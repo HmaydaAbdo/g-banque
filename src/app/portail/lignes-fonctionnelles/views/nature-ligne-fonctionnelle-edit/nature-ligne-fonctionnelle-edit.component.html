@@ -1,0 +1,43 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
+  <h2 class="text-center">{{ isEditMode ? 'Modifier une Nature de Ligne Fonctionnelle' : 'Ajouter une Nature de Ligne Fonctionnelle' }}</h2>
+  <div class="flex justify-content-center">
+    <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 600px;">
+      <form [formGroup]="natureLigneForm" (ngSubmit)="onSubmit()" class="p-fluid">
+        <div class="formgrid grid">
+          <div class="field col-12">
+            <label for="label" class="block text-900 font-medium mb-2">Libellé <span class="p-text-danger">*</span></label>
+            <input id="label" type="text" pInputText formControlName="label"
+                   [ngClass]="{'ng-invalid ng-dirty': f['label'].invalid && f['label'].touched}"
+            />
+            <small class="p-error" *ngIf="f['label'].invalid && f['label'].touched">
+              <span *ngIf="f['label'].errors?.['required']">Le libellé est obligatoire.</span>
+              <span *ngIf="f['label'].errors?.['minlength']">Le libellé doit contenir au moins {{f['label'].errors?.['minlength']?.requiredLength}} caractères.</span>
+              <span *ngIf="f['label'].errors?.['maxlength']">Le libellé ne peut pas dépasser {{f['label'].errors?.['maxlength']?.requiredLength}} caractères.</span>
+              <span *ngIf="f['label'].errors?.['pattern']">Le libellé ne doit contenir que des lettres, chiffres ou underscores.</span>
+            </small>
+          </div>
+
+          <div class="field col-12">
+            <label for="description" class="block text-900 font-medium mb-2">Description <span class="p-text-danger">*</span></label>
+            <input id="description" type="text" pInputText formControlName="description"
+                   [ngClass]="{'ng-invalid ng-dirty': f['description'].invalid && f['description'].touched}"
+            />
+            <small class="p-error" *ngIf="f['description'].invalid && f['description'].touched">
+              <span *ngIf="f['description'].errors?.['required']">La description est obligatoire.</span>
+              <span *ngIf="f['description'].errors?.['minlength']">La description doit contenir au moins {{f['description'].errors?.['minlength']?.requiredLength}} caractères.</span>
+              <span *ngIf="f['description'].errors?.['maxlength']">La description ne peut pas dépasser {{f['description'].errors?.['maxlength']?.requiredLength}} caractères.</span>
+            </small>
+          </div>
+        </div>
+
+        <div class="flex justify-content-end mt-4 gap-2">
+          <button pButton pRipple label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="onCancel()" type="button"></button>
+          <button pButton pRipple label="{{ isEditMode ? 'Modifier' : 'Créer' }}" icon="pi pi-check" class="p-button-text" type="submit" [disabled]="loading"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

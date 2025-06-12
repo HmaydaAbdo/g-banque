@@ -1,0 +1,53 @@
+<p-toast></p-toast>
+
+<div class="w-screen h-screen flex flex-column overflow-scroll">
+
+  <div class="w-screen flex justify-content-around flex-wrap gap-4 p-4">
+    <p-button label="Synchroniser les états des encours" icon="pi pi-sync"/>
+    <p-button label="Synchroniser les prélèvements leasing" icon="pi pi-dollar"/>
+    <p-button label="Synchroniser les échéances CMT" icon="pi pi-calendar"/>
+    <p-button label="Récap des soldes" icon="pi pi-chart-line"/>
+  </div>
+
+  @if (recapitulatifComptes.length === 0) {
+    <div class="flex flex-column align-items-center justify-content-center p-5 text-center" style="min-height: 50vh;">
+      <i class="pi pi-info-circle" style="font-size: 3rem; color: var(--surface-400);"></i>
+      <p class="text-xl font-bold mt-3">Aucune banque trouvée.</p>
+      <p class="text-lg text-color-secondary mb-4">Il semble qu'aucune banque n'ait encore été ajoutée. Voulez-vous en ajouter une ?</p>
+      <p-button label="Ajouter une Banque" icon="pi pi-plus" styleClass="p-button-success"   [routerLink]="['/portail/comptes-bancaires/new']"></p-button>
+    </div>
+  } @else {
+    <div class="flex flex-wrap justify-content-center mb-8">
+      @for (account of recapitulatifComptes; track account.bankId) {
+        <div class="card p-2 m-3 shadow-2 hover:shadow-8 border-round-xl" style="min-width: 20rem;">
+
+          <div class="flex flex-column align-items-center">
+            <img [src]="'data:image/png;base64,' + account.logoBase64" [alt]="'Logo de ' + account.name" class="block border-round-md"
+                 style="width: 15rem; height: 8rem; object-fit: contain;" />
+            <div class="flex flex-column gap-2 text-center">
+
+              <h3 class="text-xl font-bold">{{ account.name }}</h3>
+
+              <div class="flex flex-row justify-content-between gap-7">
+                <p class="m-0 white-space-nowrap font-bold">SOLDE ACTUEL :</p>
+                <p class="m-0 white-space-nowrap font-bold {{ account.soldeActuelle >= 0 ? 'text-green-500' : 'text-red-500' }}">
+                  {{ account.soldeActuelle }} DH
+                </p>
+              </div>
+
+              @if (account.plafondFC && account.plafondFC > 0){
+                <div class="flex flex-row justify-content-between gap-7">
+                  <p class="m-0 white-space-nowrap font-bold">FACILITÉ DE CAISSE :</p>
+                  <p class="m-0 white-space-nowrap font-bold">
+                    {{ account.plafondFC }} DH
+                  </p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+</div>

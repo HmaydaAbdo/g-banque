@@ -1,0 +1,211 @@
+import {Component, OnInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {InputTextModule} from 'primeng/inputtext';
+import {DropdownModule} from 'primeng/dropdown';
+import {CalendarModule} from 'primeng/calendar';
+import {FileUploadModule} from 'primeng/fileupload';
+import {ButtonModule} from 'primeng/button';
+import {RippleModule} from 'primeng/ripple';
+import {ImageModule} from 'primeng/image';
+import {ToastModule} from 'primeng/toast';
+import {ConfirmationService, MessageService} from 'primeng/api';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {BanqueRequest} from '../../dtos/BanqueRequest';
+import {BanqueResponse} from '../../dtos/BanqueResponse';
+import {Devise} from '../../enums/Devise';
+import {BanqueService} from '../../services/BanqueService';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {AuthService} from "../../../../auth/services/auth.service";
+import {Role} from "../../../../auth/enum/Role";
+
+@Component({
+  selector: 'app-banque-edit',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    InputTextModule,
+    DropdownModule,
+    CalendarModule,
+    FileUploadModule,
+    ButtonModule,
+    RippleModule,
+    ImageModule,
+    ToastModule,
+    RouterLink,
+    ConfirmDialogModule
+  ],
+  templateUrl: './banque-edit.component.html',
+  styleUrl: './banque-edit.component.scss',
+  providers: [
+    MessageService,
+    ConfirmationService
+  ]
+})
+export class BanqueEditComponent implements OnInit {
+
+  banqueForm!: FormGroup;
+  originalBanqueResponse: BanqueResponse | null = null;
+  logoFile: File | null = null;
+  devises: string[] = Object.values(Devise);
+  loading: boolean = false;
+  isEditMode: boolean = false;
+
+  constructor(
+    private fb: FormBuilder,
+    private banqueService: BanqueService,
+    private messageService: MessageService,
+    private confirmationService: ConfirmationService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private authService: AuthService,
+  ) {}
+
+  ngOnInit(): void {
+    this.initializeForm();
+
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        this.isEditMode = true;
+        this.loadBanque(Number(id));
+      } else {
+        this.isEditMode = false;
+      }
+    });
+  }
+
+  initializeForm(): void {
+    this.banqueForm = this.fb.group({
+      nom: ['', Validators.required],
+      numeroDeCompte: ['', [Validators.required, Validators.pattern(/^\d+$/),Validators.maxLength(24),Validators.minLength(24)]],
+      devise: [Devise.MAD, Validators.required],
+      address: ['', Validators.required],
+      agence: ['', Validators.required],
+    });
+
+    // Disable numeroDeCompte only if we are in edit mode right from the start
+    // If the form is initialized in edit mode, then disable.
+
+    if (this.isEditMode && !this.authService.hasRole(Role.ADMIN)) {
+      this.banqueForm.get('numeroDeCompte')?.disable();
+    }
+  }
+
+  loadBanque(id: number): void {
+    this.loading = true;
+    this.banqueService.getBanqueById(id).subscribe({
+      next: (data: BanqueResponse) => {
+        this.originalBanqueResponse = data;
+        this.banqueForm.patchValue({
+          nom: data.nom,
+          numeroDeCompte: data.numeroDeCompte,
+          devise: data.devise,
+          address: data.address,
+          agence: data.agence,
+        });
+        // Ensure disabling happens after patching value if it's edit mode
+        if (this.isEditMode && !this.authService.hasRole(Role.ADMIN)) {
+          this.banqueForm.get('numeroDeCompte')?.disable();
+        }
+
+        this.loading = false;
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Banque chargée avec succès.', life: 1000 });
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement de la banque:', error);
+        const errorMessage = error.error?.message || 'Impossible de charger la banque.';
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+        this.loading = false;
+        this.router.navigate(['/portail/comptes-bancaires']);
+      }
+    });
+  }
+
+  onLogoSelect(event: any): void {
+    if (event.files && event.files.length > 0) {
+      this.logoFile = event.files[0];
+      this.messageService.add({ severity: 'info', summary: 'Fichier sélectionné', detail: event.files[0].name });
+    }
+  }
+
+  // Helper pour un accès facile aux contrôles du formulaire dans le template
+  get f(): { [key: string]: AbstractControl } {
+    return this.banqueForm.controls;
+  }
+
+  saveBanque(): void {
+
+    this.banqueForm.markAllAsTouched();
+    if (this.banqueForm.invalid) {
+      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Veuillez corriger les erreurs dans le formulaire.', life: 3000 });
+      return;
+    }
+
+    // Confirmation before saving
+    this.confirmationService.confirm({
+      message: this.isEditMode ? 'Êtes-vous sûr de vouloir modifier cette banque ?' : 'Êtes-vous sûr de vouloir créer cette banque ?',
+      header: 'Confirmation de l\'enregistrement',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.executeSaveBanque();
+      },
+      reject: () => {
+        this.messageService.add({ severity: 'info', summary: 'Annulé', detail: 'Opération d\'enregistrement annulée.', life: 3000 });
+      }
+    });
+  }
+
+  executeSaveBanque(): void {
+
+    this.loading = true;
+    const formValue = this.banqueForm.getRawValue(); // Use getRawValue to get disabled field values
+    const banqueRequest: BanqueRequest = {
+      nom: formValue.nom,
+      numeroDeCompte: formValue.numeroDeCompte, // Will include value even if disabled
+      devise: formValue.devise,
+      address: formValue.address,
+      agence: formValue.agence,
+    };
+
+    if (this.isEditMode && this.originalBanqueResponse?.id) {
+      this.banqueService.updateBanque(this.originalBanqueResponse.id, banqueRequest, this.logoFile)
+        .subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Banque mise à jour avec succès.', life: 3000 });
+            this.loading = false;
+            this.router.navigate(['/portail/comptes-bancaires']); // Navigate after success
+          },
+          error: (error) => {
+            console.error('Erreur lors de la mise à jour de la banque:', error);
+            const errorMessage = error.error?.message || 'Échec de la mise à jour de la banque.';
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+            this.loading = false;
+          }
+        });
+    } else { // Create mode
+      if (!this.logoFile) {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez sélectionner un logo pour la nouvelle banque.', life: 3000 });
+        this.loading = false; // Stop loading if logo is missing
+        return;
+      }
+      this.banqueService.createBanque(banqueRequest, this.logoFile)
+        .subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Banque créée avec succès.', life: 3000 });
+            this.loading = false;
+            this.router.navigate(['/portail/comptes-bancaires']); // Navigate after success
+          },
+          error: (error) => {
+            console.error('Erreur lors de la création de la banque:', error);
+            const errorMessage = error.error?.message || 'Échec de la création de la banque.';
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+            this.loading = false;
+          }
+        });
+    }
+  }
+
+
+}

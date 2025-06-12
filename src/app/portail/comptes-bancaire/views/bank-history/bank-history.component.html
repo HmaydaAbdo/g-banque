@@ -1,0 +1,70 @@
+<!-- app/portail/comptes-bancaire/views/bank-history/bank-history.component.html -->
+<div class="card flex flex-column gap-2 md:gap-5 md:p-4 w-screen h-screen overflow-y-scroll">
+  <div class="flex justify-content-start bg-transparent">
+    <button pButton pRipple icon="pi pi-arrow-left" label="Retour aux banques" severity="secondary" routerLink="/portail/comptes-bancaires"></button>
+  </div>
+
+  @if (loadingBankDetails) {
+    <p-card header="Chargement des détails de la banque..." class="h-full flex flex-column">
+      <div class="flex flex-col items-center justify-center h-full">
+        <i class="pi pi-spin pi-spinner text-4xl text-primary-500"></i>
+        <p class="mt-4 text-lg">Veuillez patienter...</p>
+      </div>
+    </p-card>
+  } @else if (bankDetails) {
+    <p-card [header]="'Détails : ' + bankDetails.nom">
+      <div class="grid p-fluid">
+        <div class="col-12 md:col-6">
+          <p><strong>Nom:</strong> {{ bankDetails.nom }}</p>
+          <p><strong>Numéro de Compte:</strong> {{ bankDetails.numeroDeCompte }}</p>
+          <p><strong>Devise: </strong> {{bankDetails.devise}}</p>
+        </div>
+        <div class="col-12 md:col-6">
+          <p><strong>Adresse:</strong> {{ bankDetails.address }}</p>
+          <p><strong>Agence:</strong> {{ bankDetails.agence }}</p>
+          <p><strong>Solde Actuel:</strong> {{ bankDetails.soldeActuel }}</p>
+        </div>
+      </div>
+    </p-card>
+
+
+
+    <p-card header="Lignes Fonctionnelles Associées">
+      <p-table [value]="bankFunctionalLines" [loading]="loading" [scrollable]="true" scrollHeight="400px"
+               styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '50rem'}">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Nature</th>
+            <th>Plafond</th>
+            <th>Taux</th>
+            <th>Date Départ</th>
+            <th>Date Fin</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-ligne>
+          <tr>
+            <td>{{ligne.natureLigneFonctionnelleLabel}}</td>
+            <td>{{ ligne.plafond  }} MAD</td>
+            <td>{{ ligne.taux  }} %</td>
+            <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
+            <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptyMessage">
+          <tr>
+            <td [attr.colspan]="6">Aucune ligne fonctionnelle trouvée pour cette banque.</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td [attr.colspan]="6">Chargement des lignes fonctionnelles. Veuillez patienter...</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  } @else {
+    <p-card header="Banque non trouvée">
+      <p>Impossible de charger les détails de la banque. Veuillez vérifier l'ID.</p>
+    </p-card>
+  }
+</div>

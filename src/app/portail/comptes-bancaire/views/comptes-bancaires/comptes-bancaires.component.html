@@ -1,0 +1,90 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+
+<div  class="card flex flex-column gap-2 md:gap-5 md:p-4 w-screen h-screen overflow-y-scroll ">
+    <div class="flex justify-content-end bg-transparent">
+      <button pButton pRipple label="Ajouter Banque" icon="pi pi-plus" severity="primary"  routerLink="/portail/comptes-bancaires/new"></button>
+    </div>
+    <div  class="flex justify-content-between bg-transparent">
+      <form [formGroup]="searchForm">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" formControlName="nom" placeholder="Rechercher par nom..." />
+        </span>
+      </form>
+      <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()" pTooltip="Effacer la recherche"></button>
+    </div>
+    <div class="pb-8">
+      <p-table
+        #dt
+        [value]="banques"
+        [paginator]="true"
+        [rows]="rows"
+        [totalRecords]="totalRecords"
+        [loading]="loading"
+        [rowsPerPageOptions]="[3,5, 10, 25, 50]"
+        [lazy]="true"
+        (onLazyLoad)="loadBanques($event)"
+        [resizableColumns]="true"
+        [columns]="[
+          {field: 'logoBase64', header: 'Logo', sortable: false},
+          {field: 'nom', header: 'Nom', sortable: true},
+          {field: 'numeroDeCompte', header: 'Numéro de Compte', sortable: true},
+          {field: 'devise', header: 'Devise', sortable: true},
+          {field: 'address', header: 'Adresse', sortable: true},
+          {field: 'agence', header: 'Agence', sortable: true},
+          {field: 'soldeActuel', header: 'Solde Actuel', sortable: true},
+        ]"
+        styleClass="p-datatable-gridlines"
+        [tableStyle]="{'min-width': '70rem'}"
+      >
+        <ng-template pTemplate="header" let-columns>
+          <tr>
+            <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
+              {{ col.header }}
+              @if (col.sortable){ <p-sortIcon [field]="col.field"></p-sortIcon> }
+            </th>
+            <th style="width: 8rem;">Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-banque>
+          <tr>
+            <td>
+              <p-image *ngIf="banque.logoBase64"
+                       [src]="'data:image/png;base64,' + banque.logoBase64"
+                       [alt]="banque.nom + ' logo'"
+                       width="50"
+                       [preview]="true">
+              </p-image>
+              <span *ngIf="!banque.logoBase64">Pas de Logo</span>
+            </td>
+            <td>{{ banque.nom }}</td>
+            <td>{{ banque.numeroDeCompte }}</td>
+            <td><p-tag [value]="banque.devise" [severity]="getSeverity(banque.devise)"></p-tag></td>
+            <td>{{ banque.address }}</td>
+            <td>{{ banque.agence }}</td>
+            <td>{{ banque.soldeActuel}} MAD</td>
+            <td>
+              <button pButton pRipple icon="pi pi-chart-line" class="p-button-rounded p-button-info mr-2" [routerLink]="['/portail/comptes-bancaires/history', banque.id]" pTooltip="Voir l'historique"></button>
+              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" [routerLink]="['/portail/comptes-bancaires/edit', banque.id]"></button>
+              @if (isAdmin()){
+                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteBanque(banque)"></button>
+              }
+
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptyMessage">
+          <tr>
+            <td [attr.colspan]="9">Aucune banque trouvée.</td> </tr>
+        </ng-template>
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td [attr.colspan]="9">Chargement des banques. Veuillez patienter...</td> </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+
+

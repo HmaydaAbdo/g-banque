@@ -1,0 +1,120 @@
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
+  <h2 class="text-center">{{ isEditMode ? 'Modifier une Ligne Fonctionnelle' : 'Ajouter une Ligne Fonctionnelle' }}</h2>
+  <div class="flex justify-content-center">
+    <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 600px;">
+      <form [formGroup]="ligneFonctionnelleForm" (ngSubmit)="onSubmit()" class="p-fluid">
+        <div class="formgrid grid">
+          <div class="field col-12">
+            <label for="banque" class="block text-900 font-medium mb-2">Banque <span class="p-text-danger">*</span></label>
+            <p-dropdown id="banque"
+                        formControlName="banqueId"
+                        [options]="banquesOptions"
+                        placeholder="Sélectionnez une banque"
+                        optionLabel="label"
+                        optionValue="value"
+                        [filter]="true"
+                        filterBy="label"
+                        [showClear]="true"
+                        styleClass="w-full"
+                        [ngClass]="{'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched}"
+            ></p-dropdown>
+            <small class="p-error" *ngIf="f['banqueId'].invalid && f['banqueId'].touched">
+              <span *ngIf="f['banqueId'].errors?.['required']">La banque est obligatoire.</span>
+            </small>
+          </div>
+
+          <div class="field col-12">
+            <label for="nature" class="block text-900 font-medium mb-2">Nature <span class="p-text-danger">*</span></label>
+            <p-dropdown id="nature" formControlName="natureLigneFonctionnelleId"
+            [options]="natureLigneOptions"
+            placeholder="Sélectionnez une nature"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            styleClass="w-full"
+            [ngClass]="{'ng-invalid ng-dirty': f['natureLigneFonctionnelleId'].invalid && f['natureLigneFonctionnelleId'].touched}"
+            ></p-dropdown>
+            <small class="p-error" *ngIf="f['natureLigneFonctionnelleId'].invalid && f['natureLigneFonctionnelleId'].touched">
+              <span *ngIf="f['natureLigneFonctionnelleId'].errors?.['required']">La nature est obligatoire.</span>
+            </small>
+          </div>
+
+          <div class="field col-12 md:col-6">
+            <label for="plafond" class="block text-900 font-medium mb-2">Plafond <span class="p-text-danger">*</span></label>
+            <p-inputNumber id="plafond"
+                           formControlName="plafond"
+                           mode="decimal"
+                           [minFractionDigits]="2"
+                           [maxFractionDigits]="2"
+                           [min]="0.01"
+                           styleClass="w-full"
+                           [ngClass]="{'ng-invalid ng-dirty': f['plafond'].invalid && f['plafond'].touched}"
+            ></p-inputNumber>
+            <small class="p-error" *ngIf="f['plafond'].invalid && f['plafond'].touched">
+              <span *ngIf="f['plafond'].errors?.['required']">Le plafond est obligatoire.</span>
+              <span *ngIf="f['plafond'].errors?.['min']">Le plafond doit être supérieur à zéro.</span>
+              <span *ngIf="f['plafond'].errors?.['pattern']">Format de plafond invalide (ex: 123.45).</span>
+            </small>
+          </div>
+
+          <div class="field col-12 md:col-6">
+            <label for="taux" class="block text-900 font-medium mb-2">Taux (%) <span class="p-text-danger">*</span></label>
+            <p-inputNumber id="taux"
+                           formControlName="taux"
+                           mode="decimal"
+                           [minFractionDigits]="2"
+                           [maxFractionDigits]="2"
+                           [min]="0"
+                           [max]="100"
+                           suffix="%"
+                           styleClass="w-full"
+                           [ngClass]="{'ng-invalid ng-dirty': f['taux'].invalid && f['taux'].touched}"
+            ></p-inputNumber>
+            <small class="p-error" *ngIf="f['taux'].invalid && f['taux'].touched">
+              <span *ngIf="f['taux'].errors?.['required']">Le taux est obligatoire.</span>
+              <span *ngIf="f['taux'].errors?.['min'] || f['taux'].errors?.['max']">Le taux doit être entre 0 et 100.</span>
+              <span *ngIf="f['taux'].errors?.['pattern']">Format de taux invalide (ex: 5.75).</span>
+            </small>
+          </div>
+
+          <div class="field col-12 md:col-6">
+            <label for="dateDepart" class="block text-900 font-medium mb-2">Date de Départ <span class="p-text-danger">*</span></label>
+            <p-calendar id="dateDepart"
+                        formControlName="dateDepart"
+                        [showIcon]="true"
+                        dateFormat="yy/mm/dd"
+                        [ngClass]="{'ng-invalid ng-dirty': f['dateDepart'].invalid && f['dateDepart'].touched}"
+            ></p-calendar>
+            <small class="p-error" *ngIf="f['dateDepart'].invalid && f['dateDepart'].touched">
+              <span *ngIf="f['dateDepart'].errors?.['required']">La date de départ est obligatoire.</span>
+              <span *ngIf="f['dateDepart'].errors?.['minDate']">La date de départ ne peut pas être dans le passé.</span>
+            </small>
+          </div>
+
+          <div class="field col-12 md:col-6">
+            <label for="dateFin" class="block text-900 font-medium mb-2">Date de Fin <span class="p-text-danger">*</span></label>
+            <p-calendar id="dateFin"
+                        formControlName="dateFin"
+                        [showIcon]="true"
+                        dateFormat="yy/mm/dd"
+                        [ngClass]="{'ng-invalid ng-dirty': f['dateFin'].invalid && f['dateFin'].touched}"
+            ></p-calendar>
+            <small class="p-error" *ngIf="f['dateFin'].invalid && f['dateFin'].touched">
+              <span *ngIf="f['dateFin'].errors?.['required']">La date de fin est obligatoire.</span>
+              <span *ngIf="f['dateFin'].errors?.['minDate']">La date de fin ne peut pas être antérieure à la date de départ.</span>
+            </small>
+          </div>
+        </div>
+
+        <div class="flex justify-content-end mt-4 gap-2">
+          <button pButton pRipple label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="onCancel()" type="button"></button>
+          <button pButton pRipple label="{{ isEditMode ? 'Modifier' : 'Créer' }}" icon="pi pi-check" class="p-button-text" type="submit" [disabled]="loading"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
