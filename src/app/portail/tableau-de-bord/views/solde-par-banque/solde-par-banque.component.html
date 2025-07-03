@@ -1,0 +1,24 @@
+<div class="h-screen w-screen overflow-y-scroll flex flex-column justify-content-center align-items-center p-4">
+
+  <h2 class="mb-4 text-color">Solde Actuel par Banque</h2>
+
+  <div *ngIf="loading" class="text-center text-color-secondary mt-4">
+    Chargement des données...
+  </div>
+
+  <div *ngIf="errorMessage" class="p-error-message text-center text-red-500 mt-4">
+    {{ errorMessage }}
+  </div>
+
+  <p-chart *ngIf="chartData"
+           type="bar"
+           [data]="chartData"
+           [options]="chartOptions"
+           class="w-full h-30rem">
+  </p-chart>
+
+  <div *ngIf="!loading && !errorMessage && !chartData"
+       class="p-4 text-center text-color-secondary">
+    Aucune donnée de solde de banque disponible à afficher.
+  </div>
+</div>

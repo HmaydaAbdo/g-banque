@@ -1,0 +1,108 @@
+<div class=" p-fluid">
+  <div class="p-4">
+    <div class="pt-2 flex ">
+      <div class="field col-12 md:col-3">
+        <label for="userName">Nom d'utilisateur</label>
+        <p-dropdown
+          id="userName"
+          [options]="usernames"
+          [(ngModel)]="searchCriteria.userName"
+          placeholder="Sélectionner un utilisateur"
+          [showClear]="true"
+          (onChange)="onFilterChange()"
+          [filter]="true"
+          filterPlaceholder="Rechercher...">
+          <ng-template let-option pTemplate="item">
+            <span>{{ option }}</span>
+          </ng-template>
+        </p-dropdown>
+      </div>
+      <div class="field col-12 md:col-3">
+        <label for="operationType">Type d'Opération</label>
+        <p-dropdown id="operationType" [options]="operationTypes" [(ngModel)]="searchCriteria.operationType" placeholder="Sélectionner un type" [showClear]="true" (onChange)="onFilterChange()"></p-dropdown>
+      </div>
+      <div class="field col-12 md:col-3">
+        <label for="entityName">Nom de l'Entité</label>
+        <p-dropdown
+          id="entityName"
+          [options]="entityNames"
+          [(ngModel)]="searchCriteria.entityName"
+          placeholder="Sélectionner une entité"
+          [showClear]="true"
+          (onChange)="onFilterChange()"
+          [filter]="true"
+          filterPlaceholder="Rechercher..."
+        >
+          <ng-template let-option pTemplate="item">
+            <span>{{ option }}</span>
+          </ng-template>
+        </p-dropdown>
+      </div>
+      <div class="field col-12 md:col-3 align-content-center pt-5">
+        <button pButton type="button"
+                icon="pi pi-filter-slash"
+                label="Réinitialiser les filtres"
+                class="p-button-secondary "
+                (click)="clearFilters()">
+        </button>
+      </div>
+
+    </div>
+
+    <!--
+    <div class="pb-2 flex ">
+      <div class="field col-12 md:col-3">
+        <label for="timestampStart">Date Début</label>
+        <p-calendar id="timestampStart" [(ngModel)]="searchCriteria.timestampStart" (ngModelChange)="onFilterChange()"  hourFormat="24" dateFormat="yy-mm-dd" appendTo="body" [showIcon]="true"></p-calendar>
+      </div>
+      <div class="field col-12 md:col-3">
+        <label for="timestampEnd">Date Fin</label>
+        <p-calendar id="timestampEnd" [(ngModel)]="searchCriteria.timestampEnd" (ngModelChange)="onFilterChange()"  hourFormat="24" dateFormat="yy-mm-dd" appendTo="body" [showIcon]="true"></p-calendar>
+      </div>
+    </div>
+    -->
+
+  </div>
+  <p-table
+    [value]="logs"
+    [lazy]="true"
+    (onLazyLoad)="loadLogs($event)"
+    [paginator]="true"
+    [rows]="10"
+    [totalRecords]="totalRecords"
+    [loading]="loading"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} logs"
+    [rowsPerPageOptions]="[10, 25, 50]"
+    [resizableColumns]="true"
+    styleClass="p-datatable-gridlines"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="userName">Utilisateur <p-sortIcon field="userName"></p-sortIcon></th>
+        <th pSortableColumn="operationType">Opération <p-sortIcon field="operationType"></p-sortIcon></th>
+        <th pSortableColumn="entityName">Entité <p-sortIcon field="entityName"></p-sortIcon></th>
+        <th pSortableColumn="entityId">ID Entité <p-sortIcon field="entityId"></p-sortIcon></th>
+        <th pSortableColumn="timestamp">Date <p-sortIcon field="timestamp"></p-sortIcon></th>
+        <th style="width: 100px;">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-log>
+      <tr (click)="showLogDetails(log)" class="cursor-pointer">
+        <td>{{ log.userName }}</td>
+        <td>{{ log.operationType }}</td>
+        <td>{{ log.entityName }}</td>
+        <td>{{ log.entityId }}</td>
+        <td>{{ log.timestamp | date:'medium' }}</td>
+        <td>
+          <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger " (click)="deleteLog(log); $event.stopPropagation()" pTooltip="Supprimer le Log" tooltipPosition="bottom"></button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center">Aucun log trouvé.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

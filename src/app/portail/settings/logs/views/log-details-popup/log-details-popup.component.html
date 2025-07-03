@@ -1,0 +1,42 @@
+<div class="p-fluid">
+  <p-table
+    [value]="logDetails"
+    [paginator]="true"
+    [rows]="rows"
+    [first]="first"
+    [totalRecords]="totalDetailRecords"
+    (onPage)="onPageChange($event)"
+    [rowsPerPageOptions]="[3,5, 10, 20]"
+    [showCurrentPageReport]="true"
+    currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} détails"
+    styleClass="p-datatable-gridlines"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th >Champ</th>
+        <th>Ancienne Valeur</th>
+        <th>Nouvelle Valeur</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-detail>
+      <tr>
+        <td>{{ detail.fieldName }}</td>
+        <td>
+          <span [pTooltip]="detail.oldValue" tooltipPosition="bottom">
+            {{ detail.oldValue }}{{ detail.oldValue.length > 50 ? '...' : '' }}
+          </span>
+        </td>
+        <td>
+          <span [pTooltip]="detail.newValue" tooltipPosition="bottom">
+            {{ detail.newValue }}{{ detail.newValue.length > 50 ? '...' : '' }}
+          </span>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="3" class="text-center">Aucun détail de log trouvé.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

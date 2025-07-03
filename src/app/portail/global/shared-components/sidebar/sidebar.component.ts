@@ -85,7 +85,7 @@ export class SidebarComponent implements OnInit { // Implement OnInit
     });
   }
 
-  closeCallback(e: MouseEvent): void {
+  closeCallback(): void {
     this.sidebarVisible = false;
     this.sidebarVisibleChange.emit(this.sidebarVisible);
   }
