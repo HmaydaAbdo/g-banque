@@ -6,4 +6,5 @@ export interface LigneFonctionnelleRequest {
   taux: number;
   dateDepart: Date;
   dateFin: Date;
+  actif?: boolean;
 }

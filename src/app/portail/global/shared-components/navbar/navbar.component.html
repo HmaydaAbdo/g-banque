@@ -1,15 +1,15 @@
-<div class="w-screen flex justify-content-between p-3 border border-bottom-1">
+<div class="w-screen flex justify-content-between p-3 border-bottom-3 surface-border">
 
   <div class="flex align-items-center">
     <img src="assets/staportLogo.png" alt="Your Logo" class="block mx-auto" style="height: 3rem; width: 6.52rem;" />
   </div>
 
   <div>
-    <nav class="hidden lg:flex  align-items-center">
-      <ul class="list-none flex justify-content-between">
+    <nav class="hidden lg:flex align-items-center">
+      <ul class="list-none flex justify-content-between p-0 m-0">
         <li *ngFor="let item of filteredMenuItems">
           <a pRipple [routerLink]="item.routerLink" routerLinkActive="active-nav-link"
-             class="flex align-items-center nav-link hover:bg-blue-50 border-round-xl">
+             class="flex align-items-center nav-link hover:bg-blue-50 border-round-xl p-3">
             <span [class]="item.icon"></span>
             <span class="ml-2 nav-label">{{ item.label }}</span>
           </a>
@@ -18,11 +18,44 @@
     </nav>
   </div>
 
-  <div class="flex gap-2 align-items-center">
-    <p-button icon="pi pi-bars" styleClass="p-button-info p-button-outlined" (onClick)="openSidebar.emit()" pTooltip="Ouvrir le menu de navigation principale" tooltipPosition="bottom"></p-button>
-    <p-button icon="pi pi-power-off" styleClass="p-button-danger p-button-outlined" [loading]="loading" (onClick)="confirmLogout($event)" pTooltip="Se déconnecter de votre compte" tooltipPosition="bottom"></p-button>
+  <div class="flex gap-3 align-items-center">
+
+    <div class="relative inline-flex align-items-center justify-content-center
+              w-3rem h-3rem border border-round surface-border
+              text-blue-500 hover:bg-blue-50 cursor-pointer" (click)="openSidebar.emit()">
+      <i class="pi pi-bars text-2xl"  pTooltip="Ouvrir le menu de navigation principale" tooltipPosition="bottom"></i>
+    </div>
+
+    <!-- Notification Bell Icon with Badge and OverlayPanel -->
+    <div class="relative inline-flex align-items-center justify-content-center
+              w-3rem h-3rem border border-round surface-border
+              text-blue-500 hover:bg-blue-50 cursor-pointer p-overlay-badge" (click)="op.toggle($event)">
+      <i class="pi pi-bell text-2xl" pTooltip="Notifications" tooltipPosition="bottom" ></i>
+      <!-- Display unreadCount, hide if 0 -->
+      <p-badge *ngIf="unreadCount > 0" [value]="unreadCount" severity="danger"></p-badge>
+    </div>
+
+    <!-- Overlay Panel for Notifications -->
+    <p-overlayPanel #op appendTo="body" [showCloseIcon]="false" [style]="{'width': '350px'}" [dismissable]="true">
+      <ng-template pTemplate="content">
+        <!-- Pass notificationService and webSocketService to the new NotificationListComponent -->
+        <app-notification-list
+          [notificationService]="notificationService"
+          [webSocketService]="webSocketService"
+          (notificationMarkedAsRead)="op.hide()"
+        ></app-notification-list>
+      </ng-template>
+    </p-overlayPanel>
+
+    <div class="relative inline-flex align-items-center justify-content-center
+              w-3rem h-3rem border border-round border-red-300
+              text-red-500 hover:bg-red-50 cursor-pointer" (click)="confirmLogout($event)">
+      <i class="pi pi-power-off text-2xl" [class.p-button-loading]="loading"  pTooltip="Se déconnecter de votre compte" tooltipPosition="bottom"></i>
+    </div>
+
   </div>
 
 </div>
 
 <p-confirmDialog header="Confirmer la déconnexion" icon="pi pi-exclamation-triangle"></p-confirmDialog>
+<p-toast></p-toast> <!-- Toast for displaying new real-time notifications -->

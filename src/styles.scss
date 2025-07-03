@@ -7,5 +7,48 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: hidden; // Prevent body scroll if content overflows
+  overflow: hidden; /* Prevent body scroll if content overflows */
+}
+
+.portail-section {
+  .p-breadcrumb {
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+    padding: 0.5rem 0;
+    display: flex;
+    white-space: nowrap;
+    /* Base font size for smaller screens or default */
+    font-size: 0.8rem; /* Set an initial reasonable font size */
+  }
+
+  /* --- Media Queries for Responsive Font Size --- */
+
+  /* For very small screens (e.g., mobile portrait) */
+  @media (max-width: 576px) {
+    .p-breadcrumb {
+      font-size: 0.7rem; /* Make it smaller for cramped spaces */
+    }
+  }
+
+  /* Medium screens (e.g., tablets in portrait or small laptops) */
+  @media (min-width: 768px) {
+    .p-breadcrumb {
+      font-size: 0.7rem;
+    }
+  }
+
+  /* Larger screens (e.g., desktops) */
+  @media (min-width: 1024px) {
+    .p-breadcrumb {
+      font-size: 1.1rem;
+    }
+  }
+
+  /* Extra large screens */
+  @media (min-width: 1440px) {
+    .p-breadcrumb {
+      font-size: 1.2rem;
+    }
+  }
 }

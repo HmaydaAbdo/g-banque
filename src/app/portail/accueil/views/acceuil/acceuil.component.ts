@@ -4,10 +4,11 @@ import {RecapitulatifCompte} from "../../dtos/RecapitulatifCompte";
 import {TooltipModule} from "primeng/tooltip";
 import { CommonModule } from '@angular/common';
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
-import { MessageService } from 'primeng/api';
+import {MenuItem, MessageService} from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import {RouterLink} from "@angular/router";
+import {RouterLink, RouterLinkActive} from "@angular/router";
+import {BreadcrumbModule} from "primeng/breadcrumb";
 
 
 @Component({
@@ -18,7 +19,9 @@ import {RouterLink} from "@angular/router";
     TooltipModule,
     CommonModule,
     ToastModule,
-    RouterLink
+    RouterLink,
+    BreadcrumbModule,
+    RouterLinkActive
   ],
   templateUrl: './acceuil.component.html',
   styleUrl: './acceuil.component.scss',
@@ -27,13 +30,14 @@ import {RouterLink} from "@angular/router";
 export class AcceuilComponent  implements OnInit{
 
   recapitulatifComptes: RecapitulatifCompte[] = [];
-
+  items: MenuItem[] | undefined;
   constructor(
     private banqueService: BanqueService,
     private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
+    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" } ]
     this.fetchAccueilBankInfo();
   }
 

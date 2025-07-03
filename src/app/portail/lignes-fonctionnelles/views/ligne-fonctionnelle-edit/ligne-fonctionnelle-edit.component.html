@@ -86,7 +86,7 @@
             <p-calendar id="dateDepart"
                         formControlName="dateDepart"
                         [showIcon]="true"
-                        dateFormat="yy/mm/dd"
+                        dateFormat="dd/mm/yy"
                         [ngClass]="{'ng-invalid ng-dirty': f['dateDepart'].invalid && f['dateDepart'].touched}"
             ></p-calendar>
             <small class="p-error" *ngIf="f['dateDepart'].invalid && f['dateDepart'].touched">
@@ -100,7 +100,7 @@
             <p-calendar id="dateFin"
                         formControlName="dateFin"
                         [showIcon]="true"
-                        dateFormat="yy/mm/dd"
+                        dateFormat="dd/mm/yy"
                         [ngClass]="{'ng-invalid ng-dirty': f['dateFin'].invalid && f['dateFin'].touched}"
             ></p-calendar>
             <small class="p-error" *ngIf="f['dateFin'].invalid && f['dateFin'].touched">

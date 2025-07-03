@@ -1,0 +1,11 @@
+
+.active-card {
+  border: 2px solid var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb, 59, 130, 246), 0.3);
+}
+
+.card-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

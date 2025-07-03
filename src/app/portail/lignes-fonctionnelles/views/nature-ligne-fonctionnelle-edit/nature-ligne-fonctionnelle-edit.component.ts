@@ -48,16 +48,8 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
     private confirmationService: ConfirmationService
   ) {
     this.natureLigneForm = this.fb.group({
-      label: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(2),
-          Validators.maxLength(100),
-          Validators.pattern(/^[a-zA-Z0-9_]*$/) // Autoriser lettres, chiffres et underscores pour les labels
-        ],
-      ],
-      description: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(255)]],
+      label: ['', [Validators.required, Validators.pattern(/^[A-Za-zÀ-ÿ\s]*$/)]],
+      description: ['', Validators.required],
     });
   }
 

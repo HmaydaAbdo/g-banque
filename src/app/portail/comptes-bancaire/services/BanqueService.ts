@@ -5,9 +5,9 @@ import { Observable } from 'rxjs';
 import {environment} from "../../../../environments/environment";
 import {BanqueRequest} from "../dtos/BanqueRequest";
 import {BanqueResponse} from "../dtos/BanqueResponse";
-import {BanqueSearchCriteria} from "../types/BanqueSearchCriteria";
 import {PageResponse} from "../../global/types/PageResponse";
 import {RecapitulatifCompte} from "../../accueil/dtos/RecapitulatifCompte";
+import {BanqueSearchCriteria} from "../dtos/BanqueSearchCriteria";
 
 
 

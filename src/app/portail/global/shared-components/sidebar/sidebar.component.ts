@@ -51,17 +51,26 @@ export class SidebarComponent implements OnInit { // Implement OnInit
   sidebarItems: SidebarItem[] = [
     { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
-    { label: 'Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires' },
+    { label: 'Comptes Bancaires', icon: 'pi pi-wallet', items:
+        [
+          { label: 'Gestion des comptes', icon: 'pi pi-list', routerLink: '/portail/comptes-bancaires' },
+          { label: 'Historique', icon: 'pi pi-history', routerLink: '/portail/select-for-history' }
+       ]
+    },
     {
       label: 'Lignes Fonctionnelle',
       icon: 'pi pi-receipt',
-      // The parent 'Lignes Fonctionnelle' can still have a routerLink
-      // or you can remove it if you only want the sub-items to be navigable.
-      // Keeping it for now as it aligns with the existing structure.
-      routerLink: '/portail/lignes-fonctionnelles',
       items: [
         { label: 'Liste des Lignes', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles' },
         { label: 'Natures Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles' }
+      ]
+    },
+    {
+      label: 'Settings',
+      icon: 'pi pi-cog',
+      roles: [Role.ADMIN, Role.SUPER_ADMIN],
+      items: [
+        { label: 'Logs', icon: 'pi pi-history',routerLink: '/portail/logs' },
       ]
     },
   ];
@@ -102,19 +111,28 @@ export class SidebarComponent implements OnInit { // Implement OnInit
   }
 
   private filterSidebarItems(): void {
-    this.filteredSidebarItems = this.sidebarItems.filter(item => {
-      if (item.items) {
-        // If the item has sub-items, filter its sub-items recursively
-        item.items = item.items.filter(subItem => {
-          if (subItem.items) {
-            subItem.items = subItem.items.filter(subSubItem => this.hasRequiredRole(subSubItem));
-            return subItem.items.length > 0 || this.hasRequiredRole(subItem); // Keep parent if it or any sub-sub-item is visible
-          }
-          return this.hasRequiredRole(subItem);
-        });
-        return item.items.length > 0 || this.hasRequiredRole(item); // Keep parent if it or any sub-item is visible
-      }
-      return this.hasRequiredRole(item);
-    });
+    const filterAndMap = (items: SidebarItem[]): SidebarItem[] => {
+      return items.filter(item => {
+        // First, check if the current item itself should be visible based on roles
+        if (!this.hasRequiredRole(item)) {
+          return false; // User doesn't have the role for this item, so hide it and its children
+        }
+
+        // If the item has children, filter them recursively
+        if (item.items) {
+          const originalItems = [...item.items]; // Create a shallow copy to avoid modifying the original array during filtering
+          item.items = filterAndMap(originalItems); // Recursively filter children
+          // Only keep the parent if it has at least one visible child or if the parent itself has no roles defined
+          // The hasRequiredRole(item) check ensures the parent is hidden if roles are required and not met.
+          // So, if item.items is empty after filtering, we hide the parent.
+          return item.items.length > 0;
+        }
+
+        // If no children, and hasRequiredRole passed, keep the item
+        return true;
+      });
+    };
+
+    this.filteredSidebarItems = filterAndMap(this.sidebarItems);
   }
 }

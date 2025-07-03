@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastModule } from 'primeng/toast'; // Import ToastModule here
 import { MessageService } from 'primeng/api';
+
 
 @Component({
   selector: 'app-root',
@@ -11,6 +12,8 @@ import { MessageService } from 'primeng/api';
   styleUrl: './app.component.scss',
   providers: [MessageService]
 })
-export class AppComponent {
+export class AppComponent   {
+
   title = 'Gbanque';
+
 }

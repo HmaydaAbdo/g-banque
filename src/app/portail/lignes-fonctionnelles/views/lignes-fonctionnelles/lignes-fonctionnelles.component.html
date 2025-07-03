@@ -17,9 +17,9 @@
     </div>
 
     <form [formGroup]="searchForm" class="w-full">
-      <div class="flex flex-column md:flex-row md:align-items-end md:justify-content-between">
-        <div class="flex flex-column md:flex-row  gap-3 mb-3 md:mb-0">
-          <div >
+      <div class="flex flex-column px-4 md:flex-row md:align-items-end md:justify-content-between">
+        <div class="flex flex-column md:flex-row gap-3 mb-3 md:mb-0">
+          <div>
             <label for="filterBanque" class="block text-900 text-center font-medium mb-2">Banque</label>
             <p-dropdown
               id="filterBanque"
@@ -46,6 +46,7 @@
               styleClass="w-full"
             ></p-dropdown>
           </div>
+
         </div>
 
         <div class="flex-shrink-0">
@@ -54,7 +55,7 @@
       </div>
     </form>
   </div>
-  <div>
+  <div class="p-4">
     <p-table
       #dt
       [value]="lignesFonctionnelles"
@@ -62,7 +63,7 @@
       [rows]="rows"
       [totalRecords]="totalRecords"
       [loading]="loading"
-      [rowsPerPageOptions]="[5, 10, 25, 50]"
+      [rowsPerPageOptions]="[3,5, 10, 25, 50]"
       [lazy]="true"
       (onLazyLoad)="loadLignesFonctionnelles($event)"
       [resizableColumns]="true"
@@ -72,12 +73,14 @@
           {field: 'plafond', header: 'Plafond', sortable: true},
           {field: 'taux', header: 'Taux', sortable: true},
           {field: 'dateDepart', header: 'Date Départ', sortable: true},
-          {field: 'dateFin', header: 'Date Fin', sortable: true}
-      ]"
+          {field: 'dateFin', header: 'Date Fin', sortable: true} ]"
+
       styleClass="p-datatable-gridlines p-datatable-sm"
       [tableStyle]="{'min-width': '50rem'}"
       [scrollable]="true"
       scrollHeight="flex"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}" >
     >
       <ng-template pTemplate="header" let-columns>
         <tr>
@@ -91,11 +94,12 @@
       <ng-template pTemplate="body" let-ligne>
         <tr>
           <td>{{ ligne.banqueNom }}</td>
-          <td><p-tag [value]="ligne.natureLigneFonctionnelleLabel" severity="info"></p-tag></td> <!-- CHANGED: Use label directly, removed getNatureSeverity -->
+          <td><p-tag [value]="ligne.natureLigneFonctionnelleLabel" severity="info"></p-tag></td>
           <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
           <td>{{ ligne.taux | number:'1.2-2' }}%</td>
           <td>{{ ligne.dateDepart | date:'mediumDate' }}</td>
           <td>{{ ligne.dateFin | date:'mediumDate' }}</td>
+
           <td class="text-center">
             <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top"
                     [routerLink]="['/portail/lignes-fonctionnelles/edit', ligne.id]">
@@ -106,19 +110,18 @@
                       (click)="deleteLigneFonctionnelle(ligne)">
               </button>
             }
+
           </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td [attr.colspan]="7">Aucune ligne fonctionnelle trouvée.</td>
-        </tr>
+          <td [attr.colspan]="8">Aucune ligne fonctionnelle trouvée.</td> </tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="7">Chargement des lignes fonctionnelles. Veuillez patienter...</td>
-        </tr>
+          <td [attr.colspan]="8">Chargement des lignes fonctionnelles. Veuillez patienter...</td> </tr>
       </ng-template>
     </p-table>
   </div>

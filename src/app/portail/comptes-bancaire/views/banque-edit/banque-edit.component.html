@@ -1,83 +1,82 @@
-
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
-<div class="w-screen h-screen  overflow-y-scroll pt-2 pb-6 px-5" >
-  <h2 class="text-center">{{ isEditMode ? 'Modifier une Banque' : 'Ajouter une Banque' }}</h2>
-  <div class="flex flex-wrap gap-2">
-    <form [formGroup]="banqueForm" (ngSubmit)="saveBanque()">
-      <div class="p-fluid formgrid grid">
-        <div class="col-12 md:col-6 field">
-          <label for="nom">Nom <span class="p-text-danger">*</span></label>
-          <input type="text" pInputText id="nom" formControlName="nom" autofocus />
-          <small class="p-error" *ngIf="f['nom'].invalid && f['nom'].touched">
-            <span *ngIf="f['nom'].errors?.['required']">Le nom est obligatoire.</span>
+
+<div class="portail-section w-screen h-screen overflow-y-scroll pt-2 pb-8 px-5">
+
+  <div class="flex justify-content-center w-full">
+    <p-breadcrumb [model]="items">
+      <ng-template pTemplate="item" let-item>
+        <ng-container>
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        </ng-container>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <p class="text-center font-bold md:text-2xl">{{ isEditMode ? 'Modifier une Banque' : 'Ajouter une Banque' }}</p>
+
+  <form [formGroup]="banqueForm" (ngSubmit)="saveBanque()">
+    <div class="p-fluid formgrid grid">
+      <div class="col-12 md:col-6 field">
+        <label for="nom">Nom <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="nom" formControlName="nom" autofocus />
+        <small class="p-error" *ngIf="f['nom'].invalid && f['nom'].touched">
+          <span *ngIf="f['nom'].errors?.['required']">Le nom est obligatoire.</span>
+        </small>
+      </div>
+      <div class="col-12 md:col-6 field">
+        <label for="numeroDeCompte">Numéro de Compte <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="numeroDeCompte" formControlName="numeroDeCompte" />
+        <small class="p-error" *ngIf="f['numeroDeCompte'].invalid && f['numeroDeCompte'].touched">
+          <span *ngIf="f['numeroDeCompte'].errors?.['required']">Le numéro de compte est obligatoire.</span>
+          <span *ngIf="f['numeroDeCompte'].errors?.['pattern']">Le numéro de compte ne doit contenir que des chiffres.</span>
+          <span *ngIf="f['numeroDeCompte'].errors?.['minlength'] || f['numeroDeCompte'].errors?.['maxlength']">Le numéro de compte doit comporter 24 chiffres.</span>
+        </small>
+        <small *ngIf="isEditMode" class="p-text-muted">Le numéro de compte ne peut pas être modifié.</small>
+      </div>
+      <div class="col-12 md:col-6 field">
+        <label for="devise">Devise <span class="p-text-danger">*</span></label>
+        <p-dropdown id="devise" formControlName="devise" [options]="devises" placeholder="Sélectionner une devise"></p-dropdown>
+        <small class="p-error" *ngIf="f['devise'].invalid && f['devise'].touched">
+          <span *ngIf="f['devise'].errors?.['required']">La devise est obligatoire.</span>
+        </small>
+      </div>
+      <div class="col-12 md:col-6 field">
+        <label for="address">Adresse <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="address" formControlName="address" />
+        <small class="p-error" *ngIf="f['address'].invalid && f['address'].touched">
+          <span *ngIf="f['address'].errors?.['required']">L'adresse est obligatoire.</span>
+        </small>
+      </div>
+      <div class="col-12 md:col-6 field">
+        <label for="agence">Agence <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="agence" formControlName="agence" />
+        <small class="p-error" *ngIf="f['agence'].invalid && f['agence'].touched">
+          <span *ngIf="f['agence'].errors?.['required']">L'agence est obligatoire.</span>
+        </small>
+      </div>
+      <div class="col-12 flex flex-wrap justify-content-between md:justify-content-between field">
+        <div class="flex flex-column   gap-2">
+          <p-fileUpload #fileUpload mode="basic" name="logoFile" accept="image/*" [maxFileSize]="1000000" (onSelect)="onLogoSelect($event)" chooseLabel="Choisir Logo"></p-fileUpload>
+          <small class="p-error" *ngIf="!isEditMode && !logoFile && banqueForm.touched">
+            Le logo est obligatoire pour la création d'une nouvelle banque.
           </small>
-        </div>
-
-        <div class="col-12 md:col-6 field">
-          <label for="numeroDeCompte">Numéro de Compte <span class="p-text-danger">*</span></label>
-          <input type="text" pInputText id="numeroDeCompte" formControlName="numeroDeCompte" />
-          <small class="p-error" *ngIf="f['numeroDeCompte'].invalid && f['numeroDeCompte'].touched">
-            <span *ngIf="f['numeroDeCompte'].errors?.['required']">Le numéro de compte est obligatoire.</span>
-            <span *ngIf="f['numeroDeCompte'].errors?.['pattern']">Le numéro de compte ne doit contenir que des chiffres.</span>
-            <span *ngIf="f['numeroDeCompte'].errors?.['minlength'] || f['numeroDeCompte'].errors?.['maxlength']">Le numéro de compte doit comporter 24 chiffres.</span>
-          </small>
-          <small *ngIf="isEditMode" class="p-text-muted">Le numéro de compte ne peut pas être modifié.</small>
-        </div>
-
-        <div class="col-12 md:col-6 field">
-          <label for="devise">Devise <span class="p-text-danger">*</span></label>
-          <p-dropdown id="devise" formControlName="devise" [options]="devises" placeholder="Sélectionner une devise"></p-dropdown>
-          <small class="p-error" *ngIf="f['devise'].invalid && f['devise'].touched">
-            <span *ngIf="f['devise'].errors?.['required']">La devise est obligatoire.</span>
-          </small>
-        </div>
-
-        <div class="col-12 md:col-6 field">
-          <label for="address">Adresse <span class="p-text-danger">*</span></label>
-          <input type="text" pInputText id="address" formControlName="address" />
-          <small class="p-error" *ngIf="f['address'].invalid && f['address'].touched">
-            <span *ngIf="f['address'].errors?.['required']">L'adresse est obligatoire.</span>
-          </small>
-        </div>
-
-        <div class="col-12 md:col-6 field">
-          <label for="agence">Agence <span class="p-text-danger">*</span></label>
-          <input type="text" pInputText id="agence" formControlName="agence" />
-          <small class="p-error" *ngIf="f['agence'].invalid && f['agence'].touched">
-            <span *ngIf="f['agence'].errors?.['required']">L'agence est obligatoire.</span>
-          </small>
-        </div>
-
-
-        <div class="col-12 field">
-          <div class="flex justify-content-between">
-            <div class="flex flex-column gap-2">
-              <label for="logo">Logo</label>
-              <p-fileUpload #fileUpload mode="basic" name="logoFile" accept="image/*" [maxFileSize]="1000000" (onSelect)="onLogoSelect($event)" chooseLabel="Choisir Logo"></p-fileUpload>
-              <small class="p-error" *ngIf="!isEditMode && !logoFile && banqueForm.touched">
-                Le logo est obligatoire pour la création d'une nouvelle banque.
-              </small>
-            </div>
-            <div class="flex gap-2 justify-content-end">
-              <button pButton pRipple label="Annuler" icon="pi pi-times" class="p-button-outlined p-mr-2" [routerLink]="['/portail/comptes-bancaires']" type="button"></button>
-              <button pButton pRipple label="Enregistrer" icon="pi pi-check" class="p-button-outlined" type="submit" [disabled]="loading"></button>
-            </div>
-          </div>
-
-
           <div *ngIf="isEditMode && originalBanqueResponse?.logoBase64 && !logoFile" class="mt-2">
             <p>Logo actuel:</p>
             <p-image [src]="'data:image/png;base64,' + originalBanqueResponse?.logoBase64" alt="Logo actuel" width="100"></p-image>
           </div>
-          <div  class=" flex  mt-2">
-            <p *ngIf="logoFile" >Nouveau logo sélectionné: {{ logoFile.name }}</p>
+          <div class="flex mt-2">
+            <p *ngIf="logoFile">Nouveau logo sélectionné: {{ logoFile.name }}</p>
           </div>
         </div>
+        <div class="flex gap-4  ">
+          <button pButton pRipple label="Annuler" size="small" class="h-fit" icon="pi pi-times" [routerLink]="['/portail/comptes-bancaires']" type="button"></button>
+          <button pButton pRipple label="Enregistrer" size="small" class="h-fit" icon="pi pi-check" type="submit" [disabled]="loading"></button>
+        </div>
       </div>
-
-
-    </form>
-  </div>
+    </div>
+  </form>
 </div>
-

@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -34,7 +34,6 @@ import {AuthService} from "../../../../auth/services/auth.service"; // Add toolt
     ToastModule,
     ReactiveFormsModule,
     RippleModule,
-    DatePipe,
     TooltipModule,
     DropdownModule
   ],

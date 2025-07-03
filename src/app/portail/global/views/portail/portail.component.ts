@@ -1,10 +1,9 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import {NavbarComponent} from "../../shared-components/navbar/navbar.component";
-import {SidebarComponent} from "../../shared-components/sidebar/sidebar.component";
-import {ToastModule} from "primeng/toast";
-import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {ConfirmationService, MessageService} from "primeng/api";
+import { NavbarComponent } from "../../shared-components/navbar/navbar.component";
+import { SidebarComponent } from "../../shared-components/sidebar/sidebar.component";
+import { ConfirmDialogModule } from "primeng/confirmdialog";
+import { ConfirmationService } from "primeng/api";
 
 
 @Component({
@@ -14,17 +13,15 @@ import {ConfirmationService, MessageService} from "primeng/api";
     RouterOutlet,
     NavbarComponent,
     SidebarComponent,
-    ToastModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
   ],
   templateUrl: './portail.component.html',
   styleUrl: './portail.component.scss',
-  providers: [MessageService, ConfirmationService]
+  providers: [ConfirmationService]
 })
-export class PortailComponent {
+
+export class PortailComponent   {
   sidebarVisible: boolean = false;
-
   @ViewChild(SidebarComponent) sidebar!: SidebarComponent;
-
 
 }

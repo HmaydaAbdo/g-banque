@@ -1,28 +1,25 @@
-<div class="h-screen w-screen  flex flex-column  gap-8 overflow-y-scroll px-4 pt-4 pb-8">
+<div class="portail-section h-screen w-screen overflow-y-scroll px-4 py-2 flex flex-column gap-3">
 
-  <div class="flex flex-wrap gap-2 justify-content-around ">
-    <div class=" bg-orange-100 col-12 sm:col-6 md:col-4 lg:col-3 p-3 border-round p-shadow-3 flex flex-column justify-content-center align-items-center">
-      <h3 class=" text-xl font-medium">Solde Total Actuelle </h3>
-      <p class="text-xl font-bold text-primary-500">{{consolidatedTreasury}} DH</p>
-    </div>
-
-    <div class=" bg-indigo-100 col-12 sm:col-6 md:col-4 lg:col-3 p-3 border-round p-shadow-3 flex flex-column justify-content-center align-items-center">
-      <h3 class=" text-xl font-medium">Nombre de banque actifs </h3>
-      <p class="text-xl font-bold text-primary-500">9</p>
-    </div>
-    <div class=" bg-cyan-100 col-12 sm:col-6 md:col-4 lg:col-3 p-3 border-round p-shadow-3 flex flex-column justify-content-center align-items-center">
-      <h3 class=" text-xl font-medium">an other KPI</h3>
-      <p class="text-xl font-bold text-primary-500">$25,345</p>
-    </div>
-
+  <div class="flex justify-content-center w-full">
+    <p-breadcrumb [model]="items">
+      <ng-template pTemplate="item" let-item>
+        <ng-container>
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        </ng-container>
+      </ng-template>
+    </p-breadcrumb>
   </div>
 
-  <div class="flex flex-wrap justify-content-around">
-    <div class="col-12 md:col-6 lg:col-6 flex">
-      <p-chart type="bar" [data]="bankBalanceChartData" [options]="bankBalanceChartOptions" class="w-full"></p-chart>
-    </div>
-    <div class="col-12 md:col-6 lg:col-6 flex">
-      <p-chart type="bar" [data]="bankBalanceChartData" [options]="bankBalanceChartOptions" class="w-full"></p-chart>
+  <div class="flex flex-wrap justify-content-center  pb-8 gap-2">
+    <div *ngFor="let kpi of kpis"
+         class="flex flex-column justify-content-center align-content-between col-12 md:col-3 shadow-2 hover:shadow-8 text-center border-round-sm surface-overlay p-2 h-15rem cursor-pointer transition-all-0-2s"
+         [routerLink]="[kpi.route]" routerLinkActive="active-card" [pTooltip]="'Cliquer pour ' + kpi.description" tooltipPosition="bottom">
+      <i [class]="kpi.icon" [style.color]="kpi.iconColor || 'var(--primary-color)'" style="font-size: 4.5rem;"></i>
+      <h4>{{ kpi.label }}</h4>
+      <p class="text-sm">{{ kpi.description }}</p>
     </div>
   </div>
 </div>

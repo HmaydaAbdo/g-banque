@@ -7,21 +7,22 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ImageModule } from 'primeng/image';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import {MenuItem, MessageService} from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { BanqueResponse } from "../../dtos/BanqueResponse";
-import { BanqueSearchCriteria } from "../../types/BanqueSearchCriteria";
 import { Devise } from "../../enums/Devise";
 import { BanqueService } from "../../services/BanqueService";
 import { ToolbarModule } from "primeng/toolbar";
 import { TagModule } from "primeng/tag";
 import { TooltipModule } from "primeng/tooltip";
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { RouterLink} from '@angular/router';
+import {RouterLink, RouterLinkActive} from '@angular/router';
 import {PageResponse} from "../../../global/types/PageResponse";
 import {Role} from "../../../../auth/enum/Role";
 import {AuthService} from "../../../../auth/services/auth.service";
+import {BanqueSearchCriteria} from "../../dtos/BanqueSearchCriteria";
+import {BreadcrumbModule} from "primeng/breadcrumb";
 
 @Component({
   selector: 'app-comptes-bancaires',
@@ -39,7 +40,9 @@ import {AuthService} from "../../../../auth/services/auth.service";
     ToolbarModule,
     TagModule,
     TooltipModule,
-    RouterLink
+    RouterLink,
+    BreadcrumbModule,
+    RouterLinkActive
   ],
   templateUrl: './comptes-bancaires.component.html',
   styleUrl: './comptes-bancaires.component.scss',
@@ -50,6 +53,7 @@ export class ComptesBancairesComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
   banques!: BanqueResponse[];
+  items: MenuItem[] | undefined;
   totalRecords: number = 0;
   loading: boolean = false;
   first: number | undefined = 0;
@@ -67,6 +71,7 @@ export class ComptesBancairesComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },{ icon: 'pi pi-wallet', route: '/portail/comptes-bancaires', label:"liste des compte bancaires" } ]
     this.initSearchForm();
     this.searchForm.get('nom')!.valueChanges
       .pipe(

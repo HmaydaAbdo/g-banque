@@ -9,7 +9,7 @@ import {ButtonModule} from 'primeng/button';
 import {RippleModule} from 'primeng/ripple';
 import {ImageModule} from 'primeng/image';
 import {ToastModule} from 'primeng/toast';
-import {ConfirmationService, MessageService} from 'primeng/api';
+import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {BanqueRequest} from '../../dtos/BanqueRequest';
 import {BanqueResponse} from '../../dtos/BanqueResponse';
@@ -18,6 +18,7 @@ import {BanqueService} from '../../services/BanqueService';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {AuthService} from "../../../../auth/services/auth.service";
 import {Role} from "../../../../auth/enum/Role";
+import {BreadcrumbModule} from "primeng/breadcrumb";
 
 @Component({
   selector: 'app-banque-edit',
@@ -34,7 +35,8 @@ import {Role} from "../../../../auth/enum/Role";
     ImageModule,
     ToastModule,
     RouterLink,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    BreadcrumbModule
   ],
   templateUrl: './banque-edit.component.html',
   styleUrl: './banque-edit.component.scss',
@@ -51,7 +53,7 @@ export class BanqueEditComponent implements OnInit {
   devises: string[] = Object.values(Devise);
   loading: boolean = false;
   isEditMode: boolean = false;
-
+  items: MenuItem[] | undefined;
   constructor(
     private fb: FormBuilder,
     private banqueService: BanqueService,
@@ -64,7 +66,8 @@ export class BanqueEditComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializeForm();
-
+    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
+      { icon: 'pi pi-wallet', route: '/portail/comptes-bancaires', label:"Comptes bancaires" } ]
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {

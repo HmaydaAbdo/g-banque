@@ -11,4 +11,5 @@ export interface LigneFonctionnelleResponse {
   dateFin: Date;
   dateCreation: Date;
   dateModification: Date;
+  actif?: boolean;
 }
