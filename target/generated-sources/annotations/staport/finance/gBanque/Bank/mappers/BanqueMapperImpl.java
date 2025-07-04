@@ -11,7 +11,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-03T10:34:12+0100",
+    date = "2025-06-27T12:23:11+0100",
     comments = "version: 1.6.1, compiler: javac, environment: Java 23.0.2 (Oracle Corporation)"
 )
 @Component

@@ -10,12 +10,14 @@ import staport.finance.gBanque.security.dtos.ProfileResponse;
 import staport.finance.gBanque.security.services.AuthenticationService;
 
 
+
 @RestController
 @RequestMapping("/auth")
 public class SecurityController {
 
 
     private final AuthenticationService authenticationService;
+
 
     public SecurityController(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;

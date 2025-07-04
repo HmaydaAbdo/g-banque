@@ -17,12 +17,14 @@ public class LigneFonctionnelleResponse {
     private OffsetDateTime dateFin;
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
+    private boolean actif; // NEW FIELD
 
     // --- Constructors ---
     public LigneFonctionnelleResponse() {
     }
 
-    public LigneFonctionnelleResponse(Long id, Long banqueId, String banqueNom, Long natureLigneFonctionnelleId, String natureLigneFonctionnelleLabel, String natureLigneFonctionnelleDescription, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification) {
+
+    public LigneFonctionnelleResponse(Long id, Long banqueId, String banqueNom, Long natureLigneFonctionnelleId, String natureLigneFonctionnelleLabel, String natureLigneFonctionnelleDescription, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification, boolean actif) {
         this.id = id;
         this.banqueId = banqueId;
         this.banqueNom = banqueNom;
@@ -35,6 +37,7 @@ public class LigneFonctionnelleResponse {
         this.dateFin = dateFin;
         this.dateCreation = dateCreation;
         this.dateModification = dateModification;
+        this.actif = actif;
     }
 
     // --- Getters and Setters ---
@@ -74,4 +77,12 @@ public class LigneFonctionnelleResponse {
     public void setDateDepart(OffsetDateTime dateDepart) {this.dateDepart = dateDepart;}
     public OffsetDateTime getDateFin() {return dateFin;}
     public void setDateFin(OffsetDateTime dateFin) {this.dateFin = dateFin;}
+
+    public boolean isActif() {
+        return actif;
+    }
+
+    public void setActif(boolean actif) {
+        this.actif = actif;
+    }
 }

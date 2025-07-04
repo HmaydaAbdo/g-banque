@@ -10,7 +10,7 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entit
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-04T09:41:32+0100",
+    date = "2025-06-27T12:23:12+0100",
     comments = "version: 1.6.1, compiler: javac, environment: Java 23.0.2 (Oracle Corporation)"
 )
 @Component

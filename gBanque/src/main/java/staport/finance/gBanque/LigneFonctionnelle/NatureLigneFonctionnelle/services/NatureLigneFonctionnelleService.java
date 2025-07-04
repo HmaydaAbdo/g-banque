@@ -82,6 +82,7 @@ public class NatureLigneFonctionnelleService {
 
         mapper.updateEntityFromDto(request, existingEntity);
         NatureLigneFonctionnelle updatedEntity = repository.save(existingEntity);
+        repository.flush();
         return mapper.toDto(updatedEntity);
     }
 

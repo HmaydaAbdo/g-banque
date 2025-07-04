@@ -145,6 +145,7 @@ public class BanqueService {
             }
         }
         Banque updatedBanque = banqueRepository.save(existingBanque);
+        banqueRepository.flush();
         return banqueMapper.toDto(updatedBanque);
     }
 
@@ -164,7 +165,7 @@ public class BanqueService {
                     // If not found, plafondFC will remain null (its default value after mapping toDto)
                     faciliteDeCaisseIdOptional.ifPresent(fcNatureId -> {
                         Optional<LigneFonctionnelleResponse> fcOptional =
-                                ligneFonctionnelleService.getLigneFonctionnellesByBanqueIdAndNature(
+                                ligneFonctionnelleService.getActifLigneFonctionnellesByBanqueIdAndNature(
                                         banque.getId(),
                                         fcNatureId
                                 );

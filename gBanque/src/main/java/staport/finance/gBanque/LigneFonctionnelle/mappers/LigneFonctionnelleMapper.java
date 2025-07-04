@@ -3,6 +3,7 @@ package staport.finance.gBanque.LigneFonctionnelle.mappers;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
@@ -27,6 +28,7 @@ public abstract class LigneFonctionnelleMapper {
     @Mapping(target = "natureLigneFonctionnelle", expression = "java(mapNatureLigneFonctionnelleIdToEntity(request.getNatureLigneFonctionnelleId()))")
     @Mapping(source = "dateDepart", target = "dateDepart")
     @Mapping(source = "dateFin", target = "dateFin")
+    @Mapping(source = "actif", target = "actif", qualifiedByName = "setActifDefaultTrue") // NEW MAPPING for actif
     public abstract LigneFonctionnelle toEntity(LigneFonctionnelleRequest request);
 
     // Entity to Response for reading
@@ -37,6 +39,7 @@ public abstract class LigneFonctionnelleMapper {
     @Mapping(source = "natureLigneFonctionnelle.description", target = "natureLigneFonctionnelleDescription")
     @Mapping(source = "dateDepart", target = "dateDepart")
     @Mapping(source = "dateFin", target = "dateFin")
+    @Mapping(source = "actif", target = "actif") // NEW MAPPING
     public abstract LigneFonctionnelleResponse toDto(LigneFonctionnelle ligneFonctionnelle);
 
     public abstract List<LigneFonctionnelleResponse> toDtoList(List<LigneFonctionnelle> ligneFonctionnelles);
@@ -49,7 +52,8 @@ public abstract class LigneFonctionnelleMapper {
     @Mapping(target = "natureLigneFonctionnelle", expression = "java(mapNatureLigneFonctionnelleIdToEntity(request.getNatureLigneFonctionnelleId()))")
     @Mapping(source = "dateDepart", target = "dateDepart")
     @Mapping(source = "dateFin", target = "dateFin")
-    public abstract void updateLigneFonctionnelleFromDto(LigneFonctionnelleRequest request, @MappingTarget LigneFonctionnelle ligneFonctionnelle); // Made public abstract
+    @Mapping(source = "actif", target = "actif") // NEW MAPPING: Directly map if present, otherwise no change by default for updates.
+    public abstract void updateLigneFonctionnelleFromDto(LigneFonctionnelleRequest request, @MappingTarget LigneFonctionnelle ligneFonctionnelle);
 
     // Helper method to fetch NatureLigneFonctionnelle entity by ID
     protected NatureLigneFonctionnelle mapNatureLigneFonctionnelleIdToEntity(Long natureLigneFonctionnelleId) {
@@ -60,5 +64,9 @@ public abstract class LigneFonctionnelleMapper {
                 .orElseThrow(() -> new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + natureLigneFonctionnelleId));
     }
 
-
+    // Named method to provide default true for 'actif' if not present in request
+    @Named("setActifDefaultTrue")
+    protected boolean setActifDefaultTrue(Boolean actif) {
+        return actif != null ? actif : true;
+    }
 }

@@ -22,24 +22,26 @@ public class LigneFonctionnelleRequest {
     private BigDecimal taux;
 
     @NotNull(message = "La date de départ est obligatoire.")
-//    @Future(message = "La date de départ doit être une date future.")
     private OffsetDateTime dateDepart;
 
     @NotNull(message = "La date de fin est obligatoire.")
-//    @Future(message = "La date de fin doit être une date future.")
     private OffsetDateTime dateFin;
+
+    private Boolean actif;
 
     // --- Constructors ---
     public LigneFonctionnelleRequest() {
     }
 
-    public LigneFonctionnelleRequest(Long banqueId, Long natureLigneFonctionnelleId, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin) {
+
+    public LigneFonctionnelleRequest(Long banqueId, Long natureLigneFonctionnelleId, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, Boolean actif) {
         this.banqueId = banqueId;
         this.natureLigneFonctionnelleId = natureLigneFonctionnelleId;
         this.plafond = plafond;
         this.taux = taux;
         this.dateDepart = dateDepart;
         this.dateFin = dateFin;
+        this.actif = actif;
     }
 
     // --- Getters and Setters ---
@@ -61,4 +63,13 @@ public class LigneFonctionnelleRequest {
     public void setDateDepart(OffsetDateTime dateDepart) {this.dateDepart = dateDepart;}
     public OffsetDateTime getDateFin() {return dateFin;}
     public void setDateFin(OffsetDateTime dateFin) {this.dateFin = dateFin;}
+
+
+    public Boolean getActif() {
+        return actif;
+    }
+
+    public void setActif(Boolean actif) {
+        this.actif = actif;
+    }
 }

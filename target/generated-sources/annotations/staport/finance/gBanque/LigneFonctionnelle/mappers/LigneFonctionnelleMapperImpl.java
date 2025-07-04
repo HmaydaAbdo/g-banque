@@ -12,7 +12,7 @@ import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-06-04T11:49:24+0100",
+    date = "2025-06-27T12:23:12+0100",
     comments = "version: 1.6.1, compiler: javac, environment: Java 23.0.2 (Oracle Corporation)"
 )
 @Component
@@ -28,6 +28,7 @@ public class LigneFonctionnelleMapperImpl extends LigneFonctionnelleMapper {
 
         ligneFonctionnelle.setDateDepart( request.getDateDepart() );
         ligneFonctionnelle.setDateFin( request.getDateFin() );
+        ligneFonctionnelle.setActif( setActifDefaultTrue( request.getActif() ) );
         ligneFonctionnelle.setPlafond( request.getPlafond() );
         ligneFonctionnelle.setTaux( request.getTaux() );
 
@@ -51,6 +52,7 @@ public class LigneFonctionnelleMapperImpl extends LigneFonctionnelleMapper {
         ligneFonctionnelleResponse.setNatureLigneFonctionnelleDescription( ligneFonctionnelleNatureLigneFonctionnelleDescription( ligneFonctionnelle ) );
         ligneFonctionnelleResponse.setDateDepart( ligneFonctionnelle.getDateDepart() );
         ligneFonctionnelleResponse.setDateFin( ligneFonctionnelle.getDateFin() );
+        ligneFonctionnelleResponse.setActif( ligneFonctionnelle.isActif() );
         ligneFonctionnelleResponse.setId( ligneFonctionnelle.getId() );
         ligneFonctionnelleResponse.setPlafond( ligneFonctionnelle.getPlafond() );
         ligneFonctionnelleResponse.setTaux( ligneFonctionnelle.getTaux() );
@@ -82,6 +84,9 @@ public class LigneFonctionnelleMapperImpl extends LigneFonctionnelleMapper {
 
         ligneFonctionnelle.setDateDepart( request.getDateDepart() );
         ligneFonctionnelle.setDateFin( request.getDateFin() );
+        if ( request.getActif() != null ) {
+            ligneFonctionnelle.setActif( request.getActif() );
+        }
         ligneFonctionnelle.setPlafond( request.getPlafond() );
         ligneFonctionnelle.setTaux( request.getTaux() );
 

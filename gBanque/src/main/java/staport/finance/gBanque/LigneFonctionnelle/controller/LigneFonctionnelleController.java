@@ -1,8 +1,6 @@
 package staport.finance.gBanque.LigneFonctionnelle.controller;
 
-import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleRequest;
-import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleResponse;
-import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleSearchCriteria;
+import staport.finance.gBanque.LigneFonctionnelle.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.services.LigneFonctionnelleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/lignes-fonctionnelles")
@@ -38,8 +35,10 @@ public class LigneFonctionnelleController {
         return ResponseEntity.ok(ligne);
     }
 
+    // This endpoint now retrieves "active" functional lines based on the 'actif' flag.
+    // The search criteria can still filter further.
     @GetMapping
-    public ResponseEntity<Page<LigneFonctionnelleResponse>> getCurrentLigneFonctionnelles(
+    public ResponseEntity<Page<LigneFonctionnelleResponse>> getActiveLigneFonctionnelles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort,
@@ -49,19 +48,34 @@ public class LigneFonctionnelleController {
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, size, sortOrder);
 
-        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getCurrentLigneFonctionnelles(searchCriteria, pageable);
+        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getActiveLigneFonctionnelles(searchCriteria, pageable);
         return ResponseEntity.ok(lignes);
     }
 
     /**
-     * Get all functional lines associated with a specific bank ID.
+     * Get functional lines associated with a specific bank ID, with pagination, sorting,
+     * and search by nature ligne fonctionnelle, year of dateDepart, and 'actif' status.
      * GET /lignes-fonctionnelles/banque/{banqueId}
      * @param banqueId The ID of the bank.
-     * @return A list of functional lines as DTOs with HTTP status 200 OK.
+     * @param page Page number (0-indexed, default 0).
+     * @param size Page size (default 10).
+     * @param sort Sort criteria (e.g., "dateDepart,desc", "plafond,asc").
+     * @param searchCriteria DTO for search filters (natureLigneFonctionnelleId, yearDepart, actif).
+     * @return A paginated list of functional lines as DTOs with HTTP status 200 OK.
      */
     @GetMapping("/banque/{banqueId}")
-    public ResponseEntity<List<LigneFonctionnelleResponse>> getLignesFonctionnellesByBanqueId(@PathVariable Long banqueId) {
-        List<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getLignesFonctionnellesByBanqueId(banqueId);
+    public ResponseEntity<Page<LigneFonctionnelleResponse>> getLignesFonctionnellesByBanqueId(
+            @PathVariable Long banqueId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort,
+            @ModelAttribute LigneFonctionnelleSearchCriteria searchCriteria) {
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getLignesFonctionnellesByBanqueId(banqueId, searchCriteria, pageable);
         return ResponseEntity.ok(lignes);
     }
 
@@ -77,5 +91,37 @@ public class LigneFonctionnelleController {
     public ResponseEntity<Void> deleteLigneFonctionnelle(@PathVariable Long id) {
         ligneFonctionnelleService.deleteLigneFonctionnelle(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Deactivates a specific active functional line for a given bank and nature.
+     * PUT /lignes-fonctionnelles/deactivate/{banqueId}/nature/{natureLigneFonctionnelleId}
+     * @param banqueId The ID of the bank.
+     * @param natureLigneFonctionnelleId The ID of the nature of the functional line.
+     * @return HTTP status 204 No Content on success.
+     */
+    @PutMapping("/deactivate/{banqueId}/nature/{natureLigneFonctionnelleId}")
+    public ResponseEntity<Void> deactivateLigneFonctionnelle(
+            @PathVariable Long banqueId,
+            @PathVariable Long natureLigneFonctionnelleId) {
+        ligneFonctionnelleService.deactivateLigneFonctionnelleByNatureAndBank(banqueId, natureLigneFonctionnelleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Retrieves historical plafond and taux data for a specific bank and nature of functional line,
+     * formatted for a PrimeNG line chart.
+     * GET /lignes-fonctionnelles/history
+     *
+     * @return A LigneFonctionnelleChartData object with HTTP status 200 OK.
+     */
+    @GetMapping("/history")
+    public ResponseEntity<LigneFonctionnelleChartData> getLigneFonctionnelleChartHistory(
+            @RequestParam("banqueId") Long banqueId,
+            @RequestParam("natureLigneFonctionnelleId") Long natureLigneFonctionnelleId) {
+
+        LigneFonctionnelleChartData chartData = ligneFonctionnelleService.getHistoricalChartData(banqueId, natureLigneFonctionnelleId);
+
+        return ResponseEntity.ok(chartData);
     }
 }

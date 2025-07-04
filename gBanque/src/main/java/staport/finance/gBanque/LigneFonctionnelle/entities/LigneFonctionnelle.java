@@ -8,10 +8,7 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Entity
-@Table( name = "ligne_fonctionnelle",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"banque_id", "nature_ligne_id","date_fin","date_depart"}
-        )
-})
+@Table( name = "ligne_fonctionnelle")
 public class LigneFonctionnelle {
 
     @Id
@@ -44,12 +41,16 @@ public class LigneFonctionnelle {
     @Column(name = "date_modification", nullable = false)
     private OffsetDateTime dateModification;
 
+    @Column(nullable = false)
+    private boolean actif = true;
+
     // --- Constructors ---
     public LigneFonctionnelle() {
         // Default constructor required by JPA
     }
 
-    public LigneFonctionnelle(Long id, Banque banque, NatureLigneFonctionnelle natureLigneFonctionnelle, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification) {
+
+    public LigneFonctionnelle(Long id, Banque banque, NatureLigneFonctionnelle natureLigneFonctionnelle, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification, boolean actif) {
         this.id = id;
         this.banque = banque;
         this.natureLigneFonctionnelle = natureLigneFonctionnelle;
@@ -59,6 +60,7 @@ public class LigneFonctionnelle {
         this.dateFin = dateFin;
         this.dateCreation = dateCreation;
         this.dateModification = dateModification;
+        this.actif = actif; // Set actif
     }
 
     // --- Getters and Setters ---
@@ -94,12 +96,24 @@ public class LigneFonctionnelle {
     public OffsetDateTime getDateModification() { return dateModification; }
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
 
-    // --- JPA Lifecycle Callbacks ---
+
+    public boolean isActif() {
+        return actif;
+    }
+
+    public void setActif(boolean actif) {
+        this.actif = actif;
+    }
+
+
     @PrePersist
     protected void onCreate() {
         OffsetDateTime now = OffsetDateTime.now();
         this.dateCreation = now;
         this.dateModification = now;
+        if (!this.actif) { // Ensure default is true if not set
+            this.actif = true;
+        }
     }
 
     @PreUpdate
