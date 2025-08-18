@@ -2,7 +2,6 @@ import {Component, inject, OnInit} from '@angular/core';
 import {BanqueResponse} from "../../dtos/BanqueResponse";
 import {BanqueService} from "../../services/BanqueService";
 import {Router} from "@angular/router";
-import {Button} from "primeng/button";
 import {TableModule} from "primeng/table";
 import {DialogModule} from "primeng/dialog";
 
@@ -10,7 +9,7 @@ import {DialogModule} from "primeng/dialog";
   selector: 'app-select-for-history',
   standalone: true,
   imports: [
-    Button,
+
     TableModule,
     DialogModule
   ],

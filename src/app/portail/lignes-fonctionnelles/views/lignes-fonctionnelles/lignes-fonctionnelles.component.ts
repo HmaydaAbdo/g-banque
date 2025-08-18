@@ -1,13 +1,13 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import {RouterLink, RouterLinkActive} from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import {MenuItem, MessageService} from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -18,17 +18,18 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { CalendarModule } from 'primeng/calendar';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import { switchMap } from 'rxjs/operators'; //
+
 
 // Application-specific imports
 import { LigneFonctionnelleResponse } from "../../dtos/LigneFonctionnelleResponse";
-import { LigneFonctionnelleRequest } from "../../dtos/LigneFonctionnelleRequest"; // Ensure this is imported if needed for updates
+
 import { LigneFonctionnelleSearchCriteria } from "../../dtos/LigneFonctionnelleSearchCriteria";
 import { LigneFonctionnelleService } from "../../services/LigneFonctionnelleService";
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { AuthService } from "../../../../auth/services/auth.service";
 import { Role } from "../../../../auth/enum/Role";
 import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fonctionnelle.service";
+import {BreadcrumbModule} from "primeng/breadcrumb";
 
 
 @Component({
@@ -55,7 +56,9 @@ import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fon
     DropdownModule,
     InputNumberModule,
     CalendarModule,
-    InputSwitchModule
+    InputSwitchModule,
+    BreadcrumbModule,
+    RouterLinkActive
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -73,13 +76,7 @@ export class LignesFonctionnellesComponent implements OnInit {
   searchForm!: FormGroup;
   natureLigneOptions: { label: string; value: number | null }[] = [];
   banquesOptions: { label: string; value: number | null }[] = [];
-
-  // NEW: Options for the 'actif' dropdown filter
-  actifOptions: any[] = [
-    { label: 'Toutes', value: null },
-    { label: 'Actives', value: true },
-    { label: 'Inactives', value: false }
-  ];
+  items: MenuItem[] | undefined;
 
   constructor(
     private ligneFonctionnelleService: LigneFonctionnelleService,
@@ -92,6 +89,7 @@ export class LignesFonctionnellesComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },{ icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles', label:"Les Lignes fonctionnelles Actifs." } ]
     this.initSearchForm();
     this.setupFormListeners();
     this.loadBanques();
@@ -175,7 +173,7 @@ export class LignesFonctionnellesComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.lignesFonctionnelles = data.content;
-          this.totalRecords = data.totalElements;
+          this.totalRecords = data.page.totalElements;
           this.loading = false;
         },
         error: (err) => {
@@ -235,106 +233,6 @@ export class LignesFonctionnellesComponent implements OnInit {
     });
   }
 
-  // NEW: Method to handle toggling active status
-  onToggleActif(ligne: LigneFonctionnelleResponse, event: any): void {
-    const newActifStatus = event.checked; // The new state of the switch
-    const action = newActifStatus ? 'activer' : 'désactiver';
-
-    this.confirmationService.confirm({
-      message: `Voulez-vous vraiment ${action} la ligne fonctionnelle pour la banque "${ligne.banqueNom}" et la nature "${ligne.natureLigneFonctionnelleLabel}" ?`,
-      header: `Confirmation d'${action}`,
-      icon: 'pi pi-info-circle',
-      accept: () => {
-        if (ligne.banqueId && ligne.natureLigneFonctionnelleId) {
-          // IMPORTANT: Call the specific deactivate endpoint if deactivating,
-          // or a general update if reactivating.
-          // For simplicity, we'll use the dedicated `deactivateLigneFonctionnelle`
-          // for deactivation, and assume `updateLigneFonctionnelle` for activation.
-          // Your backend logic will determine the exact API call.
-
-          // Option 1: If backend has specific activate/deactivate endpoints
-          if (!newActifStatus) { // If going from active to inactive
-            this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.banqueId, ligne.natureLigneFonctionnelleId)
-              .subscribe({
-                next: () => {
-                  this.messageService.add({ severity: 'success', summary: 'Succès', detail: `Ligne fonctionnelle ${action}ée avec succès.`, life: 3000 });
-                  // No need to manually update `ligne.actif` here; the reload will fetch fresh data.
-                  this.reloadTableAfterAction();
-                },
-                error: (error) => {
-                  // Revert the UI switch if the API call fails
-                  ligne.actif = !newActifStatus;
-                  console.error(`Erreur lors de la ${action}ation de la ligne fonctionnelle:`, error);
-                  const errorMessage = error.error?.message || `Échec de la ${action}ation de la ligne fonctionnelle.`;
-                  this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-                }
-              });
-          } else { // If going from inactive to active (via general update)
-            // This assumes your backend's PUT /lignes-fonctionnelles/{id} can handle activation
-            // You'll need to fetch the full existing line, update its 'actif' status, and then send.
-            this.ligneFonctionnelleService.getLigneFonctionnelleById(ligne.id!).pipe(
-              switchMap(existingLigne => {
-                const updateRequest: LigneFonctionnelleRequest = {
-                  banqueId: existingLigne.banqueId,
-                  natureLigneFonctionnelleId: existingLigne.natureLigneFonctionnelleId,
-                  plafond: existingLigne.plafond,
-                  taux: existingLigne.taux,
-                  dateDepart: existingLigne.dateDepart,
-                  dateFin: existingLigne.dateFin,
-                  actif: newActifStatus // Set the new status
-                };
-                return this.ligneFonctionnelleService.updateLigneFonctionnelle(ligne.id!, updateRequest);
-              })
-            ).subscribe({
-              next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Succès', detail: `Ligne fonctionnelle ${action}ée avec succès.`, life: 3000 });
-                this.reloadTableAfterAction();
-              },
-              error: (error) => {
-                ligne.actif = !newActifStatus;
-                console.error(`Erreur lors de l'${action}ation de la ligne fonctionnelle:`, error);
-                const errorMessage = error.error?.message || `Échec de l'${action}ation de la ligne fonctionnelle.`;
-                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-              }
-            });
-          }
-        }
-      },
-      reject: () => {
-        // Revert the UI switch if the user cancels the confirmation
-        ligne.actif = !newActifStatus;
-        this.messageService.add({ severity: 'info', summary: 'Annulé', detail: `Action d'${action}ation annulée.`, life: 3000 });
-      }
-    });
-  }
-
-  // NEW: Method for explicit deactivate button
-  deactivateLigneFonctionnelle(ligne: LigneFonctionnelleResponse): void {
-    this.confirmationService.confirm({
-      message: `Voulez-vous désactiver la ligne fonctionnelle pour la banque "${ligne.banqueNom}" et la nature "${ligne.natureLigneFonctionnelleLabel}" ?`,
-      header: 'Confirmation de Désactivation',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        if (ligne.banqueId && ligne.natureLigneFonctionnelleId) {
-          this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.banqueId, ligne.natureLigneFonctionnelleId)
-            .subscribe({
-              next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne fonctionnelle désactivée avec succès.', life: 3000 });
-                this.reloadTableAfterAction();
-              },
-              error: (error) => {
-                console.error('Erreur lors de la désactivation de la ligne fonctionnelle:', error);
-                const errorMessage = error.error?.message || 'Échec de la désactivation de la ligne fonctionnelle.';
-                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-              }
-            });
-        }
-      },
-      reject: () => {
-        this.messageService.add({ severity: 'info', summary: 'Annulé', detail: 'Désactivation annulée.', life: 3000 });
-      }
-    });
-  }
 
 
   // Check if the user is ADMIN

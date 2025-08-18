@@ -13,7 +13,9 @@ import {ChartModule} from "primeng/chart";
 import {CheckboxModule} from "primeng/checkbox";
 import {DropdownModule} from "primeng/dropdown";
 import {FormsModule} from "@angular/forms";
-import {NgIf} from "@angular/common";
+import {NgClass, NgIf} from "@angular/common";
+import {BreadcrumbModule} from "primeng/breadcrumb";
+import {MenuItem} from "primeng/api";
 
 @Component({
   selector: 'app-evol-taux-plafond',
@@ -23,7 +25,9 @@ import {NgIf} from "@angular/common";
     CheckboxModule,
     DropdownModule,
     FormsModule,
-    NgIf
+    NgIf,
+    BreadcrumbModule,
+    NgClass
   ],
   templateUrl: './evol-taux-plafond.component.html',
   styleUrl: './evol-taux-plafond.component.scss'
@@ -44,6 +48,7 @@ export class EvolTauxPlafondComponent implements OnInit {
 
   naturesLigneFonctionnelle: NatureLigneFonctionnelleResponse[] = [];
   selectedNatureLigneFonctionnelle: NatureLigneFonctionnelleResponse | undefined;
+  items: MenuItem[] | undefined;
 
 
   constructor(
@@ -55,6 +60,11 @@ export class EvolTauxPlafondComponent implements OnInit {
   ngOnInit() {
     this.loadBanks();
     this.loadNaturesLigneFonctionnelle();
+    this.items = [
+      {label:"Accueil", route: '/portail/accueil' , icon: 'pi pi-home' },
+      { label: 'Tableau de bord' ,route: '/portail/tableau-de-bord', icon:'pi pi-chart-bar'},
+      { label: 'Évolution Taux & Plafond' ,route: '/portail/evolution-taux-plafond', icon:'pi pi-chart-line'}
+    ]
   }
 
   /**

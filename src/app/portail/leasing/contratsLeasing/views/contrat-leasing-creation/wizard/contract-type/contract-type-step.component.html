@@ -1,0 +1,20 @@
+<div class="p-fluid ">
+  <div [formGroup]="formGroup" class="flex  flex-wrap gap-4 justify-content-center align-items-center p-4">
+    <div class="field flex flex-column gap-4">
+      <label for="typeContrat" class="text-center font-semibold ">Type de Contrat <span class="p-error">*</span></label>
+      <p-dropdown
+        id="typeContrat"
+        [options]="contractTypes"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionnez le type de contrat"
+        formControlName="typeContrat"
+        [ngClass]="{'ng-invalid ng-dirty': typeContratControl.invalid && (typeContratControl.dirty || typeContratControl.touched)}"
+      ></p-dropdown>
+      <div *ngIf="typeContratControl?.invalid && (typeContratControl?.dirty || typeContratControl?.touched)" class="p-error">
+        <p-message *ngIf="typeContratControl?.errors?.['required']" severity="error" text="Le type de contrat est requis."></p-message>
+      </div>
+    </div>
+
+  </div>
+</div>

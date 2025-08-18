@@ -1,5 +1,23 @@
 <div class=" p-fluid">
-  <div class="p-4">
+  <div class="flex justify-content-between align-items-center">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+      <ng-template pTemplate="item" let-item>
+        <ng-container *ngIf="item.route; else elseBlock">
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+
+        </ng-container>
+        <ng-template #elseBlock>
+          <a [href]="item.url">
+            <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+          </a>
+        </ng-template>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+  <div class="p-2">
     <div class="pt-2 flex ">
       <div class="field col-12 md:col-3">
         <label for="userName">Nom d'utilisateur</label>
@@ -48,19 +66,6 @@
       </div>
 
     </div>
-
-    <!--
-    <div class="pb-2 flex ">
-      <div class="field col-12 md:col-3">
-        <label for="timestampStart">Date Début</label>
-        <p-calendar id="timestampStart" [(ngModel)]="searchCriteria.timestampStart" (ngModelChange)="onFilterChange()"  hourFormat="24" dateFormat="yy-mm-dd" appendTo="body" [showIcon]="true"></p-calendar>
-      </div>
-      <div class="field col-12 md:col-3">
-        <label for="timestampEnd">Date Fin</label>
-        <p-calendar id="timestampEnd" [(ngModel)]="searchCriteria.timestampEnd" (ngModelChange)="onFilterChange()"  hourFormat="24" dateFormat="yy-mm-dd" appendTo="body" [showIcon]="true"></p-calendar>
-      </div>
-    </div>
-    -->
 
   </div>
   <p-table

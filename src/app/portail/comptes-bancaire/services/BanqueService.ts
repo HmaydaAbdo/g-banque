@@ -1,14 +1,12 @@
-
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {Observable} from 'rxjs';
 import {environment} from "../../../../environments/environment";
 import {BanqueRequest} from "../dtos/BanqueRequest";
 import {BanqueResponse} from "../dtos/BanqueResponse";
 import {PageResponse} from "../../global/types/PageResponse";
 import {RecapitulatifCompte} from "../../accueil/dtos/RecapitulatifCompte";
 import {BanqueSearchCriteria} from "../dtos/BanqueSearchCriteria";
-
 
 
 @Injectable({
@@ -18,7 +16,8 @@ export class BanqueService {
 
   private apiUrl = `${environment.apiUrl}banques`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+  }
 
   /**
    * Crée une nouvelle banque.
@@ -28,7 +27,7 @@ export class BanqueService {
    */
   createBanque(banqueRequest: BanqueRequest, logoFile: File): Observable<BanqueResponse> {
     const formData = new FormData();
-    formData.append('banque', new Blob([JSON.stringify(banqueRequest)], { type: 'application/json' }));
+    formData.append('banque', new Blob([JSON.stringify(banqueRequest)], {type: 'application/json'}));
     formData.append('logoFile', logoFile, logoFile.name);
 
     return this.http.post<BanqueResponse>(this.apiUrl, formData);
@@ -76,7 +75,7 @@ export class BanqueService {
       params = params.set('maxSolde', criteria.maxSolde.toString());
     }
 
-    return this.http.get<PageResponse<BanqueResponse>>(this.apiUrl, { params });
+    return this.http.get<PageResponse<BanqueResponse>>(this.apiUrl, {params});
   }
 
   /**
@@ -88,7 +87,7 @@ export class BanqueService {
    */
   updateBanque(id: number, banqueRequest: BanqueRequest, logoFile: File | null): Observable<BanqueResponse> {
     const formData = new FormData();
-    formData.append('banque', new Blob([JSON.stringify(banqueRequest)], { type: 'application/json' }));
+    formData.append('banque', new Blob([JSON.stringify(banqueRequest)], {type: 'application/json'}));
 
     if (logoFile) { // Envoyer le fichier uniquement s'il est fourni
       formData.append('logoFile', logoFile, logoFile.name);
@@ -112,5 +111,15 @@ export class BanqueService {
    */
   getAccueilBankInfo(): Observable<RecapitulatifCompte[]> {
     return this.http.get<RecapitulatifCompte[]>(`${this.apiUrl}/accueil-info`);
+  }
+
+
+  /**
+   * Récupère les informations récapitulatives d'une banque spécifique pour le composant d'accueil.
+   * @param banqueId ID de la banque
+   * @returns Un Observable de RecapitulatifCompte
+   */
+  getAccueilBankInfoById(banqueId: number): Observable<RecapitulatifCompte> {
+    return this.http.get<RecapitulatifCompte>(`${this.apiUrl}/accueil-info/${banqueId}`);
   }
 }

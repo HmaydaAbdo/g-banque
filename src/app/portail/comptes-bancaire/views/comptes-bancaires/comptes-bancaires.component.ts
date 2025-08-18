@@ -110,7 +110,7 @@ export class ComptesBancairesComponent implements OnInit {
       .subscribe({
         next: (response: PageResponse<BanqueResponse>) => {
           this.banques = response.content;
-          this.totalRecords = response.totalElements;
+          this.totalRecords = response.page.totalElements;
           this.loading = false;
 
         },
@@ -183,7 +183,7 @@ export class ComptesBancairesComponent implements OnInit {
         this.banqueService.deleteBanque(banque.id!)
           .subscribe({
             next: () => {
-              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Banque et ses lignes fonctionnelles supprimées avec succès.', life: 3000 });
+              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'BanqueOfDebit et ses lignes fonctionnelles supprimées avec succès.', life: 3000 });
               if (this.dt) {
                 this.loadBanques(this.dt.createLazyLoadMetadata());
               } else {

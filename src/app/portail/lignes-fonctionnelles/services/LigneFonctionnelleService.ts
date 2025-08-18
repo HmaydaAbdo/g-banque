@@ -59,7 +59,7 @@ export class LigneFonctionnelleService {
     return this.http.get<PageResponse<LigneFonctionnelleResponse>>(this.apiUrl, { params });
   }
 
-  // 4. Get LignesFonctionnelles by Banque ID (GET /lignes-fonctionnelles/banque/{banqueId})
+  // 4. Get LignesFonctionnelles by BanqueOfDebit ID (GET /lignes-fonctionnelles/banque/{banqueId})
   // This is the method explicitly marked as changed.
   getLignesFonctionnellesByBanqueId(
     banqueId: number,
@@ -99,8 +99,8 @@ export class LigneFonctionnelleService {
   }
 
     // 7. deactivate a functional ligne (PUT /lignes-fonctionnelles/deactivate/{banqueId}/nature/{natureLigneFonctionnelleId})
-     deactivateLigneFonctionnelle(banqueId: number, natureLigneFonctionnelleId: number): Observable<void> {
-       return this.http.put<void>(`${this.apiUrl}/deactivate/${banqueId}/nature/${natureLigneFonctionnelleId}`, {});
+     deactivateLigneFonctionnelle(ligneId: number): Observable<void> {
+       return this.http.put<void>(`${this.apiUrl}/deactivate/${ligneId}`, {});
     }
 
   // 8. Get LigneFonctionnelle Chart History (GET /lignes-fonctionnelles/history)

@@ -1,0 +1,26 @@
+<!-- src/app/contrat-leasing-creation/wizard/BanqueOfDebit/BanqueStepComponent.html -->
+
+<div class="p-fluid flex justify-content-center align-items-center p-4">
+  <div [formGroup]="formGroup">
+    <div class="field flex flex-column gap-4">
+      <label for="banqueDePrelevementId" class="text-center text-xl font-semibold">Banque de Prélèvement <span class="p-error">*</span></label>
+      <p-dropdown
+        id="banqueDePrelevementId"
+        [options]="banques"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionnez une banque"
+        formControlName="banqueDePrelevementId"
+        [filter]="true"
+        [showClear]="true"
+        class="w-full"
+        [ngClass]="{'ng-invalid ng-dirty': banqueDePrelevementIdControl?.invalid && (banqueDePrelevementIdControl?.dirty || banqueDePrelevementIdControl?.touched)}"
+      ></p-dropdown>
+      <div *ngIf="banqueDePrelevementIdControl?.invalid && (banqueDePrelevementIdControl?.dirty || banqueDePrelevementIdControl?.touched)" class="p-error">
+        <p-message *ngIf="banqueDePrelevementIdControl?.errors?.['required']" severity="error" text="La banque de prélèvement est requise."></p-message>
+      </div>
+    </div>
+  </div>
+
+
+</div>

@@ -2,6 +2,24 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
+  <div class="flex justify-content-center align-items-center mb-2">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+      <ng-template pTemplate="item" let-item>
+        <ng-container *ngIf="item.route; else elseBlock">
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+
+        </ng-container>
+        <ng-template #elseBlock>
+          <a [href]="item.url">
+            <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+          </a>
+        </ng-template>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
   <h2 class="text-center">{{ isEditMode ? 'Modifier une Nature de Ligne Fonctionnelle' : 'Ajouter une Nature de Ligne Fonctionnelle' }}</h2>
   <div class="flex justify-content-center">
     <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 600px;">

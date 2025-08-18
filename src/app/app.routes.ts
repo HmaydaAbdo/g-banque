@@ -7,7 +7,6 @@ import {authGuard} from "./auth/guards/auth.guard";
 export const routes: Routes = [
   { path: '', redirectTo: '/connexion', pathMatch: 'full' },
   { path: 'connexion', component: LoginComponent },
-
   {
     path: 'portail',
     component: PortailComponent,
@@ -20,6 +19,5 @@ export const routes: Routes = [
       }
     ]
   },
-
   { path: '**', redirectTo: '/connexion', pathMatch: 'full' }
 ];

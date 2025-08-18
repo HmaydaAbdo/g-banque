@@ -1,7 +1,6 @@
-<p-sidebar #sidebarRef [(visible)]="sidebarVisible">
+<p-sidebar #sidebarRef [(visible)]="sidebarVisible" styleClass="w-25rem">
   <ng-template pTemplate="headless">
     <div class="flex flex-column h-full">
-      <!-- Logo & Close -->
       <div class="flex justify-content-between">
         <span class="inline-flex align-items-center pt-2 pl-4">
           <img src="assets/staportLogo.png" alt="Your Logo" class="block mx-auto" style="height: 5rem; width: 10.86rem;" />
@@ -13,17 +12,14 @@
 
       <hr class="mt-3 mx-3 border-top-1 border-3 surface-border" />
 
-      <!-- Menu -->
       <div class="overflow-y-auto">
         <ul class="list-none p-3 m-0">
-          <ng-container *ngFor="let item of filteredSidebarItems">
-            <!-- Separator -->
+          <ng-container class="white-space-nowrap" *ngFor="let item of filteredSidebarItems">
             <li *ngIf="item.separator">
               <hr class="mb-3 mx-3 border-top-1 border-3 surface-border" />
             </li>
 
-            <!-- Simple Link -->
-            <li *ngIf="item.routerLink && !item.items">
+            <li class="white-space-nowrap"  *ngIf="item.routerLink && !item.items">
               <a pRipple
                  [routerLink]="item.routerLink"
                  routerLinkActive="active-sidebar-link"
@@ -33,12 +29,12 @@
               </a>
             </li>
 
-            <!-- Parent with children -->
             <li *ngIf="item.items">
               <div
                 pRipple
+
                 (click)="toggleMenuItem(item)"
-                [ngClass]="item.styleClass || 'p-3 flex align-items-center justify-content-between text-600 cursor-pointer p-ripple'">
+                [ngClass]="item.styleClass || 'p-3 flex align-items-center justify-content-between text-600 cursor-pointer p-ripple white-space-nowrap'">
                 <div class="flex align-items-center">
                   <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
                   <span class="font-medium">{{ item.label }}</span>
@@ -46,10 +42,8 @@
                 <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
               </div>
 
-              <!-- First-level children -->
-              <ul class="list-none p-0 m-0 overflow-hidden" [ngClass]="{'hidden': !item.expanded}">
+              <ul class="list-none p-0 m-0 overflow-hidden white-space-nowrap" [ngClass]="{'hidden': !item.expanded}">
                 <ng-container *ngFor="let subItem of item.items">
-                  <!-- Subitem with routerLink -->
                   <li *ngIf="subItem.routerLink && !subItem.items">
                     <a pRipple
                        [routerLink]="subItem.routerLink"
@@ -61,7 +55,6 @@
                     </a>
                   </li>
 
-                  <!-- Subitem with nested children -->
                   <li *ngIf="subItem.items">
                     <div
                       pRipple
@@ -72,7 +65,6 @@
                       <i [class]="subItem.expanded ? 'pi pi-chevron-down ml-auto' : 'pi pi-chevron-right ml-auto'"></i>
                     </div>
 
-                    <!-- Second-level children -->
                     <ul class="list-none py-0 pl-3 pr-0 m-0 overflow-hidden" [ngClass]="{'hidden': !subItem.expanded}">
                       <li *ngFor="let subSubItem of subItem.items">
                         <a pRipple

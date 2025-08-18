@@ -40,7 +40,7 @@
   } @else {
     <div class="flex flex-wrap justify-content-center mb-8">
       @for (account of recapitulatifComptes; track account.bankId) {
-        <div class="card p-2 m-3 shadow-2 hover:shadow-8 border-round-xl" style="min-width: 20rem;">
+        <div    [routerLink]="['/portail/etats-des-encours', account.bankId]" class="card p-2 m-3 shadow-2 hover:shadow-8 border-round-xl"  style="min-width: 20rem;">
 
           <div class="flex flex-column align-items-center">
             <img [src]="'data:image/png;base64,' + account.logoBase64" [alt]="'Logo de ' + account.name" class="block border-round-md"

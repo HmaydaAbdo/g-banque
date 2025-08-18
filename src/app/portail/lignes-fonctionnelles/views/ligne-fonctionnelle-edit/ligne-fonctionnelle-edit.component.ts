@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidatorFn } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap } from '@angular/router'; // Corrected import for ActivatedRoute and added ParamMap
+import {ActivatedRoute, Router, ParamMap, RouterLink, RouterLinkActive} from '@angular/router'; // Corrected import for ActivatedRoute and added ParamMap
 
 
 import { InputTextModule } from 'primeng/inputtext';
@@ -10,7 +10,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import {MenuItem, MessageService} from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { CalendarModule } from 'primeng/calendar';
@@ -19,6 +19,8 @@ import { BanqueService } from "../../../comptes-bancaire/services/BanqueService"
 import { LigneFonctionnelleRequest } from "../../dtos/LigneFonctionnelleRequest";
 import { LigneFonctionnelleResponse } from '../../dtos/LigneFonctionnelleResponse';
 import {NatureLigneFonctionnelleService} from "../../services/nature-ligne-fonctionnelle.service";
+import {BreadcrumbModule} from "primeng/breadcrumb";
+import {TooltipModule} from "primeng/tooltip";
 
 @Component({
   selector: 'app-ligne-fonctionnelle-edit',
@@ -36,7 +38,11 @@ import {NatureLigneFonctionnelleService} from "../../services/nature-ligne-fonct
     RippleModule,
     ToastModule,
     ConfirmDialogModule,
-    CalendarModule
+    CalendarModule,
+    BreadcrumbModule,
+    RouterLink,
+    RouterLinkActive,
+    TooltipModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -49,7 +55,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
   banquesOptions: { label: string; value: number }[] = [];
   loading: boolean = false;
 
-
+  items: MenuItem[] | undefined;
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -64,6 +70,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },{ icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles', label:"Les Lignes fonctionnelles Actifs." } ]
     this.initForm()
     this.loadBanquesForDropdown();
     this.loadNatureLigneOptionsForDropdown(); // This will now fetch from backend
@@ -106,6 +113,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
 
 
   // Custom validator for cross-field validation: dateFin must be after dateDepart
+
   dateFinAfterDateDepartValidator(): ValidatorFn {
     return (formGroup: AbstractControl): { [key: string]: any } | null => {
       const dateDepartControl = formGroup.get('dateDepart');

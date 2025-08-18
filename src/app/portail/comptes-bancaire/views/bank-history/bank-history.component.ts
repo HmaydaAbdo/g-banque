@@ -199,15 +199,12 @@ export class BankHistoryComponent implements OnInit {
     // Get search criteria from the form, including the 'actif' status
     const searchCriteria: LigneFonctionnelleSearchCriteria = {
       ...this.functionalLineSearchForm.value,
-      // If the user cannot manage active status (i.e., not ADMIN/SUPERADMIN),
-      // force the 'actif' filter to true. Otherwise, use the form's value.
-      actif: this.canManageActifStatus() ? this.functionalLineSearchForm.get('actif')?.value : true
     };
 
     this.ligneFonctionnelleService.getLignesFonctionnellesByBanqueId(this.bankId, searchCriteria, page, this.rows, sort).subscribe({
       next: (pageResponse: PageResponse<LigneFonctionnelleResponse>) => {
         this.bankFunctionalLines = pageResponse.content;
-        this.totalRecords = pageResponse.totalElements;
+        this.totalRecords = pageResponse.page.totalElements;
         this.loading = false;
       },
       error: (error) => {
@@ -261,14 +258,7 @@ export class BankHistoryComponent implements OnInit {
     }
   }
 
-  clearFunctionalLineSearch(): void {
-    this.functionalLineSearchForm.reset({
-      natureLigneFonctionnelleId: null,
-      yearDepart: null,
-      // Reset actif to null for admins, or true for other users (if they can't see the filter)
-      actif: this.canManageActifStatus() ? null : true
-    });
-  }
+
 
   //method to handle toggling active status
   onToggleActif(ligne: LigneFonctionnelleResponse, event: any): void {
@@ -280,9 +270,9 @@ export class BankHistoryComponent implements OnInit {
       header: `Confirmation d'${action}`,
       icon: 'pi pi-info-circle',
       accept: () => {
-        if (ligne.banqueId && ligne.natureLigneFonctionnelleId) {
+
           if (!newActifStatus) { // If going from active to inactive (Deactivating)
-            this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.banqueId, ligne.natureLigneFonctionnelleId)
+            this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.id)
               .subscribe({
                 next: () => {
                   this.messageService.add({ severity: 'success', summary: 'Succès', detail: `Ligne fonctionnelle ${action}ée avec succès.`, life: 3000 });
@@ -324,7 +314,7 @@ export class BankHistoryComponent implements OnInit {
               }
             });
           }
-        }
+
       },
       reject: () => {
         ligne.actif = !newActifStatus; // Revert UI switch if user cancels
@@ -333,41 +323,13 @@ export class BankHistoryComponent implements OnInit {
     });
   }
 
-  // Method for explicit deactivate button (optional, can be removed if toggle suffices)
-  deactivateLigneFonctionnelle(ligne: LigneFonctionnelleResponse): void {
-    this.confirmationService.confirm({
-      message: `Voulez-vous désactiver la ligne fonctionnelle pour la banque "${ligne.banqueNom}" et la nature "${ligne.natureLigneFonctionnelleLabel}" ?`,
-      header: 'Confirmation de Désactivation',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        if (ligne.banqueId && ligne.natureLigneFonctionnelleId) {
-          this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.banqueId, ligne.natureLigneFonctionnelleId)
-            .subscribe({
-              next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne fonctionnelle désactivée avec succès.', life: 3000 });
-                this.reloadBankFunctionalLinesTable(); // Reload after deactivation
-              },
-              error: (error) => {
-                console.error('Erreur lors de la désactivation de la ligne fonctionnelle:', error);
-                const errorMessage = error.error?.message || 'Échec de la désactivation de la ligne fonctionnelle.';
-                this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-              }
-            });
-        }
-      },
-      reject: () => {
-        this.messageService.add({ severity: 'info', summary: 'Annulé', detail: 'Désactivation annulée.', life: 3000 });
-      }
-    });
-  }
+
 
   isAdmin(): boolean {
     return this.authService.hasRole(Role.ADMIN);
   }
 
-  canManageActifStatus(): boolean {
-    return this.authService.hasRole(Role.ADMIN) || this.authService.hasRole(Role.SUPER_ADMIN);
-  }
+
 
   // Helper method to reload the functional lines table
   private reloadBankFunctionalLinesTable(): void {

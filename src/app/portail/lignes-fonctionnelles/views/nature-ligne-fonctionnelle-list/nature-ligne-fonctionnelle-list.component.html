@@ -6,8 +6,24 @@
 
   <div class="mb-3 ">
 
-    <div class="flex justify-content-end mb-4">
-      <button pButton pRipple label="Ajouter une Nature" icon="pi pi-plus" class="p-button-primary" (click)="addNewNature()"></button>
+    <div class="flex justify-content-between align-items-center mb-2">
+      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+            <ng-template pTemplate="item" let-item>
+              <ng-container *ngIf="item.route; else elseBlock">
+                <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+                  <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+                  <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+                </a>
+
+              </ng-container>
+              <ng-template #elseBlock>
+                <a [href]="item.url">
+                  <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+                </a>
+              </ng-template>
+            </ng-template>
+          </p-breadcrumb>
+      <button pButton pRipple label="Ajouter une Nature" icon="pi pi-plus" class="p-button-primary h-fit" (click)="addNewNature()"></button>
     </div>
     <form [formGroup]="searchForm" class="w-full">
       <div class="flex flex-column md:flex-row md:align-items-end md:justify-content-between">

@@ -3,13 +3,16 @@ import { NgIf, CommonModule, CurrencyPipe } from '@angular/common';
 
 import { catchError, of } from 'rxjs';
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
+import {BreadcrumbModule} from "primeng/breadcrumb";
+import {MenuItem} from "primeng/api";
 
 @Component({
   selector: 'app-tresorerie-globale',
   standalone: true,
   imports: [
     CommonModule,
-    CurrencyPipe
+    CurrencyPipe,
+    BreadcrumbModule
   ],
   templateUrl: './tresorerie-globale.component.html',
   styleUrl: './tresorerie-globale.component.scss'
@@ -19,11 +22,17 @@ export class TresorerieGlobaleComponent implements OnInit {
   currentGlobalTreasury: number | undefined;
   loading: boolean = true;
   errorMessage: string | undefined;
+  items: MenuItem[] | undefined;
 
   constructor(private banqueService: BanqueService) { }
 
   ngOnInit() {
     this.loadGlobalTreasury();
+    this.items = [
+      {label:"Accueil", route: '/portail/accueil' , icon: 'pi pi-home' },
+      { label: 'Tableau de bord' ,route: '/portail/tableau-de-bord', icon:'pi pi-chart-bar'},
+      { label: 'Trésorerie Globale' ,route: '/portail/tresorerie-globale', icon:'pi pi-euro'}
+    ]
   }
 
   /**

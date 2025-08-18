@@ -1,7 +1,19 @@
 
 
 
-<div class="h-screen w-screen overflow-y-scroll flex flex-column justify-content-center align-items-center">
+<div class="h-screen w-screen overflow-y-scroll flex flex-column  align-items-center">
+  <div class="flex justify-content-center w-full">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        <ng-container>
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        </ng-container>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
   <div class=" flex flex-wrap   gap-4 p-4  ">
     <div class="flex flex-column">
       <label for="bankDropdown" class="mb-2 text-color-secondary">Sélectionner une Banque:</label>
@@ -43,7 +55,6 @@
       </div>
     </div>
   </div>
-
   <h5 *ngIf="!historicalChartData || (historicalChartData.labels.length === 0 && historicalChartData.datasets.length === 0)"
       class="text-center text-color mt-4">
     {{ historicalChartTitle }}

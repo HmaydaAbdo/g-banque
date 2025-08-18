@@ -24,12 +24,12 @@ import {Role} from "../../enum/Role";
     ButtonModule,
     InputGroupModule,
     InputGroupAddonModule,
-
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit {
+
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -66,13 +66,7 @@ export class LoginComponent implements OnInit {
       next: () => {
         this.isLoading = false;
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Connexion réussie !',life: 3000 });
-
-        if(this.authService.hasRole(Role.ADMIN)){
-          this.router.navigate(['/portail/tableau-de-bord']);
-        }else{
-          this.router.navigate(['/portail']);
-        }
-
+        this.router.navigate(['/portail']);
       },
       error: (error) => {
         this.isLoading = false;

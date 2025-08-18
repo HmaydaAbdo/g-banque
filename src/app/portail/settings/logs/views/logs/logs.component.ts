@@ -11,12 +11,13 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import {ToastModule} from "primeng/toast";
-import {MessageService} from "primeng/api";
+import {MenuItem, MessageService} from "primeng/api";
 import {ToolbarModule} from "primeng/toolbar";
 import {CalendarModule} from "primeng/calendar";
 import {Ripple} from "primeng/ripple"; // Ripple est un directive, pas un module à importer
 import {TooltipModule} from "primeng/tooltip";
 import {LogDetailsPopupComponent} from "../log-details-popup/log-details-popup.component";
+import {BreadcrumbModule} from "primeng/breadcrumb";
 
 
 @Component({
@@ -33,7 +34,8 @@ import {LogDetailsPopupComponent} from "../log-details-popup/log-details-popup.c
     ToolbarModule,
     CalendarModule,
     // Ripple, // Ripple est une directive, non un module. Il est utilisé directement dans le HTML.
-    TooltipModule
+    TooltipModule,
+    BreadcrumbModule
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -58,9 +60,14 @@ export class LogsComponent implements OnInit {
   // Stocke le dernier événement de lazy load pour réappliquer pagination/tri
   // Initialise avec des valeurs par défaut pour le premier chargement
   private lastLazyLoadEvent: TableLazyLoadEvent = { first: 0, rows: 10, sortField: 'timestamp', sortOrder: -1 };
+  items: MenuItem[] | undefined;
 
 
   ngOnInit(): void {
+    this.items = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
+      { icon: 'pi pi-list', route: '/portail/logs', label:"Les Journaux du portail"  },
+    ]
     this.logsService.getEntityNames().subscribe({
       next: (data) => this.entityNames = data,
       error: (err) => {
@@ -133,7 +140,7 @@ export class LogsComponent implements OnInit {
     this.logsService.getLogs(criteriaToSend, page, size, sort).subscribe({ // Utiliser criteriaToSend
       next: (data) => {
         this.logs = data.content;
-        this.totalRecords = data.totalElements;
+        this.totalRecords = data.page.totalElements;
         this.loading = false;
       },
       error: (error) => {

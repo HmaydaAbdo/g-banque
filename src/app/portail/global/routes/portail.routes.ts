@@ -14,7 +14,36 @@ import {EvolTauxPlafondComponent} from "../../tableau-de-bord/views/evol-taux-pl
 import {SoldeParBanqueComponent} from "../../tableau-de-bord/views/solde-par-banque/solde-par-banque.component";
 import {TresorerieGlobaleComponent} from "../../tableau-de-bord/views/tresorerie-globale/tresorerie-globale.component";
 import {SelectForHistoryComponent} from "../../comptes-bancaire/views/select-for-history/select-for-history.component";
-
+import {LesEncoursComponent} from "../../etatsDesEncours/views/parent-componant/les-encours/les-encours.component";
+import {
+  EcheancesLeasingComponent
+} from "../../etatsDesEncours/views/lesEncours/leasing/views/echeances-leasing/echeances-leasing.component";
+import {
+  EcheancesCmtComponent
+} from "../../etatsDesEncours/views/lesEncours/cmt/views/echeances-cmt/echeances-cmt.component";
+import {
+  ChequesEncoursComponent
+} from "../../etatsDesEncours/views/lesEncours/cheques-encours/cheques-encours.component";
+import {LcnEncoursComponent} from "../../etatsDesEncours/views/lesEncours/lcn-encours/lcn-encours.component";
+import {
+  VirementEncoursComponent
+} from "../../etatsDesEncours/views/lesEncours/virement-encours/virement-encours.component";
+import {
+  MiseADispositionEncoursComponent
+} from "../../etatsDesEncours/views/lesEncours/mise-a-disposition-encours/mise-a-disposition-encours.component";
+import {
+  RapprochemntMensuelleComponent
+} from "../../etatsDesEncours/rapprochement/views/rapprochemnt-mensuelle/rapprochemnt-mensuelle.component";
+import {
+  SelectBanquePourLEncoursComponent
+} from "../../etatsDesEncours/views/select-banque-pour-l-encours/select-banque-pour-l-encours.component";
+import {RecapRapprochementComponent} from "../../etatsDesEncours/recap-rapprochement/recap-rapprochement.component";
+import {LcnActifListComponent} from "../../LCN/views/lcn-actif-list/lcn-actif-list.component";
+import {ChequesActifListComponent} from "../../cheques/views/cheques-actif-list/cheques-actif-list.component";
+import {VirementActifListComponent} from "../../Virements/views/virement-actif-list/virement-actif-list.component";
+import {
+  MiseADispositionActifListComponent
+} from "../../Mise-à-disposition/views/mise-a-disposition-actif-list/mise-a-disposition-actif-list.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -35,4 +64,24 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'solde-par-banque', component: SoldeParBanqueComponent, canActivate: [adminGuard] },
   { path: 'tresorerie-globale', component: TresorerieGlobaleComponent, canActivate: [adminGuard] },
   { path: 'logs', component: LogsComponent , canActivate: [adminGuard]},
+  {path: 'leasing', loadChildren: () => import('../../leasing/route/leasing-routing.module').then(m => m.LEASING_FEATURE_ROUTES)},
+  {path:"cmt",loadChildren:()=>import('../../cmt/route/cmt-routing').then(m=>m.cmtRoutes)},
+  { path: 'etats-des-encours/:banqueId',component:LesEncoursComponent,
+    children:[
+      {path:'', redirectTo:'rapprochement', pathMatch:'full'},
+      {path:'echeances-leasing', component:EcheancesLeasingComponent},
+      {path:'echeances-cmt', component:EcheancesCmtComponent},
+      {path:'cheques', component:ChequesEncoursComponent},
+      {path:'lcn', component:LcnEncoursComponent},
+      {path:'virements', component:VirementEncoursComponent},
+      {path:'mise-a-disposition', component:MiseADispositionEncoursComponent},
+      {path: 'rapprochement',component:RapprochemntMensuelleComponent}
+    ]
+  },
+  { path: 'etats-des-encours',component:SelectBanquePourLEncoursComponent},
+  {path:"récapitulatif",component:RecapRapprochementComponent},
+  {path:"LCN",component:LcnActifListComponent},
+  {path:"Chèques",component:ChequesActifListComponent},
+  {path:"Virements",component:VirementActifListComponent},
+  {path:"Mise à disposition",component:MiseADispositionActifListComponent}
 ];

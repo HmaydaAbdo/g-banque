@@ -1,0 +1,155 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { ContratLeasingRequestDTO, ContratLeasingResponseDTO } from "../dtos/contrat-leasing";
+import { Decimal } from 'decimal.js';
+import {PageResponse} from "../../../global/types/PageResponse";
+import {ContratLeasingSearchDTO} from "../dtos/contrat-leasing-search";
+import {environment} from "../../../../../environments/environment";
+
+
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ContratLeasingService {
+
+
+  private apiUrl = `${environment.apiUrl}contratsLeasing`;
+
+  constructor(private http: HttpClient) { }
+
+  /**
+   * Helper to convert plain numbers/strings to Decimal objects.
+   * Handles null or undefined values gracefully.
+   */
+  private convertToDecimal(value: any): Decimal | undefined {
+    return value !== undefined && value !== null ? new Decimal(value) : undefined;
+  }
+
+  /**
+   * Processes a single ContratLeasingResponseDTO to convert all numeric fields
+   * that should be Decimal into Decimal objects.
+   * This is crucial because HttpClient deserializes JSON numbers into JS numbers,
+   * which can lose precision.
+   */
+  private processContratLeasingResponse(contrat: ContratLeasingResponseDTO): ContratLeasingResponseDTO {
+    contrat.montantAchatTTC = this.convertToDecimal(contrat.montantAchatTTC)!;
+
+    if (contrat.valeurResiduelle !== undefined && contrat.valeurResiduelle !== null) {
+      contrat.valeurResiduelle = this.convertToDecimal(contrat.valeurResiduelle);
+    }
+
+    if (contrat.phases && Array.isArray(contrat.phases)) {
+      contrat.phases = contrat.phases.map(phase => {
+        return {
+          ...phase,
+          mensualiteTTC: this.convertToDecimal(phase.mensualiteTTC)!,
+        };
+      });
+    }
+    return contrat;
+  }
+
+  /**
+   * Handles HTTP errors centrally.
+   */
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    let errorMessage = 'An unknown error occurred!';
+    if (error.error instanceof ErrorEvent) {
+      errorMessage = `Client-side Error: ${error.error.message}`;
+    } else {
+      if (error.error && error.error.message) {
+        errorMessage = error.error.message;
+      } else if (error.error && typeof error.error === 'string') {
+        errorMessage = error.error;
+      } else {
+        errorMessage = `Server Error: ${error.status} ${error.statusText || ''}`;
+      }
+    }
+    console.error('API Error:', errorMessage, error);
+    return throwError(() => new Error(errorMessage));
+  }
+
+  searchContratsLeasing(
+    searchDTO: ContratLeasingSearchDTO,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<PageResponse<ContratLeasingResponseDTO>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    // Using optional chaining and nullish coalescing for cleaner checks
+    if (searchDTO.numeroContrat) {
+      params = params.set('numeroContrat', searchDTO.numeroContrat);
+    }
+    if (searchDTO.immobilisation) {
+      params = params.set('immobilisation', searchDTO.immobilisation);
+    }
+    if (searchDTO.typeContrat) {
+      params = params.set('typeContrat', searchDTO.typeContrat);
+    }
+    if (searchDTO.organismeLeasingId) {
+      params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString());
+    }
+    if (searchDTO.banqueDePrelevementId) {
+      params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString());
+    }
+
+    // ⭐ Correction: Check for both undefined and null
+    if (searchDTO.completed !== undefined && searchDTO.completed !== null) {
+      params = params.set('completed', searchDTO.completed.toString());
+    }
+
+    return this.http.get<PageResponse<ContratLeasingResponseDTO>>(`${this.apiUrl}`, { params }).pipe(
+      map(pageResponse => ({
+        ...pageResponse,
+        content: pageResponse.content.map(contrat => this.processContratLeasingResponse(contrat))
+      })),
+      catchError(this.handleError)
+    );
+  }
+
+
+
+  getContratLeasingById(id: number): Observable<ContratLeasingResponseDTO> {
+    return this.http.get<ContratLeasingResponseDTO>(`${this.apiUrl}/${id}`).pipe(
+      map(response => this.processContratLeasingResponse(response)),
+      catchError(this.handleError)
+    );
+  }
+
+
+  /**
+   * Crée un nouveau contrat de leasing.
+   * @param contrat Le DTO de requête du contrat à créer.
+   * @returns Un Observable de ContratLeasingResponseDTO.
+   */
+  createContratLeasing(contrat: ContratLeasingRequestDTO): Observable<ContratLeasingResponseDTO> {
+    return this.http.post<ContratLeasingResponseDTO>(this.apiUrl, contrat).pipe(
+      map(response => this.processContratLeasingResponse(response)),
+      catchError(this.handleError)
+    );
+  }
+
+
+  updateContratLeasing(id: number, contrat: ContratLeasingRequestDTO): Observable<ContratLeasingResponseDTO> {
+    return this.http.put<ContratLeasingResponseDTO>(`${this.apiUrl}/${id}`, contrat).pipe(
+      map(response => this.processContratLeasingResponse(response)),
+      catchError(this.handleError)
+    );
+  }
+
+
+
+  deleteContratLeasing(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+}

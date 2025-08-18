@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output, ViewChild, OnInit, inject } from '@angular/core';
 import { Sidebar, SidebarModule } from 'primeng/sidebar';
-import { Button } from 'primeng/button';
-import { Ripple } from 'primeng/ripple';
+import { ButtonModule } from 'primeng/button';
+import { RippleModule } from 'primeng/ripple';
 import { StyleClassModule } from 'primeng/styleclass';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { NgFor, NgIf, NgClass } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import {Role} from "../../../../auth/enum/Role";
 import {AuthService} from "../../../../auth/services/auth.service";
 
@@ -28,49 +28,72 @@ interface SidebarItem {
   standalone: true,
   imports: [
     SidebarModule,
-    Button,
-    Ripple,
+    ButtonModule,
+    RippleModule,
     StyleClassModule,
     RouterLink,
     RouterLinkActive,
-    NgFor,
-    NgIf,
-    NgClass,
+    CommonModule,
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
-export class SidebarComponent implements OnInit { // Implement OnInit
+export class SidebarComponent implements OnInit {
   @Input() sidebarVisible: boolean = false;
   @Output() sidebarVisibleChange = new EventEmitter<boolean>();
 
   @ViewChild('sidebarRef') sidebarRef!: Sidebar;
 
-  private authService = inject(AuthService); // Inject AuthService
+  private authService = inject(AuthService);
 
   sidebarItems: SidebarItem[] = [
-    { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
-    { label: 'Comptes Bancaires', icon: 'pi pi-wallet', items:
+    {label:"Récapitulatif bancaire",icon:"pi pi-briefcase",routerLink:"/portail/récapitulatif"},
+    { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
+    { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', items:
         [
-          { label: 'Gestion des comptes', icon: 'pi pi-list', routerLink: '/portail/comptes-bancaires' },
-          { label: 'Historique', icon: 'pi pi-history', routerLink: '/portail/select-for-history' }
+          { label: 'La liste des comptes bancaires', icon: 'pi pi-list', routerLink: '/portail/comptes-bancaires' },
+          { label: "Historique des lignes fonctionnelles", icon: 'pi pi-history', routerLink: '/portail/select-for-history' }
        ]
     },
     {
-      label: 'Lignes Fonctionnelle',
-      icon: 'pi pi-receipt',
+      label: 'Leasing',
+      icon: 'pi pi-money-bill',
       items: [
-        { label: 'Liste des Lignes', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles' },
-        { label: 'Natures Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles' }
+        { label: 'Les Contras Leasing actifs', icon: 'pi pi-list', routerLink: '/portail/leasing' },
       ]
     },
     {
-      label: 'Settings',
+      label: 'Opérations Bancaires',
+      icon: 'pi pi-credit-card',
+      items: [
+        { label: 'Chèques', icon: 'pi pi-file-check', routerLink: '/portail/Chèques' },
+        { label: 'LCN', icon: 'pi pi-file-o', routerLink: '/portail/LCN' },
+        { label: 'Virements', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Virements' },
+        { label: 'Mises à disposition', icon: 'pi pi-briefcase', routerLink: '/portail/Mise à disposition' }
+      ]
+    },
+    {
+      label: 'Les Crédits Moyen Terme',
+      icon: 'pi pi-money-bill',
+      items: [
+        { label: 'La Liste des crédit actifs', icon: 'pi pi-list', routerLink: '/portail/cmt' },
+      ]
+    },
+    {
+      label: 'Les Lignes Fonctionnelles',
+      icon: 'pi pi-receipt',
+      items: [
+        { label: 'Les Lignes fonctionnelles actifs', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles' },
+        { label: 'Les Natures des lignes Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles' }
+      ]
+    },
+    {
+      label: 'Paramètres',
       icon: 'pi pi-cog',
       roles: [Role.ADMIN, Role.SUPER_ADMIN],
       items: [
-        { label: 'Logs', icon: 'pi pi-history',routerLink: '/portail/logs' },
+        { label: 'Les Journaux du portail ', icon: 'pi pi-history',routerLink: '/portail/logs' },
       ]
     },
   ];

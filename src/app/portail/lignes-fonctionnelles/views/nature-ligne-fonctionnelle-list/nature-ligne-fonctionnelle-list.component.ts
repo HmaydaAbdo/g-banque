@@ -1,12 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { DialogModule } from 'primeng/dialog'; // Keep if you use it elsewhere
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { MessageService, ConfirmationService } from 'primeng/api';
+import {MessageService, ConfirmationService, MenuItem} from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { NatureLigneFonctionnelleService } from '../../services/nature-ligne-fonctionnelle.service';
 import { NatureLigneFonctionnelleResponse } from '../../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleResponse';
@@ -17,7 +17,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators'; // Import R
 import { TooltipModule } from 'primeng/tooltip';
 import {DropdownModule} from "primeng/dropdown";
 import {Role} from "../../../../auth/enum/Role";
-import {AuthService} from "../../../../auth/services/auth.service"; // Add tooltip module for consistency
+import {AuthService} from "../../../../auth/services/auth.service";
+import {BreadcrumbModule} from "primeng/breadcrumb"; // Add tooltip module for consistency
 
 @Component({
   selector: 'app-nature-ligne-fonctionnelle-list',
@@ -35,7 +36,10 @@ import {AuthService} from "../../../../auth/services/auth.service"; // Add toolt
     ReactiveFormsModule,
     RippleModule,
     TooltipModule,
-    DropdownModule
+    DropdownModule,
+    BreadcrumbModule,
+    RouterLink,
+    RouterLinkActive
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -47,6 +51,7 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
   loading: boolean = false;
   first: number = 0;
   searchForm!: FormGroup;
+  items: MenuItem[] | undefined;
 
   constructor(
     private natureService: NatureLigneFonctionnelleService,
@@ -58,6 +63,11 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.items = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
+      { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles', label:"Les Lignes fonctionnelles" },
+      { icon: 'pi pi-list', route: '/portail/natures-fonctionnelles', label:"Les Natures des Lignes fonctionnelles" },
+    ]
     this.initSearchForm();
     this.setupFormListeners();
 
@@ -98,7 +108,7 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
       .subscribe({
         next: (pageResponse) => {
           this.natures = pageResponse.content;
-          this.totalRecords = pageResponse.totalElements;
+          this.totalRecords = pageResponse.page.totalElements;
           this.loading = false;
         },
         error: (err) => {

@@ -1,5 +1,17 @@
-<div class="h-screen w-screen overflow-y-scroll flex flex-column justify-content-center align-items-center p-4">
+<div class="h-screen w-screen overflow-y-scroll flex flex-column  align-items-center p-4">
 
+  <div class="flex justify-content-center w-full">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        <ng-container>
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        </ng-container>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
   <h2 class="mb-4 text-color">Trésorerie Globale Actuelle</h2>
 
   <div *ngIf="loading" class="text-center text-color-secondary mt-4">

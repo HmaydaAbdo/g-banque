@@ -12,7 +12,7 @@
   } @else if (bankDetails) {
 
 
-    <div class="px-4 flex flex-column gap-4">
+    <div class="px-4 flex flex-column gap-4 mb-8">
       <div class=" flex flex-wrap justify-content-between ">
         <div class="portail-section pt-1 lg:pt-3">
           <p-breadcrumb [model]="items" >
@@ -78,7 +78,7 @@
             ></p-inputNumber>
           </div>
 
-          <div class="flex-grow-1" *ngIf="canManageActifStatus()">
+          <div class="flex-grow-1" >
             <label for="filterActif" class="block text-900 font-medium mb-2">Statut Actif</label>
             <p-dropdown
               id="filterActif"
@@ -138,7 +138,7 @@
               <p-inputSwitch
                 [(ngModel)]="ligne.actif"
                 (onChange)="onToggleActif(ligne, $event)"
-                [disabled]="!canManageActifStatus()">
+              >
               </p-inputSwitch>
 
             </td>

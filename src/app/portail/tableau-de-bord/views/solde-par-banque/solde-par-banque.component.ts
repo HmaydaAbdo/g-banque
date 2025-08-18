@@ -1,8 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ChartModule } from 'primeng/chart'; // For p-chart
-import { NgIf, NgFor } from '@angular/common'; // For structural directives
+import {NgClass, NgIf} from '@angular/common'; // For structural directives
 import { catchError, of } from 'rxjs';
-import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
+import { BanqueService } from "../../../comptes-bancaire/services/BanqueService";
+import {BreadcrumbModule} from "primeng/breadcrumb";
+import {MenuItem, PrimeTemplate} from "primeng/api";
+import {RouterLinkActive} from "@angular/router";
 
 @Component({
   selector: 'app-solde-par-banque',
@@ -10,7 +13,10 @@ import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
   imports: [
     ChartModule, // Import PrimeNG ChartModule
     NgIf,
-    NgFor
+    BreadcrumbModule,
+    PrimeTemplate,
+    RouterLinkActive,
+    NgClass,
   ],
   templateUrl: './solde-par-banque.component.html',
   styleUrl: './solde-par-banque.component.scss'
@@ -21,11 +27,17 @@ export class SoldeParBanqueComponent implements OnInit {
   chartOptions: any; // Options for the PrimeNG Chart
   loading: boolean = true; // To show loading state
   errorMessage: string | undefined; // To display errors
+  items: MenuItem[] | undefined;
 
   constructor(private banqueService: BanqueService) { }
 
   ngOnInit() {
     this.loadBankBalances();
+    this.items = [
+      {label:"Accueil", route: '/portail/accueil' , icon: 'pi pi-home' },
+      { label: 'Tableau de bord' ,route: '/portail/tableau-de-bord', icon:'pi pi-chart-bar'},
+      { label: 'Solde par Banque' ,route: '/portail/solde-par-banque', icon:'pi pi-chart-line'}
+    ]
   }
 
   /**
@@ -52,12 +64,16 @@ export class SoldeParBanqueComponent implements OnInit {
           const labels = banks.map(bank => bank.nom);
           const data = banks.map(bank => bank.soldeActuel);
 
-          // Get colors from document styles (similar to your example)
+          // Get colors from document styles for positive and negative bars
           const documentStyle = getComputedStyle(document.documentElement);
           const textColor = documentStyle.getPropertyValue('--text-color');
           const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
           const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
-          const blue500 = documentStyle.getPropertyValue('--blue-500'); // Example color for bars
+          const positiveColor = documentStyle.getPropertyValue('--blue-500');
+          const negativeColor = documentStyle.getPropertyValue('--red-500'); // Assuming you have a red-500 variable defined in your theme
+
+          // Create an array of colors based on the value of each data point
+          const barColors = data.map(value => value >= 0 ? positiveColor : negativeColor);
 
           this.chartData = {
             labels: labels,
@@ -65,8 +81,8 @@ export class SoldeParBanqueComponent implements OnInit {
               {
                 label: 'Solde Actuel',
                 data: data,
-                backgroundColor: [blue500], // Use a single color or an array of colors for each bar
-                borderColor: [blue500],
+                backgroundColor: barColors, // Use the dynamically created array for colors
+                borderColor: barColors,
                 borderWidth: 1
               }
             ]

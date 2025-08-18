@@ -1,9 +1,9 @@
-<p-dialog header="Select a Bank" [(visible)]="displayDialog" [modal]="true" [style]="{ width: '50vw' }" (onHide)="onDialogHide()">
+<p-dialog header="Sélectionner une Banque " [(visible)]="displayDialog" [modal]="true" [style]="{ width: '50vw' }" (onHide)="onDialogHide()">
   <p-table [value]="banks" selectionMode="single" [(selection)]="selectedBank" dataKey="id">
     <ng-template pTemplate="header">
       <tr>
-        <th>Name</th>
-        <th>Account Number</th>
+        <th>Nom</th>
+        <th>Numéro de compte </th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-bank>

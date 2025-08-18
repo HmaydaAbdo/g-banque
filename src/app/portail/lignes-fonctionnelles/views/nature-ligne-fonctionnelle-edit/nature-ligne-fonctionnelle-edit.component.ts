@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap } from '@angular/router';
+import {ActivatedRoute, Router, ParamMap, RouterLinkActive} from '@angular/router';
 
 // PrimeNG Imports
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import {MenuItem, MessageService} from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 
@@ -16,6 +16,7 @@ import { ConfirmationService } from 'primeng/api';
 import { NatureLigneFonctionnelleService } from '../../services/nature-ligne-fonctionnelle.service';
 import { NatureLigneFonctionnelleRequest } from '../../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleRequest';
 import { NatureLigneFonctionnelleResponse } from '../../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleResponse';
+import {BreadcrumbModule} from "primeng/breadcrumb";
 
 @Component({
   selector: 'app-nature-ligne-fonctionnelle-edit',
@@ -29,7 +30,9 @@ import { NatureLigneFonctionnelleResponse } from '../../dtos/nature-ligne-foncti
     ButtonModule,
     RippleModule,
     ToastModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    BreadcrumbModule,
+    RouterLinkActive
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -38,6 +41,7 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
   isEditMode: boolean = false;
   natureLigneId: number | null = null;
   loading: boolean = false;
+  items: MenuItem[] | undefined;
 
   constructor(
     private fb: FormBuilder,
@@ -54,6 +58,12 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.items = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
+      { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles', label:"Les Lignes fonctionnelles" },
+      { icon: 'pi pi-list', route: '/portail/natures-fonctionnelles', label:"Les Natures des Lignes fonctionnelles" },
+    ]
+
     this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
       if (id) {
