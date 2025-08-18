@@ -1,0 +1,80 @@
+<ng-container *ngIf="contratDetails">
+  <p-table [value]="[{}]" responsiveLayout="stacked" styleClass="p-datatable-sm p-datatable-gridlines">
+    <ng-template pTemplate="body" >
+      <tr>
+        <td><b>Numéro Contrat:</b></td>
+        <td>{{ contratDetails.numeroContrat }}</td>
+      </tr>
+      <tr>
+        <td><b>Immobilisation:</b></td>
+        <td>{{ contratDetails.immobilisation }}</td>
+      </tr>
+      <tr>
+        <td><b>Type de Contrat:</b></td>
+        <td>
+          <p-tag [value]="contratDetails.typeContrat"
+                 [severity]="contratDetails.typeContrat === 'LINEAIRE' ? 'info' : (contratDetails.typeContrat === 'PROGRESSIF' ? 'success' : 'warning')"></p-tag>
+        </td>
+      </tr>
+      <tr>
+        <td><b>Organisme Leasing:</b></td>
+        <td>{{ contratDetails.nomOrganismeLeasing }}</td>
+      </tr>
+      <tr>
+        <td><b>Banque de Prélèvement:</b></td>
+        <td>{{ contratDetails.nomBanqueDePrelevement }}</td>
+      </tr>
+      <tr>
+        <td><b>Montant Achat TTC:</b></td>
+        <td>{{ contratDetails.montantAchatTTC.toNumber() }} MAD</td>
+      </tr>
+      <tr>
+        <td><b>Date Début:</b></td>
+        <td>{{ contratDetails.dateDebut | date:'dd/MM/yyyy' }}</td>
+      </tr>
+      <tr>
+        <td><b>Durée en Mois:</b></td>
+        <td>{{ contratDetails.periodeEnMois }} mois</td>
+      </tr>
+      <tr *ngIf="contratDetails.typeContrat === 'LINEAIRE' && contratDetails.valeurResiduelle !== undefined">
+        <td><b>Valeur Résiduelle:</b></td>
+        <td><span class="font-bold text-lg text-primary">{{ contratDetails.valeurResiduelle.toNumber() }} MAD</span></td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-divider></p-divider>
+
+  <h5>Phases de Leasing</h5>
+
+  <p-table [value]="contratPhases"
+           [paginator]="true"
+           [rows]="5"
+           [rowsPerPageOptions]="[5, 10, 20]"
+           [scrollable]="true"
+           scrollHeight="300px"
+           responsiveLayout="scroll"
+           [sortField]="'numeroPhase'"
+           [sortOrder]="1">
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="numeroPhase">Phase <p-sortIcon field="numeroPhase"></p-sortIcon></th>
+        <th pSortableColumn="dureeMois">Durée Mois <p-sortIcon field="dureeMois"></p-sortIcon></th>
+        <th pSortableColumn="mensualiteTTC">Mensualité TTC <p-sortIcon field="mensualiteTTC"></p-sortIcon></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-phase>
+      <tr>
+        <td>{{ phase.numeroPhase }}</td>
+        <td>{{ phase.dureeMois }}</td>
+        <td>{{ phase.mensualiteTTC?.toNumber() }} MAD</td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptyMessage">
+      <tr>
+        <td [attr.colspan]="3" class="text-center">Aucune phase de leasing trouvée pour ce contrat.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+</ng-container>

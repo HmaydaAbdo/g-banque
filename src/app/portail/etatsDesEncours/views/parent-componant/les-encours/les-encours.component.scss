@@ -1,0 +1,17 @@
+.active-sidebar-link {
+  background-color: #aca7cf;
+  color: black;
+
+
+  &:hover {
+    background-color: var(--blue-600);
+  }
+}
+
+.sidebar-link {
+  color: black;
+
+  &:hover {
+    background-color: #c99df1;
+  }
+}
