@@ -11,6 +11,7 @@ import staport.finance.gBanque.Bank.specifications.BanqueSpecification;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleResponse;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService;
 import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleResponse;
+import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.services.LigneFonctionnelleService;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
@@ -26,7 +27,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,22 +179,44 @@ public class BanqueService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public BankAcceuilResponse getAccueilBankInfoById(Long banqueId) {
+        Banque banque = banqueRepository.findById(banqueId)
+                .orElseThrow(() -> new ResourceNotFoundException("Banque not found with id: " + banqueId));
+
+        Optional<Long> faciliteDeCaisseIdOptional = findFaciliteDeCaisseNatureId();
+
+        BankAcceuilResponse response = banqueMapper.toAcceuilDto(banque);
+
+        faciliteDeCaisseIdOptional.flatMap(fcNatureId -> ligneFonctionnelleService.getActifLigneFonctionnellesByBanqueIdAndNature(
+                banque.getId(),
+                fcNatureId
+        )).ifPresent(fc -> response.setPlafondFC(fc.getPlafond()));
+
+        return response;
+    }
+
     /**
      * Deletes a bank account.
      * @param id The ID of the bank account to delete.
      * @throws ResourceNotFoundException if the bank is not found.
      */
     @Transactional
-    public void deleteBanque(Long id) {
-        if (!banqueRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Banque non trouvée avec l'ID: " + id);
-        }
-        // TODO: Add checks here to prevent deletion if the bank has associated LigneFonctionnelle or other related entities
-        // For example:
-        // if (ligneFonctionnelleRepository.countByBanqueId(id) > 0) {
-        //      throw new DeletionForbiddenException("Cannot delete bank as it has associated functional lines.");
-        // }
-        // (You would need to add countByBanqueId to LigneFonctionnelleRepository if it doesn't exist)
+    public void deleteBanque(Long id) throws Exception {
+
+        List<LigneFonctionnelle> actifsligneFonctionnelle;
+
+         if (banqueRepository.findById(id).isPresent()) {
+             Banque banque = banqueRepository.findById(id).get();
+              actifsligneFonctionnelle=banque.getLigneFonctionnelles()
+                     .stream().filter(LigneFonctionnelle::isActif).toList();
+         }else {
+             throw new ResourceNotFoundException("Banque non trouvée avec l'ID: " + id);
+         }
+
+         if(!actifsligneFonctionnelle.isEmpty()) {
+             throw new Exception("Impossible de supprimer cette banque car elle possède des lignes fonctionnelles actives.");
+         }
 
         banqueRepository.deleteById(id);
     }

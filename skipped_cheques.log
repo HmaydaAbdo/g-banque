@@ -1,0 +1,48 @@
+2025-08-04 14:02:34 - PROCESS_SKIP - Reason: Error in processing:  numero is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='BP', ville='MARRAKECH', beneficiaire='', montant=0, dateEcheance=null, datePaiement=2024-11-04, dateCheque=null, numero=''}
+2025-08-04 14:02:34 - PROCESS_SKIP - Reason: Error in processing:  dateCheque (date emission) is null
+  Skipped Item DTO: FunPaymentDto{type=1, banque='BMCI', ville='MARRAKECH', beneficiaire='FAM', montant=48098.4, dateEcheance=null, datePaiement=2024-10-24, dateCheque=null, numero='7661750'}
+2025-08-04 14:02:35 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='CDM', ville='MARRAKECH', beneficiaire='', montant=18136.8, dateEcheance=null, datePaiement=2024-02-14, dateCheque=2024-02-14, numero='222 5772501'}
+2025-08-04 14:02:37 - PROCESS_SKIP - Reason: Error in processing:  dateCheque (date emission) is null
+  Skipped Item DTO: FunPaymentDto{type=1, banque='AWB', ville='MARRAKECH', beneficiaire='HIBA BETON', montant=100000, dateEcheance=null, datePaiement=2023-03-15, dateCheque=null, numero='272998'}
+2025-08-04 14:02:38 - PROCESS_SKIP - Reason: Error in processing:  dateCheque (date emission) is null
+  Skipped Item DTO: FunPaymentDto{type=1, banque='CIH', ville='MARRAKECH', beneficiaire='NEW SIGNALISATION ROUTIER', montant=125000, dateEcheance=null, datePaiement=2022-09-08, dateCheque=null, numero='0854864'}
+2025-08-04 14:02:38 - PROCESS_SKIP - Reason: Error in processing:  dateCheque (date emission) is null
+  Skipped Item DTO: FunPaymentDto{type=1, banque='SGMB', ville='MARRAKECH', beneficiaire='SRM', montant=1998.72, dateEcheance=null, datePaiement=2022-09-07, dateCheque=null, numero='9946502'}
+2025-08-04 14:02:39 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='AWB', ville='MARRAKECH', beneficiaire='', montant=1040000, dateEcheance=null, datePaiement=2022-03-30, dateCheque=2022-03-30, numero='412427'}
+2025-08-04 14:02:39 - PROCESS_SKIP - Reason: Error in processing: montant is null or non-positive 
+  Skipped Item DTO: FunPaymentDto{type=1, banque='AWB', ville='MARRAKECH', beneficiaire='STE D'EXPERTISE ET D'EXECUTION DES TRAVAUX ', montant=0, dateEcheance=null, datePaiement=2022-03-01, dateCheque=2022-03-01, numero='412396'}
+2025-08-04 14:02:41 - PROCESS_SKIP - Reason: Error in processing: banque (bank name) is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='', ville='MARRAKECH', beneficiaire='SYNDIC DES COPROPRIETAIRES', montant=7704, dateEcheance=null, datePaiement=2021-06-10, dateCheque=2021-06-10, numero='1376140'}
+2025-08-04 14:02:41 - PROCESS_SKIP - Reason: Error in processing:  numero is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='CIH', ville='MARRAKECH', beneficiaire='', montant=0, dateEcheance=null, datePaiement=2021-03-30, dateCheque=null, numero=''}
+2025-08-04 14:02:41 - PROCESS_SKIP - Reason: Error in processing:  numero is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='CIH', ville='MARRAKECH', beneficiaire='', montant=0, dateEcheance=null, datePaiement=2021-03-30, dateCheque=null, numero=''}
+2025-08-04 14:02:42 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='SGMB', ville='MARRAKECH', beneficiaire='', montant=4476, dateEcheance=null, datePaiement=2021-01-18, dateCheque=2021-01-18, numero='4554225'}
+2025-08-04 14:02:42 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='CIH', ville='MARRAKECH', beneficiaire='', montant=6605, dateEcheance=null, datePaiement=2020-10-23, dateCheque=2020-10-23, numero='2638582'}
+2025-08-04 14:02:43 - PROCESS_SKIP - Reason: Error in processing:  dateCheque (date emission) is null
+  Skipped Item DTO: FunPaymentDto{type=1, banque='CIH', ville='MARRAKECH', beneficiaire='MBAREK EL MOUSSAOUI', montant=9490, dateEcheance=null, datePaiement=2020-04-08, dateCheque=null, numero='0970443'}
+2025-08-04 14:02:47 - PROCESS_SKIP - Reason: Error in processing: montant is null or non-positive 
+  Skipped Item DTO: FunPaymentDto{type=1, banque='BP', ville='MARRAKECH', beneficiaire='RECEVEUR DE DOUANE', montant=0, dateEcheance=null, datePaiement=2018-06-19, dateCheque=2018-06-19, numero='9543036'}
+2025-08-04 14:02:47 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='CIH', ville='MARRAKECH', beneficiaire='', montant=30948.1, dateEcheance=null, datePaiement=2018-06-11, dateCheque=2018-06-11, numero='3085572'}
+2025-08-04 14:02:48 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='SGMB', ville='MARRAKECH', beneficiaire='', montant=0, dateEcheance=null, datePaiement=2018-03-05, dateCheque=2018-02-08, numero='1583089'}
+2025-08-04 14:02:48 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='CIH', ville='MARRAKECH', beneficiaire='', montant=0, dateEcheance=null, datePaiement=2018-03-05, dateCheque=2018-01-06, numero='9122355'}
+2025-08-04 14:02:48 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='BMCI', ville='MARRAKECH', beneficiaire='', montant=400000, dateEcheance=null, datePaiement=2017-12-18, dateCheque=2017-12-18, numero='2707493'}
+2025-08-04 14:02:48 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='BMCI', ville='MARRAKECH', beneficiaire='', montant=400000, dateEcheance=null, datePaiement=2017-12-18, dateCheque=2017-12-18, numero='2707492'}
+2025-08-04 14:02:48 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='CIH', ville='MARRAKECH', beneficiaire='', montant=35775.55, dateEcheance=null, datePaiement=2017-12-04, dateCheque=2017-12-04, numero='9122331'}
+2025-08-04 14:02:48 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='SGMB', ville='MARRAKECH', beneficiaire='', montant=3500, dateEcheance=null, datePaiement=2017-11-02, dateCheque=2017-11-02, numero='6844548'}
+2025-08-04 14:02:48 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='BP', ville='MARRAKECH', beneficiaire='', montant=0, dateEcheance=null, datePaiement=2017-10-21, dateCheque=2017-10-02, numero='8079578'}
+2025-08-04 14:02:48 - PROCESS_SKIP - Reason: Error in processing:  beneficiaire is null or empty
+  Skipped Item DTO: FunPaymentDto{type=1, banque='BP', ville='MARRAKECH', beneficiaire='', montant=0, dateEcheance=null, datePaiement=2017-10-21, dateCheque=2017-08-28, numero='8079570'}

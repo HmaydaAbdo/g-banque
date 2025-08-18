@@ -11,10 +11,8 @@ import java.util.Optional;
 @Repository
 public interface BanqueRepository extends JpaRepository<Banque, Long>, JpaSpecificationExecutor<Banque> { // IMPORTANT: Extend JpaSpecificationExecutor
 
-    Optional<Banque> findByNom(String nom);
-    Optional<Banque> findByNumeroDeCompte(String numeroDeCompte);
-    Optional<Banque> findByAddress(String address);
-    Optional<Banque> findByAgence(String agence);
 
+    Optional<Banque> findByNumeroDeCompte(String numeroDeCompte);
+    Optional<Banque> findByNom(String nom);
 
 }

@@ -94,17 +94,16 @@ public class LigneFonctionnelleController {
     }
 
     /**
-     * Deactivates a specific active functional line for a given bank and nature.
-     * PUT /lignes-fonctionnelles/deactivate/{banqueId}/nature/{natureLigneFonctionnelleId}
-     * @param banqueId The ID of the bank.
-     * @param natureLigneFonctionnelleId The ID of the nature of the functional line.
+     * Deactivates a specific  functional line by id
+     * PUT /lignes-fonctionnelles/deactivate/{ligneId}
+     * @param ligneId The ID of the functional line.
      * @return HTTP status 204 No Content on success.
      */
-    @PutMapping("/deactivate/{banqueId}/nature/{natureLigneFonctionnelleId}")
+    @PutMapping("/deactivate/{ligneId}")
     public ResponseEntity<Void> deactivateLigneFonctionnelle(
-            @PathVariable Long banqueId,
-            @PathVariable Long natureLigneFonctionnelleId) {
-        ligneFonctionnelleService.deactivateLigneFonctionnelleByNatureAndBank(banqueId, natureLigneFonctionnelleId);
+            @PathVariable Long ligneId)
+    {
+        ligneFonctionnelleService.deactivateLigneFonctionnelleByNatureAndBank(ligneId);
         return ResponseEntity.noContent().build();
     }
 

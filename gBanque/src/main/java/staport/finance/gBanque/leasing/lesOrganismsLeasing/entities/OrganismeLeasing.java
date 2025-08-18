@@ -1,0 +1,111 @@
+package staport.finance.gBanque.leasing.lesOrganismsLeasing.entities;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.Objects;
+
+@Entity
+@Table(name = "organisme_leasing")
+public class OrganismeLeasing {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String nom;
+
+    @NotNull
+    @Column(name = "plafond", nullable = false)
+    private BigDecimal plafond;
+
+    @NotNull
+    @Column(name = "date_debut", nullable = false)
+    private OffsetDateTime dateDebut;
+
+    @NotNull
+    @Column(name = "date_fin", nullable = false)
+    private OffsetDateTime dateFin;
+
+    @Column(name = "date_creation", nullable = false, updatable = false)
+    private OffsetDateTime dateCreation;
+
+    @Column(name = "date_modification", nullable = false)
+    private OffsetDateTime dateModification;
+
+    // --- Constructors ---
+    public OrganismeLeasing() {}
+
+
+    public OrganismeLeasing(String nom, BigDecimal plafond, OffsetDateTime dateDebut, OffsetDateTime dateFin) {
+        this.nom = nom;
+        this.plafond = plafond;
+        this.dateDebut = dateDebut;
+        this.dateFin = dateFin;
+    }
+
+    // --- Getters and Setters ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getNom() { return nom; }
+    public void setNom(String nom) { this.nom = nom; }
+
+    public BigDecimal getPlafond() { return plafond; }
+    public void setPlafond(BigDecimal plafond) { this.plafond = plafond; }
+
+    public OffsetDateTime getDateDebut() { return dateDebut; }
+    public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
+
+    public OffsetDateTime getDateFin() { return dateFin; }
+    public void setDateFin(OffsetDateTime dateFin) { this.dateFin = dateFin; }
+
+
+    public OffsetDateTime getDateCreation() { return dateCreation; }
+    public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
+
+    public OffsetDateTime getDateModification() { return dateModification; }
+    public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
+
+    // --- JPA Lifecycle Callbacks ---
+    @PrePersist
+    protected void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+        this.dateCreation = now;
+        this.dateModification = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.dateModification = OffsetDateTime.now();
+    }
+
+    // --- equals(), hashCode(), toString() ---
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OrganismeLeasing that = (OrganismeLeasing) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "OrganismeLeasing{" +
+                "id=" + id +
+                ", nom='" + nom + '\'' +
+                ", plafond=" + plafond +
+                ", dateDebut=" + dateDebut +
+                ", dateFin=" + dateFin +
+                '}';
+    }
+}

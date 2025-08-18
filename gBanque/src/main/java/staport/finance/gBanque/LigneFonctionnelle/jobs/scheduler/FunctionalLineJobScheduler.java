@@ -42,8 +42,8 @@ public class FunctionalLineJobScheduler {
      * creates a new JobInstance. A common approach is to use a timestamp.
      */
 
-    //@Scheduled(cron = "0 0 3 1 * ?") // Run at 3:00 AM on the 1st day of every month
-    @Scheduled(cron = "0 * * * * ?") // Run at every minute
+    @Scheduled(cron = "0 0 12 ? * SUN") // Run every Sunday at 12:00 PM
+    //@Scheduled(cron = "0 * * * * ?") // Run at every minute
     public void runFunctionalLineExpirationJob() {
         log.info("Attempting to launch functionalLineExpirationJob...");
 

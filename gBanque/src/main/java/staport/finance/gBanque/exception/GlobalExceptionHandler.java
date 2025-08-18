@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.FileStorageException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -129,7 +131,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-
+    /**
+     * Handles custom ValidationException.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(ValidationException.class)
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", "Bad Request");
+        errorResponse.put("message", ex.getMessage());
+        errorResponse.put("detail", ex.getMessage());
+        errorResponse.put("exception Type", ex.getClass().getName());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 
     /**
      * Catches any other unhandled exceptions.

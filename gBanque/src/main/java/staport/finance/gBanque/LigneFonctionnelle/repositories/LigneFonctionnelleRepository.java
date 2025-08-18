@@ -1,10 +1,12 @@
-
 package staport.finance.gBanque.LigneFonctionnelle.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import java.time.OffsetDateTime; // Import OffsetDateTime
 import java.util.Optional;
 import java.util.List;
 
@@ -51,6 +53,7 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
      */
     Optional<LigneFonctionnelle> findByBanqueIdAndNatureLigneFonctionnelleIdAndActif(Long banqueId, Long natureLigneFonctionnelleId, boolean actif);
 
+
     /**
      * Finds all functional lines for a specific bank and nature, ordered by their start date ascending.
      * Used for historical data retrieval.
@@ -68,4 +71,18 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
      * @return A list of active LigneFonctionnelle entities, sorted by dateFin ascending.
      */
     List<LigneFonctionnelle> findAllByActifTrueOrderByDateFinAsc();
+
+    /**
+     * Finds a LigneFonctionnelle by its associated Banque, NatureLigneFonctionnelle, and specific
+     * dateDepart and dateFin. This is used primarily for checking for existing duplicates
+     * during data initialization.
+     *
+     * @param banque The Banque entity.
+     * @param natureLigneFonctionnelle The NatureLigneFonctionnelle entity.
+     * @param dateDepart The start date of the functional line.
+     * @param dateFin The end date of the functional line.
+     * @return An Optional containing the LigneFonctionnelle if found.
+     */
+    Optional<LigneFonctionnelle> findByBanqueAndNatureLigneFonctionnelleAndDateDepartAndDateFin(
+            Banque banque, NatureLigneFonctionnelle natureLigneFonctionnelle, OffsetDateTime dateDepart, OffsetDateTime dateFin);
 }

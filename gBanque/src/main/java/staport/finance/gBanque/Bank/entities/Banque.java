@@ -3,6 +3,14 @@ package staport.finance.gBanque.Bank.entities;
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.enums.Devise;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
+import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
+import staport.finance.gBanque.lesEtatsDesEncours.core.entities.Cheque;
+import staport.finance.gBanque.lesEtatsDesEncours.core.entities.Lcn;
+import staport.finance.gBanque.lesEtatsDesEncours.core.entities.MiseADisposition;
+import staport.finance.gBanque.lesEtatsDesEncours.core.entities.Virement;
+import staport.finance.gBanque.rapprochement.entities.Transaction;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -12,7 +20,6 @@ import java.util.Objects;
 @Entity
 @Table(name = "banque")
 public class Banque {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -47,25 +54,45 @@ public class Banque {
     private OffsetDateTime dateModification;
 
 
+    // One-to-many relationships with cascade and orphan removal for proper lifecycle management.
     @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneFonctionnelle> ligneFonctionnelles = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Cheque> cheques = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Lcn> lcns = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Virement> virements = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MiseADisposition> misesADisposition = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banqueDePrelevement", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ContratLeasing> contratsLeasing = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CreditMoyenTerme> creditMoyenTermes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banqueDePrelevement", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Transaction> transactions = new ArrayList<>();
+
 
     // --- Constructors ---
     public Banque() {
         // Default constructor required by JPA
     }
 
-    public Banque(Long id, byte[] logoData, String nom, String numeroDeCompte, Devise devise, String address, String agence, BigDecimal soldeActuel, OffsetDateTime dateCreation, OffsetDateTime dateModification) {
-        this.id = id;
+    // A more practical constructor for creation
+    public Banque(byte[] logoData, String nom, String numeroDeCompte, Devise devise, String address, String agence) {
         this.logoData = logoData;
         this.nom = nom;
         this.numeroDeCompte = numeroDeCompte;
         this.devise = devise;
         this.address = address;
         this.agence = agence;
-        this.soldeActuel = soldeActuel;
-        this.dateCreation = dateCreation;
-        this.dateModification = dateModification;
     }
 
     // --- Getters and Setters ---
@@ -109,16 +136,114 @@ public class Banque {
         this.ligneFonctionnelles = ligneFonctionnelles;
     }
 
-    // --- Helper methods to manage the bidirectional relationship (CRITICAL for orphanRemoval) ---
+    public List<Cheque> getCheques() {
+        return cheques;
+    }
+
+    public void setCheques(List<Cheque> cheques) {
+        this.cheques = cheques;
+    }
+
+    public List<ContratLeasing> getContratsLeasing() {
+        return contratsLeasing;
+    }
+
+    public void setContratsLeasing(List<ContratLeasing> contratsLeasing) {
+        this.contratsLeasing = contratsLeasing;
+    }
+
+    public List<CreditMoyenTerme> getCreditMoyenTermes() {
+        return creditMoyenTermes;
+    }
+
+    public void setCreditMoyenTermes(List<CreditMoyenTerme> creditMoyenTermes) {
+        this.creditMoyenTermes = creditMoyenTermes;
+    }
+
+    // Getters and Setters for the Lcn list
+    public List<Lcn> getLcns() {
+        return lcns;
+    }
+    public void setLcns(List<Lcn> lcns) {
+        this.lcns = lcns;
+    }
+
+    // Getters and Setters for the Virement list
+    public List<Virement> getVirements() {
+        return virements;
+    }
+    public void setVirements(List<Virement> virements) {
+        this.virements = virements;
+    }
+
+    // Getters and Setters for the MiseADisposition list
+    public List<MiseADisposition> getMisesADisposition() {
+        return misesADisposition;
+    }
+    public void setMisesADisposition(List<MiseADisposition> misesADisposition) {
+        this.misesADisposition = misesADisposition;
+    }
+
+    public List<Transaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(List<Transaction> transactions) {
+        this.transactions = transactions;
+    }
+
+    // --- Helper methods to manage the bidirectional relationship ---
     public void addLigneFonctionnelle(LigneFonctionnelle ligneFonctionnelle) {
         ligneFonctionnelles.add(ligneFonctionnelle);
-        ligneFonctionnelle.setBanque(this); // Set the inverse side
+        ligneFonctionnelle.setBanque(this);
     }
 
     public void removeLigneFonctionnelle(LigneFonctionnelle ligneFonctionnelle) {
         ligneFonctionnelles.remove(ligneFonctionnelle);
-        ligneFonctionnelle.setBanque(null); // Unset the inverse side
+        ligneFonctionnelle.setBanque(null);
     }
+
+    public void addCheque(Cheque cheque) {
+        cheques.add(cheque);
+        cheque.setBanque(this);
+    }
+
+    public void removeCheque(Cheque cheque) {
+        cheques.remove(cheque);
+        cheque.setBanque(null);
+    }
+
+    public void addLcn(Lcn lcn) {
+        lcns.add(lcn);
+        lcn.setBanque(this);
+    }
+
+    public void removeLcn(Lcn lcn) {
+        lcns.remove(lcn);
+        lcn.setBanque(null);
+    }
+
+    public void addVirement(Virement virement) {
+        virements.add(virement);
+        virement.setBanque(this);
+    }
+
+    public void removeVirement(Virement virement) {
+        virements.remove(virement);
+        virement.setBanque(null);
+    }
+
+    public void addMiseADisposition(MiseADisposition miseADisposition) {
+        misesADisposition.add(miseADisposition);
+        miseADisposition.setBanque(this);
+    }
+
+    public void removeMiseADisposition(MiseADisposition miseADisposition) {
+        misesADisposition.remove(miseADisposition);
+        miseADisposition.setBanque(null);
+    }
+
+    // You would add similar helper methods for ContratLeasing, CreditMoyenTerme, and Transaction
 
     // --- JPA Lifecycle Callbacks ---
     @PrePersist

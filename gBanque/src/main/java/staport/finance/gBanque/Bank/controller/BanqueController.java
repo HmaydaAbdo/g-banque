@@ -69,6 +69,12 @@ import java.util.List;
             return ResponseEntity.ok(bankInfo);
         }
 
+        @GetMapping("/accueil-info/{banqueId}")
+        public ResponseEntity<BankAcceuilResponse> getAccueilBankInformationById(@PathVariable Long banqueId) {
+            BankAcceuilResponse bankInfo = banqueService.getAccueilBankInfoById(banqueId);
+            return ResponseEntity.ok(bankInfo);
+        }
+
         /**
          * Get all bank accounts with advanced search, pagination, and sorting.
          * GET /banques?page={page}&size={size}&sort={field,direction}&nom={nom}&numeroDeCompte={num}&minSolde={min}&maxSolde={max}
@@ -121,7 +127,7 @@ import java.util.List;
          * @return HTTP status 204 NO CONTENT.
          */
         @DeleteMapping("/{id}")
-        public ResponseEntity<Void> deleteBanque(@PathVariable Long id) {
+        public ResponseEntity<Void> deleteBanque(@PathVariable Long id) throws Exception {
             banqueService.deleteBanque(id);
             return ResponseEntity.noContent().build();
         }

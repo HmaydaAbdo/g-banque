@@ -14,7 +14,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
@@ -23,7 +23,8 @@ spring:
   batch:
     job:
       enabled: true
-    initialize-schema: always
+    jdbc:
+      initialize-schema: always
 
 
 functional:
@@ -35,3 +36,14 @@ functional:
       warning:
         threshold:
           months: 3
+
+logging:
+  level:
+    # Essential for seeing the request URL and headers
+    org.springframework.web.reactive.function.client: DEBUG
+    # Essential for seeing connection details (e.g., to which IP/port it actually connects)
+    reactor.netty.http.client: DEBUG
+  #file:
+    #path: C:/Users/Hp/Desktop/n8n/logs/gBanque.log
+
+application-start-date: 2025-08-12T00:00:00+00:00

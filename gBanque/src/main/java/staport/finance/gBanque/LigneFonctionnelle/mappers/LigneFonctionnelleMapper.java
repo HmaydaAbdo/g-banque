@@ -1,72 +1,153 @@
 package staport.finance.gBanque.LigneFonctionnelle.mappers;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.stereotype.Component;
+import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleRequest;
 import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleResponse;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
-public abstract class LigneFonctionnelleMapper {
+@Component // Mark as a Spring component for dependency injection
+public class LigneFonctionnelleMapper {
 
-    @Autowired
-    protected NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
-
-    // Request to Entity for creation
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "dateCreation", ignore = true)
-    @Mapping(target = "dateModification", ignore = true)
-    @Mapping(target = "banque", ignore = true)
-    @Mapping(target = "natureLigneFonctionnelle", expression = "java(mapNatureLigneFonctionnelleIdToEntity(request.getNatureLigneFonctionnelleId()))")
-    @Mapping(source = "dateDepart", target = "dateDepart")
-    @Mapping(source = "dateFin", target = "dateFin")
-    @Mapping(source = "actif", target = "actif", qualifiedByName = "setActifDefaultTrue") // NEW MAPPING for actif
-    public abstract LigneFonctionnelle toEntity(LigneFonctionnelleRequest request);
-
-    // Entity to Response for reading
-    @Mapping(source = "banque.id", target = "banqueId")
-    @Mapping(source = "banque.nom", target = "banqueNom")
-    @Mapping(source = "natureLigneFonctionnelle.id", target = "natureLigneFonctionnelleId")
-    @Mapping(source = "natureLigneFonctionnelle.label", target = "natureLigneFonctionnelleLabel")
-    @Mapping(source = "natureLigneFonctionnelle.description", target = "natureLigneFonctionnelleDescription")
-    @Mapping(source = "dateDepart", target = "dateDepart")
-    @Mapping(source = "dateFin", target = "dateFin")
-    @Mapping(source = "actif", target = "actif") // NEW MAPPING
-    public abstract LigneFonctionnelleResponse toDto(LigneFonctionnelle ligneFonctionnelle);
-
-    public abstract List<LigneFonctionnelleResponse> toDtoList(List<LigneFonctionnelle> ligneFonctionnelles);
-
-    // Request to Entity for update
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "dateCreation", ignore = true)
-    @Mapping(target = "dateModification", ignore = true)
-    @Mapping(target = "banque", ignore = true)
-    @Mapping(target = "natureLigneFonctionnelle", expression = "java(mapNatureLigneFonctionnelleIdToEntity(request.getNatureLigneFonctionnelleId()))")
-    @Mapping(source = "dateDepart", target = "dateDepart")
-    @Mapping(source = "dateFin", target = "dateFin")
-    @Mapping(source = "actif", target = "actif") // NEW MAPPING: Directly map if present, otherwise no change by default for updates.
-    public abstract void updateLigneFonctionnelleFromDto(LigneFonctionnelleRequest request, @MappingTarget LigneFonctionnelle ligneFonctionnelle);
-
-    // Helper method to fetch NatureLigneFonctionnelle entity by ID
-    protected NatureLigneFonctionnelle mapNatureLigneFonctionnelleIdToEntity(Long natureLigneFonctionnelleId) {
-        if (natureLigneFonctionnelleId == null) {
+    /**
+     * Converts a LigneFonctionnelleRequest DTO to a LigneFonctionnelle entity for creation.
+     * The related Banque and NatureLigneFonctionnelle entities must be provided by the service layer.
+     *
+     * @param request The LigneFonctionnelleRequest DTO.
+     * @param banque The associated Banque entity (already fetched).
+     * @param natureLigneFonctionnelle The associated NatureLigneFonctionnelle entity (already fetched).
+     * @return A new LigneFonctionnelle entity.
+     */
+    public LigneFonctionnelle toEntity(LigneFonctionnelleRequest request,
+                                       Banque banque,
+                                       NatureLigneFonctionnelle natureLigneFonctionnelle) {
+        if (request == null) {
             return null;
         }
-        return natureLigneFonctionnelleRepository.findById(natureLigneFonctionnelleId)
-                .orElseThrow(() -> new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + natureLigneFonctionnelleId));
+
+        LigneFonctionnelle ligneFonctionnelle = new LigneFonctionnelle();
+        // Set relationships (handled by service and passed here)
+        ligneFonctionnelle.setBanque(banque);
+        ligneFonctionnelle.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
+
+        // Set direct properties
+        ligneFonctionnelle.setPlafond(request.getPlafond());
+        ligneFonctionnelle.setTaux(request.getTaux());
+        ligneFonctionnelle.setDateDepart(request.getDateDepart());
+        ligneFonctionnelle.setDateFin(request.getDateFin());
+
+        // Handle 'actif' with default true if not provided in the request
+        ligneFonctionnelle.setActif(request.getActif() != null ? request.getActif() : true);
+
+        // ID, dateCreation, dateModification are handled by JPA @PrePersist callbacks
+
+        return ligneFonctionnelle;
     }
 
-    // Named method to provide default true for 'actif' if not present in request
-    @Named("setActifDefaultTrue")
-    protected boolean setActifDefaultTrue(Boolean actif) {
-        return actif != null ? actif : true;
+    /**
+     * Converts a LigneFonctionnelle entity to a LigneFonctionnelleResponse DTO.
+     *
+     * @param ligneFonctionnelle The LigneFonctionnelle entity.
+     * @return A LigneFonctionnelleResponse DTO.
+     */
+    public LigneFonctionnelleResponse toDto(LigneFonctionnelle ligneFonctionnelle) {
+        if (ligneFonctionnelle == null) {
+            return null;
+        }
+
+        LigneFonctionnelleResponse response = new LigneFonctionnelleResponse();
+        response.setId(ligneFonctionnelle.getId());
+
+        // Map related entity IDs and names/labels/descriptions
+        if (ligneFonctionnelle.getBanque() != null) {
+            response.setBanqueId(ligneFonctionnelle.getBanque().getId());
+            response.setBanqueNom(ligneFonctionnelle.getBanque().getNom());
+        }
+        if (ligneFonctionnelle.getNatureLigneFonctionnelle() != null) {
+            response.setNatureLigneFonctionnelleId(ligneFonctionnelle.getNatureLigneFonctionnelle().getId());
+            response.setNatureLigneFonctionnelleLabel(ligneFonctionnelle.getNatureLigneFonctionnelle().getLabel());
+            response.setNatureLigneFonctionnelleDescription(ligneFonctionnelle.getNatureLigneFonctionnelle().getDescription());
+        }
+
+        // Map direct properties
+        response.setPlafond(ligneFonctionnelle.getPlafond());
+        response.setTaux(ligneFonctionnelle.getTaux());
+        response.setDateDepart(ligneFonctionnelle.getDateDepart());
+        response.setDateFin(ligneFonctionnelle.getDateFin());
+        response.setDateCreation(ligneFonctionnelle.getDateCreation());
+        response.setDateModification(ligneFonctionnelle.getDateModification());
+        response.setActif(ligneFonctionnelle.isActif());
+
+        return response;
+    }
+
+    /**
+     * Converts a list of LigneFonctionnelle entities to a list of LigneFonctionnelleResponse DTOs.
+     *
+     * @param ligneFonctionnelles The list of LigneFonctionnelle entities.
+     * @return A list of LigneFonctionnelleResponse DTOs.
+     */
+    public List<LigneFonctionnelleResponse> toDtoList(List<LigneFonctionnelle> ligneFonctionnelles) {
+        if (ligneFonctionnelles == null) {
+            return new ArrayList<>(); // Return an empty list for null input, more robust
+        }
+        return ligneFonctionnelles.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Updates an existing LigneFonctionnelle entity with data from a LigneFonctionnelleRequest DTO.
+     * Related entities (Banque, NatureLigneFonctionnelle) should be passed as separate arguments if they are changing.
+     * If these arguments are null, the existing relationships on the entity will be preserved.
+     *
+     * @param request The LigneFonctionnelleRequest DTO with updated data.
+     * @param ligneFonctionnelle The existing LigneFonctionnelle entity to be updated.
+     * @param newBanque (Optional) The new Banque entity if the bank association is changing. Pass null otherwise.
+     * @param newNature (Optional) The new NatureLigneFonctionnelle entity if the nature association is changing. Pass null otherwise.
+     */
+    public void updateLigneFonctionnelleFromDto(LigneFonctionnelleRequest request,
+                                                LigneFonctionnelle ligneFonctionnelle,
+                                                Banque newBanque,
+                                                NatureLigneFonctionnelle newNature) {
+        if (request == null || ligneFonctionnelle == null) {
+            return;
+        }
+
+        // Update direct properties only if they are provided in the request
+        if (request.getPlafond() != null) {
+            ligneFonctionnelle.setPlafond(request.getPlafond());
+        }
+        if (request.getTaux() != null) {
+            ligneFonctionnelle.setTaux(request.getTaux());
+        }
+        if (request.getDateDepart() != null) {
+            ligneFonctionnelle.setDateDepart(request.getDateDepart());
+        }
+        if (request.getDateFin() != null) {
+            ligneFonctionnelle.setDateFin(request.getDateFin());
+        }
+        // 'actif' is a Boolean, so null means 'no change intended' from the request's perspective,
+        // but if it's explicitly false or true, it should apply.
+        if (request.getActif() != null) {
+            ligneFonctionnelle.setActif(request.getActif());
+        }
+
+        // Update relationships if new entities are provided
+        if (newBanque != null) {
+            ligneFonctionnelle.setBanque(newBanque);
+        }
+        if (newNature != null) {
+            ligneFonctionnelle.setNatureLigneFonctionnelle(newNature);
+        }
+
+        // ID and dateCreation are ignored (not updatable via DTO)
+        // dateModification is handled by JPA @PreUpdate
     }
 }
