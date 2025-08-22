@@ -17,6 +17,12 @@ public class EcheanceCMTSearchDto {
 
     public EcheanceCMTSearchDto() {}
 
+    public EcheanceCMTSearchDto(Integer month, Integer year, StatutEcheanceCMT statutPaiement) {
+        this.month = month;
+        this.year = year;
+        this.statutPaiement = statutPaiement;
+    }
+
     // Getters et Setters pour tous les champs
     public Long getCreditMoyenTermeId() { return creditMoyenTermeId; }
     public void setCreditMoyenTermeId(Long creditMoyenTermeId) { this.creditMoyenTermeId = creditMoyenTermeId; }

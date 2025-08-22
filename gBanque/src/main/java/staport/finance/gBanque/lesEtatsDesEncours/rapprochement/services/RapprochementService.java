@@ -1,4 +1,4 @@
-package staport.finance.gBanque.rapprochement.services;
+package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.services;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,14 +18,18 @@ import staport.finance.gBanque.leasing.contratLeasing.repositories.ContratLeasin
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
-import staport.finance.gBanque.rapprochement.dtos.*;
-import staport.finance.gBanque.rapprochement.mapper.CmtTransactionMapper;
-import staport.finance.gBanque.rapprochement.mapper.LeasingTransactionMapper;
-import staport.finance.gBanque.rapprochement.entities.Transaction;
-import staport.finance.gBanque.rapprochement.mapper.TransactionMapper;
-import staport.finance.gBanque.rapprochement.repositories.TransactionRepository;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos.*;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.mapper.CmtTransactionMapper;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.mapper.LeasingTransactionMapper;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.entities.Transaction;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.mapper.TransactionMapper;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.repositories.TransactionRepository;
 
-import static staport.finance.gBanque.rapprochement.spec.TransactionSpecifications.*;
+import java.util.ArrayList;
+import java.util.List;
+import jakarta.persistence.criteria.Predicate;
+
+import static staport.finance.gBanque.lesEtatsDesEncours.rapprochement.spec.TransactionSpecifications.*;
 
 @Service
 public class RapprochementService {
@@ -128,18 +132,16 @@ public class RapprochementService {
      * @return A Page of Transaction DTOs.
      */
     public Page<TransactionResponseDto> getTransactions(Long banqueId, TransactionSearchDto searchDto, Pageable pageable) {
-        // Start with the current month filter and the mandatory bank ID filter.
-        Specification<Transaction> combinedSpec = isCurrentMonth().and(hasBanqueId(banqueId));
+        List<Specification<Transaction>> specs = new ArrayList<>();
+        specs.add(isCurrentMonth());
+        specs.add(hasBanqueId(banqueId));
 
-        // Apply optional filters from the DTO.
         if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
-            combinedSpec = combinedSpec.and(libelleContains(searchDto.getLibelle()));
+            specs.add(libelleContains(searchDto.getLibelle()));
         }
 
-        // Fetch the transactions as a Page of entities
+        Specification<Transaction> combinedSpec = withFilters(specs);
         Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, pageable);
-
-        // Map the Page of entities to a Page of DTOs
         return transactions.map(TransactionMapper::toDto);
     }
 
@@ -153,18 +155,15 @@ public class RapprochementService {
      * @return A Page of Transaction DTOs.
      */
     public Page<TransactionResponseDto> getRecapitulatifBancaire(TransactionSearchDto searchDto, Pageable pageable) {
-        // Start with the current month filter only
-        Specification<Transaction> combinedSpec = isCurrentMonth();
+        List<Specification<Transaction>> specs = new ArrayList<>();
+        specs.add(isCurrentMonth());
 
-        // Apply optional filters from the DTO
         if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
-            combinedSpec = combinedSpec.and(libelleContains(searchDto.getLibelle()));
+            specs.add(libelleContains(searchDto.getLibelle()));
         }
 
-        // Fetch the transactions across all banks
+        Specification<Transaction> combinedSpec = withFilters(specs);
         Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, pageable);
-
-        // Map the Page of entities to a Page of DTOs
         return transactions.map(TransactionMapper::toDto);
     }
 }

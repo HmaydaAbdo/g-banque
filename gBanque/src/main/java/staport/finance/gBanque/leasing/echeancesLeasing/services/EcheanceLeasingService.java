@@ -1,7 +1,6 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.services;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher; // ⭐ Importation du publisher
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -11,25 +10,21 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
-import staport.finance.gBanque.leasing.contratLeasing.dto.LeasingCompletedEvent;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasingPhase;
 import staport.finance.gBanque.leasing.contratLeasing.repositories.ContratLeasingRepository;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.*;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
-import staport.finance.gBanque.leasing.echeancesLeasing.enums.PeriodeEncours;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.mapper.EcheanceLeasingMapper;
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
 import staport.finance.gBanque.leasing.echeancesLeasing.specification.EcheanceLeasingSpecification;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 /**
  * Service pour la gestion (consultation, mise à jour de statut) et les calculs agrégés
@@ -42,7 +37,6 @@ public class EcheanceLeasingService {
     private final ContratLeasingRepository contratLeasingRepository;
     private final EcheanceLeasingMapper echeanceLeasingMapper;
     private final BanqueRepository banqueRepository;
-    private final ApplicationEventPublisher eventPublisher; // ⭐ Nouvelle dépendance
 
     private static final BigDecimal ZERO = BigDecimal.ZERO;
     private static final int SCALE = 2;
@@ -53,13 +47,12 @@ public class EcheanceLeasingService {
     public EcheanceLeasingService(EcheanceLeasingRepository echeanceLeasingRepository,
                                   ContratLeasingRepository contratLeasingRepository,
                                   EcheanceLeasingMapper echeanceLeasingMapper,
-                                  BanqueRepository banqueRepository,
-                                  ApplicationEventPublisher eventPublisher) { // ⭐ Injection du publisher
+                                  BanqueRepository banqueRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.contratLeasingRepository = contratLeasingRepository;
         this.echeanceLeasingMapper = echeanceLeasingMapper;
         this.banqueRepository = banqueRepository;
-        this.eventPublisher = eventPublisher;
+
     }
 
 
@@ -192,23 +185,9 @@ public class EcheanceLeasingService {
         ContratLeasing contrat = contratLeasingRepository.findById(contratId)
                 .orElseThrow(() -> new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found."));
 
-        Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratId(contratId);
-
-        if (searchDTO != null) {
-            if (searchDTO.getNumeroEcheance() != null) {
-                spec = spec.and(EcheanceLeasingSpecification.hasNumeroEcheance(searchDTO.getNumeroEcheance()));
-            }
-            if (searchDTO.getMonth() != null) {
-                spec = spec.and(EcheanceLeasingSpecification.hasMonth(searchDTO.getMonth()));
-            }
-            if (searchDTO.getYear() != null) {
-                spec = spec.and(EcheanceLeasingSpecification.hasYear(searchDTO.getYear()));
-            }
-            if (searchDTO.getStatutPaiement() != null) {
-                spec = spec.and(EcheanceLeasingSpecification.hasStatutPaiement(searchDTO.getStatutPaiement()));
-            }
-
-        }
+        // Utilise la nouvelle méthode buildSpecification pour une gestion unifiée des filtres.
+        Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.buildSpecification(searchDTO)
+                .and(EcheanceLeasingSpecification.byContratId(contratId));
 
         // Fetch a PAGE of Echeances based on search criteria and Pageable
         Page<EcheanceLeasing> echeancesPage = echeanceLeasingRepository.findAll(spec, pageable);
@@ -273,12 +252,7 @@ public class EcheanceLeasingService {
         echeance = this.echeanceLeasingRepository.save(echeance);
         this.banqueRepository.save(banqueDePrelevement);
 
-        // ⭐ Étape 1 : Vérification de la complétude du contrat
-        // On vérifie si toutes les échéances du contrat ont été payées
-        if (areAllEcheancesPaid(contratLeasing.getId())) {
-            // ⭐ Étape 2 : Publication de l'événement si le contrat est complet
-            eventPublisher.publishEvent(new LeasingCompletedEvent(contratLeasing.getId()));
-        }
+
 
         return echeanceLeasingMapper.toDto(echeance);
     }
@@ -337,18 +311,6 @@ public class EcheanceLeasingService {
 
 
     /**
-     * Vérifie si toutes les échéances (y compris la valeur résiduelle) d'un contrat sont payées.
-     * @param contratId L'ID du contrat.
-     * @return true si toutes les échéances sont PAYE, false sinon.
-     */
-    @Transactional(readOnly = true)
-    public boolean areAllEcheancesPaid(Long contratId) {
-        long totalEcheances = echeanceLeasingRepository.countByContratLeasingId(contratId);
-        long paidEcheances = echeanceLeasingRepository.countByContratLeasingIdAndStatutPaiement(contratId, StatutEcheanceLeasing.PAYE);
-        return totalEcheances > 0 && totalEcheances == paidEcheances;
-    }
-
-    /**
      * Vérifie si au moins une échéance d'un contrat a déjà été payée.
      * Cette méthode est utilisée pour valider la suppression du contrat.
      * @param contratId L'ID du contrat.
@@ -358,5 +320,4 @@ public class EcheanceLeasingService {
     public boolean hasPaidEcheances(Long contratId) {
         return echeanceLeasingRepository.existsByContratLeasingIdAndStatutPaiement(contratId, StatutEcheanceLeasing.PAYE);
     }
-
 }

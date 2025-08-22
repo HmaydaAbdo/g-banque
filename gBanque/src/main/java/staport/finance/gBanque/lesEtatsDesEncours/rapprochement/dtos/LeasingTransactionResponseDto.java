@@ -1,10 +1,10 @@
-package staport.finance.gBanque.rapprochement.dtos;
+package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
-import staport.finance.gBanque.rapprochement.enums.TransactionSource;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.enums.TransactionSource;
 
 public class LeasingTransactionResponseDto {
 

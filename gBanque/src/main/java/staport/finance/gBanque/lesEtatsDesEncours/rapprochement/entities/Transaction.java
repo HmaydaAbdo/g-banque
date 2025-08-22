@@ -1,10 +1,10 @@
-package staport.finance.gBanque.rapprochement.entities;
+package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.entities;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.rapprochement.enums.TransactionSource;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

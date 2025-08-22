@@ -9,7 +9,7 @@ import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponse
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDTO;
 
 /**
- * Interface for the ContratLeasingService.
+ * Interface pour le service de gestion des contrats de leasing.
  */
 public interface ContratLeasingService {
 
@@ -21,14 +21,19 @@ public interface ContratLeasingService {
 
     void deleteContratLeasing(Long id) throws ResourceNotFoundException;
 
-    Page<ContratLeasingResponseDTO> searchContratsLeasing(ContratLeasingSearchDTO searchDTO, Pageable pageable);
+    Page<ContratLeasingResponseDTO> getActiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable);
+
+    Page<ContratLeasingResponseDTO> getPendingLienReleaseContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable);
+
+    Page<ContratLeasingResponseDTO> getInactiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable);
 
     /**
-     * ⭐ Nouvelle méthode pour rechercher uniquement les contrats de leasing actifs.
-     * Un contrat est considéré comme actif s'il n'est pas marqué comme terminé.
-     * @param searchDTO Les critères de recherche (facultatifs).
-     * @param pageable Les informations de pagination.
-     * @return Une Page de ContratLeasingResponseDTO pour les contrats actifs.
+     * Marque un contrat comme inactif et terminé.
+     * Cette action n'est possible que pour un contrat "en attente de main levée".
+     * @param id L'ID du contrat à marquer comme inactif.
+     * @return Le DTO du contrat mis à jour.
+     * @throws ResourceNotFoundException Si le contrat n'existe pas.
+     * @throws ValidationException Si le contrat n'est pas dans l'état "en attente de main levée".
      */
-    Page<ContratLeasingResponseDTO> searchOnActifOnly(ContratLeasingSearchDTO searchDTO, Pageable pageable);
+    ContratLeasingResponseDTO markAsInactive(Long id) throws ResourceNotFoundException, ValidationException;
 }

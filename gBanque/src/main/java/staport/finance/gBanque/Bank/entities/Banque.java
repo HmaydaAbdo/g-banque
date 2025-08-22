@@ -9,7 +9,7 @@ import staport.finance.gBanque.lesEtatsDesEncours.core.entities.Cheque;
 import staport.finance.gBanque.lesEtatsDesEncours.core.entities.Lcn;
 import staport.finance.gBanque.lesEtatsDesEncours.core.entities.MiseADisposition;
 import staport.finance.gBanque.lesEtatsDesEncours.core.entities.Virement;
-import staport.finance.gBanque.rapprochement.entities.Transaction;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.entities.Transaction;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

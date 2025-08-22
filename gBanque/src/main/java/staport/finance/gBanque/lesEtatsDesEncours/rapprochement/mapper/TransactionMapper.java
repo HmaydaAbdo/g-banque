@@ -1,8 +1,8 @@
-package staport.finance.gBanque.rapprochement.mapper;
+package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.mapper;
 
 
-import staport.finance.gBanque.rapprochement.dtos.TransactionResponseDto;
-import staport.finance.gBanque.rapprochement.entities.Transaction;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos.TransactionResponseDto;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.entities.Transaction;
 
 public class TransactionMapper {
 

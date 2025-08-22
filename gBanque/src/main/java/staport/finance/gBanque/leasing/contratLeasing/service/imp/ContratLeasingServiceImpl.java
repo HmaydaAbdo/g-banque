@@ -1,7 +1,6 @@
-
 package staport.finance.gBanque.leasing.contratLeasing.service.imp;
 
-import org.springframework.context.event.EventListener;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,6 +16,7 @@ import staport.finance.gBanque.leasing.contratLeasing.mapper.ContratLeasingMappe
 import staport.finance.gBanque.leasing.contratLeasing.repositories.ContratLeasingRepository;
 import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 import staport.finance.gBanque.leasing.contratLeasing.specification.ContratLeasingSpecification;
+import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.EcheanceLeasingService;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLeasing;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.repositories.OrganismeLeasingRepository;
@@ -195,43 +195,68 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         contratLeasingRepository.deleteById(id);
     }
 
-    /**
-     * Searches for leasing contracts based on criteria and returns a paginated result.
-     *
-     * @param searchDTO The DTO containing the search filters.
-     * @param pageable The pagination and sorting information.
-     * @return A page of contract response DTOs.
-     */
-    @Override
-    @Transactional(readOnly = true) // Read-only transaction for performance
-    public Page<ContratLeasingResponseDTO> searchContratsLeasing(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
-        // Uses a Spring Data JPA Specification to build a dynamic query based on search criteria
-        return contratLeasingRepository.findAll(ContratLeasingSpecification.bySearchCriteria(searchDTO), pageable)
-                .map(contratLeasingMapper::toDto); // Maps each entity on the page to a DTO
-    }
 
-    // ⭐ Nouvelle méthode pour rechercher uniquement les contrats actifs
     @Override
     @Transactional(readOnly = true)
-    public Page<ContratLeasingResponseDTO> searchOnActifOnly(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
-        Specification<ContratLeasing> spec = ContratLeasingSpecification.bySearchCriteria(searchDTO);
-        spec = spec.and((root, query, builder) -> builder.isFalse(root.get("completed")));
-        return contratLeasingRepository.findAll(spec, pageable)
+    public Page<ContratLeasingResponseDTO> getInactiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        Specification<ContratLeasing> statusSpec = ContratLeasingSpecification.getInactiveContrats();
+        Specification<ContratLeasing> searchSpec = ContratLeasingSpecification.bySearchCriteria(searchDTO);
+
+        return contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable)
                 .map(contratLeasingMapper::toDto);
     }
 
-    // ⭐ Écouteur d'événement pour marquer le contrat comme terminé
-    @EventListener
-    @Transactional
-    public void handleLeasingCompletedEvent(LeasingCompletedEvent event) {
-        Long contratId = event.getContratId();
-        ContratLeasing contrat = contratLeasingRepository.findById(contratId)
-                .orElseThrow(() -> new ResourceNotFoundException("ContratLeasing introuvable avec l'ID : " + contratId));
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ContratLeasingResponseDTO> getPendingLienReleaseContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        Specification<ContratLeasing> statusSpec = ContratLeasingSpecification.getPendingLienReleaseContrats();
+        Specification<ContratLeasing> searchSpec = ContratLeasingSpecification.bySearchCriteria(searchDTO);
 
-        if (!contrat.isCompleted()) {
-            contrat.setCompleted(true);
-            contratLeasingRepository.save(contrat);
+        return contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable)
+                .map(contratLeasingMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ContratLeasingResponseDTO> getActiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        // Crée la spécification de statut (e.g., actif)
+        Specification<ContratLeasing> statusSpec = ContratLeasingSpecification.getActiveContrats();
+
+        // Crée la spécification de recherche dynamique (basée sur le DTO)
+        Specification<ContratLeasing> searchSpec = ContratLeasingSpecification.bySearchCriteria(searchDTO);
+
+        // Combine les deux spécifications avec un "AND"
+        return contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable)
+                .map(contratLeasingMapper::toDto);
+    }
+
+    @Override
+    @Transactional
+    public ContratLeasingResponseDTO markAsInactive(Long id) throws ResourceNotFoundException, ValidationException {
+
+        // 1. Récupérer le contrat existant
+        ContratLeasing contrat = contratLeasingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ContratLeasing with ID " + id + " not found."));
+
+        // 2. Vérifier si le contrat est déjà terminé
+        if (contrat.isCompleted()) {
+            throw new ValidationException("Le contrat avec l'ID " + id + " est déjà inactif.");
         }
+
+        // 3. Vérifier s'il reste des échéances avec le statut PREVU
+        boolean hasPendingInstallments = contrat.getEcheances().stream()
+                .anyMatch(echeance -> echeance.getStatutPaiement() == StatutEcheanceLeasing.PREVU);
+
+        if (hasPendingInstallments) {
+            throw new ValidationException("Le contrat ne peut être marqué comme inactif que si toutes les échéances ont été payées.");
+        }
+
+        // 4. Marquer le contrat comme terminé
+        contrat.setCompleted(true);
+        ContratLeasing updatedContrat = contratLeasingRepository.save(contrat);
+
+        // 5. Retourner le DTO mis à jour
+        return contratLeasingMapper.toDto(updatedContrat);
     }
 
     /**

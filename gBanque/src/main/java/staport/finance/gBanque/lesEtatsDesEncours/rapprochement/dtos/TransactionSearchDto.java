@@ -1,4 +1,4 @@
-package staport.finance.gBanque.rapprochement.dtos;
+package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos;
 
 public class TransactionSearchDto {
     private String libelle;

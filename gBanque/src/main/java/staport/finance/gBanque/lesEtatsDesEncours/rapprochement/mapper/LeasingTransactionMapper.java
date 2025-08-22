@@ -1,20 +1,18 @@
-package staport.finance.gBanque.rapprochement.mapper;
+package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
-import staport.finance.gBanque.rapprochement.dtos.LeasingTransactionRequestDto;
-import staport.finance.gBanque.rapprochement.dtos.LeasingTransactionResponseDto;
-import staport.finance.gBanque.rapprochement.entities.Transaction;
-import staport.finance.gBanque.rapprochement.enums.TransactionSource;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos.LeasingTransactionRequestDto;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos.LeasingTransactionResponseDto;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.entities.Transaction;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.enums.TransactionSource;
 import staport.finance.gBanque.Bank.entities.Banque;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 
 @Component
 public class LeasingTransactionMapper {
@@ -45,15 +43,24 @@ public class LeasingTransactionMapper {
         // Mapping simple fields
         transaction.setObservation(requestDto.getObservation());
         transaction.setTvaDeductible(requestDto.getTvaDeductible() / 100);
-        transaction.setTvaCollectee(requestDto.getTvaCollectee() / 100);
+
 
         // Mapping dates (ensuring consistency with OffsetDateTime)
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
 
+        boolean isValeurResiduelle = echeanceLeasing.getNumeroEcheance() == (contratLeasing.getPeriodeEnMois() + 1);
+        String libelle;
+        if (isValeurResiduelle) {
+            libelle = contratLeasing.getOrganismeLeasing().getNom() + ", V.R. pour le contrat N° " + contratLeasing.getNumeroContrat();
+        } else {
+            libelle = contratLeasing.getOrganismeLeasing().getNom() + ", contrat N° " + contratLeasing.getNumeroContrat();
+        }
+        transaction.setLibelle(libelle);
+
         // Mapping complex fields using the fetched entities
-        transaction.setLibelle(" échéance leasing n°" + requestDto.getEcheanceId() + " pour contrat numéro " + contratLeasing.getNumeroContrat() + " avec l'organisme " + contratLeasing.getOrganismeLeasing().getNom());
+
         transaction.setTransactionSource(TransactionSource.LEASING);
         transaction.setDebit(echeanceLeasing.getMontantTTC());
         transaction.setCredit(BigDecimal.ZERO);

@@ -53,5 +53,5 @@ public class EtatsDesEncoursController {
         }
     }
 
-    // You can add other controller methods here as needed for your application
+
 }

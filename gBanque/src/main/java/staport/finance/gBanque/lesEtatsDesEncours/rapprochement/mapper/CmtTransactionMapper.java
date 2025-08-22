@@ -1,15 +1,14 @@
-package staport.finance.gBanque.rapprochement.mapper;
+package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.mapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
-import staport.finance.gBanque.rapprochement.dtos.CmtTransactionRequestDto;
-import staport.finance.gBanque.rapprochement.dtos.CmtTransactionResponseDto;
-import staport.finance.gBanque.rapprochement.dtos.LeasingTransactionResponseDto;
-import staport.finance.gBanque.rapprochement.entities.Transaction;
-import staport.finance.gBanque.rapprochement.enums.TransactionSource;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos.CmtTransactionRequestDto;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos.CmtTransactionResponseDto;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.entities.Transaction;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.enums.TransactionSource;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +46,7 @@ public class CmtTransactionMapper {
         // Mapping simple fields
         transaction.setObservation(requestDto.getObservation());
         transaction.setTvaDeductible(requestDto.getTvaDeductible() / 100);
-        transaction.setTvaCollectee(requestDto.getTvaCollectee() / 100);
+
 
         // Mapping dates (ensuring consistency with OffsetDateTime)
         transaction.setDateEmission(requestDto.getDateEmission());

@@ -1,8 +1,11 @@
 package staport.finance.gBanque.cmt.specifications;
 
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.cmt.dtos.CreditMoyenTermeSearchDto;
+import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
+import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 
 import java.util.ArrayList;
@@ -37,7 +40,6 @@ public class CreditMoyenTermeSpecification {
             }
 
             // Nouveau prédicat pour le champ 'completed'
-            // Le type Boolean permet à la valeur d'être null (non spécifiée), true ou false.
             if (searchDto.getCompleted() != null) {
                 predicates.add(builder.equal(root.get("completed"), searchDto.getCompleted()));
             }
@@ -45,5 +47,59 @@ public class CreditMoyenTermeSpecification {
             // Combine tous les prédicats avec un opérateur AND
             return builder.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    /**
+     * Specification to filter for active credits.
+     * Condition: completed = false AND there is at least one unpaid installment.
+     */
+    public static Specification<CreditMoyenTerme> getActiveCredits() {
+        return (root, query, builder) -> {
+            // Predicate 1: completed is false
+            Predicate completedIsFalse = builder.isFalse(root.get("completed"));
+
+            // Predicate 2: exists a subquery with unpaid installments
+            Subquery<EcheanceCMT> subquery = query.subquery(EcheanceCMT.class);
+            jakarta.persistence.criteria.Root<EcheanceCMT> echeanceRoot = subquery.from(EcheanceCMT.class);
+
+            subquery.select(echeanceRoot.get("id"))
+                    .where(builder.and(
+                            builder.equal(echeanceRoot.get("creditMoyenTerme").get("id"), root.get("id")),
+                            builder.notEqual(echeanceRoot.get("statutPaiement"), StatutEcheanceCMT.PAYE)
+                    ));
+
+            return builder.and(completedIsFalse, builder.exists(subquery));
+        };
+    }
+
+    /**
+     * Specification to filter for credits pending closure.
+     * Condition: completed = false AND ALL installments are paid.
+     */
+    public static Specification<CreditMoyenTerme> getPendingClosureCredits() {
+        return (root, query, builder) -> {
+            // Predicate 1: completed is false
+            Predicate completedIsFalse = builder.isFalse(root.get("completed"));
+
+            // Predicate 2: does NOT exist a subquery with unpaid installments
+            Subquery<EcheanceCMT> subquery = query.subquery(EcheanceCMT.class);
+            jakarta.persistence.criteria.Root<EcheanceCMT> echeanceRoot = subquery.from(EcheanceCMT.class);
+
+            subquery.select(echeanceRoot.get("id"))
+                    .where(builder.and(
+                            builder.equal(echeanceRoot.get("creditMoyenTerme").get("id"), root.get("id")),
+                            builder.notEqual(echeanceRoot.get("statutPaiement"), StatutEcheanceCMT.PAYE)
+                    ));
+
+            return builder.and(completedIsFalse, builder.not(builder.exists(subquery)));
+        };
+    }
+
+    /**
+     * Specification to filter for archived credits.
+     * Condition: completed = true.
+     */
+    public static Specification<CreditMoyenTerme> getArchivedCredits() {
+        return (root, query, builder) -> builder.isTrue(root.get("completed"));
     }
 }

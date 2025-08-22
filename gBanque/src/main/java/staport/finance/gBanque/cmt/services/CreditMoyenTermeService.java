@@ -1,6 +1,5 @@
 package staport.finance.gBanque.cmt.services;
 
-import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -9,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.cmt.dtos.*;
+import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.services.EcheanceCMTService;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.mappers.CreditMoyenTermeMapper;
@@ -52,24 +52,35 @@ public class CreditMoyenTermeService {
         return creditMoyenTermeMapper.toResponseDto(savedCredit);
     }
 
+    @Transactional(readOnly = true)
     public CreditMoyenTermeResponseDto findById(Long id) {
         CreditMoyenTerme credit = creditMoyenTermeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Credit moyen terme introuvable avec l'ID : " + id));
         return creditMoyenTermeMapper.toResponseDto(credit);
     }
 
-    public Page<CreditMoyenTermeResponseDto> searchOnActifOnly(CreditMoyenTermeSearchDto searchDto, Pageable pageable) {
-        // 1. Crée une spécification à partir des critères de recherche existants
-        Specification<CreditMoyenTerme> spec = CreditMoyenTermeSpecification.withSearchCriteria(searchDto);
+    @Transactional(readOnly = true)
+    public Page<CreditMoyenTermeResponseDto> searchActiveCredits(CreditMoyenTermeSearchDto searchDto, Pageable pageable) {
+        Specification<CreditMoyenTerme> statusSpec = CreditMoyenTermeSpecification.getActiveCredits();
+        Specification<CreditMoyenTerme> searchSpec = CreditMoyenTermeSpecification.withSearchCriteria(searchDto);
+        return creditMoyenTermeRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable)
+                .map(creditMoyenTermeMapper::toResponseDto);
+    }
 
-        // 2. Ajoute un critère pour ne récupérer que les crédits non-terminés (completed = false)
-        spec = spec.and((root, query, builder) -> builder.isFalse(root.get("completed")));
+    @Transactional(readOnly = true)
+    public Page<CreditMoyenTermeResponseDto> searchPendingClosureCredits(CreditMoyenTermeSearchDto searchDto, Pageable pageable) {
+        Specification<CreditMoyenTerme> statusSpec = CreditMoyenTermeSpecification.getPendingClosureCredits();
+        Specification<CreditMoyenTerme> searchSpec = CreditMoyenTermeSpecification.withSearchCriteria(searchDto);
+        return creditMoyenTermeRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable)
+                .map(creditMoyenTermeMapper::toResponseDto);
+    }
 
-        // 3. Exécute la requête avec la spécification combinée
-        Page<CreditMoyenTerme> creditsPage = creditMoyenTermeRepository.findAll(spec, pageable);
-
-        // 4. Mappe le résultat en DTO
-        return creditsPage.map(creditMoyenTermeMapper::toResponseDto);
+    @Transactional(readOnly = true)
+    public Page<CreditMoyenTermeResponseDto> searchArchivedCredits(CreditMoyenTermeSearchDto searchDto, Pageable pageable) {
+        Specification<CreditMoyenTerme> statusSpec = CreditMoyenTermeSpecification.getArchivedCredits();
+        Specification<CreditMoyenTerme> searchSpec = CreditMoyenTermeSpecification.withSearchCriteria(searchDto);
+        return creditMoyenTermeRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable)
+                .map(creditMoyenTermeMapper::toResponseDto);
     }
 
     @Transactional
@@ -111,17 +122,25 @@ public class CreditMoyenTermeService {
     }
 
 
-    @EventListener
     @Transactional
-    public void handleCreditCompletedEvent(CreditCompletedEvent event) {
-        Long creditId = event.getCreditId();
+    public CreditMoyenTermeResponseDto markAsArchived(Long id) {
+        CreditMoyenTerme credit = creditMoyenTermeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Credit moyen terme introuvable avec l'ID : " + id));
 
-        CreditMoyenTerme credit = creditMoyenTermeRepository.findById(creditId)
-                .orElseThrow(() -> new ResourceNotFoundException("Credit moyen terme introuvable avec l'ID : " + creditId));
-
-        if (!credit.isCompleted()) {
-            credit.setCompleted(true);
-            creditMoyenTermeRepository.save(credit);
+        if (credit.isCompleted()) {
+            throw new ValidationException("Le crédit avec l'ID " + id + " est déjà archivé.");
         }
+
+        boolean hasUnpaidInstallments = credit.getEcheanceCMTS().stream()
+                .anyMatch(echeance -> echeance.getStatutPaiement() != StatutEcheanceCMT.PAYE);
+
+        if (hasUnpaidInstallments) {
+            throw new ValidationException("Le crédit ne peut être archivé que si toutes les échéances ont été payées.");
+        }
+
+        credit.setCompleted(true);
+        CreditMoyenTerme updatedCredit = creditMoyenTermeRepository.save(credit);
+
+        return creditMoyenTermeMapper.toResponseDto(updatedCredit);
     }
 }

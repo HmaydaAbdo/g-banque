@@ -1,34 +1,33 @@
-package staport.finance.gBanque.rapprochement.dtos;
+package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos;
 
-import staport.finance.gBanque.rapprochement.enums.TransactionSource;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.enums.TransactionSource;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
-public class CmtTransactionRequestDto {
-    private Long cmtId;
+public class LeasingTransactionRequestDto {
+
+    private Long contratLeasingId;
     private Long echeanceId;
     private TransactionSource transactionSource=TransactionSource.LEASING;
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperation;
     private String observation;
-    private double tvaCollectee;
-    private double tvaDeductible;
+    private Double tvaDeductible;
 
     // Constructeur par défaut
-    public CmtTransactionRequestDto() {
+    public LeasingTransactionRequestDto() {
     }
 
-    public CmtTransactionRequestDto(Long cmtId, Long echeanceId, TransactionSource transactionSource, OffsetDateTime dateEmission, OffsetDateTime dateValeur, OffsetDateTime dateOperation, String observation, double tvaCollectee, double tvaDeductible) {
-        this.cmtId = cmtId;
+    public LeasingTransactionRequestDto(Long contratLeasingId, Long echeanceId, TransactionSource transactionSource, OffsetDateTime dateEmission, OffsetDateTime dateValeur, OffsetDateTime dateOperation, String observation, Double tvaDeductible) {
+        this.contratLeasingId = contratLeasingId;
         this.echeanceId = echeanceId;
         this.transactionSource = transactionSource;
         this.dateEmission = dateEmission;
         this.dateValeur = dateValeur;
         this.dateOperation = dateOperation;
         this.observation = observation;
-        this.tvaCollectee = tvaCollectee;
         this.tvaDeductible = tvaDeductible;
     }
 
@@ -36,14 +35,12 @@ public class CmtTransactionRequestDto {
 
 
     // Getters et Setters
-
-
-    public Long getCmtId() {
-        return cmtId;
+    public Long getContratLeasingId() {
+        return contratLeasingId;
     }
 
-    public void setCmtId(Long cmtId) {
-        this.cmtId = cmtId;
+    public void setContratLeasingId(Long contratLeasingId) {
+        this.contratLeasingId = contratLeasingId;
     }
 
     public Long getEcheanceId() {
@@ -91,13 +88,6 @@ public class CmtTransactionRequestDto {
         this.observation = observation;
     }
 
-    public double getTvaCollectee() {
-        return tvaCollectee;
-    }
-
-    public void setTvaCollectee(double tvaCollectee) {
-        this.tvaCollectee = tvaCollectee;
-    }
 
     public double getTvaDeductible() {
         return tvaDeductible;
@@ -112,10 +102,9 @@ public class CmtTransactionRequestDto {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CmtTransactionRequestDto that = (CmtTransactionRequestDto) o;
-        return Double.compare(that.tvaCollectee, tvaCollectee) == 0 &&
-                Double.compare(that.tvaDeductible, tvaDeductible) == 0 &&
-                Objects.equals(cmtId, that.cmtId) &&
+        LeasingTransactionRequestDto that = (LeasingTransactionRequestDto) o;
+        return Double.compare(that.tvaDeductible, tvaDeductible) == 0 &&
+                Objects.equals(contratLeasingId, that.contratLeasingId) &&
                 Objects.equals(echeanceId, that.echeanceId) &&
                 Objects.equals(transactionSource, that.transactionSource) &&
                 Objects.equals(dateEmission, that.dateEmission) &&
@@ -125,23 +114,21 @@ public class CmtTransactionRequestDto {
     }
     @Override
     public int hashCode() {
-        return Objects.hash(cmtId, echeanceId, transactionSource, dateEmission, dateValeur,
-                dateOperation, observation, tvaCollectee, tvaDeductible);
+        return Objects.hash(contratLeasingId, echeanceId, transactionSource, dateEmission, dateValeur,
+                dateOperation, observation, tvaDeductible);
     }
 
     @Override
     public String toString() {
-        return "CmtTransactionRequestDto{" +
-                "cmtId='" + cmtId + '\'' +
+        return "LeasingTransactionRequestDto{" +
+                "contratLeasingId='" + contratLeasingId + '\'' +
                 ", echeanceId=" + echeanceId +
                 ", transactionSource='" + transactionSource + '\'' +
                 ", dateEmission=" + dateEmission +
                 ", dateValeur=" + dateValeur +
                 ", dateOperation=" + dateOperation +
                 ", observation='" + observation + '\'' +
-                ", tvaCollectee=" + tvaCollectee +
                 ", tvaDeductible=" + tvaDeductible +
                 '}';
     }
-
 }

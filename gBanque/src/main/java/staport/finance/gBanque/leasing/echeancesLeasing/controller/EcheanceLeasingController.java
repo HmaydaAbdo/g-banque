@@ -64,7 +64,7 @@ public class EcheanceLeasingController {
      * @param pageable Les informations de pagination et de tri pour les échéances.
      * @return ResponseEntity avec l'EncoursLeasingResponseDTO et HTTP Status 200 (OK).
      */
-        @GetMapping("/encours")
+    @GetMapping("/encours")
     public ResponseEntity<EncoursLeasingResponseDTO> getEncoursLeasing(
             @Valid @ModelAttribute EncoursLeasingRequestDTO requestDTO,
             Pageable pageable) {

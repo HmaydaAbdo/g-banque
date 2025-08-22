@@ -1,4 +1,4 @@
-package staport.finance.gBanque.rapprochement.controler;
+package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.controler;
 
 
 import jakarta.validation.Valid;
@@ -7,9 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.rapprochement.dtos.*;
-import staport.finance.gBanque.rapprochement.entities.Transaction;
-import staport.finance.gBanque.rapprochement.services.RapprochementService;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.dtos.*;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.services.RapprochementService;
 
 @RestController
 @RequestMapping("/rapprochement")

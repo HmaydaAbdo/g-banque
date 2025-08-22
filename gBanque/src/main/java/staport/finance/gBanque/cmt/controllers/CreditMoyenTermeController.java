@@ -22,7 +22,7 @@ import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundExcept
  * Gère les requêtes HTTP entrantes et délègue les tâches aux services correspondants.
  */
 @RestController
-@RequestMapping("/credits-cmt") // Définit le chemin de base de l'API pour ce contrôleur
+@RequestMapping("/credits-cmt")
 public class CreditMoyenTermeController {
 
     private final CreditMoyenTermeService creditMoyenTermeService;
@@ -52,21 +52,70 @@ public class CreditMoyenTermeController {
         return new ResponseEntity<>(createdCredit, HttpStatus.CREATED);
     }
 
+
+
     /**
-     * Récupère une liste paginée et triée de crédits, avec des critères de recherche optionnels.
-     * Mappe à GET /api/credits-cmt
+     * Récupère une liste paginée de crédits actifs.
+     * Mappe à GET /api/credits-cmt/actifs
      *
      * @param searchDto Un DTO contenant les filtres de recherche.
      * @param pageable Informations de pagination et de tri.
-     * @return Une page de DTOs de réponse des crédits.
+     * @return Une page de DTOs des crédits actifs.
      */
-    @GetMapping
-    public ResponseEntity<Page<CreditMoyenTermeResponseDto>> searchActifsCreditsMoyenTerme(
+    @GetMapping("/actifs")
+    public ResponseEntity<Page<CreditMoyenTermeResponseDto>> searchActiveCreditsMoyenTerme(
             CreditMoyenTermeSearchDto searchDto,
             Pageable pageable) {
-        Page<CreditMoyenTermeResponseDto> resultPage = creditMoyenTermeService.searchOnActifOnly(searchDto, pageable);
+        Page<CreditMoyenTermeResponseDto> resultPage = creditMoyenTermeService.searchActiveCredits(searchDto, pageable);
         return ResponseEntity.ok(resultPage);
     }
+
+    /**
+     * Récupère une liste paginée de crédits en attente de clôture.
+     * Mappe à GET /api/credits-cmt/en-attente-cloture
+     *
+     * @param searchDto Un DTO contenant les filtres de recherche.
+     * @param pageable Informations de pagination et de tri.
+     * @return Une page de DTOs des crédits en attente.
+     */
+    @GetMapping("/en-attente-de-main-levees")
+    public ResponseEntity<Page<CreditMoyenTermeResponseDto>> searchPendingClosureCreditsMoyenTerme(
+            CreditMoyenTermeSearchDto searchDto,
+            Pageable pageable) {
+        Page<CreditMoyenTermeResponseDto> resultPage = creditMoyenTermeService.searchPendingClosureCredits(searchDto, pageable);
+        return ResponseEntity.ok(resultPage);
+    }
+
+    /**
+     * Récupère une liste paginée de crédits archivés.
+     * Mappe à GET /api/credits-cmt/archives
+     *
+     * @param searchDto Un DTO contenant les filtres de recherche.
+     * @param pageable Informations de pagination et de tri.
+     * @return Une page de DTOs des crédits archivés.
+     */
+    @GetMapping("/archives")
+    public ResponseEntity<Page<CreditMoyenTermeResponseDto>> searchArchivedCreditsMoyenTerme(
+            CreditMoyenTermeSearchDto searchDto,
+            Pageable pageable) {
+        Page<CreditMoyenTermeResponseDto> resultPage = creditMoyenTermeService.searchArchivedCredits(searchDto, pageable);
+        return ResponseEntity.ok(resultPage);
+    }
+
+    /**
+     * Point d'accès pour marquer un crédit comme archivé.
+     * Mappe à PUT /api/credits-cmt/{id}/archiver
+     *
+     * @param id L'ID du crédit à archiver.
+     * @return ResponseEntity avec le DTO du crédit mis à jour.
+     */
+    @PutMapping("/{id}/archiver")
+    public ResponseEntity<CreditMoyenTermeResponseDto> markAsArchived(@PathVariable Long id) {
+        CreditMoyenTermeResponseDto updatedCredit = creditMoyenTermeService.markAsArchived(id);
+        return ResponseEntity.ok(updatedCredit);
+    }
+
+
 
     /**
      * Point d'accès pour récupérer un crédit par son ID.
@@ -119,6 +168,6 @@ public class CreditMoyenTermeController {
 
     @DeleteMapping("{id}")
     public ResponseEntity<DeleteResponceDto> deleteCreditMoyenTerme(@PathVariable Long id) {
-     return ResponseEntity.ok(this.creditMoyenTermeService.delete(id));
+        return ResponseEntity.ok(this.creditMoyenTermeService.delete(id));
     }
 }

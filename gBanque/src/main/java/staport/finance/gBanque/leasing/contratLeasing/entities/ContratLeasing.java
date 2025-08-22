@@ -107,6 +107,15 @@ public class ContratLeasing {
     public void setOrganismeLeasing(OrganismeLeasing organismeLeasing) { this.organismeLeasing = organismeLeasing; }
     public List<ContratLeasingPhase> getPhases() { return phases; }
     public void setPhases(List<ContratLeasingPhase> phases) { this.phases = phases; }
+
+    public List<EcheanceLeasing> getEcheances() {
+        return echeances;
+    }
+
+    public void setEcheances(List<EcheanceLeasing> echeances) {
+        this.echeances = echeances;
+    }
+
     public void addPhase(ContratLeasingPhase phase) {
         this.phases.add(phase);
         phase.setContratLeasing(this);

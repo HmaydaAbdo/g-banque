@@ -1,7 +1,6 @@
 package staport.finance.gBanque.cmt.echeances.services;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
-import staport.finance.gBanque.cmt.dtos.CreditCompletedEvent;
 import staport.finance.gBanque.cmt.echeances.dtos.*;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
@@ -20,14 +18,12 @@ import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.repositories.CreditMoyenTermeRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
-
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
 
 /**
  * Service pour la gestion des échéances d'un crédit à moyen terme (CMT).
@@ -40,7 +36,7 @@ public class EcheanceCMTService {
     private final CreditMoyenTermeRepository creditMoyenTermeRepository;
     private final BanqueRepository banqueRepository;
     private final EcheanceCMTMapper echeanceCmtMapper;
-    private final ApplicationEventPublisher eventPublisher;
+
 
     private static final int SCALE = 2;
     @Value("${application-start-date}")
@@ -49,17 +45,17 @@ public class EcheanceCMTService {
     public EcheanceCMTService(EcheanceCMTRepository echeanceCmtRepository,
                               CreditMoyenTermeRepository creditMoyenTermeRepository,
                               BanqueRepository banqueRepository,
-                              EcheanceCMTMapper echeanceCmtMapper,
-                              ApplicationEventPublisher eventPublisher) {
+                              EcheanceCMTMapper echeanceCmtMapper) {
         this.echeanceCmtRepository = echeanceCmtRepository;
         this.creditMoyenTermeRepository = creditMoyenTermeRepository;
         this.banqueRepository = banqueRepository;
         this.echeanceCmtMapper = echeanceCmtMapper;
-        this.eventPublisher = eventPublisher;
+
     }
 
     @Transactional
     public void generateEcheances(CreditMoyenTerme credit) {
+
         if (credit.getDuree() == null || credit.getDuree() <= 0 ||
                 credit.getPeriodicite() == null || credit.getPeriodicite() <= 0 ||
                 credit.getDateDebut() == null ||
@@ -130,10 +126,7 @@ public class EcheanceCMTService {
         banqueDePrelevement.setSoldeActuel(banqueDePrelevement.getSoldeActuel().subtract(echeance.getMontant()));
         banqueRepository.save(banqueDePrelevement);
 
-        // Nouvelle logique : publier un événement si le crédit est maintenant complet
-        if (areAllEcheancesPaid(credit.getId())) {
-            eventPublisher.publishEvent(new CreditCompletedEvent(credit.getId()));
-        }
+
 
         return echeanceCmtMapper.toResponseDto(echeance);
     }
@@ -219,17 +212,5 @@ public class EcheanceCMTService {
         );
     }
 
-    public boolean areAllEcheancesPaid(Long creditId) {
-        CreditMoyenTerme credit = creditMoyenTermeRepository.findById(creditId)
-                .orElseThrow(() -> new ResourceNotFoundException("Credit moyen terme introuvable avec l'ID : " + creditId));
 
-        List<EcheanceCMT> allEcheances = echeanceCmtRepository.findByCreditMoyenTerme(credit);
-
-        if (allEcheances.isEmpty()) {
-            return false;
-        }
-
-        return allEcheances.stream()
-                .allMatch(echeance -> echeance.getStatutPaiement() == StatutEcheanceCMT.PAYE);
-    }
 }

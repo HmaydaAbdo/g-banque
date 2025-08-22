@@ -61,26 +61,23 @@ public class ContratLeasingController {
     }
 
 
-    /**
-     * Retrieves a paginated and sorted list of leasing contracts, with optional search criteria.
-     *
-     * @param searchDTO An object containing the search filters (e.g., numeroContrat, typeContrat, montantAchatTTC, etc.).
-     * Spring automatically binds request parameters to this DTO.
-     * Example: /api/contrats-leasing?numeroContrat=CL-001&typeContrat=LINEAIRE
-     * @param pageable  Pagination and sorting information provided by Spring Data.
-     * Parameters:
-     * - page: (0-indexed) The page number to retrieve. Default is 0.
-     * - size: The number of items per page. Default is 20.
-     * - sort: Comma-separated list of properties to sort by, optionally followed by (ASC|DESC).
-     * Example: /api/contrats-leasing?page=0&size=10&sort=numeroContrat,desc&sort=montantAchatTTC
-     * @return A {@link Page} of {@link ContratLeasingResponseDTO} objects, wrapped in a {@link ResponseEntity}.
-     */
-    @GetMapping // Use a single GET endpoint for listing, searching, paginating, and sorting actif contracts
-    public ResponseEntity<Page<ContratLeasingResponseDTO>> getAllContratsLeasing(
-            ContratLeasingSearchDTO searchDTO, // DTO for search criteria, automatically mapped from request params
-            Pageable pageable) { // Pagination and sorting parameters
-        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.searchOnActifOnly(searchDTO, pageable);
-        return ResponseEntity.ok(resultPage); // Return 200 OK with the paginated results
+
+    @GetMapping("/actifs")
+    public ResponseEntity<Page<ContratLeasingResponseDTO>> getAllContratsLeasing(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getActiveContrats(searchDTO, pageable);
+        return ResponseEntity.ok(resultPage);
+    }
+
+    @GetMapping("/en-attente-main-levee")
+    public ResponseEntity<Page<ContratLeasingResponseDTO>> searchPendingLienReleaseContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getPendingLienReleaseContrats(searchDTO, pageable);
+        return ResponseEntity.ok(resultPage);
+    }
+
+    @GetMapping("/inactifs")
+    public ResponseEntity<Page<ContratLeasingResponseDTO>> searchInactiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getInactiveContrats(searchDTO, pageable);
+        return ResponseEntity.ok(resultPage);
     }
 
     /**
@@ -110,6 +107,12 @@ public class ContratLeasingController {
     @PutMapping("/{id}")
     public ResponseEntity<ContratLeasingResponseDTO> updateContratLeasing(@PathVariable Long id, @Valid @RequestBody ContratLeasingRequestDTO requestDTO) {
         ContratLeasingResponseDTO updatedContrat = contratLeasingService.updateContratLeasing(id, requestDTO);
+        return ResponseEntity.ok(updatedContrat); // Return 200 OK
+    }
+
+    @PutMapping("/{id}/markAsInactive")
+    public ResponseEntity<ContratLeasingResponseDTO> markAsInactive(@PathVariable Long id) {
+        ContratLeasingResponseDTO updatedContrat = contratLeasingService.markAsInactive(id);
         return ResponseEntity.ok(updatedContrat); // Return 200 OK
     }
 

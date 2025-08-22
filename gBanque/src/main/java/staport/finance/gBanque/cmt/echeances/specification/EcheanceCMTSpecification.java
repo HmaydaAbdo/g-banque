@@ -36,20 +36,28 @@ public class EcheanceCMTSpecification {
                 predicates.add(builder.equal(root.get("numeroEcheance"), searchDto.getNumeroEcheance()));
             }
 
-            // Prédicat pour le mois de l'échéance
-            if (searchDto.getMonth() != null) {
-                predicates.add(builder.equal(builder.function("MONTH", Integer.class, root.get("dateEcheance")), searchDto.getMonth()));
-            }
-
-            // Prédicat pour l'année de l'échéance
-            if (searchDto.getYear() != null) {
-                predicates.add(builder.equal(builder.function("YEAR", Integer.class, root.get("dateEcheance")), searchDto.getYear()));
-            }
-
             // Prédicat pour le statut de paiement
             if (searchDto.getStatutPaiement() != null) {
                 predicates.add(builder.equal(root.get("statutPaiement"), searchDto.getStatutPaiement()));
             }
+
+            // Prédicats pour le mois et l'année en utilisant une plage de dates pour plus de robustesse.
+            if (searchDto.getYear() != null && searchDto.getMonth() != null) {
+                OffsetDateTime startOfMonth = OffsetDateTime.now()
+                        .withYear(searchDto.getYear())
+                        .withMonth(searchDto.getMonth())
+                        .with(TemporalAdjusters.firstDayOfMonth())
+                        .withHour(0).withMinute(0).withSecond(0).withNano(0);
+
+                OffsetDateTime endOfMonth = OffsetDateTime.now()
+                        .withYear(searchDto.getYear())
+                        .withMonth(searchDto.getMonth())
+                        .with(TemporalAdjusters.lastDayOfMonth())
+                        .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
+                predicates.add(builder.between(root.get("dateEcheance"), startOfMonth, endOfMonth));
+            }
+
 
             // Combine tous les prédicats avec un opérateur AND
             return builder.and(predicates.toArray(new Predicate[0]));
@@ -89,10 +97,10 @@ public class EcheanceCMTSpecification {
             OffsetDateTime dateButoir;
             if (PeriodeEncoursCMT.JOUR.equals(periode)) {
                 // Calcule la date butoir à la fin de la journée actuelle
-                dateButoir = now.withHour(23).withMinute(59).withSecond(59);
+                dateButoir = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
             } else if (PeriodeEncoursCMT.MOIS.equals(periode)) {
                 // Calcule la date butoir à la fin du dernier jour du mois
-                dateButoir = now.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59);
+                dateButoir = now.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
             } else {
                 throw new IllegalArgumentException("La période d'encours spécifiée est invalide.");
             }

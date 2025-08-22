@@ -1,0 +1,48 @@
+package staport.finance.gBanque.lesEtatsDesEncours.recapitulatif.decaissement.dtos;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+
+public class RecaputilatifDecaissementItem {
+    private OffsetDateTime dateEmission;
+    private String libelle;
+    private BigDecimal debit;
+    private String observations;
+
+    public RecaputilatifDecaissementItem() {
+    }
+
+    // Getters
+    public OffsetDateTime getDateEmission() {
+        return dateEmission;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public BigDecimal getDebit() {
+        return debit;
+    }
+
+    public String getObservations() {
+        return observations;
+    }
+
+    // Setters
+    public void setDateEmission(OffsetDateTime dateEmission) {
+        this.dateEmission = dateEmission;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public void setDebit(BigDecimal debit) {
+        this.debit = debit;
+    }
+
+    public void setObservations(String observations) {
+        this.observations = observations;
+    }
+}

@@ -68,6 +68,9 @@ public class EcheanceLeasing {
         this.statutPaiement = statutPaiement;
     }
 
+    public boolean isPaid(){
+        return this.statutPaiement==StatutEcheanceLeasing.PAYE;
+    }
     // --- Getters et Setters ---
     public Long getId() { return id; }
     public ContratLeasing getContratLeasing() { return contratLeasing; }
