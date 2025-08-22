@@ -36,7 +36,8 @@ export class LesEncoursComponent implements OnInit {
     'cheques': { label: 'Décaissements ==> Chèques', icon: 'pi pi-list' },
     'lcn': { label: 'Décaissements ==> LCN', icon: 'pi pi-list' },
     'virements': { label: 'Décaissements ==> Virements', icon: 'pi pi-list' },
-    'mise-a-disposition': { label: 'Décaissements ==> Mise à disposition', icon: 'pi pi-list' }
+    'mise-a-disposition': { label: 'Décaissements ==> Mise à disposition', icon: 'pi pi-list' },
+    'recap-decaissement': { label: 'Récap Décaissements ', icon: 'pi pi-list' }
   };
 
   ngOnInit() {
@@ -83,6 +84,11 @@ export class LesEncoursComponent implements OnInit {
         label: 'Rapprochement',
         icon: 'pi pi-sync',
         routerLink: ['/portail/etats-des-encours', this.banqueId, 'rapprochement']
+      },
+      {
+        label: 'Récap des décaissements',
+        icon: 'pi pi-briefcase',
+        routerLink: ['/portail/etats-des-encours', this.banqueId, 'recap-decaissement']
       },
       {
         label: 'Décaissements',

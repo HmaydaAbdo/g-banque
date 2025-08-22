@@ -48,8 +48,8 @@ export class SidebarComponent implements OnInit {
 
   sidebarItems: SidebarItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
-    {label:"Récapitulatif bancaire",icon:"pi pi-briefcase",routerLink:"/portail/récapitulatif"},
     { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
+    {label:"Récapitulatif bancaire mensuelle",icon:"pi pi-briefcase",routerLink:"/portail/récapitulatif"},
     { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', items:
         [
           { label: 'La liste des comptes bancaires', icon: 'pi pi-list', routerLink: '/portail/comptes-bancaires' },
@@ -60,11 +60,13 @@ export class SidebarComponent implements OnInit {
       label: 'Leasing',
       icon: 'pi pi-money-bill',
       items: [
-        { label: 'Les Contras Leasing actifs', icon: 'pi pi-list', routerLink: '/portail/leasing' },
+        { label: 'Les Contras encours', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/encours' },
+        { label: 'Les Contras en attente de main levées ', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/en-attente-de-ML' },
+        { label: 'Les Contras archivés', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/archives' },
       ]
     },
     {
-      label: 'Opérations Bancaires',
+      label: 'Les Opérations Bancaires',
       icon: 'pi pi-credit-card',
       items: [
         { label: 'Chèques', icon: 'pi pi-file-check', routerLink: '/portail/Chèques' },
@@ -77,7 +79,9 @@ export class SidebarComponent implements OnInit {
       label: 'Les Crédits Moyen Terme',
       icon: 'pi pi-money-bill',
       items: [
-        { label: 'La Liste des crédit actifs', icon: 'pi pi-list', routerLink: '/portail/cmt' },
+        { label: 'Les Crédits encours', icon: 'pi pi-list', routerLink: '/portail/cmt/encours' },
+        { label: 'Les Crédits en attente de main levées', icon: 'pi pi-list', routerLink: '/portail/cmt/en-attente-de-ML' },
+        { label: 'Les Crédits archivés', icon: 'pi pi-list', routerLink: '/portail/cmt/archives' },
       ]
     },
     {

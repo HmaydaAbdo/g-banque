@@ -12,10 +12,10 @@ import { TableauAmortissement } from "../dtos/table-amortissement"; // Assuming 
 import { EcheanceLeasingSearchDTO } from "../dtos/echeance-leasing-search";
 import {
   EncoursLeasingRequestDTO
-} from "../../../etatsDesEncours/views/lesEncours/leasing/dtos/encours-leasing-request.dto";
+} from "../../../etatsDesEncours/views/lesEncours/decaissement/leasing/dtos/encours-leasing-request.dto";
 import {
   EncoursLeasingResponseDTO
-} from "../../../etatsDesEncours/views/lesEncours/leasing/dtos/encours-leasing-response.dto"; // Assuming this is the correct path/name
+} from "../../../etatsDesEncours/views/lesEncours/decaissement/leasing/dtos/encours-leasing-response.dto"; // Assuming this is the correct path/name
 
 
 @Injectable({

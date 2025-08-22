@@ -1,5 +1,5 @@
-import {PageResponse} from "../../../../../global/types/PageResponse";
-import {EcheanceCMTResponseDto} from "../../../../../cmt/dtos/EcheanceCMTResponseDto";
+import {PageResponse} from "../../../../../../global/types/PageResponse";
+import {EcheanceCMTResponseDto} from "../../../../../../cmt/dtos/EcheanceCMTResponseDto";
 
 export interface EncoursCMTResponseDTO {
   banqueId: number;

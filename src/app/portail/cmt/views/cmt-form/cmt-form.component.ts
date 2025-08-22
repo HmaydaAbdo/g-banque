@@ -175,7 +175,7 @@ export class CmtFormComponent implements OnInit {
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Crédit mis à jour avec succès.', life: 3000 });
             this.loading = false;
-            this.router.navigate(['/portail/cmt/list']);
+            this.router.navigate(['/portail/cmt/encours']);
           },
           error: (error) => {
             console.error('Erreur lors de la mise à jour du crédit:', error);
@@ -190,7 +190,7 @@ export class CmtFormComponent implements OnInit {
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Crédit créé avec succès.', life: 3000 });
             this.loading = false;
-            this.router.navigate(['/portail/cmt/list']);
+            this.router.navigate(['/portail/cmt/encours']);
           },
           error: (error) => {
             console.error('Erreur lors de la création du crédit:', error);

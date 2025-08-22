@@ -72,7 +72,12 @@ export class ContratLeasingService {
     return throwError(() => new Error(errorMessage));
   }
 
-  searchContratsLeasing(
+
+  /**
+   * Retrieves a paginated list of active leasing contracts.
+   * Calls the GET /contratsLeasing/actifs endpoint.
+   */
+  getActiveContrats(
     searchDTO: ContratLeasingSearchDTO,
     page: number = 0,
     size: number = 10,
@@ -83,29 +88,13 @@ export class ContratLeasingService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    // Using optional chaining and nullish coalescing for cleaner checks
-    if (searchDTO.numeroContrat) {
-      params = params.set('numeroContrat', searchDTO.numeroContrat);
-    }
-    if (searchDTO.immobilisation) {
-      params = params.set('immobilisation', searchDTO.immobilisation);
-    }
-    if (searchDTO.typeContrat) {
-      params = params.set('typeContrat', searchDTO.typeContrat);
-    }
-    if (searchDTO.organismeLeasingId) {
-      params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString());
-    }
-    if (searchDTO.banqueDePrelevementId) {
-      params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString());
-    }
+    if (searchDTO.numeroContrat) { params = params.set('numeroContrat', searchDTO.numeroContrat); }
+    if (searchDTO.immobilisation) { params = params.set('immobilisation', searchDTO.immobilisation); }
+    if (searchDTO.typeContrat) { params = params.set('typeContrat', searchDTO.typeContrat); }
+    if (searchDTO.organismeLeasingId) { params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString()); }
+    if (searchDTO.banqueDePrelevementId) { params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString()); }
 
-    // ⭐ Correction: Check for both undefined and null
-    if (searchDTO.completed !== undefined && searchDTO.completed !== null) {
-      params = params.set('completed', searchDTO.completed.toString());
-    }
-
-    return this.http.get<PageResponse<ContratLeasingResponseDTO>>(`${this.apiUrl}`, { params }).pipe(
+    return this.http.get<PageResponse<ContratLeasingResponseDTO>>(`${this.apiUrl}/actifs`, { params }).pipe(
       map(pageResponse => ({
         ...pageResponse,
         content: pageResponse.content.map(contrat => this.processContratLeasingResponse(contrat))
@@ -114,8 +103,77 @@ export class ContratLeasingService {
     );
   }
 
+  /**
+   * Retrieves a paginated list of contracts pending lien release.
+   * Calls the GET /contratsLeasing/en-attente-main-levee endpoint.
+   */
+  getPendingLienReleaseContrats(
+    searchDTO: ContratLeasingSearchDTO,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<PageResponse<ContratLeasingResponseDTO>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
 
+    if (searchDTO.numeroContrat) { params = params.set('numeroContrat', searchDTO.numeroContrat); }
+    if (searchDTO.immobilisation) { params = params.set('immobilisation', searchDTO.immobilisation); }
+    if (searchDTO.typeContrat) { params = params.set('typeContrat', searchDTO.typeContrat); }
+    if (searchDTO.organismeLeasingId) { params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString()); }
+    if (searchDTO.banqueDePrelevementId) { params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString()); }
 
+    return this.http.get<PageResponse<ContratLeasingResponseDTO>>(`${this.apiUrl}/en-attente-main-levee`, { params }).pipe(
+      map(pageResponse => ({
+        ...pageResponse,
+        content: pageResponse.content.map(contrat => this.processContratLeasingResponse(contrat))
+      })),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Retrieves a paginated list of inactive leasing contracts.
+   * Calls the GET /contratsLeasing/inactifs endpoint.
+   */
+  getInactiveContrats(
+    searchDTO: ContratLeasingSearchDTO,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<PageResponse<ContratLeasingResponseDTO>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    if (searchDTO.numeroContrat) { params = params.set('numeroContrat', searchDTO.numeroContrat); }
+    if (searchDTO.immobilisation) { params = params.set('immobilisation', searchDTO.immobilisation); }
+    if (searchDTO.typeContrat) { params = params.set('typeContrat', searchDTO.typeContrat); }
+    if (searchDTO.organismeLeasingId) { params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString()); }
+    if (searchDTO.banqueDePrelevementId) { params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString()); }
+
+    return this.http.get<PageResponse<ContratLeasingResponseDTO>>(`${this.apiUrl}/inactifs`, { params }).pipe(
+      map(pageResponse => ({
+        ...pageResponse,
+        content: pageResponse.content.map(contrat => this.processContratLeasingResponse(contrat))
+      })),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   *  marquer un contrat comme inactif.
+   * @param id L'ID du contrat à marquer comme inactif.
+   * @returns Un Observable de ContratLeasingResponseDTO du contrat mis à jour.
+   */
+  markAsInactive(id: number): Observable<ContratLeasingResponseDTO> {
+    return this.http.put<ContratLeasingResponseDTO>(`${this.apiUrl}/${id}/markAsInactive`, {}).pipe(
+      map(response => this.processContratLeasingResponse(response)),
+      catchError(this.handleError)
+    );
+  }
   getContratLeasingById(id: number): Observable<ContratLeasingResponseDTO> {
     return this.http.get<ContratLeasingResponseDTO>(`${this.apiUrl}/${id}`).pipe(
       map(response => this.processContratLeasingResponse(response)),

@@ -8,8 +8,8 @@ import {EcheanceCMTResponseDto} from "../dtos/EcheanceCMTResponseDto";
 import {TableauAmortissementCMTResponseDto} from "../dtos/TableauAmortissementCMTResponseDto";
 import {EcheanceCMTSearchDto} from "../dtos/EcheanceCMTSearchDto";
 import {Decimal} from "decimal.js";
-import {EncoursCMTRequestDTO} from "../../etatsDesEncours/views/lesEncours/cmt/dtos/EncoursCMTRequestDTO";
-import {EncoursCMTResponseDTO} from "../../etatsDesEncours/views/lesEncours/cmt/dtos/EncoursCMTResponseDTO";
+import {EncoursCMTRequestDTO} from "../../etatsDesEncours/views/lesEncours/decaissement/cmt/dtos/EncoursCMTRequestDTO";
+import {EncoursCMTResponseDTO} from "../../etatsDesEncours/views/lesEncours/decaissement/cmt/dtos/EncoursCMTResponseDTO";
 
 
 @Injectable({

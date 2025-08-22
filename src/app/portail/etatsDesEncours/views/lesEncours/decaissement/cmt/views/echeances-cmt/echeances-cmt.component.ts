@@ -18,20 +18,20 @@ import { PaginatorModule } from 'primeng/paginator';
 import { DividerModule } from 'primeng/divider';
 import { PeriodeEncoursCMT } from '../../dtos/PeriodeEncoursCMT';
 import {EncoursCMTResponseDTO} from "../../dtos/EncoursCMTResponseDTO";
-import {EcheanceCmtService} from "../../../../../../cmt/services/EcheanceCmtService";
+import {EcheanceCmtService} from "../../../../../../../cmt/services/EcheanceCmtService";
 import {EncoursCMTRequestDTO} from "../../dtos/EncoursCMTRequestDTO";
 import {CalendarModule} from "primeng/calendar";
 import {DialogModule} from "primeng/dialog";
 import {InputTextareaModule} from "primeng/inputtextarea";
-import {RapprochemntService} from "../../../../../rapprochement/services/rapprochemnt.service";
-import {EcheanceLeasingResponse} from "../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
+import {RapprochemntService} from "../../../../../../rapprochement/services/rapprochemnt.service";
+import {EcheanceLeasingResponse} from "../../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
 import {
   DonneesComplementairesRapprochementDTO
-} from "../../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
-import {LeasingTransactionRequest} from "../../../../../rapprochement/dtos/LeasingTransactionRequest";
-import {TransactionSource} from "../../../../../rapprochement/dtos/TransactionSource";
-import {CmtTransactionRequest} from "../../../../../rapprochement/dtos/CmtTransactionRequest";
-import {EcheanceCMTResponseDto} from "../../../../../../cmt/dtos/EcheanceCMTResponseDto";
+} from "../../../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+import {LeasingTransactionRequest} from "../../../../../../rapprochement/dtos/LeasingTransactionRequest";
+import {TransactionSource} from "../../../../../../rapprochement/dtos/TransactionSource";
+import {CmtTransactionRequest} from "../../../../../../rapprochement/dtos/CmtTransactionRequest";
+import {EcheanceCMTResponseDto} from "../../../../../../../cmt/dtos/EcheanceCMTResponseDto";
 
 
 @Component({
@@ -72,10 +72,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   banqueIdFromRoute!: number;
 
-  periodeOptions: { label: string, value: PeriodeEncoursCMT }[] = [
-    { label: 'Jour', value: PeriodeEncoursCMT.JOUR },
-    { label: 'Mois', value: PeriodeEncoursCMT.MOIS }
-  ];
+
 
   // Propriétés pour la modale de rapprochement
   displayModal: boolean = false;
@@ -132,9 +129,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       dateEmission: [null, Validators.required],
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
-      observation: [''],
-      // Ajout des validateurs pour les pourcentages de TVA
-      tvaCollectee: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
+      observation: ['',Validators.required],
       tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
     });
   }
@@ -167,7 +162,6 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
         this.totalRecords = response.echeances.page.totalElements;
         this.loading = false;
         this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/YYYY');
-
       },
       error: (error) => {
         this.loading = false;
@@ -199,6 +193,17 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
   }
 
   submitRapprochement(): void {
+
+    if (this.rapprochementForm.invalid) {
+      this.rapprochementForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
+      });
+      return;
+    }
+
     if (this.rapprochementForm.valid && this.selectedEcheance) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
 
@@ -211,7 +216,6 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
         dateValeur: donneesComplementaires.dateValeur,
         dateOperation: donneesComplementaires.dateOperation,
         observation: donneesComplementaires.observation,
-        tvaCollectee: donneesComplementaires.tvaCollectee,
         tvaDeductible: donneesComplementaires.tvaDeductible,
       };
 
@@ -244,4 +248,10 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       });
     }
   }
+
+  isInvalid(controlName: string): boolean {
+    const control = this.rapprochementForm.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
 }

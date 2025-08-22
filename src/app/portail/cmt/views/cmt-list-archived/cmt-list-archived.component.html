@@ -1,0 +1,138 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-4 p-2 md:p-4 w-screen h-screen overflow-y-auto">
+
+  <div class="flex justify-content-between align-items-center bg-transparent gap-3">
+
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+      <ng-template pTemplate="item" let-item>
+        <ng-container *ngIf="item.route; else elseBlock">
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+
+        </ng-container>
+        <ng-template #elseBlock>
+          <a [href]="item.url">
+            <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+          </a>
+        </ng-template>
+      </ng-template>
+    </p-breadcrumb>
+
+    <button pButton pRipple label="Nouveau Crédit" class="hidden md:block h-fit" size="small" icon="pi pi-plus" severity="success" (click)="createNewCredit()"></button>
+    <button pButton pRipple pTooltip="Nouveau Crédit" class="md:hidden h-fit" size="small" icon="pi pi-plus" severity="success" (click)="createNewCredit()"></button>
+  </div>
+
+  <form [formGroup]="searchForm" class="flex justify-content-between flex-wrap gap-3">
+
+    <div>
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="designation"
+               placeholder="Rechercher par désignation..."
+               class="w-full" />
+      </span>
+    </div>
+
+    <div>
+      <p-dropdown
+        [options]="banqueOptions"
+        formControlName="banqueId"
+        placeholder="Banque"
+        [showClear]="true"
+        appendTo="body"
+        class="w-full"
+      ></p-dropdown>
+    </div>
+
+
+
+    <div>
+      <p-button
+        label="Effacer"
+        icon="pi pi-times"
+        severity="secondary"
+        (onClick)="clearSearch()"
+        class="w-full"
+      ></p-button>
+    </div>
+  </form>
+
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="credits"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[3,5,10, 25, 50]"
+      [lazy]="true"
+      (onLazyLoad)="loadCredits($event)"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      [resizableColumns]="true"
+      columnResizeMode="expand"
+      [rowHover]="true"
+      dataKey="id"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} crédits"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-gridlines"
+      [tableStyle]="{'min-width': '70rem'}"
+      [globalFilterFields]="['designation', 'banque.nom']"
+      [selectionMode]="'single'" >
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="designation">Désignation <p-sortIcon field="designation"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
+          <th pSortableColumn="nominal">Nominal <p-sortIcon field="nominal"></p-sortIcon></th>
+          <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
+          <th pSortableColumn="duree">Durée <p-sortIcon field="duree"></p-sortIcon></th>
+          <th pSortableColumn="echeance">Montant Échéance <p-sortIcon field="echeance"></p-sortIcon></th>
+          <th pSortableColumn="dateDebut">Date Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
+          <!-- ⭐ Ajout de la colonne pour le statut de complétude -->
+          <th pSortableColumn="completed">Statut <p-sortIcon field="completed"></p-sortIcon></th>
+          <th style="width: 8rem;">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-credit>
+        <tr>
+          <td>{{ credit.designation }}</td>
+          <td>{{ credit.banque.nom }}</td>
+          <td>{{ credit.nominal?.toNumber() }} MAD</td>
+          <td>{{ credit.taux?.toNumber() }} %</td>
+          <td>{{ credit.duree }} mois</td>
+          <td>{{ credit.echeance?.toNumber() }} MAD</td>
+          <td>{{ credit.dateDebut | date:'dd/MM/yyyy' }}</td>
+          <!-- ⭐ Affichage du statut avec un Tag -->
+          <td>
+            <p-tag [severity]="credit.completed ? 'success' : 'info'" [value]="credit.completed ? 'Terminé' : 'En Cours'"></p-tag>
+          </td>
+
+          <td>
+            <button pButton pRipple icon="pi pi-file-excel" class="p-button-rounded p-button-secondary mr-2" pTooltip="Tableau d'Amortissement" (click)="viewAmortizationTable(credit.id)"></button>
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-info mr-2" pTooltip="Modifier" (click)="editCredit(credit.id)"></button>
+            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" pTooltip="Supprimer" (click)="confirmDeleteCredit(credit)"></button>
+          </td>
+
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="9">Aucun crédit trouvé.</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="9">Chargement des crédits. Veuillez patienter...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

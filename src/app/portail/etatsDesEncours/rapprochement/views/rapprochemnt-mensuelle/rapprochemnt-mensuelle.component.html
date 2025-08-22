@@ -71,8 +71,8 @@
         <td>{{ transaction.dateOperations | date:'dd/MM/yyyy' }}</td>
         <td>{{ transaction.libelle }}</td>
         <td>{{ transaction.observation }}</td>
-        <td>{{ transaction.tvaDeductible * 100}}%</td>
-        <td>{{ transaction.tvaCollectee *100}}%</td>
+        <td>{{ transaction.tvaDeductible !== null ? ((transaction.tvaDeductible * 100) | number:'1.2-2') + '%' : 'N/A' }}</td>
+        <td>{{ transaction.tvaCollectee !== null ? ((transaction.tvaCollectee * 100) | number:'1.2-2') + '%' : 'N/A' }}</td>
         <td>{{ transaction.debit }} MAD</td>
         <td>{{ transaction.credit }} MAD</td>
       </tr>

@@ -21,18 +21,18 @@ import { CalendarModule } from 'primeng/calendar'; // Import du module de calend
 import { InputNumberModule } from 'primeng/inputnumber'; // Import du module d'input number
 import { InputTextareaModule } from 'primeng/inputtextarea'; // Import du module de textarea
 import { Decimal } from "decimal.js"; // Import Decimal.js
-import { EcheanceLeasingResponse } from "../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
+import { EcheanceLeasingResponse } from "../../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
 import { EncoursLeasingResponseDTO } from "../../dtos/encours-leasing-response.dto";
 import { PeriodeEncours } from "../../dtos/PeriodeEncours";
-import { EcheanceLeasingService } from "../../../../../../leasing/contratsLeasing/services/EcheanceLeasingService";
-import { OrganismeLeasingService } from "../../../../../../leasing/organismesLeasing/services/organisme-leasing.service";
-import { PageResponse } from "../../../../../../global/types/PageResponse";
-import { OrganismeLeasingResponse } from "../../../../../../leasing/organismesLeasing/dtos/OrganismeLeasingResponse";
+import { EcheanceLeasingService } from "../../../../../../../leasing/contratsLeasing/services/EcheanceLeasingService";
+import { OrganismeLeasingService } from "../../../../../../../leasing/organismesLeasing/services/organisme-leasing.service";
+import { PageResponse } from "../../../../../../../global/types/PageResponse";
+import { OrganismeLeasingResponse } from "../../../../../../../leasing/organismesLeasing/dtos/OrganismeLeasingResponse";
 import { EncoursLeasingRequestDTO } from "../../dtos/encours-leasing-request.dto";
-import { RapprochemntService } from "../../../../../rapprochement/services/rapprochemnt.service";
-import { DonneesComplementairesRapprochementDTO } from "../../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
-import {LeasingTransactionRequest} from "../../../../../rapprochement/dtos/LeasingTransactionRequest";
-import {TransactionSource} from "../../../../../rapprochement/dtos/TransactionSource";
+import { RapprochemntService } from "../../../../../../rapprochement/services/rapprochemnt.service";
+import { DonneesComplementairesRapprochementDTO } from "../../../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+import {LeasingTransactionRequest} from "../../../../../../rapprochement/dtos/LeasingTransactionRequest";
+import {TransactionSource} from "../../../../../../rapprochement/dtos/TransactionSource";
 
 
 @Component({
@@ -74,10 +74,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   banqueIdFromRoute!: number; // Propriété pour stocker l'ID de la banque
 
-  periodeOptions: { label: string, value: PeriodeEncours }[] = [
-    { label: 'Jour', value: PeriodeEncours.JOUR },
-    { label: 'Mois', value: PeriodeEncours.MOIS }
-  ];
+
   organismeLeasingOptions: { label: string, value: number }[] = [];
 
   // Propriétés pour la modale de rapprochement
@@ -143,9 +140,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       dateEmission: [null, Validators.required],
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
-      observation: [''],
-      // Ajout des validateurs pour les pourcentages de TVA
-      tvaCollectee: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
+      observation: ['',Validators.required],
       tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
     });
   }
@@ -229,6 +224,16 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
   // Nouvelle méthode pour soumettre les données de rapprochement
   submitRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
+      this.rapprochementForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
+      });
+      return;
+    }
+
     if (this.rapprochementForm.valid && this.selectedEcheance) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
 
@@ -241,7 +246,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
         dateValeur: donneesComplementaires.dateValeur,
         dateOperation: donneesComplementaires.dateOperation,
         observation: donneesComplementaires.observation,
-        tvaCollectee: donneesComplementaires.tvaCollectee,
         tvaDeductible: donneesComplementaires.tvaDeductible,
       };
 
@@ -274,6 +278,11 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
         detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs de saisie.'
       });
     }
+  }
+
+  isInvalid(controlName: string): boolean {
+    const control = this.rapprochementForm.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
   protected readonly Date = Date;

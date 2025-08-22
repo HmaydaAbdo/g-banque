@@ -75,12 +75,7 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
   organismeLeasingOptions: { label: string, value: number }[] = [];
   banqueOptions: { label: string, value: number }[] = [];
 
-  // ⭐ Ajout des options pour le filtre de complétude
-  completionOptions = [
-    { label: 'Tous', value: null },
-    { label: 'Terminé', value: true },
-    { label: 'Actifs', value: false },
-  ];
+
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -139,13 +134,10 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => this.onSearch());
 
-    // ⭐ Ajout de la souscription pour le filtre de complétude
-    const completedSub = this.searchForm.get('completed')?.valueChanges
-      .pipe(distinctUntilChanged())
-      .subscribe(() => this.onSearch());
 
 
-    this.subscriptions.push(numeroContratSub!, immobilisationSub!, typeContratSub!, organismeLeasingSub!, banqueDePrelevementSub!, completedSub!);
+
+    this.subscriptions.push(numeroContratSub!, immobilisationSub!, typeContratSub!, organismeLeasingSub!, banqueDePrelevementSub!);
 
     this.loadContrats(this.lastLazyLoadEvent);
   }
@@ -213,11 +205,10 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       immobilisation: this.searchForm.get('immobilisation')?.value,
       typeContrat: this.searchForm.get('typeContrat')?.value,
       organismeLeasingId: this.searchForm.get('organismeLeasingId')?.value,
-      banqueDePrelevementId: this.searchForm.get('banqueDePrelevementId')?.value,
-      completed: this.searchForm.get('completed')?.value, // ⭐ Récupération de la valeur du filtre
+      banqueDePrelevementId: this.searchForm.get('banqueDePrelevementId')?.value
     };
 
-    this.contratLeasingService.searchContratsLeasing(
+    this.contratLeasingService.getActiveContrats(
       searchCriteria,
       currentPage,
       pageSize,

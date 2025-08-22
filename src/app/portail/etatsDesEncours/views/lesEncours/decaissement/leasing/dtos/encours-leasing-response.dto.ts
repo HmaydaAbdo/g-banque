@@ -1,5 +1,5 @@
-import {PageResponse} from "../../../../../global/types/PageResponse";
-import {EcheanceLeasingResponse} from "../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
+import {PageResponse} from "../../../../../../global/types/PageResponse";
+import {EcheanceLeasingResponse} from "../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
 
 
 export interface EncoursLeasingResponseDTO {

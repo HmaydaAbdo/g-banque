@@ -25,7 +25,7 @@ import {CreditMoyenTermeSearchDto} from "../../dtos/CreditMoyenTermeSearchDto";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 
 @Component({
-  selector: 'app-cmt-list',
+  selector: 'app-cmt-list-actifs',
   templateUrl: './cmt-list.component.html',
   standalone: true,
   imports: [
@@ -55,12 +55,6 @@ export class CmtListComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
 
   banqueOptions: { label: string, value: number }[] = [];
-  // ⭐ Ajout des options pour le filtre de complétude
-  completionOptions = [
-    { label: 'Tous', value: null },
-    { label: 'Terminé', value: true },
-    { label: 'Actifs', value: false },
-  ];
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -101,12 +95,9 @@ export class CmtListComponent implements OnInit, OnDestroy {
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => this.onSearch());
 
-    // ⭐ Ajout de la souscription pour le filtre de complétude
-    const completedSub = this.searchForm.get('completed')?.valueChanges
-      .pipe(distinctUntilChanged())
-      .subscribe(() => this.onSearch());
 
-    this.subscriptions.push(designationSub!, banqueSub!, completedSub!);
+
+    this.subscriptions.push(designationSub!, banqueSub!);
   }
 
   ngOnDestroy(): void {
@@ -117,7 +108,6 @@ export class CmtListComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       designation: [''],
       banqueId: [null],
-      completed: [false]
     });
   }
 
@@ -152,13 +142,12 @@ export class CmtListComponent implements OnInit, OnDestroy {
     const searchCriteria: CreditMoyenTermeSearchDto = {
       designation: this.searchForm.get('designation')?.value,
       banqueId:this.searchForm.get('banqueId')?.value,
-      completed: this.searchForm.get('completed')?.value, // ⭐ Récupération de la valeur du filtre
       page: currentPage,
       size: pageSize,
       sort: sort
     };
 
-    this.cmtService.searchCredits(searchCriteria).subscribe({
+    this.cmtService.searchActiveCredits(searchCriteria).subscribe({
       next: (page: PageResponse<CreditMoyenTermeResponseDto>) => {
         this.credits = page.content;
         this.totalRecords = page.page.totalElements;
@@ -188,7 +177,6 @@ export class CmtListComponent implements OnInit, OnDestroy {
     this.searchForm.reset({
       designation: '',
       banqueId: null,
-      completed: null, // ⭐ Réinitialisation du filtre
     });
     if (this.dt) {
       this.dt.clear();

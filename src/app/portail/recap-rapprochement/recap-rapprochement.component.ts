@@ -10,9 +10,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormControl } from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import {TransactionResponseDto} from "../rapprochement/dtos/TransactionResponseDto";
-import {RapprochemntService} from "../rapprochement/services/rapprochemnt.service";
-import {PageResponse} from "../../global/types/PageResponse";
+import {TransactionResponseDto} from "../etatsDesEncours/rapprochement/dtos/TransactionResponseDto";
+import {RapprochemntService} from "../etatsDesEncours/rapprochement/services/rapprochemnt.service";
+import {PageResponse} from "../global/types/PageResponse";
 
 
 @Component({

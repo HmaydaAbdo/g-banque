@@ -3,12 +3,11 @@ import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http'
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import {Decimal} from "decimal.js";
-import {CreditMoyenTermeResponseDto} from "../dtos/CreditMoyenTermeResponseDto";
-import {CreditMoyenTermeSearchDto} from "../dtos/CreditMoyenTermeSearchDto";
-import {PageResponse} from "../../global/types/PageResponse";
-import {CreditMoyenTermeRequestDto} from "../dtos/CreditMoyenTermeRequestDto";
-
+import { Decimal } from "decimal.js";
+import { CreditMoyenTermeResponseDto } from "../dtos/CreditMoyenTermeResponseDto";
+import { CreditMoyenTermeSearchDto } from "../dtos/CreditMoyenTermeSearchDto";
+import { PageResponse } from "../../global/types/PageResponse";
+import { CreditMoyenTermeRequestDto } from "../dtos/CreditMoyenTermeRequestDto";
 
 @Injectable({
   providedIn: 'root'
@@ -58,30 +57,58 @@ export class CmtService {
     return throwError(() => new Error(errorMessage));
   }
 
-
   /**
-   * Searches for credits with optional filters.
+   * Builds the HTTP parameters from the search DTO.
+   * This centralizes the logic for pagination, sorting, and filters.
    */
-  searchCredits(searchDto: CreditMoyenTermeSearchDto): Observable<PageResponse<CreditMoyenTermeResponseDto>> {
+  private buildSearchParams(searchDto: CreditMoyenTermeSearchDto): HttpParams {
     let params = new HttpParams();
     if (searchDto.designation) {
       params = params.set('designation', searchDto.designation);
     }
-
-    if(searchDto.banqueId){
+    if (searchDto.banqueId) {
       params = params.set('banqueId', searchDto.banqueId);
     }
-
-    // ⭐ Correction : Vérifier si la valeur n'est pas undefined ou null avant de la définir
-    if (searchDto.completed !== undefined && searchDto.completed !== null) {
-      params = params.set('completed', searchDto.completed.toString());
-    }
-
     params = params.set('page', searchDto.page?.toString() || '0');
     params = params.set('size', searchDto.size?.toString() || '10');
     params = params.set('sort', searchDto.sort || 'id,asc');
+    return params;
+  }
 
-    return this.http.get<PageResponse<CreditMoyenTermeResponseDto>>(this.apiUrl, { params }).pipe(
+  /**
+   * Fetches a paginated list of ACTIVE credits.
+   */
+  searchActiveCredits(searchDto: CreditMoyenTermeSearchDto): Observable<PageResponse<CreditMoyenTermeResponseDto>> {
+    const params = this.buildSearchParams(searchDto);
+    return this.http.get<PageResponse<CreditMoyenTermeResponseDto>>(`${this.apiUrl}/actifs`, { params }).pipe(
+      map(pageResponse => ({
+        ...pageResponse,
+        content: pageResponse.content.map(credit => this.processCmtResponse(credit))
+      })),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Fetches a paginated list of credits PENDING CLOSURE.
+   */
+  searchPendingClosureCredits(searchDto: CreditMoyenTermeSearchDto): Observable<PageResponse<CreditMoyenTermeResponseDto>> {
+    const params = this.buildSearchParams(searchDto);
+    return this.http.get<PageResponse<CreditMoyenTermeResponseDto>>(`${this.apiUrl}/en-attente-de-main-levees`, { params }).pipe(
+      map(pageResponse => ({
+        ...pageResponse,
+        content: pageResponse.content.map(credit => this.processCmtResponse(credit))
+      })),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Fetches a paginated list of ARCHIVED credits.
+   */
+  searchArchivedCredits(searchDto: CreditMoyenTermeSearchDto): Observable<PageResponse<CreditMoyenTermeResponseDto>> {
+    const params = this.buildSearchParams(searchDto);
+    return this.http.get<PageResponse<CreditMoyenTermeResponseDto>>(`${this.apiUrl}/archives`, { params }).pipe(
       map(pageResponse => ({
         ...pageResponse,
         content: pageResponse.content.map(credit => this.processCmtResponse(credit))
@@ -110,7 +137,6 @@ export class CmtService {
     );
   }
 
-
   /**
    * Updates an existing credit.
    */
@@ -122,10 +148,20 @@ export class CmtService {
   }
 
   /**
+   * Archives a credit.
+   */
+  archiveCredit(id: number): Observable<CreditMoyenTermeResponseDto> {
+    return this.http.put<CreditMoyenTermeResponseDto>(`${this.apiUrl}/${id}/archiver`, {}).pipe(
+      map(response => this.processCmtResponse(response)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
    * Deletes a credit by ID.
    */
-  deleteCredit(id: number): Observable<{ msg:string }> {
-    return this.http.delete<{ msg:string }>(`${this.apiUrl}/${id}`).pipe(
+  deleteCredit(id: number): Observable<{ msg: string }> {
+    return this.http.delete<{ msg: string }>(`${this.apiUrl}/${id}`).pipe(
       catchError(this.handleError)
     );
   }

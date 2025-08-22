@@ -5,7 +5,7 @@ import {
 } from "../organismesLeasing/views/organisme-leasing-form/organisme-leasing-form.component";
 import {
   ContratLeasingListComponent
-} from "../contratsLeasing/views/contrats-leasing-list/contrats-leasing-list.component";
+} from "../contratsLeasing/views/contrats-leasing-actifs-list/contrats-leasing-list.component";
 import {
   ContratLeasingCreationComponent
 } from "../contratsLeasing/views/contrat-leasing-creation/contrat-leasing-creation.component";
@@ -26,6 +26,12 @@ import {RecapStepComponent} from "../contratsLeasing/views/contrat-leasing-creat
 import {
   TableauAmortissementComponent
 } from "../contratsLeasing/views/tableauAmortissement/TableauAmortissementComponent";
+import {
+  ContratsLeasingEnAttenteDeMLComponent
+} from "../contratsLeasing/views/contrats-leasing-en-attente-de-ml/contrats-leasing-en-attente-de-ml.component";
+import {
+  ContratsLeasingArchivesComponent
+} from "../contratsLeasing/views/contrats-leasing-archives/contrats-leasing-archives.component";
 
 export const LEASING_FEATURE_ROUTES: Routes = [
   {
@@ -48,9 +54,18 @@ export const LEASING_FEATURE_ROUTES: Routes = [
   {
     path: 'contratsLeasing',
     children: [
+      {path: "",redirectTo:"encours",pathMatch:"full"},
       {
-        path: '', // Path for the list of contracts: /contratsLeasing
+        path: 'encours', // Path for the list of contracts: /contratsLeasing
         component: ContratLeasingListComponent
+      },
+      {
+        path: 'en-attente-de-ML', // Path for the list of contracts: /contratsLeasing
+        component: ContratsLeasingEnAttenteDeMLComponent
+      },
+      {
+        path: 'archives', // Path for the list of contracts: /contratsLeasing
+        component: ContratsLeasingArchivesComponent
       },
       {
         path: 'creation', // Path for the creation wizard: /contratsLeasing/creation
@@ -66,7 +81,7 @@ export const LEASING_FEATURE_ROUTES: Routes = [
         ]
       },
       { path: ':id/tableau-amortissement',component: TableauAmortissementComponent,}
-      // You can add other contract-related routes here if needed, e.g., edit/:id
+
     ]
   },
   {
