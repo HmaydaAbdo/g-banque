@@ -2,7 +2,6 @@ package staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.batch.proc
 
 import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.dtos.FunPaymentDto;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 
@@ -10,9 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.dtos.FunPaymentDto;
 import staport.finance.gBanque.lesEtatsDesEncours.core.entities.Cheque;
 import java.math.BigDecimal;
-
+import java.time.ZoneId;
 
 
 /**
@@ -22,10 +22,10 @@ import java.math.BigDecimal;
  * Enhanced to throw exceptions for all invalid scenarios, allowing Spring Batch to track skips.
  */
 @Component
-public class ChequePaymentProcessor implements ItemProcessor<FunPaymentDto, Cheque> {
+public class ChequePaymentProcessor implements ItemProcessor<FunPaymentDto, Object> {
 
     private static final Logger log = LoggerFactory.getLogger(ChequePaymentProcessor.class);
-
+    ZoneId systemZone = ZoneId.systemDefault();
     private final BanqueRepository banqueRepository;
 
     public ChequePaymentProcessor(BanqueRepository banqueRepository) {
@@ -44,6 +44,10 @@ public class ChequePaymentProcessor implements ItemProcessor<FunPaymentDto, Cheq
             throw new InvalidChequeDataException(" numero is null or empty");
         }
 
+        if (item.getDateCheque() == null) {
+            throw new InvalidChequeDataException(" date emission (date_chaque) is null");
+        }
+
         if (item.getBeneficiaire() == null || item.getBeneficiaire().trim().isEmpty()) {
             throw new InvalidChequeDataException(" beneficiaire is null or empty");
         }
@@ -52,9 +56,7 @@ public class ChequePaymentProcessor implements ItemProcessor<FunPaymentDto, Cheq
             throw new InvalidChequeDataException("montant is null or non-positive ");
         }
 
-        if (item.getDatePaiement() == null) {
-            throw new InvalidChequeDataException(" datePaiement (date emission) is null");
-        }
+
         if (item.getBanque() == null || item.getBanque().trim().isEmpty()) {
             throw new InvalidChequeDataException("banque (bank name) is null or empty");
         }
@@ -62,19 +64,23 @@ public class ChequePaymentProcessor implements ItemProcessor<FunPaymentDto, Cheq
         // 2. Create and map to Cheque entity
         Cheque cheque = new Cheque();
         cheque.setNumero(item.getNumero());
+        cheque.setDateEmission(item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime());
         cheque.setBeneficiaire(item.getBeneficiaire());
+
+        cheque.setDateEcheance(
+                item.getDateEcheance()!=null ?
+                        item.getDateEcheance().atStartOfDay(systemZone).toOffsetDateTime()
+                        : null
+        );
+
         cheque.setMontant(item.getMontant());
-        cheque.setDateEmission(item.getDatePaiement());
-        cheque.setDateEcheance(item.getDateEcheance());
 
         // 3. Handle Banque Association - Throwing error if not found
         String bankNameFromDto = item.getBanque();
         Banque banque = banqueRepository.findByNom(bankNameFromDto).orElseThrow(() -> new ResourceNotFoundException(String.format("Bank with name '%s' not found ", bankNameFromDto)));
         cheque.setBanque(banque);
 
-
-
         log.info("Successfully processed and transformed Cheque Payment {}. Returning Cheque entity.", item.getNumero());
-        return cheque; // Return the transformed Cheque entity
+        return cheque;
     }
 }

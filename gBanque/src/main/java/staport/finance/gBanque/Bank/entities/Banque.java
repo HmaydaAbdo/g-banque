@@ -1,6 +1,12 @@
 package staport.finance.gBanque.Bank.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import staport.finance.gBanque.Bank.enums.Devise;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
@@ -20,6 +26,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "banque")
 public class Banque {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,9 +35,13 @@ public class Banque {
     @Column(name = "logo_data", nullable = false, columnDefinition = "LONGBLOB")
     private byte[] logoData;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(nullable = false)
     private String nom;
 
+    @NotBlank
+    @Pattern(regexp = "\\d{24}")
     @Column(name = "numero_compte", nullable = false, unique = true, length = 24)
     private String numeroDeCompte;
 
@@ -38,54 +49,53 @@ public class Banque {
     @Column(nullable = false)
     private Devise devise;
 
+    @NotBlank
     @Column(nullable = false)
     private String address;
 
+    @NotBlank
     @Column(nullable = false)
     private String agence;
 
     @Column(name = "solde_actuel", nullable = false)
-    private BigDecimal soldeActuel;
+    private BigDecimal soldeActuel = BigDecimal.ZERO;
+
 
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
 
+
     @Column(name = "date_modification", nullable = false)
     private OffsetDateTime dateModification;
 
-
-    // One-to-many relationships with cascade and orphan removal for proper lifecycle management.
-    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    // --- Relations ---
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
     private List<LigneFonctionnelle> ligneFonctionnelles = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
     private List<Cheque> cheques = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
     private List<Lcn> lcns = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
     private List<Virement> virements = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
     private List<MiseADisposition> misesADisposition = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banqueDePrelevement", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "banqueDePrelevement", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
     private List<ContratLeasing> contratsLeasing = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
     private List<CreditMoyenTerme> creditMoyenTermes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banqueDePrelevement", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "banqueDePrelevement", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
     private List<Transaction> transactions = new ArrayList<>();
 
-
     // --- Constructors ---
-    public Banque() {
-        // Default constructor required by JPA
-    }
+    public Banque() {}
 
-    // A more practical constructor for creation
     public Banque(byte[] logoData, String nom, String numeroDeCompte, Devise devise, String address, String agence) {
         this.logoData = logoData;
         this.nom = nom;
@@ -93,9 +103,10 @@ public class Banque {
         this.devise = devise;
         this.address = address;
         this.agence = agence;
+        this.soldeActuel = BigDecimal.ZERO;
     }
 
-    // --- Getters and Setters ---
+    // --- Getters / Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -120,140 +131,62 @@ public class Banque {
     public BigDecimal getSoldeActuel() { return soldeActuel; }
     public void setSoldeActuel(BigDecimal soldeActuel) { this.soldeActuel = soldeActuel; }
 
-
     public OffsetDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
-
     public OffsetDateTime getDateModification() { return dateModification; }
-    public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
 
-    // --- Getters and Setters for the LigneFonctionnelle list ---
-    public List<LigneFonctionnelle> getLigneFonctionnelles() {
-        return ligneFonctionnelles;
-    }
+    public List<LigneFonctionnelle> getLigneFonctionnelles() { return ligneFonctionnelles; }
+    public void setLigneFonctionnelles(List<LigneFonctionnelle> ligneFonctionnelles) { this.ligneFonctionnelles = ligneFonctionnelles; }
 
-    public void setLigneFonctionnelles(List<LigneFonctionnelle> ligneFonctionnelles) {
-        this.ligneFonctionnelles = ligneFonctionnelles;
-    }
+    public List<Cheque> getCheques() { return cheques; }
+    public void setCheques(List<Cheque> cheques) { this.cheques = cheques; }
 
-    public List<Cheque> getCheques() {
-        return cheques;
-    }
+    public List<ContratLeasing> getContratsLeasing() { return contratsLeasing; }
+    public void setContratsLeasing(List<ContratLeasing> contratsLeasing) { this.contratsLeasing = contratsLeasing; }
 
-    public void setCheques(List<Cheque> cheques) {
-        this.cheques = cheques;
-    }
+    public List<CreditMoyenTerme> getCreditMoyenTermes() { return creditMoyenTermes; }
+    public void setCreditMoyenTermes(List<CreditMoyenTerme> creditMoyenTermes) { this.creditMoyenTermes = creditMoyenTermes; }
 
-    public List<ContratLeasing> getContratsLeasing() {
-        return contratsLeasing;
-    }
+    public List<Lcn> getLcns() { return lcns; }
+    public void setLcns(List<Lcn> lcns) { this.lcns = lcns; }
 
-    public void setContratsLeasing(List<ContratLeasing> contratsLeasing) {
-        this.contratsLeasing = contratsLeasing;
-    }
+    public List<Virement> getVirements() { return virements; }
+    public void setVirements(List<Virement> virements) { this.virements = virements; }
 
-    public List<CreditMoyenTerme> getCreditMoyenTermes() {
-        return creditMoyenTermes;
-    }
+    public List<MiseADisposition> getMisesADisposition() { return misesADisposition; }
+    public void setMisesADisposition(List<MiseADisposition> misesADisposition) { this.misesADisposition = misesADisposition; }
 
-    public void setCreditMoyenTermes(List<CreditMoyenTerme> creditMoyenTermes) {
-        this.creditMoyenTermes = creditMoyenTermes;
-    }
+    public List<Transaction> getTransactions() { return transactions; }
+    public void setTransactions(List<Transaction> transactions) { this.transactions = transactions; }
 
-    // Getters and Setters for the Lcn list
-    public List<Lcn> getLcns() {
-        return lcns;
-    }
-    public void setLcns(List<Lcn> lcns) {
-        this.lcns = lcns;
-    }
+    // --- Helper methods for bidirectional relationships ---
+    public void addLigneFonctionnelle(LigneFonctionnelle l) { ligneFonctionnelles.add(l); l.setBanque(this); }
+    public void removeLigneFonctionnelle(LigneFonctionnelle l) { ligneFonctionnelles.remove(l); l.setBanque(null); }
 
-    // Getters and Setters for the Virement list
-    public List<Virement> getVirements() {
-        return virements;
-    }
-    public void setVirements(List<Virement> virements) {
-        this.virements = virements;
-    }
+    public void addCheque(Cheque c) { cheques.add(c); c.setBanque(this); }
+    public void removeCheque(Cheque c) { cheques.remove(c); c.setBanque(null); }
 
-    // Getters and Setters for the MiseADisposition list
-    public List<MiseADisposition> getMisesADisposition() {
-        return misesADisposition;
-    }
-    public void setMisesADisposition(List<MiseADisposition> misesADisposition) {
-        this.misesADisposition = misesADisposition;
-    }
+    public void addLcn(Lcn l) { lcns.add(l); l.setBanque(this); }
+    public void removeLcn(Lcn l) { lcns.remove(l); l.setBanque(null); }
 
-    public List<Transaction> getTransactions() {
-        return transactions;
-    }
+    public void addVirement(Virement v) { virements.add(v); v.setBanque(this); }
+    public void removeVirement(Virement v) { virements.remove(v); v.setBanque(null); }
 
-    public void setTransactions(List<Transaction> transactions) {
-        this.transactions = transactions;
-    }
+    public void addMiseADisposition(MiseADisposition m) { misesADisposition.add(m); m.setBanque(this); }
+    public void removeMiseADisposition(MiseADisposition m) { misesADisposition.remove(m); m.setBanque(null); }
 
-    // --- Helper methods to manage the bidirectional relationship ---
-    public void addLigneFonctionnelle(LigneFonctionnelle ligneFonctionnelle) {
-        ligneFonctionnelles.add(ligneFonctionnelle);
-        ligneFonctionnelle.setBanque(this);
-    }
+    public void addContratLeasing(ContratLeasing c) { contratsLeasing.add(c); c.setBanqueDePrelevement(this); }
+    public void removeContratLeasing(ContratLeasing c) { contratsLeasing.remove(c); c.setBanqueDePrelevement(null); }
 
-    public void removeLigneFonctionnelle(LigneFonctionnelle ligneFonctionnelle) {
-        ligneFonctionnelles.remove(ligneFonctionnelle);
-        ligneFonctionnelle.setBanque(null);
-    }
+    public void addCreditMoyenTerme(CreditMoyenTerme c) { creditMoyenTermes.add(c); c.setBanque(this); }
+    public void removeCreditMoyenTerme(CreditMoyenTerme c) { creditMoyenTermes.remove(c); c.setBanque(null); }
 
-    public void addCheque(Cheque cheque) {
-        cheques.add(cheque);
-        cheque.setBanque(this);
-    }
+    public void addTransaction(Transaction t) { transactions.add(t); t.setBanqueDePrelevement(this); }
+    public void removeTransaction(Transaction t) { transactions.remove(t); t.setBanqueDePrelevement(null); }
 
-    public void removeCheque(Cheque cheque) {
-        cheques.remove(cheque);
-        cheque.setBanque(null);
-    }
-
-    public void addLcn(Lcn lcn) {
-        lcns.add(lcn);
-        lcn.setBanque(this);
-    }
-
-    public void removeLcn(Lcn lcn) {
-        lcns.remove(lcn);
-        lcn.setBanque(null);
-    }
-
-    public void addVirement(Virement virement) {
-        virements.add(virement);
-        virement.setBanque(this);
-    }
-
-    public void removeVirement(Virement virement) {
-        virements.remove(virement);
-        virement.setBanque(null);
-    }
-
-    public void addMiseADisposition(MiseADisposition miseADisposition) {
-        misesADisposition.add(miseADisposition);
-        miseADisposition.setBanque(this);
-    }
-
-    public void removeMiseADisposition(MiseADisposition miseADisposition) {
-        misesADisposition.remove(miseADisposition);
-        miseADisposition.setBanque(null);
-    }
-
-    // You would add similar helper methods for ContratLeasing, CreditMoyenTerme, and Transaction
-
-    // --- JPA Lifecycle Callbacks ---
     @PrePersist
     protected void onCreate() {
-        OffsetDateTime now = OffsetDateTime.now();
-        this.dateCreation = now;
-        this.dateModification = now;
-        if (this.soldeActuel == null) {
-            this.soldeActuel = BigDecimal.ZERO;
-        }
+        this.dateCreation = OffsetDateTime.now();
+        this.dateModification = OffsetDateTime.now();
     }
 
     @PreUpdate
@@ -261,21 +194,19 @@ public class Banque {
         this.dateModification = OffsetDateTime.now();
     }
 
-    // --- equals() and hashCode() ---
+    // --- equals / hashCode ---
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Banque banque = (Banque) o;
-        return Objects.equals(id, banque.id);
+        if (!(o instanceof Banque)) return false;
+        Banque b = (Banque) o;
+        return Objects.equals(numeroDeCompte, b.numeroDeCompte);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+    public int hashCode() { return Objects.hash(numeroDeCompte); }
 
-    // --- toString() ---
+    // --- toString ---
     @Override
     public String toString() {
         return "Banque{" +

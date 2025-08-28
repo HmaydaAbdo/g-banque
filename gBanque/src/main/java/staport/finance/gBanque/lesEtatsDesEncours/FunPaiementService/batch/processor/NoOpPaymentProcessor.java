@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 @Component
 // The output type (Cheque) matches what ChequePaymentProcessor produces,
 // ensuring compatibility with the ClassifierCompositeItemProcessor.
-public class NoOpPaymentProcessor implements ItemProcessor<FunPaymentDto, Cheque> {
+public class NoOpPaymentProcessor implements ItemProcessor<FunPaymentDto, Object> {
 
     private static final Logger log = LoggerFactory.getLogger(NoOpPaymentProcessor.class);
 

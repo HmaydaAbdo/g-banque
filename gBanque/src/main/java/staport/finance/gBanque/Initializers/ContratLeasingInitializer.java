@@ -1,4 +1,4 @@
-package staport.finance.gBanque.leasing.contratLeasing.initializer;
+package staport.finance.gBanque.Initializers;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;

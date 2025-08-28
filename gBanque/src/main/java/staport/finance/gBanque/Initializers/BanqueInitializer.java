@@ -1,4 +1,4 @@
-package staport.finance.gBanque.Bank.initializer;
+package staport.finance.gBanque.Initializers;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;

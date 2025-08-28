@@ -1,4 +1,4 @@
-package staport.finance.gBanque.usersAndRoles.initializer;
+package staport.finance.gBanque.Initializers;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;

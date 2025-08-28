@@ -7,6 +7,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import staport.finance.gBanque.lesEtatsDesEncours.recapitulatif.decaissement.dtos.RecaputilatifDecaissementItem;
@@ -28,19 +29,19 @@ public class RecapitulatifDecaissementController {
     }
 
     /**
-     * Retrieves a pageable and sortable summary of all expected disbursements
-     * for the current month.
-     *
-     * @param pageable A Spring Data Pageable object, automatically created from
-     * URL query parameters like `page`, `size`, and `sort`.
-     * @return A ResponseEntity containing a consolidated Page of disbursement items and an HTTP status of OK.
+     * Endpoint to retrieve the list of upcoming disbursements for a specific bank.
+     * The banqueId is a mandatory path variable.
+     * @param banqueId The ID of the bank to filter by.
+     * @param pageable Pagination and sorting information.
+     * @return A paginated list of disbursement items.
      */
-    @GetMapping
+    @GetMapping("/banque/{banqueId}")
     public ResponseEntity<Page<RecaputilatifDecaissementItem>> getRecapitulatifDecaissement(
-            @PageableDefault(sort = "dateEmission", direction = Sort.Direction.ASC) Pageable pageable) {
+            @PageableDefault(sort = "dateEmission", direction = Sort.Direction.ASC) Pageable pageable,
+            @PathVariable Long banqueId) {
 
         Page<RecaputilatifDecaissementItem> decaissementItems =
-                recapitulatifDecaissementService.getRecapitulatifDecaissementForCurrentMonth(pageable);
+                recapitulatifDecaissementService.getRecapitulatifDecaissementForCurrentMonthForGivenBanque(pageable,banqueId);
 
         return new ResponseEntity<>(decaissementItems, HttpStatus.OK);
     }

@@ -12,7 +12,6 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,19 +41,17 @@ public class LigneFonctionnelleService {
     private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
     private final LigneFonctionnelleMapper ligneFonctionnelleMapper;
     private final BanqueRepository banqueRepository;
-    private final NatureLigneFonctionnelleService natureLigneFonctionnelleService;
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
 
     @Autowired
     public LigneFonctionnelleService(LigneFonctionnelleRepository ligneFonctionnelleRepository,
                                      LigneFonctionnelleMapper ligneFonctionnelleMapper,
                                      BanqueRepository banqueRepository,
-                                     NatureLigneFonctionnelleService natureLigneFonctionnelleService,
                                      NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository) {
         this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
         this.ligneFonctionnelleMapper = ligneFonctionnelleMapper;
         this.banqueRepository = banqueRepository;
-        this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
+
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
     }
 
@@ -113,9 +110,9 @@ public class LigneFonctionnelleService {
         return ligneFonctionnelleMapper.toDto(ligneFonctionnelle);
     }
 
-    public Page<LigneFonctionnelleResponse> getActiveLigneFonctionnelles(LigneFonctionnelleSearchCriteria criteria, Pageable pageable) {
+    public Page<LigneFonctionnelleResponse> getLigneFonctionnelles(LigneFonctionnelleSearchCriteria criteria, Pageable pageable) {
         log.debug("Récupération des lignes fonctionnelles ACTIVES avec critères: {} et pageable: {}", criteria, pageable);
-        Specification<LigneFonctionnelle> spec = LigneFonctionnelleSpecification.searchActiveByCriteria(criteria);
+        Specification<LigneFonctionnelle> spec = LigneFonctionnelleSpecification.searchByCriteria(criteria);
         Page<LigneFonctionnelle> ligneFonctionnellesPage = ligneFonctionnelleRepository.findAll(spec, pageable);
         log.debug("Nombre de lignes fonctionnelles ACTIVES trouvées: {}", ligneFonctionnellesPage.getTotalElements());
         return ligneFonctionnellesPage.map(ligneFonctionnelleMapper::toDto);

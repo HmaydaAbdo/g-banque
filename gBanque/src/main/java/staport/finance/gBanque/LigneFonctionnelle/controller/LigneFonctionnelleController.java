@@ -35,8 +35,7 @@ public class LigneFonctionnelleController {
         return ResponseEntity.ok(ligne);
     }
 
-    // This endpoint now retrieves "active" functional lines based on the 'actif' flag.
-    // The search criteria can still filter further.
+
     @GetMapping
     public ResponseEntity<Page<LigneFonctionnelleResponse>> getActiveLigneFonctionnelles(
             @RequestParam(defaultValue = "0") int page,
@@ -48,7 +47,7 @@ public class LigneFonctionnelleController {
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, size, sortOrder);
 
-        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getActiveLigneFonctionnelles(searchCriteria, pageable);
+        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getLigneFonctionnelles(searchCriteria, pageable);
         return ResponseEntity.ok(lignes);
     }
 

@@ -5,16 +5,18 @@ public class LigneFonctionnelleSearchCriteria {
     private Long natureLigneFonctionnelleId;
     private Integer yearDepart;
     private Boolean actif;
+    private Boolean isExpired;
 
     // --- Constructors ---
     public LigneFonctionnelleSearchCriteria() {
     }
 
-    public LigneFonctionnelleSearchCriteria(Long banqueId, Long natureLigneFonctionnelleId, Integer yearDepart, Boolean actif) {
+    public LigneFonctionnelleSearchCriteria(Long banqueId, Long natureLigneFonctionnelleId, Integer yearDepart, Boolean actif, Boolean isExpired) {
         this.banqueId = banqueId;
         this.natureLigneFonctionnelleId = natureLigneFonctionnelleId;
         this.yearDepart = yearDepart;
         this.actif = actif;
+        this.isExpired = isExpired;
     }
 
     // --- Getters and Setters ---
@@ -31,18 +33,22 @@ public class LigneFonctionnelleSearchCriteria {
     public Integer getYearDepart() {
         return yearDepart;
     }
-
     public void setYearDepart(Integer yearDepart) {
         this.yearDepart = yearDepart;
     }
 
-
     public Boolean getActif() {
         return actif;
     }
-
     public void setActif(Boolean actif) {
         this.actif = actif;
+    }
+
+    public Boolean getIsExpired() {
+        return isExpired;
+    }
+    public void setIsExpired(Boolean expired) {
+        this.isExpired = expired;
     }
 
     @Override
@@ -52,6 +58,7 @@ public class LigneFonctionnelleSearchCriteria {
                 ", natureLigneFonctionnelleId=" + natureLigneFonctionnelleId +
                 ", yearDepart=" + yearDepart +
                 ", actif=" + actif +
+                ", isExpired=" + isExpired +
                 '}';
     }
 }

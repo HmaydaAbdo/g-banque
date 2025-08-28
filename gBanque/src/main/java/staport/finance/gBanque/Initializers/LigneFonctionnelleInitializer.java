@@ -1,4 +1,5 @@
-package staport.finance.gBanque.LigneFonctionnelle.initializer;
+package staport.finance.gBanque.Initializers;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-/*
 @Configuration
 public class LigneFonctionnelleInitializer {
 
@@ -141,4 +141,3 @@ public class LigneFonctionnelleInitializer {
 
 
 }
- */

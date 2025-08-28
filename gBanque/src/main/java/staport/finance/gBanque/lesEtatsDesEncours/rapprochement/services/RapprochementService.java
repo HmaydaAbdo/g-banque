@@ -1,5 +1,6 @@
 package staport.finance.gBanque.lesEtatsDesEncours.rapprochement.services;
 
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,9 +28,10 @@ import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.repositories.Tra
 
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.persistence.criteria.Predicate;
 
 import static staport.finance.gBanque.lesEtatsDesEncours.rapprochement.spec.TransactionSpecifications.*;
+import static staport.finance.gBanque.lesEtatsDesEncours.rapprochement.spec.TransactionSpecifications.withFilters;
+
 
 @Service
 public class RapprochementService {
@@ -123,47 +125,9 @@ public class RapprochementService {
         return cmtTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    /**
-     * Retrieves a paginated list of transactions for a specific bank,
-     * filtered by the current month and optional criteria, and maps them to DTOs.
-     * @param banqueId The ID of the bank to filter by (mandatory).
-     * @param searchDto A DTO containing optional search criteria.
-     * @param pageable The Pageable object for pagination and sorting.
-     * @return A Page of Transaction DTOs.
-     */
-    public Page<TransactionResponseDto> getTransactions(Long banqueId, TransactionSearchDto searchDto, Pageable pageable) {
-        List<Specification<Transaction>> specs = new ArrayList<>();
-        specs.add(isCurrentMonth());
-        specs.add(hasBanqueId(banqueId));
 
-        if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
-            specs.add(libelleContains(searchDto.getLibelle()));
-        }
 
-        Specification<Transaction> combinedSpec = withFilters(specs);
-        Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, pageable);
-        return transactions.map(TransactionMapper::toDto);
-    }
 
-    /**
-     * Retrieves a paginated list of transactions for all banks,
-     * filtered by the current month and optional criteria.
-     * This is used for the "Récapitulatif bancaire".
-     *
-     * @param searchDto A DTO containing optional search criteria.
-     * @param pageable The Pageable object for pagination and sorting.
-     * @return A Page of Transaction DTOs.
-     */
-    public Page<TransactionResponseDto> getRecapitulatifBancaire(TransactionSearchDto searchDto, Pageable pageable) {
-        List<Specification<Transaction>> specs = new ArrayList<>();
-        specs.add(isCurrentMonth());
 
-        if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
-            specs.add(libelleContains(searchDto.getLibelle()));
-        }
 
-        Specification<Transaction> combinedSpec = withFilters(specs);
-        Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, pageable);
-        return transactions.map(TransactionMapper::toDto);
-    }
 }

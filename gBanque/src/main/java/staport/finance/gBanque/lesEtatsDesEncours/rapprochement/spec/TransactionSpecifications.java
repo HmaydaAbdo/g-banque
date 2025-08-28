@@ -5,6 +5,8 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.entities.Transaction;
+import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.enums.TransactionSource;
+
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -38,6 +40,24 @@ public class TransactionSpecifications {
             OffsetDateTime startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth()).withHour(0).withMinute(0).withSecond(0).withNano(0);
             OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
             return criteriaBuilder.between(root.get("dateEmission"), startOfMonth, endOfMonth);
+        };
+    }
+
+
+    /**
+     * Filters transactions by their source.
+     * @param source The transaction source enum value as a string.
+     * @return a Specification for a given transaction source.
+     */
+    public static Specification<Transaction> hasTransactionSource(String source) {
+        return (root, query, criteriaBuilder) -> {
+            try {
+                TransactionSource transactionSource = TransactionSource.valueOf(source.toUpperCase());
+                return criteriaBuilder.equal(root.get("transactionSource"), transactionSource);
+            } catch (IllegalArgumentException e) {
+                // Return a predicate that will never match if the source is invalid
+                return criteriaBuilder.disjunction();
+            }
         };
     }
     /**

@@ -203,21 +203,16 @@ public class BanqueService {
      */
     @Transactional
     public void deleteBanque(Long id) throws Exception {
+        Banque banque = banqueRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée avec l'ID: " + id));
 
-        List<LigneFonctionnelle> actifsligneFonctionnelle;
+        boolean hasActiveLignes = banque.getLigneFonctionnelles().stream()
+                .anyMatch(LigneFonctionnelle::isActif);
 
-         if (banqueRepository.findById(id).isPresent()) {
-             Banque banque = banqueRepository.findById(id).get();
-              actifsligneFonctionnelle=banque.getLigneFonctionnelles()
-                     .stream().filter(LigneFonctionnelle::isActif).toList();
-         }else {
-             throw new ResourceNotFoundException("Banque non trouvée avec l'ID: " + id);
-         }
+        if (hasActiveLignes) {
+            throw new Exception("Impossible de supprimer cette banque car elle possède des lignes fonctionnelles actives.");
+        }
 
-         if(!actifsligneFonctionnelle.isEmpty()) {
-             throw new Exception("Impossible de supprimer cette banque car elle possède des lignes fonctionnelles actives.");
-         }
-
-        banqueRepository.deleteById(id);
+        banqueRepository.delete(banque);
     }
 }

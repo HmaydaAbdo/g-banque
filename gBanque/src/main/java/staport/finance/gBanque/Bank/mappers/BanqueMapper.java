@@ -6,10 +6,9 @@ import staport.finance.gBanque.Bank.dtos.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.entities.Banque;
 import java.util.Base64;
-import java.util.List;
-import java.util.stream.Collectors;
 
-@Component // Make it a Spring component so it can be injected
+
+@Component
 public class BanqueMapper {
 
     /**
@@ -40,10 +39,6 @@ public class BanqueMapper {
         banque.setDevise(request.getDevise());
         banque.setAddress(request.getAddress());
         banque.setAgence(request.getAgence());
-
-        // ID, dateCreation, dateModification are handled by JPA @PrePersist
-        // soldeActuel is initialized by @PrePersist to BigDecimal.ZERO
-        // logoData will be set in the service from the MultipartFile
 
         return banque;
     }
@@ -76,20 +71,7 @@ public class BanqueMapper {
         return response;
     }
 
-    /**
-     * Converts a list of Banque entities to a list of BanqueResponse DTOs.
-     *
-     * @param banques The list of Banque entities.
-     * @return A list of BanqueResponse DTOs.
-     */
-    public List<BanqueResponse> toDtoList(List<Banque> banques) {
-        if (banques == null) {
-            return null; // Or new ArrayList<>() depending on desired behavior
-        }
-        return banques.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
-    }
+
 
     /**
      * Updates an existing Banque entity from a BanqueRequest DTO.
@@ -109,8 +91,6 @@ public class BanqueMapper {
         banque.setAddress(request.getAddress());
         banque.setAgence(request.getAgence());
 
-        // ID, dateCreation, dateModification, numeroDeCompte, soldeActuel are ignored (not updated from request)
-        // logoData is updated directly in the service from the MultipartFile
     }
 
     /**
@@ -138,18 +118,5 @@ public class BanqueMapper {
         return response;
     }
 
-    /**
-     * Converts a list of Banque entities to a list of BankAcceuilResponse DTOs.
-     *
-     * @param banques The list of Banque entities.
-     * @return A list of BankAcceuilResponse DTOs.
-     */
-    public List<BankAcceuilResponse> toAcceuilDtoList(List<Banque> banques) {
-        if (banques == null) {
-            return null; // Or new ArrayList<>()
-        }
-        return banques.stream()
-                .map(this::toAcceuilDto)
-                .collect(Collectors.toList());
-    }
+
 }

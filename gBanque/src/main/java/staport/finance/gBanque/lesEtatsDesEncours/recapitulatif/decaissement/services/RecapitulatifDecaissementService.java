@@ -49,27 +49,40 @@ public class RecapitulatifDecaissementService {
      * Retrieves a pageable and sortable list of outstanding (Prévu) disbursements
      * for the current month.
      *
+     * @param banqueId The id of the bank to filter by.
      * @param pageable A Spring data Pageable object for pagination and sorting.
      * @return A consolidated Page of disbursement items.
      */
-    public Page<RecaputilatifDecaissementItem> getRecapitulatifDecaissementForCurrentMonth(Pageable pageable) {
+    public Page<RecaputilatifDecaissementItem> getRecapitulatifDecaissementForCurrentMonthForGivenBanque(Pageable pageable,Long banqueId) {
 
-        // Step 1: Fetch all outstanding payments for the current month using the dedicated specifications.
-        List<EcheanceLeasing> outstandingLeasingPayments = echeanceLeasingRepository.findAll(EcheanceLeasingSpecification.outstandingUntil(PeriodeEncours.MOIS, OffsetDateTime.now()));
-        List<EcheanceCMT> outstandingCmtPayments = echeanceCMTRepository.findAll(EcheanceCMTSpecification.outstandingUntil(PeriodeEncoursCMT.MOIS, OffsetDateTime.now()));
 
-        // Step 2: Combine the two lists and map them to the unified DTO.
+        // Step 1: Create the bank filtering specification.
+        Specification<EcheanceLeasing> leasingBanqueSpec = EcheanceLeasingSpecification.byContratBanqueId(banqueId);
+        Specification<EcheanceCMT> cmtBanqueSpec = EcheanceCMTSpecification.byCreditBanqueId(banqueId);
+
+        // Step 2: Combine the bank filter with the existing outstanding payments filter.
+        Specification<EcheanceLeasing> combinedLeasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil(PeriodeEncours.MOIS, OffsetDateTime.now()))
+                .and(leasingBanqueSpec);
+        Specification<EcheanceCMT> combinedCmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil(PeriodeEncoursCMT.MOIS, OffsetDateTime.now()))
+                .and(cmtBanqueSpec);
+
+        // Step 3: Fetch all outstanding payments for the current month using the combined specifications.
+        List<EcheanceLeasing> outstandingLeasingPayments = echeanceLeasingRepository.findAll(combinedLeasingSpec);
+        List<EcheanceCMT> outstandingCmtPayments = echeanceCMTRepository.findAll(combinedCmtSpec);
+
+
+        // Step 4: Combine the two lists and map them to the unified DTO.
         List<RecaputilatifDecaissementItem> combinedItems = Stream.concat(
                         outstandingLeasingPayments.stream().map(mapper::mapLeasingToDto),
                         outstandingCmtPayments.stream().map(mapper::mapCmtToDto)
                 )
                 .collect(Collectors.toList());
 
-        // Step 3: Sort the entire combined list based on the Pageable's sort information.
+        // Step 5: Sort the entire combined list based on the Pageable's sort information.
         Comparator<RecaputilatifDecaissementItem> comparator = getComparatorForSorting(pageable);
         combinedItems.sort(comparator);
 
-        // Step 4: Manually apply pagination to the sorted list.
+        // Step 6: Manually apply pagination to the sorted list.
         int pageSize = pageable.getPageSize();
         int currentPage = pageable.getPageNumber();
         int startItem = currentPage * pageSize;
@@ -82,7 +95,7 @@ public class RecapitulatifDecaissementService {
             pagedItems = combinedItems.subList(startItem, toIndex);
         }
 
-        // Step 5: Wrap the sublist in a Page object and return it.
+        // Step 7: Wrap the sublist in a Page object and return it.
         return new PageImpl<>(pagedItems, pageable, combinedItems.size());
     }
 

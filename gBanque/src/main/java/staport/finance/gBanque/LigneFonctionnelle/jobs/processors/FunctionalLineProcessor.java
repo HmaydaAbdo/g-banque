@@ -34,11 +34,11 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
     private final OffsetDateTime currentProcessingTime = OffsetDateTime.now();
 
     // Configurable thresholds for monthly notifications
-    @Value("${functional.line.expiration.alert.threshold.months:1}")
-    private long alertThresholdMonths; // Default 1 month (inclusive) for alert notification
+    @Value("${functional.line.expiration.alert.threshold.months}")
+    private long alertThresholdMonths;
 
-    @Value("${functional.line.expiration.warning.threshold.months:2}")
-    private long warningThresholdMonths; // Default 2 months (inclusive, but takes precedence over alert if <=1) for warning notification
+    @Value("${functional.line.expiration.warning.threshold.months}")
+    private long warningThresholdMonths;
 
 
     /**
@@ -68,13 +68,10 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
             // Rule 1: If end date has already passed
             if (endDate.isBefore(currentProcessingTime)) {
                 if (item.isActif()) { // Only deactivate if it's currently active
-                    item.setActif(false);
-                    needsPersistence = true; // Mark for persistence because status changed
-                    log.info("LigneFonctionnelle ID: {} status changed to INACTIVE. End date {} has passed.", item.getId(), endDate.toLocalDate());
 
                     // Prepare an ALERT notification for immediate action
                     notificationTitle = "Une ligne Fonctionnelle a Expirée ";
-                    notificationContent = String.format("La ligne fonctionnelle avec ID '%d' (Banque: '%s', Nature: '%s') est arrivée à expiration le %s. Elle a été désactivée automatiquement.",
+                    notificationContent = String.format("La ligne fonctionnelle avec ID '%d' (Banque: '%s', Nature: '%s') est expirée le %s. Elle faut la désactiver.",
                             item.getId(),
                             item.getBanque() != null ? item.getBanque().getNom() : "N/A",
                             item.getNatureLigneFonctionnelle() != null ? item.getNatureLigneFonctionnelle().getLabel() : "N/A",

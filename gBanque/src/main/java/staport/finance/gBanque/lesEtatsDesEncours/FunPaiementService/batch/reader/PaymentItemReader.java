@@ -1,7 +1,6 @@
 
 package staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.batch.reader;
 
-import staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.dtos.FunPaymentDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
@@ -11,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
+import staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.dtos.FunPaymentDto;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -106,7 +106,7 @@ public class PaymentItemReader implements ItemReader<FunPaymentDto> {
      */
     private Flux<FunPaymentDto> fetchPaymentsFromExternalAPI() {
         return webClient.get()
-                .uri("/GetPaiement")
+                .uri("/Paiement")
                 .retrieve()
                 .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
                         response -> response.bodyToMono(String.class)
