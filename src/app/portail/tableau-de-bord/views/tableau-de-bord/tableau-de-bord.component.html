@@ -13,7 +13,7 @@
     </p-breadcrumb>
   </div>
 
-  <div class="flex flex-wrap justify-content-center  pb-8 gap-2">
+  <div class="flex flex-wrap justify-content-center  pb-8 gap-2" @listAnimation>
     <div *ngFor="let kpi of kpis"
          class="flex flex-column justify-content-center align-content-between col-12 md:col-3 shadow-2 hover:shadow-8 text-center border-round-sm surface-overlay p-2 h-15rem cursor-pointer transition-all-0-2s"
          [routerLink]="[kpi.route]" routerLinkActive="active-card" [pTooltip]="'Cliquer pour ' + kpi.description" tooltipPosition="bottom">

@@ -1,7 +1,6 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { RapprochemntService } from '../../services/rapprochemnt.service';
 import { TransactionResponseDto } from '../../dtos/TransactionResponseDto';
-import {  CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -14,6 +13,8 @@ import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
 import { PageResponse } from "../../../../global/types/PageResponse";
+import { TransactionSearchDto } from '../../dtos/TransactionSearchDto';
+import {TransactionService} from "../../services/transactions/TransactionService"; // Import du DTO de recherche
 
 @Component({
   selector: 'app-rapprochemnt-mensuelle',
@@ -46,12 +47,12 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
   currentMonthYear: string | null = null;
 
   searchForm!: FormGroup;
-  libelleControl!: FormControl; // Propriété pour le FormControl
+  libelleControl!: FormControl;
 
   private subscriptions: Subscription[] = [];
 
   constructor(
-    private rapprochementService: RapprochemntService,
+    private transactionService: TransactionService,
     private fb: FormBuilder,
     private messageService: MessageService,
     private route: ActivatedRoute,
@@ -107,7 +108,10 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
       ? `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`
       : 'createdAt,desc';
 
-    this.rapprochementService.getTransactions(this.banqueIdFromRoute, libelle, page, size, sort)
+    const searchDto: TransactionSearchDto = { libelle: libelle };
+
+    // Changement ici : appel du nouveau service avec le DTO de recherche
+    this.transactionService.getTransactionsByBanque(this.banqueIdFromRoute, searchDto, page, size, sort)
       .subscribe({
         next: (response: PageResponse<TransactionResponseDto>) => {
           this.transactions = response.content;

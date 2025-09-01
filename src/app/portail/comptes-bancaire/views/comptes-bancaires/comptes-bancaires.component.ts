@@ -178,6 +178,8 @@ export class ComptesBancairesComponent implements OnInit {
 
       header: 'Confirmation de Suppression',
       icon: 'none',
+      acceptLabel: 'Confirmer',
+      rejectLabel: 'Annuler',
       accept: () => {
         this.loading = true;
         this.banqueService.deleteBanque(banque.id!)
@@ -193,7 +195,7 @@ export class ComptesBancairesComponent implements OnInit {
             },
             error: (error) => {
               console.error('Erreur lors de la suppression de la banque:', error);
-              const errorMessage = error.error?.message || 'Échec de la suppression de la banque.';
+              const errorMessage = error.error.detail || 'Échec de la suppression de la banque.';
               this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
               this.loading = false;
             }

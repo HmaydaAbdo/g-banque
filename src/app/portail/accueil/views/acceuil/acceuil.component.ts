@@ -46,13 +46,6 @@ export class AcceuilComponent  implements OnInit{
       next: (data) => {
         this.recapitulatifComptes = data;
 
-        // Show success toast
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Succès',
-          detail: 'Les informations des banques ont été chargées.',
-          life: 3000
-        });
       },
       error: (err) => {
         console.error('Error fetching bank accueil info:', err);

@@ -70,7 +70,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
     { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
     { label: 'Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires' },
-    { label: 'Lignes Fonctionnelle', icon: 'pi pi-receipt', routerLink: '/portail/lignes-fonctionnelles' },
+    { label: 'Lignes Fonctionnelle', icon: 'pi pi-receipt', routerLink: '/portail/lignes-fonctionnelles-encours' },
   ];
 
   filteredMenuItems: MenuItem[] = [];

@@ -19,17 +19,17 @@ export class LigneFonctionnelleService {
 
   constructor(private http: HttpClient) {} // Injects Angular's HttpClient
 
-  // 1. Create LigneFonctionnelle (POST /lignes-fonctionnelles)
+  // 1. Create LigneFonctionnelle (POST /lignes-fonctionnelles-encours)
   createLigneFonctionnelle(request: LigneFonctionnelleRequest): Observable<LigneFonctionnelleResponse> {
     return this.http.post<LigneFonctionnelleResponse>(this.apiUrl, request);
   }
 
-  // 2. Get LigneFonctionnelle by ID (GET /lignes-fonctionnelles/{id})
+  // 2. Get LigneFonctionnelle by ID (GET /lignes-fonctionnelles-encours/{id})
   getLigneFonctionnelleById(id: number): Observable<LigneFonctionnelleResponse> {
     return this.http.get<LigneFonctionnelleResponse>(`${this.apiUrl}/${id}`);
   }
 
-  // 3. Get Active LigneFonctionnelles (GET /lignes-fonctionnelles)
+  // 3. Get Active LigneFonctionnelles (GET /lignes-fonctionnelles-encours)
   // This method maps to the backend's getActiveLigneFonctionnelles endpoint.
   getCurrentLigneFonctionnelles(
     criteria: LigneFonctionnelleSearchCriteria, // This now includes actif
@@ -56,14 +56,18 @@ export class LigneFonctionnelleService {
       params = params.append('actif', criteria.actif.toString());
     }
 
+    if (criteria.isExpired !== undefined && criteria.isExpired !== null) {
+      params = params.append('isExpired', criteria.isExpired.toString());
+    }
+
     return this.http.get<PageResponse<LigneFonctionnelleResponse>>(this.apiUrl, { params });
   }
 
-  // 4. Get LignesFonctionnelles by BanqueOfDebit ID (GET /lignes-fonctionnelles/banque/{banqueId})
+  // 4. Get LignesFonctionnelles by BanqueOfDebit ID (GET /lignes-fonctionnelles-encours/banque/{banqueId})
   // This is the method explicitly marked as changed.
   getLignesFonctionnellesByBanqueId(
     banqueId: number,
-    criteria: LigneFonctionnelleSearchCriteria = {}, // Optional criteria with empty object as default
+    criteria: LigneFonctionnelleSearchCriteria , // Optional criteria with empty object as default
     page: number = 0,
     size: number = 10,
     sort: string = 'id,asc'
@@ -88,22 +92,22 @@ export class LigneFonctionnelleService {
     return this.http.get<PageResponse<LigneFonctionnelleResponse>>(`${this.apiUrl}/banque/${banqueId}`, { params });
   }
 
-  // 5. Update LigneFonctionnelle (PUT /lignes-fonctionnelles/{id})
+  // 5. Update LigneFonctionnelle (PUT /lignes-fonctionnelles-encours/{id})
   updateLigneFonctionnelle(id: number, request: LigneFonctionnelleRequest): Observable<LigneFonctionnelleResponse> {
     return this.http.put<LigneFonctionnelleResponse>(`${this.apiUrl}/${id}`, request);
   }
 
-  // 6. Delete LigneFonctionnelle (DELETE /lignes-fonctionnelles/{id})
+  // 6. Delete LigneFonctionnelle (DELETE /lignes-fonctionnelles-encours/{id})
   deleteLigneFonctionnelle(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-    // 7. deactivate a functional ligne (PUT /lignes-fonctionnelles/deactivate/{banqueId}/nature/{natureLigneFonctionnelleId})
+    // 7. deactivate a functional ligne (PUT /lignes-fonctionnelles-encours/deactivate/{banqueId}/nature/{natureLigneFonctionnelleId})
      deactivateLigneFonctionnelle(ligneId: number): Observable<void> {
        return this.http.put<void>(`${this.apiUrl}/deactivate/${ligneId}`, {});
     }
 
-  // 8. Get LigneFonctionnelle Chart History (GET /lignes-fonctionnelles/history)
+  // 8. Get LigneFonctionnelle Chart History (GET /lignes-fonctionnelles-encours/history)
   getLigneFonctionnelleChartHistory(request: LigneFonctionnelleChartHistoryRequest): Observable<LigneFonctionnelleChartData> {
     let params = new HttpParams();
     params = params.append('banqueId', request.banqueId.toString());

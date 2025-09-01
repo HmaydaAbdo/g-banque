@@ -4,5 +4,6 @@ export interface LigneFonctionnelleSearchCriteria {
   banqueId?: number;
   natureLigneFonctionnelleId?: number;
   yearDepart?: number;
-  actif?: boolean;
+  actif: boolean;
+  isExpired?: boolean;
 }

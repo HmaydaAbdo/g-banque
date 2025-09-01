@@ -3,8 +3,8 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
-  <div class=" portail-section flex justify-content-between bg-transparent">
-    <div class="flex justify-content-center align-items-center">
+
+  <div class=" portail-section flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
         <ng-template pTemplate="item" let-item>
           <ng-container *ngIf="item.route; else elseBlock">
@@ -21,15 +21,10 @@
           </ng-template>
         </ng-template>
       </p-breadcrumb>
-    </div>
-
-    <button pButton pRipple label="Ajouter Banque" class=" hidden md:block  h-fit  mt-2" size="small" icon="pi pi-plus" severity="primary"  routerLink="/portail/comptes-bancaires/new"></button>
-    <button pButton pRipple pTooltip="Ajouter une Banque" class=" md:hidden h-fit mt-2 " size="small" icon="pi pi-plus" severity="primary"  routerLink="/portail/comptes-bancaires/new"></button>
   </div>
 
-
   <h2 class="text-center">{{ isEditMode ? 'Modifier une Ligne Fonctionnelle' : 'Ajouter une Ligne Fonctionnelle' }}</h2>
-  <div class="flex justify-content-center">
+  <div class="flex justify-content-center mb-8">
     <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 600px;">
       <form [formGroup]="ligneFonctionnelleForm" (ngSubmit)="onSubmit()" class="p-fluid">
         <div class="formgrid grid">
@@ -136,8 +131,11 @@
         </div>
 
         <div class="flex justify-content-end mt-4 gap-2">
-          <button pButton pRipple label="Annuler" icon="pi pi-times" class=" p-button-secondary" (click)="onCancel()" type="button"></button>
-          <button pButton pRipple label="{{ isEditMode ? 'Modifier' : 'Créer' }}" icon="pi pi-check" class="p-button-primary" type="submit" [disabled]="loading"></button>
+          <button pButton pRipple label="Annuler" class=" p-button-secondary" (click)="onCancel()" type="button"></button>
+          <button pButton pRipple label="{{ isEditMode ? 'Modifier' : 'Créer' }}" class="p-button-primary" type="submit" [disabled]="loading"></button>
+        </div>
+        <div class="flex justify-content-end mt-2 gap-2">
+          <button pButton pRipple label="Désactiver"  class=" p-button-secondary" (click)="desactiver()" type="button"></button>
         </div>
       </form>
     </div>

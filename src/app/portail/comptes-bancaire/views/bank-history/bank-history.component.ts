@@ -86,8 +86,8 @@ export class BankHistoryComponent implements OnInit {
   // NEW: Options for the 'actif' dropdown filter
   actifOptions: any[] = [
     { label: 'Toutes', value: null },
-    { label: 'Actives', value: true },
-    { label: 'Inactives', value: false }
+    { label: 'Encours', value: true },
+    { label: 'Archivées', value: false }
   ];
 
   items: MenuItem[] | undefined;

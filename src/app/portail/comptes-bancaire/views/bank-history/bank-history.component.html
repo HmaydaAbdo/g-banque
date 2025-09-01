@@ -79,7 +79,7 @@
           </div>
 
           <div class="flex-grow-1" >
-            <label for="filterActif" class="block text-900 font-medium mb-2">Statut Actif</label>
+            <label for="filterActif" class="block text-900 font-medium mb-2">Statut </label>
             <p-dropdown
               id="filterActif"
               formControlName="actif"
@@ -121,8 +121,6 @@
             <th [pSortableColumn]="'taux'">Taux <p-sortIcon field="taux"></p-sortIcon></th>
             <th [pSortableColumn]="'dateDepart'">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
             <th [pSortableColumn]="'dateFin'">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
-            <th [pSortableColumn]="'actif'">Statut  <p-sortIcon field="actif"></p-sortIcon></th> <!-- NEW: Actif Header -->
-            <th style="width: 8rem; text-align: center;">Actions</th> <!-- Actions header -->
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-ligne>
@@ -132,29 +130,6 @@
             <td>{{ ligne.taux | number:'1.2-2' }} %</td>
             <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
             <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>
-
-            <!-- NEW: Actif Status Toggle -->
-            <td class="text-center">
-              <p-inputSwitch
-                [(ngModel)]="ligne.actif"
-                (onChange)="onToggleActif(ligne, $event)"
-              >
-              </p-inputSwitch>
-
-            </td>
-
-
-            <td class=" flex flex-row  gap-2 text-center">
-              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top"
-                      [routerLink]="['/portail/lignes-fonctionnelles/edit', ligne.id]">
-              </button>
-              <!-- Delete is only for Admin -->
-              @if (isAdmin()){
-                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger " pTooltip="Supprimer" tooltipPosition="top"
-                        (click)="deleteLigneFonctionnelle(ligne)">
-                </button>
-              }
-            </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptyMessage">

@@ -23,7 +23,7 @@ import {EncoursCMTRequestDTO} from "../../dtos/EncoursCMTRequestDTO";
 import {CalendarModule} from "primeng/calendar";
 import {DialogModule} from "primeng/dialog";
 import {InputTextareaModule} from "primeng/inputtextarea";
-import {RapprochemntService} from "../../../../../../rapprochement/services/rapprochemnt.service";
+import {RapprochemntService} from "../../../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import {EcheanceLeasingResponse} from "../../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
 import {
   DonneesComplementairesRapprochementDTO

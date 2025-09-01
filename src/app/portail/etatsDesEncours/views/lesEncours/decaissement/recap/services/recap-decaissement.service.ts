@@ -14,14 +14,16 @@ export class RecapDecaissementService {
   constructor(private http: HttpClient) { }
 
   /**
-   * Retrieves a paginated and sortable list of outstanding disbursements for the current month.
+   * Retrieves a paginated and sortable list of outstanding disbursements for a specific bank.
    *
+   * @param banqueId The ID of the bank to filter by.
    * @param page The page number to retrieve (default: 0).
    * @param size The number of items per page (default: 10).
    * @param sort The sorting criteria (e.g., 'dateEmission,asc' or 'debit,desc').
    * @returns Observable<Page<RecaputilatifDecaissementItem>> An observable of the pageable response.
    */
   getRecapitulatifDecaissement(
+    banqueId: number,
     page: number = 0,
     size: number = 10,
     sort: string = 'dateEmission,asc'
@@ -31,6 +33,9 @@ export class RecapDecaissementService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    return this.http.get<PageResponse<RecaputilatifDecaissementItem>>(this.baseUrl, { params });
+    // Construct the URL with the banqueId as a path variable
+    const url = `${this.baseUrl}/banque/${banqueId}`;
+
+    return this.http.get<PageResponse<RecaputilatifDecaissementItem>>(url, { params });
   }
 }

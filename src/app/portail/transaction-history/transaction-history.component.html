@@ -1,0 +1,126 @@
+<p-toast></p-toast>
+
+
+<div class="card flex flex-column gap-4 p-2 md:p-4 w-screen h-screen overflow-y-auto">
+
+  <div class="flex justify-content-center align-items-center bg-transparent gap-3">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+      <ng-template pTemplate="item" let-item>
+        <ng-container *ngIf="item.route; else elseBlock">
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+
+        </ng-container>
+        <ng-template #elseBlock>
+          <a [href]="item.url">
+            <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+          </a>
+        </ng-template>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <form [formGroup]="searchForm" class="flex justify-content-around flex-wrap gap-3">
+
+    <div>
+      <span class="p-input-icon-left w-full">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="libelle"
+               placeholder="Rechercher par libellé..."
+               class="w-full" />
+      </span>
+    </div>
+
+    <div>
+      <p-dropdown
+        [options]="banquesOptions"
+        formControlName="banqueId"
+        placeholder="Banque de Prélèvement"
+        [showClear]="true"
+        appendTo="body"
+        class="w-full"
+      ></p-dropdown>
+    </div>
+
+    <div>
+      <p-dropdown
+        [options]="transactionSources"
+        formControlName="transactionSource"
+        placeholder="Source de transaction"
+        [showClear]="true"
+        appendTo="body"
+        class="w-full"
+      ></p-dropdown>
+    </div>
+
+
+    <div>
+      <p-button
+        label="Effacer"
+        icon="pi pi-times"
+        severity="secondary"
+        (onClick)="clearSearch()"
+        class="w-full"
+      ></p-button>
+    </div>
+  </form>
+
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="transactions"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 20, 50]"
+      [lazy]="true"
+      (onLazyLoad)="loadTransactions($event)"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      [resizableColumns]="true"
+      columnResizeMode="expand"
+      [rowHover]="true"
+      dataKey="id"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} transactions"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-gridlines"
+      [tableStyle]="{'min-width': '70rem'}"
+      [selectionMode]="'single'">
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+          <th pSortableColumn="banqueDePrelevement.libelle">Banque <p-sortIcon field="banqueDePrelevement.libelle"></p-sortIcon></th>
+          <th pSortableColumn="credit">Crédit <p-sortIcon field="credit"></p-sortIcon></th>
+          <th pSortableColumn="debit">Débit <p-sortIcon field="debit"></p-sortIcon></th>
+          <th pSortableColumn="dateEmission">Date d'émission<p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="transactionSource">Source <p-sortIcon field="transactionSource"></p-sortIcon></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-transaction>
+        <tr>
+          <td>{{ transaction.libelle }}</td>
+          <td>{{ transaction.banqueDePrelevementNom }}</td>
+          <td>{{ transaction.credit ? transaction.credit + ' MAD' : 'N/A' }} </td>
+          <td>{{ transaction.debit ? transaction.debit + ' MAD' : 'N/A' }} </td>
+          <td>{{ transaction.dateEmission | date: 'dd/MM/yyyy' }}</td>
+          <td>{{ transaction.transactionSource }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="6">Aucune transaction trouvée.</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="6">Chargement des transactions. Veuillez patienter...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

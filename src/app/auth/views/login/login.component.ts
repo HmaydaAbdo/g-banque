@@ -65,7 +65,6 @@ export class LoginComponent implements OnInit {
     this.authService.login(credentials).subscribe({
       next: () => {
         this.isLoading = false;
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Connexion réussie !',life: 3000 });
         this.router.navigate(['/portail']);
       },
       error: (error) => {

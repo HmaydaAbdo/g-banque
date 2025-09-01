@@ -65,7 +65,7 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
   ngOnInit(): void {
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
-      { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles', label:"Les Lignes fonctionnelles" },
+      { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-encours', label:"Les Lignes fonctionnelles" },
       { icon: 'pi pi-list', route: '/portail/natures-fonctionnelles', label:"Les Natures des Lignes fonctionnelles" },
     ]
     this.initSearchForm();

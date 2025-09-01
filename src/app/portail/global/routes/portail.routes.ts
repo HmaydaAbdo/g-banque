@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { AcceuilComponent } from "../../accueil/views/acceuil/acceuil.component";
 import { ComptesBancairesComponent } from "../../comptes-bancaire/views/comptes-bancaires/comptes-bancaires.component";
-import { LignesFonctionnellesComponent } from "../../lignes-fonctionnelles/views/lignes-fonctionnelles/lignes-fonctionnelles.component";
+import { LignesFonctionnellesComponent } from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-encours/lignes-fonctionnelles.component";
 import { TableauDeBordComponent } from "../../tableau-de-bord/views/tableau-de-bord/tableau-de-bord.component";
 import { BanqueEditComponent } from "../../comptes-bancaire/views/banque-edit/banque-edit.component";
 import {LigneFonctionnelleEditComponent} from "../../lignes-fonctionnelles/views/ligne-fonctionnelle-edit/ligne-fonctionnelle-edit.component";
@@ -13,7 +13,6 @@ import {LogsComponent} from "../../settings/logs/views/logs/logs.component";
 import {EvolTauxPlafondComponent} from "../../tableau-de-bord/views/evol-taux-plafond/evol-taux-plafond.component";
 import {SoldeParBanqueComponent} from "../../tableau-de-bord/views/solde-par-banque/solde-par-banque.component";
 import {TresorerieGlobaleComponent} from "../../tableau-de-bord/views/tresorerie-globale/tresorerie-globale.component";
-import {SelectForHistoryComponent} from "../../comptes-bancaire/views/select-for-history/select-for-history.component";
 import {LesEncoursComponent} from "../../etatsDesEncours/views/parent-componant/les-encours/les-encours.component";
 import {
   EcheancesLeasingComponent
@@ -37,28 +36,35 @@ import {
 import {
   SelectBanquePourLEncoursComponent
 } from "../../etatsDesEncours/views/select-banque-pour-l-encours/select-banque-pour-l-encours.component";
-import {RecapRapprochementComponent} from "../../recap-rapprochement/recap-rapprochement.component";
-import {LcnActifListComponent} from "../../LCN/views/lcn-actif-list/lcn-actif-list.component";
-import {ChequesActifListComponent} from "../../cheques/views/cheques-actif-list/cheques-actif-list.component";
-import {VirementActifListComponent} from "../../Virements/views/virement-actif-list/virement-actif-list.component";
+import {LcnListComponent} from "../../LCN/views/lcn-list/lcn-list.component";
+import {ChequesListComponent} from "../../cheques/views/cheques-list/cheques-list.component";
+import {VirementListComponent} from "../../Virements/views/virement-list/virement-list.component";
 import {
-  MiseADispositionActifListComponent
-} from "../../Mise-à-disposition/views/mise-a-disposition-actif-list/mise-a-disposition-actif-list.component";
+  MiseADispositionListComponent
+} from "../../Mise-à-disposition/views/mise-a-disposition-list/mise-a-disposition-list.component";
 import {
   RecapDecaissementComponent
 } from "../../etatsDesEncours/views/lesEncours/decaissement/recap/views/recap-decaissement/recap-decaissement.component";
+import {
+  LignesFonctionnellesExpireesComponent
+} from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-expirees/lignes-fonctionnelles-expirees.component";
+import {
+  LignesFonctionnellesArchivesComponent
+} from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component";
+import {TransactionHistoryComponent} from "../../transaction-history/transaction-history.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
   { path: 'accueil', component: AcceuilComponent  },
   { path: 'comptes-bancaires', component: ComptesBancairesComponent  },
-  { path: "select-for-history", component: SelectForHistoryComponent },
   { path: "comptes-bancaires/new", component: BanqueEditComponent },
   { path: "comptes-bancaires/edit/:id", component: BanqueEditComponent },
   { path: "comptes-bancaires/history/:id", component: BankHistoryComponent },
-  { path: 'lignes-fonctionnelles', component: LignesFonctionnellesComponent},
-  { path: 'lignes-fonctionnelles/new', component: LigneFonctionnelleEditComponent },
-  { path: 'lignes-fonctionnelles/edit/:id', component: LigneFonctionnelleEditComponent },
+  { path: 'lignes-fonctionnelles-encours', component: LignesFonctionnellesComponent},
+  { path: 'lignes-fonctionnelles-encours/new', component: LigneFonctionnelleEditComponent },
+  { path: 'lignes-fonctionnelles-encours/edit/:id', component: LigneFonctionnelleEditComponent },
+  { path: 'lignes-fonctionnelles-expired', component: LignesFonctionnellesExpireesComponent},
+  { path: 'lignes-fonctionnelles-archived', component: LignesFonctionnellesArchivesComponent},
   { path: 'natures-fonctionnelles', component: NatureLigneFonctionnelleListComponent },
   { path: 'natures-fonctionnelles/new', component: NatureLigneFonctionnelleEditComponent },
   { path: 'natures-fonctionnelles/edit/:id', component: NatureLigneFonctionnelleEditComponent },
@@ -83,9 +89,10 @@ export const PORTAIL_ROUTES: Routes = [
     ]
   },
   { path: 'etats-des-encours',component:SelectBanquePourLEncoursComponent},
-  {path:"récapitulatif",component:RecapRapprochementComponent},
-  {path:"LCN",component:LcnActifListComponent},
-  {path:"Chèques",component:ChequesActifListComponent},
-  {path:"Virements",component:VirementActifListComponent},
-  {path:"Mise à disposition",component:MiseADispositionActifListComponent}
+  {path:"LCN",component:LcnListComponent},
+  {path:"Chèques",component:ChequesListComponent},
+  {path:"Virements",component:VirementListComponent},
+  {path:"Mise-a-disposition",component:MiseADispositionListComponent},
+  {path:"historique-des-transactions",component:TransactionHistoryComponent}
+
 ];

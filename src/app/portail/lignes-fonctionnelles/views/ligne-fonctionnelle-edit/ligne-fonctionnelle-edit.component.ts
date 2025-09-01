@@ -51,6 +51,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
   ligneFonctionnelleForm!: FormGroup;
   isEditMode: boolean = false;
   ligneFonctionnelleId: number | null = null;
+  ligneFonctionnelle?: LigneFonctionnelleResponse ;
   natureLigneOptions: { label: string; value: number }[] = [];
   banquesOptions: { label: string; value: number }[] = [];
   loading: boolean = false;
@@ -70,7 +71,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },{ icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles', label:"Les Lignes fonctionnelles Actifs." } ]
+    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },{ icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-encours', label:"Les Lignes fonctionnelles Encours" } ]
     this.initForm()
     this.loadBanquesForDropdown();
     this.loadNatureLigneOptionsForDropdown(); // This will now fetch from backend
@@ -182,6 +183,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
           dateDepart: ligne.dateDepart ? new Date(ligne.dateDepart) : null,
           dateFin: ligne.dateFin ? new Date(ligne.dateFin) : null,
         });
+        this.ligneFonctionnelle = ligne;
         this.loading = false;
       },
       error: (error) => {
@@ -232,7 +234,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle mise à jour avec succès.', life: 3000 });
             this.loading = false;
-            this.router.navigate(['/portail/lignes-fonctionnelles']);
+            this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
           },
           error: (error) => {
             console.error('Erreur lors de la mise à jour de la ligne fonctionnelle:', error);
@@ -247,7 +249,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle créée avec succès.', life: 3000 });
             this.loading = false;
-            this.router.navigate(['/portail/lignes-fonctionnelles']);
+            this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
           },
           error: (error) => {
             console.error('Erreur lors de la création de la ligne fonctionnelle:', error);
@@ -259,7 +261,42 @@ export class LigneFonctionnelleEditComponent implements OnInit {
     }
   }
 
+  desactiver(): void {
+    if (this.ligneFonctionnelle == null) {
+      console.log("ligneFonctionnelle est null")
+    } else {
+      const ligne = this.ligneFonctionnelle;
+      this.confirmationService.confirm({
+        message: `Êtes-vous sûr de vouloir désactiver la ligne fonctionnelle "${ligne.natureLigneFonctionnelleLabel}" avec  "${ligne.banqueNom}" ?`,
+        header: 'Confirmation de Désactivation',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.loading = true;
+          this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.id!)
+            .subscribe({
+              next: () => {
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Succès',
+                  detail: 'Ligne Fonctionnelle désactivées avec succès.',
+                  life: 3000
+                });
+                this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
+              },
+              error: (error) => {
+                console.error('Erreur lors de la désactivation de la ligne fonctionnelle:', error);
+                const errorMessage = error.error?.message;
+                this.messageService.add({severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000});
+                this.loading = false;
+              }
+            });
+        }
+      });
+    }
+
+  }
+
   onCancel(): void {
-    this.router.navigate(['/portail/lignes-fonctionnelles']);
+    this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
   }
 }

@@ -29,7 +29,7 @@ import { OrganismeLeasingService } from "../../../../../../../leasing/organismes
 import { PageResponse } from "../../../../../../../global/types/PageResponse";
 import { OrganismeLeasingResponse } from "../../../../../../../leasing/organismesLeasing/dtos/OrganismeLeasingResponse";
 import { EncoursLeasingRequestDTO } from "../../dtos/encours-leasing-request.dto";
-import { RapprochemntService } from "../../../../../../rapprochement/services/rapprochemnt.service";
+import { RapprochemntService } from "../../../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import { DonneesComplementairesRapprochementDTO } from "../../../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {LeasingTransactionRequest} from "../../../../../../rapprochement/dtos/LeasingTransactionRequest";
 import {TransactionSource} from "../../../../../../rapprochement/dtos/TransactionSource";

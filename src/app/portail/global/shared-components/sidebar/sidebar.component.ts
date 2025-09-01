@@ -49,13 +49,7 @@ export class SidebarComponent implements OnInit {
   sidebarItems: SidebarItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
     { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
-    {label:"Récapitulatif bancaire mensuelle",icon:"pi pi-briefcase",routerLink:"/portail/récapitulatif"},
-    { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', items:
-        [
-          { label: 'La liste des comptes bancaires', icon: 'pi pi-list', routerLink: '/portail/comptes-bancaires' },
-          { label: "Historique des lignes fonctionnelles", icon: 'pi pi-history', routerLink: '/portail/select-for-history' }
-       ]
-    },
+    { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires'},
     {
       label: 'Leasing',
       icon: 'pi pi-money-bill',
@@ -72,7 +66,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Chèques', icon: 'pi pi-file-check', routerLink: '/portail/Chèques' },
         { label: 'LCN', icon: 'pi pi-file-o', routerLink: '/portail/LCN' },
         { label: 'Virements', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Virements' },
-        { label: 'Mises à disposition', icon: 'pi pi-briefcase', routerLink: '/portail/Mise à disposition' }
+        { label: 'Mises à disposition', icon: 'pi pi-briefcase', routerLink: '/portail/Mise-a-disposition' }
       ]
     },
     {
@@ -88,10 +82,13 @@ export class SidebarComponent implements OnInit {
       label: 'Les Lignes Fonctionnelles',
       icon: 'pi pi-receipt',
       items: [
-        { label: 'Les Lignes fonctionnelles actifs', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles' },
+        { label: 'Les Lignes fonctionnelles encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-encours' },
+        { label: 'Les Lignes fonctionnelles expirées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-expired' },
+        { label: 'Les Lignes fonctionnelles archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-archived' },
         { label: 'Les Natures des lignes Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles' }
       ]
     },
+    {label:"Historique des transactions",routerLink:"/portail/historique-des-transactions",icon:"pi pi-history"},
     {
       label: 'Paramètres',
       icon: 'pi pi-cog',
