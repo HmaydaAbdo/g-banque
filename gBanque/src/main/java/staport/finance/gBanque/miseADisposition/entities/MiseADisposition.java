@@ -1,4 +1,4 @@
-package staport.finance.gBanque.lesEtatsDesEncours.core.entities;
+package staport.finance.gBanque.miseADisposition.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
@@ -31,6 +31,9 @@ public class MiseADisposition {
     @Column(name = "cin_beneficiaire")
     private String cinBeneficiaire;
 
+    @Column(name = "active", nullable = false)
+    private boolean active;
+
     public MiseADisposition() {}
 
     public MiseADisposition(String numero, OffsetDateTime dateEmission, String beneficiaire,
@@ -57,6 +60,14 @@ public class MiseADisposition {
     public String getCinBeneficiaire() { return cinBeneficiaire; }
     public void setCinBeneficiaire(String cinBeneficiaire) { this.cinBeneficiaire = cinBeneficiaire; }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -79,6 +90,7 @@ public class MiseADisposition {
                 ", montant=" + montant +
                 ", banque=" + banque +
                 ", cinBeneficiaire='" + cinBeneficiaire + '\'' +
+                ", active=" + active +
                 '}';
     }
 }

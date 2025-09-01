@@ -1,4 +1,4 @@
-package staport.finance.gBanque.lesEtatsDesEncours.core.entities;
+package staport.finance.gBanque.virements.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
@@ -33,6 +33,9 @@ public class Virement {
     @Column(name = "rib_beneficiaire")
     private String ribBeneficiaire;
 
+    @Column(name = "active", nullable = false)
+    private boolean active;
+
     public Virement() {}
 
     public Virement(String numero, OffsetDateTime dateEmission, String beneficiaire,
@@ -62,6 +65,14 @@ public class Virement {
     public String getRibBeneficiaire() { return ribBeneficiaire; }
     public void setRibBeneficiaire(String ribBeneficiaire) { this.ribBeneficiaire = ribBeneficiaire; }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -85,6 +96,7 @@ public class Virement {
                 ", banque=" + banque +
                 ", banqueBeneficiaire=" + banqueBeneficiaire +
                 ", ribBeneficiaire='" + ribBeneficiaire + '\'' +
+                ", active=" + active +
                 '}';
     }
 }

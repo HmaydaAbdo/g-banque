@@ -28,16 +28,19 @@ public class ProcessingSkipListener implements SkipListener<FunPaymentDto, Objec
     public ProcessingSkipListener(
             @Value("${batch.skipped-items.cheque-file-path:skipped_cheques.log}") String chequeFilePath,
             @Value("${batch.skipped-items.lcn-file-path:skipped_lcns.log}") String lcnFilePath,
-            @Value("${batch.skipped-items.mad-file-path:skipped_mises_a_disposition.log}") String madFilePath
+            @Value("${batch.skipped-items.mad-file-path:skipped_mises_a_disposition.log}") String madFilePath,
+            @Value("${batch.skipped-items.mad-file-path:skipped_virements.log}") String virFilePath
     ) {
         skippedItemsFilePaths.put("Cheque", chequeFilePath);
         skippedItemsFilePaths.put("Lcn", lcnFilePath);
         skippedItemsFilePaths.put("MiseADisposition", madFilePath);
+        skippedItemsFilePaths.put("Virements", virFilePath);
         skippedItemsFilePaths.put("READ", "skipped_read.log");
         skippedItemsFilePaths.put("PROCESS", "skipped_process_generic.log");
 
         typeToFileNameKeyMap.put(1, "Cheque");
         typeToFileNameKeyMap.put(2, "Lcn");
+        typeToFileNameKeyMap.put(3, "Virements");
         typeToFileNameKeyMap.put(4, "MiseADisposition");
 
         log.info("ProcessingSkipListener initialized with type-specific file paths: {}", skippedItemsFilePaths);

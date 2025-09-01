@@ -1,83 +1,72 @@
 package staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.batch.processor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataException;
-import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.dtos.FunPaymentDto;
-import staport.finance.gBanque.lesEtatsDesEncours.core.entities.Lcn;
+import staport.finance.gBanque.lcn.entities.Lcn;
+import staport.finance.gBanque.lcn.repositories.LcnRepository;
 
-import java.math.BigDecimal;
-import java.time.ZoneId;
+import java.time.OffsetDateTime;
+import java.time.YearMonth;
+import java.util.Optional;
 
 /**
  * ItemProcessor for 'LCN' payments (type = 2).
- * Contains specific business logic for this payment type.
- * This processor transforms FunPaymentDto into a LCN entity.
- * Enhanced to throw exceptions for all invalid scenarios, allowing Spring Batch to track skips.
+ * This class now extends AbstractPaymentProcessor to inherit common logic.
+ * It focuses solely on the specific business logic for LCN payments.
  */
 @Component
-public class LcnPaymentProcessor implements ItemProcessor<FunPaymentDto, Object> {
+public class LcnPaymentProcessor extends AbstractPaymentProcessor {
 
-    private static final Logger log = LoggerFactory.getLogger(LcnPaymentProcessor.class);
-    ZoneId systemZone = ZoneId.systemDefault();
-    private final BanqueRepository banqueRepository;
+    private final LcnRepository lcnRepository;
+    private final OffsetDateTime curentDateTime = OffsetDateTime.now();
 
-    public LcnPaymentProcessor(BanqueRepository banqueRepository) {
-        this.banqueRepository = banqueRepository;
+    public LcnPaymentProcessor(BanqueRepository banqueRepository, LcnRepository lcnRepository) {
+        super(banqueRepository);
+        this.lcnRepository = lcnRepository;
     }
 
     @Override
-    public Lcn process(FunPaymentDto item) throws Exception {
-        // Log the attempt to process for tracing
-        log.debug("Attempting to process FunPaymentDto with numero: {}", item.getNumero());
+    protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
+        // Check if LCN already exists by numero
+        Optional<Lcn> existingLcn = lcnRepository.findById(item.getNumero());
 
-        // --- Step 1: Validate critical fields from FunPaymentDto ---
-        // If any required field is invalid, throw InvalidChequeDataException.
-        // Spring Batch's fault-tolerant mechanism will catch this and skip the item.
-        if (item.getNumero() == null || item.getNumero().trim().isEmpty()) {
-            throw new InvalidChequeDataException(" numero is null or empty");
+        if (existingLcn.isPresent()) {
+            log.info("Lcn with numero {} already exists. Skipping.", item.getNumero());
+            return null; // Spring Batch will skip this item
         }
 
-        if (item.getDateCheque() == null) {
-            throw new InvalidChequeDataException(" date d'émission (date_chaque) is null");
-        }
 
-        if (item.getBeneficiaire() == null || item.getBeneficiaire().trim().isEmpty()) {
-            throw new InvalidChequeDataException(" beneficiaire is null or empty");
-        }
-
+        // LCN-specific validation
         if (item.getDateEcheance() == null) {
-            throw new InvalidChequeDataException(" date d'échéance (date_echeance) is null");
+            throw new InvalidChequeDataException("Date d'échéance (dateEcheance) is null for LCN payment numero " + item.getNumero());
         }
 
-
-        if (item.getMontant() == null || item.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidChequeDataException("montant is null or non-positive ");
-        }
-
-
-        if (item.getBanque() == null || item.getBanque().trim().isEmpty()) {
-            throw new InvalidChequeDataException("banque (bank name) is null or empty");
-        }
-
-        // 2. Create and map to  entity
         Lcn lcn = new Lcn();
         lcn.setNumero(item.getNumero());
         lcn.setDateEmission(item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime());
         lcn.setBeneficiaire(item.getBeneficiaire());
-        lcn.setDateEcheance(item.getDateEcheance().atStartOfDay(systemZone).toOffsetDateTime());
+        OffsetDateTime dateEcheance = item.getDateEcheance().atStartOfDay(systemZone).toOffsetDateTime();
+        lcn.setDateEcheance(dateEcheance);
         lcn.setMontant(item.getMontant());
-        // 3. Handle Banque Association - Throwing error if not found
-        String bankNameFromDto = item.getBanque();
-        Banque banque = banqueRepository.findByNom(bankNameFromDto).orElseThrow(() -> new ResourceNotFoundException(String.format("Bank with name '%s' not found ", bankNameFromDto)));
         lcn.setBanque(banque);
 
-        log.info("Successfully processed and transformed lcn Payment {}. Returning lcn entity.", item.getNumero());
-        return lcn; // Return the transformed lcn entity
+        // Compare dateEcheance against current month
+        YearMonth currentMonth = YearMonth.from(curentDateTime);
+        YearMonth echeanceMonth = YearMonth.from(dateEcheance);
+
+        if (echeanceMonth.isBefore(currentMonth)) {
+            lcn.setActive(false);
+            log.info("LCN {} marked as INACTIVE (echeance month {} < current month {}).",
+                    item.getNumero(), echeanceMonth, currentMonth);
+        } else {
+            lcn.setActive(true);
+            log.info("LCN {} marked as ACTIVE (echeance month {} >= current month {}).",
+                    item.getNumero(), echeanceMonth, currentMonth);
+        }
+        log.info("Successfully processed and transformed Lcn Payment {}. Returning Lcn entity.", item.getNumero());
+        return lcn;
     }
 }

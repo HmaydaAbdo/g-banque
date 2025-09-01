@@ -1,4 +1,4 @@
-package staport.finance.gBanque.lesEtatsDesEncours.core.entities;
+package staport.finance.gBanque.cheques.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
@@ -22,7 +22,7 @@ public class Cheque {
     @Column(name = "beneficiaire", nullable = false)
     private String beneficiaire;
 
-    @Column(name = "date_echeance") // nullable = true is default, so no need for nullable = true explicitly
+    @Column(name = "date_echeance") // nullable = true is default
     private OffsetDateTime dateEcheance;
 
     @Column(name = "montant", nullable = false, precision = 19, scale = 2) // Precision and scale for BigDecimal
@@ -32,6 +32,9 @@ public class Cheque {
     @ManyToOne(optional = false) // 'optional = false' makes the foreign key non-nullable
     @JoinColumn(name = "banque_id", nullable = false) // Defines the foreign key column in the CHEQUES table
     private Banque banque;
+
+    @Column(name = "active", nullable = false)
+    private boolean active;
 
     // --- Constructors ---
     public Cheque() {
@@ -96,6 +99,14 @@ public class Cheque {
         this.banque = banque;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     // --- Utility Methods (Recommended for Entities) ---
     @Override
     public String toString() {
@@ -106,6 +117,7 @@ public class Cheque {
                 ", dateEcheance=" + dateEcheance +
                 ", montant=" + montant +
                 ", banque=" + (banque != null ? banque.getNom() : "null") +
+                ", active=" + active +
                 '}';
     }
 

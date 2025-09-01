@@ -21,6 +21,7 @@ import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,8 +40,8 @@ public class EcheanceCMTService {
 
 
     private static final int SCALE = 2;
-    @Value("${application-start-date}")
-    private OffsetDateTime dateDeDepartPaymentLeasing;
+
+    private final OffsetDateTime dateDeDepartPaymentCmt=OffsetDateTime.now();
 
     public EcheanceCMTService(EcheanceCMTRepository echeanceCmtRepository,
                               CreditMoyenTermeRepository creditMoyenTermeRepository,
@@ -65,13 +66,17 @@ public class EcheanceCMTService {
 
         List<EcheanceCMT> echeances = new ArrayList<>();
         OffsetDateTime dateEcheanceCourante = credit.getDateDebut();
+        YearMonth currentMonth = YearMonth.from(dateDeDepartPaymentCmt);
 
         for (int i = 1; i <= credit.getDuree(); i++) {
+
             if (i > 1) {
                 dateEcheanceCourante = dateEcheanceCourante.plusMonths(credit.getPeriodicite());
             }
 
-            StatutEcheanceCMT statut = dateEcheanceCourante.isBefore(dateDeDepartPaymentLeasing)
+            YearMonth echeanceMonth = YearMonth.from(dateEcheanceCourante);
+
+            StatutEcheanceCMT statut = echeanceMonth.isBefore(currentMonth)
                     ? StatutEcheanceCMT.PAYE
                     : StatutEcheanceCMT.PREVU;
 

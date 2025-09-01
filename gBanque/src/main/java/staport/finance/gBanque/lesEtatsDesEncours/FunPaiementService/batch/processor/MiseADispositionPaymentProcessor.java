@@ -1,83 +1,72 @@
 package staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.batch.processor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataException;
-import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.dtos.FunPaymentDto;
-import staport.finance.gBanque.lesEtatsDesEncours.core.entities.MiseADisposition;
+import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
+import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
 
-import java.math.BigDecimal;
-import java.time.ZoneId;
+import java.time.OffsetDateTime;
+import java.time.YearMonth;
+import java.util.Optional;
 
 /**
  * ItemProcessor for 'Mise à disposition' payments (type = 4).
- * Contains specific business logic for this payment type.
- * This processor transforms FunPaymentDto into a Mise à disposition entity.
- * Enhanced to throw exceptions for all invalid scenarios, allowing Spring Batch to track skips.
+ * This class now extends AbstractPaymentProcessor to inherit common logic.
+ * It focuses solely on the specific business logic for Mise à disposition payments.
  */
 @Component
-public class MiseADispositionPaymentProcessor implements ItemProcessor<FunPaymentDto, Object> {
+public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
 
-    private static final Logger log = LoggerFactory.getLogger(MiseADispositionPaymentProcessor.class);
-    ZoneId systemZone = ZoneId.systemDefault();
-    private final BanqueRepository banqueRepository;
+    private final MiseADispositionRepository miseADispositionRepository;
+    private final OffsetDateTime curentDateTime = OffsetDateTime.now();
 
-    public MiseADispositionPaymentProcessor(BanqueRepository banqueRepository) {
-        this.banqueRepository = banqueRepository;
+    public MiseADispositionPaymentProcessor(BanqueRepository banqueRepository, MiseADispositionRepository miseADispositionRepository) {
+        super(banqueRepository);
+        this.miseADispositionRepository = miseADispositionRepository;
     }
 
     @Override
-    public MiseADisposition process(FunPaymentDto item) throws Exception {
-        // Log the attempt to process for tracing
-        log.debug("Attempting to process FunPaymentDto with numero: {}", item.getNumero());
+    protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
 
-        // --- Step 1: Validate critical fields from FunPaymentDto ---
-        // If any required field is invalid, throw InvalidChequeDataException.
-        // Spring Batch's fault-tolerant mechanism will catch this and skip the item.
-        if (item.getNumero() == null || item.getNumero().trim().isEmpty()) {
-            throw new InvalidChequeDataException(" numero is null or empty");
+        Optional<MiseADisposition> existingMiseADisposition = miseADispositionRepository.findById(item.getNumero());
+        if (existingMiseADisposition.isPresent()) {
+            log.info("Mise à disposition with numero {} already exists. Skipping.", item.getNumero());
+            return null; // Spring Batch will skip this item
         }
 
-        if (item.getDateCheque() == null) {
-            throw new InvalidChequeDataException(" date d'émission (date_chaque) is null");
-        }
-
-        if (item.getBeneficiaire() == null || item.getBeneficiaire().trim().isEmpty()) {
-            throw new InvalidChequeDataException(" beneficiaire is null or empty");
-        }
-
-        if (item.getMontant() == null || item.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidChequeDataException("montant is null or non-positive ");
-        }
-
-        if (item.getBanque() == null || item.getBanque().trim().isEmpty()) {
-            throw new InvalidChequeDataException("banque (bank name) is null or empty");
-        }
-
+        // MiseADisposition-specific validation
         if (item.getCinBeneficiaire() == null || item.getCinBeneficiaire().trim().isEmpty()) {
-            throw new InvalidChequeDataException(" beneficiary CIN is null or empty");
+            throw new InvalidChequeDataException("Beneficiary CIN is null or empty for Mise à disposition payment numero " + item.getNumero());
         }
 
-        // 2. Create and map to  entity
         MiseADisposition miseADisposition = new MiseADisposition();
         miseADisposition.setNumero(item.getNumero());
-        miseADisposition.setDateEmission(item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime());
+
+        OffsetDateTime dateEmission=item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime();
+
+        miseADisposition.setDateEmission(dateEmission);
         miseADisposition.setBeneficiaire(item.getBeneficiaire());
         miseADisposition.setMontant(item.getMontant());
-
-        // 3. Handle Banque Association - Throwing error if not found
-        String bankNameFromDto = item.getBanque();
-        Banque banque = banqueRepository.findByNom(bankNameFromDto).orElseThrow(() -> new ResourceNotFoundException(String.format("Bank with name '%s' not found ", bankNameFromDto)));
         miseADisposition.setBanque(banque);
-
         miseADisposition.setCinBeneficiaire(item.getCinBeneficiaire());
 
-        log.info("Successfully processed and transformed mise à disposition Payment {}. Returning  entity.", item.getNumero());
+        // Compare dateEcheance against current month
+        YearMonth currentMonth = YearMonth.from(curentDateTime);
+        YearMonth emissionMonth = YearMonth.from(dateEmission);
+
+        if( emissionMonth.isBefore(currentMonth) ) {
+            miseADisposition.setActive(false);
+            log.info("Mise à disposition {} marked as INACTIVE (emission month {} < current month {}).",
+                    item.getNumero(), emissionMonth, currentMonth);
+        }else {
+            miseADisposition.setActive(true);
+            log.info("Mise à disposition {} marked as ACTIVE (emission month {} >= current month {}).",
+                    item.getNumero(), emissionMonth, currentMonth);
+        }
+        log.info("Successfully processed and transformed Mise à disposition Payment {}. Returning MiseADisposition entity.", item.getNumero());
         return miseADisposition;
     }
 }

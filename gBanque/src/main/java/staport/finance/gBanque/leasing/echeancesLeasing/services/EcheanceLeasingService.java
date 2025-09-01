@@ -1,6 +1,5 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.services;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -22,6 +21,7 @@ import staport.finance.gBanque.leasing.echeancesLeasing.specification.EcheanceLe
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,8 +41,8 @@ public class EcheanceLeasingService {
     private static final BigDecimal ZERO = BigDecimal.ZERO;
     private static final int SCALE = 2;
 
-    @Value("${application-start-date}")
-    private OffsetDateTime dateDeDepartPaymentLeasing;
+
+    private final YearMonth currentMonth = YearMonth.from(OffsetDateTime.now());
 
     public EcheanceLeasingService(EcheanceLeasingRepository echeanceLeasingRepository,
                                   ContratLeasingRepository contratLeasingRepository,
@@ -145,8 +145,10 @@ public class EcheanceLeasingService {
             for (int i = 0; i < phase.getDureeMois(); i++) {
                 numeroEcheanceGlobal++;
                 dateEcheanceCourante = dateEcheanceCourante.plusMonths(1); // Incrémente la date de l'échéance
+
+                YearMonth echeanceMonth = YearMonth.from(dateEcheanceCourante);
                 // Check if the echeance's date is before or equal to the cut-off date
-                StatutEcheanceLeasing statut = dateEcheanceCourante.isBefore(dateDeDepartPaymentLeasing)
+                StatutEcheanceLeasing statut = echeanceMonth.isBefore(currentMonth)
                         ? StatutEcheanceLeasing.PAYE
                         : StatutEcheanceLeasing.PREVU;
 

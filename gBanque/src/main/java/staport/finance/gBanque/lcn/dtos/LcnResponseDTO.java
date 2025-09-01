@@ -1,46 +1,29 @@
-package staport.finance.gBanque.lesEtatsDesEncours.core.entities;
-
-import jakarta.persistence.*;
-import staport.finance.gBanque.Bank.entities.Banque;
+package staport.finance.gBanque.lcn.dtos;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Objects;
 
-@Entity
-@Table(name = "LCNS")
-public class Lcn {
+public class LcnResponseDTO {
 
-    @Id
-    @Column(name = "numero", nullable = false, unique = true)
     private String numero;
-
-    @Column(name = "date_emission", nullable = false)
     private OffsetDateTime dateEmission;
-
-    @Column(name = "beneficiaire", nullable = false)
     private String beneficiaire;
-
-    @Column(name = "date_echeance", nullable = false)
     private OffsetDateTime dateEcheance;
-
-    @Column(name = "montant", nullable = false, precision = 19, scale = 2)
     private BigDecimal montant;
+    private boolean active;
+    private String banqueName;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "banque_id", nullable = false)
-    private Banque banque;
+    public LcnResponseDTO() {}
 
-    public Lcn() {}
-
-    public Lcn(String numero, OffsetDateTime dateEmission, String beneficiaire,
-               OffsetDateTime dateEcheance, BigDecimal montant, Banque banque) {
+    public LcnResponseDTO(String numero, OffsetDateTime dateEmission, String beneficiaire,
+                          OffsetDateTime dateEcheance, BigDecimal montant, boolean active, String banqueName) {
         this.numero = numero;
         this.dateEmission = dateEmission;
         this.beneficiaire = beneficiaire;
         this.dateEcheance = dateEcheance;
         this.montant = montant;
-        this.banque = banque;
+        this.active = active;
+        this.banqueName = banqueName;
     }
 
     // Getters & Setters
@@ -54,31 +37,27 @@ public class Lcn {
     public void setDateEcheance(OffsetDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
     public BigDecimal getMontant() { return montant; }
     public void setMontant(BigDecimal montant) { this.montant = montant; }
-    public Banque getBanque() { return banque; }
-    public void setBanque(Banque banque) { this.banque = banque; }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Lcn)) return false;
-        Lcn lcn = (Lcn) o;
-        return numero != null && Objects.equals(numero, lcn.numero);
+    public String getBanqueName() {
+        return banqueName;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(numero);
+    public void setBanqueName(String banqueName) {
+        this.banqueName = banqueName;
     }
 
     @Override
     public String toString() {
-        return "Lcn{" +
+        return "LcnResponseDTO{" +
                 "numero='" + numero + '\'' +
                 ", dateEmission=" + dateEmission +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", dateEcheance=" + dateEcheance +
                 ", montant=" + montant +
-                ", banque=" + banque +
+                ", active=" + active +
+                ", banqueName='" + banqueName + '\'' +
                 '}';
     }
 }

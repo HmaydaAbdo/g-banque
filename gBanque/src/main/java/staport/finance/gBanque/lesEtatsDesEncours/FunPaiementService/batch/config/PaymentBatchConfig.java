@@ -1,5 +1,6 @@
 package staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.batch.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.lesEtatsDesEncours.FunPaiementService.batch.listeners.ProcessingSkipListener;
@@ -59,7 +60,7 @@ public class PaymentBatchConfig {
     @Bean
     public Step paymentProcessingStep(
             ItemProcessor<FunPaymentDto, Object> compositePaymentProcessor,
-            ItemWriter<Object> paymentWriter
+            @Qualifier("paymentWriter") ItemWriter<Object> paymentWriter
     ) {
         return new StepBuilder("paymentProcessingStep", jobRepository)
                 .<FunPaymentDto, Object>chunk(10, transactionManager)
@@ -67,8 +68,7 @@ public class PaymentBatchConfig {
                 .processor(compositePaymentProcessor)
                 .writer(paymentWriter) // Use the new, unified writer bean directly
                 .faultTolerant()
-                .skip(InvalidChequeDataException.class)
-                .skip(ResourceNotFoundException.class)
+                .skip(Exception.class)
                 .skipLimit(1000)
                 .listener(processingSkipListener)
                 .build();
