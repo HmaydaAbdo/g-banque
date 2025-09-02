@@ -12,7 +12,7 @@ import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.virements.entities.Virement;
-import staport.finance.gBanque.lesEtatsDesEncours.rapprochement.entities.Transaction;
+import staport.finance.gBanque.rapprochement.entities.Transaction;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
