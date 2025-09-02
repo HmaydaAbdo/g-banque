@@ -1,1 +1,98 @@
-<p>cheques-encours works!</p>
+<p-toast></p-toast>
+<div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
+  @if (cheques.length > 0) {
+    <div
+      class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between"
+    >
+      <div class="flex align-items-center">
+      <span class="text-lg font-medium mr-2">
+        Liste des chèques en cours pour le </span
+      >
+        <span class="text-lg font-bold">
+       {{ this.currentMonthYear }}
+      </span>
+      </div>
+      <div class="flex align-items-center">
+        <span class="text-lg font-medium mr-2">Total des encours</span>
+        <span class="text-xl font-bold">{{ totalEncours }} MAD</span>
+      </div>
+    </div>
+  }
+
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="cheques"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [lazy]="true"
+      (onLazyLoad)="loadOutstandingCheques($event)"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      [resizableColumns]="true"
+      columnResizeMode="expand"
+      [rowHover]="true"
+      dataKey="numero"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} chèques"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-gridlines"
+      [tableStyle]="{ 'min-width': '60rem' }"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="numero">
+            N° Chèque <p-sortIcon field="numero"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateEmission">
+            Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateEcheance">
+            Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon>
+          </th>
+          <th pSortableColumn="beneficiaire">
+            Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon>
+          </th>
+          <th pSortableColumn="montant">
+            Montant <p-sortIcon field="montant"></p-sortIcon>
+          </th>
+          <th style="width: 8rem">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-cheque>
+        <tr>
+          <td>{{ cheque.numero }}</td>
+          <td>{{ cheque.dateEmission | date : 'dd/MM/yyyy' }}</td>
+          <td>{{ cheque.dateEcheance ? (cheque.dateEcheance | date : 'dd/MM/yyyy') : 'N/A' }}</td>
+          <td>{{ cheque.beneficiaire }}</td>
+          <td>{{ cheque.montant }} MAD</td>
+          <td>
+            <p-button
+              pRipple
+              class="p-button-rounded p-button-success"
+              pTooltip="Valider"
+              label="Valider"
+            ></p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td colspan="6">
+            Aucun chèque en cours trouvé selon les critères de recherche.
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="6">
+            Chargement des chèques en cours. Veuillez patienter...
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

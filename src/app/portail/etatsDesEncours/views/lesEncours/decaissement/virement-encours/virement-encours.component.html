@@ -1,1 +1,103 @@
-<p>virement-encours works!</p>
+<p-toast></p-toast>
+<div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
+  @if (virements.length > 0) {
+    <div
+      class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between"
+    >
+      <div class="flex align-items-center">
+      <span class="text-lg font-medium mr-2">
+        Liste des virements en cours pour le
+      </span>
+        <span class="text-lg font-bold">
+        {{ this.currentMonthYear }}
+      </span>
+      </div>
+      <div class="flex align-items-center">
+        <span class="text-lg font-medium mr-2">Total des encours</span>
+        <span class="text-xl font-bold">{{ totalEncours }} MAD</span>
+      </div>
+    </div>
+  }
+
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="virements"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [lazy]="true"
+      (onLazyLoad)="loadOutstandingVirements($event)"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      [resizableColumns]="true"
+      columnResizeMode="expand"
+      [rowHover]="true"
+      dataKey="numero"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} virements"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-gridlines"
+      [tableStyle]="{ 'min-width': '60rem' }"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="numero">
+            N° Virement <p-sortIcon field="numero"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateEmission">
+            Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
+          </th>
+
+          <th pSortableColumn="beneficiaire">
+            Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon>
+          </th>
+          <th pSortableColumn="banqueBeneficiaire">
+            Banque Bénéficiaire <p-sortIcon field="banqueBeneficiaire"></p-sortIcon>
+          </th>
+          <th pSortableColumn="ribBeneficiaire">
+            RIB Bénéficiaire <p-sortIcon field="ribBeneficiaire"></p-sortIcon>
+          </th>
+          <th pSortableColumn="montant">
+            Montant <p-sortIcon field="montant"></p-sortIcon>
+          </th>
+          <th style="width: 8rem">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-virement>
+        <tr>
+          <td>{{ virement.numero }}</td>
+          <td>{{ virement.dateEmission | date : 'dd/MM/yyyy' }}</td>
+          <td>{{ virement.beneficiaire }}</td>
+          <td>{{ virement.banqueBeneficiaire }}</td>
+          <td>{{ virement.ribBeneficiaire }}</td>
+          <td>{{ virement.montant }} MAD</td>
+          <td>
+            <p-button
+              pRipple
+              class="p-button-rounded p-button-success"
+              pTooltip="Valider"
+              label="Valider"
+            ></p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td colspan="8">
+            Aucun virement en cours trouvé selon les critères de recherche.
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="8">
+            Chargement des virements en cours. Veuillez patienter...
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

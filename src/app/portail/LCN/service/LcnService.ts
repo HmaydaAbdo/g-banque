@@ -66,4 +66,28 @@ export class LcnService {
     const url = `${this.apiUrl}/toggle/${numero}`;
     return this.http.patch<LcnResponseDTO>(url, {});
   }
+
+  /**
+   * Retrieves a paginated list of outstanding LCNs for a specific bank.
+   *
+   * @param banqueId The ID of the bank to search for.
+   * @param page The page number to retrieve (0-indexed).
+   * @param size The number of items per page.
+   * @param sort The sorting criteria (e.g., 'dateEcheance,desc').
+   * @returns An Observable of a paginated list of LcnResponseDTO.
+   */
+  getOutstandingLcnsByBank(
+    banqueId: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEcheance,desc'
+  ): Observable<PageResponse<LcnResponseDTO>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    const url = `${this.apiUrl}/encours/${banqueId}`;
+    return this.http.get<PageResponse<LcnResponseDTO>>(url, {params});
+  }
 }

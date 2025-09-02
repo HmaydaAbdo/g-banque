@@ -71,4 +71,28 @@ export class VirementService {
     const url = `${this.apiUrl}/toggle/${numero}`;
     return this.http.patch<VirementResponseDto>(url, {});
   }
+
+  /**
+   * Retrieves a paginated list of outstanding virements for a specific bank.
+   *
+   * @param banqueId The ID of the bank.
+   * @param page The page number to retrieve (0-indexed).
+   * @param size The number of items per page.
+   * @param sort The sorting criteria (e.g., 'dateEmission,desc').
+   * @returns An Observable of a paginated list of VirementResponseDto.
+   */
+  getOutstandingVirementsByBank(
+    banqueId: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission,desc'
+  ): Observable<PageResponse<VirementResponseDto>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    const url = `${this.apiUrl}/encours/${banqueId}`;
+    return this.http.get<PageResponse<VirementResponseDto>>(url, {params});
+  }
 }
