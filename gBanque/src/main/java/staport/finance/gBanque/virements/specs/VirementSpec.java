@@ -1,8 +1,15 @@
 package staport.finance.gBanque.virements.specs;
 
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.virements.entities.Virement;
 import staport.finance.gBanque.virements.dtos.VirementSearchDto;
+
+import java.time.OffsetDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class VirementSpec {
 
@@ -138,5 +145,37 @@ public final class VirementSpec {
         }
 
         return spec;
+    }
+
+
+    /**
+     * Spécification pour filtrer les virements actifs d'une banque spécifique avec une date d'émission
+     * qui est égale ou antérieure à la fin du mois en cours.
+     *
+     * @param banqueId L'ID de la banque pour laquelle les virements sont recherchés.
+     * @return Une Specification qui combine les critères de filtrage.
+     */
+    public static Specification<Virement> activeForBankAndUntilEndOfMonth(Long banqueId) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            OffsetDateTime now = OffsetDateTime.now();
+
+            // 1. Le statut du virement doit être actif.
+            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+
+            // 2. Le virement doit appartenir à la banque spécifiée par son ID.
+            if (banqueId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            } else {
+                return criteriaBuilder.disjunction();
+            }
+
+            // 3. La date d'émission du virement doit être égale ou antérieure à la fin du mois.
+            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
+                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }

@@ -55,4 +55,22 @@ public class LcnController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
+
+    /**
+     * Retrieves a paginated list of active LCNs for a specific bank that are due in the current month.
+     * GET /lcns/encours/{banqueId}
+     *
+     * @param banqueId The ID of the bank.
+     * @param pageable The pagination and sorting information.
+     * @return A paginated list of LcnResponseDTO for the outstanding LCN.
+     */
+    @GetMapping("/encours/{banqueId}")
+    public ResponseEntity<Page<LcnResponseDTO>> getEncoursForLcn(
+            @PathVariable Long banqueId,
+            @PageableDefault(size = 10, sort = "dateEcheance") Pageable pageable) {
+
+        Page<LcnResponseDTO> result = lcnService.getEncoursForLcn(banqueId, pageable);
+        return ResponseEntity.ok(result);
+    }
 }

@@ -66,4 +66,24 @@ public class ChequeService {
         // Map and return the updated DTO
         return ChequeMapper.toDto(cheque);
     }
+
+
+    /**
+     * Retrieves a paginated list of active cheques for a specific bank that are due in the current month.
+     *
+     * @param banqueId The ID of the bank to filter by.
+     * @param pageable The pagination and sorting information.
+     * @return A Page of ChequeResponseDto for the outstanding cheques.
+     */
+    @Transactional(readOnly = true)
+    public Page<ChequeResponseDto> getEncoursForCheques(Long banqueId, Pageable pageable) {
+        // Build the specification for active cheques for the specified bank in the current month
+        Specification<Cheque> spec = ChequeSpec.activeForBankAndUntilEndOfMonth(banqueId);
+
+        // Execute the search with the specification and pagination
+        Page<Cheque> chequePage = chequeRepository.findAll(spec, pageable);
+
+        // Map the result to DTOs and return
+        return chequePage.map(ChequeMapper::toDto);
+    }
 }

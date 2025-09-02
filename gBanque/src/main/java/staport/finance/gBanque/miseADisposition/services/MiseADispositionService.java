@@ -11,6 +11,10 @@ import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.miseADisposition.mapper.MiseADispositionMapper;
 import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.miseADisposition.specs.MiseADispositionSpec;
+import staport.finance.gBanque.virements.dtos.VirementResponseDto;
+import staport.finance.gBanque.virements.entities.Virement;
+import staport.finance.gBanque.virements.mapper.VirementMapper;
+import staport.finance.gBanque.virements.specs.VirementSpec;
 
 import java.util.NoSuchElementException;
 
@@ -63,5 +67,25 @@ public class MiseADispositionService {
 
         // Map and return the updated DTO.
         return MiseADispositionMapper.toDto(miseADisposition);
+    }
+
+
+    /**
+     * Retrieves a paginated list of active mise à disposition for a specific bank that are due in the current month.
+     *
+     * @param banqueId The ID of the bank to filter by.
+     * @param pageable The pagination and sorting information.
+     * @return A Page of MiseADispositionResponseDto for the outstanding virements.
+     */
+    @Transactional(readOnly = true)
+    public Page<MiseADispositionResponseDto> getEncoursForMiseAdisposition(Long banqueId, Pageable pageable) {
+        // Build the specification for active mise à disposition for the specified bank in the current month
+        Specification<MiseADisposition> spec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId);
+
+        // Execute the search with the specification and pagination
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);
+
+        // Map the result to DTOs and return
+        return miseADispositionPage.map(MiseADispositionMapper::toDto);
     }
 }

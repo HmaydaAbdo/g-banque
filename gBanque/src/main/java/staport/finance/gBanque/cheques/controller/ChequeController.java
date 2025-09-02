@@ -56,4 +56,22 @@ public class ChequeController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
+
+    /**
+     * Retrieves a paginated list of active cheques for a specific bank that are due in the current month.
+     * GET /cheques/encours/{banqueId}
+     *
+     * @param banqueId The ID of the bank.
+     * @param pageable The pagination and sorting information.
+     * @return A paginated list of ChequeResponseDto for the outstanding cheques.
+     */
+    @GetMapping("/encours/{banqueId}")
+    public ResponseEntity<Page<ChequeResponseDto>> getEncoursForCheques(
+            @PathVariable Long banqueId,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+
+        Page<ChequeResponseDto> result = chequeService.getEncoursForCheques(banqueId, pageable);
+        return ResponseEntity.ok(result);
+    }
 }

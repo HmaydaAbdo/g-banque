@@ -67,4 +67,23 @@ public class LcnService {
         // Map and return the updated DTO
         return LcnMapper.toDto(lcn);
     }
+
+    /**
+     * Retrieves a paginated list of active LCN for a specific bank that are due in the current month.
+     *
+     * @param banqueId The ID of the bank to filter by.
+     * @param pageable The pagination and sorting information.
+     * @return A Page of LcnResponseDTO for the outstanding LCN.
+     */
+    @Transactional(readOnly = true)
+    public Page<LcnResponseDTO> getEncoursForLcn(Long banqueId, Pageable pageable) {
+        // Build the specification for active LCN for the specified bank in the current month
+        Specification<Lcn> spec = LcnSpecification.activeForBankAndUntilEndOfMonth(banqueId);
+
+        // Execute the search with the specification and pagination
+        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
+
+        // Map the result to DTOs and return
+        return lcnPage.map(LcnMapper::toDto);
+    }
 }

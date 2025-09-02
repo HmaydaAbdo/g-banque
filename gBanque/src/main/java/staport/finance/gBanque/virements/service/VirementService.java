@@ -63,4 +63,24 @@ public class VirementService {
         // Map and return the updated DTO
         return VirementMapper.toDto(virement);
     }
+
+
+    /**
+     * Retrieves a paginated list of active virements for a specific bank that are due in the current month.
+     *
+     * @param banqueId The ID of the bank to filter by.
+     * @param pageable The pagination and sorting information.
+     * @return A Page of VirementResponseDto for the outstanding virements.
+     */
+    @Transactional(readOnly = true)
+    public Page<VirementResponseDto> getEncoursForVirements(Long banqueId, Pageable pageable) {
+        // Build the specification for active virements for the specified bank in the current month
+        Specification<Virement> spec = VirementSpec.activeForBankAndUntilEndOfMonth(banqueId);
+
+        // Execute the search with the specification and pagination
+        Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
+
+        // Map the result to DTOs and return
+        return virementPage.map(VirementMapper::toDto);
+    }
 }

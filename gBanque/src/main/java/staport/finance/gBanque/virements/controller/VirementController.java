@@ -58,4 +58,23 @@ public class VirementController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
+
+
+    /**
+     * Retrieves a paginated list of active virements for a specific bank that are due in the current month.
+     * GET /virements/encours/{banqueId}
+     *
+     * @param banqueId The ID of the bank.
+     * @param pageable The pagination and sorting information.
+     * @return A paginated list of VirementResponseDto for the outstanding virements.
+     */
+    @GetMapping("/encours/{banqueId}")
+    public ResponseEntity<Page<VirementResponseDto>> getEncoursForVirements(
+            @PathVariable Long banqueId,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+
+        Page<VirementResponseDto> result = virementService.getEncoursForVirements(banqueId, pageable);
+        return ResponseEntity.ok(result);
+    }
 }

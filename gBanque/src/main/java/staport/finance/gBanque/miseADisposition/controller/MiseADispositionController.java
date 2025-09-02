@@ -10,6 +10,7 @@ import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionResponseDto
 import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionSearchDto;
 import staport.finance.gBanque.miseADisposition.services.MiseADispositionService;
 
+
 import java.util.NoSuchElementException;
 
 @RestController
@@ -56,5 +57,23 @@ public class MiseADispositionController {
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+    }
+
+
+    /**
+     * Retrieves a paginated list of active mise à dispositions for a specific bank that are due in the current month.
+     * GET /misesADisposition/encours/{banqueId}
+     *
+     * @param banqueId The ID of the bank.
+     * @param pageable The pagination and sorting information.
+     * @return A paginated list of MiseADispositionResponseDto for the outstanding mise à dispositions.
+     */
+    @GetMapping("/encours/{banqueId}")
+    public ResponseEntity<Page<MiseADispositionResponseDto>> getEncoursForMiseADisposition(
+            @PathVariable Long banqueId,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+
+        Page<MiseADispositionResponseDto> result = miseADispositionService.getEncoursForMiseAdisposition(banqueId, pageable);
+        return ResponseEntity.ok(result);
     }
 }

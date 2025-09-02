@@ -1,7 +1,13 @@
 package staport.finance.gBanque.lcn.specs;
 
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.lcn.entities.Lcn;
+
+import java.time.OffsetDateTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class LcnSpecification {
 
@@ -67,6 +73,37 @@ public final class LcnSpecification {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.equal(root.get("active"), active);
+        };
+    }
+
+    /**
+     * Spécification pour filtrer les LCN actifs d'une banque spécifique avec une date d'échéance
+     * qui est égale ou antérieure à la fin du mois en cours.
+     *
+     * @param banqueId L'ID de la banque pour laquelle les LCN sont recherchés.
+     * @return Une Specification qui combine les critères de filtrage.
+     */
+    public static Specification<Lcn> activeForBankAndUntilEndOfMonth(Long banqueId) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            OffsetDateTime now = OffsetDateTime.now();
+
+            // 1. Le statut du LCN doit être actif.
+            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+
+            // 2. Le LCN doit appartenir à la banque spécifiée par son ID.
+            if (banqueId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            } else {
+                return criteriaBuilder.disjunction();
+            }
+
+            // 3. La date d'échéance du LCN doit être égale ou antérieure à la fin du mois.
+            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
+                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), endOfMonth));
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 }
