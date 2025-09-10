@@ -5,10 +5,10 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
-import staport.finance.gBanque.rapprochement.dtos.CmtTransactionRequestDto;
-import staport.finance.gBanque.rapprochement.dtos.CmtTransactionResponseDto;
-import staport.finance.gBanque.rapprochement.entities.Transaction;
-import staport.finance.gBanque.rapprochement.enums.TransactionSource;
+import staport.finance.gBanque.rapprochement.dtos.cmt.CmtTransactionRequestDto;
+import staport.finance.gBanque.rapprochement.dtos.cmt.CmtTransactionResponseDto;
+import staport.finance.gBanque.transactions.entities.Transaction;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,10 +77,10 @@ public class CmtTransactionMapper {
     }
 
     /**
-     * Maps a Transaction entity to a LeasingTransactionResponseDto.
+     * Maps a Transaction entity to a CmtTransactionResponseDto.
      *
      * @param transaction The Transaction entity.
-     * @return The LeasingTransactionResponseDto.
+     * @return The CmtTransactionResponseDto.
      * @throws Exception if an error occurs during JSON deserialization.
      */
     public CmtTransactionResponseDto toResponseDto(Transaction transaction) throws Exception {

@@ -16,7 +16,7 @@ import staport.finance.gBanque.FunPaiementService.services.EtasDesEncoursService
  * the batch jobs related to "Etats des Encours" (e.g., payment import job).
  */
 @RestController
-@RequestMapping("/etats-des-encours") // Base path for this controller's endpoints
+@RequestMapping("/funPayment") // Base path for this controller's endpoints
 public class EtatsDesEncoursController {
 
     private static final Logger log = LoggerFactory.getLogger(EtatsDesEncoursController.class);
@@ -33,7 +33,7 @@ public class EtatsDesEncoursController {
      *
      * @return ResponseEntity with job execution details on success, or an error message on failure.
      */
-    @PostMapping("/launch-payment-import")
+    @PostMapping("/synchronisation")
     public ResponseEntity<String> launchPaymentImportJob() {
         log.info("Received request to launch payment import batch job.");
         try {

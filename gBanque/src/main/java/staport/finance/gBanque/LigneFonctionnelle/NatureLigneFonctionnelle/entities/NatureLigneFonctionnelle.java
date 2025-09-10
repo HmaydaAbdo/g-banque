@@ -1,6 +1,11 @@
 package staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities;
 import jakarta.persistence.*;
+import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
+
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -16,6 +21,12 @@ public class NatureLigneFonctionnelle {
 
     @Column(nullable = false)
     private String description;
+
+    @OneToMany(mappedBy = "natureLigneFonctionnelle", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    private List<LigneFonctionnelle> lignesFonctionnelles = new ArrayList<>();
+
+    @OneToMany(mappedBy = "natureLigneFonctionnelle", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    private List<LigneFonctionnelleSpecifique> lignesFonctionnellesSpecifique = new ArrayList<>();
 
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
@@ -75,6 +86,45 @@ public class NatureLigneFonctionnelle {
 
     public void setDateModification(OffsetDateTime dateModification) {
         this.dateModification = dateModification;
+    }
+
+
+    public List<LigneFonctionnelle> getLignesFonctionnelles() {
+        return lignesFonctionnelles;
+    }
+
+    public void setLignesFonctionnelles(List<LigneFonctionnelle> lignesFonctionnelles) {
+        this.lignesFonctionnelles = lignesFonctionnelles;
+    }
+
+    public void addLigneFonctionnelle(LigneFonctionnelle ligne) {
+        this.lignesFonctionnelles.add(ligne);
+        ligne.setNatureLigneFonctionnelle(this);
+    }
+
+    public void removeLigneFonctionnelle(LigneFonctionnelle ligne) {
+        this.lignesFonctionnelles.remove(ligne);
+        ligne.setNatureLigneFonctionnelle(null);
+    }
+
+    //
+
+    public List<LigneFonctionnelleSpecifique> getLignesFonctionnellesSpecifique() {
+        return lignesFonctionnellesSpecifique;
+    }
+
+    public void setLignesFonctionnellesSpecifique(List<LigneFonctionnelleSpecifique> lignesFonctionnellesSpecifique) {
+        this.lignesFonctionnellesSpecifique = lignesFonctionnellesSpecifique;
+    }
+
+    public void addLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique ligne) {
+        this.lignesFonctionnellesSpecifique.add(ligne);
+        ligne.setNatureLigneFonctionnelle(this);
+    }
+
+    public void removeLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique ligne) {
+        this.lignesFonctionnellesSpecifique.remove(ligne);
+        ligne.setNatureLigneFonctionnelle(null);
     }
 
     // --- JPA Lifecycle Callbacks ---

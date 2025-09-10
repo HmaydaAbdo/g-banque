@@ -7,4 +7,5 @@ import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 
 @Repository
 public interface MiseADispositionRepository extends JpaRepository<MiseADisposition, String>, JpaSpecificationExecutor<MiseADisposition> {
+
 }

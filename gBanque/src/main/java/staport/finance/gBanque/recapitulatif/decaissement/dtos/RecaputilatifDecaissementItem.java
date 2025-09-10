@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 
 public class RecaputilatifDecaissementItem {
     private OffsetDateTime dateEmission;
+    private OffsetDateTime dateEcheance;
     private String libelle;
     private BigDecimal debit;
     private String observations;
@@ -44,5 +45,12 @@ public class RecaputilatifDecaissementItem {
 
     public void setObservations(String observations) {
         this.observations = observations;
+    }
+
+    public OffsetDateTime getDateEcheance() {
+        return dateEcheance;
+    }
+    public void setDateEcheance(OffsetDateTime dateEcheance) {
+        this.dateEcheance = dateEcheance;
     }
 }

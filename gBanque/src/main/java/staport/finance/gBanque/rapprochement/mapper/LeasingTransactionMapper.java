@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
-import staport.finance.gBanque.rapprochement.dtos.LeasingTransactionRequestDto;
-import staport.finance.gBanque.rapprochement.dtos.LeasingTransactionResponseDto;
-import staport.finance.gBanque.rapprochement.entities.Transaction;
-import staport.finance.gBanque.rapprochement.enums.TransactionSource;
+import staport.finance.gBanque.rapprochement.dtos.leasing.LeasingTransactionRequestDto;
+import staport.finance.gBanque.rapprochement.dtos.leasing.LeasingTransactionResponseDto;
+import staport.finance.gBanque.transactions.entities.Transaction;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.Bank.entities.Banque;
 
 import java.math.BigDecimal;

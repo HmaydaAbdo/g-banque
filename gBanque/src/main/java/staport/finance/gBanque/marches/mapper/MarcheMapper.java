@@ -1,0 +1,48 @@
+package staport.finance.gBanque.marches.mapper;
+
+
+import org.springframework.stereotype.Component;
+import staport.finance.gBanque.marches.dtos.MarcheRequestDTO;
+import staport.finance.gBanque.marches.dtos.MarcheResponseDTO;
+import staport.finance.gBanque.marches.entities.Marche;
+
+@Component
+public class MarcheMapper {
+
+    /**
+     * Converts a MarcheRequestDTO to a Marche entity.
+     * This is used when creating a new Marche from client data.
+     */
+    public Marche toEntity(MarcheRequestDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        return new Marche(
+                dto.getNumero(),
+                dto.getNom(),
+                dto.getMontant(),
+                dto.getMaitreDouvrage(),
+                dto.getDelai()
+        );
+    }
+
+    /**
+     * Converts a Marche entity to a MarcheResponseDTO.
+     * This is used when sending Marche data to the client.
+     */
+    public MarcheResponseDTO toResponseDTO(Marche entity) {
+        if (entity == null) {
+            return null;
+        }
+        MarcheResponseDTO dto = new MarcheResponseDTO();
+        dto.setId(entity.getId());
+        dto.setNumero(entity.getNumero());
+        dto.setNom(entity.getNom());
+        dto.setMontant(entity.getMontant());
+        dto.setMaitreDouvrage(entity.getMaitreDouvrage());
+        dto.setDelai(entity.getDelai());
+        dto.setCreatedAt(entity.getCreatedAt());
+        dto.setModifiedAt(entity.getModifiedAt());
+        return dto;
+    }
+}
