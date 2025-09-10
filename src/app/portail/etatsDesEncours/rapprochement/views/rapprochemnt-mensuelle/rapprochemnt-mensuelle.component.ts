@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { TransactionResponseDto } from '../../dtos/TransactionResponseDto';
+import { TransactionResponseDto } from '../../dtos/transactions/TransactionResponseDto';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -13,7 +13,7 @@ import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
 import { PageResponse } from "../../../../global/types/PageResponse";
-import { TransactionSearchDto } from '../../dtos/TransactionSearchDto';
+import { TransactionSearchDto } from '../../dtos/transactions/TransactionSearchDto';
 import {TransactionService} from "../../services/transactions/TransactionService"; // Import du DTO de recherche
 
 @Component({

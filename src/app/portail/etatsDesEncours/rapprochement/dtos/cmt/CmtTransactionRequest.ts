@@ -1,10 +1,8 @@
-import {Decimal} from "decimal.js";
-import {TransactionSource} from "./TransactionSource";
+import {TransactionSource} from "../transactions/TransactionSource";
 
+export interface CmtTransactionRequest {
 
-export interface LeasingTransactionRequest {
-
-  contratLeasingId:number
+  cmtId:number
   echeanceId:number
   transactionSource:TransactionSource
   dateEmission: Date;       // Date d'émission

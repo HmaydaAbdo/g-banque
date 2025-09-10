@@ -28,9 +28,9 @@ import {EcheanceLeasingResponse} from "../../../../../../../leasing/contratsLeas
 import {
   DonneesComplementairesRapprochementDTO
 } from "../../../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
-import {LeasingTransactionRequest} from "../../../../../../rapprochement/dtos/LeasingTransactionRequest";
-import {TransactionSource} from "../../../../../../rapprochement/dtos/TransactionSource";
-import {CmtTransactionRequest} from "../../../../../../rapprochement/dtos/CmtTransactionRequest";
+import {LeasingTransactionRequest} from "../../../../../../rapprochement/dtos/leasing/LeasingTransactionRequest";
+import {TransactionSource} from "../../../../../../rapprochement/dtos/transactions/TransactionSource";
+import {CmtTransactionRequest} from "../../../../../../rapprochement/dtos/cmt/CmtTransactionRequest";
 import {EcheanceCMTResponseDto} from "../../../../../../../cmt/dtos/EcheanceCMTResponseDto";
 
 

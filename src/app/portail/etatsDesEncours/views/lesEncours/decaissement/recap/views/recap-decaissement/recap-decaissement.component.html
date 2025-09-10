@@ -29,6 +29,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateEcheance">Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
           <th pSortableColumn="debit">Montant Débit <p-sortIcon field="debit"></p-sortIcon></th>
           <th>Observations</th>
@@ -37,6 +38,7 @@
       <ng-template pTemplate="body" let-item>
         <tr>
           <td>{{ item.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ item.dateEmission ? (item.dateEmission | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ item.libelle }}</td>
           <td>{{ item.debit | number:'1.2-2'}} MAD</td>
           <td>{{ item.observations }}</td>

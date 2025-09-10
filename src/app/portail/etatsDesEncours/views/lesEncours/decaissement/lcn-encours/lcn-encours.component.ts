@@ -12,6 +12,17 @@ import {RippleModule} from 'primeng/ripple';
 import {LcnResponseDTO} from "../../../../../LCN/dtos/LcnResponseDTO";
 import {LcnService} from "../../../../../LCN/service/LcnService";
 import {PageResponse} from "../../../../../global/types/PageResponse";
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {LcnTransactionRequest} from "../../../../rapprochement/dtos/lcn/LcnTransactionRequest";
+import {
+  DonneesComplementairesRapprochementDTO
+} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+import {DialogModule} from "primeng/dialog";
+import {CalendarModule} from "primeng/calendar";
+import {InputTextareaModule} from "primeng/inputtextarea";
+import {DividerModule} from "primeng/divider";
 
 
 
@@ -28,6 +39,11 @@ import {PageResponse} from "../../../../../global/types/PageResponse";
     PaginatorModule,
     DatePipe,
     RippleModule,
+    DialogModule,
+    ReactiveFormsModule,
+    CalendarModule,
+    InputTextareaModule,
+    DividerModule,
   ],
   templateUrl: './lcn-encours.component.html',
   styleUrl: './lcn-encours.component.scss',
@@ -42,11 +58,19 @@ export class LcnEncoursComponent implements OnInit {
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
+
+  // Propriétés pour la modale de rapprochement
+  displayModal: boolean = false;
+  rapprochementForm!: FormGroup;
+  selectedLcn: LcnResponseDTO | null = null;
+
   constructor(
     private lcnService: LcnService,
     private route: ActivatedRoute,
     private messageService: MessageService,
     private datePipe: DatePipe,
+    private fb: FormBuilder,
+    private rapprochementService: RapprochemntService,
   ) {
   }
 
@@ -59,8 +83,76 @@ export class LcnEncoursComponent implements OnInit {
         this.loadOutstandingLcns();
       }
     });
+    this.initRapprochementForm();
+  }
+  initRapprochementForm(): void {
+    this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
+      dateValeur: [null, Validators.required],
+      dateOperation: [null, Validators.required],
+      observation: ['', Validators.required],
+      tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+    });
   }
 
+  openRapprochementModal(lcn: LcnResponseDTO): void {
+    this.selectedLcn = lcn;
+    this.initRapprochementForm();
+    this.displayModal = true;
+  }
+
+  submitRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
+      this.rapprochementForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
+      });
+      return;
+    }
+
+    if (this.rapprochementForm.valid && this.selectedLcn) {
+      const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
+
+      const lcnTransactionRequest: LcnTransactionRequest = {
+        numeroLcn: this.selectedLcn.numero,
+        dateEmission: donneesComplementaires.dateEmission,
+        dateValeur: donneesComplementaires.dateValeur,
+        dateOperation: donneesComplementaires.dateOperation,
+        observation: donneesComplementaires.observation,
+        tvaDeductible: donneesComplementaires.tvaDeductible,
+        transactionSource: TransactionSource.LCN
+      };
+
+      this.rapprochementService.lcnToRapprochement(lcnTransactionRequest)
+        .subscribe({
+          next: (response) => {
+            console.log(response);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'LCN rapproché avec succès.'
+            });
+            this.loadOutstandingLcns();
+            this.displayModal = false;
+          },
+          error: (error) => {
+            console.error('Erreur lors du rapprochement du LCN:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+            });
+          }
+        });
+    }
+  }
+
+  isInvalid(controlName: string): boolean {
+    const control = this.rapprochementForm.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
   /**
    * Loads the outstanding LCNs for the bank.
    * @param event The lazy load event from the PrimeNG table.

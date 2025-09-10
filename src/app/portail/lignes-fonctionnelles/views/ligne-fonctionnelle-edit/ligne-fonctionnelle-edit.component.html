@@ -134,9 +134,13 @@
           <button pButton pRipple label="Annuler" class=" p-button-secondary" (click)="onCancel()" type="button"></button>
           <button pButton pRipple label="{{ isEditMode ? 'Modifier' : 'Créer' }}" class="p-button-primary" type="submit" [disabled]="loading"></button>
         </div>
-        <div class="flex justify-content-end mt-2 gap-2">
-          <button pButton pRipple label="Désactiver"  class=" p-button-secondary" (click)="desactiver()" type="button"></button>
-        </div>
+
+        @if (isEditMode) {
+          <div class="flex justify-content-end mt-2 gap-2">
+            <button pButton pRipple label="Désactiver"  class=" p-button-secondary" (click)="desactiver()" type="button"></button>
+          </div>
+        }
+
       </form>
     </div>
   </div>

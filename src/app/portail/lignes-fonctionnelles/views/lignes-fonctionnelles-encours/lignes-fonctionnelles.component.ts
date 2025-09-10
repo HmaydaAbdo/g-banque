@@ -201,7 +201,8 @@ export class LignesFonctionnellesComponent implements OnInit {
     this.searchForm.reset({
       banqueId: null,
       natureLigneFonctionnelleId: null,
-      actif: this.canManageActifStatus() ? null : true // Reset actif to null for admins, true for others
+      actif:  true,
+      isExpired: false,
     });
     // The valueChanges subscription will automatically trigger a reload
   }
@@ -230,17 +231,11 @@ export class LignesFonctionnellesComponent implements OnInit {
     });
   }
 
-
-
   // Check if the user is ADMIN
   isAdmin(): boolean {
     return this.authService.hasRole(Role.ADMIN);
   }
 
-  // Check if the user is ADMIN or SUPERADMIN to manage active status
-  canManageActifStatus(): boolean {
-    return this.authService.hasRole(Role.ADMIN) || this.authService.hasRole(Role.SUPER_ADMIN);
-  }
 
   // Helper to reload the table after an action (delete/toggle)
   private reloadTableAfterAction(): void {

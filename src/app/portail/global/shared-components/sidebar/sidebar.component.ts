@@ -39,6 +39,7 @@ interface SidebarItem {
   styleUrl: './sidebar.component.scss'
 })
 export class SidebarComponent implements OnInit {
+
   @Input() sidebarVisible: boolean = false;
   @Output() sidebarVisibleChange = new EventEmitter<boolean>();
 
@@ -51,6 +52,26 @@ export class SidebarComponent implements OnInit {
     { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
     { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires'},
     {
+      label: 'Les Lignes Fonctionnelles',
+      icon: 'pi pi-receipt',
+      items: [
+        { label: 'Les Lignes ponctuelles', icon: 'pi pi-list',
+          items:[
+            { label: 'Les Lignes encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-encours' },
+            { label: 'Les Lignes expirées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-expired' },
+            { label: 'Les Lignes archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-archived' },
+          ] },
+        { label: 'Les Lignes spécifiques', icon: 'pi pi-list',
+          items:[
+            { label: 'Les lignes encours',icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-encours' },
+            { label: 'Les lignes expirées',icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-expired' },
+            { label: 'Les lignes archivées',icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-archived' },
+          ] },
+
+        { label: 'Les Natures des lignes Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles' }
+      ]
+    },
+    {
       label: 'Leasing',
       icon: 'pi pi-money-bill',
       items: [
@@ -60,7 +81,7 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
-      label: 'Les Opérations Bancaires',
+      label: 'Les moyens de paiement',
       icon: 'pi pi-credit-card',
       items: [
         { label: 'Chèques', icon: 'pi pi-file-check', routerLink: '/portail/Chèques' },
@@ -79,15 +100,11 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
-      label: 'Les Lignes Fonctionnelles',
-      icon: 'pi pi-receipt',
-      items: [
-        { label: 'Les Lignes fonctionnelles encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-encours' },
-        { label: 'Les Lignes fonctionnelles expirées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-expired' },
-        { label: 'Les Lignes fonctionnelles archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-archived' },
-        { label: 'Les Natures des lignes Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles' }
-      ]
-    },
+      label:"Les Marchés ",
+      icon:"pi pi-sliders-h",
+      items:[
+        {label: "la liste des marchés",icon: "pi pi-list",routerLink: "/portail/marches"}
+      ]},
     {label:"Historique des transactions",routerLink:"/portail/historique-des-transactions",icon:"pi pi-history"},
     {
       label: 'Paramètres',

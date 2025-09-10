@@ -12,6 +12,15 @@ import {PageResponse} from "../../../../../global/types/PageResponse";
 import {ChequeResponseDto} from "../../../../../cheques/dtos/ChequeResponseDto";
 import {ChequeService} from "../../../../../cheques/services/ChequeService";
 import {Ripple} from "primeng/ripple";
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {DonneesComplementairesRapprochementDTO} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+import {ChequeTransactionRequest} from "../../../../rapprochement/dtos/cheques/ChequeTransactionRequest";
+import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {DividerModule} from "primeng/divider";
+import {DialogModule} from "primeng/dialog";
+import {CalendarModule} from "primeng/calendar";
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 
 @Component({
@@ -27,6 +36,11 @@ import {Ripple} from "primeng/ripple";
     PaginatorModule,
     DatePipe,
     Ripple,
+    DividerModule,
+    DialogModule,
+    ReactiveFormsModule,
+    CalendarModule,
+    InputTextareaModule,
   ],
   templateUrl: './cheques-encours.component.html',
   styleUrl: './cheques-encours.component.scss',
@@ -41,8 +55,15 @@ export class ChequesEncoursComponent implements OnInit {
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
+  // Propriétés pour la modale de rapprochement
+  displayModal: boolean = false;
+  rapprochementForm!: FormGroup;
+  selectedCheque: ChequeResponseDto | null = null;
+
   constructor(
     private chequeService: ChequeService,
+    private rapprochementService: RapprochemntService,
+    private fb: FormBuilder,
     private route: ActivatedRoute,
     private messageService: MessageService,
     private datePipe: DatePipe
@@ -57,8 +78,77 @@ export class ChequesEncoursComponent implements OnInit {
         this.loadOutstandingCheques();
       }
     });
+    this.initRapprochementForm();
   }
 
+  initRapprochementForm(): void {
+    this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
+      dateValeur: [null, Validators.required],
+      dateOperation: [null, Validators.required],
+      observation: ['', Validators.required],
+      tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+    });
+  }
+
+  openRapprochementModal(cheque: ChequeResponseDto): void {
+    this.selectedCheque = cheque;
+    this.initRapprochementForm(); // Reset form on open
+    this.displayModal = true;
+  }
+
+  submitRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
+      this.rapprochementForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
+      });
+      return;
+    }
+
+    if (this.rapprochementForm.valid && this.selectedCheque) {
+      const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
+
+      const chequeTransactionRequest: ChequeTransactionRequest = {
+        numeroCheque: this.selectedCheque.numero,
+        dateEmission: donneesComplementaires.dateEmission,
+        dateValeur: donneesComplementaires.dateValeur,
+        dateOperation: donneesComplementaires.dateOperation,
+        observation: donneesComplementaires.observation,
+        tvaDeductible: donneesComplementaires.tvaDeductible,
+        transactionSource: TransactionSource.CHEQUE
+      };
+
+      this.rapprochementService.chequeToRapprochement(chequeTransactionRequest)
+        .subscribe({
+          next: (response) => {
+            console.log(response);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Chèque rapproché avec succès.'
+            });
+            this.loadOutstandingCheques(); // Refresh the table
+            this.displayModal = false;
+          },
+          error: (error) => {
+            console.error('Erreur lors du rapprochement du chèque:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+            });
+          }
+        });
+    }
+  }
+
+  isInvalid(controlName: string): boolean {
+    const control = this.rapprochementForm.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
+  }
   /**
    * Loads the outstanding cheques for the bank.
    * @param event The lazy load event from the PrimeNG table.

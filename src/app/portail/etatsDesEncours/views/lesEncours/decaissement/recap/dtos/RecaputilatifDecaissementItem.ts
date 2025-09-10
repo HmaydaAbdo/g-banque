@@ -7,6 +7,7 @@ import {Decimal} from "decimal.js";
 export interface RecaputilatifDecaissementItem {
   // The disbursement date, transmitted as an ISO 8601 string from the API.
   dateEmission: string;
+  dateEcheance: string;
 
   // A descriptive label for the disbursement, e.g., 'Contrat N°...'
   libelle: string;

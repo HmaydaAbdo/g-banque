@@ -52,29 +52,63 @@ import {
   LignesFonctionnellesArchivesComponent
 } from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component";
 import {TransactionHistoryComponent} from "../../transaction-history/transaction-history.component";
+import {MarchesListComponent} from "../../Marches/views/marches-list/marches-list.component";
+import {MarchesFormComponent} from "../../Marches/views/marches-form/marches-form.component";
+import {
+  SpeficLigneEncoursComponent
+} from "../../specific-Functional-Lignes/views/spefic-ligne-encours/spefic-ligne-encours.component";
+import {
+  SpeficLigneEditComponent
+} from "../../specific-Functional-Lignes/views/spefic-ligne-edit/spefic-ligne-edit.component";
+import {
+  SpeficLigneExpireesComponent
+} from "../../specific-Functional-Lignes/views/spefic-ligne-expirees/spefic-ligne-expirees.component";
+import {
+  SpeficLigneArchiveesComponent
+} from "../../specific-Functional-Lignes/views/spefic-ligne-archivees/spefic-ligne-archivees.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
   { path: 'accueil', component: AcceuilComponent  },
+
+  { path: 'tableau-de-bord', component: TableauDeBordComponent , canActivate: [adminGuard]},
+  { path: 'evolution-taux-plafond', component: EvolTauxPlafondComponent, canActivate: [adminGuard] },
+  { path: 'solde-par-banque', component: SoldeParBanqueComponent, canActivate: [adminGuard] },
+  { path: 'tresorerie-globale', component: TresorerieGlobaleComponent, canActivate: [adminGuard] },
+
   { path: 'comptes-bancaires', component: ComptesBancairesComponent  },
   { path: "comptes-bancaires/new", component: BanqueEditComponent },
   { path: "comptes-bancaires/edit/:id", component: BanqueEditComponent },
   { path: "comptes-bancaires/history/:id", component: BankHistoryComponent },
+
   { path: 'lignes-fonctionnelles-encours', component: LignesFonctionnellesComponent},
   { path: 'lignes-fonctionnelles-encours/new', component: LigneFonctionnelleEditComponent },
   { path: 'lignes-fonctionnelles-encours/edit/:id', component: LigneFonctionnelleEditComponent },
   { path: 'lignes-fonctionnelles-expired', component: LignesFonctionnellesExpireesComponent},
   { path: 'lignes-fonctionnelles-archived', component: LignesFonctionnellesArchivesComponent},
+
+  { path: 'lignes-fonctionnelles-specifiques-encours', component: SpeficLigneEncoursComponent },
+  { path: 'lignes-fonctionnelles-specifiques-encours/new', component: SpeficLigneEditComponent },
+  { path: 'lignes-fonctionnelles-specifiques-encours/edit/:id', component: SpeficLigneEditComponent },
+  { path: 'lignes-fonctionnelles-specifiques-expired', component: SpeficLigneExpireesComponent },
+  { path: 'lignes-fonctionnelles-specifiques-archived', component: SpeficLigneArchiveesComponent },
+
   { path: 'natures-fonctionnelles', component: NatureLigneFonctionnelleListComponent },
   { path: 'natures-fonctionnelles/new', component: NatureLigneFonctionnelleEditComponent },
   { path: 'natures-fonctionnelles/edit/:id', component: NatureLigneFonctionnelleEditComponent },
-  { path: 'tableau-de-bord', component: TableauDeBordComponent , canActivate: [adminGuard]},
-  { path: 'evolution-taux-plafond', component: EvolTauxPlafondComponent, canActivate: [adminGuard] },
-  { path: 'solde-par-banque', component: SoldeParBanqueComponent, canActivate: [adminGuard] },
-  { path: 'tresorerie-globale', component: TresorerieGlobaleComponent, canActivate: [adminGuard] },
-  { path: 'logs', component: LogsComponent , canActivate: [adminGuard]},
+
   {path: 'leasing', loadChildren: () => import('../../leasing/route/leasing-routing.module').then(m => m.LEASING_FEATURE_ROUTES)},
   {path:"cmt",loadChildren:()=>import('../../cmt/route/cmt-routing').then(m=>m.cmtRoutes)},
+
+  {path:"LCN",component:LcnListComponent},
+  {path:"Chèques",component:ChequesListComponent},
+  {path:"Virements",component:VirementListComponent},
+  {path:"Mise-a-disposition",component:MiseADispositionListComponent},
+
+  { path: "marches", component: MarchesListComponent },
+  { path: "marches/new", component: MarchesFormComponent },
+  { path: "marches/edit/:id", component: MarchesFormComponent },
+
   { path: 'etats-des-encours/:banqueId',component:LesEncoursComponent,
     children:[
       {path:'', redirectTo:'rapprochement', pathMatch:'full'},
@@ -89,10 +123,7 @@ export const PORTAIL_ROUTES: Routes = [
     ]
   },
   { path: 'etats-des-encours',component:SelectBanquePourLEncoursComponent},
-  {path:"LCN",component:LcnListComponent},
-  {path:"Chèques",component:ChequesListComponent},
-  {path:"Virements",component:VirementListComponent},
-  {path:"Mise-a-disposition",component:MiseADispositionListComponent},
-  {path:"historique-des-transactions",component:TransactionHistoryComponent}
+  {path:"historique-des-transactions",component:TransactionHistoryComponent},
 
+  { path: 'logs', component: LogsComponent , canActivate: [adminGuard]},
 ];

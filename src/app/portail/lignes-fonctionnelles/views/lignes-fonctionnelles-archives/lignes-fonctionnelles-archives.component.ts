@@ -17,10 +17,9 @@ import {LigneFonctionnelleResponse} from "../../dtos/LigneFonctionnelleResponse"
 import {LigneFonctionnelleService} from "../../services/LigneFonctionnelleService";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {NatureLigneFonctionnelleService} from "../../services/nature-ligne-fonctionnelle.service";
-import {AuthService} from "../../../../auth/services/auth.service";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {LigneFonctionnelleSearchCriteria} from "../../dtos/LigneFonctionnelleSearchCriteria";
-import {Role} from "../../../../auth/enum/Role";
+
 
 @Component({
   selector: 'app-lignes-fonctionnelles-archives',
@@ -70,9 +69,7 @@ export class LignesFonctionnellesArchivesComponent implements OnInit {
     private banqueService: BanqueService,
     private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
     private fb: FormBuilder,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private authService: AuthService,
+    private messageService: MessageService
   ) { }
 
   ngOnInit(): void {
@@ -187,61 +184,11 @@ export class LignesFonctionnellesArchivesComponent implements OnInit {
     this.searchForm.reset({
       banqueId: null,
       natureLigneFonctionnelleId: null,
-      actif: this.canManageActifStatus() ? null : true // Reset actif to null for admins, true for others
+      actif: false
     });
     // The valueChanges subscription will automatically trigger a reload
   }
 
-  deleteLigneFonctionnelle(ligne: LigneFonctionnelleResponse): void {
-    this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer la ligne fonctionnelle avec la nature "${ligne.natureLigneFonctionnelleLabel}" pour la banque "${ligne.banqueNom}" ?`,
-      header: 'Confirmation de Suppression',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.loading = true;
-        this.ligneFonctionnelleService.deleteLigneFonctionnelle(ligne.id!)
-          .subscribe({
-            next: () => {
-              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle supprimée avec succès.', life: 3000 });
-              this.reloadTableAfterAction();
-            },
-            error: (error) => {
-              console.error('Erreur lors de la suppression de la ligne fonctionnelle:', error);
-              const errorMessage = error.error?.message || 'Échec de la suppression de la ligne fonctionnelle.';
-              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-              this.loading = false;
-            }
-          });
-      }
-    });
-  }
 
 
-
-  // Check if the user is ADMIN
-  isAdmin(): boolean {
-    return this.authService.hasRole(Role.ADMIN);
-  }
-
-  // Check if the user is ADMIN or SUPERADMIN to manage active status
-  canManageActifStatus(): boolean {
-    return this.authService.hasRole(Role.ADMIN) || this.authService.hasRole(Role.SUPER_ADMIN);
-  }
-
-  // Helper to reload the table after an action (delete/toggle)
-  private reloadTableAfterAction(): void {
-    if (this.dt) {
-      this.dt.first = 0; // Go back to first page
-      this.dt.onLazyLoad.emit(this.dt.createLazyLoadMetadata()); // Reload data
-    } else {
-      // Fallback in case dt is not ready, though with @ViewChild it usually is
-      this.loadLignesFonctionnelles({
-        first: this.first,
-        rows: this.rows,
-        sortField: this.sortField,
-        sortOrder: this.sortOrder,
-        filters: {}
-      });
-    }
-  }
 }

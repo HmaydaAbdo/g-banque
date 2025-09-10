@@ -21,10 +21,9 @@ import {LigneFonctionnelleResponse} from "../../dtos/LigneFonctionnelleResponse"
 import {LigneFonctionnelleService} from "../../services/LigneFonctionnelleService";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {NatureLigneFonctionnelleService} from "../../services/nature-ligne-fonctionnelle.service";
-import {AuthService} from "../../../../auth/services/auth.service";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {LigneFonctionnelleSearchCriteria} from "../../dtos/LigneFonctionnelleSearchCriteria";
-import {Role} from "../../../../auth/enum/Role";
+
 
 @Component({
   selector: 'app-lignes-fonctionnelles-expirees',
@@ -79,7 +78,7 @@ export class LignesFonctionnellesExpireesComponent implements OnInit {
     private fb: FormBuilder,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private authService: AuthService,
+
   ) { }
 
   ngOnInit(): void {
@@ -195,7 +194,8 @@ export class LignesFonctionnellesExpireesComponent implements OnInit {
     this.searchForm.reset({
       banqueId: null,
       natureLigneFonctionnelleId: null,
-      actif: this.canManageActifStatus() ? null : true // Reset actif to null for admins, true for others
+      actif: true,
+      isExpired: true,
     });
     // The valueChanges subscription will automatically trigger a reload
   }
@@ -225,13 +225,6 @@ export class LignesFonctionnellesExpireesComponent implements OnInit {
   }
 
 
-
-
-
-  // Check if the user is ADMIN or SUPERADMIN to manage active status
-  canManageActifStatus(): boolean {
-    return this.authService.hasRole(Role.ADMIN) || this.authService.hasRole(Role.SUPER_ADMIN);
-  }
 
   // Helper to reload the table after an action (delete/toggle)
   private reloadTableAfterAction(): void {

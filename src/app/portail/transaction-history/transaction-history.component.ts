@@ -16,12 +16,12 @@ import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { TagModule } from 'primeng/tag';
 
 // Import your DTOs and services
-import { TransactionResponseDto } from "../etatsDesEncours/rapprochement/dtos/TransactionResponseDto";
+import { TransactionResponseDto } from "../etatsDesEncours/rapprochement/dtos/transactions/TransactionResponseDto";
 import { BanqueResponse } from "../comptes-bancaire/dtos/BanqueResponse";
 import { TransactionService } from "../etatsDesEncours/rapprochement/services/transactions/TransactionService";
 import { BanqueService } from "../comptes-bancaire/services/BanqueService";
-import { TransactionSource } from "../etatsDesEncours/rapprochement/dtos/TransactionSource";
-import { TransactionSearchDto } from "../etatsDesEncours/rapprochement/dtos/TransactionSearchDto";
+import { TransactionSource } from "../etatsDesEncours/rapprochement/dtos/transactions/TransactionSource";
+import { TransactionSearchDto } from "../etatsDesEncours/rapprochement/dtos/transactions/TransactionSearchDto";
 import { PageResponse } from "../global/types/PageResponse";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {RouterLinkActive} from "@angular/router";

@@ -75,6 +75,7 @@
               class="p-button-rounded p-button-success"
               pTooltip="Valider"
               label="Valider"
+              (onClick)="openRapprochementModal(miseADisposition)"
             ></p-button>
           </td>
         </tr>
@@ -96,3 +97,70 @@
     </p-table>
   </div>
 </div>
+
+
+
+<p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayModal" [modal]="true" [style]="{width: '50vw'}"
+          [draggable]="false" [resizable]="false">
+  <ng-container *ngIf="selectedMiseADisposition">
+    <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
+      <div class="grid p-fluid mt-3">
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="dateEmission" formControlName="dateEmission" dateFormat="dd/mm/yy" [showIcon]="true"
+                        appendTo="body"></p-calendar>
+            <label for="dateEmission">Date d'émission</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('dateEmission')">
+            La date d'émission est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="dateValeur" formControlName="dateValeur" [showIcon]="true" dateFormat="dd/mm/yy"
+                        appendTo="body"></p-calendar>
+            <label for="dateValeur">Date de valeur</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('dateValeur')">
+            La date de valeur est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="dateOperation" formControlName="dateOperation" dateFormat="dd/mm/yy" [showIcon]="true"
+                        appendTo="body"></p-calendar>
+            <label for="dateOperation">Date de l'opération</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('dateOperation')">
+            La date de l'opération est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-inputNumber id="tvaDeductible" formControlName="tvaDeductible" mode="decimal" [min]="0" [max]="100"
+                           [showButtons]="true" suffix=" %"></p-inputNumber>
+            <label for="tvaDeductible">TVA Déductible</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
+            La TVA doit être comprise entre 0 et 100
+          </small>
+        </div>
+
+        <div class="col-12 mb-3">
+          <span class="p-float-label">
+            <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
+            <label for="observation">Observation</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('observation')">
+            Observation est obligatoire
+          </small>
+        </div>
+      </div>
+      <p-divider></p-divider>
+      <div class="flex justify-content-end gap-2">
+        <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="displayModal = false"></p-button>
+        <p-button label="Valider" icon="pi pi-check" type="submit" [disabled]="rapprochementForm.invalid"></p-button>
+      </div>
+    </form>
+  </ng-container>
+</p-dialog>

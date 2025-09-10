@@ -1,14 +1,13 @@
-import {TransactionSource} from "./TransactionSource";
-import {Decimal} from "decimal.js";
 
-export interface CmtTransactionResponseDto {
+import { Decimal } from 'decimal.js';
+import {TransactionSource} from "../transactions/TransactionSource";
 
+export interface ChequeTransactionResponseDto {
   id: number;
   banqueName: string;
+  chequeNumber: string;
   libelle: string;
   observation: string;
-  creditoMoyenTermeId: number;
-  echeanceId: number;
   dateEmission: Date;
   dateValeur: Date;
   dateOperations: Date;
@@ -17,5 +16,4 @@ export interface CmtTransactionResponseDto {
   debit: Decimal;
   credit: Decimal;
   transactionSource: TransactionSource;
-
 }

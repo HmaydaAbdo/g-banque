@@ -12,6 +12,17 @@ import {RippleModule} from 'primeng/ripple';
 import {VirementResponseDto} from "../../../../../Virements/dtos/VirementResponseDto";
 import {VirementService} from "../../../../../Virements/service/VirementService";
 import {PageResponse} from "../../../../../global/types/PageResponse";
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {VirementTransactionRequestDto} from "../../../../rapprochement/dtos/virements/VirementTransactionRequestDto";
+import {
+  DonneesComplementairesRapprochementDTO
+} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+import {DividerModule} from "primeng/divider";
+import {InputTextareaModule} from "primeng/inputtextarea";
+import {CalendarModule} from "primeng/calendar";
+import {DialogModule} from "primeng/dialog";
 
 
 
@@ -28,6 +39,11 @@ import {PageResponse} from "../../../../../global/types/PageResponse";
     PaginatorModule,
     DatePipe,
     RippleModule,
+    DividerModule,
+    InputTextareaModule,
+    CalendarModule,
+    ReactiveFormsModule,
+    DialogModule,
   ],
   templateUrl: './virement-encours.component.html',
   styleUrl: './virement-encours.component.scss',
@@ -42,11 +58,18 @@ export class VirementEncoursComponent implements OnInit {
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
+  // Propriétés pour la modale de rapprochement
+  displayModal: boolean = false;
+  rapprochementForm!: FormGroup;
+  selectedVirement: VirementResponseDto | null = null;
+
   constructor(
     private virementService: VirementService,
     private route: ActivatedRoute,
     private messageService: MessageService,
     private datePipe: DatePipe,
+    private rapprochementService: RapprochemntService,
+    private fb: FormBuilder,
   ) {
   }
 
@@ -59,6 +82,76 @@ export class VirementEncoursComponent implements OnInit {
         this.loadOutstandingVirements();
       }
     });
+    this.initRapprochementForm();
+  }
+
+  initRapprochementForm(): void {
+    this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
+      dateValeur: [null, Validators.required],
+      dateOperation: [null, Validators.required],
+      observation: ['', Validators.required],
+      tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+    });
+  }
+
+  openRapprochementModal(virement: VirementResponseDto): void {
+    this.selectedVirement = virement;
+    this.initRapprochementForm();
+    this.displayModal = true;
+  }
+
+  submitRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
+      this.rapprochementForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
+      });
+      return;
+    }
+
+    if (this.rapprochementForm.valid && this.selectedVirement) {
+      const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
+
+      const virementTransactionRequest: VirementTransactionRequestDto = {
+        numeroVirement: this.selectedVirement.numero,
+        dateEmission: donneesComplementaires.dateEmission,
+        dateValeur: donneesComplementaires.dateValeur,
+        dateOperation: donneesComplementaires.dateOperation,
+        observation: donneesComplementaires.observation,
+        tvaDeductible: donneesComplementaires.tvaDeductible,
+        transactionSource: TransactionSource.Virement
+      };
+
+      this.rapprochementService.virementToRapprochement(virementTransactionRequest)
+        .subscribe({
+          next: (response) => {
+            console.log(response);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Virement rapproché avec succès.'
+            });
+            this.loadOutstandingVirements();
+            this.displayModal = false;
+          },
+          error: (error) => {
+            console.error('Erreur lors du rapprochement du virement:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+            });
+          }
+        });
+    }
+  }
+
+  isInvalid(controlName: string): boolean {
+    const control = this.rapprochementForm.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
   /**

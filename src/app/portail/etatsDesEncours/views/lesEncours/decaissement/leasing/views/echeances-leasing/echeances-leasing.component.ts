@@ -31,8 +31,8 @@ import { OrganismeLeasingResponse } from "../../../../../../../leasing/organisme
 import { EncoursLeasingRequestDTO } from "../../dtos/encours-leasing-request.dto";
 import { RapprochemntService } from "../../../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import { DonneesComplementairesRapprochementDTO } from "../../../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
-import {LeasingTransactionRequest} from "../../../../../../rapprochement/dtos/LeasingTransactionRequest";
-import {TransactionSource} from "../../../../../../rapprochement/dtos/TransactionSource";
+import {LeasingTransactionRequest} from "../../../../../../rapprochement/dtos/leasing/LeasingTransactionRequest";
+import {TransactionSource} from "../../../../../../rapprochement/dtos/transactions/TransactionSource";
 
 
 @Component({

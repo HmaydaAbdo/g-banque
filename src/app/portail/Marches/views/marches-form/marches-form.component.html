@@ -1,0 +1,73 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="portail-section w-screen h-screen overflow-y-scroll pt-2 pb-8 px-5">
+
+  <div class="flex justify-content-center w-full">
+    <p-breadcrumb [model]="items">
+      <ng-template pTemplate="item" let-item>
+        <ng-container>
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        </ng-container>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <p class="text-center font-bold md:text-2xl">{{ isEditMode ? 'Modifier un Marché' : 'Ajouter un Marché' }}</p>
+
+  <form [formGroup]="marcheForm" (ngSubmit)="saveMarche()">
+    <div class="p-fluid formgrid grid">
+
+      <div class="col-12 md:col-6 field">
+
+        <label for="numero">Numéro du Marché <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="numero" formControlName="numero" autofocus />
+        <small class="p-error" *ngIf="f['numero'].invalid && f['numero'].touched">
+          <span *ngIf="f['numero'].errors?.['required']">Le numéro du marché est obligatoire.</span>
+        </small>
+      </div>
+
+      <div class="col-12 md:col-6 field">
+        <label for="nom">Nom du Marché <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="nom" formControlName="nom" />
+        <small class="p-error" *ngIf="f['nom'].invalid && f['nom'].touched">
+          <span *ngIf="f['nom'].errors?.['required']">Le nom du marché est obligatoire.</span>
+        </small>
+      </div>
+
+      <div class="col-12 md:col-6 field">
+        <label for="montant">Montant <span class="p-text-danger">*</span></label>
+        <p-inputNumber id="montant" formControlName="montant" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" inputId="decimal" suffix=" MAD"></p-inputNumber>
+        <small class="p-error" *ngIf="f['montant'].invalid && f['montant'].touched">
+          <span *ngIf="f['montant'].errors?.['required']">Le montant est obligatoire.</span>
+          <span *ngIf="f['montant'].errors?.['min']">Le montant doit être supérieur à zéro.</span>
+        </small>
+      </div>
+
+      <div class="col-12 md:col-6 field">
+        <label for="maitreDouvrage">Maître d'ouvrage <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="maitreDouvrage" formControlName="maitreDouvrage" />
+        <small class="p-error" *ngIf="f['maitreDouvrage'].invalid && f['maitreDouvrage'].touched">
+          <span *ngIf="f['maitreDouvrage'].errors?.['required']">Le maître d'ouvrage est obligatoire.</span>
+        </small>
+      </div>
+
+      <div class="col-12 md:col-6 field">
+        <label for="delai">Délai <span class="p-text-danger">*</span></label>
+        <p-calendar id="delai" formControlName="delai" [showIcon]="true" dateFormat="dd/mm/yy" appendTo="body"></p-calendar>
+        <small class="p-error" *ngIf="f['delai'].invalid && f['delai'].touched">
+          <span *ngIf="f['delai'].errors?.['required']">Le délai est obligatoire.</span>
+        </small>
+      </div>
+
+
+    </div>
+    <div class="col-12 flex justify-content-end gap-2 mt-4">
+      <button pButton pRipple label="Annuler" size="small" icon="pi pi-times" [routerLink]="['/portail/marches']" type="button" severity="secondary"></button>
+      <button pButton pRipple label="Enregistrer" size="small" icon="pi pi-check" type="submit" [disabled]="loading"></button>
+    </div>
+  </form>
+</div>

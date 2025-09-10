@@ -117,8 +117,8 @@
           <td>{{ virement.numero }}</td>
           <td>{{ virement.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ virement.beneficiaire }}</td>
-          <td>{{ virement.banqueBeneficiaire }}</td>
-          <td>{{ virement.ribBeneficiaire }}</td>
+          <td>{{ virement.banqueBeneficiaire ? virement.banqueBeneficiaire : 'N/A' }}</td>
+          <td>{{ virement.ribBeneficiaire ? virement.ribBeneficiaire : 'N/A' }}</td>
           <td>{{ virement.banqueEmettriceNom }}</td>
           <td>{{ virement.montant | number:'1.2-2' }}</td>
           <td>

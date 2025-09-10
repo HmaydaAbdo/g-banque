@@ -1,5 +1,5 @@
 import {Decimal} from "decimal.js";
-import {TransactionSource} from "./TransactionSource";
+import {TransactionSource} from "../transactions/TransactionSource";
 
 export interface LeasingTransactionResponse {
   id: number;
