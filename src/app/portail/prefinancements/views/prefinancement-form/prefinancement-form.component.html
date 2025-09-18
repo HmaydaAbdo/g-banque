@@ -1,0 +1,120 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
+  <div class="portail-section flex justify-content-center align-items-center">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        <ng-container *ngIf="item.route; else elseBlock">
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        </ng-container>
+        <ng-template #elseBlock>
+          <a [href]="item.url">
+            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+          </a>
+        </ng-template>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto mt-4">
+    <div class="card-header text-center mb-4">
+      <h2 class="text-2xl font-bold">{{ isEditMode ? 'Modifier le Préfinancement' : 'Ajouter un Nouveau Préfinancement' }}</h2>
+    </div>
+    <form [formGroup]="prefinancementForm" (ngSubmit)="onSubmit()">
+      <div class="p-fluid grid formgrid">
+        <div class="field col-12 md:col-6">
+          <label for="marcheId" class="block font-medium mb-2">Marché</label>
+          <p-dropdown
+            id="marcheId"
+            formControlName="marcheId"
+            [options]="marchesOptions"
+            placeholder="Sélectionner un marché"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['marcheId'].invalid && f['marcheId'].touched }"
+            [virtualScroll]="true"
+            [virtualScrollItemSize]="38"
+            [lazy]="true"
+            (onLazyLoad)="loadMarches($event)"
+          ></p-dropdown>
+          <small class="ng-dirty ng-invalid" *ngIf="f['marcheId'].invalid && f['marcheId'].touched">
+            Le marché est requis.
+          </small>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="montant" class="block font-medium mb-2">Montant (MAD)</label>
+          <p-inputNumber
+            id="montant"
+            formControlName="montant"
+            mode="decimal"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched }"
+          ></p-inputNumber>
+          <small class="ng-dirty ng-invalid" *ngIf="f['montant'].invalid && f['montant'].touched">
+            Le montant est requis et doit être un nombre valide (ex: 123.45).
+          </small>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="type" class="block font-medium mb-2">Type</label>
+          <p-dropdown
+            id="type"
+            formControlName="type"
+            [options]="typeOptions"
+            placeholder="Sélectionner un type"
+            optionLabel="label"
+            optionValue="value"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['type'].invalid && f['type'].touched }"
+          ></p-dropdown>
+          <small class="ng-dirty ng-invalid" *ngIf="f['type'].invalid && f['type'].touched">
+            Le type est requis.
+          </small>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="dateEmission" class="block font-medium mb-2">Date d'émission</label>
+          <p-calendar
+            id="dateEmission"
+            formControlName="dateEmission"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            [showButtonBar]="true"
+            appendTo="body"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }"
+          ></p-calendar>
+          <small class="ng-dirty ng-invalid" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">
+            La date d'émission est requise.
+          </small>
+        </div>
+
+        <div class="col-12 mt-4 flex flex-row   gap-2">
+          <button
+            pButton
+            pRipple
+            label="Annuler"
+            icon="pi pi-times"
+            type="button"
+            class="p-button-secondary"
+            (click)="onCancel()"
+          ></button>
+          <button
+            pButton
+            pRipple
+            [label]="isEditMode ? 'Modifier' : 'Créer'"
+            [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+            type="submit"
+            class="p-button-success"
+            [disabled]="prefinancementForm.invalid || loading"
+          ></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

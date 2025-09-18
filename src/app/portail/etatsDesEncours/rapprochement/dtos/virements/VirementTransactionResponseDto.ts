@@ -1,4 +1,5 @@
 import {TransactionSource} from "../transactions/TransactionSource";
+import {Decimal} from "decimal.js";
 
 export interface VirementTransactionResponseDto {
   id: number;
@@ -9,8 +10,8 @@ export interface VirementTransactionResponseDto {
   dateEmission: string;      // OffsetDateTime → string (ISO 8601)
   dateValeur: string;
   dateOperations: string;
-  tvaDeductible: number;
-  tvaCollectee: number;
+  tvaDeductible: Decimal;
+  tvaCollectee: Decimal;
   debit: number;             // BigDecimal → number
   credit: number;
   transactionSource: TransactionSource;

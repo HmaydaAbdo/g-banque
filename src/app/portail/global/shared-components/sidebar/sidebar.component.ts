@@ -103,7 +103,16 @@ export class SidebarComponent implements OnInit {
       label:"Les Marchés ",
       icon:"pi pi-sliders-h",
       items:[
-        {label: "la liste des marchés",icon: "pi pi-list",routerLink: "/portail/marches"}
+        {label: "la liste des marchés",icon: "pi pi-list",routerLink: "/portail/marches"},
+        {label: "les préfinancements",icon: "pi pi-list",items: [
+            {label:"les lignes",icon:"pi pi-list",routerLink:'/portail/prefi-lines'},
+            {label: "les encours",icon: "pi pi-list",routerLink: "/portail/préfinancements"}
+          ]},
+        {label: "les droits constatés",icon: "pi pi-list",items: [
+            {label: "Les lignes",icon: "pi pi-list",routerLink: "/portail/dc-lines"},
+            {label: "les encours",icon: "pi pi-list",routerLink: "/portail/droits-constate"}
+          ]},
+        {label: "Les décomptes",icon: "pi pi-list",routerLink: "/portail/decomptes"},
       ]},
     {label:"Historique des transactions",routerLink:"/portail/historique-des-transactions",icon:"pi pi-history"},
     {

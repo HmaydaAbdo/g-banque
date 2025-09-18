@@ -61,8 +61,8 @@
                 {field: 'nom', header: 'Nom', sortable: true},
                 {field: 'montant', header: 'Montant', sortable: true},
                 {field: 'maitreDouvrage', header: 'Maître d ouvrage', sortable: true},
-                {field: 'delai', header: 'Délai', sortable: true},
-
+                {field: 'dateDebutDesTravaux', header: 'Date début travaux', sortable: true},
+                {field: 'dateDAchievementDesTravaux', header: 'Date achèvement travaux', sortable: true}
              ]"
              styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '70rem'}"
              [showCurrentPageReport]="true"
@@ -84,8 +84,8 @@
           <td>{{ marche.nom }}</td>
           <td>{{ marche.montant }} MAD</td>
           <td>{{ marche.maitreDouvrage }}</td>
-          <td>{{ marche.delai | date:'dd/mm/yyyy' }}</td>
-
+          <td>{{ marche.dateDebutDesTravaux | date:'dd/MM/yyyy' }}</td>
+          <td>{{ marche.dateDAchievementDesTravaux | date:'dd/MM/yyyy' }}</td>
           <td>
             <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
                     [routerLink]="['/portail/marches/edit', marche.id]"></button>
@@ -96,12 +96,12 @@
       </ng-template>
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td [attr.colspan]="8">Aucun marché trouvé.</td>
+          <td [attr.colspan]="7">Aucun marché trouvé.</td>
         </tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="8">Chargement des marchés. Veuillez patienter...</td>
+          <td [attr.colspan]="7">Chargement des marchés. Veuillez patienter...</td>
         </tr>
       </ng-template>
 

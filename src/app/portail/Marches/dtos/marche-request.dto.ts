@@ -1,9 +1,10 @@
-import {Decimal} from "decimal.js";
+import { Decimal } from 'decimal.js';
 
 export interface MarcheRequestDTO {
   numero: string;
   nom: string;
   montant: Decimal;
   maitreDouvrage: string;
-  delai: Date;
+  dateDebutDesTravaux: Date;
+  dateDAchievementDesTravaux: Date;
 }

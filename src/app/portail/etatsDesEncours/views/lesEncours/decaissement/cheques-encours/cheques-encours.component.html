@@ -1,23 +1,37 @@
 <p-toast></p-toast>
 <div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
-  @if (cheques.length > 0) {
-    <div
-      class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between"
-    >
+
+    <div class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between">
       <div class="flex align-items-center">
-      <span class="text-lg font-medium mr-2">
-        Liste des chèques en cours pour le </span
-      >
+        <span class="text-lg font-medium mr-2">
+          Liste des chèques en cours pour le
+        </span>
         <span class="text-lg font-bold">
-       {{ this.currentMonthYear }}
-      </span>
+          {{ this.currentMonthYear }}
+        </span>
       </div>
+      <form [formGroup]="searchForm" class="grid p-fluid">
+        <div class="col-12 md:col-6">
+        <span class="p-float-label">
+          <input id="numero" type="text" pInputText formControlName="numero" />
+          <label for="numero">Recherche par N° Chèque</label>
+        </span>
+        </div>
+        <div class="col-12 md:col-6">
+        <span class="p-float-label">
+          <input id="beneficiaire" type="text" pInputText formControlName="beneficiaire" />
+          <label for="beneficiaire">Recherche par Bénéficiaire</label>
+        </span>
+        </div>
+      </form>
       <div class="flex align-items-center">
         <span class="text-lg font-medium mr-2">Total des encours</span>
         <span class="text-xl font-bold">{{ totalEncours }} MAD</span>
       </div>
     </div>
-  }
+
+
+
 
   <div class="pb-8">
     <p-table
@@ -128,23 +142,23 @@
           <span class="p-float-label">
             <p-calendar id="dateOperation" formControlName="dateOperation" dateFormat="dd/mm/yy" [showIcon]="true"
                         appendTo="body"></p-calendar>
-            <label for="dateOperation">Date de l'opération</label>
+            <label for="dateOperation">Date d'opération</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateOperation')">
-            La date de l'opération est obligatoire
+            La date d'opération est obligatoire
           </small>
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-inputNumber id="tvaDeductible" formControlName="tvaDeductible" mode="decimal" [min]="0" [max]="100"
-                           [showButtons]="true" suffix=" %"></p-inputNumber>
+            <p-dropdown id="tvaDeductible" [options]="tvaOptions" formControlName="tvaDeductible"
+                        optionLabel="label" optionValue="value"
+                        placeholder="Sélectionner un taux" appendTo="body"></p-dropdown>
             <label for="tvaDeductible">TVA Déductible</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
-            La TVA doit être comprise entre 0 et 100
+            La TVA est obligatoire
           </small>
         </div>
-
         <div class="col-12 mb-3">
           <span class="p-float-label">
             <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule, DatePipe } from '@angular/common';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService, SelectItem } from 'primeng/api'; // Import SelectItem
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -32,6 +32,7 @@ import {LeasingTransactionRequest} from "../../../../../../rapprochement/dtos/le
 import {TransactionSource} from "../../../../../../rapprochement/dtos/transactions/TransactionSource";
 import {CmtTransactionRequest} from "../../../../../../rapprochement/dtos/cmt/CmtTransactionRequest";
 import {EcheanceCMTResponseDto} from "../../../../../../../cmt/dtos/EcheanceCMTResponseDto";
+import { InputTextModule } from 'primeng/inputtext';
 
 
 @Component({
@@ -52,14 +53,15 @@ import {EcheanceCMTResponseDto} from "../../../../../../../cmt/dtos/EcheanceCMTR
     RippleModule,
     PaginatorModule,
     DividerModule,
-    DatePipe, // <-- This is okay to have here, but it's redundant since it's in CommonModule.
+    DatePipe,
     CalendarModule,
     DialogModule,
-    InputTextareaModule
+    InputTextareaModule,
+    InputTextModule // <-- Add InputTextModule here
   ],
   templateUrl: './echeances-cmt.component.html',
   styleUrl: './echeances-cmt.component.scss',
-  providers: [MessageService, ConfirmationService] // Removed DatePipe from here
+  providers: [MessageService, ConfirmationService]
 })
 export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
@@ -69,12 +71,21 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
   loading: boolean = false;
   currentMonthYear: string | null = null;
 
+  periodeOptions: SelectItem[] = [
+    { label: 'Jour', value: PeriodeEncoursCMT.JOUR },
+    { label: 'Mois', value: PeriodeEncoursCMT.MOIS }
+  ];
+
+  tvaOptions: SelectItem[] = [
+    { label: '0%', value: 0 },
+    { label: '10%', value: 10 },
+    { label: '14%', value: 14 },
+    { label: '20%', value: 20 }
+  ];
+
   searchForm!: FormGroup;
   banqueIdFromRoute!: number;
 
-
-
-  // Propriétés pour la modale de rapprochement
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedEcheance: EcheanceCMTResponseDto | null = null;
@@ -113,7 +124,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      periode: [PeriodeEncoursCMT.MOIS]
+      periode: [PeriodeEncoursCMT.MOIS],
+      designation: [''] // Add the new form control
     });
 
     const formValueChangesSub = this.searchForm.valueChanges
@@ -130,7 +142,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['',Validators.required],
-      tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+      tvaDeductible: [null, Validators.required] // Change initial value and remove validators
     });
   }
 
@@ -148,6 +160,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     const request: EncoursCMTRequestDTO = {
       banqueId: this.banqueIdFromRoute,
       periode: searchCriteria.periode,
+      designation: searchCriteria.designation, // Pass the designation to the request
       page: event.first! / event.rows!,
       size: event.rows!,
       sort: event.sortField && event.sortOrder
@@ -161,7 +174,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
         this.echeances = response.echeances.content;
         this.totalRecords = response.echeances.page.totalElements;
         this.loading = false;
-        this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/YYYY');
+        this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/yyyy');
       },
       error: (error) => {
         this.loading = false;
@@ -188,12 +201,11 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
   openRapprochementModal(echeance: EcheanceCMTResponseDto): void {
     this.selectedEcheance = echeance;
-    this.initRapprochementForm(); // Assurez-vous d'initialiser le formulaire
+    this.initRapprochementForm();
     this.displayModal = true;
   }
 
   submitRapprochement(): void {
-
     if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -207,7 +219,6 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     if (this.rapprochementForm.valid && this.selectedEcheance) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
 
-      // Create the CmtTransactionRequest object
       const cmtTransactionRequest: CmtTransactionRequest = {
         cmtId: this.selectedEcheance.credit.id,
         echeanceId: this.selectedEcheance.id,
@@ -253,5 +264,4 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     const control = this.rapprochementForm.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
-
 }

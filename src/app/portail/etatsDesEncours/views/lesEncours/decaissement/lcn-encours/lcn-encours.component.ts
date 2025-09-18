@@ -23,7 +23,13 @@ import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {DividerModule} from "primeng/divider";
-
+import {EncoursLcnResponse} from "../../../../../LCN/dtos/EncoursLcnResponse";
+import {Decimal} from "decimal.js";
+import {LcnSearchDTO} from "../../../../../LCN/dtos/LcnSearchDTO"; // Import the DTO
+import {InputTextModule} from "primeng/inputtext";
+import {DropdownModule} from "primeng/dropdown";
+import {InputNumberModule} from "primeng/inputnumber";
+import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 
 
 @Component({
@@ -44,6 +50,9 @@ import {DividerModule} from "primeng/divider";
     CalendarModule,
     InputTextareaModule,
     DividerModule,
+    InputTextModule,
+    DropdownModule,
+    InputNumberModule,
   ],
   templateUrl: './lcn-encours.component.html',
   styleUrl: './lcn-encours.component.scss',
@@ -54,7 +63,7 @@ export class LcnEncoursComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   banqueIdFromRoute!: number;
-  totalEncours: number = 0;
+  totalEncours!: Decimal;
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -63,6 +72,17 @@ export class LcnEncoursComponent implements OnInit {
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedLcn: LcnResponseDTO | null = null;
+
+  // New properties for search and TVA
+  searchForm!: FormGroup;
+  currentSearchDto: LcnSearchDTO = {};
+  tvaOptions: { label: string, value: number }[] = [
+    { label: '0%', value: 0 },
+    { label: '10%', value: 10 },
+    { label: '14%', value: 14 },
+    { label: '20%', value: 20 }
+  ];
+
 
   constructor(
     private lcnService: LcnService,
@@ -83,15 +103,35 @@ export class LcnEncoursComponent implements OnInit {
         this.loadOutstandingLcns();
       }
     });
+    this.initSearchForm();
     this.initRapprochementForm();
   }
+
+  initSearchForm(): void {
+    this.searchForm = this.fb.group({
+      numero: [''],
+      beneficiaire: ['']
+    });
+
+    // Subscribe to form value changes with debounce
+    this.searchForm.valueChanges
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      )
+      .subscribe((searchDto: LcnSearchDTO) => {
+        this.currentSearchDto = searchDto;
+        this.loadOutstandingLcns();
+      });
+  }
+
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
       dateEmission: [null, Validators.required],
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+      tvaDeductible: [0, Validators.required]
     });
   }
 
@@ -153,6 +193,7 @@ export class LcnEncoursComponent implements OnInit {
     const control = this.rapprochementForm.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
+
   /**
    * Loads the outstanding LCNs for the bank.
    * @param event The lazy load event from the PrimeNG table.
@@ -166,18 +207,14 @@ export class LcnEncoursComponent implements OnInit {
       : 'dateEcheance,desc';
 
     this.lcnService
-      .getOutstandingLcnsByBank(this.banqueIdFromRoute, page, size, sort)
+      .getOutstandingLcnsByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
       .subscribe({
-        next: (response: PageResponse<LcnResponseDTO>) => {
-          this.lcns = response.content;
-          this.totalRecords = response.page.totalElements;
+        next: (response: EncoursLcnResponse) => {
+          this.lcns = response.page.content;
+          this.totalRecords = response.page.page.totalElements;
           this.loading = false;
-          // Calculate the total outstanding amount
-          this.totalEncours = this.lcns.reduce(
-            (sum, lcn) => sum + lcn.montant,
-            0
-          );
-          this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/YYYY');
+          this.totalEncours = response.totalEncours
+          this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/yyyy');
         },
         error: (error: Error) => {
           this.loading = false;

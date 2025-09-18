@@ -10,7 +10,8 @@
         <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
           <ng-template pTemplate="item" let-item>
             <ng-container *ngIf="item.route; else elseBlock">
-              <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+              <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
+                 #rla="routerLinkActive">
                 <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
                 <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
               </a>
@@ -85,7 +86,8 @@
         </div>
 
         <div class="flex-shrink-0">
-          <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()" pTooltip="Effacer la recherche"></button>
+          <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()"
+                  pTooltip="Effacer la recherche"></button>
         </div>
       </div>
     </form>
@@ -122,7 +124,9 @@
           <tr>
             <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
               {{ col.header }}
-              @if (col.sortable) { <p-sortIcon [field]="col.field"></p-sortIcon> }
+              @if (col.sortable) {
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+              }
             </th>
             <th style="width: 8rem; text-align: center;">Actions</th>
           </tr>
@@ -130,19 +134,21 @@
         <ng-template pTemplate="body" let-ligne>
           <tr>
             <td>{{ ligne.banqueNom }}</td>
-            <td>{{ligne.natureLigneFonctionnelleLabel}}</td>
-            <td>{{ligne.marcheNom}}</td>
+            <td>{{ ligne.natureLigneFonctionnelleLabel }}</td>
+            <td>{{ ligne.marcheNom }}</td>
             <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.taux | number:'1.2-2' }}%</td>
             <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
             <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>
 
             <td class="text-center">
-              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top"
+              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
+                      pTooltip="Modifier" tooltipPosition="top"
                       [routerLink]="['/portail/lignes-fonctionnelles-specifiques-encours/edit', ligne.id]">
               </button>
               @if (isAdmin()) {
-                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" pTooltip="Supprimer" tooltipPosition="top"
+                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" pTooltip="Supprimer"
+                        tooltipPosition="top"
                         (click)="deleteLigneFonctionnelleSpecifique(ligne)">
                 </button>
               }

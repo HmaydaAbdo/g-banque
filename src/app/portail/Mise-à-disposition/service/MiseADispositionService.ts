@@ -5,6 +5,7 @@ import {environment} from '../../../../environments/environment';
 import {MiseADispositionSearchDto} from "../dtos/MiseADispositionSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
 import {MiseADispositionResponseDto} from "../dtos/MiseADispositionResponseDto";
+import {EncoursMiseAdisposition} from "../dtos/EncoursMiseAdisposition";
 
 
 @Injectable({
@@ -75,6 +76,7 @@ export class MiseADispositionService {
    * Retrieves a paginated list of outstanding MiseADisposition entities for a specific bank.
    *
    * @param banqueId The ID of the bank.
+   * @param searchDto
    * @param page The page number to retrieve (0-indexed).
    * @param size The number of items per page.
    * @param sort The sorting criteria (e.g., 'dateEmission,desc').
@@ -82,16 +84,25 @@ export class MiseADispositionService {
    */
   getOutstandingMisesADispositionByBank(
     banqueId: number,
+    searchDto: MiseADispositionSearchDto,
     page: number = 0,
     size: number = 10,
     sort: string = 'dateEmission,desc'
-  ): Observable<PageResponse<MiseADispositionResponseDto>> {
-    const params = new HttpParams()
+  ): Observable<EncoursMiseAdisposition> {
+
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', sort);
 
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+        params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+
     const url = `${this.apiUrl}/encours/${banqueId}`;
-    return this.http.get<PageResponse<MiseADispositionResponseDto>>(url, {params});
+    return this.http.get<EncoursMiseAdisposition>(url, {params});
   }
 }

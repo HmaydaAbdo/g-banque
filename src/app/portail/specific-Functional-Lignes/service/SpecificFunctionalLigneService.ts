@@ -7,6 +7,8 @@ import {LigneFonctionnelleSpecifiqueRequest} from "../dtos/LigneFonctionnelleSpe
 import {LigneFonctionnelleSpecifiqueResponse} from "../dtos/LigneFonctionnelleSpecifiqueResponse";
 import {LigneFonctionnelleSpecifiqueSearchCriteria} from "../dtos/LigneFonctionnelleSpecifiqueSearchCriteria";
 import {PageResponse} from "../../global/types/PageResponse";
+import {PrefiResponseDto} from "../../prefinancements/lignesPrefi/dtos/SpecificLigneResposneDto";
+import {SpecifiqueLineSearchDto} from "../../prefinancements/lignesPrefi/dtos/SpecifiqueLineSearchDto";
 
 
 @Injectable({
@@ -32,7 +34,7 @@ export class SpecificFunctionalLigneService {
   }
 
   /**
-   * 3. Get a paginated list of specific functional lines with search criteria
+   * 3. Get a paginated list of specific functional lignePrefi with search criteria
    * (GET /lignes-fonctionnelles-specifiques)
    */
   getLignesFonctionnellesSpecifiques(
@@ -87,5 +89,49 @@ export class SpecificFunctionalLigneService {
    */
   deleteLigneFonctionnelleSpecifique(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getPrefi(
+    searchCriteria: SpecifiqueLineSearchDto,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ):Observable<PageResponse<PrefiResponseDto>>{
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    // Conditionally add search parameters
+    if (searchCriteria.marcheId) {
+      params = params.set('marcheId', searchCriteria.marcheId.toString());
+    }
+    if (searchCriteria.banqueId) {
+      params = params.set('banqueId', searchCriteria.banqueId.toString());
+    }
+
+    return this.http.get<PageResponse<PrefiResponseDto>>(`${this.apiUrl}/prefi-lines`, { params });
+  }
+
+  getDcLines(
+    searchCriteria: SpecifiqueLineSearchDto,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ):Observable<PageResponse<PrefiResponseDto>>{
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    // Conditionally add search parameters
+    if (searchCriteria.marcheId) {
+      params = params.set('marcheId', searchCriteria.marcheId.toString());
+    }
+    if (searchCriteria.banqueId) {
+      params = params.set('banqueId', searchCriteria.banqueId.toString());
+    }
+
+    return this.http.get<PageResponse<PrefiResponseDto>>(`${this.apiUrl}/dc-lines`, { params });
   }
 }

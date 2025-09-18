@@ -146,6 +146,10 @@ export class EcheanceCmtService {
       params = params.append('sort', request.sort);
     }
 
+    if( request.designation ){
+      params = params.append('designation', request.designation);
+    }
+
     return this.http.get<EncoursCMTResponseDTO>(`${this.apiUrl}/encours`, { params }).pipe(
       catchError(this.handleError)
     );

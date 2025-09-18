@@ -25,6 +25,13 @@ import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {DividerModule} from "primeng/divider";
+import {EncoursMiseAdisposition} from "../../../../../Mise-à-disposition/dtos/EncoursMiseAdisposition";
+import {Decimal} from "decimal.js";
+import {MiseADispositionSearchDto} from "../../../../../Mise-à-disposition/dtos/MiseADispositionSearchDto";
+import {InputTextModule} from "primeng/inputtext";
+import {DropdownModule} from "primeng/dropdown";
+import {debounceTime, distinctUntilChanged} from "rxjs/operators";
+
 
 @Component({
   selector: 'app-mise-a-disposition-encours',
@@ -44,6 +51,8 @@ import {DividerModule} from "primeng/divider";
     CalendarModule,
     InputTextareaModule,
     DividerModule,
+    InputTextModule,
+    DropdownModule,
   ],
   templateUrl: './mise-a-disposition-encours.component.html',
   styleUrl: './mise-a-disposition-encours.component.scss',
@@ -54,7 +63,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   banqueIdFromRoute!: number;
-  totalEncours: number = 0;
+  totalEncours!: Decimal;
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -62,6 +71,17 @@ export class MiseADispositionEncoursComponent implements OnInit {
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedMiseADisposition: MiseADispositionResponseDto | null = null;
+
+  // New properties for search and TVA
+  searchForm!: FormGroup;
+  currentSearchDto: MiseADispositionSearchDto = {};
+  tvaOptions: { label: string, value: number }[] = [
+    { label: '0%', value: 0 },
+    { label: '10%', value: 10 },
+    { label: '14%', value: 14 },
+    { label: '20%', value: 20 }
+  ];
+
 
   constructor(
     private miseADispositionService: MiseADispositionService,
@@ -82,7 +102,26 @@ export class MiseADispositionEncoursComponent implements OnInit {
         this.loadOutstandingMisesADisposition();
       }
     });
+    this.initSearchForm();
     this.initRapprochementForm();
+  }
+
+  initSearchForm(): void {
+    this.searchForm = this.fb.group({
+      numero: [''],
+      beneficiaire: ['']
+    });
+
+    // Subscribe to form value changes with debounce
+    this.searchForm.valueChanges
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      )
+      .subscribe((searchDto: MiseADispositionSearchDto) => {
+        this.currentSearchDto = searchDto;
+        this.loadOutstandingMisesADisposition();
+      });
   }
 
   initRapprochementForm(): void {
@@ -91,7 +130,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+      tvaDeductible: [0, Validators.required]
     });
   }
 
@@ -153,6 +192,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
     const control = this.rapprochementForm.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
+
   /**
    * Loads the outstanding mise à dispositions for the bank.
    * @param event The lazy load event from the PrimeNG table.
@@ -166,18 +206,15 @@ export class MiseADispositionEncoursComponent implements OnInit {
       : 'dateEmission,desc';
 
     this.miseADispositionService
-      .getOutstandingMisesADispositionByBank(this.banqueIdFromRoute, page, size, sort)
+      .getOutstandingMisesADispositionByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
       .subscribe({
-        next: (response: PageResponse<MiseADispositionResponseDto>) => {
-          this.misesADisposition = response.content;
-          this.totalRecords = response.page.totalElements;
+        next: (response: EncoursMiseAdisposition) => {
+          this.misesADisposition = response.page.content;
+          this.totalRecords = response.page.page.totalElements;
           this.loading = false;
           // Calculate the total outstanding amount
-          this.totalEncours = this.misesADisposition.reduce(
-            (sum, miseADisposition) => sum + miseADisposition.montant,
-            0
-          );
-          this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/YYYY');
+          this.totalEncours = response.totalDesEncours;
+          this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/yyyy');
         },
         error: (error: Error) => {
           this.loading = false;

@@ -127,7 +127,7 @@ export class BankHistoryComponent implements OnInit {
     this.functionalLineSearchForm = this.fb.group({
       natureLigneFonctionnelleId: [null],
       yearDepart: [null],
-      actif: [true] // NEW: Default to showing only active functional lines
+      actif: [true] // NEW: Default to showing only active functional lignePrefi
     });
   }
 
@@ -174,7 +174,7 @@ export class BankHistoryComponent implements OnInit {
 
   loadBankFunctionalLines(event: TableLazyLoadEvent): void {
     if (!this.bankId) {
-      console.warn('Bank ID is not available to load functional lines.');
+      console.warn('Bank ID is not available to load functional lignePrefi.');
       this.loading = false;
       return;
     }
@@ -208,7 +208,7 @@ export class BankHistoryComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading bank functional lines:', error);
+        console.error('Error loading bank functional lignePrefi:', error);
         this.loading = false;
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des lignes fonctionnelles de la banque.', life: 3000 });
       }
@@ -331,7 +331,7 @@ export class BankHistoryComponent implements OnInit {
 
 
 
-  // Helper method to reload the functional lines table
+  // Helper method to reload the functional lignePrefi table
   private reloadBankFunctionalLinesTable(): void {
     if (this.dtFunctionalLines) {
       this.dtFunctionalLines.first = 0; // Reset to first page

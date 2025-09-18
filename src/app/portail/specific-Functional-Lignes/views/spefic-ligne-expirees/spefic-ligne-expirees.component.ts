@@ -210,7 +210,7 @@ export class SpeficLigneExpireesComponent implements OnInit {
         },
         error: (err) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des lignes fonctionnelles spécifiques.', life: 3000 });
-          console.error('Error fetching specific functional lines:', err);
+          console.error('Error fetching specific functional lignePrefi:', err);
           this.loading = false;
         },
       });

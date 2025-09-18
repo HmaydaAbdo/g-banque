@@ -1,3 +1,5 @@
+// src/app/staport/finance/gBanque/leasing/etatsDesEncours/views/lesEncours/decaissement/leasing/echeances-leasing.component.ts
+
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -20,7 +22,7 @@ import { DialogModule } from 'primeng/dialog'; // Import du module de dialogue
 import { CalendarModule } from 'primeng/calendar'; // Import du module de calendrier
 import { InputNumberModule } from 'primeng/inputnumber'; // Import du module d'input number
 import { InputTextareaModule } from 'primeng/inputtextarea'; // Import du module de textarea
-import { Decimal } from "decimal.js"; // Import Decimal.js
+import { InputTextModule } from 'primeng/inputtext'; // Import du module d'input text for the numeroContrat
 import { EcheanceLeasingResponse } from "../../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
 import { EncoursLeasingResponseDTO } from "../../dtos/encours-leasing-response.dto";
 import { PeriodeEncours } from "../../dtos/PeriodeEncours";
@@ -46,7 +48,6 @@ import {TransactionSource} from "../../../../../../rapprochement/dtos/transactio
     ToastModule,
     ToolbarModule,
     DropdownModule,
-    TableModule,
     TagModule,
     TooltipModule,
     ConfirmDialogModule,
@@ -57,7 +58,9 @@ import {TransactionSource} from "../../../../../../rapprochement/dtos/transactio
     DialogModule,
     CalendarModule,
     InputNumberModule,
-    InputTextareaModule
+    InputTextareaModule,
+    InputTextModule, // Add this module
+    TableModule,
   ],
   templateUrl: './echeances-leasing.component.html',
   styleUrl: './echeances-leasing.component.scss',
@@ -74,6 +77,12 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   banqueIdFromRoute!: number; // Propriété pour stocker l'ID de la banque
 
+  tvaOptions = [
+    { label: '0 %', value: 0 },
+    { label: '10 %', value: 10 },
+    { label: '14 %', value: 14 },
+    { label: '20 %', value: 20 },
+  ];
 
   organismeLeasingOptions: { label: string, value: number }[] = [];
 
@@ -107,16 +116,15 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
           this.banqueIdFromRoute = +id; // Convertir la chaîne en nombre
           this.initSearchForm();
           this.loadDropdownOptions();
-          this.onSearch(); // Lancer la recherche initiale avec le bon ID
         }
       })
     );
-
-    // Initialisation du formulaire de recherche (assurez-vous qu'il est initialisé avant de s'y abonner)
+    // Initialisation du formulaire de recherche
     this.initSearchForm();
     const formValueChangesSub = this.searchForm.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => {
+        // Automatically trigger search when form values change
         this.onSearch();
       });
     this.subscriptions.push(formValueChangesSub);
@@ -127,10 +135,10 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   }
 
   initSearchForm(): void {
-    // Supprimez `banqueId` du formulaire
     this.searchForm = this.fb.group({
       periode: [PeriodeEncours.MOIS],
-      organismeLeasingId: [null]
+      organismeLeasingId: [null],
+      numeroContrat: [null] // Add the new form control here
     });
   }
 
@@ -162,8 +170,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   }
 
   loadEncours(event: TableLazyLoadEvent): void {
-    // Récupérez les critères de recherche SANS le champ `banqueId`
-    const searchCriteria = this.searchForm.value as Omit<EncoursLeasingRequestDTO, 'banqueId'>;
+    const searchCriteria = this.searchForm.value as EncoursLeasingRequestDTO;
 
     if (!searchCriteria.periode) {
       this.messageService.add({ severity: 'info', summary: 'Information', detail: 'Veuillez sélectionner une période pour lancer la recherche.' });
@@ -173,10 +180,11 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
     this.loading = true;
 
-    // Créez l'objet de requête en combinant l'ID de la route et les critères du formulaire
     const request: EncoursLeasingRequestDTO = {
-      banqueId: this.banqueIdFromRoute, // Utilisation de l'ID de la route
-      ...searchCriteria,
+      banqueId: this.banqueIdFromRoute,
+      periode: searchCriteria.periode,
+      organismeLeasingId: searchCriteria.organismeLeasingId,
+      numeroContrat: searchCriteria.numeroContrat, // Pass the new filter value
       page: event.first! / event.rows!,
       size: event.rows!,
       sort: event.sortField && event.sortOrder
@@ -239,7 +247,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
       // Create the LeasingTransactionRequest object
       const leasingTransactionRequest: LeasingTransactionRequest = {
-        contratLeasingId: this.selectedEcheance.contratLeasingId  ,
+        contratLeasingId: this.selectedEcheance.contratLeasingId,
         echeanceId: this.selectedEcheance.id,
         transactionSource: TransactionSource.LEASING,
         dateEmission: donneesComplementaires.dateEmission,
@@ -255,7 +263,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
             console.log(response)
             this.onSearch()
           },
-          error:(error) => {
+          error: (error) => {
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',

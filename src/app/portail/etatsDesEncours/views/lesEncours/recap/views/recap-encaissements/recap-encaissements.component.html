@@ -1,0 +1,100 @@
+<p-toast></p-toast>
+
+<div class="card shadow-2 flex flex-column gap-4 p-2 md:p-4 w-full">
+
+  <p-toolbar styleClass="mb-4">
+    <div class="flex flex-wrap gap-2 align-items-center justify-content-between w-full">
+      <div class="flex align-items-center">
+        <h3>Récapitulatif des encaissements</h3>
+      </div>
+
+      <div class="flex align-items-center">
+        <p> Total Débit : {{totalDebit}} MAD</p>
+      </div>
+      <div class="flex align-items-center">
+        <p> Total Crédit : {{totalCredit}} MAD</p>
+      </div>
+
+      <div [formGroup]="searchForm" class="flex flex-wrap gap-2 align-items-center">
+        <input pInputText
+               formControlName="libelle"
+               type="text"
+               placeholder="Recherche par libellé"
+               class="p-inputtext-sm"
+               [style]="{'min-width':'12rem'}" />
+
+        <input pInputText
+               formControlName="observation"
+               type="text"
+               placeholder="Recherche par observation"
+               class="p-inputtext-sm"
+               [style]="{'min-width':'12rem'}" />
+
+        <p-multiSelect
+          formControlName="transactionSources"
+          [options]="transactionSourceOptions"
+          optionLabel="label"
+          placeholder="Type de transaction"
+          [showClear]="true"
+          appendTo="body"
+          [style]="{'min-width':'12rem'}">
+        </p-multiSelect>
+      </div>
+    </div>
+  </p-toolbar>
+
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="recapEncaissements"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[5,10, 25, 50]"
+      [lazy]="true"
+      (onLazyLoad)="loadEncaissements($event)"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      [resizableColumns]="true"
+      columnResizeMode="expand"
+      [rowHover]="true"
+      dataKey="dateEmission"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} encaissements"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-gridlines"
+      [tableStyle]="{'min-width': '60rem'}" >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="dateEmission"> Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateEcheance"> Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
+          <th pSortableColumn="libelle"> Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+          <th pSortableColumn="debit"> Débit <p-sortIcon field="debit"></p-sortIcon></th>
+          <th pSortableColumn="credit"> Crédit <p-sortIcon field="credit"></p-sortIcon></th>
+          <th>Observations</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td>{{ item.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td class="text-center">{{ item.dateEcheance ? (item.dateEcheance | date:'dd/MM/yyyy') : '-' }}</td>
+          <td>{{ item.libelle }}</td>
+          <td>{{item.debit ? (item.debit | number:'1.2-2') : 0}} MAD</td>
+          <td>{{ item.credit ? ( item.credit  | number:'1.2-2') : 0}} MAD</td>
+          <td>{{ item.observations }}</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td colspan="4">Aucun encaissement trouvé pour le mois en cours.</td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="4">Chargement des encaissements. Veuillez patienter...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

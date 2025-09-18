@@ -23,6 +23,7 @@ import { filter } from 'rxjs/operators';
   styleUrl: './les-encours.component.scss'
 })
 export class LesEncoursComponent implements OnInit {
+
   items: MenuItem[] = [];
   breadcrumbItems: MenuItem[] = [];
   banqueId: string | null = null;
@@ -91,6 +92,11 @@ export class LesEncoursComponent implements OnInit {
         routerLink: ['/portail/etats-des-encours', this.banqueId, 'recap-decaissement']
       },
       {
+        label: 'Récap des encaissements',
+        icon: 'pi pi-briefcase',
+        routerLink: ['/portail/etats-des-encours', this.banqueId, 'recap-encaissement']
+      },
+      {
         label: 'Décaissements',
         icon: 'pi pi-arrow-circle-left',
         items: [
@@ -124,12 +130,38 @@ export class LesEncoursComponent implements OnInit {
             icon: 'pi pi-list',
             routerLink: ['/portail/etats-des-encours', this.banqueId, 'mise-a-disposition']
           },
+          {
+            label: "Préfinancement",
+            icon: 'pi pi-list',
+            routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-remboursement']
+          },
+          {
+            label: "Droits Constatés",
+            icon: 'pi pi-list',
+            routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-remboursement']
+          }
         ]
       },
       {
         label: 'Encaissements',
         icon: 'pi pi-arrow-circle-right',
-        items: []
+        items: [
+          {
+            label: "Préfinancement",
+            icon: 'pi pi-list',
+            routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-deblocage']
+          },
+          {
+            label: "Droits Constatés",
+            icon: 'pi pi-list',
+            routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-deblocage']
+          },
+          {
+            label: "Décomptes",
+            icon: 'pi pi-list',
+            routerLink: ['/portail/etats-des-encours', this.banqueId, 'decomptes']
+          }
+        ]
       }
     ];
   }
@@ -139,4 +171,5 @@ export class LesEncoursComponent implements OnInit {
       item.expanded = !item.expanded;
     }
   }
+
 }

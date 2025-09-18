@@ -5,6 +5,7 @@ import {environment} from '../../../../environments/environment';
 import {PageResponse} from "../../global/types/PageResponse";
 import {LcnResponseDTO} from "../dtos/LcnResponseDTO";
 import {LcnSearchDTO} from "../dtos/LcnSearchDTO";
+import {EncoursLcnResponse} from "../dtos/EncoursLcnResponse";
 
 
 @Injectable({
@@ -71,6 +72,7 @@ export class LcnService {
    * Retrieves a paginated list of outstanding LCNs for a specific bank.
    *
    * @param banqueId The ID of the bank to search for.
+   * @param searchDto
    * @param page The page number to retrieve (0-indexed).
    * @param size The number of items per page.
    * @param sort The sorting criteria (e.g., 'dateEcheance,desc').
@@ -78,16 +80,25 @@ export class LcnService {
    */
   getOutstandingLcnsByBank(
     banqueId: number,
+    searchDto: LcnSearchDTO,
     page: number = 0,
     size: number = 10,
     sort: string = 'dateEcheance,desc'
-  ): Observable<PageResponse<LcnResponseDTO>> {
-    const params = new HttpParams()
+  ): Observable<EncoursLcnResponse> {
+
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', sort);
 
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+
     const url = `${this.apiUrl}/encours/${banqueId}`;
-    return this.http.get<PageResponse<LcnResponseDTO>>(url, {params});
+    return this.http.get<EncoursLcnResponse>(url, {params});
   }
 }

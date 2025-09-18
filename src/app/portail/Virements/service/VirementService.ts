@@ -5,6 +5,8 @@ import {environment} from '../../../../environments/environment';
 import {VirementSearchDto} from "../dtos/VirementSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
 import {VirementResponseDto} from "../dtos/VirementResponseDto";
+import {EncoursVirementResponseDto} from "../dtos/EncoursVirementResponseDto";
+import {EncoursVirementsSearchDto} from "../dtos/EncoursVirementsSearchDto";
 
 @Injectable({
   providedIn: 'root'
@@ -76,6 +78,7 @@ export class VirementService {
    * Retrieves a paginated list of outstanding virements for a specific bank.
    *
    * @param banqueId The ID of the bank.
+   * @param searchDto
    * @param page The page number to retrieve (0-indexed).
    * @param size The number of items per page.
    * @param sort The sorting criteria (e.g., 'dateEmission,desc').
@@ -83,16 +86,23 @@ export class VirementService {
    */
   getOutstandingVirementsByBank(
     banqueId: number,
+    searchDto: EncoursVirementsSearchDto,
     page: number = 0,
     size: number = 10,
     sort: string = 'dateEmission,desc'
-  ): Observable<PageResponse<VirementResponseDto>> {
-    const params = new HttpParams()
+  ): Observable<EncoursVirementResponseDto> {
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', sort);
 
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
     const url = `${this.apiUrl}/encours/${banqueId}`;
-    return this.http.get<PageResponse<VirementResponseDto>>(url, {params});
+    return this.http.get<EncoursVirementResponseDto>(url, {params});
   }
 }

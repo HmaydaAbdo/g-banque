@@ -1,4 +1,4 @@
-import {Decimal} from "decimal.js";
+import { Decimal } from 'decimal.js';
 
 export interface MarcheResponseDTO {
   id: number;
@@ -6,7 +6,8 @@ export interface MarcheResponseDTO {
   nom: string;
   montant: Decimal;
   maitreDouvrage: string;
-  delai: Date;
+  dateDebutDesTravaux: Date;
+  dateDAchievementDesTravaux: Date;
   createdAt: Date;
   modifiedAt: Date;
 }

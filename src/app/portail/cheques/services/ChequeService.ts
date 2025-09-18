@@ -5,6 +5,8 @@ import {environment} from '../../../../environments/environment';
 import {ChequeSearchDto} from "../dtos/ChequeSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
 import {ChequeResponseDto} from "../dtos/ChequeResponseDto";
+import {EncoursChequeResponseDto} from "../dtos/EncoursChequeResponseDto";
+import {EncoursChequeSearchDto} from "../dtos/EncoursChequeSearchDto";
 
 
 @Injectable({
@@ -71,6 +73,7 @@ export class ChequeService {
    * Retrieves a paginated list of outstanding cheques for a specific bank.
    *
    * @param banqueId The ID of the bank to search for.
+   * @param searchDto
    * @param page The page number to retrieve (0-indexed).
    * @param size The number of items per page.
    * @param sort The sorting criteria (e.g., 'dateEmission,desc').
@@ -78,16 +81,25 @@ export class ChequeService {
    */
   getOutstandingChequesByBank(
     banqueId: number,
+    searchDto: EncoursChequeSearchDto,
     page: number = 0,
     size: number = 10,
     sort: string = 'dateEmission,desc'
-  ): Observable<PageResponse<ChequeResponseDto>> {
-    const params = new HttpParams()
+  ): Observable<EncoursChequeResponseDto> {
+
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', sort);
 
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+
     const url = `${this.apiUrl}/encours/${banqueId}`;
-    return this.http.get<PageResponse<ChequeResponseDto>>(url, {params});
+    return this.http.get<EncoursChequeResponseDto>(url, {params});
   }
 }

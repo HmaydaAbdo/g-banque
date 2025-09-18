@@ -1,3 +1,5 @@
+import {TransactionSource} from "./TransactionSource";
+
 /**
  * DTO for searching transactions.
  * Matches the backend's search criteria.
@@ -5,6 +7,7 @@
  */
 export interface TransactionSearchDto {
   libelle?: string;
+  observation?: string;
   banqueId?: number;
-  transactionSource?: string;
+  transactionSource?: TransactionSource[];
 }

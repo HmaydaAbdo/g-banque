@@ -5,4 +5,8 @@ export enum TransactionSource {
   LCN="LCN",
   Virement="Virement",
   MiseADisposition="MiseADisposition",
+  PREFINANCEMENT="PREFINANCEMENT",
+  DROIT_CONSTATE="DROIT_CONSTATE",
+  DECOMPTES="DECOMPTES"
+
 }

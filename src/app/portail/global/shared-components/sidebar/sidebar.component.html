@@ -23,6 +23,7 @@
               <a pRipple
                  [routerLink]="item.routerLink"
                  routerLinkActive="active-sidebar-link"
+                 (click)="closeCallback()"
                  class="flex align-items-center cursor-pointer p-3 border-round-xl text-700 hover:bg-blue-50 transition-duration-150 transition-colors p-ripple sidebar-link">
                 <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
                 <span class="font-medium">{{ item.label }}</span>
@@ -34,7 +35,7 @@
                 pRipple
 
                 (click)="toggleMenuItem(item)"
-                [ngClass]="item.styleClass || 'p-3 flex align-items-center justify-content-between text-600 cursor-pointer p-ripple white-space-nowrap'">
+                [ngClass]="item.styleClass || 'p-3 flex align-items-center justify-content-between text-600 cursor-pointer p-ripple white-space-nowrap sidebar-link'">
                 <div class="flex align-items-center">
                   <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
                   <span class="font-medium">{{ item.label }}</span>
@@ -42,12 +43,13 @@
                 <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
               </div>
 
-              <ul class="list-none p-0 m-0 overflow-hidden white-space-nowrap" [ngClass]="{'hidden': !item.expanded}">
+              <ul class="list-none p-0 m-0 overflow-hidden white-space-nowrap sidebar-link" [ngClass]="{'hidden': !item.expanded}">
                 <ng-container *ngFor="let subItem of item.items">
                   <li *ngIf="subItem.routerLink && !subItem.items">
                     <a pRipple
                        [routerLink]="subItem.routerLink"
                        routerLinkActive="active-sidebar-link"
+                       (click)="closeCallback()"
                        class="flex align-items-center cursor-pointer p-3 pl-5 border-round-xl text-700 hover:bg-blue-50 transition-duration-150 transition-colors p-ripple sidebar-link">
                       <i *ngIf="subItem.icon" [class]="subItem.icon + ' mr-2'"></i>
                       <span class="font-medium">{{ subItem.label }}</span>
@@ -59,7 +61,7 @@
                     <div
                       pRipple
                       (click)="toggleMenuItem(subItem)"
-                      class="flex align-items-center cursor-pointer p-3 pl-5 border-round text-700 hover:bg-blue-50 transition-duration-150 transition-colors p-ripple">
+                      class="flex align-items-center cursor-pointer p-3 pl-5 border-round text-700 hover:bg-blue-50 transition-duration-150 transition-colors p-ripple sidebar-link">
                       <i *ngIf="subItem.icon" [class]="subItem.icon + ' mr-2'"></i>
                       <span class="font-medium">{{ subItem.label }}</span>
                       <i [class]="subItem.expanded ? 'pi pi-chevron-down ml-auto' : 'pi pi-chevron-right ml-auto'"></i>
@@ -70,6 +72,7 @@
                         <a pRipple
                            [routerLink]="subSubItem.routerLink"
                            routerLinkActive="active-sidebar-link"
+                           (click)="closeCallback()"
                            class="flex align-items-center cursor-pointer p-3 pl-7 border-round-xl text-700 hover:bg-blue-50 transition-duration-150 transition-colors p-ripple sidebar-link">
                           <i *ngIf="subSubItem.icon" [class]="subSubItem.icon + ' mr-2'"></i>
                           <span class="font-medium">{{ subSubItem.label }}</span>

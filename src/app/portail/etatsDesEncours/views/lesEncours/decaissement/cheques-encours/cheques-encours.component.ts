@@ -8,7 +8,6 @@ import {ToastModule} from 'primeng/toast';
 import {TooltipModule} from 'primeng/tooltip';
 import {PaginatorModule} from 'primeng/paginator';
 import {MessageService} from 'primeng/api';
-import {PageResponse} from "../../../../../global/types/PageResponse";
 import {ChequeResponseDto} from "../../../../../cheques/dtos/ChequeResponseDto";
 import {ChequeService} from "../../../../../cheques/services/ChequeService";
 import {Ripple} from "primeng/ripple";
@@ -21,7 +20,13 @@ import {DividerModule} from "primeng/divider";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
-
+import {EncoursChequeResponseDto} from "../../../../../cheques/dtos/EncoursChequeResponseDto";
+import {Decimal} from "decimal.js";
+import {EncoursChequeSearchDto} from "../../../../../cheques/dtos/EncoursChequeSearchDto";
+import {InputTextModule} from "primeng/inputtext";
+import {debounceTime, distinctUntilChanged} from "rxjs/operators";
+import {DropdownModule} from "primeng/dropdown";
+import {InputNumberModule} from "primeng/inputnumber";
 
 @Component({
   selector: 'app-cheques-encours',
@@ -41,6 +46,9 @@ import {InputTextareaModule} from "primeng/inputtextarea";
     ReactiveFormsModule,
     CalendarModule,
     InputTextareaModule,
+    InputTextModule,
+    DropdownModule,
+    InputNumberModule,
   ],
   templateUrl: './cheques-encours.component.html',
   styleUrl: './cheques-encours.component.scss',
@@ -51,14 +59,27 @@ export class ChequesEncoursComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   banqueIdFromRoute!: number;
-  totalEncours: number = 0;
+  totalEncours!: Decimal;
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
-  // Propriétés pour la modale de rapprochement
+  // New properties for search
+  searchForm!: FormGroup;
+  currentSearchDto: EncoursChequeSearchDto = {};
+
+  // Properties for the rapprochement modal
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedCheque: ChequeResponseDto | null = null;
+
+  // Updated property for TVA options to use label-value pairs
+  tvaOptions: { label: string, value: number }[] = [
+    { label: '0%', value: 0 },
+    { label: '10%', value: 10 },
+    { label: '14%', value: 14 },
+    { label: '20%', value: 20 }
+  ];
+
 
   constructor(
     private chequeService: ChequeService,
@@ -70,7 +91,6 @@ export class ChequesEncoursComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Get the bank ID from the route's parent parameter
     this.route.parent!.paramMap.subscribe((params) => {
       const id = params.get('banqueId');
       if (id) {
@@ -78,7 +98,25 @@ export class ChequesEncoursComponent implements OnInit {
         this.loadOutstandingCheques();
       }
     });
+    this.initSearchForm();
     this.initRapprochementForm();
+  }
+
+  initSearchForm(): void {
+    this.searchForm = this.fb.group({
+      numero: [''],
+      beneficiaire: ['']
+    });
+
+    this.searchForm.valueChanges
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      )
+      .subscribe((searchDto: EncoursChequeSearchDto) => {
+        this.currentSearchDto = searchDto;
+        this.loadOutstandingCheques();
+      });
   }
 
   initRapprochementForm(): void {
@@ -87,13 +125,13 @@ export class ChequesEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+      tvaDeductible: [0, Validators.required]
     });
   }
 
   openRapprochementModal(cheque: ChequeResponseDto): void {
     this.selectedCheque = cheque;
-    this.initRapprochementForm(); // Reset form on open
+    this.initRapprochementForm();
     this.displayModal = true;
   }
 
@@ -130,7 +168,7 @@ export class ChequesEncoursComponent implements OnInit {
               summary: 'Succès',
               detail: 'Chèque rapproché avec succès.'
             });
-            this.loadOutstandingCheques(); // Refresh the table
+            this.loadOutstandingCheques();
             this.displayModal = false;
           },
           error: (error) => {
@@ -149,10 +187,7 @@ export class ChequesEncoursComponent implements OnInit {
     const control = this.rapprochementForm.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
-  /**
-   * Loads the outstanding cheques for the bank.
-   * @param event The lazy load event from the PrimeNG table.
-   */
+
   loadOutstandingCheques(event?: TableLazyLoadEvent): void {
     this.loading = true;
     const page = event ? event.first! / event.rows! : 0;
@@ -162,20 +197,16 @@ export class ChequesEncoursComponent implements OnInit {
       : 'dateEmission,desc';
 
     this.chequeService
-      .getOutstandingChequesByBank(this.banqueIdFromRoute, page, size, sort)
+      .getOutstandingChequesByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
       .subscribe({
-        next: (response: PageResponse<ChequeResponseDto>) => {
-          this.cheques = response.content;
-          this.totalRecords = response.page.totalElements;
+        next: (response: EncoursChequeResponseDto) => {
+          this.cheques = response.page.content;
+          this.totalRecords = response.page.page.totalElements;
           this.loading = false;
-          // Calculate the total outstanding amount
-          this.totalEncours = this.cheques.reduce(
-            (sum, cheque) => sum + cheque.montant,
-            0
-          );
-          this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/YYYY');
+          this.totalEncours = response.totalDesEncours;
+          this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/yyyy');
         },
-        error: (error:Error) => {
+        error: (error: Error) => {
           this.loading = false;
           console.error(
             'Erreur lors du chargement des chèques en cours:',

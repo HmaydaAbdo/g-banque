@@ -81,7 +81,8 @@ export class MarchesFormComponent implements OnInit {
       nom: ['', Validators.required],
       montant: ['', [Validators.required, Validators.min(0.01)]],
       maitreDouvrage: ['', Validators.required],
-      delai: ['', Validators.required],
+      dateDebutDesTravaux: ['', Validators.required],
+      dateDAchievementDesTravaux: ['', Validators.required],
     });
   }
 
@@ -95,7 +96,8 @@ export class MarchesFormComponent implements OnInit {
           nom: data.nom,
           montant: new Decimal(data.montant),
           maitreDouvrage: data.maitreDouvrage,
-          delai: new Date(data.delai),
+          dateDebutDesTravaux: new Date(data.dateDebutDesTravaux),
+          dateDAchievementDesTravaux: new Date(data.dateDAchievementDesTravaux),
         });
 
         this.loading = false;
@@ -145,7 +147,8 @@ export class MarchesFormComponent implements OnInit {
       nom: formValue.nom,
       montant: formValue.montant,
       maitreDouvrage: formValue.maitreDouvrage,
-      delai: formValue.delai,
+      dateDebutDesTravaux: formValue.dateDebutDesTravaux,
+      dateDAchievementDesTravaux: formValue.dateDAchievementDesTravaux,
     };
 
 

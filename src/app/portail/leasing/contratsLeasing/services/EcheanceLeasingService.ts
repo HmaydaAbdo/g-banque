@@ -128,9 +128,7 @@ export class EcheanceLeasingService {
     params = params.append('periode', request.periode);
 
     // Ajout des paramètres optionnels
-    if (request.organismeLeasingId) {
-      params = params.append('organismeLeasingId', request.organismeLeasingId.toString());
-    }
+
     if (request.page !== undefined) {
       params = params.append('page', request.page.toString());
     }
@@ -139,6 +137,14 @@ export class EcheanceLeasingService {
     }
     if (request.sort) {
       params = params.append('sort', request.sort);
+    }
+
+    if (request.organismeLeasingId) {
+      params = params.append('organismeLeasingId', request.organismeLeasingId.toString());
+    }
+
+    if(request.numeroContrat){
+      params = params.append('numeroContrat', request.numeroContrat.toString());
     }
 
     return this.http.get<EncoursLeasingResponseDTO>(`${this.apiUrl}/encours`, { params }).pipe(

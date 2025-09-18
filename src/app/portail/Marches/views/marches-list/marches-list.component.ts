@@ -16,6 +16,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 
 // Import DTOs, service, and models for Marche
 import { MarcheResponseDTO } from '../../dtos/marche-response.dto';
@@ -46,7 +48,7 @@ import {PageResponse} from "../../../global/types/PageResponse";
   ],
   templateUrl: './marches-list.component.html',
   styleUrl: './marches-list.component.scss',
-  providers: [MessageService, ConfirmationService]
+  providers: [MessageService, ConfirmationService, DecimalPipe, DatePipe]
 })
 export class MarchesListComponent implements OnInit {
 

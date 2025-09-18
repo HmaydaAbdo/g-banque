@@ -1,23 +1,69 @@
 <p-toast></p-toast>
 
 <div class="card shadow-2 p-2 md:p-4 w-full">
-  <p-toolbar styleClass="mb-4">
+
+  <p-toolbar styleClass="mb-2">
     <div class="flex flex-wrap gap-2 align-items-center justify-content-between w-full">
+
       <div class="flex align-items-center">
-        <span class="text-lg font-medium mr-2">Le Rapprochement Bancaire pour le : </span>
-        <span class="text-lg font-bold">{{ this.currentMonthYear }}</span>
+        <span class="text-lg font-medium mr-2">Le Rapprochement Bancaire pour le :</span>
+        <span class="text-lg font-bold">{{ currentMonthYear }}</span>
       </div>
-      <span class="p-input-icon-left">
-        <i class="pi pi-search"></i>
-        <input
-          pInputText
-          type="text"
-          [formControl]="libelleControl"
-          placeholder="Rechercher par libellé..."
-        />
-      </span>
+
+      <div [formGroup]="searchForm" class="flex flex-wrap gap-2 align-items-center">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" formControlName="libelle" placeholder="Rechercher par libellé..." />
+        </span>
+
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" formControlName="observation" placeholder="Rechercher par observation..." />
+        </span>
+        <p-multiSelect
+          formControlName="transactionSources"
+          [options]="transactionSourceOptions"
+          optionLabel="label"
+          placeholder="Type de transaction"
+          [showClear]="true"
+          appendTo="body"
+          [style]="{'min-width':'12rem'}">
+        </p-multiSelect>
+      </div>
     </div>
   </p-toolbar>
+
+  <div class="summary-totals-card p-3 mb-2 surface-2 border-round text-black-alpha-80">
+
+    <div class="flex flex-row flex-wrap justify-content-around">
+
+        <div class="flex flex-column gap-1">
+          <span class=" font-bold text-500">Total Débit</span>
+          <span class="text-xl font-semibold text-color">
+          {{ agregatedData?.totalDebit }} MAD
+        </span>
+        </div>
+        <div class="flex flex-column gap-1">
+    <span class=" font-bold text-500">Total Crédit</span>
+    <span class="text-xl font-semibold text-color">
+          {{ agregatedData?.totalCredit  }} MAD
+        </span>
+  </div>
+        <div class="flex flex-column gap-1">
+          <span class=" font-bold text-500">TVA Déductible</span>
+          <span class="text-xl font-semibold text-color">
+          {{ agregatedData?.totalTvaDeductible  }} MAD
+        </span>
+        </div>
+        <div class="flex flex-column gap-1">
+          <span class=" font-bold text-500">TVA Collectée</span>
+          <span class="text-xl font-semibold text-color">
+          {{ agregatedData?.totalTvaCollectee  }} MAD
+        </span>
+        </div>
+
+    </div>
+  </div>
 
   <p-table
     #dt
@@ -37,22 +83,29 @@
     styleClass="p-datatable-gridlines"
     [tableStyle]="{'min-width': '60rem'}"
   >
+
     <ng-template pTemplate="header">
-      <tr  class="white-space-nowrap text-sm">
+      <tr class="white-space-nowrap text-sm">
         <th pSortableColumn="dateEmission">
           Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
-        </th>
-        <th pSortableColumn="dateValeur">
-          Date de valeur <p-sortIcon field="dateValeur"></p-sortIcon>
         </th>
         <th pSortableColumn="dateOperation">
           Date d'opération <p-sortIcon field="dateOperation"></p-sortIcon>
         </th>
+        <th pSortableColumn="dateValeur">
+          Date de valeur <p-sortIcon field="dateValeur"></p-sortIcon>
+        </th>
         <th pSortableColumn="libelle">
           Libellé <p-sortIcon field="libelle"></p-sortIcon>
         </th>
+        <th pSortableColumn="debit">
+          Débit <p-sortIcon field="debit"></p-sortIcon>
+        </th>
+        <th pSortableColumn="credit">
+          Crédit <p-sortIcon field="credit"></p-sortIcon>
+        </th>
         <th pSortableColumn="observation">
-          observation <p-sortIcon field="observation"></p-sortIcon>
+          Observation <p-sortIcon field="observation"></p-sortIcon>
         </th>
         <th pSortableColumn="tvaDeductible">
           TVA Déductible <p-sortIcon field="tvaDeductible"></p-sortIcon>
@@ -60,32 +113,34 @@
         <th pSortableColumn="tvaCollectee">
           TVA Collectée <p-sortIcon field="tvaCollectee"></p-sortIcon>
         </th>
-        <th pSortableColumn="debit">Débit <p-sortIcon field="debit"></p-sortIcon></th>
-        <th pSortableColumn="credit">Crédit <p-sortIcon field="credit"></p-sortIcon></th>
       </tr>
     </ng-template>
+
     <ng-template pTemplate="body" let-transaction>
       <tr class="white-space-nowrap text-sm">
         <td>{{ transaction.dateEmission | date:'dd/MM/yyyy' }}</td>
-        <td>{{ transaction.dateValeur | date:'dd/MM/yyyy' }}</td>
         <td>{{ transaction.dateOperations | date:'dd/MM/yyyy' }}</td>
+        <td>{{ transaction.dateValeur | date:'dd/MM/yyyy' }}</td>
         <td>{{ transaction.libelle }}</td>
+        <td class="text-center">{{ transaction.debit === 0 ? '-' : (transaction.debit | number:'1.2-2') + ' MAD' }}</td>
+        <td class="text-center">{{ transaction.credit === 0 ? '-' : (transaction.credit | number:'1.2-2') + ' MAD' }}</td>
         <td>{{ transaction.observation }}</td>
-        <td>{{ transaction.tvaDeductible !== null ? ((transaction.tvaDeductible * 100) | number:'1.2-2') + '%' : 'N/A' }}</td>
-        <td>{{ transaction.tvaCollectee !== null ? ((transaction.tvaCollectee * 100) | number:'1.2-2') + '%' : 'N/A' }}</td>
-        <td>{{ transaction.debit }} MAD</td>
-        <td>{{ transaction.credit }} MAD</td>
+        <td class="text-center">{{ transaction.tvaDeductible !== null ? ((transaction.tvaDeductible | number:'1.2-2') + ' MAD') : '-' }}</td>
+        <td class="text-center">{{ transaction.tvaCollectee !== null ? ((transaction.tvaCollectee | number:'1.2-2') + ' MAD') : '-' }}</td>
       </tr>
     </ng-template>
+
     <ng-template pTemplate="emptyMessage">
       <tr>
-        <td colspan="7">Aucune transaction trouvée pour cette banque.</td>
+        <td colspan="9">Aucune transaction trouvée pour cette banque.</td>
       </tr>
     </ng-template>
+
     <ng-template pTemplate="loadingbody">
       <tr>
-        <td colspan="7">Chargement des transactions. Veuillez patienter...</td>
+        <td colspan="9">Chargement des transactions. Veuillez patienter...</td>
       </tr>
     </ng-template>
+
   </p-table>
 </div>

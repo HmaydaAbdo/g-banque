@@ -6,6 +6,7 @@ import {environment} from "../../../../../../environments/environment";
 import {TransactionSearchDto} from "../../dtos/transactions/TransactionSearchDto";
 import {PageResponse} from "../../../../global/types/PageResponse";
 import {TransactionResponseDto} from "../../dtos/transactions/TransactionResponseDto";
+import {AgreratedTransactionResponseDto} from "../../dtos/transactions/AgreratedTransactionResponseDto";
 
 
 @Injectable({
@@ -44,10 +45,11 @@ export class TransactionService {
       params = params.set('banqueId', searchDto.banqueId.toString());
     }
 
-    if (searchDto.transactionSource) {
-      params = params.set('transactionSource', searchDto.transactionSource);
+    if (searchDto.transactionSource && searchDto.transactionSource.length > 0) {
+      searchDto.transactionSource.forEach(source => {
+        params = params.append('transactionSources', source);
+      });
     }
-
     return this.http.get<PageResponse<TransactionResponseDto>>(`${this.baseUrl}/history`, { params });
   }
 
@@ -66,7 +68,7 @@ export class TransactionService {
     page: number = 0,
     size: number = 10,
     sort: string = 'createdAt,desc'
-  ): Observable<PageResponse<TransactionResponseDto>> {
+  ): Observable<AgreratedTransactionResponseDto> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
@@ -76,7 +78,17 @@ export class TransactionService {
       params = params.set('libelle', searchDto.libelle);
     }
 
-    return this.http.get<PageResponse<TransactionResponseDto>>(`${this.baseUrl}/${banqueId}/transactions`, { params });
+    if (searchDto.observation) {
+      params = params.set('observation', searchDto.observation);
+    }
+
+    if (searchDto.transactionSource && searchDto.transactionSource.length > 0) {
+      searchDto.transactionSource.forEach(source => {
+        params = params.append('transactionSources', source);
+      });
+    }
+
+    return this.http.get<AgreratedTransactionResponseDto>(`${this.baseUrl}/${banqueId}/transactions`, { params });
   }
 
 

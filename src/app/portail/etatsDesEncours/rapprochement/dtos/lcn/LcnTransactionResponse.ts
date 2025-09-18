@@ -1,4 +1,5 @@
 import {TransactionSource} from "../transactions/TransactionSource";
+import {Decimal} from "decimal.js";
 
 
 export interface LcnTransactionResponse {
@@ -10,8 +11,8 @@ export interface LcnTransactionResponse {
   dateEmission: string;
   dateValeur: string;
   dateOperations: string;
-  tvaDeductible: number;
-  tvaCollectee: number;
+  tvaDeductible: Decimal;
+  tvaCollectee: Decimal;
   debit: number;
   credit: number;
   transactionSource: TransactionSource;

@@ -12,9 +12,14 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormControl }
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
-import { PageResponse } from "../../../../global/types/PageResponse";
 import { TransactionSearchDto } from '../../dtos/transactions/TransactionSearchDto';
-import {TransactionService} from "../../services/transactions/TransactionService"; // Import du DTO de recherche
+import { TransactionService } from "../../services/transactions/TransactionService";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BreadcrumbModule} from "primeng/breadcrumb";
+import {MultiSelectModule} from "primeng/multiselect";
+import {TransactionSource} from "../../dtos/transactions/TransactionSource";
+import {AgreratedTransactionResponseDto} from "../../dtos/transactions/AgreratedTransactionResponseDto";
+
 
 @Component({
   selector: 'app-rapprochemnt-mensuelle',
@@ -30,16 +35,19 @@ import {TransactionService} from "../../services/transactions/TransactionService
     InputTextModule,
     FormsModule,
     ReactiveFormsModule,
-    DatePipe
+    DatePipe,
+    ConfirmDialogModule,
+    BreadcrumbModule,
+    MultiSelectModule
   ],
   templateUrl: './rapprochemnt-mensuelle.component.html',
-  styleUrl: './rapprochemnt-mensuelle.component.scss',
+  styleUrls: ['./rapprochemnt-mensuelle.component.scss'],
   providers: [MessageService]
 })
 export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
-
   @ViewChild('dt') dt!: Table;
 
+  agregatedData: AgreratedTransactionResponseDto | null = null;
   transactions: TransactionResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
@@ -48,6 +56,10 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
 
   searchForm!: FormGroup;
   libelleControl!: FormControl;
+  observationControl!: FormControl;
+  transactionSourcesControl!: FormControl;
+
+  transactionSourceOptions: any[] = [];
 
   private subscriptions: Subscription[] = [];
 
@@ -60,13 +72,13 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.populateTransactionSourceOptions();
     this.subscriptions.push(
       this.route.parent!.paramMap.subscribe(params => {
         const id = params.get('banqueId');
         if (id) {
           this.banqueIdFromRoute = +id;
           this.initSearchForm();
-          // Le lazy loading se chargera de la première requête
         }
       })
     );
@@ -76,19 +88,28 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
+  // Populates the options for the multi-select from the TransactionSource enum.
+  populateTransactionSourceOptions(): void {
+    this.transactionSourceOptions = Object.values(TransactionSource).map(source => ({
+      label: source,
+      value: source
+    }));
+  }
+
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      libelle: ['']
+      libelle: [''],
+      transactionSources: [[]],
+      observation:['']
     });
 
-    // Assigner le FormControl à la propriété pour une utilisation sûre
     this.libelleControl = this.searchForm.get('libelle') as FormControl;
+    this.transactionSourcesControl = this.searchForm.get('transactionSources') as FormControl;
+    this.observationControl = this.searchForm.get('observation') as FormControl;
 
-    const formValueChangesSub = this.libelleControl.valueChanges
+    const formValueChangesSub = this.searchForm.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => {
-        this.onSearch();
-      });
+      .subscribe(() => this.onSearch());
 
     this.subscriptions.push(formValueChangesSub);
   }
@@ -100,22 +121,25 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
     }
 
     this.loading = true;
-    const libelle = this.libelleControl.value;
 
+    const { libelle, transactionSources ,observation} = this.searchForm.value;
     const page = event.first! / event.rows!;
     const size = event.rows!;
-    const sort = event.sortField && event.sortOrder
-      ? `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`
-      : 'createdAt,desc';
+    const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
+    const sort = event.sortField ? `${event.sortField},${sortOrder}` : 'createdAt,desc';
 
-    const searchDto: TransactionSearchDto = { libelle: libelle };
+    const searchDto: TransactionSearchDto = {
+      libelle: libelle,
+      transactionSource: transactionSources,
+      observation:observation
+    };
 
-    // Changement ici : appel du nouveau service avec le DTO de recherche
     this.transactionService.getTransactionsByBanque(this.banqueIdFromRoute, searchDto, page, size, sort)
       .subscribe({
-        next: (response: PageResponse<TransactionResponseDto>) => {
-          this.transactions = response.content;
-          this.totalRecords = response.page.totalElements;
+        next: (response: AgreratedTransactionResponseDto) => {
+          this.agregatedData = response;
+          this.transactions = response.page.content;
+          this.totalRecords = response.page.page.totalElements;
           this.loading = false;
           this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/YYYY');
         },

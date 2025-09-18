@@ -23,7 +23,13 @@ import {DividerModule} from "primeng/divider";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {CalendarModule} from "primeng/calendar";
 import {DialogModule} from "primeng/dialog";
-
+import {EncoursVirementResponseDto} from "../../../../../Virements/dtos/EncoursVirementResponseDto";
+import {Decimal} from "decimal.js";
+import {EncoursVirementsSearchDto} from "../../../../../Virements/dtos/EncoursVirementsSearchDto";
+import {InputTextModule} from "primeng/inputtext";
+import {DropdownModule} from "primeng/dropdown";
+import {InputNumberModule} from "primeng/inputnumber";
+import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 
 
 @Component({
@@ -44,6 +50,9 @@ import {DialogModule} from "primeng/dialog";
     CalendarModule,
     ReactiveFormsModule,
     DialogModule,
+    InputTextModule,
+    DropdownModule,
+    InputNumberModule,
   ],
   templateUrl: './virement-encours.component.html',
   styleUrl: './virement-encours.component.scss',
@@ -54,7 +63,7 @@ export class VirementEncoursComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   banqueIdFromRoute!: number;
-  totalEncours: number = 0;
+  totalEncours!: Decimal;
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -62,6 +71,17 @@ export class VirementEncoursComponent implements OnInit {
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedVirement: VirementResponseDto | null = null;
+
+  // New properties for search and TVA
+  searchForm!: FormGroup;
+  currentSearchDto: EncoursVirementsSearchDto = {};
+  tvaOptions: { label: string, value: number }[] = [
+    { label: '0%', value: 0 },
+    { label: '10%', value: 10 },
+    { label: '14%', value: 14 },
+    { label: '20%', value: 20 }
+  ];
+
 
   constructor(
     private virementService: VirementService,
@@ -82,7 +102,25 @@ export class VirementEncoursComponent implements OnInit {
         this.loadOutstandingVirements();
       }
     });
+    this.initSearchForm();
     this.initRapprochementForm();
+  }
+
+  initSearchForm(): void {
+    this.searchForm = this.fb.group({
+      numero: [''],
+      beneficiaire: ['']
+    });
+
+    this.searchForm.valueChanges
+      .pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      )
+      .subscribe((searchDto: EncoursVirementsSearchDto) => {
+        this.currentSearchDto = searchDto;
+        this.loadOutstandingVirements();
+      });
   }
 
   initRapprochementForm(): void {
@@ -91,7 +129,7 @@ export class VirementEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+      tvaDeductible: [0, Validators.required]
     });
   }
 
@@ -167,18 +205,14 @@ export class VirementEncoursComponent implements OnInit {
       : 'dateEmission,desc';
 
     this.virementService
-      .getOutstandingVirementsByBank(this.banqueIdFromRoute, page, size, sort)
+      .getOutstandingVirementsByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
       .subscribe({
-        next: (response: PageResponse<VirementResponseDto>) => {
-          this.virements = response.content;
-          this.totalRecords = response.page.totalElements;
+        next: (response: EncoursVirementResponseDto) => {
+          this.virements = response.page.content;
+          this.totalRecords = response.page.page.totalElements;
           this.loading = false;
-          // Calculate the total outstanding amount
-          this.totalEncours = this.virements.reduce(
-            (sum, virement) => sum + virement.montant,
-            0
-          );
-          this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/YYYY');
+          this.totalEncours = response.totalDesEncours;
+          this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/yyyy');
         },
         error: (error: Error) => {
           this.loading = false;

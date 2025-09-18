@@ -11,8 +11,8 @@ export interface TransactionResponseDto {
   dateValeur: Date;
   dateOperations: Date;
   observation: string | null;
-  tvaDeductible: number | null;
-  tvaCollectee: number | null;
+  tvaDeductible: Decimal | null;
+  tvaCollectee: Decimal | null;
   libelle: string;
   transactionSource: TransactionSource;
   debit: Decimal;

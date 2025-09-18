@@ -11,8 +11,8 @@ export interface LeasingTransactionResponse {
   dateEmission: Date;
   dateValeur: Date;
   dateOperations: Date;
-  tvaDeductible: number;
-  tvaCollectee: number;
+  tvaDeductible: Decimal;
+  tvaCollectee: Decimal;
   debit: Decimal;
   credit: Decimal;
   transactionSource:TransactionSource

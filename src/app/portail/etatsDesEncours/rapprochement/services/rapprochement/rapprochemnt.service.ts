@@ -20,6 +20,12 @@
   } from "../../dtos/mise_a_disposition/MiseAdispositionTransactionResponseDto";
   import {VirementTransactionRequestDto} from "../../dtos/virements/VirementTransactionRequestDto";
   import {VirementTransactionResponseDto} from "../../dtos/virements/VirementTransactionResponseDto";
+  import {PrefinancementTransactionRequest} from "../../dtos/prefinancement/PrefinancementTransactionRequest";
+  import {PrefinancementTransactionResponse} from "../../dtos/prefinancement/PrefinancementTransactionResponse";
+  import {DroitConstateTransactionRequest} from "../../dtos/droits_constate/DroitConstateTransactionRequest";
+  import {DroitConstateTransactionResponse} from "../../dtos/droits_constate/DroitConstateTransactionResponse";
+  import {DecompteTransactionRequest} from "../../dtos/decomptes/DecompteTransactionRequest";
+  import {DecompteTransactionResponseDto} from "../../dtos/decomptes/DecompteTransactionResponseDto";
 
   @Injectable({
     providedIn: 'root'
@@ -100,6 +106,22 @@
 
 
 
+    prefinancementToRapprochement(prefinancement: PrefinancementTransactionRequest): Observable<PrefinancementTransactionResponse> {
+      return this.http.post<PrefinancementTransactionResponse>(`${this.baseUrl}/process/prefinancement`,
+        prefinancement
+      );
+    }
 
+    droitConstateToRapprochement(dc: DroitConstateTransactionRequest): Observable<DroitConstateTransactionResponse> {
+      return this.http.post<DroitConstateTransactionResponse>(`${this.baseUrl}/process/droit-constate`,
+        dc
+      );
+    }
+
+    decompteToRapprochement(decompte: DecompteTransactionRequest): Observable<DecompteTransactionResponseDto> {
+      return this.http.post<DecompteTransactionResponseDto>(`${this.baseUrl}/process/decompte`,
+        decompte
+      );
+    }
 
   }

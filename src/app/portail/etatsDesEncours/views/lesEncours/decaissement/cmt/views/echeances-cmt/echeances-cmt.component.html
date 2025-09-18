@@ -3,23 +3,23 @@
 
 <div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
 
-  @if (encoursResponse) {
-    <div class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between">
-      <div class="flex align-items-center">
-        <span class="text-lg font-medium mr-2">Liste des échéances CMT en cours pour le</span>
-        <span class="text-lg font-bold">{{ this.currentMonthYear }}</span>
+  <div class="p-card shadow-2 px-4 py-3 flex flex-row flex-wrap align-items-center justify-content-between gap-3">
+
+    <span class="text-lg font-medium">Liste des échéances CMT encours pour le mois : <span class="text-lg font-bold">{{ this.currentMonthYear }}</span></span>
+    <form [formGroup]="searchForm" class="flex flex-column md:flex-row align-items-center gap-3 ">
+      <div class="p-inputgroup ">
+        <input type="text" pInputText formControlName="designation" placeholder="Désignation du crédit" class="p-inputtext-sm" />
       </div>
-      <div class="flex  align-items-center">
-        <span class="text-lg font-medium mr-2">Total des encours pour CMT</span>
-        <span class="text-xl font-bold">{{ encoursResponse.totalEncours }} MAD</span>
-      </div>
-    </div>
-  } @else {
+    </form>
+    <span class="text-xl font-bold">Total des encours : {{ encoursResponse?.totalEncours }} MAD</span>
+
+  </div>
+
+  @if (!encoursResponse && !loading) {
     <div class="p-card shadow-2 px-4 py-1 flex flex-column align-items-center justify-content-center">
       <span class="text-lg font-medium">On n'arrive pas à récupérer les encours, contactez l'équipe support.</span>
     </div>
   }
-
 
   <div class="pb-8">
     <p-table
@@ -45,7 +45,7 @@
       [tableStyle]="{'min-width': '60rem'}" >
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="designationCredit">Désignation CMT <p-sortIcon field="designationCredit"></p-sortIcon></th>
+          <th pSortableColumn="credit.designation">Désignation CMT <p-sortIcon field="credit.designation"></p-sortIcon></th>
           <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
           <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
@@ -82,7 +82,6 @@
   </div>
 </div>
 
-<!-- Modal pour les données complémentaires de rapprochement -->
 <p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayModal"  [modal]="true" [style]="{width: '50vw'}" [draggable]="false" [resizable]="false">
   <ng-container *ngIf="selectedEcheance">
     <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
@@ -116,11 +115,13 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-inputNumber id="tvaDeductible" formControlName="tvaDeductible" mode="decimal" [min]="0" [max]="100" [showButtons]="true" suffix=" %"></p-inputNumber>
+            <p-dropdown id="tvaDeductible" formControlName="tvaDeductible" [options]="tvaOptions"
+                        optionLabel="label" optionValue="value" appendTo="body"
+                        placeholder="TVA Déductible" [required]="true"></p-dropdown>
             <label for="tvaDeductible">TVA Déductible</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
-            La TVA doit être comprise entre 0 et 100
+            La TVA est obligatoire
           </small>
         </div>
         <div class="col-12 mb-3">
