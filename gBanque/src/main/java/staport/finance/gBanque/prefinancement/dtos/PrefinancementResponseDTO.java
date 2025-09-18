@@ -1,0 +1,187 @@
+package staport.finance.gBanque.prefinancement.dtos;
+
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
+import staport.finance.gBanque.marches.entities.Marche;
+import staport.finance.gBanque.prefinancement.entities.Prefinancement;
+import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.prefinancement.enums.Type;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
+
+
+/**
+ * DTO for responding to the client with Prefinancement details.
+ * This DTO is a "safe" representation of the entity, containing only the data
+ * that should be exposed externally.
+ * No validation is needed here as this is an output object.
+ */
+public class PrefinancementResponseDTO {
+    private Long id;
+    private Long marcheId;
+    private String marcheName;
+    private String marcheNumero;
+    private Long banqueId;
+    private String banqueName;
+    private OffsetDateTime dateEmission;
+    private BigDecimal montant;
+    private String observation;
+    private Type type;
+    private OffsetDateTime dateOperation;
+    private OffsetDateTime dateValeur;
+    private Status status;
+
+    public PrefinancementResponseDTO() {
+    }
+
+    /**
+     * Constructs a Response DTO from a Prefinancement entity.
+     * It populates the DTO with relevant data, including details from the associated
+     * Marche and Banque entities to avoid additional API calls by the client.
+     * @param prefinancement The entity to map from.
+     */
+    public PrefinancementResponseDTO(Prefinancement prefinancement) {
+        this.id = prefinancement.getId();
+        // Check if the marche and its functional lines exist to prevent NullPointerException
+        Marche marche = prefinancement.getMarche();
+        if (marche != null) {
+            this.marcheId = marche.getId();
+            this.marcheName = marche.getNom();
+            this.marcheNumero = marche.getNumero();
+
+            if (marche.getLignesFonctionnellesSpecifiques() != null) {
+
+                // Filter the list to find all active pre-financing lines
+                List<LigneFonctionnelleSpecifique> activePrefiLines = marche.getLignesFonctionnellesSpecifiques().stream()
+                        .filter(ligne -> ligne.isActif() && "Préfinancement".equals(ligne.getNatureLigneFonctionnelle().getLabel()))
+                        .toList();
+
+                // Defensive programming check: enforce the business rule of a single active line
+                if (activePrefiLines.size() > 1) {
+                    throw new IllegalStateException("The market with ID " + marche.getId() + " has more than one active 'Préfinancement' functional line.");
+                }
+
+                // Check if there is exactly one active pre-financing line and retrieve the bank information
+                if (activePrefiLines.size() == 1) {
+                    LigneFonctionnelleSpecifique activeLigne = activePrefiLines.get(0);
+                    this.banqueId = activeLigne.getBanque().getId();
+                    this.banqueName = activeLigne.getBanque().getNom();
+                }
+            }
+        }
+
+        this.dateEmission = prefinancement.getDateEmission();
+        this.montant = prefinancement.getMontant();
+        this.observation = prefinancement.getObservation();
+        this.type = prefinancement.getType();
+        this.dateOperation = prefinancement.getDateOperation();
+        this.dateValeur = prefinancement.getDateValeur();
+        this.status = prefinancement.getStatus();
+    }
+
+    // Getters and setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getMarcheId() {
+        return marcheId;
+    }
+
+    public void setMarcheId(Long marcheId) {
+        this.marcheId = marcheId;
+    }
+
+    public String getMarcheName() {
+        return marcheName;
+    }
+
+    public void setMarcheName(String marcheName) {
+        this.marcheName = marcheName;
+    }
+
+    public String getMarcheNumero() {
+        return marcheNumero;
+    }
+
+    public void setMarcheNumero(String marcheNumero) {
+        this.marcheNumero = marcheNumero;
+    }
+
+    public Long getBanqueId() {
+        return banqueId;
+    }
+
+    public void setBanqueId(Long banqueId) {
+        this.banqueId = banqueId;
+    }
+
+    public String getBanqueName() {
+        return banqueName;
+    }
+
+    public void setBanqueName(String banqueName) {
+        this.banqueName = banqueName;
+    }
+
+    public OffsetDateTime getDateEmission() {
+        return dateEmission;
+    }
+
+    public void setDateEmission(OffsetDateTime dateEmission) {
+        this.dateEmission = dateEmission;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+}

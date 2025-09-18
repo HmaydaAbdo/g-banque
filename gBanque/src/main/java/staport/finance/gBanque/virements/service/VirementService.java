@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.virements.dtos.EncoursVirementResponseDto;
+import staport.finance.gBanque.virements.dtos.EncoursVirementsSearchDto;
 import staport.finance.gBanque.virements.dtos.VirementResponseDto;
 import staport.finance.gBanque.virements.dtos.VirementSearchDto;
 import staport.finance.gBanque.virements.entities.Virement;
@@ -12,6 +14,7 @@ import staport.finance.gBanque.virements.mapper.VirementMapper;
 import staport.finance.gBanque.virements.repositories.VirementRepository;
 import staport.finance.gBanque.virements.specs.VirementSpec;
 
+import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @Service
@@ -73,14 +76,18 @@ public class VirementService {
      * @return A Page of VirementResponseDto for the outstanding virements.
      */
     @Transactional(readOnly = true)
-    public Page<VirementResponseDto> getEncoursForVirements(Long banqueId, Pageable pageable) {
+    public EncoursVirementResponseDto getEncoursForVirements(EncoursVirementsSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification for active virements for the specified bank in the current month
-        Specification<Virement> spec = VirementSpec.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<Virement> spec = VirementSpec.activeForBankAndUntilEndOfMonth(banqueId)
+                .and(VirementSpec.hasNumero(searchDto.getNumero()))
+                .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()));
 
         // Execute the search with the specification and pagination
         Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
 
+        BigDecimal totalDesEncours = virementRepository.findAll(spec).stream().map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        Page<VirementResponseDto> result = virementPage.map(VirementMapper::toDto);
         // Map the result to DTOs and return
-        return virementPage.map(VirementMapper::toDto);
+        return new EncoursVirementResponseDto(totalDesEncours,result);
     }
 }

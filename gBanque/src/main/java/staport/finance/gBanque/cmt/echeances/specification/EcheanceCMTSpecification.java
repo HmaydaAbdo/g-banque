@@ -80,6 +80,24 @@ public class EcheanceCMTSpecification {
         };
     }
 
+    public static Specification<EcheanceCMT> byCreditDesignationLike(String designation) {
+        return (root, query, criteriaBuilder) -> {
+            // Handle null or blank input to avoid errors
+            if (designation == null || designation.isBlank()) {
+                return criteriaBuilder.conjunction(); // A predicate that is always true
+            }
+
+            // Join to the parent entity CreditMoyenTerme
+            Join<EcheanceCMT, CreditMoyenTerme> creditJoin = root.join("creditMoyenTerme");
+
+            // Create a case-insensitive LIKE predicate
+            return criteriaBuilder.like(
+                    criteriaBuilder.lower(creditJoin.get("designation")),
+                    "%" + designation.toLowerCase() + "%"
+            );
+        };
+    }
+
     /**
      * Crée une Specification pour filtrer les échéances non payées jusqu'à
      * une période donnée (fin du jour ou fin du mois).

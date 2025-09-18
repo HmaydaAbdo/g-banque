@@ -6,6 +6,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.virements.dtos.EncoursVirementResponseDto;
+import staport.finance.gBanque.virements.dtos.EncoursVirementsSearchDto;
 import staport.finance.gBanque.virements.dtos.VirementResponseDto;
 import staport.finance.gBanque.virements.dtos.VirementSearchDto;
 import staport.finance.gBanque.virements.service.VirementService;
@@ -70,11 +72,12 @@ public class VirementController {
      * @return A paginated list of VirementResponseDto for the outstanding virements.
      */
     @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<Page<VirementResponseDto>> getEncoursForVirements(
+    public ResponseEntity<EncoursVirementResponseDto> getEncoursForVirements(
             @PathVariable Long banqueId,
+            EncoursVirementsSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
 
-        Page<VirementResponseDto> result = virementService.getEncoursForVirements(banqueId, pageable);
+     EncoursVirementResponseDto result = virementService.getEncoursForVirements(searchDto,banqueId, pageable);
         return ResponseEntity.ok(result);
     }
 }

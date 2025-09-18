@@ -6,6 +6,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.miseADisposition.dtos.EncoursMiseAdisposition;
+import staport.finance.gBanque.miseADisposition.dtos.EncoursMiseAdispositionSearchDto;
 import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionResponseDto;
 import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionSearchDto;
 import staport.finance.gBanque.miseADisposition.services.MiseADispositionService;
@@ -69,11 +71,12 @@ public class MiseADispositionController {
      * @return A paginated list of MiseADispositionResponseDto for the outstanding mise à dispositions.
      */
     @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<Page<MiseADispositionResponseDto>> getEncoursForMiseADisposition(
+    public ResponseEntity<EncoursMiseAdisposition> getEncoursForMiseADisposition(
             @PathVariable Long banqueId,
+            EncoursMiseAdispositionSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
 
-        Page<MiseADispositionResponseDto> result = miseADispositionService.getEncoursForMiseAdisposition(banqueId, pageable);
+        EncoursMiseAdisposition result = miseADispositionService.getEncoursForMiseAdisposition(searchDto,banqueId, pageable);
         return ResponseEntity.ok(result);
     }
 }

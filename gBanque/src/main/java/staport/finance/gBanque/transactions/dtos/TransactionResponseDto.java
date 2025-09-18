@@ -11,8 +11,8 @@ public class TransactionResponseDto {
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperations;
     private String observation;
-    private Double tvaDeductible;
-    private Double tvaCollectee;
+    private BigDecimal tvaDeductible;
+    private BigDecimal tvaCollectee;
     private String libelle;
     private TransactionSource transactionSource;
     private BigDecimal debit;
@@ -27,7 +27,7 @@ public class TransactionResponseDto {
     public TransactionResponseDto() {
     }
 
-    public TransactionResponseDto(Long id, OffsetDateTime dateEmission, OffsetDateTime dateValeur, OffsetDateTime dateOperations, String observation, Double tvaDeductible, Double tvaCollectee, String libelle, TransactionSource transactionSource, BigDecimal debit, BigDecimal credit, String traces, Long banqueDePrelevementId, String banqueDePrelevementNom, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public TransactionResponseDto(Long id, OffsetDateTime dateEmission, OffsetDateTime dateValeur, OffsetDateTime dateOperations, String observation, BigDecimal tvaDeductible, BigDecimal tvaCollectee, String libelle, TransactionSource transactionSource, BigDecimal debit, BigDecimal credit, String traces, Long banqueDePrelevementId, String banqueDePrelevementNom, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
         this.id = id;
         this.dateEmission = dateEmission;
         this.dateValeur = dateValeur;
@@ -86,19 +86,19 @@ public class TransactionResponseDto {
         this.observation = observation;
     }
 
-    public Double getTvaDeductible() {
+    public BigDecimal getTvaDeductible() {
         return tvaDeductible;
     }
 
-    public void setTvaDeductible(Double tvaDeductible) {
+    public void setTvaDeductible(BigDecimal tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
     }
 
-    public Double getTvaCollectee() {
+    public BigDecimal getTvaCollectee() {
         return tvaCollectee;
     }
 
-    public void setTvaCollectee(Double tvaCollectee) {
+    public void setTvaCollectee(BigDecimal tvaCollectee) {
         this.tvaCollectee = tvaCollectee;
     }
 

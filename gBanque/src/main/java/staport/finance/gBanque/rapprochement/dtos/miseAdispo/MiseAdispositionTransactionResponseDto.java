@@ -16,8 +16,8 @@ public class MiseAdispositionTransactionResponseDto {
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperations;
-    private Double tvaDeductible;
-    private Double tvaCollectee;
+    private BigDecimal tvaDeductible;
+    private BigDecimal tvaCollectee;
     private BigDecimal debit;
     private BigDecimal credit;
     private final TransactionSource transactionSource = TransactionSource.LCN;
@@ -27,7 +27,7 @@ public class MiseAdispositionTransactionResponseDto {
 
     public MiseAdispositionTransactionResponseDto(Long id, String banqueName, String miseADispositionNumber, String libelle,
                                                   String observation, OffsetDateTime dateEmission, OffsetDateTime dateValeur,
-                                                  OffsetDateTime dateOperations, Double tvaDeductible, Double tvaCollectee,
+                                                  OffsetDateTime dateOperations, BigDecimal tvaDeductible, BigDecimal tvaCollectee,
                                                   BigDecimal debit, BigDecimal credit) {
         this.id = id;
         this.banqueName = banqueName;
@@ -108,19 +108,19 @@ public class MiseAdispositionTransactionResponseDto {
         this.dateOperations = dateOperations;
     }
 
-    public Double getTvaDeductible() {
+    public BigDecimal getTvaDeductible() {
         return tvaDeductible;
     }
 
-    public void setTvaDeductible(Double tvaDeductible) {
+    public void setTvaDeductible(BigDecimal tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
     }
 
-    public Double getTvaCollectee() {
+    public BigDecimal getTvaCollectee() {
         return tvaCollectee;
     }
 
-    public void setTvaCollectee(Double tvaCollectee) {
+    public void setTvaCollectee(BigDecimal tvaCollectee) {
         this.tvaCollectee = tvaCollectee;
     }
 

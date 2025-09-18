@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.lcn.dtos.EncoursLcnResponse;
+import staport.finance.gBanque.lcn.dtos.EncoursLcnSearchDto;
 import staport.finance.gBanque.lcn.dtos.LcnResponseDTO;
 import staport.finance.gBanque.lcn.dtos.LcnSearchDTO;
 import staport.finance.gBanque.lcn.entities.Lcn;
@@ -12,6 +14,7 @@ import staport.finance.gBanque.lcn.mapper.LcnMapper;
 import staport.finance.gBanque.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.lcn.specs.LcnSpecification;
 
+import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @Service
@@ -76,14 +79,17 @@ public class LcnService {
      * @return A Page of LcnResponseDTO for the outstanding LCN.
      */
     @Transactional(readOnly = true)
-    public Page<LcnResponseDTO> getEncoursForLcn(Long banqueId, Pageable pageable) {
+    public EncoursLcnResponse getEncoursForLcn(EncoursLcnSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification for active LCN for the specified bank in the current month
-        Specification<Lcn> spec = LcnSpecification.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<Lcn> spec = LcnSpecification.activeForBankAndUntilEndOfMonth(banqueId)
+                .and(LcnSpecification.hasNumero(searchDto.getNumero()))
+                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()));
 
         // Execute the search with the specification and pagination
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
-
+        BigDecimal totalDesEncours = lcnRepository.findAll(spec).stream().map(Lcn::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        Page<LcnResponseDTO> result = lcnPage.map(LcnMapper::toDto);
         // Map the result to DTOs and return
-        return lcnPage.map(LcnMapper::toDto);
+        return new EncoursLcnResponse(totalDesEncours,result);
     }
 }

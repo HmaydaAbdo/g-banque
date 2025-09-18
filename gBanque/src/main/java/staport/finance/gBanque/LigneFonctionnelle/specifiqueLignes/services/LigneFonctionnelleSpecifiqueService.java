@@ -11,9 +11,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueRequest;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueResponse;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueSearchCriteria;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.mappers.LigneFonctionnelleSpecifiqueMapper;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
@@ -204,5 +202,72 @@ public class LigneFonctionnelleSpecifiqueService {
             log.warn("Validation de date échouée: dateFin ({}) est antérieure à dateDepart ({}).", dateFin, dateDepart);
             throw new IllegalArgumentException("La date de fin (" + dateFin + ") ne peut pas être antérieure à la date de départ (" + dateDepart + ").");
         }
+    }
+
+    /**
+     * Retrieves a page of SpecificLigneResposneDto with pagination, sorting, and search support.
+     *
+     * @param searchCriteria The DTO containing search criteria.
+     * @param pageable       The pagination and sorting information.
+     * @return A Page of SpecificLigneResposneDto DTOs.
+     * @throws ResourceNotFoundException if no NatureLigneFonctionnelle is found with the given label.
+     */
+    @Transactional(readOnly = true)
+    public Page<SpecificLigneResposneDto> getPrefiLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
+        log.debug("Récupération paginée des lignes de préfinancement avec critères de recherche: {}", searchCriteria);
+
+        // Find the NatureLigneFonctionnelle by its label
+        NatureLigneFonctionnelle prefiNature = natureLigneFonctionnelleRepository.findByLabel("Préfinancement")
+                .orElseThrow(() -> new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Préfinancement"));
+
+        // Build the combined specification
+        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("natureLigneFonctionnelle"), prefiNature);
+
+        Specification<LigneFonctionnelleSpecifique> searchSpec = LigneFonctionnelleSpecifiqueSpecification.searchForPrefi(searchCriteria);
+
+        Specification<LigneFonctionnelleSpecifique> finalSpec = Specification.where(natureSpec).and(searchSpec);
+
+        // Use the repository with the combined specification and pageable
+        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(finalSpec, pageable);
+
+        log.info("Page de {} lignes de préfinancement trouvée. Total: {}", page.getNumberOfElements(), page.getTotalElements());
+
+        // Map the page of entities to a page of DTOs and return
+        return page.map(ligneFonctionnelleSpecifiqueMapper::toPrefinancementResponseDto);
+    }
+
+
+    /**
+     * Retrieves a page of SpecificLigneResposneDto with pagination, sorting, and search support.
+     *
+     * @param searchCriteria The DTO containing search criteria.
+     * @param pageable       The pagination and sorting information.
+     * @return A Page of SpecificLigneResposneDto DTOs.
+     * @throws ResourceNotFoundException if no NatureLigneFonctionnelle is found with the given label.
+     */
+    @Transactional(readOnly = true)
+    public Page<SpecificLigneResposneDto> getDCLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
+        log.debug("Récupération paginée des lignes de droit constatées avec critères de recherche: {}", searchCriteria);
+
+        // Find the NatureLigneFonctionnelle by its label
+        NatureLigneFonctionnelle dcLine = natureLigneFonctionnelleRepository.findByLabel("Droit constaté")
+                .orElseThrow(() -> new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Droit constaté"));
+
+        // Build the combined specification
+        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("natureLigneFonctionnelle"), dcLine);
+
+        Specification<LigneFonctionnelleSpecifique> searchSpec = LigneFonctionnelleSpecifiqueSpecification.searchForPrefi(searchCriteria);
+
+        Specification<LigneFonctionnelleSpecifique> finalSpec = Specification.where(natureSpec).and(searchSpec);
+
+        // Use the repository with the combined specification and pageable
+        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(finalSpec, pageable);
+
+        log.info("Page de {} lignes de préfinancement trouvée. Total: {}", page.getNumberOfElements(), page.getTotalElements());
+
+        // Map the page of entities to a page of DTOs and return
+        return page.map(ligneFonctionnelleSpecifiqueMapper::toDCResponseDto);
     }
 }

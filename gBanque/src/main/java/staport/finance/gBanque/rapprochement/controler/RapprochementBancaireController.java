@@ -5,6 +5,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import staport.finance.gBanque.decomptes.dto.DecompteTransactionRequestDto;
+import staport.finance.gBanque.decomptes.dto.DecompteTransactionResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionRequest;
+import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionResponse;
+import staport.finance.gBanque.prefinancement.dtos.PrefinancementTransactionRequest;
+import staport.finance.gBanque.prefinancement.dtos.PrefinancementTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.cheques.ChequeTransactionRequest;
 import staport.finance.gBanque.rapprochement.dtos.cheques.ChequeTransactionResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.cmt.CmtTransactionRequestDto;
@@ -110,6 +116,46 @@ public class RapprochementBancaireController {
     @PostMapping("/process/virement")
     public ResponseEntity<VirementTransactionResponseDto> processVirementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) throws Exception {
         VirementTransactionResponseDto responseDto = rapprochementService.processVirementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+
+    /**
+     * Endpoint pour traiter une transaction de rapprochement de prefinancement.
+     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
+     *
+     * @param requestDto Le DTO de la requête de transaction de prefinancement.
+     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     */
+    @PostMapping("/process/prefinancement")
+    public ResponseEntity<PrefinancementTransactionResponse> processPrefiTransaction(@Valid @RequestBody PrefinancementTransactionRequest requestDto) throws Exception {
+        PrefinancementTransactionResponse responseDto = rapprochementService.processPrefinancementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    /**
+     * Endpoint pour traiter une transaction de rapprochement de droit constate.
+     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
+     *
+     * @param requestDto Le DTO de la requête de transaction de droit constate.
+     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     */
+    @PostMapping("/process/droit-constate")
+    public ResponseEntity<DroitConstateTransactionResponse> processDroitConstqteTransaction(@Valid @RequestBody DroitConstateTransactionRequest requestDto) throws Exception {
+        DroitConstateTransactionResponse responseDto = rapprochementService.processDroitConstateTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    /**
+     * Endpoint pour traiter une transaction de rapprochement de décompte.
+     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
+     *
+     * @param requestDto Le DTO de la requête de transaction de décompte.
+     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     */
+    @PostMapping("/process/decompte")
+    public ResponseEntity<DecompteTransactionResponseDto> processDecompteToTransaction(@Valid @RequestBody DecompteTransactionRequestDto requestDto) throws Exception {
+        DecompteTransactionResponseDto responseDto = rapprochementService.processDecompteToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

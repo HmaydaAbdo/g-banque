@@ -1,13 +1,16 @@
-package staport.finance.gBanque.recapitulatif.decaissement.mappers;
+package staport.finance.gBanque.recapitulatif.mappers;
 
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
+import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
-import staport.finance.gBanque.recapitulatif.decaissement.dtos.RecaputilatifDecaissementItem;
+import staport.finance.gBanque.prefinancement.entities.Prefinancement;
+import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.virements.entities.Virement;
 
 import java.math.RoundingMode;
@@ -27,12 +30,12 @@ public class RecapitulatifDecaissementMapper {
      * @param echeance The EcheanceLeasing entity to map.
      * @return The mapped RécaputilatifDecaissementItem DTO.
      */
-    public RecaputilatifDecaissementItem mapLeasingToDto(EcheanceLeasing echeance) {
+    public RecaputilatifItem mapLeasingToDto(EcheanceLeasing echeance) {
         if (echeance == null || echeance.getContratLeasing() == null) {
             return null;
         }
 
-        RecaputilatifDecaissementItem dto = new RecaputilatifDecaissementItem();
+        RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(echeance.getDateEcheance());
         dto.setDebit(echeance.getMontantTTC().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Prélèvement");
@@ -47,7 +50,7 @@ public class RecapitulatifDecaissementMapper {
             libelle = contrat.getOrganismeLeasing().getNom() + ", contrat N° " + contrat.getNumeroContrat();
         }
         dto.setLibelle(libelle);
-
+        dto.setSource(TransactionSource.LEASING);
         return dto;
     }
 
@@ -57,17 +60,17 @@ public class RecapitulatifDecaissementMapper {
      * @param echeance The EcheanceCMT entity to map.
      * @return The mapped RécaputilatifDecaissementItem DTO.
      */
-    public RecaputilatifDecaissementItem mapCmtToDto(EcheanceCMT echeance) {
+    public RecaputilatifItem mapCmtToDto(EcheanceCMT echeance) {
         if (echeance == null || echeance.getCreditMoyenTerme() == null) {
             return null;
         }
 
-        RecaputilatifDecaissementItem dto = new RecaputilatifDecaissementItem();
+        RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(echeance.getDateEcheance());
         dto.setDebit(echeance.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Prélèvement");
         dto.setLibelle("Échéance CMT");
-
+        dto.setSource(TransactionSource.CMT);
         return dto;
     }
 
@@ -78,20 +81,20 @@ public class RecapitulatifDecaissementMapper {
      * @param cheque The Cheque entity to map.
      * @return The mapped RécaputilatifDecaissementItem DTO.
      */
-    public RecaputilatifDecaissementItem mapChequeToDto(Cheque cheque) {
+    public RecaputilatifItem mapChequeToDto(Cheque cheque) {
         if (cheque == null) {
             return null;
         }
 
-        RecaputilatifDecaissementItem dto = new RecaputilatifDecaissementItem();
+        RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(cheque.getDateEmission());
         if ( dto.getDateEcheance() != null) {
             dto.setDateEcheance(cheque.getDateEcheance());
         }
         dto.setDebit(cheque.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("Prélèvement ");
-        dto.setLibelle("Chèque N° " + cheque.getNumero() );
-
+        dto.setObservations("Chèque N° " + cheque.getNumero());
+        dto.setLibelle("Bénéficiaire : " + cheque.getBeneficiaire() );
+        dto.setSource(TransactionSource.CHEQUE);
         return dto;
     }
 
@@ -101,18 +104,18 @@ public class RecapitulatifDecaissementMapper {
      * @param lcn The Lcn entity to map.
      * @return The mapped RécaputilatifDecaissementItem DTO.
      */
-    public RecaputilatifDecaissementItem mapLcnToDto(Lcn lcn) {
+    public RecaputilatifItem mapLcnToDto(Lcn lcn) {
         if (lcn == null) {
             return null;
         }
 
-        RecaputilatifDecaissementItem dto = new RecaputilatifDecaissementItem();
+        RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(lcn.getDateEmission());
         dto.setDateEcheance(lcn.getDateEcheance());
         dto.setDebit(lcn.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("LCN à l'échéance");
-        dto.setLibelle("LCN N° " + lcn.getNumero() + " au bénéficiaire : " + lcn.getBeneficiaire());
-
+        dto.setObservations("LCN N° " + lcn.getNumero());
+        dto.setLibelle( "Bénéficiaire : " + lcn.getBeneficiaire());
+        dto.setSource(TransactionSource.LCN);
         return dto;
     }
 
@@ -122,17 +125,17 @@ public class RecapitulatifDecaissementMapper {
      * @param virement The Virement entity to map.
      * @return The mapped RecaputilatifDecaissementItem DTO.
      */
-    public RecaputilatifDecaissementItem mapVirementToDto(Virement virement) {
+    public RecaputilatifItem mapVirementToDto(Virement virement) {
         if (virement == null) {
             return null;
         }
 
-        RecaputilatifDecaissementItem dto = new RecaputilatifDecaissementItem();
+        RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(virement.getDateEmission());
         dto.setDebit(virement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("Prélèvement");
-        dto.setLibelle("Virement N° " + virement.getNumero() );
-
+        dto.setObservations("Virement N° " + virement.getNumero());
+        dto.setLibelle("Bénéficiaire " + virement.getBeneficiaire() );
+        dto.setSource(TransactionSource.Virement);
         return dto;
     }
 
@@ -142,17 +145,63 @@ public class RecapitulatifDecaissementMapper {
      * @param mad The MiseADisposition entity to map.
      * @return The mapped RecaputilatifDecaissementItem DTO.
      */
-    public RecaputilatifDecaissementItem mapMiseADispositionToDto(MiseADisposition mad) {
+    public RecaputilatifItem mapMiseADispositionToDto(MiseADisposition mad) {
         if (mad == null) {
             return null;
         }
 
-        RecaputilatifDecaissementItem dto = new RecaputilatifDecaissementItem();
+        RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(mad.getDateEmission());
         dto.setDebit(mad.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("Prélèvement");
-        dto.setLibelle("Mise à disposition N° " + mad.getNumero() );
-
+        dto.setObservations("Mise à disposition N° " + mad.getNumero());
+        dto.setLibelle("Bénéficiaire " + mad.getBeneficiaire() );
+        dto.setSource(TransactionSource.MiseADisposition);
         return dto;
     }
+
+    /**
+     * Maps a Préfinancement entity to a RecaputilatifDecaissementItem DTO.
+     *
+     * @param prefinancement The Préfinancement entity to map.
+     * @return The mapped RecaputilatifDecaissementItem DTO.
+     */
+    public RecaputilatifItem mapPrefinancementToDto(Prefinancement prefinancement) {
+
+        if (prefinancement == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(prefinancement.getDateEmission());
+        dto.setDebit(prefinancement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations("Remboursement du préfinancement" );
+        dto.setLibelle("Marché N° : " + prefinancement.getMarche().getNumero() );
+        dto.setSource(TransactionSource.PREFINANCEMENT);
+        return dto;
+    }
+
+    /**
+     * Maps a DroitConstate entity to a RecaputilatifDecaissementItem DTO.
+     *
+     * @param droitConstate The DroitConstate entity to map.
+     * @return The mapped RecaputilatifDecaissementItem DTO.
+     */
+    public RecaputilatifItem mapDroitConstateToDto(DroitConstate droitConstate) {
+
+        if (droitConstate == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(droitConstate.getDateEmission());
+        dto.setDebit(droitConstate.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations("Remboursement du droit constaté" );
+        dto.setLibelle("Marché N° : " + droitConstate.getMarche().getNumero() );
+        dto.setSource(TransactionSource.DROIT_CONSTATE);
+        return dto;
+    }
+
+
+
+
 }

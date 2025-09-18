@@ -3,6 +3,7 @@ package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.specificatio
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueSearchCriteria;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.SpecifiqueLineSearchDto;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -40,6 +41,22 @@ public class LigneFonctionnelleSpecifiqueSpecification {
             }
 
             // Add the specific predicate for the subclass
+            if (criteria.getMarcheId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("marche").get("id"), criteria.getMarcheId()));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    public static Specification<LigneFonctionnelleSpecifique> searchForPrefi(SpecifiqueLineSearchDto criteria) {
+        return (root, query, criteriaBuilder) -> {
+
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (criteria.getBanqueId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), criteria.getBanqueId()));
+            }
             if (criteria.getMarcheId() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("marche").get("id"), criteria.getMarcheId()));
             }

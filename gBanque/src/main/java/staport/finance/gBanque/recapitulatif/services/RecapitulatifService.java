@@ -1,0 +1,332 @@
+package staport.finance.gBanque.recapitulatif.services;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.cheques.entities.Cheque;
+import staport.finance.gBanque.cheques.repositories.ChequeRepository;
+import staport.finance.gBanque.cheques.specs.ChequeSpec;
+import staport.finance.gBanque.cmt.echeances.dtos.PeriodeEncoursCMT;
+import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
+import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
+import staport.finance.gBanque.cmt.echeances.specification.EcheanceCMTSpecification;
+import staport.finance.gBanque.decomptes.entities.Decompte;
+import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
+import staport.finance.gBanque.decomptes.spec.DecompteSpec;
+import staport.finance.gBanque.droitConstate.entities.DroitConstate;
+import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
+import staport.finance.gBanque.droitConstate.spec.DroitConstateSpec;
+import staport.finance.gBanque.lcn.entities.Lcn;
+import staport.finance.gBanque.lcn.repositories.LcnRepository;
+import staport.finance.gBanque.lcn.specs.LcnSpecification;
+import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
+import staport.finance.gBanque.leasing.echeancesLeasing.enums.PeriodeEncours;
+import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
+import staport.finance.gBanque.leasing.echeancesLeasing.specification.EcheanceLeasingSpecification;
+import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
+import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
+import staport.finance.gBanque.miseADisposition.specs.MiseADispositionSpec;
+import staport.finance.gBanque.prefinancement.entities.Prefinancement;
+import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
+import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
+import staport.finance.gBanque.recapitulatif.dtos.AgregatedRecapDto;
+import staport.finance.gBanque.recapitulatif.dtos.DecaissementSearchDto;
+import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
+import staport.finance.gBanque.recapitulatif.mappers.RecapitulatifDecaissementMapper;
+import staport.finance.gBanque.recapitulatif.mappers.RecapitulatifEncaissementMapper;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.virements.entities.Virement;
+import staport.finance.gBanque.virements.repositories.VirementRepository;
+import staport.finance.gBanque.virements.specs.VirementSpec;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+
+
+/**
+ * Service to generate a consolidated summary of all expected disbursements
+ * (leasing and CMT installments) for the current month.
+ */
+@Service
+@Transactional(readOnly = true)
+public class RecapitulatifService {
+
+
+    private final RecapitulatifDecaissementMapper decaissementMapper;
+    private final RecapitulatifEncaissementMapper encaissementMapper;
+
+    private final EcheanceLeasingRepository echeanceLeasingRepository;
+    private final EcheanceCMTRepository echeanceCMTRepository;
+    private final ChequeRepository chequeRepository;
+    private final LcnRepository lcnRepository;
+    private final VirementRepository virementRepository;
+    private final MiseADispositionRepository miseADispositionRepository;
+    private final PrefinancementRepository prefinancementRepository;
+    private final DroitConstateRepository droitConstateRepository;
+    private final DecompteRepository decompteRepository;
+
+    public RecapitulatifService(
+            EcheanceLeasingRepository echeanceLeasingRepository,
+            EcheanceCMTRepository echeanceCMTRepository,
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository) {
+        this.echeanceLeasingRepository = echeanceLeasingRepository;
+        this.echeanceCMTRepository = echeanceCMTRepository;
+        this.decaissementMapper = mapper;
+        this.encaissementMapper = encaissementMapper;
+        this.chequeRepository = chequeRepository;
+        this.lcnRepository = lcnRepository;
+        this.virementRepository = virementRepository;
+        this.miseADispositionRepository = miseADispositionRepository;
+        this.prefinancementRepository = prefinancementRepository;
+        this.droitConstateRepository = droitConstateRepository;
+        this.decompteRepository = decompteRepository;
+    }
+
+    /**
+     * Retrieves a pageable and sortable list of outstanding (Prévu) disbursements
+     * for the current month.
+     *
+     * @param searchDto The id of the bank to filter by.
+     * @param pageable A Spring data Pageable object for pagination and sorting.
+     * @return A consolidated Page of disbursement items.
+     */
+    public AgregatedRecapDto getRecapitulatifDecaissementForCurrentMonthForGivenBanque(Pageable pageable, DecaissementSearchDto searchDto) {
+
+        // Retrieve parameters from the DTO
+        Long banqueId = searchDto.getBanqueId();
+        List<TransactionSource> transactionSources = searchDto.getTransactionSources();
+        String libelleFilter = searchDto.getLibelle();
+        String observationFilter = searchDto.getObservation();
+
+        // Step 1: Create specifications for each entity type, filtering by bank and current month.
+
+        //leasing
+        Specification<EcheanceLeasing> leasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil(PeriodeEncours.MOIS, OffsetDateTime.now()))
+                .and(EcheanceLeasingSpecification.byContratBanqueId(banqueId));
+        //CMT
+        Specification<EcheanceCMT> cmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil(PeriodeEncoursCMT.MOIS, OffsetDateTime.now()))
+                .and(EcheanceCMTSpecification.byCreditBanqueId(banqueId));
+
+        //moyens de paiement
+        Specification<Cheque> chequeSpec = ChequeSpec.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<Lcn> lcnSpec = LcnSpecification.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<Virement> virementSpec = VirementSpec.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<MiseADisposition> madSpec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId);
+
+        // préfinancement (Remboursement only)
+        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingRemboursementForCurrentMonth()
+                .and(PrefinancementSpecification.byBanqueId(banqueId));
+
+        //Droit constatés ( Remboursement only )
+        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingRemboursementForCurrentMonth()
+                .and(DroitConstateSpec.byBanqueId(banqueId));
+
+        // Step 2: Fetch all relevant data for the current month from all repositories.
+        List<EcheanceLeasing> outstandingLeasingPayments = echeanceLeasingRepository.findAll(leasingSpec);
+        List<EcheanceCMT> outstandingCmtPayments = echeanceCMTRepository.findAll(cmtSpec);
+        List<Cheque> activeCheques = chequeRepository.findAll(chequeSpec);
+        List<Lcn> activeLcns = lcnRepository.findAll(lcnSpec);
+        List<Virement> activeVirements = virementRepository.findAll(virementSpec);
+        List<MiseADisposition> activeMisesADisposition = miseADispositionRepository.findAll(madSpec);
+        List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
+        List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
+
+        // Step 3: Combine all lists and map them to the unified DTO.
+        List<RecaputilatifItem> combinedItems = new ArrayList<>();
+        // Add items from the new data sources.
+        combinedItems.addAll(outstandingLeasingPayments.stream().map(decaissementMapper::mapLeasingToDto).toList());
+        combinedItems.addAll(outstandingCmtPayments.stream().map(decaissementMapper::mapCmtToDto).toList());
+        combinedItems.addAll(activeCheques.stream().map(decaissementMapper::mapChequeToDto).toList());
+        combinedItems.addAll(activeLcns.stream().map(decaissementMapper::mapLcnToDto).toList());
+        combinedItems.addAll(activeVirements.stream().map(decaissementMapper::mapVirementToDto).toList());
+        combinedItems.addAll(activeMisesADisposition.stream().map(decaissementMapper::mapMiseADispositionToDto).toList());
+        combinedItems.addAll(outstandingPrefinancements.stream().map(decaissementMapper::mapPrefinancementToDto).toList());
+        combinedItems.addAll(outstandingDroitsConstate.stream().map(decaissementMapper::mapDroitConstateToDto).toList());
+
+
+        // Apply the filter using the DTO value
+        if (transactionSources != null && !transactionSources.isEmpty()) {
+            combinedItems = combinedItems.stream()
+                    .filter(item -> transactionSources.contains(item.getSource()))
+                    .collect(Collectors.toList());
+        }
+
+        if (libelleFilter != null && !libelleFilter.isBlank()) {
+            combinedItems = combinedItems.stream()
+                    .filter(item -> item.getLibelle() != null && item.getLibelle().toLowerCase().contains(libelleFilter.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
+        if (observationFilter != null && !observationFilter.isBlank()) {
+            combinedItems = combinedItems.stream()
+                    .filter(item -> item.getObservations() != null && item.getObservations().toLowerCase().contains(observationFilter.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
+        // New Step: Calculate the total debit and credit of the filtered list before pagination
+        BigDecimal totalDebit = combinedItems.stream()
+                .map(RecaputilatifItem::getDebit)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalCredit = combinedItems.stream()
+                .map(RecaputilatifItem::getCredit)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Step 4: Sort the entire consolidated list based on the Pageable's sort information.
+        Comparator<RecaputilatifItem> comparator = getComparatorForSorting(pageable);
+        combinedItems.sort(comparator);
+
+        // Step 5: Manually apply pagination to the sorted list.
+        int pageSize = pageable.getPageSize();
+        int currentPage = pageable.getPageNumber();
+        int startItem = currentPage * pageSize;
+        List<RecaputilatifItem> pagedItems;
+
+        if (combinedItems.size() < startItem) {
+            pagedItems = List.of();
+        } else {
+            int toIndex = Math.min(startItem + pageSize, combinedItems.size());
+            pagedItems = combinedItems.subList(startItem, toIndex);
+        }
+
+        // Step 6: Wrap the sublist in a Page object
+        Page<RecaputilatifItem> pageResult = new PageImpl<>(pagedItems, pageable, combinedItems.size());
+
+        // Step 7: Create and return the AgregatedRecapDto
+        AgregatedRecapDto aggregatedDto = new AgregatedRecapDto();
+        aggregatedDto.setPage(pageResult);
+        aggregatedDto.setTotalDebit(totalDebit);
+        aggregatedDto.setTotalCredit(totalCredit);
+
+        return aggregatedDto;
+    }
+
+    public AgregatedRecapDto getRecapitulatifEncaissementForCurrentMonthForGivenBanque(Pageable pageable, DecaissementSearchDto searchDto) {
+
+        // Retrieve parameters from the DTO
+        Long banqueId = searchDto.getBanqueId();
+        List<TransactionSource> transactionSources = searchDto.getTransactionSources();
+        String libelleFilter = searchDto.getLibelle();
+        String observationFilter = searchDto.getObservation();
+
+        // Step 1: Create specifications for each entity type, filtering by bank and current month.
+
+        // préfinancement (Déblocage only)
+        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingDeblocageForCurrentMonth()
+                .and(PrefinancementSpecification.byBanqueId(banqueId));
+
+        // Droit Constaté ( Déblocage only )
+        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingDeblocageForCurrentMonth()
+                .and(DroitConstateSpec.byBanqueId(banqueId));
+
+        //décomptes
+        Specification<Decompte> decompteSpecification = DecompteSpec.outstandingForCurrentMonth()
+                .and(DecompteSpec.byBanqueId(banqueId));
+
+
+        // Step 2: Fetch all relevant data for the current month from all repositories.
+        List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
+        List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
+        List<Decompte> outstandingDecomptes = decompteRepository.findAll(decompteSpecification);
+
+        // Step 3: Combine all lists and map them to the unified DTO.
+        List<RecaputilatifItem> combinedItems = new ArrayList<>();
+        combinedItems.addAll(outstandingPrefinancements.stream().map(encaissementMapper::mapPrefinancementToDto).toList());
+        combinedItems.addAll(outstandingDroitsConstate.stream().map(encaissementMapper::mapDroitConstateToDto).toList());
+        combinedItems.addAll(outstandingDecomptes.stream().map(encaissementMapper::mapDecompteToDto).toList());
+
+        // Apply the filters from the DTO
+        if (transactionSources != null && !transactionSources.isEmpty()) {
+            combinedItems = combinedItems.stream()
+                    .filter(item -> transactionSources.contains(item.getSource()))
+                    .collect(Collectors.toList());
+        }
+
+        if (libelleFilter != null && !libelleFilter.isBlank()) {
+            combinedItems = combinedItems.stream()
+                    .filter(item -> item.getLibelle() != null && item.getLibelle().toLowerCase().contains(libelleFilter.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
+        if (observationFilter != null && !observationFilter.isBlank()) {
+            combinedItems = combinedItems.stream()
+                    .filter(item -> item.getObservations() != null && item.getObservations().toLowerCase().contains(observationFilter.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
+        // New Step: Calculate the total debit and credit of the filtered list before pagination
+        BigDecimal totalDebit = combinedItems.stream()
+                .map(RecaputilatifItem::getDebit)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalCredit = combinedItems.stream()
+                .map(RecaputilatifItem::getCredit)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Step 4: Sort the entire consolidated list based on the Pageable's sort information.
+        Comparator<RecaputilatifItem> comparator = getComparatorForSorting(pageable);
+        combinedItems.sort(comparator);
+
+        // Step 5: Manually apply pagination to the sorted list.
+        int pageSize = pageable.getPageSize();
+        int currentPage = pageable.getPageNumber();
+        int startItem = currentPage * pageSize;
+        List<RecaputilatifItem> pagedItems;
+
+        if (combinedItems.size() < startItem) {
+            pagedItems = List.of();
+        } else {
+            int toIndex = Math.min(startItem + pageSize, combinedItems.size());
+            pagedItems = combinedItems.subList(startItem, toIndex);
+        }
+
+        // Step 6: Wrap the sublist in a Page object
+        Page<RecaputilatifItem> pageResult = new PageImpl<>(pagedItems, pageable, combinedItems.size());
+
+        // Step 7: Create and return the AgregatedRecapDto
+        AgregatedRecapDto aggregatedDto = new AgregatedRecapDto();
+        aggregatedDto.setPage(pageResult);
+        aggregatedDto.setTotalDebit(totalDebit);
+        aggregatedDto.setTotalCredit(totalCredit);
+
+        return aggregatedDto;
+    }
+    /**
+     * Helper method to create a Comparator from the Pageable's Sort object.
+     * This is required for sorting the combined list manually.
+     */
+    private Comparator<RecaputilatifItem> getComparatorForSorting(Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            // Default sort if no sort is specified.
+            return Comparator.comparing(RecaputilatifItem::getDateEmission);
+        }
+
+        return pageable.getSort().stream()
+                .map(order -> {
+                    Comparator<RecaputilatifItem> comparator = switch (order.getProperty()) {
+                        case "dateEmission" -> Comparator.comparing(RecaputilatifItem::getDateEmission);
+                        case "libelle" -> Comparator.comparing(RecaputilatifItem::getLibelle);
+                        case "debit" -> Comparator.comparing(RecaputilatifItem::getDebit);
+                        default ->
+                            // Fallback to the default sort to avoid a NullPointerException.
+                                Comparator.comparing(RecaputilatifItem::getDateEmission);
+                    };
+                    return order.isDescending() ? comparator.reversed() : comparator;
+                })
+                .reduce(Comparator::thenComparing)
+                .orElse(Comparator.comparing(RecaputilatifItem::getDateEmission));
+    }
+}

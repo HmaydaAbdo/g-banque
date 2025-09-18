@@ -33,4 +33,13 @@ public interface LigneFonctionnelleSpecifiqueRepository extends JpaRepository<Li
     List<LigneFonctionnelleSpecifique> findByMarcheOrderByDateDepartAsc(Marche marche);
 
     Page<LigneFonctionnelleSpecifique> findAll(Specification<LigneFonctionnelleSpecifique> spec, Pageable pageable);
+
+    /**
+     * Finds a page of LigneFonctionnelleSpecifique by its NatureLigneFonctionnelle, with support for pagination and sorting.
+     * Spring Data JPA will automatically implement this method.
+     * @param natureLigneFonctionnelle The nature of the functional line.
+     * @param pageable The pagination and sorting information.
+     * @return A Page of LigneFonctionnelleSpecifique entities.
+     */
+    Page<LigneFonctionnelleSpecifique> findByNatureLigneFonctionnelle(NatureLigneFonctionnelle natureLigneFonctionnelle, Pageable pageable);
 }

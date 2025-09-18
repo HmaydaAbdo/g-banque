@@ -9,9 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueRequest;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueResponse;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueSearchCriteria;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueService;
 
 @RestController
@@ -79,5 +77,33 @@ public class LigneFonctionnelleSpecifiqueController {
     public ResponseEntity<Void> deleteLigneFonctionnelleSpecifique(@PathVariable Long id) {
         ligneFonctionnelleSpecifiqueService.deleteLigneFonctionnelleSpecifique(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/prefi-lines")
+    public ResponseEntity<Page<SpecificLigneResposneDto>> getPrefiLines(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort,
+            @ModelAttribute SpecifiqueLineSearchDto searchCriteria
+    ){
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Page<SpecificLigneResposneDto> prefinancementResponseDtoPage =ligneFonctionnelleSpecifiqueService.getPrefiLines(searchCriteria,pageable);
+        return ResponseEntity.ok(prefinancementResponseDtoPage);
+    }
+
+    @GetMapping("/dc-lines")
+    public ResponseEntity<Page<SpecificLigneResposneDto>> getDcLines(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort,
+            @ModelAttribute SpecifiqueLineSearchDto searchCriteria
+    ){
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Page<SpecificLigneResposneDto> resposne =ligneFonctionnelleSpecifiqueService.getDCLines(searchCriteria,pageable);
+        return ResponseEntity.ok(resposne);
     }
 }

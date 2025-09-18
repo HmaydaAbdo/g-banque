@@ -17,8 +17,8 @@ public class LeasingTransactionResponseDto {
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperations;
-    private Double tvaDeductible;
-    private Double tvaCollectee;
+    private BigDecimal tvaDeductible;
+    private BigDecimal tvaCollectee;
     private BigDecimal debit;
     private BigDecimal credit;
     private TransactionSource transactionSource = TransactionSource.LEASING;
@@ -31,7 +31,7 @@ public class LeasingTransactionResponseDto {
     public LeasingTransactionResponseDto(Long id, String banqueName, String libelle, String observation,
                                          Long contratLeasingId, Long echeanceId, OffsetDateTime dateEmission,
                                          OffsetDateTime dateValeur, OffsetDateTime dateOperations,
-                                         Double tvaDeductible, Double tvaCollectee, BigDecimal debit, BigDecimal credit) {
+                                         BigDecimal tvaDeductible, BigDecimal tvaCollectee, BigDecimal debit, BigDecimal credit) {
         this.id = id;
         this.banqueName = banqueName;
         this.libelle = libelle;
@@ -120,19 +120,19 @@ public class LeasingTransactionResponseDto {
         this.dateOperations = dateOperations;
     }
 
-    public Double getTvaDeductible() {
+    public BigDecimal getTvaDeductible() {
         return tvaDeductible;
     }
 
-    public void setTvaDeductible(Double tvaDeductible) {
+    public void setTvaDeductible(BigDecimal tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
     }
 
-    public Double getTvaCollectee() {
+    public BigDecimal getTvaCollectee() {
         return tvaCollectee;
     }
 
-    public void setTvaCollectee(Double tvaCollectee) {
+    public void setTvaCollectee(BigDecimal tvaCollectee) {
         this.tvaCollectee = tvaCollectee;
     }
 

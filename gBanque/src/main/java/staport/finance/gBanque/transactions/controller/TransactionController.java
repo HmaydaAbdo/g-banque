@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
 import staport.finance.gBanque.transactions.service.TransactionService;
@@ -40,23 +41,22 @@ public class TransactionController {
 
     /**
      * Retrieves a paginated and sorted list of transactions for a specific bank in the current month.
-     * Supports optional multi-search via a 'libelle' parameter.
+     * Supports optional multi-search via TransactionSearchDto.
      *
      * @param banqueId The ID of the bank, passed as a path variable.
-     * @param libelle An optional keyword to search for in the transaction's libelle.
+     * @param searchDto The DTO holding search criteria (populated from query params).
      * @param pageable A Spring data Pageable object for pagination and sorting.
      * @return A ResponseEntity containing a Page of Transaction entities and an HTTP status of OK.
      */
     @GetMapping("/{banqueId}/transactions")
-    public ResponseEntity<Page<TransactionResponseDto>> getBankTransactions(
+    public ResponseEntity<AgreratedTransactionResponseDto> getBankTransactions(
             @PathVariable Long banqueId,
-            @RequestParam(required = false) String libelle,
+            @ModelAttribute TransactionSearchDto searchDto,
             Pageable pageable) {
 
-        TransactionSearchDto searchDto = new TransactionSearchDto();
-        searchDto.setLibelle(libelle);
+        AgreratedTransactionResponseDto res =
+                transactionService.getTransactionsByBanque(banqueId, searchDto, pageable);
 
-        Page<TransactionResponseDto> transactions = transactionService.getTransactionsByBanque(banqueId, searchDto, pageable);
-        return new ResponseEntity<>(transactions, HttpStatus.OK);
+        return ResponseEntity.ok(res);
     }
 }

@@ -6,5 +6,8 @@ public enum TransactionSource {
     CHEQUE,
     LCN,
     Virement,
-    MiseADisposition
+    MiseADisposition,
+    PREFINANCEMENT,
+    DROIT_CONSTATE,
+    DECOMPTES
 }

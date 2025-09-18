@@ -17,6 +17,8 @@ public class EncoursLeasingRequestDTO {
     // Nouveau champ optionnel pour le filtre par organisme de leasing
     private Long organismeLeasingId;
 
+    private String numeroContrat;
+
     // --- Getters et Setters ---
 
     public Long getBanqueId() {
@@ -41,5 +43,13 @@ public class EncoursLeasingRequestDTO {
 
     public void setOrganismeLeasingId(Long organismeLeasingId) {
         this.organismeLeasingId = organismeLeasingId;
+    }
+
+    public String getNumeroContrat() {
+        return numeroContrat;
+    }
+
+    public void setNumeroContrat(String numeroContrat) {
+        this.numeroContrat = numeroContrat;
     }
 }

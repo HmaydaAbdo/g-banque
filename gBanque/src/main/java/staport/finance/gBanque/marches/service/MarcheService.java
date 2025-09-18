@@ -1,14 +1,12 @@
 package staport.finance.gBanque.marches.service;
 
-
-
+import staport.finance.gBanque.marches.dtos.MarcheRequestDTO;
 import staport.finance.gBanque.marches.dtos.MarcheResponseDTO;
+import staport.finance.gBanque.marches.dtos.MarcheSearchDTO;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.mapper.MarcheMapper;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.marches.specs.MarcheSpecification;
-import staport.finance.gBanque.marches.dtos.MarcheRequestDTO;
-import staport.finance.gBanque.marches.dtos.MarcheSearchDTO;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,11 +14,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+
 
 @Service
 @Transactional
-
 public class MarcheService {
 
     private final MarcheRepository marcheRepository;
@@ -36,15 +33,17 @@ public class MarcheService {
      * @param requestDTO The DTO containing the data.
      * @return The response DTO of the created Marche.
      */
-    public MarcheResponseDTO createMarche( MarcheRequestDTO requestDTO) {
+    public MarcheResponseDTO createMarche(MarcheRequestDTO requestDTO) {
         // Business logic: check for a unique numero
         if (marcheRepository.existsByNumero(requestDTO.getNumero())) {
             throw new IllegalArgumentException("Un marche avec ce numero existe deja.");
         }
 
-        // Business logic: deadline cannot be in the past
-        if (requestDTO.getDelai().isBefore(OffsetDateTime.now())) {
-            throw new IllegalArgumentException("La date d'echeance ne peut pas etre dans le passe.");
+
+
+        // Business logic: achievement date must be after the start date
+        if (requestDTO.getDateDAchievementDesTravaux().isBefore(requestDTO.getDateDebutDesTravaux())) {
+            throw new IllegalArgumentException("La date d'achevement des travaux ne peut pas etre avant la date de debut.");
         }
 
         Marche marche = marcheMapper.toEntity(requestDTO);
@@ -74,12 +73,18 @@ public class MarcheService {
         Marche existingMarche = marcheRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Marche not found with id " + id));
 
+        // Business logic: achievement date must be after the start date for updates
+        if (requestDTO.getDateDAchievementDesTravaux().isBefore(requestDTO.getDateDebutDesTravaux())) {
+            throw new IllegalArgumentException("La date d'achevement des travaux ne peut pas etre avant la date de debut.");
+        }
+
         // Update fields from DTO
         existingMarche.setNumero(requestDTO.getNumero());
         existingMarche.setNom(requestDTO.getNom());
         existingMarche.setMontant(requestDTO.getMontant());
         existingMarche.setMaitreDouvrage(requestDTO.getMaitreDouvrage());
-        existingMarche.setDelai(requestDTO.getDelai());
+        existingMarche.setDateDebutDesTravaux(requestDTO.getDateDebutDesTravaux());
+        existingMarche.setDateDAchievementDesTravaux(requestDTO.getDateDAchievementDesTravaux());
 
         Marche updatedMarche = marcheRepository.save(existingMarche);
         return marcheMapper.toResponseDTO(updatedMarche);
@@ -109,7 +114,7 @@ public class MarcheService {
                 .and(MarcheSpecification.hasNumero(searchDTO.getNumero()))
                 .and(MarcheSpecification.hasMaitreDouvrage(searchDTO.getMaitreDouvrage()));
 
-        // Add more conditions here from the searchDTO as needed
+
 
         // Execute the query with the specification and pageable info
         Page<Marche> marchePage = marcheRepository.findAll(spec, pageable);

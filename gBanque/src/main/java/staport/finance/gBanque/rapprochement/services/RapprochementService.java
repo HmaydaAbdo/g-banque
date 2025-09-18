@@ -12,6 +12,14 @@ import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.repositories.CreditMoyenTermeRepository;
+import staport.finance.gBanque.decomptes.dto.DecompteTransactionRequestDto;
+import staport.finance.gBanque.decomptes.dto.DecompteTransactionResponseDto;
+import staport.finance.gBanque.decomptes.entities.Decompte;
+import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
+import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionRequest;
+import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionResponse;
+import staport.finance.gBanque.droitConstate.entities.DroitConstate;
+import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.lcn.repositories.LcnRepository;
@@ -22,6 +30,12 @@ import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeas
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
+import staport.finance.gBanque.prefinancement.dtos.PrefinancementTransactionRequest;
+import staport.finance.gBanque.prefinancement.dtos.PrefinancementTransactionResponse;
+import staport.finance.gBanque.prefinancement.entities.Prefinancement;
+import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.prefinancement.enums.Type;
+import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
 import staport.finance.gBanque.rapprochement.dtos.cheques.ChequeTransactionRequest;
 import staport.finance.gBanque.rapprochement.dtos.cheques.ChequeTransactionResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.cmt.CmtTransactionRequestDto;
@@ -64,12 +78,22 @@ public class RapprochementService {
     private final MiseADispositionRepository miseADispositionRepository;
     private final MiseAdispositionTransactionMapper miseAdispositionTransactionMapper;
 
+    private final PrefinancementRepository prefinancementRepository;
+    private final PrefinancementTransactionMapper prefinancementTransactionMapper;
+
+    private final DroitConstateRepository droitConstateRepository;
+    private final DroitConstateTransactionMapper droitConstateTransactionMapper;
+
+    private final DecompteRepository decompteRepository;
+    private final DecompteTransactionMapper decompteTransactionMapper;
+
+
     private final TransactionRepository transactionRepository;
     private final BanqueRepository banqueRepository;
 
 
 
-    public RapprochementService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper) {
+    public RapprochementService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -86,6 +110,12 @@ public class RapprochementService {
         this.virementRepository = virementRepository;
         this.miseADispositionRepository = miseADispositionRepository;
         this.miseAdispositionTransactionMapper = miseAdispositionTransactionMapper;
+        this.prefinancementRepository = prefinancementRepository;
+        this.prefinancementTransactionMapper = prefinancementTransactionMapper;
+        this.droitConstateRepository = droitConstateRepository;
+        this.droitConstateTransactionMapper = droitConstateTransactionMapper;
+        this.decompteRepository = decompteRepository;
+        this.decompteTransactionMapper = decompteTransactionMapper;
     }
 
     @Transactional
@@ -299,5 +329,119 @@ public class RapprochementService {
         return virementTransactionMapper.toResponseDto(savedTransaction);
     }
 
+    @Transactional
+    public PrefinancementTransactionResponse processPrefinancementTransaction(PrefinancementTransactionRequest requestDto) throws Exception{
+        // Step 1: Fetch prefi  from the database using it's id from the request.
+        Prefinancement prefinancement=this.prefinancementRepository.findById(requestDto.getPrefinancementId())
+                .orElseThrow(()->new ResourceNotFoundException("Prefinancement with id "+requestDto.getPrefinancementId()+" not found"));
+
+        // Step 2: Check if the prefi is not already paid.
+        // If it's already paid , throw an exception.
+        if (prefinancement.getStatus()== Status.PAYE) {
+            throw new Exception(" préfinancement is already paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched prefi entity into a Transaction entity.
+        Transaction transactionEntity = prefinancementTransactionMapper.toEntity(requestDto);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+
+        if(prefinancement.getType()== Type.REMBOURSEMENT){
+            banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        }else{
+            banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
+        }
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the prefi as * (paid) and save the updated prefi entity.
+        prefinancement.setStatus(Status.PAYE);
+        prefinancementRepository.save(prefinancement);
+
+        // Step 7: Convert the saved Transaction entity into a PrefinancementTransactionResponse
+        // using the mapper and return it as the response.
+        return prefinancementTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+    @Transactional
+    public DroitConstateTransactionResponse processDroitConstateTransaction(DroitConstateTransactionRequest requestDto) throws Exception{
+        // Step 1: Fetch dc  from the database using it's id from the request.
+        DroitConstate droitConstate=this.droitConstateRepository.findById(requestDto.getDroitConstateId())
+                .orElseThrow(()->new ResourceNotFoundException("Droit constate with id "+requestDto.getDroitConstateId()+" not found"));
+
+        // Step 2: Check if the dc is not already paid.
+        // If it's already paid , throw an exception.
+        if (droitConstate.getStatus()== Status.PAYE) {
+            throw new Exception(" droit constate is already paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
+        Transaction transactionEntity = droitConstateTransactionMapper.toEntity(requestDto);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+
+        if(droitConstate.getType()== Type.REMBOURSEMENT){
+            banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        }else{
+            banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
+        }
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the prefi as * (paid) and save the updated prefi entity.
+        droitConstate.setStatus(Status.PAYE);
+        droitConstateRepository.save(droitConstate);
+
+        // Step 7: Convert the saved Transaction entity into a DroitConstateTransactionResponse
+        // using the mapper and return it as the response.
+        return droitConstateTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+
+    @Transactional
+    public DecompteTransactionResponseDto processDecompteToTransaction(DecompteTransactionRequestDto requestDto) throws Exception{
+        // Step 1: Fetch decompte  from the database using it's id from the request.
+        Decompte decompte=this.decompteRepository.findById(requestDto.getDecompteId())
+                .orElseThrow(()->new ResourceNotFoundException("Décompte with id "+requestDto.getDecompteId()+" not found"));
+
+        // Step 2: Check if the decompte is not already paid.
+        // If it's already paid , throw an exception.
+        if (decompte.getStatus()== Status.PAYE) {
+            throw new Exception(" décompte is already paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
+        Transaction transactionEntity = decompteTransactionMapper.toEntity(requestDto);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+
+        banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
+
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the decompte as * (paid) and save the updated decompte entity.
+        decompte.setStatus(Status.PAYE);
+        decompteRepository.save(decompte);
+
+        // Step 7: Convert the saved Transaction entity into a DroitConstateTransactionResponse
+        // using the mapper and return it as the response.
+        return decompteTransactionMapper.toResponseDto(savedTransaction);
+    }
 
 }

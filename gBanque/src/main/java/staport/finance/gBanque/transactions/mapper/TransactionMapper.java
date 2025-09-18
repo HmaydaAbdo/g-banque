@@ -23,7 +23,7 @@ public class TransactionMapper {
             dto.setDateValeur(transaction.getDateValeur());
             dto.setDateOperations(transaction.getDateOperations());
             dto.setObservation(transaction.getObservation());
-            dto.setTvaDeductible(transaction.getTvaDeductible());
+            dto.setTvaDeductible( transaction.getTvaDeductible());
             dto.setTvaCollectee(transaction.getTvaCollectee());
             dto.setLibelle(transaction.getLibelle());
             dto.setTransactionSource(transaction.getTransactionSource());

@@ -22,7 +22,7 @@ public class EcheanceLeasing {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relation ManyToOne : Chaque échéance est liée à un contrat de leasing.
+    // Relation ManyToOne : Chaque échéance est liée à un contrat d e leasing.
     @NotNull(message = "Le contrat de leasing est obligatoire")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contrat_leasing_id", nullable = false)

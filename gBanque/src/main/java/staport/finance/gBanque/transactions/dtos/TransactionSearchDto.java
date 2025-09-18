@@ -1,5 +1,9 @@
 package staport.finance.gBanque.transactions.dtos;
 
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+
+import java.util.List;
+
 /**
  * DTO for filtering transactions with a focused set of criteria.
  */
@@ -7,8 +11,8 @@ public class TransactionSearchDto {
 
     private String libelle;
     private Long banqueId;
-    private String transactionSource;
-
+    private List<TransactionSource> transactionSources;
+    private String observation;
     // Getters and Setters
 
     public String getLibelle() {
@@ -27,12 +31,19 @@ public class TransactionSearchDto {
         this.banqueId = banqueId;
     }
 
-
-    public String getTransactionSource() {
-        return transactionSource;
+    public List<TransactionSource> getTransactionSources() {
+        return transactionSources;
     }
 
-    public void setTransactionSource(String transactionSource) {
-        this.transactionSource = transactionSource;
+    public void setTransactionSources(List<TransactionSource> transactionSources) {
+        this.transactionSources = transactionSources;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
     }
 }

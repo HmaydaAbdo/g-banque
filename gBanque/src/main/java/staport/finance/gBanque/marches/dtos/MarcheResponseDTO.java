@@ -1,9 +1,7 @@
 package staport.finance.gBanque.marches.dtos;
 
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-
 
 public class MarcheResponseDTO {
 
@@ -12,7 +10,8 @@ public class MarcheResponseDTO {
     private String nom;
     private BigDecimal montant;
     private String maitreDouvrage;
-    private OffsetDateTime delai;
+    private OffsetDateTime dateDebutDesTravaux;
+    private OffsetDateTime dateDAchievementDesTravaux;
     private OffsetDateTime createdAt;
     private OffsetDateTime modifiedAt;
 
@@ -57,12 +56,20 @@ public class MarcheResponseDTO {
         this.maitreDouvrage = maitreDouvrage;
     }
 
-    public OffsetDateTime getDelai() {
-        return delai;
+    public OffsetDateTime getDateDebutDesTravaux() {
+        return dateDebutDesTravaux;
     }
 
-    public void setDelai(OffsetDateTime delai) {
-        this.delai = delai;
+    public void setDateDebutDesTravaux(OffsetDateTime dateDebutDesTravaux) {
+        this.dateDebutDesTravaux = dateDebutDesTravaux;
+    }
+
+    public OffsetDateTime getDateDAchievementDesTravaux() {
+        return dateDAchievementDesTravaux;
+    }
+
+    public void setDateDAchievementDesTravaux(OffsetDateTime dateDAchievementDesTravaux) {
+        this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
     }
 
     public OffsetDateTime getCreatedAt() {

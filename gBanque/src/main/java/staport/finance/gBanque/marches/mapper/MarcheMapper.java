@@ -1,6 +1,5 @@
 package staport.finance.gBanque.marches.mapper;
 
-
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.marches.dtos.MarcheRequestDTO;
 import staport.finance.gBanque.marches.dtos.MarcheResponseDTO;
@@ -22,7 +21,8 @@ public class MarcheMapper {
                 dto.getNom(),
                 dto.getMontant(),
                 dto.getMaitreDouvrage(),
-                dto.getDelai()
+                dto.getDateDebutDesTravaux(),
+                dto.getDateDAchievementDesTravaux()
         );
     }
 
@@ -40,7 +40,8 @@ public class MarcheMapper {
         dto.setNom(entity.getNom());
         dto.setMontant(entity.getMontant());
         dto.setMaitreDouvrage(entity.getMaitreDouvrage());
-        dto.setDelai(entity.getDelai());
+        dto.setDateDebutDesTravaux(entity.getDateDebutDesTravaux());
+        dto.setDateDAchievementDesTravaux(entity.getDateDAchievementDesTravaux());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setModifiedAt(entity.getModifiedAt());
         return dto;

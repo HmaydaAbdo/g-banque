@@ -1,6 +1,5 @@
 package staport.finance.gBanque.marches.dtos;
 
-
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,10 +26,13 @@ public class MarcheRequestDTO {
     @Size(max = 255, message = "Le maitre d'ouvrage doit avoir au maximum 255 caracteres")
     private String maitreDouvrage;
 
-    @NotNull(message = "Le delai ne peut pas etre nul")
-    private OffsetDateTime delai;
+    @NotNull(message = "La date de debut des travaux ne peut pas etre nulle")
+    private OffsetDateTime dateDebutDesTravaux;
 
-    // Getters and Setters (omitted for brevity)
+    @NotNull(message = "La date d'achevement des travaux ne peut pas etre nulle")
+    private OffsetDateTime dateDAchievementDesTravaux;
+
+    // Getters and Setters
     public String getNumero() {
         return numero;
     }
@@ -63,11 +65,19 @@ public class MarcheRequestDTO {
         this.maitreDouvrage = maitreDouvrage;
     }
 
-    public OffsetDateTime getDelai() {
-        return delai;
+    public OffsetDateTime getDateDebutDesTravaux() {
+        return dateDebutDesTravaux;
     }
 
-    public void setDelai(OffsetDateTime delai) {
-        this.delai = delai;
+    public void setDateDebutDesTravaux(OffsetDateTime dateDebutDesTravaux) {
+        this.dateDebutDesTravaux = dateDebutDesTravaux;
+    }
+
+    public OffsetDateTime getDateDAchievementDesTravaux() {
+        return dateDAchievementDesTravaux;
+    }
+
+    public void setDateDAchievementDesTravaux(OffsetDateTime dateDAchievementDesTravaux) {
+        this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
     }
 }

@@ -16,8 +16,8 @@ public class VirementTransactionResponseDto {
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperations;
-    private Double tvaDeductible;
-    private Double tvaCollectee;
+    private BigDecimal tvaDeductible;
+    private BigDecimal tvaCollectee;
     private BigDecimal debit;
     private BigDecimal credit;
     private final TransactionSource transactionSource = TransactionSource.Virement;
@@ -29,7 +29,7 @@ public class VirementTransactionResponseDto {
     // All-args constructor
     public VirementTransactionResponseDto(Long id, String banqueName, String virementNumber, String libelle,
                                           String observation, OffsetDateTime dateEmission, OffsetDateTime dateValeur,
-                                          OffsetDateTime dateOperations, Double tvaDeductible, Double tvaCollectee,
+                                          OffsetDateTime dateOperations, BigDecimal tvaDeductible, BigDecimal tvaCollectee,
                                           BigDecimal debit, BigDecimal credit) {
         this.id = id;
         this.banqueName = banqueName;
@@ -70,11 +70,11 @@ public class VirementTransactionResponseDto {
     public OffsetDateTime getDateOperations() { return dateOperations; }
     public void setDateOperations(OffsetDateTime dateOperations) { this.dateOperations = dateOperations; }
 
-    public Double getTvaDeductible() { return tvaDeductible; }
-    public void setTvaDeductible(Double tvaDeductible) { this.tvaDeductible = tvaDeductible; }
+    public BigDecimal getTvaDeductible() { return tvaDeductible; }
+    public void setTvaDeductible(BigDecimal tvaDeductible) { this.tvaDeductible = tvaDeductible; }
 
-    public Double getTvaCollectee() { return tvaCollectee; }
-    public void setTvaCollectee(Double tvaCollectee) { this.tvaCollectee = tvaCollectee; }
+    public BigDecimal getTvaCollectee() { return tvaCollectee; }
+    public void setTvaCollectee(BigDecimal tvaCollectee) { this.tvaCollectee = tvaCollectee; }
 
     public BigDecimal getDebit() { return debit; }
     public void setDebit(BigDecimal debit) { this.debit = debit; }

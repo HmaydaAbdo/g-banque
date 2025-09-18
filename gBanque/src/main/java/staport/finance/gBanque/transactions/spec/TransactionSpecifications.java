@@ -22,6 +22,10 @@ public class TransactionSpecifications {
         return (root, query, criteriaBuilder) -> criteriaBuilder.like(criteriaBuilder.lower(root.get("libelle")), "%" + keyword.toLowerCase() + "%");
     }
 
+    public static Specification<Transaction> observationContains(String keyword) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.like(criteriaBuilder.lower(root.get("observation")), "%" + keyword.toLowerCase() + "%");
+    }
+
     public static Specification<Transaction> hasBanqueId(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             Join<Transaction, Banque> banqueJoin = root.join("banqueDePrelevement");
@@ -45,19 +49,16 @@ public class TransactionSpecifications {
 
 
     /**
-     * Filters transactions by their source.
-     * @param source The transaction source enum value as a string.
-     * @return a Specification for a given transaction source.
+     * Filters transactions by a list of sources.
+     * @param sources The list of transaction source enum values.
+     * @return a Specification that matches transactions whose source is in the given list.
      */
-    public static Specification<Transaction> hasTransactionSource(String source) {
+    public static Specification<Transaction> hasTransactionSources(List<TransactionSource> sources) {
         return (root, query, criteriaBuilder) -> {
-            try {
-                TransactionSource transactionSource = TransactionSource.valueOf(source.toUpperCase());
-                return criteriaBuilder.equal(root.get("transactionSource"), transactionSource);
-            } catch (IllegalArgumentException e) {
-                // Return a predicate that will never match if the source is invalid
-                return criteriaBuilder.disjunction();
+            if (sources == null || sources.isEmpty()) {
+                return criteriaBuilder.conjunction(); // no filtering if list is empty
             }
+            return root.get("transactionSource").in(sources);
         };
     }
     /**

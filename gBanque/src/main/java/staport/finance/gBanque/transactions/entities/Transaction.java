@@ -24,10 +24,11 @@ public class Transaction {
     private String libelle;
 
     private String observation;
-    private Double tvaDeductible;
-    private Double tvaCollectee;
+    private BigDecimal tvaDeductible;
+    private BigDecimal tvaCollectee;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 100)
     private TransactionSource transactionSource;
 
     @Column(precision = 19, scale = 2)
@@ -118,19 +119,19 @@ public class Transaction {
         this.observation = observation;
     }
 
-    public Double getTvaDeductible() {
+    public BigDecimal getTvaDeductible() {
         return tvaDeductible;
     }
 
-    public void setTvaDeductible(Double tvaDeductible) {
+    public void setTvaDeductible(BigDecimal tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
     }
 
-    public Double getTvaCollectee() {
+    public BigDecimal getTvaCollectee() {
         return tvaCollectee;
     }
 
-    public void setTvaCollectee(Double tvaCollectee) {
+    public void setTvaCollectee(BigDecimal tvaCollectee) {
         this.tvaCollectee = tvaCollectee;
     }
 

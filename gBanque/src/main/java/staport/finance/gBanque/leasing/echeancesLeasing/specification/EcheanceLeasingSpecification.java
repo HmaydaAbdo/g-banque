@@ -62,16 +62,22 @@ public class EcheanceLeasingSpecification {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("contratLeasing").get("id"), contratId);
     }
-
-    public static Specification<EcheanceLeasing> hasNumeroEcheance(Integer numeroEcheance) {
-        return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("numeroEcheance"), numeroEcheance);
+    /**
+     * Creates a Specification to filter EcheanceLeasing entities by the contract number
+     * associated with their parent contract.
+     *
+     * @param numeroContrat The contract number for filtering.
+     * @return A Specification that filters by the contract number.
+     */
+    public static Specification<EcheanceLeasing> byContratNumeroContrat(String numeroContrat) {
+        return (root, query, criteriaBuilder) -> {
+            Join<EcheanceLeasing, ContratLeasing> contratLeasingJoin = root.join("contratLeasing");
+            return criteriaBuilder.like(contratLeasingJoin.get("numeroContrat"), "%" + numeroContrat + "%");
+        };
     }
 
-    public static Specification<EcheanceLeasing> hasStatutPaiement(StatutEcheanceLeasing statut) {
-        return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("statutPaiement"), statut);
-    }
+
+
 
     /**
      * Crée une Specification pour filtrer les entités EcheanceLeasing par l'ID de la banque

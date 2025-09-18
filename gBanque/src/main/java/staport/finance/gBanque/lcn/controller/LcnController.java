@@ -6,6 +6,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.lcn.dtos.EncoursLcnResponse;
+import staport.finance.gBanque.lcn.dtos.EncoursLcnSearchDto;
 import staport.finance.gBanque.lcn.dtos.LcnResponseDTO;
 import staport.finance.gBanque.lcn.dtos.LcnSearchDTO;
 import staport.finance.gBanque.lcn.services.LcnService;
@@ -66,11 +68,12 @@ public class LcnController {
      * @return A paginated list of LcnResponseDTO for the outstanding LCN.
      */
     @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<Page<LcnResponseDTO>> getEncoursForLcn(
+    public ResponseEntity<EncoursLcnResponse> getEncoursForLcn(
             @PathVariable Long banqueId,
+            EncoursLcnSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEcheance") Pageable pageable) {
 
-        Page<LcnResponseDTO> result = lcnService.getEncoursForLcn(banqueId, pageable);
+        EncoursLcnResponse result = lcnService.getEncoursForLcn(searchDto,banqueId, pageable);
         return ResponseEntity.ok(result);
     }
 }

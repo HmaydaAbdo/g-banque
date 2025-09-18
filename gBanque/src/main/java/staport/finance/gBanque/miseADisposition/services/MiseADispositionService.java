@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.miseADisposition.dtos.EncoursMiseAdisposition;
+import staport.finance.gBanque.miseADisposition.dtos.EncoursMiseAdispositionSearchDto;
 import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionResponseDto;
 import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionSearchDto;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
@@ -16,6 +18,7 @@ import staport.finance.gBanque.virements.entities.Virement;
 import staport.finance.gBanque.virements.mapper.VirementMapper;
 import staport.finance.gBanque.virements.specs.VirementSpec;
 
+import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @Service
@@ -78,14 +81,17 @@ public class MiseADispositionService {
      * @return A Page of MiseADispositionResponseDto for the outstanding virements.
      */
     @Transactional(readOnly = true)
-    public Page<MiseADispositionResponseDto> getEncoursForMiseAdisposition(Long banqueId, Pageable pageable) {
+    public EncoursMiseAdisposition getEncoursForMiseAdisposition(EncoursMiseAdispositionSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification for active mise à disposition for the specified bank in the current month
-        Specification<MiseADisposition> spec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<MiseADisposition> spec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId)
+                .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
+                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()));
 
         // Execute the search with the specification and pagination
         Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);
-
+        BigDecimal totalDesEncours = miseADispositionRepository.findAll(spec).stream().map(MiseADisposition::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        Page<MiseADispositionResponseDto> result = miseADispositionPage.map(MiseADispositionMapper::toDto);
         // Map the result to DTOs and return
-        return miseADispositionPage.map(MiseADispositionMapper::toDto);
+        return new EncoursMiseAdisposition(totalDesEncours,result);
     }
 }

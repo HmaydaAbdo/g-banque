@@ -10,6 +10,7 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.virements.entities.Virement;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,7 +44,12 @@ public class VirementTransactionMapper {
 
         // Mapping simple fields
         transaction.setObservation(requestDto.getObservation());
-        transaction.setTvaDeductible(requestDto.getTvaDeductible() / 100);
+        transaction.setTvaDeductible(
+                virement.getMontant()
+                        .multiply(BigDecimal.valueOf(requestDto.getTvaDeductible()))   // montant * taux
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
+                        .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
+        );
 
         // Mapping dates (ensuring consistency with OffsetDateTime)
         transaction.setDateEmission(requestDto.getDateEmission());

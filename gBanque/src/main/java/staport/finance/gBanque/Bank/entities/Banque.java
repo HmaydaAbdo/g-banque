@@ -8,10 +8,12 @@ import staport.finance.gBanque.Bank.enums.Devise;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
+import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
+import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.virements.entities.Virement;
 import staport.finance.gBanque.transactions.entities.Transaction;
 
@@ -73,26 +75,30 @@ public class Banque {
     @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<LigneFonctionnelleSpecifique> ligneFonctionnellesSpecifiques = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Cheque> cheques = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Lcn> lcns = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Virement> virements = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<MiseADisposition> misesADisposition = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banqueDePrelevement", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "banqueDePrelevement", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<ContratLeasing> contratsLeasing = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<CreditMoyenTerme> creditMoyenTermes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banqueDePrelevement", cascade = {CascadeType.PERSIST, CascadeType.MERGE},fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<Decompte> decomptes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banqueDePrelevement",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
+
 
     // --- Constructors ---
     public Banque() {}
@@ -200,6 +206,22 @@ public class Banque {
     public void removeLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique l) {
         ligneFonctionnellesSpecifiques.remove(l);
         l.setBanque(null);
+    }
+
+    public List<Decompte> getDecomptes() {
+        return decomptes;
+    }
+
+    public void setDecomptes(List<Decompte> decomptes) {
+        this.decomptes = decomptes;
+    }
+
+    public void addDecompte(Decompte decompte){
+        this.decomptes.add(decompte);
+    }
+
+    public void removeDecompte(Decompte decompte){
+        this.decomptes.remove(decompte);
     }
 
     @PrePersist

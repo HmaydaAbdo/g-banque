@@ -9,4 +9,5 @@ import staport.finance.gBanque.marches.entities.Marche;
 public interface MarcheRepository  extends JpaRepository <Marche, Long>, JpaSpecificationExecutor<Marche> {
     boolean existsByNumero(String numero);
 
+
 }

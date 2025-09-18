@@ -188,7 +188,8 @@ public class EcheanceCMTService {
                 .orElseThrow(() -> new ResourceNotFoundException("Banque avec l'ID " + requestDTO.getBanqueId() + " introuvable."));
 
         Specification<EcheanceCMT> spec = EcheanceCMTSpecification.byCreditBanqueId(requestDTO.getBanqueId())
-                .and(EcheanceCMTSpecification.outstandingUntil(requestDTO.getPeriode(), OffsetDateTime.now()));
+                .and(EcheanceCMTSpecification.outstandingUntil(requestDTO.getPeriode(), OffsetDateTime.now()))
+                .and(EcheanceCMTSpecification.byCreditDesignationLike(requestDTO.getDesignation()));
 
         Page<EcheanceCMT> encoursEcheancesPage = echeanceCmtRepository.findAll(spec, pageable);
         Page<EcheanceCMTResponseDto> echeancesDtoPage = encoursEcheancesPage.map(echeanceCmtMapper::toResponseDto);

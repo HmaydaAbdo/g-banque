@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.cheques.dtos.ChequeResponseDto;
 import staport.finance.gBanque.cheques.dtos.ChequeSearchDto;
+import staport.finance.gBanque.cheques.dtos.EncoursChequeResponseDto;
+import staport.finance.gBanque.cheques.dtos.EncoursChequeSearchDto;
 import staport.finance.gBanque.cheques.services.ChequeService;
 
 
@@ -67,11 +69,10 @@ public class ChequeController {
      * @return A paginated list of ChequeResponseDto for the outstanding cheques.
      */
     @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<Page<ChequeResponseDto>> getEncoursForCheques(
+    public ResponseEntity<EncoursChequeResponseDto> getEncoursForCheques(
             @PathVariable Long banqueId,
+            EncoursChequeSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-
-        Page<ChequeResponseDto> result = chequeService.getEncoursForCheques(banqueId, pageable);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(chequeService.getEncoursForCheques(searchDto,banqueId, pageable));
     }
 }

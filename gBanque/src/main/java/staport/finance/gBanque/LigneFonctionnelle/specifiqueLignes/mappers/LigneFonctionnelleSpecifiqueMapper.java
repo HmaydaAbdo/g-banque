@@ -6,9 +6,16 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entit
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueRequest;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueResponse;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.SpecificLigneResposneDto;
+import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.marches.entities.Marche;
+import staport.finance.gBanque.prefinancement.entities.Prefinancement;
+import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.prefinancement.enums.Type;
+
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Component
 public class LigneFonctionnelleSpecifiqueMapper {
@@ -84,18 +91,92 @@ public class LigneFonctionnelleSpecifiqueMapper {
         return response;
     }
 
+
     /**
-     * Converts a list of LigneFonctionnelleSpecifique entities to a list of DTOs.
+     * Converts a LigneFonctionnelleSpecifique entity to a SpecificLigneResposneDto DTO.
      *
-     * @param entities The list of LigneFonctionnelleSpecifique entities.
-     * @return A list of LigneFonctionnelleSpecifiqueResponse DTOs.
+     * @param entity The LigneFonctionnelleSpecifique entity.
+     * @return A PrefinancementResponseDto DTO.
      */
-    public List<LigneFonctionnelleSpecifiqueResponse> toDtoList(List<LigneFonctionnelleSpecifique> entities) {
-        if (entities == null) {
-            return List.of();
+    public SpecificLigneResposneDto toPrefinancementResponseDto(LigneFonctionnelleSpecifique entity) {
+        if (entity == null) {
+            return null;
         }
-        return entities.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+
+        SpecificLigneResposneDto response = new SpecificLigneResposneDto();
+
+        // Map all fields directly
+        response.setId(entity.getId());
+        // Map the specific fields
+        if (entity.getMarche() != null) {
+            response.setMarcheNumero(entity.getMarche().getNumero());
+        }
+        if (entity.getBanque() != null) {
+            response.setBanqueNom( entity.getBanque().getNom());
+        }
+
+        // montant
+        response.setMontant(entity.getPlafond());
+
+        // encours
+        List<Prefinancement> prefinancements= entity.getMarche().getPrefinancements().stream().filter(prefinancement -> prefinancement.getStatus()== Status.PAYE && prefinancement.getType()== Type.REMBOURSEMENT).toList();
+        BigDecimal encours = prefinancements.stream().map(Prefinancement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        response.setEncours(encours);
+
+        //solde
+        response.setSolde(entity.getPlafond().subtract(encours));
+
+        response.setTaux(entity.getTaux());
+        response.setDateDepart(entity.getDateDepart());
+        response.setDateFin(entity.getDateFin());
+        response.setNatureLigneFonctionnelleLabel(entity.getNatureLigneFonctionnelle() != null ? entity.getNatureLigneFonctionnelle().getLabel() : null);
+        response.setActif(entity.isActif());
+
+        return response;
     }
+
+    /**
+     * Converts a LigneFonctionnelleSpecifique entity to a SpecificLigneResposneDto DTO.
+     *
+     * @param entity The LigneFonctionnelleSpecifique entity.
+     * @return A PrefinancementResponseDto DTO.
+     */
+    public SpecificLigneResposneDto toDCResponseDto(LigneFonctionnelleSpecifique entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        SpecificLigneResposneDto response = new SpecificLigneResposneDto();
+
+        // Map all fields directly
+        response.setId(entity.getId());
+        // Map the specific fields
+        if (entity.getMarche() != null) {
+            response.setMarcheNumero(entity.getMarche().getNumero());
+        }
+        if (entity.getBanque() != null) {
+            response.setBanqueNom( entity.getBanque().getNom());
+        }
+
+        // montant
+        response.setMontant(entity.getPlafond());
+
+        // encours
+        List<DroitConstate> droitConstates= entity.getMarche().getDroitConstates().stream().filter(droitConstate -> droitConstate.getStatus()== Status.PAYE && droitConstate.getType()== Type.REMBOURSEMENT).toList();
+        BigDecimal encours = droitConstates.stream().map(DroitConstate::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        response.setEncours(encours);
+
+        //solde
+        response.setSolde(entity.getPlafond().subtract(encours));
+
+        response.setTaux(entity.getTaux());
+        response.setDateDepart(entity.getDateDepart());
+        response.setDateFin(entity.getDateFin());
+        response.setNatureLigneFonctionnelleLabel(entity.getNatureLigneFonctionnelle() != null ? entity.getNatureLigneFonctionnelle().getLabel() : null);
+        response.setActif(entity.isActif());
+
+        return response;
+    }
+
+
 }

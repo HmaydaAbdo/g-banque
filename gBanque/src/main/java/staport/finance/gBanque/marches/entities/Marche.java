@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
+import staport.finance.gBanque.decomptes.entities.Decompte;
+import staport.finance.gBanque.droitConstate.entities.DroitConstate;
+import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -32,12 +35,24 @@ public class Marche implements Serializable {
     @Column(name = "maitre_douvrage", nullable = false, length = 255)
     private String maitreDouvrage;
 
-    @Column(name = "delai", nullable = false)
-    private OffsetDateTime delai;
+    // New fields
+    @Column(name = "date_debut_des_travaux", nullable = false)
+    private OffsetDateTime dateDebutDesTravaux;
+
+    @Column(name = "date_d_achievement_des_travaux", nullable = false)
+    private OffsetDateTime dateDAchievementDesTravaux;
 
     @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneFonctionnelleSpecifique> lignesFonctionnellesSpecifiques = new ArrayList<>();
 
+    @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Prefinancement> prefinancements = new ArrayList<>();
+
+    @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DroitConstate> droitConstates = new ArrayList<>();
+
+    @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Decompte> decomptes = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -51,12 +66,13 @@ public class Marche implements Serializable {
     protected Marche() {
     }
 
-    public Marche(String numero, String nom, BigDecimal montant, String maitreDouvrage, OffsetDateTime delai) {
+    public Marche(String numero, String nom, BigDecimal montant, String maitreDouvrage, OffsetDateTime dateDebutDesTravaux, OffsetDateTime dateDAchievementDesTravaux) {
         this.numero = numero;
         this.nom = nom;
         this.montant = montant;
         this.maitreDouvrage = maitreDouvrage;
-        this.delai = delai;
+        this.dateDebutDesTravaux = dateDebutDesTravaux;
+        this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
     }
 
     // --- Getters and Setters ---
@@ -64,8 +80,6 @@ public class Marche implements Serializable {
     public Long getId() {
         return id;
     }
-
-    // No setter for 'id' as it's auto-generated
 
     public String getNumero() {
         return numero;
@@ -99,14 +113,21 @@ public class Marche implements Serializable {
         this.maitreDouvrage = maitreDouvrage;
     }
 
-    public OffsetDateTime getDelai() {
-        return delai;
+    public OffsetDateTime getDateDebutDesTravaux() {
+        return dateDebutDesTravaux;
     }
 
-    public void setDelai(OffsetDateTime delai) {
-        this.delai = delai;
+    public void setDateDebutDesTravaux(OffsetDateTime dateDebutDesTravaux) {
+        this.dateDebutDesTravaux = dateDebutDesTravaux;
     }
 
+    public OffsetDateTime getDateDAchievementDesTravaux() {
+        return dateDAchievementDesTravaux;
+    }
+
+    public void setDateDAchievementDesTravaux(OffsetDateTime dateDAchievementDesTravaux) {
+        this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
+    }
 
     public List<LigneFonctionnelleSpecifique> getLignesFonctionnellesSpecifiques() {
         return lignesFonctionnellesSpecifiques;
@@ -124,6 +145,57 @@ public class Marche implements Serializable {
     public void removeLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique ligne) {
         this.lignesFonctionnellesSpecifiques.remove(ligne);
         ligne.setMarche(null);
+    }
+    public List<Prefinancement> getPrefinancements() {
+        return prefinancements;
+    }
+
+    public void setPrefinancements(List<Prefinancement> prefinancements) {
+        this.prefinancements = prefinancements;
+    }
+
+    public void addPrefinancement(Prefinancement prefinancement) {
+        this.prefinancements.add(prefinancement);
+        prefinancement.setMarche(this);
+    }
+
+    public void removePrefinancement(Prefinancement prefinancement) {
+        this.prefinancements.remove(prefinancement);
+        prefinancement.setMarche(null);
+    }
+
+    public List<DroitConstate> getDroitConstates() {
+        return droitConstates;
+    }
+
+    public void setDroitConstates(List<DroitConstate> droitConstates) {
+        this.droitConstates = droitConstates;
+    }
+
+    public void addDroitConstate(DroitConstate dc) {
+        this.droitConstates.add(dc);
+        dc.setMarche(this);
+    }
+
+    public void removeDroitConstate(DroitConstate dc) {
+        this.droitConstates.remove(dc);
+        dc.setMarche(null);
+    }
+
+    public List<Decompte> getDecomptes() {
+        return decomptes;
+    }
+
+    public void setDecomptes(List<Decompte> decomptes) {
+        this.decomptes = decomptes;
+    }
+
+    public void addDecompte(Decompte decompte){
+        this.decomptes.add(decompte);
+    }
+
+    public void removeDecompte(Decompte decompte){
+        this.decomptes.remove(decompte);
     }
 
     public OffsetDateTime getCreatedAt() {
@@ -157,7 +229,8 @@ public class Marche implements Serializable {
                 ", nom='" + nom + '\'' +
                 ", montant=" + montant +
                 ", maitreDouvrage='" + maitreDouvrage + '\'' +
-                ", delai=" + delai +
+                ", dateDebutDesTravaux=" + dateDebutDesTravaux +
+                ", dateDAchievementDesTravaux=" + dateDAchievementDesTravaux +
                 ", createdAt=" + createdAt +
                 ", modifiedAt=" + modifiedAt +
                 '}';

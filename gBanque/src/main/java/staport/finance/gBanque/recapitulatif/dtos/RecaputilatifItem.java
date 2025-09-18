@@ -1,16 +1,20 @@
-package staport.finance.gBanque.recapitulatif.decaissement.dtos;
+package staport.finance.gBanque.recapitulatif.dtos;
+
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-public class RecaputilatifDecaissementItem {
+public class RecaputilatifItem {
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateEcheance;
     private String libelle;
     private BigDecimal debit;
+    private BigDecimal credit;
     private String observations;
+    private TransactionSource source;
 
-    public RecaputilatifDecaissementItem() {
+    public RecaputilatifItem() {
     }
 
     // Getters
@@ -52,5 +56,21 @@ public class RecaputilatifDecaissementItem {
     }
     public void setDateEcheance(OffsetDateTime dateEcheance) {
         this.dateEcheance = dateEcheance;
+    }
+
+    public BigDecimal getCredit() {
+        return credit;
+    }
+
+    public void setCredit(BigDecimal credit) {
+        this.credit = credit;
+    }
+
+    public TransactionSource getSource() {
+        return source;
+    }
+
+    public void setSource(TransactionSource source) {
+        this.source = source;
     }
 }

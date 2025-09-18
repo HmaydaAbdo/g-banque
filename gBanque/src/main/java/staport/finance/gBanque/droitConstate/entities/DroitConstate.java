@@ -1,0 +1,151 @@
+package staport.finance.gBanque.droitConstate.entities;
+
+import jakarta.persistence.*;
+import staport.finance.gBanque.marches.entities.Marche;
+import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.prefinancement.enums.Type;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.Objects;
+
+@Entity
+public class DroitConstate {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "marche_id")
+    private Marche marche;
+
+    private OffsetDateTime dateEmission;
+
+    private BigDecimal montant;
+
+    @Enumerated(EnumType.STRING) // Best practice for enums
+    private Type type;
+
+    private String observation;
+
+    @Enumerated(EnumType.STRING) // Best practice for enums
+    private Status status=Status.PREVU;
+
+    private OffsetDateTime dateOperation;
+    private OffsetDateTime dateValeur;
+
+    public DroitConstate() {
+    }
+
+    public DroitConstate(Long id, Marche marche, OffsetDateTime dateEmission, BigDecimal montant, Type type, String observation, Status status, OffsetDateTime dateOperation, OffsetDateTime dateValeur) {
+        this.id = id;
+        this.marche = marche;
+        this.dateEmission = dateEmission;
+        this.montant = montant;
+        this.type = type;
+        this.observation = observation;
+        this.status = status;
+        this.dateOperation = dateOperation;
+        this.dateValeur = dateValeur;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Marche getMarche() {
+        return marche;
+    }
+
+    public void setMarche(Marche marche) {
+        this.marche = marche;
+    }
+
+    public OffsetDateTime getDateEmission() {
+        return dateEmission;
+    }
+
+    public void setDateEmission(OffsetDateTime dateEmission) {
+        this.dateEmission = dateEmission;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        DroitConstate that = (DroitConstate) o;
+        return Objects.equals(id, that.id) && Objects.equals(marche, that.marche) && Objects.equals(dateEmission, that.dateEmission) && Objects.equals(montant, that.montant) && type == that.type && Objects.equals(observation, that.observation) && status == that.status && Objects.equals(dateOperation, that.dateOperation) && Objects.equals(dateValeur, that.dateValeur);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, marche, dateEmission, montant, type, observation, status, dateOperation, dateValeur);
+    }
+
+    @Override
+    public String toString() {
+        return "DroitConstate{" +
+                "id=" + id +
+                ", marche=" + marche +
+                ", dateEmission=" + dateEmission +
+                ", montant=" + montant +
+                ", type=" + type +
+                ", observation='" + observation + '\'' +
+                ", status=" + status +
+                ", dateOperation=" + dateOperation +
+                ", dateValeur=" + dateValeur +
+                '}';
+    }
+}
