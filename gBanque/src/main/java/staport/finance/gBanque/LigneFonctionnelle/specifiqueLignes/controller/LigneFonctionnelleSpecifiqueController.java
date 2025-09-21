@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueService;
+import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
+import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
+
 
 @RestController
 @RequestMapping("/lignes-fonctionnelles-specifiques")
@@ -56,6 +59,22 @@ public class LigneFonctionnelleSpecifiqueController {
             @Valid @RequestBody LigneFonctionnelleSpecifiqueRequest request) {
         LigneFonctionnelleSpecifiqueResponse updatedLigne = ligneFonctionnelleSpecifiqueService.updateLigneFonctionnelleSpecifique(id, request);
         return ResponseEntity.ok(updatedLigne);
+    }
+
+    @GetMapping("/banque/{banqueId}")
+    public ResponseEntity<Page<LigneFonctionnelleSpecifiqueResponse>> getLignesFonctionnellesSpecifiquesByBanqueId(
+            @PathVariable Long banqueId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort,
+            @ModelAttribute LigneFonctionnelleSpecifiqueSearchCriteria searchCriteria) {
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        Page<LigneFonctionnelleSpecifiqueResponse> lignes = ligneFonctionnelleSpecifiqueService.getLignesFonctionnellesSpecifiquesByBanqueId(banqueId, searchCriteria, pageable);
+        return ResponseEntity.ok(lignes);
     }
 
     /**
@@ -105,5 +124,37 @@ public class LigneFonctionnelleSpecifiqueController {
         Pageable pageable = PageRequest.of(page, size, sortOrder);
         Page<SpecificLigneResposneDto> resposne =ligneFonctionnelleSpecifiqueService.getDCLines(searchCriteria,pageable);
         return ResponseEntity.ok(resposne);
+    }
+
+
+    @GetMapping("/{id}/prefinancements")
+    public ResponseEntity<AgregatedSuiviePrefiLigneResponseDto> getPrefinancementsByLineId(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        AgregatedSuiviePrefiLigneResponseDto res = ligneFonctionnelleSpecifiqueService.getSuiviePrefiLigneResponse(id, pageable);
+        return ResponseEntity.ok(res);
+    }
+
+
+    @GetMapping("/{id}/dc")
+    public ResponseEntity<AgregatedSuivieDcLigneResponseDto> getDroitConstateByLineId(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        AgregatedSuivieDcLigneResponseDto res = ligneFonctionnelleSpecifiqueService.getSuivieDcLigneResponse(id, pageable);
+        return ResponseEntity.ok(res);
     }
 }

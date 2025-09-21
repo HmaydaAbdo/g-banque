@@ -92,6 +92,11 @@ public class DecompteTransactionMapper {
         } catch (Exception e) {
             throw new Exception("Erreur lors du mappage des traces", e);
         }
+
+        //update decompte
+        decompte.setDateValeur(requestDto.getDateValeur());
+        decompte.setDateOperation(requestDto.getDateOperation());
+        decompteRepository.save(decompte);
         return transaction;
     }
 

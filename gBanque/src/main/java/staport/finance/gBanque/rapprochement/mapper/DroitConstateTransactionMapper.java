@@ -101,6 +101,11 @@ public class DroitConstateTransactionMapper {
         } catch (Exception e) {
             throw new Exception("Erreur lors du mappage des traces", e);
         }
+
+        //update dc
+        droitConstate.setDateValeur(requestDto.getDateValeur());
+        droitConstate.setDateOperation(requestDto.getDateOperation());
+        droitConstateRepository.save(droitConstate);
         return transaction;
     }
 

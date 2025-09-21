@@ -31,49 +31,11 @@ public class DroitConstateResponseDto {
     private OffsetDateTime dateOperation;
     private OffsetDateTime dateValeur;
     private Status status;
+    private String libelle;
 
     public DroitConstateResponseDto() {
     }
 
-    public DroitConstateResponseDto(DroitConstate droitConstate) {
-
-        this.id = droitConstate.getId();
-        // Check if the marche and its functional lines exist to prevent NullPointerException
-        Marche marche = droitConstate.getMarche();
-        if (marche != null) {
-            this.marcheId = marche.getId();
-            this.marcheName = marche.getNom();
-            this.marcheNumero = marche.getNumero();
-
-            if (marche.getLignesFonctionnellesSpecifiques() != null) {
-
-                // Filter the list to find all active droit constaté  lines
-                List<LigneFonctionnelleSpecifique> activePrefiLines = marche.getLignesFonctionnellesSpecifiques().stream()
-                        .filter(ligne -> ligne.isActif() && "Droit constaté".equals(ligne.getNatureLigneFonctionnelle().getLabel()))
-                        .toList();
-
-                // Defensive programming check: enforce the business rule of a single active line
-                if (activePrefiLines.size() > 1) {
-                    throw new IllegalStateException("The market with ID " + marche.getId() + " has more than one active 'Droit constaté' functional line.");
-                }
-
-                // Check if there is exactly one active droit constate line and retrieve the bank information
-                if (activePrefiLines.size() == 1) {
-                    LigneFonctionnelleSpecifique activeLigne = activePrefiLines.get(0);
-                    this.banqueId = activeLigne.getBanque().getId();
-                    this.banqueName = activeLigne.getBanque().getNom();
-                }
-            }
-        }
-
-        this.dateEmission = droitConstate.getDateEmission();
-        this.montant = droitConstate.getMontant();
-        this.observation = droitConstate.getObservation();
-        this.type = droitConstate.getType();
-        this.dateOperation = droitConstate.getDateOperation();
-        this.dateValeur = droitConstate.getDateValeur();
-        this.status = droitConstate.getStatus();
-    }
 
     public Long getId() {
         return id;
@@ -177,5 +139,13 @@ public class DroitConstateResponseDto {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 }

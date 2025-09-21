@@ -6074,3 +6074,499 @@
   Skipped Item DTO: FunPaymentDto{numero='007160', dateCheque=2025-01-06, dateEcheance=null, montant=263439, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
 2025-09-18 17:58:31 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007159
   Skipped Item DTO: FunPaymentDto{numero='007159', dateCheque=2025-01-06, dateEcheance=null, montant=384938, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:48 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008311
+  Skipped Item DTO: FunPaymentDto{numero='008311', dateCheque=2025-09-15, dateEcheance=null, montant=513150, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:48 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008272
+  Skipped Item DTO: FunPaymentDto{numero='008272', dateCheque=2025-09-04, dateEcheance=null, montant=243611, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:48 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008266
+  Skipped Item DTO: FunPaymentDto{numero='008266', dateCheque=2025-09-03, dateEcheance=null, montant=433658, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008142
+  Skipped Item DTO: FunPaymentDto{numero='008142', dateCheque=2025-08-13, dateEcheance=null, montant=455654, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008108
+  Skipped Item DTO: FunPaymentDto{numero='008108', dateCheque=2025-08-05, dateEcheance=null, montant=275365, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008107
+  Skipped Item DTO: FunPaymentDto{numero='008107', dateCheque=2025-08-05, dateEcheance=null, montant=441319, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007990
+  Skipped Item DTO: FunPaymentDto{numero='007990', dateCheque=2025-07-14, dateEcheance=null, montant=424765, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007940
+  Skipped Item DTO: FunPaymentDto{numero='007940', dateCheque=2025-07-04, dateEcheance=null, montant=280927, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007939
+  Skipped Item DTO: FunPaymentDto{numero='007939', dateCheque=2025-07-04, dateEcheance=null, montant=447516, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007864
+  Skipped Item DTO: FunPaymentDto{numero='007864', dateCheque=2025-06-20, dateEcheance=null, montant=232781.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007764
+  Skipped Item DTO: FunPaymentDto{numero='007764', dateCheque=2025-06-03, dateEcheance=null, montant=522430, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007763
+  Skipped Item DTO: FunPaymentDto{numero='007763', dateCheque=2025-06-03, dateEcheance=null, montant=282042, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007762
+  Skipped Item DTO: FunPaymentDto{numero='007762', dateCheque=2025-06-03, dateEcheance=null, montant=449557, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007652
+  Skipped Item DTO: FunPaymentDto{numero='007652', dateCheque=2025-05-16, dateEcheance=null, montant=269158.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007620
+  Skipped Item DTO: FunPaymentDto{numero='007620', dateCheque=2025-05-05, dateEcheance=null, montant=280273, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007619
+  Skipped Item DTO: FunPaymentDto{numero='007619', dateCheque=2025-05-05, dateEcheance=null, montant=430606, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007527
+  Skipped Item DTO: FunPaymentDto{numero='007527', dateCheque=2025-04-18, dateEcheance=null, montant=280094.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007454
+  Skipped Item DTO: FunPaymentDto{numero='007454', dateCheque=2025-03-26, dateEcheance=null, montant=423157, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007453
+  Skipped Item DTO: FunPaymentDto{numero='007453', dateCheque=2025-03-26, dateEcheance=null, montant=289433, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007452
+  Skipped Item DTO: FunPaymentDto{numero='007452', dateCheque=2025-03-26, dateEcheance=null, montant=598976, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007408
+  Skipped Item DTO: FunPaymentDto{numero='007408', dateCheque=2025-03-14, dateEcheance=null, montant=305305, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007388
+  Skipped Item DTO: FunPaymentDto{numero='007388', dateCheque=2025-03-05, dateEcheance=null, montant=29000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007387
+  Skipped Item DTO: FunPaymentDto{numero='007387', dateCheque=2025-03-05, dateEcheance=null, montant=287754, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007386
+  Skipped Item DTO: FunPaymentDto{numero='007386', dateCheque=2025-03-05, dateEcheance=null, montant=24000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007379
+  Skipped Item DTO: FunPaymentDto{numero='007379', dateCheque=2025-03-04, dateEcheance=null, montant=395904, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:52 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007322
+  Skipped Item DTO: FunPaymentDto{numero='007322', dateCheque=2025-02-18, dateEcheance=null, montant=630372, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:52 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007280
+  Skipped Item DTO: FunPaymentDto{numero='007280', dateCheque=2025-02-10, dateEcheance=null, montant=276139, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:52 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007278
+  Skipped Item DTO: FunPaymentDto{numero='007278', dateCheque=2025-02-07, dateEcheance=null, montant=389318, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:52 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007168
+  Skipped Item DTO: FunPaymentDto{numero='007168', dateCheque=2025-01-15, dateEcheance=null, montant=483005, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:52 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007160
+  Skipped Item DTO: FunPaymentDto{numero='007160', dateCheque=2025-01-06, dateEcheance=null, montant=263439, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 08:58:52 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007159
+  Skipped Item DTO: FunPaymentDto{numero='007159', dateCheque=2025-01-06, dateEcheance=null, montant=384938, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:18 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008311
+  Skipped Item DTO: FunPaymentDto{numero='008311', dateCheque=2025-09-15, dateEcheance=null, montant=513150, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:18 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008272
+  Skipped Item DTO: FunPaymentDto{numero='008272', dateCheque=2025-09-04, dateEcheance=null, montant=243611, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:18 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008266
+  Skipped Item DTO: FunPaymentDto{numero='008266', dateCheque=2025-09-03, dateEcheance=null, montant=433658, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:18 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008142
+  Skipped Item DTO: FunPaymentDto{numero='008142', dateCheque=2025-08-13, dateEcheance=null, montant=455654, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:18 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008108
+  Skipped Item DTO: FunPaymentDto{numero='008108', dateCheque=2025-08-05, dateEcheance=null, montant=275365, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:18 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008107
+  Skipped Item DTO: FunPaymentDto{numero='008107', dateCheque=2025-08-05, dateEcheance=null, montant=441319, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007990
+  Skipped Item DTO: FunPaymentDto{numero='007990', dateCheque=2025-07-14, dateEcheance=null, montant=424765, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007940
+  Skipped Item DTO: FunPaymentDto{numero='007940', dateCheque=2025-07-04, dateEcheance=null, montant=280927, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007939
+  Skipped Item DTO: FunPaymentDto{numero='007939', dateCheque=2025-07-04, dateEcheance=null, montant=447516, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007864
+  Skipped Item DTO: FunPaymentDto{numero='007864', dateCheque=2025-06-20, dateEcheance=null, montant=232781.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007764
+  Skipped Item DTO: FunPaymentDto{numero='007764', dateCheque=2025-06-03, dateEcheance=null, montant=522430, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007763
+  Skipped Item DTO: FunPaymentDto{numero='007763', dateCheque=2025-06-03, dateEcheance=null, montant=282042, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007762
+  Skipped Item DTO: FunPaymentDto{numero='007762', dateCheque=2025-06-03, dateEcheance=null, montant=449557, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007652
+  Skipped Item DTO: FunPaymentDto{numero='007652', dateCheque=2025-05-16, dateEcheance=null, montant=269158.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007620
+  Skipped Item DTO: FunPaymentDto{numero='007620', dateCheque=2025-05-05, dateEcheance=null, montant=280273, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007619
+  Skipped Item DTO: FunPaymentDto{numero='007619', dateCheque=2025-05-05, dateEcheance=null, montant=430606, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007527
+  Skipped Item DTO: FunPaymentDto{numero='007527', dateCheque=2025-04-18, dateEcheance=null, montant=280094.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007454
+  Skipped Item DTO: FunPaymentDto{numero='007454', dateCheque=2025-03-26, dateEcheance=null, montant=423157, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007453
+  Skipped Item DTO: FunPaymentDto{numero='007453', dateCheque=2025-03-26, dateEcheance=null, montant=289433, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007452
+  Skipped Item DTO: FunPaymentDto{numero='007452', dateCheque=2025-03-26, dateEcheance=null, montant=598976, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:21 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007408
+  Skipped Item DTO: FunPaymentDto{numero='007408', dateCheque=2025-03-14, dateEcheance=null, montant=305305, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:21 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007388
+  Skipped Item DTO: FunPaymentDto{numero='007388', dateCheque=2025-03-05, dateEcheance=null, montant=29000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:21 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007387
+  Skipped Item DTO: FunPaymentDto{numero='007387', dateCheque=2025-03-05, dateEcheance=null, montant=287754, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:21 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007386
+  Skipped Item DTO: FunPaymentDto{numero='007386', dateCheque=2025-03-05, dateEcheance=null, montant=24000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:21 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007379
+  Skipped Item DTO: FunPaymentDto{numero='007379', dateCheque=2025-03-04, dateEcheance=null, montant=395904, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:21 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007322
+  Skipped Item DTO: FunPaymentDto{numero='007322', dateCheque=2025-02-18, dateEcheance=null, montant=630372, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:21 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007280
+  Skipped Item DTO: FunPaymentDto{numero='007280', dateCheque=2025-02-10, dateEcheance=null, montant=276139, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:21 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007278
+  Skipped Item DTO: FunPaymentDto{numero='007278', dateCheque=2025-02-07, dateEcheance=null, montant=389318, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:22 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007168
+  Skipped Item DTO: FunPaymentDto{numero='007168', dateCheque=2025-01-15, dateEcheance=null, montant=483005, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:22 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007160
+  Skipped Item DTO: FunPaymentDto{numero='007160', dateCheque=2025-01-06, dateEcheance=null, montant=263439, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 10:59:22 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007159
+  Skipped Item DTO: FunPaymentDto{numero='007159', dateCheque=2025-01-06, dateEcheance=null, montant=384938, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:47 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008311
+  Skipped Item DTO: FunPaymentDto{numero='008311', dateCheque=2025-09-15, dateEcheance=null, montant=513150, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:48 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008272
+  Skipped Item DTO: FunPaymentDto{numero='008272', dateCheque=2025-09-04, dateEcheance=null, montant=243611, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:48 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008266
+  Skipped Item DTO: FunPaymentDto{numero='008266', dateCheque=2025-09-03, dateEcheance=null, montant=433658, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:48 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008142
+  Skipped Item DTO: FunPaymentDto{numero='008142', dateCheque=2025-08-13, dateEcheance=null, montant=455654, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:48 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008108
+  Skipped Item DTO: FunPaymentDto{numero='008108', dateCheque=2025-08-05, dateEcheance=null, montant=275365, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:48 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008107
+  Skipped Item DTO: FunPaymentDto{numero='008107', dateCheque=2025-08-05, dateEcheance=null, montant=441319, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007990
+  Skipped Item DTO: FunPaymentDto{numero='007990', dateCheque=2025-07-14, dateEcheance=null, montant=424765, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007940
+  Skipped Item DTO: FunPaymentDto{numero='007940', dateCheque=2025-07-04, dateEcheance=null, montant=280927, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007939
+  Skipped Item DTO: FunPaymentDto{numero='007939', dateCheque=2025-07-04, dateEcheance=null, montant=447516, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007864
+  Skipped Item DTO: FunPaymentDto{numero='007864', dateCheque=2025-06-20, dateEcheance=null, montant=232781.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007764
+  Skipped Item DTO: FunPaymentDto{numero='007764', dateCheque=2025-06-03, dateEcheance=null, montant=522430, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007763
+  Skipped Item DTO: FunPaymentDto{numero='007763', dateCheque=2025-06-03, dateEcheance=null, montant=282042, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:49 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007762
+  Skipped Item DTO: FunPaymentDto{numero='007762', dateCheque=2025-06-03, dateEcheance=null, montant=449557, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007652
+  Skipped Item DTO: FunPaymentDto{numero='007652', dateCheque=2025-05-16, dateEcheance=null, montant=269158.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007620
+  Skipped Item DTO: FunPaymentDto{numero='007620', dateCheque=2025-05-05, dateEcheance=null, montant=280273, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007619
+  Skipped Item DTO: FunPaymentDto{numero='007619', dateCheque=2025-05-05, dateEcheance=null, montant=430606, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007527
+  Skipped Item DTO: FunPaymentDto{numero='007527', dateCheque=2025-04-18, dateEcheance=null, montant=280094.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007454
+  Skipped Item DTO: FunPaymentDto{numero='007454', dateCheque=2025-03-26, dateEcheance=null, montant=423157, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007453
+  Skipped Item DTO: FunPaymentDto{numero='007453', dateCheque=2025-03-26, dateEcheance=null, montant=289433, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007452
+  Skipped Item DTO: FunPaymentDto{numero='007452', dateCheque=2025-03-26, dateEcheance=null, montant=598976, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007408
+  Skipped Item DTO: FunPaymentDto{numero='007408', dateCheque=2025-03-14, dateEcheance=null, montant=305305, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007388
+  Skipped Item DTO: FunPaymentDto{numero='007388', dateCheque=2025-03-05, dateEcheance=null, montant=29000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007387
+  Skipped Item DTO: FunPaymentDto{numero='007387', dateCheque=2025-03-05, dateEcheance=null, montant=287754, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007386
+  Skipped Item DTO: FunPaymentDto{numero='007386', dateCheque=2025-03-05, dateEcheance=null, montant=24000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007379
+  Skipped Item DTO: FunPaymentDto{numero='007379', dateCheque=2025-03-04, dateEcheance=null, montant=395904, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:50 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007322
+  Skipped Item DTO: FunPaymentDto{numero='007322', dateCheque=2025-02-18, dateEcheance=null, montant=630372, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007280
+  Skipped Item DTO: FunPaymentDto{numero='007280', dateCheque=2025-02-10, dateEcheance=null, montant=276139, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007278
+  Skipped Item DTO: FunPaymentDto{numero='007278', dateCheque=2025-02-07, dateEcheance=null, montant=389318, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007168
+  Skipped Item DTO: FunPaymentDto{numero='007168', dateCheque=2025-01-15, dateEcheance=null, montant=483005, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007160
+  Skipped Item DTO: FunPaymentDto{numero='007160', dateCheque=2025-01-06, dateEcheance=null, montant=263439, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:16:51 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007159
+  Skipped Item DTO: FunPaymentDto{numero='007159', dateCheque=2025-01-06, dateEcheance=null, montant=384938, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:04 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008311
+  Skipped Item DTO: FunPaymentDto{numero='008311', dateCheque=2025-09-15, dateEcheance=null, montant=513150, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:05 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008272
+  Skipped Item DTO: FunPaymentDto{numero='008272', dateCheque=2025-09-04, dateEcheance=null, montant=243611, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:05 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008266
+  Skipped Item DTO: FunPaymentDto{numero='008266', dateCheque=2025-09-03, dateEcheance=null, montant=433658, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:05 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008142
+  Skipped Item DTO: FunPaymentDto{numero='008142', dateCheque=2025-08-13, dateEcheance=null, montant=455654, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:05 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008108
+  Skipped Item DTO: FunPaymentDto{numero='008108', dateCheque=2025-08-05, dateEcheance=null, montant=275365, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:05 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008107
+  Skipped Item DTO: FunPaymentDto{numero='008107', dateCheque=2025-08-05, dateEcheance=null, montant=441319, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:05 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007990
+  Skipped Item DTO: FunPaymentDto{numero='007990', dateCheque=2025-07-14, dateEcheance=null, montant=424765, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:05 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007940
+  Skipped Item DTO: FunPaymentDto{numero='007940', dateCheque=2025-07-04, dateEcheance=null, montant=280927, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:05 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007939
+  Skipped Item DTO: FunPaymentDto{numero='007939', dateCheque=2025-07-04, dateEcheance=null, montant=447516, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:06 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007864
+  Skipped Item DTO: FunPaymentDto{numero='007864', dateCheque=2025-06-20, dateEcheance=null, montant=232781.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:06 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007764
+  Skipped Item DTO: FunPaymentDto{numero='007764', dateCheque=2025-06-03, dateEcheance=null, montant=522430, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:06 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007763
+  Skipped Item DTO: FunPaymentDto{numero='007763', dateCheque=2025-06-03, dateEcheance=null, montant=282042, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:06 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007762
+  Skipped Item DTO: FunPaymentDto{numero='007762', dateCheque=2025-06-03, dateEcheance=null, montant=449557, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:06 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007652
+  Skipped Item DTO: FunPaymentDto{numero='007652', dateCheque=2025-05-16, dateEcheance=null, montant=269158.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:06 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007620
+  Skipped Item DTO: FunPaymentDto{numero='007620', dateCheque=2025-05-05, dateEcheance=null, montant=280273, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:06 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007619
+  Skipped Item DTO: FunPaymentDto{numero='007619', dateCheque=2025-05-05, dateEcheance=null, montant=430606, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:06 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007527
+  Skipped Item DTO: FunPaymentDto{numero='007527', dateCheque=2025-04-18, dateEcheance=null, montant=280094.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007454
+  Skipped Item DTO: FunPaymentDto{numero='007454', dateCheque=2025-03-26, dateEcheance=null, montant=423157, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007453
+  Skipped Item DTO: FunPaymentDto{numero='007453', dateCheque=2025-03-26, dateEcheance=null, montant=289433, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007452
+  Skipped Item DTO: FunPaymentDto{numero='007452', dateCheque=2025-03-26, dateEcheance=null, montant=598976, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007408
+  Skipped Item DTO: FunPaymentDto{numero='007408', dateCheque=2025-03-14, dateEcheance=null, montant=305305, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007388
+  Skipped Item DTO: FunPaymentDto{numero='007388', dateCheque=2025-03-05, dateEcheance=null, montant=29000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007387
+  Skipped Item DTO: FunPaymentDto{numero='007387', dateCheque=2025-03-05, dateEcheance=null, montant=287754, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007386
+  Skipped Item DTO: FunPaymentDto{numero='007386', dateCheque=2025-03-05, dateEcheance=null, montant=24000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007379
+  Skipped Item DTO: FunPaymentDto{numero='007379', dateCheque=2025-03-04, dateEcheance=null, montant=395904, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007322
+  Skipped Item DTO: FunPaymentDto{numero='007322', dateCheque=2025-02-18, dateEcheance=null, montant=630372, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007280
+  Skipped Item DTO: FunPaymentDto{numero='007280', dateCheque=2025-02-10, dateEcheance=null, montant=276139, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007278
+  Skipped Item DTO: FunPaymentDto{numero='007278', dateCheque=2025-02-07, dateEcheance=null, montant=389318, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007168
+  Skipped Item DTO: FunPaymentDto{numero='007168', dateCheque=2025-01-15, dateEcheance=null, montant=483005, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007160
+  Skipped Item DTO: FunPaymentDto{numero='007160', dateCheque=2025-01-06, dateEcheance=null, montant=263439, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-19 13:36:07 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007159
+  Skipped Item DTO: FunPaymentDto{numero='007159', dateCheque=2025-01-06, dateEcheance=null, montant=384938, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:08 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008311
+  Skipped Item DTO: FunPaymentDto{numero='008311', dateCheque=2025-09-15, dateEcheance=null, montant=513150, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:08 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008272
+  Skipped Item DTO: FunPaymentDto{numero='008272', dateCheque=2025-09-04, dateEcheance=null, montant=243611, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:08 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008266
+  Skipped Item DTO: FunPaymentDto{numero='008266', dateCheque=2025-09-03, dateEcheance=null, montant=433658, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:09 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008142
+  Skipped Item DTO: FunPaymentDto{numero='008142', dateCheque=2025-08-13, dateEcheance=null, montant=455654, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:09 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008108
+  Skipped Item DTO: FunPaymentDto{numero='008108', dateCheque=2025-08-05, dateEcheance=null, montant=275365, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:09 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008107
+  Skipped Item DTO: FunPaymentDto{numero='008107', dateCheque=2025-08-05, dateEcheance=null, montant=441319, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:10 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007990
+  Skipped Item DTO: FunPaymentDto{numero='007990', dateCheque=2025-07-14, dateEcheance=null, montant=424765, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:10 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007940
+  Skipped Item DTO: FunPaymentDto{numero='007940', dateCheque=2025-07-04, dateEcheance=null, montant=280927, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:10 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007939
+  Skipped Item DTO: FunPaymentDto{numero='007939', dateCheque=2025-07-04, dateEcheance=null, montant=447516, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:10 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007864
+  Skipped Item DTO: FunPaymentDto{numero='007864', dateCheque=2025-06-20, dateEcheance=null, montant=232781.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:10 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007764
+  Skipped Item DTO: FunPaymentDto{numero='007764', dateCheque=2025-06-03, dateEcheance=null, montant=522430, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:10 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007763
+  Skipped Item DTO: FunPaymentDto{numero='007763', dateCheque=2025-06-03, dateEcheance=null, montant=282042, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:10 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007762
+  Skipped Item DTO: FunPaymentDto{numero='007762', dateCheque=2025-06-03, dateEcheance=null, montant=449557, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:11 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007652
+  Skipped Item DTO: FunPaymentDto{numero='007652', dateCheque=2025-05-16, dateEcheance=null, montant=269158.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:11 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007620
+  Skipped Item DTO: FunPaymentDto{numero='007620', dateCheque=2025-05-05, dateEcheance=null, montant=280273, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:11 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007619
+  Skipped Item DTO: FunPaymentDto{numero='007619', dateCheque=2025-05-05, dateEcheance=null, montant=430606, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:11 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007527
+  Skipped Item DTO: FunPaymentDto{numero='007527', dateCheque=2025-04-18, dateEcheance=null, montant=280094.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:11 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007454
+  Skipped Item DTO: FunPaymentDto{numero='007454', dateCheque=2025-03-26, dateEcheance=null, montant=423157, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:11 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007453
+  Skipped Item DTO: FunPaymentDto{numero='007453', dateCheque=2025-03-26, dateEcheance=null, montant=289433, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:11 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007452
+  Skipped Item DTO: FunPaymentDto{numero='007452', dateCheque=2025-03-26, dateEcheance=null, montant=598976, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:12 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007408
+  Skipped Item DTO: FunPaymentDto{numero='007408', dateCheque=2025-03-14, dateEcheance=null, montant=305305, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:12 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007388
+  Skipped Item DTO: FunPaymentDto{numero='007388', dateCheque=2025-03-05, dateEcheance=null, montant=29000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:12 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007387
+  Skipped Item DTO: FunPaymentDto{numero='007387', dateCheque=2025-03-05, dateEcheance=null, montant=287754, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:12 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007386
+  Skipped Item DTO: FunPaymentDto{numero='007386', dateCheque=2025-03-05, dateEcheance=null, montant=24000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:12 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007379
+  Skipped Item DTO: FunPaymentDto{numero='007379', dateCheque=2025-03-04, dateEcheance=null, montant=395904, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:12 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007322
+  Skipped Item DTO: FunPaymentDto{numero='007322', dateCheque=2025-02-18, dateEcheance=null, montant=630372, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:12 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007280
+  Skipped Item DTO: FunPaymentDto{numero='007280', dateCheque=2025-02-10, dateEcheance=null, montant=276139, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:12 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007278
+  Skipped Item DTO: FunPaymentDto{numero='007278', dateCheque=2025-02-07, dateEcheance=null, montant=389318, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:12 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007168
+  Skipped Item DTO: FunPaymentDto{numero='007168', dateCheque=2025-01-15, dateEcheance=null, montant=483005, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:13 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007160
+  Skipped Item DTO: FunPaymentDto{numero='007160', dateCheque=2025-01-06, dateEcheance=null, montant=263439, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:26:13 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007159
+  Skipped Item DTO: FunPaymentDto{numero='007159', dateCheque=2025-01-06, dateEcheance=null, montant=384938, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008311
+  Skipped Item DTO: FunPaymentDto{numero='008311', dateCheque=2025-09-15, dateEcheance=null, montant=513150, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008272
+  Skipped Item DTO: FunPaymentDto{numero='008272', dateCheque=2025-09-04, dateEcheance=null, montant=243611, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008266
+  Skipped Item DTO: FunPaymentDto{numero='008266', dateCheque=2025-09-03, dateEcheance=null, montant=433658, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008142
+  Skipped Item DTO: FunPaymentDto{numero='008142', dateCheque=2025-08-13, dateEcheance=null, montant=455654, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008108
+  Skipped Item DTO: FunPaymentDto{numero='008108', dateCheque=2025-08-05, dateEcheance=null, montant=275365, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008107
+  Skipped Item DTO: FunPaymentDto{numero='008107', dateCheque=2025-08-05, dateEcheance=null, montant=441319, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007990
+  Skipped Item DTO: FunPaymentDto{numero='007990', dateCheque=2025-07-14, dateEcheance=null, montant=424765, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007940
+  Skipped Item DTO: FunPaymentDto{numero='007940', dateCheque=2025-07-04, dateEcheance=null, montant=280927, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007939
+  Skipped Item DTO: FunPaymentDto{numero='007939', dateCheque=2025-07-04, dateEcheance=null, montant=447516, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007864
+  Skipped Item DTO: FunPaymentDto{numero='007864', dateCheque=2025-06-20, dateEcheance=null, montant=232781.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:58 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007764
+  Skipped Item DTO: FunPaymentDto{numero='007764', dateCheque=2025-06-03, dateEcheance=null, montant=522430, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:58 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007763
+  Skipped Item DTO: FunPaymentDto{numero='007763', dateCheque=2025-06-03, dateEcheance=null, montant=282042, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:58 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007762
+  Skipped Item DTO: FunPaymentDto{numero='007762', dateCheque=2025-06-03, dateEcheance=null, montant=449557, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:58 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007652
+  Skipped Item DTO: FunPaymentDto{numero='007652', dateCheque=2025-05-16, dateEcheance=null, montant=269158.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:58 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007620
+  Skipped Item DTO: FunPaymentDto{numero='007620', dateCheque=2025-05-05, dateEcheance=null, montant=280273, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:58 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007619
+  Skipped Item DTO: FunPaymentDto{numero='007619', dateCheque=2025-05-05, dateEcheance=null, montant=430606, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:58 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007527
+  Skipped Item DTO: FunPaymentDto{numero='007527', dateCheque=2025-04-18, dateEcheance=null, montant=280094.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007454
+  Skipped Item DTO: FunPaymentDto{numero='007454', dateCheque=2025-03-26, dateEcheance=null, montant=423157, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007453
+  Skipped Item DTO: FunPaymentDto{numero='007453', dateCheque=2025-03-26, dateEcheance=null, montant=289433, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007452
+  Skipped Item DTO: FunPaymentDto{numero='007452', dateCheque=2025-03-26, dateEcheance=null, montant=598976, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007408
+  Skipped Item DTO: FunPaymentDto{numero='007408', dateCheque=2025-03-14, dateEcheance=null, montant=305305, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007388
+  Skipped Item DTO: FunPaymentDto{numero='007388', dateCheque=2025-03-05, dateEcheance=null, montant=29000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007387
+  Skipped Item DTO: FunPaymentDto{numero='007387', dateCheque=2025-03-05, dateEcheance=null, montant=287754, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007386
+  Skipped Item DTO: FunPaymentDto{numero='007386', dateCheque=2025-03-05, dateEcheance=null, montant=24000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007379
+  Skipped Item DTO: FunPaymentDto{numero='007379', dateCheque=2025-03-04, dateEcheance=null, montant=395904, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007322
+  Skipped Item DTO: FunPaymentDto{numero='007322', dateCheque=2025-02-18, dateEcheance=null, montant=630372, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007280
+  Skipped Item DTO: FunPaymentDto{numero='007280', dateCheque=2025-02-10, dateEcheance=null, montant=276139, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:34:59 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007278
+  Skipped Item DTO: FunPaymentDto{numero='007278', dateCheque=2025-02-07, dateEcheance=null, montant=389318, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:35:00 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007168
+  Skipped Item DTO: FunPaymentDto{numero='007168', dateCheque=2025-01-15, dateEcheance=null, montant=483005, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:35:00 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007160
+  Skipped Item DTO: FunPaymentDto{numero='007160', dateCheque=2025-01-06, dateEcheance=null, montant=263439, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-20 08:35:00 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007159
+  Skipped Item DTO: FunPaymentDto{numero='007159', dateCheque=2025-01-06, dateEcheance=null, montant=384938, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:15 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008311
+  Skipped Item DTO: FunPaymentDto{numero='008311', dateCheque=2025-09-15, dateEcheance=null, montant=513150, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:16 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008272
+  Skipped Item DTO: FunPaymentDto{numero='008272', dateCheque=2025-09-04, dateEcheance=null, montant=243611, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:16 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008266
+  Skipped Item DTO: FunPaymentDto{numero='008266', dateCheque=2025-09-03, dateEcheance=null, montant=433658, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:16 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008142
+  Skipped Item DTO: FunPaymentDto{numero='008142', dateCheque=2025-08-13, dateEcheance=null, montant=455654, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:17 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008108
+  Skipped Item DTO: FunPaymentDto{numero='008108', dateCheque=2025-08-05, dateEcheance=null, montant=275365, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:17 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008107
+  Skipped Item DTO: FunPaymentDto{numero='008107', dateCheque=2025-08-05, dateEcheance=null, montant=441319, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:17 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007990
+  Skipped Item DTO: FunPaymentDto{numero='007990', dateCheque=2025-07-14, dateEcheance=null, montant=424765, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:17 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007940
+  Skipped Item DTO: FunPaymentDto{numero='007940', dateCheque=2025-07-04, dateEcheance=null, montant=280927, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:17 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007939
+  Skipped Item DTO: FunPaymentDto{numero='007939', dateCheque=2025-07-04, dateEcheance=null, montant=447516, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:17 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007864
+  Skipped Item DTO: FunPaymentDto{numero='007864', dateCheque=2025-06-20, dateEcheance=null, montant=232781.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:18 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007764
+  Skipped Item DTO: FunPaymentDto{numero='007764', dateCheque=2025-06-03, dateEcheance=null, montant=522430, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:18 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007763
+  Skipped Item DTO: FunPaymentDto{numero='007763', dateCheque=2025-06-03, dateEcheance=null, montant=282042, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:18 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007762
+  Skipped Item DTO: FunPaymentDto{numero='007762', dateCheque=2025-06-03, dateEcheance=null, montant=449557, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007652
+  Skipped Item DTO: FunPaymentDto{numero='007652', dateCheque=2025-05-16, dateEcheance=null, montant=269158.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007620
+  Skipped Item DTO: FunPaymentDto{numero='007620', dateCheque=2025-05-05, dateEcheance=null, montant=280273, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007619
+  Skipped Item DTO: FunPaymentDto{numero='007619', dateCheque=2025-05-05, dateEcheance=null, montant=430606, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007527
+  Skipped Item DTO: FunPaymentDto{numero='007527', dateCheque=2025-04-18, dateEcheance=null, montant=280094.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007454
+  Skipped Item DTO: FunPaymentDto{numero='007454', dateCheque=2025-03-26, dateEcheance=null, montant=423157, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007453
+  Skipped Item DTO: FunPaymentDto{numero='007453', dateCheque=2025-03-26, dateEcheance=null, montant=289433, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007452
+  Skipped Item DTO: FunPaymentDto{numero='007452', dateCheque=2025-03-26, dateEcheance=null, montant=598976, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:19 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007408
+  Skipped Item DTO: FunPaymentDto{numero='007408', dateCheque=2025-03-14, dateEcheance=null, montant=305305, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007388
+  Skipped Item DTO: FunPaymentDto{numero='007388', dateCheque=2025-03-05, dateEcheance=null, montant=29000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007387
+  Skipped Item DTO: FunPaymentDto{numero='007387', dateCheque=2025-03-05, dateEcheance=null, montant=287754, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007386
+  Skipped Item DTO: FunPaymentDto{numero='007386', dateCheque=2025-03-05, dateEcheance=null, montant=24000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007379
+  Skipped Item DTO: FunPaymentDto{numero='007379', dateCheque=2025-03-04, dateEcheance=null, montant=395904, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007322
+  Skipped Item DTO: FunPaymentDto{numero='007322', dateCheque=2025-02-18, dateEcheance=null, montant=630372, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007280
+  Skipped Item DTO: FunPaymentDto{numero='007280', dateCheque=2025-02-10, dateEcheance=null, montant=276139, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007278
+  Skipped Item DTO: FunPaymentDto{numero='007278', dateCheque=2025-02-07, dateEcheance=null, montant=389318, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007168
+  Skipped Item DTO: FunPaymentDto{numero='007168', dateCheque=2025-01-15, dateEcheance=null, montant=483005, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007160
+  Skipped Item DTO: FunPaymentDto{numero='007160', dateCheque=2025-01-06, dateEcheance=null, montant=263439, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 12:44:20 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007159
+  Skipped Item DTO: FunPaymentDto{numero='007159', dateCheque=2025-01-06, dateEcheance=null, montant=384938, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:53 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008311
+  Skipped Item DTO: FunPaymentDto{numero='008311', dateCheque=2025-09-15, dateEcheance=null, montant=513150, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:54 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008272
+  Skipped Item DTO: FunPaymentDto{numero='008272', dateCheque=2025-09-04, dateEcheance=null, montant=243611, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:54 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008266
+  Skipped Item DTO: FunPaymentDto{numero='008266', dateCheque=2025-09-03, dateEcheance=null, montant=433658, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:54 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008142
+  Skipped Item DTO: FunPaymentDto{numero='008142', dateCheque=2025-08-13, dateEcheance=null, montant=455654, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:54 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008108
+  Skipped Item DTO: FunPaymentDto{numero='008108', dateCheque=2025-08-05, dateEcheance=null, montant=275365, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:54 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 008107
+  Skipped Item DTO: FunPaymentDto{numero='008107', dateCheque=2025-08-05, dateEcheance=null, montant=441319, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:55 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007990
+  Skipped Item DTO: FunPaymentDto{numero='007990', dateCheque=2025-07-14, dateEcheance=null, montant=424765, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:55 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007940
+  Skipped Item DTO: FunPaymentDto{numero='007940', dateCheque=2025-07-04, dateEcheance=null, montant=280927, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:55 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007939
+  Skipped Item DTO: FunPaymentDto{numero='007939', dateCheque=2025-07-04, dateEcheance=null, montant=447516, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:55 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007864
+  Skipped Item DTO: FunPaymentDto{numero='007864', dateCheque=2025-06-20, dateEcheance=null, montant=232781.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:55 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007764
+  Skipped Item DTO: FunPaymentDto{numero='007764', dateCheque=2025-06-03, dateEcheance=null, montant=522430, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:55 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007763
+  Skipped Item DTO: FunPaymentDto{numero='007763', dateCheque=2025-06-03, dateEcheance=null, montant=282042, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:55 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007762
+  Skipped Item DTO: FunPaymentDto{numero='007762', dateCheque=2025-06-03, dateEcheance=null, montant=449557, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:55 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007652
+  Skipped Item DTO: FunPaymentDto{numero='007652', dateCheque=2025-05-16, dateEcheance=null, montant=269158.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007620
+  Skipped Item DTO: FunPaymentDto{numero='007620', dateCheque=2025-05-05, dateEcheance=null, montant=280273, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007619
+  Skipped Item DTO: FunPaymentDto{numero='007619', dateCheque=2025-05-05, dateEcheance=null, montant=430606, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007527
+  Skipped Item DTO: FunPaymentDto{numero='007527', dateCheque=2025-04-18, dateEcheance=null, montant=280094.5, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007454
+  Skipped Item DTO: FunPaymentDto{numero='007454', dateCheque=2025-03-26, dateEcheance=null, montant=423157, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007453
+  Skipped Item DTO: FunPaymentDto{numero='007453', dateCheque=2025-03-26, dateEcheance=null, montant=289433, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007452
+  Skipped Item DTO: FunPaymentDto{numero='007452', dateCheque=2025-03-26, dateEcheance=null, montant=598976, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007408
+  Skipped Item DTO: FunPaymentDto{numero='007408', dateCheque=2025-03-14, dateEcheance=null, montant=305305, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007388
+  Skipped Item DTO: FunPaymentDto{numero='007388', dateCheque=2025-03-05, dateEcheance=null, montant=29000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007387
+  Skipped Item DTO: FunPaymentDto{numero='007387', dateCheque=2025-03-05, dateEcheance=null, montant=287754, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007386
+  Skipped Item DTO: FunPaymentDto{numero='007386', dateCheque=2025-03-05, dateEcheance=null, montant=24000, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007379
+  Skipped Item DTO: FunPaymentDto{numero='007379', dateCheque=2025-03-04, dateEcheance=null, montant=395904, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:56 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007322
+  Skipped Item DTO: FunPaymentDto{numero='007322', dateCheque=2025-02-18, dateEcheance=null, montant=630372, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007280
+  Skipped Item DTO: FunPaymentDto{numero='007280', dateCheque=2025-02-10, dateEcheance=null, montant=276139, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007278
+  Skipped Item DTO: FunPaymentDto{numero='007278', dateCheque=2025-02-07, dateEcheance=null, montant=389318, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007168
+  Skipped Item DTO: FunPaymentDto{numero='007168', dateCheque=2025-01-15, dateEcheance=null, montant=483005, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007160
+  Skipped Item DTO: FunPaymentDto{numero='007160', dateCheque=2025-01-06, dateEcheance=null, montant=263439, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}
+2025-09-21 14:22:57 - PROCESS_SKIP - Reason: Error in processing: Beneficiaire is null or empty for payment numero 007159
+  Skipped Item DTO: FunPaymentDto{numero='007159', dateCheque=2025-01-06, dateEcheance=null, montant=384938, beneficiaire='', ville='MARRAKECH', banque='CIH', banqueBeneficiaire='', ribBeneficiaire='', cinBeneficiaire='', type=3, codeErreur=0}

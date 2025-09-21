@@ -100,6 +100,11 @@ public class PrefinancementTransactionMapper {
         } catch (Exception e) {
             throw new Exception("Erreur lors du mappage des traces", e);
         }
+
+        // update prefi
+        prefinancement.setDateValeur(requestDto.getDateValeur());
+        prefinancement.setDateOperation(requestDto.getDateOperation());
+        prefinancementRepository.save(prefinancement);
         return transaction;
     }
 

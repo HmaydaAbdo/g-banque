@@ -16,12 +16,28 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.Lign
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.mappers.LigneFonctionnelleSpecifiqueMapper;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.specifications.LigneFonctionnelleSpecifiqueSpecification;
+import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.SuivieDcLigneResponseDto;
+import staport.finance.gBanque.droitConstate.entities.DroitConstate;
+import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;
+import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
+import staport.finance.gBanque.droitConstate.spec.DroitConstateSpec;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
+import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
+import staport.finance.gBanque.prefinancement.dtos.SuiviePrefiLigneResponseDto;
+import staport.finance.gBanque.prefinancement.entities.Prefinancement;
+import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.prefinancement.enums.Type;
+import staport.finance.gBanque.prefinancement.mapper.PrefinancementMapper;
+import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
+import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Service
 public class LigneFonctionnelleSpecifiqueService {
@@ -34,17 +50,28 @@ public class LigneFonctionnelleSpecifiqueService {
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
     private final MarcheRepository marcheRepository;
 
+    private final PrefinancementRepository prefinancementRepository;
+    private final PrefinancementMapper prefinancementMapper;
+
+    private final DroitConstateRepository droitConstateRepository;
+    private final DroitConstateMapper droitConstateMapper;
+
+
     public LigneFonctionnelleSpecifiqueService(
             LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
             LigneFonctionnelleSpecifiqueMapper ligneFonctionnelleSpecifiqueMapper,
             BanqueRepository banqueRepository,
             NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository,
-            MarcheRepository marcheRepository) {
+            MarcheRepository marcheRepository, PrefinancementRepository prefinancementRepository, PrefinancementMapper prefinancementMapper, DroitConstateRepository droitConstateRepository, DroitConstateMapper droitConstateMapper) {
         this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
         this.ligneFonctionnelleSpecifiqueMapper = ligneFonctionnelleSpecifiqueMapper;
         this.banqueRepository = banqueRepository;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
         this.marcheRepository = marcheRepository;
+        this.prefinancementRepository = prefinancementRepository;
+        this.prefinancementMapper = prefinancementMapper;
+        this.droitConstateRepository = droitConstateRepository;
+        this.droitConstateMapper = droitConstateMapper;
     }
 
     @Transactional
@@ -98,6 +125,31 @@ public class LigneFonctionnelleSpecifiqueService {
         Specification<LigneFonctionnelleSpecifique> spec = LigneFonctionnelleSpecifiqueSpecification.searchByCriteria(criteria);
         Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable);
         log.debug("Nombre de lignes fonctionnelles spécifiques trouvées: {}", page.getTotalElements());
+        return page.map(ligneFonctionnelleSpecifiqueMapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<LigneFonctionnelleSpecifiqueResponse> getLignesFonctionnellesSpecifiquesByBanqueId(
+            Long banqueId, LigneFonctionnelleSpecifiqueSearchCriteria criteria, Pageable pageable) {
+
+        log.debug("Récupération paginée et filtrée des lignes fonctionnelles spécifiques pour Banque ID: {} avec critères: {} et pageable: {}", banqueId, criteria, pageable);
+
+        // 1. Validate that the bank exists
+        if (!banqueRepository.existsById(banqueId)) {
+            log.warn("Banque non trouvée avec l'ID: {}", banqueId);
+            throw new ResourceNotFoundException("Banque non trouvée avec l'ID: " + banqueId + ". Impossible de récupérer les lignes fonctionnelles spécifiques.");
+        }
+
+        // 2. Set the banqueId in the criteria to use the existing specification logic
+        criteria.setBanqueId(banqueId);
+
+        // 3. Use the existing Specification to find the entities
+        Specification<LigneFonctionnelleSpecifique> spec = LigneFonctionnelleSpecifiqueSpecification.searchByCriteria(criteria);
+        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable);
+
+        log.debug("Nombre de lignes fonctionnelles spécifiques trouvées pour la banque {} avec filtres: {}", banqueId, page.getTotalElements());
+
+        // 4. Map the entities to DTOs and return
         return page.map(ligneFonctionnelleSpecifiqueMapper::toDto);
     }
 
@@ -172,6 +224,7 @@ public class LigneFonctionnelleSpecifiqueService {
     /**
      * Deactivates the  LigneFonctionnelleSpecifique with the given ID.
      * Sets its 'actif' flag to false.
+     *
      * @param ligneId The ID of the functional line.
      * @throws ResourceNotFoundException if no active functional line is found for the given criteria.
      */
@@ -179,7 +232,7 @@ public class LigneFonctionnelleSpecifiqueService {
     public void deactivateLigneFonctionnelleByNatureAndBank(Long ligneId) {
         log.debug("Tentative de désactivation de la ligne fonctionnelle spécifique  avec l ID: {} ", ligneId);
         LigneFonctionnelleSpecifique ligneToDeactivate = ligneFonctionnelleSpecifiqueRepository.findById(ligneId).orElseThrow(
-                ()->new ResourceNotFoundException("Aucune Ligne Fonctionnelle spécifique avec l'ID: " + ligneId)
+                () -> new ResourceNotFoundException("Aucune Ligne Fonctionnelle spécifique avec l'ID: " + ligneId)
         );
         ligneToDeactivate.setActif(false);
         ligneFonctionnelleSpecifiqueRepository.save(ligneToDeactivate);
@@ -269,5 +322,121 @@ public class LigneFonctionnelleSpecifiqueService {
 
         // Map the page of entities to a page of DTOs and return
         return page.map(ligneFonctionnelleSpecifiqueMapper::toDCResponseDto);
+    }
+
+    /**
+     * Récupère un DTO agrégé contenant les totaux (débit, crédit, reste) et une page d'enregistrements
+     * de suivi de préfinancement payés pour une ligne fonctionnelle spécifique.
+     *
+     * @param lineId   L'ID de la ligne fonctionnelle spécifique.
+     * @param pageable Les informations de pagination et de tri.
+     * @return Un AgregatedSuiviePrefiLigneResponseDto contenant les informations agrégées et paginées.
+     * @throws ResourceNotFoundException si la ligne fonctionnelle spécifique n'est pas trouvée.
+     */
+    @Transactional(readOnly = true)
+    public AgregatedSuiviePrefiLigneResponseDto getSuiviePrefiLigneResponse(Long lineId, Pageable pageable) {
+        log.debug("Préparation de l'agrégation et de la pagination pour la ligne ID: {}", lineId);
+
+        // 1. Récupérer l'entité LigneFonctionnelleSpecifique pour les détails contextuels
+        LigneFonctionnelleSpecifique specificLine = ligneFonctionnelleSpecifiqueRepository.findById(lineId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + lineId));
+
+        Marche marche = specificLine.getMarche();
+        if (marche == null) {
+            log.warn("La ligne fonctionnelle ID {} n'est liée à aucun marché.", lineId);
+            throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
+        }
+
+        // 2. Calculer les totaux globaux (tous les enregistrements payés)
+        List<Prefinancement> allPaidPrefinancements = prefinancementRepository.findByMarcheAndStatus(marche, Status.PAYE);
+        BigDecimal totalDebit = BigDecimal.ZERO;
+        BigDecimal totalCredit = BigDecimal.ZERO;
+        for (Prefinancement prefi : allPaidPrefinancements) {
+            if (prefi.getType() == Type.REMBOURSEMENT) {
+                totalDebit = totalDebit.add(prefi.getMontant());
+            } else if (prefi.getType() == Type.DEBLOCAGE) {
+                totalCredit = totalCredit.add(prefi.getMontant());
+            }
+        }
+        BigDecimal reste = totalCredit.subtract(totalDebit);
+
+        // 3. Récupérer la page d'enregistrements payés
+        Specification<Prefinancement> paidPrefiSpec = Specification.where(PrefinancementSpecification.byMarcheId(marche.getId()))
+                .and(PrefinancementSpecification.byStatus(Status.PAYE));
+
+        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(paidPrefiSpec, pageable);
+
+        // 4. Mapper la page d'entités en page de DTOs de suivi
+        Page<SuiviePrefiLigneResponseDto> pageOfDtos = prefinancementPage.map(prefinancementMapper::toSuiviePrefiLigneResponseDto);
+
+        // 5. Construire et retourner le DTO agrégé
+        AgregatedSuiviePrefiLigneResponseDto aggregatedDto = new AgregatedSuiviePrefiLigneResponseDto();
+        aggregatedDto.setBanqueName(specificLine.getBanque().getNom());
+        aggregatedDto.setMarcheName(marche.getNom());
+        aggregatedDto.setMarcheNumero(marche.getNumero());
+        aggregatedDto.setTotalDebit(totalDebit);
+        aggregatedDto.setTotalCredit(totalCredit);
+        aggregatedDto.setReste(reste);
+        aggregatedDto.setPage(pageOfDtos);
+
+        return aggregatedDto;
+    }
+
+    /**
+     * Récupère un DTO agrégé contenant les totaux (débit, crédit, reste) et une page d'enregistrements
+     * de suivi de Droit constaté payés pour une ligne fonctionnelle spécifique.
+     *
+     * @param lineId   L'ID de la ligne fonctionnelle spécifique.
+     * @param pageable Les informations de pagination et de tri.
+     * @return Un AgregatedSuivieDcLigneResponseDto contenant les informations agrégées et paginées.
+     * @throws ResourceNotFoundException si la ligne fonctionnelle spécifique n'est pas trouvée.
+     */
+    @Transactional(readOnly = true)
+    public AgregatedSuivieDcLigneResponseDto getSuivieDcLigneResponse(Long lineId, Pageable pageable) {
+        log.debug("Préparation de l'agrégation et de la pagination pour la ligne ID: {}", lineId);
+
+        // 1. Récupérer l'entité LigneFonctionnelleSpecifique pour les détails contextuels
+        LigneFonctionnelleSpecifique specificLine = ligneFonctionnelleSpecifiqueRepository.findById(lineId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + lineId));
+
+        Marche marche = specificLine.getMarche();
+        if (marche == null) {
+            log.warn("La ligne fonctionnelle ID {} n'est liée à aucun marché.", lineId);
+            throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
+        }
+
+        // 2. Calculer les totaux globaux (tous les enregistrements payés)
+        List<DroitConstate> allPaidDc = droitConstateRepository.findByMarcheAndStatus(marche, Status.PAYE);
+        BigDecimal totalDebit = BigDecimal.ZERO;
+        BigDecimal totalCredit = BigDecimal.ZERO;
+        for (DroitConstate dc : allPaidDc) {
+            if (dc.getType() == Type.REMBOURSEMENT) {
+                totalDebit = totalDebit.add(dc.getMontant());
+            } else if (dc.getType() == Type.DEBLOCAGE) {
+                totalCredit = totalCredit.add(dc.getMontant());
+            }
+        }
+        BigDecimal reste = totalCredit.subtract(totalDebit);
+
+        // 3. Récupérer la page d'enregistrements payés
+        Specification<DroitConstate> paidDcSpec = Specification.where(DroitConstateSpec.byMarcheId(marche.getId()))
+                .and(DroitConstateSpec.byStatus(Status.PAYE));
+
+        Page<DroitConstate> dcPage = droitConstateRepository.findAll(paidDcSpec, pageable);
+
+        // 4. Mapper la page d'entités en page de DTOs de suivi
+        Page<SuivieDcLigneResponseDto> pageOfDtos = dcPage.map(droitConstateMapper::toSuivieDcLigneResponseDto);
+
+        // 5. Construire et retourner le DTO agrégé
+        AgregatedSuivieDcLigneResponseDto aggregatedDto = new AgregatedSuivieDcLigneResponseDto();
+        aggregatedDto.setBanqueName(specificLine.getBanque().getNom());
+        aggregatedDto.setMarcheName(marche.getNom());
+        aggregatedDto.setMarcheNumero(marche.getNumero());
+        aggregatedDto.setTotalDebit(totalDebit);
+        aggregatedDto.setTotalCredit(totalCredit);
+        aggregatedDto.setReste(reste);
+        aggregatedDto.setPage(pageOfDtos);
+
+        return aggregatedDto;
     }
 }

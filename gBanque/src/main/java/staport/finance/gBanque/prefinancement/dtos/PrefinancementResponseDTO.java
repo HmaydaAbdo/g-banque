@@ -31,54 +31,12 @@ public class PrefinancementResponseDTO {
     private OffsetDateTime dateOperation;
     private OffsetDateTime dateValeur;
     private Status status;
+    private String libelle;
 
     public PrefinancementResponseDTO() {
     }
 
-    /**
-     * Constructs a Response DTO from a Prefinancement entity.
-     * It populates the DTO with relevant data, including details from the associated
-     * Marche and Banque entities to avoid additional API calls by the client.
-     * @param prefinancement The entity to map from.
-     */
-    public PrefinancementResponseDTO(Prefinancement prefinancement) {
-        this.id = prefinancement.getId();
-        // Check if the marche and its functional lines exist to prevent NullPointerException
-        Marche marche = prefinancement.getMarche();
-        if (marche != null) {
-            this.marcheId = marche.getId();
-            this.marcheName = marche.getNom();
-            this.marcheNumero = marche.getNumero();
 
-            if (marche.getLignesFonctionnellesSpecifiques() != null) {
-
-                // Filter the list to find all active pre-financing lines
-                List<LigneFonctionnelleSpecifique> activePrefiLines = marche.getLignesFonctionnellesSpecifiques().stream()
-                        .filter(ligne -> ligne.isActif() && "Préfinancement".equals(ligne.getNatureLigneFonctionnelle().getLabel()))
-                        .toList();
-
-                // Defensive programming check: enforce the business rule of a single active line
-                if (activePrefiLines.size() > 1) {
-                    throw new IllegalStateException("The market with ID " + marche.getId() + " has more than one active 'Préfinancement' functional line.");
-                }
-
-                // Check if there is exactly one active pre-financing line and retrieve the bank information
-                if (activePrefiLines.size() == 1) {
-                    LigneFonctionnelleSpecifique activeLigne = activePrefiLines.get(0);
-                    this.banqueId = activeLigne.getBanque().getId();
-                    this.banqueName = activeLigne.getBanque().getNom();
-                }
-            }
-        }
-
-        this.dateEmission = prefinancement.getDateEmission();
-        this.montant = prefinancement.getMontant();
-        this.observation = prefinancement.getObservation();
-        this.type = prefinancement.getType();
-        this.dateOperation = prefinancement.getDateOperation();
-        this.dateValeur = prefinancement.getDateValeur();
-        this.status = prefinancement.getStatus();
-    }
 
     // Getters and setters
     public Long getId() {
@@ -183,5 +141,12 @@ public class PrefinancementResponseDTO {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 }
