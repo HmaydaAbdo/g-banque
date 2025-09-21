@@ -93,6 +93,7 @@
               <p-sortIcon [field]="col.field"></p-sortIcon>
             }
           </th>
+          <th>Actions</th>
         </tr>
       </ng-template>
 
@@ -106,6 +107,10 @@
           <td>{{ prefiLine.taux }} %</td>
           <td>{{ prefiLine.dateDepart | date:'dd/MM/yyyy' }}</td>
           <td>{{ prefiLine.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <button pButton pRipple icon="pi pi-eye" class="p-button-rounded p-button-secondary mr-2" [routerLink]="['/portail/prefi-line', prefiLine.id, 'encours', 'validated']">
+            </button>
+          </td>
         </tr>
       </ng-template>
 

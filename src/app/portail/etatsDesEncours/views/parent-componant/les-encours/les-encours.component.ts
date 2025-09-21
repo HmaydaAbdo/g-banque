@@ -31,16 +31,26 @@ export class LesEncoursComponent implements OnInit {
   constructor(private route: ActivatedRoute, private router: Router) {}
 
   private breadcrumbMap: { [key: string]: { label: string, icon: string } } = {
+    // Par défaut
     'rapprochement': { label: 'Rapprochement des encours', icon: 'pi pi-sync' },
-    'echeances-leasing': { label: 'Décaissements ==> Échéances Leasing', icon: 'pi pi-list' },
-    'echeances-cmt': { label: 'Décaissements ==> Échéances CMT', icon: 'pi pi-list' },
-    'cheques': { label: 'Décaissements ==> Chèques', icon: 'pi pi-list' },
-    'lcn': { label: 'Décaissements ==> LCN', icon: 'pi pi-list' },
-    'virements': { label: 'Décaissements ==> Virements', icon: 'pi pi-list' },
-    'mise-a-disposition': { label: 'Décaissements ==> Mise à disposition', icon: 'pi pi-list' },
-    'recap-decaissement': { label: 'Récap Décaissements ', icon: 'pi pi-list' }
-  };
 
+    // Décaissements
+    'recap-decaissement': { label: 'Récap Décaissements', icon: 'pi pi-briefcase' },
+    'echeances-leasing': { label: 'Décaissements ⇒ Échéances Leasing', icon: 'pi pi-list' },
+    'echeances-cmt': { label: 'Décaissements ⇒ Échéances CMT', icon: 'pi pi-list' },
+    'cheques': { label: 'Décaissements ⇒ Chèques', icon: 'pi pi-list' },
+    'lcn': { label: 'Décaissements ⇒ LCN', icon: 'pi pi-list' },
+    'virements': { label: 'Décaissements ⇒ Virements', icon: 'pi pi-list' },
+    'mise-a-disposition': { label: 'Décaissements ⇒ Mise à disposition', icon: 'pi pi-list' },
+    'prefinancement-remboursement': { label: 'Décaissements ⇒ Préfinancement (Remboursement)', icon: 'pi pi-list' },
+    'dc-remboursement': { label: 'Décaissements ⇒ Droits Constatés (Remboursement)', icon: 'pi pi-list' },
+
+    // Encaissements
+    'recap-encaissement': { label: 'Récap Encaissements', icon: 'pi pi-briefcase' },
+    'prefinancement-deblocage': { label: 'Encaissements ⇒ Préfinancement (Déblocage)', icon: 'pi pi-list' },
+    'dc-deblocage': { label: 'Encaissements ⇒ Droits Constatés (Déblocage)', icon: 'pi pi-list' },
+    'decomptes': { label: 'Encaissements ⇒ Décomptes', icon: 'pi pi-list' }
+  };
   ngOnInit() {
     this.breadcrumbItems = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },

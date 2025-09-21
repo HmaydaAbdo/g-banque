@@ -2,53 +2,7 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="h-screen overflow-y-scroll max-w-screen p-1 bg-gray-50">
-  @if (loadingBankDetails) {
-    <p-card header="Chargement des détails de la banque..." class="h-full flex flex-column">
-      <div class="flex flex-col items-center justify-center h-full">
-        <i class="pi pi-spin pi-spinner text-4xl text-primary-500"></i>
-        <p class="mt-4 text-lg">Veuillez patienter...</p>
-      </div>
-    </p-card>
-  } @else if (bankDetails) {
-
-
     <div class="px-4 flex flex-column gap-4 mb-8">
-      <div class=" flex flex-wrap justify-content-between ">
-        <div class="portail-section pt-1 lg:pt-3">
-          <p-breadcrumb [model]="items" >
-            <ng-template pTemplate="item" let-item>
-              <ng-container *ngIf="item.route; else elseBlock" class="pt-3">
-                <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-                  <span [ngClass]="[item.icon ? item.icon : '', 'text-color', ]"></span>
-                  <span class="text-black-alpha-90 pl-1  ">{{ item.label }}</span>
-                </a>
-
-              </ng-container>
-              <ng-template #elseBlock>
-                <a [href]="item.url">
-                  <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-                </a>
-              </ng-template>
-            </ng-template>
-          </p-breadcrumb>
-        </div>
-        <div  class="hidden md:flex justify-content-center  text-xs md:text-sm lg:text-xl ">
-          <p> Détails & Historique de la banque : {{bankDetails.nom}} </p>
-        </div>
-      </div>
-
-      <div class=" card rounded border-dashed border-2  px-2 flex flex-row flex-wrap  justify-content-center md:justify-content-between  text-xs md:text-sm  white-space-nowrap">
-        <div class=" flex flex-wrap w-screen  justify-content-between md:hidden ">
-          <p><strong> Nom :</strong> {{ bankDetails.nom }}</p>
-          <p><strong>Solde Actuelle :</strong> {{ bankDetails.soldeActuel }} {{ bankDetails.devise }} </p>
-        </div>
-        <p class="hidden md:block"><strong> Nom :</strong> {{ bankDetails.nom }}</p>
-        <p class="hidden md:block"><strong>Solde Actuelle :</strong> {{ bankDetails.soldeActuel }} {{ bankDetails.devise }}</p>
-        <p><strong>Numéro de compte :</strong> {{ bankDetails.numeroDeCompte }}</p>
-        <p><strong>Agence :</strong> {{ bankDetails.agence }}</p>
-        <p><strong>Adresse :</strong> {{ bankDetails.address }}</p>
-      </div>
-
       <form [formGroup]="functionalLineSearchForm" >
         <div class="flex flex-row  gap-2 flex-wrap ">
 
@@ -94,8 +48,6 @@
 
         </div>
       </form>
-
-
       <p-table #dtFunctionalLines
                [value]="bankFunctionalLines"
                [loading]="loading"
@@ -144,11 +96,4 @@
         </ng-template>
       </p-table>
     </div>
-
-
-  } @else {
-    <p-card header="Banque non trouvée">
-      <p>Impossible de charger les détails de la banque. Veuillez vérifier l'ID.</p>
-    </p-card>
-  }
 </div>

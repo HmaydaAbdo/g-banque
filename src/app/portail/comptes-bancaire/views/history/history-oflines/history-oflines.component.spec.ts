@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BankHistoryComponent } from './bank-history.component';
+import { HistoryOflinesComponent } from './history-oflines.component';
 
-describe('BankHistoryComponent', () => {
-  let component: BankHistoryComponent;
-  let fixture: ComponentFixture<BankHistoryComponent>;
+describe('HistoryOflinesComponent', () => {
+  let component: HistoryOflinesComponent;
+  let fixture: ComponentFixture<HistoryOflinesComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [BankHistoryComponent]
+      imports: [HistoryOflinesComponent]
     })
     .compileComponents();
     
-    fixture = TestBed.createComponent(BankHistoryComponent);
+    fixture = TestBed.createComponent(HistoryOflinesComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

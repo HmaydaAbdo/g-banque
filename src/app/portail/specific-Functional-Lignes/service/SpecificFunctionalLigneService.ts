@@ -9,6 +9,12 @@ import {LigneFonctionnelleSpecifiqueSearchCriteria} from "../dtos/LigneFonctionn
 import {PageResponse} from "../../global/types/PageResponse";
 import {PrefiResponseDto} from "../../prefinancements/lignesPrefi/dtos/SpecificLigneResposneDto";
 import {SpecifiqueLineSearchDto} from "../../prefinancements/lignesPrefi/dtos/SpecifiqueLineSearchDto";
+import {
+  AgregatedSuiviePrefiLigneResponseDto
+} from "../../prefinancements/lignesPrefi/suivieDesLignes/dtos/AgregatedSuiviePrefiLigneResponseDto";
+import {
+  AgregatedSuivieDcLigneResponseDto
+} from "../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/Dtos/AgregatedSuivieDcLigneResponseDto";
 
 
 @Injectable({
@@ -133,5 +139,76 @@ export class SpecificFunctionalLigneService {
     }
 
     return this.http.get<PageResponse<PrefiResponseDto>>(`${this.apiUrl}/dc-lines`, { params });
+  }
+
+  /**
+   * 7. Get aggregated prefinancements by line ID
+   * (GET /lignes-fonctionnelles-specifiques/{id}/prefinancements)
+   */
+  getPrefinancementsByLineId(
+    id: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<AgregatedSuiviePrefiLigneResponseDto> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    return this.http.get<AgregatedSuiviePrefiLigneResponseDto>(`${this.apiUrl}/${id}/prefinancements`, { params });
+  }
+
+  /**
+   * 8. Get aggregated droit constaté by line ID
+   * (GET /lignes-fonctionnelles-specifiques/{id}/dc)
+   */
+  getDroitConstateByLineId(
+    id: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<AgregatedSuivieDcLigneResponseDto> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    return this.http.get<AgregatedSuivieDcLigneResponseDto>(`${this.apiUrl}/${id}/dc`, { params });
+  }
+
+  getLignesFonctionnellesByBanqueId(
+    banqueId: number,
+    criteria: LigneFonctionnelleSpecifiqueSearchCriteria,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<PageResponse<LigneFonctionnelleSpecifiqueResponse>> {
+    let params = new HttpParams();
+    params = params.append('page', page.toString());
+    params = params.append('size', size.toString());
+    params = params.append('sort', sort);
+
+    // Append criteria parameters
+    if (criteria.natureLigneFonctionnelleId !== undefined && criteria.natureLigneFonctionnelleId !== null) {
+      params = params.append('natureLigneFonctionnelleId', criteria.natureLigneFonctionnelleId.toString());
+    }
+    if (criteria.yearDepart !== undefined && criteria.yearDepart !== null) {
+      params = params.append('yearDepart', criteria.yearDepart.toString());
+    }
+    if (criteria.actif !== undefined && criteria.actif !== null) {
+      params = params.append('actif', criteria.actif.toString());
+    }
+    if (criteria.isExpired !== undefined && criteria.isExpired !== null) {
+      params = params.append('isExpired', criteria.isExpired.toString());
+    }
+    if (criteria.marcheId !== undefined && criteria.marcheId !== null) {
+      params = params.append('marcheId', criteria.marcheId.toString());
+    }
+
+    return this.http.get<PageResponse<LigneFonctionnelleSpecifiqueResponse>>(
+      `${this.apiUrl}/banque/${banqueId}`,
+      { params }
+    );
   }
 }

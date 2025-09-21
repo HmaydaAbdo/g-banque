@@ -93,6 +93,7 @@
               <p-sortIcon [field]="col.field"></p-sortIcon>
             }
           </th>
+          <th>Actions</th>
         </tr>
       </ng-template>
 
@@ -106,6 +107,16 @@
           <td>{{ dcLine.taux }} %</td>
           <td>{{ dcLine.dateDepart | date:'dd/MM/yyyy' }}</td>
           <td>{{ dcLine.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <button
+              pButton
+              pRipple
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-secondary mr-2"
+              [routerLink]="['/portail/dc-line', dcLine.id, 'encours', 'validated']">
+            </button>
+
+          </td>
         </tr>
       </ng-template>
 

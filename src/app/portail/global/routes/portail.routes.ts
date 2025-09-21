@@ -8,7 +8,7 @@ import {LigneFonctionnelleEditComponent} from "../../lignes-fonctionnelles/views
 import {adminGuard} from "../../../auth/guards/admin.guard";
 import {NatureLigneFonctionnelleListComponent} from "../../lignes-fonctionnelles/views/nature-ligne-fonctionnelle-list/nature-ligne-fonctionnelle-list.component";
 import {NatureLigneFonctionnelleEditComponent} from "../../lignes-fonctionnelles/views/nature-ligne-fonctionnelle-edit/nature-ligne-fonctionnelle-edit.component";
-import {BankHistoryComponent} from "../../comptes-bancaire/views/bank-history/bank-history.component";
+import {GeneralLignesByBankComponent} from "../../comptes-bancaire/views/history/general-lines-by-bank/general-lignes-by-bank.component";
 import {LogsComponent} from "../../settings/logs/views/logs/logs.component";
 import {EvolTauxPlafondComponent} from "../../tableau-de-bord/views/evol-taux-plafond/evol-taux-plafond.component";
 import {SoldeParBanqueComponent} from "../../tableau-de-bord/views/solde-par-banque/solde-par-banque.component";
@@ -68,6 +68,16 @@ import {
 import {DecomptesListComponent} from "../../decomptes/views/decomptes-list/decomptes-list.component";
 import {DecompteFormComponent} from "../../decomptes/views/decomptes-form/decomptes-form.component";
 import {DecomptesComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/decomptes/decomptes.component";
+import {
+  ValidatedDcComponent
+} from "../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component";
+import {
+  ValidatedPrefiComponent
+} from "../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component";
+import {
+  SpecificLignesByBankComponent
+} from "../../comptes-bancaire/views/history/specific-lines-by-bank/specific-lignes-by-bank.component";
+import {HistoryOflinesComponent} from "../../comptes-bancaire/views/history/history-oflines/history-oflines.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -81,8 +91,8 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'comptes-bancaires', component: ComptesBancairesComponent  },
   { path: "comptes-bancaires/new", component: BanqueEditComponent },
   { path: "comptes-bancaires/edit/:id", component: BanqueEditComponent },
-  { path: "comptes-bancaires/history/:id", component: BankHistoryComponent },
 
+  {path: "comptes-bancaires/history/:id", component: HistoryOflinesComponent},
   { path: 'lignes-fonctionnelles-encours', component: LignesFonctionnellesComponent},
   { path: 'lignes-fonctionnelles-encours/new', component: LigneFonctionnelleEditComponent },
   { path: 'lignes-fonctionnelles-encours/edit/:id', component: LigneFonctionnelleEditComponent },
@@ -115,11 +125,13 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'préfinancements/new', component: PrefinancementFormComponent },
   { path: 'préfinancements/edit/:id', component: PrefinancementFormComponent },
   { path: 'prefi-lines', component: PrefiLinesListComponent },
+  {path:"prefi-line/:id/encours/validated",component:ValidatedPrefiComponent},
 
   {path:"droits-constate",component:DroitConstateListComponent},
   {path:"droits-constate/new",component:DroitConstateFormComponent},
   {path:"droits-constate/edit/:id",component:DroitConstateFormComponent},
   {path:"dc-lines",component:DcLinesListComponent},
+  {path:"dc-line/:id/encours/validated",component:ValidatedDcComponent},
 
   {path:"decomptes",component:DecomptesListComponent},
   {path:"decomptes/new",component:DecompteFormComponent},
@@ -129,25 +141,22 @@ export const PORTAIL_ROUTES: Routes = [
     children:[
       {path:'', redirectTo:'rapprochement', pathMatch:'full'},
 
-      {path:'echeances-leasing', component:EcheancesLeasingComponent},
-      {path:'echeances-cmt', component:EcheancesCmtComponent},
-
-      {path:'cheques', component:ChequesEncoursComponent},
-      {path:'lcn', component:LcnEncoursComponent},
-      {path:'virements', component:VirementEncoursComponent},
-      {path:'mise-a-disposition', component:MiseADispositionEncoursComponent},
-
       {path: 'rapprochement',component:RapprochemntMensuelleComponent},
 
       {path:"recap-decaissement",component:RecapDecaissementComponent},
       {path:"recap-encaissement",component:RecapEncaissementsComponent},
 
+      {path:'echeances-leasing', component:EcheancesLeasingComponent},
+      {path:'echeances-cmt', component:EcheancesCmtComponent},
+      {path:'cheques', component:ChequesEncoursComponent},
+      {path:'lcn', component:LcnEncoursComponent},
+      {path:'virements', component:VirementEncoursComponent},
+      {path:'mise-a-disposition', component:MiseADispositionEncoursComponent},
       {path:"prefinancement-remboursement",component:PrefinancementRemboursementsComponent},
-      {path:"prefinancement-deblocage",component:PrefinancementDeblocageComponent},
-
       {path:"dc-remboursement",component:DroitConstateRemboursementsComponent},
-      {path:"dc-deblocage",component:DroitConstateDeblocageComponent},
 
+      {path:"prefinancement-deblocage",component:PrefinancementDeblocageComponent},
+      {path:"dc-deblocage",component:DroitConstateDeblocageComponent},
       {path:"decomptes",component:DecomptesComponent}
     ]
   },
