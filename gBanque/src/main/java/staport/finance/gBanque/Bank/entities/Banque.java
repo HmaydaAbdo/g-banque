@@ -8,6 +8,7 @@ import staport.finance.gBanque.Bank.enums.Devise;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
+import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.cheques.entities.Cheque;
@@ -95,6 +96,9 @@ public class Banque {
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Decompte> decomptes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<Commission> commissions = new ArrayList<>();
 
     @OneToMany(mappedBy = "banqueDePrelevement",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
@@ -222,6 +226,22 @@ public class Banque {
 
     public void removeDecompte(Decompte decompte){
         this.decomptes.remove(decompte);
+    }
+
+    public List<Commission> getCommissions() {
+        return commissions;
+    }
+
+    public void setCommissions(List<Commission> commissions) {
+        this.commissions = commissions;
+    }
+
+    public void addCommission(Commission commission){
+        this.commissions.add(commission);
+    }
+
+    public void removeCommission(Commission commission){
+        this.commissions.remove(commission);
     }
 
     @PrePersist
