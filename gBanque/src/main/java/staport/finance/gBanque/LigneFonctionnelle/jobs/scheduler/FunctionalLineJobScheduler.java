@@ -10,6 +10,7 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
+import org.springframework.context.annotation.Profile; // 1. Import @Profile
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -21,34 +22,40 @@ public class FunctionalLineJobScheduler {
     private static final Logger log = LoggerFactory.getLogger(FunctionalLineJobScheduler.class);
 
     private final JobLauncher jobLauncher;
-    private final Job functionalLineExpirationJob; // Inject  batch job
+    private final Job functionalLineExpirationJob;
 
     public FunctionalLineJobScheduler(JobLauncher jobLauncher, Job functionalLineExpirationJob) {
         this.jobLauncher = jobLauncher;
         this.functionalLineExpirationJob = functionalLineExpirationJob;
     }
 
+    // =========================================================================================
+    // 1. DEVELOPMENT Profile Schedule: Run every 5 minutes ⏱️
+    // Cron: "0 0/5 * * * ?" (At the 0th second of every 5th minute)
+    // =========================================================================================
+    @Profile("dev")
+    @Scheduled(cron = "0 0/5 * * * ?")
+    public void runFunctionalLineExpirationJobDev() {
+        log.info("Launching functionalLineExpirationJob (DEV profile) - Running Every 5 Minutes.");
+        runJobInternal();
+    }
+
+    // =========================================================================================
+    // 2. STAGING/PRODUCTION Profile Schedule: Run every Sunday at 12:00 PM (as originally planned)
+    // Cron: "0 0 12 ? * SUN"
+    // =========================================================================================
+    @Profile({"!dev"}) // Run in 'stg', 'prod', OR when 'dev' is NOT active.
+    @Scheduled(cron = "0 0 12 ? * SUN")
+    public void runFunctionalLineExpirationJobStgProd() {
+        log.info("Launching functionalLineExpirationJob (STG/PROD profile) - Running Every Sunday at 12:00 PM.");
+        runJobInternal();
+    }
+
     /**
-     * Schedules the functionalLineExpirationJob to run at 3:00 AM on the 1st day of every month.
-     * The 'cron' expression "0 0 3 1 * ?" means:
-     * - 0: Seconds (at the 0th second)
-     * - 0: Minutes (at the 0th minute)
-     * - 3: Hours (at 3 AM)
-     * - 1: Day of the month (on the 1st day)
-     * - *: Month (every month)
-     * - ?: Day of the week (no specific day of the week, as it's already specified by day of month)
-     *
-     * It's crucial to pass unique JobParameters for each execution to ensure Spring Batch
-     * creates a new JobInstance. A common approach is to use a timestamp.
+     * Internal method to execute the job, keeping the launch logic DRY (Don't Repeat Yourself).
      */
-
-    @Scheduled(cron = "0 0 12 ? * SUN") // Run every Sunday at 12:00 PM
-    //@Scheduled(cron = "0 * * * * ?") // Run at every minute
-    public void runFunctionalLineExpirationJob() {
-        log.info("Attempting to launch functionalLineExpirationJob...");
-
+    private void runJobInternal() {
         // Generate unique JobParameters to ensure a new JobInstance is created for each run.
-        // This is crucial for Spring Batch to track job executions correctly.
         JobParameters jobParameters = new JobParametersBuilder()
                 .addDate("runDate", new Date())
                 .addLong("runTime", System.currentTimeMillis())

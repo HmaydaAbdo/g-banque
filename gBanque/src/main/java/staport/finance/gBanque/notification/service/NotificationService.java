@@ -5,10 +5,14 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.notification.dtos.NotificationResponse;
 import staport.finance.gBanque.notification.entities.Notification;
 import staport.finance.gBanque.notification.entities.NotificationType;
+import staport.finance.gBanque.notification.entities.UserNotificationStatus;
 import staport.finance.gBanque.notification.repos.NotificationRepository;
+import staport.finance.gBanque.notification.repos.UserNotificationStatusRepository;
+import staport.finance.gBanque.security.entities.User;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,85 +23,117 @@ public class NotificationService {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationRepository notificationRepository;
+    private final UserNotificationStatusRepository userNotificationStatusRepository;
 
-    public NotificationService(SimpMessagingTemplate messagingTemplate, NotificationRepository notificationRepository) {
+    public NotificationService(SimpMessagingTemplate messagingTemplate,
+                               NotificationRepository notificationRepository,
+                               UserNotificationStatusRepository userNotificationStatusRepository) {
         this.messagingTemplate = messagingTemplate;
         this.notificationRepository = notificationRepository;
+        this.userNotificationStatusRepository = userNotificationStatusRepository;
     }
 
     /**
-     * Sends a public/global notification to all clients subscribed to a specific topic
-     * and persists the notification in the database. The sender is always "System".
-     * Clients will subscribe to `/topic/public-notifications`.
-     *
-     * @param title A brief title for the notification
-     * @param content The main message body
-     * @param type The type of notification (INFO, WARNING, ALERT, SUCCESS)
+     * Sends a public/global notification. ONLY the master Notification record is saved.
+     * User status records are created upon first interaction (mark as read).
      */
+    @Transactional // Ensures persistence and broadcast are atomic (optional, but good practice)
     public void sendPublicNotification(String title, String content, NotificationType type) {
-        // Create and persist the Notification entity
+        // 1. Create and persist the master Notification entity
         Notification notificationToPersist = new Notification(title, content, type);
         notificationRepository.save(notificationToPersist);
+        // NOTE: NO STATUS RECORDS ARE CREATED HERE.
 
-        // Convert the persisted Notification to NotificationResponse for WebSocket broadcast
+        // 2. Prepare and send WebSocket broadcast
         NotificationResponse response = new NotificationResponse(
                 notificationToPersist.getId(),
                 notificationToPersist.getTitle(),
                 notificationToPersist.getContent(),
                 notificationToPersist.getType(),
                 notificationToPersist.getTimestamp(),
-                notificationToPersist.isReadStatus()
+                false // New notifications are always broadcast as UNREAD
         );
 
-        // Send to the specified topic. All clients subscribed to "/topic/public-notifications" will receive this.
         messagingTemplate.convertAndSend("/topic/public-notifications", response);
-        System.out.println("Sent and persisted public notification: " + notificationToPersist);
+        System.out.println("Sent and persisted public notification (Status records deferred): " + notificationToPersist);
     }
 
     /**
-     * Retrieves public notifications from the database with pagination and sorting.
-     * Optionally filters by read status.
+     * Retrieves notifications from the database with pagination and sorting,
+     * filtered by the CURRENT USER's status using a performant JPA JOIN query.
      *
-     * @param readStatus If true, gets read notifications; if false, gets unread; if null, gets all.
+     * @param currentUser The authenticated user.
+     * @param readStatus If true, gets read; if false, gets unread; if null, gets all.
      * @param pageable Pagination and sorting information.
      * @return A paginated list of NotificationResponse DTOs.
      */
-    public Page<NotificationResponse> getPaginatedNotifications(Boolean readStatus, Pageable pageable) {
-        Page<Notification> notificationsPage;
-        if (readStatus != null) {
-            notificationsPage = notificationRepository.findByReadStatus(readStatus, pageable);
-        } else {
-            notificationsPage = notificationRepository.findAll(pageable);
-        }
+    public Page<NotificationResponse> getPaginatedNotifications(User currentUser, Boolean readStatus, Pageable pageable) {
 
-        List<NotificationResponse> responseList = notificationsPage.getContent().stream()
-                .map(notification -> new NotificationResponse(
-                        notification.getId(),
-                        notification.getTitle(),
-                        notification.getContent(),
-                        notification.getType(),
-                        notification.getTimestamp(),
-                        notification.isReadStatus()
-                ))
+        // Use the performant custom repository method (assuming it's defined with the LEFT JOIN logic)
+        // This query correctly handles NULL status (absence of record) as UNREAD (false).
+        Page<Object[]> resultsPage = notificationRepository.findNotificationsWithUserStatus(
+                currentUser.getId(),
+                readStatus,
+                pageable
+        );
+
+        List<NotificationResponse> responseList = resultsPage.getContent().stream()
+                .map(result -> {
+                    Notification notification = (Notification) result[0];
+                    Boolean isReadValue = (Boolean) result[1];
+
+                    // If isReadValue is null (no record in UserNotificationStatus), the status is UNREAD (false).
+                    boolean isRead = isReadValue != null && isReadValue;
+
+                    return new NotificationResponse(
+                            notification.getId(),
+                            notification.getTitle(),
+                            notification.getContent(),
+                            notification.getType(),
+                            notification.getTimestamp(),
+                            isRead
+                    );
+                })
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(responseList, pageable, notificationsPage.getTotalElements());
+        // Returns a new PageImpl using the database-filtered content and total count.
+        return new PageImpl<>(responseList, pageable, resultsPage.getTotalElements());
     }
 
     /**
-     * Marks a specific notification as read.
+     * Marks a specific notification as read for the CURRENT USER.
+     * Creates the UserNotificationStatus record if it doesn't exist.
      *
      * @param notificationId The ID of the notification to mark as read.
-     * @return True if the notification was found and marked as read, false otherwise.
+     * @param currentUser The authenticated user.
+     * @return True if the status was updated/created, false if the notification wasn't found.
      */
-    public boolean markNotificationAsRead(Long notificationId) {
+    @Transactional
+    public boolean markNotificationAsRead(Long notificationId, User currentUser) {
         Optional<Notification> optionalNotification = notificationRepository.findById(notificationId);
+
         if (optionalNotification.isPresent()) {
             Notification notification = optionalNotification.get();
-            notification.setReadStatus(true);
-            notificationRepository.save(notification);
+
+            // 1. Find the existing status record for this user and notification
+            Optional<UserNotificationStatus> optionalStatus = userNotificationStatusRepository
+                    .findByNotificationAndUser(notification, currentUser);
+
+            // 2. Get the status record OR create a new one (since it's their first interaction)
+            UserNotificationStatus status = optionalStatus.orElseGet(() ->
+                    new UserNotificationStatus(notification, currentUser)
+            );
+
+            // 3. Only update and save if the status is currently unread
+            if (!status.isRead()) {
+                status.setRead(true);
+                userNotificationStatusRepository.save(status);
+                return true;
+            }
+            // Already marked as read
             return true;
         }
+        // Notification itself not found
         return false;
     }
 }

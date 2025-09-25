@@ -20,8 +20,6 @@ public class Notification {
 
     private OffsetDateTime timestamp;
 
-    private boolean readStatus;
-
     // Default constructor for JPA
     public Notification() {
     }
@@ -32,7 +30,6 @@ public class Notification {
         this.content = content;
         this.type = type;
         this.timestamp = OffsetDateTime.now(); // Set current timestamp on creation
-        this.readStatus = false; // Default to unread
     }
 
     // --- Getters and Setters ---
@@ -78,18 +75,11 @@ public class Notification {
         this.timestamp = timestamp;
     }
 
-    // For clients, you might want a formatted string
     public String getFormattedTimestamp() {
         return timestamp != null ? timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : null;
     }
 
-    public boolean isReadStatus() {
-        return readStatus;
-    }
-
-    public void setReadStatus(boolean readStatus) {
-        this.readStatus = readStatus;
-    }
+    // Note: isReadStatus() and setReadStatus() are removed.
 
     @Override
     public String toString() {
@@ -99,7 +89,6 @@ public class Notification {
                 ", content='" + content + '\'' +
                 ", type=" + type +
                 ", timestamp=" + timestamp +
-                ", readStatus=" + readStatus +
                 '}';
     }
 }

@@ -1,6 +1,7 @@
 package staport.finance.gBanque.FunPaiementService.batch.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import staport.finance.gBanque.FunPaiementService.batch.listeners.EmailNotificationJobListener;
 import staport.finance.gBanque.FunPaiementService.batch.listeners.ProcessingSkipListener;
 import staport.finance.gBanque.FunPaiementService.batch.reader.PaymentItemReader;
 import staport.finance.gBanque.FunPaiementService.batch.processor.PaymentTypeClassifier;
@@ -24,17 +25,19 @@ public class PaymentBatchConfig {
     private final PlatformTransactionManager transactionManager;
     private final PaymentItemReader paymentItemReader;
     private final ProcessingSkipListener processingSkipListener;
+    private final EmailNotificationJobListener emailNotificationJobListener;
 
     public PaymentBatchConfig(
             JobRepository jobRepository,
             PlatformTransactionManager transactionManager,
             PaymentItemReader paymentItemReader,
-            ProcessingSkipListener processingSkipListener
+            ProcessingSkipListener processingSkipListener, EmailNotificationJobListener emailNotificationJobListener
     ) {
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.paymentItemReader = paymentItemReader;
         this.processingSkipListener = processingSkipListener;
+        this.emailNotificationJobListener = emailNotificationJobListener;
     }
 
 
@@ -43,6 +46,7 @@ public class PaymentBatchConfig {
     public Job importPaymentsJob(Step paymentProcessingStep) {
         return new JobBuilder("importPaymentsJob", jobRepository)
                 .start(paymentProcessingStep)
+                .listener(emailNotificationJobListener)
                 .build();
     }
 
