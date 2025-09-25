@@ -20,6 +20,7 @@ import { CalendarModule } from "primeng/calendar";
 import { InputTextModule } from 'primeng/inputtext';
 import { EncoursPrefinancementSearchDto } from "../../../../../prefinancements/dtos/EncoursPrefinancementSearchDto";
 import { DropdownModule } from 'primeng/dropdown';
+import { ActivatedRoute } from '@angular/router';
 
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -51,7 +52,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
   prefinancements: PrefinancementResponseDTO[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
-  banqueId: number = 1;
+  banqueId!: number;
   totalEncours!: Decimal;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -77,24 +78,26 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private datePipe: DatePipe,
     private rapprochementService: RapprochemntService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    this.initSearchForm();
-    this.initRapprochementForm();
+    this.route.parent!.paramMap.subscribe(params => {
+      const id = params.get('banqueId');
+      if (id) {
+        this.banqueId = +id;
+        this.initSearchForm();
+      } else {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Attention',
+          detail: 'Aucun ID de banque trouvé dans l\'URL.'
+        });
+      }
+    });
 
-    this.searchSubscription = this.searchForm.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      )
-      .subscribe(() => {
-        if (this.dt) {
-          this.dt.first = 0;
-          this.loadEncoursDeblocages();
-        }
-      });
+    this.initRapprochementForm();
   }
 
   ngOnDestroy(): void {
@@ -112,6 +115,18 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
       marcheName: [''],
     });
     this.loadEncoursDeblocages();
+
+    this.searchSubscription = this.searchForm.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        if (this.dt) {
+          this.dt.first = 0;
+          this.loadEncoursDeblocages();
+        }
+      });
   }
 
   /**
@@ -195,6 +210,12 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
    */
   loadEncoursDeblocages(event?: TableLazyLoadEvent): void {
     this.loading = true;
+
+    if (!this.banqueId) {
+      this.loading = false;
+      return;
+    }
+
     const page = event ? event.first! / event.rows! : 0;
     const size = event ? event.rows! : 10;
     const sort = event?.sortField

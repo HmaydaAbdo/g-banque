@@ -1,0 +1,157 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-4 p-2 md:p-4 w-screen h-screen overflow-y-scroll">
+
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
+               #rla="routerLinkActive">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <a [href]="item.url">
+              <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            </a>
+          </ng-template>
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+
+    <button pButton pRipple label="Ajouter Commission" class="hidden md:block h-fit mt-2" size="small" icon="pi pi-plus"
+            severity="primary" routerLink="/portail/commissions/new"></button>
+    <button pButton pRipple pTooltip="Ajouter une commission" class="md:hidden h-fit mt-2" size="small" icon="pi pi-plus"
+            severity="primary" routerLink="/portail/commissions/new"></button>
+  </div>
+
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2">
+    <form class="flex flex-column md:flex-row gap-2">
+      <div class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <p-dropdown
+          name="banque"
+          [options]="banques"
+          [(ngModel)]="selectedBanque"
+          optionLabel="nom"
+          placeholder="Sélectionner une banque"
+          [virtualScroll]="true"
+          [virtualScrollItemSize]="40"
+          [lazy]="true"
+          [loading]="banquesLoading"
+          (onLazyLoad)="loadBanquesLazy($event)"
+          (onChange)="applyFilters()"
+          appendTo="body"
+          [showClear]="true"
+        ></p-dropdown>
+      </div>
+
+      <div class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <p-dropdown
+          name="operation"
+          [options]="operationOptions"
+          [(ngModel)]="selectedOperation"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Toutes les opérations"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          appendTo="body"
+        ></p-dropdown>
+      </div>
+
+      <div class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <p-dropdown
+          name="status"
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Tous les statuts"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          appendTo="body"
+        ></p-dropdown>
+      </div>
+
+      <div class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" name="libelleFilter" placeholder="Rechercher par libellé" [(ngModel)]="libelleFilter" (input)="applyFilters()" />
+      </div>
+    </form>
+
+    <button
+      pButton
+      pRipple
+      icon="pi pi-times"
+      class="p-button-danger ml-2"
+      (click)="clearFilters()"
+      pTooltip="Effacer"
+    ></button>
+  </div>
+
+  <div class="pb-8">
+    <p-table #dt [value]="commissions" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
+             [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
+             responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadCommissions($event)"
+             [resizableColumns]="true"
+             [columns]="[
+                {field: 'libelle', header: 'Libellé', sortable: true},
+                {field: 'banqueNom', header: 'Banque', sortable: true},
+                {field: 'montant', header: 'Montant', sortable: true},
+                {field: 'operation', header: 'Motif', sortable: true},
+                {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
+                {field: 'status', header: 'Statut', sortable: true}
+             ]"
+             styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '70rem'}"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
+      <ng-template pTemplate="header" let-columns>
+        <tr>
+          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
+            {{ col.header }}
+            @if (col.sortable) {
+              <p-sortIcon [field]="col.field"></p-sortIcon>
+            }
+          </th>
+          <th style="width: 8rem;">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-commission>
+        <tr>
+          <td>{{ commission.libelle }}</td>
+          <td>{{ commission.banqueNom }}</td>
+          <td>{{ commission.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ commission.operation }}</td>
+          <td>{{ commission.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ commission.status }}</td>
+          <td>
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
+                    [routerLink]="['/portail/commissions/edit', commission.id]"></button>
+            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
+                    (click)="deleteCommission(commission)"></button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="8">Aucune commission trouvée.</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="8">Chargement en cours...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

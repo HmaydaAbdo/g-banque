@@ -114,6 +114,7 @@ export class SidebarComponent implements OnInit {
           ]},
         {label: "Les décomptes",icon: "pi pi-list",routerLink: "/portail/decomptes"},
       ]},
+    {label:"Les Commissions",icon:"pi pi-list",routerLink: '/portail/commissions'},
     {label:"Historique des transactions",routerLink:"/portail/historique-des-transactions",icon:"pi pi-history"},
     {
       label: 'Paramètres',

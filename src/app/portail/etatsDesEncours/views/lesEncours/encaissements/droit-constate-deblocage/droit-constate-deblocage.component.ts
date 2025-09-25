@@ -1,4 +1,5 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
 import {Decimal} from "decimal.js";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
@@ -12,7 +13,7 @@ import {DroitConstateService} from "../../../../../droitsConstate/service/DroitC
 import {EncoursDroitConstateDto} from "../../../../../droitsConstate/dtos/EncoursDroitConstateDto";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
-import {DatePipe, NgIf} from "@angular/common";
+import {DatePipe, NgIf, CommonModule, NgFor} from "@angular/common";
 import {DialogModule} from "primeng/dialog";
 import {RippleModule} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
@@ -40,6 +41,8 @@ import { EncoursDroitConstateSearchDto } from "../../../../../droitsConstate/dto
     TooltipModule,
     DropdownModule,
     InputTextModule,
+    CommonModule,
+    NgFor,
   ],
   templateUrl: './droit-constate-deblocage.component.html',
   styleUrl: './droit-constate-deblocage.component.scss',
@@ -49,7 +52,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
   droitsConstates: DroitConstateResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
-  banqueId: number = 1;
+  banqueId!: number;
   totalEncours!: Decimal;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -74,24 +77,27 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
     private droitConstateService: DroitConstateService,
     private messageService: MessageService,
     private rapprochementService: RapprochemntService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    this.initSearchForm();
-    this.initRapprochementForm();
+    // Subscribe to parent route parameters to get banqueId
+    this.route.parent!.paramMap.subscribe(params => {
+      const id = params.get('banqueId');
+      if (id) {
+        this.banqueId = +id;
+        this.initSearchForm();
+      } else {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Attention',
+          detail: 'Aucun ID de banque trouvé dans l\'URL.'
+        });
+      }
+    });
 
-    this.searchSubscription = this.searchForm.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      )
-      .subscribe(() => {
-        if (this.dt) {
-          this.dt.first = 0;
-          this.loadEncoursDeblocages();
-        }
-      });
+    this.initRapprochementForm();
   }
 
   ngOnDestroy(): void {
@@ -108,9 +114,32 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
       marcheNumero: [''],
       marcheName: [''],
     });
+
     this.loadEncoursDeblocages();
+
+    this.searchSubscription = this.searchForm.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        if (this.dt) {
+          this.dt.first = 0;
+          this.loadEncoursDeblocages();
+        }
+      });
   }
 
+  /**
+   * Clears the search form and reloads the table.
+   */
+  clearSearch(): void {
+    this.searchForm.reset();
+    if (this.dt) {
+      this.dt.first = 0;
+      this.loadEncoursDeblocages();
+    }
+  }
 
   /**
    * Initializes the reactive form for the rapprochement data.
@@ -178,23 +207,18 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Clears the search form and reloads the table.
-   */
-  clearSearch(): void {
-    this.searchForm.reset();
-    if (this.dt) {
-      this.dt.first = 0;
-      this.loadEncoursDeblocages();
-    }
-  }
-
-
-  /**
    * Loads outstanding dc disbursement records.
    * Handles pagination and sorting from the PrimeNG table.
    */
   loadEncoursDeblocages(event?: TableLazyLoadEvent): void {
     this.loading = true;
+
+    // Guard clause: ensure banqueId is available before making the call
+    if (!this.banqueId) {
+      this.loading = false;
+      return;
+    }
+
     const page = event ? event.first! / event.rows! : 0;
     const size = event ? event.rows! : 10;
     const sort = event?.sortField

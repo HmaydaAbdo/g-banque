@@ -15,13 +15,14 @@ import { DroitConstateTransactionRequest } from "../../../../rapprochement/dtos/
 import { RapprochemntService } from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import { Decimal } from "decimal.js";
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
-import { Subject, Subscription } from 'rxjs';
+import {  Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EncoursDroitConstateSearchDto } from "../../../../../droitsConstate/dtos/EncoursDroitConstateSearchDto";
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from "primeng/dialog";
 import { CalendarModule } from "primeng/calendar";
+import { ActivatedRoute } from '@angular/router';
 
 
 @Component({
@@ -51,7 +52,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
   droitConstates: DroitConstateResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
-  banqueId: number = 1;
+  banqueId!: number;
   totalEncours!: Decimal;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -76,24 +77,27 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
     private droitConstateService: DroitConstateService,
     private messageService: MessageService,
     private rapprochementService: RapprochemntService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private route: ActivatedRoute // Inject ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    this.initSearchForm();
+    // Subscribe to parent route parameters to get banqueId
+    this.route.parent!.paramMap.subscribe(params => {
+      const id = params.get('banqueId');
+      if (id) {
+        this.banqueId = +id;
+        // Call initSearchForm here to start the data loading process
+        this.initSearchForm();
+      } else {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Attention',
+          detail: 'Aucun ID de banque trouvé dans l\'URL.'
+        });
+      }
+    });
     this.initRapprochementForm();
-
-    this.searchSubscription = this.searchForm.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      )
-      .subscribe(() => {
-        if (this.dt) {
-          this.dt.first = 0;
-          this.loadEncoursRemboursements();
-        }
-      });
   }
 
   ngOnDestroy(): void {
@@ -110,7 +114,22 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
       marcheNumero: [''],
       marcheName: [''],
     });
+
+    // Initial data load triggered after banqueId is set
     this.loadEncoursRemboursements();
+
+    // Setup valueChanges subscription after the form is initialized
+    this.searchSubscription = this.searchForm.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        if (this.dt) {
+          this.dt.first = 0;
+          this.loadEncoursRemboursements();
+        }
+      });
   }
 
   /**
@@ -178,22 +197,20 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Clears the search form and reloads the table.
-   */
-  clearSearch(): void {
-    this.searchForm.reset();
-    if (this.dt) {
-      this.dt.first = 0;
-      this.loadEncoursRemboursements();
-    }
-  }
+
 
   /**
    * Loads outstanding dc repayment records with search criteria.
    */
   loadEncoursRemboursements(event?: TableLazyLoadEvent): void {
     this.loading = true;
+
+    // Guard clause: ensure banqueId is available before making the call
+    if (!this.banqueId) {
+      this.loading = false;
+      return;
+    }
+
     const page = event ? event.first! / event.rows! : 0;
     const size = event ? event.rows! : 10;
     const sort = event?.sortField

@@ -149,7 +149,8 @@ export class LesEncoursComponent implements OnInit {
             label: "Droits Constatés",
             icon: 'pi pi-list',
             routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-remboursement']
-          }
+          },
+          {label: "Commissions", icon: "pi pi-list", routerLink: ["/portail/etats-des-encours", this.banqueId, "commissions"]},
         ]
       },
       {

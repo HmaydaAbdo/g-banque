@@ -11,7 +11,7 @@ import {MessageService} from 'primeng/api';
 import {RippleModule} from 'primeng/ripple';
 import {VirementResponseDto} from "../../../../../Virements/dtos/VirementResponseDto";
 import {VirementService} from "../../../../../Virements/service/VirementService";
-import {PageResponse} from "../../../../../global/types/PageResponse";
+
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";

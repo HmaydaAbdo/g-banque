@@ -7,6 +7,7 @@ export enum TransactionSource {
   MiseADisposition="MiseADisposition",
   PREFINANCEMENT="PREFINANCEMENT",
   DROIT_CONSTATE="DROIT_CONSTATE",
-  DECOMPTES="DECOMPTES"
+  DECOMPTES="DECOMPTES",
+  COMMISSION="COMMISSION",
 
 }

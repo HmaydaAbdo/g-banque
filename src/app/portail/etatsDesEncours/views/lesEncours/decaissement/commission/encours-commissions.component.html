@@ -1,0 +1,165 @@
+<p-toast></p-toast>
+
+<div class="card flex flex-column gap-2 p-2    h-screen overflow-y-scroll">
+
+
+  <div class="p-card shadow-2  p-2 flex align-items-center  justify-content-between ">
+    <div class="flex align-items-center">
+      <span class="text-lg font-medium ">Commissions en cours</span>
+    </div>
+
+    <form class="flex flex-column md:flex-row gap-2">
+      <div class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <p-dropdown
+          name="operation"
+          [options]="operationOptions"
+          [(ngModel)]="selectedOperation"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Toutes les opérations"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          appendTo="body"
+        ></p-dropdown>
+      </div>
+      <div class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text" name="libelleFilter" placeholder="Rechercher par libellé" [(ngModel)]="libelleFilter" (input)="applyFilters()" />
+      </div>
+    </form>
+
+    <div class="flex flex-row  gap-2">
+      <span class="text-lg font-medium ">Total des encours</span>
+      <span class="text-xl font-bold">{{ totalEncours  }} MAD</span>
+    </div>
+
+  </div>
+
+  <div class="pb-8">
+    <p-table #dt [value]="commissions" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
+             [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
+             responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadCommissions($event)"
+             [resizableColumns]="true"
+             [columns]="[
+                {field: 'libelle', header: 'Libellé', sortable: true},
+                {field: 'banqueNom', header: 'Banque', sortable: true},
+                {field: 'montant', header: 'Montant', sortable: true},
+                {field: 'operation', header: 'Motif', sortable: true},
+                {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
+                {field: 'status', header: 'Statut', sortable: true}
+             ]"
+             styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '70rem'}"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
+      <ng-template pTemplate="header" let-columns>
+        <tr>
+          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
+            {{ col.header }}
+            @if (col.sortable) {
+              <p-sortIcon [field]="col.field"></p-sortIcon>
+            }
+          </th>
+          <th style="width: 8rem">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-commission>
+        <tr>
+          <td>{{ commission.libelle }}</td>
+          <td>{{ commission.banqueNom }}</td>
+          <td>{{ commission.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ commission.operation }}</td>
+          <td>{{ commission.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ commission.status }}</td>
+          <td>
+            <p-button
+              icon="pi pi-check"
+              label="Valider"
+              class="p-button-rounded p-button-success"
+              (onClick)="openRapprochementModal(commission)"
+            ></p-button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="6">Aucune commission en cours trouvée.</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="6">Chargement en cours...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+
+<p-dialog
+  header="Valider la commission"
+  [(visible)]="displayModal"
+  [modal]="true"
+  [style]="{ width: '40vw' }"
+>
+  <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
+    <div class="grid p-fluid mt-3">
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar
+            id="dateOperation"
+            formControlName="dateOperation"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            appendTo="body"
+          ></p-calendar>
+          <label for="dateOperation">Date d'opération</label>
+        </span>
+      </div>
+
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar
+            id="dateValeur"
+            formControlName="dateValeur"
+            [showIcon]="true"
+            dateFormat="dd/mm/yy"
+            appendTo="body"
+          ></p-calendar>
+          <label for="dateValeur">Date de valeur</label>
+        </span>
+      </div>
+
+      <div class="col-12 mb-3">
+        <span class="p-float-label">
+          <textarea
+            id="observation"
+            pInputTextarea
+            formControlName="observation"
+            rows="3"
+          ></textarea>
+          <label for="observation">Observation</label>
+        </span>
+      </div>
+    </div>
+
+    <div class="flex justify-content-end gap-2 mt-4">
+      <p-button
+        label="Annuler"
+        icon="pi pi-times"
+        [outlined]="true"
+        (onClick)="displayModal = false"
+      ></p-button>
+      <p-button
+        label="Valider"
+        icon="pi pi-check"
+        type="submit"
+        [disabled]="rapprochementForm.invalid"
+      ></p-button>
+    </div>
+  </form>
+</p-dialog>
+

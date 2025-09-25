@@ -1,4 +1,5 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
+import {ActivatedRoute} from '@angular/router';
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {MessageService} from "primeng/api";
@@ -10,13 +11,13 @@ import {EncoursDecompteDto} from "../../../../../decomptes/dtos/EncoursDecompteD
 import {Decimal} from "decimal.js";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
-import {DatePipe, NgIf} from "@angular/common";
+import {DatePipe, NgIf, CommonModule} from "@angular/common";
 import {DialogModule} from "primeng/dialog";
 import {RippleModule} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
 import {TooltipModule} from "primeng/tooltip";
 import {InputTextModule} from "primeng/inputtext";
-import { Subject, Subscription } from 'rxjs';
+import {  Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EncoursDecompteSearchDto } from "../../../../../decomptes/dtos/EncoursDecompteSearchDto";
 import {DropdownModule} from "primeng/dropdown";
@@ -37,7 +38,8 @@ import {DropdownModule} from "primeng/dropdown";
     ToastModule,
     TooltipModule,
     InputTextModule,
-    DropdownModule
+    DropdownModule,
+    CommonModule,
   ],
   templateUrl: './decomptes.component.html',
   styleUrl: './decomptes.component.scss',
@@ -48,7 +50,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
   decomptes: DecompteResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
-  banqueId: number = 1;
+  banqueId!: number;
   totalEncours!: Decimal;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -71,24 +73,27 @@ export class DecomptesComponent implements OnInit, OnDestroy {
     private decompteService: DecompteService,
     private messageService: MessageService,
     private rapprochementService: RapprochemntService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    this.initSearchForm();
-    this.initRapprochementForm();
+    // Subscribe to parent route parameters to get banqueId
+    this.route.parent!.paramMap.subscribe(params => {
+      const id = params.get('banqueId');
+      if (id) {
+        this.banqueId = +id;
+        this.initSearchForm();
+      } else {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Attention',
+          detail: 'Aucun ID de banque trouvé dans l\'URL.'
+        });
+      }
+    });
 
-    this.searchSubscription = this.searchForm.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      )
-      .subscribe(() => {
-        if (this.dt) {
-          this.dt.first = 0;
-          this.loadEncoursDecomptes();
-        }
-      });
+    this.initRapprochementForm();
   }
 
   ngOnDestroy(): void {
@@ -105,19 +110,23 @@ export class DecomptesComponent implements OnInit, OnDestroy {
       marcheNumero: [''],
       marcheName: [''],
     });
+
     this.loadEncoursDecomptes();
+
+    this.searchSubscription = this.searchForm.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        if (this.dt) {
+          this.dt.first = 0;
+          this.loadEncoursDecomptes();
+        }
+      });
   }
 
-  /**
-   * Clears the search form and reloads the table.
-   */
-  clearSearch(): void {
-    this.searchForm.reset();
-    if (this.dt) {
-      this.dt.first = 0;
-      this.loadEncoursDecomptes();
-    }
-  }
+
 
   /**
    * Initializes the reactive form for the rapprochement data.
@@ -191,6 +200,13 @@ export class DecomptesComponent implements OnInit, OnDestroy {
    */
   loadEncoursDecomptes(event?: TableLazyLoadEvent): void {
     this.loading = true;
+
+    // Guard clause: ensure banqueId is available before making the call
+    if (!this.banqueId) {
+      this.loading = false;
+      return;
+    }
+
     const page = event ? event.first! / event.rows! : 0;
     const size = event ? event.rows! : 10;
     const sort = event?.sortField

@@ -78,6 +78,11 @@ import {
   SpecificLignesByBankComponent
 } from "../../comptes-bancaire/views/history/specific-lines-by-bank/specific-lignes-by-bank.component";
 import {HistoryOflinesComponent} from "../../comptes-bancaire/views/history/history-oflines/history-oflines.component";
+import {CommissionListComponent} from "../../commission/views/CommissionListComponent/commission-list.component";
+import {CommissionFormComponent} from "../../commission/views/CommissionFormComponent/commission-form.component";
+import {
+  EncoursCommissionsComponent
+} from "../../etatsDesEncours/views/lesEncours/decaissement/commission/encours-commissions.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -157,9 +162,16 @@ export const PORTAIL_ROUTES: Routes = [
 
       {path:"prefinancement-deblocage",component:PrefinancementDeblocageComponent},
       {path:"dc-deblocage",component:DroitConstateDeblocageComponent},
-      {path:"decomptes",component:DecomptesComponent}
+      {path:"decomptes",component:DecomptesComponent},
+
+      {path:"commissions",component:EncoursCommissionsComponent},
     ]
   },
+
+  { path: 'commissions', component: CommissionListComponent },
+  { path: 'commissions/new', component: CommissionFormComponent },
+  { path: 'commissions/edit/:id', component: CommissionFormComponent },
+
   { path: 'etats-des-encours',component:SelectBanquePourLEncoursComponent},
   {path:"historique-des-transactions",component:TransactionHistoryComponent},
 

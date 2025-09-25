@@ -21,8 +21,9 @@ import {CalendarModule} from "primeng/calendar";
 import { EncoursPrefinancementSearchDto } from "../../../../../prefinancements/dtos/EncoursPrefinancementSearchDto";
 import { InputTextModule } from 'primeng/inputtext';
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import { ActivatedRoute } from '@angular/router'; // Import ActivatedRoute
 
-import { Subject, Subscription } from 'rxjs';
+import {  Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { DropdownModule } from 'primeng/dropdown';
 
@@ -54,7 +55,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
   prefinancements: PrefinancementResponseDTO[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
-  banqueId: number = 1;
+  banqueId!: number; // Remove hardcoded value
   totalEncours!: Decimal;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -80,24 +81,27 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
     private messageService: MessageService,
     private datePipe: DatePipe,
     private rapprochementService: RapprochemntService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private route: ActivatedRoute // Inject ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    this.initSearchForm();
+    // Subscribe to parent route parameters to get banqueId
+    this.route.parent!.paramMap.subscribe(params => {
+      const id = params.get('banqueId');
+      if (id) {
+        this.banqueId = +id;
+        // Call initSearchForm here to start the data loading process
+        this.initSearchForm();
+      } else {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Attention',
+          detail: 'Aucun ID de banque trouvé dans l\'URL.'
+        });
+      }
+    });
     this.initRapprochementForm();
-
-    this.searchSubscription = this.searchForm.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      )
-      .subscribe(() => {
-        if (this.dt) {
-          this.dt.first = 0;
-          this.loadEncoursRemboursements();
-        }
-      });
   }
 
   ngOnDestroy(): void {
@@ -114,7 +118,22 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
       marcheNumero: [''],
       marcheName: [''],
     });
+
+    // Initial data load triggered after banqueId is set
     this.loadEncoursRemboursements();
+
+    // Setup valueChanges subscription after the form is initialized
+    this.searchSubscription = this.searchForm.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => {
+        if (this.dt) {
+          this.dt.first = 0;
+          this.loadEncoursRemboursements();
+        }
+      });
   }
 
   /**
@@ -184,22 +203,19 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
       });
   }
 
-  /**
-   * Clears the search form and reloads the table.
-   */
-  clearSearch(): void {
-    this.searchForm.reset();
-    if (this.dt) {
-      this.dt.first = 0;
-      this.loadEncoursRemboursements();
-    }
-  }
 
   /**
    * Loads outstanding pre-financing repayment records.
    */
   loadEncoursRemboursements(event?: TableLazyLoadEvent): void {
     this.loading = true;
+
+    // Guard clause: ensure banqueId is available before making the call
+    if (!this.banqueId) {
+      this.loading = false;
+      return;
+    }
+
     const page = event ? event.first! / event.rows! : 0;
     const size = event ? event.rows! : 10;
     const sort = event?.sortField

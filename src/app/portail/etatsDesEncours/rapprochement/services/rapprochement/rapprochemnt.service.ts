@@ -26,6 +26,8 @@
   import {DroitConstateTransactionResponse} from "../../dtos/droits_constate/DroitConstateTransactionResponse";
   import {DecompteTransactionRequest} from "../../dtos/decomptes/DecompteTransactionRequest";
   import {DecompteTransactionResponseDto} from "../../dtos/decomptes/DecompteTransactionResponseDto";
+  import {CommissionValidationDto} from "../../dtos/commission/CommissionValidationDto";
+  import {CommissionTransactionResponse} from "../../dtos/commission/CommissionTransactionResponse";
 
   @Injectable({
     providedIn: 'root'
@@ -121,6 +123,15 @@
     decompteToRapprochement(decompte: DecompteTransactionRequest): Observable<DecompteTransactionResponseDto> {
       return this.http.post<DecompteTransactionResponseDto>(`${this.baseUrl}/process/decompte`,
         decompte
+      );
+    }
+
+    commissionToRapprochement(
+      commission: CommissionValidationDto
+    ): Observable<CommissionTransactionResponse> {
+      return this.http.post<CommissionTransactionResponse>(
+        `${this.baseUrl}/process/commission`,
+        commission
       );
     }
 
