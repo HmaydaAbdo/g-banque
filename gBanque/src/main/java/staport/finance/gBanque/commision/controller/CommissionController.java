@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -66,4 +67,24 @@ public class CommissionController {
         commissionService.deleteCommission(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Retrieves a paginated list of outstanding commissions and their total amount for a specific bank.
+     *
+     * @param banqueId  The ID of the bank to filter by.
+     * @param searchDto Optional search criteria (e.g., for filtering by libelle, etc.).
+     * @param pageable  Pagination and sorting information.
+     * @return An EncoursCommissionDto containing the page of commissions and the total outstanding amount.
+     */
+    @GetMapping("/encours/{banqueId}")
+    public ResponseEntity<EncoursCommissionDto> getOutstandingCommissions(
+            @PathVariable Long banqueId,
+            @ModelAttribute CommissionSearchDto searchDto,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+        log.info("REST request to get outstanding commissions for banqueId={}", banqueId);
+        searchDto.setBanqueId(banqueId); // Set the bank ID from the path variable
+        EncoursCommissionDto result = commissionService.getOutstandingCommissions(searchDto, pageable);
+        return ResponseEntity.ok(result);
+    }
 }
+

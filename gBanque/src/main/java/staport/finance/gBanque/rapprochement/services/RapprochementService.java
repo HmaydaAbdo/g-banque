@@ -12,12 +12,16 @@ import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.repositories.CreditMoyenTermeRepository;
-import staport.finance.gBanque.decomptes.dto.DecompteTransactionRequestDto;
-import staport.finance.gBanque.decomptes.dto.DecompteTransactionResponseDto;
+import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.repository.CommisionRepository;
+import staport.finance.gBanque.rapprochement.dtos.commision.CommissionTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.commision.CommissionValidationDto;
+import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionRequestDto;
+import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionResponseDto;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
-import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionRequest;
-import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.droitConstate.DroitConstateTransactionRequest;
+import staport.finance.gBanque.rapprochement.dtos.droitConstate.DroitConstateTransactionResponse;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
@@ -30,8 +34,8 @@ import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeas
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
-import staport.finance.gBanque.prefinancement.dtos.PrefinancementTransactionRequest;
-import staport.finance.gBanque.prefinancement.dtos.PrefinancementTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.prefinancements.PrefinancementTransactionRequest;
+import staport.finance.gBanque.rapprochement.dtos.prefinancements.PrefinancementTransactionResponse;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
@@ -87,13 +91,15 @@ public class RapprochementService {
     private final DecompteRepository decompteRepository;
     private final DecompteTransactionMapper decompteTransactionMapper;
 
+    private final CommisionRepository commisionRepository;
+    private final CommisionTransactionMapper commisionTransactionMapper;
 
     private final TransactionRepository transactionRepository;
     private final BanqueRepository banqueRepository;
 
 
 
-    public RapprochementService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper) {
+    public RapprochementService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -116,6 +122,8 @@ public class RapprochementService {
         this.droitConstateTransactionMapper = droitConstateTransactionMapper;
         this.decompteRepository = decompteRepository;
         this.decompteTransactionMapper = decompteTransactionMapper;
+        this.commisionRepository = commisionRepository;
+        this.commisionTransactionMapper = commisionTransactionMapper;
     }
 
     @Transactional
@@ -407,7 +415,6 @@ public class RapprochementService {
         return droitConstateTransactionMapper.toResponseDto(savedTransaction);
     }
 
-
     @Transactional
     public DecompteTransactionResponseDto processDecompteToTransaction(DecompteTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch decompte  from the database using it's id from the request.
@@ -444,4 +451,39 @@ public class RapprochementService {
         return decompteTransactionMapper.toResponseDto(savedTransaction);
     }
 
+    @Transactional
+    public CommissionTransactionResponse processCommissionToTransaction(CommissionValidationDto requestDto) throws Exception{
+        // Step 1: Fetch commission from the database using it's id from the request.
+        Commission commission=this.commisionRepository.findById(requestDto.getIdCommission())
+                .orElseThrow(()->new ResourceNotFoundException("Commission with id "+requestDto.getIdCommission()+" not found"));
+
+        // Step 2: Check if the commission is not already paid.
+        // If it's already paid , throw an exception.
+        if (commission.getStatus()== Status.PAYE) {
+            throw new Exception(" commission is already paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
+        Transaction transactionEntity = commisionTransactionMapper.toEntity(requestDto,commission);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+
+        Banque banque = banqueRepository.findById(commission.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+commission.getBanque().getId()+" not found"));
+
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the commission as * (paid) and save the updated commission entity.
+        commission.setStatus(Status.PAYE);
+        commisionRepository.save(commission);
+
+        // Step 7: Convert the saved Transaction entity into a CommissionTransactionResponse
+        // using the mapper and return it as the response.
+        return commisionTransactionMapper.toResponseDto(savedTransaction);
+    }
 }

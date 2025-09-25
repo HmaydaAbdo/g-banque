@@ -5,12 +5,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import staport.finance.gBanque.decomptes.dto.DecompteTransactionRequestDto;
-import staport.finance.gBanque.decomptes.dto.DecompteTransactionResponseDto;
-import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionRequest;
-import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionResponse;
-import staport.finance.gBanque.prefinancement.dtos.PrefinancementTransactionRequest;
-import staport.finance.gBanque.prefinancement.dtos.PrefinancementTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.commision.CommissionTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.commision.CommissionValidationDto;
+import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionRequestDto;
+import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionResponseDto;
+import staport.finance.gBanque.rapprochement.dtos.droitConstate.DroitConstateTransactionRequest;
+import staport.finance.gBanque.rapprochement.dtos.droitConstate.DroitConstateTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.prefinancements.PrefinancementTransactionRequest;
+import staport.finance.gBanque.rapprochement.dtos.prefinancements.PrefinancementTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.cheques.ChequeTransactionRequest;
 import staport.finance.gBanque.rapprochement.dtos.cheques.ChequeTransactionResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.cmt.CmtTransactionRequestDto;
@@ -158,6 +160,20 @@ public class RapprochementBancaireController {
         DecompteTransactionResponseDto responseDto = rapprochementService.processDecompteToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
+
+    /**
+     * Endpoint pour traiter une transaction de rapprochement de commission.
+     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
+     *
+     * @param requestDto Le DTO de la requête de transaction de décompte.
+     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     */
+    @PostMapping("/process/commission")
+    public ResponseEntity<CommissionTransactionResponse> processCommissionToTransaction(@Valid @RequestBody CommissionValidationDto requestDto) throws Exception {
+        CommissionTransactionResponse responseDto = rapprochementService.processCommissionToTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
 
 
 }

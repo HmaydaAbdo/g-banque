@@ -24,6 +24,12 @@ public class NatureLigneFonctionnelleInitializer3 {
     @Order(3)
     CommandLineRunner natureLigneFonctionnelleDataInitializer(NatureLigneFonctionnelleRepository repository) {
         return args -> {
+
+            if (repository.count() > 0) {
+                log.info("natures already exist. Skipping initialization.");
+                return;
+            }
+
             log.info("Initializing NatureLigneFonctionnelle data from XLSX...");
 
             String XLSX_FILE_PATH = "nature_lignes_fonctionnelles.xlsx";

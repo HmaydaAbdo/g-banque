@@ -4,15 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
-import staport.finance.gBanque.decomptes.dto.DecompteTransactionRequestDto;
-import staport.finance.gBanque.decomptes.dto.DecompteTransactionResponseDto;
+import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionRequestDto;
+import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionResponseDto;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
-import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionRequest;
-import staport.finance.gBanque.droitConstate.dtos.DroitConstateTransactionResponse;
-import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 

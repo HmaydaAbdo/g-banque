@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.cmt.dtos.CreditMoyenTermeRequestDto;
+import staport.finance.gBanque.cmt.repositories.CreditMoyenTermeRepository;
 import staport.finance.gBanque.cmt.services.CreditMoyenTermeService;
 
 import java.io.InputStream;
@@ -25,25 +26,33 @@ import java.util.stream.StreamSupport;
 
 @Component
 @Order(7)
-public class CmtInitializer implements CommandLineRunner {
+    public class CmtInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(CmtInitializer.class);
     private final CreditMoyenTermeService cmtService;
     private final BanqueRepository banqueRepository;
     private final DataFormatter dataFormatter = new DataFormatter();
+    private final CreditMoyenTermeRepository cmtRepository;
 
     private static final DateTimeFormatter[] DATE_FORMATTERS = new DateTimeFormatter[]{
             DateTimeFormatter.ofPattern("yyyy-MM-dd"),
             DateTimeFormatter.ofPattern("M/d/yy") // Added to handle inconsistent Excel date formats
     };
 
-    public CmtInitializer(CreditMoyenTermeService cmtService, BanqueRepository banqueRepository) {
+    public CmtInitializer(CreditMoyenTermeService cmtService, BanqueRepository banqueRepository, CreditMoyenTermeRepository cmtRepository) {
         this.cmtService = cmtService;
         this.banqueRepository = banqueRepository;
+        this.cmtRepository = cmtRepository;
     }
 
     @Override
     public void run(String... args) {
+
+        if (cmtRepository.count() > 0) {
+            logger.info("les crédits moyens termes already exist. Skipping initialization.");
+            return;
+        }
+
         logger.info("Démarrage de l'initialisation des données de crédit à moyen terme depuis le fichier XLSX...");
 
         String XLSX_FILE_PATH = "cmt.xlsx";

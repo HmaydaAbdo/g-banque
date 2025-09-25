@@ -37,8 +37,7 @@ public class Commission {
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperation;
 
-    @Column(nullable = false, precision = 5, scale = 2)
-    private BigDecimal tvaDeductible = BigDecimal.valueOf(0.10);
+    private Double tvaDeductible = 10.0;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
@@ -122,11 +121,11 @@ public class Commission {
         this.dateOperation = dateOperation;
     }
 
-    public BigDecimal getTvaDeductible() {
+    public Double getTvaDeductible() {
         return tvaDeductible;
     }
 
-    public void setTvaDeductible(BigDecimal tvaDeductible) {
+    public void setTvaDeductible(Double tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
     }
 

@@ -5,28 +5,8 @@ server:
 spring:
   application:
     name: gBanque
-
-  datasource:
-    url: jdbc:mysql://localhost:3306/GBanque?useSSL=false&serverTimezone=UTC
-    username: root
-    password:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-
-  batch:
-    job:
-      enabled: true
-    jdbc:
-      initialize-schema: always
-
+  profiles:
+    active: dev
 
 functional:
   line:
@@ -40,11 +20,5 @@ functional:
 
 logging:
   level:
-    # Essential for seeing the request URL and headers
-    org.springframework.web.reactive.function.client: DEBUG
-    # Essential for seeing connection details (e.g., to which IP/port it actually connects)
-    reactor.netty.http.client: DEBUG
-  #file:
-    #path: C:/Users/Hp/Desktop/n8n/logs/gBanque.log
-
-
+    org.springframework: WARN
+    org.hibernate.SQL: WARN

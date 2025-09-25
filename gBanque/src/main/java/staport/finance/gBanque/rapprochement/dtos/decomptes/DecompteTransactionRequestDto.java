@@ -1,28 +1,28 @@
-package staport.finance.gBanque.droitConstate.dtos;
+package staport.finance.gBanque.rapprochement.dtos.decomptes;
 
 import jakarta.validation.constraints.NotNull;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-public class DroitConstateTransactionRequest {
-    @NotNull(message = "L'ID du droit constaté  est obligatoire.")
-    private Long droitConstateId;
+public class DecompteTransactionRequestDto {
+
+    @NotNull(message = "L'ID du décompte  est obligatoire.")
+    private Long decompteId;
     @NotNull(message = "L'ID de la banque est obligatoire.")
     private Long  banqueId;
     @NotNull(message = "La date de valeur est obligatoire.")
     private OffsetDateTime dateValeur;
     @NotNull(message = "la date d'opération est obligatoire ")
     private OffsetDateTime dateOperation;
-    @NotNull (message = "TVA est obligatoire")
+    @NotNull(message = "TVA est obligatoire")
     private double tva;
 
-    public Long getDroitConstateId() {
-        return droitConstateId;
+    public Long getDecompteId() {
+        return decompteId;
     }
 
-    public void setDroitConstateId(Long droitConstateId) {
-        this.droitConstateId = droitConstateId;
+    public void setDecompteId(Long decompteId) {
+        this.decompteId = decompteId;
     }
 
     public Long getBanqueId() {
@@ -52,7 +52,6 @@ public class DroitConstateTransactionRequest {
     public double getTva() {
         return tva;
     }
-
     public void setTva(double tva) {
         this.tva = tva;
     }

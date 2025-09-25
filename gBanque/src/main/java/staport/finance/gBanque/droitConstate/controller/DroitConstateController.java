@@ -119,4 +119,6 @@ public class DroitConstateController {
         EncoursDroitConstateDto result = droitConstateService.getDeblocageEncoursForBanque(searchDTO,banqueId, pageable);
         return ResponseEntity.ok(result);
     }
+
+
 }

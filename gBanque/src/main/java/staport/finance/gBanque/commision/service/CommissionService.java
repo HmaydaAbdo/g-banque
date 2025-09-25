@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
@@ -14,6 +15,8 @@ import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.mapper.CommissionMapper;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
+
+import java.math.BigDecimal;
 
 
 @Service
@@ -111,5 +114,40 @@ public class CommissionService {
         }
         commissionRepository.deleteById(id);
         log.info("Commission deleted successfully id={}", id);
+    }
+
+    /**
+     * Retrieves a paginated list of outstanding commissions and calculates their total amount.
+     * Outstanding commissions are those with a 'PREVU' status and an emission date in the past.
+     *
+     * @param pageable Pagination and sorting information.
+     * @param searchDto Optional search criteria (e.g., for filtering by bank, libelle, etc.).
+     * @return An EncoursCommissionDto containing the page of commissions and the total outstanding amount.
+     */
+    @Transactional(readOnly = true)
+    public EncoursCommissionDto getOutstandingCommissions(CommissionSearchDto searchDto, Pageable pageable) {
+        // Build the specification to filter the records
+        Specification<Commission> spec = Specification.where(CommissionSpecifications.outstandingCommissions())
+                .and(CommissionSpecifications.hasBanque(searchDto.getBanqueId()))
+                .and(CommissionSpecifications.hasLibelle(searchDto.getLibelle()))
+                .and(CommissionSpecifications.hasOperation(searchDto.getOperation()));
+
+        // Fetch the paginated list of commissions
+        Page<Commission> commissionPage = commissionRepository.findAll(spec, pageable);
+
+        // Fetch the total sum of the montant for the same criteria
+        BigDecimal totalDesEncours = commissionRepository.findAll(spec).stream()
+                .map(Commission::getMontant)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Map the page of entities to a page of DTOs
+        Page<CommissionResponseDto> pageDto = commissionPage.map(commissionMapper::toResponseDto);
+
+        // Create and return the final DTO
+        EncoursCommissionDto result = new EncoursCommissionDto();
+        result.setPage(pageDto);
+        result.setTotalDesEncours(totalDesEncours);
+
+        return result;
     }
 }

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
-import staport.finance.gBanque.commision.dtos.CommissionValidationDto;
+import staport.finance.gBanque.rapprochement.dtos.commision.CommissionValidationDto;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.prefinancement.enums.Status;
 

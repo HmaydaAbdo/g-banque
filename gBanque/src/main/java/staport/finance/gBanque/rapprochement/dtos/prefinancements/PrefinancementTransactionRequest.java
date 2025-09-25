@@ -1,4 +1,4 @@
-package staport.finance.gBanque.prefinancement.dtos;
+package staport.finance.gBanque.rapprochement.dtos.prefinancements;
 
 import jakarta.validation.constraints.NotNull;
 

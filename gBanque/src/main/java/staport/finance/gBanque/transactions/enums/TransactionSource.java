@@ -9,5 +9,6 @@ public enum TransactionSource {
     MiseADisposition,
     PREFINANCEMENT,
     DROIT_CONSTATE,
-    DECOMPTES
+    DECOMPTES,
+    COMMISSION,
 }

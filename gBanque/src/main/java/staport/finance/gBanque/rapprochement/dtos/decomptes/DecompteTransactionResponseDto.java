@@ -1,4 +1,4 @@
-package staport.finance.gBanque.decomptes.dto;
+package staport.finance.gBanque.rapprochement.dtos.decomptes;
 
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 

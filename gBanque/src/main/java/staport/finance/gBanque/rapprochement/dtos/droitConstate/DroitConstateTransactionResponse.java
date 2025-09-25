@@ -1,4 +1,4 @@
-package staport.finance.gBanque.droitConstate.dtos;
+package staport.finance.gBanque.rapprochement.dtos.droitConstate;
 
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 

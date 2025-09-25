@@ -32,6 +32,12 @@ public class OrganismeLeasingInitializer5 {
     @Order(5)
     CommandLineRunner organismeLeasingDataInitializer(OrganismeLeasingRepository repository) {
         return args -> {
+
+            if (repository.count() > 0) {
+                log.info("Les Organismes Leasing already exist. Skipping initialization.");
+                return;
+            }
+
             log.info("Initializing OrganismeLeasing data from XLSX...");
 
             String XLSX_FILE_PATH = "organismes_leasing_data.xlsx";

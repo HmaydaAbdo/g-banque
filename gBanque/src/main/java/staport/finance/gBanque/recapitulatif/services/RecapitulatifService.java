@@ -13,6 +13,9 @@ import staport.finance.gBanque.cmt.echeances.dtos.PeriodeEncoursCMT;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
 import staport.finance.gBanque.cmt.echeances.specification.EcheanceCMTSpecification;
+import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.repository.CommisionRepository;
+import staport.finance.gBanque.commision.specs.CommissionSpecifications;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
 import staport.finance.gBanque.decomptes.spec.DecompteSpec;
@@ -73,11 +76,13 @@ public class RecapitulatifService {
     private final PrefinancementRepository prefinancementRepository;
     private final DroitConstateRepository droitConstateRepository;
     private final DecompteRepository decompteRepository;
+    private final CommisionRepository commissionRepository;
+
 
     public RecapitulatifService(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
-            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository) {
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.decaissementMapper = mapper;
@@ -89,6 +94,7 @@ public class RecapitulatifService {
         this.prefinancementRepository = prefinancementRepository;
         this.droitConstateRepository = droitConstateRepository;
         this.decompteRepository = decompteRepository;
+        this.commissionRepository = commissionRepository;
     }
 
     /**
@@ -130,6 +136,11 @@ public class RecapitulatifService {
         Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingRemboursementForCurrentMonth()
                 .and(DroitConstateSpec.byBanqueId(banqueId));
 
+        //Commissions
+
+        Specification<Commission> commissionSpecification= CommissionSpecifications.outstandingCommissions()
+                .and(CommissionSpecifications.hasBanque(banqueId));
+
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<EcheanceLeasing> outstandingLeasingPayments = echeanceLeasingRepository.findAll(leasingSpec);
         List<EcheanceCMT> outstandingCmtPayments = echeanceCMTRepository.findAll(cmtSpec);
@@ -139,6 +150,8 @@ public class RecapitulatifService {
         List<MiseADisposition> activeMisesADisposition = miseADispositionRepository.findAll(madSpec);
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
         List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
+        List<Commission> outstandingCommissions=commissionRepository.findAll(commissionSpecification);
+
 
         // Step 3: Combine all lists and map them to the unified DTO.
         List<RecaputilatifItem> combinedItems = new ArrayList<>();
@@ -151,7 +164,7 @@ public class RecapitulatifService {
         combinedItems.addAll(activeMisesADisposition.stream().map(decaissementMapper::mapMiseADispositionToDto).toList());
         combinedItems.addAll(outstandingPrefinancements.stream().map(decaissementMapper::mapPrefinancementToDto).toList());
         combinedItems.addAll(outstandingDroitsConstate.stream().map(decaissementMapper::mapDroitConstateToDto).toList());
-
+        combinedItems.addAll(outstandingCommissions.stream().map(decaissementMapper::mapCommissionToDto).toList());
 
         // Apply the filter using the DTO value
         if (transactionSources != null && !transactionSources.isEmpty()) {

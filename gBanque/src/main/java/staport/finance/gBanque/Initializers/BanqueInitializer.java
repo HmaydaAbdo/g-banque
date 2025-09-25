@@ -28,6 +28,12 @@ public class BanqueInitializer {
     @Order(2)
     CommandLineRunner banqueDataInitializer(BanqueRepository repository) {
         return args -> {
+
+            if (repository.count() > 0) {
+                log.info("Banques already exist. Skipping initialization.");
+                return;
+            }
+
             log.info("Initializing Banque data from banques_data.xlsx...");
 
             String XLSX_FILE_PATH = "banques_data.xlsx";

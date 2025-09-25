@@ -65,6 +65,11 @@ public class ContratLeasingInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+
+        if (contratLeasingRepository.count() > 0) {
+            log.info("les contrats leasing  already exist. Skipping initialization.");
+            return;
+        }
         log.info("Initializing LINEAR ContratLeasing data from XLSX file...");
 
         Map<String, Long> banqueIdCache = new HashMap<>();

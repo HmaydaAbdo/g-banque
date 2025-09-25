@@ -18,7 +18,7 @@ public class CommissionResponseDto {
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperation;
-    private BigDecimal tvaDeductible;
+    private Double tvaDeductible;
     private Status status;
 
     // Getters & Setters
@@ -102,11 +102,11 @@ public class CommissionResponseDto {
         this.dateOperation = dateOperation;
     }
 
-    public BigDecimal getTvaDeductible() {
+    public Double getTvaDeductible() {
         return tvaDeductible;
     }
 
-    public void setTvaDeductible(BigDecimal tvaDeductible) {
+    public void setTvaDeductible(Double tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
     }
 
