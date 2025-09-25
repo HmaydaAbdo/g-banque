@@ -1,9 +1,10 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject, takeUntil, tap } from 'rxjs';
-import {environment} from "../../../../environments/environment";
-import {NotificationModel} from "../dtos/Notification";
-import {WebSocketService} from "./WebSocketService";
+import { environment } from "../../../../environments/environment";
+import { NotificationModel } from "../dtos/Notification";
+import { WebSocketService } from "./WebSocketService";
+import { PageResponse } from "../../global/types/PageResponse"; // Assuming this type is defined
 
 
 @Injectable({
@@ -14,53 +15,53 @@ export class NotificationService implements OnDestroy {
   private readonly API_URL = `${environment.apiUrl}notification`;
   private destroy$ = new Subject<void>();
 
-  // Use a BehaviorSubject for the list of unread notifications
   private unreadNotificationsSubject = new BehaviorSubject<NotificationModel[]>([]);
   public unreadNotifications$: Observable<NotificationModel[]> = this.unreadNotificationsSubject.asObservable();
 
-  // Use a BehaviorSubject for the unread count
   private unreadCountSubject = new BehaviorSubject<number>(0);
   public unreadCount$: Observable<number> = this.unreadCountSubject.asObservable();
 
-  // Pagination state
+  // Single source of truth for the total unread count
+  private totalUnreadElements: number = 0;
+  // Pagination state (Spring pages are 0-indexed)
   private currentPage = 0;
   private pageSize = 10;
-  private hasMoreUnread = true; // To know if there are more pages to load
+  private hasMoreUnread = true;
 
   constructor(
     private http: HttpClient,
     private webSocketService: WebSocketService
   ) {
-    // Subscribe to new public notifications from WebSocket
+    // 1. WebSocket Subscription: Updates local state and increments the total count
     this.webSocketService.publicNotifications$
       .pipe(takeUntil(this.destroy$))
       .subscribe(newNotification => {
         console.log('NotificationService: New public notification received via WebSocket', newNotification);
-        // Add new notification to the beginning of the unread list
+
         const currentNotifications = this.unreadNotificationsSubject.getValue();
         this.unreadNotificationsSubject.next([newNotification, ...currentNotifications]);
-        // Increment unread count
-        this.unreadCountSubject.next(this.unreadCountSubject.getValue() + 1);
+
+        // Synchronized increment
+        this.totalUnreadElements++;
+        this.unreadCountSubject.next(this.totalUnreadElements);
       });
-
-
   }
 
   /**
    * Initializes the notification service by fetching the first page of unread notifications.
-   * This should be called once, e.g., on application startup or user login.
    */
   public initializeNotifications(): void {
     console.log('Initializing notification service...');
-    this.currentPage = 0; // Reset page for initial load
-    this.hasMoreUnread = true; // Assume there's more until proven otherwise
-    this.unreadNotificationsSubject.next([]); // Clear existing notifications
-    this.loadMoreUnreadNotifications(); // Load the first set
+    this.currentPage = 0;
+    this.hasMoreUnread = true;
+    this.totalUnreadElements = 0;
+    this.unreadNotificationsSubject.next([]);
+    this.unreadCountSubject.next(0);
+    this.loadMoreUnreadNotifications();
   }
 
   /**
    * Fetches a paginated list of unread notifications from the backend.
-   * Updates the unreadNotificationsSubject and unreadCountSubject.
    */
   public loadMoreUnreadNotifications(): void {
     if (!this.hasMoreUnread) {
@@ -72,9 +73,9 @@ export class NotificationService implements OnDestroy {
     let params = new HttpParams()
       .set('page', this.currentPage.toString())
       .set('size', this.pageSize.toString())
-      .set('sort', 'timestamp,desc'); // Always sort by timestamp descending
+      .set('sort', 'timestamp,desc');
 
-    this.http.get<any>(`${this.API_URL}/unread`, { params })
+    this.http.get<PageResponse<NotificationModel>>(`${this.API_URL}/unread`, { params })
       .pipe(
         tap(response => {
           const newNotifications: NotificationModel[] = response.content;
@@ -83,11 +84,24 @@ export class NotificationService implements OnDestroy {
           // Append new notifications to the existing list
           this.unreadNotificationsSubject.next([...currentNotifications, ...newNotifications]);
 
-          // Update pagination state
-          this.hasMoreUnread = !response.last; // 'last' property from Spring Page
-          this.currentPage++; // Increment for next load
-          this.unreadCountSubject.next(response.totalElements);
-          console.log(`Loaded ${newNotifications.length} notifications. Total unread: ${this.unreadCountSubject.getValue()}`);
+          // Get pagination indices
+          const totalPages = response.page.totalPages;
+          const currentPageIndex = response.page.number;
+
+          // CRITICAL FIX: Determine if there are more pages using totalPages and current index
+          this.hasMoreUnread = (currentPageIndex + 1) < totalPages;
+
+          // Increment current page counter for the *next* request
+          this.currentPage++;
+
+          // Synchronization FIX: Only set the total count from the API on the first page load
+          if (currentPageIndex === 0) {
+            this.totalUnreadElements = response.page.totalElements;
+          }
+
+          // Emit the total count from the synchronized variable
+          this.unreadCountSubject.next(this.totalUnreadElements);
+          console.log(`Loaded ${newNotifications.length} notifications. Total unread: ${this.totalUnreadElements}`);
         }),
         takeUntil(this.destroy$)
       )
@@ -98,18 +112,20 @@ export class NotificationService implements OnDestroy {
 
   /**
    * Marks a notification as read on the backend and updates the frontend state.
-   * @param notificationId The ID of the notification to mark as read.
    */
   public markNotificationAsRead(notificationId: number): Observable<any> {
     return this.http.put(`${this.API_URL}/${notificationId}/mark-as-read`, {})
       .pipe(
         tap(() => {
-          // Update the local list: remove the marked notification and decrement count
+          // Update the local list
           const currentNotifications = this.unreadNotificationsSubject.getValue();
           const updatedNotifications = currentNotifications.filter(n => n.id !== notificationId);
           this.unreadNotificationsSubject.next(updatedNotifications);
-          this.unreadCountSubject.next(this.unreadCountSubject.getValue() - 1);
-          console.log(`Notification ${notificationId} marked as read. New unread count: ${this.unreadCountSubject.getValue()}`);
+
+          // Synchronization FIX: Decrement the private total count variable
+          this.totalUnreadElements = Math.max(0, this.totalUnreadElements - 1);
+          this.unreadCountSubject.next(this.totalUnreadElements);
+          console.log(`Notification ${notificationId} marked as read. New unread count: ${this.totalUnreadElements}`);
         }),
         takeUntil(this.destroy$)
       );
@@ -117,11 +133,11 @@ export class NotificationService implements OnDestroy {
 
   /**
    * Resets the pagination state and clears current notifications.
-   * Useful when the user logs out or count needs a full re-sync.
    */
   public resetNotifications(): void {
     this.currentPage = 0;
     this.hasMoreUnread = true;
+    this.totalUnreadElements = 0;
     this.unreadNotificationsSubject.next([]);
     this.unreadCountSubject.next(0);
   }

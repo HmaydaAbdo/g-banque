@@ -10,12 +10,12 @@ import { AuthService } from "../../../../auth/services/auth.service";
 import { TooltipModule } from "primeng/tooltip";
 import { Role } from "../../../../auth/enum/Role";
 import { BadgeModule } from 'primeng/badge';
-import { OverlayPanelModule } from 'primeng/overlaypanel'; // Import OverlayPanelModule
-import { OverlayPanel } from 'primeng/overlaypanel'; // Import OverlayPanel class
+import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { OverlayPanel } from 'primeng/overlaypanel';
 import { ToastModule } from 'primeng/toast';
-import {NotificationService} from "../../../notification/service/NotificationService";
-import {WebSocketService} from "../../../notification/service/WebSocketService";
-import {NotificationListComponent} from "../../../notification/views/notification-list/notification-list.component"; // Import ToastModule
+import { NotificationService } from "../../../notification/service/NotificationService";
+import { WebSocketService } from "../../../notification/service/WebSocketService";
+import { NotificationListComponent } from "../../../notification/views/notification-list/notification-list.component";
 
 interface MenuItem {
   label: string;
@@ -50,20 +50,19 @@ interface MenuItem {
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   @Output() openSidebar = new EventEmitter<void>();
-  @ViewChild('op') op!: OverlayPanel; // Reference to the OverlayPanel
+  @ViewChild('op') op!: OverlayPanel;
 
   loading: boolean = false;
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
 
-  unreadCount: number = 0; // Property to hold the unread notification count
+  unreadCount: number = 0;
 
-  // Inject NotificationService and WebSocketService
   constructor(
     private confirmationService: ConfirmationService,
-    private messageService: MessageService, // PrimeNG MessageService for toasts
-    public notificationService: NotificationService, // Made public to pass to child component
-    public webSocketService: WebSocketService // Made public to pass to child component
+    private messageService: MessageService,
+    public notificationService: NotificationService,
+    public webSocketService: WebSocketService
   ) { }
 
   allMenuItems: MenuItem[] = [
@@ -77,52 +76,54 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.filterMenuItems();
-    // Subscribe to auth status changes to connect/disconnect WebSocket and manage notifications
+
     this.authService.isAuthenticated$.pipe(takeUntil(this.destroy$)).subscribe(isAuthenticated => {
       this.filterMenuItems();
-      if (isAuthenticated) { // Use the 'isAuthenticated' value emitted by the observable
-        const currentUser = this.authService.getUsername(); // Assuming you have a method to get current user details
-        if (currentUser && currentUser) {
-          this.webSocketService.connect(currentUser); // Connect WebSocket on login
-          this.notificationService.initializeNotifications(); // Load unread notifications
-        }
+      const username = this.authService.getUsername();
+
+      if (isAuthenticated && username) {
+        // --- LOGGED IN: Initialize Services and Subscriptions ---
+        this.webSocketService.connect(username);
+        this.notificationService.initializeNotifications();
+
+        // 1. Subscribe to unread notification count
+        this.notificationService.unreadCount$
+          .pipe(takeUntil(this.destroy$))
+          .subscribe(count => {
+            this.unreadCount = count;
+          });
+
+        // 2. Subscribe to new public notifications for toast alerts
+        this.webSocketService.publicNotifications$
+          .pipe(takeUntil(this.destroy$))
+          .subscribe(notification => {
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Nouvelle notification ',
+              detail: notification.title,
+              life: 5000
+            });
+          });
+
+        // 3. Subscribe to new private notifications for toast alerts
+        this.webSocketService.privateNotifications$
+          .pipe(takeUntil(this.destroy$))
+          .subscribe(notification => {
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Nouvelle notification privée',
+              detail: notification.title,
+              life: 5000
+            });
+          });
+
       } else {
-        this.webSocketService.disconnect(); // Disconnect WebSocket on logout
-        this.notificationService.resetNotifications(); // Clear notifications on logout
+        // --- LOGGED OUT: Clean up ---
+        this.webSocketService.disconnect();
+        this.notificationService.resetNotifications();
+        this.unreadCount = 0;
       }
     });
-
-    // Subscribe to unread notification count from the service
-    this.notificationService.unreadCount$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(count => {
-        this.unreadCount = count;
-      });
-
-    // Subscribe to new public notifications from WebSocket service to show a toast
-    this.webSocketService.publicNotifications$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(notification => {
-        this.messageService.add({
-          severity: 'info',
-          summary: 'Nouvelle notification ',
-          detail: notification.title,
-          life: 5000 // Display for 5 seconds
-        });
-        // (NotificationService already handles adding to its subject)
-      });
-
-    // Subscribe to new private notifications from WebSocket service to show a toast
-    this.webSocketService.privateNotifications$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(notification => {
-        this.messageService.add({
-          severity: 'warn', // Or a different severity for private
-          summary: 'Nouvelle notification privée',
-          detail: notification.title,
-          life: 5000
-        });
-      });
   }
 
   private hasRequiredRole(item: MenuItem): boolean {
