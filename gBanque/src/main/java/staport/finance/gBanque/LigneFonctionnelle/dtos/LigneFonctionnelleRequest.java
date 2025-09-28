@@ -27,7 +27,7 @@ public class LigneFonctionnelleRequest {
     @NotNull(message = "La date de fin est obligatoire.")
     private OffsetDateTime dateFin;
 
-    private Boolean actif;
+
 
     // --- Constructors ---
     public LigneFonctionnelleRequest() {
@@ -41,7 +41,7 @@ public class LigneFonctionnelleRequest {
         this.taux = taux;
         this.dateDepart = dateDepart;
         this.dateFin = dateFin;
-        this.actif = actif;
+
     }
 
     // --- Getters and Setters ---
@@ -65,11 +65,5 @@ public class LigneFonctionnelleRequest {
     public void setDateFin(OffsetDateTime dateFin) {this.dateFin = dateFin;}
 
 
-    public Boolean getActif() {
-        return actif;
-    }
 
-    public void setActif(Boolean actif) {
-        this.actif = actif;
-    }
 }

@@ -76,6 +76,12 @@ public class Banque {
     @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<LigneFonctionnelleSpecifique> ligneFonctionnellesSpecifiques = new ArrayList<>();
 
+    @OneToMany(mappedBy = "banqueDePrelevement", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<ContratLeasing> contratsLeasing = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<CreditMoyenTerme> creditMoyenTermes = new ArrayList<>();
+
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Cheque> cheques = new ArrayList<>();
 
@@ -87,12 +93,6 @@ public class Banque {
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<MiseADisposition> misesADisposition = new ArrayList<>();
-
-    @OneToMany(mappedBy = "banqueDePrelevement", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<ContratLeasing> contratsLeasing = new ArrayList<>();
-
-    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<CreditMoyenTerme> creditMoyenTermes = new ArrayList<>();
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Decompte> decomptes = new ArrayList<>();
@@ -114,7 +114,6 @@ public class Banque {
         this.devise = devise;
         this.address = address;
         this.agence = agence;
-        this.soldeActuel = BigDecimal.ZERO;
     }
 
     // --- Getters / Setters ---

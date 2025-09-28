@@ -9,11 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.jobs.dtos.ProcessedFunctionalLine;
-import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
 import staport.finance.gBanque.notification.service.NotificationService;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * ItemWriter for the functional line expiration batch job.
@@ -30,19 +27,15 @@ public class FunctionalLineWriter implements ItemWriter<ProcessedFunctionalLine>
 
     private static final Logger log = LoggerFactory.getLogger(FunctionalLineWriter.class);
 
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
     private final NotificationService notificationService;
 
     /**
      * Constructs a FunctionalLineWriter.
      *
-     * @param ligneFonctionnelleRepository The repository to save LigneFonctionnelle entities.
      * @param notificationService The service to send notifications.
      */
     @Autowired
-    public FunctionalLineWriter(LigneFonctionnelleRepository ligneFonctionnelleRepository,
-                                NotificationService notificationService) {
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
+    public FunctionalLineWriter(NotificationService notificationService) {
         this.notificationService = notificationService;
         log.info("FunctionalLineWriter initialized.");
     }
@@ -53,25 +46,16 @@ public class FunctionalLineWriter implements ItemWriter<ProcessedFunctionalLine>
      * for a given chunk are committed together or rolled back if an error occurs.
      *
      * @param chunk The chunk of ProcessedFunctionalLine items to write.
-     * @throws Exception if any error occurs during writing or notification sending.
      */
     @Override
     @Transactional // Ensures atomicity: all saves and notifications within the chunk succeed or fail together.
-    public void write(Chunk<? extends ProcessedFunctionalLine> chunk) throws Exception {
+    public void write(Chunk<? extends ProcessedFunctionalLine> chunk)   {
         log.info("Starting to write chunk of {} processed functional lines.", chunk.getItems().size());
 
-        List<LigneFonctionnelle> linesToSave = new ArrayList<>();
+
 
         for (ProcessedFunctionalLine processedLine : chunk.getItems()) {
             LigneFonctionnelle ligne = processedLine.getLigneFonctionnelle();
-
-            // Add the line to the list for batch saving ONLY if it was marked for persistence
-            if (processedLine.getNeedsPersistence()) {
-                linesToSave.add(ligne);
-                log.debug("LigneFonctionnelle ID: {} added to save list (NeedsPersistence = true). Actif status: {}.", ligne.getId(), ligne.isActif());
-            } else {
-                log.debug("LigneFonctionnelle ID: {} not added to save list (NeedsPersistence = false).", ligne.getId());
-            }
 
             // Send notification if one was prepared by the processor, notifications are always persisted
             if (processedLine.hasNotification()) {
@@ -93,20 +77,7 @@ public class FunctionalLineWriter implements ItemWriter<ProcessedFunctionalLine>
             }
         }
 
-        // Save all modified/processed functional lines in a single batch operation for efficiency
-        if (!linesToSave.isEmpty()) {
-            try {
-                ligneFonctionnelleRepository.saveAll(linesToSave);
-                log.info("Successfully saved {} LigneFonctionnelle entities that required persistence.", linesToSave.size());
-            }
-            catch (Exception e) {
-                log.error("Failed to save LigneFonctionnelle entities in chunk. Error: {}", e.getMessage(), e);
-                // Re-throw to trigger transaction rollback for the entire chunk
-                throw e;
-            }
-        } else {
-            log.info("No LigneFonctionnelle entities explicitly marked for persistence in this chunk.");
-        }
+
         log.info("Finished writing chunk.");
     }
 }

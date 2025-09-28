@@ -7,12 +7,10 @@ import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.mappers.BanqueMapper;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
-import staport.finance.gBanque.Bank.specifications.BanqueSpecification;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleResponse;
+import staport.finance.gBanque.Bank.specifications.BanqueSpecification;;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService;
-import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleResponse;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.services.LigneFonctionnelleService;
+import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.FileStorageException;
@@ -24,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,35 +36,18 @@ public class BanqueService {
 
     private final BanqueRepository banqueRepository;
     private final BanqueMapper banqueMapper;
-    private final LigneFonctionnelleService ligneFonctionnelleService;
     private final NatureLigneFonctionnelleService natureLigneFonctionnelleService;
+    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
 
     public BanqueService(BanqueRepository banqueRepository,
                          BanqueMapper banqueMapper,
-                         LigneFonctionnelleService ligneFonctionnelleService,
-                         NatureLigneFonctionnelleService natureLigneFonctionnelleService) {
+                         NatureLigneFonctionnelleService natureLigneFonctionnelleService, LigneFonctionnelleRepository ligneFonctionnelleRepository) {
         this.banqueRepository = banqueRepository;
         this.banqueMapper = banqueMapper;
-        this.ligneFonctionnelleService = ligneFonctionnelleService;
         this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
+        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
     }
 
-    /**
-     * Tries to find the ID for the "Facilité de Caisse" nature of functional line.
-     * Logs a warning if not found, but does not throw an exception.
-     * @return An Optional containing the ID if found, or an empty Optional otherwise.
-     */
-    private Optional<Long> findFaciliteDeCaisseNatureId() {
-        return natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().stream()
-                .filter(nlf -> "Facilité de Caisse".trim().equalsIgnoreCase(nlf.getLabel()))
-                .map(NatureLigneFonctionnelleResponse::getId)
-                .findFirst()
-                .or(() -> {
-                    logger.warn("La nature de ligne fonctionnelle 'Facilité de Caisse' n'a pas été trouvée. " +
-                            "Veuillez vous assurer qu'elle est créée dans la base de données pour un fonctionnement optimal. Le plafond de facilité de caisse sera omis de la réponse.");
-                    return Optional.empty(); // Returns an empty Optional if not found
-                });
-    }
 
 
     /**
@@ -75,8 +57,10 @@ public class BanqueService {
      * @return The created BanqueResponse DTO.
      * @throws FileStorageException if there's an issue processing the logo file.
      */
+
     @Transactional
     public BanqueResponse createBanque(BanqueRequest request, MultipartFile logoFile) {
+
         if (banqueRepository.findByNumeroDeCompte(request.getNumeroDeCompte()).isPresent()) {
             throw new DuplicateEntryException("Le numéro de compte existe déjà: " + request.getNumeroDeCompte());
         }
@@ -155,24 +139,20 @@ public class BanqueService {
 
         List<Banque> allBanques = banqueRepository.findAll();
 
-        Optional<Long> faciliteDeCaisseIdOptional = findFaciliteDeCaisseNatureId();
+        Long faciliteDeCaisseId = findFaciliteDeCaisseNatureId();
 
         return allBanques.stream()
                 .map(banque -> {
                     BankAcceuilResponse response = banqueMapper.toAcceuilDto(banque);
-
                     // Only attempt to get functional line if the nature ID is present
                     // If not found, plafondFC will remain null (its default value after mapping toDto)
-                    faciliteDeCaisseIdOptional.ifPresent(fcNatureId -> {
-                        Optional<LigneFonctionnelleResponse> fcOptional =
-                                ligneFonctionnelleService.getActifLigneFonctionnellesByBanqueIdAndNature(
-                                        banque.getId(),
-                                        fcNatureId
-                                );
-                        // If a LigneFonctionnelle of type Facilite de Caisse is found for THIS bank, set its plafond.
-                        // Otherwise, plafondFC will remain null.
-                        fcOptional.ifPresent(fc -> response.setPlafondFC(fc.getPlafond()));
-                    });
+                    Optional<LigneFonctionnelle> fcOptional =
+                            ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(
+                                    banque.getId(),faciliteDeCaisseId
+                            );
+
+                    fcOptional.ifPresent(fc -> response.setPlafondFC(fc.getPlafond()));
+
 
                     return response;
                 })
@@ -181,17 +161,17 @@ public class BanqueService {
 
     @Transactional(readOnly = true)
     public BankAcceuilResponse getAccueilBankInfoById(Long banqueId) {
+
         Banque banque = banqueRepository.findById(banqueId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banque not found with id: " + banqueId));
 
-        Optional<Long> faciliteDeCaisseIdOptional = findFaciliteDeCaisseNatureId();
+        Long faciliteDeCaisseId = findFaciliteDeCaisseNatureId();
 
         BankAcceuilResponse response = banqueMapper.toAcceuilDto(banque);
 
-        faciliteDeCaisseIdOptional.flatMap(fcNatureId -> ligneFonctionnelleService.getActifLigneFonctionnellesByBanqueIdAndNature(
-                banque.getId(),
-                fcNatureId
-        )).ifPresent(fc -> response.setPlafondFC(fc.getPlafond()));
+        Optional<LigneFonctionnelle> fc=ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banqueId,faciliteDeCaisseId);
+
+        fc.ifPresent(f -> response.setPlafondFC(f.getPlafond()));
 
         return response;
     }
@@ -214,5 +194,32 @@ public class BanqueService {
         }
 
         banqueRepository.delete(banque);
+    }
+
+    /**
+     * Tries to find the ID for the "Facilité de Caisse" nature of functional line.
+     * Logs a warning if not found, but does not throw an exception.
+     * @return An Optional containing the ID if found, or an empty Optional otherwise.
+     */
+    private Long findFaciliteDeCaisseNatureId() {
+
+        return natureLigneFonctionnelleService.getNatureByLabel("Facilité de Caisse").getId();
+
+    }
+
+
+    @Transactional
+    private void debiter(Long banqueId, BigDecimal montant) {
+        Banque banque=banqueRepository.findById(banqueId).orElseThrow(()->new RuntimeException("banque non trouvée avec l id "+banqueId));
+        banque.setSoldeActuel( banque.getSoldeActuel().subtract(montant));
+        banqueRepository.save(banque);
+    }
+
+
+    @Transactional
+    private void crediter(Long banqueId,BigDecimal montant) {
+        Banque banque=banqueRepository.findById(banqueId).orElseThrow(()->new RuntimeException("banque non trouvée avec l id "+banqueId));
+        banque.setSoldeActuel( banque.getSoldeActuel().add(montant));
+        banqueRepository.save(banque);
     }
 }

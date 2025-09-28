@@ -17,7 +17,7 @@ public class LigneFonctionnelleResponse {
     private OffsetDateTime dateFin;
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
-    private boolean actif; // NEW FIELD
+    private boolean actif;
 
     // --- Constructors ---
     public LigneFonctionnelleResponse() {

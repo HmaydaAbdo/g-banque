@@ -57,46 +57,70 @@ public class LigneFonctionnelleService {
 
     @Transactional
     public LigneFonctionnelleResponse createLigneFonctionnelle(LigneFonctionnelleRequest request) {
-
         log.debug("Requête de création de ligne fonctionnelle: {}", request);
+
+        // assurer que la date de fin > la date de départ
         validateDateRange(request.getDateDepart(), request.getDateFin());
 
+        // récupérer la banque
         Banque banque = banqueRepository.findById(request.getBanqueId())
                 .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée avec l'ID: " + request.getBanqueId()));
-        log.debug("Banque trouvée: {}", banque.getNom());
 
+        // récupérer la nature de la ligne fonctionnelle
         NatureLigneFonctionnelle natureLigneFonctionnelle = natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId())
                 .orElseThrow(() -> new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId()));
-        log.debug("NatureLigneFonctionnelle trouvée: {}", natureLigneFonctionnelle.getLabel());
 
-        boolean requestActif = request.getActif() == null || request.getActif();
 
-        if (requestActif) {
-            ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(
-                    request.getBanqueId(),
-                    request.getNatureLigneFonctionnelleId()
-            ).ifPresent(existingActiveLigne -> {
-                log.warn("Tentative de création d'un doublon actif pour la combinaison: Banque '{}' (ID: {}), Nature '{}' (ID: {}). Conflit avec ID: {}",
-                        banque.getNom(), request.getBanqueId(), natureLigneFonctionnelle.getLabel(), request.getNatureLigneFonctionnelleId(), existingActiveLigne.getId());
-                throw new DuplicateEntryException(
-                        "Une ligne fonctionnelle ACTIVE de type '" + natureLigneFonctionnelle.getLabel() +
-                                "' existe déjà pour la banque '" + banque.getNom() + "'."
-                );
-            });
-        }
+        // avoir having more than one actif line by banque and nature
+        avoidDuplicateActifLines(banque, natureLigneFonctionnelle);
 
         LigneFonctionnelle ligneFonctionnelle = ligneFonctionnelleMapper.toEntity(request, banque, natureLigneFonctionnelle);
 
-        try {
-            LigneFonctionnelle savedLigneFonctionnelle = ligneFonctionnelleRepository.save(ligneFonctionnelle);
-            log.info("Ligne fonctionnelle créée avec succès, ID: {}", savedLigneFonctionnelle.getId());
-            return ligneFonctionnelleMapper.toDto(savedLigneFonctionnelle);
-        } catch (DataIntegrityViolationException e) {
-            log.error("Erreur d'intégrité des données lors de la création de la ligne fonctionnelle: {}", e.getMessage(), e);
-            throw new DuplicateEntryException(
-                    "Impossible de créer la ligne fonctionnelle. La combinaison Banque '" + banque.getNom() +
-                            "', Nature '" + natureLigneFonctionnelle.getLabel() + "' existe déjà en tant que ligne ACTIVE." );
-        }
+        LigneFonctionnelle savedLigneFonctionnelle = ligneFonctionnelleRepository.save(ligneFonctionnelle);
+        log.info("Ligne fonctionnelle créée avec succès, ID: {}", savedLigneFonctionnelle.getId());
+        return ligneFonctionnelleMapper.toDto(savedLigneFonctionnelle);
+
+    }
+
+    @Transactional
+    public LigneFonctionnelleResponse updateLigneFonctionnelle(Long id, LigneFonctionnelleRequest request) {
+        log.debug("--- Début de la mise à jour de LigneFonctionnelle (ID: {}) ---", id);
+        log.debug("Requête reçue: {}", request);
+
+        LigneFonctionnelle existingLigneFonctionnelle = ligneFonctionnelleRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Ligne Fonctionnelle non trouvée avec l'ID: {} pour la mise à jour.", id);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle non trouvée avec l'ID: " + id);
+                });
+        log.debug("Ligne fonctionnelle existante (avant toute modification): {}", existingLigneFonctionnelle.toString());
+
+
+        validateDateRange(request.getDateDepart(), request.getDateFin());
+
+        Banque targetBanque = banqueRepository.findById(request.getBanqueId())
+                .orElseThrow(() -> {
+                    log.warn("Banque cible non trouvée avec l'ID: {}.", request.getBanqueId());
+                    return new ResourceNotFoundException("Banque non trouvée avec l'ID: " + request.getBanqueId());
+                });
+
+        log.debug("Banque cible trouvée: {}", targetBanque.getNom());
+
+        NatureLigneFonctionnelle targetNature = natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId())
+                .orElseThrow(() -> {
+                    log.warn("NatureLigneFonctionnelle cible non trouvée avec l'ID: {}.", request.getNatureLigneFonctionnelleId());
+                    return new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId());
+                });
+
+        log.debug("NatureLigneFonctionnelle cible trouvée: {}", targetNature.getLabel());
+
+        avoidDuplicateActifLines(targetBanque, targetNature);
+
+        ligneFonctionnelleMapper.updateLigneFonctionnelleFromDto(request, existingLigneFonctionnelle, targetBanque, targetNature);
+
+        LigneFonctionnelle updatedLigneFonctionnelle = ligneFonctionnelleRepository.save(existingLigneFonctionnelle);
+
+        return ligneFonctionnelleMapper.toDto(updatedLigneFonctionnelle);
+
     }
 
     public LigneFonctionnelleResponse getLigneFonctionnelleById(Long id) {
@@ -110,7 +134,7 @@ public class LigneFonctionnelleService {
         return ligneFonctionnelleMapper.toDto(ligneFonctionnelle);
     }
 
-    public Page<LigneFonctionnelleResponse> getLigneFonctionnelles(LigneFonctionnelleSearchCriteria criteria, Pageable pageable) {
+    public Page<LigneFonctionnelleResponse> getPaginatedLigneFonctionnelles(LigneFonctionnelleSearchCriteria criteria, Pageable pageable) {
         log.debug("Récupération des lignes fonctionnelles ACTIVES avec critères: {} et pageable: {}", criteria, pageable);
         Specification<LigneFonctionnelle> spec = LigneFonctionnelleSpecification.searchByCriteria(criteria);
         Page<LigneFonctionnelle> ligneFonctionnellesPage = ligneFonctionnelleRepository.findAll(spec, pageable);
@@ -118,16 +142,8 @@ public class LigneFonctionnelleService {
         return ligneFonctionnellesPage.map(ligneFonctionnelleMapper::toDto);
     }
 
-    /**
-     * Get all functional lines associated with a specific bank ID, with pagination, sorting, and search capabilities.
-     * This method can retrieve both active and inactive lines based on criteria.
-     * @param banqueId The ID of the bank.
-     * @param criteria Search criteria (natureLigneFonctionnelleId, yearDepart, actif)
-     * @param pageable Pagination and sorting information.
-     * @return A Page of functional lines as DTOs.
-     */
     @Transactional(readOnly = true)
-    public Page<LigneFonctionnelleResponse> getLignesFonctionnellesByBanqueId(Long banqueId, LigneFonctionnelleSearchCriteria criteria, Pageable pageable) {
+    public Page<LigneFonctionnelleResponse> getPaginatedLignesFonctionnellesByBanqueId(Long banqueId, LigneFonctionnelleSearchCriteria criteria, Pageable pageable) {
         log.debug("Récupération paginée et filtrée des lignes fonctionnelles pour Banque ID: {} avec critères: {} et pageable: {}", banqueId, criteria, pageable);
 
         if (!banqueRepository.existsById(banqueId)) {
@@ -144,73 +160,19 @@ public class LigneFonctionnelleService {
         return ligneFonctionnellesPage.map(ligneFonctionnelleMapper::toDto);
     }
 
-    public Optional<LigneFonctionnelleResponse> getActifLigneFonctionnellesByBanqueIdAndNature(Long banqueId, Long natureLigneFonctionnelleId){
-        log.debug("Recherche de ligne fonctionnelle par Banque ID: {} et Nature ID: {}", banqueId, natureLigneFonctionnelleId);
-        return ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banqueId, natureLigneFonctionnelleId)
-                .map(ligneFonctionnelleMapper::toDto);
-    }
 
     @Transactional
-    public LigneFonctionnelleResponse updateLigneFonctionnelle(Long id, LigneFonctionnelleRequest request) {
-        log.debug("--- Début de la mise à jour de LigneFonctionnelle (ID: {}) ---", id);
-        log.debug("Requête reçue: {}", request);
+    public void deactivateLigneFonctionnelleByNatureAndBank(Long ligneId) {
 
-        LigneFonctionnelle existingLigneFonctionnelle = ligneFonctionnelleRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Ligne Fonctionnelle non trouvée avec l'ID: {} pour la mise à jour.", id);
-                    return new ResourceNotFoundException("Ligne Fonctionnelle non trouvée avec l'ID: " + id);
-                });
-        log.debug("Ligne fonctionnelle existante (avant toute modification): {}", existingLigneFonctionnelle.toString());
+        log.debug("Tentative de désactivation de la ligne fonctionnelle  avec l ID: {} ", ligneId);
 
-        OffsetDateTime effectiveDateDepart = request.getDateDepart() != null ? request.getDateDepart() : existingLigneFonctionnelle.getDateDepart();
-        OffsetDateTime effectiveDateFin = request.getDateFin() != null ? request.getDateFin() : existingLigneFonctionnelle.getDateFin();
-        validateDateRange(effectiveDateDepart, effectiveDateFin);
+        LigneFonctionnelle ligneToDeactivate = ligneFonctionnelleRepository.findById(ligneId).orElseThrow(
+                ()->new ResourceNotFoundException("Aucune Ligne Fonctionnelle avec l'ID: " + ligneId)
+        );
 
-        Banque targetBanque = banqueRepository.findById(request.getBanqueId())
-                .orElseThrow(() -> {
-                    log.warn("Banque cible non trouvée avec l'ID: {}.", request.getBanqueId());
-                    return new ResourceNotFoundException("Banque non trouvée avec l'ID: " + request.getBanqueId());
-                });
-        log.debug("Banque cible trouvée: {}", targetBanque.getNom());
-
-        NatureLigneFonctionnelle targetNature = natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId())
-                .orElseThrow(() -> {
-                    log.warn("NatureLigneFonctionnelle cible non trouvée avec l'ID: {}.", request.getNatureLigneFonctionnelleId());
-                    return new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId());
-                });
-        log.debug("NatureLigneFonctionnelle cible trouvée: {}", targetNature.getLabel());
-
-        boolean requestedActif = request.getActif() != null ? request.getActif() : existingLigneFonctionnelle.isActif();
-
-        if (requestedActif) {
-            Optional<LigneFonctionnelle> existingActiveDuplicate = ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(
-                    request.getBanqueId(),
-                    request.getNatureLigneFonctionnelleId()
-            );
-
-            if (existingActiveDuplicate.isPresent() && !existingActiveDuplicate.get().getId().equals(id)) {
-                log.warn("Tentative de mise à jour créant un doublon actif pour la combinaison: Banque '{}' (ID: {}), Nature '{}' (ID: {}). Conflit avec ID: {}",
-                        targetBanque.getNom(), request.getBanqueId(), targetNature.getLabel(), request.getNatureLigneFonctionnelleId(), existingActiveDuplicate.get().getId());
-                throw new DuplicateEntryException(
-                        "Impossible de mettre à jour la ligne fonctionnelle. Une ligne fonctionnelle ACTIVE de type '" + targetNature.getLabel() +
-                                "' existe déjà pour la banque '" + targetBanque.getNom() + "'."
-                );
-            }
-        }
-
-        ligneFonctionnelleMapper.updateLigneFonctionnelleFromDto(request, existingLigneFonctionnelle, targetBanque, targetNature);
-
-        try {
-            LigneFonctionnelle updatedLigneFonctionnelle = ligneFonctionnelleRepository.save(existingLigneFonctionnelle);
-            ligneFonctionnelleRepository.flush();
-            log.info("Ligne fonctionnelle avec ID {} mise à jour avec succès.", updatedLigneFonctionnelle.getId());
-            log.debug("--- Fin de la mise à jour de LigneFonctionnelle (ID: {}) ---", updatedLigneFonctionnelle.getId());
-            return ligneFonctionnelleMapper.toDto(updatedLigneFonctionnelle);
-        } catch (DataIntegrityViolationException e) {
-            log.error("Erreur d'intégrité des données (doublon ou autre) lors de la mise à jour de la ligne fonctionnelle (ID: {}): {}", id, e.getMessage(), e);
-            throw new DuplicateEntryException(
-                    "Impossible de mettre à jour la ligne fonctionnelle. Une ligne fonctionnelle ACTIVE avec la même Nature existe déjà pour la Banque spécifiée." );
-        }
+        ligneToDeactivate.setActif(false);
+        ligneFonctionnelleRepository.save(ligneToDeactivate);
+        log.info("Ligne fonctionnelle avec ID {}  désactivée avec succès.", ligneToDeactivate.getId());
     }
 
     @Transactional
@@ -224,33 +186,27 @@ public class LigneFonctionnelleService {
         log.info("Ligne fonctionnelle avec ID {} supprimée avec succès.", id);
     }
 
-    /**
-     * Deactivates the  LigneFonctionnelle
-     * Sets its 'actif' flag to false.
-     * @param ligneId The ID of the functional line.
-     * @throws ResourceNotFoundException if no active functional line is found for the given criteria.
-     */
-    @Transactional
-    public void deactivateLigneFonctionnelleByNatureAndBank(Long ligneId) {
-
-        log.debug("Tentative de désactivation de la ligne fonctionnelle  avec l ID: {} ", ligneId);
-        LigneFonctionnelle ligneToDeactivate = ligneFonctionnelleRepository.findById(ligneId).orElseThrow(
-                ()->new ResourceNotFoundException("Aucune Ligne Fonctionnelle avec l'ID: " + ligneId)
-        );
-
-        ligneToDeactivate.setActif(false);
-        ligneFonctionnelleRepository.save(ligneToDeactivate);
-        log.info("Ligne fonctionnelle avec ID {}  désactivée avec succès.",
-                ligneToDeactivate.getId());
-    }
-
-
     private void validateDateRange(OffsetDateTime dateDepart, OffsetDateTime dateFin) {
         if (dateDepart != null && dateFin != null && dateFin.isBefore(dateDepart)) {
             log.warn("Validation de date échouée: dateFin ({}) est antérieure à dateDepart ({}).", dateFin, dateDepart);
             throw new IllegalArgumentException("La date de fin (" + dateFin + ") ne peut pas être antérieure à la date de départ (" + dateDepart + ").");
         }
     }
+
+    private void avoidDuplicateActifLines(Banque banque, NatureLigneFonctionnelle natureLigneFonctionnelle) {
+
+        Optional<LigneFonctionnelle> existingActifLineWithSameBanqueAndNature = ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banque.getId(), natureLigneFonctionnelle.getId());
+
+        existingActifLineWithSameBanqueAndNature.ifPresent(existingActiveLine -> {
+            log.warn("Tentative de création d'un doublon actif pour la combinaison: Banque '{}' (ID: {}), Nature '{}' (ID: {}).",
+                    banque.getNom(), banque.getId(), natureLigneFonctionnelle.getLabel(), natureLigneFonctionnelle.getId());
+            throw new DuplicateEntryException(
+                    "Une ligne fonctionnelle ACTIVE de type '" + natureLigneFonctionnelle.getLabel() +
+                            "' existe déjà pour la banque '" + banque.getNom() + "'."
+            );
+        });
+    }
+
 
     /**
      * Retrieves historical plafond and taux data for a specific bank and nature of functional line,
@@ -326,4 +282,7 @@ public class LigneFonctionnelleService {
         log.debug("Données historiques du graphique préparées: Labels={}, Taux Data={}, Plafond Data={}", labels, tauxData.size(), plafondData.size());
         return new LigneFonctionnelleChartData(labels, datasets);
     }
+
+
+
 }

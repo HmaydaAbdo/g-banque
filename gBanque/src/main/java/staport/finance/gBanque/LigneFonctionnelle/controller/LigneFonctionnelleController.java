@@ -29,54 +29,6 @@ public class LigneFonctionnelleController {
         return new ResponseEntity<>(createdLigne, HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<LigneFonctionnelleResponse> getLigneFonctionnelleById(@PathVariable Long id) {
-        LigneFonctionnelleResponse ligne = ligneFonctionnelleService.getLigneFonctionnelleById(id);
-        return ResponseEntity.ok(ligne);
-    }
-
-
-    @GetMapping
-    public ResponseEntity<Page<LigneFonctionnelleResponse>> getActiveLigneFonctionnelles(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort,
-            @ModelAttribute LigneFonctionnelleSearchCriteria searchCriteria) {
-
-        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
-        Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
-
-        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getLigneFonctionnelles(searchCriteria, pageable);
-        return ResponseEntity.ok(lignes);
-    }
-
-    /**
-     * Get functional lines associated with a specific bank ID, with pagination, sorting,
-     * and search by nature ligne fonctionnelle, year of dateDepart, and 'actif' status.
-     * GET /lignes-fonctionnelles/banque/{banqueId}
-     * @param banqueId The ID of the bank.
-     * @param page Page number (0-indexed, default 0).
-     * @param size Page size (default 10).
-     * @param sort Sort criteria (e.g., "dateDepart,desc", "plafond,asc").
-     * @param searchCriteria DTO for search filters (natureLigneFonctionnelleId, yearDepart, actif).
-     * @return A paginated list of functional lines as DTOs with HTTP status 200 OK.
-     */
-    @GetMapping("/banque/{banqueId}")
-    public ResponseEntity<Page<LigneFonctionnelleResponse>> getLignesFonctionnellesByBanqueId(
-            @PathVariable Long banqueId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort,
-            @ModelAttribute LigneFonctionnelleSearchCriteria searchCriteria) {
-
-        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
-        Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
-
-        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getLignesFonctionnellesByBanqueId(banqueId, searchCriteria, pageable);
-        return ResponseEntity.ok(lignes);
-    }
 
     @PutMapping("/{id}")
     public ResponseEntity<LigneFonctionnelleResponse> updateLigneFonctionnelle(
@@ -86,10 +38,28 @@ public class LigneFonctionnelleController {
         return ResponseEntity.ok(updatedLigne);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteLigneFonctionnelle(@PathVariable Long id) {
-        ligneFonctionnelleService.deleteLigneFonctionnelle(id);
-        return ResponseEntity.noContent().build();
+
+
+    @GetMapping("/{id}")
+    public ResponseEntity<LigneFonctionnelleResponse> getLigneFonctionnelleById(@PathVariable Long id) {
+        LigneFonctionnelleResponse ligne = ligneFonctionnelleService.getLigneFonctionnelleById(id);
+        return ResponseEntity.ok(ligne);
+    }
+
+
+    @GetMapping
+    public ResponseEntity<Page<LigneFonctionnelleResponse>> getPaginatedLigneFonctionnelles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort,
+            @ModelAttribute LigneFonctionnelleSearchCriteria searchCriteria) {
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getPaginatedLigneFonctionnelles(searchCriteria, pageable);
+        return ResponseEntity.ok(lignes);
     }
 
     /**
@@ -104,6 +74,40 @@ public class LigneFonctionnelleController {
     {
         ligneFonctionnelleService.deactivateLigneFonctionnelleByNatureAndBank(ligneId);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteLigneFonctionnelle(@PathVariable Long id) {
+        ligneFonctionnelleService.deleteLigneFonctionnelle(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    /**
+     * Get functional lines associated with a specific bank ID, with pagination, sorting,
+     * and search by nature ligne fonctionnelle, year of dateDepart, and 'actif' status.
+     * GET /lignes-fonctionnelles/banque/{banqueId}
+     * @param banqueId The ID of the bank.
+     * @param page Page number (0-indexed, default 0).
+     * @param size Page size (default 10).
+     * @param sort Sort criteria (e.g., "dateDepart,desc", "plafond,asc").
+     * @param searchCriteria DTO for search filters (natureLigneFonctionnelleId, yearDepart, actif).
+     * @return A paginated list of functional lines as DTOs with HTTP status 200 OK.
+     */
+    @GetMapping("/banque/{banqueId}")
+    public ResponseEntity<Page<LigneFonctionnelleResponse>> getPaginatedLignesFonctionnellesByBanqueId(
+            @PathVariable Long banqueId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort,
+            @ModelAttribute LigneFonctionnelleSearchCriteria searchCriteria) {
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getPaginatedLignesFonctionnellesByBanqueId(banqueId, searchCriteria, pageable);
+        return ResponseEntity.ok(lignes);
     }
 
     /**

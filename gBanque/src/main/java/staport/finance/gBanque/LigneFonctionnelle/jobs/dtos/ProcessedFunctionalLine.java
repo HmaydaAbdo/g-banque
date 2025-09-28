@@ -21,7 +21,7 @@ public class ProcessedFunctionalLine {
     private String notificationTitle;
     private String notificationContent;
     private NotificationType notificationType;
-    private boolean needsPersistence;
+
 
     /**
      * Constructor for cases where a functional line is processed and a notification needs to be generated,
@@ -31,14 +31,13 @@ public class ProcessedFunctionalLine {
      * @param notificationTitle The title for the notification.
      * @param notificationContent The content/body for the notification.
      * @param notificationType The type of notification (e.g., ALERT, WARNING).
-     * @param needsPersistence True if the LigneFonctionnelle entity needs to be saved to the database.
      */
-    public ProcessedFunctionalLine(LigneFonctionnelle ligneFonctionnelle, String notificationTitle, String notificationContent, NotificationType notificationType, boolean needsPersistence) {
+    public ProcessedFunctionalLine(LigneFonctionnelle ligneFonctionnelle, String notificationTitle, String notificationContent, NotificationType notificationType ) {
         this.ligneFonctionnelle = ligneFonctionnelle;
         this.notificationTitle = notificationTitle;
         this.notificationContent = notificationContent;
         this.notificationType = notificationType;
-        this.needsPersistence = needsPersistence;
+
     }
 
     /**
@@ -48,11 +47,10 @@ public class ProcessedFunctionalLine {
      * This is for clarity when no *specific* persistence action beyond standard batch processing is implied.
      *
      * @param ligneFonctionnelle The LigneFonctionnelle entity, potentially modified.
-     * @param needsPersistence True if the LigneFonctionnelle entity needs to be saved to the database.
      */
-    public ProcessedFunctionalLine(LigneFonctionnelle ligneFonctionnelle, boolean needsPersistence) {
+    public ProcessedFunctionalLine(LigneFonctionnelle ligneFonctionnelle ) {
         this.ligneFonctionnelle = ligneFonctionnelle;
-        this.needsPersistence = needsPersistence;
+
     }
 
     // --- Getters ---
@@ -73,9 +71,7 @@ public class ProcessedFunctionalLine {
         return notificationType;
     }
 
-    public boolean getNeedsPersistence() {
-        return needsPersistence;
-    }
+
 
     /**
      * Checks if this processed functional line carries notification details.
@@ -91,7 +87,6 @@ public class ProcessedFunctionalLine {
         return "ProcessedFunctionalLine{" +
                 "ligneFonctionnelleId=" + (ligneFonctionnelle != null ? ligneFonctionnelle.getId() : "null") +
                 ", notificationType=" + notificationType +
-                ", needsPersistence=" + needsPersistence +
                 ", notificationTitle='" + notificationTitle + '\'' +
                 '}';
     }

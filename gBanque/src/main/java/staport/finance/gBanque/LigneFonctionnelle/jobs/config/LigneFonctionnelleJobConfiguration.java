@@ -66,25 +66,19 @@ public class LigneFonctionnelleJobConfiguration {
         log.info("LigneFonctionnelleJobConfiguration initialized.");
     }
 
+
+
     /**
-     * Defines the ItemReader for fetching active LigneFonctionnelle entities.
-     * It uses JpaPagingItemReader to efficiently read data in pages,
-     * specifically fetching active lines ordered by their end date.
+     * Defines the main Spring Batch Job for functional line expiration.
+     * This job simply executes the `processFunctionalLinesStep`.
      *
-     * @return A configured JpaPagingItemReader.
+     * @return A configured Spring Batch Job.
      */
     @Bean
-    public JpaPagingItemReader<LigneFonctionnelle> functionalLineReader() {
-        log.info("Configuring JpaPagingItemReader for active LigneFonctionnelle entities.");
-        // JPQL query to select active functional lines, ordered by dateFin ascending.
-        // This order is crucial for the business logic in the processor (e.g., handling expired lines first).
-        String jpqlQuery = "SELECT l FROM LigneFonctionnelle l WHERE l.actif = true ORDER BY l.dateFin ASC";
-
-        return new JpaPagingItemReaderBuilder<LigneFonctionnelle>()
-                .name("functionalLineReader") // Unique name for the reader bean
-                .entityManagerFactory(entityManagerFactory) // Provides the JPA context
-                .queryString(jpqlQuery) // The JPQL query to fetch data
-                .pageSize(100) // Number of items to read in a single page/chunk
+    public Job functionalLineExpirationJob() {
+        log.info("Configuring 'functionalLineExpirationJob'.");
+        return new JobBuilder("functionalLineExpirationJob", jobRepository)
+                .start(processFunctionalLinesStep()) // The starting step of this job
                 .build();
     }
 
@@ -108,17 +102,26 @@ public class LigneFonctionnelleJobConfiguration {
                 .build();
     }
 
+
     /**
-     * Defines the main Spring Batch Job for functional line expiration.
-     * This job simply executes the `processFunctionalLinesStep`.
+     * Defines the ItemReader for fetching active LigneFonctionnelle entities.
+     * It uses JpaPagingItemReader to efficiently read data in pages,
+     * specifically fetching active lines ordered by their end date.
      *
-     * @return A configured Spring Batch Job.
+     * @return A configured JpaPagingItemReader.
      */
     @Bean
-    public Job functionalLineExpirationJob() {
-        log.info("Configuring 'functionalLineExpirationJob'.");
-        return new JobBuilder("functionalLineExpirationJob", jobRepository)
-                .start(processFunctionalLinesStep()) // The starting step of this job
+    public JpaPagingItemReader<LigneFonctionnelle> functionalLineReader() {
+        log.info("Configuring JpaPagingItemReader for active LigneFonctionnelle entities.");
+        // JPQL query to select active functional lines, ordered by dateFin ascending.
+        // This order is crucial for the business logic in the processor (e.g., handling expired lines first).
+        String jpqlQuery = "SELECT l FROM LigneFonctionnelle l WHERE l.actif = true ORDER BY l.dateFin ASC";
+
+        return new JpaPagingItemReaderBuilder<LigneFonctionnelle>()
+                .name("functionalLineReader") // Unique name for the reader bean
+                .entityManagerFactory(entityManagerFactory) // Provides the JPA context
+                .queryString(jpqlQuery) // The JPQL query to fetch data
+                .pageSize(100) // Number of items to read in a single page/chunk
                 .build();
     }
 }

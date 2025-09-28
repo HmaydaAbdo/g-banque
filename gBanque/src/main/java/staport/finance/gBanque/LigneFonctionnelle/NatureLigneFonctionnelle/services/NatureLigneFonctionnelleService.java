@@ -102,8 +102,8 @@ public class NatureLigneFonctionnelleService {
 
     // Helper method to fetch entity by ID (useful for other services)
     @Transactional(readOnly = true)
-    public NatureLigneFonctionnelle getNatureLigneFonctionnelleEntityById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Nature de ligne fonctionnelle non trouvée avec l'ID: " + id));
+    public NatureLigneFonctionnelle getNatureByLabel(String label) {
+        return repository.findByLabel(label)
+                .orElseThrow(() -> new ResourceNotFoundException("Nature de ligne fonctionnelle non trouvée avec libelle : " + label));
     }
 }

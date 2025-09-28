@@ -19,7 +19,6 @@ import java.time.temporal.ChronoUnit;
  * 1. Determines if the line's end date has passed and marks it for deactivation.
  * 2. Calculates remaining time until expiration and determines if a warning or alert notification
  * needs to be generated based on configured monthly thresholds.
- *
  * It takes a LigneFonctionnelle as input and outputs a ProcessedFunctionalLine,
  * which may contain a modified LigneFonctionnelle entity and/or notification details,
  * and a flag indicating if the entity needs explicit persistence.
@@ -40,17 +39,15 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
     @Value("${functional.line.expiration.warning.threshold.months}")
     private long warningThresholdMonths;
 
-
     /**
      * Processes a single LigneFonctionnelle item.
      *
      * @param item The LigneFonctionnelle entity to be processed.
      * @return A ProcessedFunctionalLine object containing the updated LigneFonctionnelle
      * and potential notification details, along with a flag for persistence.
-     * @throws Exception if any processing error occurs.
      */
     @Override
-    public ProcessedFunctionalLine process(LigneFonctionnelle item) throws Exception {
+    public ProcessedFunctionalLine process(LigneFonctionnelle item)   {
         log.debug("Processing LigneFonctionnelle ID: {} (Bank: {}, Nature: {}, EndDate: {}) at {}.",
                 item.getId(),
                 item.getBanque() != null ? item.getBanque().getNom() : "N/A",
@@ -59,7 +56,7 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
                 currentProcessingTime);
 
         OffsetDateTime endDate = item.getDateFin();
-        boolean needsPersistence = false; // Flag to indicate if the item needs to be saved
+
         String notificationTitle = null;
         String notificationContent = null;
         NotificationType notificationType = null;
@@ -68,7 +65,6 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
             // Rule 1: If end date has already passed
             if (endDate.isBefore(currentProcessingTime)) {
                 if (item.isActif()) { // Only deactivate if it's currently active
-
                     // Prepare an ALERT notification for immediate action
                     notificationTitle = "Une ligne Fonctionnelle a Expirée ";
                     notificationContent = String.format("La ligne fonctionnelle avec ID '%d' (Banque: '%s', Nature: '%s') est expirée le %s. Elle faut la désactiver.",
@@ -77,8 +73,6 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
                             item.getNatureLigneFonctionnelle() != null ? item.getNatureLigneFonctionnelle().getLabel() : "N/A",
                             endDate.toLocalDate().toString());
                     notificationType = NotificationType.ALERT;
-                } else {
-                    log.debug("LigneFonctionnelle ID: {} is already inactive, no deactivation needed. End date: {}", item.getId(), endDate.toLocalDate());
                 }
             }
             // Rule 2: If end date has not yet arrived
@@ -112,8 +106,6 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
                             endDate.toLocalDate().toString(),
                             remainingMonths);
                     notificationType = NotificationType.WARNING;
-                } else {
-                    log.debug("LigneFonctionnelle ID: {}: No specific notification criteria met for remaining time ({} months).", item.getId(), remainingMonths);
                 }
             }
         } catch (Exception e) {
@@ -122,9 +114,9 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
         }
 
         // Construct the ProcessedFunctionalLine with all determined values
-        ProcessedFunctionalLine result = new ProcessedFunctionalLine(item, notificationTitle, notificationContent, notificationType, needsPersistence);
-        log.debug("Finished processing LigneFonctionnelle ID: {}. Notification status: {}, Needs Persistence: {}",
-                item.getId(), result.hasNotification() ? result.getNotificationType() : "NONE", result.getNeedsPersistence());
+        ProcessedFunctionalLine result = new ProcessedFunctionalLine(item, notificationTitle, notificationContent, notificationType);
+        log.debug("Finished processing LigneFonctionnelle ID: {}. Notification status: {}",
+                item.getId(), result.hasNotification() ? result.getNotificationType() : "NONE");
         return result;
     }
 }

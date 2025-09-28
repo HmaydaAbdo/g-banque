@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Component // Mark as a Spring component for dependency injection
+@Component
 public class LigneFonctionnelleMapper {
 
     /**
@@ -32,18 +32,15 @@ public class LigneFonctionnelleMapper {
         }
 
         LigneFonctionnelle ligneFonctionnelle = new LigneFonctionnelle();
-        // Set relationships (handled by service and passed here)
         ligneFonctionnelle.setBanque(banque);
         ligneFonctionnelle.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
 
-        // Set direct properties
+
         ligneFonctionnelle.setPlafond(request.getPlafond());
         ligneFonctionnelle.setTaux(request.getTaux());
         ligneFonctionnelle.setDateDepart(request.getDateDepart());
         ligneFonctionnelle.setDateFin(request.getDateFin());
 
-        // Handle 'actif' with default true if not provided in the request
-        ligneFonctionnelle.setActif(request.getActif() != null ? request.getActif() : true);
 
         // ID, dateCreation, dateModification are handled by JPA @PrePersist callbacks
 
@@ -64,11 +61,12 @@ public class LigneFonctionnelleMapper {
         LigneFonctionnelleResponse response = new LigneFonctionnelleResponse();
         response.setId(ligneFonctionnelle.getId());
 
-        // Map related entity IDs and names/labels/descriptions
+
         if (ligneFonctionnelle.getBanque() != null) {
             response.setBanqueId(ligneFonctionnelle.getBanque().getId());
             response.setBanqueNom(ligneFonctionnelle.getBanque().getNom());
         }
+
         if (ligneFonctionnelle.getNatureLigneFonctionnelle() != null) {
             response.setNatureLigneFonctionnelleId(ligneFonctionnelle.getNatureLigneFonctionnelle().getId());
             response.setNatureLigneFonctionnelleLabel(ligneFonctionnelle.getNatureLigneFonctionnelle().getLabel());
@@ -87,20 +85,6 @@ public class LigneFonctionnelleMapper {
         return response;
     }
 
-    /**
-     * Converts a list of LigneFonctionnelle entities to a list of LigneFonctionnelleResponse DTOs.
-     *
-     * @param ligneFonctionnelles The list of LigneFonctionnelle entities.
-     * @return A list of LigneFonctionnelleResponse DTOs.
-     */
-    public List<LigneFonctionnelleResponse> toDtoList(List<LigneFonctionnelle> ligneFonctionnelles) {
-        if (ligneFonctionnelles == null) {
-            return new ArrayList<>(); // Return an empty list for null input, more robust
-        }
-        return ligneFonctionnelles.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
-    }
 
     /**
      * Updates an existing LigneFonctionnelle entity with data from a LigneFonctionnelleRequest DTO.
@@ -133,21 +117,17 @@ public class LigneFonctionnelleMapper {
         if (request.getDateFin() != null) {
             ligneFonctionnelle.setDateFin(request.getDateFin());
         }
-        // 'actif' is a Boolean, so null means 'no change intended' from the request's perspective,
-        // but if it's explicitly false or true, it should apply.
-        if (request.getActif() != null) {
-            ligneFonctionnelle.setActif(request.getActif());
-        }
+
 
         // Update relationships if new entities are provided
         if (newBanque != null) {
             ligneFonctionnelle.setBanque(newBanque);
         }
+
         if (newNature != null) {
             ligneFonctionnelle.setNatureLigneFonctionnelle(newNature);
         }
 
-        // ID and dateCreation are ignored (not updatable via DTO)
-        // dateModification is handled by JPA @PreUpdate
+
     }
 }
