@@ -10,5 +10,4 @@ import java.util.Optional;
 @Repository
 public interface ContratLeasingRepository extends JpaRepository<ContratLeasing, Long>, JpaSpecificationExecutor<ContratLeasing> {
     Optional<ContratLeasing> findByNumeroContrat(String numeroContrat);
-    boolean existsByNumeroContrat(String numeroContrat);
 }

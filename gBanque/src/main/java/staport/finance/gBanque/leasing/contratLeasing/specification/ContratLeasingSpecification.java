@@ -14,6 +14,7 @@ public class ContratLeasingSpecification {
 
     public static Specification<ContratLeasing> bySearchCriteria(ContratLeasingSearchDTO searchDTO) {
         return (root, query, criteriaBuilder) -> {
+
             List<Predicate> predicates = new ArrayList<>();
 
             // Filter by numeroContrat (case-insensitive, like search)
@@ -49,6 +50,7 @@ public class ContratLeasingSpecification {
     }
 
     /**
+     * Les contracts leasing encours
      * Specification to filter for active contracts.
      * Condition: completed = false AND there is at least one unpaid installment.
      */
@@ -75,6 +77,7 @@ public class ContratLeasingSpecification {
     }
 
     /**
+     * Les contracts leasing en attente de main levées.
      * Specification to filter for contracts pending lien release.
      * Condition: completed = false AND ALL installments are paid.
      */
@@ -101,6 +104,7 @@ public class ContratLeasingSpecification {
     }
 
     /**
+     * Les contracts leasing Archivées.
      * Specification to filter for inactive contracts.
      * Condition: completed = true.
      */

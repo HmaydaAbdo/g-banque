@@ -1,7 +1,6 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,9 +49,9 @@ public class EcheanceLeasingController {
      * @param id L'ID de l'échéance à marquer comme payée.
      * @return ResponseEntity avec l'échéance mise à jour et HTTP Status 200 (OK).
      */
-    @PutMapping("/{id}/mark-as-paid")
+    @PutMapping("/{id}/toggle-status")
     public ResponseEntity<EcheanceLeasingResponseDTO> markEcheanceAsPaid(@PathVariable Long id) {
-        EcheanceLeasingResponseDTO updatedEcheance = echeanceLeasingService.markEcheanceAsPaid(id);
+        EcheanceLeasingResponseDTO updatedEcheance = echeanceLeasingService.toggleStatus(id);
         return ResponseEntity.ok(updatedEcheance);
     }
 

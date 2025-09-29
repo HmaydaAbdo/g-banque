@@ -1,13 +1,13 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.specification;
 
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingSearchDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
-import staport.finance.gBanque.leasing.echeancesLeasing.enums.PeriodeEncours;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
@@ -35,23 +35,41 @@ public class EcheanceLeasingSpecification {
                 predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), searchDTO.getStatutPaiement()));
             }
 
-            // Prédicats pour le mois et l'année en utilisant une plage de dates pour plus de robustesse.
-            if (searchDTO.getYear() != null && searchDTO.getMonth() != null) {
-                OffsetDateTime startOfMonth = OffsetDateTime.now()
-                        .withYear(searchDTO.getYear())
-                        .withMonth(searchDTO.getMonth())
+            // Gestion du mois / année
+            Integer year = searchDTO.getYear();
+            Integer month = searchDTO.getMonth();
+
+            if (year != null && month != null) {
+                // Cas mois + année
+                OffsetDateTime start = OffsetDateTime.now()
+                        .withYear(year).withMonth(month)
                         .with(TemporalAdjusters.firstDayOfMonth())
                         .withHour(0).withMinute(0).withSecond(0).withNano(0);
 
-                OffsetDateTime endOfMonth = OffsetDateTime.now()
-                        .withYear(searchDTO.getYear())
-                        .withMonth(searchDTO.getMonth())
-                        .with(TemporalAdjusters.lastDayOfMonth())
+                OffsetDateTime end = start.with(TemporalAdjusters.lastDayOfMonth())
                         .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
 
-                predicates.add(criteriaBuilder.between(root.get("dateEcheance"), startOfMonth, endOfMonth));
-            }
+                predicates.add(criteriaBuilder.between(root.get("dateEcheance"), start, end));
 
+            } else if (year != null) {
+                // Cas année seule
+                OffsetDateTime start = OffsetDateTime.now()
+                        .withYear(year)
+                        .withMonth(1).with(TemporalAdjusters.firstDayOfMonth())
+                        .withHour(0).withMinute(0).withSecond(0).withNano(0);
+
+                OffsetDateTime end = OffsetDateTime.now()
+                        .withYear(year)
+                        .withMonth(12).with(TemporalAdjusters.lastDayOfMonth())
+                        .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
+                predicates.add(criteriaBuilder.between(root.get("dateEcheance"), start, end));
+
+            } else if (month != null) {
+                Expression<Integer> monthExpr = criteriaBuilder.function("MONTH", Integer.class, root.get("dateEcheance"));
+
+                predicates.add(criteriaBuilder.equal(monthExpr, month));
+            }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
@@ -110,26 +128,17 @@ public class EcheanceLeasingSpecification {
     }
     /**
      * Spécification pour les échéances non payées jusqu'à une période donnée.
-     *
-     * @param periode L'énumération de la période ("JOUR" ou "MOIS").
-     * @param now La date et l'heure actuelles, utilisées pour les calculs.
      * @return Une Specification pour les échéances d'encours.
      */
-    public static Specification<EcheanceLeasing> outstandingUntil(PeriodeEncours periode, OffsetDateTime now) {
+    public static Specification<EcheanceLeasing> outstandingUntil( ) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            // récupérer les échéances prévues
             predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), StatutEcheanceLeasing.PREVU));
 
             OffsetDateTime dateButoir;
-            if (PeriodeEncours.JOUR.equals(periode)) {
-                dateButoir = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-            } else if (PeriodeEncours.MOIS.equals(periode)) {
-                dateButoir = now.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-            } else {
-                // C'est un cas qui ne devrait pas arriver avec une énumération,
-                // mais une gestion défensive est toujours une bonne idée.
-                throw new IllegalArgumentException("La période d'encours spécifiée est invalide.");
-            }
+            dateButoir = OffsetDateTime.now().with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
 
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), dateButoir));
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

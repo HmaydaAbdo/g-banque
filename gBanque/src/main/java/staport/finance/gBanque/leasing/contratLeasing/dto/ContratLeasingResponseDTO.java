@@ -22,7 +22,7 @@ public class ContratLeasingResponseDTO {
     private List<ContratLeasingPhaseResponseDTO> phases;
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
-    private boolean completed; // ⭐ Nouveau champ de réponse
+    private boolean completed;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -55,6 +55,6 @@ public class ContratLeasingResponseDTO {
     public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
     public OffsetDateTime getDateModification() { return dateModification; }
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
-    public boolean isCompleted() { return completed; } // ⭐ Getter du nouveau champ
-    public void setCompleted(boolean completed) { this.completed = completed; } // ⭐ Setter du nouveau champ
+    public boolean isCompleted() { return completed; }
+    public void setCompleted(boolean completed) { this.completed = completed; }
 }

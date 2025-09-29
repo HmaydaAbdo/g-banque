@@ -66,20 +66,5 @@ public class ContratLeasingPhaseMapper { // Keep the original class name
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Updates an existing ContratLeasingPhase entity with data from a ContratLeasingPhaseRequestDTO.
-     * ID, contratLeasing, dateCreation, and dateModification are ignored.
-     *
-     * @param dto The ContratLeasingPhaseRequestDTO with updated data.
-     * @param entity The existing ContratLeasingPhase entity to be updated.
-     */
-    public void updateEntityFromDto(ContratLeasingPhaseRequestDTO dto, ContratLeasingPhase entity) {
-        if (dto == null || entity == null) {
-            return;
-        }
-        entity.setNumeroPhase(dto.getNumeroPhase());
-        entity.setDureeMois(dto.getDureeMois());
-        entity.setMensualiteTTC(dto.getMensualiteTTC());
-        // ID, contratLeasing, dateCreation, dateModification are ignored
-    }
+
 }

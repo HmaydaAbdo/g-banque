@@ -10,6 +10,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
+import staport.finance.gBanque.leasing.contratLeasing.config.LeasingProperties;
 import staport.finance.gBanque.leasing.contratLeasing.dto.*;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.contratLeasing.mapper.ContratLeasingMapper;
@@ -26,7 +27,6 @@ import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,8 +43,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     private final BanqueRepository banqueRepository;
     private final OrganismeLeasingRepository organismeLeasingRepository;
     private final  EcheanceLeasingService echeanceLeasingService;
-    // Defines the residual value percentage as a constant
-    private static final BigDecimal RESIDUAL_VALUE_PERCENTAGE = new BigDecimal("0.01"); // 1%
+    private final LeasingProperties leasingProperties;
 
     /**
      * Constructor for ContratLeasingServiceImpl, injecting necessary dependencies.
@@ -57,12 +56,13 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     public ContratLeasingServiceImpl(EcheanceLeasingService echeanceLeasingService, ContratLeasingRepository contratLeasingRepository,
                                      ContratLeasingMapper contratLeasingMapper,
                                      BanqueRepository banqueRepository,
-                                     OrganismeLeasingRepository organismeLeasingRepository) {
+                                     OrganismeLeasingRepository organismeLeasingRepository, LeasingProperties leasingProperties) {
         this.contratLeasingRepository = contratLeasingRepository;
         this.contratLeasingMapper = contratLeasingMapper;
         this.banqueRepository = banqueRepository;
         this.organismeLeasingRepository = organismeLeasingRepository;
         this.echeanceLeasingService = echeanceLeasingService;
+        this.leasingProperties = leasingProperties;
     }
 
     /**
@@ -77,8 +77,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     @Transactional // Ensures the entire operation is atomic (all or nothing)
     public ContratLeasingResponseDTO createContratLeasing(ContratLeasingRequestDTO requestDTO) throws ValidationException {
 
-        // 1. Perform common business validations and type-specific validations
-        validateCommonContratLeasingRequest(requestDTO, null); // Pass null for ID as it's a creation
+        // 1. Perform  type-specific validations
         validateTypeSpecificContratLeasingRequest(requestDTO);
 
         // 2. Retrieve related entities (Banque and OrganismeLeasing)
@@ -96,13 +95,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         // This logic is now uniform for all contract types.
         setValeurResiduelleBasedOnType(contratLeasing, requestDTO.getMontantAchatTTC());
 
-        // 5. Establish the bidirectional relationship for phases.
-        // This is crucial for JPA to correctly persist the association from the phase side.
-        if (contratLeasing.getPhases() != null) {
-            contratLeasing.getPhases().forEach(phase -> phase.setContratLeasing(contratLeasing));
-        }
-
-        // 6. Save the new contract to the database
+        // 5. Save the new contract to the database
         ContratLeasing savedContrat = contratLeasingRepository.save(contratLeasing);
 
         // 7. Générer les échéances pour le contrat nouvellement créé
@@ -147,7 +140,6 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
                 .orElseThrow(() -> new ResourceNotFoundException("ContratLeasing with ID " + id + " not found."));
 
         // 2. Perform common business validations and type-specific validations on the updated data
-        validateCommonContratLeasingRequest(requestDTO, id); // Pass the ID for uniqueness checks during update
         validateTypeSpecificContratLeasingRequest(requestDTO);
 
         // 3. Re-fetch related entities (Banque and OrganismeLeasing), in case their IDs changed in the DTO
@@ -165,17 +157,11 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         // This is applied after mapping, using the potentially updated MontantAchatTTC.
         setValeurResiduelleBasedOnType(existingContrat, existingContrat.getMontantAchatTTC()); // Use entity's montantAchatTTC as it's now updated
 
-        // 6. Re-establish the bidirectional relationship for phases after the update.
-        // This is important if phases were added, removed, or modified.
-        if (existingContrat.getPhases() != null) {
-            existingContrat.getPhases().forEach(phase -> phase.setContratLeasing(existingContrat));
-        }
-
-        // 7. Save the updated contract to the database
+        // 6. Save the updated contract to the database
         ContratLeasing updatedContrat = contratLeasingRepository.save(existingContrat);
 
         this.echeanceLeasingService.regenerateEcheances(updatedContrat.getId());
-        // 8. Map the updated entity to a response DTO and return it
+        // 7. Map the updated entity to a response DTO and return it
         return contratLeasingMapper.toDto(updatedContrat);
     }
 
@@ -259,40 +245,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         return contratLeasingMapper.toDto(updatedContrat);
     }
 
-    /**
-     * Performs **common business validations** applicable to all contract types.
-     * This method ensures that fundamental data integrity rules are respected regardless of the contract's nature.
-     *
-     * @param requestDTO The DTO containing the contract data.
-     * @param existingId The ID of the contract being updated. Null if it's a creation operation.
-     * @throws ValidationException If a common business rule is violated.
-     */
-    private void validateCommonContratLeasingRequest(ContratLeasingRequestDTO requestDTO, Long existingId) {
-        // Rule 1: Ensure `numeroContrat` is unique.
-        Optional<ContratLeasing> existingByNumero = contratLeasingRepository.findByNumeroContrat(requestDTO.getNumeroContrat());
 
-        if (existingByNumero.isPresent()) {
-            if (existingId == null || !existingByNumero.get().getId().equals(existingId)) {
-                throw new ValidationException("Le numéro de contrat '" + requestDTO.getNumeroContrat() + "' existe déjà. Il doit être unique.");
-            }
-        }
-
-        // Rule 2: Period in months must be positive.
-        if (requestDTO.getPeriodeEnMois() == null || requestDTO.getPeriodeEnMois() <= 0) {
-            throw new ValidationException("La période en mois doit être un entier positif.");
-        }
-
-        // Rule 3: Purchase amount (MontantAchatTTC) must be positive.
-        if (requestDTO.getMontantAchatTTC() == null || requestDTO.getMontantAchatTTC().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ValidationException("Le montant d'achat TTC est obligatoire et doit être positif.");
-        }
-
-        // MODIFIED: Rule 4: Residual value (ValeurResiduelle) must be null or positive.
-        // It should not be negative if provided, as it will be calculated regardless.
-        if (requestDTO.getValeurResiduelle() != null && requestDTO.getValeurResiduelle().compareTo(BigDecimal.ZERO) < 0) {
-            throw new ValidationException("La valeur résiduelle ne peut pas être un montant négatif.");
-        }
-    }
 
     /**
      * **Delegates** to type-specific contract validation functions.
@@ -333,6 +286,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
      * @throws ValidationException If business rules specific to LINEAIRE contracts are violated.
      */
     private void validateLineaireContrat(ContratLeasingRequestDTO requestDTO) {
+
         // Rule 1: LINEAIRE contracts must have **exactly one single phase**.
         if (requestDTO.getPhases() == null || requestDTO.getPhases().size() != 1) {
             throw new ValidationException("Un contrat de type LINEAIRE doit avoir exactement une seule phase.");
@@ -346,17 +300,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
             throw new ValidationException("Pour un contrat LINEAIRE, la phase unique doit avoir le numéro 1.");
         }
 
-        // Rule 3: The duration of the single phase must be positive.
-        if (singlePhase.getDureeMois() == null || singlePhase.getDureeMois() <= 0) {
-            throw new ValidationException("La durée de la phase du contrat LINEAIRE doit être un nombre de mois positif.");
-        }
-
-        // Rule 4: The monthly payment (Mensualite TTC) of the single phase must be positive.
-        if (singlePhase.getMensualiteTTC() == null || singlePhase.getMensualiteTTC().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ValidationException("Le montant de la mensualité TTC de la phase du contrat LINEAIRE doit être un montant positif.");
-        }
-
-        // Rule 5: The duration of the single phase must match the total contract period.
+        // Rule 3: The duration of the single phase must match the total contract period.
         if (!singlePhase.getDureeMois().equals(requestDTO.getPeriodeEnMois())) {
             throw new ValidationException(String.format(
                     "Pour un contrat LINEAIRE, la durée de la phase unique (%d mois) doit correspondre à la période totale du contrat (%d mois).",
@@ -462,21 +406,10 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
         // Iterate over each phase to perform individual and cumulative validations.
         for (ContratLeasingPhaseRequestDTO phase : phases) {
-            // Rule 2: Each phase must have a positive phase number.
-            if (phase.getNumeroPhase() == null || phase.getNumeroPhase() <= 0) {
-                throw new ValidationException("Le numéro de phase doit être un entier positif.");
-            }
-            // Rule 3: Phase numbers must be unique within a contract.
+
+            // Rule 2: Phase numbers must be unique within a contract.
             if (!phaseNumbers.add(phase.getNumeroPhase())) {
                 throw new ValidationException("Les numéros de phase doivent être uniques par contrat.");
-            }
-            // Rule 4: The duration of each phase must be positive.
-            if (phase.getDureeMois() == null || phase.getDureeMois() <= 0) {
-                throw new ValidationException("La durée de la phase doit être un nombre de mois positif.");
-            }
-            // Rule 5: The monthly payment of each phase must be positive.
-            if (phase.getMensualiteTTC() == null || phase.getMensualiteTTC().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ValidationException("Le montant de la mensualité TTC de la phase doit être un montant positif.");
             }
 
             // Accumulate total duration of all phases.
@@ -484,14 +417,12 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
         }
 
-        // Rule 6: The sum of all phase durations must match the total contract period.
+        // Rule 3: The sum of all phase durations must match the total contract period.
         if (!Integer.valueOf(totalPhaseDuration.get()).equals(requestDTO.getPeriodeEnMois())) {
             throw new ValidationException(String.format("La somme des durées des phases (%d mois) ne correspond pas à la période totale du contrat (%d mois).", totalPhaseDuration.get(), requestDTO.getPeriodeEnMois()));
         }
 
-
-
-        // Rule 7: Phase numbers must be sequential and start from 1 (e.g., 1, 2, 3...).
+        // Rule 4: Phase numbers must be sequential and start from 1 (e.g., 1, 2, 3...).
         // Sort phase numbers to easily check sequential order.
         List<Integer> sortedPhaseNumbers = phases.stream()
                 .map(ContratLeasingPhaseRequestDTO::getNumeroPhase)
@@ -514,7 +445,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
      */
     private void setValeurResiduelleBasedOnType(ContratLeasing contratLeasing, BigDecimal montantAchatTTC) {
 
-        BigDecimal valeurResiduelle = montantAchatTTC.multiply(RESIDUAL_VALUE_PERCENTAGE).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal valeurResiduelle = montantAchatTTC.multiply(leasingProperties.getValeurResiduelle()).setScale(2, RoundingMode.HALF_UP);
         contratLeasing.setValeurResiduelle(valeurResiduelle);
     }
 }

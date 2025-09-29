@@ -18,6 +18,12 @@ functional:
         threshold:
           months: 3
 
+leasing:
+  contract:
+    valeur-residuelle: 0.01
+    taux-tva: 0.2
+
+
 logging:
   level:
     org.springframework: WARN

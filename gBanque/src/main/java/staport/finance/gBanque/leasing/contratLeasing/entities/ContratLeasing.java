@@ -71,7 +71,6 @@ public class ContratLeasing {
     @OneToMany(mappedBy = "contratLeasing", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<EcheanceLeasing> echeances = new ArrayList<>();
 
-    // ⭐ Nouveau champ pour l'état de complétude
     @Column(nullable = false)
     private boolean completed = false;
 
@@ -128,8 +127,8 @@ public class ContratLeasing {
     public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
     public OffsetDateTime getDateModification() { return dateModification; }
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
-    public boolean isCompleted() { return completed; } // ⭐ Getter du nouveau champ
-    public void setCompleted(boolean completed) { this.completed = completed; } // ⭐ Setter du nouveau champ
+    public boolean isCompleted() { return completed; }
+    public void setCompleted(boolean completed) { this.completed = completed; }
 
     // --- Callbacks du cycle de vie JPA ---
     @PrePersist
@@ -168,7 +167,7 @@ public class ContratLeasing {
                 ", immobilisation='" + immobilisation + '\'' +
                 ", dateDebut=" + dateDebut +
                 ", typeContrat=" + typeContrat +
-                ", completed=" + completed + // Ajout du champ pour le débogage
+                ", completed=" + completed +
                 '}';
     }
 }

@@ -26,7 +26,6 @@ import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.lcn.specs.LcnSpecification;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
-import staport.finance.gBanque.leasing.echeancesLeasing.enums.PeriodeEncours;
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
 import staport.finance.gBanque.leasing.echeancesLeasing.specification.EcheanceLeasingSpecification;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
@@ -116,7 +115,7 @@ public class RecapitulatifService {
         // Step 1: Create specifications for each entity type, filtering by bank and current month.
 
         //leasing
-        Specification<EcheanceLeasing> leasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil(PeriodeEncours.MOIS, OffsetDateTime.now()))
+        Specification<EcheanceLeasing> leasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil())
                 .and(EcheanceLeasingSpecification.byContratBanqueId(banqueId));
         //CMT
         Specification<EcheanceCMT> cmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil(PeriodeEncoursCMT.MOIS, OffsetDateTime.now()))

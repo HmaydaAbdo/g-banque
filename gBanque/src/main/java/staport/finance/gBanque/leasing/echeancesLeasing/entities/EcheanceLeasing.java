@@ -5,7 +5,6 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Objects;
@@ -36,12 +35,13 @@ public class EcheanceLeasing {
     @Column(name = "date_echeance", nullable = false)
     private OffsetDateTime dateEcheance; // Date à laquelle l'échéance doit être payée
 
+    private OffsetDateTime dateOperation ;
+    private OffsetDateTime dateValeur;
 
     @NotNull(message = "Le montant TTC de l'échéance est obligatoire")
     @DecimalMin(value = "0.01", message = "Le montant TTC de l'échéance doit être supérieur à zéro")
     @Column(name = "montant_ttc", nullable = false, precision = 19, scale = 2)
     private BigDecimal montantTTC;
-
 
     @NotNull(message = "Le statut de paiement est obligatoire")
     @Enumerated(EnumType.STRING)
@@ -79,17 +79,24 @@ public class EcheanceLeasing {
     public void setNumeroEcheance(Integer numeroEcheance) { this.numeroEcheance = numeroEcheance; }
     public OffsetDateTime getDateEcheance() { return dateEcheance; }
     public void setDateEcheance(OffsetDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
-
-
     public BigDecimal getMontantTTC() {
         return montantTTC;
     }
-
     public void setMontantTTC(BigDecimal montantTTC) {
         this.montantTTC = montantTTC;
     }
-
-
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
+    }
     public StatutEcheanceLeasing getStatutPaiement() { return statutPaiement; }
     public void setStatutPaiement(StatutEcheanceLeasing statutPaiement) { this.statutPaiement = statutPaiement; }
     public OffsetDateTime getDateCreation() { return dateCreation; }

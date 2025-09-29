@@ -67,27 +67,6 @@ public class EcheanceLeasingService {
      */
     @Transactional // L'ensemble de l'opération (création) est atomique
     public void generateEcheances(ContratLeasing contrat) {
-        // 1. Validation des données du contrat pour le calcul
-        if (contrat.getPeriodeEnMois() == null || contrat.getPeriodeEnMois() <= 0 || contrat.getDateDebut() == null) {
-            throw new ValidationException("Les informations de durée (periodeEnMois, dateDebut) du contrat sont incomplètes pour générer les échéances.");
-        }
-        if (contrat.getPhases() == null || contrat.getPhases().isEmpty()) {
-            throw new ValidationException("Le contrat doit avoir au moins une phase définie pour générer les échéances, spécifiant les loyers.");
-        }
-        if (contrat.getValeurResiduelle() == null || contrat.getValeurResiduelle().compareTo(ZERO) < 0) {
-            throw new ValidationException("La valeur résiduelle est obligatoire et doit être positive ou nulle.");
-        }
-
-        // Validation de la somme des durées des phases par rapport à la période totale du contrat
-        int totalPhaseDuration = contrat.getPhases().stream()
-                .mapToInt(ContratLeasingPhase::getDureeMois)
-                .sum();
-        if (totalPhaseDuration != contrat.getPeriodeEnMois()) {
-            throw new ValidationException("La somme des durées des phases (" + totalPhaseDuration + " mois) ne correspond pas à la période totale des loyers du contrat (" + contrat.getPeriodeEnMois() + " mois).");
-        }
-
-        // 2. Générer le nouveau set d'échéances basé sur les termes du contrat
-        // (La logique de calcul est encapsulée dans une méthode privée)
         _generateEcheancesInternal(contrat);
     }
 
@@ -133,12 +112,6 @@ public class EcheanceLeasingService {
 
         // Génération des échéances de loyer
         for (ContratLeasingPhase phase : sortedPhases) {
-            if (phase.getDureeMois() == null || phase.getDureeMois() <= 0) {
-                throw new ValidationException("La durée de la phase " + phase.getNumeroPhase() + " est invalide.");
-            }
-            if (phase.getMensualiteTTC() == null || phase.getMensualiteTTC().compareTo(ZERO) <= 0) {
-                throw new ValidationException("Le montant de loyer TTC de la phase " + phase.getNumeroPhase() + " est invalide.");
-            }
 
             BigDecimal mensualiteTTCDuMois = phase.getMensualiteTTC().setScale(SCALE, RoundingMode.HALF_UP);
 
@@ -147,11 +120,11 @@ public class EcheanceLeasingService {
                 dateEcheanceCourante = dateEcheanceCourante.plusMonths(1); // Incrémente la date de l'échéance
 
                 YearMonth echeanceMonth = YearMonth.from(dateEcheanceCourante);
+
                 // Check if the echeance's date is before or equal to the cut-off date
                 StatutEcheanceLeasing statut = echeanceMonth.isBefore(currentMonth)
                         ? StatutEcheanceLeasing.PAYE
                         : StatutEcheanceLeasing.PREVU;
-
 
                 EcheanceLeasing echeance = new EcheanceLeasing(
                         contrat,
@@ -165,25 +138,32 @@ public class EcheanceLeasingService {
         }
 
         // Ajout de l'échéance dédiée pour la valeur résiduelle
-        if (contrat.getValeurResiduelle().compareTo(ZERO) > 0) { // S'il y a une valeur résiduelle à payer
-            numeroEcheanceGlobal++; // Le numéro de l'échéance sera (période en mois + 1)
-            dateEcheanceCourante = dateEcheanceCourante.plusMonths(1); // Un mois après la dernière échéance de loyer
 
-            EcheanceLeasing echeanceValeurResiduelle = new EcheanceLeasing(
+        numeroEcheanceGlobal++; // Le numéro de l'échéance sera (période en mois + 1)
+        dateEcheanceCourante = dateEcheanceCourante.plusMonths(1); // Un mois après la dernière échéance de loyer
+        YearMonth echeanceMonth = YearMonth.from(dateEcheanceCourante);
+
+        StatutEcheanceLeasing statut = echeanceMonth.isBefore(currentMonth)
+                ? StatutEcheanceLeasing.PAYE
+                : StatutEcheanceLeasing.PREVU;
+
+        EcheanceLeasing echeanceValeurResiduelle = new EcheanceLeasing(
                     contrat,
                     numeroEcheanceGlobal,
                     dateEcheanceCourante,
                     contrat.getValeurResiduelle().setScale(SCALE, RoundingMode.HALF_UP),
-                    StatutEcheanceLeasing.PREVU
+                    statut
             );
-            echeances.add(echeanceValeurResiduelle);
-        }
+
+        echeances.add(echeanceValeurResiduelle);
+
 
         echeanceLeasingRepository.saveAll(echeances);
     }
 
 
     public TableauAmortissementDTO getTableauAmortissementForContrat(Long contratId, EcheanceLeasingSearchDTO searchDTO, Pageable pageable) {
+
         ContratLeasing contrat = contratLeasingRepository.findById(contratId)
                 .orElseThrow(() -> new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found."));
 
@@ -228,38 +208,20 @@ public class EcheanceLeasingService {
         );
     }
 
+    // we only change the status , no banque operation are involved
     @Transactional
-    public EcheanceLeasingResponseDTO markEcheanceAsPaid(Long echeanceId) {
+    public EcheanceLeasingResponseDTO toggleStatus(Long echeanceId) {
+
         EcheanceLeasing echeance = echeanceLeasingRepository.findById(echeanceId)
                 .orElseThrow(() -> new ResourceNotFoundException("EcheanceLeasing with ID " + echeanceId + " not found."));
 
-        if (echeance.getStatutPaiement() == StatutEcheanceLeasing.PAYE) {
-            throw new ValidationException("Echeance with ID " + echeanceId + " is already marked as PAID.");
-        }
+        StatutEcheanceLeasing currentStatus = echeance.getStatutPaiement();
+        StatutEcheanceLeasing newStatus = currentStatus == StatutEcheanceLeasing.PAYE ? StatutEcheanceLeasing.PREVU : StatutEcheanceLeasing.PAYE;
 
-        ContratLeasing contratLeasing = echeance.getContratLeasing();
-
-        if (contratLeasing == null) {
-            // This case ideally shouldn't happen with proper cascade/mapping, but defensive check is good.
-            throw new ResourceNotFoundException("Echeance with ID " + echeanceId + " is not associated with a leasing contract.");
-        }
-
-        Banque banqueDePrelevement = contratLeasing.getBanqueDePrelevement();
-        if (banqueDePrelevement == null) {
-            throw new ResourceNotFoundException("ContratLeasing ID " + contratLeasing.getId() + " does not have an associated bank for debits.");
-        }
-        echeance.setStatutPaiement(StatutEcheanceLeasing.PAYE);
-        banqueDePrelevement.setSoldeActuel(banqueDePrelevement.getSoldeActuel().subtract(echeance.getMontantTTC()));
-
+        echeance.setStatutPaiement(newStatus);
         echeance = this.echeanceLeasingRepository.save(echeance);
-        this.banqueRepository.save(banqueDePrelevement);
-
-
-
         return echeanceLeasingMapper.toDto(echeance);
     }
-
-
 
     @Transactional(readOnly = true)
     public EncoursLeasingResponseDTO getEncoursLeasingForBanque(EncoursLeasingRequestDTO requestDTO, Pageable pageable) {
@@ -270,7 +232,7 @@ public class EcheanceLeasingService {
 
         // 2. Start building the specification with the mandatory filters
         Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratBanqueId(requestDTO.getBanqueId())
-                .and(EcheanceLeasingSpecification.outstandingUntil(requestDTO.getPeriode(), OffsetDateTime.now()));
+                .and(EcheanceLeasingSpecification.outstandingUntil());
 
         // 3. Add the optional filter for the leasing agency if it exists
         if (requestDTO.getOrganismeLeasingId() != null) {
@@ -280,6 +242,7 @@ public class EcheanceLeasingService {
         if (requestDTO.getNumeroContrat() != null && !requestDTO.getNumeroContrat().isEmpty()) {
             spec = spec.and(EcheanceLeasingSpecification.byContratNumeroContrat(requestDTO.getNumeroContrat()));
         }
+
         // 4. Fetch the paginated list of outstanding payments
         Page<EcheanceLeasing> encoursEcheancesPage = echeanceLeasingRepository.findAll(spec, pageable);
 
@@ -289,27 +252,18 @@ public class EcheanceLeasingService {
         // 6. Calculate totals based on ALL outstanding payments for the summary
         List<EcheanceLeasing> allOutstandingEcheances = echeanceLeasingRepository.findAll(spec);
 
-        // ... (calculation logic for totalEncours, nombreContratsConcernes, etc. remains the same)
+        // ... (calculation logic for totalEncours
 
         BigDecimal totalEncours = allOutstandingEcheances.stream()
                 .map(EcheanceLeasing::getMontantTTC)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(SCALE, RoundingMode.HALF_UP);
 
-        long nombreContratsConcernes = allOutstandingEcheances.stream()
-                .map(echeance -> echeance.getContratLeasing().getId())
-                .distinct()
-                .count();
-
-        long nombreEcheancesEnAttente = allOutstandingEcheances.size();
-
         // 7. Return the combined DTO
         return new EncoursLeasingResponseDTO(
                 banque.getId(),
                 banque.getNom(),
                 totalEncours,
-                nombreEcheancesEnAttente,
-                nombreContratsConcernes,
                 echeancesDtoPage
         );
     }
@@ -324,5 +278,14 @@ public class EcheanceLeasingService {
     @Transactional(readOnly = true)
     public boolean hasPaidEcheances(Long contratId) {
         return echeanceLeasingRepository.existsByContratLeasingIdAndStatutPaiement(contratId, StatutEcheanceLeasing.PAYE);
+    }
+
+
+    @Transactional
+    public void validerEcheance(Long id ,OffsetDateTime dateOperation, OffsetDateTime dateValeur){
+        EcheanceLeasing echeanceLeasing=echeanceLeasingRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("EcheanceLeasing with id "+id+" not found"));
+        echeanceLeasing.setDateOperation(dateOperation);
+        echeanceLeasing.setDateValeur(dateValeur);
+        echeanceLeasingRepository.save(echeanceLeasing);
     }
 }

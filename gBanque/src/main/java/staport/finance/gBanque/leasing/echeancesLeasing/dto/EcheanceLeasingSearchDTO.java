@@ -2,8 +2,6 @@ package staport.finance.gBanque.leasing.echeancesLeasing.dto;
 
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 
-import java.math.BigDecimal;
-// import java.time.OffsetDateTime; // Plus nécessaire pour les champs directs de date
 
 /**
  * DTO utilisé pour les critères de recherche avancée des échéances.

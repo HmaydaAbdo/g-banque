@@ -16,6 +16,8 @@ public class EcheanceLeasingResponseDTO {
     private String numeroContrat;
     private Integer numeroEcheance;
     private OffsetDateTime dateEcheance;
+    private OffsetDateTime dateOperation ;
+    private OffsetDateTime dateValeur;
     private BigDecimal montantTTC;
     private BigDecimal montantHT;  // Nouveau champ
     private BigDecimal montantTVA; // Nouveau champ
@@ -86,6 +88,22 @@ public class EcheanceLeasingResponseDTO {
 
     public void setStatutPaiement(StatutEcheanceLeasing statutPaiement) {
         this.statutPaiement = statutPaiement;
+    }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
     }
 
     public OffsetDateTime getDateCreation() {

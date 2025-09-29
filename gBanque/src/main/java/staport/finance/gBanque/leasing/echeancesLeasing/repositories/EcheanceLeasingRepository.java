@@ -24,14 +24,6 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
      */
     List<EcheanceLeasing> findByContratLeasing(ContratLeasing contratLeasing);
 
-    /**
-     * Trouve toutes les échéances associées à un contrat de leasing donné et dont le statut est PREVU.
-     * Utile pour la régénération afin de supprimer uniquement les échéances non encore payées.
-     * @param contratLeasing Le contrat de leasing.
-     * @param statut Le statut de l'échéance (doit être StatutEcheanceLeasing.PREVU).
-     * @return Une liste d'échéances avec le statut PREVU pour le contrat spécifié.
-     */
-    List<EcheanceLeasing> findByContratLeasingAndStatutPaiement(ContratLeasing contratLeasing, StatutEcheanceLeasing statut);
 
     Optional<EcheanceLeasing> findByIdAndContratLeasingId(Long id, Long contratLeasingId);
 
@@ -41,12 +33,6 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
      */
     void deleteByContratLeasing(ContratLeasing contratLeasing);
 
-    // ⭐ Nouvelle méthode pour compter le nombre d'échéances pour un contrat donné.
-    long countByContratLeasingId(Long contratLeasingId);
-
-    // ⭐ Nouvelle méthode pour compter les échéances payées pour un contrat.
-    long countByContratLeasingIdAndStatutPaiement(Long contratLeasingId, StatutEcheanceLeasing statutPaiement);
-
-    // ⭐ Nouvelle méthode pour vérifier l'existence d'au moins une échéance payée.
+    // méthode pour vérifier l'existence d'au moins une échéance payée.
     boolean existsByContratLeasingIdAndStatutPaiement(Long contratLeasingId, StatutEcheanceLeasing statutPaiement);
 }

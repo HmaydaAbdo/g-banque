@@ -1,7 +1,6 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.dto;
 
 import org.springframework.data.domain.Page;
-
 import java.math.BigDecimal;
 
 /**
@@ -14,20 +13,17 @@ public class EncoursLeasingResponseDTO {
     private Long banqueId;
     private String nomBanque;
     private BigDecimal totalEncours;
-    private long nombreEcheancesEnAttente;
-    private long nombreContratsConcernes;
+
     private Page<EcheanceLeasingResponseDTO> echeances;
 
     // --- Constructeurs, Getters et Setters ---
 
     public EncoursLeasingResponseDTO() {}
 
-    public EncoursLeasingResponseDTO(Long banqueId, String nomBanque, BigDecimal totalEncours, long nombreEcheancesEnAttente, long nombreContratsConcernes, Page<EcheanceLeasingResponseDTO> echeances) {
+    public EncoursLeasingResponseDTO(Long banqueId, String nomBanque, BigDecimal totalEncours , Page<EcheanceLeasingResponseDTO> echeances) {
         this.banqueId = banqueId;
         this.nomBanque = nomBanque;
         this.totalEncours = totalEncours;
-        this.nombreEcheancesEnAttente = nombreEcheancesEnAttente;
-        this.nombreContratsConcernes = nombreContratsConcernes;
         this.echeances = echeances;
     }
 
@@ -53,22 +49,6 @@ public class EncoursLeasingResponseDTO {
 
     public void setTotalEncours(BigDecimal totalEncours) {
         this.totalEncours = totalEncours;
-    }
-
-    public long getNombreEcheancesEnAttente() {
-        return nombreEcheancesEnAttente;
-    }
-
-    public void setNombreEcheancesEnAttente(long nombreEcheancesEnAttente) {
-        this.nombreEcheancesEnAttente = nombreEcheancesEnAttente;
-    }
-
-    public long getNombreContratsConcernes() {
-        return nombreContratsConcernes;
-    }
-
-    public void setNombreContratsConcernes(long nombreContratsConcernes) {
-        this.nombreContratsConcernes = nombreContratsConcernes;
     }
 
     public Page<EcheanceLeasingResponseDTO> getEcheances() {

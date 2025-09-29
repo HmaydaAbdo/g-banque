@@ -45,17 +45,17 @@ public class ContratLeasingMapper {
         entity.setBanqueDePrelevement(banque);
         entity.setOrganismeLeasing(organismeLeasing);
 
-        if (requestDTO.getPhases() != null && !requestDTO.getPhases().isEmpty()) {
-            List<ContratLeasingPhase> phases = new ArrayList<>();
-            for (ContratLeasingPhaseRequestDTO phaseDto : requestDTO.getPhases()) {
+
+        List<ContratLeasingPhase> phases = new ArrayList<>();
+
+        for (ContratLeasingPhaseRequestDTO phaseDto : requestDTO.getPhases()) {
                 ContratLeasingPhase phase = phaseMapper.toEntity(phaseDto);
                 phase.setContratLeasing(entity);
                 phases.add(phase);
-            }
-            entity.setPhases(phases);
-        } else {
-            entity.setPhases(new ArrayList<>());
         }
+
+        entity.setPhases(phases);
+
         return entity;
     }
 
@@ -77,7 +77,7 @@ public class ContratLeasingMapper {
         dto.setValeurResiduelle(entity.getValeurResiduelle());
         dto.setDateCreation(entity.getDateCreation());
         dto.setDateModification(entity.getDateModification());
-        dto.setCompleted(entity.isCompleted()); // ⭐ Mappage du nouveau champ
+        dto.setCompleted(entity.isCompleted());
 
         if (entity.getBanqueDePrelevement() != null) {
             dto.setBanqueDePrelevementId(entity.getBanqueDePrelevement().getId());
@@ -93,17 +93,7 @@ public class ContratLeasingMapper {
         return dto;
     }
 
-    /**
-     * Converts a list of ContratLeasing entities to a list of ContratLeasingResponseDTOs.
-     */
-    public List<ContratLeasingResponseDTO> toDtoList(List<ContratLeasing> entities) {
-        if (entities == null) {
-            return new ArrayList<>();
-        }
-        return entities.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
-    }
+
 
     /**
      * Updates an existing ContratLeasing entity from a ContratLeasingRequestDTO.
@@ -131,7 +121,6 @@ public class ContratLeasingMapper {
         if (requestDTO.getTypeContrat() != null) {
             existingEntity.setTypeContrat(requestDTO.getTypeContrat());
         }
-        existingEntity.setValeurResiduelle(requestDTO.getValeurResiduelle());
 
         existingEntity.setBanqueDePrelevement(banque);
         existingEntity.setOrganismeLeasing(organismeLeasing);

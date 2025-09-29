@@ -60,26 +60,6 @@ public class ContratLeasingController {
         return new ResponseEntity<>(createdContrat, HttpStatus.CREATED); // Return 201 Created
     }
 
-
-
-    @GetMapping("/actifs")
-    public ResponseEntity<Page<ContratLeasingResponseDTO>> getAllContratsLeasing(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
-        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getActiveContrats(searchDTO, pageable);
-        return ResponseEntity.ok(resultPage);
-    }
-
-    @GetMapping("/en-attente-main-levee")
-    public ResponseEntity<Page<ContratLeasingResponseDTO>> searchPendingLienReleaseContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
-        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getPendingLienReleaseContrats(searchDTO, pageable);
-        return ResponseEntity.ok(resultPage);
-    }
-
-    @GetMapping("/inactifs")
-    public ResponseEntity<Page<ContratLeasingResponseDTO>> searchInactiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
-        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getInactiveContrats(searchDTO, pageable);
-        return ResponseEntity.ok(resultPage);
-    }
-
     /**
      * Endpoint to retrieve a leasing contract by its ID.
      * Maps to GET /gBanque/api/contratsLeasing/{id}
@@ -116,6 +96,38 @@ public class ContratLeasingController {
         return ResponseEntity.ok(updatedContrat); // Return 200 OK
     }
 
+    @GetMapping("/actifs")
+    public ResponseEntity<Page<ContratLeasingResponseDTO>> getAllContratsLeasing(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getActiveContrats(searchDTO, pageable);
+        return ResponseEntity.ok(resultPage);
+    }
+
+    @GetMapping("/en-attente-main-levee")
+    public ResponseEntity<Page<ContratLeasingResponseDTO>> searchPendingLienReleaseContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getPendingLienReleaseContrats(searchDTO, pageable);
+        return ResponseEntity.ok(resultPage);
+    }
+
+    @GetMapping("/inactifs")
+    public ResponseEntity<Page<ContratLeasingResponseDTO>> searchInactiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getInactiveContrats(searchDTO, pageable);
+        return ResponseEntity.ok(resultPage);
+    }
+
+
+    /**
+     * Endpoint to delete a leasing contract by its ID.
+     * Maps to DELETE /gBanque/api/contratsLeasing/{id}
+     *
+     * @param id The ID of the contract to delete.
+     * @return ResponseEntity with no content and HTTP Status 204 (No Content) on successful deletion.
+     * @throws ResourceNotFoundException (Handled by global exception handler)
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteContratLeasing(@PathVariable Long id) {
+        contratLeasingService.deleteContratLeasing(id);
+        return ResponseEntity.noContent().build(); // Return 204 No Content
+    }
 
     /**
      * Retrieves the amortization table for a specific leasing contract,
@@ -141,19 +153,7 @@ public class ContratLeasingController {
         TableauAmortissementDTO tableau = echeanceLeasingService.getTableauAmortissementForContrat(contratId, searchDTO, pageable);
         return ResponseEntity.ok(tableau);
     }
-    /**
-     * Endpoint to delete a leasing contract by its ID.
-     * Maps to DELETE /gBanque/api/contratsLeasing/{id}
-     *
-     * @param id The ID of the contract to delete.
-     * @return ResponseEntity with no content and HTTP Status 204 (No Content) on successful deletion.
-     * @throws ResourceNotFoundException (Handled by global exception handler)
-     */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteContratLeasing(@PathVariable Long id) {
-        contratLeasingService.deleteContratLeasing(id);
-        return ResponseEntity.noContent().build(); // Return 204 No Content
-    }
+
 
 
 }

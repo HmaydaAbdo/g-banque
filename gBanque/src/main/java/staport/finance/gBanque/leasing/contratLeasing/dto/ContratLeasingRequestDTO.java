@@ -25,6 +25,7 @@ public class ContratLeasingRequestDTO {
 
     @NotNull(message = "Le montant d'achat est obligatoire")
     @DecimalMin(value = "0.01", message = "Le montant d'achat doit être supérieur à zéro")
+    @Positive(message = "Le montant d'achat TTC est obligatoire et doit être positif.")
     private BigDecimal montantAchatTTC;
 
     @NotNull(message = "La date de début est obligatoire")
@@ -32,14 +33,18 @@ public class ContratLeasingRequestDTO {
 
     @NotNull(message = "La période en mois est obligatoire")
     @Min(value = 1, message = "La période en mois doit être d'au moins 1")
+    @Positive(message = "La période en mois doit être un entier positif")
     private Integer periodeEnMois;
 
     @NotNull(message = "Le type de contrat de leasing est obligatoire")
     private TypeContratLeasing typeContrat;
     @NotNull(message = "la valeur résiduelle est obligatoire")
+
+    @Positive(message = "la valeur résiduelle doit être positif ")
     private BigDecimal valeurResiduelle;
 
     @Valid
+    @NotEmpty(message = "Phases list must not be empty")
     private List<ContratLeasingPhaseRequestDTO> phases;
 
     // Getters and Setters

@@ -9,7 +9,7 @@ public class ContratLeasingSearchDTO {
     private Long organismeLeasingId;
     private String immobilisation;
     private TypeContratLeasing typeContrat;
-    private Boolean completed; // ⭐ Nouveau champ de recherche
+    private Boolean completed;
 
     // Getters and Setters
     public String getNumeroContrat() { return numeroContrat; }
@@ -22,6 +22,6 @@ public class ContratLeasingSearchDTO {
     public void setImmobilisation(String immobilisation) { this.immobilisation = immobilisation; }
     public TypeContratLeasing getTypeContrat() { return typeContrat; }
     public void setTypeContrat(TypeContratLeasing typeContrat) { this.typeContrat = typeContrat; }
-    public Boolean getCompleted() { return completed; } // ⭐ Getter du nouveau champ
-    public void setCompleted(Boolean completed) { this.completed = completed; } // ⭐ Setter du nouveau champ
+    public Boolean getCompleted() { return completed; }
+    public void setCompleted(Boolean completed) { this.completed = completed; }
 }
