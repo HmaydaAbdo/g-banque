@@ -44,26 +44,19 @@ public class LeasingTransactionMapper {
         // Mapping simple fields
         transaction.setObservation(requestDto.getObservation());
 
-        transaction.setTvaDeductible(
-                echeanceLeasing.getMontantTTC()
-                        .multiply(BigDecimal.valueOf(requestDto.getTvaDeductible()))   // montant * taux
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
-                        .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
-        );
+        BigDecimal ttc = echeanceLeasing.getMontantTTC();
+        BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTvaDeductible()); // en %
+        BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+
+        BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+        transaction.setTvaDeductible(tva);
+
 
         // Mapping dates (ensuring consistency with OffsetDateTime)
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-
-        boolean isValeurResiduelle = echeanceLeasing.getNumeroEcheance() == (contratLeasing.getPeriodeEnMois() + 1);
-        String libelle;
-        if (isValeurResiduelle) {
-            libelle = contratLeasing.getOrganismeLeasing().getNom() + ", V.R. pour le contrat N° " + contratLeasing.getNumeroContrat();
-        } else {
-            libelle = contratLeasing.getOrganismeLeasing().getNom() + ", contrat N° " + contratLeasing.getNumeroContrat();
-        }
-        transaction.setLibelle(libelle);
+        transaction.setLibelle(requestDto.getLibelle());
 
         // Mapping complex fields using the fetched entities
 

@@ -2,6 +2,7 @@ package staport.finance.gBanque.leasing.echeancesLeasing.mapper;
 
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.leasing.contratLeasing.config.LeasingProperties;
+import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingResponseDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 
@@ -45,6 +46,17 @@ public class EcheanceLeasingMapper {
             dto.setMontantTVA(montantTVA);
         }
 
+        // 2. Construire le libellé
+        String libelle;
+        ContratLeasing contrat = entity.getContratLeasing();
+        // La dernière échéance est celle dont le numéro est égal à PeriodeEnMois + 1
+        if (entity.getNumeroEcheance().equals(contrat.getPeriodeEnMois() + 1)) {
+            libelle = contrat.getOrganismeLeasing().getNom() + ", V.R. pour le contrat N° " + contrat.getNumeroContrat();
+        } else {
+            libelle = contrat.getOrganismeLeasing().getNom() + ", contrat N° " + contrat.getNumeroContrat();
+        }
+        dto.setLibelle(libelle);
+        dto.setObservation("Prélèvement leasing");
         dto.setStatutPaiement(entity.getStatutPaiement());
         dto.setDateOperation(entity.getDateOperation()!=null ? entity.getDateOperation(): null);
         dto.setDateValeur(entity.getDateValeur()!=null ? entity.getDateValeur(): null);

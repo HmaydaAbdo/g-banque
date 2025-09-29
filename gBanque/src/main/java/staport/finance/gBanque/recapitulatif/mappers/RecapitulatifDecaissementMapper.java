@@ -39,7 +39,7 @@ public class RecapitulatifDecaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(echeance.getDateEcheance());
         dto.setDebit(echeance.getMontantTTC().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("Prélèvement");
+        dto.setObservations("Prélèvement leasing");
 
         // Construct the libelle based on the contract details
         ContratLeasing contrat = echeance.getContratLeasing();

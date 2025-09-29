@@ -15,6 +15,7 @@ public class LeasingTransactionRequestDto {
     private OffsetDateTime dateOperation;
     private String observation;
     private Double tvaDeductible;
+    private String libelle;
 
     // Constructeur par défaut
     public LeasingTransactionRequestDto() {
@@ -95,6 +96,22 @@ public class LeasingTransactionRequestDto {
 
     public void setTvaDeductible(double tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public void setTvaDeductible(Double tvaDeductible) {
+        this.tvaDeductible = tvaDeductible;
+    }
+
+    public void setTransactionSource(TransactionSource transactionSource) {
+        this.transactionSource = transactionSource;
     }
 
     // Méthodes utilitaires (facultatif mais recommandé)

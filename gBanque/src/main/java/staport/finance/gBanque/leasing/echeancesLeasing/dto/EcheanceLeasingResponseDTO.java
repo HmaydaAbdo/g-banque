@@ -24,6 +24,8 @@ public class EcheanceLeasingResponseDTO {
     private StatutEcheanceLeasing statutPaiement;
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
+    private String libelle;
+    private String observation;
 
     // --- Getters et Setters ---
     public Long getId() {
@@ -128,5 +130,21 @@ public class EcheanceLeasingResponseDTO {
 
     public void setNumeroContrat(String numeroContrat) {
         this.numeroContrat = numeroContrat;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
     }
 }

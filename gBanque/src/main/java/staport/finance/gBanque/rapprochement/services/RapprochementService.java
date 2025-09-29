@@ -66,6 +66,7 @@ public class RapprochementService {
     private final ContratLeasingRepository contratLeasingRepository;
     private final EcheanceLeasingRepository echeanceLeasingRepository;
 
+
     private final CreditMoyenTermeRepository creditMoyenTermeRepository;
     private final EcheanceCMTRepository echeanceCMTRepository;
     private final CmtTransactionMapper cmtTransactionMapper;
@@ -154,6 +155,8 @@ public class RapprochementService {
 
         // Étape 5: Marquer l'échéance comme payée.
         echeanceLeasing.setStatutPaiement(StatutEcheanceLeasing.PAYE);
+        echeanceLeasing.setDateValeur(savedTransaction.getDateValeur());
+        echeanceLeasing.setDateOperation(savedTransaction.getDateOperations());
         echeanceLeasingRepository.save(echeanceLeasing);
 
         // Étape 6: Utiliser le mapper pour convertir l'entité sauvegardée en DTO de réponse.
