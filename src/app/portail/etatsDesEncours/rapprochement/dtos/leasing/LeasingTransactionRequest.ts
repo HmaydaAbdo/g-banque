@@ -11,5 +11,6 @@ export interface LeasingTransactionRequest {
   dateValeur: Date;         // Date de valeur
   dateOperation: Date;      // Date de l'opération
   observation: string;       // Commentaire
+  libelle:string;
   tvaDeductible: number;      // Montant de TVA déductible
 }

@@ -3,33 +3,27 @@
 
 <div class="card shadow-2 flex flex-column gap-4 p-2 md:p-4 w-full">
 
-  @if (encoursResponse) {
-    <div class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between">
-      <div class="flex align-items-center">
-        <span class="text-lg font-medium mr-2">Liste des échéances Leasing en cours pour le</span>
-        <span class="text-lg font-bold">{{ this.currentMonthYear }}</span>
-      </div>
-      <form [formGroup]="searchForm" class="grid p-fluid gap-4">
+
+  <div class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between">
+
+    <span class="text-lg font-medium white-space-nowrap">Les encoursLeasing en cours pour le <strong>{{ this.currentMonthYear }}</strong> </span>
+    <form [formGroup]="searchForm" class="flex flex-row gap-2">
         <span class="p-float-label">
           <p-dropdown id="organismeLeasingId" formControlName="organismeLeasingId" [options]="organismeLeasingOptions" optionLabel="label" optionValue="value" [showClear]="true"></p-dropdown>
           <label for="organismeLeasingId">Organisme de Leasing</label>
         </span>
-        <span class="p-float-label">
+      <span class="p-float-label">
           <input id="numeroContrat" type="text" pInputText formControlName="numeroContrat">
           <label for="numeroContrat">Numéro Contrat</label>
         </span>
-      </form>
-      <div class="flex  align-items-center">
-        <span class="text-lg font-medium mr-2">Total des encours pour Leasing</span>
-        <span class="text-xl font-bold">{{ encoursResponse.totalEncours }} MAD</span>
-      </div>
+    </form>
+    <div class="flex  align-items-center">
+      <span class="text-lg font-medium mr-2">Total des encours pour Leasing</span>
+      <span class="text-xl font-bold">{{ encoursResponse?.totalEncours }} MAD</span>
+    </div>
 
-    </div>
-  } @else {
-    <div class="p-card shadow-2 px-4 py-1 flex flex-column align-items-center justify-content-center">
-      <span class="text-lg font-medium">On n'arrive pas à récupérer les encours, contactez l'équipe support.</span>
-    </div>
-  }
+  </div>
+
 
 
   <div class="pb-8">
@@ -99,11 +93,20 @@
       <div class="grid p-fluid mt-3">
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy"  [showIcon]="true" appendTo="body"></p-calendar>
+            <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy"  [showIcon]="true" appendTo="body" ></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateEmission')">
             La date d'émission est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+             <span class="p-float-label">
+               <p-dropdown id="tvaDeductible" formControlName="tvaDeductible" [options]="tvaOptions" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body" ></p-dropdown>
+                <label for="tvaDeductible">TVA Déductible</label>
+             </span>
+          <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
+            La TVA est obligatoire
           </small>
         </div>
         <div class="col-12 md:col-6 mb-3">
@@ -128,14 +131,16 @@
 
         <div class="col-12 md:col-6 mb-3">
              <span class="p-float-label">
-               <p-dropdown id="tvaDeductible" formControlName="tvaDeductible" [options]="tvaOptions" optionLabel="label" optionValue="value" [showClear]="false" appendTo="body"></p-dropdown>
-                <label for="tvaDeductible">TVA Déductible</label>
+               <textarea id="libelle" pInputTextarea   formControlName="libelle" rows="3"></textarea>
+               <label for="libelle">Libellé</label>
              </span>
-            <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
-               La TVA est obligatoire
-           </small>
+          <small class="p-error" *ngIf="isInvalid('libelle')">
+            Le libellé est obligatoire
+          </small>
         </div>
-        <div class="col-12 mb-3">
+
+
+        <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
             <label for="observation">Observation</label>

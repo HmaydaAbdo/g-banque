@@ -7,4 +7,5 @@ export interface DonneesComplementairesRapprochementDTO {
   observation: string;       // Commentaire
   tvaCollectee: number;       // Montant de TVA collectée
   tvaDeductible: number;      // Montant de TVA déductible
+  libelle:string;
 }

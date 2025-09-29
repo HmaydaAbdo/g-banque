@@ -1,10 +1,8 @@
-// src/app/staport/finance/gBanque/leasing/etatsDesEncours/views/lesEncours/decaissement/leasing/echeances-leasing.component.ts
-
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -18,14 +16,13 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { RippleModule } from 'primeng/ripple';
 import { PaginatorModule } from 'primeng/paginator';
 import { DividerModule } from 'primeng/divider';
-import { DialogModule } from 'primeng/dialog'; // Import du module de dialogue
-import { CalendarModule } from 'primeng/calendar'; // Import du module de calendrier
-import { InputNumberModule } from 'primeng/inputnumber'; // Import du module d'input number
-import { InputTextareaModule } from 'primeng/inputtextarea'; // Import du module de textarea
-import { InputTextModule } from 'primeng/inputtext'; // Import du module d'input text for the numeroContrat
+import { DialogModule } from 'primeng/dialog';
+import { CalendarModule } from 'primeng/calendar';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextareaModule } from 'primeng/inputtextarea';
+import { InputTextModule } from 'primeng/inputtext';
 import { EcheanceLeasingResponse } from "../../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
 import { EncoursLeasingResponseDTO } from "../../dtos/encours-leasing-response.dto";
-import { PeriodeEncours } from "../../dtos/PeriodeEncours";
 import { EcheanceLeasingService } from "../../../../../../../leasing/contratsLeasing/services/EcheanceLeasingService";
 import { OrganismeLeasingService } from "../../../../../../../leasing/organismesLeasing/services/organisme-leasing.service";
 import { PageResponse } from "../../../../../../../global/types/PageResponse";
@@ -59,7 +56,7 @@ import {TransactionSource} from "../../../../../../rapprochement/dtos/transactio
     CalendarModule,
     InputNumberModule,
     InputTextareaModule,
-    InputTextModule, // Add this module
+    InputTextModule,
     TableModule,
   ],
   templateUrl: './echeances-leasing.component.html',
@@ -98,17 +95,16 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   constructor(
     private echeanceLeasingService: EcheanceLeasingService,
     private organismeLeasingService: OrganismeLeasingService,
-    private rapprochementService: RapprochemntService, // Injection du service
-    private route: ActivatedRoute, // Injection d'ActivatedRoute
-    private router: Router,
+    private rapprochementService: RapprochemntService,
+    private route: ActivatedRoute,
     private messageService: MessageService,
     private fb: FormBuilder,
-    private confirmationService: ConfirmationService,
     private datePipe: DatePipe
   ) { }
 
   ngOnInit(): void {
     // Récupérer l'ID de la banque depuis la route parent
+
     this.subscriptions.push(
       this.route.parent!.paramMap.subscribe(params => {
         const id = params.get('banqueId');
@@ -119,14 +115,17 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
         }
       })
     );
+
     // Initialisation du formulaire de recherche
     this.initSearchForm();
+
     const formValueChangesSub = this.searchForm.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
       .subscribe(() => {
         // Automatically trigger search when form values change
         this.onSearch();
       });
+
     this.subscriptions.push(formValueChangesSub);
   }
 
@@ -136,9 +135,8 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      periode: [PeriodeEncours.MOIS],
       organismeLeasingId: [null],
-      numeroContrat: [null] // Add the new form control here
+      numeroContrat: [null]
     });
   }
 
@@ -148,8 +146,9 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       dateEmission: [null, Validators.required],
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
-      observation: ['',Validators.required],
-      tvaDeductible: [0, [Validators.required, Validators.min(0), Validators.max(100)]]
+      observation: ['', Validators.required],
+      libelle: ['', Validators.required], // Ajout du champ libelle
+      tvaDeductible: [20, [Validators.required, Validators.min(0), Validators.max(100)]] // Valeur par défaut 20%
     });
   }
 
@@ -171,18 +170,9 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
   loadEncours(event: TableLazyLoadEvent): void {
     const searchCriteria = this.searchForm.value as EncoursLeasingRequestDTO;
-
-    if (!searchCriteria.periode) {
-      this.messageService.add({ severity: 'info', summary: 'Information', detail: 'Veuillez sélectionner une période pour lancer la recherche.' });
-      this.echeances = [];
-      return;
-    }
-
     this.loading = true;
-
     const request: EncoursLeasingRequestDTO = {
       banqueId: this.banqueIdFromRoute,
-      periode: searchCriteria.periode,
       organismeLeasingId: searchCriteria.organismeLeasingId,
       numeroContrat: searchCriteria.numeroContrat, // Pass the new filter value
       page: event.first! / event.rows!,
@@ -223,10 +213,30 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Nouvelle méthode pour ouvrir la modale
+
   openRapprochementModal(echeance: EcheanceLeasingResponse): void {
     this.selectedEcheance = echeance;
     this.initRapprochementForm(); // Assurez-vous d'initialiser le formulaire
+
+    // Pré-remplissage des champs et gestion de la désactivation
+    this.rapprochementForm.patchValue({
+      // Pré-remplissage avec la date d'échéance et désactivation
+      dateEmission: new Date(echeance.dateEcheance),
+
+      // Pré-remplissage de l'observation et du libellé
+      observation: echeance.observation,
+      libelle: echeance.libelle,
+
+      // Pré-remplissage de la TVA (20%) et désactivation
+      tvaDeductible: 20
+    });
+
+    // Désactivation des contrôles non éditables
+    this.rapprochementForm.get('dateEmission')?.disable();
+    this.rapprochementForm.get('tvaDeductible')?.disable();
+
+
+    // dateValeur et dateOperation restent nulls et éditables
     this.displayModal = true;
   }
 
@@ -243,7 +253,18 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
     }
 
     if (this.rapprochementForm.valid && this.selectedEcheance) {
-      const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
+      // Utilisation de getRawValue() pour récupérer aussi les champs désactivés (dateEmission, tvaDeductible)
+      const formValue = this.rapprochementForm.getRawValue();
+
+      const donneesComplementaires: DonneesComplementairesRapprochementDTO = {
+        dateEmission: formValue.dateEmission,
+        dateValeur: formValue.dateValeur,
+        dateOperation: formValue.dateOperation,
+        observation: formValue.observation,
+        libelle: formValue.libelle,
+        tvaDeductible: formValue.tvaDeductible,
+        tvaCollectee: 0 // Non géré dans ce formulaire
+      };
 
       // Create the LeasingTransactionRequest object
       const leasingTransactionRequest: LeasingTransactionRequest = {
@@ -255,12 +276,18 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
         dateOperation: donneesComplementaires.dateOperation,
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
+        libelle: donneesComplementaires.libelle
       };
 
       this.rapprochementService.echeanceLeasingToRapprochemnt(leasingTransactionRequest)
         .subscribe({
           next: (response) => {
             console.log(response)
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Échéance rapprochée avec succès.'
+            });
             this.onSearch()
           },
           error: (error) => {
@@ -272,12 +299,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
           },
 
         })
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Succès',
-        detail: 'Échéance rapprochée avec succès.'
-      });
-
       this.displayModal = false;
     } else {
       this.messageService.add({
@@ -290,6 +311,10 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
   isInvalid(controlName: string): boolean {
     const control = this.rapprochementForm.get(controlName);
+    // Le contrôle doit être valide pour les champs disabled
+    if (control && control.disabled) {
+      return false;
+    }
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 

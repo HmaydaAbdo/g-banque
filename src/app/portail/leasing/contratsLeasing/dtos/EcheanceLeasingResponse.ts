@@ -13,6 +13,8 @@ export interface EcheanceLeasingResponse {
   montantHT: Decimal;
   montantTVA: Decimal;
   statutPaiement: StatutEcheanceLeasing;
+  observation: string;
+  libelle:string
   dateCreation: Date;
   dateModification: Date;
 }

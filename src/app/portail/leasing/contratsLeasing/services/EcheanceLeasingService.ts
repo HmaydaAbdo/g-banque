@@ -117,7 +117,7 @@ export class EcheanceLeasingService {
 
     // Ajout des paramètres obligatoires
     params = params.append('banqueId', request.banqueId.toString());
-    params = params.append('periode', request.periode);
+
 
     // Ajout des paramètres optionnels
 
