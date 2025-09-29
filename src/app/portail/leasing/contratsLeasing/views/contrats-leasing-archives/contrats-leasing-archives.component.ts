@@ -1,5 +1,5 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {ContratLeasingRequestDTO, ContratLeasingResponseDTO} from "../../dtos/contrat-leasing";
+import { ContratLeasingResponseDTO} from "../../dtos/contrat-leasing";
 import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {TypeContratLeasing} from "../../dtos/type-contrat-leasing";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
@@ -14,7 +14,6 @@ import {PageResponse} from "../../../../global/types/PageResponse";
 import {OrganismeLeasingResponse} from "../../../organismesLeasing/dtos/OrganismeLeasingResponse";
 import {BanqueResponse} from "../../../../comptes-bancaire/dtos/BanqueResponse";
 import {ContratLeasingSearchDTO} from "../../dtos/contrat-leasing-search";
-import {Decimal} from "decimal.js";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {Button, ButtonDirective} from "primeng/button";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
@@ -239,7 +238,7 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
       typeContrat: null,
       organismeLeasingId: null,
       banqueDePrelevementId: null,
-      completed: null // ⭐ Réinitialisation du filtre
+      completed: null
     });
 
     if (this.dt) {
@@ -251,10 +250,7 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
     }
   }
 
-  createNewContrat(): void {
-    this.wizardService.resetContract();
-    this.router.navigate(['portail/leasing/contratsLeasing/creation/organisme']);
-  }
+
 
   onRowSelect(event: any): void {
     const contratId = event.data.id;
@@ -285,83 +281,7 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
   viewAmortizationTable(contratId: number): void {
     this.router.navigate(['portail/leasing/contratsLeasing', contratId, 'tableau-amortissement']);
   }
-  editContrat(id: number): void {
-    this.loading = true;
-    this.contratLeasingService.getContratLeasingById(id).pipe(
-      take(1)
-    ).subscribe({
-      next: (contrat: ContratLeasingResponseDTO) => {
-        // Ensure that 'contrat.phases' is treated as an array, even if it could be null/undefined
-        // And ensure Decimal types are correctly assigned to Decimal | null if that's the DTO type.
-        // Your ContratLeasingService's processContratLeasingResponse should already ensure
-        // montantAchatTTC, valeurResiduelle, and mensualiteTTC are Decimal or null.
-        const contratRequest: ContratLeasingRequestDTO = {
-          id: contrat.id,
-          numeroContrat: contrat.numeroContrat,
-          immobilisation: contrat.immobilisation,
-          // These should already be Decimal | null from ContratLeasingService
-          montantAchatTTC: contrat.montantAchatTTC,
-          dateDebut: contrat.dateDebut,
-          periodeEnMois: contrat.periodeEnMois,
-          organismeLeasingId: contrat.organismeLeasingId,
-          banqueDePrelevementId: contrat.banqueDePrelevementId,
-          typeContrat: contrat.typeContrat,
-          valeurResiduelle: contrat.valeurResiduelle as Decimal,
-          // Use a nullish coalescing operator to ensure phases is always an array
-          phases: (contrat.phases ?? []).map(p => ({
-            id: p.id,
-            numeroPhase: p.numeroPhase,
-            dureeMois: p.dureeMois,
-            // mensualiteTTC should also be Decimal | null
-            mensualiteTTC: p.mensualiteTTC,
-          }))
-        };
 
-        this.wizardService.loadContractForEdit(contratRequest);
-        this.router.navigate(['portail/leasing/contratsLeasing/creation/organisme']);
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error fetching contract for edit:', error);
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du contrat pour modification.' });
-        this.loading = false;
-      }
-    });
-  }
 
-  confirmDeleteContrat(contrat: ContratLeasingResponseDTO): void {
-    this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer le contrat N° ${contrat.numeroContrat} ?`,
-      header: 'Confirmation de suppression',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Oui',
-      rejectLabel: 'Non',
-      acceptButtonStyleClass: 'p-button-danger',
-      rejectButtonStyleClass: 'p-button-text',
-      accept: () => {
-        this.deleteContrat(contrat.id);
-      }
-    });
-  }
 
-  deleteContrat(id: number): void {
-    this.contratLeasingService.deleteContratLeasing(id).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Contrat supprimé avec succès.' });
-        if (this.dt) {
-          this.loadContrats(this.dt.createLazyLoadMetadata());
-        } else {
-          this.loadContrats(this.lastLazyLoadEvent);
-        }
-      },
-      error: (error) => {
-        console.error('Erreur lors de la suppression:', error);
-        let errorMessage = 'Échec de la suppression du contrat.';
-        if (error.error && error.error.message) {
-          errorMessage = error.error.message;
-        }
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage });
-      }
-    });
-  }
 }

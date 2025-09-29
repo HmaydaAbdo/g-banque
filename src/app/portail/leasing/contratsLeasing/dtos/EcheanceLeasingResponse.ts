@@ -7,6 +7,8 @@ export interface EcheanceLeasingResponse {
   numeroContrat: string;
   numeroEcheance: number;
   dateEcheance: Date;
+  dateValeur:Date
+  dateOperation:Date
   montantTTC: Decimal;
   montantHT: Decimal;
   montantTVA: Decimal;

@@ -1,34 +1,36 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
+import {CommonModule} from '@angular/common';
+import {Subscription} from 'rxjs';
+import {debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators';
 
 // PrimeNG Modules
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast';
-import { InputTextModule } from 'primeng/inputtext';
-import { DropdownModule } from 'primeng/dropdown';
-import { TableModule, TableLazyLoadEvent } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {ToastModule} from 'primeng/toast';
+import {InputTextModule} from 'primeng/inputtext';
+import {DropdownModule} from 'primeng/dropdown';
+import {TableLazyLoadEvent, TableModule} from 'primeng/table';
+import {TagModule} from 'primeng/tag';
+import {TooltipModule} from 'primeng/tooltip';
 import {MenuItem, MessageService} from 'primeng/api';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { DividerModule } from 'primeng/divider';
-import { InputNumberModule } from 'primeng/inputnumber';
+import {ProgressSpinnerModule} from 'primeng/progressspinner';
+import {DividerModule} from 'primeng/divider';
+import {InputNumberModule} from 'primeng/inputnumber';
 
 // Make sure these paths are correct based on your project structure
-import { TableauAmortissement } from "../../dtos/table-amortissement";
-import { EcheanceLeasingResponse } from "../../dtos/EcheanceLeasingResponse";
-import { StatutEcheanceLeasing } from "../../dtos/StatutEcheanceLeasing";
-import { EcheanceLeasingService } from "../../services/EcheanceLeasingService";
-import { EcheanceLeasingSearchDTO } from "../../dtos/echeance-leasing-search";
+import {TableauAmortissement} from "../../dtos/table-amortissement";
+import {EcheanceLeasingResponse} from "../../dtos/EcheanceLeasingResponse";
+import {StatutEcheanceLeasing} from "../../dtos/StatutEcheanceLeasing";
+import {EcheanceLeasingService} from "../../services/EcheanceLeasingService";
+import {EcheanceLeasingSearchDTO} from "../../dtos/echeance-leasing-search";
 import {InputSwitchModule} from "primeng/inputswitch";
 import {DialogModule} from "primeng/dialog";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {BreadcrumbModule} from "primeng/breadcrumb";
+import {AuthService} from "../../../../../auth/services/auth.service";
+import {Role} from "../../../../../auth/enum/Role";
 
 
 @Component({
@@ -86,7 +88,8 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private echeanceLeasingService: EcheanceLeasingService,
     private messageService: MessageService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private authService:AuthService
   ) { }
 
   ngOnInit(): void {
@@ -228,5 +231,35 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Handles the toggle change to mark an installment as paid or revert it (optional: depends on API).
+   * Note: The current API only supports mark-as-paid, so we'll only allow switching to 'PAYE'.
+   * @param echeance The installment object being changed.
+   */
+  onStatutChange(echeance: EcheanceLeasingResponse): void {
+    this.loading = true; // Set general loading indicator or use a specific one
+    this.echeanceLeasingService.toggleStatus(echeance.id).pipe(
+        finalize(() => {
+          this.loading = false;
+        })
+      ).subscribe({
+        next: () => {
+          // Re-fetch the entire table to update the summary totals (Endettement, Montants payés, etc.)
+          this.loadTableauAmortissement(this.lastLazyLoadEvent);
+        },
+        error: (error) => {
+          console.error('Error toggling  echeance status  :', error);
+          this.errorMessage = 'Échec de la mise à jour du statut. ' + (error.message || 'Veuillez réessayer.');
+          this.messageService.add({severity: 'error', summary: 'Erreur', detail: this.errorMessage});
+          // Revert the local toggle state on failure to maintain consistency with the backend
+          echeance.statutPaiement = StatutEcheanceLeasing.PREVU;
+        }
+      });
 
+
+  }
+
+  isAdmin():boolean{
+    return this.authService.hasRole(Role.ADMIN)
+  }
 }

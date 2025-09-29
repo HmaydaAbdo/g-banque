@@ -1,21 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators'; // No 'map' needed for explicit conversion
+import { catchError } from 'rxjs/operators';
 import { environment } from "../../../../../environments/environment";
-
-// Import your DTOs
-// Note: While your DTOs define Decimal, at runtime these will be JS numbers
-//       if not explicitly mapped. HttpClient handles Date conversion automatically.
 import { EcheanceLeasingResponse } from "../dtos/EcheanceLeasingResponse";
-import { TableauAmortissement } from "../dtos/table-amortissement"; // Assuming this is the correct path/name
+import { TableauAmortissement } from "../dtos/table-amortissement";
 import { EcheanceLeasingSearchDTO } from "../dtos/echeance-leasing-search";
-import {
-  EncoursLeasingRequestDTO
-} from "../../../etatsDesEncours/views/lesEncours/decaissement/leasing/dtos/encours-leasing-request.dto";
-import {
-  EncoursLeasingResponseDTO
-} from "../../../etatsDesEncours/views/lesEncours/decaissement/leasing/dtos/encours-leasing-response.dto"; // Assuming this is the correct path/name
+import {EncoursLeasingRequestDTO} from "../../../etatsDesEncours/views/lesEncours/decaissement/leasing/dtos/encours-leasing-request.dto";
+import {EncoursLeasingResponseDTO} from "../../../etatsDesEncours/views/lesEncours/decaissement/leasing/dtos/encours-leasing-response.dto";
 
 
 @Injectable({
@@ -108,8 +100,8 @@ export class EcheanceLeasingService {
    * @param id The ID of the installment to mark as paid.
    * @returns An Observable of the updated EcheanceLeasingResponseDTO.
    */
-  markEcheanceAsPaid(id: number): Observable<EcheanceLeasingResponse> {
-    const url = `${this.apiUrl}/${id}/mark-as-paid`;
+  toggleStatus(id: number): Observable<EcheanceLeasingResponse> {
+    const url = `${this.apiUrl}/${id}/toggle-status`;
     return this.http.put<EcheanceLeasingResponse>(url, {}).pipe(
       catchError(this.handleError)
     );

@@ -108,6 +108,9 @@
             <th pSortableColumn="montantTVA">Montant TVA <p-sortIcon field="montantTVA"></p-sortIcon></th>
             <th pSortableColumn="montantTTC">Montant TTC <p-sortIcon field="montantTTC"></p-sortIcon></th>
             <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
+            @if (isAdmin()) {
+              <th style="width: 8rem;">Action</th>
+            }
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-echeance>
@@ -117,6 +120,17 @@
             <td>{{ echeance.montantTVA?.toFixed(2) }} MAD</td>
             <td>{{ echeance.montantTTC?.toFixed(2) }} MAD</td>
             <td><p-tag [value]="echeance.statutPaiement" [severity]="getStatutSeverity(echeance.statutPaiement)"></p-tag></td>
+
+            @if (isAdmin()){
+              <td class="text-center">
+                <p-inputSwitch
+                  [ngModel]="echeance.statutPaiement === 'PAYE'"
+                  (onChange)="onStatutChange(echeance)"
+                  pTooltip="changer le status de l'échéance"
+                  tooltipPosition="top"
+                ></p-inputSwitch>
+              </td>
+            }
 
           </tr>
         </ng-template>
