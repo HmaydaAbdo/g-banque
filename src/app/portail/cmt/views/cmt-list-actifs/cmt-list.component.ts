@@ -1,21 +1,20 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Router} from '@angular/router';
 import {ConfirmationService, MenuItem, MessageService} from "primeng/api";
-import { TableLazyLoadEvent, Table } from "primeng/table";
-import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast';
-import { InputTextModule } from 'primeng/inputtext';
-import { DropdownModule } from 'primeng/dropdown';
-import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { RippleModule } from "primeng/ripple";
-import { DialogModule } from 'primeng/dialog';
+import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
+import {debounceTime, distinctUntilChanged, Subscription} from 'rxjs';
+import {CommonModule} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {CardModule} from 'primeng/card';
+import {ButtonModule} from 'primeng/button';
+import {ToastModule} from 'primeng/toast';
+import {InputTextModule} from 'primeng/inputtext';
+import {DropdownModule} from 'primeng/dropdown';
+import {TagModule} from 'primeng/tag';
+import {TooltipModule} from 'primeng/tooltip';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {RippleModule} from "primeng/ripple";
+import {DialogModule} from 'primeng/dialog';
 import {CreditMoyenTermeResponseDto} from "../../dtos/CreditMoyenTermeResponseDto";
 import {CmtService} from "../../services/CmtService";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
@@ -23,6 +22,8 @@ import {PageResponse} from "../../../global/types/PageResponse";
 import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
 import {CreditMoyenTermeSearchDto} from "../../dtos/CreditMoyenTermeSearchDto";
 import {BreadcrumbModule} from "primeng/breadcrumb";
+import {AuthService} from "../../../../auth/services/auth.service";
+import {Role} from "../../../../auth/enum/Role";
 
 @Component({
   selector: 'app-cmt-list-actifs',
@@ -73,6 +74,7 @@ export class CmtListComponent implements OnInit, OnDestroy {
     private cmtService: CmtService,
     private banqueService: BanqueService,
     private router: Router,
+    private authService: AuthService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private fb: FormBuilder
@@ -234,5 +236,9 @@ export class CmtListComponent implements OnInit, OnDestroy {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage });
       }
     });
+  }
+
+  isAdmin():boolean {
+   return  this.authService.hasRole(Role.ADMIN)
   }
 }

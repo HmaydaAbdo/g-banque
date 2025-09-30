@@ -18,62 +18,7 @@ export class CmtService {
 
   constructor(private http: HttpClient) { }
 
-  /**
-   * Helper to convert plain numbers/strings to BigDecimal objects.
-   */
-  private convertToBigDecimal(value: any): Decimal {
-    return value !== undefined && value !== null ? new Decimal(value) : new Decimal(0);
-  }
 
-  /**
-   * Processes a single CreditMoyenTermeResponseDto to convert numeric fields.
-   */
-  private processCmtResponse(credit: CreditMoyenTermeResponseDto): CreditMoyenTermeResponseDto {
-    return {
-      ...credit,
-      nominal: this.convertToBigDecimal(credit.nominal),
-      echeance: this.convertToBigDecimal(credit.echeance),
-      taux: this.convertToBigDecimal(credit.taux),
-    };
-  }
-
-  /**
-   * Handles HTTP errors centrally.
-   */
-  private handleError(error: HttpErrorResponse): Observable<never> {
-    let errorMessage = 'An unknown error occurred!';
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Client-side Error: ${error.error.message}`;
-    } else {
-      if (error.error && error.error.message) {
-        errorMessage = error.error.message;
-      } else if (error.error && typeof error.error === 'string') {
-        errorMessage = error.error;
-      } else {
-        errorMessage = `Server Error: ${error.status} ${error.statusText || ''}`;
-      }
-    }
-    console.error('API Error:', errorMessage, error);
-    return throwError(() => new Error(errorMessage));
-  }
-
-  /**
-   * Builds the HTTP parameters from the search DTO.
-   * This centralizes the logic for pagination, sorting, and filters.
-   */
-  private buildSearchParams(searchDto: CreditMoyenTermeSearchDto): HttpParams {
-    let params = new HttpParams();
-    if (searchDto.designation) {
-      params = params.set('designation', searchDto.designation);
-    }
-    if (searchDto.banqueId) {
-      params = params.set('banqueId', searchDto.banqueId);
-    }
-    params = params.set('page', searchDto.page?.toString() || '0');
-    params = params.set('size', searchDto.size?.toString() || '10');
-    params = params.set('sort', searchDto.sort || 'id,asc');
-    return params;
-  }
 
   /**
    * Fetches a paginated list of ACTIVE credits.
@@ -164,5 +109,62 @@ export class CmtService {
     return this.http.delete<{ msg: string }>(`${this.apiUrl}/${id}`).pipe(
       catchError(this.handleError)
     );
+  }
+
+  /**
+   * Helper to convert plain numbers/strings to BigDecimal objects.
+   */
+  private convertToBigDecimal(value: any): Decimal {
+    return value !== undefined && value !== null ? new Decimal(value) : new Decimal(0);
+  }
+
+  /**
+   * Processes a single CreditMoyenTermeResponseDto to convert numeric fields.
+   */
+  private processCmtResponse(credit: CreditMoyenTermeResponseDto): CreditMoyenTermeResponseDto {
+    return {
+      ...credit,
+      nominal: this.convertToBigDecimal(credit.nominal),
+      echeance: this.convertToBigDecimal(credit.echeance),
+      taux: this.convertToBigDecimal(credit.taux),
+    };
+  }
+
+  /**
+   * Handles HTTP errors centrally.
+   */
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    let errorMessage = 'An unknown error occurred!';
+    if (error.error instanceof ErrorEvent) {
+      errorMessage = `Client-side Error: ${error.error.message}`;
+    } else {
+      if (error.error && error.error.message) {
+        errorMessage = error.error.message;
+      } else if (error.error && typeof error.error === 'string') {
+        errorMessage = error.error;
+      } else {
+        errorMessage = `Server Error: ${error.status} ${error.statusText || ''}`;
+      }
+    }
+    console.error('API Error:', errorMessage, error);
+    return throwError(() => new Error(errorMessage));
+  }
+
+  /**
+   * Builds the HTTP parameters from the search DTO.
+   * This centralizes the logic for pagination, sorting, and filters.
+   */
+  private buildSearchParams(searchDto: CreditMoyenTermeSearchDto): HttpParams {
+    let params = new HttpParams();
+    if (searchDto.designation) {
+      params = params.set('designation', searchDto.designation);
+    }
+    if (searchDto.banqueId) {
+      params = params.set('banqueId', searchDto.banqueId);
+    }
+    params = params.set('page', searchDto.page?.toString() || '0');
+    params = params.set('size', searchDto.size?.toString() || '10');
+    params = params.set('sort', searchDto.sort || 'id,asc');
+    return params;
   }
 }

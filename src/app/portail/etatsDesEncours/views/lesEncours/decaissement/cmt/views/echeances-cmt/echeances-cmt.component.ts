@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -16,7 +16,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { RippleModule } from 'primeng/ripple';
 import { PaginatorModule } from 'primeng/paginator';
 import { DividerModule } from 'primeng/divider';
-import { PeriodeEncoursCMT } from '../../dtos/PeriodeEncoursCMT';
+
 import {EncoursCMTResponseDTO} from "../../dtos/EncoursCMTResponseDTO";
 import {EcheanceCmtService} from "../../../../../../../cmt/services/EcheanceCmtService";
 import {EncoursCMTRequestDTO} from "../../dtos/EncoursCMTRequestDTO";
@@ -24,11 +24,7 @@ import {CalendarModule} from "primeng/calendar";
 import {DialogModule} from "primeng/dialog";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {RapprochemntService} from "../../../../../../rapprochement/services/rapprochement/rapprochemnt.service";
-import {EcheanceLeasingResponse} from "../../../../../../../leasing/contratsLeasing/dtos/EcheanceLeasingResponse";
-import {
-  DonneesComplementairesRapprochementDTO
-} from "../../../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
-import {LeasingTransactionRequest} from "../../../../../../rapprochement/dtos/leasing/LeasingTransactionRequest";
+import {DonneesComplementairesRapprochementDTO} from "../../../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {TransactionSource} from "../../../../../../rapprochement/dtos/transactions/TransactionSource";
 import {CmtTransactionRequest} from "../../../../../../rapprochement/dtos/cmt/CmtTransactionRequest";
 import {EcheanceCMTResponseDto} from "../../../../../../../cmt/dtos/EcheanceCMTResponseDto";
@@ -57,7 +53,7 @@ import { InputTextModule } from 'primeng/inputtext';
     CalendarModule,
     DialogModule,
     InputTextareaModule,
-    InputTextModule // <-- Add InputTextModule here
+    InputTextModule
   ],
   templateUrl: './echeances-cmt.component.html',
   styleUrl: './echeances-cmt.component.scss',
@@ -71,10 +67,6 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
   loading: boolean = false;
   currentMonthYear: string | null = null;
 
-  periodeOptions: SelectItem[] = [
-    { label: 'Jour', value: PeriodeEncoursCMT.JOUR },
-    { label: 'Mois', value: PeriodeEncoursCMT.MOIS }
-  ];
 
   tvaOptions: SelectItem[] = [
     { label: '0%', value: 0 },
@@ -97,10 +89,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
   constructor(
     private echeanceCmtService: EcheanceCmtService,
     private route: ActivatedRoute,
-    private router: Router,
     private messageService: MessageService,
     private fb: FormBuilder,
-    private confirmationService: ConfirmationService,
     private rapprochementService: RapprochemntService,
     private datePipe: DatePipe,
   ) { }
@@ -124,7 +114,6 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      periode: [PeriodeEncoursCMT.MOIS],
       designation: [''] // Add the new form control
     });
 
@@ -142,24 +131,19 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['',Validators.required],
-      tvaDeductible: [null, Validators.required] // Change initial value and remove validators
+      tvaDeductible: [null, Validators.required] ,
+      libelle: ['', Validators.required]
     });
   }
 
   loadEncours(event: TableLazyLoadEvent): void {
     const searchCriteria = this.searchForm.value;
 
-    if (!searchCriteria.periode) {
-      this.messageService.add({ severity: 'info', summary: 'Information', detail: 'Veuillez sélectionner une période pour lancer la recherche.' });
-      this.echeances = [];
-      return;
-    }
 
     this.loading = true;
 
     const request: EncoursCMTRequestDTO = {
       banqueId: this.banqueIdFromRoute,
-      periode: searchCriteria.periode,
       designation: searchCriteria.designation, // Pass the designation to the request
       page: event.first! / event.rows!,
       size: event.rows!,
@@ -202,6 +186,34 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
   openRapprochementModal(echeance: EcheanceCMTResponseDto): void {
     this.selectedEcheance = echeance;
     this.initRapprochementForm();
+    this.selectedEcheance = echeance;
+    this.initRapprochementForm();
+
+    const creditTaux = echeance.credit.taux;
+    // Ensure the dynamic rate is available in tvaOptions for the dropdown to display it
+    const isTauxPresent = this.tvaOptions.some(opt => opt.value === creditTaux);
+    if (!isTauxPresent) {
+      // Add the specific credit taux  to the options list temporarily
+      this.tvaOptions.push({ label: `${creditTaux.toFixed(2)}%`, value: creditTaux });
+    }
+
+    this.rapprochementForm.patchValue({
+      // Pre-fill dateEmission with dateEcheance (convert string to Date object)
+      dateEmission: new Date(echeance.dateEcheance),
+
+      // Pre-fill TVA with the credit's rate (taux)
+      tvaDeductible: creditTaux,
+
+      // Pre-fill modifiable text fields
+      observation: echeance.observation,
+      libelle: echeance.libelle,
+
+      // dateValeur and dateOperation remain null for user entry
+    });
+
+    // 2. Disabling controls
+    this.rapprochementForm.get('dateEmission')?.disable();
+    this.rapprochementForm.get('tvaDeductible')?.disable();
     this.displayModal = true;
   }
 
@@ -217,7 +229,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     }
 
     if (this.rapprochementForm.valid && this.selectedEcheance) {
-      const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
+      const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.getRawValue() as DonneesComplementairesRapprochementDTO;
 
       const cmtTransactionRequest: CmtTransactionRequest = {
         cmtId: this.selectedEcheance.credit.id,
@@ -228,6 +240,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
         dateOperation: donneesComplementaires.dateOperation,
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
+        libelle:donneesComplementaires.libelle,
       };
 
       this.rapprochementService.echeanceCmtToRapprochement(cmtTransactionRequest)

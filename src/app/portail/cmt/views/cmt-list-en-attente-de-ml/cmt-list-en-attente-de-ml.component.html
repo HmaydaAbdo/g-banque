@@ -22,8 +22,6 @@
       </ng-template>
     </p-breadcrumb>
 
-    <button pButton pRipple label="Nouveau Crédit" class="hidden md:block h-fit" size="small" icon="pi pi-plus" severity="success" (click)="createNewCredit()"></button>
-    <button pButton pRipple pTooltip="Nouveau Crédit" class="md:hidden h-fit" size="small" icon="pi pi-plus" severity="success" (click)="createNewCredit()"></button>
   </div>
 
   <form [formGroup]="searchForm" class="flex justify-content-between flex-wrap gap-3">
@@ -116,7 +114,6 @@
           <td >
             <button pButton pRipple icon="pi pi-file-excel" class="p-button-rounded p-button-secondary mr-2" pTooltip="Tableau d'Amortissement" (click)="viewAmortizationTable(credit.id)"></button>
             <button pButton pRipple icon="pi pi-folder" class="p-button-rounded p-button-success mr-2" pTooltip="Archiver" (click)="confirmArchiveCredit(credit)"></button>
-
           </td>
 
         </tr>

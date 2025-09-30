@@ -22,8 +22,6 @@
       </ng-template>
     </p-breadcrumb>
 
-    <button pButton pRipple label="Nouveau Crédit" class="hidden md:block h-fit" size="small" icon="pi pi-plus" severity="success" (click)="createNewCredit()"></button>
-    <button pButton pRipple pTooltip="Nouveau Crédit" class="md:hidden h-fit" size="small" icon="pi pi-plus" severity="success" (click)="createNewCredit()"></button>
   </div>
 
   <form [formGroup]="searchForm" class="flex justify-content-between flex-wrap gap-3">
@@ -96,9 +94,8 @@
           <th pSortableColumn="duree">Durée <p-sortIcon field="duree"></p-sortIcon></th>
           <th pSortableColumn="echeance">Montant Échéance <p-sortIcon field="echeance"></p-sortIcon></th>
           <th pSortableColumn="dateDebut">Date Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
-          <!-- ⭐ Ajout de la colonne pour le statut de complétude -->
           <th pSortableColumn="completed">Statut <p-sortIcon field="completed"></p-sortIcon></th>
-          <th style="width: 8rem;">Actions</th>
+
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-credit>
@@ -110,15 +107,13 @@
           <td>{{ credit.duree }} mois</td>
           <td>{{ credit.echeance?.toNumber() }} MAD</td>
           <td>{{ credit.dateDebut | date:'dd/MM/yyyy' }}</td>
-          <!-- ⭐ Affichage du statut avec un Tag -->
+
           <td>
             <p-tag [severity]="credit.completed ? 'success' : 'info'" [value]="credit.completed ? 'Terminé' : 'En Cours'"></p-tag>
           </td>
 
           <td>
             <button pButton pRipple icon="pi pi-file-excel" class="p-button-rounded p-button-secondary mr-2" pTooltip="Tableau d'Amortissement" (click)="viewAmortizationTable(credit.id)"></button>
-            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-info mr-2" pTooltip="Modifier" (click)="editCredit(credit.id)"></button>
-            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" pTooltip="Supprimer" (click)="confirmDeleteCredit(credit)"></button>
           </td>
 
         </tr>

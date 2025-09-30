@@ -9,5 +9,6 @@ export interface CmtTransactionRequest {
   dateValeur: Date;         // Date de valeur
   dateOperation: Date;      // Date de l'opération
   observation: string;       // Commentaire
+  libelle:string;
   tvaDeductible: number;      // Montant de TVA déductible
 }

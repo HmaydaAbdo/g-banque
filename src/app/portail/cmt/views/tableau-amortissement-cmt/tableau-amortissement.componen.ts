@@ -1,36 +1,37 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {ActivatedRoute, Router} from '@angular/router';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
-import { TableLazyLoadEvent, Table } from 'primeng/table';
-import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-
 // PrimeNG Modules
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
-import { DropdownModule } from 'primeng/dropdown';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import {MessageService, ConfirmationService, MenuItem} from 'primeng/api';
+import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
+import {debounceTime, distinctUntilChanged, Subscription} from 'rxjs';
+import {ButtonModule} from 'primeng/button';
+import {ToastModule} from 'primeng/toast';
+import {TagModule} from 'primeng/tag';
+import {TooltipModule} from 'primeng/tooltip';
+import {DropdownModule} from 'primeng/dropdown';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
 import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {DividerModule} from "primeng/divider";
 import {InputNumberModule} from "primeng/inputnumber";
 import {InputSwitchModule} from "primeng/inputswitch";
-import { RippleModule } from 'primeng/ripple';
+import {RippleModule} from 'primeng/ripple';
 
 
 // Services and DTOs
-import { EcheanceCmtService } from '../../services/EcheanceCmtService';
-import { TableauAmortissementCMTResponseDto } from '../../dtos/TableauAmortissementCMTResponseDto';
-import { EcheanceCMTResponseDto } from '../../dtos/EcheanceCMTResponseDto';
-import { StatutEcheanceCMT } from '../../enums/StatutEcheanceCMT';
-import { EcheanceCMTSearchDto } from '../../dtos/EcheanceCMTSearchDto';
+import {EcheanceCmtService} from '../../services/EcheanceCmtService';
+import {TableauAmortissementCMTResponseDto} from '../../dtos/TableauAmortissementCMTResponseDto';
+import {EcheanceCMTResponseDto} from '../../dtos/EcheanceCMTResponseDto';
+import {StatutEcheanceCMT} from '../../enums/StatutEcheanceCMT';
+import {EcheanceCMTSearchDto} from '../../dtos/EcheanceCMTSearchDto';
 import {DialogModule} from "primeng/dialog";
 import {InputTextModule} from "primeng/inputtext";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {BreadcrumbModule} from "primeng/breadcrumb";
+import {AuthService} from "../../../../auth/services/auth.service";
+import {Role} from "../../../../auth/enum/Role";
+import {finalize} from "rxjs/operators";
 
 
 @Component({
@@ -79,16 +80,13 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   private lastLazyLoadEvent: TableLazyLoadEvent = {};
   items: MenuItem[] | undefined;
 
-
-
-
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private echeanceCmtService: EcheanceCmtService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private authService: AuthService,
   ) { }
 
   ngOnInit(): void {
@@ -223,9 +221,30 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   }
 
 
+  isAdmin():boolean {
+    return this.authService.hasRole(Role.ADMIN)
+  }
+
+  onStatutChange(echeance: EcheanceCMTResponseDto): void {
+    this.loading = true; // Set general loading indicator or use a specific one
+    this.echeanceCmtService.toggleStatus(echeance.id).pipe(
+      finalize(() => {
+        this.loading = false;
+      })
+    ).subscribe({
+      next: () => {
+        // Re-fetch the entire table to update the summary totals (Endettement, Montants payés, etc.)
+        this.loadEcheances(this.lastLazyLoadEvent);
+      },
+      error: (error) => {
+        console.error('Error toggling  echeance status  :', error);
+        this.errorMessage = 'Échec de la mise à jour du statut. ' + (error.message || 'Veuillez réessayer.');
+        this.messageService.add({severity: 'error', summary: 'Erreur', detail: this.errorMessage});
+
+      }
+    });
 
 
-
-
+  }
 
 }

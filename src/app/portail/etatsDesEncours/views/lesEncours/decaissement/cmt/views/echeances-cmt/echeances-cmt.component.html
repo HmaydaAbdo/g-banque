@@ -48,7 +48,7 @@
           <th pSortableColumn="credit.designation">Désignation CMT <p-sortIcon field="credit.designation"></p-sortIcon></th>
           <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
           <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
-          <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="montant">Montant TTC <p-sortIcon field="montant"></p-sortIcon></th>
           <th style="width: 8rem;">Actions</th>
         </tr>
       </ng-template>
@@ -57,7 +57,7 @@
           <td>{{ echeance.credit.designation }}</td>
           <td>{{ echeance.numeroEcheance }}</td>
           <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-          <td>{{ echeance.montant}} MAD</td>
+          <td>{{ echeance.montantTtc}} MAD</td>
           <td>
             <p-button
               pRipple
@@ -86,15 +86,23 @@
   <ng-container *ngIf="selectedEcheance">
     <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
       <div class="grid p-fluid mt-3">
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy"  [showIcon]="true" appendTo="body"></p-calendar>
+            <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy"  [showIcon]="true" appendTo="body" [readonlyInput]="true"></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('dateEmission')">
-            La date d'émission est obligatoire
-          </small>
         </div>
+
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-dropdown id="tvaDeductible" formControlName="tvaDeductible" [options]="tvaOptions"
+                        optionLabel="label" optionValue="value" appendTo="body"
+                        placeholder="TVA Déductible" [required]="true" [readonly]="true"></p-dropdown>
+            <label for="tvaDeductible">TVA Déductible</label>
+          </span>
+        </div>
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <p-calendar id="dateValeur" formControlName="dateValeur" [showIcon]="true"  dateFormat="dd/mm/yy" appendTo="body"></p-calendar>
@@ -104,6 +112,7 @@
             La date de valeur est obligatoire
           </small>
         </div>
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <p-calendar id="dateOperation" formControlName="dateOperation"  dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body"></p-calendar>
@@ -113,18 +122,20 @@
             La date de l'opération est obligatoire
           </small>
         </div>
+
+
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-dropdown id="tvaDeductible" formControlName="tvaDeductible" [options]="tvaOptions"
-                        optionLabel="label" optionValue="value" appendTo="body"
-                        placeholder="TVA Déductible" [required]="true"></p-dropdown>
-            <label for="tvaDeductible">TVA Déductible</label>
+             <textarea id="libelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
+             <label for="libelle">Libellé</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
-            La TVA est obligatoire
+          <small class="p-error" *ngIf="isInvalid('libelle')">
+            Le libellé est obligatoire
           </small>
         </div>
-        <div class="col-12 mb-3">
+
+        <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
             <label for="observation">Observation</label>
@@ -133,6 +144,7 @@
             Observation est obligatoire
           </small>
         </div>
+
       </div>
       <p-divider></p-divider>
       <div class="flex justify-content-end gap-2">

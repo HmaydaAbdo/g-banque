@@ -103,19 +103,35 @@
           <tr>
             <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
             <th pSortableColumn="dateEcheance">Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
-            <th>Montant</th>
+            <th>Montant TTC</th>
+            <th>Montant HT </th>
+            <th>Montant TVA </th>
             <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
+            <th style="width: 8rem;">Actions</th>
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-echeance>
           <tr >
             <td>{{ echeance.numeroEcheance }}</td>
             <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-            <td>{{ echeance.montant.toFixed(2) }} MAD</td>
+            <td>{{ echeance.montantTtc.toFixed(2) }} MAD</td>
+            <td>{{ echeance.montantHt.toFixed(2) }} MAD</td>
+            <td>{{ echeance.montantTva.toFixed(2) }} MAD</td>
             <td>
               <p-tag [value]="echeance.statutPaiement" [severity]="getStatusSeverity(echeance.statutPaiement)"></p-tag>
             </td>
 
+            <td>
+              @if (isAdmin()){
+              <td class="text-center">
+                <p-inputSwitch
+                  [ngModel]="echeance.statutPaiement === 'PAYE'"
+                  (onChange)="onStatutChange(echeance)"
+                  pTooltip="changer le status de l'échéance"
+                  tooltipPosition="top"
+                ></p-inputSwitch>
+              </td>
+            }</td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">

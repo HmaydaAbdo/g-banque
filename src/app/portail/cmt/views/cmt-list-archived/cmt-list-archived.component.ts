@@ -3,7 +3,7 @@ import {CreditMoyenTermeResponseDto} from "../../dtos/CreditMoyenTermeResponseDt
 import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
-import {ConfirmationService, MenuItem, MessageService, PrimeTemplate} from "primeng/api";
+import { MenuItem, MessageService, PrimeTemplate} from "primeng/api";
 import {CmtService} from "../../services/CmtService";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {Router, RouterLinkActive} from "@angular/router";
@@ -74,7 +74,6 @@ export class CmtListArchivedComponent implements OnInit, OnDestroy {
     private banqueService: BanqueService,
     private router: Router,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService,
     private fb: FormBuilder
   ) { }
 
@@ -187,53 +186,12 @@ export class CmtListArchivedComponent implements OnInit, OnDestroy {
     }
   }
 
-  createNewCredit(): void {
-    // Navigate to the creation form. The route should be defined in cmt.routes.ts.
-    this.router.navigate(['portail/cmt/new']);
-  }
 
   viewAmortizationTable(creditId: number): void {
     this.router.navigate(['portail/cmt', creditId, 'tableau-amortissement']);
   }
 
-  editCredit(id: number): void {
-    this.router.navigate(['portail/cmt/edit', id]);
-  }
 
-  confirmDeleteCredit(credit: CreditMoyenTermeResponseDto): void {
-    this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer le crédit : ${credit.designation} ?`,
-      header: 'Confirmation de suppression',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Oui',
-      rejectLabel: 'Non',
-      acceptButtonStyleClass: 'p-button-danger',
-      rejectButtonStyleClass: 'p-button-text',
-      accept: () => {
-        this.deleteCredit(credit.id);
-      }
-    });
-  }
 
-  deleteCredit(id: number): void {
-    this.cmtService.deleteCredit(id).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Crédit supprimé avec succès.' });
-        if (this.dt) {
-          this.loadCredits(this.dt.createLazyLoadMetadata());
-        } else {
-          this.loadCredits(this.lastLazyLoadEvent);
-        }
-      },
-      error: (error) => {
-        console.error('Erreur lors de la suppression:', error);
-        let errorMessage = 'Échec de la suppression du crédit.';
-        if (error.error && error.error.message) {
-          errorMessage = error.error.message;
-        }
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage });
-      }
-    });
-  }
 }
 
