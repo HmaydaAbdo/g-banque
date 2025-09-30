@@ -6,8 +6,9 @@ import staport.finance.gBanque.cmt.echeances.dtos.EcheanceCMTResponseDto;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 
 /**
  * Composant Spring pour le mappage entre l'entité EcheanceCMT et ses DTOs.
@@ -30,34 +31,37 @@ public class EcheanceCMTMapper {
         responseDto.setId(entity.getId());
         responseDto.setNumeroEcheance(entity.getNumeroEcheance());
         responseDto.setDateEcheance(entity.getDateEcheance());
-        responseDto.setMontant(entity.getMontant());
+        responseDto.setMontantTtc(entity.getMontant());
+
+        // HT = TTC / (1 + taux/100)
+        BigDecimal taux = entity.getCreditMoyenTerme().getTaux();
+        BigDecimal divisor = BigDecimal.ONE.add(taux.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP));
+
+        BigDecimal montantHt = entity.getMontant().divide(divisor, 2, RoundingMode.HALF_UP);
+        responseDto.setMontantHt(montantHt);
+
+        // TVA = TTC - HT
+        BigDecimal montantTva = entity.getMontant().subtract(montantHt);
+        responseDto.setMontantTva(montantTva);
+
+        responseDto.setObservation("Prélèvement CMT");
+        responseDto.setLibelle("échéance CMT");
+
         responseDto.setStatutPaiement(entity.getStatutPaiement());
 
-        // *** CORRECTION : Ajout du mappage des dates de cycle de vie ***
+
         responseDto.setDateCreation(entity.getDateCreation());
         responseDto.setDateModification(entity.getDateModification());
 
         if (entity.getCreditMoyenTerme() != null) {
             responseDto.setCredit(toCreditDto(entity.getCreditMoyenTerme()));
         }
+        responseDto.setDateOperation(entity.getDateOperation()!=null ? entity.getDateOperation(): null);
+        responseDto.setDateValuer(entity.getDateValeur()!=null ? entity.getDateValeur(): null);
 
         return responseDto;
     }
 
-    /**
-     * Convertit une liste d'entités EcheanceCMT en une liste de DTOs de réponse.
-     *
-     * @param entities La liste d'entités à convertir.
-     * @return La liste correspondante de DTOs.
-     */
-    public List<EcheanceCMTResponseDto> toResponseDtoList(List<EcheanceCMT> entities) {
-        if (entities == null) {
-            return null;
-        }
-        return entities.stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
-    }
 
     /**
      * Convertit une page d'entités EcheanceCMT en une page de DTOs.
@@ -85,6 +89,7 @@ public class EcheanceCMTMapper {
         EcheanceCMTResponseDto.CreditMoyenTermeDto creditDto = new EcheanceCMTResponseDto.CreditMoyenTermeDto();
         creditDto.setId(credit.getId());
         creditDto.setDesignation(credit.getDesignation());
+        creditDto.setTaux(credit.getTaux());
         return creditDto;
     }
 }

@@ -19,7 +19,7 @@ public class CreditMoyenTermeResponseDto {
     private OffsetDateTime dateDebut;
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
-    private boolean completed; // <-- Ajout du champ 'completed'
+    private boolean completed;
 
     public CreditMoyenTermeResponseDto() {}
 

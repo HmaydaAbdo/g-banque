@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.cheques.specs.ChequeSpec;
-import staport.finance.gBanque.cmt.echeances.dtos.PeriodeEncoursCMT;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
 import staport.finance.gBanque.cmt.echeances.specification.EcheanceCMTSpecification;
@@ -118,7 +117,7 @@ public class RecapitulatifService {
         Specification<EcheanceLeasing> leasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil())
                 .and(EcheanceLeasingSpecification.byContratBanqueId(banqueId));
         //CMT
-        Specification<EcheanceCMT> cmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil(PeriodeEncoursCMT.MOIS, OffsetDateTime.now()))
+        Specification<EcheanceCMT> cmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil())
                 .and(EcheanceCMTSpecification.byCreditBanqueId(banqueId));
 
         //moyens de paiement

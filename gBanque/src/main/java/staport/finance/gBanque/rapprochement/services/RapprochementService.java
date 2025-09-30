@@ -178,6 +178,7 @@ public class RapprochementService {
         if( echeanceCMT.getStatutPaiement() == StatutEcheanceCMT.PAYE){
             throw new Exception("l echéance est deja payee");
         }
+
         // Étape 2: Utiliser le mapper pour convertir le DTO et les entités en une nouvelle entité Transaction.
         Transaction transactionEntity = cmtTransactionMapper.toEntity(requestDto, creditMoyenTerme, echeanceCMT);
 
@@ -190,8 +191,10 @@ public class RapprochementService {
         this.banqueRepository.save(banque);
 
 
-        // Étape 5: Marquer l'échéance comme payée.
+        // Étape 5 : Marquer l'échéance comme payée et enregistrer les dates rélatives au rapprochement .
         echeanceCMT.setStatutPaiement(StatutEcheanceCMT.PAYE);
+        echeanceCMT.setDateValeur(savedTransaction.getDateValeur());
+        echeanceCMT.setDateOperation(savedTransaction.getDateOperations());
         echeanceCMTRepository.save(echeanceCMT);
 
         // Étape 6: Utiliser le mapper pour convertir l'entité sauvegardée en DTO de réponse.

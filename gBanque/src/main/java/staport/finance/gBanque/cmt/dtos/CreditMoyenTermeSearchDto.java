@@ -8,7 +8,7 @@ public class CreditMoyenTermeSearchDto {
 
     private Long banqueId;
     private String designation;
-    private Boolean completed; // <-- Ajout du champ 'completed' (utilisez Boolean pour qu'il puisse être null)
+    private Boolean completed;
 
     public CreditMoyenTermeSearchDto() {}
 

@@ -13,6 +13,7 @@ public class CmtTransactionRequestDto {
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperation;
     private String observation;
+    private String libelle;
     private Double tvaDeductible;
 
     // Constructeur par défaut
@@ -95,6 +96,22 @@ public class CmtTransactionRequestDto {
     }
 
     public void setTvaDeductible(double tvaDeductible) {
+        this.tvaDeductible = tvaDeductible;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public void setTransactionSource(TransactionSource transactionSource) {
+        this.transactionSource = transactionSource;
+    }
+
+    public void setTvaDeductible(Double tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
     }
 

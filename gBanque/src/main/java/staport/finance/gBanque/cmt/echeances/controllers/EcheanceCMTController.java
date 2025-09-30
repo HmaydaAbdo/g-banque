@@ -48,9 +48,9 @@ public class EcheanceCMTController {
      * @param id L'ID de l'échéance à marquer comme payée.
      * @return ResponseEntity avec le DTO de l'échéance mise à jour et le statut HTTP 200 (OK).
      */
-    @PutMapping("/{id}/mark-as-paid")
-    public ResponseEntity<EcheanceCMTResponseDto> markEcheanceAsPaid(@PathVariable Long id) {
-        EcheanceCMTResponseDto updatedEcheance = echeanceCmtService.markEcheanceAsPaid(id);
+    @PutMapping("/{id}/toggle-status")
+    public ResponseEntity<EcheanceCMTResponseDto> toggleStatus(@PathVariable Long id) {
+        EcheanceCMTResponseDto updatedEcheance = echeanceCmtService.toggleStatus(id);
         return ResponseEntity.ok(updatedEcheance);
     }
 

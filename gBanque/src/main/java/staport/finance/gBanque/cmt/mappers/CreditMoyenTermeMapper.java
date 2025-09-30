@@ -117,18 +117,5 @@ public class CreditMoyenTermeMapper {
         return banqueDto;
     }
 
-    /**
-     * Convertit une liste d'entités CreditMoyenTerme en une liste de DTOs de réponse.
-     *
-     * @param entities La liste d'entités à convertir.
-     * @return La liste correspondante de DTOs de réponse.
-     */
-    public List<CreditMoyenTermeResponseDto> toResponseDtoList(List<CreditMoyenTerme> entities) {
-        if (entities == null) {
-            return null;
-        }
-        return entities.stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
-    }
+
 }

@@ -35,6 +35,9 @@ public class EcheanceCMT {
     @Column(name = "date_echeance", nullable = false)
     private OffsetDateTime dateEcheance;
 
+    private OffsetDateTime dateOperation;
+    private  OffsetDateTime dateValeur;
+
     @NotNull(message = "Le montant de l'échéance est obligatoire")
     @DecimalMin(value = "0.01", message = "Le montant de l'échéance doit être supérieur à zéro")
     @Column(name = "montant", nullable = false, precision = 19, scale = 2)
@@ -79,6 +82,22 @@ public class EcheanceCMT {
     public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
     public OffsetDateTime getDateModification() { return dateModification; }
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
+    }
 
     // Callbacks JPA
     @PrePersist

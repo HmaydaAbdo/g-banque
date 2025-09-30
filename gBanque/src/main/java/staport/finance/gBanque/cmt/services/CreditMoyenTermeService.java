@@ -88,12 +88,6 @@ public class CreditMoyenTermeService {
         CreditMoyenTerme existingCredit = creditMoyenTermeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Credit moyen terme introuvable avec l'ID : " + id));
 
-        boolean changesAffectEcheances =
-                !existingCredit.getDuree().equals(requestDto.getDuree()) ||
-                        !existingCredit.getPeriodicite().equals(requestDto.getPeriodicite()) ||
-                        !existingCredit.getEcheance().equals(requestDto.getEcheance()) ||
-                        !existingCredit.getDateDebut().toInstant().equals(requestDto.getDateDebut().toInstant());
-
         Banque banque = banqueRepository.findById(requestDto.getBanqueId())
                 .orElseThrow(() -> new ResourceNotFoundException("Banque introuvable avec l'ID : " + requestDto.getBanqueId()));
 
@@ -101,9 +95,9 @@ public class CreditMoyenTermeService {
 
         CreditMoyenTerme updatedCredit = creditMoyenTermeRepository.save(existingCredit);
 
-        if (changesAffectEcheances) {
-            echeanceCmtService.regenerateEcheances(updatedCredit.getId());
-        }
+
+        echeanceCmtService.regenerateEcheances(updatedCredit.getId());
+
 
         return creditMoyenTermeMapper.toResponseDto(updatedCredit);
     }

@@ -46,25 +46,23 @@ public class CmtTransactionMapper {
 
         // Mapping simple fields
         transaction.setObservation(requestDto.getObservation());
-
-        transaction.setTvaDeductible(
-                creditMoyenTerme.getEcheance()
-                        .multiply(BigDecimal.valueOf(requestDto.getTvaDeductible()))   // montant * taux
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
-                        .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
-        );
+        transaction.setLibelle(requestDto.getLibelle());
         // Mapping dates (ensuring consistency with OffsetDateTime)
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-
-        // Mapping complex fields using the fetched entities
-        transaction.setLibelle(" échéance CMT");
-
         transaction.setTransactionSource(TransactionSource.CMT);
         transaction.setDebit(echeanceCMT.getMontant());
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(creditMoyenTerme.getBanque());
+
+
+        BigDecimal ttc = echeanceCMT.getMontant();
+        BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTvaDeductible()); // en %
+        BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+
+        BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+        transaction.setTvaDeductible(tva);
 
         // Mapping traces
         try {

@@ -1,6 +1,6 @@
 package staport.finance.gBanque.cmt.echeances.services;
 
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -57,13 +57,6 @@ public class EcheanceCMTService {
     @Transactional
     public void generateEcheances(CreditMoyenTerme credit) {
 
-        if (credit.getDuree() == null || credit.getDuree() <= 0 ||
-                credit.getPeriodicite() == null || credit.getPeriodicite() <= 0 ||
-                credit.getDateDebut() == null ||
-                credit.getEcheance() == null || credit.getEcheance().signum() <= 0) {
-            throw new ValidationException("Les données du crédit sont invalides pour la génération des échéances.");
-        }
-
         List<EcheanceCMT> echeances = new ArrayList<>();
         OffsetDateTime dateEcheanceCourante = credit.getDateDebut();
         YearMonth currentMonth = YearMonth.from(dateDeDepartPaymentCmt);
@@ -107,32 +100,15 @@ public class EcheanceCMTService {
     }
 
     @Transactional
-    public EcheanceCMTResponseDto markEcheanceAsPaid(Long echeanceId) {
+    public EcheanceCMTResponseDto toggleStatus(Long echeanceId) {
+
         EcheanceCMT echeance = echeanceCmtRepository.findById(echeanceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Echeance avec l'ID " + echeanceId + " introuvable."));
 
-        if (echeance.getStatutPaiement() == StatutEcheanceCMT.PAYE) {
-            throw new ValidationException("L'échéance avec l'ID " + echeanceId + " est déjà marquée comme payée.");
-        }
+        StatutEcheanceCMT newStatus= echeance.getStatutPaiement() ==StatutEcheanceCMT.PAYE ? StatutEcheanceCMT.PREVU : StatutEcheanceCMT.PAYE;
 
-        CreditMoyenTerme credit = echeance.getCreditMoyenTerme();
-        if (credit == null) {
-            throw new ResourceNotFoundException("L'échéance " + echeanceId + " n'est associée à aucun crédit.");
-        }
-
-        Banque banqueDePrelevement = credit.getBanque();
-        if (banqueDePrelevement == null) {
-            throw new ResourceNotFoundException("Le crédit " + credit.getId() + " n'a pas de banque de prélèvement associée.");
-        }
-
-        echeance.setStatutPaiement(StatutEcheanceCMT.PAYE);
+        echeance.setStatutPaiement(newStatus);
         echeance = echeanceCmtRepository.save(echeance);
-
-        banqueDePrelevement.setSoldeActuel(banqueDePrelevement.getSoldeActuel().subtract(echeance.getMontant()));
-        banqueRepository.save(banqueDePrelevement);
-
-
-
         return echeanceCmtMapper.toResponseDto(echeance);
     }
 
@@ -184,11 +160,12 @@ public class EcheanceCMTService {
 
     @Transactional(readOnly = true)
     public EncoursCMTResponseDTO getEncoursCMTForBanque(EncoursCMTRequestDTO requestDTO, Pageable pageable) {
+
         Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
                 .orElseThrow(() -> new ResourceNotFoundException("Banque avec l'ID " + requestDTO.getBanqueId() + " introuvable."));
 
         Specification<EcheanceCMT> spec = EcheanceCMTSpecification.byCreditBanqueId(requestDTO.getBanqueId())
-                .and(EcheanceCMTSpecification.outstandingUntil(requestDTO.getPeriode(), OffsetDateTime.now()))
+                .and(EcheanceCMTSpecification.outstandingUntil())
                 .and(EcheanceCMTSpecification.byCreditDesignationLike(requestDTO.getDesignation()));
 
         Page<EcheanceCMT> encoursEcheancesPage = echeanceCmtRepository.findAll(spec, pageable);
@@ -201,19 +178,12 @@ public class EcheanceCMTService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(SCALE, RoundingMode.HALF_UP);
 
-        long nombreCreditsConcernes = allOutstandingEcheances.stream()
-                .map(echeance -> echeance.getCreditMoyenTerme().getId())
-                .distinct()
-                .count();
 
-        long nombreEcheancesEnAttente = allOutstandingEcheances.size();
 
         return new EncoursCMTResponseDTO(
                 banque.getId(),
                 banque.getNom(),
                 totalEncours,
-                nombreEcheancesEnAttente,
-                nombreCreditsConcernes,
                 echeancesDtoPage
         );
     }

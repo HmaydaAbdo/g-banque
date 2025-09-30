@@ -1,10 +1,10 @@
 package staport.finance.gBanque.cmt.echeances.specification;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.cmt.echeances.dtos.EcheanceCMTSearchDto;
-import staport.finance.gBanque.cmt.echeances.dtos.PeriodeEncoursCMT;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
@@ -42,20 +42,40 @@ public class EcheanceCMTSpecification {
             }
 
             // Prédicats pour le mois et l'année en utilisant une plage de dates pour plus de robustesse.
-            if (searchDto.getYear() != null && searchDto.getMonth() != null) {
+            Integer year = searchDto.getYear();
+            Integer month = searchDto.getMonth();
+
+            if (year != null && month != null) {
+                // Cas : Année + Mois
                 OffsetDateTime startOfMonth = OffsetDateTime.now()
-                        .withYear(searchDto.getYear())
-                        .withMonth(searchDto.getMonth())
+                        .withYear(year)
+                        .withMonth(month)
                         .with(TemporalAdjusters.firstDayOfMonth())
                         .withHour(0).withMinute(0).withSecond(0).withNano(0);
 
-                OffsetDateTime endOfMonth = OffsetDateTime.now()
-                        .withYear(searchDto.getYear())
-                        .withMonth(searchDto.getMonth())
+                OffsetDateTime endOfMonth = startOfMonth
                         .with(TemporalAdjusters.lastDayOfMonth())
                         .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
 
                 predicates.add(builder.between(root.get("dateEcheance"), startOfMonth, endOfMonth));
+
+            } else if (year != null) {
+                // Cas : Année seule
+                OffsetDateTime startOfYear = OffsetDateTime.now()
+                        .withYear(year)
+                        .with(TemporalAdjusters.firstDayOfYear())
+                        .withHour(0).withMinute(0).withSecond(0).withNano(0);
+
+                OffsetDateTime endOfYear = startOfYear
+                        .with(TemporalAdjusters.lastDayOfYear())
+                        .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
+                predicates.add(builder.between(root.get("dateEcheance"), startOfYear, endOfYear));
+
+            } else if (month != null) {
+                // Cas : Mois seul (toutes les années)
+                Expression<Integer> monthExpr = builder.function("MONTH", Integer.class, root.get("dateEcheance"));
+                predicates.add(builder.equal(monthExpr, month));
             }
 
 
@@ -101,27 +121,18 @@ public class EcheanceCMTSpecification {
     /**
      * Crée une Specification pour filtrer les échéances non payées jusqu'à
      * une période donnée (fin du jour ou fin du mois).
-     *
-     * @param periode L'énumération de la période ("JOUR" ou "MOIS").
-     * @param now L'instant présent utilisé pour les calculs.
      * @return Une Specification pour les échéances d'encours.
      */
-    public static Specification<EcheanceCMT> outstandingUntil(PeriodeEncoursCMT periode, OffsetDateTime now) {
+    public static Specification<EcheanceCMT> outstandingUntil() {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
             // Filtre les échéances dont le statut est "PREVU" (non payé)
             predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), StatutEcheanceCMT.PREVU));
 
             OffsetDateTime dateButoir;
-            if (PeriodeEncoursCMT.JOUR.equals(periode)) {
-                // Calcule la date butoir à la fin de la journée actuelle
-                dateButoir = now.withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-            } else if (PeriodeEncoursCMT.MOIS.equals(periode)) {
-                // Calcule la date butoir à la fin du dernier jour du mois
-                dateButoir = now.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-            } else {
-                throw new IllegalArgumentException("La période d'encours spécifiée est invalide.");
-            }
+            // Calcule la date butoir à la fin du dernier jour du mois
+            dateButoir = OffsetDateTime.now().with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
 
             // Ajoute la condition de date
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), dateButoir));

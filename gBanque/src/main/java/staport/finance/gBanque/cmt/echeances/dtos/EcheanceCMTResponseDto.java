@@ -12,7 +12,13 @@ public class EcheanceCMTResponseDto {
     private Long id;
     private Integer numeroEcheance;
     private OffsetDateTime dateEcheance;
-    private BigDecimal montant;
+    private OffsetDateTime dateValuer;
+    private OffsetDateTime dateOperation;
+    private BigDecimal montantTtc;
+    private BigDecimal montantHt;
+    private BigDecimal montantTva;
+    private String observation;
+    private String libelle;
     private StatutEcheanceCMT statutPaiement;
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
@@ -27,8 +33,6 @@ public class EcheanceCMTResponseDto {
     public void setNumeroEcheance(Integer numeroEcheance) { this.numeroEcheance = numeroEcheance; }
     public OffsetDateTime getDateEcheance() { return dateEcheance; }
     public void setDateEcheance(OffsetDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
-    public BigDecimal getMontant() { return montant; }
-    public void setMontant(BigDecimal montant) { this.montant = montant; }
     public StatutEcheanceCMT getStatutPaiement() { return statutPaiement; }
     public void setStatutPaiement(StatutEcheanceCMT statutPaiement) { this.statutPaiement = statutPaiement; }
     public OffsetDateTime getDateCreation() { return dateCreation; }
@@ -38,6 +42,61 @@ public class EcheanceCMTResponseDto {
     public CreditMoyenTermeDto getCredit() { return credit; }
     public void setCredit(CreditMoyenTermeDto credit) { this.credit = credit; }
 
+    public OffsetDateTime getDateValuer() {
+        return dateValuer;
+    }
+
+    public void setDateValuer(OffsetDateTime dateValuer) {
+        this.dateValuer = dateValuer;
+    }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+
+    public BigDecimal getMontantTtc() {
+        return montantTtc;
+    }
+
+    public void setMontantTtc(BigDecimal montantTtc) {
+        this.montantTtc = montantTtc;
+    }
+
+    public BigDecimal getMontantHt() {
+        return montantHt;
+    }
+
+    public void setMontantHt(BigDecimal montantHt) {
+        this.montantHt = montantHt;
+    }
+
+    public BigDecimal getMontantTva() {
+        return montantTva;
+    }
+
+    public void setMontantTva(BigDecimal montantTva) {
+        this.montantTva = montantTva;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
 
     /**
      * DTO imbriqué pour exposer les informations minimales du crédit parent.
@@ -45,6 +104,7 @@ public class EcheanceCMTResponseDto {
     public static class CreditMoyenTermeDto {
         private Long id;
         private String designation;
+        private BigDecimal taux;
 
         public CreditMoyenTermeDto() {}
 
@@ -52,5 +112,13 @@ public class EcheanceCMTResponseDto {
         public void setId(Long id) { this.id = id; }
         public String getDesignation() { return designation; }
         public void setDesignation(String designation) { this.designation = designation; }
+
+        public BigDecimal getTaux() {
+            return taux;
+        }
+
+        public void setTaux(BigDecimal taux) {
+            this.taux = taux;
+        }
     }
 }

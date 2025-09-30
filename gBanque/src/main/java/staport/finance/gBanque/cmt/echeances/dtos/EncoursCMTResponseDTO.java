@@ -13,8 +13,7 @@ public class EncoursCMTResponseDTO {
     private Long banqueId;
     private String nomBanque;
     private BigDecimal totalEncours;
-    private long nombreEcheancesEnAttente;
-    private long nombreCreditsConcernes;
+
     private Page<EcheanceCMTResponseDto> echeances;
 
     // Constructeurs, Getters et Setters
@@ -22,12 +21,10 @@ public class EncoursCMTResponseDTO {
     public EncoursCMTResponseDTO() {
     }
 
-    public EncoursCMTResponseDTO(Long banqueId, String nomBanque, BigDecimal totalEncours, long nombreEcheancesEnAttente, long nombreCreditsConcernes, Page<EcheanceCMTResponseDto> echeances) {
+    public EncoursCMTResponseDTO(Long banqueId, String nomBanque, BigDecimal totalEncours , Page<EcheanceCMTResponseDto> echeances) {
         this.banqueId = banqueId;
         this.nomBanque = nomBanque;
         this.totalEncours = totalEncours;
-        this.nombreEcheancesEnAttente = nombreEcheancesEnAttente;
-        this.nombreCreditsConcernes = nombreCreditsConcernes;
         this.echeances = echeances;
     }
 
@@ -53,22 +50,6 @@ public class EncoursCMTResponseDTO {
 
     public void setTotalEncours(BigDecimal totalEncours) {
         this.totalEncours = totalEncours;
-    }
-
-    public long getNombreEcheancesEnAttente() {
-        return nombreEcheancesEnAttente;
-    }
-
-    public void setNombreEcheancesEnAttente(long nombreEcheancesEnAttente) {
-        this.nombreEcheancesEnAttente = nombreEcheancesEnAttente;
-    }
-
-    public long getNombreCreditsConcernes() {
-        return nombreCreditsConcernes;
-    }
-
-    public void setNombreCreditsConcernes(long nombreCreditsConcernes) {
-        this.nombreCreditsConcernes = nombreCreditsConcernes;
     }
 
     public Page<EcheanceCMTResponseDto> getEcheances() {

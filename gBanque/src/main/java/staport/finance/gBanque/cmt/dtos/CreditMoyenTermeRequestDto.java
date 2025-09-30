@@ -3,6 +3,8 @@ package staport.finance.gBanque.cmt.dtos;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -20,8 +22,10 @@ public class CreditMoyenTermeRequestDto {
     @DecimalMin(value = "0.01", message = "Le nominal doit être supérieur à zéro")
     private BigDecimal nominal;
     @NotNull(message = "La périodicité est obligatoire")
+    @Positive(message = "La périodicité doit être positif ")
     private Integer periodicite;
     @NotNull(message = "La durée est obligatoire")
+    @Positive(message = "La durée doit être un entier positif ")
     private Integer duree;
     @NotNull(message = "Le montant de l'échéance est obligatoire")
     @DecimalMin(value = "0.01", message = "Le montant de l'échéance doit être supérieur à zéro")

@@ -69,7 +69,7 @@ public class RecapitulatifDecaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(echeance.getDateEcheance());
         dto.setDebit(echeance.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("Prélèvement");
+        dto.setObservations("Prélèvement CMT");
         dto.setLibelle("Échéance CMT");
         dto.setSource(TransactionSource.CMT);
         return dto;
