@@ -129,13 +129,21 @@ export class VirementEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, Validators.required]
+      tvaDeductible: [0, Validators.required],
+      libelle: ['', Validators.required],
     });
   }
 
   openRapprochementModal(virement: VirementResponseDto): void {
     this.selectedVirement = virement;
     this.initRapprochementForm();
+
+    this.rapprochementForm.patchValue({
+      dateEmission: new Date(virement.dateEmission),
+      libelle:virement.libelle,
+      observation:virement.observation
+    })
+
     this.displayModal = true;
   }
 
@@ -160,7 +168,8 @@ export class VirementEncoursComponent implements OnInit {
         dateOperation: donneesComplementaires.dateOperation,
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
-        transactionSource: TransactionSource.Virement
+        transactionSource: TransactionSource.Virement,
+        libelle:donneesComplementaires.libelle,
       };
 
       this.rapprochementService.virementToRapprochement(virementTransactionRequest)

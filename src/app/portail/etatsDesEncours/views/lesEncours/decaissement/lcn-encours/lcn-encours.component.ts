@@ -140,7 +140,7 @@ export class LcnEncoursComponent implements OnInit {
     this.selectedLcn = lcn;
     this.initRapprochementForm();
     this.rapprochementForm.patchValue({
-      dateEmission:lcn.dateEcheance,
+      dateEmission: new Date(lcn.dateEcheance),
       libelle:lcn.libelle,
       observation:lcn.observation,
     })

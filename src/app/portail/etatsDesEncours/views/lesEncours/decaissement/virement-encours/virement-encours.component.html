@@ -132,6 +132,17 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
+            <p-dropdown id="tvaDeductible" [options]="tvaOptions" formControlName="tvaDeductible"
+                        optionLabel="label" optionValue="value"
+                        placeholder="Sélectionner un taux" appendTo="body"></p-dropdown>
+            <label for="tvaDeductible">TVA Déductible</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
+            La TVA est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
             <p-calendar id="dateValeur" formControlName="dateValeur" [showIcon]="true" dateFormat="dd/mm/yy"
                         appendTo="body"></p-calendar>
             <label for="dateValeur">Date de valeur</label>
@@ -152,22 +163,20 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-dropdown id="tvaDeductible" [options]="tvaOptions" formControlName="tvaDeductible"
-                        optionLabel="label" optionValue="value"
-                        placeholder="Sélectionner un taux" appendTo="body"></p-dropdown>
-            <label for="tvaDeductible">TVA Déductible</label>
-          </span>
-          <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
-            La TVA est obligatoire
-          </small>
-        </div>
-        <div class="col-12 mb-3">
-          <span class="p-float-label">
             <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
             <label for="observation">Observation</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('observation')">
             Observation est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="libelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
+            <label for="libelle">Libellé</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('libelle')">
+            Libellé est obligatoire
           </small>
         </div>
       </div>

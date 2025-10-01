@@ -8,5 +8,9 @@ export interface VirementResponseDto {
   banqueEmettriceNom: string;
   banqueBeneficiaire: string;
   ribBeneficiaire: string;
+  dateOperation:string;
+  dateValeur:string;
+  libelle:string;
+  observation:string;
   active: boolean;
 }

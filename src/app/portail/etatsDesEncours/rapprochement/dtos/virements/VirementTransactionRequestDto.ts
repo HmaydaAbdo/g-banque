@@ -8,4 +8,5 @@ export interface VirementTransactionRequestDto {
   dateOperation: Date;
   observation: string;
   tvaDeductible: number;
+  libelle: string;
 }
