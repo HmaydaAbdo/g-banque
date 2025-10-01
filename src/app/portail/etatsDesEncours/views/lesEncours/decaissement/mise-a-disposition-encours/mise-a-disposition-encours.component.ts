@@ -130,13 +130,19 @@ export class MiseADispositionEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, Validators.required]
+      tvaDeductible: [0, Validators.required],
+      libelle: ['', Validators.required],
     });
   }
 
   openRapprochementModal(miseADisposition: MiseADispositionResponseDto): void {
     this.selectedMiseADisposition = miseADisposition;
     this.initRapprochementForm();
+    this.rapprochementForm.patchValue({
+      dateEmission: new Date(miseADisposition.dateEmission),
+      libelle:miseADisposition.libelle,
+      observation:miseADisposition.observation,
+    })
     this.displayModal = true;
   }
 
@@ -161,7 +167,8 @@ export class MiseADispositionEncoursComponent implements OnInit {
         dateOperation: donneesComplementaires.dateOperation,
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
-        transactionSource: TransactionSource.MiseADisposition
+        transactionSource: TransactionSource.MiseADisposition,
+        libelle: donneesComplementaires.libelle,
       };
 
       this.rapprochementService.miseAdispoToRapprochement(miseADispositionTransactionRequest)

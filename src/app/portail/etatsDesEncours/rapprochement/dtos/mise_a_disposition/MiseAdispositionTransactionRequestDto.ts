@@ -8,4 +8,5 @@ export interface MiseAdispositionTransactionRequestDto {
   dateOperation: Date;
   observation: string;
   tvaDeductible: number;
+  libelle: string;
 }
