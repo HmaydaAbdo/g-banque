@@ -27,6 +27,9 @@ public class MiseAdispositionTransactionRequestDto {
     @NotBlank(message = "L’observation est obligatoire")
     private String observation;
 
+    @NotBlank(message = "libellé est obligatoire")
+    private String libelle;
+
     @NotNull(message = "La TVA déductible est obligatoire")
     private Double tvaDeductible;
 
@@ -81,6 +84,14 @@ public class MiseAdispositionTransactionRequestDto {
 
     public void setTvaDeductible(Double tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 
     //  equals & hashCode (generated with all fields)

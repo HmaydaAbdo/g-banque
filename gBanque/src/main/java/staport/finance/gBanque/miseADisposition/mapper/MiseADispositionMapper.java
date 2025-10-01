@@ -28,6 +28,11 @@ public class MiseADispositionMapper {
             dto.setBanqueName(miseADisposition.getBanque().getNom());
         }
 
+        dto.setDateOperation(miseADisposition.getDateOperation() !=null ? miseADisposition.getDateOperation() : null);
+        dto.setDateValeur(miseADisposition.getDateValeur() !=null ? miseADisposition.getDateValeur() : null);
+        dto.setObservation("Mise à disposition N° " + miseADisposition.getNumero());
+        dto.setLibelle("Bénéficiaire " + miseADisposition.getBeneficiaire() );
+
         return dto;
     }
 }

@@ -18,6 +18,9 @@ public class MiseADisposition {
     @Column(name = "date_emission", nullable = false)
     private OffsetDateTime dateEmission;
 
+    private OffsetDateTime dateOperation;
+    private OffsetDateTime dateValeur;
+
     @Column(name = "beneficiaire", nullable = false)
     private String beneficiaire;
 
@@ -59,6 +62,19 @@ public class MiseADisposition {
     public void setBanque(Banque banque) { this.banque = banque; }
     public String getCinBeneficiaire() { return cinBeneficiaire; }
     public void setCinBeneficiaire(String cinBeneficiaire) { this.cinBeneficiaire = cinBeneficiaire; }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
+    }
 
     public boolean isActive() {
         return active;

@@ -43,24 +43,30 @@ public class MiseAdispositionTransactionMapper {
 
         // Mapping simple fields
         transaction.setObservation(requestDto.getObservation());
-
-        transaction.setTvaDeductible(
-                miseADispo.getMontant()
-                        .multiply(BigDecimal.valueOf(requestDto.getTvaDeductible()))   // montant * taux
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
-                        .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
-        );
-        // Mapping dates (ensuring consistency with OffsetDateTime)
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-
-        // Mapping complex fields using the fetched entities
-        transaction.setLibelle("Mise à disposition  N° "+miseADispo.getNumero());
+        transaction.setLibelle(requestDto.getLibelle());
         transaction.setTransactionSource(TransactionSource.MiseADisposition);
         transaction.setDebit(miseADispo.getMontant());
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(miseADispo.getBanque());
+
+        BigDecimal ttc = miseADispo.getMontant();
+        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
+
+        // HT = TTC / (1 + taux/100)
+        BigDecimal ht = ttc
+                .divide(BigDecimal.ONE.add(tauxTva.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)),
+                        2, RoundingMode.HALF_UP)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        // TVA = TTC - HT
+        BigDecimal montantTva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+
+        transaction.setTvaDeductible(montantTva);
+
+
 
         // Mapping traces
         try {

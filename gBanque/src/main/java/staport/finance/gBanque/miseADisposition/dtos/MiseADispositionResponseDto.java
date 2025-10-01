@@ -7,6 +7,10 @@ public class MiseADispositionResponseDto {
 
     private String numero;
     private OffsetDateTime dateEmission;
+    private OffsetDateTime dateOperation ;
+    private OffsetDateTime dateValeur;
+    private String libelle;
+    private String observation;
     private String beneficiaire;
     private BigDecimal montant;
     private String banqueName;
@@ -70,6 +74,35 @@ public class MiseADispositionResponseDto {
         this.banqueName = banqueName;
     }
 
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
 
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
 
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
+    }
 }

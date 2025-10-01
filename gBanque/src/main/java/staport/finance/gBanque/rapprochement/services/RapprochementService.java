@@ -342,6 +342,8 @@ public class RapprochementService {
 
         // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
         miseADisposition.setActive(false);
+        miseADisposition.setDateOperation(savedTransaction.getDateOperations());
+        miseADisposition.setDateValeur(savedTransaction.getDateValeur());
         miseADispositionRepository.save(miseADisposition);
 
         // Step 7: Convert the saved Transaction entity into a MiseAdispositionTransactionResponseDto
