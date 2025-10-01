@@ -21,6 +21,10 @@ public class FunPaymentDto {
     @JsonDeserialize(using = ZeroDateToNullLocalDateDeserializer.class)
     private LocalDate dateEcheance;
 
+    @JsonProperty("date_creation")
+    @JsonDeserialize(using = ZeroDateToNullLocalDateDeserializer.class)
+    private LocalDate dateCreation;
+
     private BigDecimal montant;
 
     @JsonProperty("beneficiare")
@@ -99,6 +103,14 @@ public class FunPaymentDto {
 
     public int getCodeErreur() { return codeErreur; }
     public void setCodeErreur(int codeErreur) { this.codeErreur = codeErreur; }
+
+    public LocalDate getDateCreation() {
+        return dateCreation;
+    }
+
+    public void setDateCreation(LocalDate dateCreation) {
+        this.dateCreation = dateCreation;
+    }
 
     @Override
     public String toString() {

@@ -22,8 +22,7 @@ public class EtasDesEncoursService {
 
     private final JobLauncher jobLauncher;
 
-    // Inject your specific Job bean here
-    // Use @Qualifier if you have multiple Job beans and need to specify which one
+
     private final Job importPaymentsJob;
 
     public EtasDesEncoursService(JobLauncher jobLauncher, @Qualifier("importPaymentsJob") Job importPaymentsJob) {
@@ -58,7 +57,5 @@ public class EtasDesEncoursService {
         return jobExecution;
     }
 
-    /**
-     * You might add other service methods here related to "Etats des Encours"
-     */
+
 }

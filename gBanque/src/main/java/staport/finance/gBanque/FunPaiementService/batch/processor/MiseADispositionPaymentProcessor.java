@@ -45,7 +45,7 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
         MiseADisposition miseADisposition = new MiseADisposition();
         miseADisposition.setNumero(item.getNumero());
 
-        OffsetDateTime dateEmission=item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime();
+        OffsetDateTime dateEmission=item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime();
 
         miseADisposition.setDateEmission(dateEmission);
         miseADisposition.setBeneficiaire(item.getBeneficiaire());

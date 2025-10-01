@@ -46,7 +46,7 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
 
         Lcn lcn = new Lcn();
         lcn.setNumero(item.getNumero());
-        lcn.setDateEmission(item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime());
+        lcn.setDateEmission(item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime());
         lcn.setBeneficiaire(item.getBeneficiaire());
         OffsetDateTime dateEcheance = item.getDateEcheance().atStartOfDay(systemZone).toOffsetDateTime();
         lcn.setDateEcheance(dateEcheance);

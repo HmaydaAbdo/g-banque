@@ -54,7 +54,7 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
         Virement virement = new Virement();
         virement.setNumero(item.getNumero());
 
-        OffsetDateTime dateEmission=item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime();
+        OffsetDateTime dateEmission=item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime();
 
         virement.setDateEmission(dateEmission);
         virement.setBeneficiaire(item.getBeneficiaire());
