@@ -164,11 +164,8 @@ public final class VirementSpec {
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
 
             // 2. Le virement doit appartenir à la banque spécifiée par son ID.
-            if (banqueId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
-            } else {
-                return criteriaBuilder.disjunction();
-            }
+            predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+
 
             // 3. La date d'émission du virement doit être égale ou antérieure à la fin du mois.
             OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())

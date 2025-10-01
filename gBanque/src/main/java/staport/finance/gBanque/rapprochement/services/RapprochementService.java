@@ -278,6 +278,43 @@ public class RapprochementService {
     }
 
     @Transactional
+    public VirementTransactionResponseDto processVirementTransaction(VirementTransactionRequestDto requestDto) throws Exception{
+        // Step 1: Fetch virement entity from the database using it's number from the request.
+        // If the virement does not exist, throw a ResourceNotFoundException.
+        Virement virement = virementRepository.findById(requestDto.getNumeroVirement())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "virement with numero " + requestDto.getNumeroVirement() + " not found"));
+
+        // Step 2: Check if the virement is active.
+        // If the virement is already used/paid (active = false), throw an exception.
+        if (!virement.isActive()) {
+            throw new Exception("The virement is not active, it has already been paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
+        Transaction transactionEntity = virementTransactionMapper.toEntity(requestDto, virement);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
+        // Then save the updated bank entity.
+        Banque banque = virement.getBanque();
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
+        virement.setActive(false);
+        virement.setDateOperation(savedTransaction.getDateOperations());
+        virement.setDateValeur(savedTransaction.getDateValeur());
+        virementRepository.save(virement);
+
+        // Step 7: Convert the saved Transaction entity into a VirementTransactionResponseDto
+        // using the mapper and return it as the response.
+        return virementTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+    @Transactional
     public MiseAdispositionTransactionResponseDto processMiseAdispoTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch the MiseAdispo entity from the database using it's number from the request.
         // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
@@ -312,40 +349,6 @@ public class RapprochementService {
         return miseAdispositionTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional
-    public VirementTransactionResponseDto processVirementTransaction(VirementTransactionRequestDto requestDto) throws Exception{
-        // Step 1: Fetch virement entity from the database using it's number from the request.
-        // If the virement does not exist, throw a ResourceNotFoundException.
-        Virement virement = virementRepository.findById(requestDto.getNumeroVirement())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "virement with numero " + requestDto.getNumeroVirement() + " not found"));
-
-        // Step 2: Check if the virement is active.
-        // If the virement is already used/paid (active = false), throw an exception.
-        if (!virement.isActive()) {
-            throw new Exception("The virement is not active, it has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
-        Transaction transactionEntity = virementTransactionMapper.toEntity(requestDto, virement);
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
-
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
-        Banque banque = virement.getBanque();
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
-        this.banqueRepository.save(banque);
-
-        // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
-        virement.setActive(false);
-        virementRepository.save(virement);
-
-        // Step 7: Convert the saved Transaction entity into a VirementTransactionResponseDto
-        // using the mapper and return it as the response.
-        return virementTransactionMapper.toResponseDto(savedTransaction);
-    }
 
     @Transactional
     public PrefinancementTransactionResponse processPrefinancementTransaction(PrefinancementTransactionRequest requestDto) throws Exception{
