@@ -125,13 +125,20 @@ export class ChequesEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, Validators.required]
+      tvaDeductible: [0, Validators.required],
+      libelle: ['', Validators.required]
     });
   }
 
   openRapprochementModal(cheque: ChequeResponseDto): void {
     this.selectedCheque = cheque;
     this.initRapprochementForm();
+
+    this.rapprochementForm.patchValue({
+      dateEmission: new Date(cheque.dateEmission) ,
+      observation: cheque.observation,
+      libelle: cheque.libelle
+    });
     this.displayModal = true;
   }
 
@@ -156,7 +163,8 @@ export class ChequesEncoursComponent implements OnInit {
         dateOperation: donneesComplementaires.dateOperation,
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
-        transactionSource: TransactionSource.CHEQUE
+        transactionSource: TransactionSource.CHEQUE,
+        libelle:donneesComplementaires.libelle
       };
 
       this.rapprochementService.chequeToRapprochement(chequeTransactionRequest)

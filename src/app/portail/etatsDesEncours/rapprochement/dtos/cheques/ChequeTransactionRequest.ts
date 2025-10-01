@@ -8,4 +8,5 @@ export interface ChequeTransactionRequest {
   dateOperation: Date;
   observation: string;
   tvaDeductible: number;
+  libelle: string;
 }

@@ -8,8 +8,6 @@ export interface EcheanceCMTResponseDto {
   dateValuer: string;
   dateOperation: string;
   montantTtc: Decimal;
-  montantHt: Decimal;
-  montantTva: Decimal;
   observation: string;
   libelle: string;
   statutPaiement: StatutEcheanceCMT;
@@ -18,6 +16,5 @@ export interface EcheanceCMTResponseDto {
   credit: {
     id: number;
     designation: string;
-    taux:Decimal
   };
 }

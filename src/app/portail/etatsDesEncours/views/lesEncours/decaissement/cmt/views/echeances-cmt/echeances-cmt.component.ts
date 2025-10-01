@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule, DatePipe } from '@angular/common';
-import { ConfirmationService, MessageService, SelectItem } from 'primeng/api'; // Import SelectItem
+import { ConfirmationService, MessageService, SelectItem } from 'primeng/api';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -189,20 +189,11 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     this.selectedEcheance = echeance;
     this.initRapprochementForm();
 
-    const creditTaux = echeance.credit.taux;
-    // Ensure the dynamic rate is available in tvaOptions for the dropdown to display it
-    const isTauxPresent = this.tvaOptions.some(opt => opt.value === creditTaux);
-    if (!isTauxPresent) {
-      // Add the specific credit taux  to the options list temporarily
-      this.tvaOptions.push({ label: `${creditTaux.toFixed(2)}%`, value: creditTaux });
-    }
+
 
     this.rapprochementForm.patchValue({
       // Pre-fill dateEmission with dateEcheance (convert string to Date object)
       dateEmission: new Date(echeance.dateEcheance),
-
-      // Pre-fill TVA with the credit's rate (taux)
-      tvaDeductible: creditTaux,
 
       // Pre-fill modifiable text fields
       observation: echeance.observation,
@@ -213,7 +204,6 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
     // 2. Disabling controls
     this.rapprochementForm.get('dateEmission')?.disable();
-    this.rapprochementForm.get('tvaDeductible')?.disable();
     this.displayModal = true;
   }
 

@@ -7,6 +7,10 @@ export interface ChequeResponseDto {
   montant: number;
   active: boolean;
   nomBanque: string;
+  dateOperation:string;
+  dateValeur:string;
+  libelle:string;
+  observation:string
 }
 
 
