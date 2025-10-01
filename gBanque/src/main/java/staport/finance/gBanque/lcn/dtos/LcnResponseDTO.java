@@ -9,6 +9,10 @@ public class LcnResponseDTO {
     private OffsetDateTime dateEmission;
     private String beneficiaire;
     private OffsetDateTime dateEcheance;
+    private OffsetDateTime dateOperation;
+    private OffsetDateTime dateValeur;
+    private String libelle;
+    private String observation;
     private BigDecimal montant;
     private boolean active;
     private String banqueName;
@@ -39,13 +43,36 @@ public class LcnResponseDTO {
     public void setMontant(BigDecimal montant) { this.montant = montant; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
-
     public String getBanqueName() {
         return banqueName;
     }
-
     public void setBanqueName(String banqueName) {
         this.banqueName = banqueName;
+    }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
+    }
+    public String getLibelle() {
+        return libelle;
+    }
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+    public String getObservation() {
+        return observation;
+    }
+    public void setObservation(String observation) {
+        this.observation = observation;
     }
 
     @Override

@@ -31,6 +31,11 @@ public class LcnMapper {
             dto.setBanqueName(lcn.getBanque().getNom());
         }
 
+        dto.setDateOperation(lcn.getDateOperation()!=null ? lcn.getDateOperation() : null);
+        dto.setDateValeur(lcn.getDateValeur() !=null ? lcn.getDateValeur() : null);
+        dto.setObservation("LCN N° " + lcn.getNumero());
+        dto.setLibelle( "Bénéficiaire : " + lcn.getBeneficiaire());
+
         return dto;
     }
 

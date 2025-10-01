@@ -24,6 +24,9 @@ public class Lcn {
     @Column(name = "date_echeance", nullable = false)
     private OffsetDateTime dateEcheance;
 
+    private OffsetDateTime dateOperation;
+    private OffsetDateTime dateValeur;
+
     @Column(name = "montant", nullable = false, precision = 19, scale = 2)
     private BigDecimal montant;
 
@@ -63,9 +66,22 @@ public class Lcn {
     public boolean isActive() {
         return active;
     }
-
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
     }
 
     @Override

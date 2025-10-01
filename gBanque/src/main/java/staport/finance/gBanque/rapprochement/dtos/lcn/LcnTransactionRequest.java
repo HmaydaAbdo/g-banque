@@ -30,6 +30,9 @@ public class LcnTransactionRequest {
     @NotNull(message = "La TVA déductible est obligatoire")
     private Double tvaDeductible;
 
+    @NotNull(message = "libelle  est obligatoire")
+    private String libelle;
+
     // Default constructor
     public LcnTransactionRequest() {
     }
@@ -100,6 +103,14 @@ public class LcnTransactionRequest {
 
     public void setTvaDeductible(Double tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 
     // equals & hashCode

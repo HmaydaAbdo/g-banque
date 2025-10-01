@@ -268,6 +268,8 @@ public class RapprochementService {
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
         lcn.setActive(false);
+        lcn.setDateOperation(savedTransaction.getDateOperations());
+        lcn.setDateValeur(savedTransaction.getDateValeur());
         lcnRepository.save(lcn);
 
         // Step 7: Convert the saved Transaction entity into a LcnTransactionResponse
