@@ -8,4 +8,5 @@ export interface LcnTransactionRequest {
   dateOperation: Date;
   observation: string;
   tvaDeductible: number;
+  libelle: string;
 }

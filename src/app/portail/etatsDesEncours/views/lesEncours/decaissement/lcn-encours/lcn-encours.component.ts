@@ -131,13 +131,19 @@ export class LcnEncoursComponent implements OnInit {
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
       observation: ['', Validators.required],
-      tvaDeductible: [0, Validators.required]
+      tvaDeductible: [0, Validators.required],
+      libelle: ['', Validators.required]
     });
   }
 
   openRapprochementModal(lcn: LcnResponseDTO): void {
     this.selectedLcn = lcn;
     this.initRapprochementForm();
+    this.rapprochementForm.patchValue({
+      dateEmission:lcn.dateEcheance,
+      libelle:lcn.libelle,
+      observation:lcn.observation,
+    })
     this.displayModal = true;
   }
 
@@ -162,7 +168,8 @@ export class LcnEncoursComponent implements OnInit {
         dateOperation: donneesComplementaires.dateOperation,
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
-        transactionSource: TransactionSource.LCN
+        transactionSource: TransactionSource.LCN,
+        libelle:donneesComplementaires.libelle
       };
 
       this.rapprochementService.lcnToRapprochement(lcnTransactionRequest)
