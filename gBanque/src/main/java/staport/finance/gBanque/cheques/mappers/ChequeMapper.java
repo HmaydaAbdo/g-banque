@@ -31,6 +31,10 @@ public class ChequeMapper {
             dto.setNomBanque(cheque.getBanque().getNom());
         }
 
+        dto.setDateOperation(cheque.getDateOperation() != null ? cheque.getDateOperation() : null);
+        dto.setDateValeur(cheque.getDateValeur() != null ? cheque.getDateValeur() : null);
+        dto.setObservation("Chèque N° " + cheque.getNumero());
+        dto.setLibelle("Bénéficiaire : " + cheque.getBeneficiaire() );
         return dto;
     }
 }

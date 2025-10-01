@@ -6,8 +6,7 @@ import staport.finance.gBanque.cmt.echeances.dtos.EcheanceCMTResponseDto;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+
 
 
 /**
@@ -32,18 +31,6 @@ public class EcheanceCMTMapper {
         responseDto.setNumeroEcheance(entity.getNumeroEcheance());
         responseDto.setDateEcheance(entity.getDateEcheance());
         responseDto.setMontantTtc(entity.getMontant());
-
-        // HT = TTC / (1 + taux/100)
-        BigDecimal taux = entity.getCreditMoyenTerme().getTaux();
-        BigDecimal divisor = BigDecimal.ONE.add(taux.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP));
-
-        BigDecimal montantHt = entity.getMontant().divide(divisor, 2, RoundingMode.HALF_UP);
-        responseDto.setMontantHt(montantHt);
-
-        // TVA = TTC - HT
-        BigDecimal montantTva = entity.getMontant().subtract(montantHt);
-        responseDto.setMontantTva(montantTva);
-
         responseDto.setObservation("Prélèvement CMT");
         responseDto.setLibelle("échéance CMT");
 
@@ -89,7 +76,6 @@ public class EcheanceCMTMapper {
         EcheanceCMTResponseDto.CreditMoyenTermeDto creditDto = new EcheanceCMTResponseDto.CreditMoyenTermeDto();
         creditDto.setId(credit.getId());
         creditDto.setDesignation(credit.getDesignation());
-        creditDto.setTaux(credit.getTaux());
         return creditDto;
     }
 }

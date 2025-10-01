@@ -8,10 +8,14 @@ public class ChequeResponseDto {
     private String numero;
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateEcheance;
+    private OffsetDateTime dateOperation ;
+    private OffsetDateTime dateValeur ;
     private String beneficiaire;
     private BigDecimal montant;
     private boolean active;
     private String nomBanque;
+    private String libelle;
+    private String observation;
 
     // Default constructor
     public ChequeResponseDto() {
@@ -83,5 +87,37 @@ public class ChequeResponseDto {
 
     public void setNomBanque(String nomBanque) {
         this.nomBanque = nomBanque;
+    }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
     }
 }

@@ -25,6 +25,9 @@ public class Cheque {
     @Column(name = "date_echeance") // nullable = true is default
     private OffsetDateTime dateEcheance;
 
+    private OffsetDateTime dateOperation ;
+    private OffsetDateTime dateValeur;
+
     @Column(name = "montant", nullable = false, precision = 19, scale = 2) // Precision and scale for BigDecimal
     private BigDecimal montant;
 
@@ -105,6 +108,22 @@ public class Cheque {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public OffsetDateTime getDateOperation() {
+        return dateOperation;
+    }
+
+    public void setDateOperation(OffsetDateTime dateOperation) {
+        this.dateOperation = dateOperation;
+    }
+
+    public OffsetDateTime getDateValeur() {
+        return dateValeur;
+    }
+
+    public void setDateValeur(OffsetDateTime dateValeur) {
+        this.dateValeur = dateValeur;
     }
 
     // --- Utility Methods (Recommended for Entities) ---

@@ -230,6 +230,8 @@ public class RapprochementService {
 
         // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
         cheque.setActive(false);
+        cheque.setDateOperation(savedTransaction.getDateOperations());
+        cheque.setDateValeur(savedTransaction.getDateValeur());
         chequeRepository.save(cheque);
 
         // Step 7: Convert the saved Transaction entity into a ChequeTransactionResponseDto
