@@ -46,6 +46,20 @@
         <i class="pi pi-search"></i>
         <input pInputText type="text" formControlName="maitreDouvrage" placeholder="maitre d'ouvrage..."/>
       </div>
+
+      <div class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <p-dropdown
+          formControlName="banqueId"
+          [options]="banques"
+          optionLabel="nom"
+          optionValue="id"
+          placeholder="Sélectionner une banque"
+          [filter]="true"                  filterBy="nom"                   [virtualScroll]="true"
+          [lazy]="true"                    [virtualScrollItemSize]="38"     [loading]="loadingBanques"
+          (onLazyLoad)="loadBanques($event)">
+        </p-dropdown>
+      </div>
     </form>
     <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()"
             pTooltip="Effacer la recherche"></button>
@@ -61,6 +75,7 @@
                 {field: 'nom', header: 'Nom', sortable: true},
                 {field: 'montant', header: 'Montant', sortable: true},
                 {field: 'maitreDouvrage', header: 'Maître d ouvrage', sortable: true},
+                {field: 'banqueNom', header: 'Banque', sortable: true},
                 {field: 'dateDebutDesTravaux', header: 'Date début travaux', sortable: true},
                 {field: 'dateDAchievementDesTravaux', header: 'Date achèvement travaux', sortable: true}
              ]"
@@ -84,6 +99,7 @@
           <td>{{ marche.nom }}</td>
           <td>{{ marche.montant }} MAD</td>
           <td>{{ marche.maitreDouvrage }}</td>
+          <td>{{ marche.banqueNom }}</td>
           <td>{{ marche.dateDebutDesTravaux | date:'dd/MM/yyyy' }}</td>
           <td>{{ marche.dateDAchievementDesTravaux | date:'dd/MM/yyyy' }}</td>
           <td>

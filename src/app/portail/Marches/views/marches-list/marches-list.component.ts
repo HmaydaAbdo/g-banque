@@ -24,6 +24,8 @@ import { MarcheResponseDTO } from '../../dtos/marche-response.dto';
 import { MarcheSearchDTO } from '../../dtos/marche-search.dto';
 import {MarcheService} from "../../service/marche-service.service";
 import {PageResponse} from "../../../global/types/PageResponse";
+import {DropdownModule} from "primeng/dropdown";
+import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 
 
 @Component({
@@ -44,7 +46,8 @@ import {PageResponse} from "../../../global/types/PageResponse";
     TooltipModule,
     RouterLink,
     BreadcrumbModule,
-    RouterLinkActive
+    RouterLinkActive,
+    DropdownModule
   ],
   templateUrl: './marches-list.component.html',
   styleUrl: './marches-list.component.scss',
@@ -64,10 +67,16 @@ export class MarchesListComponent implements OnInit {
   sortOrder: number = 1;
   searchForm!: FormGroup;
 
+  banques: { id: number; nom: string }[] = [];
+  loadingBanques: boolean = false;
+
+
+
   constructor(
     private marcheService: MarcheService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
+    private banqueService: BanqueService,
     private fb: FormBuilder
   ) { }
 
@@ -88,7 +97,8 @@ export class MarchesListComponent implements OnInit {
     this.searchForm = this.fb.group({
       nom: [''],
       numero: [''],
-      maitreDouvrage: ['']
+      maitreDouvrage: [''],
+      banqueId: [null]
     });
   }
 
@@ -124,6 +134,26 @@ export class MarchesListComponent implements OnInit {
           this.loading = false;
         }
       });
+  }
+
+
+  loadBanques(event: any) {
+    this.loadingBanques = true;
+
+    const page = event.first / event.rows || 0;
+    const size = event.rows || 10;
+
+    const criteria = { nom: event.filter }; // filtre par nom si tapé
+
+    this.banqueService.getAllBanques(criteria, page, size).subscribe({
+      next: (data) => {
+        this.banques = data.content.map(b => ({ id: b.id, nom: b.nom }));
+        this.loadingBanques = false;
+      },
+      error: () => {
+        this.loadingBanques = false;
+      }
+    });
   }
 
   onSearch(): void {

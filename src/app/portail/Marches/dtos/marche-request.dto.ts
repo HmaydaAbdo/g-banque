@@ -7,4 +7,5 @@ export interface MarcheRequestDTO {
   maitreDouvrage: string;
   dateDebutDesTravaux: Date;
   dateDAchievementDesTravaux: Date;
+  banqueId: number;
 }

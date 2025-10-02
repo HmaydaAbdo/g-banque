@@ -16,6 +16,8 @@ import { Decimal } from 'decimal.js';
 import { MarcheRequestDTO } from '../../dtos/marche-request.dto';
 import { MarcheResponseDTO } from '../../dtos/marche-response.dto';
 import {MarcheService} from "../../service/marche-service.service";
+import {DropdownModule} from "primeng/dropdown";
+import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 
 
 @Component({
@@ -32,7 +34,8 @@ import {MarcheService} from "../../service/marche-service.service";
     RouterLink,
     ConfirmDialogModule,
     BreadcrumbModule,
-    InputNumberModule
+    InputNumberModule,
+    DropdownModule
   ],
   templateUrl: './marches-form.component.html',
   styleUrl: './marches-form.component.scss',
@@ -49,12 +52,16 @@ export class MarchesFormComponent implements OnInit {
   isEditMode: boolean = false;
   items: MenuItem[] | undefined;
 
+  banques: { id: number; nom: string }[] = [];
+  loadingBanques: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private marcheService: MarcheService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private route: ActivatedRoute,
+    private banqueService: BanqueService,
     private router: Router
   ) {}
 
@@ -83,6 +90,7 @@ export class MarchesFormComponent implements OnInit {
       maitreDouvrage: ['', Validators.required],
       dateDebutDesTravaux: ['', Validators.required],
       dateDAchievementDesTravaux: ['', Validators.required],
+      banqueId: [null, Validators.required]
     });
   }
 
@@ -91,6 +99,7 @@ export class MarchesFormComponent implements OnInit {
     this.marcheService.getMarcheById(id).subscribe({
       next: (data: MarcheResponseDTO) => {
         this.originalMarcheResponse = data;
+
         this.marcheForm.patchValue({
           numero: data.numero,
           nom: data.nom,
@@ -98,6 +107,7 @@ export class MarchesFormComponent implements OnInit {
           maitreDouvrage: data.maitreDouvrage,
           dateDebutDesTravaux: new Date(data.dateDebutDesTravaux),
           dateDAchievementDesTravaux: new Date(data.dateDAchievementDesTravaux),
+          banqueId: data.banqueId
         });
 
         this.loading = false;
@@ -113,6 +123,24 @@ export class MarchesFormComponent implements OnInit {
     });
   }
 
+  loadBanques(event: any) {
+    this.loadingBanques = true;
+
+    const page = event.first / event.rows || 0;
+    const size = event.rows || 10;
+
+    const criteria = { nom: event.filter }; // filtre par nom si tapé
+
+    this.banqueService.getAllBanques(criteria, page, size).subscribe({
+      next: (data) => {
+        this.banques = data.content.map(b => ({ id: b.id, nom: b.nom }));
+        this.loadingBanques = false;
+      },
+      error: () => {
+        this.loadingBanques = false;
+      }
+    });
+  }
   // Helper for easy access to form controls in the template
   get f(): { [key: string]: AbstractControl } {
     return this.marcheForm.controls;
@@ -149,6 +177,7 @@ export class MarchesFormComponent implements OnInit {
       maitreDouvrage: formValue.maitreDouvrage,
       dateDebutDesTravaux: formValue.dateDebutDesTravaux,
       dateDAchievementDesTravaux: formValue.dateDAchievementDesTravaux,
+      banqueId: formValue.banqueId
     };
 
 

@@ -8,6 +8,8 @@ export interface MarcheResponseDTO {
   maitreDouvrage: string;
   dateDebutDesTravaux: Date;
   dateDAchievementDesTravaux: Date;
+  banqueNom:string;
+  banqueId:number;
   createdAt: Date;
   modifiedAt: Date;
 }

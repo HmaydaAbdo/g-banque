@@ -66,6 +66,10 @@ export class MarcheService {
       params = params.set('maitreDouvrage', criteria.maitreDouvrage);
     }
 
+    if (criteria.banqueId){
+      params = params.set('banqueId', criteria.banqueId);
+    }
+
     return this.http.get<PageResponse<MarcheResponseDTO>>(this.apiUrl, {params});
   }
 
