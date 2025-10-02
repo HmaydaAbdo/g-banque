@@ -8,6 +8,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.marches.dtos.MarcheRequestDTO;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.marches.service.MarcheService;
@@ -27,10 +29,12 @@ public class MarcheInitializer implements CommandLineRunner {
     private final MarcheService marcheService;
     private final MarcheRepository repository ;
     private final DataFormatter dataFormatter = new DataFormatter();
+    private final BanqueRepository banqueRepository;
 
-    public MarcheInitializer(MarcheService marcheService, MarcheRepository repository) {
+    public MarcheInitializer(MarcheService marcheService, MarcheRepository repository, BanqueRepository banqueRepository) {
         this.marcheService = marcheService;
         this.repository = repository;
+        this.banqueRepository = banqueRepository;
     }
 
     @Override
@@ -69,10 +73,11 @@ public class MarcheInitializer implements CommandLineRunner {
             OffsetDateTime dateDebut = parseDate(getCellValueAsString(row.getCell(4)));
             OffsetDateTime dateFin = parseDate(getCellValueAsString(row.getCell(5)));
 
-            if (numero == null || numero.isBlank()) {
-                logger.warn("Ligne {} ignorée : numero vide.", row.getRowNum());
-                return;
-            }
+            String banqueNom = getCellValueAsString(row.getCell(6));
+
+            // 1. Recherche de la Banque par Nom
+            Long banqueId = banqueRepository.findByNom(banqueNom).map(Banque::getId)
+                    .orElseThrow(()-> new RuntimeException("Aucune banque trouvée pour le nom: " + banqueNom + ". Assurez-vous que la banque existe"));
 
             MarcheRequestDTO dto = new MarcheRequestDTO();
             dto.setNumero(numero);
@@ -81,6 +86,7 @@ public class MarcheInitializer implements CommandLineRunner {
             dto.setMaitreDouvrage(maitreDouvrage);
             dto.setDateDebutDesTravaux(dateDebut);
             dto.setDateDAchievementDesTravaux(dateFin);
+            dto.setBanqueId(banqueId);
 
             marcheService.createMarche(dto);
             logger.info("Marché {} sauvegardé avec succès.", numero);

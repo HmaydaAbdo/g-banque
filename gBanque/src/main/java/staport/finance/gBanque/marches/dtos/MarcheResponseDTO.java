@@ -12,6 +12,8 @@ public class MarcheResponseDTO {
     private String maitreDouvrage;
     private OffsetDateTime dateDebutDesTravaux;
     private OffsetDateTime dateDAchievementDesTravaux;
+    private Long banqueId;
+    private String banqueNom;
     private OffsetDateTime createdAt;
     private OffsetDateTime modifiedAt;
 
@@ -70,6 +72,22 @@ public class MarcheResponseDTO {
 
     public void setDateDAchievementDesTravaux(OffsetDateTime dateDAchievementDesTravaux) {
         this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
+    }
+
+    public Long getBanqueId() {
+        return banqueId;
+    }
+
+    public void setBanqueId(Long banqueId) {
+        this.banqueId = banqueId;
+    }
+
+    public String getBanqueNom() {
+        return banqueNom;
+    }
+
+    public void setBanqueNom(String banqueNom) {
+        this.banqueNom = banqueNom;
     }
 
     public OffsetDateTime getCreatedAt() {

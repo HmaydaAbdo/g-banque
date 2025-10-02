@@ -13,6 +13,7 @@ import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.lcn.entities.Lcn;
+import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.virements.entities.Virement;
@@ -93,6 +94,10 @@ public class Banque {
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<MiseADisposition> misesADisposition = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Marche> marches = new ArrayList<>();
+
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Decompte> decomptes = new ArrayList<>();
@@ -189,6 +194,24 @@ public class Banque {
 
     public void addCreditMoyenTerme(CreditMoyenTerme c) { creditMoyenTermes.add(c); c.setBanque(this); }
     public void removeCreditMoyenTerme(CreditMoyenTerme c) { creditMoyenTermes.remove(c); c.setBanque(null); }
+
+    public List<Marche> getMarches() {
+        return marches;
+    }
+
+    public void setMarches(List<Marche> marches) {
+        this.marches = marches;
+    }
+
+    public void addMarche(Marche marche) {
+        marches.add(marche);
+        marche.setBanque(this);
+    }
+
+    public void removeMarche(Marche marche) {
+        marches.remove(marche);
+        marche.setBanque(null);
+    }
 
     public void addTransaction(Transaction t) { transactions.add(t); t.setBanqueDePrelevement(this); }
     public void removeTransaction(Transaction t) { transactions.remove(t); t.setBanqueDePrelevement(null); }

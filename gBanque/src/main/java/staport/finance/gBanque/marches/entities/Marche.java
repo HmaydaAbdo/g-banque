@@ -3,6 +3,7 @@ package staport.finance.gBanque.marches.entities;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
@@ -41,6 +42,10 @@ public class Marche implements Serializable {
 
     @Column(name = "date_d_achievement_des_travaux", nullable = false)
     private OffsetDateTime dateDAchievementDesTravaux;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "banque_id", nullable = false)
+    private Banque banque;
 
     @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneFonctionnelleSpecifique> lignesFonctionnellesSpecifiques = new ArrayList<>();
@@ -127,6 +132,14 @@ public class Marche implements Serializable {
 
     public void setDateDAchievementDesTravaux(OffsetDateTime dateDAchievementDesTravaux) {
         this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
+    }
+
+    public Banque getBanque() {
+        return banque;
+    }
+
+    public void setBanque(Banque banque) {
+        this.banque = banque;
     }
 
     public List<LigneFonctionnelleSpecifique> getLignesFonctionnellesSpecifiques() {

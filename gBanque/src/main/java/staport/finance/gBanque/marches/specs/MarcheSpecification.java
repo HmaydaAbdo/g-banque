@@ -66,4 +66,18 @@ public final class MarcheSpecification {
     }
 
 
+    /**
+     * Creates a Specification to filter by banqueId.
+     *
+     * @param banqueId The id of the bank.
+     * @return A Specification for banqueId.
+     */
+    public static Specification<Marche> hasBanqueId(Long banqueId) {
+        return (root, query, cb) -> {
+            if (banqueId == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("banque").get("id"), banqueId);
+        };
+    }
 }

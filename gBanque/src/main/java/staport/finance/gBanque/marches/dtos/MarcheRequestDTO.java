@@ -10,6 +10,9 @@ import java.time.OffsetDateTime;
 
 public class MarcheRequestDTO {
 
+    @NotNull(message = "Le marche doit etre rattache a une banque")
+    private Long banqueId;
+
     @NotBlank(message = "Le numero du marche ne peut pas etre vide")
     @Size(max = 50, message = "Le numero doit avoir au maximum 50 caracteres")
     private String numero;
@@ -33,6 +36,16 @@ public class MarcheRequestDTO {
     private OffsetDateTime dateDAchievementDesTravaux;
 
     // Getters and Setters
+
+
+    public Long getBanqueId() {
+        return banqueId;
+    }
+
+    public void setBanqueId(Long banqueId) {
+        this.banqueId = banqueId;
+    }
+
     public String getNumero() {
         return numero;
     }

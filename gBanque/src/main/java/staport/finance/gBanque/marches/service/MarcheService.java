@@ -1,5 +1,7 @@
 package staport.finance.gBanque.marches.service;
 
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.marches.dtos.MarcheRequestDTO;
 import staport.finance.gBanque.marches.dtos.MarcheResponseDTO;
 import staport.finance.gBanque.marches.dtos.MarcheSearchDTO;
@@ -21,10 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class MarcheService {
 
     private final MarcheRepository marcheRepository;
+    private  final BanqueRepository banqueRepository;
     private final MarcheMapper marcheMapper;
 
-    public MarcheService(MarcheRepository marcheRepository, MarcheMapper marcheMapper) {
+    public MarcheService(MarcheRepository marcheRepository, BanqueRepository banqueRepository, MarcheMapper marcheMapper) {
         this.marcheRepository = marcheRepository;
+        this.banqueRepository = banqueRepository;
         this.marcheMapper = marcheMapper;
     }
 
@@ -38,15 +42,15 @@ public class MarcheService {
         if (marcheRepository.existsByNumero(requestDTO.getNumero())) {
             throw new IllegalArgumentException("Un marche avec ce numero existe deja.");
         }
-
-
-
         // Business logic: achievement date must be after the start date
         if (requestDTO.getDateDAchievementDesTravaux().isBefore(requestDTO.getDateDebutDesTravaux())) {
             throw new IllegalArgumentException("La date d'achevement des travaux ne peut pas etre avant la date de debut.");
         }
 
-        Marche marche = marcheMapper.toEntity(requestDTO);
+        Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
+                .orElseThrow(() -> new EntityNotFoundException("Banque non trouvée avec id " + requestDTO.getBanqueId()));
+
+        Marche marche = marcheMapper.toEntity(requestDTO,banque);
         Marche savedMarche = marcheRepository.save(marche);
         return marcheMapper.toResponseDTO(savedMarche);
     }
@@ -58,8 +62,10 @@ public class MarcheService {
      */
     @Transactional(readOnly = true)
     public MarcheResponseDTO getMarcheById(Long id) {
+
         Marche marche = marcheRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Marche not found with id " + id));
+
         return marcheMapper.toResponseDTO(marche);
     }
 
@@ -70,6 +76,7 @@ public class MarcheService {
      * @return The response DTO of the updated contract.
      */
     public MarcheResponseDTO updateMarche(Long id, MarcheRequestDTO requestDTO) {
+
         Marche existingMarche = marcheRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Marche not found with id " + id));
 
@@ -86,6 +93,12 @@ public class MarcheService {
         existingMarche.setDateDebutDesTravaux(requestDTO.getDateDebutDesTravaux());
         existingMarche.setDateDAchievementDesTravaux(requestDTO.getDateDAchievementDesTravaux());
 
+        if (requestDTO.getBanqueId() != null) {
+            Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
+                    .orElseThrow(() -> new EntityNotFoundException("Banque non trouvée avec id " + requestDTO.getBanqueId()));
+            existingMarche.setBanque(banque);
+        }
+
         Marche updatedMarche = marcheRepository.save(existingMarche);
         return marcheMapper.toResponseDTO(updatedMarche);
     }
@@ -95,9 +108,11 @@ public class MarcheService {
      * @param id The ID of the contract to delete.
      */
     public void deleteMarche(Long id) {
+
         if (!marcheRepository.existsById(id)) {
             throw new EntityNotFoundException("Marche not found with id " + id);
         }
+
         marcheRepository.deleteById(id);
     }
 
@@ -112,8 +127,8 @@ public class MarcheService {
         // Build the dynamic specification based on search criteria
         Specification<Marche> spec = Specification.where(MarcheSpecification.hasNom(searchDTO.getNom()))
                 .and(MarcheSpecification.hasNumero(searchDTO.getNumero()))
-                .and(MarcheSpecification.hasMaitreDouvrage(searchDTO.getMaitreDouvrage()));
-
+                .and(MarcheSpecification.hasMaitreDouvrage(searchDTO.getMaitreDouvrage()))
+                .and(MarcheSpecification.hasBanqueId(searchDTO.getBanqueId()));
 
 
         // Execute the query with the specification and pageable info
