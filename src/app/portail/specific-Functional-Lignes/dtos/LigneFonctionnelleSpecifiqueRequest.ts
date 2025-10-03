@@ -1,6 +1,5 @@
 
 export interface LigneFonctionnelleSpecifiqueRequest {
-  banqueId: number;
   natureLigneFonctionnelleId: number;
   plafond: number;
   taux: number;

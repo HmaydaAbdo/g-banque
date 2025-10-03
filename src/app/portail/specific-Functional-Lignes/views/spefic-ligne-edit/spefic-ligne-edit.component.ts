@@ -15,7 +15,6 @@ import {CalendarModule} from 'primeng/calendar';
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {TooltipModule} from "primeng/tooltip";
 import {SpecificFunctionalLigneService} from "../../service/SpecificFunctionalLigneService";
-import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {MarcheService} from "../../../Marches/service/marche-service.service";
 import {NatureLigneFonctionnelleService} from "../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service";
 import {LigneFonctionnelleSpecifiqueRequest} from "../../dtos/LigneFonctionnelleSpecifiqueRequest";
@@ -54,7 +53,6 @@ export class SpeficLigneEditComponent implements OnInit {
   ligneFonctionnelleSpecifiqueId: number | null = null;
   ligneFonctionnelleSpecifique?: LigneFonctionnelleSpecifiqueResponse;
   natureLigneOptions: { label: string; value: number }[] = [];
-  banquesOptions: { label: string; value: number }[] = [];
   marchesOptions: { label: string; value: number | null }[] = [];
   marchesTotalRecords: number = 0;
   loading: boolean = false;
@@ -75,7 +73,6 @@ export class SpeficLigneEditComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private specificLigneService: SpecificFunctionalLigneService,
-    private banqueService: BanqueService,
     private marcheService: MarcheService,
     private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
     private messageService: MessageService,
@@ -86,7 +83,6 @@ export class SpeficLigneEditComponent implements OnInit {
   ngOnInit(): void {
     this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" }, { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-specifiques-encours', label: "Les Lignes Fonctionnelles Spécifiques" }];
     this.initForm();
-    this.loadBanquesForDropdown();
 
     this.loadNatureLigneOptionsForDropdown();
     this.loadMarchesForDropdown({ first: 0, last: 1000 });
@@ -105,7 +101,6 @@ export class SpeficLigneEditComponent implements OnInit {
 
   initForm(): void {
     this.ligneFonctionnelleSpecifiqueForm = this.fb.group({
-      banqueId: [null, Validators.required],
       natureLigneFonctionnelleId: [null, Validators.required],
       marcheId: [null, Validators.required],
       plafond: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)],],
@@ -159,18 +154,6 @@ export class SpeficLigneEditComponent implements OnInit {
     });
   }
 
-  loadBanquesForDropdown(): void {
-    this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc')
-      .subscribe({
-        next: (pageResponse) => {
-          this.banquesOptions = pageResponse.content.map(banque => ({ label: banque.nom, value: banque.id! }));
-        },
-        error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.', life: 3000 });
-        }
-      });
-  }
-
   loadMarchesForDropdown(event: { first: number, last: number, filter?: string }): void {
     this.loading = true;
     const page = Math.floor(event.first / 10);
@@ -195,7 +178,6 @@ export class SpeficLigneEditComponent implements OnInit {
     this.specificLigneService.getLigneFonctionnelleSpecifiqueById(id).subscribe({
       next: (ligne: LigneFonctionnelleSpecifiqueResponse) => {
         this.ligneFonctionnelleSpecifiqueForm.patchValue({
-          banqueId: ligne.banqueId,
           natureLigneFonctionnelleId: ligne.natureLigneFonctionnelleId,
           marcheId: ligne.marcheId,
           plafond: ligne.plafond,
@@ -317,10 +299,6 @@ export class SpeficLigneEditComponent implements OnInit {
   onCancel(): void {
     this.router.navigate(['/portail/lignes-fonctionnelles-specifiques-encours']);
   }
-  private toDateOnly(dateString: string): Date | null {
-    if (!dateString) return null;
-    const d = new Date(dateString); // parse ISO
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate()); // reset to local midnight
-  }
+
 
 }
