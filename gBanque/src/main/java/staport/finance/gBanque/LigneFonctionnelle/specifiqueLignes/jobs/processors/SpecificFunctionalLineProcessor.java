@@ -29,7 +29,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
         log.debug("Processing LigneFonctionnelleSpecifique ID: {} (Marché : {} Bank: {}, EndDate: {}) ",
                 item.getId(),
                 item.getMarche() != null ? item.getMarche().getNom() : "N/A",
-                item.getBanque() != null ? item.getBanque().getNom() : "N/A",
+                item.getMarche().getBanque() != null ? item.getMarche().getBanque().getNom() : "N/A",
                 item.getDateFin());
 
         OffsetDateTime endDate = item.getDateFin();
@@ -38,7 +38,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
         NotificationType notificationType = null;
 
         String marcheNom = item.getMarche() != null ? item.getMarche().getNom() : "N/A";
-        String banqueNom = item.getBanque() != null ? item.getBanque().getNom() : "N/A";
+        String banqueNom = item.getMarche().getBanque() != null ? item.getMarche().getBanque().getNom() : "N/A";
 
 
         if (endDate.isBefore(currentProcessingTime)) {

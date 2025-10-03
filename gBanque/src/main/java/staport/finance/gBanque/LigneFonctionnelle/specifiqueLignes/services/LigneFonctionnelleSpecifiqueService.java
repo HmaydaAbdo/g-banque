@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
@@ -76,12 +75,11 @@ public class LigneFonctionnelleSpecifiqueService {
 
     @Transactional
     public LigneFonctionnelleSpecifiqueResponse createLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifiqueRequest request) {
+
         log.debug("Requête de création de ligne fonctionnelle spécifique: {}", request);
+
         validateDateRange(request.getDateDepart(), request.getDateFin());
 
-        // Step 1: Validate and retrieve required entities
-        Banque banque = banqueRepository.findById(request.getBanqueId())
-                .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée avec l'ID: " + request.getBanqueId()));
 
         NatureLigneFonctionnelle natureLigneFonctionnelle = natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId())
                 .orElseThrow(() -> new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId()));
@@ -102,7 +100,7 @@ public class LigneFonctionnelleSpecifiqueService {
         }
 
         // Step 3: Map DTO to entity and save
-        LigneFonctionnelleSpecifique entity = ligneFonctionnelleSpecifiqueMapper.toEntity(request, banque, natureLigneFonctionnelle, marche);
+        LigneFonctionnelleSpecifique entity = ligneFonctionnelleSpecifiqueMapper.toEntity(request, natureLigneFonctionnelle, marche);
 
         LigneFonctionnelleSpecifique savedEntity = ligneFonctionnelleSpecifiqueRepository.save(entity);
         log.info("Ligne fonctionnelle spécifique créée avec succès, ID: {}", savedEntity.getId());
@@ -165,10 +163,6 @@ public class LigneFonctionnelleSpecifiqueService {
         OffsetDateTime effectiveDateFin = request.getDateFin() != null ? request.getDateFin() : existingEntity.getDateFin();
         validateDateRange(effectiveDateDepart, effectiveDateFin);
 
-        // Find and retrieve relationships
-        Banque targetBanque = (request.getBanqueId() != null) ?
-                banqueRepository.findById(request.getBanqueId()).orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée avec l'ID: " + request.getBanqueId()))
-                : existingEntity.getBanque();
 
         NatureLigneFonctionnelle targetNature = (request.getNatureLigneFonctionnelleId() != null) ?
                 natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId()).orElseThrow(() -> new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId()))
@@ -211,7 +205,6 @@ public class LigneFonctionnelleSpecifiqueService {
         }
 
         // Update relationships
-        existingEntity.setBanque(targetBanque);
         existingEntity.setNatureLigneFonctionnelle(targetNature);
         existingEntity.setMarche(targetMarche);
 
@@ -229,7 +222,7 @@ public class LigneFonctionnelleSpecifiqueService {
      * @throws ResourceNotFoundException if no active functional line is found for the given criteria.
      */
     @Transactional
-    public void deactivateLigneFonctionnelleByNatureAndBank(Long ligneId) {
+    public void deactivateLigneFonctionnelleById(Long ligneId) {
         log.debug("Tentative de désactivation de la ligne fonctionnelle spécifique  avec l ID: {} ", ligneId);
         LigneFonctionnelleSpecifique ligneToDeactivate = ligneFonctionnelleSpecifiqueRepository.findById(ligneId).orElseThrow(
                 () -> new ResourceNotFoundException("Aucune Ligne Fonctionnelle spécifique avec l'ID: " + ligneId)
@@ -371,7 +364,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
         // 5. Construire et retourner le DTO agrégé
         AgregatedSuiviePrefiLigneResponseDto aggregatedDto = new AgregatedSuiviePrefiLigneResponseDto();
-        aggregatedDto.setBanqueName(specificLine.getBanque().getNom());
+        aggregatedDto.setBanqueName(specificLine.getMarche().getBanque().getNom());
         aggregatedDto.setMarcheName(marche.getNom());
         aggregatedDto.setMarcheNumero(marche.getNumero());
         aggregatedDto.setTotalDebit(totalDebit);
@@ -429,7 +422,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
         // 5. Construire et retourner le DTO agrégé
         AgregatedSuivieDcLigneResponseDto aggregatedDto = new AgregatedSuivieDcLigneResponseDto();
-        aggregatedDto.setBanqueName(specificLine.getBanque().getNom());
+        aggregatedDto.setBanqueName(specificLine.getMarche().getBanque().getNom());
         aggregatedDto.setMarcheName(marche.getNom());
         aggregatedDto.setMarcheNumero(marche.getNumero());
         aggregatedDto.setTotalDebit(totalDebit);

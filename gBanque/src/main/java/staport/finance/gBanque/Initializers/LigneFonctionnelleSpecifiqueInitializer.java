@@ -8,7 +8,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueRequest;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
@@ -24,27 +23,26 @@ import java.time.format.DateTimeFormatter;
 import java.util.stream.StreamSupport;
 
 @Component
-@Order(10) // S'exécute après MarcheInitializer et les autres initialisateurs nécessaires
+@Order(10)
 public class LigneFonctionnelleSpecifiqueInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(LigneFonctionnelleSpecifiqueInitializer.class);
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final LigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService;
     private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;;
-    private final BanqueRepository banqueRepository;
+
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
     private final MarcheRepository marcheRepository;
     private final DataFormatter dataFormatter = new DataFormatter();
 
     public LigneFonctionnelleSpecifiqueInitializer(
             LigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
-            BanqueRepository banqueRepository,
             NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository,
             MarcheRepository marcheRepository) {
         this.ligneFonctionnelleSpecifiqueService = ligneFonctionnelleSpecifiqueService;
         this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
-        this.banqueRepository = banqueRepository;
+
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
         this.marcheRepository = marcheRepository;
     }
@@ -78,20 +76,17 @@ public class LigneFonctionnelleSpecifiqueInitializer implements CommandLineRunne
     private void processRow(Row row) {
         try {
             // Extraction des valeurs de la ligne en utilisant les en-têtes du fichier CSV
-            String banqueName = getCellValueAsString(row.getCell(0));
-            String natureLibelle = getCellValueAsString(row.getCell(1));
-            String marcheNumero = getCellValueAsString(row.getCell(6)); // `Numero de marche` est à la 7e colonne
 
-            BigDecimal plafond = parseBigDecimal(getCellValueAsString(row.getCell(2)));
-            BigDecimal taux = parseBigDecimal(getCellValueAsString(row.getCell(3)));
-            OffsetDateTime dateDepart = parseDate(getCellValueAsString(row.getCell(4)));
-            OffsetDateTime dateFin = parseDate(getCellValueAsString(row.getCell(5)));
-            Boolean actif = parseBoolean(getCellValueAsString(row.getCell(7)));
+            String natureLibelle = getCellValueAsString(row.getCell(0));
+            String marcheNumero = getCellValueAsString(row.getCell(5));
 
-            // Recherche des IDs à partir des noms/libellés
-            Long banqueId = banqueRepository.findByNom(banqueName)
-                    .orElseThrow(() -> new IllegalArgumentException("Banque non trouvée: " + banqueName))
-                    .getId();
+            BigDecimal plafond = parseBigDecimal(getCellValueAsString(row.getCell(1)));
+            BigDecimal taux = parseBigDecimal(getCellValueAsString(row.getCell(2)));
+            OffsetDateTime dateDepart = parseDate(getCellValueAsString(row.getCell(3)));
+            OffsetDateTime dateFin = parseDate(getCellValueAsString(row.getCell(4)));
+
+
+
 
             Long natureLigneFonctionnelleId = natureLigneFonctionnelleRepository.findByLabel(natureLibelle)
                     .orElseThrow(() -> new IllegalArgumentException("Nature de ligne non trouvée: " + natureLibelle))
@@ -103,14 +98,13 @@ public class LigneFonctionnelleSpecifiqueInitializer implements CommandLineRunne
 
 
             LigneFonctionnelleSpecifiqueRequest dto = new LigneFonctionnelleSpecifiqueRequest();
-            dto.setBanqueId(banqueId);
             dto.setNatureLigneFonctionnelleId(natureLigneFonctionnelleId);
             dto.setMarcheId(marcheId);
             dto.setPlafond(plafond);
             dto.setTaux(taux);
             dto.setDateDepart(dateDepart);
             dto.setDateFin(dateFin);
-            dto.setActif(actif);
+
 
             ligneFonctionnelleSpecifiqueService.createLigneFonctionnelleSpecifique(dto);
             logger.info("Ligne fonctionnelle spécifique pour le Marché {} sauvegardée avec succès.", marcheNumero);
@@ -140,7 +134,13 @@ public class LigneFonctionnelleSpecifiqueInitializer implements CommandLineRunne
     private OffsetDateTime parseDate(String value) {
         try {
             if (value == null || value.isBlank()) return null;
-            LocalDate localDate = LocalDate.parse(value, DATE_FORMATTER);
+            // Supposons que les dates dans le fichier sont au format 'yyyy-MM-dd' ou 'dd/MM/yyyy'
+            LocalDate localDate;
+            if (value.contains("-")) {
+                localDate = LocalDate.parse(value.trim()); // Utilise le format ISO (yyyy-MM-dd)
+            } else {
+                localDate = LocalDate.parse(value.trim(), dateFormatter); // Utilise le format dd/MM/yyyy
+            }
             return localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime();
         } catch (Exception e) {
             logger.error("Impossible de parser la date '{}'.", value);
@@ -148,9 +148,5 @@ public class LigneFonctionnelleSpecifiqueInitializer implements CommandLineRunne
         }
     }
 
-    private Boolean parseBoolean(String value) {
-        if (value == null || value.isBlank()) return null;
-        String lowerValue = value.toLowerCase();
-        return "true".equals(lowerValue) || "vrai".equals(lowerValue) || "1".equals(lowerValue);
-    }
+
 }

@@ -1,7 +1,6 @@
 package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.mappers;
 
 import org.springframework.stereotype.Component;
-import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueRequest;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueResponse;
@@ -24,14 +23,12 @@ public class LigneFonctionnelleSpecifiqueMapper {
      * Converts a LigneFonctionnelleSpecifiqueRequest DTO to a LigneFonctionnelleSpecifique entity.
      *
      * @param request The LigneFonctionnelleSpecifiqueRequest DTO.
-     * @param banque The associated Banque entity.
      * @param natureLigneFonctionnelle The associated NatureLigneFonctionnelle entity.
      * @param marche The associated Marche entity.
      * @return A new LigneFonctionnelleSpecifique entity.
      */
     public LigneFonctionnelleSpecifique toEntity(
             LigneFonctionnelleSpecifiqueRequest request,
-            Banque banque,
             NatureLigneFonctionnelle natureLigneFonctionnelle,
             Marche marche) {
         if (request == null) {
@@ -41,7 +38,6 @@ public class LigneFonctionnelleSpecifiqueMapper {
         LigneFonctionnelleSpecifique entity = new LigneFonctionnelleSpecifique();
 
         // Map all fields directly
-        entity.setBanque(banque);
         entity.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
         entity.setPlafond(request.getPlafond());
         entity.setTaux(request.getTaux());
@@ -68,8 +64,6 @@ public class LigneFonctionnelleSpecifiqueMapper {
 
         // Map all fields directly
         response.setId(entity.getId());
-        response.setBanqueId(entity.getBanque() != null ? entity.getBanque().getId() : null);
-        response.setBanqueNom(entity.getBanque() != null ? entity.getBanque().getNom() : null);
         response.setNatureLigneFonctionnelleId(entity.getNatureLigneFonctionnelle() != null ? entity.getNatureLigneFonctionnelle().getId() : null);
         response.setNatureLigneFonctionnelleLabel(entity.getNatureLigneFonctionnelle() != null ? entity.getNatureLigneFonctionnelle().getLabel() : null);
         response.setNatureLigneFonctionnelleDescription(entity.getNatureLigneFonctionnelle() != null ? entity.getNatureLigneFonctionnelle().getDescription() : null);
@@ -86,6 +80,8 @@ public class LigneFonctionnelleSpecifiqueMapper {
             response.setMarcheId(entity.getMarche().getId());
             response.setMarcheNom(entity.getMarche().getNom());
             response.setMarcheNumero(entity.getMarche().getNumero());
+            response.setBanqueId(entity.getMarche().getBanque().getId());
+            response.setBanqueNom(entity.getMarche().getBanque().getNom());
         }
 
         return response;
@@ -110,9 +106,7 @@ public class LigneFonctionnelleSpecifiqueMapper {
         // Map the specific fields
         if (entity.getMarche() != null) {
             response.setMarcheNumero(entity.getMarche().getNumero());
-        }
-        if (entity.getBanque() != null) {
-            response.setBanqueNom( entity.getBanque().getNom());
+            response.setBanqueNom( entity.getMarche().getBanque().getNom());
         }
 
         // montant
@@ -153,9 +147,7 @@ public class LigneFonctionnelleSpecifiqueMapper {
         // Map the specific fields
         if (entity.getMarche() != null) {
             response.setMarcheNumero(entity.getMarche().getNumero());
-        }
-        if (entity.getBanque() != null) {
-            response.setBanqueNom( entity.getBanque().getNom());
+            response.setBanqueNom( entity.getMarche().getBanque().getNom());
         }
 
         // montant

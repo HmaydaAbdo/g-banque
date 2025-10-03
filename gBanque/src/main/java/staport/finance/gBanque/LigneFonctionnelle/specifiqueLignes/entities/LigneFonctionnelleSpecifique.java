@@ -1,7 +1,6 @@
 package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities;
 
 import jakarta.persistence.*;
-import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.marches.entities.Marche;
 import java.math.BigDecimal;
@@ -15,10 +14,6 @@ public class LigneFonctionnelleSpecifique {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "banque_id", nullable = false)
-    private Banque banque;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "nature_ligne_id", nullable = false)
@@ -54,9 +49,8 @@ public class LigneFonctionnelleSpecifique {
         // Default constructor required by JPA
     }
 
-    public LigneFonctionnelleSpecifique(Long id, Banque banque, NatureLigneFonctionnelle natureLigneFonctionnelle, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification, boolean actif, Marche marche) {
+    public LigneFonctionnelleSpecifique(Long id , NatureLigneFonctionnelle natureLigneFonctionnelle, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification, boolean actif, Marche marche) {
         this.id = id;
-        this.banque = banque;
         this.natureLigneFonctionnelle = natureLigneFonctionnelle;
         this.plafond = plafond;
         this.taux = taux;
@@ -71,9 +65,6 @@ public class LigneFonctionnelleSpecifique {
     // --- Getters and Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-
-    public Banque getBanque() { return banque; }
-    public void setBanque(Banque banque) { this.banque = banque; }
 
     public NatureLigneFonctionnelle getNatureLigneFonctionnelle() {
         return natureLigneFonctionnelle;
@@ -147,7 +138,6 @@ public class LigneFonctionnelleSpecifique {
     public String toString() {
         return "LigneFonctionnelleSpecifique{" +
                 "id=" + id +
-                ", banque=" + (banque != null ? banque.getNom() : "null") +
                 ", natureLigneFonctionnelle=" + (natureLigneFonctionnelle != null ? natureLigneFonctionnelle.getLabel() : "null") +
                 ", plafond=" + plafond +
                 ", taux=" + taux +

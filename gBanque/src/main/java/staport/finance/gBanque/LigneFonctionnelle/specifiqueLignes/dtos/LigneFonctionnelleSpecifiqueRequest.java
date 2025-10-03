@@ -8,8 +8,6 @@ import java.time.OffsetDateTime;
 
 public class LigneFonctionnelleSpecifiqueRequest {
 
-    @NotNull(message = "L'ID de la banque est obligatoire.")
-    private Long banqueId;
 
     @NotNull(message = "L'ID de la nature de ligne fonctionnelle est obligatoire.")
     private Long natureLigneFonctionnelleId;
@@ -39,8 +37,7 @@ public class LigneFonctionnelleSpecifiqueRequest {
     }
 
     // You will need a new constructor with all fields
-    public LigneFonctionnelleSpecifiqueRequest(Long banqueId, Long natureLigneFonctionnelleId, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, Boolean actif, Long marcheId) {
-        this.banqueId = banqueId;
+    public LigneFonctionnelleSpecifiqueRequest( Long natureLigneFonctionnelleId, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, Boolean actif, Long marcheId) {
         this.natureLigneFonctionnelleId = natureLigneFonctionnelleId;
         this.plafond = plafond;
         this.taux = taux;
@@ -51,8 +48,6 @@ public class LigneFonctionnelleSpecifiqueRequest {
     }
 
     // --- Getters and Setters ---
-    public Long getBanqueId() { return banqueId; }
-    public void setBanqueId(Long banqueId) { this.banqueId = banqueId; }
     public Long getNatureLigneFonctionnelleId() { return natureLigneFonctionnelleId; }
     public void setNatureLigneFonctionnelleId(Long natureLigneFonctionnelleId) { this.natureLigneFonctionnelleId = natureLigneFonctionnelleId; }
     public BigDecimal getPlafond() { return plafond; }
@@ -71,7 +66,6 @@ public class LigneFonctionnelleSpecifiqueRequest {
     @Override
     public String toString() {
         return "LigneFonctionnelleSpecifiqueRequest{" +
-                "banqueId=" + banqueId +
                 ", natureLigneFonctionnelleId=" + natureLigneFonctionnelleId +
                 ", plafond=" + plafond +
                 ", taux=" + taux +

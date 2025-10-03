@@ -86,8 +86,8 @@ public class DroitConstateMapper {
                 // Check if there is exactly one active DC line and retrieve the bank information
                 if (droitContateesLines.size() == 1) {
                     LigneFonctionnelleSpecifique activeLigne = droitContateesLines.get(0);
-                    dto.setBanqueId(activeLigne.getBanque().getId());
-                    dto.setBanqueName(activeLigne.getBanque().getNom());
+                    dto.setBanqueId(activeLigne.getMarche().getBanque().getId());
+                    dto.setBanqueName(activeLigne.getMarche().getBanque().getNom());
 
                 }
             }
@@ -133,7 +133,7 @@ public class DroitConstateMapper {
                 // Check if there is exactly one active pre-financing line and retrieve the bank information
                 if (activeDcLines.size() == 1) {
                     LigneFonctionnelleSpecifique activeLigne = activeDcLines.get(0);
-                    dto.setBanqueName(activeLigne.getBanque().getNom());
+                    dto.setBanqueName(activeLigne.getMarche().getBanque().getNom());
 
                 }
             }

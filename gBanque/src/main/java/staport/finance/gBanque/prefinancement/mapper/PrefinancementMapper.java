@@ -65,8 +65,8 @@ public class PrefinancementMapper {
                 // Check if there is exactly one active pre-financing line and retrieve the bank information
                 if (activePrefiLines.size() == 1) {
                     LigneFonctionnelleSpecifique activeLigne = activePrefiLines.get(0);
-                    dto.setBanqueId(activeLigne.getBanque().getId());
-                    dto.setBanqueName(activeLigne.getBanque().getNom());
+                    dto.setBanqueId(activeLigne.getMarche().getBanque().getId());
+                    dto.setBanqueName(activeLigne.getMarche().getBanque().getNom());
 
                 }
             }
@@ -138,7 +138,7 @@ public class PrefinancementMapper {
                 // Check if there is exactly one active pre-financing line and retrieve the bank information
                 if (activePrefiLines.size() == 1) {
                     LigneFonctionnelleSpecifique activeLigne = activePrefiLines.get(0);
-                    dto.setBanqueName(activeLigne.getBanque().getNom());
+                    dto.setBanqueName(activeLigne.getMarche().getBanque().getNom());
 
                 }
             }

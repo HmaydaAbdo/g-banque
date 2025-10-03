@@ -87,7 +87,7 @@ public class LigneFonctionnelleSpecifiqueController {
     public ResponseEntity<Void> deactivateLigneFonctionnelle(
             @PathVariable Long ligneId)
     {
-        ligneFonctionnelleSpecifiqueService.deactivateLigneFonctionnelleByNatureAndBank(ligneId);
+        ligneFonctionnelleSpecifiqueService.deactivateLigneFonctionnelleById(ligneId);
         return ResponseEntity.noContent().build();
     }
 

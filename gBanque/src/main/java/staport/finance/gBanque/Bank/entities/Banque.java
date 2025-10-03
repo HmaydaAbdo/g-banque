@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import staport.finance.gBanque.Bank.enums.Devise;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.decomptes.entities.Decompte;
@@ -15,10 +14,8 @@ import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
-import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.virements.entities.Virement;
 import staport.finance.gBanque.transactions.entities.Transaction;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -74,9 +71,6 @@ public class Banque {
     @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<LigneFonctionnelle> ligneFonctionnelles = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<LigneFonctionnelleSpecifique> ligneFonctionnellesSpecifiques = new ArrayList<>();
-
     @OneToMany(mappedBy = "banqueDePrelevement", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<ContratLeasing> contratsLeasing = new ArrayList<>();
 
@@ -97,7 +91,6 @@ public class Banque {
 
     @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Marche> marches = new ArrayList<>();
-
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Decompte> decomptes = new ArrayList<>();
@@ -215,24 +208,6 @@ public class Banque {
 
     public void addTransaction(Transaction t) { transactions.add(t); t.setBanqueDePrelevement(this); }
     public void removeTransaction(Transaction t) { transactions.remove(t); t.setBanqueDePrelevement(null); }
-
-    public List<LigneFonctionnelleSpecifique> getLigneFonctionnellesSpecifiques() {
-        return ligneFonctionnellesSpecifiques;
-    }
-
-    public void setLigneFonctionnellesSpecifiques(List<LigneFonctionnelleSpecifique> ligneFonctionnellesSpecifiques) {
-        this.ligneFonctionnellesSpecifiques = ligneFonctionnellesSpecifiques;
-    }
-
-    public void addLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique l) {
-        ligneFonctionnellesSpecifiques.add(l);
-        l.setBanque(this);
-    }
-
-    public void removeLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique l) {
-        ligneFonctionnellesSpecifiques.remove(l);
-        l.setBanque(null);
-    }
 
     public List<Decompte> getDecomptes() {
         return decomptes;

@@ -17,21 +17,39 @@ public class LigneFonctionnelleSpecifiqueSpecification {
             OffsetDateTime now = OffsetDateTime.now();
 
             // Add predicates for the common fields
+
+            // --- Accessing Banque ID through Marche entity ---
             if (criteria.getBanqueId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), criteria.getBanqueId()));
+                // Path: LigneFonctionnelleSpecifique -> Marche -> Banque -> id
+                predicates.add(criteriaBuilder.equal(
+                        root.get("marche").get("banque").get("id"),
+                        criteria.getBanqueId()
+                ));
             }
+
+
+            // --- NatureLigneFonctionnelle ID ---
             if (criteria.getNatureLigneFonctionnelleId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("natureLigneFonctionnelle").get("id"), criteria.getNatureLigneFonctionnelleId()));
+                // Path: LigneFonctionnelleSpecifique -> NatureLigneFonctionnelle -> id
+                predicates.add(criteriaBuilder.equal(
+                        root.get("natureLigneFonctionnelle").get("id"),
+                        criteria.getNatureLigneFonctionnelleId()
+                ));
             }
+
+            // --- Date Depart Year ---
             if (criteria.getYearDepart() != null) {
                 predicates.add(criteriaBuilder.equal(
                         criteriaBuilder.function("YEAR", Integer.class, root.get("dateDepart")),
                         criteria.getYearDepart()
                 ));
             }
+
+            // --- Actif Status ---
             if (criteria.getActif() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("actif"), criteria.getActif()));
             }
+            // --- Expiration Status ---
             if (criteria.getIsExpired() != null) {
                 if (criteria.getIsExpired()) {
                     predicates.add(criteriaBuilder.lessThan(root.get("dateFin"), now));
@@ -40,9 +58,13 @@ public class LigneFonctionnelleSpecifiqueSpecification {
                 }
             }
 
-            // Add the specific predicate for the subclass
+            // --- Marche ID ---
             if (criteria.getMarcheId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("marche").get("id"), criteria.getMarcheId()));
+                // Path: LigneFonctionnelleSpecifique -> Marche -> id
+                predicates.add(criteriaBuilder.equal(
+                        root.get("marche").get("id"),
+                        criteria.getMarcheId()
+                ));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
@@ -54,12 +76,22 @@ public class LigneFonctionnelleSpecifiqueSpecification {
 
             List<Predicate> predicates = new ArrayList<>();
 
+            // --- Accessing Banque ID through Marche entity ---
             if (criteria.getBanqueId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), criteria.getBanqueId()));
+                // Path: LigneFonctionnelleSpecifique -> Marche -> Banque -> id
+                predicates.add(criteriaBuilder.equal(
+                        root.get("marche").get("banque").get("id"),
+                        criteria.getBanqueId()
+                ));
             }
+            // --- Marche ID ---
             if (criteria.getMarcheId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("marche").get("id"), criteria.getMarcheId()));
+                predicates.add(criteriaBuilder.equal(
+                        root.get("marche").get("id"),
+                        criteria.getMarcheId()
+                ));
             }
+
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
