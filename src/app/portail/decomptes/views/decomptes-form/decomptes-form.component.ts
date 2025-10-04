@@ -5,7 +5,6 @@ import { ActivatedRoute, Router, ParamMap, RouterLink, RouterLinkActive } from '
 import { DecompteRequestDto } from '../../dtos/DecompteRequestDto';
 import { DecompteResponseDto } from '../../dtos/DecompteResponseDto';
 import { MarcheService } from '../../../Marches/service/marche-service.service';
-import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { PageResponse } from '../../../global/types/PageResponse';
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
@@ -20,7 +19,6 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
 import { MarcheResponseDTO } from '../../../Marches/dtos/marche-response.dto';
 import { DecompteService } from '../../service/DecompteService';
-import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
 
 @Component({
   selector: 'app-decompte-form',
@@ -53,7 +51,7 @@ export class DecompteFormComponent implements OnInit {
   loading: boolean = false;
 
   marchesOptions: { label: string; value: number }[] = [];
-  banquesOptions: { label: string; value: number }[] = [];
+
 
   items: MenuItem[] | undefined;
 
@@ -63,14 +61,12 @@ export class DecompteFormComponent implements OnInit {
     private router: Router,
     private decompteService: DecompteService,
     private marcheService: MarcheService,
-    private banqueService: BanqueService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
-    this.loadDropdownData();
     this.setupBreadcrumbs();
 
     this.route.paramMap.subscribe((params: ParamMap) => {
@@ -92,7 +88,6 @@ export class DecompteFormComponent implements OnInit {
   initForm(): void {
     this.decompteForm = this.fb.group({
       marcheId: [null, Validators.required],
-      banqueId: [null, Validators.required],
       dateEmission: [null, Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
     });
@@ -126,27 +121,7 @@ export class DecompteFormComponent implements OnInit {
     });
   }
 
-  loadDropdownData(): void {
-    this.loading = true;
-    this.banqueService.getAllBanques({},0,100,'id,asc').subscribe({
-      next: (pageResponse: PageResponse<BanqueResponse>) => {
-        this.banquesOptions = pageResponse.content.map((banque) => ({
-          label: `${banque.nom}`,
-          value: banque.id,
-        }));
-        this.loading = false;
-      },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des banques.',
-          life: 3000,
-        });
-        this.loading = false;
-      },
-    });
-  }
+
 
   setupBreadcrumbs(): void {
     this.items = [
@@ -164,7 +139,6 @@ export class DecompteFormComponent implements OnInit {
       next: (decompte: DecompteResponseDto) => {
         this.decompteForm.patchValue({
           marcheId: decompte.marcheId,
-          banqueId: decompte.banqueId,
           dateEmission: new Date(decompte.dateEmission),
           montant: decompte.montant,
         });
@@ -241,7 +215,6 @@ export class DecompteFormComponent implements OnInit {
     const formValue = this.decompteForm.value;
     const request: DecompteRequestDto = {
       marcheId: formValue.marcheId,
-      banqueId: formValue.banqueId,
       dateEmission: formValue.dateEmission,
       montant: formValue.montant,
     };

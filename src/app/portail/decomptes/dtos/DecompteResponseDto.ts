@@ -15,4 +15,6 @@ export interface DecompteResponseDto {
   dateOperation: string;
   dateValeur: string;
   status: Status;
+  libelle: string;
+
 }

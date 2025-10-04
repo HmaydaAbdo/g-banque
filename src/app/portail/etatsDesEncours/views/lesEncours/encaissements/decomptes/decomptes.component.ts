@@ -21,6 +21,7 @@ import {  Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EncoursDecompteSearchDto } from "../../../../../decomptes/dtos/EncoursDecompteSearchDto";
 import {DropdownModule} from "primeng/dropdown";
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 
 @Component({
@@ -40,6 +41,7 @@ import {DropdownModule} from "primeng/dropdown";
     InputTextModule,
     DropdownModule,
     CommonModule,
+    InputTextareaModule,
   ],
   templateUrl: './decomptes.component.html',
   styleUrl: './decomptes.component.scss',
@@ -133,9 +135,12 @@ export class DecomptesComponent implements OnInit, OnDestroy {
    */
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
       dateValeur: [null, Validators.required],
       tva: [null, Validators.required],
+      libelle: ['', Validators.required],
+      observation: ['', Validators.required],
     });
   }
 
@@ -146,6 +151,11 @@ export class DecomptesComponent implements OnInit, OnDestroy {
   openRapprochementModal(decompte: DecompteResponseDto): void {
     this.selectedDecompte = decompte;
     this.initRapprochementForm();
+    this.rapprochementForm.patchValue({
+      dateEmission:new Date(decompte.dateEmission),
+      libelle:decompte.libelle,
+      observation:decompte.observation
+    })
     this.displayModal = true;
   }
 
@@ -165,11 +175,14 @@ export class DecomptesComponent implements OnInit, OnDestroy {
 
     // Construct the request DTO using the selected dc and form data
     const decompteTransactionRequest:DecompteTransactionRequest= {
+      dateEmission:this.rapprochementForm.value.dateEmission,
       decompteId: this.selectedDecompte.id,
       banqueId: this.selectedDecompte.banqueId,
       dateOperation: this.rapprochementForm.value.dateOperation,
       dateValeur: this.rapprochementForm.value.dateValeur,
-      tva: this.rapprochementForm.value.tva
+      tva: this.rapprochementForm.value.tva,
+      libelle:this.rapprochementForm.value.libelle,
+      observation:this.rapprochementForm.value.observation
     };
 
     this.rapprochementService.decompteToRapprochement(decompteTransactionRequest)

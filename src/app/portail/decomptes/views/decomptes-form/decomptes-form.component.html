@@ -47,22 +47,6 @@
           </small>
         </div>
         <div class="field col-12 md:col-6">
-          <label for="banqueId" class="block font-medium mb-2">Banque</label>
-          <p-dropdown
-            id="banqueId"
-            formControlName="banqueId"
-            [options]="banquesOptions"
-            placeholder="Sélectionner une banque"
-            optionLabel="label"
-            optionValue="value"
-            [showClear]="true"
-            [ngClass]="{ 'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched }"
-          ></p-dropdown>
-          <small class="ng-dirty ng-invalid" *ngIf="f['banqueId'].invalid && f['banqueId'].touched">
-            La banque est requise.
-          </small>
-        </div>
-        <div class="field col-12 md:col-6">
           <label for="montant" class="block font-medium mb-2">Montant (MAD)</label>
           <p-inputNumber
             id="montant"
