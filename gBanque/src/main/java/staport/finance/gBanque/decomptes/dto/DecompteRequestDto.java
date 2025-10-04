@@ -11,9 +11,6 @@ public class DecompteRequestDto {
     @NotNull(message = "Marche ID cannot be null")
     private Long marcheId;
 
-    @NotNull(message = "Banque ID cannot be null")
-    private Long banqueId;
-
     @NotNull(message = "Date of emission cannot be null")
     private OffsetDateTime dateEmission;
 
@@ -24,9 +21,8 @@ public class DecompteRequestDto {
     public DecompteRequestDto() {
     }
 
-    public DecompteRequestDto(Long marcheId, Long banqueId, OffsetDateTime dateEmission, BigDecimal montant) {
+    public DecompteRequestDto(Long marcheId , OffsetDateTime dateEmission, BigDecimal montant) {
         this.marcheId = marcheId;
-        this.banqueId = banqueId;
         this.dateEmission = dateEmission;
         this.montant = montant;
     }
@@ -39,13 +35,6 @@ public class DecompteRequestDto {
         this.marcheId = marcheId;
     }
 
-    public Long getBanqueId() {
-        return banqueId;
-    }
-
-    public void setBanqueId(Long banqueId) {
-        this.banqueId = banqueId;
-    }
 
     public OffsetDateTime getDateEmission() {
         return dateEmission;
@@ -67,7 +56,6 @@ public class DecompteRequestDto {
     public String toString() {
         return "DecompteRequestDto{" +
                 "marcheId=" + marcheId +
-                ", banqueId=" + banqueId +
                 ", dateEmission=" + dateEmission +
                 ", montant=" + montant +
                 '}';

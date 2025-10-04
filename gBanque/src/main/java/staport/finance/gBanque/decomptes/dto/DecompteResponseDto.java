@@ -1,7 +1,6 @@
 package staport.finance.gBanque.decomptes.dto;
 
 import staport.finance.gBanque.prefinancement.enums.Status;
-import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -20,6 +19,7 @@ public class DecompteResponseDto {
     private OffsetDateTime dateOperation;
     private OffsetDateTime dateValeur;
     private Status status;
+    private String libelle;
 
     public DecompteResponseDto() {
     }
@@ -119,5 +119,13 @@ public class DecompteResponseDto {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 }
