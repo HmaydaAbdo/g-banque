@@ -8,7 +8,6 @@ import {LigneFonctionnelleEditComponent} from "../../lignes-fonctionnelles/views
 import {adminGuard} from "../../../auth/guards/admin.guard";
 import {NatureLigneFonctionnelleListComponent} from "../../lignes-fonctionnelles/views/nature-ligne-fonctionnelle-list/nature-ligne-fonctionnelle-list.component";
 import {NatureLigneFonctionnelleEditComponent} from "../../lignes-fonctionnelles/views/nature-ligne-fonctionnelle-edit/nature-ligne-fonctionnelle-edit.component";
-import {GeneralLignesByBankComponent} from "../../comptes-bancaire/views/history/general-lines-by-bank/general-lignes-by-bank.component";
 import {LogsComponent} from "../../settings/logs/views/logs/logs.component";
 import {EvolTauxPlafondComponent} from "../../tableau-de-bord/views/evol-taux-plafond/evol-taux-plafond.component";
 import {SoldeParBanqueComponent} from "../../tableau-de-bord/views/solde-par-banque/solde-par-banque.component";
@@ -36,50 +35,25 @@ import {SpeficLigneEncoursComponent} from "../../specific-Functional-Lignes/view
 import {SpeficLigneEditComponent} from "../../specific-Functional-Lignes/views/spefic-ligne-edit/spefic-ligne-edit.component";
 import {SpeficLigneExpireesComponent} from "../../specific-Functional-Lignes/views/spefic-ligne-expirees/spefic-ligne-expirees.component";
 import {SpeficLigneArchiveesComponent} from "../../specific-Functional-Lignes/views/spefic-ligne-archivees/spefic-ligne-archivees.component";
-import {
-  PrefinancementsListComponent
-} from "../../prefinancements/views/prefinancements-list/prefinancements-list.component";
-import {
-  PrefinancementFormComponent
-} from "../../prefinancements/views/prefinancement-form/prefinancement-form.component";
-import {
-  PrefiLinesListComponent
-} from "../../prefinancements/lignesPrefi/views/prefi-lines-list/prefi-lines-list.component";
-import {
-  RecapEncaissementsComponent
-} from "../../etatsDesEncours/views/lesEncours/recap/views/recap-encaissements/recap-encaissements.component";
-import {
-  PrefinancementRemboursementsComponent
-} from "../../etatsDesEncours/views/lesEncours/decaissement/prefinancement-remboursements/prefinancement-remboursements.component";
-import {
-  PrefinancementDeblocageComponent
-} from "../../etatsDesEncours/views/lesEncours/encaissements/prefinancement-deblocage/prefinancement-deblocage.component";
+import {PrefinancementsListComponent} from "../../prefinancements/views/prefinancements-list/prefinancements-list.component";
+import {PrefinancementFormComponent} from "../../prefinancements/views/prefinancement-form/prefinancement-form.component";
+import {PrefiLinesListComponent} from "../../prefinancements/lignesPrefi/views/prefi-lines-list/prefi-lines-list.component";
+import {RecapEncaissementsComponent} from "../../etatsDesEncours/views/lesEncours/recap/views/recap-encaissements/recap-encaissements.component";
+import {PrefinancementRemboursementsComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/prefinancement-remboursements/prefinancement-remboursements.component";
+import {PrefinancementDeblocageComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/prefinancement-deblocage/prefinancement-deblocage.component";
 import {DroitConstateListComponent} from "../../droitsConstate/views/droit-constate-list/droit-constate-list.component";
 import {DroitConstateFormComponent} from "../../droitsConstate/views/droit-constate-form/droit-constate-form.component";
-import {
-  DcLinesListComponent
-} from "../../droitsConstate/LignesDroitsConstate/views/dc-lines-list/dc-lines-list.component";
-import {
-  DroitConstateRemboursementsComponent
-} from "../../etatsDesEncours/views/lesEncours/decaissement/droit-constate-remboursements/droit-constate-remboursements.component";
-import {
-  DroitConstateDeblocageComponent
-} from "../../etatsDesEncours/views/lesEncours/encaissements/droit-constate-deblocage/droit-constate-deblocage.component";
+import {DcLinesListComponent} from "../../droitsConstate/LignesDroitsConstate/views/dc-lines-list/dc-lines-list.component";
+import {DroitConstateRemboursementsComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/droit-constate-remboursements/droit-constate-remboursements.component";
+import {DroitConstateDeblocageComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/droit-constate-deblocage/droit-constate-deblocage.component";
 import {DecomptesListComponent} from "../../decomptes/views/decomptes-list/decomptes-list.component";
 import {DecompteFormComponent} from "../../decomptes/views/decomptes-form/decomptes-form.component";
 import {DecomptesComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/decomptes/decomptes.component";
-import {
-  ValidatedDcComponent
-} from "../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component";
-import {
-  ValidatedPrefiComponent
-} from "../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component";
-import {
-  SpecificLignesByBankComponent
-} from "../../comptes-bancaire/views/history/specific-lines-by-bank/specific-lignes-by-bank.component";
+import {ValidatedDcComponent} from "../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component";
+import {ValidatedPrefiComponent} from "../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component";
 import {HistoryOflinesComponent} from "../../comptes-bancaire/views/history/history-oflines/history-oflines.component";
 import {CommissionListComponent} from "../../commission/views/CommissionListComponent/commission-list.component";
-import {CommissionFormComponent} from "../../commission/views/CommissionFormComponent/commission-form.component";
+
 import {
   EncoursCommissionsComponent
 } from "../../etatsDesEncours/views/lesEncours/decaissement/commission/encours-commissions.component";
@@ -169,9 +143,6 @@ export const PORTAIL_ROUTES: Routes = [
   },
 
   { path: 'commissions', component: CommissionListComponent },
-  { path: 'commissions/new', component: CommissionFormComponent },
-  { path: 'commissions/edit/:id', component: CommissionFormComponent },
-
   { path: 'etats-des-encours',component:SelectBanquePourLEncoursComponent},
   {path:"historique-des-transactions",component:TransactionHistoryComponent},
 

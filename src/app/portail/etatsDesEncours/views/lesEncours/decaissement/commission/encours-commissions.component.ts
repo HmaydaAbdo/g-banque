@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { MessageService, MenuItem } from 'primeng/api';
+import {MessageService, MenuItem, SelectItem} from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgFor } from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
@@ -67,6 +67,12 @@ export class EncoursCommissionsComponent implements OnInit {
   libelleFilter: string | null = null;
   operationOptions: { label: string; value: TransactionSource | null }[] = [];
   items: MenuItem[] = [];
+  tvaOptions: SelectItem[] = [
+    { label: '0%', value: 0 },
+    { label: '10%', value: 10 },
+    { label: '14%', value: 14 },
+    { label: '20%', value: 20 }
+  ];
 
   constructor(
     private commissionService: CommissionService,
@@ -107,9 +113,12 @@ export class EncoursCommissionsComponent implements OnInit {
     });
 
     this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
       dateValeur: [null, Validators.required],
       observation: ['', Validators.required],
+      libelle: ['', Validators.required],
+      tvaDeductible: [null, Validators.required],
     });
   }
 
@@ -160,6 +169,11 @@ export class EncoursCommissionsComponent implements OnInit {
   openRapprochementModal(commission: any): void {
     this.selectedCommission = commission;
     this.rapprochementForm.reset();
+    this.rapprochementForm.patchValue({
+      dateEmission: new Date(commission.dateEmission),
+      observation: commission.observation,
+      libelle: commission.libelle,
+    })
     this.displayModal = true;
   }
 
@@ -180,8 +194,11 @@ export class EncoursCommissionsComponent implements OnInit {
     const request: CommissionValidationDto = {
       idCommission: this.selectedCommission.id,
       dateOperation: this.rapprochementForm.value.dateOperation,
+      dateEmission:this.rapprochementForm.value.dateEmission,
       dateValeur: this.rapprochementForm.value.dateValeur,
       observation: this.rapprochementForm.value.observation,
+      libelle:this.rapprochementForm.value.libelle,
+      tva:this.rapprochementForm.value.tvaDeductible
     };
 
     this.rapprochementService.commissionToRapprochement(request).subscribe({
@@ -215,5 +232,10 @@ export class EncoursCommissionsComponent implements OnInit {
     if (this.table) {
       setTimeout(() => this.table.reset(), 0);
     }
+  }
+
+  isInvalid(controlName: string): boolean {
+    const control = this.rapprochementForm.get(controlName);
+    return !!(control && control.invalid && (control.dirty || control.touched));
   }
 }
