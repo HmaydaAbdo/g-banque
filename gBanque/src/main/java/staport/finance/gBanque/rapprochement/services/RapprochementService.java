@@ -506,6 +506,10 @@ public class RapprochementService {
 
         // Step 6: Mark the commission as * (paid) and save the updated commission entity.
         commission.setStatus(Status.PAYE);
+        commission.setObservation(savedTransaction.getObservation());
+        commission.setLibelle(savedTransaction.getLibelle());
+        commission.setDateValeur(savedTransaction.getDateValeur());
+        commission.setDateOperation(savedTransaction.getDateOperations());
         commisionRepository.save(commission);
 
         // Step 7: Convert the saved Transaction entity into a CommissionTransactionResponse

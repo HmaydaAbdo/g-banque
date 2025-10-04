@@ -43,25 +43,21 @@ public class CommisionTransactionMapper {
 
         // Mapping simple fields
         transaction.setObservation(requestDto.getObservation());
-        transaction.setTvaDeductible(
-                commission.getMontant()
-                        .multiply(BigDecimal.valueOf(commission.getTvaDeductible()))   // montant * taux
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
-                        .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
-        );
-
-        // Mapping dates (ensuring consistency with OffsetDateTime)
         transaction.setDateEmission(commission.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-
-        // Mapping complex fields using the fetched entities
         transaction.setLibelle(commission.getLibelle());
         transaction.setTransactionSource(TransactionSource.COMMISSION);
         transaction.setDebit(commission.getMontant());
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(commission.getBanque());
 
+        BigDecimal ttc = commission.getMontant();
+        BigDecimal tauxTVA = requestDto.getTva();
+        BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+
+        BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+        transaction.setTvaDeductible(tva);
         // Mapping traces
         try {
             Map<String, Object> tracesMap = new HashMap<>();

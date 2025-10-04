@@ -218,7 +218,7 @@ public class RecapitulatifDecaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(commission.getDateEmission());
         dto.setDebit(commission.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("Commission pour " + commission.getOperation() );
+        dto.setObservations(commission.getObservation() );
         dto.setLibelle(commission.getLibelle());
         dto.setSource(TransactionSource.COMMISSION);
         return dto;

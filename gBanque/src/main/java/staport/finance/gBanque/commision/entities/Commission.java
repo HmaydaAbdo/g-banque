@@ -16,9 +16,6 @@ public class Commission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 150)
-    private String libelle;
-
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal montant;
 
@@ -31,26 +28,19 @@ public class Commission {
     private TransactionSource operation;
 
     private OffsetDateTime dateEmission;
-
-    @Column(length = 500)
-    private String observation;
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperation;
 
-    private Double tvaDeductible = 10.0;
+    @Column(nullable = false, length = 150)
+    private String libelle;
+    @Column(length = 500)
+    private String observation;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private Status status=Status.PREVU;
 
     public Commission() {}
-
-    public Commission(String libelle, BigDecimal montant, Banque banque, TransactionSource operation) {
-        this.libelle = libelle;
-        this.montant = montant;
-        this.banque = banque;
-        this.operation = operation;
-    }
 
 
     public Long getId() {
@@ -121,13 +111,7 @@ public class Commission {
         this.dateOperation = dateOperation;
     }
 
-    public Double getTvaDeductible() {
-        return tvaDeductible;
-    }
 
-    public void setTvaDeductible(Double tvaDeductible) {
-        this.tvaDeductible = tvaDeductible;
-    }
 
     public Status getStatus() {
         return status;

@@ -43,7 +43,7 @@ public class TransactionSpecifications {
             OffsetDateTime now = OffsetDateTime.now();
             OffsetDateTime startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth()).withHour(0).withMinute(0).withSecond(0).withNano(0);
             OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-            return criteriaBuilder.between(root.get("dateEmission"), startOfMonth, endOfMonth);
+            return criteriaBuilder.between(root.get("createdAt"), startOfMonth, endOfMonth);
         };
     }
 

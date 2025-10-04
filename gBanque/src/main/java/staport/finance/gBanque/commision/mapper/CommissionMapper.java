@@ -5,9 +5,7 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
-import staport.finance.gBanque.rapprochement.dtos.commision.CommissionValidationDto;
 import staport.finance.gBanque.commision.entities.Commission;
-import staport.finance.gBanque.prefinancement.enums.Status;
 
 @Component
 public class CommissionMapper {
@@ -26,16 +24,6 @@ public class CommissionMapper {
         return commission;
     }
 
-    // Mapper ValidationDto -> update Entity
-    public  void applyValidation(Commission commission, CommissionValidationDto dto) {
-        if (dto == null) {
-            return;
-        }
-        commission.setDateValeur(dto.getDateValeur());
-        commission.setDateOperation(dto.getDateOperation());
-        commission.setObservation(dto.getObservation());
-        commission.setStatus(Status.PAYE);
-    }
 
     // Mapper Entity -> ResponseDto
     public  CommissionResponseDto toResponseDto(Commission entity) {
@@ -54,9 +42,7 @@ public class CommissionMapper {
         }
 
         dto.setDateEmission(entity.getDateEmission());
-        dto.setTvaDeductible(entity.getTvaDeductible());
         dto.setStatus(entity.getStatus());
-
         dto.setDateOperation(entity.getDateOperation()!=null ? entity.getDateOperation() : null);
         dto.setDateValeur(entity.getDateValeur() != null ? entity.getDateValeur() : null);
         dto.setObservation(entity.getObservation()!=null ? entity.getObservation() : null);
