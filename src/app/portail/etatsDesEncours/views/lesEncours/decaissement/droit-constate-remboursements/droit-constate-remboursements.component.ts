@@ -23,6 +23,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from "primeng/dialog";
 import { CalendarModule } from "primeng/calendar";
 import { ActivatedRoute } from '@angular/router';
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 
 @Component({
@@ -43,6 +44,7 @@ import { ActivatedRoute } from '@angular/router';
     CalendarModule,
     InputTextModule,
     DropdownModule,
+    InputTextareaModule,
   ],
   templateUrl: './droit-constate-remboursements.component.html',
   styleUrl: './droit-constate-remboursements.component.scss',
@@ -137,9 +139,12 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
    */
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
       dateValeur: [null, Validators.required],
-      tva: [null, Validators.required], // Added TVA field
+      tva: [null, Validators.required],
+      observation:['',Validators.required],
+      libelle:['',Validators.required],
     });
   }
 
@@ -150,6 +155,11 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
   openRapprochementModal(dc: DroitConstateResponseDto): void {
     this.selectedDroitConstate = dc;
     this.initRapprochementForm();
+    this.rapprochementForm.patchValue({
+      dateEmission: new Date(dc.dateEmission),
+      libelle: dc.libelle,
+      observation : dc.observation
+    })
     this.displayModal = true;
   }
 
@@ -170,9 +180,12 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
     const dcTransactionRequest: DroitConstateTransactionRequest = {
       droitConstateId: this.selectedDroitConstate.id,
       banqueId: this.selectedDroitConstate.banqueId,
+      dateEmission:this.rapprochementForm.value.dateEmission,
       dateOperation: this.rapprochementForm.value.dateOperation,
       dateValeur: this.rapprochementForm.value.dateValeur,
-      tva: this.rapprochementForm.value.tva, // Included TVA value
+      tva: this.rapprochementForm.value.tva,
+      libelle:this.rapprochementForm.value.libelle,
+      observation:this.rapprochementForm.value.observation
     };
 
     this.rapprochementService.droitConstateToRapprochement(dcTransactionRequest)

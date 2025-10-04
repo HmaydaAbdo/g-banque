@@ -13,16 +13,17 @@ import {DroitConstateService} from "../../../../../droitsConstate/service/DroitC
 import {EncoursDroitConstateDto} from "../../../../../droitsConstate/dtos/EncoursDroitConstateDto";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
-import {DatePipe, NgIf, CommonModule, NgFor} from "@angular/common";
+import {DatePipe, NgIf, CommonModule} from "@angular/common";
 import {DialogModule} from "primeng/dialog";
 import {RippleModule} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
 import {TooltipModule} from "primeng/tooltip";
 import {DropdownModule} from "primeng/dropdown";
 import {InputTextModule} from "primeng/inputtext";
-import { Subject, Subscription } from 'rxjs';
+import {  Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EncoursDroitConstateSearchDto } from "../../../../../droitsConstate/dtos/EncoursDroitConstateSearchDto";
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 
 @Component({
@@ -42,7 +43,8 @@ import { EncoursDroitConstateSearchDto } from "../../../../../droitsConstate/dto
     DropdownModule,
     InputTextModule,
     CommonModule,
-    NgFor,
+
+    InputTextareaModule,
   ],
   templateUrl: './droit-constate-deblocage.component.html',
   styleUrl: './droit-constate-deblocage.component.scss',
@@ -146,9 +148,12 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
    */
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
       dateValeur: [null, Validators.required],
       tva: [null, Validators.required],
+      libelle: ['', Validators.required],
+      observation: ['', Validators.required],
     });
   }
 
@@ -159,6 +164,11 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
   openRapprochementModal(dc: DroitConstateResponseDto): void {
     this.selectedDroitConstate = dc;
     this.initRapprochementForm();
+    this.rapprochementForm.patchValue({
+      dateEmission:new Date(dc.dateEmission),
+      libelle:dc.libelle,
+      observation:dc.observation
+    })
     this.displayModal = true;
   }
 
@@ -179,9 +189,12 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
     const droitConstateTransactionRequest: DroitConstateTransactionRequest = {
       droitConstateId: this.selectedDroitConstate.id,
       banqueId: this.selectedDroitConstate.banqueId,
+      dateEmission:this.rapprochementForm.value.dateEmission,
       dateOperation: this.rapprochementForm.value.dateOperation,
       dateValeur: this.rapprochementForm.value.dateValeur,
       tva: this.rapprochementForm.value.tva,
+      libelle:this.rapprochementForm.value.libelle,
+      observation:this.rapprochementForm.value.observation
     };
 
     this.rapprochementService.droitConstateToRapprochement(droitConstateTransactionRequest)

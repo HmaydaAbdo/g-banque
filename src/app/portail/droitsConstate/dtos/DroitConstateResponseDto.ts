@@ -16,5 +16,6 @@ export interface DroitConstateResponseDto {
   dateOperation: string;
   dateValeur: string;
   status: Status;
+  libelle: string;
 }
 

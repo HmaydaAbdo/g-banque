@@ -126,6 +126,39 @@
   <ng-container *ngIf="selectedDroitConstate">
     <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
       <div class="grid p-fluid mt-3">
+
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar
+              id="dateEmission"
+              formControlName="dateEmission"
+              dateFormat="dd/mm/yy"
+              [showIcon]="true"
+              appendTo="body"
+            ></p-calendar>
+            <label for="dateEmission">Date d'émission</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('dateEmission')">
+            La date d'émission est obligatoire.
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-dropdown
+              id="tva"
+              formControlName="tva"
+              [options]="tvaOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionner la TVA déductible"
+              appendTo="body"
+            ></p-dropdown>
+            <label for="tva">TVA déductible</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('tva')">
+            La TVA déductible est obligatoire.
+          </small>
+        </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <p-calendar
@@ -156,23 +189,25 @@
             La date de valeur est obligatoire.
           </small>
         </div>
-        <div class="col-12 mb-3">
+        <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-dropdown
-              id="tva"
-              formControlName="tva"
-              [options]="tvaOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Sélectionner la TVA déductible"
-              appendTo="body"
-            ></p-dropdown>
-            <label for="tva">TVA déductible</label>
+            <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
+            <label for="observation">Observation</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('tva')">
-            La TVA déductible est obligatoire.
+          <small class="p-error" *ngIf="isInvalid('observation')">
+            Observation est obligatoire
           </small>
         </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="libelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
+            <label for="libelle">Libellé</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('observation')">
+            Libellé est obligatoire
+          </small>
+        </div>
+
       </div>
 
       <div class="flex justify-content-end gap-2 mt-4">
