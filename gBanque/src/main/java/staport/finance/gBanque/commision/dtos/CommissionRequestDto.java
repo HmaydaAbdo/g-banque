@@ -1,11 +1,10 @@
 package staport.finance.gBanque.commision.dtos;
 
+import jakarta.validation.constraints.NotEmpty;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -13,6 +12,9 @@ public class CommissionRequestDto {
 
     @NotBlank(message = "Le libellé est obligatoire")
     private String libelle;
+
+    @NotEmpty(message = "L'observation est obligatoire")
+    private String observation;
 
     @NotNull(message = "Le montant est obligatoire")
     @Positive(message = "Le montant doit être positif")
@@ -66,5 +68,13 @@ public class CommissionRequestDto {
 
     public void setDateEmission(OffsetDateTime dateEmission) {
         this.dateEmission = dateEmission;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
     }
 }

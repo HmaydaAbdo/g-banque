@@ -18,7 +18,6 @@ public class CommissionResponseDto {
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperation;
-    private Double tvaDeductible;
     private Status status;
 
     // Getters & Setters
@@ -102,13 +101,6 @@ public class CommissionResponseDto {
         this.dateOperation = dateOperation;
     }
 
-    public Double getTvaDeductible() {
-        return tvaDeductible;
-    }
-
-    public void setTvaDeductible(Double tvaDeductible) {
-        this.tvaDeductible = tvaDeductible;
-    }
 
     public Status getStatus() {
         return status;
