@@ -380,10 +380,14 @@ public class RapprochementService {
         }else{
             banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
         }
+
         this.banqueRepository.save(banque);
 
         // Step 6: Mark the prefi as * (paid) and save the updated prefi entity.
         prefinancement.setStatus(Status.PAYE);
+        prefinancement.setDateOperation(savedTransaction.getDateOperations());
+        prefinancement.setDateValeur(savedTransaction.getDateValeur());
+        prefinancement.setObservation(savedTransaction.getObservation());
         prefinancementRepository.save(prefinancement);
 
         // Step 7: Convert the saved Transaction entity into a PrefinancementTransactionResponse
@@ -423,6 +427,10 @@ public class RapprochementService {
 
         // Step 6: Mark the prefi as * (paid) and save the updated prefi entity.
         droitConstate.setStatus(Status.PAYE);
+        droitConstate.setDateOperation(savedTransaction.getDateOperations());
+        droitConstate.setDateValeur(savedTransaction.getDateValeur());
+        droitConstate.setObservation(savedTransaction.getObservation());
+
         droitConstateRepository.save(droitConstate);
 
         // Step 7: Convert the saved Transaction entity into a DroitConstateTransactionResponse

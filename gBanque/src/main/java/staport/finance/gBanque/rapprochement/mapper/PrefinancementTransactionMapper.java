@@ -57,34 +57,36 @@ public class PrefinancementTransactionMapper {
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
-        transaction.setLibelle("Marché  N° "+prefinancement.getMarche().getNumero());
-        transaction.setTransactionSource(TransactionSource.PREFINANCEMENT);
-        transaction.setDateEmission(prefinancement.getDateEmission());
+
+        transaction.setLibelle(requestDto.getLibelle());
+        transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setBanqueDePrelevement(banque);
+        transaction.setObservation(requestDto.getObservation());
+        transaction.setTransactionSource(TransactionSource.PREFINANCEMENT);
 
         if(prefinancement.getType()== Type.REMBOURSEMENT){
             transaction.setDebit(prefinancement.getMontant());
             transaction.setCredit(BigDecimal.ZERO);
-            transaction.setObservation("Remboursement du préfinancement");
-            transaction.setTvaDeductible(
-                    prefinancement.getMontant()
-                            .multiply(BigDecimal.valueOf(requestDto.getTva()))   // montant * taux
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
-                            .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
-            );
+
+            BigDecimal ttc = prefinancement.getMontant();
+            BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
+            BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+
+            BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+            transaction.setTvaDeductible(tva);
 
         }else {
             transaction.setDebit(BigDecimal.ZERO);
             transaction.setCredit(prefinancement.getMontant());
-            transaction.setObservation("Déblocage du préfinancement");
-            transaction.setTvaCollectee(
-                    prefinancement.getMontant()
-                            .multiply(BigDecimal.valueOf(requestDto.getTva()))   // montant * taux
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
-                            .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
-            );
+
+            BigDecimal ttc = prefinancement.getMontant();
+            BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
+            BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+
+            BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+            transaction.setTvaCollectee(tva);
         }
 
 
@@ -101,9 +103,6 @@ public class PrefinancementTransactionMapper {
             throw new Exception("Erreur lors du mappage des traces", e);
         }
 
-        // update prefi
-        prefinancement.setDateValeur(requestDto.getDateValeur());
-        prefinancement.setDateOperation(requestDto.getDateOperation());
         prefinancementRepository.save(prefinancement);
         return transaction;
     }

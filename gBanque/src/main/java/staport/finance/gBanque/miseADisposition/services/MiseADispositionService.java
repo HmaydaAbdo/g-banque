@@ -13,11 +13,6 @@ import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.miseADisposition.mapper.MiseADispositionMapper;
 import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.miseADisposition.specs.MiseADispositionSpec;
-import staport.finance.gBanque.virements.dtos.VirementResponseDto;
-import staport.finance.gBanque.virements.entities.Virement;
-import staport.finance.gBanque.virements.mapper.VirementMapper;
-import staport.finance.gBanque.virements.specs.VirementSpec;
-
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 

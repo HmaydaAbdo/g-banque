@@ -48,35 +48,16 @@ public class PrefinancementMapper {
             dto.setMarcheId(marche.getId());
             dto.setMarcheName(marche.getNom());
             dto.setMarcheNumero(marche.getNumero());
-
-
-            if (marche.getLignesFonctionnellesSpecifiques() != null) {
-
-                // Filter the list to find all active pre-financing lines
-                List<LigneFonctionnelleSpecifique> activePrefiLines = marche.getLignesFonctionnellesSpecifiques().stream()
-                        .filter(ligne -> ligne.isActif() && "Préfinancement".equals(ligne.getNatureLigneFonctionnelle().getLabel()))
-                        .toList();
-
-                // Defensive programming check: enforce the business rule of a single active line
-                if (activePrefiLines.size() > 1) {
-                    throw new IllegalStateException("The market with ID " + marche.getId() + " has more than one active 'Préfinancement' functional line.");
-                }
-
-                // Check if there is exactly one active pre-financing line and retrieve the bank information
-                if (activePrefiLines.size() == 1) {
-                    LigneFonctionnelleSpecifique activeLigne = activePrefiLines.get(0);
-                    dto.setBanqueId(activeLigne.getMarche().getBanque().getId());
-                    dto.setBanqueName(activeLigne.getMarche().getBanque().getNom());
-
-                }
+            dto.setBanqueId(marche.getBanque().getId());
+            dto.setBanqueName(marche.getBanque().getNom());
+            if( prefinancement.getType()== Type.DEBLOCAGE){
+                dto.setLibelle("Déblocage du préfinancement du marché " +  marche.getNom() );
+            }else {
+                dto.setLibelle("Remboursement du préfinancement du marché " + marche.getNom()  );
             }
         }
 
-        if( prefinancement.getType()== Type.DEBLOCAGE){
-            dto.setLibelle("Déblocage du préfinancement du marché " + (marche != null ? marche.getNom() : null));
-        }else {
-            dto.setLibelle("Remboursement du préfinancement du marché " + (marche != null ? marche.getNom() : null) + "");
-        }
+
         return dto;
     }
 
@@ -110,6 +91,7 @@ public class PrefinancementMapper {
         if (prefinancement == null) {
             return null;
         }
+
         SuiviePrefiLigneResponseDto dto = new SuiviePrefiLigneResponseDto();
         dto.setId(prefinancement.getId());
         dto.setDateEmission(prefinancement.getDateEmission());
@@ -121,34 +103,14 @@ public class PrefinancementMapper {
         if (marche != null) {
             dto.setMarcheName(marche.getNom());
             dto.setMarcheNumero(marche.getNumero());
-
-
-            if (marche.getLignesFonctionnellesSpecifiques() != null) {
-
-                // Filter the list to find all active pre-financing lines
-                List<LigneFonctionnelleSpecifique> activePrefiLines = marche.getLignesFonctionnellesSpecifiques().stream()
-                        .filter(ligne -> ligne.isActif() && "Préfinancement".equals(ligne.getNatureLigneFonctionnelle().getLabel()))
-                        .toList();
-
-                // Defensive programming check: enforce the business rule of a single active line
-                if (activePrefiLines.size() > 1) {
-                    throw new IllegalStateException("The market with ID " + marche.getId() + " has more than one active 'Préfinancement' functional line.");
-                }
-
-                // Check if there is exactly one active pre-financing line and retrieve the bank information
-                if (activePrefiLines.size() == 1) {
-                    LigneFonctionnelleSpecifique activeLigne = activePrefiLines.get(0);
-                    dto.setBanqueName(activeLigne.getMarche().getBanque().getNom());
-
-                }
+            dto.setBanqueName(marche.getBanque().getNom());
+            if( prefinancement.getType()== Type.DEBLOCAGE){
+                dto.setLibelle("Déblocage du préfinancement du marché " + marche.getNom());
+                dto.setCredit(prefinancement.getMontant());
+            }else {
+                dto.setLibelle("Remboursement du préfinancement du marché " +  marche.getNom() );
+                dto.setDebit(prefinancement.getMontant());
             }
-        }
-        if( prefinancement.getType()== Type.DEBLOCAGE){
-            dto.setLibelle("Déblocage du préfinancement du marché " + (marche != null ? marche.getNom() : null));
-            dto.setCredit(prefinancement.getMontant());
-        }else {
-            dto.setLibelle("Remboursement du préfinancement du marché " + (marche != null ? marche.getNom() : null) );
-            dto.setDebit(prefinancement.getMontant());
         }
 
         dto.setObservation(prefinancement.getObservation());

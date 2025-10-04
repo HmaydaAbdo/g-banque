@@ -62,8 +62,11 @@ public class DroitConstateService {
         if (activeDc.isEmpty()) {
             throw new Exception("Impossible de créer un droit constaté. Le marché '" + marche.getNom() + "' n'est pas associé à une ligne fonctionnelle 'Droit constaté' active.");
         }
+
         DroitConstate droitConstate = droitConstateMapper.toEntity(requestDTO, marche);
+
         droitConstate = droitConstateRepository.save(droitConstate);
+
         return droitConstateMapper.toDto(droitConstate);
     }
 
@@ -144,11 +147,13 @@ public class DroitConstateService {
      * @return The DTO of the updated record.
      */
     @Transactional
-    public DroitConstateResponseDto markAsPaid(Long id ) {
+    public DroitConstateResponseDto toggleStatus(Long id ) {
+
         DroitConstate droitConstate = droitConstateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Droit constate not found with ID: " + id));
 
-        droitConstate.setStatus(Status.PAYE);
+        Status existingStatus = droitConstate.getStatus();
+        droitConstate.setStatus(existingStatus==Status.PAYE ? Status.PREVU : Status.PAYE);
         DroitConstate updatedDroitConstate = droitConstateRepository.save(droitConstate);
         return droitConstateMapper.toDto(updatedDroitConstate);
     }

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -111,6 +112,7 @@ public class LigneFonctionnelleJobConfiguration {
      * @return A configured JpaPagingItemReader.
      */
     @Bean
+    @StepScope
     public JpaPagingItemReader<LigneFonctionnelle> functionalLineReader() {
         log.info("Configuring JpaPagingItemReader for active LigneFonctionnelle entities.");
         // JPQL query to select active functional lines, ordered by dateFin ascending.

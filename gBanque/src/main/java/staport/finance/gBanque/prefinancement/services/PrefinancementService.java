@@ -62,6 +62,7 @@ public class PrefinancementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId()));
 
         // vérifiez si le marché a une ligne spécifique actif de nature prefinancement
+
         // Step 1: Find the "Préfinancement" nature line by its label
         NatureLigneFonctionnelle prefiNature = natureLigneFonctionnelleRepository.findByLabel("Préfinancement")
                 .orElseThrow(() -> new ResourceNotFoundException("Nature de ligne fonctionnelle 'Préfinancement' non trouvée."));
@@ -155,11 +156,12 @@ public class PrefinancementService {
      * @return The DTO of the updated record.
      */
     @Transactional
-    public PrefinancementResponseDTO markAsPaid(Long id ) {
+    public PrefinancementResponseDTO toggleStatus(Long id ) {
         Prefinancement prefinancement = prefinancementRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Prefinancement not found with ID: " + id));
 
-        prefinancement.setStatus(Status.PAYE);
+        Status existingStatus = prefinancement.getStatus();
+        prefinancement.setStatus(existingStatus==Status.PAYE ? Status.PREVU: Status.PAYE);
         Prefinancement updatedPrefinancement = prefinancementRepository.save(prefinancement);
         return prefinancementMapper.toDto(updatedPrefinancement);
     }

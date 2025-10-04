@@ -6,14 +6,11 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.droitConstate.dtos.DroitConstateSearchDto;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
-
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -23,6 +20,7 @@ import java.util.List;
  * A utility class to create JPA Specifications for dynamic queries on the DroitConstate entity.
  * This class uses the Criteria API to build predicates based on search criteria.
  */
+
 public class DroitConstateSpec {
 
 
@@ -90,11 +88,13 @@ public class DroitConstateSpec {
             if (banqueId == null) {
                 return cb.conjunction();
             }
-            // Path: Droit Constate -> Marche -> LigneFonctionnelleSpecifique -> Banque
+
+            //  PATH: DroitConstate -> Marche -> Banque
             Join<DroitConstate, Marche> marcheJoin = root.join("marche", JoinType.INNER);
-            Join<Marche, LigneFonctionnelleSpecifique> ligneJoin = marcheJoin.join("lignesFonctionnellesSpecifiques", JoinType.INNER);
-            Join<LigneFonctionnelleSpecifique, Banque> banqueJoin = ligneJoin.join("banque", JoinType.INNER);
-            // Add predicates for the Banque ID
+            // The Marche entity has a direct ManyToOne relationship with Banque
+            Join<Marche, Banque> banqueJoin = marcheJoin.join("banque", JoinType.INNER);
+
+            // Add predicate for the Banque ID
             return cb.equal(banqueJoin.get("id"), banqueId);
         };
     }

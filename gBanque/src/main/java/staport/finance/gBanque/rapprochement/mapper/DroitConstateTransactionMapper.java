@@ -58,9 +58,9 @@ public class DroitConstateTransactionMapper {
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
-        transaction.setLibelle("Marché  N° "+droitConstate.getMarche().getNumero());
+        transaction.setLibelle(requestDto.getLibelle());
         transaction.setTransactionSource(TransactionSource.DROIT_CONSTATE);
-        transaction.setDateEmission(droitConstate.getDateEmission());
+        transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setBanqueDePrelevement(banque);
@@ -68,24 +68,26 @@ public class DroitConstateTransactionMapper {
         if(droitConstate.getType()== Type.REMBOURSEMENT){
             transaction.setDebit(droitConstate.getMontant());
             transaction.setCredit(BigDecimal.ZERO);
-            transaction.setObservation("Remboursement du droit constaté");
-            transaction.setTvaDeductible(
-                    droitConstate.getMontant()
-                            .multiply(BigDecimal.valueOf(requestDto.getTva()))   // montant * taux
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
-                            .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
-            );
+            transaction.setObservation(requestDto.getObservation());
+
+            BigDecimal ttc = droitConstate.getMontant();
+            BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
+            BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+
+            BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+            transaction.setTvaDeductible(tva);
 
         }else {
             transaction.setDebit(BigDecimal.ZERO);
             transaction.setCredit(droitConstate.getMontant());
-            transaction.setObservation("Déblocage du droit constaté");
-            transaction.setTvaCollectee(
-                    droitConstate.getMontant()
-                            .multiply(BigDecimal.valueOf(requestDto.getTva()))   // montant * taux
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
-                            .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
-            );
+            transaction.setObservation(requestDto.getObservation());
+
+            BigDecimal ttc = droitConstate.getMontant();
+            BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
+            BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+
+            BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+            transaction.setTvaCollectee(tva);
         }
 
 
@@ -102,9 +104,7 @@ public class DroitConstateTransactionMapper {
             throw new Exception("Erreur lors du mappage des traces", e);
         }
 
-        //update dc
-        droitConstate.setDateValeur(requestDto.getDateValeur());
-        droitConstate.setDateOperation(requestDto.getDateOperation());
+
         droitConstateRepository.save(droitConstate);
         return transaction;
     }

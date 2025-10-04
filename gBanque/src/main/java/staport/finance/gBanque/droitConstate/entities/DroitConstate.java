@@ -24,12 +24,12 @@ public class DroitConstate {
 
     private BigDecimal montant;
 
-    @Enumerated(EnumType.STRING) // Best practice for enums
+    @Enumerated(EnumType.STRING)
     private Type type;
 
     private String observation;
 
-    @Enumerated(EnumType.STRING) // Best practice for enums
+    @Enumerated(EnumType.STRING)
     private Status status=Status.PREVU;
 
     private OffsetDateTime dateOperation;

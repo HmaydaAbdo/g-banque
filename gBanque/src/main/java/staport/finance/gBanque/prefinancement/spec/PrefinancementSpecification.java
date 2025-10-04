@@ -23,9 +23,7 @@ import java.util.List;
  */
 public final class PrefinancementSpecification {
 
-    // Private constructor to prevent instantiation
-    private PrefinancementSpecification() {
-    }
+
 
     /**
      * Creates a Specification to filter by a specific Marche ID.
@@ -83,18 +81,19 @@ public final class PrefinancementSpecification {
             return cb.like(cb.lower(marcheJoin.get("nom")), "%" + marcheName.toLowerCase() + "%");
         };
     }
+
     public static Specification<Prefinancement> byBanqueId(Long banqueId) {
         return (root, query, cb) -> {
             if (banqueId == null) {
                 return cb.conjunction();
             }
 
-            // Path: Prefinancement -> Marche -> LigneFonctionnelleSpecifique -> Banque
+            //  PATH: Prefinancement -> Marche -> Banque
             Join<Prefinancement, Marche> marcheJoin = root.join("marche", JoinType.INNER);
-            Join<Marche, LigneFonctionnelleSpecifique> ligneJoin = marcheJoin.join("lignesFonctionnellesSpecifiques", JoinType.INNER);
-            Join<LigneFonctionnelleSpecifique, Banque> banqueJoin = ligneJoin.join("banque", JoinType.INNER);
+            // The Marche entity has a direct ManyToOne relationship with Banque
+            Join<Marche, Banque> banqueJoin = marcheJoin.join("banque", JoinType.INNER);
 
-            // Add predicates for the Banque ID
+            // Add predicate for the Banque ID
             return cb.equal(banqueJoin.get("id"), banqueId);
         };
     }

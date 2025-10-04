@@ -250,6 +250,7 @@ public class LigneFonctionnelleSpecifiqueService {
         }
     }
 
+
     /**
      * Retrieves a page of SpecificLigneResposneDto with pagination, sorting, and search support.
      *
@@ -260,6 +261,7 @@ public class LigneFonctionnelleSpecifiqueService {
      */
     @Transactional(readOnly = true)
     public Page<SpecificLigneResposneDto> getPrefiLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
+
         log.debug("Récupération paginée des lignes de préfinancement avec critères de recherche: {}", searchCriteria);
 
         // Find the NatureLigneFonctionnelle by its label
@@ -402,6 +404,7 @@ public class LigneFonctionnelleSpecifiqueService {
         List<DroitConstate> allPaidDc = droitConstateRepository.findByMarcheAndStatus(marche, Status.PAYE);
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
+
         for (DroitConstate dc : allPaidDc) {
             if (dc.getType() == Type.REMBOURSEMENT) {
                 totalDebit = totalDebit.add(dc.getMontant());
@@ -409,6 +412,7 @@ public class LigneFonctionnelleSpecifiqueService {
                 totalCredit = totalCredit.add(dc.getMontant());
             }
         }
+
         BigDecimal reste = totalCredit.subtract(totalDebit);
 
         // 3. Récupérer la page d'enregistrements payés
