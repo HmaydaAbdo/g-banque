@@ -24,6 +24,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 @Component({
   selector: 'app-prefinancement-deblocage',
@@ -43,6 +44,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     CalendarModule,
     InputTextModule,
     DropdownModule,
+    InputTextareaModule,
   ],
   templateUrl: './prefinancement-deblocage.component.html',
   styleUrl: './prefinancement-deblocage.component.scss',
@@ -76,7 +78,6 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
   constructor(
     private prefinancementService: PrefinancementService,
     private messageService: MessageService,
-    private datePipe: DatePipe,
     private rapprochementService: RapprochemntService,
     private fb: FormBuilder,
     private route: ActivatedRoute
@@ -134,9 +135,12 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
    */
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
       dateValeur: [null, Validators.required],
       tvaCollecte: [null, Validators.required],
+      observation:['',Validators.required],
+      libelle:['',Validators.required],
     });
   }
 
@@ -147,6 +151,11 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
   openRapprochementModal(prefinancement: PrefinancementResponseDTO): void {
     this.selectedPrefinancement = prefinancement;
     this.initRapprochementForm();
+    this.rapprochementForm.patchValue({
+      dateEmission:new Date(prefinancement.dateEmission),
+      observation:prefinancement.observation,
+      libelle:prefinancement.libelle
+    })
     this.displayModal = true;
   }
 
@@ -167,9 +176,12 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
     const prefinancementTransactionRequest: PrefinancementTransactionRequest = {
       prefinancementId: this.selectedPrefinancement.id,
       banqueId: this.selectedPrefinancement.banqueId,
+      dateEmission:this.rapprochementForm.value.dateEmission,
       dateOperation: this.rapprochementForm.value.dateOperation,
       dateValeur: this.rapprochementForm.value.dateValeur,
       tva: this.rapprochementForm.value.tvaCollecte,
+      libelle:this.rapprochementForm.value.libelle,
+      observation:this.rapprochementForm.value.observation,
     };
 
     this.rapprochementService.prefinancementToRapprochement(prefinancementTransactionRequest)
@@ -194,16 +206,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Clears the search form and reloads the table.
-   */
-  clearSearch(): void {
-    this.searchForm.reset();
-    if (this.dt) {
-      this.dt.first = 0;
-      this.loadEncoursDeblocages();
-    }
-  }
+
 
   /**
    * Loads outstanding pre-financing disbursement records.

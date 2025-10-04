@@ -19,4 +19,5 @@ export interface PrefinancementResponseDTO {
   dateOperation: Date;
   dateValeur: Date;
   status: Status;
+  libelle:string
 }

@@ -26,6 +26,7 @@ import { ActivatedRoute } from '@angular/router'; // Import ActivatedRoute
 import {  Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { DropdownModule } from 'primeng/dropdown';
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 
 @Component({
@@ -46,6 +47,7 @@ import { DropdownModule } from 'primeng/dropdown';
     CalendarModule,
     InputTextModule,
     DropdownModule,
+    InputTextareaModule,
   ],
   templateUrl: './prefinancement-remboursements.component.html',
   styleUrl: './prefinancement-remboursements.component.scss',
@@ -79,10 +81,9 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
   constructor(
     private prefinancementService: PrefinancementService,
     private messageService: MessageService,
-    private datePipe: DatePipe,
     private rapprochementService: RapprochemntService,
     private fb: FormBuilder,
-    private route: ActivatedRoute // Inject ActivatedRoute
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -142,9 +143,12 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
    */
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
+      dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
       dateValeur: [null, Validators.required],
       tvaDeductible: [null, Validators.required],
+      observation:['',Validators.required],
+      libelle:['',Validators.required],
     });
   }
 
@@ -155,6 +159,11 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
   openRapprochementModal(prefinancement: PrefinancementResponseDTO): void {
     this.selectedPrefinancement = prefinancement;
     this.initRapprochementForm();
+    this.rapprochementForm.patchValue({
+      dateEmission:new Date(prefinancement.dateEmission),
+      observation:prefinancement.observation,
+      libelle:prefinancement.libelle
+    })
     this.displayModal = true;
   }
 
@@ -176,9 +185,13 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
     const prefinancementTransactionRequest: PrefinancementTransactionRequest = {
       prefinancementId: this.selectedPrefinancement.id,
       banqueId: this.selectedPrefinancement.banqueId,
+      dateEmission:this.rapprochementForm.value.dateEmission,
       dateOperation: this.rapprochementForm.value.dateOperation,
       dateValeur: this.rapprochementForm.value.dateValeur,
       tva: this.rapprochementForm.value.tvaDeductible,
+      libelle:this.rapprochementForm.value.libelle,
+      observation:this.rapprochementForm.value.observation,
+
     };
 
     this.rapprochementService.prefinancementToRapprochement(prefinancementTransactionRequest)
