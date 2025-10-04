@@ -17,7 +17,6 @@ public class DroitConstateRequestDto {
     @NotNull(message = "Marche ID cannot be null")
     private Long marcheId;
 
-
     @NotNull(message = "Date of emission cannot be null")
     private OffsetDateTime dateEmission;
 

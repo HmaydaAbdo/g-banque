@@ -3,7 +3,6 @@ package staport.finance.gBanque.prefinancement.dtos;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.prefinancement.enums.Type;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -12,11 +11,9 @@ import java.time.OffsetDateTime;
  * This DTO is used to receive data from the client, preventing exposure of the internal entity.
  */
 public class PrefinancementRequestDTO {
-    // Fields that the client can provide to create or update a Prefinancement.
-    // We use Long for IDs instead of the full entity to simplify the request body.
+
     @NotNull(message = "Marche ID cannot be null")
     private Long marcheId;
-
 
     @NotNull(message = "Date of emission cannot be null")
     private OffsetDateTime dateEmission;
@@ -27,8 +24,6 @@ public class PrefinancementRequestDTO {
 
     @NotNull(message = "Type cannot be null")
     private Type type;
-
-
 
     public PrefinancementRequestDTO() {
     }

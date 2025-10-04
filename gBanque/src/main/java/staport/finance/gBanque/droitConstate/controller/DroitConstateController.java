@@ -98,7 +98,7 @@ public class DroitConstateController {
      */
     @PatchMapping("/{id}/status/paid")
     public ResponseEntity<DroitConstateResponseDto> markAsPaid(@PathVariable Long id) {
-        DroitConstateResponseDto responseDTO = droitConstateService.markAsPaid(id);
+        DroitConstateResponseDto responseDTO = droitConstateService.toggleStatus(id);
         return ResponseEntity.ok(responseDTO);
     }
 

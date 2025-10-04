@@ -96,7 +96,7 @@ public class PrefinancementController {
      */
     @PatchMapping("/{id}/status/paid")
     public ResponseEntity<PrefinancementResponseDTO> markAsPaid(@PathVariable Long id) {
-        PrefinancementResponseDTO responseDTO = prefinancementService.markAsPaid(id);
+        PrefinancementResponseDTO responseDTO = prefinancementService.toggleStatus(id);
         return ResponseEntity.ok(responseDTO);
     }
 

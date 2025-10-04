@@ -1,14 +1,9 @@
 package staport.finance.gBanque.prefinancement.dtos;
 
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.List;
 
 
 /**
@@ -35,8 +30,6 @@ public class PrefinancementResponseDTO {
 
     public PrefinancementResponseDTO() {
     }
-
-
 
     // Getters and setters
     public Long getId() {
