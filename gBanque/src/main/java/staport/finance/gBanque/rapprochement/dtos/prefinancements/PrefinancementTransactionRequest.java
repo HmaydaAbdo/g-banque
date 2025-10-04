@@ -8,15 +8,27 @@ public class PrefinancementTransactionRequest {
 
     @NotNull(message = "L'ID du préfinancement  est obligatoire.")
     private Long prefinancementId;
+
     @NotNull(message = "L'ID de la banque est obligatoire.")
     private Long  banqueId;
+
+    @NotNull(message = "La date d'émission est obligatoire.")
+    private OffsetDateTime dateEmission;
+
     @NotNull(message = "La date de valeur est obligatoire.")
     private OffsetDateTime dateValeur;
+
     @NotNull(message = "la date d'opération est obligatoire ")
     private OffsetDateTime dateOperation;
 
     @NotNull(message = "La TVA  est obligatoire.")
     private double tva;
+
+    @NotNull(message = "libelle est obligatoire")
+    private String libelle;
+
+    @NotNull(message = "L'observation est obligatoire")
+    private String observation;
 
     public Long getPrefinancementId() {
         return prefinancementId;
@@ -56,5 +68,29 @@ public class PrefinancementTransactionRequest {
 
     public void setTva(double tvaDeductible) {
         this.tva = tvaDeductible;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
+    }
+
+    public OffsetDateTime getDateEmission() {
+        return dateEmission;
+    }
+
+    public void setDateEmission(OffsetDateTime dateEmission) {
+        this.dateEmission = dateEmission;
     }
 }
