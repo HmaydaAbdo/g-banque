@@ -71,7 +71,7 @@ public class RecapitulatifEncaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(decompte.getDateEmission());
         dto.setCredit(decompte.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("Décompte" );
+        dto.setObservations(decompte.getObservation());
         dto.setLibelle("Marché N° : " + decompte.getMarche().getNumero() );
         dto.setSource(TransactionSource.DECOMPTES);
         return dto;

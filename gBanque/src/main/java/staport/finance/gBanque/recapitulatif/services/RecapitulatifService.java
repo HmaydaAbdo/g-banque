@@ -242,7 +242,7 @@ public class RecapitulatifService {
                 .and(DroitConstateSpec.byBanqueId(banqueId));
 
         //décomptes
-        Specification<Decompte> decompteSpecification = DecompteSpec.outstandingForCurrentMonth()
+        Specification<Decompte> decompteSpecification = DecompteSpec.outstandingDecomptesForCurrentMonth()
                 .and(DecompteSpec.byBanqueId(banqueId));
 
 

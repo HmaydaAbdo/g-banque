@@ -98,8 +98,8 @@ public class DecompteController {
      * @return A ResponseEntity with the updated record and HTTP status 200.
      */
     @PatchMapping("/{id}/status/paid")
-    public ResponseEntity<DecompteResponseDto> markAsPaid(@PathVariable Long id) {
-        DecompteResponseDto responseDTO = decompteService.markAsPaid(id);
+    public ResponseEntity<DecompteResponseDto> toggleStatus(@PathVariable Long id) {
+        DecompteResponseDto responseDTO = decompteService.toglleStatus(id);
         return ResponseEntity.ok(responseDTO);
     }
 

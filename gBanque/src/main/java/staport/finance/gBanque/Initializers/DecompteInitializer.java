@@ -9,7 +9,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.decomptes.dto.DecompteRequestDto;
 import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
 import staport.finance.gBanque.decomptes.service.DecompteService;
@@ -31,14 +30,13 @@ public class DecompteInitializer implements CommandLineRunner {
     private final DecompteService decompteService;
     private final DecompteRepository decompteRepository;
     private final MarcheRepository marcheRepository;
-    private final BanqueRepository banqueRepository;
     private final DataFormatter dataFormatter = new DataFormatter();
 
-    public DecompteInitializer(DecompteService decompteService, DecompteRepository decompteRepository, MarcheRepository marcheRepository, BanqueRepository banqueRepository) {
+    public DecompteInitializer(DecompteService decompteService, DecompteRepository decompteRepository, MarcheRepository marcheRepository) {
         this.decompteService = decompteService;
         this.decompteRepository = decompteRepository;
         this.marcheRepository = marcheRepository;
-        this.banqueRepository = banqueRepository;
+
     }
 
     @Override
@@ -69,11 +67,10 @@ public class DecompteInitializer implements CommandLineRunner {
     private void processRow(Row row) {
         try {
             String marcheNumero = getCellValueAsString(row.getCell(0));
-            String banqueNom = getCellValueAsString(row.getCell(1));
-            OffsetDateTime dateEmission = parseDate(getCellValueAsString(row.getCell(2)));
-            BigDecimal montant = parseBigDecimal(getCellValueAsString(row.getCell(3)));
+            OffsetDateTime dateEmission = parseDate(getCellValueAsString(row.getCell(1)));
+            BigDecimal montant = parseBigDecimal(getCellValueAsString(row.getCell(2)));
 
-            if (marcheNumero == null || banqueNom == null || dateEmission == null || montant == null) {
+            if (marcheNumero == null  || dateEmission == null || montant == null) {
                 logger.warn("Ligne {} ignorée : Données obligatoires manquantes.", row.getRowNum());
                 return;
             }
@@ -81,17 +78,13 @@ public class DecompteInitializer implements CommandLineRunner {
             Marche marche = marcheRepository.findByNumero(marcheNumero)
                     .orElseThrow(() -> new IllegalArgumentException("Marché non trouvé avec le numéro: " + marcheNumero));
 
-            Banque banque = banqueRepository.findByNom(banqueNom)
-                    .orElseThrow(() -> new IllegalArgumentException("Banque non trouvée avec le nom: " + banqueNom));
-
             DecompteRequestDto dto = new DecompteRequestDto();
             dto.setMarcheId(marche.getId());
-            dto.setBanqueId(banque.getId());
             dto.setDateEmission(dateEmission);
             dto.setMontant(montant);
 
             decompteService.createDecompte(dto);
-            logger.info("Décompte pour le marché {} et la banque {} sauvegardé avec succès.", marcheNumero, banqueNom);
+            logger.info("Décompte pour le marché {} est sauvegardé avec succès.", marcheNumero);
 
         } catch (Exception e) {
             logger.error("Erreur lors du traitement de la ligne {} : {}", row.getRowNum(), e.getMessage());

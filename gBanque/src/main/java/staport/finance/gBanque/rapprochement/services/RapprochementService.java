@@ -467,6 +467,9 @@ public class RapprochementService {
 
         // Step 6: Mark the decompte as * (paid) and save the updated decompte entity.
         decompte.setStatus(Status.PAYE);
+        decompte.setDateOperation(savedTransaction.getDateOperations());
+        decompte.setDateValeur(savedTransaction.getDateValeur());
+        decompte.setObservation(savedTransaction.getObservation());
         decompteRepository.save(decompte);
 
         // Step 7: Convert the saved Transaction entity into a DroitConstateTransactionResponse

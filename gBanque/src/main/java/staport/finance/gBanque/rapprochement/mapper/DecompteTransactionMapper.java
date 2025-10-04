@@ -58,24 +58,22 @@ public class DecompteTransactionMapper {
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
-        transaction.setLibelle("Marché  N° "+decompte.getMarche().getNumero());
+        transaction.setLibelle(requestDto.getLibelle());
         transaction.setTransactionSource(TransactionSource.DECOMPTES);
         transaction.setDateEmission(decompte.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setBanqueDePrelevement(banque);
-
-
         transaction.setDebit(BigDecimal.ZERO);
         transaction.setCredit(decompte.getMontant());
-        transaction.setObservation("décompte");
+        transaction.setObservation(requestDto.getObservation());
 
-        transaction.setTvaCollectee(
-                decompte.getMontant()
-                        .multiply(BigDecimal.valueOf(requestDto.getTva()))   // montant * taux
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)     // /100 arrondi à 2 décimales
-                        .setScale(2, RoundingMode.HALF_UP)                            // force toujours 2 décimales
-        );
+        BigDecimal ttc = decompte.getMontant();
+        BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
+        BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+
+        BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+        transaction.setTvaCollectee(tva);
 
         // Mapping traces
         try {
@@ -89,10 +87,6 @@ public class DecompteTransactionMapper {
             throw new Exception("Erreur lors du mappage des traces", e);
         }
 
-        //update decompte
-        decompte.setDateValeur(requestDto.getDateValeur());
-        decompte.setDateOperation(requestDto.getDateOperation());
-        decompteRepository.save(decompte);
         return transaction;
     }
 

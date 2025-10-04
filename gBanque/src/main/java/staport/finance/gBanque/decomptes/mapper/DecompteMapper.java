@@ -21,10 +21,9 @@ public class DecompteMapper {
      *
      * @param requestDTO The DroitConstateRequestDto to map.
      * @param marche The Marche entity fetched from the database.
-     * @param banque The Banque entity fetched from the database.
      * @return A new DroitConstate entity instance with relationships set.
      */
-    public Decompte toEntity(DecompteRequestDto requestDTO , Marche marche, Banque banque) {
+    public Decompte toEntity(DecompteRequestDto requestDTO , Marche marche) {
         if (requestDTO == null) {
             return null;
         }
@@ -32,12 +31,11 @@ public class DecompteMapper {
         Decompte entity = new Decompte();
 
         entity.setMarche(marche);
-        entity.setBanque(banque);
 
         entity.setDateEmission(requestDTO.getDateEmission());
         entity.setMontant(requestDTO.getMontant());
 
-        entity.setObservation("Marche: " + marche.getNumero());
+        entity.setObservation("decompte , Marché N° : " + marche.getNumero()  );
         entity.setStatus(Status.PREVU);
 
         return entity;
@@ -75,11 +73,13 @@ public class DecompteMapper {
             dto.setMarcheNumero(marche.getNumero());
         }
 
-        Banque banque = decompte.getBanque();
+        Banque banque = decompte.getMarche().getBanque();
         if (banque != null) {
             dto.setBanqueId(banque.getId());
             dto.setBanqueName(banque.getNom());
         }
+
+        dto.setLibelle("Marché N° : " + decompte.getMarche().getNumero() );
 
         return dto;
     }

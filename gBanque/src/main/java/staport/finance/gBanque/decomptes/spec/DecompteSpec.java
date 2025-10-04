@@ -4,22 +4,17 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.decomptes.dto.DecompteSearchDto;
 import staport.finance.gBanque.decomptes.entities.Decompte;
-import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
-import staport.finance.gBanque.prefinancement.enums.Type;
-
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DecompteSpec {
-    private DecompteSpec() {
-        // Utility class
-    }
 
     /**
      * Filter by Marche ID.
@@ -66,7 +61,7 @@ public class DecompteSpec {
             if (marcheName == null || marcheName.trim().isEmpty()) {
                 return cb.conjunction();
             }
-            // Join the Prefinancement entity with the Marche entity
+            // Join the Decompte entity with the Marche entity
             Join<Decompte, Marche> marcheJoin = root.join("marche", JoinType.INNER);
             // Apply a case-insensitive 'like' predicate on the 'nom' property
             return cb.like(cb.lower(marcheJoin.get("nom")), "%" + marcheName.toLowerCase() + "%");
@@ -81,7 +76,9 @@ public class DecompteSpec {
             if (banqueId == null) {
                 return cb.conjunction();
             }
-            return cb.equal(root.join("banque").get("id"), banqueId);
+            Join<Decompte, Marche> marcheJoin = root.join("marche", JoinType.INNER);
+            Join<Marche, Banque> banqueJoin = marcheJoin.join("banque", JoinType.INNER);
+            return cb.equal(banqueJoin.get("id"), banqueId);
         };
     }
 
@@ -94,32 +91,6 @@ public class DecompteSpec {
                 return cb.conjunction();
             }
             return cb.equal(root.get("status"), status);
-        };
-    }
-
-
-    /**
-     * Outstanding Decompte for current month:
-     * status = PREVU AND dateEmission <= end of month.
-     */
-    public static Specification<Decompte> outstandingForCurrentMonth() {
-        return (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-
-            // Status = PREVU
-            predicates.add(cb.equal(root.get("status"), Status.PREVU));
-
-            // Date <= end of current month
-            OffsetDateTime now = OffsetDateTime.now();
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23)
-                    .withMinute(59)
-                    .withSecond(59)
-                    .withNano(999999999);
-
-            predicates.add(cb.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
-            return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
@@ -156,8 +127,6 @@ public class DecompteSpec {
     public static Specification<Decompte> outstandingDecomptesForCurrentMonth() {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-
 
             // Condition 1: Filter by status
             // The status must be 'PREVU'

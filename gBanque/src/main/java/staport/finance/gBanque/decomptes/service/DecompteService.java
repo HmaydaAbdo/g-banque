@@ -43,15 +43,13 @@ public class DecompteService {
     @Transactional
     public DecompteResponseDto createDecompte(DecompteRequestDto requestDTO) {
 
-
         Marche marche = marcheRepository.findById(requestDTO.getMarcheId())
                 .orElseThrow(() -> new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId()));
 
-        Banque banque=banqueRepository.findById(requestDTO.getBanqueId())
-                .orElseThrow(() -> new ResourceNotFoundException("Banque not found with ID: " + requestDTO.getBanqueId()));
+        Decompte decompte = decompteMapper.toEntity(requestDTO, marche);
 
-        Decompte decompte = decompteMapper.toEntity(requestDTO, marche,banque);
         decompte = decompteRepository.save(decompte);
+
         return decompteMapper.toDto(decompte);
     }
 
@@ -71,11 +69,7 @@ public class DecompteService {
         Marche marche = marcheRepository.findById(requestDTO.getMarcheId())
                 .orElseThrow(() -> new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId()));
 
-        Banque banque=banqueRepository.findById(requestDTO.getBanqueId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Banque not found with ID: " + requestDTO.getBanqueId()));
-
         existingDecompte.setMarche(marche);
-        existingDecompte.setBanque(banque);
         existingDecompte.setDateEmission(requestDTO.getDateEmission());
         existingDecompte.setMontant(requestDTO.getMontant());
         existingDecompte.setObservation("Marche: " + marche.getNumero() );
@@ -137,11 +131,13 @@ public class DecompteService {
      * @return The DTO of the updated record.
      */
     @Transactional
-    public DecompteResponseDto markAsPaid(Long id ) {
+    public DecompteResponseDto toglleStatus(Long id ) {
+
         Decompte decompte = decompteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("décompte not found with ID: " + id));
 
-        decompte.setStatus(Status.PAYE);
+        Status existingStatus = decompte.getStatus();
+        decompte.setStatus(existingStatus==Status.PAYE ? Status.PREVU : Status.PAYE);
         Decompte updatedDecompte = decompteRepository.save(decompte);
         return decompteMapper.toDto(updatedDecompte);
     }
