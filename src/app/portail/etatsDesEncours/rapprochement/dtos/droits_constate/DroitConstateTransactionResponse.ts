@@ -13,5 +13,5 @@ export interface DroitConstateTransactionResponse {
   dateOperations: Date;
   debit: Decimal;
   credit: Decimal;
-  transactionSource: TransactionSource.DROIT_CONSTATE
+  transactionSource: TransactionSource
 }

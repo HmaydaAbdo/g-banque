@@ -122,6 +122,7 @@
   [style]="{ width: '40vw' }"
   [draggable]="false"
   [resizable]="false"
+  [closable]="!isSubmitting"
 >
   <ng-container *ngIf="selectedPrefinancement">
     <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
@@ -219,7 +220,8 @@
           label="Valider"
           icon="pi pi-check"
           type="submit"
-          [disabled]="rapprochementForm.invalid"
+          [disabled]="rapprochementForm.invalid || isSubmitting"
+          [loading]="isSubmitting"
         ></p-button>
       </div>
     </form>

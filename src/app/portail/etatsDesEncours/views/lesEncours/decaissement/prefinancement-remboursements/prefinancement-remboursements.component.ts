@@ -78,6 +78,8 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
     { label: '20%', value: 20 },
   ];
 
+  isSubmitting: boolean = false;
+
   constructor(
     private prefinancementService: PrefinancementService,
     private messageService: MessageService,
@@ -194,6 +196,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
 
     };
 
+    this.isSubmitting = true;
     this.rapprochementService.prefinancementToRapprochement(prefinancementTransactionRequest)
       .subscribe({
         next: () => {
@@ -202,6 +205,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
             summary: 'Succès',
             detail: 'Préfinancement validé et rapproché avec succès.',
           });
+          this.isSubmitting = false;
           this.dt?.reset();
           this.displayModal = false;
         },
@@ -212,6 +216,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
             summary: 'Erreur',
             detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
           });
+          this.isSubmitting = false;
         },
       });
   }

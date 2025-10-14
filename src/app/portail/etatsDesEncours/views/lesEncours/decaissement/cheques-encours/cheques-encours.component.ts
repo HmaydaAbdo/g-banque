@@ -80,6 +80,7 @@ export class ChequesEncoursComponent implements OnInit {
     { label: '20%', value: 20 }
   ];
 
+  isSubmitting: boolean = false;
 
   constructor(
     private chequeService: ChequeService,
@@ -143,7 +144,8 @@ export class ChequesEncoursComponent implements OnInit {
   }
 
   submitRapprochement(): void {
-    if (this.rapprochementForm.invalid) {
+
+   if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
@@ -167,6 +169,8 @@ export class ChequesEncoursComponent implements OnInit {
         libelle:donneesComplementaires.libelle
       };
 
+      this.isSubmitting = true;
+
       this.rapprochementService.chequeToRapprochement(chequeTransactionRequest)
         .subscribe({
           next: (response) => {
@@ -176,6 +180,7 @@ export class ChequesEncoursComponent implements OnInit {
               summary: 'Succès',
               detail: 'Chèque rapproché avec succès.'
             });
+            this.isSubmitting = false;
             this.loadOutstandingCheques();
             this.displayModal = false;
           },
@@ -186,6 +191,7 @@ export class ChequesEncoursComponent implements OnInit {
               summary: 'Erreur',
               detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
             });
+            this.isSubmitting = false;
           }
         });
     }

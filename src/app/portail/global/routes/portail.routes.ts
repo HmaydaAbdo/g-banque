@@ -13,8 +13,8 @@ import {EvolTauxPlafondComponent} from "../../tableau-de-bord/views/evol-taux-pl
 import {SoldeParBanqueComponent} from "../../tableau-de-bord/views/solde-par-banque/solde-par-banque.component";
 import {TresorerieGlobaleComponent} from "../../tableau-de-bord/views/tresorerie-globale/tresorerie-globale.component";
 import {LesEncoursComponent} from "../../etatsDesEncours/views/parent-componant/les-encours/les-encours.component";
-import {EcheancesLeasingComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/leasing/views/echeances-leasing/echeances-leasing.component";
-import {EcheancesCmtComponent}from "../../etatsDesEncours/views/lesEncours/decaissement/cmt/views/echeances-cmt/echeances-cmt.component";
+import {EcheancesLeasingComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/echeances-leasing/echeances-leasing.component";
+import {EcheancesCmtComponent}from "../../etatsDesEncours/views/lesEncours/decaissement/echeances-cmt/echeances-cmt.component";
 import {ChequesEncoursComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/cheques-encours/cheques-encours.component";
 import {LcnEncoursComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/lcn-encours/lcn-encours.component";
 import {VirementEncoursComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/virement-encours/virement-encours.component";
@@ -57,6 +57,20 @@ import {CommissionListComponent} from "../../commission/views/CommissionListComp
 import {
   EncoursCommissionsComponent
 } from "../../etatsDesEncours/views/lesEncours/decaissement/commission/encours-commissions.component";
+import {CommissionFormComponent} from "../../commission/views/commission-form/commission-form.component";
+import {AgiosListComponent} from "../../agios/views/agios-list/agios-list.component";
+import {AgiosFormComponent} from "../../agios/views/agios-form/agios.form.component";
+import {FraisBancaireListComponent} from "../../frais-bancaire/views/frais-bancaire-list/frais-bancaire-list.component";
+import {FraisBancaireFormComponent} from "../../frais-bancaire/views/frais-bancaire-form/frais-bancaire-form.component";
+import {InteretListComponent} from "../../interest/views/interest-list/interet-list.component";
+import {InteretFormComponent} from "../../interest/views/interest-form/interet-form.component";
+import {EncoursAgiosComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/agios/encours-agios.component";
+import {
+  EncoursInteretComponent
+} from "../../etatsDesEncours/views/lesEncours/decaissement/interet/encours-interet.component";
+import {
+  EncoursFraisBancaireComponent
+} from "../../etatsDesEncours/views/lesEncours/decaissement/frais-bancaire/encours-fraisBancaire.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -139,10 +153,32 @@ export const PORTAIL_ROUTES: Routes = [
       {path:"decomptes",component:DecomptesComponent},
 
       {path:"commissions",component:EncoursCommissionsComponent},
+      {path:"agios",component:EncoursAgiosComponent},
+      {path:"interests",component:EncoursInteretComponent},
+      {path:"fraisBancaire",component:EncoursFraisBancaireComponent},
     ]
   },
 
   { path: 'commissions', component: CommissionListComponent },
+  {path:"commissions/new",component:CommissionFormComponent},
+  {path:"commissions/edit/:id",component:CommissionFormComponent},
+
+  { path: 'agios', component: AgiosListComponent },
+  {path:"agios/new",component:AgiosFormComponent},
+  {path:"agios/edit/:id",component:AgiosFormComponent},
+
+  { path: 'frais-bancaire', component:  FraisBancaireListComponent},
+  {path:"frais-bancaire/new",component:FraisBancaireFormComponent},
+  {path:"frais-bancaire/edit/:id",component:FraisBancaireFormComponent},
+
+  { path: 'frais-bancaire', component:  FraisBancaireListComponent},
+  {path:"frais-bancaire/new",component:FraisBancaireFormComponent},
+  {path:"frais-bancaire/edit/:id",component:FraisBancaireFormComponent},
+
+  { path: 'interets', component:  InteretListComponent},
+  {path:"interets/new",component:InteretFormComponent},
+  {path:"interets/edit/:id",component:InteretFormComponent},
+
   { path: 'etats-des-encours',component:SelectBanquePourLEncoursComponent},
   {path:"historique-des-transactions",component:TransactionHistoryComponent},
 

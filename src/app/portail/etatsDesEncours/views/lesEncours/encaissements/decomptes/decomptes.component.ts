@@ -71,6 +71,8 @@ export class DecomptesComponent implements OnInit, OnDestroy {
   rapprochementForm!: FormGroup;
   selectedDecompte: DecompteResponseDto | null = null;
 
+  isSubmitting: boolean = false;
+
   constructor(
     private decompteService: DecompteService,
     private messageService: MessageService,
@@ -163,6 +165,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
    * Handles the form submission to send the rapprochement request.
    */
   submitRapprochement(): void {
+
     if (this.rapprochementForm.invalid || !this.selectedDecompte) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -185,6 +188,8 @@ export class DecomptesComponent implements OnInit, OnDestroy {
       observation:this.rapprochementForm.value.observation
     };
 
+    this.isSubmitting = true;
+
     this.rapprochementService.decompteToRapprochement(decompteTransactionRequest)
       .subscribe({
         next: (response) => {
@@ -193,6 +198,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
             summary: 'Succès',
             detail: 'décompte  validée et rapprochée avec succès.',
           });
+          this.isSubmitting = false;
           this.loadEncoursDecomptes();
           this.displayModal = false;
         },
@@ -203,6 +209,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
             summary: 'Erreur',
             detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
           });
+          this.isSubmitting = false;
         },
       });
   }

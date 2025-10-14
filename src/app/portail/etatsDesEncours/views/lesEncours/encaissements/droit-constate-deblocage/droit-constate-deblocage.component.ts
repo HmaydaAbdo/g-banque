@@ -5,9 +5,7 @@ import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {MessageService} from "primeng/api";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
-import {
-  DroitConstateTransactionRequest
-} from "../../../../rapprochement/dtos/droits_constate/DroitConstateTransactionRequest";
+import {DroitConstateTransactionRequest} from "../../../../rapprochement/dtos/droits_constate/DroitConstateTransactionRequest";
 import {DroitConstateResponseDto} from "../../../../../droitsConstate/dtos/DroitConstateResponseDto";
 import {DroitConstateService} from "../../../../../droitsConstate/service/DroitConstateService";
 import {EncoursDroitConstateDto} from "../../../../../droitsConstate/dtos/EncoursDroitConstateDto";
@@ -75,6 +73,8 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
     { label: '20%', value: 20 },
   ];
 
+  isSubmitting: boolean = false;
+
   constructor(
     private droitConstateService: DroitConstateService,
     private messageService: MessageService,
@@ -132,16 +132,6 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Clears the search form and reloads the table.
-   */
-  clearSearch(): void {
-    this.searchForm.reset();
-    if (this.dt) {
-      this.dt.first = 0;
-      this.loadEncoursDeblocages();
-    }
-  }
 
   /**
    * Initializes the reactive form for the rapprochement data.
@@ -176,6 +166,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
    * Handles the form submission to send the rapprochement request.
    */
   submitRapprochement(): void {
+
     if (this.rapprochementForm.invalid || !this.selectedDroitConstate) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -197,6 +188,8 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
       observation:this.rapprochementForm.value.observation
     };
 
+    this.isSubmitting = true;
+
     this.rapprochementService.droitConstateToRapprochement(droitConstateTransactionRequest)
       .subscribe({
         next: (response) => {
@@ -205,6 +198,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
             summary: 'Succès',
             detail: 'Droit constaté validé et rapproché avec succès.',
           });
+          this.isSubmitting = false;
           this.dt?.reset();
           this.displayModal = false;
         },
@@ -215,6 +209,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
             summary: 'Erreur',
             detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
           });
+          this.isSubmitting = false;
         },
       });
   }

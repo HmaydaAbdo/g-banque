@@ -12,8 +12,9 @@ import { MessageService } from 'primeng/api';
   styleUrl: './app.component.scss',
   providers: [MessageService]
 })
-export class AppComponent   {
+export class AppComponent  {
 
   title = 'Gbanque';
+
 
 }

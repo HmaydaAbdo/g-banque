@@ -11,14 +11,11 @@ import {MessageService} from 'primeng/api';
 import {RippleModule} from 'primeng/ripple';
 import {VirementResponseDto} from "../../../../../Virements/dtos/VirementResponseDto";
 import {VirementService} from "../../../../../Virements/service/VirementService";
-
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
 import {VirementTransactionRequestDto} from "../../../../rapprochement/dtos/virements/VirementTransactionRequestDto";
-import {
-  DonneesComplementairesRapprochementDTO
-} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+import {DonneesComplementairesRapprochementDTO} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {DividerModule} from "primeng/divider";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {CalendarModule} from "primeng/calendar";
@@ -82,6 +79,7 @@ export class VirementEncoursComponent implements OnInit {
     { label: '20%', value: 20 }
   ];
 
+  isSubmitting: boolean = false;
 
   constructor(
     private virementService: VirementService,
@@ -148,6 +146,7 @@ export class VirementEncoursComponent implements OnInit {
   }
 
   submitRapprochement(): void {
+
     if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -172,6 +171,7 @@ export class VirementEncoursComponent implements OnInit {
         libelle:donneesComplementaires.libelle,
       };
 
+      this.isSubmitting = true;
       this.rapprochementService.virementToRapprochement(virementTransactionRequest)
         .subscribe({
           next: (response) => {
@@ -181,6 +181,7 @@ export class VirementEncoursComponent implements OnInit {
               summary: 'Succès',
               detail: 'Virement rapproché avec succès.'
             });
+            this.isSubmitting = false;
             this.loadOutstandingVirements();
             this.displayModal = false;
           },
@@ -191,6 +192,7 @@ export class VirementEncoursComponent implements OnInit {
               summary: 'Erreur',
               detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
             });
+            this.isSubmitting = false;
           }
         });
     }

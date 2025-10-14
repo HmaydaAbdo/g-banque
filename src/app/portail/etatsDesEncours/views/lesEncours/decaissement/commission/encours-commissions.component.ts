@@ -74,6 +74,8 @@ export class EncoursCommissionsComponent implements OnInit {
     { label: '20%', value: 20 }
   ];
 
+  isSubmitting: boolean = false;
+
   constructor(
     private commissionService: CommissionService,
     private messageService: MessageService,
@@ -201,6 +203,7 @@ export class EncoursCommissionsComponent implements OnInit {
       tva:this.rapprochementForm.value.tvaDeductible
     };
 
+    this.isSubmitting = true;
     this.rapprochementService.commissionToRapprochement(request).subscribe({
       next: () => {
         this.messageService.add({
@@ -208,6 +211,7 @@ export class EncoursCommissionsComponent implements OnInit {
           summary: 'Succès',
           detail: 'Commission validée avec succès.',
         });
+        this.isSubmitting = false;
         this.displayModal = false;
         this.table.reset(); // recharge ton tableau existant
       },
@@ -217,6 +221,7 @@ export class EncoursCommissionsComponent implements OnInit {
           summary: 'Erreur',
           detail: 'Une erreur est survenue.',
         });
+        this.isSubmitting = false;
       },
     });
   }

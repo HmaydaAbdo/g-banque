@@ -83,6 +83,8 @@ export class LcnEncoursComponent implements OnInit {
     { label: '20%', value: 20 }
   ];
 
+  isSubmitting: boolean = false;
+
 
   constructor(
     private lcnService: LcnService,
@@ -148,6 +150,7 @@ export class LcnEncoursComponent implements OnInit {
   }
 
   submitRapprochement(): void {
+
     if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -172,6 +175,8 @@ export class LcnEncoursComponent implements OnInit {
         libelle:donneesComplementaires.libelle
       };
 
+      this.isSubmitting = true;
+
       this.rapprochementService.lcnToRapprochement(lcnTransactionRequest)
         .subscribe({
           next: (response) => {
@@ -181,6 +186,7 @@ export class LcnEncoursComponent implements OnInit {
               summary: 'Succès',
               detail: 'LCN rapproché avec succès.'
             });
+            this.isSubmitting = false;
             this.loadOutstandingLcns();
             this.displayModal = false;
           },
@@ -191,6 +197,7 @@ export class LcnEncoursComponent implements OnInit {
               summary: 'Erreur',
               detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
             });
+            this.isSubmitting = false;
           }
         });
     }

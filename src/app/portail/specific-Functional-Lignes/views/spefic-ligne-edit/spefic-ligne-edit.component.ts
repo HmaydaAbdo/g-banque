@@ -142,17 +142,28 @@ export class SpeficLigneEditComponent implements OnInit {
   loadNatureLigneOptionsForDropdown(): void {
     this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().subscribe({
       next: (natures) => {
-        this.natureLigneOptions = natures.map(nature => ({
+
+        const naturesFiltrees = natures.filter(nature =>
+          ['Préfinancement', 'Droit constaté', 'Factoring'].includes(nature.label)
+        );
+
+        this.natureLigneOptions = naturesFiltrees.map(nature => ({
           label: nature.label,
           value: nature.id!
         }));
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des natures de ligne.', life: 3000 });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement des natures de ligne.',
+          life: 3000
+        });
         console.error('Error loading natures:', err);
       }
     });
   }
+
 
   loadMarchesForDropdown(event: { first: number, last: number, filter?: string }): void {
     this.loading = true;

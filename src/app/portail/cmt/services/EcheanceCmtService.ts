@@ -6,8 +6,8 @@ import {environment} from "../../../../environments/environment";
 import {EcheanceCMTResponseDto} from "../dtos/EcheanceCMTResponseDto";
 import {TableauAmortissementCMTResponseDto} from "../dtos/TableauAmortissementCMTResponseDto";
 import {EcheanceCMTSearchDto} from "../dtos/EcheanceCMTSearchDto";
-import {EncoursCMTRequestDTO} from "../../etatsDesEncours/views/lesEncours/decaissement/cmt/dtos/EncoursCMTRequestDTO";
-import {EncoursCMTResponseDTO} from "../../etatsDesEncours/views/lesEncours/decaissement/cmt/dtos/EncoursCMTResponseDTO";
+import {EncoursCMTRequestDTO} from "../dtos/EncoursCMTRequestDTO";
+import {EncoursCMTResponseDTO} from "../dtos/EncoursCMTResponseDTO";
 
 
 @Injectable({

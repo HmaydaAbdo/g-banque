@@ -20,7 +20,7 @@ import { filter } from 'rxjs/operators';
     BreadcrumbModule
   ],
   templateUrl: './les-encours.component.html',
-  styleUrl: './les-encours.component.scss'
+  styleUrls: ['./les-encours.component.scss']
 })
 export class LesEncoursComponent implements OnInit {
 
@@ -30,6 +30,7 @@ export class LesEncoursComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
+  /** Mapping entre les routes et les labels/icônes pour le fil d’Ariane **/
   private breadcrumbMap: { [key: string]: { label: string, icon: string } } = {
     // Par défaut
     'rapprochement': { label: 'Rapprochement des encours', icon: 'pi pi-sync' },
@@ -44,6 +45,10 @@ export class LesEncoursComponent implements OnInit {
     'mise-a-disposition': { label: 'Décaissements ⇒ Mise à disposition', icon: 'pi pi-list' },
     'prefinancement-remboursement': { label: 'Décaissements ⇒ Préfinancement (Remboursement)', icon: 'pi pi-list' },
     'dc-remboursement': { label: 'Décaissements ⇒ Droits Constatés (Remboursement)', icon: 'pi pi-list' },
+    'commissions': { label: 'Décaissements ⇒ Commissions', icon: 'pi pi-list' },
+    'agios': { label: 'Décaissements ⇒ Agios', icon: 'pi pi-list' },
+    'interests': { label: 'Décaissements ⇒ Intérêts', icon: 'pi pi-list' },
+    'fraisBancaire': { label: 'Décaissements ⇒ Frais Bancaires', icon: 'pi pi-list' },
 
     // Encaissements
     'recap-encaissement': { label: 'Récap Encaissements', icon: 'pi pi-briefcase' },
@@ -51,29 +56,29 @@ export class LesEncoursComponent implements OnInit {
     'dc-deblocage': { label: 'Encaissements ⇒ Droits Constatés (Déblocage)', icon: 'pi pi-list' },
     'decomptes': { label: 'Encaissements ⇒ Décomptes', icon: 'pi pi-list' }
   };
+
   ngOnInit() {
+    // Initialisation du fil d’Ariane
     this.breadcrumbItems = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
       { icon: 'pi pi-list', route: '/portail/etats-des-encours', label: "Suivi des encours" },
       { icon: 'pi pi-sync', route: '', label: "Rapprochement des encours" } // par défaut
     ];
 
-    // Récupérer banqueId et mettre à jour le fil d'Ariane
-    // C'est ici que se trouve la correction principale.
+    // Récupération du banqueId et mise à jour du menu + breadcrumb
     this.route.paramMap.subscribe(params => {
       this.banqueId = params.get('banqueId');
       this.updateMenuItems();
-      // Appel de la méthode de mise à jour du fil d'Ariane ici pour garantir que le banqueId est disponible.
       this.updateBreadcrumb();
     });
 
-    // Mettre à jour le breadcrumb quand la route enfant change
-    // C'est nécessaire pour les navigations futures à l'intérieur du composant.
+    // Mise à jour du fil d’Ariane à chaque changement de route enfant
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => this.updateBreadcrumb());
   }
 
+  /** Met à jour le fil d’Ariane dynamiquement selon la route enfant **/
   updateBreadcrumb() {
     const child = this.route.firstChild?.snapshot;
     if (child?.routeConfig?.path && this.banqueId) {
@@ -89,6 +94,7 @@ export class LesEncoursComponent implements OnInit {
     }
   }
 
+  /** Initialise les éléments du menu latéral **/
   updateMenuItems() {
     this.items = [
       {
@@ -110,77 +116,36 @@ export class LesEncoursComponent implements OnInit {
         label: 'Décaissements',
         icon: 'pi pi-arrow-circle-left',
         items: [
-          {
-            label: 'Échéances leasing',
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-leasing']
-          },
-          {
-            label: 'Échéances CMT',
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-cmt']
-          },
-          {
-            label: 'Chèques',
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'cheques']
-          },
-          {
-            label: 'LCN',
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'lcn']
-          },
-          {
-            label: 'Virements',
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'virements']
-          },
-          {
-            label: 'Mise à disposition',
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'mise-a-disposition']
-          },
-          {
-            label: "Préfinancement",
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-remboursement']
-          },
-          {
-            label: "Droits Constatés",
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-remboursement']
-          },
-          {label: "Commissions", icon: "pi pi-list", routerLink: ["/portail/etats-des-encours", this.banqueId, "commissions"]},
+          { label: 'Échéances leasing', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-leasing'] },
+          { label: 'Échéances CMT', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-cmt'] },
+          { label: 'Chèques', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'cheques'] },
+          { label: 'LCN', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'lcn'] },
+          { label: 'Virements', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'virements'] },
+          { label: 'Mise à disposition', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'mise-a-disposition'] },
+          { label: 'Préfinancement', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-remboursement'] },
+          { label: 'Droits Constatés', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-remboursement'] },
+          { label: 'Commissions', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'commissions'] },
+          { label: 'Agios', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'agios'] },
+          { label: 'Intérêts', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'interests'] },
+          { label: 'Frais Bancaire', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'fraisBancaire'] },
         ]
       },
       {
         label: 'Encaissements',
         icon: 'pi pi-arrow-circle-right',
         items: [
-          {
-            label: "Préfinancement",
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-deblocage']
-          },
-          {
-            label: "Droits Constatés",
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-deblocage']
-          },
-          {
-            label: "Décomptes",
-            icon: 'pi pi-list',
-            routerLink: ['/portail/etats-des-encours', this.banqueId, 'decomptes']
-          }
+          { label: 'Préfinancement', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-deblocage'] },
+          { label: 'Droits Constatés', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-deblocage'] },
+          { label: 'Décomptes', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'decomptes'] }
         ]
       }
     ];
   }
 
+  /** Ouvre ou ferme les sous-menus **/
   toggleMenuItem(item: MenuItem): void {
     if (item.items) {
       item.expanded = !item.expanded;
     }
   }
-
 }

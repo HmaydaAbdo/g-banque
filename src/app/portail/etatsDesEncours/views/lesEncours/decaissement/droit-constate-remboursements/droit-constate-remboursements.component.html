@@ -120,6 +120,7 @@
   [(visible)]="displayModal"
   [modal]="true"
   [style]="{ width: '40vw' }"
+  [closable]="!isSubmitting"
   [draggable]="false"
   [resizable]="false"
 >
@@ -221,7 +222,8 @@
           label="Valider"
           icon="pi pi-check"
           type="submit"
-          [disabled]="rapprochementForm.invalid"
+          [disabled]="rapprochementForm.invalid || isSubmitting"
+          [loading]="isSubmitting"
         ></p-button>
       </div>
     </form>

@@ -1,23 +1,17 @@
   import { Injectable } from '@angular/core';
   import {LeasingTransactionRequest} from "../../dtos/leasing/LeasingTransactionRequest";
-  import {HttpClient, HttpParams} from "@angular/common/http";
+  import {HttpClient} from "@angular/common/http";
   import {environment} from "../../../../../../environments/environment";
   import {Observable} from "rxjs";
   import {LeasingTransactionResponse} from "../../dtos/leasing/LeasingTransactionResponse";
   import {CmtTransactionRequest} from "../../dtos/cmt/CmtTransactionRequest";
   import {CmtTransactionResponseDto} from "../../dtos/cmt/CmtTransactionResponseDto";
-  import {PageResponse} from "../../../../global/types/PageResponse";
-  import {TransactionResponseDto} from "../../dtos/transactions/TransactionResponseDto";
   import {ChequeTransactionRequest} from "../../dtos/cheques/ChequeTransactionRequest";
   import {ChequeTransactionResponseDto} from "../../dtos/cheques/ChequeTransactionResponseDto";
   import {LcnTransactionRequest} from "../../dtos/lcn/LcnTransactionRequest";
   import {LcnTransactionResponse} from "../../dtos/lcn/LcnTransactionResponse";
-  import {
-    MiseAdispositionTransactionRequestDto
-  } from "../../dtos/mise_a_disposition/MiseAdispositionTransactionRequestDto";
-  import {
-    MiseAdispositionTransactionResponseDto
-  } from "../../dtos/mise_a_disposition/MiseAdispositionTransactionResponseDto";
+  import {MiseAdispositionTransactionRequestDto} from "../../dtos/mise_a_disposition/MiseAdispositionTransactionRequestDto";
+  import {MiseAdispositionTransactionResponseDto} from "../../dtos/mise_a_disposition/MiseAdispositionTransactionResponseDto";
   import {VirementTransactionRequestDto} from "../../dtos/virements/VirementTransactionRequestDto";
   import {VirementTransactionResponseDto} from "../../dtos/virements/VirementTransactionResponseDto";
   import {PrefinancementTransactionRequest} from "../../dtos/prefinancement/PrefinancementTransactionRequest";
@@ -28,6 +22,12 @@
   import {DecompteTransactionResponseDto} from "../../dtos/decomptes/DecompteTransactionResponseDto";
   import {CommissionValidationDto} from "../../dtos/commission/CommissionValidationDto";
   import {CommissionTransactionResponse} from "../../dtos/commission/CommissionTransactionResponse";
+  import {AgiosValidationRequest} from "../../dtos/agios/agios-validation-request.dto";
+  import {AgiosTransactionResponse} from "../../dtos/agios/AgiosTransactionResponse";
+  import {InteretValidationRequest} from "../../dtos/interets/interet-validation-request.dto";
+  import {InteretTransactionResponse} from "../../dtos/interets/interet-transaction-response.dto";
+  import {FraisBancaireValidationRequest} from "../../dtos/frais-bancaire/frais-bancaire-validation-request.dto";
+  import {FraisBancaireTransactionResponse} from "../../dtos/frais-bancaire/frais-bancaire-transaction-response.dto";
 
   @Injectable({
     providedIn: 'root'
@@ -126,12 +126,32 @@
       );
     }
 
-    commissionToRapprochement(
-      commission: CommissionValidationDto
-    ): Observable<CommissionTransactionResponse> {
+    commissionToRapprochement(commission: CommissionValidationDto): Observable<CommissionTransactionResponse> {
       return this.http.post<CommissionTransactionResponse>(
         `${this.baseUrl}/process/commission`,
         commission
+      );
+    }
+
+    agiosToRapprochement(agios: AgiosValidationRequest): Observable<AgiosTransactionResponse> {
+      return this.http.post<AgiosTransactionResponse>(
+        `${this.baseUrl}/process/agios`,
+        agios
+      );
+    }
+
+    interetToRapprochement(interet: InteretValidationRequest): Observable<InteretTransactionResponse> {
+      return this.http.post<InteretTransactionResponse>(
+        `${this.baseUrl}/process/interet`,
+        interet
+      );
+    }
+
+
+    fraisBancaireToRapprochement(fraisBancaire: FraisBancaireValidationRequest): Observable<FraisBancaireTransactionResponse> {
+      return this.http.post<FraisBancaireTransactionResponse>(
+        `${this.baseUrl}/process/frais-bancaire`,
+        fraisBancaire
       );
     }
 

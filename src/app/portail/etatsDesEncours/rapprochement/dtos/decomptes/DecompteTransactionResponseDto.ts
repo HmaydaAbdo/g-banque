@@ -13,5 +13,5 @@ export interface DecompteTransactionResponseDto {
   dateOperations: Date;
   debit: Decimal;
   credit: Decimal;
-  transactionSource: TransactionSource.DECOMPTES
+  transactionSource: TransactionSource
 }

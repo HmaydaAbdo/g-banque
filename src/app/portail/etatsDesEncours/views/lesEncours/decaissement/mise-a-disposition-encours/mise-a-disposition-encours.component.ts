@@ -82,6 +82,8 @@ export class MiseADispositionEncoursComponent implements OnInit {
     { label: '20%', value: 20 }
   ];
 
+  isSubmitting: boolean = false;
+
 
   constructor(
     private miseADispositionService: MiseADispositionService,
@@ -171,6 +173,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
         libelle: donneesComplementaires.libelle,
       };
 
+      this.isSubmitting = true;
       this.rapprochementService.miseAdispoToRapprochement(miseADispositionTransactionRequest)
         .subscribe({
           next: (response) => {
@@ -180,6 +183,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
               summary: 'Succès',
               detail: 'Mise à disposition rapprochée avec succès.'
             });
+            this.isSubmitting = false;
             this.loadOutstandingMisesADisposition();
             this.displayModal = false;
           },
@@ -190,6 +194,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
               summary: 'Erreur',
               detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
             });
+            this.isSubmitting = false;
           }
         });
     }

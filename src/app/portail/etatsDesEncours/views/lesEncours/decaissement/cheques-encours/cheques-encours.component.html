@@ -113,8 +113,10 @@
 </div>
 
 
-<p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayModal" [modal]="true" [style]="{width: '50vw'}"
-          [draggable]="false" [resizable]="false">
+<p-dialog header="Passage au rapprochement bancaire"
+          [(visible)]="displayModal" [modal]="true"
+          [style]="{width: '50vw'}" [draggable]="false"
+          [resizable]="false"  [closable]="!isSubmitting"   >
   <ng-container *ngIf="selectedCheque">
     <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
       <div class="grid p-fluid mt-3">
@@ -186,7 +188,10 @@
       <p-divider></p-divider>
       <div class="flex justify-content-end gap-2">
         <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="displayModal = false"></p-button>
-        <p-button label="Valider" icon="pi pi-check" type="submit" [disabled]="rapprochementForm.invalid"></p-button>
+        <p-button label="Valider" icon="pi pi-check" type="submit"
+                  [disabled]="rapprochementForm.invalid || isSubmitting"
+                  [loading]="isSubmitting"
+        ></p-button>
       </div>
     </form>
   </ng-container>

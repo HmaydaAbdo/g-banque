@@ -6,8 +6,8 @@ import { environment } from "../../../../../environments/environment";
 import { EcheanceLeasingResponse } from "../dtos/EcheanceLeasingResponse";
 import { TableauAmortissement } from "../dtos/table-amortissement";
 import { EcheanceLeasingSearchDTO } from "../dtos/echeance-leasing-search";
-import {EncoursLeasingRequestDTO} from "../../../etatsDesEncours/views/lesEncours/decaissement/leasing/dtos/encours-leasing-request.dto";
-import {EncoursLeasingResponseDTO} from "../../../etatsDesEncours/views/lesEncours/decaissement/leasing/dtos/encours-leasing-response.dto";
+import {EncoursLeasingRequestDTO} from "../dtos/encours-leasing-request.dto";
+import {EncoursLeasingResponseDTO} from "../dtos/encours-leasing-response.dto";
 
 
 @Injectable({

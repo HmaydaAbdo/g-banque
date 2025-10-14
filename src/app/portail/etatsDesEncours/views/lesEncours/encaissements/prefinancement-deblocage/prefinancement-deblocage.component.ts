@@ -75,6 +75,8 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
     { label: '20%', value: 20 },
   ];
 
+  isSubmitting: boolean = false;
+
   constructor(
     private prefinancementService: PrefinancementService,
     private messageService: MessageService,
@@ -184,6 +186,8 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
       observation:this.rapprochementForm.value.observation,
     };
 
+    this.isSubmitting = true;
+
     this.rapprochementService.prefinancementToRapprochement(prefinancementTransactionRequest)
       .subscribe({
         next: () => {
@@ -192,6 +196,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
             summary: 'Succès',
             detail: 'Préfinancement validé et rapproché avec succès.',
           });
+          this.isSubmitting = false;
           this.loadEncoursDeblocages();
           this.displayModal = false;
         },
@@ -202,6 +207,8 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
             summary: 'Erreur',
             detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
           });
+          this.isSubmitting = false;
+
         },
       });
   }

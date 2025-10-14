@@ -75,6 +75,9 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
     { label: '20%', value: 20 },
   ];
 
+  isSubmitting: boolean = false;
+
+
   constructor(
     private droitConstateService: DroitConstateService,
     private messageService: MessageService,
@@ -177,6 +180,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.isSubmitting = true;
     const dcTransactionRequest: DroitConstateTransactionRequest = {
       droitConstateId: this.selectedDroitConstate.id,
       banqueId: this.selectedDroitConstate.banqueId,
@@ -197,6 +201,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
             detail: 'Droit constaté validé et rapproché avec succès.',
           });
           this.dt?.reset();
+          this.isSubmitting = false;
           this.displayModal = false;
         },
         error: (error) => {
@@ -206,6 +211,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
             summary: 'Erreur',
             detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
           });
+          this.isSubmitting = false;
         },
       });
   }

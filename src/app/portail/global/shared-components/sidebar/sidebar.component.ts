@@ -78,6 +78,8 @@ export class SidebarComponent implements OnInit {
         { label: 'Les Contras encours', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/encours' },
         { label: 'Les Contras en attente de main levées ', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/en-attente-de-ML' },
         { label: 'Les Contras archivés', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/archives' },
+        { label: 'Les organismes leasing', icon: 'pi pi-list', routerLink: '/portail/leasing/organismesLeasing' },
+
       ]
     },
     {
@@ -115,6 +117,9 @@ export class SidebarComponent implements OnInit {
         {label: "Les décomptes",icon: "pi pi-list",routerLink: "/portail/decomptes"},
       ]},
     {label:"Les Commissions",icon:"pi pi-list",routerLink: '/portail/commissions'},
+    {label:"Les Agios",icon:"pi pi-list",routerLink: '/portail/agios'},
+    {label:"Les Frais bancaire",icon:"pi pi-list",routerLink: '/portail/frais-bancaire'},
+    {label:"Les Intérêts ",icon:"pi pi-list",routerLink: '/portail/interets'},
     {label:"Historique des transactions",routerLink:"/portail/historique-des-transactions",icon:"pi pi-history"},
     {
       label: 'Paramètres',

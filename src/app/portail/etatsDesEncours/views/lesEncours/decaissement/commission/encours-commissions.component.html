@@ -103,6 +103,7 @@
   header="Valider la commission"
   [(visible)]="displayModal"
   [modal]="true"
+  [closable]="!isSubmitting"
   [style]="{ width: '40vw' }"
 >
   <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
@@ -151,8 +152,6 @@
           </small>
         </div>
 
-
-
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
              <textarea id="libelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
@@ -186,7 +185,8 @@
         label="Valider"
         icon="pi pi-check"
         type="submit"
-        [disabled]="rapprochementForm.invalid"
+        [disabled]="rapprochementForm.invalid || isSubmitting"
+        [loading]="isSubmitting"
       ></p-button>
     </div>
   </form>

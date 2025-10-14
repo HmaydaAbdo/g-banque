@@ -12,5 +12,5 @@ export interface PrefinancementTransactionResponse {
   dateOperations: Date;
   debit: Decimal;
   credit: Decimal;
-  transactionSource: TransactionSource.PREFINANCEMENT
+  transactionSource: TransactionSource
 }

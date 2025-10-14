@@ -1,0 +1,93 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
+  <div class="portail-section flex justify-content-center align-items-center">
+    <div class="flex justify-content-center w-full">
+      <p-breadcrumb [model]="items">
+        <ng-template pTemplate="item" let-item>
+          <ng-container>
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            </a>
+          </ng-container>
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+  </div>
+
+  <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto mt-4">
+    <div class="card-header text-center mb-4">
+      <h2 class="text-2xl font-bold">{{ isEditMode ? 'Modifier l\'Agio' : 'Ajouter un Nouvel Agio' }}</h2>
+    </div>
+
+    <form [formGroup]="agiosForm" (ngSubmit)="onSubmit()">
+      <div class="p-fluid grid formgrid">
+
+        <div class="field col-12 md:col-6">
+          <label>Banque</label>
+          <p-dropdown
+            formControlName="banqueId"
+            [options]="banquesOptions"
+            optionLabel="nom"
+            optionValue="id"
+            placeholder="Sélectionner une banque"
+            [showClear]="true"
+            [virtualScroll]="true"
+            [lazy]="true"
+            [virtualScrollItemSize]="38"
+            (onLazyLoad)="loadBanques($event)"
+            [ngClass]="{'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched}"
+          ></p-dropdown>
+        </div>
+
+
+        <div class="field col-12 md:col-6">
+          <label>Montant (MAD)</label>
+          <p-inputNumber
+            formControlName="montant"
+            mode="decimal"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            [ngClass]="{'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched}"
+          ></p-inputNumber>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label>Date d'émission</label>
+          <p-calendar
+            formControlName="dateEmission"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            [showButtonBar]="true"
+            appendTo="body"
+            [ngClass]="{'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched}"
+          ></p-calendar>
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label>Libellé</label>
+          <input pInputText formControlName="libelle" [ngClass]="{'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched}" />
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label>Observation</label>
+          <input pInputText formControlName="observation" [ngClass]="{'ng-invalid ng-dirty': f['observation'].invalid && f['observation'].touched}" />
+        </div>
+
+        <div class="col-12 mt-4 flex flex-row gap-2">
+          <button pButton pRipple label="Annuler" icon="pi pi-times" type="button" class="p-button-secondary" (click)="onCancel()"></button>
+          <button
+            pButton pRipple
+            [label]="isEditMode ? 'Modifier' : 'Créer'"
+            [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+            type="submit"
+            class="p-button-success"
+            [disabled]="agiosForm.invalid || loading"
+          ></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
