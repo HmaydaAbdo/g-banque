@@ -31,7 +31,7 @@ public class Commission {
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperation;
 
-    @Column(nullable = false, length = 150)
+    @Column( length = 150)
     private String libelle;
     @Column(length = 500)
     private String observation;

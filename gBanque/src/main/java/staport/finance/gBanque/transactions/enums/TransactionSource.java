@@ -11,4 +11,7 @@ public enum TransactionSource {
     DROIT_CONSTATE,
     DECOMPTES,
     COMMISSION,
+    AGIOS,
+    FRAIS_BANCAIRE,
+    INTERETS
 }

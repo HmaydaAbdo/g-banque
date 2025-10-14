@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "CHEQUES") // Good practice to use plural for table names
+@Table(name = "CHEQUES")
 public class Cheque {
 
     @Id // 'numero' is the primary key
@@ -38,6 +38,9 @@ public class Cheque {
 
     @Column(name = "active", nullable = false)
     private boolean active;
+
+    private String libelle;
+    private String observation;
 
     // --- Constructors ---
     public Cheque() {
@@ -124,6 +127,22 @@ public class Cheque {
 
     public void setDateValeur(OffsetDateTime dateValeur) {
         this.dateValeur = dateValeur;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
     }
 
     // --- Utility Methods (Recommended for Entities) ---

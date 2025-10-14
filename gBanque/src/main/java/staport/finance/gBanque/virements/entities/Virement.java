@@ -39,6 +39,9 @@ public class Virement {
     @Column(name = "active", nullable = false)
     private boolean active;
 
+    private String observation;
+    private String libelle;
+
     public Virement() {}
 
     public Virement(String numero, OffsetDateTime dateEmission, String beneficiaire,
@@ -86,6 +89,22 @@ public class Virement {
     }
     public void setDateValeur(OffsetDateTime dateValeur) {
         this.dateValeur = dateValeur;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 
     @Override

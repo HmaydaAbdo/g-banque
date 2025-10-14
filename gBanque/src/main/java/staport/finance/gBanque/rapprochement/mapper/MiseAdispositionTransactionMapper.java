@@ -6,6 +6,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.rapprochement.dtos.miseAdispo.MiseAdispositionTransactionRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.miseAdispo.MiseAdispositionTransactionResponseDto;
+import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -54,19 +55,8 @@ public class MiseAdispositionTransactionMapper {
 
         BigDecimal ttc = miseADispo.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
-
-        // HT = TTC / (1 + taux/100)
-        BigDecimal ht = ttc
-                .divide(BigDecimal.ONE.add(tauxTva.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)),
-                        2, RoundingMode.HALF_UP)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        // TVA = TTC - HT
-        BigDecimal montantTva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-
+        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
-
-
 
         // Mapping traces
         try {

@@ -27,7 +27,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import staport.finance.gBanque.security.services.UserDetailsServiceImpl;
 import javax.crypto.spec.SecretKeySpec;
-
+import java.util.List;
 
 
 @Configuration
@@ -99,7 +99,7 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration corsConfiguration=new CorsConfiguration();
-        corsConfiguration.addAllowedOrigin("http://localhost:4200");
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:4200","http://192.168.1.34:4200"));
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.setAllowCredentials(true);

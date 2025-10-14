@@ -7,6 +7,7 @@ import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.rapprochement.dtos.cmt.CmtTransactionRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.cmt.CmtTransactionResponseDto;
+import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
@@ -56,13 +57,11 @@ public class CmtTransactionMapper {
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(creditMoyenTerme.getBanque());
 
-
         BigDecimal ttc = echeanceCMT.getMontant();
-        BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTvaDeductible()); // en %
-        BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
+        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
+        transaction.setTvaDeductible(montantTva);
 
-        BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-        transaction.setTvaDeductible(tva);
 
         // Mapping traces
         try {

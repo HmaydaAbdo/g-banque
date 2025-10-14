@@ -9,6 +9,7 @@ import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionR
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
 import staport.finance.gBanque.marches.entities.Marche;
+import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -58,22 +59,24 @@ public class DecompteTransactionMapper {
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
+
         transaction.setLibelle(requestDto.getLibelle());
-        transaction.setTransactionSource(TransactionSource.DECOMPTES);
-        transaction.setDateEmission(decompte.getDateEmission());
+        transaction.setObservation(requestDto.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
+        transaction.setTransactionSource(TransactionSource.DECOMPTES);
+
         transaction.setBanqueDePrelevement(banque);
         transaction.setDebit(BigDecimal.ZERO);
         transaction.setCredit(decompte.getMontant());
-        transaction.setObservation(requestDto.getObservation());
+
 
         BigDecimal ttc = decompte.getMontant();
-        BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-        BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
+        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
+        transaction.setTvaCollectee(montantTva);
 
-        BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-        transaction.setTvaCollectee(tva);
 
         // Mapping traces
         try {

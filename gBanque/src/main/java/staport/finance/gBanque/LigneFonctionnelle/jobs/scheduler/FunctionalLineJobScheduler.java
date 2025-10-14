@@ -29,22 +29,12 @@ public class FunctionalLineJobScheduler {
         this.functionalLineExpirationJob = functionalLineExpirationJob;
     }
 
-    // =========================================================================================
-    // 1. DEVELOPMENT Profile Schedule: Run every 5 minutes ⏱️
-    // Cron: "0 0/5 * * * ?" (At the 0th second of every 5th minute)
-    // =========================================================================================
-    @Profile("dev")
-    @Scheduled(cron = "0 0/5 * * * ?")
-    public void runFunctionalLineExpirationJobDev() {
-        log.info("Launching functionalLineExpirationJob (DEV profile) - Running Every 5 Minutes.");
-        runJobInternal();
-    }
+
 
     // =========================================================================================
-    // 2. STAGING/PRODUCTION Profile Schedule: Run every Sunday at 12:00 PM (as originally planned)
+    // Run every Sunday at 12:00 PM (as originally planned)
     // Cron: "0 0 12 ? * SUN"
     // =========================================================================================
-    @Profile({"!dev"}) // Run in 'stg', 'prod', OR when 'dev' is NOT active.
     @Scheduled(cron = "0 0 12 ? * SUN")
     public void runFunctionalLineExpirationJobStgProd() {
         log.info("Launching functionalLineExpirationJob (STG/PROD profile) - Running Every Sunday at 12:00 PM.");

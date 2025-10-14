@@ -4,10 +4,13 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Bank.enums.Devise;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
+import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.lcn.entities.Lcn;
@@ -94,6 +97,15 @@ public class Banque {
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Commission> commissions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<FraisBancaire> fraisBancaires = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<Interet> interets = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<Agios> agios = new ArrayList<>();
 
     @OneToMany(mappedBy = "banqueDePrelevement",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
@@ -222,6 +234,54 @@ public class Banque {
 
     public void removeCommission(Commission commission){
         this.commissions.remove(commission);
+    }
+
+    public List<FraisBancaire> getFraisBancaires() {
+        return fraisBancaires;
+    }
+
+    public void setFraisBancaires(List<FraisBancaire> fraisBancaires) {
+        this.fraisBancaires = fraisBancaires;
+    }
+
+    public void addFraisBancaire(FraisBancaire fraisBancaire){
+        this.fraisBancaires.add(fraisBancaire);
+    }
+
+    public void removeFraisBancaire(FraisBancaire fraisBancaire){
+        this.fraisBancaires.remove(fraisBancaire);
+    }
+
+    public List<Interet> getInterets() {
+        return interets;
+    }
+
+    public void setInterets(List<Interet> interets) {
+        this.interets = interets;
+    }
+
+    public void addInterest(Interet interet){
+        this.interets.add(interet);
+    }
+
+    public void removeInterest(Interet interet){
+        this.interets.remove(interet);
+    }
+
+    public List<Agios> getAgios() {
+        return agios;
+    }
+
+    public void setAgios(List<Agios> agios) {
+        this.agios = agios;
+    }
+
+    public void addAgios(Agios agios){
+        this.agios.add(agios);
+    }
+
+    public void removeAgios(Agios agios){
+        this.agios.remove(agios);
     }
 
     @PrePersist

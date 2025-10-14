@@ -28,6 +28,7 @@ public class DroitConstate {
     private Type type;
 
     private String observation;
+    private String libelle;
 
     @Enumerated(EnumType.STRING)
     private Status status=Status.PREVU;
@@ -96,6 +97,14 @@ public class DroitConstate {
 
     public void setObservation(String observation) {
         this.observation = observation;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 
     public Status getStatus() {

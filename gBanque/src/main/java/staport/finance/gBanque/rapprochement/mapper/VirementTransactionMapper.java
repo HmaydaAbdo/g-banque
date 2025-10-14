@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.rapprochement.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.virements.VirementTransactionResponseDto;
+import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.virements.entities.Virement;
@@ -55,18 +56,8 @@ public class VirementTransactionMapper {
 
         BigDecimal ttc = virement.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
-
-        // HT = TTC / (1 + taux/100)
-        BigDecimal ht = ttc
-                .divide(BigDecimal.ONE.add(tauxTva.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)),
-                        2, RoundingMode.HALF_UP)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        // TVA = TTC - HT
-        BigDecimal montantTva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-
+        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
-
 
         // Mapping traces
         try {

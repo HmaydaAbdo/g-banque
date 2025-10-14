@@ -10,6 +10,7 @@ import staport.finance.gBanque.rapprochement.dtos.prefinancements.Prefinancement
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
+import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -71,22 +72,18 @@ public class PrefinancementTransactionMapper {
             transaction.setCredit(BigDecimal.ZERO);
 
             BigDecimal ttc = prefinancement.getMontant();
-            BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
-
-            BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-            transaction.setTvaDeductible(tva);
+            BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
+            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
+            transaction.setTvaDeductible(montantTva);
 
         }else {
             transaction.setDebit(BigDecimal.ZERO);
             transaction.setCredit(prefinancement.getMontant());
 
             BigDecimal ttc = prefinancement.getMontant();
-            BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
-
-            BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-            transaction.setTvaCollectee(tva);
+            BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
+            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
+            transaction.setTvaCollectee(montantTva);
         }
 
 

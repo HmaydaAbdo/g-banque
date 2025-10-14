@@ -37,18 +37,18 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
             return null;
         }
 
-        // Vérifier si le bénéficiaire est "MR LE RECEVEUR DES DOUANES"
-        boolean isReceveurDouanes = "MR LE RECEVEUR DES DOUANES".equalsIgnoreCase(item.getBeneficiaire());
-
-        // Virement-specific validation (sauf pour MR LE RECEVEUR DES DOUANES)
-        if (!isReceveurDouanes) {
-            if (item.getBanqueBeneficiaire() == null || item.getBanqueBeneficiaire().trim().isEmpty()) {
-                throw new InvalidChequeDataException("Beneficiary Bank is null or empty for Virement payment numero " + item.getNumero());
-            }
-            if (item.getRibBeneficiaire() == null || item.getRibBeneficiaire().trim().isEmpty()) {
-                throw new InvalidChequeDataException("Beneficiary RIB is null or empty for Virement payment numero " + item.getNumero());
-            }
-        }
+//        // Vérifier si le bénéficiaire est "MR LE RECEVEUR DES DOUANES"
+//        boolean isReceveurDouanes = "MR LE RECEVEUR DES DOUANES".equalsIgnoreCase(item.getBeneficiaire());
+//
+//        // Virement-specific validation (sauf pour MR LE RECEVEUR DES DOUANES)
+//        if (!isReceveurDouanes) {
+//            if (item.getBanqueBeneficiaire() == null || item.getBanqueBeneficiaire().trim().isEmpty()) {
+//                throw new InvalidChequeDataException("Beneficiary Bank is null or empty for Virement payment numero " + item.getNumero());
+//            }
+//            if (item.getRibBeneficiaire() == null || item.getRibBeneficiaire().trim().isEmpty()) {
+//                throw new InvalidChequeDataException("Beneficiary RIB is null or empty for Virement payment numero " + item.getNumero());
+//            }
+//        }
 
 
         Virement virement = new Virement();

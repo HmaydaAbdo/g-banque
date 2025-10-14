@@ -28,6 +28,7 @@ public class Prefinancement {
     private Type type;
 
     private String observation;
+    private String libelle;
 
     @Enumerated(EnumType.STRING) // Best practice for enums
     private Status status=Status.PREVU;
@@ -91,6 +92,14 @@ public class Prefinancement {
 
     public void setObservation(String observation) {
         this.observation = observation;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 
     public Type getType() {

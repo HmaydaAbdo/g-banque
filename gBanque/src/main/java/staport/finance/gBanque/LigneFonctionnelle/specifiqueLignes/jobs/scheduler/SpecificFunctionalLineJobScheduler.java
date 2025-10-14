@@ -10,7 +10,6 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -33,25 +32,11 @@ public class SpecificFunctionalLineJobScheduler {
         this.specificFunctionalLineExpirationJob = specificFunctionalLineExpirationJob;
     }
 
-    // =========================================================================================
-    // 1. DEVELOPMENT Profile Schedule: Run every 5 minutes
-    // =========================================================================================
-    @Profile("dev")
-    @Scheduled(cron = "0 0/10 * * * ?")
-    public void runAllJobsDev() { // <--- Renamed to reflect running all jobs
-        log.info("Launching ALL expiration jobs (DEV profile) - Running Every 5 Minutes.");
 
-        // Launch LigneFonctionnelle Job
-        runJobInternal(functionalLineExpirationJob, "FunctionalLineExpirationJob");
-
-        // Launch LigneFonctionnelleSpecifique Job
-        runJobInternal(specificFunctionalLineExpirationJob, "SpecificFunctionalLineExpirationJob");
-    }
 
     // =========================================================================================
-    // 2. STAGING/PRODUCTION Profile Schedule: Run every Sunday at 12:00 PM
+    //  Run every Sunday at 12:00 PM
     // =========================================================================================
-    @Profile("!dev")
     @Scheduled(cron = "0 0 13 ? * SUN")
     public void runAllJobsStgProd() {
         log.info("Launching ALL expiration jobs (STG/PROD profile) - Running Every Sunday at 12:00 PM.");

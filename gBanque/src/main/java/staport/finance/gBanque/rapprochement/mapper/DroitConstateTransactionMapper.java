@@ -10,6 +10,7 @@ import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Type;
+import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -72,9 +73,18 @@ public class DroitConstateTransactionMapper {
 
             BigDecimal ttc = droitConstate.getMontant();
             BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
 
+            // Calcul HT avec précision élevée
+            BigDecimal ht = ttc.divide(
+                    BigDecimal.ONE.add(tauxTVA.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)),
+                    10,
+                    RoundingMode.HALF_UP
+            );
+
+            // Arrondir HT et calculer TVA
+            ht = ht.setScale(2, RoundingMode.HALF_UP);
             BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
+
             transaction.setTvaDeductible(tva);
 
         }else {
@@ -83,11 +93,9 @@ public class DroitConstateTransactionMapper {
             transaction.setObservation(requestDto.getObservation());
 
             BigDecimal ttc = droitConstate.getMontant();
-            BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-            BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
-
-            BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-            transaction.setTvaCollectee(tva);
+            BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
+            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
+            transaction.setTvaCollectee(montantTva);
         }
 
 
@@ -103,7 +111,6 @@ public class DroitConstateTransactionMapper {
         } catch (Exception e) {
             throw new Exception("Erreur lors du mappage des traces", e);
         }
-
 
         droitConstateRepository.save(droitConstate);
         return transaction;

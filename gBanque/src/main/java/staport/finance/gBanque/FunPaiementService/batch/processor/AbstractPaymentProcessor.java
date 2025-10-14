@@ -54,9 +54,9 @@ public abstract class AbstractPaymentProcessor implements ItemProcessor<FunPayme
         if (item.getDateCreation() == null) {
             throw new InvalidChequeDataException("Date d'émission (date_creation) is null for payment numero " + item.getNumero());
         }
-        if (item.getBeneficiaire() == null || item.getBeneficiaire().trim().isEmpty()) {
-            throw new InvalidChequeDataException("Beneficiaire is null or empty for payment numero " + item.getNumero());
-        }
+//        if (item.getBeneficiaire() == null || item.getBeneficiaire().trim().isEmpty()) {
+//            throw new InvalidChequeDataException("Beneficiaire is null or empty for payment numero " + item.getNumero());
+//        }
         if (item.getMontant() == null || item.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidChequeDataException("Montant is null or non-positive for payment numero " + item.getNumero());
         }

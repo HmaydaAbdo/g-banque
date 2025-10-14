@@ -5,12 +5,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import staport.finance.gBanque.rapprochement.dtos.agios.AgiosTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.agios.AgiosValidationRequest;
 import staport.finance.gBanque.rapprochement.dtos.commision.CommissionTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.commision.CommissionValidationDto;
 import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.droitConstate.DroitConstateTransactionRequest;
 import staport.finance.gBanque.rapprochement.dtos.droitConstate.DroitConstateTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.fraisBancaire.FraisBancaireTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.fraisBancaire.FraisBanciareValidationRequest;
+import staport.finance.gBanque.rapprochement.dtos.interet.InteretTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.interet.InteretValidationRequest;
 import staport.finance.gBanque.rapprochement.dtos.prefinancements.PrefinancementTransactionRequest;
 import staport.finance.gBanque.rapprochement.dtos.prefinancements.PrefinancementTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.cheques.ChequeTransactionRequest;
@@ -171,6 +177,24 @@ public class RapprochementBancaireController {
     @PostMapping("/process/commission")
     public ResponseEntity<CommissionTransactionResponse> processCommissionToTransaction(@Valid @RequestBody CommissionValidationDto requestDto) throws Exception {
         CommissionTransactionResponse responseDto = rapprochementService.processCommissionToTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/process/agios")
+    public ResponseEntity<AgiosTransactionResponse> processAgiosToTransaction(@Valid @RequestBody AgiosValidationRequest requestDto) throws Exception {
+        AgiosTransactionResponse responseDto = rapprochementService.processAgiosToTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/process/frais-bancaire")
+    public ResponseEntity<FraisBancaireTransactionResponse> processFraisBancaireToTransaction(@Valid @RequestBody FraisBanciareValidationRequest requestDto) throws Exception {
+        FraisBancaireTransactionResponse responseDto = rapprochementService.processFraisBancaireToTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/process/interet")
+    public ResponseEntity<InteretTransactionResponse> processInteretToTransaction(@Valid @RequestBody InteretValidationRequest requestDto) throws Exception {
+        InteretTransactionResponse responseDto = rapprochementService.processInteretToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

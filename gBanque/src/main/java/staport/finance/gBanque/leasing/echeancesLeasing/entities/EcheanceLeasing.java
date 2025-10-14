@@ -48,6 +48,9 @@ public class EcheanceLeasing {
     @Column(name = "statut_paiement", nullable = false)
     private StatutEcheanceLeasing statutPaiement; // État de l'échéance (prévue, payée, en retard, etc.)
 
+    private String observation;
+    private String libelle;
+
     // Champs d'audit
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
@@ -103,6 +106,22 @@ public class EcheanceLeasing {
     public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
     public OffsetDateTime getDateModification() { return dateModification; }
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
 
     // --- Callbacks du cycle de vie JPA ---
     @PrePersist

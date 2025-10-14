@@ -48,6 +48,9 @@ public class EcheanceCMT {
     @Column(name = "statut_paiement", nullable = false)
     private StatutEcheanceCMT statutPaiement;
 
+    private String observation;
+    private String libelle;
+
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
 
@@ -97,6 +100,22 @@ public class EcheanceCMT {
 
     public void setDateValeur(OffsetDateTime dateValeur) {
         this.dateValeur = dateValeur;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 
     // Callbacks JPA

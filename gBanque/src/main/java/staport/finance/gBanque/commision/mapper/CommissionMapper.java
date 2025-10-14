@@ -17,6 +17,7 @@ public class CommissionMapper {
         }
         Commission commission = new Commission();
         commission.setLibelle(dto.getLibelle());
+        commission.setObservation(dto.getObservation());
         commission.setMontant(dto.getMontant());
         commission.setBanque(banque);
         commission.setOperation(dto.getOperation());

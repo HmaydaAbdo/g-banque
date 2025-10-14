@@ -27,6 +27,7 @@ public class Decompte {
     private BigDecimal montant;
 
     private String observation;
+    private String libelle;
 
     @Column(name = "date_operation")
     private OffsetDateTime dateOperation;
@@ -90,6 +91,14 @@ public class Decompte {
 
     public void setObservation(String observation) {
         this.observation = observation;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
     }
 
     public OffsetDateTime getDateOperation() {

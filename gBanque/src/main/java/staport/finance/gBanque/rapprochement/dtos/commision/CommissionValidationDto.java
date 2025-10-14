@@ -2,8 +2,6 @@ package staport.finance.gBanque.rapprochement.dtos.commision;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class CommissionValidationDto {
@@ -12,7 +10,7 @@ public class CommissionValidationDto {
     private Long idCommission;
 
     @NotNull(message = "TVA est obligatoire")
-    private BigDecimal tva;
+    private Double tva;
 
     @NotNull(message = "date d'mission est obligatoire ")
     private OffsetDateTime dateEmission;
@@ -83,11 +81,11 @@ public class CommissionValidationDto {
         this.libelle = libelle;
     }
 
-    public BigDecimal getTva() {
+    public Double getTva() {
         return tva;
     }
 
-    public void setTva(BigDecimal tva) {
+    public void setTva(Double tva) {
         this.tva = tva;
     }
 }

@@ -6,6 +6,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.Agios.entities.Agios;
+import staport.finance.gBanque.Agios.repository.AgiosRepository;
+import staport.finance.gBanque.Agios.spec.AgiosSpec;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.cheques.specs.ChequeSpec;
@@ -21,6 +24,12 @@ import staport.finance.gBanque.decomptes.spec.DecompteSpec;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
 import staport.finance.gBanque.droitConstate.spec.DroitConstateSpec;
+import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
+import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
+import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpec;
+import staport.finance.gBanque.interets.entities.Interet;
+import staport.finance.gBanque.interets.repository.InteretRepository;
+import staport.finance.gBanque.interets.specs.InteretSpec;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.lcn.specs.LcnSpecification;
@@ -75,12 +84,14 @@ public class RecapitulatifService {
     private final DroitConstateRepository droitConstateRepository;
     private final DecompteRepository decompteRepository;
     private final CommisionRepository commissionRepository;
-
+    private final AgiosRepository agiosRepository;
+    private  final FraisBancaireRepository fraisBancaireRepository;
+    private final InteretRepository interetRepository;
 
     public RecapitulatifService(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
-            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository) {
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.decaissementMapper = mapper;
@@ -93,6 +104,9 @@ public class RecapitulatifService {
         this.droitConstateRepository = droitConstateRepository;
         this.decompteRepository = decompteRepository;
         this.commissionRepository = commissionRepository;
+        this.agiosRepository = agiosRepository;
+        this.fraisBancaireRepository = fraisBancaireRepository;
+        this.interetRepository = interetRepository;
     }
 
     /**
@@ -135,9 +149,19 @@ public class RecapitulatifService {
                 .and(DroitConstateSpec.byBanqueId(banqueId));
 
         //Commissions
-
         Specification<Commission> commissionSpecification= CommissionSpecifications.outstandingCommissions()
                 .and(CommissionSpecifications.hasBanque(banqueId));
+        //Agios
+        Specification<Agios> agiosSpecification= AgiosSpec.outstandingAgios()
+                .and(AgiosSpec.hasBanque(banqueId));
+
+        // frais bancaire
+        Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingFraisBancaires()
+                .and(FraisBancaireSpec.hasBanque(banqueId));
+
+        // interet
+        Specification<Interet> interetSpecification= InteretSpec.outstandingInterests()
+                .and(InteretSpec.hasBanque(banqueId));
 
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<EcheanceLeasing> outstandingLeasingPayments = echeanceLeasingRepository.findAll(leasingSpec);
@@ -149,6 +173,9 @@ public class RecapitulatifService {
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
         List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
         List<Commission> outstandingCommissions=commissionRepository.findAll(commissionSpecification);
+        List<Agios> outstandingAgios=agiosRepository.findAll(agiosSpecification);
+        List<FraisBancaire> outstandingFraisBancaire=fraisBancaireRepository.findAll(fraisBancaireSpecification);
+        List<Interet> outstandingInterets=interetRepository.findAll(interetSpecification);
 
 
         // Step 3: Combine all lists and map them to the unified DTO.
@@ -163,6 +190,9 @@ public class RecapitulatifService {
         combinedItems.addAll(outstandingPrefinancements.stream().map(decaissementMapper::mapPrefinancementToDto).toList());
         combinedItems.addAll(outstandingDroitsConstate.stream().map(decaissementMapper::mapDroitConstateToDto).toList());
         combinedItems.addAll(outstandingCommissions.stream().map(decaissementMapper::mapCommissionToDto).toList());
+        combinedItems.addAll(outstandingAgios.stream().map(decaissementMapper::mapAgiosToDto).toList());
+        combinedItems.addAll(outstandingFraisBancaire.stream().map(decaissementMapper::mapFraisBancaireToDto).toList());
+        combinedItems.addAll(outstandingInterets.stream().map(decaissementMapper::mapInteretToDto).toList());
 
         // Apply the filter using the DTO value
         if (transactionSources != null && !transactionSources.isEmpty()) {

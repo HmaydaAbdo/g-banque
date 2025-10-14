@@ -6,6 +6,7 @@ import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.rapprochement.dtos.leasing.LeasingTransactionRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.leasing.LeasingTransactionResponseDto;
+import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.Bank.entities.Banque;
@@ -43,15 +44,6 @@ public class LeasingTransactionMapper {
 
         // Mapping simple fields
         transaction.setObservation(requestDto.getObservation());
-
-        BigDecimal ttc = echeanceLeasing.getMontantTTC();
-        BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTvaDeductible()); // en %
-        BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
-
-        BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-        transaction.setTvaDeductible(tva);
-
-
         // Mapping dates (ensuring consistency with OffsetDateTime)
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
@@ -65,6 +57,10 @@ public class LeasingTransactionMapper {
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(contratLeasing.getBanqueDePrelevement());
 
+        BigDecimal ttc = echeanceLeasing.getMontantTTC();
+        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
+        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
+        transaction.setTvaDeductible(montantTva);
         // Mapping traces
         try {
             Map<String, Object> tracesMap = new HashMap<>();

@@ -6,6 +6,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.rapprochement.dtos.commision.CommissionTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.commision.CommissionValidationDto;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -43,21 +44,20 @@ public class CommisionTransactionMapper {
 
         // Mapping simple fields
         transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(commission.getDateEmission());
+        transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setLibelle(commission.getLibelle());
+        transaction.setLibelle(requestDto.getLibelle());
         transaction.setTransactionSource(TransactionSource.COMMISSION);
         transaction.setDebit(commission.getMontant());
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(commission.getBanque());
 
         BigDecimal ttc = commission.getMontant();
-        BigDecimal tauxTVA = requestDto.getTva();
-        BigDecimal ht=ttc.divide(tauxTVA.divide(BigDecimal.valueOf(100)).add(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
+        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
+        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
+        transaction.setTvaDeductible(montantTva);
 
-        BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-        transaction.setTvaDeductible(tva);
         // Mapping traces
         try {
             Map<String, Object> tracesMap = new HashMap<>();

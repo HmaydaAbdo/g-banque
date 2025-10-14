@@ -107,6 +107,7 @@ public final class ChequeSpec {
             // 3. Check if the emission date is on or before the last day of the current month.
             OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
                     .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

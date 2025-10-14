@@ -7,6 +7,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.rapprochement.dtos.cheques.ChequeTransactionRequest;
 import staport.finance.gBanque.rapprochement.dtos.cheques.ChequeTransactionResponseDto;
+import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -54,21 +55,11 @@ public  class  ChequeTransactionMapper {
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(cheque.getBanque());
 
+        // Calculer  la TVA avec utilitaire
         BigDecimal ttc = cheque.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
-
-        // HT = TTC / (1 + taux/100)
-        BigDecimal ht = ttc
-                .divide(BigDecimal.ONE.add(tauxTva.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)),
-                        2, RoundingMode.HALF_UP)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        // TVA = TTC - HT
-        BigDecimal montantTva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-
+        BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
-
-
 
 
         // Mapping traces

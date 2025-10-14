@@ -7,6 +7,7 @@ import staport.finance.gBanque.commision.dtos.CommissionSearchDto;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.TemporalAdjusters;
 
 public class CommissionSpecifications {
 
@@ -62,15 +63,24 @@ public class CommissionSpecifications {
      */
     public static Specification<Commission> outstandingCommissions() {
         return (root, query, cb) -> {
-            // Condition 1: status is PREVU
+            // Condition 1 : statut = PREVU
             Specification<Commission> hasStatusPrev = hasStatus(Status.PREVU);
 
-            // Condition 2: dateEmission is on or before the current date and time
-            Specification<Commission> hasDatePassed = (rootDate, queryDate, cbDate) ->
-                    cbDate.lessThanOrEqualTo(rootDate.get("dateEmission"), OffsetDateTime.now());
+            // Calcul de la fin du mois courant (dernier jour à 23h59m59s999999999)
+            OffsetDateTime endOfMonth = OffsetDateTime.now()
+                    .with(TemporalAdjusters.lastDayOfMonth())
+                    .withHour(23).withMinute(59).withSecond(59).withNano(999_999_999);
 
-            // Combine the two conditions with a logical AND
-            return Specification.where(hasStatusPrev).and(hasDatePassed).toPredicate(root, query, cb);
+            // Condition 2 : dateEmission <= fin du mois courant
+            Specification<Commission> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
+                    cbDate.lessThanOrEqualTo(rootDate.get("dateEmission"), endOfMonth);
+
+            // Combinaison des deux conditions avec AND logique
+            return Specification
+                    .where(hasStatusPrev)
+                    .and(hasDateBeforeEndOfMonth)
+                    .toPredicate(root, query, cb);
         };
     }
+
 }

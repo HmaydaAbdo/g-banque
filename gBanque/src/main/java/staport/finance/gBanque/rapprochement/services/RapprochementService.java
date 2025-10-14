@@ -2,7 +2,10 @@ package staport.finance.gBanque.rapprochement.services;
 
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.Agios.entities.Agios;
+import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.cheques.entities.Cheque;
@@ -14,6 +17,12 @@ import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.repositories.CreditMoyenTermeRepository;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
+import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
+import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
+import staport.finance.gBanque.interets.entities.Interet;
+import staport.finance.gBanque.interets.repository.InteretRepository;
+import staport.finance.gBanque.rapprochement.dtos.agios.AgiosTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.agios.AgiosValidationRequest;
 import staport.finance.gBanque.rapprochement.dtos.commision.CommissionTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.commision.CommissionValidationDto;
 import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionRequestDto;
@@ -34,6 +43,10 @@ import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeas
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
+import staport.finance.gBanque.rapprochement.dtos.fraisBancaire.FraisBancaireTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.fraisBancaire.FraisBanciareValidationRequest;
+import staport.finance.gBanque.rapprochement.dtos.interet.InteretTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.interet.InteretValidationRequest;
 import staport.finance.gBanque.rapprochement.dtos.prefinancements.PrefinancementTransactionRequest;
 import staport.finance.gBanque.rapprochement.dtos.prefinancements.PrefinancementTransactionResponse;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
@@ -95,12 +108,21 @@ public class RapprochementService {
     private final CommisionRepository commisionRepository;
     private final CommisionTransactionMapper commisionTransactionMapper;
 
+    private final AgiosTransactionMapper agiosTransactionMapper;
+    private  final AgiosRepository agiosRepository;
+
+    private final InteretRepository interetRepository;
+    private final InteretTransactionMapper interetTransactionMapper;
+
+    private final FraisBancaireRepository fraisBancaireRepository;
+    private final FraisBancaireTransactionMapper fraisBancaireTransactionMapper;
+
     private final TransactionRepository transactionRepository;
     private final BanqueRepository banqueRepository;
 
 
 
-    public RapprochementService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper) {
+    public RapprochementService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -125,9 +147,15 @@ public class RapprochementService {
         this.decompteTransactionMapper = decompteTransactionMapper;
         this.commisionRepository = commisionRepository;
         this.commisionTransactionMapper = commisionTransactionMapper;
+        this.agiosTransactionMapper = agiosTransactionMapper;
+        this.agiosRepository = agiosRepository;
+        this.interetRepository = interetRepository;
+        this.interetTransactionMapper = interetTransactionMapper;
+        this.fraisBancaireRepository = fraisBancaireRepository;
+        this.fraisBancaireTransactionMapper = fraisBancaireTransactionMapper;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public LeasingTransactionResponseDto processLeasingTransaction(LeasingTransactionRequestDto requestDto) throws Exception {
 
         // Étape 1: Récupérer les entités liées avant le mappage
@@ -157,6 +185,8 @@ public class RapprochementService {
         echeanceLeasing.setStatutPaiement(StatutEcheanceLeasing.PAYE);
         echeanceLeasing.setDateValeur(savedTransaction.getDateValeur());
         echeanceLeasing.setDateOperation(savedTransaction.getDateOperations());
+        echeanceLeasing.setLibelle(savedTransaction.getLibelle());
+        echeanceLeasing.setObservation(savedTransaction.getObservation());
         echeanceLeasingRepository.save(echeanceLeasing);
 
         // Étape 6: Utiliser le mapper pour convertir l'entité sauvegardée en DTO de réponse.
@@ -164,7 +194,7 @@ public class RapprochementService {
     }
 
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public CmtTransactionResponseDto processCmtTransaction(CmtTransactionRequestDto requestDto) throws Exception {
 
 
@@ -195,6 +225,8 @@ public class RapprochementService {
         echeanceCMT.setStatutPaiement(StatutEcheanceCMT.PAYE);
         echeanceCMT.setDateValeur(savedTransaction.getDateValeur());
         echeanceCMT.setDateOperation(savedTransaction.getDateOperations());
+        echeanceCMT.setLibelle(savedTransaction.getLibelle());
+        echeanceCMT.setObservation(savedTransaction.getObservation());
         echeanceCMTRepository.save(echeanceCMT);
 
         // Étape 6: Utiliser le mapper pour convertir l'entité sauvegardée en DTO de réponse.
@@ -202,7 +234,7 @@ public class RapprochementService {
     }
 
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public ChequeTransactionResponseDto processChequeTransaction(ChequeTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
         // If the Chèque does not exist, throw a ResourceNotFoundException.
@@ -232,6 +264,8 @@ public class RapprochementService {
         cheque.setActive(false);
         cheque.setDateOperation(savedTransaction.getDateOperations());
         cheque.setDateValeur(savedTransaction.getDateValeur());
+        cheque.setLibelle(savedTransaction.getLibelle());
+        cheque.setObservation(savedTransaction.getObservation());
         chequeRepository.save(cheque);
 
         // Step 7: Convert the saved Transaction entity into a ChequeTransactionResponseDto
@@ -240,7 +274,7 @@ public class RapprochementService {
     }
 
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public LcnTransactionResponse processLcnTransaction(LcnTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
         // If the Lcn does not exist, throw a ResourceNotFoundException.
@@ -270,6 +304,8 @@ public class RapprochementService {
         lcn.setActive(false);
         lcn.setDateOperation(savedTransaction.getDateOperations());
         lcn.setDateValeur(savedTransaction.getDateValeur());
+        lcn.setLibelle(savedTransaction.getLibelle());
+        lcn.setObservation(savedTransaction.getObservation());
         lcnRepository.save(lcn);
 
         // Step 7: Convert the saved Transaction entity into a LcnTransactionResponse
@@ -277,7 +313,7 @@ public class RapprochementService {
         return lcnTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public VirementTransactionResponseDto processVirementTransaction(VirementTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch virement entity from the database using it's number from the request.
         // If the virement does not exist, throw a ResourceNotFoundException.
@@ -307,6 +343,8 @@ public class RapprochementService {
         virement.setActive(false);
         virement.setDateOperation(savedTransaction.getDateOperations());
         virement.setDateValeur(savedTransaction.getDateValeur());
+        virement.setLibelle(savedTransaction.getLibelle());
+        virement.setObservation(savedTransaction.getObservation());
         virementRepository.save(virement);
 
         // Step 7: Convert the saved Transaction entity into a VirementTransactionResponseDto
@@ -314,7 +352,7 @@ public class RapprochementService {
         return virementTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public MiseAdispositionTransactionResponseDto processMiseAdispoTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch the MiseAdispo entity from the database using it's number from the request.
         // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
@@ -344,6 +382,8 @@ public class RapprochementService {
         miseADisposition.setActive(false);
         miseADisposition.setDateOperation(savedTransaction.getDateOperations());
         miseADisposition.setDateValeur(savedTransaction.getDateValeur());
+        miseADisposition.setLibelle(savedTransaction.getLibelle());
+        miseADisposition.setObservation(savedTransaction.getObservation());
         miseADispositionRepository.save(miseADisposition);
 
         // Step 7: Convert the saved Transaction entity into a MiseAdispositionTransactionResponseDto
@@ -352,7 +392,7 @@ public class RapprochementService {
     }
 
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public PrefinancementTransactionResponse processPrefinancementTransaction(PrefinancementTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch prefi  from the database using it's id from the request.
         Prefinancement prefinancement=this.prefinancementRepository.findById(requestDto.getPrefinancementId())
@@ -388,6 +428,7 @@ public class RapprochementService {
         prefinancement.setDateOperation(savedTransaction.getDateOperations());
         prefinancement.setDateValeur(savedTransaction.getDateValeur());
         prefinancement.setObservation(savedTransaction.getObservation());
+        prefinancement.setLibelle(savedTransaction.getLibelle());
         prefinancementRepository.save(prefinancement);
 
         // Step 7: Convert the saved Transaction entity into a PrefinancementTransactionResponse
@@ -395,7 +436,7 @@ public class RapprochementService {
         return prefinancementTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public DroitConstateTransactionResponse processDroitConstateTransaction(DroitConstateTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch dc  from the database using it's id from the request.
         DroitConstate droitConstate=this.droitConstateRepository.findById(requestDto.getDroitConstateId())
@@ -430,6 +471,7 @@ public class RapprochementService {
         droitConstate.setDateOperation(savedTransaction.getDateOperations());
         droitConstate.setDateValeur(savedTransaction.getDateValeur());
         droitConstate.setObservation(savedTransaction.getObservation());
+        droitConstate.setLibelle(savedTransaction.getLibelle());
 
         droitConstateRepository.save(droitConstate);
 
@@ -438,7 +480,7 @@ public class RapprochementService {
         return droitConstateTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public DecompteTransactionResponseDto processDecompteToTransaction(DecompteTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch decompte  from the database using it's id from the request.
         Decompte decompte=this.decompteRepository.findById(requestDto.getDecompteId())
@@ -470,6 +512,7 @@ public class RapprochementService {
         decompte.setDateOperation(savedTransaction.getDateOperations());
         decompte.setDateValeur(savedTransaction.getDateValeur());
         decompte.setObservation(savedTransaction.getObservation());
+        decompte.setLibelle(savedTransaction.getLibelle());
         decompteRepository.save(decompte);
 
         // Step 7: Convert the saved Transaction entity into a DroitConstateTransactionResponse
@@ -477,7 +520,7 @@ public class RapprochementService {
         return decompteTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public CommissionTransactionResponse processCommissionToTransaction(CommissionValidationDto requestDto) throws Exception{
         // Step 1: Fetch commission from the database using it's id from the request.
         Commission commission=this.commisionRepository.findById(requestDto.getIdCommission())
@@ -516,4 +559,129 @@ public class RapprochementService {
         // using the mapper and return it as the response.
         return commisionTransactionMapper.toResponseDto(savedTransaction);
     }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public AgiosTransactionResponse processAgiosToTransaction(AgiosValidationRequest requestDto) throws Exception{
+        // Step 1: Fetch agios from the database using it's id from the request.
+        Agios agios=this.agiosRepository.findById(requestDto.getIdAgio())
+                .orElseThrow(()->new ResourceNotFoundException("Agios with id "+requestDto.getIdAgio()+" not found"));
+
+        // Step 2: Check if the agios is not already paid.
+        // If it's already paid , throw an exception.
+        if (agios.getStatus()== Status.PAYE) {
+            throw new Exception(" agios is already paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
+        Transaction transactionEntity = agiosTransactionMapper.toEntity(requestDto,agios);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+
+        Banque banque = banqueRepository.findById(agios.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+agios.getBanque().getId()+" not found"));
+
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the agios as * (paid) and save the updated agios entity.
+        agios.setStatus(Status.PAYE);
+        agios.setObservation(savedTransaction.getObservation());
+        agios.setLibelle(savedTransaction.getLibelle());
+        agios.setDateValeur(savedTransaction.getDateValeur());
+        agios.setDateOperation(savedTransaction.getDateOperations());
+        agiosRepository.save(agios);
+
+        // Step 7: Convert the saved Transaction entity into a AgiosTransactionResponse
+        // using the mapper and return it as the response.
+        return agiosTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public InteretTransactionResponse processInteretToTransaction(InteretValidationRequest requestDto) throws Exception{
+        // Step 1: Fetch interet from the database using it's id from the request.
+        Interet interet=this.interetRepository.findById(requestDto.getIdInteret())
+                .orElseThrow(()->new ResourceNotFoundException("Interet with id "+requestDto.getIdInteret()+" not found"));
+
+        // Step 2: Check if the interet is not already paid.
+        // If it's already paid , throw an exception.
+        if (interet.getStatus()== Status.PAYE) {
+            throw new Exception(" interet is already paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
+        Transaction transactionEntity = interetTransactionMapper.toEntity(requestDto,interet);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+
+        Banque banque = banqueRepository.findById(interet.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+interet.getBanque().getId()+" not found"));
+
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the interet as * (paid) and save the updated agios entity.
+        interet.setStatus(Status.PAYE);
+        interet.setObservation(savedTransaction.getObservation());
+        interet.setLibelle(savedTransaction.getLibelle());
+        interet.setDateValeur(savedTransaction.getDateValeur());
+        interet.setDateOperation(savedTransaction.getDateOperations());
+        interetRepository.save(interet);
+
+        // Step 7: Convert the saved Transaction entity into a AgiosTransactionResponse
+        // using the mapper and return it as the response.
+        return interetTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public FraisBancaireTransactionResponse processFraisBancaireToTransaction(FraisBanciareValidationRequest requestDto) throws Exception{
+        // Step 1: Fetch frais bancaire from the database using it's id from the request.
+        FraisBancaire fraisBancaire=this.fraisBancaireRepository.findById(requestDto.getIdFraisBancaire())
+                .orElseThrow(()->new ResourceNotFoundException("Interet with id "+requestDto.getIdFraisBancaire()+" not found"));
+
+        // Step 2: Check if the frais bancaire is not already paid.
+        // If it's already paid , throw an exception.
+        if (fraisBancaire.getStatus()== Status.PAYE) {
+            throw new Exception(" frais bancaire is already paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
+        Transaction transactionEntity = fraisBancaireTransactionMapper.toEntity(requestDto,fraisBancaire);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+
+        Banque banque = banqueRepository.findById(fraisBancaire.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+fraisBancaire.getBanque().getId()+" not found"));
+
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the frais bancaire as * (paid) and save the updated agios entity.
+        fraisBancaire.setStatus(Status.PAYE);
+        fraisBancaire.setObservation(savedTransaction.getObservation());
+        fraisBancaire.setLibelle(savedTransaction.getLibelle());
+        fraisBancaire.setDateValeur(savedTransaction.getDateValeur());
+        fraisBancaire.setDateOperation(savedTransaction.getDateOperations());
+        fraisBancaireRepository.save(fraisBancaire);
+
+        // Step 7: Convert the saved Transaction entity into a FraisBancaireTransactionResponse
+        // using the mapper and return it as the response.
+        return fraisBancaireTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+
+
 }

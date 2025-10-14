@@ -1,10 +1,13 @@
 package staport.finance.gBanque.recapitulatif.mappers;
 
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
+import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
+import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
@@ -224,6 +227,51 @@ public class RecapitulatifDecaissementMapper {
         return dto;
     }
 
+
+    public RecaputilatifItem mapAgiosToDto(Agios agios) {
+
+        if (agios == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(agios.getDateEmission());
+        dto.setDebit(agios.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(agios.getObservation() );
+        dto.setLibelle(agios.getLibelle());
+        dto.setSource(TransactionSource.AGIOS);
+        return dto;
+    }
+
+    public RecaputilatifItem mapFraisBancaireToDto(FraisBancaire fraisBancaire) {
+
+        if (fraisBancaire == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(fraisBancaire.getDateEmission());
+        dto.setDebit(fraisBancaire.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(fraisBancaire.getObservation() );
+        dto.setLibelle(fraisBancaire.getLibelle());
+        dto.setSource(TransactionSource.FRAIS_BANCAIRE);
+        return dto;
+    }
+
+    public RecaputilatifItem mapInteretToDto(Interet interet) {
+
+        if (interet == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(interet.getDateEmission());
+        dto.setDebit(interet.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(interet.getObservation() );
+        dto.setLibelle(interet.getLibelle());
+        dto.setSource(TransactionSource.INTERETS);
+        return dto;
+    }
 
 
 

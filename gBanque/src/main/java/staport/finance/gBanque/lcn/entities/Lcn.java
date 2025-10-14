@@ -37,6 +37,9 @@ public class Lcn {
     @Column(name = "active", nullable = false)
     private boolean active;
 
+    private String libelle;
+    private String observation;
+
     public Lcn() {}
 
     public Lcn(String numero, OffsetDateTime dateEmission, String beneficiaire,
@@ -82,6 +85,22 @@ public class Lcn {
     }
     public void setDateValeur(OffsetDateTime dateValeur) {
         this.dateValeur = dateValeur;
+    }
+
+    public String getLibelle() {
+        return libelle;
+    }
+
+    public void setLibelle(String libelle) {
+        this.libelle = libelle;
+    }
+
+    public String getObservation() {
+        return observation;
+    }
+
+    public void setObservation(String observation) {
+        this.observation = observation;
     }
 
     @Override
