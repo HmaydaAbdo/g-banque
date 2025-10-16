@@ -6,8 +6,8 @@ export interface MarcheResponseDTO {
   nom: string;
   montant: Decimal;
   maitreDouvrage: string;
-  dateDebutDesTravaux: Date;
-  dateDAchievementDesTravaux: Date;
+  dateDebutDesTravaux?: Date;
+  dateDAchievementDesTravaux?: Date;
   banqueNom:string;
   banqueId:number;
   createdAt: Date;

@@ -88,8 +88,8 @@ export class MarchesFormComponent implements OnInit {
       nom: ['', Validators.required],
       montant: ['', [Validators.required, Validators.min(0.01)]],
       maitreDouvrage: ['', Validators.required],
-      dateDebutDesTravaux: ['', Validators.required],
-      dateDAchievementDesTravaux: ['', Validators.required],
+      dateDebutDesTravaux: [''],
+      dateDAchievementDesTravaux: [''],
       banqueId: [null, Validators.required]
     });
   }
@@ -105,8 +105,8 @@ export class MarchesFormComponent implements OnInit {
           nom: data.nom,
           montant: new Decimal(data.montant),
           maitreDouvrage: data.maitreDouvrage,
-          dateDebutDesTravaux: new Date(data.dateDebutDesTravaux),
-          dateDAchievementDesTravaux: new Date(data.dateDAchievementDesTravaux),
+          dateDebutDesTravaux: data.dateDebutDesTravaux ? new Date(data.dateDebutDesTravaux) : null,
+          dateDAchievementDesTravaux: data.dateDAchievementDesTravaux ? new Date(data.dateDAchievementDesTravaux) : null,
           banqueId: data.banqueId
         });
 
@@ -175,8 +175,8 @@ export class MarchesFormComponent implements OnInit {
       nom: formValue.nom,
       montant: formValue.montant,
       maitreDouvrage: formValue.maitreDouvrage,
-      dateDebutDesTravaux: formValue.dateDebutDesTravaux,
-      dateDAchievementDesTravaux: formValue.dateDAchievementDesTravaux,
+      dateDebutDesTravaux: formValue.dateDebutDesTravaux || null,
+      dateDAchievementDesTravaux: formValue.dateDAchievementDesTravaux || null,
       banqueId: formValue.banqueId
     };
 

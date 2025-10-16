@@ -69,7 +69,7 @@ export class GeneralLignesByBankComponent implements OnInit {
   loadingBankDetails: boolean = true;
 
   totalRecords: number = 0;
-  rows: number = 3;
+  rows: number = 10;
   first: number = 0;
   sortField: string | string[] = 'id';
   sortOrder: number = 1;

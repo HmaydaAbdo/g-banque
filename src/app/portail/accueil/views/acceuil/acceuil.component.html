@@ -54,14 +54,14 @@
                 <div class="flex flex-row justify-content-between gap-7">
                   <p class="m-0 white-space-nowrap font-bold">SOLDE ACTUEL :</p>
                   <p class="m-0 white-space-nowrap font-bold {{ account.soldeActuelle >= 0 ? 'text-green-500' : 'text-red-500' }}">
-                    {{ account.soldeActuelle }} DH
+                    {{ account.soldeActuelle | number:'':'fr-FR' }} DH
                   </p>
                 </div>
                 @if (account.plafondFC && account.plafondFC > 0){
                   <div class="flex flex-row justify-content-between gap-7">
                     <p class="m-0 white-space-nowrap font-bold">FACILITÉ DE CAISSE :</p>
                     <p class="m-0 white-space-nowrap font-bold">
-                      {{ account.plafondFC }} DH
+                      {{ account.plafondFC  | number:'':'fr-FR' }} DH
                     </p>
                   </div>
                 } @else {

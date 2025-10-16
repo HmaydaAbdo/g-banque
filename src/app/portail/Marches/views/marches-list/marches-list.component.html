@@ -100,8 +100,8 @@
           <td>{{ marche.montant }} MAD</td>
           <td>{{ marche.maitreDouvrage }}</td>
           <td>{{ marche.banqueNom }}</td>
-          <td>{{ marche.dateDebutDesTravaux | date:'dd/MM/yyyy' }}</td>
-          <td>{{ marche.dateDAchievementDesTravaux | date:'dd/MM/yyyy' }}</td>
+          <td>{{ marche.dateDebutDesTravaux ? (marche.dateDebutDesTravaux | date:'dd/MM/yyyy') : '—' }}</td>
+          <td>{{ marche.dateDAchievementDesTravaux ? (marche.dateDAchievementDesTravaux | date:'dd/MM/yyyy') : '—' }}</td>
           <td>
             <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
                     [routerLink]="['/portail/marches/edit', marche.id]"></button>

@@ -12,5 +12,6 @@ export enum TransactionSource {
   AGIOS="AGIOS",
   FRAIS_BANCAIRE="FRAIS_BANCAIRE",
   INTERETS="INTERETS",
+  FACTORING="FACTORING",
 
 }

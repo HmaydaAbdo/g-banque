@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -42,7 +42,6 @@ import {SkeletonModule} from "primeng/skeleton";
     CommonModule,
     ReactiveFormsModule,
     FormsModule,
-    RouterLink,
     CardModule,
     TableModule,
     ButtonModule,
@@ -55,7 +54,6 @@ import {SkeletonModule} from "primeng/skeleton";
     BreadcrumbModule,
     DatePipe,
     DecimalPipe,
-    RouterLinkActive,
     SkeletonModule
   ],
   providers: [MessageService],
@@ -71,7 +69,7 @@ export class SpecificLignesByBankComponent implements OnInit {
   loadingBankDetails: boolean = true;
 
   totalRecords: number = 0;
-  rows: number = 3;
+  rows: number = 10;
   first: number = 0;
   sortField: string | string[] = 'id';
   sortOrder: number = 1;

@@ -52,7 +52,7 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
     private confirmationService: ConfirmationService
   ) {
     this.natureLigneForm = this.fb.group({
-      label: ['', [Validators.required, Validators.pattern(/^[A-Za-zÀ-ÿ\s]*$/)]],
+      label: ['', [Validators.required]],
       description: ['', Validators.required],
     });
   }

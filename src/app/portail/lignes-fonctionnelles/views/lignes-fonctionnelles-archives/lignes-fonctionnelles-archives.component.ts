@@ -56,7 +56,7 @@ export class LignesFonctionnellesArchivesComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   first: number = 0;
-  rows: number = 3;
+  rows: number = 10;
   sortField: string | string[] = 'id';
   sortOrder: number = 1;
   searchForm!: FormGroup;

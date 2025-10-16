@@ -115,6 +115,10 @@ export class SidebarComponent implements OnInit {
             {label: "les encours",icon: "pi pi-list",routerLink: "/portail/droits-constate"}
           ]},
         {label: "Les décomptes",icon: "pi pi-list",routerLink: "/portail/decomptes"},
+        {label: "Factoring",icon: "pi pi-list",items: [
+            {label: "Les lignes",icon: "pi pi-list",routerLink: "/portail/factoring-lines"},
+            {label: "les encours",icon: "pi pi-list",routerLink: "/portail/factoring"}
+          ]},
       ]},
     {label:"Les Commissions",icon:"pi pi-list",routerLink: '/portail/commissions'},
     {label:"Les Agios",icon:"pi pi-list",routerLink: '/portail/agios'},

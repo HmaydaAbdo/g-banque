@@ -50,7 +50,7 @@ import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
     DropdownModule
   ],
   templateUrl: './marches-list.component.html',
-  styleUrl: './marches-list.component.scss',
+  styleUrls: ['./marches-list.component.scss'],
   providers: [MessageService, ConfirmationService, DecimalPipe, DatePipe]
 })
 export class MarchesListComponent implements OnInit {

@@ -1,4 +1,3 @@
-// dc-lines-list.component.ts
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { DatePipe, NgClass, NgForOf } from '@angular/common';
 import { TableLazyLoadEvent, TableModule, Table } from 'primeng/table';
@@ -19,8 +18,9 @@ import { BanqueService } from "../../../../comptes-bancaire/services/BanqueServi
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {TooltipModule} from "primeng/tooltip";
-import {PrefiResponseDto} from "../../../../prefinancements/lignesPrefi/dtos/SpecificLigneResposneDto";
 import {SpecifiqueLineSearchDto} from "../../../../prefinancements/lignesPrefi/dtos/SpecifiqueLineSearchDto";
+import {DroitConstateResponseDto} from "../../../dtos/DroitConstateResponseDto";
+import {SpecificLigneResponseDto} from "../../../../specific-Functional-Lignes/dtos/SpecificLigneResponseDto";
 
 @Component({
   selector: 'app-dc-lines-list',
@@ -47,7 +47,7 @@ import {SpecifiqueLineSearchDto} from "../../../../prefinancements/lignesPrefi/d
 export class DcLinesListComponent implements OnInit {
   @ViewChild('dt') table!: Table;
 
-  dcLines: PrefiResponseDto[] = [];
+  dcLines: SpecificLigneResponseDto[] = [];
   totalRecords = 0;
   loading = true;
   items: MenuItem[] = [];
@@ -75,7 +75,7 @@ export class DcLinesListComponent implements OnInit {
   ngOnInit(): void {
     this.items = [
       { icon: 'pi pi-home', label: 'Accueil', routerLink: '/portail/accueil' },
-      { icon: 'pi pi-list', label: 'Lignes de Droits Constatés' }
+      { icon: 'pi pi-list', label: 'Lignes de Droits Constatés', routerLink: '/portail/dc-lines' }
     ];
 
     // Subscribe to the filter subject with a debounce time
@@ -107,7 +107,7 @@ export class DcLinesListComponent implements OnInit {
     };
 
     this.specifiqueFunctionalLigneService.getDcLines(searchCriteria, page, size, sort).subscribe({
-      next: (res: PageResponse<PrefiResponseDto>) => {
+      next: (res: PageResponse<SpecificLigneResponseDto>) => {
         this.dcLines = res.content;
         this.totalRecords = res.page.totalElements;
         this.loading = false;

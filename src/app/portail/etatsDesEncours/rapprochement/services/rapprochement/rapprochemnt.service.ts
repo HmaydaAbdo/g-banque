@@ -28,6 +28,8 @@
   import {InteretTransactionResponse} from "../../dtos/interets/interet-transaction-response.dto";
   import {FraisBancaireValidationRequest} from "../../dtos/frais-bancaire/frais-bancaire-validation-request.dto";
   import {FraisBancaireTransactionResponse} from "../../dtos/frais-bancaire/frais-bancaire-transaction-response.dto";
+  import {FactoringTransactionRequest} from "../../dtos/factoring/FactoringTransactionRequest";
+  import {FactoringTransactionResponse} from "../../dtos/factoring/FactoringTransactionResponse";
 
   @Injectable({
     providedIn: 'root'
@@ -117,6 +119,12 @@
     droitConstateToRapprochement(dc: DroitConstateTransactionRequest): Observable<DroitConstateTransactionResponse> {
       return this.http.post<DroitConstateTransactionResponse>(`${this.baseUrl}/process/droit-constate`,
         dc
+      );
+    }
+
+    factoringToRapprochement(factoring: FactoringTransactionRequest): Observable<FactoringTransactionResponse> {
+      return this.http.post<FactoringTransactionResponse>(`${this.baseUrl}/process/factoring`,
+        factoring
       );
     }
 

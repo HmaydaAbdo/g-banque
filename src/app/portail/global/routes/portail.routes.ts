@@ -71,6 +71,17 @@ import {
 import {
   EncoursFraisBancaireComponent
 } from "../../etatsDesEncours/views/lesEncours/decaissement/frais-bancaire/encours-fraisBancaire.component";
+import {
+  FactoringLinesListComponent
+} from "../../factoring/LignesFactoring/views/factoring-line-list/factoring-lines-list.component";
+import {FactoringFormComponent} from "../../factoring/views/factoring-form/factoring-form.component";
+import {FactoringListComponent} from "../../factoring/views/factoring-list/factoring-list.component";
+import {
+  FactoringRemboursementsComponent
+} from "../../etatsDesEncours/views/lesEncours/decaissement/factoring-remboursement/factoring-remboursements.component";
+import {
+  FactoringDeblocageComponent
+} from "../../etatsDesEncours/views/lesEncours/encaissements/factoring-deblocage/factoring-deblocage.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -118,13 +129,19 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'préfinancements/new', component: PrefinancementFormComponent },
   { path: 'préfinancements/edit/:id', component: PrefinancementFormComponent },
   { path: 'prefi-lines', component: PrefiLinesListComponent },
-  {path:"prefi-line/:id/encours/validated",component:ValidatedPrefiComponent},
+  { path:"prefi-line/:id/encours/validated",component:ValidatedPrefiComponent},
 
   {path:"droits-constate",component:DroitConstateListComponent},
   {path:"droits-constate/new",component:DroitConstateFormComponent},
   {path:"droits-constate/edit/:id",component:DroitConstateFormComponent},
   {path:"dc-lines",component:DcLinesListComponent},
   {path:"dc-line/:id/encours/validated",component:ValidatedDcComponent},
+
+  {path:"factoring",component:FactoringListComponent},
+  {path:"factoring/new",component:FactoringFormComponent},
+  {path:"factoring/edit/:id",component:FactoringFormComponent},
+  {path:"factoring-lines",component:FactoringLinesListComponent},
+  {path:"factoring-line/:id/encours/validated",component:ValidatedDcComponent},
 
   {path:"decomptes",component:DecomptesListComponent},
   {path:"decomptes/new",component:DecompteFormComponent},
@@ -145,11 +162,15 @@ export const PORTAIL_ROUTES: Routes = [
       {path:'lcn', component:LcnEncoursComponent},
       {path:'virements', component:VirementEncoursComponent},
       {path:'mise-a-disposition', component:MiseADispositionEncoursComponent},
+
       {path:"prefinancement-remboursement",component:PrefinancementRemboursementsComponent},
       {path:"dc-remboursement",component:DroitConstateRemboursementsComponent},
+      {path:"factoring-remboursement",component:FactoringRemboursementsComponent},
 
       {path:"prefinancement-deblocage",component:PrefinancementDeblocageComponent},
       {path:"dc-deblocage",component:DroitConstateDeblocageComponent},
+      {path:"factoring-deblocage",component:FactoringDeblocageComponent},
+
       {path:"decomptes",component:DecomptesComponent},
 
       {path:"commissions",component:EncoursCommissionsComponent},

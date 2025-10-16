@@ -23,9 +23,11 @@
       </p-breadcrumb>
     </div>
 
-    <button pButton pRipple label="Ajouter Droit Constaté" class="hidden md:block h-fit mt-2" size="small" icon="pi pi-plus"
+    <button pButton pRipple label="Ajouter Droit Constaté" class="hidden md:block h-fit mt-2" size="small"
+            icon="pi pi-plus"
             severity="primary" routerLink="/portail/droits-constate/new"></button>
-    <button pButton pRipple pTooltip="Ajouter un Droit Constaté" class="md:hidden h-fit mt-2" size="small" icon="pi pi-plus"
+    <button pButton pRipple pTooltip="Ajouter un Droit Constaté" class="md:hidden h-fit mt-2" size="small"
+            icon="pi pi-plus"
             severity="primary" routerLink="/portail/droits-constate/new"></button>
   </div>
 
@@ -113,7 +115,8 @@
   <div class="pb-8">
     <p-table #dt [value]="droitsConstates" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
              [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
-             responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadDroitsConstates($event)"
+             responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex"
+             (onLazyLoad)="loadDroitsConstates($event)"
              [resizableColumns]="true"
              [columns]="[
                 {field: 'marcheNumero', header: 'Marché', sortable: true},

@@ -64,7 +64,7 @@
         </div>
       </div>
     </form>
-    <div class="p-4">
+    <div class="p-4 mb-8">
       <p-table
         #dt
         [value]="lignesFonctionnelles"
@@ -103,13 +103,16 @@
         <ng-template pTemplate="body" let-ligne>
           <tr>
             <td>{{ ligne.banqueNom }}</td>
-            <td><p-tag [value]="ligne.natureLigneFonctionnelleLabel" severity="info"></p-tag></td>
+            <td>{{ligne.natureLigneFonctionnelleLabel}}</td>
             <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.taux | number:'1.2-2' }}%</td>
             <td>{{ ligne.dateDepart | date:'mediumDate' }}</td>
             <td>{{ ligne.dateFin | date:'mediumDate' }}</td>
 
             <td class="text-center">
+              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-primary   mr-2" pTooltip="Modifier" tooltipPosition="top"
+                      [routerLink]="['/portail/lignes-fonctionnelles-encours/edit', ligne.id]">
+              </button>
                 <button pButton pRipple icon="pi pi-stop-circle" class="p-button-rounded p-button-secondary " pTooltip="Désactiver" tooltipPosition="top"
                         (click)="desactiver(ligne)">
                 </button>

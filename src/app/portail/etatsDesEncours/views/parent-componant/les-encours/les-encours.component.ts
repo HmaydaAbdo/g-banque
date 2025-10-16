@@ -45,6 +45,7 @@ export class LesEncoursComponent implements OnInit {
     'mise-a-disposition': { label: 'Décaissements ⇒ Mise à disposition', icon: 'pi pi-list' },
     'prefinancement-remboursement': { label: 'Décaissements ⇒ Préfinancement (Remboursement)', icon: 'pi pi-list' },
     'dc-remboursement': { label: 'Décaissements ⇒ Droits Constatés (Remboursement)', icon: 'pi pi-list' },
+    'factoring-remboursement': { label:'Décaissements ⇒ Factoring (Remboursement) ',icon: 'pi pi-list'},
     'commissions': { label: 'Décaissements ⇒ Commissions', icon: 'pi pi-list' },
     'agios': { label: 'Décaissements ⇒ Agios', icon: 'pi pi-list' },
     'interests': { label: 'Décaissements ⇒ Intérêts', icon: 'pi pi-list' },
@@ -52,6 +53,7 @@ export class LesEncoursComponent implements OnInit {
 
     // Encaissements
     'recap-encaissement': { label: 'Récap Encaissements', icon: 'pi pi-briefcase' },
+    'factoring-deblocage': { label: 'Encaissements ⇒ Factoring (Déblocage)', icon: 'pi pi-list' },
     'prefinancement-deblocage': { label: 'Encaissements ⇒ Préfinancement (Déblocage)', icon: 'pi pi-list' },
     'dc-deblocage': { label: 'Encaissements ⇒ Droits Constatés (Déblocage)', icon: 'pi pi-list' },
     'decomptes': { label: 'Encaissements ⇒ Décomptes', icon: 'pi pi-list' }
@@ -124,6 +126,7 @@ export class LesEncoursComponent implements OnInit {
           { label: 'Mise à disposition', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'mise-a-disposition'] },
           { label: 'Préfinancement', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-remboursement'] },
           { label: 'Droits Constatés', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-remboursement'] },
+          { label: 'Factoring', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'factoring-remboursement'] },
           { label: 'Commissions', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'commissions'] },
           { label: 'Agios', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'agios'] },
           { label: 'Intérêts', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'interests'] },
@@ -136,6 +139,7 @@ export class LesEncoursComponent implements OnInit {
         items: [
           { label: 'Préfinancement', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-deblocage'] },
           { label: 'Droits Constatés', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-deblocage'] },
+          { label: 'Factoring', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'factoring-deblocage'] },
           { label: 'Décomptes', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'decomptes'] }
         ]
       }

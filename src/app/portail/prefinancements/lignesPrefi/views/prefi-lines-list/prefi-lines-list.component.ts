@@ -4,7 +4,6 @@ import { TableLazyLoadEvent, TableModule, Table } from 'primeng/table';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
 import { MenuItem, MessageService, PrimeTemplate } from 'primeng/api';
-import { PrefiResponseDto } from "../../dtos/SpecificLigneResposneDto";
 import { SpecificFunctionalLigneService } from "../../../../specific-Functional-Lignes/service/SpecificFunctionalLigneService";
 import { PageResponse } from "../../../../global/types/PageResponse";
 import { ToastModule } from "primeng/toast";
@@ -18,7 +17,8 @@ import { BanqueResponse } from "../../../../comptes-bancaire/dtos/BanqueResponse
 import { MarcheService } from "../../../../Marches/service/marche-service.service";
 import { BanqueService } from "../../../../comptes-bancaire/services/BanqueService";
 import { Subject } from 'rxjs'; // Import Subject
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators'; // Import operators
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import {SpecificLigneResponseDto} from "../../../../specific-Functional-Lignes/dtos/SpecificLigneResponseDto"; // Import operators
 
 @Component({
   selector: 'app-prefi-lines-list',
@@ -44,7 +44,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators'; // Import o
 export class PrefiLinesListComponent implements OnInit {
   @ViewChild('dt') table!: Table;
 
-  prefiLines: PrefiResponseDto[] = [];
+  prefiLines: SpecificLigneResponseDto[] = [];
   totalRecords = 0;
   loading = true;
   items: MenuItem[] = [];
@@ -104,7 +104,7 @@ export class PrefiLinesListComponent implements OnInit {
     };
 
     this.specifiqueFunctionalLigneService.getPrefi(searchCriteria, page, size, sort).subscribe({
-      next: (res: PageResponse<PrefiResponseDto>) => {
+      next: (res: PageResponse<SpecificLigneResponseDto>) => {
         this.prefiLines = res.content;
         this.totalRecords = res.page.totalElements;
         this.loading = false;
