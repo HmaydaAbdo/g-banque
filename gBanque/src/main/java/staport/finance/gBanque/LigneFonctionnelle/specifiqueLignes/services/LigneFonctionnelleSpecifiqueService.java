@@ -23,6 +23,12 @@ import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepositor
 import staport.finance.gBanque.droitConstate.spec.DroitConstateSpec;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.factoring.dtos.AgregatedSuivieFactoringLigneResponseDto;
+import staport.finance.gBanque.factoring.dtos.SuivieFactoringLineResponseDto;
+import staport.finance.gBanque.factoring.entities.Factoring;
+import staport.finance.gBanque.factoring.mapper.FactoringMapper;
+import staport.finance.gBanque.factoring.repository.FactoringRepository;
+import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
@@ -55,13 +61,16 @@ public class LigneFonctionnelleSpecifiqueService {
     private final DroitConstateRepository droitConstateRepository;
     private final DroitConstateMapper droitConstateMapper;
 
+    private final FactoringRepository factoringRepository;
+    private final FactoringMapper factoringMapper;
+
 
     public LigneFonctionnelleSpecifiqueService(
             LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
             LigneFonctionnelleSpecifiqueMapper ligneFonctionnelleSpecifiqueMapper,
             BanqueRepository banqueRepository,
             NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository,
-            MarcheRepository marcheRepository, PrefinancementRepository prefinancementRepository, PrefinancementMapper prefinancementMapper, DroitConstateRepository droitConstateRepository, DroitConstateMapper droitConstateMapper) {
+            MarcheRepository marcheRepository, PrefinancementRepository prefinancementRepository, PrefinancementMapper prefinancementMapper, DroitConstateRepository droitConstateRepository, DroitConstateMapper droitConstateMapper, FactoringRepository factoringRepository, FactoringMapper factoringMapper) {
         this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
         this.ligneFonctionnelleSpecifiqueMapper = ligneFonctionnelleSpecifiqueMapper;
         this.banqueRepository = banqueRepository;
@@ -71,6 +80,8 @@ public class LigneFonctionnelleSpecifiqueService {
         this.prefinancementMapper = prefinancementMapper;
         this.droitConstateRepository = droitConstateRepository;
         this.droitConstateMapper = droitConstateMapper;
+        this.factoringRepository = factoringRepository;
+        this.factoringMapper = factoringMapper;
     }
 
     @Transactional
@@ -319,6 +330,39 @@ public class LigneFonctionnelleSpecifiqueService {
         return page.map(ligneFonctionnelleSpecifiqueMapper::toDCResponseDto);
     }
 
+
+    /**
+     * Retrieves a page of SpecificLigneResposneDto with pagination, sorting, and search support.
+     *
+     * @param searchCriteria The DTO containing search criteria.
+     * @param pageable       The pagination and sorting information.
+     * @return A Page of SpecificLigneResposneDto DTOs.
+     * @throws ResourceNotFoundException if no NatureLigneFonctionnelle is found with the given label.
+     */
+    @Transactional(readOnly = true)
+    public Page<SpecificLigneResposneDto> getFactoringLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
+        log.debug("Récupération paginée des lignes de factoring avec critères de recherche: {}", searchCriteria);
+
+        // Find the NatureLigneFonctionnelle by its label
+        NatureLigneFonctionnelle factoringLine = natureLigneFonctionnelleRepository.findByLabel("Factoring")
+                .orElseThrow(() -> new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Factoring"));
+
+        // Build the combined specification
+        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("natureLigneFonctionnelle"), factoringLine);
+
+        Specification<LigneFonctionnelleSpecifique> searchSpec = LigneFonctionnelleSpecifiqueSpecification.searchForPrefi(searchCriteria);
+
+        Specification<LigneFonctionnelleSpecifique> finalSpec = Specification.where(natureSpec).and(searchSpec);
+
+        // Use the repository with the combined specification and pageable
+        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(finalSpec, pageable);
+
+        log.info("Page de {} lignes de factoring trouvée. Total: {}", page.getNumberOfElements(), page.getTotalElements());
+
+        // Map the page of entities to a page of DTOs and return
+        return page.map(ligneFonctionnelleSpecifiqueMapper::toFactoringResponseDto);
+    }
     /**
      * Récupère un DTO agrégé contenant les totaux (débit, crédit, reste) et une page d'enregistrements
      * de suivi de préfinancement payés pour une ligne fonctionnelle spécifique.
@@ -436,4 +480,66 @@ public class LigneFonctionnelleSpecifiqueService {
 
         return aggregatedDto;
     }
-}
+
+
+    /**
+     * Récupère un DTO agrégé contenant les totaux (débit, crédit, reste) et une page d'enregistrements
+     * de suivi de Factoring payés pour une ligne fonctionnelle spécifique.
+     *
+     * @param lineId   L'ID de la ligne fonctionnelle spécifique.
+     * @param pageable Les informations de pagination et de tri.
+     * @return Un AgregatedSuivieFactoringLigneResponseDto contenant les informations agrégées et paginées.
+     * @throws ResourceNotFoundException si la ligne fonctionnelle spécifique n'est pas trouvée.
+     */
+    @Transactional(readOnly = true)
+    public AgregatedSuivieFactoringLigneResponseDto getSuivieFactoringLigneResponse(Long lineId, Pageable pageable) {
+        log.debug("Préparation de l'agrégation et de la pagination pour la ligne ID: {}", lineId);
+
+        // 1. Récupérer l'entité LigneFonctionnelleSpecifique pour les détails contextuels
+        LigneFonctionnelleSpecifique specificLine = ligneFonctionnelleSpecifiqueRepository.findById(lineId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + lineId));
+
+        Marche marche = specificLine.getMarche();
+        if (marche == null) {
+            log.warn("La ligne fonctionnelle ID {} n'est liée à aucun marché.", lineId);
+            throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
+        }
+
+        // 2. Calculer les totaux globaux (tous les enregistrements payés)
+        List<Factoring> allPaidFactoring = factoringRepository.findByMarcheAndStatus(marche, Status.PAYE);
+        BigDecimal totalDebit = BigDecimal.ZERO;
+        BigDecimal totalCredit = BigDecimal.ZERO;
+
+        for (Factoring factoring : allPaidFactoring) {
+            if (factoring.getType() == Type.REMBOURSEMENT) {
+                totalDebit = totalDebit.add(factoring.getMontant());
+            } else if (factoring.getType() == Type.DEBLOCAGE) {
+                totalCredit = totalCredit.add(factoring.getMontant());
+            }
+        }
+
+        BigDecimal reste = totalCredit.subtract(totalDebit);
+
+        // 3. Récupérer la page d'enregistrements payés
+        Specification<Factoring> paidFactoringSpec = Specification.where(FactoringSpec.byMarcheId(marche.getId()))
+                .and(FactoringSpec.byStatus(Status.PAYE));
+
+        Page<Factoring> factoringPage = factoringRepository.findAll(paidFactoringSpec, pageable);
+
+        // 4. Mapper la page d'entités en page de DTOs de suivi
+        Page<SuivieFactoringLineResponseDto> pageOfDtos = factoringPage.map(factoringMapper::toSuivieFactoringLigneResponseDto);
+
+        // 5. Construire et retourner le DTO agrégé
+        AgregatedSuivieFactoringLigneResponseDto aggregatedDto = new AgregatedSuivieFactoringLigneResponseDto();
+        aggregatedDto.setBanqueName(specificLine.getMarche().getBanque().getNom());
+        aggregatedDto.setMarcheName(marche.getNom());
+        aggregatedDto.setMarcheNumero(marche.getNumero());
+        aggregatedDto.setTotalDebit(totalDebit);
+        aggregatedDto.setTotalCredit(totalCredit);
+        aggregatedDto.setReste(reste);
+        aggregatedDto.setPage(pageOfDtos);
+
+        return aggregatedDto;
+    }
+
+    }

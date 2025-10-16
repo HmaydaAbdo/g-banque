@@ -63,17 +63,16 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
         virement.setBanqueBeneficiaire(item.getBanqueBeneficiaire());
         virement.setRibBeneficiaire(item.getRibBeneficiaire());
 
-        YearMonth currentMonth = YearMonth.from(curentDateTime);
-        YearMonth emissionMonth = YearMonth.from(dateEmission);
 
-        if (emissionMonth.isBefore(currentMonth)) {
+
+        if (dateEmission.isBefore(curentDateTime)) {
             virement.setActive(false);
-            log.info("Virement {} marked as INACTIVE (emission month {} < current month {}).",
-                    item.getNumero(), emissionMonth, currentMonth);
+            log.info("Virement {} marked as INACTIVE (emission date {} < current date {}).",
+                    item.getNumero(), dateEmission, curentDateTime);
         } else {
             virement.setActive(true);
-            log.info("Virement {} marked as ACTIVE (emission month {} >= current month {}).",
-                    item.getNumero(), emissionMonth, currentMonth);
+            log.info("Virement {} marked as ACTIVE (emission date {} >= current date {}).",
+                    item.getNumero(), dateEmission, curentDateTime);
         }
 
         log.info("Successfully processed and transformed Virement Payment {}. Returning Virement entity.", item.getNumero());

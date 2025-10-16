@@ -6,6 +6,7 @@ import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
+import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.lcn.entities.Lcn;
@@ -202,6 +203,28 @@ public class RecapitulatifDecaissementMapper {
         dto.setObservations("Remboursement du droit constaté" );
         dto.setLibelle("Marché N° : " + droitConstate.getMarche().getNumero() );
         dto.setSource(TransactionSource.DROIT_CONSTATE);
+        return dto;
+    }
+
+
+    /**
+     * Maps a Factoring entity to a RecaputilatifDecaissementItem DTO.
+     *
+     * @param factoring The Factoring entity to map.
+     * @return The mapped RecaputilatifDecaissementItem DTO.
+     */
+    public RecaputilatifItem mapFactoringToDto(Factoring factoring) {
+
+        if (factoring == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(factoring.getDateEmission());
+        dto.setDebit(factoring.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations("Remboursement du factoring" );
+        dto.setLibelle("Marché N° : " + factoring.getMarche().getNumero() );
+        dto.setSource(TransactionSource.FACTORING);
         return dto;
     }
 

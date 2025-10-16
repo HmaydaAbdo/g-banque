@@ -53,18 +53,16 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
         lcn.setMontant(item.getMontant());
         lcn.setBanque(banque);
 
-        // Compare dateEcheance against current month
-        YearMonth currentMonth = YearMonth.from(curentDateTime);
-        YearMonth echeanceMonth = YearMonth.from(dateEcheance);
 
-        if (echeanceMonth.isBefore(currentMonth)) {
+
+        if (dateEcheance.isBefore(curentDateTime)) {
             lcn.setActive(false);
-            log.info("LCN {} marked as INACTIVE (echeance month {} < current month {}).",
-                    item.getNumero(), echeanceMonth, currentMonth);
+            log.info("LCN {} marked as INACTIVE (echeance date {} < current date {}).",
+                    item.getNumero(), dateEcheance, curentDateTime);
         } else {
             lcn.setActive(true);
-            log.info("LCN {} marked as ACTIVE (echeance month {} >= current month {}).",
-                    item.getNumero(), echeanceMonth, currentMonth);
+            log.info("LCN {} marked as ACTIVE (echeance date {} >= current date {}).",
+                    item.getNumero(), dateEcheance, curentDateTime);
         }
         log.info("Successfully processed and transformed Lcn Payment {}. Returning Lcn entity.", item.getNumero());
         return lcn;

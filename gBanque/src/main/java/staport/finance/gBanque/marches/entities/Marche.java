@@ -7,6 +7,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
+import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 
 import java.io.Serializable;
@@ -37,10 +38,10 @@ public class Marche implements Serializable {
     private String maitreDouvrage;
 
     // New fields
-    @Column(name = "date_debut_des_travaux", nullable = false)
+    @Column(name = "date_debut_des_travaux")
     private OffsetDateTime dateDebutDesTravaux;
 
-    @Column(name = "date_d_achievement_des_travaux", nullable = false)
+    @Column(name = "date_d_achievement_des_travaux")
     private OffsetDateTime dateDAchievementDesTravaux;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -57,6 +58,9 @@ public class Marche implements Serializable {
     private List<DroitConstate> droitConstates = new ArrayList<>();
 
     @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Factoring> factorings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Decompte> decomptes = new ArrayList<>();
 
     @CreationTimestamp
@@ -67,18 +71,9 @@ public class Marche implements Serializable {
     @Column(name = "modified_at", nullable = false)
     private OffsetDateTime modifiedAt;
 
-    // Default constructor for JPA
-    protected Marche() {
+    public Marche() {
     }
 
-    public Marche(String numero, String nom, BigDecimal montant, String maitreDouvrage, OffsetDateTime dateDebutDesTravaux, OffsetDateTime dateDAchievementDesTravaux) {
-        this.numero = numero;
-        this.nom = nom;
-        this.montant = montant;
-        this.maitreDouvrage = maitreDouvrage;
-        this.dateDebutDesTravaux = dateDebutDesTravaux;
-        this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
-    }
 
     // --- Getters and Setters ---
 
@@ -209,6 +204,22 @@ public class Marche implements Serializable {
 
     public void removeDecompte(Decompte decompte){
         this.decomptes.remove(decompte);
+    }
+
+    public List<Factoring> getFactorings() {
+        return factorings;
+    }
+
+    public void setFactorings(List<Factoring> factorings) {
+        this.factorings = factorings;
+    }
+
+    public void addFactoring(Factoring factoring){
+        this.factorings.add(factoring);
+    }
+
+    public void removeFactoring(Factoring factoring){
+        this.factorings.remove(factoring);
     }
 
     public OffsetDateTime getCreatedAt() {

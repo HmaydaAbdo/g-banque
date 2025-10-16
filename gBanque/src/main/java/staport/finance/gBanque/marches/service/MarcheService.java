@@ -43,8 +43,10 @@ public class MarcheService {
             throw new IllegalArgumentException("Un marche avec ce numero existe deja.");
         }
         // Business logic: achievement date must be after the start date
-        if (requestDTO.getDateDAchievementDesTravaux().isBefore(requestDTO.getDateDebutDesTravaux())) {
-            throw new IllegalArgumentException("La date d'achevement des travaux ne peut pas etre avant la date de debut.");
+        if (requestDTO.getDateDebutDesTravaux() != null && requestDTO.getDateDAchievementDesTravaux() != null) {
+            if (requestDTO.getDateDAchievementDesTravaux().isBefore(requestDTO.getDateDebutDesTravaux())) {
+                throw new IllegalArgumentException("La date d'achèvement des travaux ne peut pas être avant la date de début.");
+            }
         }
 
         Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
@@ -81,8 +83,10 @@ public class MarcheService {
                 .orElseThrow(() -> new EntityNotFoundException("Marche not found with id " + id));
 
         // Business logic: achievement date must be after the start date for updates
-        if (requestDTO.getDateDAchievementDesTravaux().isBefore(requestDTO.getDateDebutDesTravaux())) {
-            throw new IllegalArgumentException("La date d'achevement des travaux ne peut pas etre avant la date de debut.");
+        if (requestDTO.getDateDebutDesTravaux() != null && requestDTO.getDateDAchievementDesTravaux() != null) {
+            if (requestDTO.getDateDAchievementDesTravaux().isBefore(requestDTO.getDateDebutDesTravaux())) {
+                throw new IllegalArgumentException("La date d'achèvement des travaux ne peut pas être avant la date de début.");
+            }
         }
 
         // Update fields from DTO

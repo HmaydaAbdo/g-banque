@@ -3,6 +3,7 @@ package staport.finance.gBanque.recapitulatif.mappers;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
+import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -52,6 +53,28 @@ public class RecapitulatifEncaissementMapper {
         dto.setObservations("Déblocage du droit constaté" );
         dto.setLibelle("Marché N° : " + droitConstate.getMarche().getNumero() );
         dto.setSource(TransactionSource.DROIT_CONSTATE);
+        return dto;
+    }
+
+
+    /**
+     * Maps a factoring  entity to a RecaputilatifItem DTO.
+     *
+     * @param factoring The Factoring entity to map.
+     * @return The mapped RecaputilatifItem DTO.
+     */
+    public RecaputilatifItem mapFactoringToDto(Factoring factoring) {
+
+        if (factoring == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(factoring.getDateEmission());
+        dto.setCredit(factoring.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations("Déblocage du factoring" );
+        dto.setLibelle("Marché N° : " + factoring.getMarche().getNumero() );
+        dto.setSource(TransactionSource.FACTORING);
         return dto;
     }
 

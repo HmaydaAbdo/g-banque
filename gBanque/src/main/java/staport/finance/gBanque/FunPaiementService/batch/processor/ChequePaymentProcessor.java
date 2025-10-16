@@ -52,19 +52,16 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
                         null
         );
 
-        // Get current month (YearMonth is handy for comparisons)
-        YearMonth currentMonth = YearMonth.from(curentDateTime);
-        YearMonth emissionMonth = YearMonth.from(dateEmission);
 
         // Business rule: inactive if cheque emission month is before current month
-        if (emissionMonth.isBefore(currentMonth)) {
+        if (dateEmission.isBefore(curentDateTime)) {
             cheque.setActive(false);
-            log.info("Cheque {} marked as INACTIVE (emission month {} < current month {}).",
-                    item.getNumero(), emissionMonth, currentMonth);
+            log.info("Cheque {} marked as INACTIVE (date emission  {} < current date {}).",
+                    item.getNumero(), dateEmission, curentDateTime);
         } else {
             cheque.setActive(true);
-            log.info("Cheque {} marked as ACTIVE (emission month {} >= current month {}).",
-                    item.getNumero(), emissionMonth, currentMonth);
+            log.info("Cheque {} marked as ACTIVE (date emission  {} < current date {}).",
+                    item.getNumero(), dateEmission, curentDateTime);
         }
 
         log.info("Successfully processed and transformed Cheque Payment {}. Returning Cheque entity.", item.getNumero());

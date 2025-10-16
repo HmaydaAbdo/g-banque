@@ -24,6 +24,9 @@ import staport.finance.gBanque.decomptes.spec.DecompteSpec;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
 import staport.finance.gBanque.droitConstate.spec.DroitConstateSpec;
+import staport.finance.gBanque.factoring.entities.Factoring;
+import staport.finance.gBanque.factoring.repository.FactoringRepository;
+import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpec;
@@ -87,11 +90,12 @@ public class RecapitulatifService {
     private final AgiosRepository agiosRepository;
     private  final FraisBancaireRepository fraisBancaireRepository;
     private final InteretRepository interetRepository;
+    private final FactoringRepository factoringRepository;
 
     public RecapitulatifService(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
-            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository) {
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository, FactoringRepository factoringRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.decaissementMapper = mapper;
@@ -107,6 +111,7 @@ public class RecapitulatifService {
         this.agiosRepository = agiosRepository;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.interetRepository = interetRepository;
+        this.factoringRepository = factoringRepository;
     }
 
     /**
@@ -148,6 +153,10 @@ public class RecapitulatifService {
         Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingRemboursementForCurrentMonth()
                 .and(DroitConstateSpec.byBanqueId(banqueId));
 
+        //Factoring ( Remboursement only )
+        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingRemboursementForCurrentMonth()
+                .and(FactoringSpec.byBanqueId(banqueId));
+
         //Commissions
         Specification<Commission> commissionSpecification= CommissionSpecifications.outstandingCommissions()
                 .and(CommissionSpecifications.hasBanque(banqueId));
@@ -172,6 +181,7 @@ public class RecapitulatifService {
         List<MiseADisposition> activeMisesADisposition = miseADispositionRepository.findAll(madSpec);
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
         List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
+        List<Factoring> outstandingFactoring = factoringRepository.findAll(factoringSpecification);
         List<Commission> outstandingCommissions=commissionRepository.findAll(commissionSpecification);
         List<Agios> outstandingAgios=agiosRepository.findAll(agiosSpecification);
         List<FraisBancaire> outstandingFraisBancaire=fraisBancaireRepository.findAll(fraisBancaireSpecification);
@@ -189,6 +199,7 @@ public class RecapitulatifService {
         combinedItems.addAll(activeMisesADisposition.stream().map(decaissementMapper::mapMiseADispositionToDto).toList());
         combinedItems.addAll(outstandingPrefinancements.stream().map(decaissementMapper::mapPrefinancementToDto).toList());
         combinedItems.addAll(outstandingDroitsConstate.stream().map(decaissementMapper::mapDroitConstateToDto).toList());
+        combinedItems.addAll(outstandingFactoring.stream().map(decaissementMapper::mapFactoringToDto).toList());
         combinedItems.addAll(outstandingCommissions.stream().map(decaissementMapper::mapCommissionToDto).toList());
         combinedItems.addAll(outstandingAgios.stream().map(decaissementMapper::mapAgiosToDto).toList());
         combinedItems.addAll(outstandingFraisBancaire.stream().map(decaissementMapper::mapFraisBancaireToDto).toList());
@@ -271,6 +282,10 @@ public class RecapitulatifService {
         Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingDeblocageForCurrentMonth()
                 .and(DroitConstateSpec.byBanqueId(banqueId));
 
+        // Factoring ( Déblocage only )
+        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingDeblocageForCurrentMonth()
+                .and(FactoringSpec.byBanqueId(banqueId));
+
         //décomptes
         Specification<Decompte> decompteSpecification = DecompteSpec.outstandingDecomptesForCurrentMonth()
                 .and(DecompteSpec.byBanqueId(banqueId));
@@ -279,12 +294,14 @@ public class RecapitulatifService {
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
         List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
+        List<Factoring> outstandingFactoring = factoringRepository.findAll(factoringSpecification);
         List<Decompte> outstandingDecomptes = decompteRepository.findAll(decompteSpecification);
 
         // Step 3: Combine all lists and map them to the unified DTO.
         List<RecaputilatifItem> combinedItems = new ArrayList<>();
         combinedItems.addAll(outstandingPrefinancements.stream().map(encaissementMapper::mapPrefinancementToDto).toList());
         combinedItems.addAll(outstandingDroitsConstate.stream().map(encaissementMapper::mapDroitConstateToDto).toList());
+        combinedItems.addAll(outstandingFactoring.stream().map(encaissementMapper::mapFactoringToDto).toList());
         combinedItems.addAll(outstandingDecomptes.stream().map(encaissementMapper::mapDecompteToDto).toList());
 
         // Apply the filters from the DTO

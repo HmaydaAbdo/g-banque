@@ -29,10 +29,10 @@ public class MarcheRequestDTO {
     @Size(max = 255, message = "Le maitre d'ouvrage doit avoir au maximum 255 caracteres")
     private String maitreDouvrage;
 
-    @NotNull(message = "La date de debut des travaux ne peut pas etre nulle")
+
     private OffsetDateTime dateDebutDesTravaux;
 
-    @NotNull(message = "La date d'achevement des travaux ne peut pas etre nulle")
+
     private OffsetDateTime dateDAchievementDesTravaux;
 
     // Getters and Setters

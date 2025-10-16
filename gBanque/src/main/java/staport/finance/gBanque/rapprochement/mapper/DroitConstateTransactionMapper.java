@@ -60,6 +60,7 @@ public class DroitConstateTransactionMapper {
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
         transaction.setLibelle(requestDto.getLibelle());
+        transaction.setObservation(requestDto.getObservation());
         transaction.setTransactionSource(TransactionSource.DROIT_CONSTATE);
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
@@ -67,30 +68,18 @@ public class DroitConstateTransactionMapper {
         transaction.setBanqueDePrelevement(banque);
 
         if(droitConstate.getType()== Type.REMBOURSEMENT){
+
             transaction.setDebit(droitConstate.getMontant());
             transaction.setCredit(BigDecimal.ZERO);
-            transaction.setObservation(requestDto.getObservation());
 
             BigDecimal ttc = droitConstate.getMontant();
             BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-
-            // Calcul HT avec précision élevée
-            BigDecimal ht = ttc.divide(
-                    BigDecimal.ONE.add(tauxTVA.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP)),
-                    10,
-                    RoundingMode.HALF_UP
-            );
-
-            // Arrondir HT et calculer TVA
-            ht = ht.setScale(2, RoundingMode.HALF_UP);
-            BigDecimal tva = ttc.subtract(ht).setScale(2, RoundingMode.HALF_UP);
-
-            transaction.setTvaDeductible(tva);
+            BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTVA);
+            transaction.setTvaDeductible(montantTva);
 
         }else {
             transaction.setDebit(BigDecimal.ZERO);
             transaction.setCredit(droitConstate.getMontant());
-            transaction.setObservation(requestDto.getObservation());
 
             BigDecimal ttc = droitConstate.getMontant();
             BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
@@ -112,7 +101,6 @@ public class DroitConstateTransactionMapper {
             throw new Exception("Erreur lors du mappage des traces", e);
         }
 
-        droitConstateRepository.save(droitConstate);
         return transaction;
     }
 

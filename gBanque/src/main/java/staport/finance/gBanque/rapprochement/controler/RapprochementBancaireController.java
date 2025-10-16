@@ -13,6 +13,8 @@ import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionR
 import staport.finance.gBanque.rapprochement.dtos.decomptes.DecompteTransactionResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.droitConstate.DroitConstateTransactionRequest;
 import staport.finance.gBanque.rapprochement.dtos.droitConstate.DroitConstateTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.factoring.FactoringTransactionRequest;
+import staport.finance.gBanque.rapprochement.dtos.factoring.FactoringTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.fraisBancaire.FraisBancaireTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.fraisBancaire.FraisBanciareValidationRequest;
 import staport.finance.gBanque.rapprochement.dtos.interet.InteretTransactionResponse;
@@ -151,6 +153,12 @@ public class RapprochementBancaireController {
     @PostMapping("/process/droit-constate")
     public ResponseEntity<DroitConstateTransactionResponse> processDroitConstqteTransaction(@Valid @RequestBody DroitConstateTransactionRequest requestDto) throws Exception {
         DroitConstateTransactionResponse responseDto = rapprochementService.processDroitConstateTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/process/factoring")
+    public ResponseEntity<FactoringTransactionResponse> processFactoringTransaction(@Valid @RequestBody FactoringTransactionRequest requestDto) throws Exception {
+        FactoringTransactionResponse responseDto = rapprochementService.processFactoringTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

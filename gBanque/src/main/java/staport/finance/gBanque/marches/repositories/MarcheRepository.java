@@ -12,6 +12,5 @@ public interface MarcheRepository  extends JpaRepository <Marche, Long>, JpaSpec
 
     boolean existsByNumero(String numero);
 
-    Optional<Marche> findByNumero(String numero);
 
 }

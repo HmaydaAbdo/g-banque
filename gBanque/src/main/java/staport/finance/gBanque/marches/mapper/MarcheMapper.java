@@ -17,16 +17,24 @@ public class MarcheMapper {
         if (dto == null) {
             return null;
         }
-        Marche marche= new Marche(
-                dto.getNumero(),
-                dto.getNom(),
-                dto.getMontant(),
-                dto.getMaitreDouvrage(),
-                dto.getDateDebutDesTravaux(),
-                dto.getDateDAchievementDesTravaux()
-        );
 
+        Marche marche = new Marche();
+
+        marche.setNumero(dto.getNumero());
+        marche.setNom(dto.getNom());
+        marche.setMontant(dto.getMontant());
+        marche.setMaitreDouvrage(dto.getMaitreDouvrage());
         marche.setBanque(banque);
+
+        // Null-safety for optional dates
+        if (dto.getDateDebutDesTravaux() != null) {
+            marche.setDateDebutDesTravaux(dto.getDateDebutDesTravaux());
+        }
+
+        if (dto.getDateDAchievementDesTravaux() != null) {
+            marche.setDateDAchievementDesTravaux(dto.getDateDAchievementDesTravaux());
+        }
+
         return marche;
     }
 
@@ -44,8 +52,8 @@ public class MarcheMapper {
         dto.setNom(entity.getNom());
         dto.setMontant(entity.getMontant());
         dto.setMaitreDouvrage(entity.getMaitreDouvrage());
-        dto.setDateDebutDesTravaux(entity.getDateDebutDesTravaux());
-        dto.setDateDAchievementDesTravaux(entity.getDateDAchievementDesTravaux());
+        dto.setDateDebutDesTravaux(entity.getDateDebutDesTravaux() != null ? entity.getDateDebutDesTravaux() : null);
+        dto.setDateDAchievementDesTravaux(entity.getDateDAchievementDesTravaux() != null ? entity.getDateDAchievementDesTravaux() : null);
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setModifiedAt(entity.getModifiedAt());
 

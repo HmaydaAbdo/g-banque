@@ -17,6 +17,8 @@ import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.repositories.CreditMoyenTermeRepository;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
+import staport.finance.gBanque.factoring.entities.Factoring;
+import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.interets.entities.Interet;
@@ -43,6 +45,8 @@ import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeas
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
+import staport.finance.gBanque.rapprochement.dtos.factoring.FactoringTransactionRequest;
+import staport.finance.gBanque.rapprochement.dtos.factoring.FactoringTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.fraisBancaire.FraisBancaireTransactionResponse;
 import staport.finance.gBanque.rapprochement.dtos.fraisBancaire.FraisBanciareValidationRequest;
 import staport.finance.gBanque.rapprochement.dtos.interet.InteretTransactionResponse;
@@ -117,12 +121,15 @@ public class RapprochementService {
     private final FraisBancaireRepository fraisBancaireRepository;
     private final FraisBancaireTransactionMapper fraisBancaireTransactionMapper;
 
+    private  final FactoringRepository factoringRepository;
+    private final FactoringTransactionMapper factoringTransactionMapper;
+
     private final TransactionRepository transactionRepository;
     private final BanqueRepository banqueRepository;
 
 
 
-    public RapprochementService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper) {
+    public RapprochementService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -153,6 +160,8 @@ public class RapprochementService {
         this.interetTransactionMapper = interetTransactionMapper;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.fraisBancaireTransactionMapper = fraisBancaireTransactionMapper;
+        this.factoringRepository = factoringRepository;
+        this.factoringTransactionMapper = factoringTransactionMapper;
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -479,6 +488,51 @@ public class RapprochementService {
         // using the mapper and return it as the response.
         return droitConstateTransactionMapper.toResponseDto(savedTransaction);
     }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public FactoringTransactionResponse processFactoringTransaction(FactoringTransactionRequest requestDto) throws Exception{
+        // Step 1: Fetch factoring  from the database using it's id from the request.
+        Factoring factoring=this.factoringRepository.findById(requestDto.getFactoringId())
+                .orElseThrow(()->new ResourceNotFoundException("Factoring with id "+requestDto.getFactoringId()+" not found"));
+
+        // Step 2: Check if the factoring is not already paid.
+        // If it's already paid , throw an exception.
+        if (factoring.getStatus()== Status.PAYE) {
+            throw new Exception(" factoring is already paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
+        Transaction transactionEntity = factoringTransactionMapper.toEntity(requestDto);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+
+        if(factoring.getType()== Type.REMBOURSEMENT){
+            banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        }else{
+            banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
+        }
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the factoring as paid and save the updated factoring entity.
+        factoring.setStatus(Status.PAYE);
+        factoring.setDateOperation(savedTransaction.getDateOperations());
+        factoring.setDateValeur(savedTransaction.getDateValeur());
+        factoring.setObservation(savedTransaction.getObservation());
+        factoring.setLibelle(savedTransaction.getLibelle());
+
+        factoringRepository.save(factoring);
+
+        // Step 7: Convert the saved Transaction entity into a FactoringTransactionResponse
+        // using the mapper and return it as the response.
+        return factoringTransactionMapper.toResponseDto(savedTransaction);
+    }
+
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public DecompteTransactionResponseDto processDecompteToTransaction(DecompteTransactionRequestDto requestDto) throws Exception{

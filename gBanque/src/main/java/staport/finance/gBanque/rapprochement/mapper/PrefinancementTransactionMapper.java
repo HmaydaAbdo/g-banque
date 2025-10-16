@@ -100,7 +100,6 @@ public class PrefinancementTransactionMapper {
             throw new Exception("Erreur lors du mappage des traces", e);
         }
 
-        prefinancementRepository.save(prefinancement);
         return transaction;
     }
 
