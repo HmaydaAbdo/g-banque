@@ -2,6 +2,7 @@ package staport.finance.gBanque.LigneFonctionnelle.dtos;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public class LigneFonctionnelleResponse {
 
@@ -19,25 +20,13 @@ public class LigneFonctionnelleResponse {
     private OffsetDateTime dateModification;
     private boolean actif;
 
+    private Long ligneMereId;
+    private List<SousLigneResponseDto> sousLignes;
+    private Boolean estSousLigne;
+    private Boolean estLigneMere;
+
     // --- Constructors ---
     public LigneFonctionnelleResponse() {
-    }
-
-
-    public LigneFonctionnelleResponse(Long id, Long banqueId, String banqueNom, Long natureLigneFonctionnelleId, String natureLigneFonctionnelleLabel, String natureLigneFonctionnelleDescription, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification, boolean actif) {
-        this.id = id;
-        this.banqueId = banqueId;
-        this.banqueNom = banqueNom;
-        this.natureLigneFonctionnelleId = natureLigneFonctionnelleId;
-        this.natureLigneFonctionnelleLabel = natureLigneFonctionnelleLabel;
-        this.natureLigneFonctionnelleDescription = natureLigneFonctionnelleDescription;
-        this.plafond = plafond;
-        this.taux = taux;
-        this.dateDepart = dateDepart;
-        this.dateFin = dateFin;
-        this.dateCreation = dateCreation;
-        this.dateModification = dateModification;
-        this.actif = actif;
     }
 
     // --- Getters and Setters ---
@@ -85,4 +74,17 @@ public class LigneFonctionnelleResponse {
     public void setActif(boolean actif) {
         this.actif = actif;
     }
+
+
+    public Long getLigneMereId() { return ligneMereId; }
+    public void setLigneMereId(Long ligneMereId) { this.ligneMereId = ligneMereId; }
+
+    public List<SousLigneResponseDto> getSousLignes() { return sousLignes; }
+    public void setSousLignes(List<SousLigneResponseDto> sousLignes) { this.sousLignes = sousLignes; }
+
+    public Boolean getEstSousLigne() { return estSousLigne; }
+    public void setEstSousLigne(Boolean estSousLigne) { this.estSousLigne = estSousLigne; }
+
+    public Boolean getEstLigneMere() { return estLigneMere; }
+    public void setEstLigneMere(Boolean estLigneMere) { this.estLigneMere = estLigneMere; }
 }

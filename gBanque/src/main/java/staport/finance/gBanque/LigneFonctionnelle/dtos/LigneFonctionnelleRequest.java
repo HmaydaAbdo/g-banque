@@ -9,10 +9,12 @@ public class LigneFonctionnelleRequest {
     @NotNull(message = "L'ID de la banque est obligatoire.")
     private Long banqueId;
 
+    private Long ligneMereId;
+
     @NotNull(message = "L'ID de la nature de ligne fonctionnelle est obligatoire.")
     private Long natureLigneFonctionnelleId;
 
-    @NotNull(message = "Le plafond est obligatoire.")
+
     @DecimalMin(value = "0.0", inclusive = false, message = "Le plafond doit être supérieur à zéro.")
     private BigDecimal plafond;
 
@@ -64,6 +66,7 @@ public class LigneFonctionnelleRequest {
     public OffsetDateTime getDateFin() {return dateFin;}
     public void setDateFin(OffsetDateTime dateFin) {this.dateFin = dateFin;}
 
-
+    public Long getLigneMereId() { return ligneMereId; }
+    public void setLigneMereId(Long ligneMereId) { this.ligneMereId = ligneMereId; }
 
 }
