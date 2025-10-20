@@ -5,6 +5,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -23,7 +24,7 @@ public class LigneFonctionnelle {
     @JoinColumn(name = "nature_ligne_id", nullable = false)
     private NatureLigneFonctionnelle natureLigneFonctionnelle;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private BigDecimal plafond;
 
     @Column(nullable = false)
@@ -43,6 +44,15 @@ public class LigneFonctionnelle {
 
     @Column(nullable = false)
     private boolean actif = true;
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ligne_mere_id")
+    private LigneFonctionnelle ligneMere;
+
+
+    @OneToMany(mappedBy = "ligneMere", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LigneFonctionnelle> sousLignes;
 
     // --- Constructors ---
     public LigneFonctionnelle() {
@@ -103,6 +113,24 @@ public class LigneFonctionnelle {
 
     public void setActif(boolean actif) {
         this.actif = actif;
+    }
+
+
+    public LigneFonctionnelle getLigneMere() {
+        return ligneMere;
+    }
+
+    public void setLigneMere(LigneFonctionnelle ligneMere) {
+        this.ligneMere = ligneMere;
+    }
+
+
+    public List<LigneFonctionnelle> getSousLignes() {
+        return sousLignes;
+    }
+
+    public void setSousLignes(List<LigneFonctionnelle> sousLignes) {
+        this.sousLignes = sousLignes;
     }
 
 
