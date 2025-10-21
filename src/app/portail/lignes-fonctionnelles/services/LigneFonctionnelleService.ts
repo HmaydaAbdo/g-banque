@@ -9,7 +9,8 @@ import { LigneFonctionnelleRequest } from '../dtos/LigneFonctionnelleRequest';
 import { LigneFonctionnelleSearchCriteria } from "../dtos/LigneFonctionnelleSearchCriteria";
 import { PageResponse } from "../../global/types/PageResponse";
 import {LigneFonctionnelleChartData} from "../dtos/LigneFonctionnelleChartData";
-import {LigneFonctionnelleChartHistoryRequest} from "../dtos/LigneFonctionnelleChartHistoryRequest"; // <-- Ensure this import exists
+import {LigneFonctionnelleChartHistoryRequest} from "../dtos/LigneFonctionnelleChartHistoryRequest";
+import {SousLigneRequestDto} from "../dtos/SousLigneRequestDto"; // <-- Ensure this import exists
 
 @Injectable({
   providedIn: 'root', // This makes the service a singleton and tree-shakable
@@ -107,6 +108,11 @@ export class LigneFonctionnelleService {
        return this.http.put<void>(`${this.apiUrl}/deactivate/${ligneId}`, {});
     }
 
+  manageSousLignes(ligneMereId: number, sousLignes: SousLigneRequestDto[]): Observable<LigneFonctionnelleResponse> {
+    const url = `${this.apiUrl}/${ligneMereId}/sous-lignes`;
+    return this.http.put<LigneFonctionnelleResponse>(url, sousLignes);
+  }
+
   // 8. Get LigneFonctionnelle Chart History (GET /lignes-fonctionnelles-encours/history)
   getLigneFonctionnelleChartHistory(request: LigneFonctionnelleChartHistoryRequest): Observable<LigneFonctionnelleChartData> {
     let params = new HttpParams();
@@ -115,4 +121,6 @@ export class LigneFonctionnelleService {
 
     return this.http.get<LigneFonctionnelleChartData>(`${this.apiUrl}/history`, { params });
   }
+
+
 }

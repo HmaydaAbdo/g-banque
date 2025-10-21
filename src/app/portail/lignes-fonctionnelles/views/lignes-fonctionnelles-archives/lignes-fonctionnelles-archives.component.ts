@@ -63,7 +63,7 @@ export class LignesFonctionnellesArchivesComponent implements OnInit {
   natureLigneOptions: { label: string; value: number | null }[] = [];
   banquesOptions: { label: string; value: number | null }[] = [];
   items: MenuItem[] | undefined;
-
+  expandedRows={}
   constructor(
     private ligneFonctionnelleService: LigneFonctionnelleService,
     private banqueService: BanqueService,

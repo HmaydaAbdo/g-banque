@@ -86,55 +86,88 @@
         (onLazyLoad)="loadLignesFonctionnelles($event)"
         [resizableColumns]="true"
         [columns]="[
-          {field: 'banqueNom', header: 'Banque', sortable: true},
-          {field: 'natureLigneFonctionnelleLabel', header: 'Nature', sortable: true},
-          {field: 'plafond', header: 'Plafond', sortable: true},
-          {field: 'taux', header: 'Taux', sortable: true},
-          {field: 'dateDepart', header: 'Date Départ', sortable: true},
-          {field: 'dateFin', header: 'Date Fin', sortable: true} ]"
+      {field: 'banqueNom', header: 'Banque', sortable: true},
+      {field: 'natureLigneFonctionnelleLabel', header: 'Nature', sortable: true},
+      {field: 'plafond', header: 'Plafond', sortable: true},
+      {field: 'taux', header: 'Taux', sortable: true},
+      {field: 'dateDepart', header: 'Date Départ', sortable: true},
+      {field: 'dateFin', header: 'Date Fin', sortable: true} ]"
 
         styleClass="p-datatable-gridlines p-datatable-sm"
         [tableStyle]="{'min-width': '50rem'}"
         [scrollable]="true"
         scrollHeight="flex"
         [showCurrentPageReport]="true"
-        currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}" >
+        currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
+        dataKey="id"
+        [expandedRowKeys]="expandedRows"
+
+      >
 
         <ng-template pTemplate="header" let-columns>
           <tr>
-            <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
-              {{ col.header }}
-              @if (col.sortable) { <p-sortIcon [field]="col.field"></p-sortIcon> }
-            </th>
+            <th style="width: 3rem"></th> <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
+            {{ col.header }}
+            @if (col.sortable) { <p-sortIcon [field]="col.field"></p-sortIcon> }
+          </th>
             <th style="width: 8rem; text-align: center;">Actions</th>
           </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-ligne>
-          <tr>
+
+        <ng-template pTemplate="body" let-ligne let-expanded="expanded">
+          <tr [pSelectableRow]="ligne">
+            <td>
+              <button type="button" pButton pRipple icon="{{expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'}}"
+                      class="p-button-text p-button-rounded p-button-plain"
+                      (click)="dt.toggleRow(ligne)"
+                      *ngIf="ligne.estLigneMere"></button>
+            </td>
             <td>{{ ligne.banqueNom }}</td>
-            <td><p-tag [value]="ligne.natureLigneFonctionnelleLabel" severity="info"></p-tag></td>
+            <td>{{ ligne.natureLigneFonctionnelleLabe}}</td>
             <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.taux | number:'1.2-2' }}%</td>
             <td>{{ ligne.dateDepart | date:'mediumDate' }}</td>
             <td>{{ ligne.dateFin | date:'mediumDate' }}</td>
 
             <td class="text-center">
-              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top"
-                      [routerLink]="['/portail/lignes-fonctionnelles-encours/edit', ligne.id]">
-              </button>
+              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" [routerLink]="['/portail/lignes-fonctionnelles-encours/edit', ligne.id]"></button>
+              <button pButton pRipple icon="pi pi-ban" class=" p-button-rounded p-button-secondary mr-2" (click)="desactiver(ligne)" type="button" [disabled]="ligne?.estSousLigne || !ligne?.actif" pTooltip="Désactiver."></button>
+              @if (isAdmin()){ <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger " pTooltip="Supprimer" tooltipPosition="top" (click)="deleteLigneFonctionnelle(ligne)"> </button> } </td>
 
-              @if (isAdmin()){
-                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger " pTooltip="Supprimer" tooltipPosition="top"
-                        (click)="deleteLigneFonctionnelle(ligne)">
-                </button>
-              }
-
-            </td>
           </tr>
         </ng-template>
 
+        <ng-template pTemplate="rowexpansion" let-ligne>
+          <tr>
+            <td [attr.colspan]="8">
+              <div class="p-2">
+                <h3 class="mb-2">Sous-lignes:</h3>
+                <p-table [value]="ligne.sousLignes" dataKey="id" styleClass="p-datatable-sm p-datatable-striped">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th style="width: 40%;">Nature </th>
+                      <th style="width: 30%;">Plafond </th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-sousLigne>
+                    <tr>
+                      <td>{{ sousLigne.natureLigneFonctionnelleLabel }}</td>
+                      <td>{{ sousLigne.plafond ? (sousLigne.plafond | number:'1.2-2') + ' MAD' : '-' }}</td>
+
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="2">Aucune sous-ligne définie.</td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
         <ng-template pTemplate="emptyMessage">
-            <p> Aucune ligne fonctionnelle trouvée.</p>
+          <p> Aucune ligne fonctionnelle trouvée.</p>
         </ng-template>
         <ng-template pTemplate="loadingbody">
           <tr>

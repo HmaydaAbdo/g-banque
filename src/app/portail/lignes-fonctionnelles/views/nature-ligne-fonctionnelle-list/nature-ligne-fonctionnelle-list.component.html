@@ -69,8 +69,8 @@
           <td>{{ nature.label }}</td>
           <td>{{ nature.description }}</td>
           <td>
-            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" (click)="editNature(nature.id!)"></button>
             @if (isAdmin()){
+              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" (click)="editNature(nature.id!)"></button>
               <button pButton pRipple icon="pi pi-trash"  class="p-button-rounded  p-button-danger" pTooltip="Supprimer" tooltipPosition="top" (click)="deleteNature(nature.id!)"></button>
             }
           </td>

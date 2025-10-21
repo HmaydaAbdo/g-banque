@@ -1,7 +1,7 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {RouterLink, RouterLinkActive} from '@angular/router';
+import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
@@ -30,7 +30,7 @@ import { AuthService } from "../../../../auth/services/auth.service";
 import { Role } from "../../../../auth/enum/Role";
 import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fonctionnelle.service";
 import {BreadcrumbModule} from "primeng/breadcrumb";
-
+import { SpeedDialModule } from 'primeng/speeddial';
 
 @Component({
   selector: 'app-lignes-fonctionnelles-encours',
@@ -58,7 +58,8 @@ import {BreadcrumbModule} from "primeng/breadcrumb";
     CalendarModule,
     InputSwitchModule,
     BreadcrumbModule,
-    RouterLinkActive
+    RouterLinkActive,
+    SpeedDialModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -77,12 +78,14 @@ export class LignesFonctionnellesComponent implements OnInit {
   natureLigneOptions: { label: string; value: number | null }[] = [];
   banquesOptions: { label: string; value: number | null }[] = [];
   items: MenuItem[] | undefined;
+  expandedRows={}
 
   constructor(
     private ligneFonctionnelleService: LigneFonctionnelleService,
     private banqueService: BanqueService,
     private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
     private fb: FormBuilder,
+    private router: Router,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private authService: AuthService,
@@ -207,6 +210,42 @@ export class LignesFonctionnellesComponent implements OnInit {
     // The valueChanges subscription will automatically trigger a reload
   }
 
+  desactiver(ligne:LigneFonctionnelleResponse): void {
+    if (ligne == null) {
+      console.log("ligneFonctionnelle est null")
+    } else {
+      ;
+      this.confirmationService.confirm({
+        message: `Êtes-vous sûr de vouloir désactiver la ligne fonctionnelle "${ligne.natureLigneFonctionnelleLabel}" avec  "${ligne.banqueNom}" ?`,
+        header: 'Confirmation de Désactivation',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.loading = true;
+          this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.id!)
+            .subscribe({
+              next: () => {
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Succès',
+                  detail: 'Ligne Fonctionnelle désactivées avec succès.',
+                  life: 3000
+                });
+                this.loading=false
+                this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
+              },
+              error: (error) => {
+                console.error('Erreur lors de la désactivation de la ligne fonctionnelle:', error);
+                const errorMessage = error.error?.message;
+                this.messageService.add({severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000});
+                this.loading = false;
+              }
+            });
+        }
+      });
+    }
+
+  }
+
   deleteLigneFonctionnelle(ligne: LigneFonctionnelleResponse): void {
     this.confirmationService.confirm({
       message: `Êtes-vous sûr de vouloir supprimer la ligne fonctionnelle avec la nature "${ligne.natureLigneFonctionnelleLabel}" pour la banque "${ligne.banqueNom}" ?`,
@@ -253,4 +292,44 @@ export class LignesFonctionnellesComponent implements OnInit {
       });
     }
   }
+
+  getActions(ligne: any) {
+    const actions: any[] = [];
+
+    // ✏️ Modifier
+    actions.push({
+      icon: 'pi pi-pencil',
+      tooltip: 'Modifier',
+      command: () => this.router.navigate(['/portail/lignes-fonctionnelles-encours/edit', ligne.id])
+    });
+
+    // 🚫 Désactiver
+    actions.push({
+      icon: 'pi pi-ban',
+      tooltip: 'Désactiver',
+      disabled: ligne?.estSousLigne || !ligne?.actif,
+      command: () => this.desactiver(ligne)
+    });
+
+    // 🌿 Gérer les sous-lignes
+    if (ligne?.estLigneMere) {
+      actions.push({
+        icon: 'pi pi-sitemap',
+        tooltip: 'Gérer les Sous-lignes',
+
+      });
+    }
+
+    // 🗑️ Supprimer (si admin)
+    if (this.isAdmin()) {
+      actions.push({
+        icon: 'pi pi-trash',
+        tooltip: 'Supprimer',
+        command: () => this.deleteLigneFonctionnelle(ligne)
+      });
+    }
+
+    return actions;
+  }
+
 }

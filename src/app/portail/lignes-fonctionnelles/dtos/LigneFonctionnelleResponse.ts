@@ -1,3 +1,5 @@
+import {SousLigneResponseDto} from "./SousLigneResponseDto";
+
 export interface LigneFonctionnelleResponse {
   id: number;
   banqueId: number;
@@ -12,4 +14,9 @@ export interface LigneFonctionnelleResponse {
   dateCreation: Date;
   dateModification: Date;
   actif?: boolean;
+
+  ligneMereId:number;
+  sousLignes:SousLigneResponseDto[];
+  estLigneMere:boolean;
+  estSousLigne:boolean;
 }

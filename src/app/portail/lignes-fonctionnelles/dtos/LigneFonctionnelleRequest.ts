@@ -1,3 +1,4 @@
+import {SousLigneRequestDto} from "./SousLigneRequestDto";
 
 export interface LigneFonctionnelleRequest {
   banqueId: number;
@@ -6,4 +7,5 @@ export interface LigneFonctionnelleRequest {
   taux: number;
   dateDepart: Date;
   dateFin: Date;
+  sousLignes:SousLigneRequestDto[]
 }
