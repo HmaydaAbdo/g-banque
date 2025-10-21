@@ -1,6 +1,9 @@
     package staport.finance.gBanque.LigneFonctionnelle.specifications;
 
+    import jakarta.persistence.criteria.CriteriaBuilder;
+    import jakarta.persistence.criteria.CriteriaQuery;
     import jakarta.persistence.criteria.Predicate;
+    import jakarta.persistence.criteria.Root;
     import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleSearchCriteria;
     import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
     import org.springframework.data.jpa.domain.Specification;
@@ -56,5 +59,15 @@
             };
         }
 
+        /**
+         * Crée une Specification qui filtre uniquement les Lignes Mères (celles qui n'ont pas de parent).
+         * C'est-à-dire : LigneFonctionnelle.ligneMere IS NULL.
+         */
+        public static Specification<LigneFonctionnelle> isLigneMereOrIndependante() {
+            return (Root<LigneFonctionnelle> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> {
+                // Le prédicat pour vérifier si la colonne 'ligneMere' est NULL
+                return criteriaBuilder.isNull(root.get("ligneMere"));
+            };
+        }
 
     }

@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/lignes-fonctionnelles")
 public class LigneFonctionnelleController {
@@ -72,7 +74,7 @@ public class LigneFonctionnelleController {
     public ResponseEntity<Void> deactivateLigneFonctionnelle(
             @PathVariable Long ligneId)
     {
-        ligneFonctionnelleService.deactivateLigneFonctionnelleByNatureAndBank(ligneId);
+        ligneFonctionnelleService.deactivateLigneFonctionnelle(ligneId);
         return ResponseEntity.noContent().build();
     }
 
@@ -82,6 +84,23 @@ public class LigneFonctionnelleController {
         return ResponseEntity.noContent().build();
     }
 
+    // --- NOUVEL ENDPOINT POUR LA GESTION DES SOUS-LIGNES ---
+    /**
+     * Endpoint dédié pour la gestion (création, mise à jour, suppression) des Sous-lignes
+     * d'une Ligne Mère spécifique.
+     * PUT /lignes-fonctionnelles/{ligneMereId}/sous-lignes
+     * @param ligneMereId L'ID de la Ligne Mère.
+     * @param sousLignesRequests La liste complète des Sous-lignes désirées.
+     * @return La Ligne Mère mise à jour (incluant les nouvelles Sous-lignes).
+     */
+    @PutMapping("/{ligneMereId}/sous-lignes")
+    public ResponseEntity<LigneFonctionnelleResponse> manageSousLignes(
+            @PathVariable Long ligneMereId,
+            @Valid @RequestBody List<SousLigneRequestDto> sousLignesRequests) {
+
+        LigneFonctionnelleResponse updatedLigneMere = ligneFonctionnelleService.manageSousLignes(ligneMereId, sousLignesRequests);
+        return ResponseEntity.ok(updatedLigneMere);
+    }
 
     /**
      * Get functional lines associated with a specific bank ID, with pagination, sorting,

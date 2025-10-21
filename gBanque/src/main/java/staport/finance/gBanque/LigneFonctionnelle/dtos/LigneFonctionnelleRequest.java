@@ -1,19 +1,18 @@
 package staport.finance.gBanque.LigneFonctionnelle.dtos;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public class LigneFonctionnelleRequest {
 
     @NotNull(message = "L'ID de la banque est obligatoire.")
     private Long banqueId;
 
-    private Long ligneMereId;
-
     @NotNull(message = "L'ID de la nature de ligne fonctionnelle est obligatoire.")
     private Long natureLigneFonctionnelleId;
-
 
     @DecimalMin(value = "0.0", inclusive = false, message = "Le plafond doit être supérieur à zéro.")
     private BigDecimal plafond;
@@ -29,7 +28,8 @@ public class LigneFonctionnelleRequest {
     @NotNull(message = "La date de fin est obligatoire.")
     private OffsetDateTime dateFin;
 
-
+    @Valid
+    private List<SousLigneRequestDto> sousLignes;
 
     // --- Constructors ---
     public LigneFonctionnelleRequest() {
@@ -66,7 +66,6 @@ public class LigneFonctionnelleRequest {
     public OffsetDateTime getDateFin() {return dateFin;}
     public void setDateFin(OffsetDateTime dateFin) {this.dateFin = dateFin;}
 
-    public Long getLigneMereId() { return ligneMereId; }
-    public void setLigneMereId(Long ligneMereId) { this.ligneMereId = ligneMereId; }
-
+    public List<SousLigneRequestDto> getSousLignes() { return sousLignes; }
+    public void setSousLignes(List<SousLigneRequestDto> sousLignes) { this.sousLignes = sousLignes; }
 }

@@ -6,6 +6,8 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleRequest;
 import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleResponse;
+import staport.finance.gBanque.LigneFonctionnelle.dtos.SousLigneRequestDto;
+import staport.finance.gBanque.LigneFonctionnelle.dtos.SousLigneResponseDto;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 
 import java.util.ArrayList;
@@ -15,14 +17,10 @@ import java.util.stream.Collectors;
 @Component
 public class LigneFonctionnelleMapper {
 
+
     /**
-     * Converts a LigneFonctionnelleRequest DTO to a LigneFonctionnelle entity for creation.
-     * The related Banque and NatureLigneFonctionnelle entities must be provided by the service layer.
-     *
-     * @param request The LigneFonctionnelleRequest DTO.
-     * @param banque The associated Banque entity (already fetched).
-     * @param natureLigneFonctionnelle The associated NatureLigneFonctionnelle entity (already fetched).
-     * @return A new LigneFonctionnelle entity.
+     * Converts a LigneFonctionnelleRequest DTO to a LigneFonctionnelle entity for creation (Mother or Independent).
+     * The service is responsible for creating and linking child entities (SousLignes).
      */
     public LigneFonctionnelle toEntity(LigneFonctionnelleRequest request,
                                        Banque banque,
@@ -32,26 +30,57 @@ public class LigneFonctionnelleMapper {
         }
 
         LigneFonctionnelle ligneFonctionnelle = new LigneFonctionnelle();
+
+        // Mappage des propriétés directes
         ligneFonctionnelle.setBanque(banque);
         ligneFonctionnelle.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
-
-
         ligneFonctionnelle.setPlafond(request.getPlafond());
         ligneFonctionnelle.setTaux(request.getTaux());
         ligneFonctionnelle.setDateDepart(request.getDateDepart());
         ligneFonctionnelle.setDateFin(request.getDateFin());
 
 
-        // ID, dateCreation, dateModification are handled by JPA @PrePersist callbacks
+        // Initialisation de la collection de Sous-lignes pour la cascade
+        ligneFonctionnelle.setSousLignes(new ArrayList<>());
 
         return ligneFonctionnelle;
     }
 
+
+
     /**
-     * Converts a LigneFonctionnelle entity to a LigneFonctionnelleResponse DTO.
-     *
-     * @param ligneFonctionnelle The LigneFonctionnelle entity.
-     * @return A LigneFonctionnelleResponse DTO.
+     * Helper : Converts a SousLigneRequestDto to a LigneFonctionnelle entity (Sub-line).
+     * The Service must provide the LigneMere entity (for inherited properties) and the NatureLigneFonctionnelle entity.
+     */
+    public LigneFonctionnelle toSousLigneEntity(SousLigneRequestDto request,
+                                                LigneFonctionnelle ligneMere,
+                                                NatureLigneFonctionnelle natureSousLigne) {
+
+        LigneFonctionnelle sousLigne = new LigneFonctionnelle();
+
+        // Propriétés spécifiques du DTO Fille
+        sousLigne.setId(request.getId()); // Essentiel pour la modification/suppression dans le Service
+        sousLigne.setPlafond(request.getPlafond());
+        sousLigne.setNatureLigneFonctionnelle(natureSousLigne);
+
+        // Propriétés héritées (EXTRAITES DIRECTEMENT DE LA MÈRE)
+        sousLigne.setBanque(ligneMere.getBanque());
+        sousLigne.setTaux(ligneMere.getTaux());
+        sousLigne.setDateDepart(ligneMere.getDateDepart());
+        sousLigne.setDateFin(ligneMere.getDateFin());
+
+        // Lien Parent
+        sousLigne.setLigneMere(ligneMere);
+
+        return sousLigne;
+    }
+
+
+
+
+    /**
+     * Converts a LigneFonctionnelle entity to a LigneFonctionnelleResponse DTO,
+     * incluant les informations de hiérarchie.
      */
     public LigneFonctionnelleResponse toDto(LigneFonctionnelle ligneFonctionnelle) {
         if (ligneFonctionnelle == null) {
@@ -61,7 +90,7 @@ public class LigneFonctionnelleMapper {
         LigneFonctionnelleResponse response = new LigneFonctionnelleResponse();
         response.setId(ligneFonctionnelle.getId());
 
-
+        // ... Mappage des propriétés de la Banque, Nature, Plafond, Taux, Dates ...
         if (ligneFonctionnelle.getBanque() != null) {
             response.setBanqueId(ligneFonctionnelle.getBanque().getId());
             response.setBanqueNom(ligneFonctionnelle.getBanque().getNom());
@@ -73,7 +102,6 @@ public class LigneFonctionnelleMapper {
             response.setNatureLigneFonctionnelleDescription(ligneFonctionnelle.getNatureLigneFonctionnelle().getDescription());
         }
 
-        // Map direct properties
         response.setPlafond(ligneFonctionnelle.getPlafond());
         response.setTaux(ligneFonctionnelle.getTaux());
         response.setDateDepart(ligneFonctionnelle.getDateDepart());
@@ -82,19 +110,54 @@ public class LigneFonctionnelleMapper {
         response.setDateModification(ligneFonctionnelle.getDateModification());
         response.setActif(ligneFonctionnelle.isActif());
 
+        // GESTION HIÉRARCHIQUE: Rôles et Relations
+        final boolean estSousLigne = ligneFonctionnelle.getLigneMere() != null;
+        final boolean estLigneMere = ligneFonctionnelle.getSousLignes() != null && !ligneFonctionnelle.getSousLignes().isEmpty();
+
+        response.setEstSousLigne(estSousLigne);
+        response.setEstLigneMere(estLigneMere);
+
+        if (estSousLigne) {
+            response.setLigneMereId(ligneFonctionnelle.getLigneMere().getId());
+        }
+
+        if (estLigneMere) {
+            List<SousLigneResponseDto> sousLignesDto = ligneFonctionnelle.getSousLignes().stream()
+                    .map(this::toSousLigneDto)
+                    .collect(Collectors.toList());
+
+            response.setSousLignes(sousLignesDto);
+        } else {
+            response.setSousLignes(new ArrayList<>());
+        }
+
         return response;
     }
 
+    /**
+     * Private helper method to convert a LigneFonctionnelle entity into the lightweight SousLigneResponseDto.
+     */
+    private SousLigneResponseDto toSousLigneDto(LigneFonctionnelle sousLigne) {
+        if (sousLigne == null) {
+            return null;
+        }
+
+        SousLigneResponseDto dto = new SousLigneResponseDto();
+        dto.setId(sousLigne.getId());
+        dto.setPlafond(sousLigne.getPlafond());
+
+        if (sousLigne.getNatureLigneFonctionnelle() != null) {
+            dto.setNatureLigneFonctionnelleId(sousLigne.getNatureLigneFonctionnelle().getId());
+            dto.setNatureLigneFonctionnelleLabel(sousLigne.getNatureLigneFonctionnelle().getLabel());
+        }
+
+        dto.setActif(sousLigne.isActif());
+        return dto;
+    }
 
     /**
-     * Updates an existing LigneFonctionnelle entity with data from a LigneFonctionnelleRequest DTO.
-     * Related entities (Banque, NatureLigneFonctionnelle) should be passed as separate arguments if they are changing.
-     * If these arguments are null, the existing relationships on the entity will be preserved.
-     *
-     * @param request The LigneFonctionnelleRequest DTO with updated data.
-     * @param ligneFonctionnelle The existing LigneFonctionnelle entity to be updated.
-     * @param newBanque (Optional) The new Banque entity if the bank association is changing. Pass null otherwise.
-     * @param newNature (Optional) The new NatureLigneFonctionnelle entity if the nature association is changing. Pass null otherwise.
+     * Updates an existing LigneFonctionnelle entity (Mother or Independent) with data from the request DTO.
+     * The Service handles the update logic for SousLignes.
      */
     public void updateLigneFonctionnelleFromDto(LigneFonctionnelleRequest request,
                                                 LigneFonctionnelle ligneFonctionnelle,
@@ -104,10 +167,9 @@ public class LigneFonctionnelleMapper {
             return;
         }
 
-        // Update direct properties only if they are provided in the request
-        if (request.getPlafond() != null) {
-            ligneFonctionnelle.setPlafond(request.getPlafond());
-        }
+        // 1. Mise à jour des propriétés directes de la Ligne Mère
+        ligneFonctionnelle.setPlafond(request.getPlafond());
+
         if (request.getTaux() != null) {
             ligneFonctionnelle.setTaux(request.getTaux());
         }
@@ -118,8 +180,7 @@ public class LigneFonctionnelleMapper {
             ligneFonctionnelle.setDateFin(request.getDateFin());
         }
 
-
-        // Update relationships if new entities are provided
+        // 2. Mise à jour des relations (Banque et Nature)
         if (newBanque != null) {
             ligneFonctionnelle.setBanque(newBanque);
         }
@@ -128,6 +189,7 @@ public class LigneFonctionnelleMapper {
             ligneFonctionnelle.setNatureLigneFonctionnelle(newNature);
         }
 
-
+        // La mise à jour du lien ligneMere n'est pas gérée ici (immuabilité gérée par le Service si nécessaire).
     }
+
 }
