@@ -86,7 +86,7 @@ export class MarchesFormComponent implements OnInit {
     this.marcheForm = this.fb.group({
       numero: ['',Validators.required],
       nom: ['', Validators.required],
-      montant: ['', [Validators.required, Validators.min(0.01)]],
+      montant: [null, [Validators.required, Validators.min(0.01)]],
       maitreDouvrage: ['', Validators.required],
       dateDebutDesTravaux: [''],
       dateDAchievementDesTravaux: [''],

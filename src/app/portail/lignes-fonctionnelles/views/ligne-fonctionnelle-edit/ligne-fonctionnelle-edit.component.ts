@@ -115,7 +115,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
         dateFin: [null, Validators.required],
         sousLignes: this.fb.array([], [this.sousLigneNatureUniquenessValidator()])
       },
-      { validators: [this.dateFinAfterDateDepartValidator(),this.plafondSousLignesValidator()]}
+      { validators: [this.dateFinAfterDateDepartValidator()]}
     );
 
     // Formulaire dédié pour la modale des sous-lignes
@@ -433,43 +433,7 @@ export class LigneFonctionnelleEditComponent implements OnInit {
     this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
   }
 
-  plafondSousLignesValidator(): ValidatorFn {
-    return (formGroup: AbstractControl): { [key: string]: any } | null => {
-      const selectedNatureId = formGroup.get('natureLigneFonctionnelleId')?.value;
-      const plafondMereControl = formGroup.get('plafond');
-      const sousLignesArray = formGroup.get('sousLignes') as FormArray;
 
-      // La validation n'a de sens que si la nature est 'Caution Administrative' et qu'il y a des enfants
-      if (selectedNatureId !== CAUTION_ADMINISTRATIVE_ID || sousLignesArray.length === 0 || !plafondMereControl || !plafondMereControl.value) {
-        // Nettoyer l'erreur si la condition n'est plus remplie
-        if (plafondMereControl && plafondMereControl.hasError('plafondExceeded')) {
-          const errors = { ...plafondMereControl.errors };
-          delete errors['plafondExceeded'];
-          plafondMereControl.setErrors(Object.keys(errors).length > 0 ? errors : null);
-        }
-        return null;
-      }
-
-      const plafondMere = plafondMereControl.value;
-
-      // Utiliser totalSousLignesPlafond que nous maintenons à jour
-      const totalPlafondFilles = this.totalSousLignesPlafond;
-
-      if (totalPlafondFilles > plafondMere) {
-        // Définir l'erreur sur le champ plafond de la Mère
-        plafondMereControl.setErrors({ ...plafondMereControl.errors, 'plafondExceeded': true });
-        return { 'totalPlafondExceeded': true }; // Erreur au niveau du Formulaire
-      } else {
-        // Nettoyer l'erreur 'plafondExceeded'
-        if (plafondMereControl.hasError('plafondExceeded')) {
-          const errors = { ...plafondMereControl.errors };
-          delete errors['plafondExceeded'];
-          plafondMereControl.setErrors(Object.keys(errors).length > 0 ? errors : null);
-        }
-      }
-      return null;
-    };
-  }
   //  dateFin must be after dateDepart
   dateFinAfterDateDepartValidator(): ValidatorFn {
     return (formGroup: AbstractControl): { [key: string]: any } | null => {

@@ -62,7 +62,7 @@ export class MarchesListComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   first: number | undefined = 0;
-  rows: number | undefined = 3;
+  rows: number | undefined = 10;
   sortField: string | string[] = 'id';
   sortOrder: number = 1;
   searchForm!: FormGroup;
