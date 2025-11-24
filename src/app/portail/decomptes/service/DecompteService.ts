@@ -141,6 +141,10 @@ export class DecompteService {
       params = params.set('marcheNumero', searchDto.marcheNumero);
     }
 
+    if(searchDto.montant){
+      params = params.set('montant', searchDto.montant.toString());
+    }
+
     return this.http.get<EncoursDecompteDto>(
       `${this.apiUrl}/encours/${banqueId}`,
       { params }

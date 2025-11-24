@@ -68,7 +68,8 @@
   </div>
 
   <div class="pb-8">
-    <p-table #dt [value]="prefiLines" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
+    <p-table #dt [value]="prefiLines" [paginator]="true"
+             [rows]="10" [totalRecords]="totalRecords"
              [lazy]="true" (onLazyLoad)="loadPrefiLines($event)"
              [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading"
              responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex"
@@ -101,10 +102,10 @@
         <tr>
           <td>{{ prefiLine.marcheNumero }} </td>
           <td>{{ prefiLine.banqueNom }} </td>
-          <td>{{ prefiLine.montant }} MAD</td>
-          <td>{{ prefiLine.encours }} MAD</td>
-          <td>{{ prefiLine.solde }} MAD</td>
-          <td>{{ prefiLine.taux }} %</td>
+          <td>{{ prefiLine.montant | number:'1.2-2'}} MAD</td>
+          <td>{{ prefiLine.encours | number:'1.2-2' }} MAD</td>
+          <td>{{ prefiLine.solde | number:'1.2-2' }} MAD</td>
+          <td>{{ prefiLine.taux | number:'1.2-2'}} %</td>
           <td>{{ prefiLine.dateDepart | date:'dd/MM/yyyy' }}</td>
           <td>{{ prefiLine.dateFin | date:'dd/MM/yyyy' }}</td>
           <td>

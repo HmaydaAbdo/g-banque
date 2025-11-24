@@ -3,6 +3,6 @@ import {DroitConstateResponseDto} from "./DroitConstateResponseDto";
 import {Decimal} from "decimal.js";
 
 export interface EncoursDroitConstateDto {
-  totalDesEncours: Decimal;
+  totalDesEncours: number;
   page: PageResponse<DroitConstateResponseDto>;
 }

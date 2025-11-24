@@ -21,6 +21,10 @@ import {BreadcrumbModule} from "primeng/breadcrumb";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {ToastModule} from "primeng/toast";
 import {FormsModule} from "@angular/forms";
+import {TagModule} from "primeng/tag";
+import {AuthService} from "../../../../auth/services/auth.service";
+import {InputSwitchModule} from "primeng/inputswitch";
+import {FactoringResponseDto} from "../../../factoring/dtos/FactoringResponseDto";
 
 @Component({
   selector: 'app-prefinancements-list',
@@ -43,6 +47,8 @@ import {FormsModule} from "@angular/forms";
     NgIf,
     NgFor,
     NgForOf,
+    TagModule,
+    InputSwitchModule,
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -80,7 +86,8 @@ export class PrefinancementsListComponent implements OnInit {
     private banqueService: BanqueService,
     private marcheService: MarcheService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    public authService: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -194,16 +201,31 @@ export class PrefinancementsListComponent implements OnInit {
     this.applyFilters();
   }
 
-  /** Mark a prefinancement as paid */
-  markAsPaid(pref: PrefinancementResponseDTO) {
-    if (pref.status === Status.PAYE) return;
-    this.prefinancementService.markAsPaid(pref.id).subscribe({
+  toggleStatus(pref: PrefinancementResponseDTO) {
+
+    this.prefinancementService.toggleStatus(pref.id).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
         this.loadPrefinancements(this.table.createLazyLoadMetadata());
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de mettre à jour le statut.' });
+      }
+    });
+  }
+
+  confirmToggleStatus(pref: PrefinancementResponseDTO){
+    const confirmationMessage = `Êtes-vous sûr de vouloir ${pref.status==Status.PAYE ? 'désactiver' : 'activer'} ce préfinancement ?`;
+    this.confirmationService.confirm({
+      message: confirmationMessage,
+      header: `Confirmation de ${pref.status ? 'désactivation' : 'activation'}`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      acceptButtonStyleClass: pref.status ? 'p-button-danger' : 'p-button-success',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.toggleStatus(pref);
       }
     });
   }
@@ -225,4 +247,6 @@ export class PrefinancementsListComponent implements OnInit {
       }
     });
   }
+
+  protected readonly Status = Status;
 }

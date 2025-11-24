@@ -102,8 +102,8 @@ export class DroitConstateService {
    * @param id The ID of the record to update.
    * @returns An Observable of the updated record's response DTO.
    */
-  markAsPaid(id: number): Observable<DroitConstateResponseDto> {
-    return this.http.patch<DroitConstateResponseDto>(`${this.apiUrl}/${id}/status/paid`, {});
+  toggleStatus(id: number): Observable<DroitConstateResponseDto> {
+    return this.http.patch<DroitConstateResponseDto>(`${this.apiUrl}/${id}/status/toggle`, {});
   }
 
   /**
@@ -135,6 +135,11 @@ export class DroitConstateService {
     if (searchDto.marcheNumero){
       params = params.set('marcheNumero', searchDto.marcheNumero);
     }
+
+    if (searchDto.montant){
+      params = params.set('montant', searchDto.montant.toString());
+    }
+
     return this.http.get<EncoursDroitConstateDto>(
       `${this.apiUrl}/remboursement/encours/${banqueId}`,
       { params }
@@ -168,6 +173,9 @@ export class DroitConstateService {
     }
     if (searchDto.marcheNumero){
       params = params.set('marcheNumero', searchDto.marcheNumero);
+    }
+    if (searchDto.montant){
+      params = params.set('montant', searchDto.montant.toString());
     }
     return this.http.get<EncoursDroitConstateDto>(
       `${this.apiUrl}/deblocage/encours/${banqueId}`,

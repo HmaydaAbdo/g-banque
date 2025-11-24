@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -7,26 +7,24 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { PaginatorModule } from 'primeng/paginator';
 import { RippleModule } from 'primeng/ripple';
-import { MessageService } from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import {PrefinancementResponseDTO} from "../../../../../prefinancements/dtos/PrefinancementResponseDTO";
 import {PrefinancementService} from "../../../../../prefinancements/service/PrefinancementService";
 import {EncoursPrefinancementDto} from "../../../../../prefinancements/dtos/EncoursPrefinancementDto";
-import {Decimal} from "decimal.js";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {
-  PrefinancementTransactionRequest
-} from "../../../../rapprochement/dtos/prefinancement/PrefinancementTransactionRequest";
+import {PrefinancementTransactionRequest} from "../../../../rapprochement/dtos/prefinancement/PrefinancementTransactionRequest";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import { EncoursPrefinancementSearchDto } from "../../../../../prefinancements/dtos/EncoursPrefinancementSearchDto";
 import { InputTextModule } from 'primeng/inputtext';
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
-import { ActivatedRoute } from '@angular/router'; // Import ActivatedRoute
+import {ActivatedRoute, RouterLink} from '@angular/router'; // Import ActivatedRoute
 
 import {  Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { DropdownModule } from 'primeng/dropdown';
 import {InputTextareaModule} from "primeng/inputtextarea";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
 
 
 @Component({
@@ -48,17 +46,19 @@ import {InputTextareaModule} from "primeng/inputtextarea";
     InputTextModule,
     DropdownModule,
     InputTextareaModule,
+    ConfirmDialogModule,
+    RouterLink,
   ],
   templateUrl: './prefinancement-remboursements.component.html',
   styleUrl: './prefinancement-remboursements.component.scss',
-  providers: [MessageService],
+  providers: [MessageService,ConfirmationService,DecimalPipe],
 })
 export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy {
   prefinancements: PrefinancementResponseDTO[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
   banqueId!: number; // Remove hardcoded value
-  totalEncours!: Decimal;
+  totalEncours!: number;
   @ViewChild('dt') dt: Table | undefined;
 
   // Search form properties
@@ -84,6 +84,9 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
     private prefinancementService: PrefinancementService,
     private messageService: MessageService,
     private rapprochementService: RapprochemntService,
+    private confirmationService: ConfirmationService,
+    private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
     private route: ActivatedRoute
   ) {}
@@ -120,6 +123,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
     this.searchForm = this.fb.group({
       marcheNumero: [''],
       marcheName: [''],
+      montant: [null],
     });
 
     // Initial data load triggered after banqueId is set
@@ -169,56 +173,110 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
     this.displayModal = true;
   }
 
+
+
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
+      this.rapprochementForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
+      });
+      return;
+    }
+
+    if (this.rapprochementForm.valid && this.selectedPrefinancement) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedPrefinancement = this.selectedPrefinancement;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ce Préfinancement ?
+            <br><br>
+            <strong>N° de Marché:</strong> ${selectedPrefinancement.marcheNumero}
+            <br>
+            <strong>Montant du Remboursement:</strong> ${this.decimalPipe.transform(selectedPrefinancement.montant,'1.2-2',"fr-FR")} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Préfinancement',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+
+
   /**
    * Handles the form submission to send the rapprochement request.
    * New: Includes tvaDeductible in the request.
    */
   submitRapprochement(): void {
-    if (this.rapprochementForm.invalid || !this.selectedPrefinancement) {
-      this.rapprochementForm.markAllAsTouched();
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs obligatoires.',
-      });
-      return;
+    if (this.rapprochementForm.valid && this.selectedPrefinancement) {
+
+
+      const prefinancementTransactionRequest: PrefinancementTransactionRequest = {
+        prefinancementId: this.selectedPrefinancement.id,
+        banqueId: this.selectedPrefinancement.banqueId,
+        dateEmission: this.rapprochementForm.value.dateEmission,
+        dateOperation: this.rapprochementForm.value.dateOperation,
+        dateValeur: this.rapprochementForm.value.dateValeur,
+        tva: this.rapprochementForm.value.tvaDeductible,
+        libelle: this.rapprochementForm.value.libelle,
+        observation: this.rapprochementForm.value.observation,
+
+      };
+
+      this.isSubmitting = true;
+      this.rapprochementService.prefinancementToRapprochement(prefinancementTransactionRequest)
+        .subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Préfinancement validé et rapproché avec succès.',
+            });
+            this.isSubmitting = false;
+            this.dt?.reset();
+            this.displayModal = false;
+          },
+          error: (error) => {
+            console.error('Erreur lors du rapprochement du préfinancement:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
+            });
+            this.isSubmitting = false;
+          },
+        });
+
     }
-
-    const prefinancementTransactionRequest: PrefinancementTransactionRequest = {
-      prefinancementId: this.selectedPrefinancement.id,
-      banqueId: this.selectedPrefinancement.banqueId,
-      dateEmission:this.rapprochementForm.value.dateEmission,
-      dateOperation: this.rapprochementForm.value.dateOperation,
-      dateValeur: this.rapprochementForm.value.dateValeur,
-      tva: this.rapprochementForm.value.tvaDeductible,
-      libelle:this.rapprochementForm.value.libelle,
-      observation:this.rapprochementForm.value.observation,
-
-    };
-
-    this.isSubmitting = true;
-    this.rapprochementService.prefinancementToRapprochement(prefinancementTransactionRequest)
-      .subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'Préfinancement validé et rapproché avec succès.',
-          });
-          this.isSubmitting = false;
-          this.dt?.reset();
-          this.displayModal = false;
-        },
-        error: (error) => {
-          console.error('Erreur lors du rapprochement du préfinancement:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
-          });
-          this.isSubmitting = false;
-        },
-      });
   }
 
 

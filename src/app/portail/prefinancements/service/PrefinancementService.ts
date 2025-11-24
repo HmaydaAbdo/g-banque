@@ -103,8 +103,8 @@ export class PrefinancementService {
    * @param id The ID of the record to update.
    * @returns An Observable of the updated record's response DTO.
    */
-  markAsPaid(id: number): Observable<PrefinancementResponseDTO> {
-    return this.http.patch<PrefinancementResponseDTO>(`${this.apiUrl}/${id}/status/paid`, {});
+  toggleStatus(id: number): Observable<PrefinancementResponseDTO> {
+    return this.http.patch<PrefinancementResponseDTO>(`${this.apiUrl}/${id}/status/toggle`, {});
   }
 
   /**
@@ -135,6 +135,10 @@ export class PrefinancementService {
 
     if(searchDto.marcheNumero){
       params = params.set('marcheNumero', searchDto.marcheNumero);
+    }
+
+    if(searchDto.montant){
+      params = params.set('montant', searchDto.montant.toString());
     }
 
     return this.http.get<EncoursPrefinancementDto>(
@@ -171,6 +175,10 @@ export class PrefinancementService {
 
     if(searchDto.marcheNumero){
       params = params.set('marcheNumero', searchDto.marcheNumero);
+    }
+
+    if(searchDto.montant){
+      params = params.set('montant', searchDto.montant.toString());
     }
 
     return this.http.get<EncoursPrefinancementDto>(

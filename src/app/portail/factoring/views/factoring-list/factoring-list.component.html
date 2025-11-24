@@ -150,13 +150,38 @@
           <td>{{ factoring.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ factoring.dateOperation ? (factoring.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ factoring.dateValeur ? (factoring.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>
-          <td>{{ factoring.type }}</td>
-          <td>{{ factoring.status }}</td>
           <td>
+            <p-tag
+              [value]="factoring.type"
+              [severity]="factoring.type == Type.DEBLOCAGE ? 'success' : 'danger'">
+            </p-tag>
+          </td>
+
+          <td>
+            <p-tag
+              [value]="factoring.status"
+              [severity]="factoring.status == Status.PAYE ? 'success' : 'danger'">
+            </p-tag>
+          </td>
+
+          <td class="flex justify-content-center align-items-center gap-3" style="width: 10rem;">
+
+
+            <p-inputSwitch
+              [ngModel]="factoring.status === Status.PAYE"
+              (ngModelChange)="confirmToggleStatus(factoring)"
+              pTooltip="{{ factoring.status === Status.PAYE ? 'Marquer comme prévu' : 'Marquer comme Payé' }}"
+            ></p-inputSwitch>
+
             <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
                     [routerLink]="['/portail/factoring/edit', factoring.id]"></button>
-            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
-                    (click)="deleteFactoring(factoring)"></button>
+
+
+            @if(authService.isAdmin()) {
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
+                      (click)="deleteFactoring(factoring)"></button>
+            }
+
           </td>
         </tr>
       </ng-template>

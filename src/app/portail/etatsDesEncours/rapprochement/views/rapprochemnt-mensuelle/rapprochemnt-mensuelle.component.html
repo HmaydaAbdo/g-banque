@@ -40,25 +40,25 @@
         <div class="flex flex-column gap-1">
           <span class=" font-bold text-500">Total Débit</span>
           <span class="text-xl font-semibold text-color">
-          {{ agregatedData?.totalDebit }} MAD
+          {{ agregatedData?.totalDebit | number: '1.2-2' }} MAD
         </span>
         </div>
         <div class="flex flex-column gap-1">
     <span class=" font-bold text-500">Total Crédit</span>
     <span class="text-xl font-semibold text-color">
-          {{ agregatedData?.totalCredit  }} MAD
+          {{ agregatedData?.totalCredit | number: '1.2-2'  }} MAD
         </span>
   </div>
         <div class="flex flex-column gap-1">
           <span class=" font-bold text-500">TVA Déductible</span>
           <span class="text-xl font-semibold text-color">
-          {{ agregatedData?.totalTvaDeductible  }} MAD
+          {{ agregatedData?.totalTvaDeductible  | number: '1.2-2' }} MAD
         </span>
         </div>
         <div class="flex flex-column gap-1">
           <span class=" font-bold text-500">TVA Collectée</span>
           <span class="text-xl font-semibold text-color">
-          {{ agregatedData?.totalTvaCollectee  }} MAD
+          {{ agregatedData?.totalTvaCollectee | number: '1.2-2'  }} MAD
         </span>
         </div>
 
@@ -95,23 +95,24 @@
         <th pSortableColumn="dateValeur">
           Date de valeur <p-sortIcon field="dateValeur"></p-sortIcon>
         </th>
-        <th pSortableColumn="libelle">
-          Libellé <p-sortIcon field="libelle"></p-sortIcon>
-        </th>
+
         <th pSortableColumn="debit">
           Débit <p-sortIcon field="debit"></p-sortIcon>
         </th>
         <th pSortableColumn="credit">
           Crédit <p-sortIcon field="credit"></p-sortIcon>
         </th>
-        <th pSortableColumn="observation">
-          Observation <p-sortIcon field="observation"></p-sortIcon>
-        </th>
         <th pSortableColumn="tvaDeductible">
           TVA Déductible <p-sortIcon field="tvaDeductible"></p-sortIcon>
         </th>
         <th pSortableColumn="tvaCollectee">
           TVA Collectée <p-sortIcon field="tvaCollectee"></p-sortIcon>
+        </th>
+        <th pSortableColumn="libelle">
+          Libellé <p-sortIcon field="libelle"></p-sortIcon>
+        </th>
+        <th pSortableColumn="observation">
+          Observation <p-sortIcon field="observation"></p-sortIcon>
         </th>
       </tr>
     </ng-template>
@@ -121,12 +122,12 @@
         <td>{{ transaction.dateEmission | date:'dd/MM/yyyy' }}</td>
         <td>{{ transaction.dateOperations | date:'dd/MM/yyyy' }}</td>
         <td>{{ transaction.dateValeur | date:'dd/MM/yyyy' }}</td>
-        <td>{{ transaction.libelle }}</td>
         <td class="text-center">{{ transaction.debit === 0 ? '-' : (transaction.debit | number:'1.2-2') + ' MAD' }}</td>
         <td class="text-center">{{ transaction.credit === 0 ? '-' : (transaction.credit | number:'1.2-2') + ' MAD' }}</td>
-        <td>{{ transaction.observation }}</td>
         <td class="text-center">{{ transaction.tvaDeductible !== null ? ((transaction.tvaDeductible | number:'1.2-2') + ' MAD') : '-' }}</td>
         <td class="text-center">{{ transaction.tvaCollectee !== null ? ((transaction.tvaCollectee | number:'1.2-2') + ' MAD') : '-' }}</td>
+        <td>{{ transaction.libelle }}</td>
+        <td>{{ transaction.observation }}</td>
       </tr>
     </ng-template>
 

@@ -58,13 +58,11 @@ export class SidebarComponent implements OnInit {
         { label: 'Les Lignes ponctuelles', icon: 'pi pi-list',
           items:[
             { label: 'Les Lignes encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-encours' },
-            { label: 'Les Lignes expirées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-expired' },
             { label: 'Les Lignes archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-archived' },
           ] },
         { label: 'Les Lignes spécifiques', icon: 'pi pi-list',
           items:[
             { label: 'Les lignes encours',icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-encours' },
-            { label: 'Les lignes expirées',icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-expired' },
             { label: 'Les lignes archivées',icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-archived' },
           ] },
 

@@ -13,7 +13,7 @@ import {CardModule} from "primeng/card";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
-import {MenuItem, MessageService, SelectItem} from "primeng/api";
+import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
 import {Decimal} from "decimal.js";
 import {ActivatedRoute} from "@angular/router";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
@@ -22,6 +22,8 @@ import {InteretService} from "../../../../../interest/service/InteretService";
 import {InteretSearchDto} from "../../../../../interest/dtos/InteretSearchDto";
 import {EncoursInteretDto} from "../../../../../interest/dtos/EncoursInteretDto";
 import {InteretValidationRequest} from "../../../../rapprochement/dtos/interets/interet-validation-request.dto";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 
 @Component({
   selector: 'app-encours-interest',
@@ -44,10 +46,11 @@ import {InteretValidationRequest} from "../../../../rapprochement/dtos/interets/
     DialogModule,
     ReactiveFormsModule,
     CalendarModule,
-    InputTextareaModule
+    InputTextareaModule,
+    ConfirmDialogModule
   ],
   templateUrl: './encours-interet.component.html',
-  providers: [MessageService]
+  providers: [MessageService,ConfirmationService,DecimalPipe]
 })
 export class EncoursInteretComponent implements OnInit {
   @ViewChild('dt') table!: Table;
@@ -55,13 +58,14 @@ export class EncoursInteretComponent implements OnInit {
   interests: InteretResponseDto[] = [];
   totalRecords = 0;
   loading = true;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   banqueId?: number;
 
   displayModal: boolean = false;
   selectedInterest: any = null;
   rapprochementForm!: FormGroup;
-  libelleFilter: string | null = null;
+
+  searchForm!:FormGroup
 
   items: MenuItem[] = [];
   tvaOptions: SelectItem[] = [
@@ -73,15 +77,21 @@ export class EncoursInteretComponent implements OnInit {
 
   isSubmitting: boolean = false;
 
+  searchFormSubscription!: Subscription ;
+
   constructor(
     private interestService: InteretService,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
+    private datePipe: DatePipe,
+    private decimalPipe:DecimalPipe,
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private rapprochementService: RapprochemntService,
   ) {}
 
   ngOnInit(): void {
+
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
       { icon: 'pi pi-list', route: '/portail/interests', label: 'Intérêts' },
@@ -110,6 +120,21 @@ export class EncoursInteretComponent implements OnInit {
       }
     });
 
+    this.searchForm = this.fb.group({
+      libelle: [''],
+      montant: [null],
+    })
+
+    this.searchFormSubscription = this.searchForm.valueChanges.pipe(
+      // Attends 300ms après la dernière frappe/changement
+      debounceTime(300),
+      // N'émet que si la valeur actuelle est différente de la dernière valeur émise
+      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
+    ).subscribe(() => {
+      // Recharge le tableau via applyFilters (qui appelle table.reset())
+      this.applyFilters();
+    });
+
     this.rapprochementForm = this.fb.group({
       dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
@@ -127,7 +152,7 @@ export class EncoursInteretComponent implements OnInit {
     if (!this.banqueId) {
       this.interests = [];
       this.totalRecords = 0;
-      this.totalEncours = new Decimal(0);
+      this.totalEncours = 0;
       this.loading = false;
       return;
     }
@@ -138,9 +163,7 @@ export class EncoursInteretComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    const searchCriteria: InteretSearchDto = {
-      libelle: this.libelleFilter || undefined
-    };
+    const searchCriteria: InteretSearchDto =this.searchForm.getRawValue()
 
     this.interestService.getOutstandingInterest(this.banqueId, searchCriteria, page, size, sort)
       .subscribe({
@@ -175,19 +198,69 @@ export class EncoursInteretComponent implements OnInit {
   }
 
 
-
-  // Soumettre la validation
-  submitRapprochement(): void {
-
-    if (this.rapprochementForm.invalid || !this.selectedInterest) {
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs.',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
       });
       return;
     }
+
+    if (this.rapprochementForm.valid && this.selectedInterest) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedInterest = this.selectedInterest;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ces Intérêts ?
+            <br><br>
+            <strong>ID Intérêt:</strong> ${selectedInterest.id}
+            <br>
+            <strong>Montant:</strong> ${this.decimalPipe.transform(selectedInterest.montant,'1.2-2',"fr-FR")} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Intérêts',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+  // Soumettre la validation
+  submitRapprochement(): void {
+
+    if (this.rapprochementForm.valid && this.selectedInterest) {
+
+
 
     const request: InteretValidationRequest = {
       idInteret: this.selectedInterest.id,
@@ -221,7 +294,7 @@ export class EncoursInteretComponent implements OnInit {
         this.isSubmitting = false;
       },
     });
-  }
+  }}
 
 
 

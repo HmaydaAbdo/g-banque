@@ -48,8 +48,8 @@ import {Decimal} from "decimal.js";
 })
 export class RecapDecaissementComponent implements OnInit, OnDestroy {
   // Table data state properties
-  totalDebit!:Decimal
-  totalCredit!:Decimal
+  totalDebit!:number
+  totalCredit!:number
   recapDecaissements: RecaputilatifItem[] = [];
   totalRecords: number = 0;
   loading: boolean = true;

@@ -72,11 +72,16 @@ export class LignesFonctionnellesComponent implements OnInit {
   loading: boolean = false;
   first: number = 0;
   rows: number = 10;
-  sortField: string | string[] = 'id';
-  sortOrder: number = 1;
+  sortField: string | string[] | null | undefined
+  sortOrder: number | null | undefined
   searchForm!: FormGroup;
   natureLigneOptions: { label: string; value: number | null }[] = [];
   banquesOptions: { label: string; value: number | null }[] = [];
+  statutOptions: any[] = [
+    { label: 'Tous', value: null },
+    { label: 'En cours', value: false },
+    { label: 'Expirées', value: true }
+  ];
   items: MenuItem[] | undefined;
   expandedRows={}
 
@@ -104,7 +109,7 @@ export class LignesFonctionnellesComponent implements OnInit {
       banqueId: [null],
       natureLigneFonctionnelleId: [null],
       actif: [true],
-      isExpired: [false],
+      isExpired: [null],
     });
   }
 
@@ -157,8 +162,8 @@ export class LignesFonctionnellesComponent implements OnInit {
 
     this.first = event.first !== undefined ? event.first : 0;
     this.rows = (event.rows !== undefined ? event.rows : 10) as number;
-    this.sortField = event.sortField || 'id';
-    this.sortOrder = event.sortOrder === 1 ? 1 : -1;
+    this.sortField = event.sortField
+    this.sortOrder = event.sortOrder
 
     const page = this.first / this.rows;
 
@@ -219,6 +224,8 @@ export class LignesFonctionnellesComponent implements OnInit {
         message: `Êtes-vous sûr de vouloir désactiver la ligne fonctionnelle "${ligne.natureLigneFonctionnelleLabel}" avec  "${ligne.banqueNom}" ?`,
         header: 'Confirmation de Désactivation',
         icon: 'pi pi-exclamation-triangle',
+        acceptLabel:"Oui",
+        rejectLabel:"Non",
         accept: () => {
           this.loading = true;
           this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.id!)

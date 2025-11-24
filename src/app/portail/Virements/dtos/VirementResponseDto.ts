@@ -1,4 +1,5 @@
 
+import {Type} from "../Type";
 
 export interface VirementResponseDto {
   numero: string;
@@ -13,4 +14,5 @@ export interface VirementResponseDto {
   libelle:string;
   observation:string;
   active: boolean;
+  type:Type
 }

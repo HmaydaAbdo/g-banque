@@ -1,13 +1,13 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {CommonModule, DatePipe} from '@angular/common';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
 import {ToastModule} from 'primeng/toast';
 import {TooltipModule} from 'primeng/tooltip';
 import {PaginatorModule} from 'primeng/paginator';
-import {MessageService} from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import {ChequeResponseDto} from "../../../../../cheques/dtos/ChequeResponseDto";
 import {ChequeService} from "../../../../../cheques/services/ChequeService";
 import {Ripple} from "primeng/ripple";
@@ -21,12 +21,12 @@ import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {EncoursChequeResponseDto} from "../../../../../cheques/dtos/EncoursChequeResponseDto";
-import {Decimal} from "decimal.js";
 import {EncoursChequeSearchDto} from "../../../../../cheques/dtos/EncoursChequeSearchDto";
 import {InputTextModule} from "primeng/inputtext";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {DropdownModule} from "primeng/dropdown";
 import {InputNumberModule} from "primeng/inputnumber";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
 
 @Component({
   selector: 'app-cheques-encours',
@@ -49,17 +49,18 @@ import {InputNumberModule} from "primeng/inputnumber";
     InputTextModule,
     DropdownModule,
     InputNumberModule,
+    ConfirmDialogModule,
   ],
   templateUrl: './cheques-encours.component.html',
   styleUrl: './cheques-encours.component.scss',
-  providers: [MessageService],
+  providers: [MessageService,ConfirmationService,DecimalPipe],
 })
 export class ChequesEncoursComponent implements OnInit {
   cheques: ChequeResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
   banqueIdFromRoute!: number;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -88,7 +89,9 @@ export class ChequesEncoursComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private messageService: MessageService,
-    private datePipe: DatePipe
+    private ConfirmationService:ConfirmationService,
+    private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe
   ) {}
 
   ngOnInit(): void {
@@ -106,7 +109,8 @@ export class ChequesEncoursComponent implements OnInit {
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       numero: [''],
-      beneficiaire: ['']
+      beneficiaire: [''],
+      montant:[null]
     });
 
     this.searchForm.valueChanges
@@ -143,9 +147,9 @@ export class ChequesEncoursComponent implements OnInit {
     this.displayModal = true;
   }
 
-  submitRapprochement(): void {
 
-   if (this.rapprochementForm.invalid) {
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
@@ -155,6 +159,56 @@ export class ChequesEncoursComponent implements OnInit {
       return;
     }
 
+    if (this.rapprochementForm.valid && this.selectedCheque) {
+      // Utilisation de getRawValue() pour récupérer aussi les champs désactivés
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedCheque = this.selectedCheque;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ce chèque ?
+            <br><br>
+            <strong>N° Chèque:</strong> ${selectedCheque.numero}
+            <br>
+            <strong>Bénéficiaire:</strong> ${selectedCheque.beneficiaire}
+            <br>
+            <strong>Montant:</strong> ${this.decimalPipe.transform(selectedCheque.montant,"1.2-2","fr-FR")} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.ConfirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Chèque',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+
+
+  submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedCheque) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
 
@@ -206,6 +260,7 @@ export class ChequesEncoursComponent implements OnInit {
     this.loading = true;
     const page = event ? event.first! / event.rows! : 0;
     const size = event ? event.rows! : 10;
+
     const sort = event?.sortField
       ? `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`
       : 'dateEmission,desc';
@@ -234,4 +289,6 @@ export class ChequesEncoursComponent implements OnInit {
         },
       });
   }
+
+
 }

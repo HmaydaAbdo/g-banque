@@ -1,12 +1,11 @@
-import {Decimal} from "decimal.js";
 import {PageResponse} from "../../../../global/types/PageResponse";
 import {TransactionResponseDto} from "./TransactionResponseDto";
 
 export interface AgreratedTransactionResponseDto {
 
-  totalDebit:Decimal,
-  totalCredit:Decimal,
-  totalTvaDeductible:Decimal,
-  totalTvaCollectee:Decimal,
+  totalDebit:number,
+  totalCredit:number,
+  totalTvaDeductible:number,
+  totalTvaCollectee:number,
   page:PageResponse<TransactionResponseDto>
 }

@@ -97,23 +97,23 @@
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="body" let-dcLine>
+      <ng-template pTemplate="body" let-factoringLine>
         <tr>
-          <td>{{ dcLine.marcheNumero }} </td>
-          <td>{{ dcLine.banqueNom }} </td>
-          <td>{{ dcLine.montant }} MAD</td>
-          <td>{{ dcLine.encours }} MAD</td>
-          <td>{{ dcLine.solde }} MAD</td>
-          <td>{{ dcLine.taux }} %</td>
-          <td>{{ dcLine.dateDepart | date:'dd/MM/yyyy' }}</td>
-          <td>{{ dcLine.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td>{{ factoringLine.marcheNumero }} </td>
+          <td>{{ factoringLine.banqueNom }} </td>
+          <td>{{ factoringLine.montant | number:'1.2-2'  }} MAD</td>
+          <td>{{ factoringLine.encours  | number:'1.2-2' }} MAD</td>
+          <td>{{ factoringLine.solde  | number:'1.2-2' }} MAD</td>
+          <td>{{ factoringLine.taux }} %</td>
+          <td>{{ factoringLine.dateDepart | date:'dd/MM/yyyy' }}</td>
+          <td>{{ factoringLine.dateFin | date:'dd/MM/yyyy' }}</td>
           <td>
             <button
               pButton
               pRipple
               icon="pi pi-eye"
               class="p-button-rounded p-button-secondary mr-2"
-              [routerLink]="['/portail/factoring-line', dcLine.id, 'encours', 'validated']">
+              [routerLink]="['/portail/factoring-line', factoringLine.id, 'encours', 'validated']">
             </button>
 
           </td>

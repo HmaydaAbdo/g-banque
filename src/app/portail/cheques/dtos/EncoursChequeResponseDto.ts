@@ -4,6 +4,6 @@ import {ChequeResponseDto} from "./ChequeResponseDto";
 
 export interface EncoursChequeResponseDto {
 
-  totalDesEncours:Decimal
+  totalDesEncours:number
   page:PageResponse<ChequeResponseDto>
 }

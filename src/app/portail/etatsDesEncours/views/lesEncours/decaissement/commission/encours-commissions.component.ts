@@ -1,6 +1,6 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
-import {MessageService, MenuItem, SelectItem} from 'primeng/api';
+import {MessageService, MenuItem, SelectItem, ConfirmationService} from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgFor } from '@angular/common';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
@@ -23,6 +23,9 @@ import {RapprochemntService} from "../../../../rapprochement/services/rapprochem
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
+import {AuthService} from "../../../../../../auth/services/auth.service";
 
 @Component({
   selector: 'app-encours-commissions',
@@ -45,26 +48,29 @@ import {InputTextareaModule} from "primeng/inputtextarea";
     DialogModule,
     ReactiveFormsModule,
     CalendarModule,
-    InputTextareaModule
+    InputTextareaModule,
+    ConfirmDialogModule
   ],
   templateUrl: './encours-commissions.component.html',
-  providers: [MessageService]
+  providers: [MessageService,ConfirmationService,DecimalPipe]
 })
-export class EncoursCommissionsComponent implements OnInit {
+export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
   @ViewChild('dt') table!: Table;
 
   commissions: CommissionResponseDto[] = [];
   totalRecords = 0;
   loading = true;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   banqueId?: number;
 
   displayModal: boolean = false;
-  selectedCommission: any = null;
+  selectedCommission!: CommissionResponseDto ;
   rapprochementForm!: FormGroup;
 
-  selectedOperation?: TransactionSource;
-  libelleFilter: string | null = null;
+  searchForm!: FormGroup;
+  private searchSubscription!: Subscription;
+
+
   operationOptions: { label: string; value: TransactionSource | null }[] = [];
   items: MenuItem[] = [];
   tvaOptions: SelectItem[] = [
@@ -79,18 +85,30 @@ export class EncoursCommissionsComponent implements OnInit {
   constructor(
     private commissionService: CommissionService,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
+    private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe,
     private route: ActivatedRoute,
+    private authService:AuthService,
     private fb: FormBuilder,
     private rapprochementService: RapprochemntService,
   ) {}
 
+
   ngOnInit(): void {
+
+    this.searchForm = this.fb.group({
+      operation: [null], // Filtre par type d'opération
+      libelle: [''], // Filtre par libellé
+      montant: [null] // Nouveau filtre par montant
+    });
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
       { icon: 'pi pi-list', route: '/portail/commissions', label: 'Commissions' },
       { label: 'Encours' }
     ];
 
+    this.setupSearchSubscription();
     this.loadOperationOptions();
 
     // Subscribe to the parent route to get the banqueId
@@ -124,6 +142,16 @@ export class EncoursCommissionsComponent implements OnInit {
     });
   }
 
+  setupSearchSubscription(): void {
+    // Écoute les changements de valeur sur l'ensemble du formulaire
+    this.searchSubscription = this.searchForm.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
+    ).subscribe(() => {
+      this.applyFilters();
+    });
+  }
+
   loadCommissions(event: TableLazyLoadEvent) {
     this.loading = true;
 
@@ -131,7 +159,7 @@ export class EncoursCommissionsComponent implements OnInit {
     if (!this.banqueId) {
       this.commissions = [];
       this.totalRecords = 0;
-      this.totalEncours = new Decimal(0);
+      this.totalEncours =0;
       this.loading = false;
       return;
     }
@@ -142,9 +170,12 @@ export class EncoursCommissionsComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
+    const formValues = this.searchForm.value; // Récupérer toutes les valeurs
+
     const searchCriteria: CommissionSearchDto = {
-      operation: this.selectedOperation,
-      libelle: this.libelleFilter || undefined
+      operation: formValues.operation,
+      libelle: formValues.libelle ,
+      montant: formValues.montant
     };
 
     this.commissionService.getOutstandingCommissions(this.banqueId, searchCriteria, page, size, sort)
@@ -179,52 +210,100 @@ export class EncoursCommissionsComponent implements OnInit {
     this.displayModal = true;
   }
 
-
-
-  // Soumettre la validation
-  submitRapprochement(): void {
-    if (this.rapprochementForm.invalid || !this.selectedCommission) {
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs.',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
       });
       return;
     }
 
-    const request: CommissionValidationDto = {
-      idCommission: this.selectedCommission.id,
-      dateOperation: this.rapprochementForm.value.dateOperation,
-      dateEmission:this.rapprochementForm.value.dateEmission,
-      dateValeur: this.rapprochementForm.value.dateValeur,
-      observation: this.rapprochementForm.value.observation,
-      libelle:this.rapprochementForm.value.libelle,
-      tva:this.rapprochementForm.value.tvaDeductible
-    };
+    if (this.rapprochementForm.valid && this.selectedCommission) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedCommission = this.selectedCommission;
 
-    this.isSubmitting = true;
-    this.rapprochementService.commissionToRapprochement(request).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Succès',
-          detail: 'Commission validée avec succès.',
-        });
-        this.isSubmitting = false;
-        this.displayModal = false;
-        this.table.reset(); // recharge ton tableau existant
-      },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Une erreur est survenue.',
-        });
-        this.isSubmitting = false;
-      },
-    });
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher cette Commission ?
+            <br><br>
+            <strong>ID Commission:</strong> ${selectedCommission.id}
+            <br>
+            <strong>Type d'Opération:</strong> ${selectedCommission.operation}
+            <br>
+            <strong>Montant TTC:</strong> ${this.decimalPipe.transform(selectedCommission.montant,'1.2-2','fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Commission',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
   }
+
+  // Soumettre la validation
+  submitRapprochement(): void {
+    if (this.rapprochementForm.valid && this.selectedCommission) {
+
+      const request: CommissionValidationDto = {
+        idCommission: this.selectedCommission.id,
+        dateOperation: this.rapprochementForm.value.dateOperation,
+        dateEmission: this.rapprochementForm.value.dateEmission,
+        dateValeur: this.rapprochementForm.value.dateValeur,
+        observation: this.rapprochementForm.value.observation,
+        libelle: this.rapprochementForm.value.libelle,
+        tva: this.rapprochementForm.value.tvaDeductible
+      };
+
+      this.isSubmitting = true;
+      this.rapprochementService.commissionToRapprochement(request).subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Commission validée avec succès.',
+          });
+          this.isSubmitting = false;
+          this.displayModal = false;
+          this.table.reset(); // recharge ton tableau existant
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Une erreur est survenue.',
+          });
+          this.isSubmitting = false;
+        },
+      });
+    }
+    }
 
   loadOperationOptions() {
     this.operationOptions = Object.values(TransactionSource).map(op => ({
@@ -239,8 +318,26 @@ export class EncoursCommissionsComponent implements OnInit {
     }
   }
 
+  clearFilters() {
+    this.searchForm.reset({
+      operation: null,
+      libelle: '',
+      montant: null
+    });
+    this.applyFilters();
+  }
+
   isInvalid(controlName: string): boolean {
     const control = this.rapprochementForm.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  ngOnDestroy(): void {
+    this.searchSubscription.unsubscribe();
+  }
+
 }

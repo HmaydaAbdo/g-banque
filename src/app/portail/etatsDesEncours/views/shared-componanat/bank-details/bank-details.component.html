@@ -15,7 +15,7 @@
       <p class="text-center text-xl">
         Solde actuelle :
         <span class="font-bold" [ngClass]="{'text-green-700': bankInfo.soldeActuelle >= 0, 'text-red-500': bankInfo.soldeActuelle < 0}">
-      {{bankInfo.soldeActuelle}}
+      {{bankInfo.soldeActuelle | number: '1.2-2'}}
     </span> MAD
       </p>
     </div>
@@ -23,7 +23,9 @@
 
     @if (bankInfo.plafondFC) {
       <div  class="flex-shrink-0">
-        <p class="text-center text-xl" > Facilité de caisse : <span class="font-bold text-green-700">{{bankInfo.plafondFC}} </span> MAD </p>
+        <p class="text-center text-xl" > Facilité de caisse : <span class="font-bold text-green-700">
+          {{bankInfo.plafondFC | number: '1.2-2'}} </span> MAD
+        </p>
       </div>
     } @else {
       <div  class="flex-shrink-0">

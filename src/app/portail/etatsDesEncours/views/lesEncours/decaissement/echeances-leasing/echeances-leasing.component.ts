@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { CommonModule, DatePipe } from '@angular/common';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -61,7 +61,7 @@ import {TransactionSource} from "../../../../rapprochement/dtos/transactions/Tra
   ],
   templateUrl: './echeances-leasing.component.html',
   styleUrl: './echeances-leasing.component.scss',
-  providers: [MessageService, ConfirmationService]
+  providers: [MessageService, ConfirmationService,DecimalPipe]
 })
 export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
@@ -101,8 +101,10 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
     private rapprochementService: RapprochemntService,
     private route: ActivatedRoute,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
     private fb: FormBuilder,
-    private datePipe: DatePipe
+    private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe
   ) { }
 
   ngOnInit(): void {
@@ -139,7 +141,8 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       organismeLeasingId: [null],
-      numeroContrat: [null]
+      numeroContrat: [null],
+      montant: [null]
     });
   }
 
@@ -177,7 +180,8 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
     const request: EncoursLeasingRequestDTO = {
       banqueId: this.banqueIdFromRoute,
       organismeLeasingId: searchCriteria.organismeLeasingId,
-      numeroContrat: searchCriteria.numeroContrat, // Pass the new filter value
+      numeroContrat: searchCriteria.numeroContrat,
+      montant: searchCriteria.montant,
       page: event.first! / event.rows!,
       size: event.rows!,
       sort: event.sortField && event.sortOrder
@@ -243,8 +247,8 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
     this.displayModal = true;
   }
 
-  // Nouvelle méthode pour soumettre les données de rapprochement
-  submitRapprochement(): void {
+
+  confirmRapprochement(): void {
     if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -255,6 +259,51 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.rapprochementForm.valid && this.selectedEcheance) {
+      // Utilisation de getRawValue() pour récupérer aussi les champs désactivés
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedEcheance = this.selectedEcheance;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher cette échéance ?
+            <br><br>
+            <strong>Contrat N°:</strong> ${selectedEcheance.numeroContrat}
+            <br>
+            <strong>Montant TTC:</strong> ${this.decimalPipe.transform(selectedEcheance.montantTTC, "1.2-2", 'fr-FR')} MAD            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${this.decimalPipe.transform(formValue.tvaDeductible,"1.2-2","fr-FR")}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+
+        }
+      });
+    }
+  }
+
+  submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedEcheance) {
       // Utilisation de getRawValue() pour récupérer aussi les champs désactivés (dateEmission, tvaDeductible)
       const formValue = this.rapprochementForm.getRawValue();
@@ -326,4 +375,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   }
 
   protected readonly Date = Date;
+
+
 }

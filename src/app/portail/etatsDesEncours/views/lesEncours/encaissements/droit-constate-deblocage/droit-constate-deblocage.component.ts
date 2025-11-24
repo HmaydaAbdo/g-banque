@@ -1,9 +1,9 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, RouterLink} from '@angular/router';
 import {Decimal} from "decimal.js";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {MessageService} from "primeng/api";
+import {ConfirmationService, MessageService} from "primeng/api";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import {DroitConstateTransactionRequest} from "../../../../rapprochement/dtos/droits_constate/DroitConstateTransactionRequest";
 import {DroitConstateResponseDto} from "../../../../../droitsConstate/dtos/DroitConstateResponseDto";
@@ -11,7 +11,7 @@ import {DroitConstateService} from "../../../../../droitsConstate/service/DroitC
 import {EncoursDroitConstateDto} from "../../../../../droitsConstate/dtos/EncoursDroitConstateDto";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
-import {DatePipe, NgIf, CommonModule} from "@angular/common";
+import {DatePipe, NgIf, CommonModule, DecimalPipe} from "@angular/common";
 import {DialogModule} from "primeng/dialog";
 import {RippleModule} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
@@ -22,6 +22,7 @@ import {  Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EncoursDroitConstateSearchDto } from "../../../../../droitsConstate/dtos/EncoursDroitConstateSearchDto";
 import {InputTextareaModule} from "primeng/inputtextarea";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
 
 
 @Component({
@@ -43,17 +44,19 @@ import {InputTextareaModule} from "primeng/inputtextarea";
     CommonModule,
 
     InputTextareaModule,
+    ConfirmDialogModule,
+    RouterLink,
   ],
   templateUrl: './droit-constate-deblocage.component.html',
   styleUrl: './droit-constate-deblocage.component.scss',
-  providers: [MessageService]
+  providers: [MessageService,DecimalPipe,ConfirmationService]
 })
 export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
   droitsConstates: DroitConstateResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
   banqueId!: number;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   @ViewChild('dt') dt: Table | undefined;
 
   // Search form properties
@@ -78,6 +81,9 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
   constructor(
     private droitConstateService: DroitConstateService,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
+    private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe,
     private rapprochementService: RapprochemntService,
     private fb: FormBuilder,
     private route: ActivatedRoute
@@ -89,7 +95,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
       const id = params.get('banqueId');
       if (id) {
         this.banqueId = +id;
-        this.initSearchForm();
+
       } else {
         this.messageService.add({
           severity: 'warn',
@@ -98,7 +104,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
         });
       }
     });
-
+    this.initSearchForm();
     this.initRapprochementForm();
   }
 
@@ -115,6 +121,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       marcheNumero: [''],
       marcheName: [''],
+      montant: [null],
     });
 
     this.loadEncoursDeblocages();
@@ -162,20 +169,70 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
     this.displayModal = true;
   }
 
+
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
+      this.rapprochementForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
+      });
+      return;
+    }
+
+    if (this.rapprochementForm.valid && this.selectedDroitConstate) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedDroitConstate = this.selectedDroitConstate;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ce Déblocage de Droit Constaté ?
+            <br><br>
+            <strong>N° de Marché:</strong> ${selectedDroitConstate.marcheNumero}
+            <br>
+            <strong>Montant du Déblocage:</strong> ${this.decimalPipe.transform(selectedDroitConstate.montant,'1.2-2','fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA :</strong> ${formValue.tva}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Déblocage DC',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
   /**
    * Handles the form submission to send the rapprochement request.
    */
   submitRapprochement(): void {
 
-    if (this.rapprochementForm.invalid || !this.selectedDroitConstate) {
-      this.rapprochementForm.markAllAsTouched();
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs obligatoires.',
-      });
-      return;
-    }
+    if (this.rapprochementForm.valid && this.selectedDroitConstate) {
 
     const droitConstateTransactionRequest: DroitConstateTransactionRequest = {
       droitConstateId: this.selectedDroitConstate.id,
@@ -212,7 +269,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
           this.isSubmitting = false;
         },
       });
-  }
+  }}
 
   /**
    * Loads outstanding dc disbursement records.

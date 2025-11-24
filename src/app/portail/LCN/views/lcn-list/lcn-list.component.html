@@ -115,11 +115,11 @@
           <td>
             <p-tag [value]="lcn.active ? 'Encours' : 'Archivé'" [severity]="lcn.active ? 'success' : 'danger'"></p-tag>
           </td>
-          @if (isAdmin) {
+
             <td>
               <p-inputSwitch [ngModel]="lcn.active" (onChange)="confirmToggleStatus(lcn)"></p-inputSwitch>
             </td>
-          }
+
         </tr>
       </ng-template>
       <ng-template pTemplate="emptyMessage">

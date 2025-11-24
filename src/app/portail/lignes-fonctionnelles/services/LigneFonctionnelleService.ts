@@ -10,15 +10,15 @@ import { LigneFonctionnelleSearchCriteria } from "../dtos/LigneFonctionnelleSear
 import { PageResponse } from "../../global/types/PageResponse";
 import {LigneFonctionnelleChartData} from "../dtos/LigneFonctionnelleChartData";
 import {LigneFonctionnelleChartHistoryRequest} from "../dtos/LigneFonctionnelleChartHistoryRequest";
-import {SousLigneRequestDto} from "../dtos/SousLigneRequestDto"; // <-- Ensure this import exists
+import {SousLigneRequestDto} from "../dtos/SousLigneRequestDto";
 
 @Injectable({
-  providedIn: 'root', // This makes the service a singleton and tree-shakable
+  providedIn: 'root',
 })
 export class LigneFonctionnelleService {
-  private apiUrl = `${environment.apiUrl}lignes-fonctionnelles`; // Base URL for the LigneFonctionnelle API
+  private apiUrl = `${environment.apiUrl}lignes-fonctionnelles`;
 
-  constructor(private http: HttpClient) {} // Injects Angular's HttpClient
+  constructor(private http: HttpClient) {}
 
   // 1. Create LigneFonctionnelle (POST /lignes-fonctionnelles-encours)
   createLigneFonctionnelle(request: LigneFonctionnelleRequest): Observable<LigneFonctionnelleResponse> {
@@ -34,9 +34,9 @@ export class LigneFonctionnelleService {
   // This method maps to the backend's getActiveLigneFonctionnelles endpoint.
   getCurrentLigneFonctionnelles(
     criteria: LigneFonctionnelleSearchCriteria, // This now includes actif
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'id,asc'
+    page: number ,
+    size: number ,
+    sort: string
   ): Observable<PageResponse<LigneFonctionnelleResponse>> {
     let params = new HttpParams();
     params = params.append('page', page.toString());

@@ -1,13 +1,18 @@
-<p-toast></p-toast>
+  <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
 <div class="card shadow-2 flex flex-column gap-4 p-2 md:p-4 w-full">
 
 
-  <div class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between">
+  <div class="p-card shadow-2 px-4 py-3 flex flex-column gap-4 justify-content-between">
 
-    <span class="text-lg font-medium white-space-nowrap">Les encoursLeasing en cours pour le <strong>{{ this.currentMonthYear }}</strong> </span>
-    <form [formGroup]="searchForm" class="flex flex-row gap-2">
+    <div class="flex flex-row gap-2 justify-content-between">
+      <span class="text-lg font-medium white-space-nowrap">Les encours Leasing  pour le <strong>{{ this.currentMonthYear }}</strong> </span>
+      <span class="text-lg font-medium white-space-nowrap">Total des encours : <strong>{{ encoursResponse?.totalEncours | number: '1.2-2' }} MAD</strong> </span>
+    </div>
+
+
+    <form [formGroup]="searchForm" class="flex flex-row justify-content-between  gap-2">
         <span class="p-float-label">
           <p-dropdown id="organismeLeasingId" formControlName="organismeLeasingId" [options]="organismeLeasingOptions" optionLabel="label" optionValue="value" [showClear]="true"></p-dropdown>
           <label for="organismeLeasingId">Organisme de Leasing</label>
@@ -16,11 +21,12 @@
           <input id="numeroContrat" type="text" pInputText formControlName="numeroContrat">
           <label for="numeroContrat">Numéro Contrat</label>
         </span>
+
+      <span class="p-float-label">
+          <input id="montant" type="number" pInputText formControlName="montant">
+          <label for="montant">Montant</label>
+        </span>
     </form>
-    <div class="flex  align-items-center">
-      <span class="text-lg font-medium mr-2">Total des encours pour Leasing</span>
-      <span class="text-xl font-bold">{{ encoursResponse?.totalEncours }} MAD</span>
-    </div>
 
   </div>
 
@@ -62,7 +68,7 @@
           <td>{{ echeance.numeroContrat }}</td>
           <td>{{ echeance.numeroEcheance }}</td>
           <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-          <td>{{ echeance.montantTTC}} MAD</td>
+          <td>{{ echeance.montantTTC | number: '1.2-2'}} MAD</td>
           <td>
             <p-button
               pRipple
@@ -93,11 +99,11 @@
           [closable]="!isSubmitting"
 >
   <ng-container *ngIf="selectedEcheance">
-    <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
+    <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
       <div class="grid p-fluid mt-3">
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy"  [showIcon]="true" appendTo="body" ></p-calendar>
+            <p-calendar id="dateEmission" formControlName="dateEmission" [showOnFocus]="false"    dateFormat="dd/mm/yy"  ></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateEmission')">
@@ -115,7 +121,7 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateValeur" formControlName="dateValeur" [showIcon]="true"  dateFormat="dd/mm/yy" appendTo="body"></p-calendar>
+            <p-calendar id="dateValeur" formControlName="dateValeur" dateFormat="dd/mm/yy"  [showOnFocus]="false"></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateValeur')">
@@ -124,7 +130,7 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateOperation" formControlName="dateOperation"  dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body"></p-calendar>
+            <p-calendar id="dateOperation" formControlName="dateOperation"  dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
             <label for="dateOperation">Date de l'opération</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateOperation')">

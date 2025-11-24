@@ -101,9 +101,9 @@
         <tr>
           <td>{{ dcLine.marcheNumero }} </td>
           <td>{{ dcLine.banqueNom }} </td>
-          <td>{{ dcLine.montant }} MAD</td>
-          <td>{{ dcLine.encours }} MAD</td>
-          <td>{{ dcLine.solde }} MAD</td>
+          <td>{{ dcLine.montant | number:'1.2-2'  }} MAD</td>
+          <td>{{ dcLine.encours  | number:'1.2-2' }} MAD</td>
+          <td>{{ dcLine.solde | number:'1.2-2'  }} MAD</td>
           <td>{{ dcLine.taux }} %</td>
           <td>{{ dcLine.dateDepart | date:'dd/MM/yyyy' }}</td>
           <td>{{ dcLine.dateFin | date:'dd/MM/yyyy' }}</td>

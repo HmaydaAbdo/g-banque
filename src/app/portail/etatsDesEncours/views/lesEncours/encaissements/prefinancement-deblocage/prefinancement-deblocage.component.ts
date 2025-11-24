@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -7,11 +7,10 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { PaginatorModule } from 'primeng/paginator';
 import { RippleModule } from 'primeng/ripple';
-import { MessageService } from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import { PrefinancementResponseDTO } from "../../../../../prefinancements/dtos/PrefinancementResponseDTO";
 import { PrefinancementService } from "../../../../../prefinancements/service/PrefinancementService";
 import { EncoursPrefinancementDto } from "../../../../../prefinancements/dtos/EncoursPrefinancementDto";
-import { Decimal } from "decimal.js";
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RapprochemntService } from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import { PrefinancementTransactionRequest } from "../../../../rapprochement/dtos/prefinancement/PrefinancementTransactionRequest";
@@ -20,11 +19,12 @@ import { CalendarModule } from "primeng/calendar";
 import { InputTextModule } from 'primeng/inputtext';
 import { EncoursPrefinancementSearchDto } from "../../../../../prefinancements/dtos/EncoursPrefinancementSearchDto";
 import { DropdownModule } from 'primeng/dropdown';
-import { ActivatedRoute } from '@angular/router';
+import {ActivatedRoute, RouterLink} from '@angular/router';
 
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {InputTextareaModule} from "primeng/inputtextarea";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
 
 @Component({
   selector: 'app-prefinancement-deblocage',
@@ -45,17 +45,19 @@ import {InputTextareaModule} from "primeng/inputtextarea";
     InputTextModule,
     DropdownModule,
     InputTextareaModule,
+    ConfirmDialogModule,
+    RouterLink,
   ],
   templateUrl: './prefinancement-deblocage.component.html',
   styleUrl: './prefinancement-deblocage.component.scss',
-  providers: [MessageService],
+  providers: [MessageService,ConfirmationService,DecimalPipe],
 })
 export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
   prefinancements: PrefinancementResponseDTO[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
   banqueId!: number;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   @ViewChild('dt') dt: Table | undefined;
 
   // Search form properties
@@ -80,6 +82,9 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
   constructor(
     private prefinancementService: PrefinancementService,
     private messageService: MessageService,
+    private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe,
+    private confirmationService: ConfirmationService,
     private rapprochementService: RapprochemntService,
     private fb: FormBuilder,
     private route: ActivatedRoute
@@ -90,7 +95,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
       const id = params.get('banqueId');
       if (id) {
         this.banqueId = +id;
-        this.initSearchForm();
+
       } else {
         this.messageService.add({
           severity: 'warn',
@@ -99,7 +104,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
         });
       }
     });
-
+    this.initSearchForm();
     this.initRapprochementForm();
   }
 
@@ -116,8 +121,10 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       marcheNumero: [''],
       marcheName: [''],
+      montant: [null],
     });
-    this.loadEncoursDeblocages();
+
+
 
     this.searchSubscription = this.searchForm.valueChanges
       .pipe(
@@ -161,19 +168,69 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
     this.displayModal = true;
   }
 
-  /**
-   * Handles the form submission to send the rapprochement request.
-   */
-  submitRapprochement(): void {
-    if (this.rapprochementForm.invalid || !this.selectedPrefinancement) {
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs obligatoires.',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
       });
       return;
     }
+
+    if (this.rapprochementForm.valid && this.selectedPrefinancement) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedPrefinancement = this.selectedPrefinancement;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ce Déblocage de Préfinancement ?
+            <br><br>
+            <strong>N° de Marché:</strong> ${selectedPrefinancement.marcheNumero}
+            <br>
+            <strong>Montant Débloqué:</strong> ${this.decimalPipe.transform(selectedPrefinancement.montant,'1.2-2','fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Collectée:</strong> ${formValue.tvaCollecte}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Déblocage Préfinancement',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+  /**
+   * Handles the form submission to send the rapprochement request.
+   */
+  submitRapprochement(): void {
+    if (this.rapprochementForm.valid && this.selectedPrefinancement) {
+
 
     const prefinancementTransactionRequest: PrefinancementTransactionRequest = {
       prefinancementId: this.selectedPrefinancement.id,
@@ -211,7 +268,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
 
         },
       });
-  }
+  }}
 
 
 

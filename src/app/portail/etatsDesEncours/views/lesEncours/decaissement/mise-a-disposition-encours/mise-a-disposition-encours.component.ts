@@ -1,13 +1,13 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {CommonModule, DatePipe} from '@angular/common';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
 import {ToastModule} from 'primeng/toast';
 import {TooltipModule} from 'primeng/tooltip';
 import {PaginatorModule} from 'primeng/paginator';
-import {MessageService} from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import {RippleModule} from 'primeng/ripple';
 import {MiseADispositionResponseDto} from "../../../../../Mise-à-disposition/dtos/MiseADispositionResponseDto";
 import {MiseADispositionService} from "../../../../../Mise-à-disposition/service/MiseADispositionService";
@@ -31,6 +31,7 @@ import {MiseADispositionSearchDto} from "../../../../../Mise-à-disposition/dtos
 import {InputTextModule} from "primeng/inputtext";
 import {DropdownModule} from "primeng/dropdown";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
 
 
 @Component({
@@ -53,17 +54,18 @@ import {debounceTime, distinctUntilChanged} from "rxjs/operators";
     DividerModule,
     InputTextModule,
     DropdownModule,
+    ConfirmDialogModule,
   ],
   templateUrl: './mise-a-disposition-encours.component.html',
   styleUrl: './mise-a-disposition-encours.component.scss',
-  providers: [MessageService],
+  providers: [MessageService,ConfirmationService,DecimalPipe],
 })
 export class MiseADispositionEncoursComponent implements OnInit {
   misesADisposition: MiseADispositionResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
   banqueIdFromRoute!: number;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -91,7 +93,9 @@ export class MiseADispositionEncoursComponent implements OnInit {
     private messageService: MessageService,
     private datePipe: DatePipe,
     private rapprochementService: RapprochemntService,
+    private confirmationService: ConfirmationService,
     private fb: FormBuilder,
+    private decimalPipe: DecimalPipe
   ) {
   }
 
@@ -111,7 +115,8 @@ export class MiseADispositionEncoursComponent implements OnInit {
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       numero: [''],
-      beneficiaire: ['']
+      beneficiaire: [''],
+      montant:[null]
     });
 
     // Subscribe to form value changes with debounce
@@ -148,7 +153,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
     this.displayModal = true;
   }
 
-  submitRapprochement(): void {
+  confirmRapprochement(): void {
     if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -158,6 +163,55 @@ export class MiseADispositionEncoursComponent implements OnInit {
       });
       return;
     }
+
+    if (this.rapprochementForm.valid && this.selectedMiseADisposition) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedMiseADisposition = this.selectedMiseADisposition;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher cette Mise à Disposition ?
+            <br><br>
+            <strong>N° Opération:</strong> ${selectedMiseADisposition.numero}
+            <br>
+            <strong>Bénéficiaire:</strong> ${selectedMiseADisposition.beneficiaire}
+            <br>
+            <strong>Montant:</strong> ${this.decimalPipe.transform(selectedMiseADisposition.montant,'1.2-2','fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Mise à Disposition',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+            this.submitRapprochement();
+            },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+
+  submitRapprochement(): void {
 
     if (this.rapprochementForm.valid && this.selectedMiseADisposition) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;

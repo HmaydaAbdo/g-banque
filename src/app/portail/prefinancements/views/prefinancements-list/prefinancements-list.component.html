@@ -111,7 +111,8 @@
   </div>
 
   <div class="pb-8">
-    <p-table #dt [value]="prefinancements" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
+    <p-table #dt [value]="prefinancements" [paginator]="true"
+             [rows]="10" [totalRecords]="totalRecords"
              [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
              responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadPrefinancements($event)"
              [resizableColumns]="true"
@@ -150,18 +151,36 @@
           <td>{{ prefinancement.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ prefinancement.dateOperation ? (prefinancement.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ prefinancement.dateValeur ? (prefinancement.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>
-          <td>{{ prefinancement.type }}</td>
-          <td>{{ prefinancement.status }}</td>
           <td>
+            <p-tag
+              [value]="prefinancement.type"
+              [severity]="prefinancement.type === 'DEBLOCAGE' ? 'success' : 'danger'">
+            </p-tag>
+          </td>
+
+          <td>
+            <p-tag
+              [value]="prefinancement.status"
+              [severity]="prefinancement.status === 'PAYE' ? 'success' : 'danger'">
+            </p-tag>
+          </td>
+
+          <td class="flex justify-content-center align-items-center gap-3" style="width: 10rem;">
+            <p-inputSwitch
+              [ngModel]="prefinancement.status === Status.PAYE"
+              (ngModelChange)="confirmToggleStatus(prefinancement)"
+              pTooltip="{{ prefinancement.status === Status.PAYE ? 'Marquer comme Prévu' : 'Marquer comme Payé' }}"
+            ></p-inputSwitch>
+
             <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
                     [routerLink]="['/portail/préfinancements/edit', prefinancement.id]"></button>
 
-            <!--
-            <button pButton pRipple icon="pi pi-minus" class="p-button-rounded p-button-danger"
-                    (click)="markAsPaid(prefinancement)"></button>
-              -->
-            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
-                    (click)="deletePrefinancement(prefinancement)"></button>
+
+            @if (authService.isAdmin()) {
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
+                      (click)="deletePrefinancement(prefinancement)"></button>
+            }
+
           </td>
         </tr>
       </ng-template>

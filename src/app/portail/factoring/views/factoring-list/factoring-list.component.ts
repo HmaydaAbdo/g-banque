@@ -19,6 +19,9 @@ import {PageResponse} from "../../../global/types/PageResponse";
 import {FactoringResponseDto} from "../../dtos/FactoringResponseDto";
 import {FactoringSearchDto} from "../../dtos/FactoringSearchDto";
 import {FactoringService} from "../../service/FactoringService";
+import {AuthService} from "../../../../auth/services/auth.service";
+import {TagModule} from "primeng/tag";
+import {InputSwitchModule} from "primeng/inputswitch";
 
 @Component({
   selector: 'app-factoring-list',
@@ -40,6 +43,8 @@ import {FactoringService} from "../../service/FactoringService";
     NgIf,
     NgFor,
     NgForOf,
+    TagModule,
+    InputSwitchModule,
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -77,7 +82,8 @@ export class FactoringListComponent implements OnInit {
     private banqueService: BanqueService,
     private marcheService: MarcheService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    public authService:AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -190,7 +196,23 @@ export class FactoringListComponent implements OnInit {
     this.applyFilters();
   }
 
-  markAsPaid(factoring: FactoringResponseDto) {
+  confirmToggleStatus(factoring:FactoringResponseDto){
+    const confirmationMessage = `Êtes-vous sûr de vouloir ${factoring.status==Status.PAYE ? 'désactiver' : 'activer'} ce factoring ?`;
+    this.confirmationService.confirm({
+      message: confirmationMessage,
+      header: `Confirmation de ${factoring.status ? 'désactivation' : 'activation'}`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      acceptButtonStyleClass: factoring.status ? 'p-button-danger' : 'p-button-success',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.toggleStatus(factoring);
+      }
+    });
+  }
+
+  toggleStatus(factoring: FactoringResponseDto) {
 
     this.factoringService.toggleStatus(factoring.id).subscribe({
       next: () => {
@@ -223,4 +245,7 @@ export class FactoringListComponent implements OnInit {
       }
     });
   }
+
+  protected readonly Status = Status;
+  protected readonly Type = Type;
 }

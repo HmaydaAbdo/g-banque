@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from "@angular/core";
+import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
 import {CommonModule, DatePipe, DecimalPipe, NgFor} from "@angular/common";
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
@@ -13,7 +13,7 @@ import {CardModule} from "primeng/card";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
-import {MenuItem, MessageService, SelectItem} from "primeng/api";
+import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
 import {Decimal} from "decimal.js";
 import {ActivatedRoute} from "@angular/router";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
@@ -22,6 +22,8 @@ import {AgiosService} from "../../../../../agios/service/agios.service";
 import {AgiosSearchDto} from "../../../../../agios/dtos/AgiosSearchDto";
 import {EncoursAgiosDto} from "../../../../../agios/dtos/EncoursAgiosDto";
 import {AgiosValidationRequest} from "../../../../rapprochement/dtos/agios/agios-validation-request.dto";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 
 @Component({
   selector: 'app-encours-agios',
@@ -44,24 +46,26 @@ import {AgiosValidationRequest} from "../../../../rapprochement/dtos/agios/agios
     DialogModule,
     ReactiveFormsModule,
     CalendarModule,
-    InputTextareaModule
+    InputTextareaModule,
+    ConfirmDialogModule
   ],
   templateUrl: './encours-agios.component.html',
-  providers: [MessageService]
+  providers: [MessageService,ConfirmationService,DecimalPipe]
 })
-export class EncoursAgiosComponent implements OnInit {
+export class EncoursAgiosComponent implements OnInit,OnDestroy {
   @ViewChild('dt') table!: Table;
 
   agios: AgiosResponseDto[] = [];
   totalRecords = 0;
   loading = true;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   banqueId?: number;
 
   displayModal: boolean = false;
   selectedAgio: any = null;
   rapprochementForm!: FormGroup;
-  libelleFilter: string | null = null;
+
+  searchForm!:FormGroup
 
   items: MenuItem[] = [];
   tvaOptions: SelectItem[] = [
@@ -72,14 +76,20 @@ export class EncoursAgiosComponent implements OnInit {
   ];
 
   isSubmitting: boolean = false;
+  private searchSubscription!: Subscription;
 
   constructor(
     private agiosService: AgiosService,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
+    private datePipe: DatePipe,
+    private decimalPipe:DecimalPipe,
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private rapprochementService: RapprochemntService,
   ) {}
+
+
 
   ngOnInit(): void {
     this.items = [
@@ -87,7 +97,6 @@ export class EncoursAgiosComponent implements OnInit {
       { icon: 'pi pi-list', route: '/portail/agios', label: 'Agios' },
       { label: 'Encours' }
     ];
-
 
     // Subscribe to the parent route to get the banqueId
     this.route.parent!.paramMap.subscribe(params => {
@@ -110,6 +119,14 @@ export class EncoursAgiosComponent implements OnInit {
       }
     });
 
+
+    this.searchForm = this.fb.group({
+      libelle: [''],
+      montant: [null],
+    })
+
+    this.setupSearchSubscription();
+
     this.rapprochementForm = this.fb.group({
       dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
@@ -120,6 +137,19 @@ export class EncoursAgiosComponent implements OnInit {
     });
   }
 
+  setupSearchSubscription(): void {
+    // Écoute les changements de valeur sur l'ensemble du formulaire
+    this.searchSubscription = this.searchForm.valueChanges.pipe(
+      // Attends 300ms après la dernière frappe/changement
+      debounceTime(300),
+      // N'émet que si la valeur actuelle est différente de la dernière valeur émise
+      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
+    ).subscribe(() => {
+      // Recharge le tableau via applyFilters (qui appelle table.reset())
+      this.applyFilters();
+    });
+  }
+
   loadAgios(event: TableLazyLoadEvent) {
     this.loading = true;
 
@@ -127,7 +157,7 @@ export class EncoursAgiosComponent implements OnInit {
     if (!this.banqueId) {
       this.agios = [];
       this.totalRecords = 0;
-      this.totalEncours = new Decimal(0);
+      this.totalEncours = 0;
       this.loading = false;
       return;
     }
@@ -138,9 +168,7 @@ export class EncoursAgiosComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    const searchCriteria: AgiosSearchDto = {
-      libelle: this.libelleFilter || undefined
-    };
+    const searchCriteria: AgiosSearchDto = this.searchForm.getRawValue();
 
     this.agiosService.getOutstandingAgios(this.banqueId, searchCriteria, page, size, sort)
       .subscribe({
@@ -175,19 +203,68 @@ export class EncoursAgiosComponent implements OnInit {
   }
 
 
-
-  // Soumettre la validation
-  submitRapprochement(): void {
-
-    if (this.rapprochementForm.invalid || !this.selectedAgio) {
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs.',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
       });
       return;
     }
+
+    if (this.rapprochementForm.valid && this.selectedAgio) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedAgio = this.selectedAgio;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ces Agios ?
+            <br><br>
+            <strong>ID Agios:</strong> ${selectedAgio.id}
+            <br>
+            <strong>Montant:</strong> ${this.decimalPipe.transform(selectedAgio.montant,'1.2-2','fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Agios',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+
+  // Soumettre la validation
+  submitRapprochement(): void {
+
+    if (this.rapprochementForm.valid && this.selectedAgio) {
 
     const request: AgiosValidationRequest = {
       idAgio: this.selectedAgio.id,
@@ -221,7 +298,7 @@ export class EncoursAgiosComponent implements OnInit {
         this.isSubmitting = false;
       },
     });
-  }
+  }}
 
 
 
@@ -234,5 +311,9 @@ export class EncoursAgiosComponent implements OnInit {
   isInvalid(controlName: string): boolean {
     const control = this.rapprochementForm.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  ngOnDestroy(): void {
+    this.searchSubscription.unsubscribe();
   }
 }

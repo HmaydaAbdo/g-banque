@@ -1,8 +1,8 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, RouterLink} from '@angular/router';
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {MessageService} from "primeng/api";
+import {ConfirmationService, MessageService} from "primeng/api";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import {DecompteResponseDto} from "../../../../../decomptes/dtos/DecompteResponseDto";
 import {DecompteService} from "../../../../../decomptes/service/DecompteService";
@@ -11,7 +11,7 @@ import {EncoursDecompteDto} from "../../../../../decomptes/dtos/EncoursDecompteD
 import {Decimal} from "decimal.js";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
-import {DatePipe, NgIf, CommonModule} from "@angular/common";
+import {DatePipe, NgIf, CommonModule, DecimalPipe} from "@angular/common";
 import {DialogModule} from "primeng/dialog";
 import {RippleModule} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
@@ -22,6 +22,9 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EncoursDecompteSearchDto } from "../../../../../decomptes/dtos/EncoursDecompteSearchDto";
 import {DropdownModule} from "primeng/dropdown";
 import {InputTextareaModule} from "primeng/inputtextarea";
+import _default from "chart.js/dist/plugins/plugin.tooltip";
+import numbers = _default.defaults.animations.numbers;
+import {ConfirmDialogModule} from "primeng/confirmdialog";
 
 
 @Component({
@@ -42,10 +45,12 @@ import {InputTextareaModule} from "primeng/inputtextarea";
     DropdownModule,
     CommonModule,
     InputTextareaModule,
+    ConfirmDialogModule,
+    RouterLink,
   ],
   templateUrl: './decomptes.component.html',
   styleUrl: './decomptes.component.scss',
-  providers: [MessageService]
+  providers: [MessageService,ConfirmationService,DecimalPipe]
 })
 export class DecomptesComponent implements OnInit, OnDestroy {
 
@@ -53,7 +58,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
   totalRecords: number = 0;
   loading: boolean = false;
   banqueId!: number;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   @ViewChild('dt') dt: Table | undefined;
 
   // New properties for search and TVA
@@ -76,6 +81,9 @@ export class DecomptesComponent implements OnInit, OnDestroy {
   constructor(
     private decompteService: DecompteService,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
+    private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe,
     private rapprochementService: RapprochemntService,
     private fb: FormBuilder,
     private route: ActivatedRoute
@@ -113,6 +121,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       marcheNumero: [''],
       marcheName: [''],
+      montant: [null]
     });
 
     this.loadEncoursDecomptes();
@@ -161,20 +170,71 @@ export class DecomptesComponent implements OnInit, OnDestroy {
     this.displayModal = true;
   }
 
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
+      this.rapprochementForm.markAllAsTouched();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
+      });
+      return;
+    }
+
+    if (this.rapprochementForm.valid && this.selectedDecompte) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedDecompte = this.selectedDecompte;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ce Décompte ?
+            <br><br>
+            <strong>N° de Marché:</strong> ${selectedDecompte.marcheNumero}
+            <br>
+            <strong>Montant du Décompte:</strong> ${this.decimalPipe.transform(selectedDecompte.montant,'1.2-2','fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA :</strong> ${formValue.tva}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Décompte',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+
   /**
    * Handles the form submission to send the rapprochement request.
    */
   submitRapprochement(): void {
 
-    if (this.rapprochementForm.invalid || !this.selectedDecompte) {
-      this.rapprochementForm.markAllAsTouched();
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs obligatoires.',
-      });
-      return;
-    }
+    if (this.rapprochementForm.valid && this.selectedDecompte) {
+
 
     // Construct the request DTO using the selected dc and form data
     const decompteTransactionRequest:DecompteTransactionRequest= {
@@ -212,7 +272,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
           this.isSubmitting = false;
         },
       });
-  }
+  }}
 
   /**
    * Loads outstanding dc disbursement records.

@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -7,7 +7,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { PaginatorModule } from 'primeng/paginator';
 import { RippleModule } from 'primeng/ripple';
-import { MessageService } from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import { DroitConstateResponseDto } from "../../../../../droitsConstate/dtos/DroitConstateResponseDto";
 import { DroitConstateService } from "../../../../../droitsConstate/service/DroitConstateService";
 import { EncoursDroitConstateDto } from "../../../../../droitsConstate/dtos/EncoursDroitConstateDto";
@@ -22,8 +22,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from "primeng/dialog";
 import { CalendarModule } from "primeng/calendar";
-import { ActivatedRoute } from '@angular/router';
+import {ActivatedRoute, RouterLink} from '@angular/router';
 import {InputTextareaModule} from "primeng/inputtextarea";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
 
 
 @Component({
@@ -45,17 +46,19 @@ import {InputTextareaModule} from "primeng/inputtextarea";
     InputTextModule,
     DropdownModule,
     InputTextareaModule,
+    ConfirmDialogModule,
+    RouterLink,
   ],
   templateUrl: './droit-constate-remboursements.component.html',
   styleUrl: './droit-constate-remboursements.component.scss',
-  providers: [MessageService],
+  providers: [MessageService,ConfirmationService,DecimalPipe],
 })
 export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
   droitConstates: DroitConstateResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
   banqueId!: number;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   @ViewChild('dt') dt: Table | undefined;
 
   // Search form properties
@@ -81,9 +84,12 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
   constructor(
     private droitConstateService: DroitConstateService,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
     private rapprochementService: RapprochemntService,
+    private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
-    private route: ActivatedRoute // Inject ActivatedRoute
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -118,6 +124,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       marcheNumero: [''],
       marcheName: [''],
+      montant:[null]
     });
 
     // Initial data load triggered after banqueId is set
@@ -166,55 +173,108 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
     this.displayModal = true;
   }
 
-  /**
-   * Handles the form submission to send the rapprochement request.
-   */
-  submitRapprochement(): void {
-    if (this.rapprochementForm.invalid || !this.selectedDroitConstate) {
+
+
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs obligatoires.',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
       });
       return;
     }
 
-    this.isSubmitting = true;
-    const dcTransactionRequest: DroitConstateTransactionRequest = {
-      droitConstateId: this.selectedDroitConstate.id,
-      banqueId: this.selectedDroitConstate.banqueId,
-      dateEmission:this.rapprochementForm.value.dateEmission,
-      dateOperation: this.rapprochementForm.value.dateOperation,
-      dateValeur: this.rapprochementForm.value.dateValeur,
-      tva: this.rapprochementForm.value.tva,
-      libelle:this.rapprochementForm.value.libelle,
-      observation:this.rapprochementForm.value.observation
-    };
+    if (this.rapprochementForm.valid && this.selectedDroitConstate) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedDroitConstate = this.selectedDroitConstate;
 
-    this.rapprochementService.droitConstateToRapprochement(dcTransactionRequest)
-      .subscribe({
-        next: (response) => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'Droit constaté validé et rapproché avec succès.',
-          });
-          this.dt?.reset();
-          this.isSubmitting = false;
-          this.displayModal = false;
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ce Droit Constaté ?
+            <br><br>
+            <strong>N° de Marché:</strong> ${selectedDroitConstate.marcheNumero}
+            <br>
+            <strong>Montant du DC:</strong> ${this.decimalPipe.transform(selectedDroitConstate.montant,"1.2-2",'fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA :</strong> ${formValue.tva}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Droit Constaté',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement(); // Appel à la méthode d'exécution
         },
-        error: (error) => {
-          console.error('Erreur lors du rapprochement du droit constaté:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
-          });
-          this.isSubmitting = false;
-        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
       });
+    }
   }
+
+
+  /**
+   * Handles the form submission to send the rapprochement request.
+   */
+  submitRapprochement(): void {
+    if ( this.selectedDroitConstate &&  this.rapprochementForm.valid ) {
+
+
+      this.isSubmitting = true;
+      const dcTransactionRequest: DroitConstateTransactionRequest = {
+        droitConstateId: this.selectedDroitConstate.id,
+        banqueId: this.selectedDroitConstate.banqueId,
+        dateEmission: this.rapprochementForm.value.dateEmission,
+        dateOperation: this.rapprochementForm.value.dateOperation,
+        dateValeur: this.rapprochementForm.value.dateValeur,
+        tva: this.rapprochementForm.value.tva,
+        libelle: this.rapprochementForm.value.libelle,
+        observation: this.rapprochementForm.value.observation
+      };
+
+
+      this.rapprochementService.droitConstateToRapprochement(dcTransactionRequest)
+        .subscribe({
+          next: (response) => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Droit constaté validé et rapproché avec succès.',
+            });
+            this.dt?.reset();
+            this.isSubmitting = false;
+            this.displayModal = false;
+          },
+          error: (error) => {
+            console.error('Erreur lors du rapprochement du droit constaté:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
+            });
+            this.isSubmitting = false;
+          },
+        });
+    }
+    }
 
 
 

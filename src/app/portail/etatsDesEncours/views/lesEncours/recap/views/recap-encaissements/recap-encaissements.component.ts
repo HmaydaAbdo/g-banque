@@ -46,8 +46,8 @@ import { AgregatedRecapDto } from "../../dtos/AgregatedRecapDto";
 })
 export class RecapEncaissementsComponent implements OnInit, OnDestroy {
   // Table data state properties
-  totalDebit!: Decimal;
-  totalCredit!: Decimal;
+  totalDebit!: number;
+  totalCredit!: number;
   recapEncaissements: RecaputilatifItem[] = [];
   totalRecords: number = 0;
   loading: boolean = true;

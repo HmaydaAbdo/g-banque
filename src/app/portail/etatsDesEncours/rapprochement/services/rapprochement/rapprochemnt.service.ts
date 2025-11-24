@@ -91,8 +91,14 @@
      * @param virement Les données du virement à rapprocher
      * @returns Observable<VirementTransactionResponseDto>
      */
-    virementToRapprochement( virement: VirementTransactionRequestDto): Observable<VirementTransactionResponseDto> {
-      return this.http.post<VirementTransactionResponseDto>(`${this.baseUrl}/process/virement`,
+    virementDecaissementToRapprochement( virement: VirementTransactionRequestDto): Observable<VirementTransactionResponseDto> {
+      return this.http.post<VirementTransactionResponseDto>(`${this.baseUrl}/process/decaissement/virement`,
+        virement
+      );
+    }
+
+    virementEncaissementToRapprochement( virement: VirementTransactionRequestDto): Observable<VirementTransactionResponseDto> {
+      return this.http.post<VirementTransactionResponseDto>(`${this.baseUrl}/process/encaissement/virement`,
         virement
       );
     }

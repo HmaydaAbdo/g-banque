@@ -60,6 +60,10 @@ export class VirementService {
       params = params.set('active', searchDto.active.toString());
     }
 
+    if (searchDto.type !== undefined && searchDto.type !== null) {
+      params = params.set('type', searchDto.type.toString());
+    }
+
     return this.http.get<PageResponse<VirementResponseDto>>(this.apiUrl, {params});
   }
 
@@ -84,7 +88,7 @@ export class VirementService {
    * @param sort The sorting criteria (e.g., 'dateEmission,desc').
    * @returns An Observable of a paginated list of VirementResponseDto.
    */
-  getOutstandingVirementsByBank(
+  getEncoursDecaissementVirementsByBank(
     banqueId: number,
     searchDto: EncoursVirementsSearchDto,
     page: number = 0,
@@ -102,7 +106,37 @@ export class VirementService {
     if (searchDto.beneficiaire) {
       params = params.set('beneficiaire', searchDto.beneficiaire);
     }
-    const url = `${this.apiUrl}/encours/${banqueId}`;
+
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    const url = `${this.apiUrl}/decaissement/encours/${banqueId}`;
+    return this.http.get<EncoursVirementResponseDto>(url, {params});
+  }
+
+
+  getEncoursEncaissementVirementsByBank(
+    banqueId: number,
+    searchDto: EncoursVirementsSearchDto,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission,desc'
+  ): Observable<EncoursVirementResponseDto> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    const url = `${this.apiUrl}/encaissement/encours/${banqueId}`;
     return this.http.get<EncoursVirementResponseDto>(url, {params});
   }
 }

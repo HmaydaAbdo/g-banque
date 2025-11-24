@@ -17,35 +17,34 @@
     </div>
   </div>
 
-  <div *ngIf="aggregatedData" class="p-card p-2 ">
-    <div class="flex flex-wrap gap-6 justify-content-between items-center">
+  <div *ngIf="aggregatedData" class="p-card p-2">
+    <div class="flex flex-wrap  justify-content-between items-center">
       <div class="flex flex-col items-center gap-2">
-        <h3 class="text-lg font-bold">Banque :</h3>
-        <h3>{{ aggregatedData.banqueName }}</h3>
+        <h4 class="text-black-alpha-90 font-bold">Banque :</h4>
+        <h4>{{ aggregatedData.banqueName  }}</h4>
       </div>
       <div class="flex flex-col items-center gap-2">
-        <h3 class="text-lg font-bold">Marché :</h3>
-        <h3>{{ aggregatedData.marcheName }}</h3>
+        <h4 class="text-black-alpha-90 font-bold">Marché :</h4>
+        <h4>{{ aggregatedData.marcheName }}</h4>
       </div>
       <div class="flex flex-col items-center gap-2">
-        <h3 class="text-lg font-bold">Numéro de Marché:</h3>
-        <h3>{{ aggregatedData.marcheNumero }}</h3>
+        <h4 class="text-black-alpha-90 font-bold">Numéro de Marché:</h4>
+        <h4>{{ aggregatedData.marcheNumero }}</h4>
       </div>
       <div class="flex flex-col items-center gap-2">
-        <h3 class="text-lg font-bold">Total Débit:</h3>
-        <h3>{{ aggregatedData.totalDebit }} MAD</h3>
+        <h4 class="text-black-alpha-90 font-bold">Total Crédit:</h4>
+        <h4>{{ aggregatedData.totalCredit | number: '1.2-2' }} MAD</h4>
       </div>
       <div class="flex flex-col items-center gap-2">
-        <h3 class="text-lg font-bold">Total Crédit:</h3>
-        <h3>{{ aggregatedData.totalCredit }} MAD</h3>
+        <h4 class="text-black-alpha-90 font-bold">Total Débit:</h4>
+        <h4>{{ aggregatedData.totalDebit  | number: '1.2-2'}} MAD</h4>
       </div>
       <div class="flex flex-col items-center gap-2">
-        <h3 class="text-lg font-bold">Reste:</h3>
-        <h3>{{ aggregatedData.reste }} MAD</h3>
+        <h4 class="text-black-alpha-90 font-bold">Reste:</h4>
+        <h4>{{ aggregatedData.reste | number: '1.2-2' }} MAD</h4>
       </div>
     </div>
   </div>
-
 
   <div class="pb-8">
     <p-table
@@ -88,16 +87,17 @@
       </ng-template>
       <ng-template pTemplate="body" let-line>
         <tr>
-          <td>{{ line.dateEmission | date: 'dd/MM/yyyy' }}</td>
-          <td>{{ line.dateOperation | date: 'dd/MM/yyyy' }}</td>
-          <td>{{ line.dateValeur | date: 'dd/MM/yyyy' }}</td>
-          <td>{{ line.libelle }}</td>
-          <td class="text-red-500 font-semibold">{{ line.debit | number: '1.2-2' }} MAD</td>
-          <td class="text-green-500 font-semibold">{{ line.credit | number: '1.2-2' }} MAD</td>
-          <td>{{ line.observation }}</td>
-          <td>{{line.status | uppercase}}</td>
-          <td>{{line.type | uppercase}}</td>
+          <td>{{ line.dateEmission ? (line.dateEmission | date: 'dd/MM/yyyy') : '----' }}</td>
+          <td>{{ line.dateOperation ? (line.dateOperation | date: 'dd/MM/yyyy') : '----' }}</td>
+          <td>{{ line.dateValeur ? (line.dateValeur | date: 'dd/MM/yyyy') : '----' }}</td>
+          <td>{{ line.libelle || '----' }}</td>
+          <td class="text-red-500 font-semibold">{{ line.debit != null ? (line.debit | number: '1.2-2') + ' MAD' : '----' }}</td>
+          <td class="text-green-500 font-semibold">{{ line.credit != null ? (line.credit | number: '1.2-2') + ' MAD' : '----' }}</td>
+          <td>{{ line.observation || '----' }}</td>
+          <td>{{ line.status ? (line.status | uppercase) : '----' }}</td>
+          <td>{{ line.type ? (line.type | uppercase) : '----' }}</td>
         </tr>
+
       </ng-template>
       <ng-template pTemplate="emptyMessage">
         <tr>

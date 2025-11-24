@@ -139,6 +139,10 @@ export class EcheanceLeasingService {
       params = params.append('numeroContrat', request.numeroContrat.toString());
     }
 
+    if(request.montant){
+      params = params.append('montant', request.montant.toString());
+    }
+
     return this.http.get<EncoursLeasingResponseDTO>(`${this.apiUrl}/encours`, { params }).pipe(
       catchError(this.handleError)
     );

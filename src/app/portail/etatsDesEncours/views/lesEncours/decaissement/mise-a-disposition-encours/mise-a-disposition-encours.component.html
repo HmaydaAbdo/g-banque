@@ -1,35 +1,32 @@
 
 
+<p-confirmDialog></p-confirmDialog>
 <p-toast></p-toast>
 
 <div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
-  <div class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between">
-      <div class="flex align-items-center">
-        <span class="text-lg font-medium mr-2">
-          Liste des mises à disposition en cours pour le
-        </span>
-        <span class="text-lg font-bold">
-          {{ this.currentMonthYear }}
-        </span>
-      </div>
-      <form [formGroup]="searchForm" class="grid p-fluid">
-        <div class="col-12 md:col-6">
+  <div class="p-card shadow-2 px-4 py-3 flex flex-column gap-4">
+
+    <div class="flex flex-row justify-content-between flex-wrap">
+        <span class="text-lg font-medium mr-2">Liste des mises à disposition en cours pour le <strong>  {{ this.currentMonthYear }}</strong></span>
+        <span class="text-lg font-medium mr-2">Total des encours <strong> {{ totalEncours | number:'1.2-2'}} MAD</strong></span>
+    </div>
+
+    <form [formGroup]="searchForm" class="grid p-fluid flex flex-row justify-content-between flex-wrap">
         <span class="p-float-label">
           <input id="numero" type="text" pInputText formControlName="numero" />
           <label for="numero">Recherche par N° MAD</label>
         </span>
-        </div>
-        <div class="col-12 md:col-6">
         <span class="p-float-label">
           <input id="beneficiaire" type="text" pInputText formControlName="beneficiaire" />
           <label for="beneficiaire">Recherche par Bénéficiaire</label>
         </span>
-        </div>
-      </form>
-      <div class="flex align-items-center">
-        <span class="text-lg font-medium mr-2">Total des encours</span>
-        <span class="text-xl font-bold">{{ totalEncours }} MAD</span>
-      </div>
+        <span class="p-float-label">
+          <input id="montant" type="number" pInputText formControlName="montant" />
+          <label for="montant">Recherche par Montant</label>
+        </span>
+
+    </form>
+
     </div>
   <div class="pb-8">
     <p-table
@@ -79,7 +76,7 @@
           <td>{{ miseADisposition.numero }}</td>
           <td>{{ miseADisposition.dateEmission | date : 'dd/MM/yyyy' }}</td>
           <td>{{ miseADisposition.beneficiaire }}</td>
-          <td>{{ miseADisposition.montant }} MAD</td>
+          <td>{{ miseADisposition.montant | number:'1.2-2' }} MAD</td>
           <td>{{ miseADisposition.cinBeneficiaire }}</td>
           <td>
             <p-button
@@ -115,12 +112,11 @@
           [draggable]="false" [resizable]="false" [closable]="!isSubmitting">
 
   <ng-container *ngIf="selectedMiseADisposition">
-    <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
+    <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
       <div class="grid p-fluid mt-3">
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateEmission" formControlName="dateEmission" dateFormat="dd/mm/yy" [showIcon]="true"
-                        appendTo="body"></p-calendar>
+            <p-calendar id="dateEmission" formControlName="dateEmission" dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateEmission')">
@@ -140,8 +136,7 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateValeur" formControlName="dateValeur" [showIcon]="true" dateFormat="dd/mm/yy"
-                        appendTo="body"></p-calendar>
+            <p-calendar id="dateValeur" formControlName="dateValeur"  dateFormat="dd/mm/yy"  [showOnFocus]="false"></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateValeur')">
@@ -150,8 +145,7 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateOperation" formControlName="dateOperation" dateFormat="dd/mm/yy" [showIcon]="true"
-                        appendTo="body"></p-calendar>
+            <p-calendar id="dateOperation" formControlName="dateOperation" dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
             <label for="dateOperation">Date de l'opération</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateOperation')">

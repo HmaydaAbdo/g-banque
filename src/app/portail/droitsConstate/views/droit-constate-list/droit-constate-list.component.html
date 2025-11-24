@@ -153,13 +153,38 @@
           <td>{{ droitConstate.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ droitConstate.dateOperation ? (droitConstate.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ droitConstate.dateValeur ? (droitConstate.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>
-          <td>{{ droitConstate.type }}</td>
-          <td>{{ droitConstate.status }}</td>
           <td>
+            <p-tag
+              [value]="droitConstate.type"
+              [severity]="droitConstate.type == Type.DEBLOCAGE ? 'success' : 'danger'">
+            </p-tag>
+          </td>
+
+          <td>
+            <p-tag
+              [value]="droitConstate.status"
+              [severity]="droitConstate.status == Status.PAYE ? 'success' : 'danger'">
+            </p-tag>
+          </td>
+
+          <td class="flex justify-content-center align-items-center gap-3" style="width: 10rem;">
+
+            <p-inputSwitch
+              [ngModel]="droitConstate.status === Status.PAYE"
+              (ngModelChange)="confirmToggleStatus(droitConstate)"
+              pTooltip="{{ droitConstate.status === Status.PAYE ? 'Marquer comme prévu' : 'Marquer comme Payé' }}"
+            ></p-inputSwitch>
+
             <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
                     [routerLink]="['/portail/droits-constate/edit', droitConstate.id]"></button>
-            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
-                    (click)="deleteDroitConstate(droitConstate)"></button>
+
+            @if (authService.isAdmin()){
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
+                      (click)="deleteDroitConstate(droitConstate)"></button>
+            }
+
+
+
           </td>
         </tr>
       </ng-template>

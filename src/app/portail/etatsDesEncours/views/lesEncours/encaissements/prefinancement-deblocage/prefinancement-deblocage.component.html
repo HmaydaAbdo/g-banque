@@ -1,14 +1,17 @@
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
 <div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
-  <div class="p-card shadow-2 px-4 py-3 flex align-items-center justify-content-between">
-    <div class="flex align-items-center">
+
+  <div class="p-card shadow-2 px-4 py-3 flex flex-column gap-4">
+
+    <div class="flex flex-row justify-content-between flex-wrap">
       <span class="text-lg font-medium mr-2">Déblocages des préfinancements en cours</span>
+      <span class="text-lg font-medium mr-2">Total des encours <strong> {{ totalEncours | number: '1.2-2' }} MAD</strong></span>
     </div>
 
     <div class=" mx-4">
-      <form [formGroup]="searchForm" class="flex gap-2">
-        <div class="p-field ">
+      <form [formGroup]="searchForm" class="flex flex-row justify-content-between flex-wrap">
           <span class="p-float-label">
             <input
               id="marcheNumero"
@@ -18,8 +21,6 @@
             />
             <label for="marcheNumero">N° Marché</label>
           </span>
-        </div>
-        <div class="p-field ">
           <span class="p-float-label">
             <input
               id="marcheName"
@@ -29,15 +30,22 @@
             />
             <label for="marcheName">Nom du Marché</label>
           </span>
-        </div>
+          <span class="p-float-label">
+            <input
+              id="montant"
+              type="number"
+              pInputText
+              formControlName="montant"
+            />
+            <label for="montant">Montant</label>
+          </span>
+          <button pButton pRipple label="Ajouter Préfinancement" class=" h-fit " size="small" icon="pi pi-plus"
+                severity="primary" routerLink="/portail/préfinancements/new"></button>
 
       </form>
     </div>
 
-    <div class="flex align-items-center flex-shrink-0 ml-4">
-      <span class="text-lg font-medium mr-2">Total des encours</span>
-      <span class="text-xl font-bold">{{ totalEncours }} MAD</span>
-    </div>
+
   </div>
 
   <div class="pb-8">
@@ -63,14 +71,15 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="dateEmission">
-            Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
-          </th>
+
           <th pSortableColumn="marcheNumero">
             N° Marché <p-sortIcon field="marcheNumero"></p-sortIcon>
           </th>
           <th pSortableColumn="banqueName">
             Banque <p-sortIcon field="banqueName"></p-sortIcon>
+          </th>
+          <th pSortableColumn="dateEmission">
+            Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
           </th>
           <th pSortableColumn="montant">
             Montant <p-sortIcon field="montant"></p-sortIcon>
@@ -84,10 +93,10 @@
 
       <ng-template pTemplate="body" let-p>
         <tr>
-          <td>{{ p.dateEmission | date: 'dd/MM/yyyy' }}</td>
           <td>{{ p.marcheNumero }}</td>
           <td>{{ p.banqueName }}</td>
-          <td>{{ p.montant }} MAD</td>
+          <td>{{ p.dateEmission | date: 'dd/MM/yyyy' }}</td>
+          <td>{{ p.montant | number: '1.2-2' }} MAD</td>
           <td>{{ p.type }}</td>
           <td>
             <p-button
@@ -126,17 +135,11 @@
   [closable]="!isSubmitting"
 >
   <ng-container *ngIf="selectedPrefinancement">
-    <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
+    <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
       <div class="grid p-fluid mt-3">
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar
-              id="dateEmission"
-              formControlName="dateEmission"
-              dateFormat="dd/mm/yy"
-              [showIcon]="true"
-              appendTo="body"
-            ></p-calendar>
+            <p-calendar id="dateEmission" formControlName="dateEmission" dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateEmission')">
@@ -162,13 +165,7 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar
-              id="dateOperation"
-              formControlName="dateOperation"
-              dateFormat="dd/mm/yy"
-              [showIcon]="true"
-              appendTo="body"
-            ></p-calendar>
+            <p-calendar id="dateOperation" formControlName="dateOperation" dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
             <label for="dateOperation">Date d'opération</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateOperation')">
@@ -177,13 +174,7 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar
-              id="dateValeur"
-              formControlName="dateValeur"
-              [showIcon]="true"
-              dateFormat="dd/mm/yy"
-              appendTo="body"
-            ></p-calendar>
+            <p-calendar id="dateValeur" formControlName="dateValeur" dateFormat="dd/mm/yy" [showOnFocus]="false" ></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateValeur')">
@@ -192,7 +183,7 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
+            <textarea id="observation" pInputTextarea formControlName="observation" rows="3."></textarea>
             <label for="observation">Observation</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('observation')">

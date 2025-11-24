@@ -29,6 +29,7 @@ import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {Role} from "../../../../auth/enum/Role";
+import {Type} from "../../Type";
 
 
 @Component({
@@ -71,6 +72,12 @@ export class VirementListComponent implements OnInit, OnDestroy {
     {label: 'Les virements en cours', value: true},
     {label: 'Les virements archivés', value: false}
   ];
+  typeOptions: SelectItem[] = [
+    { label: 'Tous les types', value: null },
+    { label: 'Encaissement', value: Type.ENCAISSEMENT },
+    { label: 'Décaissement', value: Type.DECAISSEMENT }
+  ];
+
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -118,7 +125,8 @@ export class VirementListComponent implements OnInit, OnDestroy {
       banqueBeneficiaire: [''],
       nomBanqueEmettrice: [null],
       ribBeneficiaire: [''],
-      active: [null]
+      active: [null],
+      type: [null]
     });
 
     const searchSubscription = this.searchForm.valueChanges.subscribe(() => this.onSearch());
@@ -147,7 +155,8 @@ export class VirementListComponent implements OnInit, OnDestroy {
       banqueBeneficiaire: this.searchForm.get('banqueBeneficiaire')?.value,
       nomBanqueEmettrice: this.searchForm.get('nomBanqueEmettrice')?.value,
       ribBeneficiaire: this.searchForm.get('ribBeneficiaire')?.value,
-      active: this.searchForm.get('active')?.value
+      active: this.searchForm.get('active')?.value,
+      type: this.searchForm.get('type')?.value
     };
 
     this.virementService.searchVirements(

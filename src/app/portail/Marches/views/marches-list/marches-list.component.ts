@@ -1,31 +1,30 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { RippleModule } from 'primeng/ripple';
-import { ImageModule } from 'primeng/image';
-import { ToastModule } from 'primeng/toast';
-import { MenuItem, MessageService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
-import { ToolbarModule } from 'primeng/toolbar';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { DecimalPipe } from '@angular/common';
-import { DatePipe } from '@angular/common';
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
+import {InputTextModule} from 'primeng/inputtext';
+import {ButtonModule} from 'primeng/button';
+import {RippleModule} from 'primeng/ripple';
+import {ImageModule} from 'primeng/image';
+import {ToastModule} from 'primeng/toast';
+import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {ToolbarModule} from 'primeng/toolbar';
+import {TagModule} from 'primeng/tag';
+import {TooltipModule} from 'primeng/tooltip';
+import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
+import {RouterLink, RouterLinkActive} from '@angular/router';
+import {BreadcrumbModule} from 'primeng/breadcrumb';
 
 // Import DTOs, service, and models for Marche
-import { MarcheResponseDTO } from '../../dtos/marche-response.dto';
-import { MarcheSearchDTO } from '../../dtos/marche-search.dto';
+import {MarcheResponseDTO} from '../../dtos/marche-response.dto';
+import {MarcheSearchDTO} from '../../dtos/marche-search.dto';
 import {MarcheService} from "../../service/marche-service.service";
 import {PageResponse} from "../../../global/types/PageResponse";
 import {DropdownModule} from "primeng/dropdown";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
+import {AuthService} from "../../../../auth/services/auth.service";
+import {Role} from "../../../../auth/enum/Role";
 
 
 @Component({
@@ -77,6 +76,7 @@ export class MarchesListComponent implements OnInit {
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private banqueService: BanqueService,
+    private authService: AuthService,
     private fb: FormBuilder
   ) { }
 
@@ -225,5 +225,9 @@ export class MarchesListComponent implements OnInit {
           });
       }
     });
+  }
+
+  isAdmin():boolean{
+    return this.authService.hasRole(Role.ADMIN)
   }
 }

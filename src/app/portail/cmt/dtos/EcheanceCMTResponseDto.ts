@@ -7,7 +7,7 @@ export interface EcheanceCMTResponseDto {
   dateEcheance: string;
   dateValuer: string;
   dateOperation: string;
-  montantTtc: Decimal;
+  montantTtc: number;
   observation: string;
   libelle: string;
   statutPaiement: StatutEcheanceCMT;

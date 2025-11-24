@@ -1,14 +1,13 @@
-import {Decimal} from "decimal.js";
 import {PageResponse} from "../../../../global/types/PageResponse";
 import {SuivieFactoringLineResponseDto} from "./SuivieFactoringLineResponseDto";
 
 
 export interface AgregatedSuivieFactoringLigneResponseDto {
-  BanqueName: string;
+  banqueName: string;
   marcheName: string;
   marcheNumero: string;
-  totalDebit: Decimal;
-  totalCredit: Decimal;
-  reste: Decimal;
+  totalDebit: number;
+  totalCredit: number;
+  reste: number;
   page: PageResponse<SuivieFactoringLineResponseDto>;
 }

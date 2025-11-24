@@ -1,24 +1,33 @@
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
 <div class="card flex flex-column gap-2 p-2    h-screen overflow-y-scroll">
 
 
-  <div class="p-card shadow-2  p-2 flex align-items-center  justify-content-between ">
-    <div class="flex align-items-center">
+  <div class="p-card shadow-2  p-2 flex flex-column  gap-4 ">
+
+    <div class="flex flex-row justify-content-between">
       <span class="text-lg font-medium ">Frais Bancaire en cours</span>
+      <span class="text-lg font-medium ">Total des encours <strong>  {{ totalEncours | number:'1.2-2' }} MAD </strong></span>
+
     </div>
 
-    <form class="flex flex-column md:flex-row gap-2">
-      <div class="p-input-icon-left">
-        <i class="pi pi-search"></i>
-        <input pInputText type="text" name="libelleFilter" placeholder="Rechercher par libellé" [(ngModel)]="libelleFilter" (input)="applyFilters()" />
+    <form [formGroup]="searchForm" (ngSubmit)="applyFilters()" class="flex flex-row  justify-content-between flex-wrap ">
+
+      <!-- Filtre 1: Libellé (Input) -->
+      <div class=" w-full sm:w-auto">
+        <input pInputText type="text" formControlName="libelle" placeholder="Rechercher par libellé" (keyup.enter)="applyFilters()" class="w-full" />
       </div>
-    </form>
 
-    <div class="flex flex-row  gap-2">
-      <span class="text-lg font-medium ">Total des encours</span>
-      <span class="text-xl font-bold">{{ totalEncours  }} MAD</span>
-    </div>
+      <!-- Filtre 2: Montant Minimum (Input Numérique) -->
+      <div class=" w-full sm:w-auto">
+        <input pInputText type="number" formControlName="montant" placeholder="Montant" (keyup.enter)="applyFilters()" class="w-full" />
+      </div>
+
+      <button pButton pRipple label="Ajouter frais bancaire" class="h-fit " size="small"
+              icon="pi pi-plus" severity="primary" routerLink="/portail/frais-bancaire/new"></button>
+
+    </form>
 
   </div>
 
@@ -90,13 +99,13 @@
   [closable]="!isSubmitting"
   [style]="{ width: '40vw' }"
 >
-  <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
+  <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
 
     <div class="grid p-fluid mt-3">
 
       <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy"  [showIcon]="true" appendTo="body" [readonlyInput]="true"></p-calendar>
+            <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy" [showOnFocus]="false" [readonlyInput]="true"></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
         <small class="p-error" *ngIf="isInvalid('dateEmission')">
@@ -118,7 +127,7 @@
 
       <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateValeur" formControlName="dateValeur" [showIcon]="true"  dateFormat="dd/mm/yy" appendTo="body"></p-calendar>
+            <p-calendar id="dateValeur" formControlName="dateValeur" [showOnFocus]="false"  dateFormat="dd/mm/yy" ></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
         <small class="p-error" *ngIf="isInvalid('dateValeur')">
@@ -128,7 +137,7 @@
 
       <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateOperation" formControlName="dateOperation"  dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body"></p-calendar>
+            <p-calendar id="dateOperation" formControlName="dateOperation"  dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
             <label for="dateOperation">Date de l'opération</label>
           </span>
         <small class="p-error" *ngIf="isInvalid('dateOperation')">

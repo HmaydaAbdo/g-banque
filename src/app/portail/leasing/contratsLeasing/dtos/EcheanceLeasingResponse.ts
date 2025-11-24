@@ -1,5 +1,4 @@
 import {StatutEcheanceLeasing} from "./StatutEcheanceLeasing";
-import {Decimal} from "decimal.js";
 
 export interface EcheanceLeasingResponse {
   id: number;
@@ -9,9 +8,9 @@ export interface EcheanceLeasingResponse {
   dateEcheance: Date;
   dateValeur:Date
   dateOperation:Date
-  montantTTC: Decimal;
-  montantHT: Decimal;
-  montantTVA: Decimal;
+  montantTTC: number;
+  montantHT: number;
+  montantTVA: number;
   statutPaiement: StatutEcheanceLeasing;
   observation: string;
   libelle:string

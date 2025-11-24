@@ -75,6 +75,10 @@ export class CommissionService {
     if(searchDto.operation){
       params = params.set('operation', searchDto.operation);
     }
+
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
     // Ajoutez ici d'autres propriétés si nécessaire (e.g., dateDebut, dateFin, etc.)
 
     return this.http.get<EncoursCommissionDto>(`${this.apiUrl}/encours/${banqueId}`, { params });

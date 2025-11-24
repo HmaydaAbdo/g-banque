@@ -122,11 +122,11 @@
           <td>
             <p-tag [value]="miseADisposition.active ? 'Encours' : 'Archivé'" [severity]="miseADisposition.active ? 'success' : 'danger'"></p-tag>
           </td>
-          @if (isAdmin) {
-            <td>
-              <p-inputSwitch [ngModel]="miseADisposition.active" (onChange)="confirmToggleStatus(miseADisposition)"></p-inputSwitch>
-            </td>
-          }
+
+          <td>
+            <p-inputSwitch [ngModel]="miseADisposition.active" (onChange)="confirmToggleStatus(miseADisposition)"></p-inputSwitch>
+          </td>
+
         </tr>
       </ng-template>
       <ng-template pTemplate="emptyMessage">

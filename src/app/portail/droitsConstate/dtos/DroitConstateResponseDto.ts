@@ -10,7 +10,7 @@ export interface DroitConstateResponseDto {
   banqueId: number;
   banqueName: string;
   dateEmission: Date;
-  montant: Decimal;
+  montant: number;
   observation: string;
   type: Type;
   dateOperation: string;

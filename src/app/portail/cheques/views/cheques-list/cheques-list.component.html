@@ -113,14 +113,14 @@
           <td>{{ cheque.beneficiaire }}</td>
           <td>{{ cheque.nomBanque }}</td>
           <td>{{ cheque.montant | number:'1.2-2' }}</td>
+
           <td>
             <p-tag [value]="cheque.active ? 'Encours' : 'Archivé'" [severity]="cheque.active ? 'success' : 'danger'"></p-tag>
           </td>
-          @if (isAdmin) {
-            <td>
-              <p-inputSwitch [ngModel]="cheque.active" (onChange)="confirmToggleStatus(cheque)"></p-inputSwitch>
-            </td>
-          }
+
+          <td>
+            <p-inputSwitch [ngModel]="cheque.active" (onChange)="confirmToggleStatus(cheque)"></p-inputSwitch>
+          </td>
 
         </tr>
       </ng-template>

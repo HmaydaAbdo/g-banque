@@ -1,35 +1,32 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {CommonModule, DatePipe} from '@angular/common';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
 import {ToastModule} from 'primeng/toast';
 import {TooltipModule} from 'primeng/tooltip';
 import {PaginatorModule} from 'primeng/paginator';
-import {MessageService} from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import {RippleModule} from 'primeng/ripple';
 import {LcnResponseDTO} from "../../../../../LCN/dtos/LcnResponseDTO";
 import {LcnService} from "../../../../../LCN/service/LcnService";
-import {PageResponse} from "../../../../../global/types/PageResponse";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
 import {LcnTransactionRequest} from "../../../../rapprochement/dtos/lcn/LcnTransactionRequest";
-import {
-  DonneesComplementairesRapprochementDTO
-} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+import {DonneesComplementairesRapprochementDTO} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {DividerModule} from "primeng/divider";
 import {EncoursLcnResponse} from "../../../../../LCN/dtos/EncoursLcnResponse";
-import {Decimal} from "decimal.js";
 import {LcnSearchDTO} from "../../../../../LCN/dtos/LcnSearchDTO"; // Import the DTO
 import {InputTextModule} from "primeng/inputtext";
 import {DropdownModule} from "primeng/dropdown";
 import {InputNumberModule} from "primeng/inputnumber";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
 
 
 @Component({
@@ -53,17 +50,18 @@ import {debounceTime, distinctUntilChanged} from "rxjs/operators";
     InputTextModule,
     DropdownModule,
     InputNumberModule,
+    ConfirmDialogModule,
   ],
   templateUrl: './lcn-encours.component.html',
   styleUrl: './lcn-encours.component.scss',
-  providers: [MessageService],
+  providers: [MessageService,ConfirmationService,DecimalPipe],
 })
 export class LcnEncoursComponent implements OnInit {
   lcns: LcnResponseDTO[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
   banqueIdFromRoute!: number;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -90,7 +88,9 @@ export class LcnEncoursComponent implements OnInit {
     private lcnService: LcnService,
     private route: ActivatedRoute,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
     private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
     private rapprochementService: RapprochemntService,
   ) {
@@ -112,7 +112,8 @@ export class LcnEncoursComponent implements OnInit {
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       numero: [''],
-      beneficiaire: ['']
+      beneficiaire: [''],
+      montant:[null]
     });
 
     // Subscribe to form value changes with debounce
@@ -149,8 +150,8 @@ export class LcnEncoursComponent implements OnInit {
     this.displayModal = true;
   }
 
-  submitRapprochement(): void {
 
+  confirmRapprochement(): void {
     if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -160,6 +161,57 @@ export class LcnEncoursComponent implements OnInit {
       });
       return;
     }
+
+    if (this.rapprochementForm.valid && this.selectedLcn) {
+      // Utilisation de getRawValue() pour récupérer aussi les champs désactivés
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedLcn = this.selectedLcn;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ce LCN ?
+            <br><br>
+            <strong>N° LCN:</strong> ${selectedLcn.numero}
+            <br>
+            <strong>Bénéficiaire:</strong> ${selectedLcn.beneficiaire}
+            <br>
+            <strong>Montant:</strong> ${this.decimalPipe.transform(selectedLcn.montant,"1.2-2","fr-FR")} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement LCN',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+  submitRapprochement(): void {
+
+
 
     if (this.rapprochementForm.valid && this.selectedLcn) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;

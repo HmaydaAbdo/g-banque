@@ -1,13 +1,13 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {CommonModule, DatePipe} from '@angular/common';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {CardModule} from 'primeng/card';
 import {ButtonModule} from 'primeng/button';
 import {ToastModule} from 'primeng/toast';
 import {TooltipModule} from 'primeng/tooltip';
 import {PaginatorModule} from 'primeng/paginator';
-import {MessageService} from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import {RippleModule} from 'primeng/ripple';
 import {VirementResponseDto} from "../../../../../Virements/dtos/VirementResponseDto";
 import {VirementService} from "../../../../../Virements/service/VirementService";
@@ -27,6 +27,7 @@ import {InputTextModule} from "primeng/inputtext";
 import {DropdownModule} from "primeng/dropdown";
 import {InputNumberModule} from "primeng/inputnumber";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
 
 
 @Component({
@@ -50,17 +51,18 @@ import {debounceTime, distinctUntilChanged} from "rxjs/operators";
     InputTextModule,
     DropdownModule,
     InputNumberModule,
+    ConfirmDialogModule,
   ],
   templateUrl: './virement-encours.component.html',
   styleUrl: './virement-encours.component.scss',
-  providers: [MessageService],
+  providers: [MessageService,ConfirmationService,DecimalPipe],
 })
 export class VirementEncoursComponent implements OnInit {
   virements: VirementResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
   banqueIdFromRoute!: number;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
@@ -87,6 +89,8 @@ export class VirementEncoursComponent implements OnInit {
     private messageService: MessageService,
     private datePipe: DatePipe,
     private rapprochementService: RapprochemntService,
+    private confirmationService: ConfirmationService,
+    private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
   ) {
   }
@@ -107,7 +111,8 @@ export class VirementEncoursComponent implements OnInit {
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       numero: [''],
-      beneficiaire: ['']
+      beneficiaire: [''],
+      montant:[null]
     });
 
     this.searchForm.valueChanges
@@ -145,8 +150,8 @@ export class VirementEncoursComponent implements OnInit {
     this.displayModal = true;
   }
 
-  submitRapprochement(): void {
 
+  confirmRapprochement(): void {
     if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -156,6 +161,55 @@ export class VirementEncoursComponent implements OnInit {
       });
       return;
     }
+
+    if (this.rapprochementForm.valid && this.selectedVirement) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedVirement = this.selectedVirement;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ce virement ?
+            <br><br>
+            <strong>N° Virement:</strong> ${selectedVirement.numero}
+            <br>
+            <strong>Bénéficiaire:</strong> ${selectedVirement.beneficiaire}
+            <br>
+            <strong>Montant:</strong> ${this.decimalPipe.transform(selectedVirement.montant,"1.2-2",'fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Virement',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
+  }
+
+  submitRapprochement(): void {
+
 
     if (this.rapprochementForm.valid && this.selectedVirement) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
@@ -172,7 +226,7 @@ export class VirementEncoursComponent implements OnInit {
       };
 
       this.isSubmitting = true;
-      this.rapprochementService.virementToRapprochement(virementTransactionRequest)
+      this.rapprochementService.virementDecaissementToRapprochement(virementTransactionRequest)
         .subscribe({
           next: (response) => {
             console.log(response);
@@ -216,7 +270,7 @@ export class VirementEncoursComponent implements OnInit {
       : 'dateEmission,desc';
 
     this.virementService
-      .getOutstandingVirementsByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
+      .getEncoursDecaissementVirementsByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
       .subscribe({
         next: (response: EncoursVirementResponseDto) => {
           this.virements = response.page.content;

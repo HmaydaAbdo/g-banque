@@ -1,5 +1,3 @@
-import {Decimal} from "decimal.js";
-import {Type} from "../../prefinancements/enums/Type";
 import {Status} from "../../prefinancements/enums/Status";
 
 export interface DecompteResponseDto {
@@ -10,7 +8,7 @@ export interface DecompteResponseDto {
   banqueId: number;
   banqueName: string;
   dateEmission: Date;
-  montant: Decimal;
+  montant: number;
   observation: string;
   dateOperation: string;
   dateValeur: string;

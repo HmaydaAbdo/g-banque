@@ -18,9 +18,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
-// Removed: import { ScrollerOptions } from 'primeng/scroller'; - This is the key fix!
 
-// Application-specific imports
 import { Role } from "../../../../auth/enum/Role";
 import { AuthService } from "../../../../auth/services/auth.service";
 import { LigneFonctionnelleSpecifiqueResponse } from "../../dtos/LigneFonctionnelleSpecifiqueResponse";
@@ -74,11 +72,15 @@ export class SpeficLigneEncoursComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   first: number = 0;
-  rows: number = 3;
+  rows: number = 10;
   sortField: string | string[] = 'id';
   sortOrder: number = 1;
   searchForm!: FormGroup;
-
+  statutOptions: any[] = [
+    { label: 'Tous', value: null },
+    { label: 'En cours', value: false },
+    { label: 'Expirées', value: true }
+  ];
   banquesOptions: { label: string; value: number | null }[] = [];
   marchesOptions: { label: string; value: number | null }[] = [];
   natureLigneOptions: { label: string; value: number | null }[] = [];
@@ -119,7 +121,7 @@ export class SpeficLigneEncoursComponent implements OnInit {
       natureLigneFonctionnelleId: [null],
       marcheId: [null],
       actif: [true],
-      isExpired: [false]
+      isExpired: [null]
     });
   }
 
@@ -282,7 +284,31 @@ export class SpeficLigneEncoursComponent implements OnInit {
     return this.authService.hasRole(Role.ADMIN);
   }
 
-
+  desactiver(ligne: LigneFonctionnelleSpecifiqueResponse): void {
+    this.confirmationService.confirm({
+      message: `Êtes-vous sûr de vouloir désactiver la ligne fonctionnelle spécifique avec la nature "${ligne.natureLigneFonctionnelleLabel}" pour la banque "${ligne.banqueNom}" et le marché "${ligne.marcheNom}" ?`,
+      header: 'Confirmation de Désactivation',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel:"Oui",
+      rejectLabel:"Non",
+      accept: () => {
+        this.loading = true;
+        this.specificLigneService.deactivateLigneFonctionnelle(ligne.id!)
+          .subscribe({
+            next: () => {
+              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle Spécifique désactivée avec succès.', life: 3000 });
+              this.reloadTableAfterAction();
+            },
+            error: (error) => {
+              console.error('Erreur lors de la désactivation de la ligne fonctionnelle spécifique:', error);
+              const errorMessage = error.error?.message || 'Échec de la désactivation de la ligne fonctionnelle spécifique.';
+              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+              this.loading = false;
+            }
+          });
+      }
+    });
+  }
 
   private reloadTableAfterAction(): void {
     if (this.dt) {

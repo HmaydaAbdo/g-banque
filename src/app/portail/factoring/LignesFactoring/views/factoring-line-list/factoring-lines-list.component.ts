@@ -2,7 +2,7 @@ import {Component, OnInit, ViewChild} from "@angular/core";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {ButtonModule} from "primeng/button";
-import {DatePipe, NgClass, NgForOf} from "@angular/common";
+import {DatePipe, DecimalPipe, NgClass, NgForOf} from "@angular/common";
 import {ToastModule} from "primeng/toast";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {DropdownModule} from "primeng/dropdown";
@@ -40,6 +40,7 @@ import {SpecificLigneResponseDto} from "../../../../specific-Functional-Lignes/d
     Ripple,
     PrimeTemplate,
     TooltipModule,
+    DecimalPipe,
   ],
   templateUrl: './factoring-lines-list.component.html',
 

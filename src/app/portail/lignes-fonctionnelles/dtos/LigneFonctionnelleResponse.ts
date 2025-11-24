@@ -14,7 +14,7 @@ export interface LigneFonctionnelleResponse {
   dateCreation: Date;
   dateModification: Date;
   actif?: boolean;
-
+  expired:boolean
   ligneMereId:number;
   sousLignes:SousLigneResponseDto[];
   estLigneMere:boolean;

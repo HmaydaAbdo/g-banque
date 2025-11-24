@@ -123,4 +123,8 @@ export class AuthService {
     const roles = this.getRoles();
     return roles.includes(role);
   }
+
+  isAdmin(): boolean {
+    return this.hasRole(Role.ADMIN);
+  }
 }

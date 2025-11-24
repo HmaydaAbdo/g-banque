@@ -98,6 +98,10 @@ export class LcnService {
       params = params.set('beneficiaire', searchDto.beneficiaire);
     }
 
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+
     const url = `${this.apiUrl}/encours/${banqueId}`;
     return this.http.get<EncoursLcnResponse>(url, {params});
   }

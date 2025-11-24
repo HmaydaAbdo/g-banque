@@ -26,14 +26,12 @@ import {ChequesListComponent} from "../../cheques/views/cheques-list/cheques-lis
 import {VirementListComponent} from "../../Virements/views/virement-list/virement-list.component";
 import {MiseADispositionListComponent} from "../../Mise-à-disposition/views/mise-a-disposition-list/mise-a-disposition-list.component";
 import {RecapDecaissementComponent} from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
-import {LignesFonctionnellesExpireesComponent} from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-expirees/lignes-fonctionnelles-expirees.component";
 import {LignesFonctionnellesArchivesComponent} from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component";
 import {TransactionHistoryComponent} from "../../transaction-history/transaction-history.component";
 import {MarchesListComponent} from "../../Marches/views/marches-list/marches-list.component";
 import {MarchesFormComponent} from "../../Marches/views/marches-form/marches-form.component";
 import {SpeficLigneEncoursComponent} from "../../specific-Functional-Lignes/views/spefic-ligne-encours/spefic-ligne-encours.component";
 import {SpeficLigneEditComponent} from "../../specific-Functional-Lignes/views/spefic-ligne-edit/spefic-ligne-edit.component";
-import {SpeficLigneExpireesComponent} from "../../specific-Functional-Lignes/views/spefic-ligne-expirees/spefic-ligne-expirees.component";
 import {SpeficLigneArchiveesComponent} from "../../specific-Functional-Lignes/views/spefic-ligne-archivees/spefic-ligne-archivees.component";
 import {PrefinancementsListComponent} from "../../prefinancements/views/prefinancements-list/prefinancements-list.component";
 import {PrefinancementFormComponent} from "../../prefinancements/views/prefinancement-form/prefinancement-form.component";
@@ -82,6 +80,12 @@ import {
 import {
   FactoringDeblocageComponent
 } from "../../etatsDesEncours/views/lesEncours/encaissements/factoring-deblocage/factoring-deblocage.component";
+import {
+  ValidatedFactoringComponent
+} from "../../factoring/LignesFactoring/SuivieDesLignes/views/validated-factoring.component";
+import {
+  VirementEncaissementEncoursComponent
+} from "../../etatsDesEncours/views/lesEncours/encaissements/virement-encours/virement-encours.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -100,13 +104,11 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'lignes-fonctionnelles-encours', component: LignesFonctionnellesComponent},
   { path: 'lignes-fonctionnelles-encours/new', component: LigneFonctionnelleEditComponent },
   { path: 'lignes-fonctionnelles-encours/edit/:id', component: LigneFonctionnelleEditComponent },
-  { path: 'lignes-fonctionnelles-expired', component: LignesFonctionnellesExpireesComponent},
   { path: 'lignes-fonctionnelles-archived', component: LignesFonctionnellesArchivesComponent},
 
   { path: 'lignes-fonctionnelles-specifiques-encours', component: SpeficLigneEncoursComponent },
   { path: 'lignes-fonctionnelles-specifiques-encours/new', component: SpeficLigneEditComponent },
   { path: 'lignes-fonctionnelles-specifiques-encours/edit/:id', component: SpeficLigneEditComponent },
-  { path: 'lignes-fonctionnelles-specifiques-expired', component: SpeficLigneExpireesComponent },
   { path: 'lignes-fonctionnelles-specifiques-archived', component: SpeficLigneArchiveesComponent },
 
   { path: 'natures-fonctionnelles', component: NatureLigneFonctionnelleListComponent },
@@ -141,7 +143,7 @@ export const PORTAIL_ROUTES: Routes = [
   {path:"factoring/new",component:FactoringFormComponent},
   {path:"factoring/edit/:id",component:FactoringFormComponent},
   {path:"factoring-lines",component:FactoringLinesListComponent},
-  {path:"factoring-line/:id/encours/validated",component:ValidatedDcComponent},
+  {path:"factoring-line/:id/encours/validated",component:ValidatedFactoringComponent},
 
   {path:"decomptes",component:DecomptesListComponent},
   {path:"decomptes/new",component:DecompteFormComponent},
@@ -160,7 +162,8 @@ export const PORTAIL_ROUTES: Routes = [
       {path:'echeances-cmt', component:EcheancesCmtComponent},
       {path:'cheques', component:ChequesEncoursComponent},
       {path:'lcn', component:LcnEncoursComponent},
-      {path:'virements', component:VirementEncoursComponent},
+      {path:'virements-decaissements', component:VirementEncoursComponent},
+      {path:'virements-encaissements',component:VirementEncaissementEncoursComponent},
       {path:'mise-a-disposition', component:MiseADispositionEncoursComponent},
 
       {path:"prefinancement-remboursement",component:PrefinancementRemboursementsComponent},

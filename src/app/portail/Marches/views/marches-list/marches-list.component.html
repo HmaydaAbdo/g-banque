@@ -97,7 +97,7 @@
         <tr>
           <td>{{ marche.numero }}</td>
           <td>{{ marche.nom }}</td>
-          <td>{{ marche.montant }} MAD</td>
+          <td>{{ marche.montant  | number:'1.2-2' }} MAD</td>
           <td>{{ marche.maitreDouvrage }}</td>
           <td>{{ marche.banqueNom }}</td>
           <td>{{ marche.dateDebutDesTravaux ? (marche.dateDebutDesTravaux | date:'dd/MM/yyyy') : '—' }}</td>
@@ -105,8 +105,10 @@
           <td>
             <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
                     [routerLink]="['/portail/marches/edit', marche.id]"></button>
-            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
-                    (click)="deleteMarche(marche)"></button>
+            @if (isAdmin()){
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteMarche(marche)"></button>
+            }
+
           </td>
         </tr>
       </ng-template>

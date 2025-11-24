@@ -70,6 +70,18 @@
       </p-dropdown>
     </div>
 
+    <div class="flex flex-column gap-2">
+      <label for="type">Type</label>
+      <p-dropdown id="type"
+                  [options]="typeOptions"
+                  formControlName="type"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Sélectionner un type"
+                  [showClear]="true">
+      </p-dropdown>
+    </div>
+
     <div class="flex align-items-end">
       <p-button label="Effacer" icon="pi pi-times" severity="secondary" (onClick)="clearSearch()"></p-button>
     </div>
@@ -102,10 +114,12 @@
           <th pSortableColumn="numero">N° Virement <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
-          <th pSortableColumn="banqueBeneficiaire">Banque Bénéficiaire <p-sortIcon field="banqueBeneficiaire"></p-sortIcon></th>
+          <th pSortableColumn="banqueBeneficiare">Banque Bénéficiaire <p-sortIcon field="banqueBeneficiare"></p-sortIcon></th>
           <th pSortableColumn="ribBeneficiaire">RIB Bénéficiaire <p-sortIcon field="ribBeneficiaire"></p-sortIcon></th>
           <th pSortableColumn="nomBanqueEmettrice">Banque Émettrice <p-sortIcon field="nomBanqueEmettrice"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
+
           <th style="width: 8rem;">Statut</th>
           @if (isAdmin) {
             <th style="width: 8rem;">Action</th>
@@ -121,14 +135,16 @@
           <td>{{ virement.ribBeneficiaire ? virement.ribBeneficiaire : 'N/A' }}</td>
           <td>{{ virement.banqueEmettriceNom }}</td>
           <td>{{ virement.montant | number:'1.2-2' }}</td>
+          <td>{{ virement.type }}</td>
+
           <td>
             <p-tag [value]="virement.active ? 'Encours' : 'Archivé'" [severity]="virement.active ? 'success' : 'danger'"></p-tag>
           </td>
-          @if (isAdmin) {
-            <td>
-              <p-inputSwitch [ngModel]="virement.active" (onChange)="confirmToggleStatus(virement)"></p-inputSwitch>
-            </td>
-          }
+
+          <td>
+            <p-inputSwitch [ngModel]="virement.active" (onChange)="confirmToggleStatus(virement)"></p-inputSwitch>
+          </td>
+
         </tr>
       </ng-template>
       <ng-template pTemplate="emptyMessage">

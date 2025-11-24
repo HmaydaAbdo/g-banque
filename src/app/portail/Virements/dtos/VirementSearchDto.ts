@@ -1,3 +1,5 @@
+import {Type} from "../Type";
+
 export interface VirementSearchDto {
   numero: string;
   beneficiaire: string;
@@ -5,4 +7,5 @@ export interface VirementSearchDto {
   nomBanqueEmettrice: string;
   ribBeneficiaire: string;
   active: boolean | null;
+  type:Type
 }

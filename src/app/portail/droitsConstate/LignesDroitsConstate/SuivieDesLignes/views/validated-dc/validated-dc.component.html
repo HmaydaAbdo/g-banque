@@ -33,15 +33,15 @@
       </div>
       <div class="flex flex-col items-center gap-2">
         <h3 class="text-lg font-bold">Total Débit:</h3>
-        <h3>{{ aggregatedData.totalDebit }} MAD</h3>
+        <h3>{{ aggregatedData.totalDebit | number:'1.2-2'  }} MAD</h3>
       </div>
       <div class="flex flex-col items-center gap-2">
         <h3 class="text-lg font-bold">Total Crédit:</h3>
-        <h3>{{ aggregatedData.totalCredit }} MAD</h3>
+        <h3>{{ aggregatedData.totalCredit | number:'1.2-2'  }} MAD</h3>
       </div>
       <div class="flex flex-col items-center gap-2">
         <h3 class="text-lg font-bold">Reste:</h3>
-        <h3>{{ aggregatedData.reste }} MAD</h3>
+        <h3>{{ aggregatedData.reste  | number:'1.2-2' }} MAD</h3>
       </div>
     </div>
   </div>

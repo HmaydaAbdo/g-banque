@@ -64,6 +64,19 @@
               styleClass="w-full"
             ></p-dropdown>
           </div>
+          <div>
+            <label for="filterStatus" class="block text-900 text-center font-medium mb-2">Statut</label>
+            <p-dropdown
+              id="filterStatus"
+              formControlName="isExpired"
+              [options]="statutOptions"
+              placeholder="Toutes les status"
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              styleClass="w-full"
+            ></p-dropdown>
+          </div>
 
         </div>
 
@@ -83,6 +96,8 @@
         [loading]="loading"
         [rowsPerPageOptions]="[3,5, 10, 25, 50]"
         [lazy]="true"
+        [sortField]="'dateFin'"
+        [sortOrder]="-1"
         (onLazyLoad)="loadLignesFonctionnelles($event)"
         [resizableColumns]="true"
         [columns]="[
@@ -109,7 +124,8 @@
             <th style="width: 3rem"></th> <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) { <p-sortIcon [field]="col.field"></p-sortIcon> }
-          </th>
+           </th>
+            <th style="width: 6rem" pSortableColumn="isExpired">Statut</th>
             <th style="width: 8rem; text-align: center;">Actions</th>
           </tr>
         </ng-template>
@@ -128,6 +144,12 @@
             <td>{{ ligne.taux | number:'1.2-2' }}%</td>
             <td>{{ ligne.dateDepart | date:'mediumDate' }}</td>
             <td>{{ ligne.dateFin | date:'mediumDate' }}</td>
+            <td>
+              <p-tag
+                [value]="ligne.expired ? 'Expirée' : 'En cours'"
+                [severity]="ligne.expired ? 'danger' : 'success'">
+              </p-tag>
+            </td>
 
             <td class="text-center">
               <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" [routerLink]="['/portail/lignes-fonctionnelles-encours/edit', ligne.id]"></button>

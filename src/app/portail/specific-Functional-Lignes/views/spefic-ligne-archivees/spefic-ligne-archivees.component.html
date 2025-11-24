@@ -94,7 +94,7 @@
         [columns]="[
           { field: 'banqueNom', header: 'Banque', sortable: true },
           { field: 'natureLigneFonctionnelleLabel', header: 'Nature', sortable: true },
-          { field: 'marcheNom', header: 'Marché', sortable: true },
+          { field: 'marcheNumero', header: 'Marché', sortable: true },
           { field: 'plafond', header: 'Plafond', sortable: true },
           { field: 'taux', header: 'Taux', sortable: true },
           { field: 'dateDepart', header: 'Date Départ', sortable: true },
@@ -120,7 +120,7 @@
           <tr>
             <td>{{ ligne.banqueNom }}</td>
             <td>{{ligne.natureLigneFonctionnelleLabel}}</td>
-            <td>{{ ligne.marcheNom }}</td>
+            <td>{{ ligne.marcheNumero }}</td>
             <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.taux | number:'1.2-2' }}%</td>
             <td>{{ ligne.dateDepart | date:'mediumDate' }}</td>

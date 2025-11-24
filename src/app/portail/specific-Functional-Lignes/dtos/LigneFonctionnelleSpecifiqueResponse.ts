@@ -13,6 +13,7 @@ export interface LigneFonctionnelleSpecifiqueResponse   {
   dateCreation: Date;
   dateModification: Date;
   actif?: boolean;
+  expired:boolean
   marcheId: number;
   marcheNom: string;
   marcheNumero: string;

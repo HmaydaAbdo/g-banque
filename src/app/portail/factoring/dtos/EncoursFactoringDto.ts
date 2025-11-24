@@ -4,6 +4,6 @@ import {Decimal} from "decimal.js";
 
 
 export interface EncoursFactoringDto {
-  totalDesEncours: Decimal;
+  totalDesEncours: number;
   page: PageResponse<FactoringResponseDto>;
 }

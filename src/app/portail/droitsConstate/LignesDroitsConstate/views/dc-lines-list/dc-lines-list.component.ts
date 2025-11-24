@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { DatePipe, NgClass, NgForOf } from '@angular/common';
+import {DatePipe, DecimalPipe, NgClass, NgForOf} from '@angular/common';
 import { TableLazyLoadEvent, TableModule, Table } from 'primeng/table';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
@@ -40,6 +40,7 @@ import {SpecificLigneResponseDto} from "../../../../specific-Functional-Lignes/d
     Ripple,
     PrimeTemplate,
     TooltipModule,
+    DecimalPipe,
   ],
   templateUrl: './dc-lines-list.component.html',
   styleUrl: './dc-lines-list.component.scss'

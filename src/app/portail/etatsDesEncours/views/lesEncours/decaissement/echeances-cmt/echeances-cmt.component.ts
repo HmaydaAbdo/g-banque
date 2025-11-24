@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { CommonModule, DatePipe } from '@angular/common';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import { ConfirmationService, MessageService, SelectItem } from 'primeng/api';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -57,7 +57,7 @@ import { InputTextModule } from 'primeng/inputtext';
   ],
   templateUrl: './echeances-cmt.component.html',
   styleUrl: './echeances-cmt.component.scss',
-  providers: [MessageService, ConfirmationService]
+  providers: [MessageService, ConfirmationService,DecimalPipe]
 })
 export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
@@ -93,7 +93,9 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private fb: FormBuilder,
     private rapprochementService: RapprochemntService,
+    private confirmationService: ConfirmationService,
     private datePipe: DatePipe,
+    private decimalPipe: DecimalPipe
   ) { }
 
   ngOnInit(): void {
@@ -115,7 +117,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      designation: [''] // Add the new form control
+      designation: [''] ,
+      montant:[null]
     });
 
     const formValueChangesSub = this.searchForm.valueChanges
@@ -145,7 +148,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
     const request: EncoursCMTRequestDTO = {
       banqueId: this.banqueIdFromRoute,
-      designation: searchCriteria.designation, // Pass the designation to the request
+      designation: searchCriteria.designation,
+      montant: searchCriteria.montant,
       page: event.first! / event.rows!,
       size: event.rows!,
       sort: event.sortField && event.sortOrder
@@ -208,7 +212,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     this.displayModal = true;
   }
 
-  submitRapprochement(): void {
+  confirmRapprochement() {
     if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
@@ -220,7 +224,61 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     }
 
     if (this.rapprochementForm.valid && this.selectedEcheance) {
-      const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.getRawValue() as DonneesComplementairesRapprochementDTO;
+      // Utilisation de getRawValue() pour récupérer aussi les champs désactivés
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedEcheance = this.selectedEcheance;
+
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher cette échéance CMT ?
+            <br><br>
+            <strong>Désignation du crédit:</strong> ${selectedEcheance.credit.designation}
+            <br>
+            <strong>Montant TTC:</strong> ${this.decimalPipe.transform(selectedEcheance.montantTtc,"1.2-2",'fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement CMT',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.executeRapprochement(); // Appel de la méthode d'exécution
+        },
+        reject: () => {
+          // L'utilisateur a annulé
+        }
+      });
+    }
+  }
+
+  /**
+   * Exécute l'appel API réel après la confirmation de l'utilisateur.
+   * C'est l'ancienne méthode submitRapprochement, renommée pour clarifier son rôle.
+   */
+  private executeRapprochement(): void {
+    // Vérification redondante, mais garantit que les données sont prêtes
+    if (this.rapprochementForm.valid && this.selectedEcheance) {
+      // Utilisation de getRawValue() pour récupérer aussi les champs désactivés
+      const formValue = this.rapprochementForm.getRawValue();
+
+      const donneesComplementaires: DonneesComplementairesRapprochementDTO = formValue as DonneesComplementairesRapprochementDTO;
 
       const cmtTransactionRequest: CmtTransactionRequest = {
         cmtId: this.selectedEcheance.credit.id,
@@ -235,6 +293,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       };
 
       this.isSubmitting = true;
+      this.displayModal = false;
+
       this.rapprochementService.echeanceCmtToRapprochement(cmtTransactionRequest)
         .subscribe({
           next: (response) => {
@@ -244,9 +304,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
               summary: 'Succès',
               detail: 'Échéance CMT rapprochée avec succès.'
             });
-            this.onSearch(); // Refresh the table
+            this.onSearch();
             this.isSubmitting = false;
-            this.displayModal = false;
           },
           error: (error) => {
             console.error('Erreur lors du rapprochement CMT:', error);
@@ -259,16 +318,22 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
           }
         });
     } else {
+      // Devrait être capturé par confirmRapprochement, mais c'est une sécurité
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs de saisie.'
+        detail: 'Tentative d\'exécution invalide.'
       });
     }
   }
+
+
+
 
   isInvalid(controlName: string): boolean {
     const control = this.rapprochementForm.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
+
+
 }

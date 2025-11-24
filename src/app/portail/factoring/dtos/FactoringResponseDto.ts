@@ -11,7 +11,7 @@ export interface FactoringResponseDto {
   banqueId: number;
   banqueName: string;
   dateEmission: string;
-  montant: Decimal;
+  montant: number;
   observation: string;
   type: Type;
   dateOperation: string;

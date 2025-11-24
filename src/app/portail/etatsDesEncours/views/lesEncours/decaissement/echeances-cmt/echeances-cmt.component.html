@@ -3,15 +3,22 @@
 
 <div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
 
-  <div class="p-card shadow-2 px-4 py-3 flex flex-row flex-wrap align-items-center justify-content-between gap-3">
+  <div class="p-card shadow-2 px-4 py-3 flex flex-column flex-wrap   gap-3">
 
-    <span class="text-lg font-medium">Liste des échéances CMT encours pour le mois : <span class="text-lg font-bold">{{ this.currentMonthYear }}</span></span>
-    <form [formGroup]="searchForm" class="flex flex-column md:flex-row align-items-center gap-3 ">
-      <div class="p-inputgroup ">
-        <input type="text" pInputText formControlName="designation" placeholder="Désignation du crédit" class="p-inputtext-sm" />
-      </div>
+    <div class="flex flex-row gap-2 justify-content-between">
+      <span class="text-lg font-medium">Liste des échéances CMT encours pour le mois : <span class="text-lg font-bold">{{ this.currentMonthYear }}</span></span>
+      <span class="text-lg font-medium">Total des encours : <span class="text-lg font-bold"> {{ encoursResponse?.totalEncours | number: '1.2-2' }} MAD</span></span>
+    </div>
+
+    <form [formGroup]="searchForm" class="flex  flex-row justify-content-between gap-3 ">
+      <input type="text" pInputText formControlName="designation" placeholder="Désignation du crédit" class="p-inputtext-sm" />
+
+      <span class="p-float-label">
+          <input id="montant" type="number" pInputText formControlName="montant">
+          <label for="montant">Montant</label>
+        </span>
     </form>
-    <span class="text-xl font-bold">Total des encours : {{ encoursResponse?.totalEncours }} MAD</span>
+
 
   </div>
 
@@ -57,7 +64,7 @@
           <td>{{ echeance.credit.designation }}</td>
           <td>{{ echeance.numeroEcheance }}</td>
           <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-          <td>{{ echeance.montantTtc}} MAD</td>
+          <td>{{ echeance.montantTtc | number: '1.2-2'}} MAD</td>
           <td>
             <p-button
               pRipple
@@ -89,12 +96,12 @@
           [closable]="!isSubmitting"
 >
   <ng-container *ngIf="selectedEcheance">
-    <form [formGroup]="rapprochementForm" (ngSubmit)="submitRapprochement()">
+    <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
       <div class="grid p-fluid mt-3">
 
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy"  [showIcon]="true" appendTo="body" [readonlyInput]="true"></p-calendar>
+            <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy"  [showOnFocus]="false" [readonlyInput]="true"></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
         </div>
@@ -110,7 +117,7 @@
 
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateValeur" formControlName="dateValeur" [showIcon]="true"  dateFormat="dd/mm/yy" appendTo="body"></p-calendar>
+            <p-calendar id="dateValeur" formControlName="dateValeur"  dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateValeur')">
@@ -120,7 +127,7 @@
 
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateOperation" formControlName="dateOperation"  dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body"></p-calendar>
+            <p-calendar id="dateOperation" formControlName="dateOperation"  dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
             <label for="dateOperation">Date de l'opération</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateOperation')">

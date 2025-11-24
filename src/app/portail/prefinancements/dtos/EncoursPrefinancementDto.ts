@@ -4,6 +4,6 @@ import {PrefinancementResponseDTO} from "./PrefinancementResponseDTO";
 
 export interface EncoursPrefinancementDto {
 
-  totalDesEncours:Decimal,
+  totalDesEncours:number,
   page:PageResponse<PrefinancementResponseDTO>
 }

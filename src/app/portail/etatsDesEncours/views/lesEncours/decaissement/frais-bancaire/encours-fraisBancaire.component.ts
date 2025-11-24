@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from "@angular/core";
+import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
 import {CommonModule, DatePipe, DecimalPipe, NgFor} from "@angular/common";
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
@@ -13,7 +13,7 @@ import {CardModule} from "primeng/card";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
-import {MenuItem, MessageService, SelectItem} from "primeng/api";
+import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
 import {Decimal} from "decimal.js";
 import {ActivatedRoute} from "@angular/router";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
@@ -22,6 +22,8 @@ import {FraisBancaireService} from "../../../../../frais-bancaire/service/FraisB
 import {FraisBancaireSearchDto} from "../../../../../frais-bancaire/dtos/FraisBancaireSearchDto";
 import {EncoursFraisBancaireDto} from "../../../../../frais-bancaire/dtos/EncoursFraisBancaireDto";
 import {FraisBancaireValidationRequest} from "../../../../rapprochement/dtos/frais-bancaire/frais-bancaire-validation-request.dto";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 
 @Component({
   selector: 'app-encours-fraisBancaire',
@@ -44,24 +46,28 @@ import {FraisBancaireValidationRequest} from "../../../../rapprochement/dtos/fra
     DialogModule,
     ReactiveFormsModule,
     CalendarModule,
-    InputTextareaModule
+    InputTextareaModule,
+    ConfirmDialogModule
   ],
   templateUrl: './encours-fraisBancaire.component.html',
-  providers: [MessageService]
+  providers: [MessageService,ConfirmationService,DecimalPipe]
 })
-export class EncoursFraisBancaireComponent implements OnInit {
+export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
   @ViewChild('dt') table!: Table;
 
   fraisBancaires: FraisBancaireResponseDto[] = [];
   totalRecords = 0;
   loading = true;
-  totalEncours!: Decimal;
+  totalEncours!: number;
   banqueId?: number;
 
   displayModal: boolean = false;
   selectedFraisBancaire: any = null;
   rapprochementForm!: FormGroup;
-  libelleFilter: string | null = null;
+
+  searchForm!:FormGroup
+
+  subscriptions:Subscription[]=[]
 
   items: MenuItem[] = [];
   tvaOptions: SelectItem[] = [
@@ -76,10 +82,15 @@ export class EncoursFraisBancaireComponent implements OnInit {
   constructor(
     private fraisBancaireService: FraisBancaireService,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
+    private datePipe: DatePipe,
     private route: ActivatedRoute,
     private fb: FormBuilder,
+    private decimalPipe: DecimalPipe,
     private rapprochementService: RapprochemntService,
   ) {}
+
+
 
   ngOnInit(): void {
     this.items = [
@@ -90,7 +101,8 @@ export class EncoursFraisBancaireComponent implements OnInit {
 
 
     // Subscribe to the parent route to get the banqueId
-    this.route.parent!.paramMap.subscribe(params => {
+
+   const sub1= this.route.parent!.paramMap.subscribe(params => {
       const id = params.get('banqueId');
       if (id) {
         this.banqueId = +id;
@@ -110,6 +122,21 @@ export class EncoursFraisBancaireComponent implements OnInit {
       }
     });
 
+    this.searchForm = this.fb.group({
+      libelle: [''],
+      montant: [null],
+    })
+
+   const sub2= this.searchForm.valueChanges.pipe(
+      // Attends 300ms après la dernière frappe/changement
+      debounceTime(300),
+      // N'émet que si la valeur actuelle est différente de la dernière valeur émise
+      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
+    ).subscribe(() => {
+      // Recharge le tableau via applyFilters (qui appelle table.reset())
+      this.applyFilters();
+    });
+
     this.rapprochementForm = this.fb.group({
       dateEmission: [null, Validators.required],
       dateOperation: [null, Validators.required],
@@ -118,6 +145,8 @@ export class EncoursFraisBancaireComponent implements OnInit {
       libelle: ['', Validators.required],
       tvaDeductible: [null, Validators.required],
     });
+
+    this.subscriptions.push(sub1,sub2)
   }
 
   loadFraisBancaire(event: TableLazyLoadEvent) {
@@ -127,7 +156,7 @@ export class EncoursFraisBancaireComponent implements OnInit {
     if (!this.banqueId) {
       this.fraisBancaires = [];
       this.totalRecords = 0;
-      this.totalEncours = new Decimal(0);
+      this.totalEncours = 0;
       this.loading = false;
       return;
     }
@@ -138,9 +167,7 @@ export class EncoursFraisBancaireComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    const searchCriteria: FraisBancaireSearchDto = {
-      libelle: this.libelleFilter || undefined
-    };
+    const searchCriteria: FraisBancaireSearchDto = this.searchForm.getRawValue();
 
     this.fraisBancaireService.getOutstandingFraisBancaire(this.banqueId, searchCriteria, page, size, sort)
       .subscribe({
@@ -174,63 +201,115 @@ export class EncoursFraisBancaireComponent implements OnInit {
     this.displayModal = true;
   }
 
-
-
-  // Soumettre la validation
-  submitRapprochement(): void {
-    if (this.rapprochementForm.invalid || !this.selectedFraisBancaire) {
+  confirmRapprochement(): void {
+    if (this.rapprochementForm.invalid) {
       this.rapprochementForm.markAllAsTouched();
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
-        detail: 'Veuillez remplir tous les champs.',
+        detail: 'Veuillez remplir tous les champs obligatoires et corriger les erreurs.'
       });
       return;
     }
 
-    const request: FraisBancaireValidationRequest = {
-      idFraisBancaire: this.selectedFraisBancaire.id,
-      dateOperation: this.rapprochementForm.value.dateOperation,
-      dateEmission:this.rapprochementForm.value.dateEmission,
-      dateValeur: this.rapprochementForm.value.dateValeur,
-      observation: this.rapprochementForm.value.observation,
-      libelle:this.rapprochementForm.value.libelle,
-      tva:this.rapprochementForm.value.tvaDeductible
-    };
+    if (this.rapprochementForm.valid && this.selectedFraisBancaire) {
+      const formValue = this.rapprochementForm.getRawValue();
+      const selectedFraisBancaire = this.selectedFraisBancaire;
 
-    this.isSubmitting = true;
-    this.rapprochementService.fraisBancaireToRapprochement(request).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Succès',
-          detail: 'Frai Bancaire validé avec succès.',
-        });
-        this.isSubmitting = false;
-        this.displayModal = false;
-        this.table.reset(); // recharge ton tableau existant
-      },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Une erreur est survenue.',
-        });
-        this.isSubmitting = false;
-      },
-    });
+      // Formatage des dates pour l'affichage
+      const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
+      const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
+      const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+
+
+
+      // Création du message de récapitulatif en HTML
+      const recapMessage = `
+            Êtes-vous sûr de vouloir rapprocher ces Frais Bancaires ?
+            <br><br>
+            <strong>ID Frais:</strong> ${selectedFraisBancaire.id}
+            <br>
+            <strong>Montant:</strong> ${this.decimalPipe.transform(selectedFraisBancaire.montant,'1.2-2','fr-FR')} MAD
+            <br><br>
+            <strong>Détails du Rapprochement:</strong>
+            <ul>
+                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
+                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+            </ul>
+      `;
+
+      this.confirmationService.confirm({
+        message: recapMessage,
+        header: 'Confirmation de Rapprochement Frais Bancaires',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Confirmer',
+        rejectLabel: 'Annuler',
+        accept: () => {
+          this.submitRapprochement();
+        },
+        reject: () => {
+          // L'utilisateur a annulé, aucune action
+        }
+      });
+    }
   }
 
+  // Soumettre la validation
+  submitRapprochement(): void {
+    if (this.rapprochementForm.valid && this.selectedFraisBancaire) {
+
+
+      const request: FraisBancaireValidationRequest = {
+        idFraisBancaire: this.selectedFraisBancaire.id,
+        dateOperation: this.rapprochementForm.value.dateOperation,
+        dateEmission: this.rapprochementForm.value.dateEmission,
+        dateValeur: this.rapprochementForm.value.dateValeur,
+        observation: this.rapprochementForm.value.observation,
+        libelle: this.rapprochementForm.value.libelle,
+        tva: this.rapprochementForm.value.tvaDeductible
+      };
+
+      this.isSubmitting = true;
+      this.rapprochementService.fraisBancaireToRapprochement(request).subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Frai Bancaire validé avec succès.',
+          });
+          this.isSubmitting = false;
+          this.displayModal = false;
+          this.table.reset(); // recharge ton tableau existant
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Une erreur est survenue.',
+          });
+          this.isSubmitting = false;
+        },
+      });
+    }
+  }
 
 
   applyFilters() {
     if (this.table) {
-      setTimeout(() => this.table.reset(), 0);
+      this.table.reset()
     }
   }
 
   isInvalid(controlName: string): boolean {
     const control = this.rapprochementForm.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
   }
 }

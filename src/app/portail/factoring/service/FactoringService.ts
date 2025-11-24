@@ -143,8 +143,13 @@ export class FactoringService {
     if (searchDto.marcheName) {
       params = params.set('marcheName', searchDto.marcheName);
     }
+
     if (searchDto.marcheNumero) {
       params = params.set('marcheNumero', searchDto.marcheNumero);
+    }
+
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
     }
 
     return this.http.get<EncoursFactoringDto>(
@@ -181,6 +186,10 @@ export class FactoringService {
     }
     if (searchDto.marcheNumero) {
       params = params.set('marcheNumero', searchDto.marcheNumero);
+    }
+
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
     }
 
     return this.http.get<EncoursFactoringDto>(

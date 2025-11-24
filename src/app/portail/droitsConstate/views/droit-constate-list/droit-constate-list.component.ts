@@ -19,6 +19,9 @@ import {DroitConstateSearchDto} from "../../dtos/DroitConstateSearchDto";
 import {Status} from "../../../prefinancements/enums/Status";
 import {Type} from "../../../prefinancements/enums/Type";
 import {DroitConstateService} from "../../service/DroitConstateService";
+import {AuthService} from "../../../../auth/services/auth.service";
+import {TagModule} from "primeng/tag";
+import {InputSwitchModule} from "primeng/inputswitch";
 
 @Component({
   selector: 'app-droit-constate-list',
@@ -41,6 +44,8 @@ import {DroitConstateService} from "../../service/DroitConstateService";
     NgIf,
     NgFor,
     NgForOf,
+    TagModule,
+    InputSwitchModule,
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -78,7 +83,8 @@ export class DroitConstateListComponent implements OnInit {
     private banqueService: BanqueService,
     private marcheService: MarcheService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    public authService:AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -192,10 +198,27 @@ export class DroitConstateListComponent implements OnInit {
     this.applyFilters();
   }
 
+
+  confirmToggleStatus(dc: DroitConstateResponseDto){
+    const confirmationMessage = `Êtes-vous sûr de vouloir ${dc.status==Status.PAYE ? 'désactiver' : 'activer'} ce droit constaté ?`;
+    this.confirmationService.confirm({
+      message: confirmationMessage,
+      header: `Confirmation de ${dc.status ? 'désactivation' : 'activation'}`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      acceptButtonStyleClass: dc.status ? 'p-button-danger' : 'p-button-success',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.toggleStatus(dc);
+      }
+    });
+  }
+
   /** Mark a droit constaté as paid */
-  markAsPaid(dc: DroitConstateResponseDto) {
+  toggleStatus(dc: DroitConstateResponseDto) {
     if (dc.status === Status.PAYE) return;
-    this.droitConstateService.markAsPaid(dc.id).subscribe({
+    this.droitConstateService.toggleStatus(dc.id).subscribe({
       next: () => {
         this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.'});
         this.loadDroitsConstates(this.table.createLazyLoadMetadata());
@@ -205,6 +228,7 @@ export class DroitConstateListComponent implements OnInit {
       }
     });
   }
+
 
   /** Delete a droit constaté */
   deleteDroitConstate(dc: DroitConstateResponseDto) {
@@ -227,4 +251,7 @@ export class DroitConstateListComponent implements OnInit {
       }
     });
   }
+
+  protected readonly Status = Status;
+  protected readonly Type = Type;
 }

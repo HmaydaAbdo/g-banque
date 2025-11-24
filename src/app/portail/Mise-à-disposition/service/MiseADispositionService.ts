@@ -101,6 +101,9 @@ export class MiseADispositionService {
     if (searchDto.beneficiaire) {
         params = params.set('beneficiaire', searchDto.beneficiaire);
     }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
 
     const url = `${this.apiUrl}/encours/${banqueId}`;
     return this.http.get<EncoursMiseAdisposition>(url, {params});

@@ -89,6 +89,10 @@ export class EcheanceCmtService {
       params = params.append('designation', request.designation);
     }
 
+    if( request.montant ){
+      params = params.append('montant', request.montant.toString());
+    }
+
     return this.http.get<EncoursCMTResponseDTO>(`${this.apiUrl}/encours`, { params });
   }
 

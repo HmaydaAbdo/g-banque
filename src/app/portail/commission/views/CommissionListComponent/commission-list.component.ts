@@ -21,6 +21,7 @@ import {TransactionSource} from "../../../etatsDesEncours/rapprochement/dtos/tra
 import {Status} from "../../../prefinancements/enums/Status";
 import {PageResponse} from "../../../global/types/PageResponse";
 import {InputTextModule} from "primeng/inputtext";
+import {AuthService} from "../../../../auth/services/auth.service";
 
 
 @Component({
@@ -78,7 +79,8 @@ export class CommissionListComponent implements OnInit {
     private commissionService: CommissionService,
     private banqueService: BanqueService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -179,5 +181,9 @@ export class CommissionListComponent implements OnInit {
         });
       }
     });
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
   }
 }

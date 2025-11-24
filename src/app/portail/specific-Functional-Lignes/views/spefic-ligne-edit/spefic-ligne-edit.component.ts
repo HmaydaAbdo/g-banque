@@ -173,7 +173,7 @@ export class SpeficLigneEditComponent implements OnInit {
 
     this.marcheService.getAllMarchesForLazyLoad(page, size, sort).subscribe({
       next: (pageResponse) => {
-        this.marchesOptions = pageResponse.content.map(marche => ({label: marche.nom, value: marche.id!}));
+        this.marchesOptions = pageResponse.content.map(marche => ({label: marche.numero, value: marche.id!}));
         this.marchesTotalRecords = pageResponse.page.totalElements;
         this.loading = false;
       },
