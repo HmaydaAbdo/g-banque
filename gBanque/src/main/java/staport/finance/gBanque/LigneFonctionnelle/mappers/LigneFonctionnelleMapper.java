@@ -10,6 +10,7 @@ import staport.finance.gBanque.LigneFonctionnelle.dtos.SousLigneRequestDto;
 import staport.finance.gBanque.LigneFonctionnelle.dtos.SousLigneResponseDto;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -109,6 +110,7 @@ public class LigneFonctionnelleMapper {
         response.setDateCreation(ligneFonctionnelle.getDateCreation());
         response.setDateModification(ligneFonctionnelle.getDateModification());
         response.setActif(ligneFonctionnelle.isActif());
+        response.setExpired(isExpired(ligneFonctionnelle.getDateFin()));
 
         // GESTION HIÉRARCHIQUE: Rôles et Relations
         final boolean estSousLigne = ligneFonctionnelle.getLigneMere() != null;
@@ -192,4 +194,17 @@ public class LigneFonctionnelleMapper {
         // La mise à jour du lien ligneMere n'est pas gérée ici (immuabilité gérée par le Service si nécessaire).
     }
 
+
+    private boolean isExpired(OffsetDateTime dateFin) {
+        // Si pas de date de fin, elle ne peut pas être expirée
+        if (dateFin == null) {
+            return false;
+        }
+
+        // 1. On prend l'instant présent exact
+        OffsetDateTime now = OffsetDateTime.now();
+
+        // 2. On retourne true si l'instant "now" est après l'instant "dateFin"
+        return now.isAfter(dateFin);
+    }
 }

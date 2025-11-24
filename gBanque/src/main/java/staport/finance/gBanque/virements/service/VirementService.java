@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.virements.dtos.EncoursVirementResponseDto;
 import staport.finance.gBanque.virements.dtos.EncoursVirementsSearchDto;
 import staport.finance.gBanque.virements.dtos.VirementResponseDto;
@@ -22,9 +24,11 @@ import java.util.NoSuchElementException;
 public class VirementService {
 
     private final VirementRepository virementRepository;
+    private final BanqueRepository banqueRepository;
 
-    public VirementService(VirementRepository virementRepository) {
+    public VirementService(VirementRepository virementRepository, BanqueRepository banqueRepository) {
         this.virementRepository = virementRepository;
+        this.banqueRepository = banqueRepository;
     }
 
     /**
@@ -68,6 +72,7 @@ public class VirementService {
     }
 
 
+
     /**
      * Retrieves a paginated list of active virements for a specific bank that are due in the current month.
      *
@@ -76,11 +81,34 @@ public class VirementService {
      * @return A Page of VirementResponseDto for the outstanding virements.
      */
     @Transactional(readOnly = true)
-    public EncoursVirementResponseDto getEncoursForVirements(EncoursVirementsSearchDto searchDto, Long banqueId, Pageable pageable) {
+    public EncoursVirementResponseDto getEncoursDecaissementForVirements(EncoursVirementsSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification for active virements for the specified bank in the current month
-        Specification<Virement> spec = VirementSpec.activeForBankAndUntilEndOfMonth(banqueId)
+        Specification<Virement> spec = VirementSpec.encoursDecaissement(banqueId)
                 .and(VirementSpec.hasNumero(searchDto.getNumero()))
-                .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()));
+                .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(VirementSpec.hasMontant(searchDto.getMontant()));
+
+        // Execute the search with the specification and pagination
+        Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
+
+        BigDecimal totalDesEncours = virementRepository.findAll(spec).stream().map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        Page<VirementResponseDto> result = virementPage.map(VirementMapper::toDto);
+        // Map the result to DTOs and return
+        return new EncoursVirementResponseDto(totalDesEncours,result);
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public EncoursVirementResponseDto getEncoursEncaissementForVirements(EncoursVirementsSearchDto searchDto, Long banqueId, Pageable pageable) {
+
+        Banque banqueBeneficiaire = banqueRepository.findById(banqueId).orElseThrow(() -> new NoSuchElementException("Bank with id " + banqueId + " not found."));
+
+        // Build the specification for active virements for the specified bank in the current month
+        Specification<Virement> spec = VirementSpec.encoursEncaissement(banqueBeneficiaire.getNom())
+                .and(VirementSpec.hasNumero(searchDto.getNumero()))
+                .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(VirementSpec.hasMontant(searchDto.getMontant()));
 
         // Execute the search with the specification and pagination
         Page<Virement> virementPage = virementRepository.findAll(spec, pageable);

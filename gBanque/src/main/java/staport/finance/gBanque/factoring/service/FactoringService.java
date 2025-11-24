@@ -165,7 +165,8 @@ public class FactoringService {
         Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
                 .and(FactoringSpec.outstandingRemboursementForCurrentMonth())
                 .and(FactoringSpec.byMarcheName(searchDto.getMarcheName()))
-                .and(FactoringSpec.byMarcheNumero(searchDto.getMarcheNumero()));
+                .and(FactoringSpec.byMarcheNumero(searchDto.getMarcheNumero()))
+                .and(FactoringSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of factoring records
         Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
@@ -193,7 +194,8 @@ public class FactoringService {
         Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
                 .and(FactoringSpec.outstandingDeblocageForCurrentMonth())
                 .and(FactoringSpec.byMarcheName(searchDto.getMarcheName()))
-                .and(FactoringSpec.byMarcheNumero(searchDto.getMarcheNumero()));
+                .and(FactoringSpec.byMarcheNumero(searchDto.getMarcheNumero()))
+                .and(FactoringSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of factoring records
         Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);

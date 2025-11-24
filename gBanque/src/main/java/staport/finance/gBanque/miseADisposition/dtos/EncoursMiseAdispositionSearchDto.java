@@ -1,9 +1,12 @@
 package staport.finance.gBanque.miseADisposition.dtos;
 
+import java.math.BigDecimal;
+
 public class EncoursMiseAdispositionSearchDto {
 
     private String numero;
     private String beneficiaire;
+    private BigDecimal montant;
 
     public EncoursMiseAdispositionSearchDto() {
     }
@@ -26,4 +29,19 @@ public class EncoursMiseAdispositionSearchDto {
         this.beneficiaire = beneficiaire;
     }
 
+    public BigDecimal getMontant() {
+        return montant;
+    }
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    @Override
+    public String toString() {
+        return "EncoursMiseAdispositionSearchDto{" +
+                "numero='" + numero + '\'' +
+                ", beneficiaire='" + beneficiaire + '\'' +
+                ", montant=" + montant +
+                '}';
+    }
 }

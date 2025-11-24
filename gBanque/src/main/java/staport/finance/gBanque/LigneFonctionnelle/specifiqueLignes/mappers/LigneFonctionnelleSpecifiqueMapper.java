@@ -14,6 +14,7 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 
@@ -75,6 +76,7 @@ public class LigneFonctionnelleSpecifiqueMapper {
         response.setDateCreation(entity.getDateCreation());
         response.setDateModification(entity.getDateModification());
         response.setActif(entity.isActif());
+        response.setExpired(isExpired(entity.getDateFin()));
 
         // Map the specific fields
         if (entity.getMarche() != null) {
@@ -114,8 +116,12 @@ public class LigneFonctionnelleSpecifiqueMapper {
         response.setMontant(entity.getPlafond());
 
         // encours
-        List<Prefinancement> prefinancements= entity.getMarche().getPrefinancements().stream().filter(prefinancement -> prefinancement.getStatus()== Status.PAYE && prefinancement.getType()== Type.REMBOURSEMENT).toList();
-        BigDecimal encours = prefinancements.stream().map(Prefinancement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<Prefinancement> prefinancements= entity.getMarche().getPrefinancements().stream().toList();
+
+        BigDecimal totalDeblocages= prefinancements.stream().filter(prefinancement -> prefinancement.getType()== Type.DEBLOCAGE).map(Prefinancement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalRemboursements=prefinancements.stream().filter(prefinancement -> prefinancement.getType()== Type.REMBOURSEMENT).map(Prefinancement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal encours = totalDeblocages.subtract(totalRemboursements);
         response.setEncours(encours);
 
         //solde
@@ -155,8 +161,11 @@ public class LigneFonctionnelleSpecifiqueMapper {
         response.setMontant(entity.getPlafond());
 
         // encours
-        List<DroitConstate> droitConstates= entity.getMarche().getDroitConstates().stream().filter(droitConstate -> droitConstate.getStatus()== Status.PAYE && droitConstate.getType()== Type.REMBOURSEMENT).toList();
-        BigDecimal encours = droitConstates.stream().map(DroitConstate::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<DroitConstate> droitConstates= entity.getMarche().getDroitConstates().stream().toList();
+        BigDecimal totalDeblocages=droitConstates.stream().filter(droitConstate -> droitConstate.getType()== Type.DEBLOCAGE).map(DroitConstate::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalRembourssement=droitConstates.stream().filter(droitConstate -> droitConstate.getType()== Type.REMBOURSEMENT).map(DroitConstate::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal encours = totalDeblocages.subtract(totalRembourssement);
         response.setEncours(encours);
 
         //solde
@@ -195,8 +204,11 @@ public class LigneFonctionnelleSpecifiqueMapper {
         response.setMontant(entity.getPlafond());
 
         // encours
-        List<Factoring> factorings= entity.getMarche().getFactorings().stream().filter(factoring -> factoring.getStatus()== Status.PAYE && factoring.getType()== Type.REMBOURSEMENT).toList();
-        BigDecimal encours = factorings.stream().map(Factoring::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<Factoring> factorings= entity.getMarche().getFactorings().stream().toList();
+        BigDecimal totalDeblocage=factorings.stream().filter(factoring -> factoring.getType()== Type.DEBLOCAGE).map(Factoring::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalRemboursement=factorings.stream().filter(factoring -> factoring.getType()== Type.REMBOURSEMENT).map(Factoring::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal encours = totalDeblocage.subtract(totalRemboursement);
         response.setEncours(encours);
 
         //solde
@@ -211,5 +223,18 @@ public class LigneFonctionnelleSpecifiqueMapper {
         return response;
     }
 
+
+    private boolean isExpired(OffsetDateTime dateFin) {
+        // Si pas de date de fin, elle ne peut pas être expirée
+        if (dateFin == null) {
+            return false;
+        }
+
+        // 1. On prend l'instant présent exact
+        OffsetDateTime now = OffsetDateTime.now();
+
+        // 2. On retourne true si l'instant "now" est après l'instant "dateFin"
+        return now.isAfter(dateFin);
+    }
 
 }

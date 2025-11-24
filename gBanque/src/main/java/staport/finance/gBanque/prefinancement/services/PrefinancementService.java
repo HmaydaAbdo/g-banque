@@ -1,6 +1,7 @@
 package staport.finance.gBanque.prefinancement.services;
 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,16 +22,13 @@ import staport.finance.gBanque.prefinancement.repository.PrefinancementRepositor
 import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
-/**
- * Service class for handling all business logic related to Prefinancement entities.
- * This class uses the DTOs, mappers, and specifications to provide a clean and robust API.
- */
+
 @Service
 public class PrefinancementService {
 
+    private static final Logger log = LoggerFactory.getLogger(PrefinancementService.class);
     private final PrefinancementRepository prefinancementRepository;
     private final MarcheRepository marcheRepository;
     private final PrefinancementMapper prefinancementMapper;
@@ -40,7 +38,9 @@ public class PrefinancementService {
     public PrefinancementService(
             PrefinancementRepository prefinancementRepository,
             MarcheRepository marcheRepository,
-            PrefinancementMapper prefinancementMapper, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository) {
+            PrefinancementMapper prefinancementMapper,
+            LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
+            NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository) {
         this.prefinancementRepository = prefinancementRepository;
         this.marcheRepository = marcheRepository;
         this.prefinancementMapper = prefinancementMapper;
@@ -48,144 +48,143 @@ public class PrefinancementService {
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
     }
 
-    /**
-     * Creates a new Prefinancement record.
-     *
-     * @param requestDTO The DTO containing the data for the new record.
-     * @return The DTO of the newly created record.
-     */
     @Transactional
     public PrefinancementResponseDTO createPrefinancement(PrefinancementRequestDTO requestDTO) throws Exception {
-
+        log.info("Creating prefinancement for MarcheId: {}", requestDTO.getMarcheId());
 
         Marche marche = marcheRepository.findById(requestDTO.getMarcheId())
-                .orElseThrow(() -> new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId()));
+                .orElseThrow(() -> {
+                    log.error("Marche not found with ID: {}", requestDTO.getMarcheId());
+                    return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
+                });
 
-        // vérifiez si le marché a une ligne spécifique actif de nature prefinancement
+        log.debug("Marche found: {}", marche.getNom());
 
-        // Step 1: Find the "Préfinancement" nature line by its label
         NatureLigneFonctionnelle prefiNature = natureLigneFonctionnelleRepository.findByLabel("Préfinancement")
-                .orElseThrow(() -> new ResourceNotFoundException("Nature de ligne fonctionnelle 'Préfinancement' non trouvée."));
+                .orElseThrow(() -> {
+                    log.error("Nature de ligne fonctionnelle 'Préfinancement' not found");
+                    return new ResourceNotFoundException("Nature de ligne fonctionnelle 'Préfinancement' non trouvée.");
+                });
 
-        // Step 2: Check for an active 'Préfinancement' specific line for the Marche
-        Optional<LigneFonctionnelleSpecifique> activePrefiLine = ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, prefiNature);
+        Optional<LigneFonctionnelleSpecifique> activePrefiLine = ligneFonctionnelleSpecifiqueRepository
+                .findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, prefiNature);
 
-        // Step 3: If no active line is found, throw a business validation exception
         if (activePrefiLine.isEmpty()) {
+            log.warn("No active 'Préfinancement' line for Marche: {}", marche.getNom());
             throw new Exception("Impossible de créer un préfinancement. Le marché '" + marche.getNom() + "' n'est pas associé à une ligne fonctionnelle 'Préfinancement' active.");
         }
 
+        log.debug("Active 'Préfinancement' line found for Marche: {}", marche.getNom());
+
         Prefinancement prefinancement = prefinancementMapper.toEntity(requestDTO, marche);
         prefinancement = prefinancementRepository.save(prefinancement);
+
+        log.info("Prefinancement created with ID: {}", prefinancement.getId());
         return prefinancementMapper.toDto(prefinancement);
     }
 
-    /**
-     * Updates an existing Prefinancement record.
-     *
-     * @param id The ID of the record to update.
-     * @param requestDTO The DTO containing the updated data.
-     * @return The DTO of the updated record.
-     */
     @Transactional
     public PrefinancementResponseDTO updatePrefinancement(Long id, PrefinancementRequestDTO requestDTO) {
+        log.info("Updating prefinancement with ID: {}", id);
+
         Prefinancement existingPrefinancement = prefinancementRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Prefinancement not found with ID: " + id));
+                .orElseThrow(() -> {
+                    log.error("Prefinancement not found with ID: {}", id);
+                    return new ResourceNotFoundException("Prefinancement not found with ID: " + id);
+                });
 
         Marche marche = marcheRepository.findById(requestDTO.getMarcheId())
-                .orElseThrow(() -> new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId()));
+                .orElseThrow(() -> {
+                    log.error("Marche not found with ID: {}", requestDTO.getMarcheId());
+                    return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
+                });
 
         existingPrefinancement.setMarche(marche);
         existingPrefinancement.setDateEmission(requestDTO.getDateEmission());
         existingPrefinancement.setMontant(requestDTO.getMontant());
         existingPrefinancement.setType(requestDTO.getType());
-        existingPrefinancement.setObservation("Marche: " + marche.getNumero() );
+        existingPrefinancement.setObservation("Marche: " + marche.getNumero());
+
         Prefinancement updatedPrefinancement = prefinancementRepository.save(existingPrefinancement);
+        log.info("Prefinancement updated with ID: {}", updatedPrefinancement.getId());
+
         return prefinancementMapper.toDto(updatedPrefinancement);
     }
 
-    /**
-     * Deletes a Prefinancement record by its ID.
-     *
-     * @param id The ID of the record to delete.
-     */
     @Transactional
     public void deletePrefinancement(Long id) {
+        log.info("Deleting prefinancement with ID: {}", id);
 
         if (!prefinancementRepository.existsById(id)) {
+            log.error("Prefinancement not found with ID: {}", id);
             throw new ResourceNotFoundException("Prefinancement not found with ID: " + id);
         }
+
         prefinancementRepository.deleteById(id);
+        log.info("Prefinancement deleted with ID: {}", id);
     }
 
-    /**
-     * Finds a Prefinancement record by its ID.
-     *
-     * @param id The ID of the record to find.
-     * @return The DTO of the found record.
-     */
     @Transactional(readOnly = true)
     public PrefinancementResponseDTO findById(Long id) {
+        log.info("Fetching prefinancement with ID: {}", id);
 
         Prefinancement prefinancement = prefinancementRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Prefinancement not found with ID: " + id));
+                .orElseThrow(() -> {
+                    log.error("Prefinancement not found with ID: {}", id);
+                    return new ResourceNotFoundException("Prefinancement not found with ID: " + id);
+                });
 
         return prefinancementMapper.toDto(prefinancement);
     }
 
-
-
-    /**
-     * Searches for Prefinancement records based on criteria.
-     *
-     * @param searchDTO The DTO containing the search criteria.
-     * @param pageable Pagination and sorting information.
-     * @return A Page of PrefinancementResponseDTOs matching the criteria.
-     */
     @Transactional(readOnly = true)
     public Page<PrefinancementResponseDTO> findAll(PrefinancementSearchDTO searchDTO, Pageable pageable) {
+        log.info("Fetching prefinancements with search criteria: {}", searchDTO);
+
         Specification<Prefinancement> spec = PrefinancementSpecification.bySearchCriteria(searchDTO);
         Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable);
+
+        log.info("Found {} prefinancement records", prefinancementPage.getTotalElements());
         return prefinancementPage.map(prefinancementMapper::toDto);
     }
 
-    /**
-     * Changes the status of a Prefinancement record.
-     *
-     * @param id The ID of the record.
-     * @return The DTO of the updated record.
-     */
     @Transactional
-    public PrefinancementResponseDTO toggleStatus(Long id ) {
+    public PrefinancementResponseDTO toggleStatus(Long id) {
+        log.info("Toggling status for prefinancement ID: {}", id);
+
         Prefinancement prefinancement = prefinancementRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Prefinancement not found with ID: " + id));
+                .orElseThrow(() -> {
+                    log.error("Prefinancement not found with ID: {}", id);
+                    return new ResourceNotFoundException("Prefinancement not found with ID: " + id);
+                });
 
         Status existingStatus = prefinancement.getStatus();
-        prefinancement.setStatus(existingStatus==Status.PAYE ? Status.PREVU: Status.PAYE);
+        prefinancement.setStatus(existingStatus == Status.PAYE ? Status.PREVU : Status.PAYE);
+
         Prefinancement updatedPrefinancement = prefinancementRepository.save(prefinancement);
+        log.info("Prefinancement status updated to {} for ID: {}", updatedPrefinancement.getStatus(), updatedPrefinancement.getId());
+
         return prefinancementMapper.toDto(updatedPrefinancement);
     }
 
     @Transactional(readOnly = true)
     public EncoursPrefinancementDto getRemboursementEncoursForBanque(EncoursPrefinancementSearchDto searchDto, Long banqueId, Pageable pageable) {
-        // Build the specification to filter the records
+        log.info("Fetching remboursement encours for banque ID: {}, searchDto: {}", banqueId, searchDto);
+
         Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
                 .and(PrefinancementSpecification.outstandingRemboursementForCurrentMonth())
                 .and(PrefinancementSpecification.byMarcheName(searchDto.getMarcheName()))
-                .and(PrefinancementSpecification.byMarcheNumero(searchDto.getMarcheNumero()));
+                .and(PrefinancementSpecification.byMarcheNumero(searchDto.getMarcheNumero()))
+                .and(PrefinancementSpecification.hasMontant(searchDto.getMontant()));
 
-        // Fetch the paginated list of prefinancement records
         Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable);
-
-        // Fetch the total sum of the montant for the same criteria
         BigDecimal totalDesEncours = prefinancementRepository.findAll(spec).stream()
                 .map(Prefinancement::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Map the page of entities to a page of DTOs
-        Page<PrefinancementResponseDTO> pageDto = prefinancementPage.map(prefinancementMapper::toDto);
+        log.info("Total remboursement encours: {}", totalDesEncours);
 
-        // Create and return the final DTO
+        Page<PrefinancementResponseDTO> pageDto = prefinancementPage.map(prefinancementMapper::toDto);
         EncoursPrefinancementDto result = new EncoursPrefinancementDto();
         result.setPage(pageDto);
         result.setTotalDesEncours(totalDesEncours);
@@ -194,25 +193,23 @@ public class PrefinancementService {
     }
 
     @Transactional(readOnly = true)
-    public EncoursPrefinancementDto getDeblocageEncoursForBanque(EncoursPrefinancementSearchDto searchDto,Long banqueId, Pageable pageable) {
-        // Build the specification to filter the records
+    public EncoursPrefinancementDto getDeblocageEncoursForBanque(EncoursPrefinancementSearchDto searchDto, Long banqueId, Pageable pageable) {
+        log.info("Fetching deblocage encours for banque ID: {}, searchDto: {}", banqueId, searchDto);
+
         Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
                 .and(PrefinancementSpecification.outstandingDeblocageForCurrentMonth())
                 .and(PrefinancementSpecification.byMarcheName(searchDto.getMarcheName()))
-                .and(PrefinancementSpecification.byMarcheNumero(searchDto.getMarcheNumero()));
+                .and(PrefinancementSpecification.byMarcheNumero(searchDto.getMarcheNumero()))
+                .and(PrefinancementSpecification.hasMontant(searchDto.getMontant()));
 
-        // Fetch the paginated list of prefinancement records
         Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable);
-
-        // Fetch the total sum of the montant for the same criteria
         BigDecimal totalDesEncours = prefinancementRepository.findAll(spec).stream()
                 .map(Prefinancement::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Map the page of entities to a page of DTOs
-        Page<PrefinancementResponseDTO> pageDto = prefinancementPage.map(prefinancementMapper::toDto);
+        log.info("Total deblocage encours: {}", totalDesEncours);
 
-        // Create and return the final DTO
+        Page<PrefinancementResponseDTO> pageDto = prefinancementPage.map(prefinancementMapper::toDto);
         EncoursPrefinancementDto result = new EncoursPrefinancementDto();
         result.setPage(pageDto);
         result.setTotalDesEncours(totalDesEncours);

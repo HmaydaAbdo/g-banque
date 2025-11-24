@@ -129,7 +129,8 @@ public class AgiosService {
         // Build the specification to filter the records
         Specification<Agios> spec = Specification.where(AgiosSpec.outstandingAgios())
                 .and(AgiosSpec.hasBanque(searchDto.getBanqueId()))
-                .and(AgiosSpec.hasLibelle(searchDto.getLibelle()));
+                .and(AgiosSpec.hasLibelle(searchDto.getLibelle()))
+                .and(AgiosSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of agios
         Page<Agios> agiosPage = agiosRepository.findAll(spec, pageable);

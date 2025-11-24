@@ -6,6 +6,7 @@ import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionSearchDto;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.virements.entities.Virement;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -92,6 +93,15 @@ public final class MiseADispositionSpec {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.equal(root.get("active"), active);
+        };
+    }
+
+    public static Specification<MiseADisposition> hasMontant(BigDecimal montant) {
+        return (root, query, criteriaBuilder) -> {
+            if (montant == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("montant"), montant);
         };
     }
 

@@ -1,5 +1,7 @@
 package staport.finance.gBanque.virements.dtos;
 
+import staport.finance.gBanque.virements.enums.Type;
+
 public class VirementSearchDto {
 
     private String numero;
@@ -8,6 +10,7 @@ public class VirementSearchDto {
     private String nomBanqueEmettrice;
     private String ribBeneficiaire;
     private Boolean active;
+    private Type type;
 
     public VirementSearchDto() {
     }
@@ -70,6 +73,9 @@ public class VirementSearchDto {
         this.active = active;
     }
 
+    public Type getType() {return type;}
+    public void setType(Type type) { this.type = type;}
+
     @Override
     public String toString() {
         return "VirementSearchDto{" +
@@ -79,6 +85,7 @@ public class VirementSearchDto {
                 ", nomBanqueEmettrice='" + nomBanqueEmettrice + '\'' +
                 ", ribBeneficiaire='" + ribBeneficiaire + '\'' +
                 ", active=" + active +
+                ", type=" + type +
                 '}';
     }
 }

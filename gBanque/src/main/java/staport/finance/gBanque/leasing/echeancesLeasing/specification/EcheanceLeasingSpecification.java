@@ -9,6 +9,8 @@ import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingSearchDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
+
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -111,6 +113,11 @@ public class EcheanceLeasingSpecification {
             // Accède à l'entité BanqueDePrelevement via le ContratLeasing joint
             return criteriaBuilder.equal(contratLeasingJoin.get("banqueDePrelevement").get("id"), banqueId);
         };
+    }
+
+    public static Specification<EcheanceLeasing> byMontant(BigDecimal montant) {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("montantTTC"), montant);
     }
 
 

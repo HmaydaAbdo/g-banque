@@ -1,5 +1,7 @@
 package staport.finance.gBanque.virements.dtos;
 
+import staport.finance.gBanque.virements.enums.Type;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -19,6 +21,7 @@ public class VirementResponseDto {
     private String banqueBeneficiaire;
     private String ribBeneficiaire;
     private boolean active;
+    private Type type;
 
 
     public VirementResponseDto() {
@@ -50,6 +53,9 @@ public class VirementResponseDto {
     public void setActive(boolean active) {
         this.active = active;
     }
+
+    public Type getType() {return type;}
+    public void setType(Type type) { this.type = type;}
 
     public String getBanqueBeneficiaire() {
         return banqueBeneficiaire;

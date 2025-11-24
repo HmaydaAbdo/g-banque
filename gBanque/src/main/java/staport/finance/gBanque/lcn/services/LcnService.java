@@ -83,7 +83,8 @@ public class LcnService {
         // Build the specification for active LCN for the specified bank in the current month
         Specification<Lcn> spec = LcnSpecification.activeForBankAndUntilEndOfMonth(banqueId)
                 .and(LcnSpecification.hasNumero(searchDto.getNumero()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()));
+                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(LcnSpecification.hasMontant(searchDto.getMontant()));
 
         // Execute the search with the specification and pagination
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);

@@ -20,7 +20,7 @@ import java.util.Optional;
 public class ChequePaymentProcessor extends AbstractPaymentProcessor {
 
     private final ChequeRepository chequeRepository;
-    private final OffsetDateTime curentDateTime = OffsetDateTime.now();
+    private final OffsetDateTime currentDateTime = OffsetDateTime.now();
 
     public ChequePaymentProcessor(BanqueRepository banqueRepository, ChequeRepository chequeRepository) {
         super(banqueRepository);
@@ -29,6 +29,7 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
 
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) {
+
         // Check if cheque already exists by numero
         Optional<Cheque> existingCheque = chequeRepository.findById(item.getNumero());
 
@@ -52,16 +53,21 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
                         null
         );
 
+        YearMonth currentMonth = YearMonth.from(currentDateTime);
+        YearMonth emissionMonth = YearMonth.from(dateEmission);
+
+        YearMonth twoMonthThreshold = currentMonth.minusMonths(1);
+
 
         // Business rule: inactive if cheque emission month is before current month
-        if (dateEmission.isBefore(curentDateTime)) {
+        if (emissionMonth.isBefore(twoMonthThreshold)) {
             cheque.setActive(false);
-            log.info("Cheque {} marked as INACTIVE (date emission  {} < current date {}).",
-                    item.getNumero(), dateEmission, curentDateTime);
+            log.info("Cheque {} marked as INACTIVE (emission month {} is before current month {}).",
+                    item.getNumero(), emissionMonth, currentMonth);
         } else {
             cheque.setActive(true);
-            log.info("Cheque {} marked as ACTIVE (date emission  {} < current date {}).",
-                    item.getNumero(), dateEmission, curentDateTime);
+            log.info("Cheque {} marked as ACTIVE (emission month {} is current or future month {}).",
+                    item.getNumero(), emissionMonth, currentMonth);
         }
 
         log.info("Successfully processed and transformed Cheque Payment {}. Returning Cheque entity.", item.getNumero());

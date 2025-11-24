@@ -138,7 +138,8 @@ public class FraisBancaireService {
         // Build the specification to filter the records
         Specification<FraisBancaire> spec = Specification.where(FraisBancaireSpec.outstandingFraisBancaires())
                 .and(FraisBancaireSpec.hasBanque(searchDto.getBanqueId()))
-                .and(FraisBancaireSpec.hasLibelle(searchDto.getLibelle()));
+                .and(FraisBancaireSpec.hasLibelle(searchDto.getLibelle()))
+                .and(FraisBancaireSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of frais bancaires
         Page<FraisBancaire> fraisBancairePage = fraisBancaireRepository.findAll(spec, pageable);

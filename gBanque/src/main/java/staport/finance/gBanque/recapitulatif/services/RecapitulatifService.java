@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Agios.spec.AgiosSpec;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.cheques.specs.ChequeSpec;
@@ -76,6 +78,7 @@ public class RecapitulatifService {
 
     private final RecapitulatifDecaissementMapper decaissementMapper;
     private final RecapitulatifEncaissementMapper encaissementMapper;
+    private final BanqueRepository banqueRepository;
 
     private final EcheanceLeasingRepository echeanceLeasingRepository;
     private final EcheanceCMTRepository echeanceCMTRepository;
@@ -95,11 +98,12 @@ public class RecapitulatifService {
     public RecapitulatifService(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
-            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository, FactoringRepository factoringRepository) {
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository, FactoringRepository factoringRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.decaissementMapper = mapper;
         this.encaissementMapper = encaissementMapper;
+        this.banqueRepository = banqueRepository;
         this.chequeRepository = chequeRepository;
         this.lcnRepository = lcnRepository;
         this.virementRepository = virementRepository;
@@ -142,7 +146,7 @@ public class RecapitulatifService {
         //moyens de paiement
         Specification<Cheque> chequeSpec = ChequeSpec.activeForBankAndUntilEndOfMonth(banqueId);
         Specification<Lcn> lcnSpec = LcnSpecification.activeForBankAndUntilEndOfMonth(banqueId);
-        Specification<Virement> virementSpec = VirementSpec.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banqueId);
         Specification<MiseADisposition> madSpec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId);
 
         // préfinancement (Remboursement only)
@@ -268,6 +272,7 @@ public class RecapitulatifService {
 
         // Retrieve parameters from the DTO
         Long banqueId = searchDto.getBanqueId();
+        Banque banque = banqueRepository.findById(banqueId).orElseThrow(() -> new IllegalArgumentException("Banque with id " + banqueId + " not found."));
         List<TransactionSource> transactionSources = searchDto.getTransactionSources();
         String libelleFilter = searchDto.getLibelle();
         String observationFilter = searchDto.getObservation();
@@ -290,12 +295,15 @@ public class RecapitulatifService {
         Specification<Decompte> decompteSpecification = DecompteSpec.outstandingDecomptesForCurrentMonth()
                 .and(DecompteSpec.byBanqueId(banqueId));
 
+        Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom());
+
 
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
         List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
         List<Factoring> outstandingFactoring = factoringRepository.findAll(factoringSpecification);
         List<Decompte> outstandingDecomptes = decompteRepository.findAll(decompteSpecification);
+        List<Virement> outstandingVirements = virementRepository.findAll(virementSpec);
 
         // Step 3: Combine all lists and map them to the unified DTO.
         List<RecaputilatifItem> combinedItems = new ArrayList<>();
@@ -303,7 +311,7 @@ public class RecapitulatifService {
         combinedItems.addAll(outstandingDroitsConstate.stream().map(encaissementMapper::mapDroitConstateToDto).toList());
         combinedItems.addAll(outstandingFactoring.stream().map(encaissementMapper::mapFactoringToDto).toList());
         combinedItems.addAll(outstandingDecomptes.stream().map(encaissementMapper::mapDecompteToDto).toList());
-
+        combinedItems.addAll(outstandingVirements.stream().map(encaissementMapper::mapVirementToDto).toList());
         // Apply the filters from the DTO
         if (transactionSources != null && !transactionSources.isEmpty()) {
             combinedItems = combinedItems.stream()

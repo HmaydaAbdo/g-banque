@@ -5,6 +5,7 @@ import staport.finance.gBanque.Agios.dtos.AgiosSearchDto;
 import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 
@@ -37,6 +38,16 @@ public class AgiosSpec {
             return cb.equal(root.get("status"), status);
         };
     }
+
+    public static Specification<Agios> hasMontant(BigDecimal montant) {
+        return (root, query, cb) -> {
+            if (montant == null) {
+                return null;
+            }
+            return cb.equal(root.get("montant"), montant);
+        };
+    }
+
 
     public static Specification<Agios> buildSpecification(AgiosSearchDto dto) {
         return Specification

@@ -21,7 +21,7 @@ public class AgregatedSuivieFactoringLigneResponseDto {
     }
 
     public void setBanqueName(String banqueName) {
-        BanqueName = banqueName;
+        this.BanqueName = banqueName;
     }
 
     public String getMarcheName() {
@@ -70,5 +70,18 @@ public class AgregatedSuivieFactoringLigneResponseDto {
 
     public void setPage(Page<SuivieFactoringLineResponseDto> page) {
         this.page = page;
+    }
+
+    @Override
+    public String toString() {
+        return "AgregatedSuivieFactoringLigneResponseDto{" +
+                "BanqueName='" + BanqueName + '\'' +
+                ", marcheName='" + marcheName + '\'' +
+                ", marcheNumero='" + marcheNumero + '\'' +
+                ", totalDebit=" + totalDebit +
+                ", totalCredit=" + totalCredit +
+                ", reste=" + reste +
+                ", page=" + page +
+                '}';
     }
 }

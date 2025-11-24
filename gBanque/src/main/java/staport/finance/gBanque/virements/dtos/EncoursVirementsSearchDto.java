@@ -1,9 +1,12 @@
 package staport.finance.gBanque.virements.dtos;
 
+import java.math.BigDecimal;
+
 public class EncoursVirementsSearchDto {
 
     private String numero;
     private String beneficiaire;
+    private BigDecimal montant;
 
     public EncoursVirementsSearchDto() {
     }
@@ -26,5 +29,22 @@ public class EncoursVirementsSearchDto {
 
     public void setBeneficiaire(String beneficiaire) {
         this.beneficiaire = beneficiaire;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    @Override
+    public String toString() {
+        return "EncoursVirementsSearchDto{" +
+                "numero='" + numero + '\'' +
+                ", beneficiaire='" + beneficiaire + '\'' +
+                ", montant=" + montant +
+                '}';
     }
 }

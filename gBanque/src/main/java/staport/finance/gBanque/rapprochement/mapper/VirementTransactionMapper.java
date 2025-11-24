@@ -3,12 +3,14 @@ package staport.finance.gBanque.rapprochement.mapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.rapprochement.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.virements.VirementTransactionResponseDto;
 import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.virements.entities.Virement;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -19,9 +21,11 @@ import java.util.Map;
 public class VirementTransactionMapper {
 
     private final ObjectMapper objectMapper;
+    private final BanqueRepository banqueRepository;
 
-    public VirementTransactionMapper(ObjectMapper objectMapper) {
+    public VirementTransactionMapper(ObjectMapper objectMapper, BanqueRepository banqueRepository) {
         this.objectMapper = objectMapper;
+        this.banqueRepository = banqueRepository;
     }
 
 
@@ -50,19 +54,29 @@ public class VirementTransactionMapper {
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setTransactionSource(TransactionSource.Virement);
-        transaction.setDebit(virement.getMontant());
-        transaction.setCredit(BigDecimal.ZERO);
-        transaction.setBanqueDePrelevement(virement.getBanque());
 
         BigDecimal ttc = virement.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
-        transaction.setTvaDeductible(montantTva);
+
+        if(virement.getType()== Type.DECAISSEMENT){
+            transaction.setDebit(virement.getMontant());
+            transaction.setCredit(BigDecimal.ZERO);
+            transaction.setTvaDeductible(montantTva);
+            transaction.setBanqueDePrelevement(virement.getBanqueEmettrice());
+
+        }else {
+            transaction.setDebit(BigDecimal.ZERO);
+            transaction.setCredit(virement.getMontant());
+            transaction.setTvaCollectee(montantTva);
+            transaction.setBanqueDePrelevement(virement.getBanqueBeneficiare());
+
+        }
+
 
         // Mapping traces
         try {
             Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueId", virement.getBanque().getId());
             tracesMap.put("numeroVirement", virement.getNumero());
             String jsonTraces = objectMapper.writeValueAsString(tracesMap);
             transaction.setTraces(jsonTraces);

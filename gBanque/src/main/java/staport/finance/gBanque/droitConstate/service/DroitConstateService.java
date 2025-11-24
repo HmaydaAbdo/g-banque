@@ -166,7 +166,8 @@ public class DroitConstateService {
         Specification<DroitConstate> spec = DroitConstateSpec.byBanqueId(banqueId)
                 .and(DroitConstateSpec.outstandingRemboursementForCurrentMonth())
                 .and(DroitConstateSpec.byMarcheName(searchDto.getMarcheName()))
-                .and(DroitConstateSpec.byMarcheNumero(searchDto.getMarcheNumero()));
+                .and(DroitConstateSpec.byMarcheNumero(searchDto.getMarcheNumero()))
+                .and(DroitConstateSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of droit constate records
         Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec, pageable);
@@ -194,7 +195,8 @@ public class DroitConstateService {
         Specification<DroitConstate> spec = DroitConstateSpec.byBanqueId(banqueId)
                 .and(DroitConstateSpec.outstandingDeblocageForCurrentMonth())
                 .and(DroitConstateSpec.byMarcheName(searchDto.getMarcheName()))
-                .and(DroitConstateSpec.byMarcheNumero(searchDto.getMarcheNumero()));
+                .and(DroitConstateSpec.byMarcheNumero(searchDto.getMarcheNumero()))
+                .and(DroitConstateSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of droit constate records
         Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec, pageable);

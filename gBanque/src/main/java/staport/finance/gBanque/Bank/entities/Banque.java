@@ -85,8 +85,11 @@ public class Banque {
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Lcn> lcns = new ArrayList<>();
 
-    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<Virement> virements = new ArrayList<>();
+    @OneToMany(mappedBy = "banqueEmettrice", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<Virement> virementsEmis = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banqueBeneficiare", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<Virement> virementsRecus = new ArrayList<>();
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<MiseADisposition> misesADisposition = new ArrayList<>();
@@ -166,9 +169,11 @@ public class Banque {
     public List<Lcn> getLcns() { return lcns; }
     public void setLcns(List<Lcn> lcns) { this.lcns = lcns; }
 
-    public List<Virement> getVirements() { return virements; }
-    public void setVirements(List<Virement> virements) { this.virements = virements; }
+    public List<Virement> getVirementsEmis() { return virementsEmis; }
+    public void setVirementsEmis(List<Virement> virementsEmis) { this.virementsEmis = virementsEmis; }
 
+    public List<Virement> getVirementsRecus() { return virementsRecus; }
+    public void setVirementsRecus(List<Virement> virementsRecus) { this.virementsRecus = virementsRecus; }
     public List<MiseADisposition> getMisesADisposition() { return misesADisposition; }
     public void setMisesADisposition(List<MiseADisposition> misesADisposition) { this.misesADisposition = misesADisposition; }
 
@@ -185,8 +190,11 @@ public class Banque {
     public void addLcn(Lcn l) { lcns.add(l); l.setBanque(this); }
     public void removeLcn(Lcn l) { lcns.remove(l); l.setBanque(null); }
 
-    public void addVirement(Virement v) { virements.add(v); v.setBanque(this); }
-    public void removeVirement(Virement v) { virements.remove(v); v.setBanque(null); }
+    public void addVirementEmis(Virement v) { virementsEmis.add(v); v.setBanqueEmettrice(this); }
+    public void removeVirementEmis(Virement v) { virementsEmis.remove(v); v.setBanqueEmettrice(null); }
+
+    public void addVirementRecu(Virement v) { virementsRecus.add(v); v.setBanqueBeneficiare(this); }
+    public void removeVirementRecu(Virement v) { virementsRecus.remove(v); v.setBanqueBeneficiare(null); }
 
     public void addMiseADisposition(MiseADisposition m) { misesADisposition.add(m); m.setBanque(this); }
     public void removeMiseADisposition(MiseADisposition m) { misesADisposition.remove(m); m.setBanque(null); }

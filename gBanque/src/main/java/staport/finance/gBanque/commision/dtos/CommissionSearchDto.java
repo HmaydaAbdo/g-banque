@@ -3,11 +3,14 @@ package staport.finance.gBanque.commision.dtos;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
+import java.math.BigDecimal;
+
 public class CommissionSearchDto {
 
     private Long banqueId;
     private String libelle;
     private TransactionSource operation;
+    private BigDecimal montant;
     private Status status;
 
     public CommissionSearchDto() {
@@ -44,5 +47,24 @@ public class CommissionSearchDto {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    @Override
+    public String toString() {
+        return "CommissionSearchDto{" +
+                "banqueId=" + banqueId +
+                ", libelle='" + libelle + '\'' +
+                ", operation=" + operation +
+                ", montant=" + montant +
+                ", status=" + status +
+                '}';
     }
 }

@@ -96,8 +96,8 @@ public class DroitConstateController {
      * @param id The ID of the record.
      * @return A ResponseEntity with the updated record and HTTP status 200.
      */
-    @PatchMapping("/{id}/status/paid")
-    public ResponseEntity<DroitConstateResponseDto> markAsPaid(@PathVariable Long id) {
+    @PatchMapping("/{id}/status/toggle")
+    public ResponseEntity<DroitConstateResponseDto> toggleStatus(@PathVariable Long id) {
         DroitConstateResponseDto responseDTO = droitConstateService.toggleStatus(id);
         return ResponseEntity.ok(responseDTO);
     }

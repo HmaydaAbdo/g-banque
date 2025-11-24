@@ -18,6 +18,7 @@ public class LigneFonctionnelleSpecifiqueResponse {
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
     private boolean actif;
+    private boolean expired;
     private Long marcheId;
     private String marcheNom;
     private String marcheNumero;
@@ -73,6 +74,8 @@ public class LigneFonctionnelleSpecifiqueResponse {
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
     public boolean isActif() { return actif; }
     public void setActif(boolean actif) { this.actif = actif; }
+    public boolean isExpired() { return expired; }
+    public void setExpired(boolean expired) { this.expired = expired; }
     public Long getMarcheId() { return marcheId; }
     public void setMarcheId(Long marcheId) { this.marcheId = marcheId; }
     public String getMarcheNom() { return marcheNom; }

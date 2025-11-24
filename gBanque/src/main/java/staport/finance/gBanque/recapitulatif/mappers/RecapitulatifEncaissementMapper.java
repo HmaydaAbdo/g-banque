@@ -7,6 +7,7 @@ import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.virements.entities.Virement;
 
 import java.math.RoundingMode;
 
@@ -97,6 +98,21 @@ public class RecapitulatifEncaissementMapper {
         dto.setObservations(decompte.getObservation());
         dto.setLibelle("Marché N° : " + decompte.getMarche().getNumero() );
         dto.setSource(TransactionSource.DECOMPTES);
+        return dto;
+    }
+
+
+    public RecaputilatifItem mapVirementToDto(Virement virement) {
+        if (virement == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(virement.getDateEmission());
+        dto.setCredit(virement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations("Virement N° " + virement.getNumero());
+        dto.setLibelle("Bénéficiaire " + virement.getBeneficiaire() );
+        dto.setSource(TransactionSource.Virement);
         return dto;
     }
 

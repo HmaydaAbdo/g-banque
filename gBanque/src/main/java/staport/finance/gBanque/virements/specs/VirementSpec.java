@@ -1,11 +1,15 @@
 package staport.finance.gBanque.virements.specs;
 
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.virements.entities.Virement;
 import staport.finance.gBanque.virements.dtos.VirementSearchDto;
+import staport.finance.gBanque.virements.enums.Type;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -47,19 +51,20 @@ public final class VirementSpec {
         };
     }
 
-    /**
-     * Specification to filter Virements by the beneficiary's bank name (case-insensitive).
-     * @param banqueBeneficiaire The beneficiary's bank name to match.
-     * @return A Specification for the beneficiary's bank name.
-     */
-    public static Specification<Virement> hasBanqueBeneficiaire(String banqueBeneficiaire) {
+
+    public static Specification<Virement> hasBanqueBeneficiaire(String banqueBeneficiaireNom) {
         return (root, query, criteriaBuilder) -> {
-            if (banqueBeneficiaire == null || banqueBeneficiaire.trim().isEmpty()) {
+            if (banqueBeneficiaireNom == null || banqueBeneficiaireNom.trim().isEmpty()) {
                 return criteriaBuilder.conjunction();
             }
+
+            // 1. Joindre l'entité Banque via la relation 'banqueBeneficiare'
+            Join<Virement, Banque> banqueJoin = root.join("banqueBeneficiare");
+
+            // 2. Comparer le nom de la Banque (via le champ 'nom' de l'entité Banque)
             return criteriaBuilder.like(
-                    criteriaBuilder.lower(root.get("banqueBeneficiaire")),
-                    "%" + banqueBeneficiaire.toLowerCase() + "%"
+                    criteriaBuilder.lower(banqueJoin.get("nom")),
+                    "%" + banqueBeneficiaireNom.toLowerCase() + "%"
             );
         };
     }
@@ -75,7 +80,7 @@ public final class VirementSpec {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.like(
-                    criteriaBuilder.lower(root.get("banque").get("nom")),
+                    criteriaBuilder.lower(root.get("banqueEmettrice").get("nom")),
                     "%" + nomBanqueEmettrice.toLowerCase() + "%"
             );
         };
@@ -112,6 +117,26 @@ public final class VirementSpec {
         };
     }
 
+
+    public static Specification<Virement> hasMontant(BigDecimal montant) {
+        return (root, query, criteriaBuilder) -> {
+            if (montant == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("montant"), montant);
+        };
+    }
+
+
+    public static Specification<Virement> hasType(Type type) {
+        return (root, query, criteriaBuilder) -> {
+            if (type == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("type"), type);
+        };
+    }
+
     /**
      * Combines multiple specifications from a VirementSearchDto into a single Specification.
      * @param searchDto The DTO containing search criteria.
@@ -144,6 +169,10 @@ public final class VirementSpec {
             spec = spec.and(isActive(searchDto.getActive()));
         }
 
+        if(searchDto.getType() != null) {
+            spec = spec.and(hasType(searchDto.getType()));
+        }
+
         return spec;
     }
 
@@ -155,7 +184,7 @@ public final class VirementSpec {
      * @param banqueId L'ID de la banque pour laquelle les virements sont recherchés.
      * @return Une Specification qui combine les critères de filtrage.
      */
-    public static Specification<Virement> activeForBankAndUntilEndOfMonth(Long banqueId) {
+    public static Specification<Virement> encoursDecaissement(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             OffsetDateTime now = OffsetDateTime.now();
@@ -164,7 +193,32 @@ public final class VirementSpec {
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
 
             // 2. Le virement doit appartenir à la banque spécifiée par son ID.
-            predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(criteriaBuilder.equal(root.get("banqueEmettrice").get("id"), banqueId));
+
+            predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
+
+
+            // 3. La date d'émission du virement doit être égale ou antérieure à la fin du mois.
+            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
+                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    public static Specification<Virement> encoursEncaissement(String banqueName) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            OffsetDateTime now = OffsetDateTime.now();
+
+            // 1. Le statut du virement doit être actif.
+            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+
+
+            predicates.add(criteriaBuilder.equal(root.get("banqueBeneficiare").get("nom"), banqueName));
+
+            predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
 
 
             // 3. La date d'émission du virement doit être égale ou antérieure à la fin du mois.

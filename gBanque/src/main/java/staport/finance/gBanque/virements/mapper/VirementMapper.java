@@ -21,12 +21,13 @@ public class VirementMapper {
         response.setBeneficiaire(virement.getBeneficiaire());
         response.setDateEmission(virement.getDateEmission());
         response.setMontant(virement.getMontant());
-        response.setBanqueEmettriceNom(virement.getBanque() != null ? virement.getBanque().getNom() : null);
-        response.setBanqueBeneficiaire(virement.getBanqueBeneficiaire());
+        response.setBanqueEmettriceNom(virement.getBanqueEmettrice() != null ? virement.getBanqueEmettrice().getNom() : null);
+        response.setBanqueBeneficiaire(virement.getBanqueBeneficiare() !=null ? virement.getBanqueBeneficiare().getNom() : virement.getNomBanqueBeneficiaireLibre());
         response.setRibBeneficiaire(virement.getRibBeneficiaire());
         response.setActive(virement.isActive());
         response.setDateOperation(virement.getDateOperation()!=null ? virement.getDateOperation() : null);
         response.setDateValeur(virement.getDateValeur()!=null ? virement.getDateValeur() : null);
+        response.setType(virement.getType());
         response.setObservation("Virement N° " + virement.getNumero());
         response.setLibelle("Bénéficiaire " + virement.getBeneficiaire() );
         return response;

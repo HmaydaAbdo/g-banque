@@ -94,8 +94,8 @@ public class PrefinancementController {
      * @param id The ID of the record.
      * @return A ResponseEntity with the updated record and HTTP status 200.
      */
-    @PatchMapping("/{id}/status/paid")
-    public ResponseEntity<PrefinancementResponseDTO> markAsPaid(@PathVariable Long id) {
+    @PatchMapping("/{id}/status/toggle")
+    public ResponseEntity<PrefinancementResponseDTO> toggleStatus(@PathVariable Long id) {
         PrefinancementResponseDTO responseDTO = prefinancementService.toggleStatus(id);
         return ResponseEntity.ok(responseDTO);
     }

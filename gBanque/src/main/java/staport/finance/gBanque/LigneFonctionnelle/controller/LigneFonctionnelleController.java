@@ -53,7 +53,7 @@ public class LigneFonctionnelleController {
     public ResponseEntity<Page<LigneFonctionnelleResponse>> getPaginatedLigneFonctionnelles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort,
+                @RequestParam(defaultValue = "id,asc") String[] sort,
             @ModelAttribute LigneFonctionnelleSearchCriteria searchCriteria) {
 
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);

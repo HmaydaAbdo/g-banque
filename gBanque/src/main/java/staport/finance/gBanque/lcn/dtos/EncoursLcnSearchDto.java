@@ -1,9 +1,12 @@
 package staport.finance.gBanque.lcn.dtos;
 
+import java.math.BigDecimal;
+
 public class EncoursLcnSearchDto {
 
     private String numero;
     private String beneficiaire;
+    private BigDecimal montant;
 
     public EncoursLcnSearchDto() {
     }
@@ -26,5 +29,22 @@ public class EncoursLcnSearchDto {
 
     public void setBeneficiaire(String beneficiaire) {
         this.beneficiaire = beneficiaire;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    @Override
+    public String toString() {
+        return "EncoursLcnSearchDto{" +
+                "numero='" + numero + '\'' +
+                ", beneficiaire='" + beneficiaire + '\'' +
+                ", montant=" + montant +
+                '}';
     }
 }

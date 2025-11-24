@@ -2,10 +2,13 @@ package staport.finance.gBanque.fraisBancaires.dtos;
 
 import staport.finance.gBanque.prefinancement.enums.Status;
 
+import java.math.BigDecimal;
+
 public class FraisBancaireSearchDto {
 
     private Long banqueId;
     private String libelle;
+    private BigDecimal montant;
     private Status status;
 
     public Long getBanqueId() {
@@ -27,8 +30,24 @@ public class FraisBancaireSearchDto {
     public Status getStatus() {
         return status;
     }
-
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    @Override
+    public String toString() {
+        return "FraisBancaireSearchDto{" +
+                "banqueId=" + banqueId +
+                ", libelle='" + libelle + '\'' +
+                ", montant=" + montant +
+                ", status=" + status +
+                '}';
     }
 }

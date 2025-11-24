@@ -14,6 +14,7 @@ public class MarcheSearchDTO {
     private String numero;
 
     @Size(max = 255, message = "Le maitre d'ouvrage doit avoir au maximum 255 caracteres")
+
     private String maitreDouvrage;
 
     private Long banqueId;
@@ -53,5 +54,15 @@ public class MarcheSearchDTO {
 
     public void setBanqueId(Long banqueId) {
         this.banqueId = banqueId;
+    }
+
+    @Override
+    public String toString() {
+        return "MarcheSearchDTO{" +
+                "nom='" + nom + '\'' +
+                ", numero='" + numero + '\'' +
+                ", maitreDouvrage='" + maitreDouvrage + '\'' +
+                ", banqueId=" + banqueId +
+                '}';
     }
 }

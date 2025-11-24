@@ -1,6 +1,6 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.dto;
 import jakarta.validation.constraints.NotNull;
-;
+;import java.math.BigDecimal;
 
 /**
  * DTO utilisé pour requêter les encours d'échéances de leasing.
@@ -14,6 +14,8 @@ public class EncoursLeasingRequestDTO {
     private Long organismeLeasingId;
 
     private String numeroContrat;
+
+    private BigDecimal montant;
 
     // --- Getters et Setters ---
 
@@ -40,5 +42,23 @@ public class EncoursLeasingRequestDTO {
 
     public void setNumeroContrat(String numeroContrat) {
         this.numeroContrat = numeroContrat;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    @Override
+    public String toString() {
+        return "EncoursLeasingRequestDTO{" +
+                "banqueId=" + banqueId +
+                ", organismeLeasingId=" + organismeLeasingId +
+                ", numeroContrat='" + numeroContrat + '\'' +
+                ", montant=" + montant +
+                '}';
     }
 }

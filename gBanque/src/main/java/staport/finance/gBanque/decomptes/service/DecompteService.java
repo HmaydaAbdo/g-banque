@@ -150,7 +150,8 @@ public class DecompteService {
         Specification<Decompte> spec = DecompteSpec.byBanqueId(banqueId)
                 .and(DecompteSpec.outstandingDecomptesForCurrentMonth())
                 .and(DecompteSpec.byMarcheName(searchDto.getMarcheName()))
-                .and(DecompteSpec.byMarcheNumero(searchDto.getMarcheNumero()));
+                .and(DecompteSpec.byMarcheNumero(searchDto.getMarcheNumero()))
+                .and(DecompteSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of decomptes  records
         Page<Decompte> decomptePage = decompteRepository.findAll(spec, pageable);

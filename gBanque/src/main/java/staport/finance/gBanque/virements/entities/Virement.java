@@ -2,6 +2,7 @@ package staport.finance.gBanque.virements.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -27,11 +28,16 @@ public class Virement {
     @Column(name = "montant", nullable = false, precision = 19, scale = 2)
     private BigDecimal montant;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "banque_emettrice_id", nullable = false)
-    private Banque banque;
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "banque_emettrice_id", nullable = true)
+    private Banque banqueEmettrice;
 
-    private String banqueBeneficiaire;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "banque_beneficiare_id",  nullable =true)
+    private Banque banqueBeneficiare;
+
+
+    private String nomBanqueBeneficiaireLibre;
 
     @Column(name = "rib_beneficiaire")
     private String ribBeneficiaire;
@@ -39,21 +45,14 @@ public class Virement {
     @Column(name = "active", nullable = false)
     private boolean active;
 
+    @Enumerated(EnumType.STRING)
+    private Type type;
+
     private String observation;
     private String libelle;
 
     public Virement() {}
 
-    public Virement(String numero, OffsetDateTime dateEmission, String beneficiaire,
-                    BigDecimal montant, Banque banque, String banqueBeneficiaire, String ribBeneficiaire) {
-        this.numero = numero;
-        this.dateEmission = dateEmission;
-        this.beneficiaire = beneficiaire;
-        this.montant = montant;
-        this.banque = banque;
-        this.banqueBeneficiaire = banqueBeneficiaire;
-        this.ribBeneficiaire = ribBeneficiaire;
-    }
 
     // Getters & Setters
     public String getNumero() { return numero; }
@@ -64,12 +63,32 @@ public class Virement {
     public void setBeneficiaire(String beneficiaire) { this.beneficiaire = beneficiaire; }
     public BigDecimal getMontant() { return montant; }
     public void setMontant(BigDecimal montant) { this.montant = montant; }
-    public Banque getBanque() { return banque; }
-    public void setBanque(Banque banque) { this.banque = banque; }
-    public String getBanqueBeneficiaire() { return banqueBeneficiaire; }
-    public void setBanqueBeneficiaire(String banqueBeneficiaire) { this.banqueBeneficiaire = banqueBeneficiaire; }
     public String getRibBeneficiaire() { return ribBeneficiaire; }
     public void setRibBeneficiaire(String ribBeneficiaire) { this.ribBeneficiaire = ribBeneficiaire; }
+
+    public Banque getBanqueEmettrice() {
+        return banqueEmettrice;
+    }
+
+    public void setBanqueEmettrice(Banque banqueEmettrice) {
+        this.banqueEmettrice = banqueEmettrice;
+    }
+
+    public Banque getBanqueBeneficiare() {
+        return banqueBeneficiare;
+    }
+
+    public void setBanqueBeneficiare(Banque banqueBeneficiare) {
+        this.banqueBeneficiare = banqueBeneficiare;
+    }
+
+    public String getNomBanqueBeneficiaireLibre() {
+        return nomBanqueBeneficiaireLibre;
+    }
+
+    public void setNomBanqueBeneficiaireLibre(String nomBanqueBeneficiaireLibre) {
+        this.nomBanqueBeneficiaireLibre = nomBanqueBeneficiaireLibre;
+    }
 
     public boolean isActive() {
         return active;
@@ -77,6 +96,9 @@ public class Virement {
     public void setActive(boolean active) {
         this.active = active;
     }
+
+    public Type getType() {return type;}
+    public void setType(Type type) { this.type = type;}
 
     public OffsetDateTime getDateOperation() {
         return dateOperation;
@@ -109,15 +131,14 @@ public class Virement {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Virement)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         Virement virement = (Virement) o;
-        return numero != null && Objects.equals(numero, virement.numero);
+        return active == virement.active && Objects.equals(numero, virement.numero) && Objects.equals(dateEmission, virement.dateEmission) && Objects.equals(dateOperation, virement.dateOperation) && Objects.equals(dateValeur, virement.dateValeur) && Objects.equals(beneficiaire, virement.beneficiaire) && Objects.equals(montant, virement.montant) && Objects.equals(banqueEmettrice, virement.banqueEmettrice) && Objects.equals(banqueBeneficiare, virement.banqueBeneficiare) && Objects.equals(nomBanqueBeneficiaireLibre, virement.nomBanqueBeneficiaireLibre) && Objects.equals(ribBeneficiaire, virement.ribBeneficiaire) && type == virement.type && Objects.equals(observation, virement.observation) && Objects.equals(libelle, virement.libelle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(numero);
+        return Objects.hash(numero, dateEmission, dateOperation, dateValeur, beneficiaire, montant, banqueEmettrice, banqueBeneficiare, nomBanqueBeneficiaireLibre, ribBeneficiaire, active, type, observation, libelle);
     }
 
     @Override
@@ -125,12 +146,18 @@ public class Virement {
         return "Virement{" +
                 "numero='" + numero + '\'' +
                 ", dateEmission=" + dateEmission +
+                ", dateOperation=" + dateOperation +
+                ", dateValeur=" + dateValeur +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", montant=" + montant +
-                ", banque=" + banque +
-                ", banqueBeneficiaire=" + banqueBeneficiaire +
+                ", banqueEmettrice=" + banqueEmettrice +
+                ", banqueBeneficiare=" + banqueBeneficiare +
+                ", nomBanqueBeneficiaireLibre='" + nomBanqueBeneficiaireLibre + '\'' +
                 ", ribBeneficiaire='" + ribBeneficiaire + '\'' +
                 ", active=" + active +
+                ", type=" + type +
+                ", observation='" + observation + '\'' +
+                ", libelle='" + libelle + '\'' +
                 '}';
     }
 }

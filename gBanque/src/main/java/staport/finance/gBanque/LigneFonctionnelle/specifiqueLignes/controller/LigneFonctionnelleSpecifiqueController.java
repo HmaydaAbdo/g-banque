@@ -86,8 +86,7 @@ public class LigneFonctionnelleSpecifiqueController {
      */
     @PutMapping("/deactivate/{ligneId}")
     public ResponseEntity<Void> deactivateLigneFonctionnelle(
-            @PathVariable Long ligneId)
-    {
+            @PathVariable Long ligneId) throws Exception {
         ligneFonctionnelleSpecifiqueService.deactivateLigneFonctionnelleById(ligneId);
         return ResponseEntity.noContent().build();
     }

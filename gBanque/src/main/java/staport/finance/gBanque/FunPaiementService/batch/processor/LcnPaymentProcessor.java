@@ -38,12 +38,12 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
             return null; // Spring Batch will skip this item
         }
 
-
         // LCN-specific validation
         if (item.getDateEcheance() == null) {
             throw new InvalidChequeDataException("Date d'échéance (dateEcheance) is null for LCN payment numero " + item.getNumero());
         }
 
+        // Création de l'entité et mapping des champs
         Lcn lcn = new Lcn();
         lcn.setNumero(item.getNumero());
         lcn.setDateEmission(item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime());
@@ -55,15 +55,23 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
 
 
 
-        if (dateEcheance.isBefore(curentDateTime)) {
+        // 1. Extraire l'année et le mois des dates pour la comparaison
+        YearMonth currentMonth = YearMonth.from(curentDateTime);
+        YearMonth echeanceMonth = YearMonth.from(dateEcheance);
+        YearMonth twoMonthThreshold = currentMonth.minusMonths(1);
+
+        // Règle métier : INACTIF si le mois d'échéance est antérieur au mois actuel.
+        if (echeanceMonth.isBefore(twoMonthThreshold)) {
             lcn.setActive(false);
-            log.info("LCN {} marked as INACTIVE (echeance date {} < current date {}).",
-                    item.getNumero(), dateEcheance, curentDateTime);
+            log.info("LCN {} marked as INACTIVE (echeance month {} is before current month {}).",
+                    item.getNumero(), echeanceMonth, currentMonth);
         } else {
             lcn.setActive(true);
-            log.info("LCN {} marked as ACTIVE (echeance date {} >= current date {}).",
-                    item.getNumero(), dateEcheance, curentDateTime);
+            log.info("LCN {} marked as ACTIVE (echeance month {} is current or future month {}).",
+                    item.getNumero(), echeanceMonth, currentMonth);
         }
+
+
         log.info("Successfully processed and transformed Lcn Payment {}. Returning Lcn entity.", item.getNumero());
         return lcn;
     }

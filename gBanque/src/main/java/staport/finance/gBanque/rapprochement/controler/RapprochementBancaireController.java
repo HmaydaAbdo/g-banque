@@ -123,9 +123,16 @@ public class RapprochementBancaireController {
      * @param requestDto Le DTO de la requête de transaction de virement.
      * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
      */
-    @PostMapping("/process/virement")
-    public ResponseEntity<VirementTransactionResponseDto> processVirementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) throws Exception {
-        VirementTransactionResponseDto responseDto = rapprochementService.processVirementTransaction(requestDto);
+    @PostMapping("/process/decaissement/virement")
+    public ResponseEntity<VirementTransactionResponseDto> processVirementDecaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) throws Exception {
+        VirementTransactionResponseDto responseDto = rapprochementService.processVirementDecaissementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+
+    @PostMapping("/process/encaissement/virement")
+    public ResponseEntity<VirementTransactionResponseDto> processVirementEncaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) throws Exception {
+        VirementTransactionResponseDto responseDto = rapprochementService.processVirementEncaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

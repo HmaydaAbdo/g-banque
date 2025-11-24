@@ -166,7 +166,8 @@ public class EcheanceCMTService {
 
         Specification<EcheanceCMT> spec = EcheanceCMTSpecification.byCreditBanqueId(requestDTO.getBanqueId())
                 .and(EcheanceCMTSpecification.outstandingUntil())
-                .and(EcheanceCMTSpecification.byCreditDesignationLike(requestDTO.getDesignation()));
+                .and(EcheanceCMTSpecification.byCreditDesignationLike(requestDTO.getDesignation()))
+                .and(EcheanceCMTSpecification.byMontant(requestDTO.getMontant()));
 
         Page<EcheanceCMT> encoursEcheancesPage = echeanceCmtRepository.findAll(spec, pageable);
         Page<EcheanceCMTResponseDto> echeancesDtoPage = encoursEcheancesPage.map(echeanceCmtMapper::toResponseDto);

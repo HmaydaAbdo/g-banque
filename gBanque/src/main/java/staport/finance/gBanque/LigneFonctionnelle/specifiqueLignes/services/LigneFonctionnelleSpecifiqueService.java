@@ -83,332 +83,342 @@ public class LigneFonctionnelleSpecifiqueService {
         this.factoringRepository = factoringRepository;
         this.factoringMapper = factoringMapper;
     }
-
     @Transactional
     public LigneFonctionnelleSpecifiqueResponse createLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifiqueRequest request) {
+        log.debug("[CREATE] Début de la création de ligne fonctionnelle spécifique avec la requête: {}", request);
 
-        log.debug("Requête de création de ligne fonctionnelle spécifique: {}", request);
-
+        // Validation des dates
         validateDateRange(request.getDateDepart(), request.getDateFin());
+        log.debug("[CREATE] Dates validées: dateDepart={}, dateFin={}", request.getDateDepart(), request.getDateFin());
 
+        // Récupération de la NatureLigneFonctionnelle
+        NatureLigneFonctionnelle nature = natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId())
+                .orElseThrow(() -> {
+                    log.error("[CREATE] NatureLigneFonctionnelle non trouvée pour ID: {}", request.getNatureLigneFonctionnelleId());
+                    return new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId());
+                });
+        log.debug("[CREATE] NatureLigneFonctionnelle trouvée: {}", nature.getLabel());
 
-        NatureLigneFonctionnelle natureLigneFonctionnelle = natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId())
-                .orElseThrow(() -> new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId()));
-
+        // Récupération du Marché
         Marche marche = marcheRepository.findById(request.getMarcheId())
-                .orElseThrow(() -> new ResourceNotFoundException("Marché non trouvé avec l'ID: " + request.getMarcheId()));
+                .orElseThrow(() -> {
+                    log.error("[CREATE] Marché non trouvé pour ID: {}", request.getMarcheId());
+                    return new ResourceNotFoundException("Marché non trouvé avec l'ID: " + request.getMarcheId());
+                });
+        log.debug("[CREATE] Marché trouvé: {}", marche.getNom());
 
-        // Step 2: Perform business logic validation with the refined rule
-        boolean requestActif = request.getActif() == null || request.getActif();
-
-        if (requestActif) {
-            ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, natureLigneFonctionnelle)
-                    .ifPresent(existingActiveLigne -> {
-                        log.warn("Tentative de création d'un doublon actif pour la combinaison Marche/Nature : Marché '{}' (ID: {}), Nature '{}' (ID: {}).",
-                                marche.getNom(), request.getMarcheId(), natureLigneFonctionnelle.getLabel(), request.getNatureLigneFonctionnelleId());
-                        throw new DuplicateEntryException("Une ligne fonctionnelle ACTIVE de type '" + natureLigneFonctionnelle.getLabel() + "' existe déjà pour le marché '" + marche.getNom() + "'.");
+        // Vérification doublon actif
+        boolean isActif = request.getActif() == null || request.getActif();
+        if (isActif) {
+            ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, nature)
+                    .ifPresent(existing -> {
+                        log.warn("[CREATE] Doublon actif détecté pour Marche '{}' et Nature '{}'", marche.getNom(), nature.getLabel());
+                        throw new DuplicateEntryException(
+                                "Une ligne fonctionnelle ACTIVE de type '" + nature.getLabel() + "' existe déjà pour le marché '" + marche.getNom() + "'."
+                        );
                     });
+            log.debug("[CREATE] Aucun doublon actif trouvé, création possible");
         }
 
-        // Step 3: Map DTO to entity and save
-        LigneFonctionnelleSpecifique entity = ligneFonctionnelleSpecifiqueMapper.toEntity(request, natureLigneFonctionnelle, marche);
-
+        // Mapping DTO -> Entity
+        LigneFonctionnelleSpecifique entity = ligneFonctionnelleSpecifiqueMapper.toEntity(request, nature, marche);
         LigneFonctionnelleSpecifique savedEntity = ligneFonctionnelleSpecifiqueRepository.save(entity);
-        log.info("Ligne fonctionnelle spécifique créée avec succès, ID: {}", savedEntity.getId());
+        log.info("[CREATE] Ligne fonctionnelle spécifique créée avec succès, ID: {}", savedEntity.getId());
+
         return ligneFonctionnelleSpecifiqueMapper.toDto(savedEntity);
     }
 
     @Transactional(readOnly = true)
     public LigneFonctionnelleSpecifiqueResponse getLigneFonctionnelleSpecifiqueById(Long id) {
-        log.debug("Récupération de ligne fonctionnelle spécifique par ID: {}", id);
+        log.debug("[GET BY ID] Début de la récupération de ligne fonctionnelle spécifique pour ID: {}", id);
+
         LigneFonctionnelleSpecifique entity = ligneFonctionnelleSpecifiqueRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + id));
-        log.debug("Ligne fonctionnelle spécifique trouvée: {}", entity.getId());
+                .orElseThrow(() -> {
+                    log.error("[GET BY ID] Ligne fonctionnelle spécifique non trouvée pour ID: {}", id);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + id);
+                });
+
+        log.debug("[GET BY ID] Ligne fonctionnelle spécifique trouvée: ID={}, Nature={}, Marché={}",
+                entity.getId(),
+                entity.getNatureLigneFonctionnelle().getLabel(),
+                entity.getMarche().getNom());
+
         return ligneFonctionnelleSpecifiqueMapper.toDto(entity);
     }
 
     @Transactional(readOnly = true)
     public Page<LigneFonctionnelleSpecifiqueResponse> getLignesFonctionnellesSpecifiques(
             LigneFonctionnelleSpecifiqueSearchCriteria criteria, Pageable pageable) {
-        log.debug("Récupération des lignes fonctionnelles spécifiques avec critères: {} et pageable: {}", criteria, pageable);
+        log.debug("[GET ALL] Récupération des lignes fonctionnelles spécifiques avec critères: {} et Pageable: {}", criteria, pageable);
+
         Specification<LigneFonctionnelleSpecifique> spec = LigneFonctionnelleSpecifiqueSpecification.searchByCriteria(criteria);
         Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable);
-        log.debug("Nombre de lignes fonctionnelles spécifiques trouvées: {}", page.getTotalElements());
+
+        log.info("[GET ALL] {} lignes fonctionnelles spécifiques trouvées (Page {}/{})",
+                page.getTotalElements(), page.getNumber() + 1, page.getTotalPages());
+
+
         return page.map(ligneFonctionnelleSpecifiqueMapper::toDto);
     }
-
     @Transactional(readOnly = true)
     public Page<LigneFonctionnelleSpecifiqueResponse> getLignesFonctionnellesSpecifiquesByBanqueId(
             Long banqueId, LigneFonctionnelleSpecifiqueSearchCriteria criteria, Pageable pageable) {
 
-        log.debug("Récupération paginée et filtrée des lignes fonctionnelles spécifiques pour Banque ID: {} avec critères: {} et pageable: {}", banqueId, criteria, pageable);
+        log.debug("[GET BY BANQUE] Début de récupération paginée pour Banque ID: {} avec critères: {} et pageable: {}", banqueId, criteria, pageable);
 
         // 1. Validate that the bank exists
         if (!banqueRepository.existsById(banqueId)) {
-            log.warn("Banque non trouvée avec l'ID: {}", banqueId);
+            log.warn("[GET BY BANQUE] Banque non trouvée avec l'ID: {}", banqueId);
             throw new ResourceNotFoundException("Banque non trouvée avec l'ID: " + banqueId + ". Impossible de récupérer les lignes fonctionnelles spécifiques.");
         }
+        log.debug("[GET BY BANQUE] Banque ID {} existante confirmée", banqueId);
 
-        // 2. Set the banqueId in the criteria to use the existing specification logic
+        // 2. Set the banqueId in the criteria
         criteria.setBanqueId(banqueId);
+        log.debug("[GET BY BANQUE] Critères mis à jour avec banqueId: {}", criteria);
 
         // 3. Use the existing Specification to find the entities
         Specification<LigneFonctionnelleSpecifique> spec = LigneFonctionnelleSpecifiqueSpecification.searchByCriteria(criteria);
         Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable);
 
-        log.debug("Nombre de lignes fonctionnelles spécifiques trouvées pour la banque {} avec filtres: {}", banqueId, page.getTotalElements());
+        log.info("[GET BY BANQUE] {} lignes fonctionnelles spécifiques trouvées pour la banque ID {} (Page {}/{})",
+                page.getTotalElements(), banqueId, page.getNumber() + 1, page.getTotalPages());
 
-        // 4. Map the entities to DTOs and return
+        page.forEach(entity ->
+                log.debug("[GET BY BANQUE] Ligne ID={}, Nature={}, Marché={}, Actif={}",
+                        entity.getId(),
+                        entity.getNatureLigneFonctionnelle().getLabel(),
+                        entity.getMarche().getNom(),
+                        entity.isActif())
+        );
+
+        // 4. Map entities to DTOs and return
         return page.map(ligneFonctionnelleSpecifiqueMapper::toDto);
     }
 
     @Transactional
     public LigneFonctionnelleSpecifiqueResponse updateLigneFonctionnelleSpecifique(Long id, LigneFonctionnelleSpecifiqueRequest request) {
-        log.debug("--- Début de la mise à jour de LigneFonctionnelleSpécifique (ID: {}) ---", id);
+        log.debug("[UPDATE] Début de mise à jour de LigneFonctionnelleSpécifique ID: {} avec request: {}", id, request);
 
         LigneFonctionnelleSpecifique existingEntity = ligneFonctionnelleSpecifiqueRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + id));
+                .orElseThrow(() -> {
+                    log.error("[UPDATE] Ligne Fonctionnelle Spécifique non trouvée avec ID: {}", id);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + id);
+                });
+        log.debug("[UPDATE] Entité existante récupérée: ID={}, Nature={}, Marché={}, Actif={}",
+                existingEntity.getId(),
+                existingEntity.getNatureLigneFonctionnelle().getLabel(),
+                existingEntity.getMarche().getNom(),
+                existingEntity.isActif());
 
-        // Use existing entity fields for validation if request fields are null
+        // Validation des dates
         OffsetDateTime effectiveDateDepart = request.getDateDepart() != null ? request.getDateDepart() : existingEntity.getDateDepart();
         OffsetDateTime effectiveDateFin = request.getDateFin() != null ? request.getDateFin() : existingEntity.getDateFin();
         validateDateRange(effectiveDateDepart, effectiveDateFin);
+        log.debug("[UPDATE] Validation des dates effective: dateDepart={}, dateFin={}", effectiveDateDepart, effectiveDateFin);
 
-
+        // Mise à jour des relations
         NatureLigneFonctionnelle targetNature = (request.getNatureLigneFonctionnelleId() != null) ?
-                natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId()).orElseThrow(() -> new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId()))
+                natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId())
+                        .orElseThrow(() -> {
+                            log.error("[UPDATE] NatureLigneFonctionnelle non trouvée pour ID: {}", request.getNatureLigneFonctionnelleId());
+                            return new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId());
+                        })
                 : existingEntity.getNatureLigneFonctionnelle();
 
         Marche targetMarche = (request.getMarcheId() != null) ?
-                marcheRepository.findById(request.getMarcheId()).orElseThrow(() -> new ResourceNotFoundException("Marché non trouvé avec l'ID: " + request.getMarcheId()))
+                marcheRepository.findById(request.getMarcheId())
+                        .orElseThrow(() -> {
+                            log.error("[UPDATE] Marché non trouvé pour ID: {}", request.getMarcheId());
+                            return new ResourceNotFoundException("Marché non trouvé avec l'ID: " + request.getMarcheId());
+                        })
                 : existingEntity.getMarche();
 
-        // Check for active duplicates, excluding the current entity
-        boolean requestedActif = request.getActif() != null ? request.getActif() : existingEntity.isActif();
+        log.debug("[UPDATE] Relations mises à jour: Nature={}, Marché={}", targetNature.getLabel(), targetMarche.getNom());
 
+        // Vérification des doublons actifs
+        boolean requestedActif = request.getActif() != null ? request.getActif() : existingEntity.isActif();
         if (requestedActif) {
             ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(targetMarche, targetNature)
                     .ifPresent(existingActiveDuplicate -> {
-                        // Check if the found active duplicate is a different entity
                         if (!existingActiveDuplicate.getId().equals(id)) {
-                            log.warn("Tentative de mise à jour créant un doublon actif pour la combinaison Marche/Nature : Marché '{}' (ID: {}), Nature '{}' (ID: {}). Conflit avec ID: {}",
-                                    targetMarche.getNom(), targetMarche.getId(), targetNature.getLabel(), targetNature.getId(), existingActiveDuplicate.getId());
+                            log.warn("[UPDATE] Doublon actif détecté pour Marche '{}' et Nature '{}', conflit avec ID: {}",
+                                    targetMarche.getNom(), targetNature.getLabel(), existingActiveDuplicate.getId());
                             throw new DuplicateEntryException("Impossible de mettre à jour. Une ligne fonctionnelle ACTIVE de ce type existe déjà pour ce marché.");
                         }
                     });
+            log.debug("[UPDATE] Aucun doublon actif détecté ou doublon existant correspond à la même entité");
         }
 
-        // Apply partial updates only for non-null fields
-        if (request.getPlafond() != null) {
-            existingEntity.setPlafond(request.getPlafond());
-        }
-        if (request.getTaux() != null) {
-            existingEntity.setTaux(request.getTaux());
-        }
-        if (request.getDateDepart() != null) {
-            existingEntity.setDateDepart(request.getDateDepart());
-        }
-        if (request.getDateFin() != null) {
-            existingEntity.setDateFin(request.getDateFin());
-        }
-        if (request.getActif() != null) {
-            existingEntity.setActif(request.getActif());
-        }
+        // Mise à jour partielle des champs
+        if (request.getPlafond() != null) existingEntity.setPlafond(request.getPlafond());
+        if (request.getTaux() != null) existingEntity.setTaux(request.getTaux());
+        if (request.getDateDepart() != null) existingEntity.setDateDepart(request.getDateDepart());
+        if (request.getDateFin() != null) existingEntity.setDateFin(request.getDateFin());
+        if (request.getActif() != null) existingEntity.setActif(request.getActif());
 
-        // Update relationships
+        // Mise à jour des relations
         existingEntity.setNatureLigneFonctionnelle(targetNature);
         existingEntity.setMarche(targetMarche);
 
-        // Save and return
+        // Sauvegarde
         LigneFonctionnelleSpecifique updatedEntity = ligneFonctionnelleSpecifiqueRepository.save(existingEntity);
-        log.info("Ligne fonctionnelle spécifique avec ID {} mise à jour avec succès.", updatedEntity.getId());
+        log.info("[UPDATE] Ligne fonctionnelle spécifique ID {} mise à jour avec succès", updatedEntity.getId());
+
         return ligneFonctionnelleSpecifiqueMapper.toDto(updatedEntity);
     }
 
-    /**
-     * Deactivates the  LigneFonctionnelleSpecifique with the given ID.
-     * Sets its 'actif' flag to false.
-     *
-     * @param ligneId The ID of the functional line.
-     * @throws ResourceNotFoundException if no active functional line is found for the given criteria.
-     */
     @Transactional
-    public void deactivateLigneFonctionnelleById(Long ligneId) {
-        log.debug("Tentative de désactivation de la ligne fonctionnelle spécifique  avec l ID: {} ", ligneId);
-        LigneFonctionnelleSpecifique ligneToDeactivate = ligneFonctionnelleSpecifiqueRepository.findById(ligneId).orElseThrow(
-                () -> new ResourceNotFoundException("Aucune Ligne Fonctionnelle spécifique avec l'ID: " + ligneId)
-        );
+    public void deactivateLigneFonctionnelleById(Long ligneId) throws Exception {
+        log.debug("[DEACTIVATE] Tentative de désactivation de la ligne fonctionnelle spécifique ID: {}", ligneId);
+
+        LigneFonctionnelleSpecifique ligneToDeactivate = ligneFonctionnelleSpecifiqueRepository.findById(ligneId)
+                .orElseThrow(() -> {
+                    log.error("[DEACTIVATE] Ligne fonctionnelle spécifique non trouvée pour ID: {}", ligneId);
+                    return new ResourceNotFoundException("Aucune Ligne Fonctionnelle spécifique avec l'ID: " + ligneId);
+                });
+        if(!ligneToDeactivate.isActif()) {
+            log.error("[DEACTIVATE] Ligne fonctionnelle spécifique est déja désactivée");
+            throw new Exception("[DEACTIVATE] Ligne fonctionnelle spécifique est déja désactivée");
+        }
         ligneToDeactivate.setActif(false);
         ligneFonctionnelleSpecifiqueRepository.save(ligneToDeactivate);
-        log.info("Ligne fonctionnelle  spécifique avec ID {}  désactivée avec succès.", ligneToDeactivate.getId());
+        log.info("[DEACTIVATE] Ligne fonctionnelle spécifique ID {} désactivée avec succès", ligneToDeactivate.getId());
     }
 
     @Transactional
     public void deleteLigneFonctionnelleSpecifique(Long id) {
-        log.debug("Requête de suppression de ligne fonctionnelle spécifique pour ID: {}", id);
+        log.debug("[DELETE] Requête de suppression de ligne fonctionnelle spécifique ID: {}", id);
+
         if (!ligneFonctionnelleSpecifiqueRepository.existsById(id)) {
-            log.warn("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: {} pour la suppression.", id);
+            log.warn("[DELETE] Ligne fonctionnelle spécifique non trouvée pour ID: {}", id);
             throw new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + id);
         }
+
         ligneFonctionnelleSpecifiqueRepository.deleteById(id);
-        log.info("Ligne fonctionnelle spécifique avec ID {} supprimée avec succès.", id);
+        log.info("[DELETE] Ligne fonctionnelle spécifique ID {} supprimée avec succès", id);
     }
 
     private void validateDateRange(OffsetDateTime dateDepart, OffsetDateTime dateFin) {
         if (dateDepart != null && dateFin != null && dateFin.isBefore(dateDepart)) {
-            log.warn("Validation de date échouée: dateFin ({}) est antérieure à dateDepart ({}).", dateFin, dateDepart);
+            log.warn("[VALIDATE DATE] dateFin ({}) est antérieure à dateDepart ({})", dateFin, dateDepart);
             throw new IllegalArgumentException("La date de fin (" + dateFin + ") ne peut pas être antérieure à la date de départ (" + dateDepart + ").");
         }
+        log.debug("[VALIDATE DATE] Plage de dates valide: dateDepart={}, dateFin={}", dateDepart, dateFin);
     }
 
-
-    /**
-     * Retrieves a page of SpecificLigneResposneDto with pagination, sorting, and search support.
-     *
-     * @param searchCriteria The DTO containing search criteria.
-     * @param pageable       The pagination and sorting information.
-     * @return A Page of SpecificLigneResposneDto DTOs.
-     * @throws ResourceNotFoundException if no NatureLigneFonctionnelle is found with the given label.
-     */
     @Transactional(readOnly = true)
     public Page<SpecificLigneResposneDto> getPrefiLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
+        log.debug("[PREFI] Début récupération paginée des lignes de préfinancement avec critères: {}", searchCriteria);
 
-        log.debug("Récupération paginée des lignes de préfinancement avec critères de recherche: {}", searchCriteria);
-
-        // Find the NatureLigneFonctionnelle by its label
         NatureLigneFonctionnelle prefiNature = natureLigneFonctionnelleRepository.findByLabel("Préfinancement")
-                .orElseThrow(() -> new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Préfinancement"));
+                .orElseThrow(() -> {
+                    log.error("[PREFI] Aucune nature de ligne fonctionnelle trouvée avec le label : Préfinancement");
+                    return new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Préfinancement");
+                });
 
-        // Build the combined specification
-        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("natureLigneFonctionnelle"), prefiNature);
-
+        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, cb) -> cb.equal(root.get("natureLigneFonctionnelle"), prefiNature);
         Specification<LigneFonctionnelleSpecifique> searchSpec = LigneFonctionnelleSpecifiqueSpecification.searchForPrefi(searchCriteria);
-
         Specification<LigneFonctionnelleSpecifique> finalSpec = Specification.where(natureSpec).and(searchSpec);
 
-        // Use the repository with the combined specification and pageable
         Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(finalSpec, pageable);
 
-        log.info("Page de {} lignes de préfinancement trouvée. Total: {}", page.getNumberOfElements(), page.getTotalElements());
+        log.info("[PREFI] {} lignes de préfinancement trouvées. PageSize={}, TotalElements={}",
+                page.getNumberOfElements(), page.getSize(), page.getTotalElements());
 
-        // Map the page of entities to a page of DTOs and return
+
+
         return page.map(ligneFonctionnelleSpecifiqueMapper::toPrefinancementResponseDto);
     }
 
-
-    /**
-     * Retrieves a page of SpecificLigneResposneDto with pagination, sorting, and search support.
-     *
-     * @param searchCriteria The DTO containing search criteria.
-     * @param pageable       The pagination and sorting information.
-     * @return A Page of SpecificLigneResposneDto DTOs.
-     * @throws ResourceNotFoundException if no NatureLigneFonctionnelle is found with the given label.
-     */
     @Transactional(readOnly = true)
     public Page<SpecificLigneResposneDto> getDCLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
-        log.debug("Récupération paginée des lignes de droit constatées avec critères de recherche: {}", searchCriteria);
+        log.debug("[DC] Début récupération paginée des lignes de droit constaté avec critères: {}", searchCriteria);
 
-        // Find the NatureLigneFonctionnelle by its label
         NatureLigneFonctionnelle dcLine = natureLigneFonctionnelleRepository.findByLabel("Droit constaté")
-                .orElseThrow(() -> new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Droit constaté"));
+                .orElseThrow(() -> {
+                    log.error("[DC] Aucune nature de ligne fonctionnelle trouvée avec le label : Droit constaté");
+                    return new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Droit constaté");
+                });
 
-        // Build the combined specification
-        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("natureLigneFonctionnelle"), dcLine);
-
+        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, cb) -> cb.equal(root.get("natureLigneFonctionnelle"), dcLine);
         Specification<LigneFonctionnelleSpecifique> searchSpec = LigneFonctionnelleSpecifiqueSpecification.searchForPrefi(searchCriteria);
-
         Specification<LigneFonctionnelleSpecifique> finalSpec = Specification.where(natureSpec).and(searchSpec);
 
-        // Use the repository with the combined specification and pageable
         Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(finalSpec, pageable);
 
-        log.info("Page de {} lignes de préfinancement trouvée. Total: {}", page.getNumberOfElements(), page.getTotalElements());
+        log.info("[DC] {} lignes de droit constaté trouvées. PageSize={}, TotalElements={}",
+                page.getNumberOfElements(), page.getSize(), page.getTotalElements());
 
-        // Map the page of entities to a page of DTOs and return
+        page.forEach(entity ->
+                log.debug("[DC] Ligne ID={}, Marche={}, Actif={}",
+                        entity.getId(), entity.getMarche().getNom(), entity.isActif())
+        );
+
         return page.map(ligneFonctionnelleSpecifiqueMapper::toDCResponseDto);
     }
 
-
-    /**
-     * Retrieves a page of SpecificLigneResposneDto with pagination, sorting, and search support.
-     *
-     * @param searchCriteria The DTO containing search criteria.
-     * @param pageable       The pagination and sorting information.
-     * @return A Page of SpecificLigneResposneDto DTOs.
-     * @throws ResourceNotFoundException if no NatureLigneFonctionnelle is found with the given label.
-     */
     @Transactional(readOnly = true)
     public Page<SpecificLigneResposneDto> getFactoringLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
-        log.debug("Récupération paginée des lignes de factoring avec critères de recherche: {}", searchCriteria);
+        log.debug("[FACTORING] Début récupération paginée des lignes de factoring avec critères: {}", searchCriteria);
 
-        // Find the NatureLigneFonctionnelle by its label
         NatureLigneFonctionnelle factoringLine = natureLigneFonctionnelleRepository.findByLabel("Factoring")
-                .orElseThrow(() -> new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Factoring"));
+                .orElseThrow(() -> {
+                    log.error("[FACTORING] Aucune nature de ligne fonctionnelle trouvée avec le label : Factoring");
+                    return new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Factoring");
+                });
 
-        // Build the combined specification
-        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("natureLigneFonctionnelle"), factoringLine);
-
+        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, cb) -> cb.equal(root.get("natureLigneFonctionnelle"), factoringLine);
         Specification<LigneFonctionnelleSpecifique> searchSpec = LigneFonctionnelleSpecifiqueSpecification.searchForPrefi(searchCriteria);
-
         Specification<LigneFonctionnelleSpecifique> finalSpec = Specification.where(natureSpec).and(searchSpec);
 
-        // Use the repository with the combined specification and pageable
         Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(finalSpec, pageable);
 
-        log.info("Page de {} lignes de factoring trouvée. Total: {}", page.getNumberOfElements(), page.getTotalElements());
+        log.info("[FACTORING] {} lignes de factoring trouvées. PageSize={}, TotalElements={}",
+                page.getNumberOfElements(), page.getSize(), page.getTotalElements());
 
-        // Map the page of entities to a page of DTOs and return
+        page.forEach(entity ->
+                log.debug("[FACTORING] Ligne ID={}, Marche={}, Actif={}",
+                        entity.getId(), entity.getMarche().getNom(), entity.isActif())
+        );
+
         return page.map(ligneFonctionnelleSpecifiqueMapper::toFactoringResponseDto);
     }
-    /**
-     * Récupère un DTO agrégé contenant les totaux (débit, crédit, reste) et une page d'enregistrements
-     * de suivi de préfinancement payés pour une ligne fonctionnelle spécifique.
-     *
-     * @param lineId   L'ID de la ligne fonctionnelle spécifique.
-     * @param pageable Les informations de pagination et de tri.
-     * @return Un AgregatedSuiviePrefiLigneResponseDto contenant les informations agrégées et paginées.
-     * @throws ResourceNotFoundException si la ligne fonctionnelle spécifique n'est pas trouvée.
-     */
+
     @Transactional(readOnly = true)
     public AgregatedSuiviePrefiLigneResponseDto getSuiviePrefiLigneResponse(Long lineId, Pageable pageable) {
-        log.debug("Préparation de l'agrégation et de la pagination pour la ligne ID: {}", lineId);
+        log.debug("[PREFI SUIVIE] Début récupération agrégée pour ligne ID: {}", lineId);
 
-        // 1. Récupérer l'entité LigneFonctionnelleSpecifique pour les détails contextuels
         LigneFonctionnelleSpecifique specificLine = ligneFonctionnelleSpecifiqueRepository.findById(lineId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + lineId));
+                .orElseThrow(() -> {
+                    log.error("[PREFI SUIVIE] Ligne non trouvée pour ID: {}", lineId);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + lineId);
+                });
 
         Marche marche = specificLine.getMarche();
         if (marche == null) {
-            log.warn("La ligne fonctionnelle ID {} n'est liée à aucun marché.", lineId);
+            log.warn("[PREFI SUIVIE] Ligne ID {} non liée à aucun marché", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
         }
 
-        // 2. Calculer les totaux globaux (tous les enregistrements payés)
-        List<Prefinancement> allPaidPrefinancements = prefinancementRepository.findByMarcheAndStatus(marche, Status.PAYE);
+        List<Prefinancement> allPaidPrefi = prefinancementRepository.findByMarcheAndStatus(marche, Status.PAYE);
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
-        for (Prefinancement prefi : allPaidPrefinancements) {
-            if (prefi.getType() == Type.REMBOURSEMENT) {
-                totalDebit = totalDebit.add(prefi.getMontant());
-            } else if (prefi.getType() == Type.DEBLOCAGE) {
-                totalCredit = totalCredit.add(prefi.getMontant());
-            }
+        for (Prefinancement prefi : allPaidPrefi) {
+            if (prefi.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(prefi.getMontant());
+            else if (prefi.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(prefi.getMontant());
         }
         BigDecimal reste = totalCredit.subtract(totalDebit);
+        log.debug("[PREFI SUIVIE] Totaux calculés: totalDebit={}, totalCredit={}, reste={}", totalDebit, totalCredit, reste);
 
-        // 3. Récupérer la page d'enregistrements payés
-        Specification<Prefinancement> paidPrefiSpec = Specification.where(PrefinancementSpecification.byMarcheId(marche.getId()))
+        Specification<Prefinancement> spec = Specification.where(PrefinancementSpecification.byMarcheId(marche.getId()))
                 .and(PrefinancementSpecification.byStatus(Status.PAYE));
 
-        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(paidPrefiSpec, pageable);
+        Page<Prefinancement> prefiPage = prefinancementRepository.findAll(spec, pageable);
+        log.info("[PREFI SUIVIE] {} enregistrements préfinancement payés récupérés", prefiPage.getNumberOfElements());
 
-        // 4. Mapper la page d'entités en page de DTOs de suivi
-        Page<SuiviePrefiLigneResponseDto> pageOfDtos = prefinancementPage.map(prefinancementMapper::toSuiviePrefiLigneResponseDto);
+        Page<SuiviePrefiLigneResponseDto> pageOfDtos = prefiPage.map(prefinancementMapper::toSuiviePrefiLigneResponseDto);
 
-        // 5. Construire et retourner le DTO agrégé
         AgregatedSuiviePrefiLigneResponseDto aggregatedDto = new AgregatedSuiviePrefiLigneResponseDto();
         aggregatedDto.setBanqueName(specificLine.getMarche().getBanque().getNom());
         aggregatedDto.setMarcheName(marche.getNom());
@@ -418,57 +428,43 @@ public class LigneFonctionnelleSpecifiqueService {
         aggregatedDto.setReste(reste);
         aggregatedDto.setPage(pageOfDtos);
 
+        log.info("[PREFI SUIVIE] Agrégation complétée pour ligne ID: {}", lineId);
         return aggregatedDto;
     }
 
-    /**
-     * Récupère un DTO agrégé contenant les totaux (débit, crédit, reste) et une page d'enregistrements
-     * de suivi de Droit constaté payés pour une ligne fonctionnelle spécifique.
-     *
-     * @param lineId   L'ID de la ligne fonctionnelle spécifique.
-     * @param pageable Les informations de pagination et de tri.
-     * @return Un AgregatedSuivieDcLigneResponseDto contenant les informations agrégées et paginées.
-     * @throws ResourceNotFoundException si la ligne fonctionnelle spécifique n'est pas trouvée.
-     */
     @Transactional(readOnly = true)
     public AgregatedSuivieDcLigneResponseDto getSuivieDcLigneResponse(Long lineId, Pageable pageable) {
-        log.debug("Préparation de l'agrégation et de la pagination pour la ligne ID: {}", lineId);
+        log.debug("[DC SUIVIE] Début récupération agrégée pour ligne ID: {}", lineId);
 
-        // 1. Récupérer l'entité LigneFonctionnelleSpecifique pour les détails contextuels
         LigneFonctionnelleSpecifique specificLine = ligneFonctionnelleSpecifiqueRepository.findById(lineId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + lineId));
+                .orElseThrow(() -> {
+                    log.error("[DC SUIVIE] Ligne non trouvée pour ID: {}", lineId);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + lineId);
+                });
 
         Marche marche = specificLine.getMarche();
         if (marche == null) {
-            log.warn("La ligne fonctionnelle ID {} n'est liée à aucun marché.", lineId);
+            log.warn("[DC SUIVIE] Ligne ID {} non liée à aucun marché", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
         }
 
-        // 2. Calculer les totaux globaux (tous les enregistrements payés)
         List<DroitConstate> allPaidDc = droitConstateRepository.findByMarcheAndStatus(marche, Status.PAYE);
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
-
         for (DroitConstate dc : allPaidDc) {
-            if (dc.getType() == Type.REMBOURSEMENT) {
-                totalDebit = totalDebit.add(dc.getMontant());
-            } else if (dc.getType() == Type.DEBLOCAGE) {
-                totalCredit = totalCredit.add(dc.getMontant());
-            }
+            if (dc.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(dc.getMontant());
+            else if (dc.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(dc.getMontant());
         }
-
         BigDecimal reste = totalCredit.subtract(totalDebit);
+        log.debug("[DC SUIVIE] Totaux calculés: totalDebit={}, totalCredit={}, reste={}", totalDebit, totalCredit, reste);
 
-        // 3. Récupérer la page d'enregistrements payés
-        Specification<DroitConstate> paidDcSpec = Specification.where(DroitConstateSpec.byMarcheId(marche.getId()))
+        Specification<DroitConstate> spec = Specification.where(DroitConstateSpec.byMarcheId(marche.getId()))
                 .and(DroitConstateSpec.byStatus(Status.PAYE));
+        Page<DroitConstate> dcPage = droitConstateRepository.findAll(spec, pageable);
+        log.info("[DC SUIVIE] {} enregistrements DC payés récupérés", dcPage.getNumberOfElements());
 
-        Page<DroitConstate> dcPage = droitConstateRepository.findAll(paidDcSpec, pageable);
-
-        // 4. Mapper la page d'entités en page de DTOs de suivi
         Page<SuivieDcLigneResponseDto> pageOfDtos = dcPage.map(droitConstateMapper::toSuivieDcLigneResponseDto);
 
-        // 5. Construire et retourner le DTO agrégé
         AgregatedSuivieDcLigneResponseDto aggregatedDto = new AgregatedSuivieDcLigneResponseDto();
         aggregatedDto.setBanqueName(specificLine.getMarche().getBanque().getNom());
         aggregatedDto.setMarcheName(marche.getNom());
@@ -478,58 +474,44 @@ public class LigneFonctionnelleSpecifiqueService {
         aggregatedDto.setReste(reste);
         aggregatedDto.setPage(pageOfDtos);
 
+        log.info("[DC SUIVIE] Agrégation complétée pour ligne ID: {}", lineId);
         return aggregatedDto;
     }
 
-
-    /**
-     * Récupère un DTO agrégé contenant les totaux (débit, crédit, reste) et une page d'enregistrements
-     * de suivi de Factoring payés pour une ligne fonctionnelle spécifique.
-     *
-     * @param lineId   L'ID de la ligne fonctionnelle spécifique.
-     * @param pageable Les informations de pagination et de tri.
-     * @return Un AgregatedSuivieFactoringLigneResponseDto contenant les informations agrégées et paginées.
-     * @throws ResourceNotFoundException si la ligne fonctionnelle spécifique n'est pas trouvée.
-     */
     @Transactional(readOnly = true)
     public AgregatedSuivieFactoringLigneResponseDto getSuivieFactoringLigneResponse(Long lineId, Pageable pageable) {
-        log.debug("Préparation de l'agrégation et de la pagination pour la ligne ID: {}", lineId);
+        log.debug("[FACTORING SUIVIE] Début récupération agrégée pour ligne ID: {}", lineId);
 
-        // 1. Récupérer l'entité LigneFonctionnelleSpecifique pour les détails contextuels
         LigneFonctionnelleSpecifique specificLine = ligneFonctionnelleSpecifiqueRepository.findById(lineId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + lineId));
+                .orElseThrow(() -> {
+                    log.error("[FACTORING SUIVIE] Ligne non trouvée pour ID: {}", lineId);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle Spécifique non trouvée avec l'ID: " + lineId);
+                });
 
         Marche marche = specificLine.getMarche();
         if (marche == null) {
-            log.warn("La ligne fonctionnelle ID {} n'est liée à aucun marché.", lineId);
+            log.warn("[FACTORING SUIVIE] Ligne ID {} non liée à aucun marché", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
         }
 
-        // 2. Calculer les totaux globaux (tous les enregistrements payés)
         List<Factoring> allPaidFactoring = factoringRepository.findByMarcheAndStatus(marche, Status.PAYE);
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
-
-        for (Factoring factoring : allPaidFactoring) {
-            if (factoring.getType() == Type.REMBOURSEMENT) {
-                totalDebit = totalDebit.add(factoring.getMontant());
-            } else if (factoring.getType() == Type.DEBLOCAGE) {
-                totalCredit = totalCredit.add(factoring.getMontant());
-            }
+        for (Factoring f : allPaidFactoring) {
+            if (f.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(f.getMontant());
+            else if (f.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(f.getMontant());
         }
-
         BigDecimal reste = totalCredit.subtract(totalDebit);
+        log.debug("[FACTORING SUIVIE] Totaux calculés: totalDebit={}, totalCredit={}, reste={}", totalDebit, totalCredit, reste);
 
-        // 3. Récupérer la page d'enregistrements payés
-        Specification<Factoring> paidFactoringSpec = Specification.where(FactoringSpec.byMarcheId(marche.getId()))
+        Specification<Factoring> spec = Specification.where(FactoringSpec.byMarcheId(marche.getId()))
                 .and(FactoringSpec.byStatus(Status.PAYE));
 
-        Page<Factoring> factoringPage = factoringRepository.findAll(paidFactoringSpec, pageable);
+        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
+        log.info("[FACTORING SUIVIE] {} enregistrements factoring payés récupérés", factoringPage.getNumberOfElements());
 
-        // 4. Mapper la page d'entités en page de DTOs de suivi
         Page<SuivieFactoringLineResponseDto> pageOfDtos = factoringPage.map(factoringMapper::toSuivieFactoringLigneResponseDto);
 
-        // 5. Construire et retourner le DTO agrégé
         AgregatedSuivieFactoringLigneResponseDto aggregatedDto = new AgregatedSuivieFactoringLigneResponseDto();
         aggregatedDto.setBanqueName(specificLine.getMarche().getBanque().getNom());
         aggregatedDto.setMarcheName(marche.getNom());
@@ -539,6 +521,8 @@ public class LigneFonctionnelleSpecifiqueService {
         aggregatedDto.setReste(reste);
         aggregatedDto.setPage(pageOfDtos);
 
+        log.info("[FACTORING SUIVIE] Agrégation complétée pour ligne ID: {}", lineId);
+        log.info("result after agrégation : {} ",aggregatedDto.toString());
         return aggregatedDto;
     }
 

@@ -5,6 +5,7 @@ import staport.finance.gBanque.interets.dtos.InteretSearchDto;
 import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 
@@ -36,6 +37,16 @@ public class InteretSpec {
             return cb.equal(root.get("status"), status);
         };
     }
+
+    public static Specification<Interet> hasMontant(BigDecimal montant) {
+        return (root, query, cb) -> {
+            if (montant == null) {
+                return null;
+            }
+            return cb.equal(root.get("montant"), montant);
+        };
+    }
+
 
     public static Specification<Interet> buildSpecification(InteretSearchDto dto) {
         return Specification

@@ -71,13 +71,24 @@ public class VirementController {
      * @param pageable The pagination and sorting information.
      * @return A paginated list of VirementResponseDto for the outstanding virements.
      */
-    @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<EncoursVirementResponseDto> getEncoursForVirements(
+    @GetMapping("/decaissement/encours/{banqueId}")
+    public ResponseEntity<EncoursVirementResponseDto> getEncoursDecaissementForVirements(
             @PathVariable Long banqueId,
             EncoursVirementsSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
 
-     EncoursVirementResponseDto result = virementService.getEncoursForVirements(searchDto,banqueId, pageable);
+     EncoursVirementResponseDto result = virementService.getEncoursDecaissementForVirements(searchDto,banqueId, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+
+    @GetMapping("/encaissement/encours/{banqueId}")
+    public ResponseEntity<EncoursVirementResponseDto> getEncoursEncaissementForVirements(
+            @PathVariable Long banqueId,
+            EncoursVirementsSearchDto searchDto,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+
+        EncoursVirementResponseDto result = virementService.getEncoursEncaissementForVirements(searchDto,banqueId, pageable);
         return ResponseEntity.ok(result);
     }
 }

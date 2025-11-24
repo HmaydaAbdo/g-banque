@@ -130,7 +130,8 @@ public class CommissionService {
         Specification<Commission> spec = Specification.where(CommissionSpecifications.outstandingCommissions())
                 .and(CommissionSpecifications.hasBanque(searchDto.getBanqueId()))
                 .and(CommissionSpecifications.hasLibelle(searchDto.getLibelle()))
-                .and(CommissionSpecifications.hasOperation(searchDto.getOperation()));
+                .and(CommissionSpecifications.hasOperation(searchDto.getOperation()))
+                .and(CommissionSpecifications.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of commissions
         Page<Commission> commissionPage = commissionRepository.findAll(spec, pageable);

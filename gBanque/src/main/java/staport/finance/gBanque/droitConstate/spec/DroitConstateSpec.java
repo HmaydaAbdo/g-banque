@@ -11,6 +11,8 @@ import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
+
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -111,6 +113,15 @@ public class DroitConstateSpec {
                 return cb.conjunction();
             }
             return cb.equal(root.get("type"), type);
+        };
+    }
+
+    public static Specification<DroitConstate> hasMontant(BigDecimal montant) {
+        return (root, query, cb) -> {
+            if (montant == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("montant"), montant);
         };
     }
 

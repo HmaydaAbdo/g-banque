@@ -6,6 +6,7 @@ import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.dtos.CommissionSearchDto;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 
@@ -44,6 +45,15 @@ public class CommissionSpecifications {
                 return null;
             }
             return cb.equal(root.get("status"), status);
+        };
+    }
+
+    public static Specification<Commission> hasMontant(BigDecimal montant) {
+        return (root, query, cb) -> {
+            if (montant == null) {
+                return null;
+            }
+            return cb.equal(root.get("montant"), montant);
         };
     }
 

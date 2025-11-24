@@ -4,6 +4,7 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.lcn.entities.Lcn;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -73,6 +74,15 @@ public final class LcnSpecification {
                 return criteriaBuilder.conjunction();
             }
             return criteriaBuilder.equal(root.get("active"), active);
+        };
+    }
+
+    public static Specification<Lcn> hasMontant(BigDecimal montant) {
+        return (root, query, criteriaBuilder) -> {
+            if (montant == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("montant"), montant);
         };
     }
 

@@ -1,17 +1,16 @@
 package staport.finance.gBanque.decomptes.dto;
 
+import java.math.BigDecimal;
+
 public class EncoursDecompteSearchDto {
 
     private String marcheNumero;
     private String marcheName ;
+    private BigDecimal montant;
 
     public EncoursDecompteSearchDto() {
     }
 
-    public EncoursDecompteSearchDto(String marcheNumero, String marcheName) {
-        this.marcheNumero = marcheNumero;
-        this.marcheName = marcheName;
-    }
 
     public String getMarcheNumero() {
         return marcheNumero;
@@ -27,5 +26,22 @@ public class EncoursDecompteSearchDto {
 
     public void setMarcheName(String marcheName) {
         this.marcheName = marcheName;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    @Override
+    public String toString() {
+        return "EncoursDecompteSearchDto{" +
+                "marcheNumero='" + marcheNumero + '\'' +
+                ", marcheName='" + marcheName + '\'' +
+                ", montant=" + montant +
+                '}';
     }
 }

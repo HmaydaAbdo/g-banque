@@ -10,6 +10,7 @@ import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -97,6 +98,15 @@ public class EcheanceCMTSpecification {
             Join<EcheanceCMT, CreditMoyenTerme> creditJoin = root.join("creditMoyenTerme");
             // Accède à l'entité Banque via le CreditMoyenTerme joint
             return criteriaBuilder.equal(creditJoin.get("banque").get("id"), banqueId);
+        };
+    }
+
+    public static Specification<EcheanceCMT> byMontant(BigDecimal montant) {
+        return (root, query, criteriaBuilder) -> {
+            if (montant == null ) {
+                return criteriaBuilder.conjunction(); // A predicate that is always true
+            }
+            return criteriaBuilder.equal(root.get("montant"), montant);
         };
     }
 

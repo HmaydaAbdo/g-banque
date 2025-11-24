@@ -1,9 +1,12 @@
 package staport.finance.gBanque.factoring.dtos;
 
+import java.math.BigDecimal;
+
 public class EncoursFactoringSearchDto {
 
     private String marcheName;
     private String marcheNumero;
+    private BigDecimal montant;
 
     public EncoursFactoringSearchDto() {
     }
@@ -22,5 +25,22 @@ public class EncoursFactoringSearchDto {
 
     public void setMarcheNumero(String marcheNumero) {
         this.marcheNumero = marcheNumero;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    @Override
+    public String toString() {
+        return "EncoursFactoringSearchDto{" +
+                "marcheName='" + marcheName + '\'' +
+                ", marcheNumero='" + marcheNumero + '\'' +
+                ", montant=" + montant +
+                '}';
     }
 }

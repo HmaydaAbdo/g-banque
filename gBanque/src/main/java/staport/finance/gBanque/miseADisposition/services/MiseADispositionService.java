@@ -80,7 +80,8 @@ public class MiseADispositionService {
         // Build the specification for active mise à disposition for the specified bank in the current month
         Specification<MiseADisposition> spec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId)
                 .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
-                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()));
+                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()));
 
         // Execute the search with the specification and pagination
         Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);

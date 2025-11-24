@@ -10,20 +10,22 @@ import staport.finance.gBanque.marches.mapper.MarcheMapper;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.marches.specs.MarcheSpecification;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
-
 @Service
 @Transactional
 public class MarcheService {
 
+    private static final Logger logger = LoggerFactory.getLogger(MarcheService.class);
+
     private final MarcheRepository marcheRepository;
-    private  final BanqueRepository banqueRepository;
+    private final BanqueRepository banqueRepository;
     private final MarcheMapper marcheMapper;
 
     public MarcheService(MarcheRepository marcheRepository, BanqueRepository banqueRepository, MarcheMapper marcheMapper) {
@@ -38,22 +40,29 @@ public class MarcheService {
      * @return The response DTO of the created Marche.
      */
     public MarcheResponseDTO createMarche(MarcheRequestDTO requestDTO) {
-        // Business logic: check for a unique numero
+        logger.info("Creating new Marche with numero: {}", requestDTO.getNumero());
+
         if (marcheRepository.existsByNumero(requestDTO.getNumero())) {
+            logger.warn("Attempted to create a Marche with existing numero: {}", requestDTO.getNumero());
             throw new IllegalArgumentException("Un marche avec ce numero existe deja.");
         }
-        // Business logic: achievement date must be after the start date
+
         if (requestDTO.getDateDebutDesTravaux() != null && requestDTO.getDateDAchievementDesTravaux() != null) {
             if (requestDTO.getDateDAchievementDesTravaux().isBefore(requestDTO.getDateDebutDesTravaux())) {
+                logger.warn("Invalid dates for Marche {}: end date before start date", requestDTO.getNumero());
                 throw new IllegalArgumentException("La date d'achèvement des travaux ne peut pas être avant la date de début.");
             }
         }
 
         Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
-                .orElseThrow(() -> new EntityNotFoundException("Banque non trouvée avec id " + requestDTO.getBanqueId()));
+                .orElseThrow(() -> {
+                    logger.error("Banque not found with id {}", requestDTO.getBanqueId());
+                    return new EntityNotFoundException("Banque non trouvée avec id " + requestDTO.getBanqueId());
+                });
 
-        Marche marche = marcheMapper.toEntity(requestDTO,banque);
+        Marche marche = marcheMapper.toEntity(requestDTO, banque);
         Marche savedMarche = marcheRepository.save(marche);
+        logger.info("Successfully created Marche with id: {}", savedMarche.getId());
         return marcheMapper.toResponseDTO(savedMarche);
     }
 
@@ -64,10 +73,15 @@ public class MarcheService {
      */
     @Transactional(readOnly = true)
     public MarcheResponseDTO getMarcheById(Long id) {
+        logger.info("Fetching Marche with id: {}", id);
 
         Marche marche = marcheRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Marche not found with id " + id));
+                .orElseThrow(() -> {
+                    logger.error("Marche not found with id {}", id);
+                    return new EntityNotFoundException("Marche not found with id " + id);
+                });
 
+        logger.debug("Found Marche: {}", marche.getNom());
         return marcheMapper.toResponseDTO(marche);
     }
 
@@ -78,18 +92,21 @@ public class MarcheService {
      * @return The response DTO of the updated contract.
      */
     public MarcheResponseDTO updateMarche(Long id, MarcheRequestDTO requestDTO) {
+        logger.info("Updating Marche with id: {}", id);
 
         Marche existingMarche = marcheRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Marche not found with id " + id));
+                .orElseThrow(() -> {
+                    logger.error("Marche not found with id {}", id);
+                    return new EntityNotFoundException("Marche not found with id " + id);
+                });
 
-        // Business logic: achievement date must be after the start date for updates
         if (requestDTO.getDateDebutDesTravaux() != null && requestDTO.getDateDAchievementDesTravaux() != null) {
             if (requestDTO.getDateDAchievementDesTravaux().isBefore(requestDTO.getDateDebutDesTravaux())) {
+                logger.warn("Invalid dates for update of Marche {}: end date before start date", id);
                 throw new IllegalArgumentException("La date d'achèvement des travaux ne peut pas être avant la date de début.");
             }
         }
 
-        // Update fields from DTO
         existingMarche.setNumero(requestDTO.getNumero());
         existingMarche.setNom(requestDTO.getNom());
         existingMarche.setMontant(requestDTO.getMontant());
@@ -99,11 +116,15 @@ public class MarcheService {
 
         if (requestDTO.getBanqueId() != null) {
             Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
-                    .orElseThrow(() -> new EntityNotFoundException("Banque non trouvée avec id " + requestDTO.getBanqueId()));
+                    .orElseThrow(() -> {
+                        logger.error("Banque not found with id {}", requestDTO.getBanqueId());
+                        return new EntityNotFoundException("Banque non trouvée avec id " + requestDTO.getBanqueId());
+                    });
             existingMarche.setBanque(banque);
         }
 
         Marche updatedMarche = marcheRepository.save(existingMarche);
+        logger.info("Successfully updated Marche with id: {}", updatedMarche.getId());
         return marcheMapper.toResponseDTO(updatedMarche);
     }
 
@@ -112,12 +133,15 @@ public class MarcheService {
      * @param id The ID of the contract to delete.
      */
     public void deleteMarche(Long id) {
+        logger.info("Deleting Marche with id: {}", id);
 
         if (!marcheRepository.existsById(id)) {
+            logger.error("Attempted to delete non-existent Marche with id {}", id);
             throw new EntityNotFoundException("Marche not found with id " + id);
         }
 
         marcheRepository.deleteById(id);
+        logger.info("Successfully deleted Marche with id: {}", id);
     }
 
     /**
@@ -128,17 +152,16 @@ public class MarcheService {
      */
     @Transactional(readOnly = true)
     public Page<MarcheResponseDTO> findAllMarches(MarcheSearchDTO searchDTO, Pageable pageable) {
-        // Build the dynamic specification based on search criteria
+        logger.info("Searching Marches with criteria: {}", searchDTO);
+
         Specification<Marche> spec = Specification.where(MarcheSpecification.hasNom(searchDTO.getNom()))
                 .and(MarcheSpecification.hasNumero(searchDTO.getNumero()))
                 .and(MarcheSpecification.hasMaitreDouvrage(searchDTO.getMaitreDouvrage()))
                 .and(MarcheSpecification.hasBanqueId(searchDTO.getBanqueId()));
 
-
-        // Execute the query with the specification and pageable info
         Page<Marche> marchePage = marcheRepository.findAll(spec, pageable);
+        logger.debug("Found {} Marches matching criteria", marchePage.getTotalElements());
 
-        // Map the paginated result to a paginated DTO
         return marchePage.map(marcheMapper::toResponseDTO);
     }
 }

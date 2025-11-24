@@ -243,6 +243,10 @@ public class EcheanceLeasingService {
             spec = spec.and(EcheanceLeasingSpecification.byContratNumeroContrat(requestDTO.getNumeroContrat()));
         }
 
+        if (requestDTO.getMontant()!=null ){
+            spec=spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.getMontant()));
+        }
+
         // 4. Fetch the paginated list of outstanding payments
         Page<EcheanceLeasing> encoursEcheancesPage = echeanceLeasingRepository.findAll(spec, pageable);
 

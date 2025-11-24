@@ -53,17 +53,22 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
         miseADisposition.setBanque(banque);
         miseADisposition.setCinBeneficiaire(item.getCinBeneficiaire());
 
+        // Extraire l'année et le mois des dates pour la comparaison
+        YearMonth currentMonth = YearMonth.from(curentDateTime);
+        YearMonth emissionMonth = YearMonth.from(dateEmission);
+        YearMonth twoMonthThreshold = currentMonth.minusMonths(1);
 
 
-        if( dateEmission.isBefore(curentDateTime) ) {
+        if (emissionMonth.isBefore(twoMonthThreshold)) {
             miseADisposition.setActive(false);
-            log.info("Mise à disposition {} marked as INACTIVE (emission date {} < current date {}).",
-                    item.getNumero(), dateEmission, curentDateTime);
-        }else {
+            log.info("Mise à disposition {} marked as INACTIVE (emission month {} is before current month {}).",
+                    item.getNumero(), emissionMonth, currentMonth);
+        } else {
             miseADisposition.setActive(true);
-            log.info("Mise à disposition {} marked as ACTIVE (emission date {} >= current date {}).",
-                    item.getNumero(), dateEmission, curentDateTime);
+            log.info("Mise à disposition {} marked as ACTIVE (emission month {} is current or future month {}).",
+                    item.getNumero(), emissionMonth, currentMonth);
         }
+
         log.info("Successfully processed and transformed Mise à disposition Payment {}. Returning MiseADisposition entity.", item.getNumero());
         return miseADisposition;
     }

@@ -141,7 +141,8 @@ public class InteretService {
         // Build the specification to filter the records
         Specification<Interet> spec = Specification.where(InteretSpec.outstandingInterests())
                 .and(InteretSpec.hasBanque(searchDto.getBanqueId()))
-                .and(InteretSpec.hasLibelle(searchDto.getLibelle()));
+                .and(InteretSpec.hasLibelle(searchDto.getLibelle()))
+                .and(InteretSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of interest
         Page<Interet> interetPage = interetRepository.findAll(spec, pageable);

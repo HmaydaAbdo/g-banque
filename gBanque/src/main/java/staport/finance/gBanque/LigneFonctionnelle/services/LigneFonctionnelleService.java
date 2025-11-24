@@ -80,8 +80,6 @@ public class LigneFonctionnelleService {
             // RÈGLE MÉTIER 1 : Validation de la Nature pour être Ligne Mère
             validateNatureForMere(natureLigneFonctionnelle);
 
-            // RÈGLE MÉTIER 2 : Validation du Plafond des Sous-lignes
-            validateSousLignesPlafond(request.getPlafond(), request.getSousLignes());
 
             List<LigneFonctionnelle> sousLignesEntities = new ArrayList<>();
 
@@ -266,8 +264,7 @@ public class LigneFonctionnelleService {
         // RÈGLE MÉTIER 1 : Assurer que la nature de la Mère permet d'avoir des Sous-lignes
         validateNatureForMere(ligneMere.getNatureLigneFonctionnelle());
 
-        // RÈGLE MÉTIER 2 : Validation du Plafond des Sous-lignes par rapport au plafond actuel de la Mère
-        validateSousLignesPlafond(ligneMere.getPlafond(), sousLignesRequests);
+
 
 
         // 3. Préparation pour la gestion de la cascade (Modification, Création, Suppression)
@@ -457,7 +454,6 @@ public class LigneFonctionnelleService {
     // 10. VALIDATIONS ET HELPERS PRIVÉS
     // =========================================================================================
 
-
     /**
      * Règle Métier 1: Valide si la NatureLigneFonctionnelle est autorisée à être une Ligne Mère.
      * Seule la 'Caution Administrative' peut contenir des sous-lignes.
@@ -471,28 +467,7 @@ public class LigneFonctionnelleService {
         }
     }
 
-    /**
-     * Règle Métier 2: Valide que la somme des plafonds des sous-lignes ne dépasse pas le plafond de la Ligne Mère.
-     */
-    private void validateSousLignesPlafond(BigDecimal merePlafond, List<SousLigneRequestDto> sousLignesRequests) {
-        if (sousLignesRequests == null || sousLignesRequests.isEmpty()) {
-            return;
-        }
 
-        BigDecimal totalSousLignesPlafond = sousLignesRequests.stream()
-                .map(s -> Objects.requireNonNullElse(s.getPlafond(), BigDecimal.ZERO))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-
-        if (totalSousLignesPlafond.compareTo(merePlafond) > 0) {
-            log.warn("Validation de plafond échouée: La somme des plafonds des Sous-lignes ({}) dépasse le plafond de la Ligne Mère ({}).",
-                    totalSousLignesPlafond, merePlafond);
-            throw new IllegalArgumentException(
-                    "La somme des plafonds des sous-lignes (" + totalSousLignesPlafond +
-                            ") ne peut pas dépasser le plafond de la ligne mère (" + merePlafond + ")."
-            );
-        }
-    }
 
     /**
      * Helper pour mettre à jour les propriétés spécifiques (Plafond, Nature) et héritées (Taux, Dates, Banque) d'une sous-ligne existante.

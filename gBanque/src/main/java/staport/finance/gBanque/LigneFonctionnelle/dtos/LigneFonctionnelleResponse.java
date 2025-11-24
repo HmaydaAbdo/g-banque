@@ -19,6 +19,7 @@ public class LigneFonctionnelleResponse {
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
     private boolean actif;
+    private boolean isExpired;
 
     private Long ligneMereId;
     private List<SousLigneResponseDto> sousLignes;
@@ -39,21 +40,15 @@ public class LigneFonctionnelleResponse {
     public Long getNatureLigneFonctionnelleId() {
         return natureLigneFonctionnelleId;
     }
-    public void setNatureLigneFonctionnelleId(Long natureLigneFonctionnelleId) {
-        this.natureLigneFonctionnelleId = natureLigneFonctionnelleId;
-    }
+    public void setNatureLigneFonctionnelleId(Long natureLigneFonctionnelleId) {this.natureLigneFonctionnelleId = natureLigneFonctionnelleId;}
     public String getNatureLigneFonctionnelleLabel() {
         return natureLigneFonctionnelleLabel;
     }
-    public void setNatureLigneFonctionnelleLabel(String natureLigneFonctionnelleLabel) {
-        this.natureLigneFonctionnelleLabel = natureLigneFonctionnelleLabel;
-    }
+    public void setNatureLigneFonctionnelleLabel(String natureLigneFonctionnelleLabel) {this.natureLigneFonctionnelleLabel = natureLigneFonctionnelleLabel;}
     public String getNatureLigneFonctionnelleDescription() {
         return natureLigneFonctionnelleDescription;
     }
-    public void setNatureLigneFonctionnelleDescription(String natureLigneFonctionnelleDescription) {
-        this.natureLigneFonctionnelleDescription = natureLigneFonctionnelleDescription;
-    }
+    public void setNatureLigneFonctionnelleDescription(String natureLigneFonctionnelleDescription) {this.natureLigneFonctionnelleDescription = natureLigneFonctionnelleDescription;}
     public BigDecimal getPlafond() { return plafond; }
     public void setPlafond(BigDecimal plafond) { this.plafond = plafond; }
     public BigDecimal getTaux() { return taux; }
@@ -70,11 +65,12 @@ public class LigneFonctionnelleResponse {
     public boolean isActif() {
         return actif;
     }
-
     public void setActif(boolean actif) {
         this.actif = actif;
     }
 
+    public boolean isExpired() {return isExpired;}
+    public void setExpired(boolean expired) {isExpired = expired;}
 
     public Long getLigneMereId() { return ligneMereId; }
     public void setLigneMereId(Long ligneMereId) { this.ligneMereId = ligneMereId; }

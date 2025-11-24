@@ -9,6 +9,8 @@ import staport.finance.gBanque.decomptes.dto.DecompteSearchDto;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
+
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -91,6 +93,16 @@ public class DecompteSpec {
                 return cb.conjunction();
             }
             return cb.equal(root.get("status"), status);
+        };
+    }
+
+
+    public static Specification<Decompte> hasMontant (BigDecimal montant) {
+        return (root, query, cb) -> {
+            if (montant == null) {
+                return cb.conjunction();
+            }
+            return cb.equal(root.get("montant"), montant);
         };
     }
 
