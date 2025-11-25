@@ -88,6 +88,9 @@ import {
 } from "../../etatsDesEncours/views/lesEncours/encaissements/virement-encours/virement-encours.component";
 import {PrelevementListComponent} from "../../prelevements/views/prelevement-list/prelevement-list.component";
 import {PrelevementFormComponent} from "../../prelevements/views/prelevement-form/prelevement-form.component";
+import {
+  EncoursPrelevementComponent
+} from "../../etatsDesEncours/views/lesEncours/decaissement/prelevement/encours-prelevement.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -180,6 +183,7 @@ export const PORTAIL_ROUTES: Routes = [
 
       {path:"commissions",component:EncoursCommissionsComponent},
       {path:"agios",component:EncoursAgiosComponent},
+      {path:"prelevements",component:EncoursPrelevementComponent},
       {path:"interests",component:EncoursInteretComponent},
       {path:"fraisBancaire",component:EncoursFraisBancaireComponent},
     ]

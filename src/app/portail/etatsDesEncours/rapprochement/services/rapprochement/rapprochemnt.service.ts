@@ -30,6 +30,8 @@
   import {FraisBancaireTransactionResponse} from "../../dtos/frais-bancaire/frais-bancaire-transaction-response.dto";
   import {FactoringTransactionRequest} from "../../dtos/factoring/FactoringTransactionRequest";
   import {FactoringTransactionResponse} from "../../dtos/factoring/FactoringTransactionResponse";
+  import {PrelevementValidationRequestDto} from "../../dtos/prelevement/prelevement-validation-request.dto";
+  import {PrelevementTransactionResponse} from "../../dtos/prelevement/PrelevementTransactionResponse";
 
   @Injectable({
     providedIn: 'root'
@@ -153,6 +155,14 @@
         agios
       );
     }
+
+    prelevementToRapprochement(prelevement: PrelevementValidationRequestDto): Observable<PrelevementTransactionResponse> {
+      return this.http.post<PrelevementTransactionResponse>(
+        `${this.baseUrl}/process/prelevement`,
+        prelevement
+      );
+    }
+
 
     interetToRapprochement(interet: InteretValidationRequest): Observable<InteretTransactionResponse> {
       return this.http.post<InteretTransactionResponse>(

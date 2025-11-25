@@ -48,6 +48,7 @@ export class LesEncoursComponent implements OnInit {
     'factoring-remboursement': { label:'Décaissements ⇒ Factoring (Remboursement) ',icon: 'pi pi-list'},
     'commissions': { label: 'Décaissements ⇒ Commissions', icon: 'pi pi-list' },
     'agios': { label: 'Décaissements ⇒ Agios', icon: 'pi pi-list' },
+    'prelevements': { label: 'Décaissements ⇒ Prélèvements', icon: 'pi pi-list' },
     'interests': { label: 'Décaissements ⇒ Intérêts', icon: 'pi pi-list' },
     'fraisBancaire': { label: 'Décaissements ⇒ Frais Bancaires', icon: 'pi pi-list' },
 
@@ -130,6 +131,7 @@ export class LesEncoursComponent implements OnInit {
           { label: 'Factoring', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'factoring-remboursement'] },
           { label: 'Commissions', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'commissions'] },
           { label: 'Agios', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'agios'] },
+          { label: 'Prélèvements', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prelevements'] },
           { label: 'Intérêts', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'interests'] },
           { label: 'Frais Bancaire', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'fraisBancaire'] },
         ]
