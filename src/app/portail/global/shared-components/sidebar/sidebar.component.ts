@@ -120,6 +120,7 @@ export class SidebarComponent implements OnInit {
       ]},
     {label:"Les Commissions",icon:"pi pi-list",routerLink: '/portail/commissions'},
     {label:"Les Agios",icon:"pi pi-list",routerLink: '/portail/agios'},
+    {label:"Les Prélèvements",icon:"pi pi-list",routerLink: '/portail/prelevements'},
     {label:"Les Frais bancaire",icon:"pi pi-list",routerLink: '/portail/frais-bancaire'},
     {label:"Les Intérêts ",icon:"pi pi-list",routerLink: '/portail/interets'},
     {label:"Historique des transactions",routerLink:"/portail/historique-des-transactions",icon:"pi pi-history"},

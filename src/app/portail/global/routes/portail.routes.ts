@@ -86,6 +86,8 @@ import {
 import {
   VirementEncaissementEncoursComponent
 } from "../../etatsDesEncours/views/lesEncours/encaissements/virement-encours/virement-encours.component";
+import {PrelevementListComponent} from "../../prelevements/views/prelevement-list/prelevement-list.component";
+import {PrelevementFormComponent} from "../../prelevements/views/prelevement-form/prelevement-form.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -190,6 +192,10 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'agios', component: AgiosListComponent },
   {path:"agios/new",component:AgiosFormComponent},
   {path:"agios/edit/:id",component:AgiosFormComponent},
+
+  { path: 'prelevements', component: PrelevementListComponent },
+  {path:"prelevements/new",component:PrelevementFormComponent},
+  {path:"prelevements/edit/:id",component:PrelevementFormComponent},
 
   { path: 'frais-bancaire', component:  FraisBancaireListComponent},
   {path:"frais-bancaire/new",component:FraisBancaireFormComponent},
