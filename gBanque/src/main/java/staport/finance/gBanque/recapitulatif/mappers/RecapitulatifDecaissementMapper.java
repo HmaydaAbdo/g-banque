@@ -14,6 +14,7 @@ import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
+import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.virements.entities.Virement;
@@ -265,6 +266,22 @@ public class RecapitulatifDecaissementMapper {
         dto.setSource(TransactionSource.AGIOS);
         return dto;
     }
+
+    public RecaputilatifItem mapPrelevementToDto(Prelevement prelevement) {
+
+        if (prelevement == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(prelevement.getDateEmission());
+        dto.setDebit(prelevement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(prelevement.getObservation() );
+        dto.setLibelle(prelevement.getLibelle());
+        dto.setSource(TransactionSource.PRELEVEMENT);
+        return dto;
+    }
+
 
     public RecaputilatifItem mapFraisBancaireToDto(FraisBancaire fraisBancaire) {
 

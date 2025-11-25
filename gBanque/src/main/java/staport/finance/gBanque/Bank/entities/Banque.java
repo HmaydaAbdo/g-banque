@@ -16,6 +16,7 @@ import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
+import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.virements.entities.Virement;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import java.math.BigDecimal;
@@ -109,6 +110,9 @@ public class Banque {
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Agios> agios = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<Prelevement> prelevements = new ArrayList<>();
 
     @OneToMany(mappedBy = "banqueDePrelevement",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
@@ -290,6 +294,23 @@ public class Banque {
 
     public void removeAgios(Agios agios){
         this.agios.remove(agios);
+    }
+
+
+    public List<Prelevement> getPrelevements() {
+        return prelevements;
+    }
+
+    public void setPrelevements(List<Prelevement> prelevements) {
+        this.prelevements = prelevements;
+    }
+
+    public void addPrelevement(Prelevement prelevement){
+        this.prelevements.add(prelevement);
+    }
+
+    public void removePrelevement(Prelevement prelevement){
+        this.prelevements.remove(prelevement);
     }
 
     @PrePersist

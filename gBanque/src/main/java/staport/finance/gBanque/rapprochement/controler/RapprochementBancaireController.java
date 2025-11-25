@@ -201,6 +201,12 @@ public class RapprochementBancaireController {
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    @PostMapping("/process/prelevement")
+    public ResponseEntity<AgiosTransactionResponse> processAgiosToTransaction(@Valid @RequestBody AgiosValidationRequest requestDto) throws Exception {
+        AgiosTransactionResponse responseDto = rapprochementService.processAgiosToTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
     @PostMapping("/process/frais-bancaire")
     public ResponseEntity<FraisBancaireTransactionResponse> processFraisBancaireToTransaction(@Valid @RequestBody FraisBanciareValidationRequest requestDto) throws Exception {
         FraisBancaireTransactionResponse responseDto = rapprochementService.processFraisBancaireToTransaction(requestDto);

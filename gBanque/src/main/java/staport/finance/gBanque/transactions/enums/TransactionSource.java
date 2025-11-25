@@ -14,5 +14,6 @@ public enum TransactionSource {
     AGIOS,
     FRAIS_BANCAIRE,
     INTERETS,
-    FACTORING
+    FACTORING,
+    PRELEVEMENT
 }
