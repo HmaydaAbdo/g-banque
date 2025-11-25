@@ -31,6 +31,8 @@ import staport.finance.gBanque.rapprochement.dtos.leasing.LeasingTransactionRequ
 import staport.finance.gBanque.rapprochement.dtos.leasing.LeasingTransactionResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.miseAdispo.MiseAdispositionTransactionRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.miseAdispo.MiseAdispositionTransactionResponseDto;
+import staport.finance.gBanque.rapprochement.dtos.prelevements.PrelevementTransactionResponse;
+import staport.finance.gBanque.rapprochement.dtos.prelevements.PrelevementValidationRequest;
 import staport.finance.gBanque.rapprochement.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.virements.VirementTransactionResponseDto;
 import staport.finance.gBanque.rapprochement.services.RapprochementService;
@@ -202,8 +204,8 @@ public class RapprochementBancaireController {
     }
 
     @PostMapping("/process/prelevement")
-    public ResponseEntity<AgiosTransactionResponse> processAgiosToTransaction(@Valid @RequestBody AgiosValidationRequest requestDto) throws Exception {
-        AgiosTransactionResponse responseDto = rapprochementService.processAgiosToTransaction(requestDto);
+    public ResponseEntity<PrelevementTransactionResponse> processPrelevementToTransaction(@Valid @RequestBody PrelevementValidationRequest requestDto) throws Exception {
+        PrelevementTransactionResponse responseDto = rapprochementService.processPrelevementToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
