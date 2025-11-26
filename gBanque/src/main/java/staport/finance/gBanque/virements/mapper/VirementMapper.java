@@ -30,6 +30,7 @@ public class VirementMapper {
         response.setType(virement.getType());
         response.setObservation("Virement N° " + virement.getNumero());
         response.setLibelle("Bénéficiaire " + virement.getBeneficiaire() );
+        response.setEmetteur(virement.getEmetteur()!=null ? virement.getEmetteur() : null);
         return response;
     }
 }

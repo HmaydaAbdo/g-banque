@@ -19,6 +19,7 @@ public class VirementResponseDto {
     private BigDecimal montant;
     private String banqueEmettriceNom;
     private String banqueBeneficiaire;
+    private String emetteur;
     private String ribBeneficiaire;
     private boolean active;
     private Type type;
@@ -27,16 +28,7 @@ public class VirementResponseDto {
     public VirementResponseDto() {
     }
 
-    public VirementResponseDto(String numero, String beneficiaire, OffsetDateTime dateEmission, BigDecimal montant, String banqueEmettriceNom, String banqueBeneficiaire, String ribBeneficiaire, boolean active) {
-        this.numero = numero;
-        this.beneficiaire = beneficiaire;
-        this.dateEmission = dateEmission;
-        this.montant = montant;
-        this.banqueEmettriceNom = banqueEmettriceNom;
-        this.banqueBeneficiaire = banqueBeneficiaire;
-        this.ribBeneficiaire = ribBeneficiaire;
-        this.active = active;
-    }
+
 
     public String getNumero() {
         return numero;
@@ -79,6 +71,14 @@ public class VirementResponseDto {
 
     public void setBanqueEmettriceNom(String banqueEmettriceNom) {
         this.banqueEmettriceNom = banqueEmettriceNom;
+    }
+
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
     }
 
     public BigDecimal getMontant() {
@@ -137,17 +137,5 @@ public class VirementResponseDto {
         this.observation = observation;
     }
 
-    @Override
-    public String toString() {
-        return "VirementResponseDto{" +
-                "numero='" + numero + '\'' +
-                ", dateEmission=" + dateEmission +
-                ", beneficiaire='" + beneficiaire + '\'' +
-                ", montant=" + montant +
-                ", banqueEmettriceNom='" + banqueEmettriceNom + '\'' +
-                ", banqueBeneficiaire='" + banqueBeneficiaire + '\'' +
-                ", ribBeneficiaire='" + ribBeneficiaire + '\'' +
-                ", active=" + active +
-                '}';
-    }
+
 }

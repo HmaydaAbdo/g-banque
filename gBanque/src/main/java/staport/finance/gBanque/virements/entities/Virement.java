@@ -13,7 +13,10 @@ import java.util.Objects;
 public class Virement {
 
     @Id
-    @Column(name = "numero", nullable = false, unique = true)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "numero")
     private String numero;
 
     @Column(name = "date_emission", nullable = false)
@@ -31,11 +34,11 @@ public class Virement {
     @ManyToOne(optional = true)
     @JoinColumn(name = "banque_emettrice_id", nullable = true)
     private Banque banqueEmettrice;
+    private String emetteur;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "banque_beneficiare_id",  nullable =true)
     private Banque banqueBeneficiare;
-
 
     private String nomBanqueBeneficiaireLibre;
 
@@ -55,6 +58,10 @@ public class Virement {
 
 
     // Getters & Setters
+
+    public Long getId() {
+        return id;
+    }
     public String getNumero() { return numero; }
     public void setNumero(String numero) { this.numero = numero; }
     public OffsetDateTime getDateEmission() { return dateEmission; }
@@ -72,6 +79,14 @@ public class Virement {
 
     public void setBanqueEmettrice(Banque banqueEmettrice) {
         this.banqueEmettrice = banqueEmettrice;
+    }
+
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
     }
 
     public Banque getBanqueBeneficiare() {
@@ -133,24 +148,26 @@ public class Virement {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Virement virement = (Virement) o;
-        return active == virement.active && Objects.equals(numero, virement.numero) && Objects.equals(dateEmission, virement.dateEmission) && Objects.equals(dateOperation, virement.dateOperation) && Objects.equals(dateValeur, virement.dateValeur) && Objects.equals(beneficiaire, virement.beneficiaire) && Objects.equals(montant, virement.montant) && Objects.equals(banqueEmettrice, virement.banqueEmettrice) && Objects.equals(banqueBeneficiare, virement.banqueBeneficiare) && Objects.equals(nomBanqueBeneficiaireLibre, virement.nomBanqueBeneficiaireLibre) && Objects.equals(ribBeneficiaire, virement.ribBeneficiaire) && type == virement.type && Objects.equals(observation, virement.observation) && Objects.equals(libelle, virement.libelle);
+        return active == virement.active && Objects.equals(id, virement.id) && Objects.equals(numero, virement.numero) && Objects.equals(dateEmission, virement.dateEmission) && Objects.equals(dateOperation, virement.dateOperation) && Objects.equals(dateValeur, virement.dateValeur) && Objects.equals(beneficiaire, virement.beneficiaire) && Objects.equals(montant, virement.montant) && Objects.equals(banqueEmettrice, virement.banqueEmettrice) && Objects.equals(emetteur, virement.emetteur) && Objects.equals(banqueBeneficiare, virement.banqueBeneficiare) && Objects.equals(nomBanqueBeneficiaireLibre, virement.nomBanqueBeneficiaireLibre) && Objects.equals(ribBeneficiaire, virement.ribBeneficiaire) && type == virement.type && Objects.equals(observation, virement.observation) && Objects.equals(libelle, virement.libelle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(numero, dateEmission, dateOperation, dateValeur, beneficiaire, montant, banqueEmettrice, banqueBeneficiare, nomBanqueBeneficiaireLibre, ribBeneficiaire, active, type, observation, libelle);
+        return Objects.hash(id, numero, dateEmission, dateOperation, dateValeur, beneficiaire, montant, banqueEmettrice, emetteur, banqueBeneficiare, nomBanqueBeneficiaireLibre, ribBeneficiaire, active, type, observation, libelle);
     }
 
     @Override
     public String toString() {
         return "Virement{" +
-                "numero='" + numero + '\'' +
+                "id=" + id +
+                ", numero='" + numero + '\'' +
                 ", dateEmission=" + dateEmission +
                 ", dateOperation=" + dateOperation +
                 ", dateValeur=" + dateValeur +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", montant=" + montant +
                 ", banqueEmettrice=" + banqueEmettrice +
+                ", emetteur='" + emetteur + '\'' +
                 ", banqueBeneficiare=" + banqueBeneficiare +
                 ", nomBanqueBeneficiaireLibre='" + nomBanqueBeneficiaireLibre + '\'' +
                 ", ribBeneficiaire='" + ribBeneficiaire + '\'' +

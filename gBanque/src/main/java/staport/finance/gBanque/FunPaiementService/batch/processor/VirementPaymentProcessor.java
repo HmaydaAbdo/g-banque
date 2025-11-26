@@ -54,7 +54,7 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
 
     private Virement createVirement(FunPaymentDto item, Banque banque, Type type, String numero) {
 
-        if (virementRepository.existsById(numero)) {
+        if (virementRepository.existsByNumero(numero)) {
             log.warn("Virement {} already exists, skipping", numero);
             return null;
         }
@@ -76,6 +76,10 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
         YearMonth oneMonthAgo = currentMonth.minusMonths(1);
 
         v.setActive(!emissionMonth.isBefore(oneMonthAgo));
+
+        if(type==Type.ENCAISSEMENT){
+            v.setEmetteur("virement intra bancaire");
+        }
 
         return v;
     }
