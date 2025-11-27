@@ -31,6 +31,37 @@ public final class VirementSpec {
         };
     }
 
+    public static Specification<Virement> hasDateEmission(OffsetDateTime dateEmission) {
+        return (root, query, criteriaBuilder) -> {
+            if (dateEmission == null ) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("dateEmission"), dateEmission);
+
+        };
+    }
+
+    public static Specification<Virement> hasDateEmission(String emetteur) {
+        return (root, query, criteriaBuilder) -> {
+            if (emetteur == null ) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("emetteur"), emetteur);
+
+        };
+    }
+
+
+    public static Specification<Virement> hasEmissionDate(OffsetDateTime dateEmission) {
+        return (root, query, criteriaBuilder) -> {
+            if (dateEmission == null ) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("dateEmission"), dateEmission);
+
+        };
+    }
+
     public static Specification<Virement> hasEmetteur(String emetteur) {
         return (root, query, criteriaBuilder) -> {
             if (emetteur == null || emetteur.trim().isEmpty()) {
@@ -164,6 +195,10 @@ public final class VirementSpec {
             spec = spec.and(hasNumero(searchDto.getNumero()));
         }
 
+        if( searchDto.getDateEmission() !=null){
+            spec=spec.and(hasEmissionDate(searchDto.getDateEmission()));
+        }
+
         if (searchDto.getBeneficiaire() != null) {
             spec = spec.and(hasBeneficiaire(searchDto.getBeneficiaire()));
         }
@@ -190,6 +225,10 @@ public final class VirementSpec {
 
         if(searchDto.getEmetteur() != null) {
             spec = spec.and(hasEmetteur(searchDto.getEmetteur()));
+        }
+
+        if(searchDto.getMontant() != null) {
+            spec = spec.and(hasMontant(searchDto.getMontant()));
         }
 
         return spec;

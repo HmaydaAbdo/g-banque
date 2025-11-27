@@ -44,12 +44,21 @@ public class VirementController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping
-    public ResponseEntity<Page<VirementResponseDto>> searchVirements(
+    @GetMapping("/encaissements")
+    public ResponseEntity<Page<VirementResponseDto>> getEncaissementVirements(
             VirementSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
 
-        Page<VirementResponseDto> result = virementService.searchVirements(searchDto, pageable);
+        Page<VirementResponseDto> result = virementService.getEncaissementVirements(searchDto, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/decaissements")
+    public ResponseEntity<Page<VirementResponseDto>> getDecaissementVirements(
+            VirementSearchDto searchDto,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+
+        Page<VirementResponseDto> result = virementService.getDecaissementVirements(searchDto, pageable);
         return ResponseEntity.ok(result);
     }
 

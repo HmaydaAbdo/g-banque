@@ -1,5 +1,7 @@
 package staport.finance.gBanque.virements.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -22,6 +24,7 @@ import java.util.NoSuchElementException;
 @Transactional(readOnly = true)
 public class VirementService {
 
+    private static final Logger log = LoggerFactory.getLogger(VirementService.class);
     private final VirementRepository virementRepository;
     private final BanqueRepository banqueRepository;
     private final VirementMapper virementMapper;
@@ -33,153 +36,192 @@ public class VirementService {
         this.virementMapper = virementMapper;
     }
 
-
     @Transactional
     public VirementResponseDto createEncaissementVirement(VirementRequestDto dto) {
+        log.info("Creating new encaissement virement: {}", dto);
 
-        // 1. Convertir le DTO en entité Virement
         Virement virement = this.virementMapper.toEntity(dto);
-
-        // 2. Définir le statut initial (doit être actif pour les nouvelles créations)
         virement.setActive(true);
 
-        // 4. Sauvegarder l'entité
+        log.debug("Saving virement entity: {}", virement);
         virement = virementRepository.save(virement);
 
-        // 5. Mapper et retourner le DTO de réponse
+        log.info("Successfully created virement with id: {}", virement.getId());
         return this.virementMapper.toDto(virement);
     }
 
     @Transactional
     public VirementResponseDto editEncaissementVirement(Long id, VirementRequestDto dto) {
-        Virement existingVirement = virementRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Virement with id " + id + " not found."));
+        log.info("Editing encaissement virement id={} with data={}", id, dto);
 
-        // Règle 1 : Vérifier le type (doit être ENCAISSEMENT)
+        Virement existingVirement = virementRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Virement with id {} not found", id);
+                    return new NoSuchElementException("Virement with id " + id + " not found.");
+                });
+
         if (existingVirement.getType() != Type.ENCAISSEMENT) {
+            log.warn("Attempt to modify non-encaissement virement id={}", id);
             throw new IllegalArgumentException("Modification interdite: le virement with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
-        // Règle 2 : Vérifier le statut (doit être actif)
         if (!existingVirement.isActive()) {
-            throw new IllegalArgumentException("Modification interdite: le virement with id  " + id + " est déja réglé.");
+            log.warn("Attempt to modify inactive virement id={}", id);
+            throw new IllegalArgumentException("Modification interdite: le virement with id " + id + " est déja réglé.");
         }
 
-        // Règle 3 : Mettre à jour les champs modifiables
-        // Montant
         if (dto.getMontant() != null) {
+            log.debug("Updating montant for virement id={}", id);
             existingVirement.setMontant(dto.getMontant());
         }
-        // Date de réception (DateEmission dans l'entité)
         if (dto.getDateReception() != null) {
+            log.debug("Updating dateReception for virement id={}", id);
             existingVirement.setDateEmission(dto.getDateReception());
         }
-        // Émetteur
         if (dto.getEmetteur() != null) {
+            log.debug("Updating emetteur for virement id={}", id);
             existingVirement.setEmetteur(dto.getEmetteur());
         }
-        // Banque Bénéficiaire (BanqueBeneficiare dans l'entité)
         if (dto.getBanqueBeneficiaireId() != null) {
-            Banque banque=banqueRepository.findById(dto.getBanqueBeneficiaireId()).orElseThrow(()->new ResourceNotFoundException("Banque with id: "+dto.getBanqueBeneficiaireId()+" not found"));
+            log.debug("Updating banqueBeneficiaire for virement id={}", id);
+            Banque banque = banqueRepository.findById(dto.getBanqueBeneficiaireId())
+                    .orElseThrow(() -> {
+                        log.error("Banque with id {} not found", dto.getBanqueBeneficiaireId());
+                        return new ResourceNotFoundException("Banque with id: " + dto.getBanqueBeneficiaireId() + " not found");
+                    });
             existingVirement.setBanqueBeneficiare(banque);
         }
 
-        // Les champs 'type' et 'beneficiaire' sont immuables, donc on ne les modifie pas.
-
-        // Sauvegarder et retourner
         existingVirement = virementRepository.save(existingVirement);
+        log.info("Successfully updated virement id={}", id);
         return this.virementMapper.toDto(existingVirement);
     }
 
     @Transactional
     public VirementResponseDto getVirementById(Long id) {
+        log.info("Fetching virement with id={}", id);
+
         Virement virement = virementRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Virement with id " + id + " not found."));
+                .orElseThrow(() -> {
+                    log.error("Virement with id {} not found", id);
+                    return new ResourceNotFoundException("Virement with id " + id + " not found.");
+                });
+
+        log.debug("Found virement: {}", virement);
         return this.virementMapper.toDto(virement);
     }
-    @Transactional(readOnly = true)
-    public Page<VirementResponseDto> searchVirements(VirementSearchDto searchDto, Pageable pageable) {
-        // Build the combined specification using the static methods from VirementSpec
-        Specification<Virement> spec = VirementSpec.bySearchDto(searchDto);
 
-        // Execute the search with the combined specification and pagination
+    @Transactional(readOnly = true)
+    public Page<VirementResponseDto> getEncaissementVirements(VirementSearchDto searchDto, Pageable pageable) {
+        log.info("Searching encaissement virements with filters={} pageable={}", searchDto, pageable);
+
+        Specification<Virement> spec = VirementSpec.bySearchDto(searchDto)
+                .and(VirementSpec.hasType(Type.ENCAISSEMENT));
+
         Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
 
-        // Map the result Page<Virement> to Page<VirementResponseDto>
+        log.info("Found {} encaissement virements", virementPage.getTotalElements());
+        return virementPage.map(this.virementMapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<VirementResponseDto> getDecaissementVirements(VirementSearchDto searchDto, Pageable pageable) {
+        log.info("Searching decaissement virements with filters={} pageable={}", searchDto, pageable);
+
+        Specification<Virement> spec = VirementSpec.bySearchDto(searchDto)
+                .and(VirementSpec.hasType(Type.DECAISSEMENT));
+
+        Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
+
+        log.info("Found {} decaissement virements", virementPage.getTotalElements());
         return virementPage.map(this.virementMapper::toDto);
     }
 
     @Transactional
     public VirementResponseDto toggleVirementStatus(Long id) {
+        log.info("Toggling status for virement id={}", id);
+
         Virement virement = virementRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Virement with id " + id + " not found."));
+                .orElseThrow(() -> {
+                    log.error("Virement with id {} not found", id);
+                    return new NoSuchElementException("Virement with id " + id + " not found.");
+                });
 
-        // Toggle the 'active' status
         virement.setActive(!virement.isActive());
+        log.debug("New status for virement id={} isActive={}", id, virement.isActive());
 
-        // Save the updated virement
         virement = virementRepository.save(virement);
 
-        // Map and return the updated DTO
+        log.info("Status toggled successfully for virement id={}", id);
         return this.virementMapper.toDto(virement);
     }
 
-
     @Transactional(readOnly = true)
     public EncoursVirementResponseDto getEncoursDecaissementForVirements(EncoursVirementsSearchDto searchDto, Long banqueId, Pageable pageable) {
-        // Build the specification for active virements for the specified bank in the current month
+        log.info("Fetching encours decaissement for banqueId={} with filters={}", banqueId, searchDto);
+
         Specification<Virement> spec = VirementSpec.encoursDecaissement(banqueId)
-                .and(VirementSpec.hasNumero(searchDto.getNumero()))
+                .and(VirementSpec.hasDateEmission(searchDto.getDateEmission()))
                 .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(VirementSpec.hasMontant(searchDto.getMontant()));
 
-        // Execute the search with the specification and pagination
         Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
 
-        BigDecimal totalDesEncours = virementRepository.findAll(spec).stream().map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-        Page<VirementResponseDto> result = virementPage.map(this.virementMapper::toDto);
-        // Map the result to DTOs and return
-        return new EncoursVirementResponseDto(totalDesEncours,result);
-    }
+        BigDecimal totalDesEncours = virementRepository.findAll(spec).stream()
+                .map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        log.info("Total encours decaissement for banqueId={} is {}", banqueId, totalDesEncours);
+
+        return new EncoursVirementResponseDto(totalDesEncours, virementPage.map(this.virementMapper::toDto));
+    }
 
     @Transactional(readOnly = true)
     public EncoursVirementResponseDto getEncoursEncaissementForVirements(EncoursVirementsSearchDto searchDto, Long banqueId, Pageable pageable) {
+        log.info("Fetching encours encaissement for banqueId={} with filters={}", banqueId, searchDto);
 
-        Banque banqueBeneficiaire = banqueRepository.findById(banqueId).orElseThrow(() -> new NoSuchElementException("Bank with id " + banqueId + " not found."));
+        Banque banqueBeneficiaire = banqueRepository.findById(banqueId)
+                .orElseThrow(() -> {
+                    log.error("Banque with id {} not found", banqueId);
+                    return new NoSuchElementException("Bank with id " + banqueId + " not found.");
+                });
 
-        // Build the specification for active virements for the specified bank in the current month
         Specification<Virement> spec = VirementSpec.encoursEncaissement(banqueBeneficiaire.getNom())
-                .and(VirementSpec.hasNumero(searchDto.getNumero()))
+                .and(VirementSpec.hasDateEmission(searchDto.getDateEmission()))
                 .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(VirementSpec.hasMontant(searchDto.getMontant()));
+                .and(VirementSpec.hasMontant(searchDto.getMontant()))
+                .and(VirementSpec.hasEmetteur(searchDto.getEmetteur()));
 
-        // Execute the search with the specification and pagination
         Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
 
-        BigDecimal totalDesEncours = virementRepository.findAll(spec).stream().map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-        Page<VirementResponseDto> result = virementPage.map(this.virementMapper::toDto);
-        // Map the result to DTOs and return
-        return new EncoursVirementResponseDto(totalDesEncours,result);
-    }
+        BigDecimal totalDesEncours = virementRepository.findAll(spec).stream()
+                .map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        log.info("Total encours encaissement for banqueId={} is {}", banqueId, totalDesEncours);
+
+        return new EncoursVirementResponseDto(totalDesEncours, virementPage.map(this.virementMapper::toDto));
+    }
 
     @Transactional
     public void deleteEncaissementVirement(Long id) {
-        Virement virement = virementRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Virement with id " + id + " not found."));
+        log.info("Deleting encaissement virement id={}", id);
 
-        // Règle 1 : Vérifier le type (doit être ENCAISSEMENT)
+        Virement virement = virementRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Virement with id {} not found", id);
+                    return new NoSuchElementException("Virement with id " + id + " not found.");
+                });
+
         if (virement.getType() != Type.ENCAISSEMENT) {
+            log.warn("Attempt to delete non-encaissement virement id={}", id);
             throw new IllegalArgumentException("Suppression interdite: le virement with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
-        // Règle 2 : Vérifier le statut (doit être actif)
         if (!virement.isActive()) {
+            log.warn("Attempt to delete inactive virement id={}", id);
             throw new IllegalArgumentException("Suppression interdite: le virement with id " + id + " est déja réglé.");
         }
 
-        // Supprimer l'entité
         virementRepository.delete(virement);
+        log.info("Successfully deleted virement id={}", id);
     }
 }

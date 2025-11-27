@@ -1,28 +1,27 @@
 package staport.finance.gBanque.virements.dtos;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 public class EncoursVirementsSearchDto {
 
-    private String numero;
+    private OffsetDateTime dateEmission;
     private String beneficiaire;
     private BigDecimal montant;
+    private String emetteur;
 
     public EncoursVirementsSearchDto() {
     }
 
-    public EncoursVirementsSearchDto(String numero, String beneficiaire) {
-        this.numero = numero;
-        this.beneficiaire = beneficiaire;
+
+    public OffsetDateTime getDateEmission() {
+        return dateEmission;
     }
 
-    public String getNumero() {
-        return numero;
+    public void setDateEmission(OffsetDateTime dateEmission) {
+        this.dateEmission = dateEmission;
     }
 
-    public void setNumero(String numero) {
-        this.numero = numero;
-    }
     public String getBeneficiaire() {
         return beneficiaire;
     }
@@ -39,12 +38,21 @@ public class EncoursVirementsSearchDto {
         this.montant = montant;
     }
 
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
+    }
+
     @Override
     public String toString() {
         return "EncoursVirementsSearchDto{" +
-                "numero='" + numero + '\'' +
+                "dateEmission=" + dateEmission +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", montant=" + montant +
+                ", emetteur='" + emetteur + '\'' +
                 '}';
     }
 }

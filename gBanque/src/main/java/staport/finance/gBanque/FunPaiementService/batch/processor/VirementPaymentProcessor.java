@@ -78,7 +78,7 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
         v.setActive(!emissionMonth.isBefore(oneMonthAgo));
 
         if(type==Type.ENCAISSEMENT){
-            v.setEmetteur("virement intra bancaire");
+            v.setEmetteur("STAPORT");
         }
 
         return v;
