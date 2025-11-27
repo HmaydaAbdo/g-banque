@@ -1,10 +1,7 @@
 package staport.finance.gBanque.virements.specs;
 
-import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
-import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.virements.entities.Virement;
 import staport.finance.gBanque.virements.dtos.VirementSearchDto;
 import staport.finance.gBanque.virements.enums.Type;
@@ -34,6 +31,19 @@ public final class VirementSpec {
         };
     }
 
+    public static Specification<Virement> hasEmetteur(String emetteur) {
+        return (root, query, criteriaBuilder) -> {
+            if (emetteur == null || emetteur.trim().isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("emetteur")),
+                    "%" + emetteur.toLowerCase() + "%"
+            );
+        };
+    }
+
+
     /**
      * Specification to filter Virements by their beneficiary (case-insensitive).
      * @param beneficiaire The beneficiary name to match.
@@ -58,14 +68,19 @@ public final class VirementSpec {
                 return criteriaBuilder.conjunction();
             }
 
-            // 1. Joindre l'entité Banque via la relation 'banqueBeneficiare'
-            Join<Virement, Banque> banqueJoin = root.join("banqueBeneficiare");
+            String searchPattern = "%" + banqueBeneficiaireNom.toLowerCase() + "%";
 
-            // 2. Comparer le nom de la Banque (via le champ 'nom' de l'entité Banque)
-            return criteriaBuilder.like(
-                    criteriaBuilder.lower(banqueJoin.get("nom")),
-                    "%" + banqueBeneficiaireNom.toLowerCase() + "%"
+            Predicate banqueReferenceePredicate = criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("banqueBeneficiare").get("nom")),
+                    searchPattern
             );
+
+            Predicate banqueLibrePredicate = criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("nomBanqueBeneficiaireLibre")),
+                    searchPattern
+            );
+
+            return criteriaBuilder.or(banqueReferenceePredicate, banqueLibrePredicate);
         };
     }
 
@@ -171,6 +186,10 @@ public final class VirementSpec {
 
         if(searchDto.getType() != null) {
             spec = spec.and(hasType(searchDto.getType()));
+        }
+
+        if(searchDto.getEmetteur() != null) {
+            spec = spec.and(hasEmetteur(searchDto.getEmetteur()));
         }
 
         return spec;

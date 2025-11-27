@@ -1,15 +1,13 @@
 package staport.finance.gBanque.virements.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.virements.dtos.EncoursVirementResponseDto;
-import staport.finance.gBanque.virements.dtos.EncoursVirementsSearchDto;
-import staport.finance.gBanque.virements.dtos.VirementResponseDto;
-import staport.finance.gBanque.virements.dtos.VirementSearchDto;
+import staport.finance.gBanque.virements.dtos.*;
 import staport.finance.gBanque.virements.service.VirementService;
 
 import java.util.NoSuchElementException;
@@ -24,16 +22,28 @@ public class VirementController {
         this.virementService = virementService;
     }
 
-    /**
-     * Searches for Virements with pagination and filtering.
-     * <p>
-     * Endpoint: GET /virements
-     * Example: /virements?beneficiaire=John&active=true&page=0&size=20
-     *
-     * @param searchDto The VirementSearchDto populated from request parameters.
-     * @param pageable  The Pageable object from the request, with a default size and sorting.
-     * @return A paginated list of VirementResponseDto.
-     */
+
+    @PostMapping
+    public ResponseEntity<VirementResponseDto> createVirement( @Valid @RequestBody VirementRequestDto dto) {
+        return ResponseEntity.ok(virementService.createEncaissementVirement(dto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<VirementResponseDto> updateVirement(@PathVariable Long id, @Valid @RequestBody VirementRequestDto dto) {
+        return ResponseEntity.ok(virementService.editEncaissementVirement(id,dto));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<VirementResponseDto> getVirementByid(@PathVariable Long id){
+        return ResponseEntity.ok(virementService.getVirementById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteVirement(@PathVariable Long id) {
+        virementService.deleteEncaissementVirement(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping
     public ResponseEntity<Page<VirementResponseDto>> searchVirements(
             VirementSearchDto searchDto,
@@ -43,18 +53,11 @@ public class VirementController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * Toggles the active status of a Virement.
-     * <p>
-     * Endpoint: PATCH /virements/toggle/{numero}
-     *
-     * @param numero The numero of the Virement to toggle.
-     * @return The updated VirementResponseDto.
-     */
-    @PatchMapping("/toggle/{numero}")
-    public ResponseEntity<VirementResponseDto> toggleVirementStatus(@PathVariable String numero) {
+
+    @PatchMapping("/toggle/{id}")
+    public ResponseEntity<VirementResponseDto> toggleVirementStatus(@PathVariable Long id) {
         try {
-            VirementResponseDto updatedVirement = virementService.toggleVirementStatus(numero);
+            VirementResponseDto updatedVirement = virementService.toggleVirementStatus(id);
             return ResponseEntity.ok(updatedVirement);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.virements.entities.Virement;
 
 @Repository
-public interface VirementRepository extends JpaRepository <Virement, String> , JpaSpecificationExecutor<Virement> {
+public interface VirementRepository extends JpaRepository <Virement, Long> , JpaSpecificationExecutor<Virement> {
     boolean existsByNumero(String numero);
 }

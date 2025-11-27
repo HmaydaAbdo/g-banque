@@ -9,8 +9,8 @@ import java.util.Objects;
 
 public class VirementTransactionRequestDto {
 
-    @NotBlank(message = "Le numéro du virement est obligatoire")
-    private String numeroVirement;
+    @NotBlank(message = " id du virement est obligatoire")
+    private Long id;
 
     @NotNull(message = "La source de transaction est obligatoire")
     private final TransactionSource transactionSource = TransactionSource.Virement;
@@ -37,28 +37,13 @@ public class VirementTransactionRequestDto {
     public VirementTransactionRequestDto() {
     }
 
-    // All-args constructor (except transactionSource since it's final)
-    public VirementTransactionRequestDto(String numeroVirement,
-                                         OffsetDateTime dateEmission,
-                                         OffsetDateTime dateValeur,
-                                         OffsetDateTime dateOperation,
-                                         String observation,
-                                         Double tvaDeductible) {
-        this.numeroVirement = numeroVirement;
-        this.dateEmission = dateEmission;
-        this.dateValeur = dateValeur;
-        this.dateOperation = dateOperation;
-        this.observation = observation;
-        this.tvaDeductible = tvaDeductible;
+
+    public Long getId() {
+        return id;
     }
 
-    // Getters and Setters
-    public String getNumeroVirement() {
-        return numeroVirement;
-    }
-
-    public void setNumeroVirement(String numeroVirement) {
-        this.numeroVirement = numeroVirement;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public TransactionSource getTransactionSource() {
@@ -118,7 +103,7 @@ public class VirementTransactionRequestDto {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof VirementTransactionRequestDto that)) return false;
-        return Objects.equals(numeroVirement, that.numeroVirement) &&
+        return Objects.equals(id, that.id) &&
                 transactionSource == that.transactionSource &&
                 Objects.equals(dateEmission, that.dateEmission) &&
                 Objects.equals(dateValeur, that.dateValeur) &&
@@ -129,14 +114,14 @@ public class VirementTransactionRequestDto {
 
     @Override
     public int hashCode() {
-        return Objects.hash(numeroVirement, transactionSource, dateEmission, dateValeur, dateOperation, observation, tvaDeductible);
+        return Objects.hash(id, transactionSource, dateEmission, dateValeur, dateOperation, observation, tvaDeductible);
     }
 
     // toString
     @Override
     public String toString() {
         return "VirementTransactionRequestDto{" +
-                "numeroVirement='" + numeroVirement + '\'' +
+                "id='" + id + '\'' +
                 ", transactionSource=" + transactionSource +
                 ", dateEmission=" + dateEmission +
                 ", dateValeur=" + dateValeur +

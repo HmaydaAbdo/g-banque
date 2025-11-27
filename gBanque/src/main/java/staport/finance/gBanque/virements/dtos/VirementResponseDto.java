@@ -9,6 +9,7 @@ import java.time.OffsetDateTime;
 
 public class VirementResponseDto {
 
+    private Long id;
     private String numero;
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateOperation;
@@ -18,7 +19,9 @@ public class VirementResponseDto {
     private String beneficiaire;
     private BigDecimal montant;
     private String banqueEmettriceNom;
+    private Long banqueEmettriceId;
     private String banqueBeneficiaire;
+    private Long banqueBeneficiaireId;
     private String emetteur;
     private String ribBeneficiaire;
     private boolean active;
@@ -28,7 +31,13 @@ public class VirementResponseDto {
     public VirementResponseDto() {
     }
 
+    public Long getId() {
+        return id;
+    }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getNumero() {
         return numero;
@@ -137,5 +146,19 @@ public class VirementResponseDto {
         this.observation = observation;
     }
 
+    public Long getBanqueEmettriceId() {
+        return banqueEmettriceId;
+    }
 
+    public void setBanqueEmettriceId(Long banqueEmettriceId) {
+        this.banqueEmettriceId = banqueEmettriceId;
+    }
+
+    public Long getBanqueBeneficiaireId() {
+        return banqueBeneficiaireId;
+    }
+
+    public void setBanqueBeneficiaireId(Long banqueBeneficiaireId) {
+        this.banqueBeneficiaireId = banqueBeneficiaireId;
+    }
 }

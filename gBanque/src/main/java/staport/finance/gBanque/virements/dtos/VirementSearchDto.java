@@ -10,6 +10,7 @@ public class VirementSearchDto {
     private String nomBanqueEmettrice;
     private String ribBeneficiaire;
     private Boolean active;
+    private String emetteur;
     private Type type;
 
     public VirementSearchDto() {
@@ -76,6 +77,9 @@ public class VirementSearchDto {
     public Type getType() {return type;}
     public void setType(Type type) { this.type = type;}
 
+    public String getEmetteur() {return emetteur;}
+    public void setEmetteur(String emetteur) {this.emetteur = emetteur;}
+
     @Override
     public String toString() {
         return "VirementSearchDto{" +
@@ -85,6 +89,7 @@ public class VirementSearchDto {
                 ", nomBanqueEmettrice='" + nomBanqueEmettrice + '\'' +
                 ", ribBeneficiaire='" + ribBeneficiaire + '\'' +
                 ", active=" + active +
+                ", emetteur='" + emetteur + '\'' +
                 ", type=" + type +
                 '}';
     }

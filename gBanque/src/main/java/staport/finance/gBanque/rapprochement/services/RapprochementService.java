@@ -335,9 +335,9 @@ public class RapprochementService {
     public VirementTransactionResponseDto processVirementDecaissementTransaction(VirementTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch virement entity from the database using it's number from the request.
         // If the virement does not exist, throw a ResourceNotFoundException.
-        Virement virement = virementRepository.findById(requestDto.getNumeroVirement())
+        Virement virement = virementRepository.findById(requestDto.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "virement with numero " + requestDto.getNumeroVirement() + " not found"));
+                        "virement with id " + requestDto.getId() + " not found"));
 
         // Step 2: Check if the virement is active.
         // If the virement is already used/paid (active = false), throw an exception.
@@ -374,9 +374,9 @@ public class RapprochementService {
     public VirementTransactionResponseDto processVirementEncaissementTransaction(VirementTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch virement entity from the database using it's number from the request.
         // If the virement does not exist, throw a ResourceNotFoundException.
-        Virement virement = virementRepository.findById(requestDto.getNumeroVirement())
+        Virement virement = virementRepository.findById(requestDto.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "virement with numero " + requestDto.getNumeroVirement() + " not found"));
+                        "virement with id " + requestDto.getId() + " not found"));
 
         // Step 2: Check if the virement is active.
         // If the virement is already used/paid (active = false), throw an exception.
