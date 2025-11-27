@@ -3,6 +3,7 @@ package staport.finance.gBanque.cheques.specs;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.cheques.entities.Cheque;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -77,6 +78,15 @@ public final class ChequeSpec {
         };
     }
 
+    public static Specification<Cheque> hasType(Type type) {
+        return (root, query, criteriaBuilder) -> {
+            if (type == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("type"), type);
+        };
+    }
+
     public static Specification<Cheque> hasMontant(BigDecimal montant) {
         return (root, query, criteriaBuilder) -> {
             if (montant == null) {
@@ -87,24 +97,44 @@ public final class ChequeSpec {
     }
 
 
-    /**
-     * Specification to filter active cheques for a specific bank with an emission date
-     * that is on or before the last day of the current month.
-     * This method applies the following criteria:
-     * 1. The cheque's status must be active.
-     * 2. The cheque must belong to the specified bank.
-     * 3. The cheque's emission date must be on or before the last day of the current month.
-     *
-     * @param banqueId The ID of the bank to search for.
-     * @return A Specification that combines these three filtering criteria.
-     */
-    public static Specification<Cheque> activeForBankAndUntilEndOfMonth(Long banqueId) {
+
+    public static Specification<Cheque> encoursDecaissements(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             OffsetDateTime now = OffsetDateTime.now();
 
             // 1. Check if the cheque is active.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
+
+            predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
+
+            // 2. Check if the cheque belongs to the specified bank ID.
+            if (banqueId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            } else {
+                // If banqueId is null, return a predicate that will always be false
+                return criteriaBuilder.disjunction();
+            }
+
+            // 3. Check if the emission date is on or before the last day of the current month.
+            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
+                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    public static Specification<Cheque> encoursEncaissements(Long banqueId) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            OffsetDateTime now = OffsetDateTime.now();
+
+            // 1. Check if the cheque is active.
+            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+
+            predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
 
             // 2. Check if the cheque belongs to the specified bank ID.
             if (banqueId != null) {

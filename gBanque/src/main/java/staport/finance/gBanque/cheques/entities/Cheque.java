@@ -2,6 +2,7 @@ package staport.finance.gBanque.cheques.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 
@@ -12,8 +13,11 @@ import java.util.Objects;
 @Table(name = "CHEQUES")
 public class Cheque {
 
-    @Id // 'numero' is the primary key
-    @Column(name = "numero", nullable = false, unique = true)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "numero", nullable = true)
     private String numero;
 
     @Column(name = "date_emission", nullable = false)
@@ -39,6 +43,10 @@ public class Cheque {
     @Column(name = "active", nullable = false)
     private boolean active;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private Type type;
+
     private String libelle;
     private String observation;
 
@@ -47,16 +55,19 @@ public class Cheque {
         // Default constructor required by JPA
     }
 
-    public Cheque(String numero, OffsetDateTime dateEmission, String beneficiaire, OffsetDateTime dateEcheance, BigDecimal montant, Banque banque) {
-        this.numero = numero;
-        this.dateEmission = dateEmission;
-        this.beneficiaire = beneficiaire;
-        this.dateEcheance = dateEcheance;
-        this.montant = montant;
-        this.banque = banque;
-    }
+
 
     // --- Getters and Setters ---
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getNumero() {
         return numero;
     }
@@ -145,30 +156,42 @@ public class Cheque {
         this.observation = observation;
     }
 
-    // --- Utility Methods (Recommended for Entities) ---
-    @Override
-    public String toString() {
-        return "Cheque{" +
-                "numero='" + numero + '\'' +
-                ", dateEmission=" + dateEmission +
-                ", beneficiaire='" + beneficiaire + '\'' +
-                ", dateEcheance=" + dateEcheance +
-                ", montant=" + montant +
-                ", banque=" + (banque != null ? banque.getNom() : "null") +
-                ", active=" + active +
-                '}';
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Cheque cheque = (Cheque) o;
-        return numero != null && Objects.equals(numero, cheque.numero);
+        return active == cheque.active && Objects.equals(id, cheque.id) && Objects.equals(numero, cheque.numero) && Objects.equals(dateEmission, cheque.dateEmission) && Objects.equals(beneficiaire, cheque.beneficiaire) && Objects.equals(dateEcheance, cheque.dateEcheance) && Objects.equals(dateOperation, cheque.dateOperation) && Objects.equals(dateValeur, cheque.dateValeur) && Objects.equals(montant, cheque.montant) && Objects.equals(banque, cheque.banque) && type == cheque.type && Objects.equals(libelle, cheque.libelle) && Objects.equals(observation, cheque.observation);
+    }
+
+    @Override
+    public String toString() {
+        return "Cheque{" +
+                "id=" + id +
+                ", numero='" + numero + '\'' +
+                ", dateEmission=" + dateEmission +
+                ", beneficiaire='" + beneficiaire + '\'' +
+                ", dateEcheance=" + dateEcheance +
+                ", dateOperation=" + dateOperation +
+                ", dateValeur=" + dateValeur +
+                ", montant=" + montant +
+                ", banque=" + banque +
+                ", active=" + active +
+                ", type=" + type +
+                ", libelle='" + libelle + '\'' +
+                ", observation='" + observation + '\'' +
+                '}';
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(numero);
+        return Objects.hash(id, numero, dateEmission, beneficiaire, dateEcheance, dateOperation, dateValeur, montant, banque, active, type, libelle, observation);
     }
 }

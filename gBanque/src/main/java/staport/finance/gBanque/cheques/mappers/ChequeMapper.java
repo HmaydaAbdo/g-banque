@@ -18,13 +18,14 @@ public class ChequeMapper {
         }
 
         ChequeResponseDto dto = new ChequeResponseDto();
+        dto.setId(cheque.getId());
         dto.setNumero(cheque.getNumero());
         dto.setDateEmission(cheque.getDateEmission());
         dto.setDateEcheance(cheque.getDateEcheance());
         dto.setBeneficiaire(cheque.getBeneficiaire());
         dto.setMontant(cheque.getMontant());
         dto.setActive(cheque.isActive());
-
+        dto.setType(cheque.getType());
         // We only need the bank's name for the DTO, not the entire Banque object,
         // which avoids exposing unnecessary data and improves performance.
         if (cheque.getBanque() != null) {

@@ -8,7 +8,7 @@ import staport.finance.gBanque.cheques.entities.Cheque;
 import java.util.Optional;
 
 @Repository
-public interface ChequeRepository extends JpaRepository<Cheque, String>, JpaSpecificationExecutor<Cheque> {
+public interface ChequeRepository extends JpaRepository<Cheque, Long>, JpaSpecificationExecutor<Cheque> {
 
 
     /**

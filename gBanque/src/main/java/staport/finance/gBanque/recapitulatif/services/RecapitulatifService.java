@@ -149,7 +149,7 @@ public class RecapitulatifService {
                 .and(EcheanceCMTSpecification.byCreditBanqueId(banqueId));
 
         //moyens de paiement
-        Specification<Cheque> chequeSpec = ChequeSpec.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<Cheque> chequeSpec = ChequeSpec.encoursDecaissements(banqueId);
         Specification<Lcn> lcnSpec = LcnSpecification.activeForBankAndUntilEndOfMonth(banqueId);
         Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banqueId);
         Specification<MiseADisposition> madSpec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId);

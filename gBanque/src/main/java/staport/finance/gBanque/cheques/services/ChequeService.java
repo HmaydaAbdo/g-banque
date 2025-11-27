@@ -13,6 +13,7 @@ import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cheques.mappers.ChequeMapper;
 import staport.finance.gBanque.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.cheques.specs.ChequeSpec;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
@@ -34,12 +35,28 @@ public class ChequeService {
      * @param pageable  The pagination and sorting information.
      * @return A Page of ChequeResponseDto.
      */
-    public Page<ChequeResponseDto> searchCheques(ChequeSearchDto searchDto, Pageable pageable) {
+    public Page<ChequeResponseDto> getAllDecaissement(ChequeSearchDto searchDto, Pageable pageable) {
         // Combine specifications based on non-null search criteria from the DTO
         Specification<Cheque> spec = Specification.where(ChequeSpec.hasNumero(searchDto.getNumero()))
                 .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
-                .and(ChequeSpec.isActive(searchDto.getActive()));
+                .and(ChequeSpec.isActive(searchDto.getActive()))
+                .and(ChequeSpec.hasType(Type.DECAISSEMENT));
+
+        // Execute the search with the combined specification and pagination
+        Page<Cheque> chequePage = chequeRepository.findAll(spec, pageable);
+
+        // Map the result Page<Cheque> to Page<ChequeResponseDto>
+        return chequePage.map(ChequeMapper::toDto);
+    }
+
+    public Page<ChequeResponseDto> getAllEncaissement(ChequeSearchDto searchDto, Pageable pageable) {
+        // Combine specifications based on non-null search criteria from the DTO
+        Specification<Cheque> spec = Specification.where(ChequeSpec.hasNumero(searchDto.getNumero()))
+                .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
+                .and(ChequeSpec.isActive(searchDto.getActive()))
+                .and(ChequeSpec.hasType(Type.ENCAISSEMENT));
 
         // Execute the search with the combined specification and pagination
         Page<Cheque> chequePage = chequeRepository.findAll(spec, pageable);
@@ -71,17 +88,27 @@ public class ChequeService {
     }
 
 
-    /**
-     * Retrieves a paginated list of active cheques for a specific bank that are due in the current month.
-     *
-     * @param banqueId The ID of the bank to filter by.
-     * @param pageable The pagination and sorting information.
-     * @return A Page of EncoursChequeResponseDto for the outstanding cheques.
-     */
+
     @Transactional(readOnly = true)
-    public EncoursChequeResponseDto getEncoursForCheques(EncoursChequeSearchDto searchDto, Long banqueId, Pageable pageable) {
+    public EncoursChequeResponseDto getEncoursDecaissementForCheques(EncoursChequeSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification for active cheques for the specified bank in the current month
-        Specification<Cheque> spec = ChequeSpec.activeForBankAndUntilEndOfMonth(banqueId)
+        Specification<Cheque> spec = ChequeSpec.encoursDecaissements(banqueId)
+                .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(ChequeSpec.hasNumero(searchDto.getNumero()))
+                .and(ChequeSpec.hasMontant(searchDto.getMontant()));
+
+        // Execute the search with the specification and pagination
+        Page<Cheque> page = chequeRepository.findAll(spec, pageable);
+        Page<ChequeResponseDto> chequePage = page.map(ChequeMapper::toDto);
+        BigDecimal total=chequeRepository.findAll(spec).stream().map(Cheque::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Map the result to DTOs and return
+        return new EncoursChequeResponseDto(total,chequePage);
+    }
+
+    @Transactional(readOnly = true)
+    public EncoursChequeResponseDto getEncoursEncaissementForCheques(EncoursChequeSearchDto searchDto, Long banqueId, Pageable pageable) {
+        // Build the specification for active cheques for the specified bank in the current month
+        Specification<Cheque> spec = ChequeSpec.encoursEncaissements(banqueId)
                 .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(ChequeSpec.hasNumero(searchDto.getNumero()))
                 .and(ChequeSpec.hasMontant(searchDto.getMontant()));

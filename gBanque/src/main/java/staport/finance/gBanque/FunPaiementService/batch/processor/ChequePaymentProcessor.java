@@ -6,6 +6,7 @@ import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.FunPaiementService.dtos.FunPaymentDto;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cheques.repositories.ChequeRepository;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
@@ -31,7 +32,7 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
     protected Object processSpecific(FunPaymentDto item, Banque banque) {
 
         // Check if cheque already exists by numero
-        Optional<Cheque> existingCheque = chequeRepository.findById(item.getNumero());
+        Optional<Cheque> existingCheque = chequeRepository.findByNumero(item.getNumero());
 
         if (existingCheque.isPresent()) {
             log.info("Cheque with numero {} already exists. Skipping.", item.getNumero());
@@ -70,6 +71,7 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
                     item.getNumero(), emissionMonth, currentMonth);
         }
 
+        cheque.setType(Type.DECAISSEMENT);
         log.info("Successfully processed and transformed Cheque Payment {}. Returning Cheque entity.", item.getNumero());
         return cheque;
     }
