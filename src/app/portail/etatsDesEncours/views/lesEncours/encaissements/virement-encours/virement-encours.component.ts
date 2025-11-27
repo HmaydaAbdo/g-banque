@@ -109,7 +109,8 @@ export class VirementEncaissementEncoursComponent implements OnInit {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      numero: [''],
+      dateEmission: [null],
+      emetteur:[null],
       beneficiaire: [''],
       montant: [null],
     });
@@ -216,7 +217,7 @@ export class VirementEncaissementEncoursComponent implements OnInit {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
 
       const virementTransactionRequest: VirementTransactionRequestDto = {
-        numeroVirement: this.selectedVirement.numero,
+        id: this.selectedVirement.id,
         dateEmission: donneesComplementaires.dateEmission,
         dateValeur: donneesComplementaires.dateValeur,
         dateOperation: donneesComplementaires.dateOperation,

@@ -1,11 +1,14 @@
 import {Type} from "../Type";
 
 export interface VirementSearchDto {
-  numero: string;
-  beneficiaire: string;
-  banqueBeneficiaire: string;
-  nomBanqueEmettrice: string;
-  ribBeneficiaire: string;
-  active: boolean | null;
-  type:Type
+  numero?: string;
+  dateEmission?: Date;
+  montant?: number;
+  beneficiaire?: string;
+  banqueBeneficiaire?: string;
+  nomBanqueEmettrice?: string;
+  ribBeneficiaire?: string;
+  active?: boolean | null;
+  type?:Type
+  emetteur?:string
 }

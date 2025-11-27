@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { VirementListComponent } from './virement-list.component';
+import { VirementFormComponent } from './virement-form.component';
 
-describe('VirementListComponent', () => {
-  let component: VirementListComponent;
-  let fixture: ComponentFixture<VirementListComponent>;
+describe('VirementFormComponent', () => {
+  let component: VirementFormComponent;
+  let fixture: ComponentFixture<VirementFormComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [VirementListComponent]
+      imports: [VirementFormComponent]
     })
     .compileComponents();
-
-    fixture = TestBed.createComponent(VirementListComponent);
+    
+    fixture = TestBed.createComponent(VirementFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

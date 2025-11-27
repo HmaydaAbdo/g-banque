@@ -7,10 +7,12 @@ import {PageResponse} from "../../global/types/PageResponse";
 import {VirementResponseDto} from "../dtos/VirementResponseDto";
 import {EncoursVirementResponseDto} from "../dtos/EncoursVirementResponseDto";
 import {EncoursVirementsSearchDto} from "../dtos/EncoursVirementsSearchDto";
+import {VirementRequestDto} from "../dtos/VirementRequestDto";
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class VirementService {
 
   private apiUrl = `${environment.apiUrl}virements`;
@@ -18,16 +20,23 @@ export class VirementService {
   constructor(private http: HttpClient) {
   }
 
-  /**
-   * Searches for virements with pagination and filtering.
-   *
-   * @param searchDto The DTO containing search criteria.
-   * @param page The page number to retrieve (0-indexed).
-   * @param size The number of items per page.
-   * @param sort The sorting criteria (e.g., 'dateEmission,desc').
-   * @returns An Observable of a paginated list of VirementResponseDto.
-   */
-  searchVirements(
+
+  createVirement(requestDto: VirementRequestDto): Observable<VirementResponseDto> {
+    return this.http.post<VirementResponseDto>(this.apiUrl, requestDto);
+  }
+
+  updateVirement(id: number, requestDto: VirementRequestDto): Observable<VirementResponseDto> {
+    return this.http.put<VirementResponseDto>(`${this.apiUrl}/${id}`, requestDto);
+  }
+
+  getVirementById(id:number): Observable<VirementResponseDto> {
+    return this.http.get<VirementResponseDto>(`${this.apiUrl}/${id}`);
+  }
+  deleteVirement(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getDecaissementVirements(
     searchDto: VirementSearchDto,
     page: number = 0,
     size: number = 10,
@@ -40,54 +49,68 @@ export class VirementService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    // Append search criteria if they are present
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
-    }
-    if (searchDto.beneficiaire) {
-      params = params.set('beneficiaire', searchDto.beneficiaire);
-    }
-    if (searchDto.banqueBeneficiaire) {
-      params = params.set('banqueBeneficiaire', searchDto.banqueBeneficiaire);
-    }
-    if (searchDto.nomBanqueEmettrice) {
-      params = params.set('nomBanqueEmettrice', searchDto.nomBanqueEmettrice);
-    }
-    if (searchDto.ribBeneficiaire) {
-      params = params.set('ribBeneficiaire', searchDto.ribBeneficiaire);
-    }
-    if (searchDto.active !== undefined && searchDto.active !== null) {
-      params = params.set('active', searchDto.active.toString());
-    }
+    Object.entries(searchDto).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        let stringValue: string;
 
-    if (searchDto.type !== undefined && searchDto.type !== null) {
-      params = params.set('type', searchDto.type.toString());
-    }
+        if (key === 'dateEmission' && value instanceof Date) {
+          stringValue = value.toISOString();
+        } else if (key === 'montant' && typeof value === 'number') {
+          stringValue = value.toString();
+        } else {
+          stringValue = value.toString();
+        }
 
-    return this.http.get<PageResponse<VirementResponseDto>>(this.apiUrl, {params});
+        params = params.set(key, stringValue);
+      }
+    });
+
+
+    return this.http.get<PageResponse<VirementResponseDto>>(`${this.apiUrl}/decaissements`, {params});
   }
 
-  /**
-   * Toggles the active status of a virement by its unique numero.
-   *
-   * @param numero The unique identifier of the virement to toggle.
-   * @returns An Observable of the updated VirementResponseDto.
-   */
-  toggleVirementStatus(numero: string): Observable<VirementResponseDto> {
-    const url = `${this.apiUrl}/toggle/${numero}`;
+
+
+  getEncaissementVirements(
+    searchDto: VirementSearchDto,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission,desc'
+  ): Observable<PageResponse<VirementResponseDto>> {
+
+    // Initialize HttpParams with pagination and sorting info
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    Object.entries(searchDto).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        let stringValue: string;
+
+        if (key === 'dateEmission' && value instanceof Date) {
+          // CORRECTION: Formatte la Date en YYYY-MM-DD
+          stringValue = value.toISOString();
+        } else if (key === 'montant' && typeof value === 'number') {
+          stringValue = value.toString();
+        } else {
+          stringValue = value.toString();
+        }
+
+        params = params.set(key, stringValue);
+      }
+    });
+
+    return this.http.get<PageResponse<VirementResponseDto>>(`${this.apiUrl}/encaissements`, {params});
+  }
+
+
+  toggleVirementStatus(id: number): Observable<VirementResponseDto> {
+    const url = `${this.apiUrl}/toggle/${id}`;
     return this.http.patch<VirementResponseDto>(url, {});
   }
 
-  /**
-   * Retrieves a paginated list of outstanding virements for a specific bank.
-   *
-   * @param banqueId The ID of the bank.
-   * @param searchDto
-   * @param page The page number to retrieve (0-indexed).
-   * @param size The number of items per page.
-   * @param sort The sorting criteria (e.g., 'dateEmission,desc').
-   * @returns An Observable of a paginated list of VirementResponseDto.
-   */
+
   getEncoursDecaissementVirementsByBank(
     banqueId: number,
     searchDto: EncoursVirementsSearchDto,
@@ -100,8 +123,8 @@ export class VirementService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
     }
     if (searchDto.beneficiaire) {
       params = params.set('beneficiaire', searchDto.beneficiaire);
@@ -127,8 +150,11 @@ export class VirementService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
+    }
+    if (searchDto.emetteur){
+      params = params.set('emetteur', searchDto.emetteur);
     }
     if (searchDto.beneficiaire) {
       params = params.set('beneficiaire', searchDto.beneficiaire);

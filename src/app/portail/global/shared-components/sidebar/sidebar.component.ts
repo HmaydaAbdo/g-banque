@@ -86,7 +86,12 @@ export class SidebarComponent implements OnInit {
       items: [
         { label: 'Chèques', icon: 'pi pi-file-check', routerLink: '/portail/Chèques' },
         { label: 'LCN', icon: 'pi pi-file-o', routerLink: '/portail/LCN' },
-        { label: 'Virements', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Virements' },
+        { label: 'Virements', icon: 'pi pi-arrow-right-arrow-left',
+          items: [
+            {label:"Encaissements", icon: 'pi pi-plus' , routerLink: '/portail/Virements/encaissement' },
+            {label:"Décaissements", icon: 'pi pi-minus' , routerLink: '/portail/Virements/decaissement' },
+          ]
+        },
         { label: 'Mises à disposition', icon: 'pi pi-briefcase', routerLink: '/portail/Mise-a-disposition' }
       ]
     },

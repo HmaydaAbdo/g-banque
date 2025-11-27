@@ -30,10 +30,13 @@ import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {Role} from "../../../../auth/enum/Role";
 import {Type} from "../../Type";
+import {MarcheResponseDTO} from "../../../Marches/dtos/marche-response.dto";
+import {CalendarModule} from "primeng/calendar";
+import {InputNumberModule} from "primeng/inputnumber";
 
 
 @Component({
-  selector: 'app-virement-list',
+  selector: 'app-virement-decaissement-list',
   standalone: true,
   imports: [
     CommonModule,
@@ -52,13 +55,15 @@ import {Type} from "../../Type";
     InputSwitchModule,
     FormsModule,
     BreadcrumbModule,
-    RouterLinkActive
+    RouterLinkActive,
+    CalendarModule,
+    InputNumberModule
   ],
-  templateUrl: './virement-list.component.html',
-  styleUrl: './virement-list.component.scss',
+  templateUrl: './virement-decaissement-list.component.html',
+  styleUrl: './virement-decaissement-list.component.scss',
   providers: [MessageService, ConfirmationService]
 })
-export class VirementListComponent implements OnInit, OnDestroy {
+export class VirementDecaissementListComponent implements OnInit, OnDestroy {
   virements: VirementResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
@@ -103,7 +108,7 @@ export class VirementListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
-      { icon: 'pi pi-list', route: '/portail/Virements', label: "Les Virements" },
+      { icon: 'pi pi-list', route: '/portail/Virements/decaissement', label: "Les Virements ( décaissement )" },
     ];
     this.isAdmin = this.authService.hasRole(Role.ADMIN);
     this.initSearchForm();
@@ -120,13 +125,12 @@ export class VirementListComponent implements OnInit, OnDestroy {
    */
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      numero: [''],
       beneficiaire: [''],
-      banqueBeneficiaire: [''],
       nomBanqueEmettrice: [null],
-      ribBeneficiaire: [''],
       active: [null],
-      type: [null]
+      dateEmission: [null],
+      montant: [null],
+      banqueBeneficiaire: [null],
     });
 
     const searchSubscription = this.searchForm.valueChanges.subscribe(() => this.onSearch());
@@ -149,17 +153,9 @@ export class VirementListComponent implements OnInit, OnDestroy {
       sort = `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
     }
 
-    const searchCriteria: VirementSearchDto = {
-      numero: this.searchForm.get('numero')?.value,
-      beneficiaire: this.searchForm.get('beneficiaire')?.value,
-      banqueBeneficiaire: this.searchForm.get('banqueBeneficiaire')?.value,
-      nomBanqueEmettrice: this.searchForm.get('nomBanqueEmettrice')?.value,
-      ribBeneficiaire: this.searchForm.get('ribBeneficiaire')?.value,
-      active: this.searchForm.get('active')?.value,
-      type: this.searchForm.get('type')?.value
-    };
+    const searchCriteria: VirementSearchDto = this.searchForm.getRawValue();
 
-    this.virementService.searchVirements(
+    this.virementService.getDecaissementVirements(
       searchCriteria,
       currentPage,
       pageSize,
@@ -216,15 +212,7 @@ export class VirementListComponent implements OnInit, OnDestroy {
    * Clears all search filters and reloads the table.
    */
   clearSearch(): void {
-    this.searchForm.reset({
-      numero: '',
-      beneficiaire: '',
-      banqueBeneficiaire: '',
-      nomBanqueEmettrice: null,
-      ribBeneficiaire: '',
-      active: null
-    });
-
+    this.searchForm.reset();
     if (this.dt) {
       this.dt.clear();
       this.dt.first = 0;
@@ -237,7 +225,7 @@ export class VirementListComponent implements OnInit, OnDestroy {
    * @param virement The virement to toggle.
    */
   confirmToggleStatus(virement: VirementResponseDto): void {
-    const confirmationMessage = `Êtes-vous sûr de vouloir ${virement.active ? 'désactiver' : 'activer'} le virement N° ${virement.numero}?`;
+    const confirmationMessage = `Êtes-vous sûr de vouloir ${virement.active ? 'désactiver' : 'activer'} le virement  ${virement.id}?`;
     this.confirmationService.confirm({
       message: confirmationMessage,
       header: `Confirmation de ${virement.active ? 'désactivation' : 'activation'}`,
@@ -247,22 +235,19 @@ export class VirementListComponent implements OnInit, OnDestroy {
       acceptButtonStyleClass: virement.active ? 'p-button-danger' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
-        this.toggleVirementStatus(virement.numero);
+        this.toggleVirementStatus(virement.id);
       }
     });
   }
 
-  /**
-   * Calls the service to toggle the virement's status.
-   * @param numero The numero of the virement.
-   */
-  toggleVirementStatus(numero: string): void {
-    this.virementService.toggleVirementStatus(numero).subscribe({
+
+  toggleVirementStatus(id: number): void {
+    this.virementService.toggleVirementStatus(id).subscribe({
       next: (updatedVirement) => {
         this.messageService.add({
           severity: 'success',
           summary: 'Succès',
-          detail: `Virement N° ${updatedVirement.numero} ${updatedVirement.active ? 'activé' : 'désactivé'} avec succès.`
+          detail: `Virement  ${updatedVirement.id} ${updatedVirement.active ? 'activé' : 'désactivé'} avec succès.`
         });
         // Reload data from the server to reflect the change
         if (this.dt) {
@@ -279,4 +264,40 @@ export class VirementListComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  deleteVirement(virement: VirementResponseDto): void {
+    const confirmationMessageHtml = `
+    <div class="text-center">
+        <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
+        <p>Êtes-vous sûr de vouloir supprimer ce virement "<strong>${virement.id}</strong>" ?</p>
+        <p style="color: #ef4444; font-weight: bold;">Cette action est irréversible.</p>
+    </div>
+    `;
+
+    this.confirmationService.confirm({
+      message: confirmationMessageHtml,
+      header: 'Confirmation de Suppression',
+      icon: 'none',
+      acceptLabel: 'Confirmer',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.virementService.deleteVirement(virement.id!)
+          .subscribe({
+            next: () => {
+              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le marché a été supprimé avec succès.', life: 3000 });
+              this.loadVirements(this.lastLazyLoadEvent)
+              this.loading = false;
+            },
+            error: (error) => {
+              console.error('Erreur lors de la suppression du marché:', error);
+              const errorMessage = error.error.detail || 'Échec de la suppression du marché.';
+              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+              this.loading = false;
+            }
+          });
+      }
+    });
+  }
+
 }

@@ -12,9 +12,19 @@
       <form [formGroup]="searchForm" class="grid p-fluid flex flex-row justify-content-between flex-wrap">
 
         <span class="p-float-label">
-          <input id="numero" type="text" pInputText formControlName="numero" />
-          <label for="numero">Recherche par N° Virement</label>
+            <p-calendar id="dateEmission"
+             formControlName="dateEmission"
+             dateFormat="dd/mm/yy"
+             placeholder="JJ/MM/AAAA"
+                        [showOnFocus]="false"
+            >
+          </p-calendar>
+          <label for="dateEmission"> Date d'émission</label>
+
+
         </span>
+
+
 
         <span class="p-float-label">
           <input id="beneficiaire" type="text" pInputText formControlName="beneficiaire" />
@@ -54,9 +64,7 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="numero">
-            N° Virement <p-sortIcon field="numero"></p-sortIcon>
-          </th>
+
           <th pSortableColumn="dateEmission">
             Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
           </th>
@@ -67,9 +75,7 @@
           <th pSortableColumn="banqueBeneficiaire">
             Banque Bénéficiaire <p-sortIcon field="banqueBeneficiaire"></p-sortIcon>
           </th>
-          <th pSortableColumn="ribBeneficiaire">
-            RIB Bénéficiaire <p-sortIcon field="ribBeneficiaire"></p-sortIcon>
-          </th>
+
           <th pSortableColumn="montant">
             Montant <p-sortIcon field="montant"></p-sortIcon>
           </th>
@@ -78,11 +84,9 @@
       </ng-template>
       <ng-template pTemplate="body" let-virement>
         <tr>
-          <td>{{ virement.numero }}</td>
           <td>{{ virement.dateEmission | date : 'dd/MM/yyyy' }}</td>
           <td>{{ virement.beneficiaire ? virement.beneficiaire : 'N/A' }}</td>
           <td>{{ virement.banqueBeneficiaire ? virement.banqueBeneficiaire : 'N/A' }}</td>
-          <td>{{ virement.ribBeneficiaire ? virement.ribBeneficiaire : 'N/A'}}</td>
           <td>{{ virement.montant | number:'1.2-2'}} MAD</td>
           <td>
             <p-button

@@ -3,31 +3,64 @@
 
 <div class="flex flex-column gap-4 py-2 px-2 md:px-4 h-screen w-screen overflow-y-scroll">
 
-  <div class="flex justify-content-center align-items-center bg-transparent ">
-    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
-      <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
-          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
-          </a>
-        </ng-container>
-        <ng-template #elseBlock>
-          <a [href]="item.url">
-            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-          </a>
+
+
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <a [href]="item.url">
+              <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            </a>
+          </ng-template>
         </ng-template>
-      </ng-template>
-    </p-breadcrumb>
+      </p-breadcrumb>
+    </div>
+
   </div>
 
-  <form [formGroup]="searchForm" class="flex justify-content-around flex-wrap gap-3">
+
+  <form [formGroup]="searchForm" class="flex justify-content-around ">
+
     <div class="flex flex-column gap-2">
-      <label for="numero">N° Virement</label>
-      <span class="p-input-icon-left">
-                <i class="pi pi-search"></i>
-                <input id="numero" pInputText type="text" formControlName="numero" placeholder="Rechercher par N°..." />
-            </span>
+      <label for="dateEmission">Date d'Émission</label>
+      <p-calendar id="dateEmission"
+                  formControlName="dateEmission"
+                  dateFormat="dd/mm/yy"
+                  placeholder="JJ/MM/AAAA"
+                  >
+      </p-calendar>
+    </div>
+
+    <div class="flex flex-column gap-2">
+      <label for="montant">Montant</label>
+      <p-inputNumber id="montant"
+                     formControlName="montant"
+                     placeholder="Rechercher par montant..."
+                     mode="decimal"
+                     [showClear]="true">
+      </p-inputNumber>
+    </div>
+
+
+
+    <div class="flex flex-column gap-2">
+      <label for="banqueBeneficiaire">Banque Bénéficiaire</label>
+      <p-dropdown id="banqueBeneficiaire"
+                  [options]="banqueOptions"
+                  formControlName="banqueBeneficiaire"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Sélectionner une banque"
+                  [showClear]="true">
+      </p-dropdown>
     </div>
 
     <div class="flex flex-column gap-2">
@@ -38,13 +71,6 @@
             </span>
     </div>
 
-    <div class="flex flex-column gap-2">
-      <label for="ribBeneficiaire">RIB Bénéficiaire</label>
-      <span class="p-input-icon-left">
-                <i class="pi pi-search"></i>
-                <input id="ribBeneficiaire" pInputText type="text" formControlName="ribBeneficiaire" placeholder="Rechercher par RIB..." />
-            </span>
-    </div>
 
     <div class="flex flex-column gap-2">
       <label for="nomBanqueEmettrice">Banque Émettrice</label>
@@ -70,17 +96,7 @@
       </p-dropdown>
     </div>
 
-    <div class="flex flex-column gap-2">
-      <label for="type">Type</label>
-      <p-dropdown id="type"
-                  [options]="typeOptions"
-                  formControlName="type"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Sélectionner un type"
-                  [showClear]="true">
-      </p-dropdown>
-    </div>
+
 
     <div class="flex align-items-end">
       <p-button label="Effacer" icon="pi pi-times" severity="secondary" (onClick)="clearSearch()"></p-button>
@@ -103,7 +119,7 @@
              [resizableColumns]="true"
              columnResizeMode="expand"
              [rowHover]="true"
-             dataKey="numero"
+             dataKey="id"
              currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} virements"
              [showCurrentPageReport]="true"
              styleClass="p-datatable-gridlines"
@@ -111,38 +127,32 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="numero">N° Virement <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
-          <th pSortableColumn="banqueBeneficiare">Banque Bénéficiaire <p-sortIcon field="banqueBeneficiare"></p-sortIcon></th>
-          <th pSortableColumn="ribBeneficiaire">RIB Bénéficiaire <p-sortIcon field="ribBeneficiaire"></p-sortIcon></th>
+          <th pSortableColumn="banqueBeneficiaire">Banque Bénéficiaire <p-sortIcon field="banqueBeneficiaire"></p-sortIcon></th>
           <th pSortableColumn="nomBanqueEmettrice">Banque Émettrice <p-sortIcon field="nomBanqueEmettrice"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
+          <th >Type</th>
+          <th >Statut</th>
+          <th >Action</th>
 
-          <th style="width: 8rem;">Statut</th>
-          @if (isAdmin) {
-            <th style="width: 8rem;">Action</th>
-          }
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-virement>
         <tr>
-          <td>{{ virement.numero }}</td>
           <td>{{ virement.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ virement.beneficiaire }}</td>
-          <td>{{ virement.banqueBeneficiaire ? virement.banqueBeneficiaire : 'N/A' }}</td>
-          <td>{{ virement.ribBeneficiaire ? virement.ribBeneficiaire : 'N/A' }}</td>
-          <td>{{ virement.banqueEmettriceNom }}</td>
+          <td>{{ virement.banqueBeneficiaire ? virement.banqueBeneficiaire : '--' }}</td>
+          <td>{{ virement.banqueEmettriceNom ? virement.banqueEmettriceNom : '--' }}</td>
           <td>{{ virement.montant | number:'1.2-2' }}</td>
           <td>{{ virement.type }}</td>
+          <td><p-tag [value]="virement.active ? 'Encours' : 'Archivé'" [severity]="virement.active ? 'success' : 'danger'"></p-tag></td>
 
-          <td>
-            <p-tag [value]="virement.active ? 'Encours' : 'Archivé'" [severity]="virement.active ? 'success' : 'danger'"></p-tag>
-          </td>
-
-          <td>
-            <p-inputSwitch [ngModel]="virement.active" (onChange)="confirmToggleStatus(virement)"></p-inputSwitch>
+          <td class="flex flex-row align-content-center justify-content-center gap-2 flex-wrap">
+            <p-inputSwitch [ngModel]="virement.active" class="py-2" (onChange)="confirmToggleStatus(virement)"></p-inputSwitch>
+            @if (isAdmin){
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteVirement(virement)"></button>
+            }
           </td>
 
         </tr>

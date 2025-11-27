@@ -23,7 +23,7 @@ import {RapprochemntMensuelleComponent} from "../../etatsDesEncours/rapprochemen
 import {SelectBanquePourLEncoursComponent} from "../../etatsDesEncours/views/select-banque-pour-l-encours/select-banque-pour-l-encours.component";
 import {LcnListComponent} from "../../LCN/views/lcn-list/lcn-list.component";
 import {ChequesListComponent} from "../../cheques/views/cheques-list/cheques-list.component";
-import {VirementListComponent} from "../../Virements/views/virement-list/virement-list.component";
+import {VirementDecaissementListComponent} from "../../Virements/views/virement-decaissement-list/virement-decaissement-list.component";
 import {MiseADispositionListComponent} from "../../Mise-à-disposition/views/mise-a-disposition-list/mise-a-disposition-list.component";
 import {RecapDecaissementComponent} from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
 import {LignesFonctionnellesArchivesComponent} from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component";
@@ -91,6 +91,10 @@ import {PrelevementFormComponent} from "../../prelevements/views/prelevement-for
 import {
   EncoursPrelevementComponent
 } from "../../etatsDesEncours/views/lesEncours/decaissement/prelevement/encours-prelevement.component";
+import {VirementFormComponent} from "../../Virements/views/virement-form/virement-form.component";
+import {
+  VirementEncaissementListComponent
+} from "../../Virements/views/virement-encaissement-list/virement-encaissement-list.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -125,7 +129,12 @@ export const PORTAIL_ROUTES: Routes = [
 
   {path:"LCN",component:LcnListComponent},
   {path:"Chèques",component:ChequesListComponent},
-  {path:"Virements",component:VirementListComponent},
+
+  {path:"Virements/decaissement",component:VirementDecaissementListComponent},
+  {path:"Virements/encaissement",component:VirementEncaissementListComponent},
+  { path: 'Virements/new', component: VirementFormComponent },
+  { path: 'Virements/edit/:id', component: VirementFormComponent },
+
   {path:"Mise-a-disposition",component:MiseADispositionListComponent},
 
   { path: "marches", component: MarchesListComponent },

@@ -1,9 +1,9 @@
 import {TransactionSource} from "../transactions/TransactionSource";
 
 export interface VirementTransactionRequestDto {
-  numeroVirement: string;
+  id: number;
   transactionSource: TransactionSource;
-  dateEmission: Date;    // ISO 8601
+  dateEmission: Date;
   dateValeur: Date;
   dateOperation: Date;
   observation: string;
