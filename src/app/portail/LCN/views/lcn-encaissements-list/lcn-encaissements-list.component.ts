@@ -1,63 +1,56 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {Subscription} from 'rxjs';
-import {CommonModule} from '@angular/common';
-import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
-
-// PrimeNG modules
-import {ButtonModule} from 'primeng/button';
-import {CardModule} from 'primeng/card';
-import {InputTextModule} from 'primeng/inputtext';
-import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
-import {TagModule} from 'primeng/tag';
-import {TooltipModule} from 'primeng/tooltip';
-import {RippleModule} from 'primeng/ripple';
-import {ToastModule} from 'primeng/toast';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ConfirmationService, MenuItem, MessageService, SelectItem} from 'primeng/api';
-import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {DropdownModule} from 'primeng/dropdown';
-import {InputSwitchModule} from "primeng/inputswitch";
 import {BreadcrumbModule} from "primeng/breadcrumb";
+import {Button} from "primeng/button";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {DatePipe, DecimalPipe, NgClass, NgIf} from "@angular/common";
+import {DropdownModule} from "primeng/dropdown";
+import {InputSwitchModule} from "primeng/inputswitch";
+import {InputTextModule} from "primeng/inputtext";
+import {PaginatorModule} from "primeng/paginator";
+import {ConfirmationService, MenuItem, MessageService, PrimeTemplate, SelectItem} from "primeng/api";
+import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {RouterLinkActive} from "@angular/router";
-
-// Project-specific imports
+import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
+import {TagModule} from "primeng/tag";
+import {ToastModule} from "primeng/toast";
 import {LcnResponseDTO} from "../../dtos/LcnResponseDTO";
-import {LcnSearchDTO} from "../../dtos/LcnSearchDTO";
-import {PageResponse} from "../../../global/types/PageResponse";
+import {Subscription} from "rxjs";
+import {LcnService} from "../../service/LcnService";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
-import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {Role} from "../../../../auth/enum/Role";
-import {LcnService} from "../../service/LcnService";
-
+import {LcnSearchDTO} from "../../dtos/LcnSearchDTO";
+import {PageResponse} from "../../../global/types/PageResponse";
+import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
+import {Ripple} from "primeng/ripple";
 
 @Component({
-  selector: 'app-lcn-list',
+  selector: 'app-lcn-encaissements-list',
   standalone: true,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    CardModule,
-    ButtonModule,
-    ToastModule,
-    ToolbarModule,
-    InputTextModule,
-    TableModule,
-    TagModule,
-    TooltipModule,
-    RippleModule,
+    BreadcrumbModule,
+    Button,
     ConfirmDialogModule,
+    DatePipe,
+    DecimalPipe,
     DropdownModule,
     InputSwitchModule,
-    FormsModule,
-    BreadcrumbModule,
-    RouterLinkActive
+    InputTextModule,
+    NgIf,
+    PaginatorModule,
+    PrimeTemplate,
+    ReactiveFormsModule,
+    RouterLinkActive,
+    TableModule,
+    TagModule,
+    ToastModule,
+    NgClass,
+    Ripple
   ],
-  templateUrl: './lcn-list.component.html',
-  styleUrl: './lcn-list.component.scss',
-  providers: [MessageService, ConfirmationService]
+  templateUrl: './lcn-encaissements-list.component.html',
+  styleUrl: './lcn-encaissements-list.component.scss'
 })
-export class LcnListComponent implements OnInit, OnDestroy {
+export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
   lcns: LcnResponseDTO[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
@@ -98,7 +91,7 @@ export class LcnListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.items = [
       {icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil"},
-      {icon: 'pi pi-list', route: '/portail/LCN', label: "Les LCN"},
+      {icon: 'pi pi-list', route: '/portail/LCN/encaissements', label: " LCN (encaissements)"},
     ]
     this.isAdmin = this.authService.hasRole(Role.ADMIN);
     this.initSearchForm();
@@ -148,7 +141,7 @@ export class LcnListComponent implements OnInit, OnDestroy {
       active: this.searchForm.get('active')?.value
     };
 
-    this.lcnService.searchLcns(
+    this.lcnService.getEncaissementLcns(
       searchCriteria,
       currentPage,
       pageSize,
@@ -234,7 +227,7 @@ export class LcnListComponent implements OnInit, OnDestroy {
       acceptButtonStyleClass: lcn.active ? 'p-button-danger' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
-        this.toggleLcnStatus(lcn.numero);
+        this.toggleLcnStatus(lcn.id);
       }
     });
   }
@@ -243,8 +236,8 @@ export class LcnListComponent implements OnInit, OnDestroy {
    * Calls the service to toggle the LCN's status.
    * @param numero The numero of the LCN.
    */
-  toggleLcnStatus(numero: string): void {
-    this.lcnService.toggleLcnStatus(numero).subscribe({
+  toggleLcnStatus(id: number): void {
+    this.lcnService.toggleLcnStatus(id).subscribe({
       next: (updatedLcn) => {
         this.messageService.add({
           severity: 'success',

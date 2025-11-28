@@ -18,16 +18,8 @@ export class LcnService {
   constructor(private http: HttpClient) {
   }
 
-  /**
-   * Searches for LCNs with pagination and filtering.
-   *
-   * @param searchDto The DTO containing search criteria.
-   * @param page The page number to retrieve (0-indexed).
-   * @param size The number of items per page.
-   * @param sort The sorting criteria (e.g., 'dateEmission,desc').
-   * @returns An Observable of a paginated list of LcnResponseDTO.
-   */
-  searchLcns(
+
+  getDecaissementLcns(
     searchDto: LcnSearchDTO,
     page: number = 0,
     size: number = 10,
@@ -54,17 +46,42 @@ export class LcnService {
       params = params.set('active', searchDto.active.toString());
     }
 
-    return this.http.get<PageResponse<LcnResponseDTO>>(this.apiUrl, {params});
+    return this.http.get<PageResponse<LcnResponseDTO>>(this.apiUrl+"/decaissements", {params});
   }
 
-  /**
-   * Toggles the active status of an LCN by its unique numero.
-   *
-   * @param numero The unique identifier of the LCN to toggle.
-   * @returns An Observable of the updated LcnResponseDTO.
-   */
-  toggleLcnStatus(numero: string): Observable<LcnResponseDTO> {
-    const url = `${this.apiUrl}/toggle/${numero}`;
+  getEncaissementLcns(
+    searchDto: LcnSearchDTO,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission,desc'
+  ): Observable<PageResponse<LcnResponseDTO>> {
+
+    // Initialize HttpParams with pagination and sorting info
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    // Append search criteria if they are present
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if (searchDto.nomBanque) {
+      params = params.set('nomBanque', searchDto.nomBanque);
+    }
+    if (searchDto.active !== undefined && searchDto.active !== null) {
+      params = params.set('active', searchDto.active.toString());
+    }
+
+    return this.http.get<PageResponse<LcnResponseDTO>>(this.apiUrl+"/encaissements", {params});
+  }
+
+
+  toggleLcnStatus(id: number): Observable<LcnResponseDTO> {
+    const url = `${this.apiUrl}/toggle/${id}`;
     return this.http.patch<LcnResponseDTO>(url, {});
   }
 

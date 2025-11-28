@@ -21,7 +21,7 @@ import {VirementEncoursComponent} from "../../etatsDesEncours/views/lesEncours/d
 import {MiseADispositionEncoursComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/mise-a-disposition-encours/mise-a-disposition-encours.component";
 import {RapprochemntMensuelleComponent} from "../../etatsDesEncours/rapprochement/views/rapprochemnt-mensuelle/rapprochemnt-mensuelle.component";
 import {SelectBanquePourLEncoursComponent} from "../../etatsDesEncours/views/select-banque-pour-l-encours/select-banque-pour-l-encours.component";
-import {LcnListComponent} from "../../LCN/views/lcn-list/lcn-list.component";
+import {LcnDecaissementsListComponent} from "../../LCN/views/lcn-decaissements-list/lcn-decaissements-list.component";
 import {ChequesDecaissementsListComponent} from "../../cheques/views/cheques-decaissements-list/cheques-decaissements-list.component";
 import {VirementDecaissementListComponent} from "../../Virements/views/virement-decaissement-list/virement-decaissement-list.component";
 import {MiseADispositionListComponent} from "../../Mise-à-disposition/views/mise-a-disposition-list/mise-a-disposition-list.component";
@@ -102,6 +102,8 @@ import {ChequesFormComponent} from "../../cheques/views/cheques-form/cheques-for
 import {
   ChequeEncaissementsEncoursComponent
 } from "../../etatsDesEncours/views/lesEncours/encaissements/cheque-encaissements-encours/cheque-encaissements-encours.component";
+import {LcnFormComponent} from "../../LCN/views/lcn-form/lcn-form.component";
+import {LcnEncaissementsListComponent} from "../../LCN/views/lcn-encaissements-list/lcn-encaissements-list.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -134,7 +136,12 @@ export const PORTAIL_ROUTES: Routes = [
   {path: 'leasing', loadChildren: () => import('../../leasing/route/leasing-routing.module').then(m => m.LEASING_FEATURE_ROUTES)},
   {path:"cmt",loadChildren:()=>import('../../cmt/route/cmt-routing').then(m=>m.cmtRoutes)},
 
-  {path:"LCN",component:LcnListComponent},
+  {path:"LCN/decaissements",component:LcnDecaissementsListComponent},
+  {path:"LCN/encaissements",component:LcnEncaissementsListComponent},
+  {path:"LCN/new",component:LcnFormComponent},
+  {path:"LCN/edit/:id",component:LcnFormComponent},
+
+
 
   {path:"Cheques/decaissements",component:ChequesDecaissementsListComponent},
   {path:"Cheques/encaissements",component:ChequesEncaissementsListComponent},

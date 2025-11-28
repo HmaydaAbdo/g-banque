@@ -90,7 +90,11 @@ export class SidebarComponent implements OnInit {
             {label:"Décaissements", icon: 'pi pi-minus' , routerLink: '/portail/Cheques/decaissements' },
           ]
         },
-        { label: 'LCN', icon: 'pi pi-file-o', routerLink: '/portail/LCN' },
+        { label: 'LCN', icon: 'pi pi-file-o',
+          items: [
+              {label:"Encaissements", icon: 'pi pi-plus' , routerLink: '/portail/LCN/encaissements' },
+            {label:"Décaissements", icon: 'pi pi-minus' , routerLink: '/portail/LCN/decaissements' },
+          ]},
         { label: 'Virements', icon: 'pi pi-arrow-right-arrow-left',
           items: [
             {label:"Encaissements", icon: 'pi pi-plus' , routerLink: '/portail/Virements/encaissement' },

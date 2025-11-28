@@ -1,7 +1,7 @@
 import {TransactionSource} from "../transactions/TransactionSource";
 
 export interface LcnTransactionRequest {
-  numeroLcn: string;
+  id: number;
   transactionSource: TransactionSource;
   dateEmission: Date;
   dateValeur: Date;

@@ -217,7 +217,7 @@ export class LcnEncoursComponent implements OnInit {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
 
       const lcnTransactionRequest: LcnTransactionRequest = {
-        numeroLcn: this.selectedLcn.numero,
+        id: this.selectedLcn.id,
         dateEmission: donneesComplementaires.dateEmission,
         dateValeur: donneesComplementaires.dateValeur,
         dateOperation: donneesComplementaires.dateOperation,

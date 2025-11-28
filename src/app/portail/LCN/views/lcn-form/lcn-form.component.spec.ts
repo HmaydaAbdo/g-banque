@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LcnListComponent } from './lcn-list.component';
+import { LcnFormComponent } from './lcn-form.component';
 
-describe('LcnListComponent', () => {
-  let component: LcnListComponent;
-  let fixture: ComponentFixture<LcnListComponent>;
+describe('LcnFormComponent', () => {
+  let component: LcnFormComponent;
+  let fixture: ComponentFixture<LcnFormComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [LcnListComponent]
+      imports: [LcnFormComponent]
     })
     .compileComponents();
-
-    fixture = TestBed.createComponent(LcnListComponent);
+    
+    fixture = TestBed.createComponent(LcnFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

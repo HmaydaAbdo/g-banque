@@ -1,5 +1,9 @@
+import {Type} from "../../Virements/Type";
+
 export interface LcnResponseDTO {
   numero: string;
+  id:number
+  type:Type
   dateEmission: string;
   beneficiaire: string;
   dateEcheance: string;
@@ -10,4 +14,5 @@ export interface LcnResponseDTO {
   montant: number;
   active: boolean;
   banqueName: string;
+  banqueId:number
 }
