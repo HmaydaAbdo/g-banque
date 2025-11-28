@@ -114,17 +114,8 @@ export class LcnService {
     return this.http.patch<LcnResponseDTO>(url, {});
   }
 
-  /**
-   * Retrieves a paginated list of outstanding LCNs for a specific bank.
-   *
-   * @param banqueId The ID of the bank to search for.
-   * @param searchDto
-   * @param page The page number to retrieve (0-indexed).
-   * @param size The number of items per page.
-   * @param sort The sorting criteria (e.g., 'dateEcheance,desc').
-   * @returns An Observable of a paginated list of LcnResponseDTO.
-   */
-  getOutstandingLcnsByBank(
+
+  encoursDecaissementLcnsByBank(
     banqueId: number,
     searchDto: LcnSearchDTO,
     page: number = 0,
@@ -148,7 +139,35 @@ export class LcnService {
       params = params.set('montant', searchDto.montant.toString());
     }
 
-    const url = `${this.apiUrl}/encours/${banqueId}`;
+    const url = `${this.apiUrl}/decaissements/encours/${banqueId}`;
+    return this.http.get<EncoursLcnResponse>(url, {params});
+  }
+
+  encoursEncaissementLcnsByBank(
+    banqueId: number,
+    searchDto: LcnSearchDTO,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEcheance,desc'
+  ): Observable<EncoursLcnResponse> {
+
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+
+    const url = `${this.apiUrl}/encaissements/encours/${banqueId}`;
     return this.http.get<EncoursLcnResponse>(url, {params});
   }
 }

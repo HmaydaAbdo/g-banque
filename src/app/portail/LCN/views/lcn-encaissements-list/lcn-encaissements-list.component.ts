@@ -217,7 +217,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
    * @param lcn The LCN to toggle.
    */
   confirmToggleStatus(lcn: LcnResponseDTO): void {
-    const confirmationMessage = `Êtes-vous sûr de vouloir ${lcn.active ? 'désactiver' : 'activer'} le LCN N° ${lcn.numero}?`;
+    const confirmationMessage = `Êtes-vous sûr de vouloir ${lcn.active ? 'désactiver' : 'activer'} le LCN  ${lcn.id}?`;
     this.confirmationService.confirm({
       message: confirmationMessage,
       header: `Confirmation de ${lcn.active ? 'désactivation' : 'activation'}`,

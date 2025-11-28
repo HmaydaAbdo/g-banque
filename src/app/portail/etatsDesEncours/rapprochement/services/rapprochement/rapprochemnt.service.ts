@@ -67,23 +67,20 @@
 
 
 
-    /**
-     * Envoie un LCN au backend pour le rapprochement
-     * @param lcn  Les données du lcn à rapprocher
-     * @returns Observable<LcnTransactionResponse>
-     */
-    lcnToRapprochement( lcn: LcnTransactionRequest): Observable<LcnTransactionResponse> {
-      return this.http.post<LcnTransactionResponse>(`${this.baseUrl}/process/lcn`,
+    lcnDecaissementToRapprochement( lcn: LcnTransactionRequest): Observable<LcnTransactionResponse> {
+      return this.http.post<LcnTransactionResponse>(`${this.baseUrl}/process/decaissement/lcn`,
+        lcn
+      );
+    }
+
+    lcnEncaissementToRapprochement( lcn: LcnTransactionRequest): Observable<LcnTransactionResponse> {
+      return this.http.post<LcnTransactionResponse>(`${this.baseUrl}/process/encaissement/lcn`,
         lcn
       );
     }
 
 
-    /**
-     * Envoie le virement au backend pour le rapprochement
-     * @param virement Les données du virement à rapprocher
-     * @returns Observable<VirementTransactionResponseDto>
-     */
+
     virementDecaissementToRapprochement( virement: VirementTransactionRequestDto): Observable<VirementTransactionResponseDto> {
       return this.http.post<VirementTransactionResponseDto>(`${this.baseUrl}/process/decaissement/virement`,
         virement

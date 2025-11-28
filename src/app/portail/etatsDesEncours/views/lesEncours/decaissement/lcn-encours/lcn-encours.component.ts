@@ -229,7 +229,7 @@ export class LcnEncoursComponent implements OnInit {
 
       this.isSubmitting = true;
 
-      this.rapprochementService.lcnToRapprochement(lcnTransactionRequest)
+      this.rapprochementService.lcnDecaissementToRapprochement(lcnTransactionRequest)
         .subscribe({
           next: (response) => {
             console.log(response);
@@ -273,7 +273,7 @@ export class LcnEncoursComponent implements OnInit {
       : 'dateEcheance,desc';
 
     this.lcnService
-      .getOutstandingLcnsByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
+      .encoursDecaissementLcnsByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
       .subscribe({
         next: (response: EncoursLcnResponse) => {
           this.lcns = response.page.content;

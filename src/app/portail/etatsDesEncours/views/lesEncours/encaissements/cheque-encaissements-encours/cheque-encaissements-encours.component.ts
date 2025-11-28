@@ -174,7 +174,7 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
       const recapMessage = `
             Êtes-vous sûr de vouloir rapprocher ce chèque ?
             <br><br>
-            <strong>Id Chèque:</strong> ${selectedCheque.id}
+            <strong>Id Chèque :</strong> ${selectedCheque.id}
             <br>
             <strong>Bénéficiaire:</strong> ${selectedCheque.beneficiaire}
             <br>
@@ -182,14 +182,14 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
             <br>
             <strong>Montant:</strong> ${this.decimalPipe.transform(selectedCheque.montant,"1.2-2","fr-FR")} MAD
             <br><br>
-            <strong>Détails du Rapprochement:</strong>
+            <strong>Détails du Rapprochement :</strong>
             <ul>
-                <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
-                <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
-                <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
+                <li><strong>Date d'émission :</strong> ${dateEmissionFormatted}</li>
+                <li><strong>Date de valeur :</strong> ${dateValeurFormatted || '-'}</li>
+                <li><strong>Date d'opération :</strong> ${dateOperationFormatted || '-'}</li>
                 <li><strong>Libellé:</strong> ${formValue.libelle}</li>
                 <li><strong>Observation:</strong> ${formValue.observation}</li>
-                <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
+                <li><strong>TVA Collectée :</strong> ${formValue.tvaDeductible}%</li>
             </ul>
       `;
 

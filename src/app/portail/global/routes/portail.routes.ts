@@ -104,6 +104,9 @@ import {
 } from "../../etatsDesEncours/views/lesEncours/encaissements/cheque-encaissements-encours/cheque-encaissements-encours.component";
 import {LcnFormComponent} from "../../LCN/views/lcn-form/lcn-form.component";
 import {LcnEncaissementsListComponent} from "../../LCN/views/lcn-encaissements-list/lcn-encaissements-list.component";
+import {
+  EncaissementLcnEncoursComponent
+} from "../../etatsDesEncours/views/lesEncours/encaissements/encaissement-lcn-encours/encaissement-lcn-encours.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -193,7 +196,9 @@ export const PORTAIL_ROUTES: Routes = [
       {path:'echeances-leasing', component:EcheancesLeasingComponent},
       {path:'echeances-cmt', component:EcheancesCmtComponent},
 
-      {path:'lcn', component:LcnEncoursComponent},
+      {path:'lcn-decaissements', component:LcnEncoursComponent},
+      {path:'lcn-encaissements', component:EncaissementLcnEncoursComponent},
+
       {path:'virements-decaissements', component:VirementEncoursComponent},
       {path:'virements-encaissements',component:VirementEncaissementEncoursComponent},
       {path:'cheques-decaissements', component:ChequesEncoursComponent},
