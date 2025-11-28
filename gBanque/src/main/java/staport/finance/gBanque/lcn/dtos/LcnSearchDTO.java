@@ -1,8 +1,15 @@
 package staport.finance.gBanque.lcn.dtos;
 
 
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+
 public class LcnSearchDTO {
 
+    private OffsetDateTime dateEmission;
+    private OffsetDateTime dateEcheance;
+    private String emetteur;
+    private BigDecimal montant;
     private String numero;
     private String beneficiaire;
     private String nomBanque;
@@ -11,11 +18,36 @@ public class LcnSearchDTO {
     public LcnSearchDTO() {
     }
 
-    public LcnSearchDTO(String numero, String beneficiaire, String nomBanque, Boolean active) {
-        this.numero = numero;
-        this.beneficiaire = beneficiaire;
-        this.nomBanque = nomBanque;
-        this.active = active;
+    public OffsetDateTime getDateEmission() {
+        return dateEmission;
+    }
+
+    public void setDateEmission(OffsetDateTime dateEmission) {
+        this.dateEmission = dateEmission;
+    }
+
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
+    }
+
+    public OffsetDateTime getDateEcheance() {
+        return dateEcheance;
+    }
+
+    public void setDateEcheance(OffsetDateTime dateEcheance) {
+        this.dateEcheance = dateEcheance;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
     }
 
     public String getNumero() {
@@ -53,7 +85,11 @@ public class LcnSearchDTO {
     @Override
     public String toString() {
         return "LcnSearchDTO{" +
-                "numero='" + numero + '\'' +
+                "dateEmission=" + dateEmission +
+                ", dateEcheance=" + dateEcheance +
+                ", emetteur='" + emetteur + '\'' +
+                ", montant=" + montant +
+                ", numero='" + numero + '\'' +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", nomBanque='" + nomBanque + '\'' +
                 ", active=" + active +

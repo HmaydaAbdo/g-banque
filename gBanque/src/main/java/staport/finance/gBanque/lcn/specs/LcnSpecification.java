@@ -13,11 +13,6 @@ import java.util.List;
 
 public final class LcnSpecification {
 
-    /**
-     * Specification to filter Lcns by their numero (case-insensitive).
-     * @param numero The Lcn number to match.
-     * @return A Specification for the Lcn number.
-     */
     public static Specification<Lcn> hasNumero(String numero) {
         return (root, query, criteriaBuilder) -> {
             if (numero == null || numero.trim().isEmpty()) {
@@ -40,12 +35,6 @@ public final class LcnSpecification {
         };
     }
 
-
-    /**
-     * Specification to filter Lcns by their beneficiary (case-insensitive).
-     * @param beneficiaire The beneficiary name to match.
-     * @return A Specification for the beneficiary.
-     */
     public static Specification<Lcn> hasBeneficiaire(String beneficiaire) {
         return (root, query, criteriaBuilder) -> {
             if (beneficiaire == null || beneficiaire.trim().isEmpty()) {
@@ -58,11 +47,6 @@ public final class LcnSpecification {
         };
     }
 
-    /**
-     * Specification to filter Lcns by the name of the associated bank (case-insensitive).
-     * @param nomBanque The bank name to match.
-     * @return A Specification for the bank name.
-     */
     public static Specification<Lcn> hasBanqueNom(String nomBanque) {
         return (root, query, criteriaBuilder) -> {
             if (nomBanque == null || nomBanque.trim().isEmpty()) {
@@ -75,11 +59,6 @@ public final class LcnSpecification {
         };
     }
 
-    /**
-     * Specification to filter Lcns by their active status.
-     * @param active The active status (true or false).
-     * @return A Specification for the active status.
-     */
     public static Specification<Lcn> isActive(Boolean active) {
         return (root, query, criteriaBuilder) -> {
             if (active == null) {
@@ -98,13 +77,36 @@ public final class LcnSpecification {
         };
     }
 
-    /**
-     * Spécification pour filtrer les LCN actifs d'une banque spécifique avec une date d'échéance
-     * qui est égale ou antérieure à la fin du mois en cours.
-     *
-     * @param banqueId L'ID de la banque pour laquelle les LCN sont recherchés.
-     * @return Une Specification qui combine les critères de filtrage.
-     */
+    public static Specification<Lcn> hasDateEcheance(OffsetDateTime dateEcheance) {
+        return (root, query, criteriaBuilder) -> {
+            if (dateEcheance == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("dateEcheance"), dateEcheance);
+        };
+    }
+
+    public static Specification<Lcn> hasDateEmission(OffsetDateTime dateEmission) {
+        return (root, query, criteriaBuilder) -> {
+            if (dateEmission == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("dateEmission"), dateEmission);
+        };
+    }
+
+    public static Specification<Lcn> hasEmetteur(String emetteur) {
+        return (root, query, criteriaBuilder) -> {
+            if (emetteur == null || emetteur.trim().isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("emetteur")),
+                    "%" + emetteur.toLowerCase() + "%"
+            );
+        };
+    }
+
     public static Specification<Lcn> activeForBankAndUntilEndOfMonth(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();

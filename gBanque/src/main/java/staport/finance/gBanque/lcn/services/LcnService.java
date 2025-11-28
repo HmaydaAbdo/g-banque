@@ -134,12 +134,14 @@ public class LcnService {
 
     public Page<LcnResponseDTO> getEncaissements(LcnSearchDTO searchDto, Pageable pageable) {
         // Combine specifications based on non-null search criteria from the DTO
-        Specification<Lcn> spec = Specification.where(LcnSpecification.hasNumero(searchDto.getNumero()))
+        Specification<Lcn> spec = Specification.where(LcnSpecification.hasType(Type.ENCAISSEMENT))
+                .and(LcnSpecification.hasDateEmission(searchDto.getDateEmission()))
+                .and(LcnSpecification.hasDateEcheance(searchDto.getDateEcheance()))
+                .and(LcnSpecification.hasEmetteur(searchDto.getEmetteur()))
+                .and(LcnSpecification.hasMontant(searchDto.getMontant()))
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
-                .and(LcnSpecification.isActive(searchDto.getActive()))
-                .and(LcnSpecification.hasType(Type.ENCAISSEMENT));
-
+                .and(LcnSpecification.isActive(searchDto.getActive()));
         // Execute the search with the combined specification and pagination
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
 
