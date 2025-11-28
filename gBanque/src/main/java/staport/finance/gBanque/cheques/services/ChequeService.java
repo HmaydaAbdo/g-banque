@@ -184,8 +184,9 @@ public class ChequeService {
         // Build the specification for active cheques for the specified bank in the current month
         Specification<Cheque> spec = ChequeSpec.encoursEncaissements(banqueId)
                 .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(ChequeSpec.hasNumero(searchDto.getNumero()))
-                .and(ChequeSpec.hasMontant(searchDto.getMontant()));
+                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
+                .and(ChequeSpec.hasMontant(searchDto.getMontant()))
+                .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()));
 
         // Execute the search with the specification and pagination
         Page<Cheque> page = chequeRepository.findAll(spec, pageable);

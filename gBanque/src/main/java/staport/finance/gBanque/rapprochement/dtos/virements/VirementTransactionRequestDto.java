@@ -9,7 +9,7 @@ import java.util.Objects;
 
 public class VirementTransactionRequestDto {
 
-    @NotBlank(message = " id du virement est obligatoire")
+    @NotNull(message = " id du virement est obligatoire")
     private Long id;
 
     @NotNull(message = "La source de transaction est obligatoire")
