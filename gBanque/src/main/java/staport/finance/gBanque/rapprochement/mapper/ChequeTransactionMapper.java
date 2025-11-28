@@ -27,15 +27,7 @@ public  class  ChequeTransactionMapper {
     }
 
 
-    /**
-     * Maps ChequeTransactionRequestDto and its associated entities to a Transaction entity.
-     * The service layer is responsible for fetching the entities.
-     *
-     * @param requestDto      The DTO containing the request data.
-     * @param cheque  The fetched cheque entity.
-     * @return The Transaction entity, ready for persistence.
-     * @throws Exception if an error occurs during JSON serialization.
-     */
+
     public  Transaction toEntity(ChequeTransactionRequest requestDto, Cheque cheque ) throws Exception {
 
 
@@ -44,8 +36,6 @@ public  class  ChequeTransactionMapper {
         }
 
         Transaction transaction = new Transaction();
-
-
         transaction.setObservation(requestDto.getObservation());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setDateEmission(requestDto.getDateEmission());

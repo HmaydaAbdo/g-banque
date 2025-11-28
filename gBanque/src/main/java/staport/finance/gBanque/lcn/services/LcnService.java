@@ -185,9 +185,11 @@ public class LcnService {
     public EncoursLcnResponse getEncoursEncaissementsForLcn(EncoursLcnSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification for active LCN for the specified bank in the current month
         Specification<Lcn> spec = LcnSpecification.encoursEncaissement(banqueId)
-                .and(LcnSpecification.hasNumero(searchDto.getNumero()))
+                .and(LcnSpecification.hasEmetteur(searchDto.getEmetteur()))
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(LcnSpecification.hasMontant(searchDto.getMontant()));
+                .and(LcnSpecification.hasMontant(searchDto.getMontant()))
+                .and(LcnSpecification.hasDateEcheance(searchDto.getDateEcheance()))
+                .and(LcnSpecification.hasDateEmission(searchDto.getDateEmission()));
 
         // Execute the search with the specification and pagination
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
