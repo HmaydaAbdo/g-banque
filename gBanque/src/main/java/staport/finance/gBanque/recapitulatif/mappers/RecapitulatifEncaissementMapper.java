@@ -111,7 +111,7 @@ public class RecapitulatifEncaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(virement.getDateEmission());
         dto.setCredit(virement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("Virement N° " + virement.getNumero());
+        dto.setObservations("emetteur " + virement.getEmetteur());
         dto.setLibelle("Bénéficiaire " + virement.getBeneficiaire() );
         dto.setSource(TransactionSource.Virement);
         return dto;
@@ -126,7 +126,7 @@ public class RecapitulatifEncaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(cheque.getDateEmission());
         dto.setCredit(cheque.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("Cheque N° " + cheque.getNumero());
+        dto.setObservations("emetteur  " + cheque.getEmetteur());
         dto.setLibelle("Bénéficiaire " + cheque.getBeneficiaire() );
         dto.setSource(TransactionSource.CHEQUE);
         return dto;

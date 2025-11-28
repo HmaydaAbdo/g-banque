@@ -9,7 +9,7 @@ import java.util.Objects;
 
 public class ChequeTransactionRequest {
 
-    @NotBlank(message = "Le id du chèque est obligatoire")
+    @NotNull(message = "Le id du chèque est obligatoire")
     private Long idCheque;
 
     @NotNull(message = "La source de transaction est obligatoire")

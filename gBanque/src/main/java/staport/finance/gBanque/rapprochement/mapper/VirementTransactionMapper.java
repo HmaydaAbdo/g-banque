@@ -74,15 +74,7 @@ public class VirementTransactionMapper {
         }
 
 
-        // Mapping traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("numeroVirement", virement.getNumero());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
-        }
+
         return transaction;
     }
 
@@ -117,14 +109,6 @@ public class VirementTransactionMapper {
         responseDto.setTvaCollectee(transaction.getTvaCollectee());
         responseDto.setDebit(transaction.getDebit());
         responseDto.setCredit(transaction.getCredit());
-
-        // Retrieving IDs from traces
-        try {
-            Map tracesMap = objectMapper.readValue(transaction.getTraces(), Map.class);
-            responseDto.setVirementNumber(String.valueOf(tracesMap.get("numeroVirement").toString()));
-        } catch (Exception e) {
-            throw new Exception("Erreur lors de la désérialisation des traces", e);
-        }
 
         return responseDto;
     }
