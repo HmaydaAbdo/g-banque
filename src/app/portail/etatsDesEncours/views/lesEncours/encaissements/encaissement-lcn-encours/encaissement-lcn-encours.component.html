@@ -13,18 +13,23 @@
     <form [formGroup]="searchForm" class="grid p-fluid flex flex-row justify-content-between flex-wrap">
 
         <span class="p-float-label">
-          <input id="numero" type="text" pInputText formControlName="numero" />
-          <label for="numero">Recherche par N° LCN</label>
+          <p-calendar id="dateEmission" formControlName="dateEmission" [showOnFocus]="false" dateFormat="dd/mm/yy" ></p-calendar>
+          <label for="dateEmission"> Date d'émission</label>
         </span>
 
       <span class="p-float-label">
-          <input id="beneficiaire" type="text" pInputText formControlName="beneficiaire" />
-          <label for="beneficiaire">Recherche par Bénéficiaire</label>
+          <p-calendar id="dateEcheance" formControlName="dateEcheance" [showOnFocus]="false" dateFormat="dd/mm/yy" ></p-calendar>
+          <label for="dateEcheance">Date d'échéance</label>
+        </span>
+
+      <span class="p-float-label">
+          <input id="emetteur" type="text" pInputText formControlName="emetteur" />
+          <label for="emetteur">  émetteur</label>
         </span>
 
       <span class="p-float-label">
           <input id="montant" type="number" pInputText formControlName="montant" />
-          <label for="montant">Recherche par Montant</label>
+          <label for="montant"> Montant</label>
         </span>
 
     </form>

@@ -111,8 +111,9 @@ export class EncaissementLcnEncoursComponent implements OnInit {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      numero: [''],
-      beneficiaire: [''],
+      emetteur: [''],
+      dateEcheance: [null],
+      dateEmission: [null],
       montant:[null]
     });
 
