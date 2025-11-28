@@ -99,6 +99,9 @@ import {
   ChequesEncaissementsListComponent
 } from "../../cheques/views/cheques-encaissements-list/cheques-encaissements-list.component";
 import {ChequesFormComponent} from "../../cheques/views/cheques-form/cheques-form.component";
+import {
+  ChequeEncaissementsEncoursComponent
+} from "../../etatsDesEncours/views/lesEncours/encaissements/cheque-encaissements-encours/cheque-encaissements-encours.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -182,10 +185,13 @@ export const PORTAIL_ROUTES: Routes = [
 
       {path:'echeances-leasing', component:EcheancesLeasingComponent},
       {path:'echeances-cmt', component:EcheancesCmtComponent},
-      {path:'cheques', component:ChequesEncoursComponent},
+
       {path:'lcn', component:LcnEncoursComponent},
       {path:'virements-decaissements', component:VirementEncoursComponent},
       {path:'virements-encaissements',component:VirementEncaissementEncoursComponent},
+      {path:'cheques-decaissements', component:ChequesEncoursComponent},
+      {path:'cheques-encaissements', component:ChequeEncaissementsEncoursComponent},
+
       {path:'mise-a-disposition', component:MiseADispositionEncoursComponent},
 
       {path:"prefinancement-remboursement",component:PrefinancementRemboursementsComponent},

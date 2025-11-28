@@ -39,7 +39,8 @@ export class LesEncoursComponent implements OnInit {
     'recap-decaissement': { label: 'Récap Décaissements', icon: 'pi pi-briefcase' },
     'echeances-leasing': { label: 'Décaissements ⇒ Échéances Leasing', icon: 'pi pi-list' },
     'echeances-cmt': { label: 'Décaissements ⇒ Échéances CMT', icon: 'pi pi-list' },
-    'cheques': { label: 'Décaissements ⇒ Chèques', icon: 'pi pi-list' },
+    'cheques-decaissements': { label: 'Décaissements ⇒ Chèques', icon: 'pi pi-list' },
+    'cheques-encaissements': { label: 'Encaissements ⇒ Chèques', icon: 'pi pi-list' },
     'lcn': { label: 'Décaissements ⇒ LCN', icon: 'pi pi-list' },
     'virements-decaissements': { label: 'Décaissements ⇒ Virements', icon: 'pi pi-list' },
     'mise-a-disposition': { label: 'Décaissements ⇒ Mise à disposition', icon: 'pi pi-list' },
@@ -122,7 +123,7 @@ export class LesEncoursComponent implements OnInit {
         items: [
           { label: 'Échéances leasing', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-leasing'] },
           { label: 'Échéances CMT', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-cmt'] },
-          { label: 'Chèques', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'cheques'] },
+          { label: 'Chèques', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'cheques-decaissements'] },
           { label: 'LCN', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'lcn'] },
           { label: 'Virements', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'virements-decaissements'] },
           { label: 'Mise à disposition', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'mise-a-disposition'] },
@@ -141,6 +142,7 @@ export class LesEncoursComponent implements OnInit {
         icon: 'pi pi-arrow-circle-right',
         items: [
           {label: "Virements", icon: "pi pi-list", routerLink: ["/portail/etats-des-encours", this.banqueId, "virements-encaissements"]},
+          { label: 'Chèques', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'cheques-encaissements'] },
           { label: 'Préfinancement', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-deblocage'] },
           { label: 'Droits Constatés', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-deblocage'] },
           { label: 'Factoring', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'factoring-deblocage'] },
