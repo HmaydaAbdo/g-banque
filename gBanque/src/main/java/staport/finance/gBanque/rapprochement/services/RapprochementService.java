@@ -253,12 +253,12 @@ public class RapprochementService {
 
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public ChequeTransactionResponseDto processChequeTransaction(ChequeTransactionRequest requestDto) throws Exception{
+    public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
         // If the Chèque does not exist, throw a ResourceNotFoundException.
-        Cheque cheque = chequeRepository.findByNumero(requestDto.getNumeroCheque())
+        Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Cheque with numero " + requestDto.getNumeroCheque() + " not found"));
+                        "Cheque with id " + requestDto.getIdCheque() + " not found"));
 
         // Step 2: Check if the chèque is active.
         // If the Chèque is already used/paid (active = false), throw an exception.
@@ -291,6 +291,44 @@ public class RapprochementService {
         return chequeTransactionMapper.toResponseDto(savedTransaction);
     }
 
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public ChequeTransactionResponseDto processChequeEncaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
+        // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
+        // If the Chèque does not exist, throw a ResourceNotFoundException.
+        Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Cheque with id " + requestDto.getIdCheque() + " not found"));
+
+        // Step 2: Check if the chèque is active.
+        // If the Chèque is already used/paid (active = false), throw an exception.
+        if (!cheque.isActive()) {
+            throw new Exception("The cheque is not active, it has already been paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
+        Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
+        // Then save the updated bank entity.
+        Banque banque = cheque.getBanque();
+        banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getDebit()));
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
+        cheque.setActive(false);
+        cheque.setDateOperation(savedTransaction.getDateOperations());
+        cheque.setDateValeur(savedTransaction.getDateValeur());
+        cheque.setLibelle(savedTransaction.getLibelle());
+        cheque.setObservation(savedTransaction.getObservation());
+        chequeRepository.save(cheque);
+
+        // Step 7: Convert the saved Transaction entity into a ChequeTransactionResponseDto
+        // using the mapper and return it as the response.
+        return chequeTransactionMapper.toResponseDto(savedTransaction);
+    }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public LcnTransactionResponse processLcnTransaction(LcnTransactionRequest requestDto) throws Exception{

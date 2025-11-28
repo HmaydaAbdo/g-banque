@@ -1,7 +1,14 @@
 package staport.finance.gBanque.cheques.dtos;
 
 
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+
 public class ChequeSearchDto {
+
+    private OffsetDateTime dateEmission;
+    private BigDecimal montant;
+    private String emetteur;
 
     private String numero;
     private String beneficiaire;
@@ -46,5 +53,27 @@ public class ChequeSearchDto {
         this.active = active;
     }
 
+    public OffsetDateTime getDateEmission() {
+        return dateEmission;
+    }
 
+    public void setDateEmission(OffsetDateTime dateEmission) {
+        this.dateEmission = dateEmission;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
+    }
 }

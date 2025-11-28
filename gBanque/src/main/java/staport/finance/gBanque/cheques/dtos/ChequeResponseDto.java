@@ -1,10 +1,13 @@
 package staport.finance.gBanque.cheques.dtos;
 
+import staport.finance.gBanque.virements.enums.Type;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class ChequeResponseDto {
 
+    private Long id;
     private String numero;
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateEcheance;
@@ -13,7 +16,10 @@ public class ChequeResponseDto {
     private String beneficiaire;
     private BigDecimal montant;
     private boolean active;
+    private Type type;
+    private String emetteur;
     private String nomBanque;
+    private Long banqueId;
     private String libelle;
     private String observation;
 
@@ -21,16 +27,6 @@ public class ChequeResponseDto {
     public ChequeResponseDto() {
     }
 
-    // Constructor with all fields
-    public ChequeResponseDto(String numero, OffsetDateTime dateEmission,OffsetDateTime dateEcheance, String beneficiaire, BigDecimal montant, boolean active, String nomBanque) {
-        this.numero = numero;
-        this.dateEmission = dateEmission;
-        this.dateEcheance = dateEcheance;
-        this.beneficiaire = beneficiaire;
-        this.montant = montant;
-        this.active = active;
-        this.nomBanque = nomBanque;
-    }
 
     // Getters and Setters
     public String getNumero() {
@@ -89,6 +85,14 @@ public class ChequeResponseDto {
         this.nomBanque = nomBanque;
     }
 
+    public Long getBanqueId() {
+        return banqueId;
+    }
+
+    public void setBanqueId(Long banqueId) {
+        this.banqueId = banqueId;
+    }
+
     public OffsetDateTime getDateOperation() {
         return dateOperation;
     }
@@ -119,5 +123,29 @@ public class ChequeResponseDto {
 
     public void setObservation(String observation) {
         this.observation = observation;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
     }
 }

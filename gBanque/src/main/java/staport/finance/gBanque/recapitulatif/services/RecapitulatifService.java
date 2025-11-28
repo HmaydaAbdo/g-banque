@@ -306,6 +306,7 @@ public class RecapitulatifService {
                 .and(DecompteSpec.byBanqueId(banqueId));
 
         Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom());
+        Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId());
 
 
         // Step 2: Fetch all relevant data for the current month from all repositories.
@@ -314,6 +315,8 @@ public class RecapitulatifService {
         List<Factoring> outstandingFactoring = factoringRepository.findAll(factoringSpecification);
         List<Decompte> outstandingDecomptes = decompteRepository.findAll(decompteSpecification);
         List<Virement> outstandingVirements = virementRepository.findAll(virementSpec);
+        List<Cheque> outstandingCheques = chequeRepository.findAll(chequeSpec);
+
 
         // Step 3: Combine all lists and map them to the unified DTO.
         List<RecaputilatifItem> combinedItems = new ArrayList<>();
@@ -322,6 +325,7 @@ public class RecapitulatifService {
         combinedItems.addAll(outstandingFactoring.stream().map(encaissementMapper::mapFactoringToDto).toList());
         combinedItems.addAll(outstandingDecomptes.stream().map(encaissementMapper::mapDecompteToDto).toList());
         combinedItems.addAll(outstandingVirements.stream().map(encaissementMapper::mapVirementToDto).toList());
+        combinedItems.addAll(outstandingCheques.stream().map(encaissementMapper::mapChequeToDto).toList());
         // Apply the filters from the DTO
         if (transactionSources != null && !transactionSources.isEmpty()) {
             combinedItems = combinedItems.stream()

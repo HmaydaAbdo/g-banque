@@ -23,17 +23,19 @@ public class Cheque {
     @Column(name = "date_emission", nullable = false)
     private OffsetDateTime dateEmission;
 
+    @Column(name = "date_echeance")
+    private OffsetDateTime dateEcheance;
+
     @Column(name = "beneficiaire", nullable = false)
     private String beneficiaire;
 
-    @Column(name = "date_echeance") // nullable = true is default
-    private OffsetDateTime dateEcheance;
+    @Column(name = "montant", nullable = false, precision = 19, scale = 2) // Precision and scale for BigDecimal
+    private BigDecimal montant;
 
     private OffsetDateTime dateOperation ;
     private OffsetDateTime dateValeur;
 
-    @Column(name = "montant", nullable = false, precision = 19, scale = 2) // Precision and scale for BigDecimal
-    private BigDecimal montant;
+
 
     // Many cheques can come from one bank. This is a mandatory (not nullable) relationship.
     @ManyToOne(optional = false) // 'optional = false' makes the foreign key non-nullable
@@ -49,6 +51,8 @@ public class Cheque {
 
     private String libelle;
     private String observation;
+
+    private String emetteur;
 
     // --- Constructors ---
     public Cheque() {
@@ -164,11 +168,24 @@ public class Cheque {
         this.type = type;
     }
 
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Cheque cheque = (Cheque) o;
-        return active == cheque.active && Objects.equals(id, cheque.id) && Objects.equals(numero, cheque.numero) && Objects.equals(dateEmission, cheque.dateEmission) && Objects.equals(beneficiaire, cheque.beneficiaire) && Objects.equals(dateEcheance, cheque.dateEcheance) && Objects.equals(dateOperation, cheque.dateOperation) && Objects.equals(dateValeur, cheque.dateValeur) && Objects.equals(montant, cheque.montant) && Objects.equals(banque, cheque.banque) && type == cheque.type && Objects.equals(libelle, cheque.libelle) && Objects.equals(observation, cheque.observation);
+        return active == cheque.active && Objects.equals(id, cheque.id) && Objects.equals(numero, cheque.numero) && Objects.equals(dateEmission, cheque.dateEmission) && Objects.equals(beneficiaire, cheque.beneficiaire) && Objects.equals(dateEcheance, cheque.dateEcheance) && Objects.equals(dateOperation, cheque.dateOperation) && Objects.equals(dateValeur, cheque.dateValeur) && Objects.equals(montant, cheque.montant) && Objects.equals(banque, cheque.banque) && type == cheque.type && Objects.equals(libelle, cheque.libelle) && Objects.equals(observation, cheque.observation) && Objects.equals(emetteur, cheque.emetteur);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, numero, dateEmission, beneficiaire, dateEcheance, dateOperation, dateValeur, montant, banque, active, type, libelle, observation, emetteur);
     }
 
     @Override
@@ -187,11 +204,7 @@ public class Cheque {
                 ", type=" + type +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
+                ", emetteur='" + emetteur + '\'' +
                 '}';
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, numero, dateEmission, beneficiaire, dateEcheance, dateOperation, dateValeur, montant, banque, active, type, libelle, observation);
     }
 }

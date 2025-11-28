@@ -9,8 +9,8 @@ import java.util.Objects;
 
 public class ChequeTransactionRequest {
 
-    @NotBlank(message = "Le numéro du chèque est obligatoire")
-    private String numeroCheque;
+    @NotBlank(message = "Le id du chèque est obligatoire")
+    private Long idCheque;
 
     @NotNull(message = "La source de transaction est obligatoire")
     private final TransactionSource transactionSource = TransactionSource.CHEQUE;
@@ -37,28 +37,13 @@ public class ChequeTransactionRequest {
     public ChequeTransactionRequest() {
     }
 
-    // All-args constructor (except transactionSource since it's final)
-    public ChequeTransactionRequest(String numeroCheque,
-                                    OffsetDateTime dateEmission,
-                                    OffsetDateTime dateValeur,
-                                    OffsetDateTime dateOperation,
-                                    String observation,
-                                    Double tvaDeductible) {
-        this.numeroCheque = numeroCheque;
-        this.dateEmission = dateEmission;
-        this.dateValeur = dateValeur;
-        this.dateOperation = dateOperation;
-        this.observation = observation;
-        this.tvaDeductible = tvaDeductible;
+
+    public Long getIdCheque() {
+        return idCheque;
     }
 
-    // Getters and Setters
-    public String getNumeroCheque() {
-        return numeroCheque;
-    }
-
-    public void setNumeroCheque(String numeroCheque) {
-        this.numeroCheque = numeroCheque;
+    public void setIdCheque(Long idCheque) {
+        this.idCheque = idCheque;
     }
 
     public TransactionSource getTransactionSource() {
@@ -113,35 +98,16 @@ public class ChequeTransactionRequest {
         this.libelle = libelle;
     }
 
-    // equals & hashCode (based on numeroCheque, transactionSource, and dates)
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ChequeTransactionRequest that)) return false;
-        return Objects.equals(numeroCheque, that.numeroCheque) &&
-                transactionSource == that.transactionSource &&
-                Objects.equals(dateEmission, that.dateEmission) &&
-                Objects.equals(dateValeur, that.dateValeur) &&
-                Objects.equals(dateOperation, that.dateOperation) &&
-                Objects.equals(observation, that.observation) &&
-                Objects.equals(tvaDeductible, that.tvaDeductible);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(numeroCheque, transactionSource, dateEmission, dateValeur, dateOperation, observation, tvaDeductible);
-    }
-
-    // toString
     @Override
     public String toString() {
         return "ChequeTransactionRequest{" +
-                "numeroCheque='" + numeroCheque + '\'' +
+                "idCheque='" + idCheque + '\'' +
                 ", transactionSource=" + transactionSource +
                 ", dateEmission=" + dateEmission +
                 ", dateValeur=" + dateValeur +
                 ", dateOperation=" + dateOperation +
                 ", observation='" + observation + '\'' +
+                ", libelle='" + libelle + '\'' +
                 ", tvaDeductible=" + tvaDeductible +
                 '}';
     }

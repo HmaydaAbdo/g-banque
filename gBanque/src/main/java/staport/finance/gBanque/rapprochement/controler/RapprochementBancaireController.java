@@ -77,20 +77,6 @@ public class RapprochementBancaireController {
 
 
     /**
-     * Endpoint pour traiter une transaction de rapprochement de cheque.
-     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
-     *
-     * @param requestDto Le DTO de la requête de transaction de cheque.
-     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
-     */
-    @PostMapping("/process/cheque")
-    public ResponseEntity<ChequeTransactionResponseDto> processChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) throws Exception {
-        ChequeTransactionResponseDto responseDto = rapprochementService.processChequeTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
-    }
-
-
-    /**
      * Endpoint pour traiter une transaction de rapprochement de lcn.
      * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
      *
@@ -138,6 +124,18 @@ public class RapprochementBancaireController {
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+
+    @PostMapping("/process/decaissement/cheque")
+    public ResponseEntity<ChequeTransactionResponseDto> processDecaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) throws Exception {
+        ChequeTransactionResponseDto responseDto = rapprochementService.processChequeDecaissementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/process/encaissement/cheque")
+    public ResponseEntity<ChequeTransactionResponseDto> processEncaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) throws Exception {
+        ChequeTransactionResponseDto responseDto = rapprochementService.processChequeEncaissementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
 
     /**
      * Endpoint pour traiter une transaction de rapprochement de prefinancement.

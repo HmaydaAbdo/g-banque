@@ -1,17 +1,13 @@
 package staport.finance.gBanque.cheques.mappers;
 
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.cheques.dtos.ChequeRequestDto;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cheques.dtos.ChequeResponseDto;
 
 public class ChequeMapper {
 
-    /**
-     * Converts a Cheque entity to a ChequeResponseDto.
-     * This method is crucial for separating the domain model from the API's data contract.
-     *
-     * @param cheque The Cheque entity to convert.
-     * @return The populated ChequeResponseDto.
-     */
+
     public static ChequeResponseDto toDto(Cheque cheque) {
         if (cheque == null) {
             return null;
@@ -19,17 +15,19 @@ public class ChequeMapper {
 
         ChequeResponseDto dto = new ChequeResponseDto();
         dto.setId(cheque.getId());
-        dto.setNumero(cheque.getNumero());
+        dto.setNumero(cheque.getNumero() != null ? cheque.getNumero() : null);
         dto.setDateEmission(cheque.getDateEmission());
-        dto.setDateEcheance(cheque.getDateEcheance());
+        dto.setDateEcheance(cheque.getDateEcheance() != null ? cheque.getDateEcheance() : null);
         dto.setBeneficiaire(cheque.getBeneficiaire());
         dto.setMontant(cheque.getMontant());
         dto.setActive(cheque.isActive());
         dto.setType(cheque.getType());
+        dto.setEmetteur(cheque.getEmetteur() != null ? cheque.getEmetteur() : null);
         // We only need the bank's name for the DTO, not the entire Banque object,
         // which avoids exposing unnecessary data and improves performance.
         if (cheque.getBanque() != null) {
             dto.setNomBanque(cheque.getBanque().getNom());
+            dto.setBanqueId(cheque.getBanque().getId());
         }
 
         dto.setDateOperation(cheque.getDateOperation() != null ? cheque.getDateOperation() : null);
@@ -37,5 +35,26 @@ public class ChequeMapper {
         dto.setObservation("Chèque N° " + cheque.getNumero());
         dto.setLibelle("Bénéficiaire : " + cheque.getBeneficiaire() );
         return dto;
+    }
+
+    public static Cheque toEntity(ChequeRequestDto dto, Banque banque) {
+
+        Cheque cheque = new Cheque();
+
+        cheque.setDateEmission(dto.getDateEmission());
+
+        if(dto.getDateEcheance() != null){
+            cheque.setDateEcheance(dto.getDateEcheance());
+        }
+
+        cheque.setBeneficiaire(dto.getBeneficiaire());
+        cheque.setMontant(dto.getMontant());
+        cheque.setBanque(banque);
+        cheque.setActive(true);
+        cheque.setType(dto.getType());
+        cheque.setEmetteur(dto.getEmetteur());
+
+        return cheque;
+
     }
 }

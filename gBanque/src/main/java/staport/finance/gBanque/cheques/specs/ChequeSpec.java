@@ -47,6 +47,19 @@ public final class ChequeSpec {
         };
     }
 
+
+    public static Specification<Cheque> hasEmetteur(String emetteur) {
+        return (root, query, criteriaBuilder) -> {
+            if (emetteur == null || emetteur.trim().isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("emetteur")),
+                    "%" + emetteur.toLowerCase() + "%"
+            );
+        };
+    }
+
     /**
      * Specification to filter Cheques by the name of the associated bank (case-insensitive).
      * @param nomBanque The bank name to match.
@@ -96,6 +109,16 @@ public final class ChequeSpec {
         };
     }
 
+
+
+    public static Specification<Cheque> hasDateEmission(OffsetDateTime dateEmission) {
+        return (root, query, criteriaBuilder) -> {
+            if (dateEmission == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("dateEmission"), dateEmission);
+        };
+    }
 
 
     public static Specification<Cheque> encoursDecaissements(Long banqueId) {

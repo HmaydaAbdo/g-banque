@@ -6,10 +6,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.cheques.dtos.ChequeResponseDto;
-import staport.finance.gBanque.cheques.dtos.ChequeSearchDto;
-import staport.finance.gBanque.cheques.dtos.EncoursChequeResponseDto;
-import staport.finance.gBanque.cheques.dtos.EncoursChequeSearchDto;
+import staport.finance.gBanque.cheques.dtos.*;
 import staport.finance.gBanque.cheques.services.ChequeService;
 
 
@@ -25,34 +22,51 @@ public class ChequeController {
         this.chequeService = chequeService;
     }
 
-    /**
-     * Searches for cheques with pagination and filtering.
-     *
-     * @param searchDto The ChequeSearchDto populated from request parameters.
-     * @param pageable  The Pageable object from the request.
-     * @return A paginated list of ChequeResponseDto.
-     */
-    @GetMapping
-    public ResponseEntity<Page<ChequeResponseDto>> searchCheques(
+
+    @PostMapping
+    public ResponseEntity<ChequeResponseDto> createCheque(@RequestBody ChequeRequestDto requestDto) {
+        return ResponseEntity.ok(chequeService.createEncaissementCheque(requestDto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ChequeResponseDto> updateCheque(@PathVariable Long id, @RequestBody ChequeRequestDto requestDto) {
+        return ResponseEntity.ok(chequeService.editEncaissementCheque(id, requestDto));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ChequeResponseDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(chequeService.getChequeById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCheque(@PathVariable Long id) {
+        chequeService.deleteCheque(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/decaissements")
+    public ResponseEntity<Page<ChequeResponseDto>> getAllDecaissement(
             ChequeSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
 
-        Page<ChequeResponseDto> result = chequeService.searchCheques(searchDto, pageable);
+        Page<ChequeResponseDto> result = chequeService.getAllDecaissement(searchDto, pageable);
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * Toggles the active status of a cheque.
-     *
-     * PATCH /cheques/toggle/{numero}
-     *
-     * @param numero The numero of the cheque to toggle.
-     * @return The updated ChequeResponseDto.
-     */
-    @PatchMapping("/toggle/{numero}")
-    public ResponseEntity<ChequeResponseDto> toggleChequeStatus(@PathVariable String numero) {
+    @GetMapping("/encaissements")
+    public ResponseEntity<Page<ChequeResponseDto>> getAllEncaissement(
+            ChequeSearchDto searchDto,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+
+        Page<ChequeResponseDto> result = chequeService.getAllEncaissement(searchDto, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+
+    @PatchMapping("/toggle/{id}")
+    public ResponseEntity<ChequeResponseDto> toggleChequeStatus(@PathVariable long id) {
         try {
-            ChequeResponseDto updatedCheque = chequeService.toggleChequeStatus(numero);
+            ChequeResponseDto updatedCheque = chequeService.toggleChequeStatus(id);
             return ResponseEntity.ok(updatedCheque);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -60,19 +74,20 @@ public class ChequeController {
     }
 
 
-    /**
-     * Retrieves a paginated list of active cheques for a specific bank that are due in the current month.
-     * GET /cheques/encours/{banqueId}
-     *
-     * @param banqueId The ID of the bank.
-     * @param pageable The pagination and sorting information.
-     * @return A paginated list of ChequeResponseDto for the outstanding cheques.
-     */
-    @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<EncoursChequeResponseDto> getEncoursForCheques(
+
+    @GetMapping("/decaissements/encours/{banqueId}")
+    public ResponseEntity<EncoursChequeResponseDto> getEncoursDecaissementForCheques(
             @PathVariable Long banqueId,
             EncoursChequeSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        return ResponseEntity.ok(chequeService.getEncoursForCheques(searchDto,banqueId, pageable));
+        return ResponseEntity.ok(chequeService.getEncoursDecaissementForCheques(searchDto,banqueId, pageable));
+    }
+
+    @GetMapping("/encaissements/encours/{banqueId}")
+    public ResponseEntity<EncoursChequeResponseDto> getEncoursEncaissementForCheques(
+            @PathVariable Long banqueId,
+            EncoursChequeSearchDto searchDto,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+        return ResponseEntity.ok(chequeService.getEncoursEncaissementForCheques(searchDto,banqueId, pageable));
     }
 }

@@ -1,6 +1,7 @@
 package staport.finance.gBanque.recapitulatif.mappers;
 
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.factoring.entities.Factoring;
@@ -113,6 +114,21 @@ public class RecapitulatifEncaissementMapper {
         dto.setObservations("Virement N° " + virement.getNumero());
         dto.setLibelle("Bénéficiaire " + virement.getBeneficiaire() );
         dto.setSource(TransactionSource.Virement);
+        return dto;
+    }
+
+
+    public RecaputilatifItem mapChequeToDto(Cheque cheque) {
+        if (cheque == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(cheque.getDateEmission());
+        dto.setCredit(cheque.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations("Cheque N° " + cheque.getNumero());
+        dto.setLibelle("Bénéficiaire " + cheque.getBeneficiaire() );
+        dto.setSource(TransactionSource.CHEQUE);
         return dto;
     }
 
