@@ -161,8 +161,12 @@ export class ChequeService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
+    if(searchDto.dateEmission){
+      params = params.set('dateEmission', searchDto.dateEmission.toISOString())
+    }
+
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur);
     }
     if (searchDto.beneficiaire) {
       params = params.set('beneficiaire', searchDto.beneficiaire);
