@@ -7,7 +7,7 @@ import staport.finance.gBanque.lcn.entities.Lcn;
 import java.util.Optional;
 
 @Repository
-public interface LcnRepository extends JpaRepository<Lcn, String> , JpaSpecificationExecutor<Lcn> {
+public interface LcnRepository extends JpaRepository<Lcn, Long> , JpaSpecificationExecutor<Lcn> {
 
     /**
      * Finds an Lcn by its unique numero.

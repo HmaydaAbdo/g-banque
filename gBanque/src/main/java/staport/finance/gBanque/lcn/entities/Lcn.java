@@ -2,6 +2,7 @@ package staport.finance.gBanque.lcn.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -12,7 +13,10 @@ import java.util.Objects;
 public class Lcn {
 
     @Id
-    @Column(name = "numero", nullable = false, unique = true)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "numero")
     private String numero;
 
     @Column(name = "date_emission", nullable = false)
@@ -40,17 +44,15 @@ public class Lcn {
     private String libelle;
     private String observation;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private Type type;
+
+    private String emetteur;
+
     public Lcn() {}
 
-    public Lcn(String numero, OffsetDateTime dateEmission, String beneficiaire,
-               OffsetDateTime dateEcheance, BigDecimal montant, Banque banque) {
-        this.numero = numero;
-        this.dateEmission = dateEmission;
-        this.beneficiaire = beneficiaire;
-        this.dateEcheance = dateEcheance;
-        this.montant = montant;
-        this.banque = banque;
-    }
+
 
     // Getters & Setters
     public String getNumero() { return numero; }
@@ -103,29 +105,60 @@ public class Lcn {
         this.observation = observation;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Lcn)) return false;
-        Lcn lcn = (Lcn) o;
-        return numero != null && Objects.equals(numero, lcn.numero);
+
+    public Long getId() {
+        return id;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(numero);
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
     }
 
     @Override
     public String toString() {
         return "Lcn{" +
-                "numero='" + numero + '\'' +
+                "id=" + id +
+                ", numero='" + numero + '\'' +
                 ", dateEmission=" + dateEmission +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", dateEcheance=" + dateEcheance +
+                ", dateOperation=" + dateOperation +
+                ", dateValeur=" + dateValeur +
                 ", montant=" + montant +
-                ", active=" + active +
                 ", banque=" + banque +
+                ", active=" + active +
+                ", libelle='" + libelle + '\'' +
+                ", observation='" + observation + '\'' +
+                ", type=" + type +
+                ", emetteur='" + emetteur + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Lcn lcn = (Lcn) o;
+        return active == lcn.active && Objects.equals(id, lcn.id) && Objects.equals(numero, lcn.numero) && Objects.equals(dateEmission, lcn.dateEmission) && Objects.equals(beneficiaire, lcn.beneficiaire) && Objects.equals(dateEcheance, lcn.dateEcheance) && Objects.equals(dateOperation, lcn.dateOperation) && Objects.equals(dateValeur, lcn.dateValeur) && Objects.equals(montant, lcn.montant) && Objects.equals(banque, lcn.banque) && Objects.equals(libelle, lcn.libelle) && Objects.equals(observation, lcn.observation) && type == lcn.type && Objects.equals(emetteur, lcn.emetteur);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, numero, dateEmission, beneficiaire, dateEcheance, dateOperation, dateValeur, montant, banque, active, libelle, observation, type, emetteur);
     }
 }

@@ -334,9 +334,9 @@ public class RapprochementService {
     public LcnTransactionResponse processLcnTransaction(LcnTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
         // If the Lcn does not exist, throw a ResourceNotFoundException.
-        Lcn lcn = lcnRepository.findByNumero(requestDto.getNumeroLcn())
+        Lcn lcn = lcnRepository.findById(requestDto.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Lcn with numero " + requestDto.getNumeroLcn() + " not found"));
+                        "Lcn with id " + requestDto.getId() + " not found"));
 
         // Step 2: Check if the Lcn is active.
         // If the Lcn is already used/paid (active = false), throw an exception.

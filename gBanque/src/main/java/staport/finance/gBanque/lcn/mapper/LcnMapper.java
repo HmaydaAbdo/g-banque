@@ -19,7 +19,8 @@ public class LcnMapper {
         }
 
         LcnResponseDTO dto = new LcnResponseDTO();
-        dto.setNumero(lcn.getNumero());
+        dto.setId(lcn.getId());
+        dto.setNumero(lcn.getNumero()!=null ? lcn.getNumero() : null);
         dto.setDateEmission(lcn.getDateEmission());
         dto.setBeneficiaire(lcn.getBeneficiaire());
         dto.setDateEcheance(lcn.getDateEcheance());
@@ -29,13 +30,15 @@ public class LcnMapper {
         // We only expose the bank's name, not the whole Banque object.
         if (lcn.getBanque() != null) {
             dto.setBanqueName(lcn.getBanque().getNom());
+            dto.setBanqueId(lcn.getBanque().getId());
         }
 
         dto.setDateOperation(lcn.getDateOperation()!=null ? lcn.getDateOperation() : null);
         dto.setDateValeur(lcn.getDateValeur() !=null ? lcn.getDateValeur() : null);
         dto.setObservation("LCN N° " + lcn.getNumero());
         dto.setLibelle( "Bénéficiaire : " + lcn.getBeneficiaire());
-
+        dto.setType(lcn.getType());
+        dto.setEmetteur(lcn.getEmetteur() !=null ? lcn.getEmetteur() : null);
         return dto;
     }
 

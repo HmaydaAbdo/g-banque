@@ -40,18 +40,11 @@ public class LcnController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * Toggles the active status of an LCN.
-     *
-     * PATCH /lcns/toggle/{numero}
-     *
-     * @param numero The numero of the LCN to toggle.
-     * @return The updated LcnResponseDTO.
-     */
-    @PatchMapping("/toggle/{numero}")
-    public ResponseEntity<LcnResponseDTO> toggleLcnStatus(@PathVariable String numero) {
+    
+    @PatchMapping("/toggle/{id}")
+    public ResponseEntity<LcnResponseDTO> toggleLcnStatus(@PathVariable Long id) {
         try {
-            LcnResponseDTO updatedLcn = lcnService.toggleLcnStatus(numero);
+            LcnResponseDTO updatedLcn = lcnService.toggleLcnStatus(id);
             return ResponseEntity.ok(updatedLcn);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

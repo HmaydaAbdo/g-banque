@@ -49,17 +49,11 @@ public class LcnService {
         return lcnPage.map(LcnMapper::toDto);
     }
 
-    /**
-     * Toggles the active status of an LCN by its numero.
-     *
-     * @param numero The numero of the LCN to toggle.
-     * @return The updated LcnResponseDTO.
-     * @throws NoSuchElementException if the LCN is not found.
-     */
+
     @Transactional
-    public LcnResponseDTO toggleLcnStatus(String numero) {
-        Lcn lcn = lcnRepository.findByNumero(numero)
-                .orElseThrow(() -> new NoSuchElementException("Lcn with numero " + numero + " not found."));
+    public LcnResponseDTO toggleLcnStatus(Long  id) {
+        Lcn lcn = lcnRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Lcn with id " + id + " not found."));
 
         // Toggle the 'active' status
         lcn.setActive(!lcn.isActive());

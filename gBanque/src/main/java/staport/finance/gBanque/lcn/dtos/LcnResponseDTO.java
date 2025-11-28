@@ -1,11 +1,14 @@
 package staport.finance.gBanque.lcn.dtos;
 
+import staport.finance.gBanque.virements.enums.Type;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class LcnResponseDTO {
 
     private String numero;
+    private Long id;
     private OffsetDateTime dateEmission;
     private String beneficiaire;
     private OffsetDateTime dateEcheance;
@@ -16,19 +19,14 @@ public class LcnResponseDTO {
     private BigDecimal montant;
     private boolean active;
     private String banqueName;
+    private Long banqueId;
+    private Type type;
+    private String emetteur;
+
 
     public LcnResponseDTO() {}
 
-    public LcnResponseDTO(String numero, OffsetDateTime dateEmission, String beneficiaire,
-                          OffsetDateTime dateEcheance, BigDecimal montant, boolean active, String banqueName) {
-        this.numero = numero;
-        this.dateEmission = dateEmission;
-        this.beneficiaire = beneficiaire;
-        this.dateEcheance = dateEcheance;
-        this.montant = montant;
-        this.active = active;
-        this.banqueName = banqueName;
-    }
+
 
     // Getters & Setters
     public String getNumero() { return numero; }
@@ -75,16 +73,35 @@ public class LcnResponseDTO {
         this.observation = observation;
     }
 
-    @Override
-    public String toString() {
-        return "LcnResponseDTO{" +
-                "numero='" + numero + '\'' +
-                ", dateEmission=" + dateEmission +
-                ", beneficiaire='" + beneficiaire + '\'' +
-                ", dateEcheance=" + dateEcheance +
-                ", montant=" + montant +
-                ", active=" + active +
-                ", banqueName='" + banqueName + '\'' +
-                '}';
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getBanqueId() {
+        return banqueId;
+    }
+
+    public void setBanqueId(Long banqueId) {
+        this.banqueId = banqueId;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
     }
 }

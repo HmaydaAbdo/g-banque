@@ -31,7 +31,7 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
         // Check if LCN already exists by numero
-        Optional<Lcn> existingLcn = lcnRepository.findById(item.getNumero());
+        Optional<Lcn> existingLcn = lcnRepository.findByNumero(item.getNumero());
 
         if (existingLcn.isPresent()) {
             log.info("Lcn with numero {} already exists. Skipping.", item.getNumero());
