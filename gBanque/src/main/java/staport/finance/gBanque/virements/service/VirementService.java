@@ -21,7 +21,6 @@ import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @Service
-@Transactional(readOnly = true)
 public class VirementService {
 
     private static final Logger log = LoggerFactory.getLogger(VirementService.class);

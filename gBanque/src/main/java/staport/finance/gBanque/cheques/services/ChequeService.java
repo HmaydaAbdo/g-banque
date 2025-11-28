@@ -20,7 +20,6 @@ import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @Service
-@Transactional(readOnly = true)
 public class ChequeService {
 
     private static final Logger log = LoggerFactory.getLogger(ChequeService.class);

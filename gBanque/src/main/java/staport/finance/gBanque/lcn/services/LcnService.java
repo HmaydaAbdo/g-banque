@@ -1,14 +1,20 @@
 package staport.finance.gBanque.lcn.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.lcn.dtos.EncoursLcnResponse;
-import staport.finance.gBanque.lcn.dtos.EncoursLcnSearchDto;
-import staport.finance.gBanque.lcn.dtos.LcnResponseDTO;
-import staport.finance.gBanque.lcn.dtos.LcnSearchDTO;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.cheques.dtos.ChequeRequestDto;
+import staport.finance.gBanque.cheques.dtos.ChequeResponseDto;
+import staport.finance.gBanque.cheques.entities.Cheque;
+import staport.finance.gBanque.cheques.mappers.ChequeMapper;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.lcn.dtos.*;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.lcn.mapper.LcnMapper;
 import staport.finance.gBanque.lcn.repositories.LcnRepository;
@@ -19,16 +25,97 @@ import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @Service
-@Transactional(readOnly = true)
 public class LcnService {
 
+    private static final Logger log = LoggerFactory.getLogger(LcnService.class);
     private final LcnRepository lcnRepository;
+    private final BanqueRepository banqueRepository;
 
-    public LcnService(LcnRepository lcnRepository) {
+    public LcnService(LcnRepository lcnRepository, BanqueRepository banqueRepository) {
         this.lcnRepository = lcnRepository;
+        this.banqueRepository = banqueRepository;
+    }
+
+    @Transactional
+    public LcnResponseDTO createLcn(LcnRequestDto requestDto) {
+        log.info("Creating new encaissement lcn: {}", requestDto);
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(() -> new ResourceNotFoundException("Bank with id " + requestDto.getBanqueId() + " not found."));
+        Lcn lcn = LcnMapper.toEntity(requestDto,banque);
+        log.debug("Saving lcn entity: {}", lcn);
+        lcn = lcnRepository.save(lcn);
+        log.info("Successfully created lcn with id: {}", lcn.getId());
+        return LcnMapper.toDto(lcn);
+    }
+
+    @Transactional
+    public LcnResponseDTO editEncaissementLcn(Long id, LcnRequestDto dto) {
+
+        log.info("Editing encaissement lcn id={} with data={}", id, dto);
+        Lcn existingLcn = lcnRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Lcn with id " + id + " not found."));
+
+        if(existingLcn.getType()!=Type.ENCAISSEMENT){
+            log.warn("Attempt to modify decaissement lcn with  id={}", id);
+            throw new IllegalArgumentException("Modification interdite: le lcn with id " + id + " n'est pas de type ENCAISSEMENT.");
+        }
+
+        if (!existingLcn.isActive()) {
+            log.warn("Attempt to modify inactive lcn id={}", id);
+            throw new IllegalArgumentException("Modification interdite: le lcn with id " + id + " est déja réglé.");
+        }
+
+        if(dto.getDateEmission()!=null){
+            existingLcn.setDateEmission(dto.getDateEmission());
+        }
+
+        if(dto.getDateEcheance()!=null){
+            existingLcn.setDateEcheance(dto.getDateEcheance());
+        }
+        if (dto.getBanqueId() != null) {
+            Banque banque = banqueRepository.findById(dto.getBanqueId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Bank with id " + dto.getBanqueId() + " not found."));
+            existingLcn.setBanque(banque);
+        }
+
+        if(dto.getMontant()!=null){
+            existingLcn.setMontant(dto.getMontant());
+        }
+
+        if(dto.getEmetteur()!=null){
+            existingLcn.setEmetteur(dto.getEmetteur());
+        }
+
+        existingLcn=lcnRepository.save(existingLcn);
+        return LcnMapper.toDto(existingLcn);
 
     }
 
+    @Transactional(readOnly = true)
+    public LcnResponseDTO getLcnById(Long id) {
+        log.info("Fetching lcn with id={}", id);
+        Lcn lcn = lcnRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("lcn with id " + id + " not found."));
+        return LcnMapper.toDto(lcn);
+    }
+
+    @Transactional
+    public void deleteLcn(Long id) {
+        log.info("Deleting lcn with id={}", id);
+
+        Lcn lcn=lcnRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("lcn with id " + id + " not found."));
+
+        if (lcn.getType() != Type.ENCAISSEMENT) {
+            log.warn("Attempt to delete non-encaissement lcn id={}", id);
+            throw new IllegalArgumentException("Suppression interdite: le lcn with id " + id + " n'est pas de type ENCAISSEMENT.");
+        }
+
+        if (!lcn.isActive()) {
+            log.warn("Attempt to delete inactive lcn id={}", id);
+            throw new IllegalArgumentException("Suppression interdite: le lcn with id " + id + " est déja réglé.");
+        }
+        lcnRepository.deleteById(id);
+        log.info("Successfully deleted lcn id={}", id);
+
+    }
 
     public Page<LcnResponseDTO> getDecaissements(LcnSearchDTO searchDto, Pageable pageable) {
         // Combine specifications based on non-null search criteria from the DTO
@@ -45,7 +132,6 @@ public class LcnService {
         return lcnPage.map(LcnMapper::toDto);
     }
 
-
     public Page<LcnResponseDTO> getEncaissements(LcnSearchDTO searchDto, Pageable pageable) {
         // Combine specifications based on non-null search criteria from the DTO
         Specification<Lcn> spec = Specification.where(LcnSpecification.hasNumero(searchDto.getNumero()))
@@ -60,7 +146,6 @@ public class LcnService {
         // Map the result Page<Lcn> to Page<LcnResponseDTO>
         return lcnPage.map(LcnMapper::toDto);
     }
-
 
     @Transactional
     public LcnResponseDTO toggleLcnStatus(Long  id) {
@@ -77,13 +162,7 @@ public class LcnService {
         return LcnMapper.toDto(lcn);
     }
 
-    /**
-     * Retrieves a paginated list of active LCN for a specific bank that are due in the current month.
-     *
-     * @param banqueId The ID of the bank to filter by.
-     * @param pageable The pagination and sorting information.
-     * @return A Page of LcnResponseDTO for the outstanding LCN.
-     */
+
     @Transactional(readOnly = true)
     public EncoursLcnResponse getEncoursForLcn(EncoursLcnSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification for active LCN for the specified bank in the current month

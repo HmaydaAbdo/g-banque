@@ -57,29 +57,10 @@ public class LcnTransactionMapper {
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
 
-
-        // Mapping traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueId", lcn.getBanque().getId());
-            tracesMap.put("numeroLcn", lcn.getNumero());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
-        }
-
         return transaction;
     }
 
 
-    /**
-     * Maps a Transaction entity to a LcnTransactionResponse.
-     *
-     * @param transaction The Transaction entity.
-     * @return The LcnTransactionResponse.
-     * @throws Exception if an error occurs during JSON deserialization.
-     */
     public LcnTransactionResponse toResponseDto(Transaction transaction) throws Exception {
         if (transaction == null) {
             return null;
@@ -104,15 +85,6 @@ public class LcnTransactionMapper {
         responseDto.setDebit(transaction.getDebit());
         responseDto.setCredit(transaction.getCredit());
 
-
-        // Retrieving IDs from traces
-        try {
-            Map tracesMap = objectMapper.readValue(transaction.getTraces(), Map.class);
-            responseDto.setLcnNumber(String.valueOf(tracesMap.get("numeroLcn").toString()));
-
-        } catch (Exception e) {
-            throw new Exception("Erreur lors de la désérialisation des traces", e);
-        }
 
         return responseDto;
     }

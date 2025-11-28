@@ -1,5 +1,8 @@
 package staport.finance.gBanque.lcn.mapper;
 
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.cheques.entities.Cheque;
+import staport.finance.gBanque.lcn.dtos.LcnRequestDto;
 import staport.finance.gBanque.lcn.dtos.LcnResponseDTO;
 import staport.finance.gBanque.lcn.entities.Lcn;
 
@@ -7,12 +10,7 @@ import staport.finance.gBanque.lcn.entities.Lcn;
 public class LcnMapper {
 
 
-    /**
-     * Maps an Lcn entity to an LcnResponseDTO.
-     * This method is crucial for decoupling the internal entity from the external API representation.
-     * @param lcn The Lcn entity to map.
-     * @return The corresponding LcnResponseDTO.
-     */
+
     public static LcnResponseDTO toDto(Lcn lcn) {
         if (lcn == null) {
             return null;
@@ -40,6 +38,22 @@ public class LcnMapper {
         dto.setType(lcn.getType());
         dto.setEmetteur(lcn.getEmetteur() !=null ? lcn.getEmetteur() : null);
         return dto;
+    }
+
+
+    public static Lcn toEntity(LcnRequestDto dto, Banque banque) {
+
+        Lcn lcn = new Lcn();
+        lcn.setDateEmission(dto.getDateEmission());
+        lcn.setDateEcheance(dto.getDateEcheance());
+        lcn.setBeneficiaire(dto.getBeneficiaire());
+        lcn.setMontant(dto.getMontant());
+        lcn.setBanque(banque);
+        lcn.setActive(true);
+        lcn.setType(dto.getType());
+        lcn.setEmetteur(dto.getEmetteur());
+
+        return lcn;
     }
 
 }

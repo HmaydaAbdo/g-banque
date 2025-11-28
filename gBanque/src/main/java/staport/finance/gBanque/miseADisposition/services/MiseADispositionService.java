@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
 @Service
-@Transactional(readOnly = true)
 public class MiseADispositionService {
 
     private final MiseADispositionRepository miseADispositionRepository;

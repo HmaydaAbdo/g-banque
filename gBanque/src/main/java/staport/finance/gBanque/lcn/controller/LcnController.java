@@ -6,10 +6,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.lcn.dtos.EncoursLcnResponse;
-import staport.finance.gBanque.lcn.dtos.EncoursLcnSearchDto;
-import staport.finance.gBanque.lcn.dtos.LcnResponseDTO;
-import staport.finance.gBanque.lcn.dtos.LcnSearchDTO;
+import staport.finance.gBanque.lcn.dtos.*;
 import staport.finance.gBanque.lcn.services.LcnService;
 
 import java.util.NoSuchElementException;
@@ -22,6 +19,29 @@ public class LcnController {
 
     public LcnController(LcnService lcnService) {
         this.lcnService = lcnService;
+    }
+
+
+    @PostMapping()
+    public ResponseEntity<LcnResponseDTO> createLcn(@RequestBody LcnRequestDto requestDto) {
+        LcnResponseDTO createdLcn = lcnService.createLcn(requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdLcn);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<LcnResponseDTO> updateLcn(@PathVariable Long id, @RequestBody LcnRequestDto requestDto) {
+        return ResponseEntity.ok(lcnService.editEncaissementLcn(id, requestDto));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<LcnResponseDTO> getLcnById(@PathVariable Long id ){
+        return ResponseEntity.ok(lcnService.getLcnById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteLcn(@PathVariable Long id) {
+        lcnService.deleteLcn(id);
+        return ResponseEntity.noContent().build();
     }
 
 

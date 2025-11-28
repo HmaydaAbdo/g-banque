@@ -58,16 +58,6 @@ public class MiseAdispositionTransactionMapper {
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
 
-        // Mapping traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueId", miseADispo.getBanque().getId());
-            tracesMap.put("numeroMiseAdispo", miseADispo.getNumero());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
-        }
         return transaction;
     }
 
@@ -103,13 +93,6 @@ public class MiseAdispositionTransactionMapper {
         responseDto.setDebit(transaction.getDebit());
         responseDto.setCredit(transaction.getCredit());
 
-        // Retrieving IDs from traces
-        try {
-            Map tracesMap = objectMapper.readValue(transaction.getTraces(), Map.class);
-            responseDto.setMiseADispositionNumber(String.valueOf(tracesMap.get("numeroMiseAdispo").toString()));
-        } catch (Exception e) {
-            throw new Exception("Erreur lors de la désérialisation des traces", e);
-        }
 
         return responseDto;
     }
