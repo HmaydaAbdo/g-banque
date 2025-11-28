@@ -26,25 +26,49 @@
             severity="primary" routerLink="/portail/LCN/new"></button>
 
   </div>
-  <form [formGroup]="searchForm" class="flex justify-content-around flex-wrap gap-3">
+  <form [formGroup]="searchForm" class="flex justify-content-around  gap-1">
+
     <div class="flex flex-column gap-2">
-      <label for="numero">N° LCN</label>
+      <label for="dateEmission">Date d'émission </label>
+      <p-calendar id="dateEmission"
+                  formControlName="dateEmission"
+                  dateFormat="dd/mm/yy"
+                  placeholder="JJ/MM/AAAA"
+      >
+      </p-calendar>
+    </div>
+
+
+    <div class="flex flex-column gap-2">
+      <label for="dateEcheance">Date d'échéance </label>
+      <p-calendar id="dateEcheance"
+                  formControlName="dateEcheance"
+                  dateFormat="dd/mm/yy"
+                  placeholder="JJ/MM/AAAA"
+      >
+      </p-calendar>
+    </div>
+
+    <div class="flex flex-column gap-2">
+      <label for="emetteur">émetteur</label>
       <span class="p-input-icon-left">
         <i class="pi pi-search"></i>
-        <input id="numero" pInputText type="text" formControlName="numero" placeholder="Rechercher par N°..." />
+        <input id="emetteur" pInputText type="text" formControlName="emetteur" placeholder="Rechercher par émetteur..." />
+      </span>
+    </div>
+
+
+
+    <div class="flex flex-column gap-2">
+      <label for="montant">Montant</label>
+      <span class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input id="montant" pInputText type="number" formControlName="montant" placeholder="Montant" />
       </span>
     </div>
 
     <div class="flex flex-column gap-2">
-      <label for="beneficiaire">Bénéficiaire</label>
-      <span class="p-input-icon-left">
-        <i class="pi pi-search"></i>
-        <input id="beneficiaire" pInputText type="text" formControlName="beneficiaire" placeholder="Rechercher par bénéficiaire..." />
-      </span>
-    </div>
-
-    <div class="flex flex-column gap-2">
-      <label for="nomBanque">Nom Banque</label>
+      <label for="nomBanque"> Banque</label>
       <p-dropdown id="nomBanque"
                   [options]="banqueOptions"
                   formControlName="nomBanque"

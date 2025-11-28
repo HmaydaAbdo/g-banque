@@ -23,6 +23,7 @@ import {LcnSearchDTO} from "../../dtos/LcnSearchDTO";
 import {PageResponse} from "../../../global/types/PageResponse";
 import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
 import {Ripple} from "primeng/ripple";
+import {CalendarModule} from "primeng/calendar";
 
 @Component({
   selector: 'app-lcn-encaissements-list',
@@ -45,7 +46,8 @@ import {Ripple} from "primeng/ripple";
     TagModule,
     ToastModule,
     NgClass,
-    Ripple
+    Ripple,
+    CalendarModule
   ],
   templateUrl: './lcn-encaissements-list.component.html',
   styleUrl: './lcn-encaissements-list.component.scss'
@@ -108,10 +110,13 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
    */
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      numero: [''],
-      beneficiaire: [''],
+      dateEmission: [null],
+      dateEcheance: [null],
+      emetteur:[''],
       nomBanque: [null],
-      active: [null]
+      montant: [null],
+      active: [null],
+      beneficiaire: [''],
     });
 
     const searchSubscription = this.searchForm.valueChanges.subscribe(() => this.onSearch());
@@ -134,12 +139,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
       sort = `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
     }
 
-    const searchCriteria: LcnSearchDTO = {
-      numero: this.searchForm.get('numero')?.value,
-      beneficiaire: this.searchForm.get('beneficiaire')?.value,
-      nomBanque: this.searchForm.get('nomBanque')?.value,
-      active: this.searchForm.get('active')?.value
-    };
+    const searchCriteria: LcnSearchDTO = this.searchForm.getRawValue();
 
     this.lcnService.getEncaissementLcns(
       searchCriteria,

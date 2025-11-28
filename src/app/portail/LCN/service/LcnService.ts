@@ -81,9 +81,20 @@ export class LcnService {
       .set('sort', sort);
 
     // Append search criteria if they are present
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
     }
+
+    if (searchDto.dateEcheance) {
+      params = params.set('dateEcheance', searchDto.dateEcheance.toISOString());
+    }
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur);
+    }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+
     if (searchDto.beneficiaire) {
       params = params.set('beneficiaire', searchDto.beneficiaire);
     }
