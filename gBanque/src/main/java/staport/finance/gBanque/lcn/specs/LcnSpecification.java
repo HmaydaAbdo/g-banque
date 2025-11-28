@@ -3,6 +3,7 @@ package staport.finance.gBanque.lcn.specs;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.lcn.entities.Lcn;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -28,6 +29,17 @@ public final class LcnSpecification {
             );
         };
     }
+
+    public static Specification<Lcn> hasType(Type type) {
+        return (root, query, criteriaBuilder) -> {
+            if (type == null ) {
+                return criteriaBuilder.conjunction(); // A no-op predicate
+            }
+            return criteriaBuilder.equal(root.get("type"), type);
+
+        };
+    }
+
 
     /**
      * Specification to filter Lcns by their beneficiary (case-insensitive).

@@ -13,6 +13,7 @@ import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.lcn.mapper.LcnMapper;
 import staport.finance.gBanque.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.lcn.specs.LcnSpecification;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
@@ -28,19 +29,30 @@ public class LcnService {
 
     }
 
-    /**
-     * Searches, filters, and paginates LCNs based on search criteria.
-     *
-     * @param searchDto The DTO containing search criteria.
-     * @param pageable  The pagination and sorting information.
-     * @return A Page of LcnResponseDTO.
-     */
-    public Page<LcnResponseDTO> searchLcns(LcnSearchDTO searchDto, Pageable pageable) {
+
+    public Page<LcnResponseDTO> getDecaissements(LcnSearchDTO searchDto, Pageable pageable) {
         // Combine specifications based on non-null search criteria from the DTO
         Specification<Lcn> spec = Specification.where(LcnSpecification.hasNumero(searchDto.getNumero()))
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
-                .and(LcnSpecification.isActive(searchDto.getActive()));
+                .and(LcnSpecification.isActive(searchDto.getActive()))
+                .and(LcnSpecification.hasType(Type.DECAISSEMENT));
+
+        // Execute the search with the combined specification and pagination
+        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
+
+        // Map the result Page<Lcn> to Page<LcnResponseDTO>
+        return lcnPage.map(LcnMapper::toDto);
+    }
+
+
+    public Page<LcnResponseDTO> getEncaissements(LcnSearchDTO searchDto, Pageable pageable) {
+        // Combine specifications based on non-null search criteria from the DTO
+        Specification<Lcn> spec = Specification.where(LcnSpecification.hasNumero(searchDto.getNumero()))
+                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
+                .and(LcnSpecification.isActive(searchDto.getActive()))
+                .and(LcnSpecification.hasType(Type.ENCAISSEMENT));
 
         // Execute the search with the combined specification and pagination
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);

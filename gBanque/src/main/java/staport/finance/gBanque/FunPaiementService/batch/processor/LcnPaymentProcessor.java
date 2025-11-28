@@ -7,6 +7,7 @@ import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataExcep
 import staport.finance.gBanque.FunPaiementService.dtos.FunPaymentDto;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.lcn.repositories.LcnRepository;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
@@ -52,8 +53,7 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
         lcn.setDateEcheance(dateEcheance);
         lcn.setMontant(item.getMontant());
         lcn.setBanque(banque);
-
-
+        lcn.setType(Type.DECAISSEMENT);
 
         // 1. Extraire l'année et le mois des dates pour la comparaison
         YearMonth currentMonth = YearMonth.from(curentDateTime);

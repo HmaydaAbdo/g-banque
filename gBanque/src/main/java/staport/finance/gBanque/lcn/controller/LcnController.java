@@ -24,23 +24,26 @@ public class LcnController {
         this.lcnService = lcnService;
     }
 
-    /**
-     * Searches for LCNs with pagination and filtering.
-     *
-     * @param searchDto The LcnSearchDTO populated from request parameters.
-     * @param pageable  The Pageable object from the request, with a default size and sorting.
-     * @return A paginated list of LcnResponseDTO.
-     */
-    @GetMapping
-    public ResponseEntity<Page<LcnResponseDTO>> searchLcns(
+
+    @GetMapping("/decaissements")
+    public ResponseEntity<Page<LcnResponseDTO>> getAllDecaissements(
             LcnSearchDTO searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
 
-        Page<LcnResponseDTO> result = lcnService.searchLcns(searchDto, pageable);
+        Page<LcnResponseDTO> result = lcnService.getDecaissements(searchDto, pageable);
         return ResponseEntity.ok(result);
     }
 
-    
+    @GetMapping("/encaissements")
+    public ResponseEntity<Page<LcnResponseDTO>> getAllEncaissements(
+            LcnSearchDTO searchDto,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+
+        Page<LcnResponseDTO> result = lcnService.getEncaissements(searchDto, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+
     @PatchMapping("/toggle/{id}")
     public ResponseEntity<LcnResponseDTO> toggleLcnStatus(@PathVariable Long id) {
         try {
