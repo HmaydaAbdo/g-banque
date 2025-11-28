@@ -65,16 +65,7 @@
       );
     }
 
-    /**
-     * Envoie un cheque au backend pour le rapprochement
-     * @param cheque  Les données du cheque  à rapprocher
-     * @returns Observable<ChequeTransactionResponseDto >
-     */
-    chequeToRapprochement( cheque: ChequeTransactionRequest): Observable<ChequeTransactionResponseDto> {
-      return this.http.post<ChequeTransactionResponseDto>(`${this.baseUrl}/process/cheque`,
-        cheque
-      );
-    }
+
 
     /**
      * Envoie un LCN au backend pour le rapprochement
@@ -102,6 +93,18 @@
     virementEncaissementToRapprochement( virement: VirementTransactionRequestDto): Observable<VirementTransactionResponseDto> {
       return this.http.post<VirementTransactionResponseDto>(`${this.baseUrl}/process/encaissement/virement`,
         virement
+      );
+    }
+
+    chequeDecaissementToRapprochement( cheque: ChequeTransactionRequest): Observable<ChequeTransactionResponseDto> {
+      return this.http.post<ChequeTransactionResponseDto>(`${this.baseUrl}/process/decaissement/cheque`,
+        cheque
+      );
+    }
+
+    chequeEncaissementToRapprochement( cheque: ChequeTransactionRequest): Observable<ChequeTransactionResponseDto> {
+      return this.http.post<ChequeTransactionResponseDto>(`${this.baseUrl}/process/encaissement/cheque`,
+        cheque
       );
     }
 

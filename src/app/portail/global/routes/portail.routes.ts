@@ -22,7 +22,7 @@ import {MiseADispositionEncoursComponent} from "../../etatsDesEncours/views/lesE
 import {RapprochemntMensuelleComponent} from "../../etatsDesEncours/rapprochement/views/rapprochemnt-mensuelle/rapprochemnt-mensuelle.component";
 import {SelectBanquePourLEncoursComponent} from "../../etatsDesEncours/views/select-banque-pour-l-encours/select-banque-pour-l-encours.component";
 import {LcnListComponent} from "../../LCN/views/lcn-list/lcn-list.component";
-import {ChequesListComponent} from "../../cheques/views/cheques-list/cheques-list.component";
+import {ChequesDecaissementsListComponent} from "../../cheques/views/cheques-decaissements-list/cheques-decaissements-list.component";
 import {VirementDecaissementListComponent} from "../../Virements/views/virement-decaissement-list/virement-decaissement-list.component";
 import {MiseADispositionListComponent} from "../../Mise-à-disposition/views/mise-a-disposition-list/mise-a-disposition-list.component";
 import {RecapDecaissementComponent} from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
@@ -95,6 +95,10 @@ import {VirementFormComponent} from "../../Virements/views/virement-form/viremen
 import {
   VirementEncaissementListComponent
 } from "../../Virements/views/virement-encaissement-list/virement-encaissement-list.component";
+import {
+  ChequesEncaissementsListComponent
+} from "../../cheques/views/cheques-encaissements-list/cheques-encaissements-list.component";
+import {ChequesFormComponent} from "../../cheques/views/cheques-form/cheques-form.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -128,7 +132,11 @@ export const PORTAIL_ROUTES: Routes = [
   {path:"cmt",loadChildren:()=>import('../../cmt/route/cmt-routing').then(m=>m.cmtRoutes)},
 
   {path:"LCN",component:LcnListComponent},
-  {path:"Chèques",component:ChequesListComponent},
+
+  {path:"Cheques/decaissements",component:ChequesDecaissementsListComponent},
+  {path:"Cheques/encaissements",component:ChequesEncaissementsListComponent},
+  { path: 'Cheques/new', component: ChequesFormComponent },
+  { path: 'Cheques/edit/:id', component: ChequesFormComponent },
 
   {path:"Virements/decaissement",component:VirementDecaissementListComponent},
   {path:"Virements/encaissement",component:VirementEncaissementListComponent},

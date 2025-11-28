@@ -1,63 +1,58 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {Subscription} from 'rxjs';
-import {CommonModule} from '@angular/common';
-import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
-
-// PrimeNG modules
-import {ButtonModule} from 'primeng/button';
-import {CardModule} from 'primeng/card';
-import {InputTextModule} from 'primeng/inputtext';
-import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
-import {TagModule} from 'primeng/tag';
-import {TooltipModule} from 'primeng/tooltip';
-import {RippleModule} from 'primeng/ripple';
-import {ToastModule} from 'primeng/toast';
-import {ToolbarModule} from 'primeng/toolbar';
-import {ConfirmationService, MenuItem, MessageService, SelectItem} from 'primeng/api';
-import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {DropdownModule} from 'primeng/dropdown';
-
-// Project-specific imports
-import {ChequeResponseDto} from "../../dtos/ChequeResponseDto";
-import {ChequeService} from "../../services/ChequeService";
-import {ChequeSearchDto} from "../../dtos/ChequeSearchDto";
-import {PageResponse} from "../../../global/types/PageResponse";
-import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
-import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
+import {BreadcrumbModule} from "primeng/breadcrumb";
+import {Button} from "primeng/button";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {DatePipe, DecimalPipe, NgClass, NgIf} from "@angular/common";
+import {DropdownModule} from "primeng/dropdown";
 import {InputSwitchModule} from "primeng/inputswitch";
+import {InputTextModule} from "primeng/inputtext";
+import {PaginatorModule} from "primeng/paginator";
+import {ConfirmationService, MenuItem, MessageService, PrimeTemplate, SelectItem} from "primeng/api";
+import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
+import {RouterLinkActive} from "@angular/router";
+import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
+import {TagModule} from "primeng/tag";
+import {ToastModule} from "primeng/toast";
+import {ChequeResponseDto} from "../../dtos/ChequeResponseDto";
+import {Subscription} from "rxjs";
+import {ChequeService} from "../../services/ChequeService";
+import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {Role} from "../../../../auth/enum/Role";
-import {BreadcrumbModule} from "primeng/breadcrumb";
-import {RouterLinkActive} from "@angular/router";
-
+import {ChequeSearchDto} from "../../dtos/ChequeSearchDto";
+import {PageResponse} from "../../../global/types/PageResponse";
+import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
+import {Ripple} from "primeng/ripple";
+import {CalendarModule} from "primeng/calendar";
 
 @Component({
-  selector: 'app-cheques-list',
+  selector: 'app-cheques-encaissements-list',
   standalone: true,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    CardModule,
-    ButtonModule,
-    ToastModule,
-    ToolbarModule,
-    InputTextModule,
-    TableModule,
-    TagModule,
-    TooltipModule,
-    RippleModule,
+    BreadcrumbModule,
+    Button,
     ConfirmDialogModule,
+    DatePipe,
+    DecimalPipe,
     DropdownModule,
     InputSwitchModule,
-    FormsModule,
-    BreadcrumbModule,
-    RouterLinkActive
+    InputTextModule,
+    NgIf,
+    PaginatorModule,
+    PrimeTemplate,
+    ReactiveFormsModule,
+    RouterLinkActive,
+    TableModule,
+    TagModule,
+    ToastModule,
+    NgClass,
+    Ripple,
+    CalendarModule
   ],
-  templateUrl: './cheques-list.component.html',
-  styleUrl: './cheques-list.component.scss',
-  providers: [MessageService, ConfirmationService]
+  templateUrl: './cheques-encaissements-list.component.html',
+  styleUrl: './cheques-encaissements-list.component.scss'
 })
-export class ChequesListComponent implements OnInit, OnDestroy {
+export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
   cheques: ChequeResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
@@ -98,7 +93,7 @@ export class ChequesListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
-      { icon: 'pi pi-list', route: '/portail/Chèques', label:"Les Cheques" },
+      { icon: 'pi pi-list', route: '/portail/Cheques/encaissements', label:"Les Cheques ( encaissements )" },
     ]
     this.isAdmin=this.authService.hasRole(Role.ADMIN);
     this.initSearchForm();
@@ -115,8 +110,9 @@ export class ChequesListComponent implements OnInit, OnDestroy {
    */
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      numero: [''],
-      beneficiaire: [''],
+      dateEmission: [null],
+      montant: [null],
+      emetteur: [''],
       nomBanque: [null],
       active: [null]
     });
@@ -141,14 +137,9 @@ export class ChequesListComponent implements OnInit, OnDestroy {
       sort = `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
     }
 
-    const searchCriteria: ChequeSearchDto = {
-      numero: this.searchForm.get('numero')?.value,
-      beneficiaire: this.searchForm.get('beneficiaire')?.value,
-      nomBanque: this.searchForm.get('nomBanque')?.value,
-      active: this.searchForm.get('active')?.value
-    };
+    const searchCriteria: ChequeSearchDto = this.searchForm.getRawValue();
 
-    this.chequeService.searchCheques(
+    this.chequeService.getEncaissementCheques(
       searchCriteria,
       currentPage,
       pageSize,
@@ -204,12 +195,7 @@ export class ChequesListComponent implements OnInit, OnDestroy {
    * Clears all search filters and reloads the table.
    */
   clearSearch(): void {
-    this.searchForm.reset({
-      numero: '',
-      beneficiaire: '',
-      nomBanque: null,
-      active: null
-    });
+    this.searchForm.reset();
 
     if (this.dt) {
       this.dt.clear();
@@ -223,7 +209,7 @@ export class ChequesListComponent implements OnInit, OnDestroy {
    * @param cheque The cheque to toggle.
    */
   confirmToggleStatus(cheque: ChequeResponseDto): void {
-    const confirmationMessage = `Êtes-vous sûr de vouloir ${cheque.active ? 'désactiver' : 'activer'} le chèque N° ${cheque.numero}?`;
+    const confirmationMessage = `Êtes-vous sûr de vouloir ${cheque.active ? 'désactiver' : 'activer'} le chèque id ${cheque.id}?`;
     this.confirmationService.confirm({
       message: confirmationMessage,
       header: `Confirmation de ${cheque.active ? 'désactivation' : 'activation'}`,
@@ -233,22 +219,19 @@ export class ChequesListComponent implements OnInit, OnDestroy {
       acceptButtonStyleClass: cheque.active ? 'p-button-danger' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
-        this.toggleChequeStatus(cheque.numero);
+        this.toggleChequeStatus(cheque.id);
       }
     });
   }
 
-  /**
-   * Calls the service to toggle the cheque's status.
-   * @param numero The numero of the cheque.
-   */
-  toggleChequeStatus(numero: string): void {
-    this.chequeService.toggleChequeStatus(numero).subscribe({
+
+  toggleChequeStatus(id: number): void {
+    this.chequeService.toggleChequeStatus(id).subscribe({
       next: (updatedCheque) => {
         this.messageService.add({
           severity: 'success',
           summary: 'Succès',
-          detail: `Chèque N° ${updatedCheque.numero} ${updatedCheque.active ? 'activé' : 'désactivé'} avec succès.`
+          detail: `Chèque Id° ${updatedCheque.id} ${updatedCheque.active ? 'activé' : 'désactivé'} avec succès.`
         });
         // Reload data from the server to reflect the change
         if (this.dt) {
@@ -265,4 +248,40 @@ export class ChequesListComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  deleteCheque(cheque: ChequeResponseDto): void {
+    const confirmationMessageHtml = `
+    <div class="text-center">
+        <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
+        <p>Êtes-vous sûr de vouloir supprimer ce chèque "<strong>${cheque.id}</strong>" ?</p>
+        <p style="color: #ef4444; font-weight: bold;">Cette action est irréversible.</p>
+    </div>
+    `;
+
+    this.confirmationService.confirm({
+      message: confirmationMessageHtml,
+      header: 'Confirmation de Suppression',
+      icon: 'none',
+      acceptLabel: 'Confirmer',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.chequeService.deleteCheque(cheque.id)
+          .subscribe({
+            next: () => {
+              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le cheque a été supprimé avec succès.', life: 3000 });
+              this.loadCheques(this.lastLazyLoadEvent)
+              this.loading = false;
+            },
+            error: (error) => {
+              console.error('Erreur lors de la suppression du cheque:', error);
+              const errorMessage = error.error.detail || 'Échec de la suppression du cheque.';
+              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+              this.loading = false;
+            }
+          });
+      }
+    });
+  }
+
 }

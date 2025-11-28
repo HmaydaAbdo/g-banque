@@ -7,6 +7,7 @@ import {PageResponse} from "../../global/types/PageResponse";
 import {ChequeResponseDto} from "../dtos/ChequeResponseDto";
 import {EncoursChequeResponseDto} from "../dtos/EncoursChequeResponseDto";
 import {EncoursChequeSearchDto} from "../dtos/EncoursChequeSearchDto";
+import {ChequeRequestDto} from "../dtos/ChequeRequestDto";
 
 
 @Injectable({
@@ -19,16 +20,24 @@ export class ChequeService {
   constructor(private http: HttpClient) {
   }
 
-  /**
-   * Searches for cheques with pagination and filtering.
-   *
-   * @param searchDto The DTO containing search criteria.
-   * @param page The page number to retrieve (0-indexed).
-   * @param size The number of items per page.
-   * @param sort The sorting criteria (e.g., 'dateEmission,desc').
-   * @returns An Observable of a paginated list of ChequeResponseDto.
-   */
-  searchCheques(
+  createCheque(requestDto:ChequeRequestDto):Observable<ChequeResponseDto>{
+    return this.http.post<ChequeResponseDto>(this.apiUrl,requestDto);
+  }
+
+  updateCheque(id:number,requestDto:ChequeRequestDto):Observable<ChequeResponseDto>{
+    return this.http.put<ChequeResponseDto>(`${this.apiUrl}/${id}`,requestDto);
+  }
+
+  getChequeById(id:number):Observable<ChequeResponseDto>{
+    return this.http.get<ChequeResponseDto>(`${this.apiUrl}/${id}`);
+  }
+
+  deleteCheque(id:number):Observable<void>{
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+
+  getDecaissementCheques(
     searchDto: ChequeSearchDto,
     page: number = 0,
     size: number = 10,
@@ -55,17 +64,48 @@ export class ChequeService {
       params = params.set('active', searchDto.active.toString());
     }
 
-    return this.http.get<PageResponse<ChequeResponseDto>>(this.apiUrl, {params});
+    return this.http.get<PageResponse<ChequeResponseDto>>(this.apiUrl+"/decaissements", {params});
   }
 
-  /**
-   * Toggles the active status of a cheque by its unique numero.
-   *
-   * @param numero The unique identifier of the cheque to toggle.
-   * @returns An Observable of the updated ChequeResponseDto.
-   */
-  toggleChequeStatus(numero: string): Observable<ChequeResponseDto> {
-    const url = `${this.apiUrl}/toggle/${numero}`;
+
+  getEncaissementCheques(
+    searchDto: ChequeSearchDto,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission,desc'
+  ): Observable<PageResponse<ChequeResponseDto>> {
+
+    // Initialize HttpParams with pagination and sorting info
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    // Append search criteria if they are present
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
+    }
+
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant);
+    }
+
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur);
+    }
+    if (searchDto.nomBanque) {
+      params = params.set('nomBanque', searchDto.nomBanque);
+    }
+    if (searchDto.active !== undefined && searchDto.active !== null) {
+      params = params.set('active', searchDto.active.toString());
+    }
+
+    return this.http.get<PageResponse<ChequeResponseDto>>(this.apiUrl+"/encaissements", {params});
+  }
+
+
+  toggleChequeStatus(id: number): Observable<ChequeResponseDto> {
+    const url = `${this.apiUrl}/toggle/${id}`;
     return this.http.patch<ChequeResponseDto>(url, {});
   }
 
@@ -79,7 +119,7 @@ export class ChequeService {
    * @param sort The sorting criteria (e.g., 'dateEmission,desc').
    * @returns An Observable of a paginated list of ChequeResponseDto.
    */
-  getOutstandingChequesByBank(
+  getEncoursDecaissementChequesByBank(
     banqueId: number,
     searchDto: EncoursChequeSearchDto,
     page: number = 0,
@@ -103,7 +143,36 @@ export class ChequeService {
       params = params.set('montant', searchDto.montant.toString());
     }
 
-    const url = `${this.apiUrl}/encours/${banqueId}`;
+    const url = `${this.apiUrl}/decaissements/encours/${banqueId}`;
+    return this.http.get<EncoursChequeResponseDto>(url, {params});
+  }
+
+
+  getEncoursEncaissementChequesByBank(
+    banqueId: number,
+    searchDto: EncoursChequeSearchDto,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission,desc'
+  ): Observable<EncoursChequeResponseDto> {
+
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+
+    const url = `${this.apiUrl}/encaissements/encours/${banqueId}`;
     return this.http.get<EncoursChequeResponseDto>(url, {params});
   }
 }

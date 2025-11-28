@@ -1,7 +1,7 @@
 import {TransactionSource} from "../transactions/TransactionSource";
 
 export interface ChequeTransactionRequest {
-  numeroCheque: string;
+  idCheque: number;
   transactionSource: TransactionSource;
   dateEmission: Date;
   dateValeur: Date;

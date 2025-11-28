@@ -93,25 +93,42 @@ export class VirementFormComponent implements OnInit {
     });
   }
 
+
   private checkModeAndLoadData(): void {
     this.route.paramMap.pipe(
-      // 1. Vérifier si un ID est présent dans l'URL
+      // 1. Vérifier si un ID est présent et charger les données du virement
       switchMap(params => {
         const id = params.get('id');
         if (id) {
           this.virementId = +id;
           this.isEditMode = true;
           this.loading = true;
-          // 2. Si c'est le mode édition, charger les données du virement
+          // Charger les données du virement
           return this.virementService.getVirementById(this.virementId);
         } else {
           this.isEditMode = false;
-          // 3. Si c'est le mode ajout, initialiser le formulaire vide
+          // Mode ajout : initialiser le formulaire vide
           return of(null);
         }
+      }),
+      // 2. Si un virement est chargé (mode édition), pré-charger la Banque Bénéficiaire
+      switchMap(virementResponse => {
+        if (virementResponse && virementResponse.banqueBeneficiaireId) {
+          // Appeler le service pour obtenir l'objet complet de la banque
+          // Ceci est crucial pour que le p-dropdown affiche le nom de la banque
+          return this.banqueService.getBanqueById(virementResponse.banqueBeneficiaireId).pipe(
+            switchMap(banque => {
+              // Ajouter la banque aux options 'this.banques'
+              this.banques = [banque];
+              return of(virementResponse);
+            })
+          );
+        }
+        return of(virementResponse);
       })
     ).subscribe({
       next: (virementResponse) => {
+        // 3. Initialiser le formulaire avec le virement et la banque pré-chargée
         this.initForm(virementResponse || undefined);
         this.loading = false;
 
@@ -123,14 +140,10 @@ export class VirementFormComponent implements OnInit {
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du virement.' });
         this.loading = false;
-        // Optionnel : rediriger si l'ID n'existe pas
         this.router.navigate(['/portail/Virements/encaissement']);
       }
     });
-
-
   }
-
   loadBanques(event: any) {
 
     const page = event.first / event.rows || 0;

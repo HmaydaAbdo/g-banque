@@ -4,4 +4,8 @@ export interface ChequeSearchDto {
   beneficiaire?: string;
   nomBanque?: string;
   active?: boolean;
+  dateEmission?: Date;
+  montant?: number;
+  emetteur?:string
+
 }

@@ -3,44 +3,60 @@
 
 <div class=" flex flex-column gap-4 py-2 px-2 md:px-4 h-screen w-screen overflow-y-scroll">
 
-  <div class="flex justify-content-center align-items-center bg-transparent ">
-      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
         <ng-template pTemplate="item" let-item>
           <ng-container *ngIf="item.route; else elseBlock">
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
               <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
             </a>
-
           </ng-container>
           <ng-template #elseBlock>
             <a [href]="item.url">
-              <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+              <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
             </a>
           </ng-template>
         </ng-template>
       </p-breadcrumb>
+    </div>
+
+    <button pButton pRipple label="Ajouter Cheque" class=" h-fit mt-2" size="small" icon="pi pi-plus"
+            severity="primary" routerLink="/portail/Cheques/new"></button>
+
   </div>
-
   <form [formGroup]="searchForm" class="flex justify-content-around flex-wrap gap-3">
+
     <div class="flex flex-column gap-2">
-      <label for="numero">N° Chèque</label>
+      <label for="dateEmission">Date d'émission </label>
+      <p-calendar id="dateEmission"
+                  formControlName="dateEmission"
+                  dateFormat="dd/mm/yy"
+                  placeholder="JJ/MM/AAAA"
+      >
+      </p-calendar>
+    </div>
+
+
+    <div class="flex flex-column gap-2">
+      <label for="montant">Montant</label>
       <span class="p-input-icon-left">
         <i class="pi pi-search"></i>
-        <input id="numero" pInputText type="text" formControlName="numero" placeholder="Rechercher par N°..." />
+        <input id="montant" pInputText type="number" formControlName="montant" placeholder="Montant" />
       </span>
     </div>
 
     <div class="flex flex-column gap-2">
-      <label for="beneficiaire">Bénéficiaire</label>
+      <label for="emetteur">émetteur</label>
       <span class="p-input-icon-left">
         <i class="pi pi-search"></i>
-        <input id="beneficiaire" pInputText type="text" formControlName="beneficiaire" placeholder="Rechercher par bénéficiaire..." />
+        <input id="emetteur" pInputText type="text" formControlName="emetteur" placeholder="Rechercher par émetteur..." />
       </span>
     </div>
 
     <div class="flex flex-column gap-2">
-      <label for="nomBanque">Nom Banque</label>
+      <label for="nomBanque"> Banque</label>
       <p-dropdown id="nomBanque"
                   [options]="banqueOptions"
                   formControlName="nomBanque"
@@ -92,34 +108,31 @@
     >
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="numero">N° Chèque <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="dateEcheance">Date d'Échéance  <p-sortIcon field="dateEcheance"></p-sortIcon></th>
+          <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="emetteur">Emetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
           <th pSortableColumn="nomBanque">Banque <p-sortIcon field="nomBanque"></p-sortIcon></th>
-          <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th style="width: 8rem;">Statut</th>
-          @if (isAdmin) {
-            <th style="width: 8rem;">Action</th>
-          }
-
+          <th >Statut</th>
+          <th >Action</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-cheque>
         <tr>
-          <td>{{ cheque.numero }}</td>
           <td>{{ cheque.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ cheque.dateEcheance ? ( cheque.dateEcheance  | date:'dd/MM/yyyy' ) : 'N/A' }}</td>
+          <td>{{ cheque.montant | number:'1.2-2' }}</td>
+          <td>{{ cheque.emetteur }}</td>
           <td>{{ cheque.beneficiaire }}</td>
           <td>{{ cheque.nomBanque }}</td>
-          <td>{{ cheque.montant | number:'1.2-2' }}</td>
-
+          <td><p-tag [value]="cheque.active ? 'Encours' : 'Archivé'" [severity]="cheque.active ? 'success' : 'danger'"></p-tag></td>
           <td>
-            <p-tag [value]="cheque.active ? 'Encours' : 'Archivé'" [severity]="cheque.active ? 'success' : 'danger'"></p-tag>
-          </td>
-
-          <td>
-            <p-inputSwitch [ngModel]="cheque.active" (onChange)="confirmToggleStatus(cheque)"></p-inputSwitch>
+            <p-inputSwitch [ngModel]="cheque.active" class="p-2" (onChange)="confirmToggleStatus(cheque)"></p-inputSwitch>
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" [routerLink]="['/portail/Cheques/edit', cheque.id]"></button>
+            @if (isAdmin){
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteCheque(cheque)"></button>
+            }
           </td>
 
         </tr>

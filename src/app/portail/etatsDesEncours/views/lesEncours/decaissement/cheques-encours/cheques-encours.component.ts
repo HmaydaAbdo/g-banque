@@ -213,7 +213,7 @@ export class ChequesEncoursComponent implements OnInit {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
 
       const chequeTransactionRequest: ChequeTransactionRequest = {
-        numeroCheque: this.selectedCheque.numero,
+        idCheque: this.selectedCheque.id,
         dateEmission: donneesComplementaires.dateEmission,
         dateValeur: donneesComplementaires.dateValeur,
         dateOperation: donneesComplementaires.dateOperation,
@@ -225,7 +225,7 @@ export class ChequesEncoursComponent implements OnInit {
 
       this.isSubmitting = true;
 
-      this.rapprochementService.chequeToRapprochement(chequeTransactionRequest)
+      this.rapprochementService.chequeDecaissementToRapprochement(chequeTransactionRequest)
         .subscribe({
           next: (response) => {
             console.log(response);
@@ -266,7 +266,7 @@ export class ChequesEncoursComponent implements OnInit {
       : 'dateEmission,desc';
 
     this.chequeService
-      .getOutstandingChequesByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
+      .getEncoursDecaissementChequesByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
       .subscribe({
         next: (response: EncoursChequeResponseDto) => {
           this.cheques = response.page.content;

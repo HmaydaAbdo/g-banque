@@ -84,7 +84,12 @@ export class SidebarComponent implements OnInit {
       label: 'Les moyens de paiement',
       icon: 'pi pi-credit-card',
       items: [
-        { label: 'Chèques', icon: 'pi pi-file-check', routerLink: '/portail/Chèques' },
+        { label: 'Chèques', icon: 'pi pi-arrow-right-arrow-left',
+          items: [
+            {label:"Encaissements", icon: 'pi pi-plus' , routerLink: '/portail/Cheques/encaissements' },
+            {label:"Décaissements", icon: 'pi pi-minus' , routerLink: '/portail/Cheques/decaissements' },
+          ]
+        },
         { label: 'LCN', icon: 'pi pi-file-o', routerLink: '/portail/LCN' },
         { label: 'Virements', icon: 'pi pi-arrow-right-arrow-left',
           items: [
