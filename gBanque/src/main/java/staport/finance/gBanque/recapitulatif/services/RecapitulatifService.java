@@ -150,7 +150,7 @@ public class RecapitulatifService {
 
         //moyens de paiement
         Specification<Cheque> chequeSpec = ChequeSpec.encoursDecaissements(banqueId);
-        Specification<Lcn> lcnSpec = LcnSpecification.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banqueId);
         Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banqueId);
         Specification<MiseADisposition> madSpec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId);
 
@@ -305,9 +305,14 @@ public class RecapitulatifService {
         Specification<Decompte> decompteSpecification = DecompteSpec.outstandingDecomptesForCurrentMonth()
                 .and(DecompteSpec.byBanqueId(banqueId));
 
+        //virements
         Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom());
+
+        //cheques
         Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId());
 
+        //lcn
+        Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banqueId);
 
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
@@ -316,6 +321,7 @@ public class RecapitulatifService {
         List<Decompte> outstandingDecomptes = decompteRepository.findAll(decompteSpecification);
         List<Virement> outstandingVirements = virementRepository.findAll(virementSpec);
         List<Cheque> outstandingCheques = chequeRepository.findAll(chequeSpec);
+        List<Lcn> outstandingLcns = lcnRepository.findAll(lcnSpec);
 
 
         // Step 3: Combine all lists and map them to the unified DTO.
@@ -326,6 +332,8 @@ public class RecapitulatifService {
         combinedItems.addAll(outstandingDecomptes.stream().map(encaissementMapper::mapDecompteToDto).toList());
         combinedItems.addAll(outstandingVirements.stream().map(encaissementMapper::mapVirementToDto).toList());
         combinedItems.addAll(outstandingCheques.stream().map(encaissementMapper::mapChequeToDto).toList());
+        combinedItems.addAll(outstandingLcns.stream().map(encaissementMapper::mapLcnToDto).toList());
+
         // Apply the filters from the DTO
         if (transactionSources != null && !transactionSources.isEmpty()) {
             combinedItems = combinedItems.stream()

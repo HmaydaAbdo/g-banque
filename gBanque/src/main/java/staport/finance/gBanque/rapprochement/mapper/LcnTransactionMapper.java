@@ -9,6 +9,8 @@ import staport.finance.gBanque.rapprochement.dtos.lcn.LcnTransactionResponse;
 import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.virements.enums.Type;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
@@ -48,14 +50,22 @@ public class LcnTransactionMapper {
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setTransactionSource(TransactionSource.LCN);
-        transaction.setDebit(lcn.getMontant());
-        transaction.setCredit(BigDecimal.ZERO);
+
         transaction.setBanqueDePrelevement(lcn.getBanque());
 
         BigDecimal ttc = lcn.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
-        transaction.setTvaDeductible(montantTva);
+
+        if(lcn.getType()== Type.DECAISSEMENT){
+            transaction.setTvaDeductible(montantTva);
+            transaction.setDebit(lcn.getMontant());
+            transaction.setCredit(BigDecimal.ZERO);
+        }else {
+            transaction.setTvaCollectee(montantTva);
+            transaction.setDebit(BigDecimal.ZERO);
+            transaction.setCredit(lcn.getMontant());
+        }
 
         return transaction;
     }

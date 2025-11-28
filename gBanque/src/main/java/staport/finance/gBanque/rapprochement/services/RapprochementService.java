@@ -331,7 +331,7 @@ public class RapprochementService {
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public LcnTransactionResponse processLcnTransaction(LcnTransactionRequest requestDto) throws Exception{
+    public LcnTransactionResponse processDecaissementLcnTransaction(LcnTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
         // If the Lcn does not exist, throw a ResourceNotFoundException.
         Lcn lcn = lcnRepository.findById(requestDto.getId())
@@ -354,6 +354,45 @@ public class RapprochementService {
         // Then save the updated bank entity.
         Banque banque = lcn.getBanque();
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
+        lcn.setActive(false);
+        lcn.setDateOperation(savedTransaction.getDateOperations());
+        lcn.setDateValeur(savedTransaction.getDateValeur());
+        lcn.setLibelle(savedTransaction.getLibelle());
+        lcn.setObservation(savedTransaction.getObservation());
+        lcnRepository.save(lcn);
+
+        // Step 7: Convert the saved Transaction entity into a LcnTransactionResponse
+        // using the mapper and return it as the response.
+        return lcnTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public LcnTransactionResponse processEncaissementLcnTransaction(LcnTransactionRequest requestDto) throws Exception{
+        // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
+        // If the Lcn does not exist, throw a ResourceNotFoundException.
+        Lcn lcn = lcnRepository.findById(requestDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Lcn with id " + requestDto.getId() + " not found"));
+
+        // Step 2: Check if the Lcn is active.
+        // If the Lcn is already used/paid (active = false), throw an exception.
+        if (!lcn.isActive()) {
+            throw new Exception("The lcn is not active, it has already been paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched lcn entity into a Transaction entity.
+        Transaction transactionEntity = lcnTransactionMapper.toEntity(requestDto, lcn);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
+        // Then save the updated bank entity.
+        Banque banque = lcn.getBanque();
+        banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getDebit()));
         this.banqueRepository.save(banque);
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.

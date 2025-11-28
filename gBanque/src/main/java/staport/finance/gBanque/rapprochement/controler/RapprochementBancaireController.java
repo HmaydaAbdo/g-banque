@@ -76,27 +76,6 @@ public class RapprochementBancaireController {
     }
 
 
-    /**
-     * Endpoint pour traiter une transaction de rapprochement de lcn.
-     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
-     *
-     * @param requestDto Le DTO de la requête de transaction de lcn.
-     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
-     */
-    @PostMapping("/process/lcn")
-    public ResponseEntity<LcnTransactionResponse> processLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) throws Exception {
-        LcnTransactionResponse responseDto = rapprochementService.processLcnTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
-    }
-
-
-    /**
-     * Endpoint pour traiter une transaction de rapprochement de miseADisposition.
-     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
-     *
-     * @param requestDto Le DTO de la requête de transaction de miseADisposition.
-     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
-     */
     @PostMapping("/process/mise-a-disposition")
     public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) throws Exception {
         MiseAdispositionTransactionResponseDto responseDto = rapprochementService.processMiseAdispoTransaction(requestDto);
@@ -104,13 +83,7 @@ public class RapprochementBancaireController {
     }
 
 
-    /**
-     * Endpoint pour traiter une transaction de rapprochement de virement.
-     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
-     *
-     * @param requestDto Le DTO de la requête de transaction de virement.
-     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
-     */
+
     @PostMapping("/process/decaissement/virement")
     public ResponseEntity<VirementTransactionResponseDto> processVirementDecaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) throws Exception {
         VirementTransactionResponseDto responseDto = rapprochementService.processVirementDecaissementTransaction(requestDto);
@@ -134,6 +107,18 @@ public class RapprochementBancaireController {
     @PostMapping("/process/encaissement/cheque")
     public ResponseEntity<ChequeTransactionResponseDto> processEncaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) throws Exception {
         ChequeTransactionResponseDto responseDto = rapprochementService.processChequeEncaissementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/process/decaissement/lcn")
+    public ResponseEntity<LcnTransactionResponse> processDecaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) throws Exception {
+        LcnTransactionResponse responseDto = rapprochementService.processDecaissementLcnTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/process/encaissement/lcn")
+    public ResponseEntity<LcnTransactionResponse> processEncaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) throws Exception {
+        LcnTransactionResponse responseDto = rapprochementService.processEncaissementLcnTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

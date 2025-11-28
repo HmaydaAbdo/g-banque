@@ -75,21 +75,23 @@ public class LcnController {
     }
 
 
-    /**
-     * Retrieves a paginated list of active LCNs for a specific bank that are due in the current month.
-     * GET /lcns/encours/{banqueId}
-     *
-     * @param banqueId The ID of the bank.
-     * @param pageable The pagination and sorting information.
-     * @return A paginated list of LcnResponseDTO for the outstanding LCN.
-     */
-    @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<EncoursLcnResponse> getEncoursForLcn(
+    @GetMapping("/decaissements/encours/{banqueId}")
+    public ResponseEntity<EncoursLcnResponse> getEncoursDecaissementsForLcn(
             @PathVariable Long banqueId,
             EncoursLcnSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEcheance") Pageable pageable) {
 
-        EncoursLcnResponse result = lcnService.getEncoursForLcn(searchDto,banqueId, pageable);
+        EncoursLcnResponse result = lcnService.getEncoursDecaissementsForLcn(searchDto,banqueId, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/encaissements/encours/{banqueId}")
+    public ResponseEntity<EncoursLcnResponse> getEncoursEncaissementsForLcn(
+            @PathVariable Long banqueId,
+            EncoursLcnSearchDto searchDto,
+            @PageableDefault(size = 10, sort = "dateEcheance") Pageable pageable) {
+
+        EncoursLcnResponse result = lcnService.getEncoursEncaissementsForLcn(searchDto,banqueId, pageable);
         return ResponseEntity.ok(result);
     }
 }

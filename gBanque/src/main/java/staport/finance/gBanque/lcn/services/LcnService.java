@@ -166,9 +166,25 @@ public class LcnService {
 
 
     @Transactional(readOnly = true)
-    public EncoursLcnResponse getEncoursForLcn(EncoursLcnSearchDto searchDto, Long banqueId, Pageable pageable) {
+    public EncoursLcnResponse getEncoursDecaissementsForLcn(EncoursLcnSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification for active LCN for the specified bank in the current month
-        Specification<Lcn> spec = LcnSpecification.activeForBankAndUntilEndOfMonth(banqueId)
+        Specification<Lcn> spec = LcnSpecification.encoursDecaissement(banqueId)
+                .and(LcnSpecification.hasNumero(searchDto.getNumero()))
+                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(LcnSpecification.hasMontant(searchDto.getMontant()));
+
+        // Execute the search with the specification and pagination
+        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
+        BigDecimal totalDesEncours = lcnRepository.findAll(spec).stream().map(Lcn::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        Page<LcnResponseDTO> result = lcnPage.map(LcnMapper::toDto);
+        // Map the result to DTOs and return
+        return new EncoursLcnResponse(totalDesEncours,result);
+    }
+
+    @Transactional(readOnly = true)
+    public EncoursLcnResponse getEncoursEncaissementsForLcn(EncoursLcnSearchDto searchDto, Long banqueId, Pageable pageable) {
+        // Build the specification for active LCN for the specified bank in the current month
+        Specification<Lcn> spec = LcnSpecification.encoursEncaissement(banqueId)
                 .and(LcnSpecification.hasNumero(searchDto.getNumero()))
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(LcnSpecification.hasMontant(searchDto.getMontant()));

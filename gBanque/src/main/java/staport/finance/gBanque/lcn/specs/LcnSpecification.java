@@ -107,13 +107,14 @@ public final class LcnSpecification {
         };
     }
 
-    public static Specification<Lcn> activeForBankAndUntilEndOfMonth(Long banqueId) {
+    public static Specification<Lcn> encoursDecaissement(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             OffsetDateTime now = OffsetDateTime.now();
 
             // 1. Le statut du LCN doit être actif.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
 
             // 2. Le LCN doit appartenir à la banque spécifiée par son ID.
             if (banqueId != null) {
@@ -130,4 +131,29 @@ public final class LcnSpecification {
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
+    public static Specification<Lcn> encoursEncaissement(Long banqueId) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            OffsetDateTime now = OffsetDateTime.now();
+
+            // 1. Le statut du LCN doit être actif.
+            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
+
+            // 2. Le LCN doit appartenir à la banque spécifiée par son ID.
+            if (banqueId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            } else {
+                return criteriaBuilder.disjunction();
+            }
+
+            // 3. La date d'échéance du LCN doit être égale ou antérieure à la fin du mois.
+            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
+                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), endOfMonth));
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
 }

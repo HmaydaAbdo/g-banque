@@ -5,6 +5,7 @@ import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.factoring.entities.Factoring;
+import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -129,6 +130,20 @@ public class RecapitulatifEncaissementMapper {
         dto.setObservations("emetteur  " + cheque.getEmetteur());
         dto.setLibelle("Bénéficiaire " + cheque.getBeneficiaire() );
         dto.setSource(TransactionSource.CHEQUE);
+        return dto;
+    }
+
+    public RecaputilatifItem mapLcnToDto(Lcn lcn) {
+        if (lcn == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(lcn.getDateEmission());
+        dto.setCredit(lcn.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations("emetteur  " + lcn.getEmetteur());
+        dto.setLibelle("Bénéficiaire " + lcn.getBeneficiaire() );
+        dto.setSource(TransactionSource.LCN);
         return dto;
     }
 
