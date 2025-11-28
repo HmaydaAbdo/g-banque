@@ -6,6 +6,7 @@ import {PageResponse} from "../../global/types/PageResponse";
 import {LcnResponseDTO} from "../dtos/LcnResponseDTO";
 import {LcnSearchDTO} from "../dtos/LcnSearchDTO";
 import {EncoursLcnResponse} from "../dtos/EncoursLcnResponse";
+import {LcnRequestDto} from "../dtos/LcnRequestDto";
 
 
 @Injectable({
@@ -18,6 +19,23 @@ export class LcnService {
   constructor(private http: HttpClient) {
   }
 
+
+
+  createLcn(requestDto: LcnRequestDto): Observable<LcnResponseDTO> {
+    return this.http.post<LcnResponseDTO>(this.apiUrl, requestDto);
+  }
+
+  updateLcn(id: number, requestDto: LcnRequestDto): Observable<LcnResponseDTO> {
+    return this.http.put<LcnResponseDTO>(`${this.apiUrl}/${id}`, requestDto);
+  }
+
+  getLcnById(id:number): Observable<LcnResponseDTO> {
+    return this.http.get<LcnResponseDTO>(`${this.apiUrl}/${id}`);
+  }
+
+  deleteLcn(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 
   getDecaissementLcns(
     searchDto: LcnSearchDTO,

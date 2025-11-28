@@ -121,7 +121,11 @@
           </td>
 
           <td>
-            <p-inputSwitch [ngModel]="lcn.active" (onChange)="confirmToggleStatus(lcn)"></p-inputSwitch>
+            <p-inputSwitch [ngModel]="lcn.active" class="p-2" (onChange)="confirmToggleStatus(lcn)"></p-inputSwitch>
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" [routerLink]="['/portail/LCN/edit', lcn.id]"></button>
+            @if (isAdmin){
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteLcn(lcn)"></button>
+            }
           </td>
 
         </tr>

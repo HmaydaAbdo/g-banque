@@ -15,4 +15,5 @@ export interface LcnResponseDTO {
   active: boolean;
   banqueName: string;
   banqueId:number
+  emetteur:string
 }

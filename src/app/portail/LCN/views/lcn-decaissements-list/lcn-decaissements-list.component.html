@@ -118,6 +118,9 @@
 
             <td>
               <p-inputSwitch [ngModel]="lcn.active" (onChange)="confirmToggleStatus(lcn)"></p-inputSwitch>
+              @if (isAdmin){
+                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteLcn(lcn)"></button>
+              }
             </td>
 
         </tr>

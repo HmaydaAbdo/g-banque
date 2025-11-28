@@ -259,4 +259,39 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  deleteLcn(lcn: LcnResponseDTO): void {
+    const confirmationMessageHtml = `
+    <div class="text-center">
+        <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
+        <p>Êtes-vous sûr de vouloir supprimer ce Lcn "<strong>${lcn.id}</strong>" ?</p>
+        <p style="color: #ef4444; font-weight: bold;">Cette action est irréversible.</p>
+    </div>
+    `;
+
+    this.confirmationService.confirm({
+      message: confirmationMessageHtml,
+      header: 'Confirmation de Suppression',
+      icon: 'none',
+      acceptLabel: 'Confirmer',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.lcnService.deleteLcn(lcn.id)
+          .subscribe({
+            next: () => {
+              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le lcn a été supprimé avec succès.', life: 3000 });
+              this.loadLcns(this.lastLazyLoadEvent)
+              this.loading = false;
+            },
+            error: (error) => {
+              console.error('Erreur lors de la suppression du lcn:', error);
+              const errorMessage = error.error.detail || 'Échec de la suppression du lcn.';
+              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+              this.loading = false;
+            }
+          });
+      }
+    });
+  }
 }
