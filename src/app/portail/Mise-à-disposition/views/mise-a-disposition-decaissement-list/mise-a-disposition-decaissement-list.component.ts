@@ -32,7 +32,7 @@ import {MiseADispositionSearchDto} from "../../dtos/MiseADispositionSearchDto";
 
 
 @Component({
-  selector: 'app-mise-a-disposition-list',
+  selector: 'app-mise-a-disposition-decaissement-list',
   standalone: true,
   imports: [
     CommonModule,
@@ -53,11 +53,11 @@ import {MiseADispositionSearchDto} from "../../dtos/MiseADispositionSearchDto";
     BreadcrumbModule,
     RouterLinkActive
   ],
-  templateUrl: './mise-a-disposition-list.component.html',
-  styleUrl: './mise-a-disposition-list.component.scss',
+  templateUrl: './mise-a-disposition-decaissement-list.component.html',
+  styleUrl: './mise-a-disposition-decaissement-list.component.scss',
   providers: [MessageService, ConfirmationService]
 })
-export class MiseADispositionListComponent implements OnInit, OnDestroy {
+export class MiseADispositionDecaissementListComponent implements OnInit, OnDestroy {
   misesADisposition: MiseADispositionResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
@@ -94,15 +94,16 @@ export class MiseADispositionListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+
     this.items = [
       {icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil"},
-      {icon: 'pi pi-list', route: '/portail/mises-a-disposition', label: "Les mises à disposition"},
+      {icon: 'pi pi-list', route: '/portail/Mise-a-disposition/decaissement', label: "Les mises à disposition ( décaissements)"},
     ];
+
     this.isAdmin = this.authService.hasRole(Role.ADMIN);
     this.initSearchForm();
     this.loadBanques();
-    this.loadMisesADisposition(this.lastLazyLoadEvent);
-  }
+    }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
@@ -148,7 +149,7 @@ export class MiseADispositionListComponent implements OnInit, OnDestroy {
       active: this.searchForm.get('active')?.value
     };
 
-    this.miseADispositionService.searchMisesADisposition(
+    this.miseADispositionService.getDecaissementsForMiseADisposition(
       searchCriteria,
       currentPage,
       pageSize,
@@ -171,9 +172,6 @@ export class MiseADispositionListComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Triggers a new search from the first page.
-   */
   onSearch(): void {
     if (this.dt) {
       this.dt.first = 0;
@@ -181,9 +179,7 @@ export class MiseADispositionListComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Loads the list of banks for the dropdown filter.
-   */
+
   loadBanques(): void {
     this.banqueService.getAllBanques({}, 0, 1000)
       .subscribe({
@@ -201,9 +197,7 @@ export class MiseADispositionListComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Clears all search filters and reloads the table.
-   */
+
   clearSearch(): void {
     this.searchForm.reset({
       numero: '',
@@ -220,10 +214,7 @@ export class MiseADispositionListComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Confirms and toggles the status of a mise à disposition.
-   * @param miseADisposition The mise à disposition to toggle.
-   */
+
   confirmToggleStatus(miseADisposition: MiseADispositionResponseDto): void {
     const confirmationMessage = `Êtes-vous sûr de vouloir ${miseADisposition.active ? 'désactiver' : 'activer'} la mise à disposition N° ${miseADisposition.numero}?`;
     this.confirmationService.confirm({
@@ -235,17 +226,14 @@ export class MiseADispositionListComponent implements OnInit, OnDestroy {
       acceptButtonStyleClass: miseADisposition.active ? 'p-button-danger' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
       accept: () => {
-        this.toggleMiseADispositionStatus(miseADisposition.numero);
+        this.toggleMiseADispositionStatus(miseADisposition.id);
       }
     });
   }
 
-  /**
-   * Calls the service to toggle the mise à disposition's status.
-   * @param numero The numero of the mise à disposition.
-   */
-  toggleMiseADispositionStatus(numero: string): void {
-    this.miseADispositionService.toggleMiseADispositionStatus(numero).subscribe({
+
+  toggleMiseADispositionStatus(id: number): void {
+    this.miseADispositionService.toggleMiseADispositionStatus(id).subscribe({
       next: (updatedMiseADisposition) => {
         this.messageService.add({
           severity: 'success',

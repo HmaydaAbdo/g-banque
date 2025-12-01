@@ -24,7 +24,7 @@ import {SelectBanquePourLEncoursComponent} from "../../etatsDesEncours/views/sel
 import {LcnDecaissementsListComponent} from "../../LCN/views/lcn-decaissements-list/lcn-decaissements-list.component";
 import {ChequesDecaissementsListComponent} from "../../cheques/views/cheques-decaissements-list/cheques-decaissements-list.component";
 import {VirementDecaissementListComponent} from "../../Virements/views/virement-decaissement-list/virement-decaissement-list.component";
-import {MiseADispositionListComponent} from "../../Mise-à-disposition/views/mise-a-disposition-list/mise-a-disposition-list.component";
+import {MiseADispositionDecaissementListComponent} from "../../Mise-à-disposition/views/mise-a-disposition-decaissement-list/mise-a-disposition-decaissement-list.component";
 import {RecapDecaissementComponent} from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
 import {LignesFonctionnellesArchivesComponent} from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component";
 import {TransactionHistoryComponent} from "../../transaction-history/transaction-history.component";
@@ -107,6 +107,12 @@ import {LcnEncaissementsListComponent} from "../../LCN/views/lcn-encaissements-l
 import {
   EncaissementLcnEncoursComponent
 } from "../../etatsDesEncours/views/lesEncours/encaissements/encaissement-lcn-encours/encaissement-lcn-encours.component";
+import {
+  MiseADispositionEncaissementListComponent
+} from "../../Mise-à-disposition/views/mise-a-disposition-encaissement-list/mise-a-disposition-encaissement-list.component";
+import {
+  MiseADispositionFormComponent
+} from "../../Mise-à-disposition/views/mise-a-disposition-form/mise-a-disposition-form.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -156,7 +162,11 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'Virements/new', component: VirementFormComponent },
   { path: 'Virements/edit/:id', component: VirementFormComponent },
 
-  {path:"Mise-a-disposition",component:MiseADispositionListComponent},
+  {path:"Mise-a-disposition/decaissement",component:MiseADispositionDecaissementListComponent},
+  {path:"Mise-a-disposition/encaissement",component:MiseADispositionEncaissementListComponent},
+  {path:"Mise-a-disposition/new",component:MiseADispositionFormComponent},
+  { path: 'Mise-a-disposition/edit/:id', component: MiseADispositionFormComponent },
+
 
   { path: "marches", component: MarchesListComponent },
   { path: "marches/new", component: MarchesFormComponent },

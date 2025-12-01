@@ -1,7 +1,7 @@
 import {TransactionSource} from "../transactions/TransactionSource";
 
 export interface MiseAdispositionTransactionRequestDto {
-  numeroMiseAdisposition: string;
+  id: number;
   transactionSource: TransactionSource;
   dateEmission: Date;    // ISO 8601
   dateValeur: Date;

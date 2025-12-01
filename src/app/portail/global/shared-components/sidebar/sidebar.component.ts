@@ -86,22 +86,26 @@ export class SidebarComponent implements OnInit {
       items: [
         { label: 'Chèques', icon: 'pi pi-arrow-right-arrow-left',
           items: [
-            {label:"Encaissements", icon: 'pi pi-plus' , routerLink: '/portail/Cheques/encaissements' },
-            {label:"Décaissements", icon: 'pi pi-minus' , routerLink: '/portail/Cheques/decaissements' },
+            {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/Cheques/encaissements' },
+            {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/Cheques/decaissements' },
           ]
         },
         { label: 'LCN', icon: 'pi pi-file-o',
           items: [
-              {label:"Encaissements", icon: 'pi pi-plus' , routerLink: '/portail/LCN/encaissements' },
-            {label:"Décaissements", icon: 'pi pi-minus' , routerLink: '/portail/LCN/decaissements' },
+              {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/LCN/encaissements' },
+            {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/LCN/decaissements' },
           ]},
         { label: 'Virements', icon: 'pi pi-arrow-right-arrow-left',
           items: [
-            {label:"Encaissements", icon: 'pi pi-plus' , routerLink: '/portail/Virements/encaissement' },
-            {label:"Décaissements", icon: 'pi pi-minus' , routerLink: '/portail/Virements/decaissement' },
+            {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/Virements/encaissement' },
+            {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/Virements/decaissement' },
           ]
         },
-        { label: 'Mises à disposition', icon: 'pi pi-briefcase', routerLink: '/portail/Mise-a-disposition' }
+        { label: 'Mises à disposition', icon: 'pi pi-arrow-right-arrow-left',
+        items: [
+          {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/Mise-a-disposition/encaissement' },
+          {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/Mise-a-disposition/decaissement' },
+        ]}
       ]
     },
     {

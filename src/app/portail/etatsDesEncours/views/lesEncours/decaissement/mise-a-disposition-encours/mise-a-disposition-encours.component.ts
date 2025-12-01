@@ -217,7 +217,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
 
       const miseADispositionTransactionRequest: MiseAdispositionTransactionRequestDto = {
-        numeroMiseAdisposition: this.selectedMiseADisposition.numero,
+        id: this.selectedMiseADisposition.id,
         dateEmission: donneesComplementaires.dateEmission,
         dateValeur: donneesComplementaires.dateValeur,
         dateOperation: donneesComplementaires.dateOperation,
@@ -272,7 +272,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
       : 'dateEmission,desc';
 
     this.miseADispositionService
-      .getOutstandingMisesADispositionByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
+      .getEncoursDecaissementsForMiseADispositionByBank(this.banqueIdFromRoute, this.currentSearchDto, page, size, sort)
       .subscribe({
         next: (response: EncoursMiseAdisposition) => {
           this.misesADisposition = response.page.content;

@@ -1,8 +1,14 @@
+import {Type} from "../../Virements/Type";
+
 /**
  * Interface representing the data for a single MiseADisposition resource
  * returned from the API.
  */
 export interface MiseADispositionResponseDto {
+  id:number
+  banqueId:number
+  emetteur:string
+  type:Type
   numero: string;
   dateEmission: string;
   dateOperation:string;
