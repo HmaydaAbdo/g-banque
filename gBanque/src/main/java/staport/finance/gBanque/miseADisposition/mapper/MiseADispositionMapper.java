@@ -1,6 +1,8 @@
 package staport.finance.gBanque.miseADisposition.mapper;
 
+import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionResponseDto;
+import staport.finance.gBanque.miseADisposition.dtos.MiseAdispositionRequestDto;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 
 public class MiseADispositionMapper {
@@ -40,5 +42,19 @@ public class MiseADispositionMapper {
         dto.setLibelle("Bénéficiaire " + miseADisposition.getBeneficiaire() );
 
         return dto;
+    }
+
+    public  static MiseADisposition toEntity(MiseAdispositionRequestDto dto, Banque banque) {
+        MiseADisposition miseADisposition = new MiseADisposition();
+
+        miseADisposition.setDateEmission(dto.getDateEmission());
+        miseADisposition.setBeneficiaire(dto.getBeneficiaire());
+        miseADisposition.setMontant(dto.getMontant());
+        miseADisposition.setBanque(banque);
+        miseADisposition.setActive(true);
+        miseADisposition.setType(dto.getType());
+        miseADisposition.setEmetteur(dto.getEmetteur());
+
+        return miseADisposition;
     }
 }

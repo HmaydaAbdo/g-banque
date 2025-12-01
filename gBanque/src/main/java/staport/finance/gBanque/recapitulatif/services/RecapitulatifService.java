@@ -152,7 +152,7 @@ public class RecapitulatifService {
         Specification<Cheque> chequeSpec = ChequeSpec.encoursDecaissements(banqueId);
         Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banqueId);
         Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banqueId);
-        Specification<MiseADisposition> madSpec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId);
+        Specification<MiseADisposition> madSpec = MiseADispositionSpec.encoursDecaissementForMiseAdispo(banqueId);
 
         // préfinancement (Remboursement only)
         Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingRemboursementForCurrentMonth()
@@ -305,23 +305,23 @@ public class RecapitulatifService {
         Specification<Decompte> decompteSpecification = DecompteSpec.outstandingDecomptesForCurrentMonth()
                 .and(DecompteSpec.byBanqueId(banqueId));
 
-        //virements
+        //Moyens de paiement
         Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom());
-
-        //cheques
         Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId());
-
-        //lcn
         Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banqueId);
+        Specification<MiseADisposition> miseADispositionSpecification=MiseADispositionSpec.encoursEncaissementForMiseAdispo(banqueId);
+
 
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
         List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
         List<Factoring> outstandingFactoring = factoringRepository.findAll(factoringSpecification);
         List<Decompte> outstandingDecomptes = decompteRepository.findAll(decompteSpecification);
+
         List<Virement> outstandingVirements = virementRepository.findAll(virementSpec);
         List<Cheque> outstandingCheques = chequeRepository.findAll(chequeSpec);
         List<Lcn> outstandingLcns = lcnRepository.findAll(lcnSpec);
+        List<MiseADisposition> outstandingMisesADisposition = miseADispositionRepository.findAll(miseADispositionSpecification);
 
 
         // Step 3: Combine all lists and map them to the unified DTO.
@@ -333,6 +333,7 @@ public class RecapitulatifService {
         combinedItems.addAll(outstandingVirements.stream().map(encaissementMapper::mapVirementToDto).toList());
         combinedItems.addAll(outstandingCheques.stream().map(encaissementMapper::mapChequeToDto).toList());
         combinedItems.addAll(outstandingLcns.stream().map(encaissementMapper::mapLcnToDto).toList());
+        combinedItems.addAll(outstandingMisesADisposition.stream().map(encaissementMapper::mapMiseAdispositionToDto).toList());
 
         // Apply the filters from the DTO
         if (transactionSources != null && !transactionSources.isEmpty()) {
@@ -392,10 +393,7 @@ public class RecapitulatifService {
 
         return aggregatedDto;
     }
-    /**
-     * Helper method to create a Comparator from the Pageable's Sort object.
-     * This is required for sorting the combined list manually.
-     */
+
     private Comparator<RecaputilatifItem> getComparatorForSorting(Pageable pageable) {
         if (pageable.getSort().isUnsorted()) {
             // Default sort if no sort is specified.

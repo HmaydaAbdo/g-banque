@@ -6,10 +6,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.miseADisposition.dtos.EncoursMiseAdisposition;
-import staport.finance.gBanque.miseADisposition.dtos.EncoursMiseAdispositionSearchDto;
-import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionResponseDto;
-import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionSearchDto;
+import staport.finance.gBanque.miseADisposition.dtos.*;
 import staport.finance.gBanque.miseADisposition.services.MiseADispositionService;
 
 
@@ -25,6 +22,27 @@ public class MiseADispositionController {
         this.miseADispositionService = miseADispositionService;
     }
 
+
+    @PostMapping
+    public ResponseEntity<MiseADispositionResponseDto> createMiseAdisposition(@RequestBody MiseAdispositionRequestDto requestDto) {
+        return ResponseEntity.ok(miseADispositionService.createEncaissementMiseAdisposition(requestDto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<MiseADispositionResponseDto> updateMiseAdisposition(@PathVariable Long id, @RequestBody MiseAdispositionRequestDto requestDto) {
+        return ResponseEntity.ok(miseADispositionService.editEncaissementMiseAdisposition(id, requestDto));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MiseADispositionResponseDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(miseADispositionService.getMiseAdispositionById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMiseAdisposition(@PathVariable Long id) {
+        miseADispositionService.deleteMiseAdispositionById(id);
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping("/decaissements")
     public ResponseEntity<Page<MiseADispositionResponseDto>> getDecaissementMisesADisposition(

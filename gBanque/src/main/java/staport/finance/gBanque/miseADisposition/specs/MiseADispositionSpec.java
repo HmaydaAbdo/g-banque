@@ -158,13 +158,39 @@ public final class MiseADispositionSpec {
      * @param banqueId L'ID de la banque pour laquelle les mises à disposition sont recherchés.
      * @return Une Specification qui combine les critères de filtrage.
      */
-    public static Specification<MiseADisposition> activeForBankAndUntilEndOfMonth(Long banqueId) {
+    public static Specification<MiseADisposition> encoursDecaissementForMiseAdispo(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             OffsetDateTime now = OffsetDateTime.now();
 
             // 1. Le statut de la mise à disposition doit être actif.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
+
+            // 2. La mise à disposition doit appartenir à la banque spécifiée par son ID.
+            if (banqueId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            } else {
+                return criteriaBuilder.disjunction();
+            }
+
+            // 3. La date d'émission doit être égale ou antérieure à la fin du mois.
+            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
+                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    public static Specification<MiseADisposition> encoursEncaissementForMiseAdispo(Long banqueId) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            OffsetDateTime now = OffsetDateTime.now();
+
+            // 1. Le statut de la mise à disposition doit être actif.
+            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
 
             // 2. La mise à disposition doit appartenir à la banque spécifiée par son ID.
             if (banqueId != null) {
