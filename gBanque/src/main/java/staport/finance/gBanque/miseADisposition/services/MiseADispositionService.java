@@ -177,7 +177,9 @@ public class MiseADispositionService {
                 .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
                 .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
-                .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT));
+                .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT))
+                .and(MiseADispositionSpec.hasEmetteur(searchDto.getEmetteur()))
+                .and(MiseADispositionSpec.hasDateEmission(searchDto.getDateEmission()));
 
         // Execute the search with the specification and pagination
         Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);

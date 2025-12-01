@@ -9,6 +9,7 @@ import staport.finance.gBanque.rapprochement.dtos.miseAdispo.MiseAdispositionTra
 import staport.finance.gBanque.rapprochement.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -49,14 +50,24 @@ public class MiseAdispositionTransactionMapper {
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setTransactionSource(TransactionSource.MiseADisposition);
-        transaction.setDebit(miseADispo.getMontant());
-        transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(miseADispo.getBanque());
 
         BigDecimal ttc = miseADispo.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
-        transaction.setTvaDeductible(montantTva);
+
+        if(miseADispo.getType()== Type.DECAISSEMENT){
+            transaction.setTvaDeductible(montantTva);
+            transaction.setTvaCollectee(BigDecimal.ZERO);
+            transaction.setDebit(miseADispo.getMontant());
+            transaction.setCredit(BigDecimal.ZERO);
+        }else{
+            transaction.setTvaDeductible(BigDecimal.ZERO);
+            transaction.setTvaCollectee(montantTva);
+            transaction.setDebit(BigDecimal.ZERO);
+            transaction.setCredit(miseADispo.getMontant());
+        }
+
 
         return transaction;
     }

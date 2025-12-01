@@ -9,6 +9,7 @@ public class MiseADispositionSearchDto {
     private String beneficiaire;
     private String cinBeneficiaire;
     private String banqueName;
+    private String emetteur;
     private Boolean active;
 
     // Getters and Setters
@@ -34,6 +35,14 @@ public class MiseADispositionSearchDto {
 
     public void setCinBeneficiaire(String cinBeneficiaire) {
         this.cinBeneficiaire = cinBeneficiaire;
+    }
+
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
     }
 
     public String getBanqueName() {

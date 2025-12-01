@@ -76,9 +76,16 @@ public class RapprochementBancaireController {
     }
 
 
-    @PostMapping("/process/mise-a-disposition")
-    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) throws Exception {
-        MiseAdispositionTransactionResponseDto responseDto = rapprochementService.processMiseAdispoTransaction(requestDto);
+    @PostMapping("/process/decaissement/mise-a-disposition")
+    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionDecaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) throws Exception {
+        MiseAdispositionTransactionResponseDto responseDto = rapprochementService.processMiseAdispositionDecaissementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+
+    @PostMapping("/process/encaissement/mise-a-disposition")
+    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionEncaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) throws Exception {
+        MiseAdispositionTransactionResponseDto responseDto = rapprochementService.processMiseAdispositionEncaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

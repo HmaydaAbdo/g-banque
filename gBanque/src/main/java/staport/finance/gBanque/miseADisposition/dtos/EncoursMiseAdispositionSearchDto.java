@@ -1,19 +1,33 @@
 package staport.finance.gBanque.miseADisposition.dtos;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 public class EncoursMiseAdispositionSearchDto {
 
     private String numero;
     private String beneficiaire;
     private BigDecimal montant;
+    private String emetteur;
+    private OffsetDateTime dateEmission;
 
     public EncoursMiseAdispositionSearchDto() {
     }
 
-    public EncoursMiseAdispositionSearchDto(String numero, String beneficiaire) {
-        this.numero = numero;
-        this.beneficiaire = beneficiaire;
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
+    }
+
+    public OffsetDateTime getDateEmission() {
+        return dateEmission;
+    }
+
+    public void setDateEmission(OffsetDateTime dateEmission) {
+        this.dateEmission = dateEmission;
     }
 
     public String getNumero() {
@@ -42,6 +56,8 @@ public class EncoursMiseAdispositionSearchDto {
                 "numero='" + numero + '\'' +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", montant=" + montant +
+                ", emetteur='" + emetteur + '\'' +
+                ", dateEmission=" + dateEmission +
                 '}';
     }
 }

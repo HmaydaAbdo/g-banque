@@ -41,13 +41,19 @@ public final class MiseADispositionSpec {
 
         };
     }
+    public static Specification<MiseADisposition> hasDateEmission(OffsetDateTime dateEmission) {
+        return (root, query, criteriaBuilder) -> {
+            if (dateEmission == null ) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("dateEmission"), dateEmission);
+
+        };
+    }
 
 
-    /**
-     * Specification to filter MiseADisposition by beneficiaire (case-insensitive).
-     * @param beneficiaire The beneficiaire name to match.
-     * @return A Specification for the beneficiaire.
-     */
+
+
     public static Specification<MiseADisposition> hasBeneficiaire(String beneficiaire) {
         return (root, query, criteriaBuilder) -> {
             if (beneficiaire == null || beneficiaire.trim().isEmpty()) {
@@ -59,6 +65,19 @@ public final class MiseADispositionSpec {
             );
         };
     }
+
+    public static Specification<MiseADisposition> hasEmetteur(String emetteur) {
+        return (root, query, criteriaBuilder) -> {
+            if (emetteur == null ) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("emetteur")),
+                    "%" + emetteur.toLowerCase() + "%"
+            );
+        };
+    }
+
 
     /**
      * Specification to filter MiseADisposition by the beneficiary's CIN (case-insensitive).
@@ -139,6 +158,10 @@ public final class MiseADispositionSpec {
 
         if (searchDto.getBanqueName() != null) {
             spec = spec.and(hasBanqueName(searchDto.getBanqueName()));
+        }
+
+        if(searchDto.getEmetteur()!=null){
+            spec = spec.and(hasEmetteur(searchDto.getEmetteur()));
         }
 
         if (searchDto.getActive() != null) {

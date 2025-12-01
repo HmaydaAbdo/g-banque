@@ -489,8 +489,8 @@ public class RapprochementService {
 
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public MiseAdispositionTransactionResponseDto processMiseAdispoTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
-        // Step 1: Fetch the MiseAdispo entity from the database using it's number from the request.
+    public MiseAdispositionTransactionResponseDto processMiseAdispositionDecaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
+        // Step 1: Fetch the MiseAdispo entity from the database.
         // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
         MiseADisposition miseADisposition = miseADispositionRepository.findById(requestDto.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -512,6 +512,45 @@ public class RapprochementService {
         // Then save the updated bank entity.
         Banque banque = miseADisposition.getBanque();
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
+        miseADisposition.setActive(false);
+        miseADisposition.setDateOperation(savedTransaction.getDateOperations());
+        miseADisposition.setDateValeur(savedTransaction.getDateValeur());
+        miseADisposition.setLibelle(savedTransaction.getLibelle());
+        miseADisposition.setObservation(savedTransaction.getObservation());
+        miseADispositionRepository.save(miseADisposition);
+
+        // Step 7: Convert the saved Transaction entity into a MiseAdispositionTransactionResponseDto
+        // using the mapper and return it as the response.
+        return miseAdispositionTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public MiseAdispositionTransactionResponseDto processMiseAdispositionEncaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
+        // Step 1: Fetch the MiseAdispo entity from the database.
+        // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
+        MiseADisposition miseADisposition = miseADispositionRepository.findById(requestDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Mise à disposition  with id " + requestDto.getId() + " not found"));
+
+        // Step 2: Check if the MiseAdispo is active.
+        // If the MiseAdispo is already used/paid (active = false), throw an exception.
+        if (!miseADisposition.isActive()) {
+            throw new Exception("The miseADisposition is not active, it has already been paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched miseADisposition entity into a Transaction entity.
+        Transaction transactionEntity = miseAdispositionTransactionMapper.toEntity(requestDto, miseADisposition);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
+        // Then save the updated bank entity.
+        Banque banque = miseADisposition.getBanque();
+        banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getDebit()));
         this.banqueRepository.save(banque);
 
         // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
