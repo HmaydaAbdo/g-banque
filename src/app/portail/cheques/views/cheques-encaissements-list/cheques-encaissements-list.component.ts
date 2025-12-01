@@ -112,6 +112,7 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       dateEmission: [null],
       montant: [null],
+      numero: [''],
       emetteur: [''],
       nomBanque: [null],
       active: [null]

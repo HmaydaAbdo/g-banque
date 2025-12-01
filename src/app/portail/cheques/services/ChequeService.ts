@@ -86,6 +86,10 @@ export class ChequeService {
       params = params.set('dateEmission', searchDto.dateEmission.toISOString());
     }
 
+    if(searchDto.numero){
+      params = params.set('numero', searchDto.numero)
+    }
+
     if (searchDto.montant) {
       params = params.set('montant', searchDto.montant);
     }
@@ -161,8 +165,14 @@ export class ChequeService {
       .set('size', size.toString())
       .set('sort', sort);
 
+
+
     if(searchDto.dateEmission){
       params = params.set('dateEmission', searchDto.dateEmission.toISOString())
+    }
+
+    if(searchDto.numero){
+      params = params.set('numero', searchDto.numero)
     }
 
     if (searchDto.emetteur) {

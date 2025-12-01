@@ -29,6 +29,14 @@
   <form [formGroup]="searchForm" class="flex justify-content-around flex-wrap gap-3">
 
     <div class="flex flex-column gap-2">
+      <label for="numero">numero</label>
+      <span class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input id="numero" pInputText type="text" formControlName="numero" placeholder="Rechercher par numero..." />
+      </span>
+    </div>
+
+    <div class="flex flex-column gap-2">
       <label for="dateEmission">Date d'émission </label>
       <p-calendar id="dateEmission"
                   formControlName="dateEmission"
@@ -37,7 +45,6 @@
       >
       </p-calendar>
     </div>
-
 
     <div class="flex flex-column gap-2">
       <label for="montant">Montant</label>
@@ -108,6 +115,7 @@
     >
       <ng-template pTemplate="header">
         <tr>
+          <th pSortableColumn="numero">numero <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="dateEcheance">Date d'Échéance  <p-sortIcon field="dateEcheance"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
@@ -120,6 +128,7 @@
       </ng-template>
       <ng-template pTemplate="body" let-cheque>
         <tr>
+          <td>{{cheque.numero}}</td>
           <td>{{ cheque.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ cheque.dateEcheance ? ( cheque.dateEcheance  | date:'dd/MM/yyyy' ) : 'N/A' }}</td>
           <td>{{ cheque.montant | number:'1.2-2' }}</td>

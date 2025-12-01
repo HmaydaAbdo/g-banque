@@ -108,6 +108,7 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
+      numero:[''],
       emetteur: [''],
       dateEmission: [null],
       beneficiaire: [''],

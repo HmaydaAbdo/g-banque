@@ -26,6 +26,14 @@
     <div class="p-fluid formgrid grid">
 
       <div class="col-12 md:col-6 field">
+        <label for="numero">numero <span class="p-text-danger">*</span></label>
+        <input type="text" pInputText id="numero" formControlName="numero" />
+        <small class="p-error" *ngIf="f['numero'].invalid && f['numero'].touched">
+          <span *ngIf="f['numero'].errors?.['numero']">numero est obligatoire.</span>
+        </small>
+      </div>
+
+      <div class="col-12 md:col-6 field">
         <label for="banqueId">Banque  <span class="p-text-danger">*</span></label>
         <p-dropdown
           formControlName="banqueId"

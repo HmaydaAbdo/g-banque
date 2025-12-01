@@ -84,6 +84,7 @@ export class ChequesFormComponent implements OnInit {
   private initForm(cheque?: ChequeResponseDto): void {
 
     this.chequeForm = this.fb.group({
+      numero: [cheque ? cheque.numero : null, Validators.required],
       banqueId: [cheque ? cheque.banqueId : null, Validators.required],
       dateEmission: [cheque ? new Date(cheque.dateEmission) : null, Validators.required],
       dateEcheance: [cheque ? new Date(cheque.dateEcheance) : null], // Optionnel
