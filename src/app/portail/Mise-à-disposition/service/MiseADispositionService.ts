@@ -89,8 +89,8 @@ export class MiseADispositionService {
     if (searchDto.beneficiaire) {
       params = params.set('beneficiaire', searchDto.beneficiaire);
     }
-    if (searchDto.cinBeneficiaire) {
-      params = params.set('cinBeneficiaire', searchDto.cinBeneficiaire);
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur);
     }
     if (searchDto.banqueName) {
       params = params.set('banqueName', searchDto.banqueName);
@@ -150,9 +150,14 @@ export class MiseADispositionService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    if (searchDto.numero) {
-      params = params.set('numero', searchDto.numero);
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur);
     }
+
+    if(searchDto.dateEmission){
+      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
+    }
+
     if (searchDto.beneficiaire) {
       params = params.set('beneficiaire', searchDto.beneficiaire);
     }

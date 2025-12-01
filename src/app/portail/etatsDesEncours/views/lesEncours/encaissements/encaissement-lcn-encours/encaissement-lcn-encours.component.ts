@@ -18,7 +18,7 @@ import {TooltipModule} from "primeng/tooltip";
 import {LcnResponseDTO} from "../../../../../LCN/dtos/LcnResponseDTO";
 import {LcnSearchDTO} from "../../../../../LCN/dtos/LcnSearchDTO";
 import {LcnService} from "../../../../../LCN/service/LcnService";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, RouterLink} from "@angular/router";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {
@@ -49,7 +49,8 @@ import {EncoursLcnResponse} from "../../../../../LCN/dtos/EncoursLcnResponse";
     Ripple,
     TableModule,
     ToastModule,
-    TooltipModule
+    TooltipModule,
+    RouterLink
   ],
   templateUrl: './encaissement-lcn-encours.component.html',
   styleUrl: './encaissement-lcn-encours.component.scss',

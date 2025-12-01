@@ -113,6 +113,9 @@ import {
 import {
   MiseADispositionFormComponent
 } from "../../Mise-à-disposition/views/mise-a-disposition-form/mise-a-disposition-form.component";
+import {
+  MiseADispoEncaissementEncoursComponent
+} from "../../etatsDesEncours/views/lesEncours/encaissements/mise-a-dispo-encaissement-encours/mise-a-dispo-encaissement-encours.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -214,7 +217,8 @@ export const PORTAIL_ROUTES: Routes = [
       {path:'cheques-decaissements', component:ChequesEncoursComponent},
       {path:'cheques-encaissements', component:ChequeEncaissementsEncoursComponent},
 
-      {path:'mise-a-disposition', component:MiseADispositionEncoursComponent},
+      {path:'mise-a-disposition-decaissements', component:MiseADispositionEncoursComponent},
+      {path:'mise-a-disposition-encaissements', component:MiseADispoEncaissementEncoursComponent},
 
       {path:"prefinancement-remboursement",component:PrefinancementRemboursementsComponent},
       {path:"dc-remboursement",component:DroitConstateRemboursementsComponent},

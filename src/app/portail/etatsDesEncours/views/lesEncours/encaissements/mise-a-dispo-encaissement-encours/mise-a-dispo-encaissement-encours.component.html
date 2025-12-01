@@ -1,0 +1,184 @@
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+
+<div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
+  <div class="p-card shadow-2 px-4 py-3 flex flex-column gap-4">
+
+    <div class="flex flex-row justify-content-between flex-wrap">
+      <span class="text-lg font-medium mr-2">Liste des mises à disposition en cours pour le <strong>  {{ this.currentMonthYear }}</strong></span>
+      <span class="text-lg font-medium mr-2">Total des encours <strong> {{ totalEncours | number:'1.2-2'}} MAD</strong></span>
+    </div>
+
+    <form [formGroup]="searchForm" class="flex flex-row justify-content-between ">
+      <span class="p-float-label">
+          <input id="emetteur" type="text" pInputText formControlName="emetteur" />
+          <label for="emetteur">émetteur</label>
+        </span>
+      <span class="p-float-label">
+            <p-calendar id="dateEmission" formControlName="dateEmission" dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
+            <label for="dateEmission">Date d'émission</label>
+        </span>
+      <span class="p-float-label">
+          <input id="beneficiaire" type="text" pInputText formControlName="beneficiaire" />
+          <label for="beneficiaire">Recherche par Bénéficiaire</label>
+        </span>
+      <span class="p-float-label">
+          <input id="montant" type="number" pInputText formControlName="montant" />
+          <label for="montant">Recherche par Montant</label>
+        </span>
+      <button pButton pRipple label="Ajouter Mise à disposition" class=" h-fit " size="small" icon="pi pi-plus"
+              severity="primary" routerLink="/portail/Mise-a-disposition/new"></button>
+
+    </form>
+
+  </div>
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="misesADisposition"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [lazy]="true"
+      (onLazyLoad)="loadOutstandingMisesADisposition($event)"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      [resizableColumns]="true"
+      columnResizeMode="expand"
+      [rowHover]="true"
+      dataKey="numero"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} mises à disposition"
+      [showCurrentPageReport]="true"
+      styleClass="p-datatable-gridlines"
+      [tableStyle]="{ 'min-width': '60rem' }"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="dateEmission">
+            Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
+          </th>
+          <th pSortableColumn="emetteur">
+            Emetteur <p-sortIcon field="emetteur"></p-sortIcon>
+          </th>
+          <th pSortableColumn="beneficiaire">
+            Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon>
+          </th>
+          <th pSortableColumn="montant">
+            Montant <p-sortIcon field="montant"></p-sortIcon>
+          </th>
+
+          <th style="width: 8rem">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-miseADisposition>
+        <tr>
+          <td>{{ miseADisposition.dateEmission | date : 'dd/MM/yyyy' }}</td>
+          <td>{{ miseADisposition.emetteur }}</td>
+          <td>{{ miseADisposition.beneficiaire }}</td>
+          <td>{{ miseADisposition.montant | number:'1.2-2' }} MAD</td>
+          <td>
+            <p-button
+              pRipple
+              class="p-button-rounded p-button-success"
+              pTooltip="Valider"
+              label="Valider"
+              (onClick)="openRapprochementModal(miseADisposition)"
+            ></p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td colspan="7">
+            Aucune mise à disposition en cours trouvée selon les critères de recherche.
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="7">
+            Chargement des mises à disposition en cours. Veuillez patienter...
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayModal"
+          [modal]="true" [style]="{width: '50vw'}"
+          [draggable]="false" [resizable]="false" [closable]="!isSubmitting">
+
+  <ng-container *ngIf="selectedMiseADisposition">
+    <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
+      <div class="grid p-fluid mt-3">
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="dateEmission" formControlName="dateEmission" dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
+            <label for="dateEmission">Date d'émission</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('dateEmission')">
+            La date d'émission est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-dropdown id="tvaDeductible" [options]="tvaOptions" formControlName="tvaDeductible"
+                        optionLabel="label" optionValue="value"
+                        placeholder="Sélectionner un taux" appendTo="body"></p-dropdown>
+            <label for="tvaDeductible">TVA Collectée</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
+            La TVA est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="dateValeur" formControlName="dateValeur"  dateFormat="dd/mm/yy"  [showOnFocus]="false"></p-calendar>
+            <label for="dateValeur">Date de valeur</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('dateValeur')">
+            La date de valeur est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <p-calendar id="dateOperation" formControlName="dateOperation" dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
+            <label for="dateOperation">Date de l'opération</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('dateOperation')">
+            La date de l'opération est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
+            <label for="observation">Observation</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('observation')">
+            Observation est obligatoire
+          </small>
+        </div>
+        <div class="col-12 md:col-6 mb-3">
+          <span class="p-float-label">
+            <textarea id="libelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
+            <label for="libelle">Libellé</label>
+          </span>
+          <small class="p-error" *ngIf="isInvalid('observation')">
+            Libellé est obligatoire
+          </small>
+        </div>
+      </div>
+      <p-divider></p-divider>
+      <div class="flex justify-content-end gap-2">
+        <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="displayModal = false"></p-button>
+        <p-button label="Valider" icon="pi pi-check" type="submit"
+                  [disabled]="rapprochementForm.invalid || isSubmitting"
+                  [loading]="isSubmitting"></p-button>
+      </div>
+    </form>
+  </ng-container>
+</p-dialog>

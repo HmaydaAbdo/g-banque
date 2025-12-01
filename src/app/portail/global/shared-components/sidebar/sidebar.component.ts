@@ -101,11 +101,7 @@ export class SidebarComponent implements OnInit {
             {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/Virements/decaissement' },
           ]
         },
-        { label: 'Mises à disposition', icon: 'pi pi-arrow-right-arrow-left',
-        items: [
-          {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/Mise-a-disposition/encaissement' },
-          {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/Mise-a-disposition/decaissement' },
-        ]}
+        { label: 'Mises à disposition ( Décaissements ) ', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Mise-a-disposition/decaissement'}
       ]
     },
     {

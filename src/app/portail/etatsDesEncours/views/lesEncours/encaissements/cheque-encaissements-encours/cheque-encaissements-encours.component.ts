@@ -5,7 +5,7 @@ import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/
 import {EncoursChequeSearchDto} from "../../../../../cheques/dtos/EncoursChequeSearchDto";
 import {ChequeService} from "../../../../../cheques/services/ChequeService";
 import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, RouterLink} from "@angular/router";
 import {ConfirmationService, MessageService, PrimeTemplate} from "primeng/api";
 import {DatePipe, DecimalPipe, NgIf} from "@angular/common";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
@@ -47,7 +47,8 @@ import {TooltipModule} from "primeng/tooltip";
     Ripple,
     TableModule,
     ToastModule,
-    TooltipModule
+    TooltipModule,
+    RouterLink
   ],
   templateUrl: './cheque-encaissements-encours.component.html',
   styleUrl: './cheque-encaissements-encours.component.scss',

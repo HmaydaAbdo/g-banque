@@ -108,7 +108,7 @@ export class MiseADispositionEncaissementListComponent implements OnInit, OnDest
     this.searchForm = this.fb.group({
       numero: [''],
       beneficiaire: [''],
-      cinBeneficiaire: [''],
+      emetteur: [''],
       banqueName: [null],
       active: [null]
     });

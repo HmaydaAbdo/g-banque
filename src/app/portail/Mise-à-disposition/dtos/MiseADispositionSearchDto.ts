@@ -10,5 +10,7 @@ export interface MiseADispositionSearchDto {
   cinBeneficiaire?: string;
   banqueName?: string;
   montant?: Decimal;
+  emetteur?:string
+  dateEmission?: Date;
   active?: boolean;
 }

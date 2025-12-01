@@ -105,18 +105,19 @@
       );
     }
 
-    /**
-     * Envoie la mise à disposition  au backend pour le rapprochement
-     * @param miseAdispo  Les données de la mise à disposition  à rapprocher
-     * @returns Observable<MiseAdispositionTransactionResponseDto>
-     */
-    miseAdispoToRapprochement( miseAdispo: MiseAdispositionTransactionRequestDto): Observable<MiseAdispositionTransactionResponseDto> {
-      return this.http.post<MiseAdispositionTransactionResponseDto>(`${this.baseUrl}/process/mise-a-disposition`,
+
+    miseAdispoDecaissementToRapprochement( miseAdispo: MiseAdispositionTransactionRequestDto): Observable<MiseAdispositionTransactionResponseDto> {
+      return this.http.post<MiseAdispositionTransactionResponseDto>(`${this.baseUrl}/process/decaissement/mise-a-disposition`,
         miseAdispo
       );
     }
 
 
+    miseAdispoEncaissementToRapprochement( miseAdispo: MiseAdispositionTransactionRequestDto): Observable<MiseAdispositionTransactionResponseDto> {
+      return this.http.post<MiseAdispositionTransactionResponseDto>(`${this.baseUrl}/process/encaissement/mise-a-disposition`,
+        miseAdispo
+      );
+    }
 
     prefinancementToRapprochement(prefinancement: PrefinancementTransactionRequest): Observable<PrefinancementTransactionResponse> {
       return this.http.post<PrefinancementTransactionResponse>(`${this.baseUrl}/process/prefinancement`,

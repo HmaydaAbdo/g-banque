@@ -228,7 +228,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
       };
 
       this.isSubmitting = true;
-      this.rapprochementService.miseAdispoToRapprochement(miseADispositionTransactionRequest)
+      this.rapprochementService.miseAdispoDecaissementToRapprochement(miseADispositionTransactionRequest)
         .subscribe({
           next: (response) => {
             console.log(response);
