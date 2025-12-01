@@ -21,7 +21,6 @@ import { RippleModule } from "primeng/ripple";
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { BanqueDto } from '../../../cmt/dtos/BanqueDto';
 import { ChequeResponseDto } from '../../dtos/ChequeResponseDto';
-import { ChequeRequestDto } from '../../dtos/ChequeRequestDto';
 import {Type} from "../../../Virements/Type";
 import {ChequeService} from "../../services/ChequeService";
 

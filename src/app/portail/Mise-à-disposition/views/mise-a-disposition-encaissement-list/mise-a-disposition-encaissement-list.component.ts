@@ -21,6 +21,7 @@ import {InputTextModule} from "primeng/inputtext";
 import {RouterLinkActive} from "@angular/router";
 import {TagModule} from "primeng/tag";
 import {ToastModule} from "primeng/toast";
+import {Ripple} from "primeng/ripple";
 
 @Component({
   selector: 'app-mise-a-disposition-encaissement-list',
@@ -42,7 +43,8 @@ import {ToastModule} from "primeng/toast";
     TableModule,
     TagModule,
     ToastModule,
-    NgClass
+    NgClass,
+    Ripple
   ],
   templateUrl: './mise-a-disposition-encaissement-list.component.html',
   styleUrl: './mise-a-disposition-encaissement-list.component.scss'
@@ -200,7 +202,7 @@ export class MiseADispositionEncaissementListComponent implements OnInit, OnDest
 
 
   confirmToggleStatus(miseADisposition: MiseADispositionResponseDto): void {
-    const confirmationMessage = `Êtes-vous sûr de vouloir ${miseADisposition.active ? 'désactiver' : 'activer'} la mise à disposition N° ${miseADisposition.numero}?`;
+    const confirmationMessage = `Êtes-vous sûr de vouloir ${miseADisposition.active ? 'désactiver' : 'activer'} la mise à disposition avec l'id ${miseADisposition.id}?`;
     this.confirmationService.confirm({
       message: confirmationMessage,
       header: `Confirmation de ${miseADisposition.active ? 'désactivation' : 'activation'}`,
@@ -222,7 +224,7 @@ export class MiseADispositionEncaissementListComponent implements OnInit, OnDest
         this.messageService.add({
           severity: 'success',
           summary: 'Succès',
-          detail: `Mise à disposition N° ${updatedMiseADisposition.numero} ${updatedMiseADisposition.active ? 'activée' : 'désactivée'} avec succès.`
+          detail: `Mise à disposition avec id  ${updatedMiseADisposition.id} ${updatedMiseADisposition.active ? 'activée' : 'désactivée'} avec succès.`
         });
         // Reload data from the server to reflect the change
         if (this.dt) {
@@ -236,6 +238,43 @@ export class MiseADispositionEncaissementListComponent implements OnInit, OnDest
           summary: 'Erreur',
           detail: `Échec de la mise à jour de la mise à disposition.`
         });
+      }
+    });
+  }
+
+
+
+  deleteMiseAdispo(miseADisposition: MiseADispositionResponseDto): void {
+    const confirmationMessageHtml = `
+    <div class="text-center">
+        <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
+        <p>Êtes-vous sûr de vouloir supprimer la mise à disposition dont l'id est  "<strong>${miseADisposition.id}</strong>" ?</p>
+        <p style="color: #ef4444; font-weight: bold;">Cette action est irréversible.</p>
+    </div>
+    `;
+
+    this.confirmationService.confirm({
+      message: confirmationMessageHtml,
+      header: 'Confirmation de Suppression',
+      icon: 'none',
+      acceptLabel: 'Confirmer',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.miseADispositionService.deleteMiseAdisposition(miseADisposition.id)
+          .subscribe({
+            next: () => {
+              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'La mise à disposition a été supprimée avec succès.', life: 3000 });
+              this.loadMisesADisposition(this.lastLazyLoadEvent)
+              this.loading = false;
+            },
+            error: (error) => {
+              console.error('Erreur lors de la suppression de la mise à disposition :', error);
+              const errorMessage = error.error.detail || 'Échec de la suppression de la mise à disposition .';
+              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+              this.loading = false;
+            }
+          });
       }
     });
   }

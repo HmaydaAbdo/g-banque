@@ -3,24 +3,29 @@
 
 <div class="flex flex-column gap-4 py-2 px-2 md:px-4 h-screen w-screen overflow-y-scroll">
 
-  <div class="flex justify-content-center align-items-center bg-transparent ">
-    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
-      <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
-          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
-          </a>
-        </ng-container>
-        <ng-template #elseBlock>
-          <a [href]="item.url">
-            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-          </a>
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <a [href]="item.url">
+              <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            </a>
+          </ng-template>
         </ng-template>
-      </ng-template>
-    </p-breadcrumb>
-  </div>
+      </p-breadcrumb>
+    </div>
 
+    <button pButton pRipple label="Ajouter Mise à disposition" class=" h-fit mt-2" size="small" icon="pi pi-plus"
+            severity="primary" routerLink="/portail/Mise-a-disposition/new"></button>
+
+  </div>
   <form [formGroup]="searchForm" class="flex justify-content-around flex-wrap gap-3">
 
 
@@ -113,10 +118,15 @@
           <td>{{ miseADisposition.banqueName }}</td>
           <td>
             <p-tag [value]="miseADisposition.active ? 'Encours' : 'Archivé'" [severity]="miseADisposition.active ? 'success' : 'danger'"></p-tag>
+
           </td>
 
           <td>
-            <p-inputSwitch [ngModel]="miseADisposition.active" (onChange)="confirmToggleStatus(miseADisposition)"></p-inputSwitch>
+            <p-inputSwitch [ngModel]="miseADisposition.active" class="p-2" (onChange)="confirmToggleStatus(miseADisposition)"></p-inputSwitch>
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" [routerLink]="['/portail/Mise-a-disposition/edit', miseADisposition.id]"></button>
+            @if (isAdmin){
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteMiseAdispo(miseADisposition)"></button>
+            }
           </td>
 
         </tr>

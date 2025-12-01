@@ -6,6 +6,7 @@ import {MiseADispositionSearchDto} from "../dtos/MiseADispositionSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
 import {MiseADispositionResponseDto} from "../dtos/MiseADispositionResponseDto";
 import {EncoursMiseAdisposition} from "../dtos/EncoursMiseAdisposition";
+import {MiseAdispositionRequestDto} from "../dtos/MiseAdispositionRequestDto";
 
 
 @Injectable({
@@ -18,6 +19,21 @@ export class MiseADispositionService {
   constructor(private http: HttpClient) {
   }
 
+  createMiseAdisposition(requestDto:MiseAdispositionRequestDto):Observable<MiseADispositionResponseDto>{
+    return this.http.post<MiseADispositionResponseDto>(this.apiUrl,requestDto);
+  }
+
+  updateMiseAdisposition(id:number,requestDto:MiseAdispositionRequestDto):Observable<MiseADispositionResponseDto>{
+    return this.http.put<MiseADispositionResponseDto>(`${this.apiUrl}/${id}`,requestDto);
+  }
+
+  getMiseAdispositionById(id:number):Observable<MiseADispositionResponseDto>{
+    return this.http.get<MiseADispositionResponseDto>(`${this.apiUrl}/${id}`);
+  }
+
+  deleteMiseAdisposition(id:number):Observable<void>{
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 
   getDecaissementsForMiseADisposition(
     searchDto: MiseADispositionSearchDto,
@@ -147,4 +163,6 @@ export class MiseADispositionService {
     const url = `${this.apiUrl}/encours/encaissements/${banqueId}`;
     return this.http.get<EncoursMiseAdisposition>(url, {params});
   }
+
+
 }
