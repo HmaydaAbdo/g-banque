@@ -25,36 +25,28 @@ public class MiseADispositionController {
         this.miseADispositionService = miseADispositionService;
     }
 
-    /**
-     * Searches for MiseADisposition entities with pagination and filtering.
-     * <p>
-     * Endpoint: GET /misesADisposition
-     * Example: /misesADisposition?cinBeneficiaire=A123456&active=true&page=0&size=20
-     *
-     * @param searchDto The MiseADispositionSearchDto populated from request parameters.
-     * @param pageable The Pageable object from the request, with a default size and sorting.
-     * @return A paginated list of MiseADispositionResponseDto.
-     */
-    @GetMapping
-    public ResponseEntity<Page<MiseADispositionResponseDto>> searchMisesADisposition(
+
+    @GetMapping("/decaissements")
+    public ResponseEntity<Page<MiseADispositionResponseDto>> getDecaissementMisesADisposition(
             MiseADispositionSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        Page<MiseADispositionResponseDto> result = miseADispositionService.searchMisesADisposition(searchDto, pageable);
+        Page<MiseADispositionResponseDto> result = miseADispositionService.getDecaissementForMiseAdisposition(searchDto, pageable);
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * Toggles the active status of a MiseADisposition.
-     * <p>
-     * Endpoint: PATCH /misesADisposition/toggle/{numero}
-     *
-     * @param numero The numero of the MiseADisposition to toggle.
-     * @return The updated MiseADispositionResponseDto.
-     */
-    @PatchMapping("/toggle/{numero}")
-    public ResponseEntity<MiseADispositionResponseDto> toggleMiseADispositionStatus(@PathVariable String numero) {
+    @GetMapping("/encaissements")
+    public ResponseEntity<Page<MiseADispositionResponseDto>> getEncaissementMisesADisposition(
+            MiseADispositionSearchDto searchDto,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+        Page<MiseADispositionResponseDto> result = miseADispositionService.getEncaissementForMiseAdisposition(searchDto, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+
+    @PatchMapping("/toggle/{id}")
+    public ResponseEntity<MiseADispositionResponseDto> toggleMiseADispositionStatus(@PathVariable Long id) {
         try {
-            MiseADispositionResponseDto updatedMiseADisposition = miseADispositionService.toggleMiseADispositionStatus(numero);
+            MiseADispositionResponseDto updatedMiseADisposition = miseADispositionService.toggleMiseADispositionStatus(id);
             return ResponseEntity.ok(updatedMiseADisposition);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -62,21 +54,24 @@ public class MiseADispositionController {
     }
 
 
-    /**
-     * Retrieves a paginated list of active mise à dispositions for a specific bank that are due in the current month.
-     * GET /misesADisposition/encours/{banqueId}
-     *
-     * @param banqueId The ID of the bank.
-     * @param pageable The pagination and sorting information.
-     * @return A paginated list of MiseADispositionResponseDto for the outstanding mise à dispositions.
-     */
-    @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<EncoursMiseAdisposition> getEncoursForMiseADisposition(
+
+    @GetMapping("/encours/decaissements/{banqueId}")
+    public ResponseEntity<EncoursMiseAdisposition> getEncoursDecaissementsForMiseADispositionByBank(
             @PathVariable Long banqueId,
             EncoursMiseAdispositionSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
 
-        EncoursMiseAdisposition result = miseADispositionService.getEncoursForMiseAdisposition(searchDto,banqueId, pageable);
+        EncoursMiseAdisposition result = miseADispositionService.getEncoursDecaissementsForMiseADispositionByBank(searchDto,banqueId, pageable);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/encours/encaissements/{banqueId}")
+    public ResponseEntity<EncoursMiseAdisposition> getEncoursEncaissementsForMiseADispositionByBank(
+            @PathVariable Long banqueId,
+            EncoursMiseAdispositionSearchDto searchDto,
+            @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+
+        EncoursMiseAdisposition result = miseADispositionService.getEncoursEncaissementsForMiseADispositionByBank(searchDto,banqueId, pageable);
         return ResponseEntity.ok(result);
     }
 }

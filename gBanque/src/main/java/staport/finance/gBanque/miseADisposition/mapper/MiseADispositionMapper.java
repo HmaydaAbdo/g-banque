@@ -12,20 +12,26 @@ public class MiseADispositionMapper {
      * @return The corresponding MiseADispositionResponseDto.
      */
     public static MiseADispositionResponseDto toDto(MiseADisposition miseADisposition) {
+
         if (miseADisposition == null) {
             return null;
         }
 
         MiseADispositionResponseDto dto = new MiseADispositionResponseDto();
-        dto.setNumero(miseADisposition.getNumero());
+        dto.setId(miseADisposition.getId());
+
+        dto.setNumero(miseADisposition.getNumero() != null ? miseADisposition.getNumero() : null);
         dto.setDateEmission(miseADisposition.getDateEmission());
         dto.setBeneficiaire(miseADisposition.getBeneficiaire());
         dto.setMontant(miseADisposition.getMontant());
         dto.setCinBeneficiaire(miseADisposition.getCinBeneficiaire());
         dto.setActive(miseADisposition.isActive());
+        dto.setType(miseADisposition.getType());
+        dto.setEmetteur(miseADisposition.getEmetteur() !=null ? miseADisposition.getEmetteur() : null);
 
         if (miseADisposition.getBanque() != null) {
             dto.setBanqueName(miseADisposition.getBanque().getNom());
+            dto.setBanqueId(miseADisposition.getBanque().getId());
         }
 
         dto.setDateOperation(miseADisposition.getDateOperation() !=null ? miseADisposition.getDateOperation() : null);

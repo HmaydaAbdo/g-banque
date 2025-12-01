@@ -2,6 +2,7 @@ package staport.finance.gBanque.miseADisposition.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -12,13 +13,17 @@ import java.util.Objects;
 public class MiseADisposition {
 
     @Id
-    @Column(name = "numero", nullable = false, unique = true)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
+    @Column(name = "numero")
     private String numero;
 
     @Column(name = "date_emission", nullable = false)
     private OffsetDateTime dateEmission;
 
     private OffsetDateTime dateOperation;
+
     private OffsetDateTime dateValeur;
 
     @Column(name = "beneficiaire", nullable = false)
@@ -38,19 +43,16 @@ public class MiseADisposition {
     private boolean active;
 
     private String observation;
+
     private String libelle;
+
+    @Enumerated(EnumType.STRING)
+    private Type type;
+
+    private String emetteur;
 
     public MiseADisposition() {}
 
-    public MiseADisposition(String numero, OffsetDateTime dateEmission, String beneficiaire,
-                            BigDecimal montant, Banque banque, String cinBeneficiaire) {
-        this.numero = numero;
-        this.dateEmission = dateEmission;
-        this.beneficiaire = beneficiaire;
-        this.montant = montant;
-        this.banque = banque;
-        this.cinBeneficiaire = cinBeneficiaire;
-    }
 
     // Getters & Setters
     public String getNumero() { return numero; }
@@ -103,29 +105,55 @@ public class MiseADisposition {
         this.active = active;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public String getEmetteur() {
+        return emetteur;
+    }
+
+    public void setEmetteur(String emetteur) {
+        this.emetteur = emetteur;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MiseADisposition)) return false;
-        MiseADisposition mad = (MiseADisposition) o;
-        return numero != null && Objects.equals(numero, mad.numero);
+        if (o == null || getClass() != o.getClass()) return false;
+        MiseADisposition that = (MiseADisposition) o;
+        return active == that.active && Objects.equals(id, that.id) && Objects.equals(numero, that.numero) && Objects.equals(dateEmission, that.dateEmission) && Objects.equals(dateOperation, that.dateOperation) && Objects.equals(dateValeur, that.dateValeur) && Objects.equals(beneficiaire, that.beneficiaire) && Objects.equals(montant, that.montant) && Objects.equals(banque, that.banque) && Objects.equals(cinBeneficiaire, that.cinBeneficiaire) && Objects.equals(observation, that.observation) && Objects.equals(libelle, that.libelle) && type == that.type && Objects.equals(emetteur, that.emetteur);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(numero);
+        return Objects.hash(id, numero, dateEmission, dateOperation, dateValeur, beneficiaire, montant, banque, cinBeneficiaire, active, observation, libelle, type, emetteur);
     }
 
     @Override
     public String toString() {
         return "MiseADisposition{" +
-                "numero='" + numero + '\'' +
+                "id=" + id +
+                ", numero='" + numero + '\'' +
                 ", dateEmission=" + dateEmission +
+                ", dateOperation=" + dateOperation +
+                ", dateValeur=" + dateValeur +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", montant=" + montant +
                 ", banque=" + banque +
                 ", cinBeneficiaire='" + cinBeneficiaire + '\'' +
                 ", active=" + active +
+                ", observation='" + observation + '\'' +
+                ", libelle='" + libelle + '\'' +
+                ", type=" + type +
+                ", emetteur='" + emetteur + '\'' +
                 '}';
     }
 }

@@ -492,9 +492,9 @@ public class RapprochementService {
     public MiseAdispositionTransactionResponseDto processMiseAdispoTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch the MiseAdispo entity from the database using it's number from the request.
         // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
-        MiseADisposition miseADisposition = miseADispositionRepository.findById(requestDto.getNumeroMiseAdisposition())
+        MiseADisposition miseADisposition = miseADispositionRepository.findById(requestDto.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Mise à disposition  with numero " + requestDto.getNumeroMiseAdisposition() + " not found"));
+                        "Mise à disposition  with id " + requestDto.getId() + " not found"));
 
         // Step 2: Check if the MiseAdispo is active.
         // If the MiseAdispo is already used/paid (active = false), throw an exception.

@@ -7,6 +7,7 @@ import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataExcep
 import staport.finance.gBanque.FunPaiementService.dtos.FunPaymentDto;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
@@ -31,7 +32,7 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
 
-        Optional<MiseADisposition> existingMiseADisposition = miseADispositionRepository.findById(item.getNumero());
+        Optional<MiseADisposition> existingMiseADisposition = miseADispositionRepository.findByNumero(item.getNumero());
         if (existingMiseADisposition.isPresent()) {
             log.info("Mise à disposition with numero {} already exists. Skipping.", item.getNumero());
             return null; // Spring Batch will skip this item
@@ -51,6 +52,7 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
         miseADisposition.setBeneficiaire(item.getBeneficiaire());
         miseADisposition.setMontant(item.getMontant());
         miseADisposition.setBanque(banque);
+        miseADisposition.setType(Type.DECAISSEMENT);
         miseADisposition.setCinBeneficiaire(item.getCinBeneficiaire());
 
         // Extraire l'année et le mois des dates pour la comparaison

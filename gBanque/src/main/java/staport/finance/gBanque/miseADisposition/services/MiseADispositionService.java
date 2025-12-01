@@ -13,6 +13,8 @@ import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.miseADisposition.mapper.MiseADispositionMapper;
 import staport.finance.gBanque.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.miseADisposition.specs.MiseADispositionSpec;
+import staport.finance.gBanque.virements.enums.Type;
+
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 
@@ -25,17 +27,11 @@ public class MiseADispositionService {
         this.miseADispositionRepository = miseADispositionRepository;
     }
 
-    /**
-     * Searches, filters, and paginates MiseADisposition entities based on search criteria.
-     * This method uses the Specification pattern to build dynamic queries.
-     *
-     * @param searchDto The DTO containing search criteria.
-     * @param pageable The pagination and sorting information.
-     * @return A Page of MiseADispositionResponseDto.
-     */
-    public Page<MiseADispositionResponseDto> searchMisesADisposition(MiseADispositionSearchDto searchDto, Pageable pageable) {
+
+    public Page<MiseADispositionResponseDto> getDecaissementForMiseAdisposition(MiseADispositionSearchDto searchDto, Pageable pageable) {
         // Build the combined specification using the static methods from MiseADispositionSpec.
-        Specification<MiseADisposition> spec = MiseADispositionSpec.bySearchDto(searchDto);
+        Specification<MiseADisposition> spec = MiseADispositionSpec.bySearchDto(searchDto)
+                .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
 
         // Execute the search with the combined specification and pagination.
         Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);
@@ -44,17 +40,23 @@ public class MiseADispositionService {
         return miseADispositionPage.map(MiseADispositionMapper::toDto);
     }
 
-    /**
-     * Toggles the active status of a MiseADisposition by its numero.
-     *
-     * @param numero The numero of the MiseADisposition to toggle.
-     * @return The updated MiseADispositionResponseDto.
-     * @throws NoSuchElementException if the MiseADisposition is not found.
-     */
+    public Page<MiseADispositionResponseDto> getEncaissementForMiseAdisposition(MiseADispositionSearchDto searchDto, Pageable pageable) {
+        // Build the combined specification using the static methods from MiseADispositionSpec.
+        Specification<MiseADisposition> spec = MiseADispositionSpec.bySearchDto(searchDto)
+                .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT));
+
+        // Execute the search with the combined specification and pagination.
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);
+
+        // Map the resulting Page<MiseADisposition> to Page<MiseADispositionResponseDto>.
+        return miseADispositionPage.map(MiseADispositionMapper::toDto);
+    }
+
+
     @Transactional
-    public MiseADispositionResponseDto toggleMiseADispositionStatus(String numero) {
-        MiseADisposition miseADisposition = miseADispositionRepository.findById(numero)
-                .orElseThrow(() -> new NoSuchElementException("MiseADisposition with numero " + numero + " not found."));
+    public MiseADispositionResponseDto toggleMiseADispositionStatus(Long id) {
+        MiseADisposition miseADisposition = miseADispositionRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("MiseADisposition with id " + id + " not found."));
 
         // Toggle the 'active' status.
         miseADisposition.setActive(!miseADisposition.isActive());
@@ -75,12 +77,30 @@ public class MiseADispositionService {
      * @return A Page of MiseADispositionResponseDto for the outstanding virements.
      */
     @Transactional(readOnly = true)
-    public EncoursMiseAdisposition getEncoursForMiseAdisposition(EncoursMiseAdispositionSearchDto searchDto, Long banqueId, Pageable pageable) {
+    public EncoursMiseAdisposition getEncoursDecaissementsForMiseADispositionByBank(EncoursMiseAdispositionSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification for active mise à disposition for the specified bank in the current month
         Specification<MiseADisposition> spec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId)
                 .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
                 .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()));
+                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
+                .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
+
+        // Execute the search with the specification and pagination
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);
+        BigDecimal totalDesEncours = miseADispositionRepository.findAll(spec).stream().map(MiseADisposition::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
+        Page<MiseADispositionResponseDto> result = miseADispositionPage.map(MiseADispositionMapper::toDto);
+        // Map the result to DTOs and return
+        return new EncoursMiseAdisposition(totalDesEncours,result);
+    }
+
+    @Transactional(readOnly = true)
+    public EncoursMiseAdisposition getEncoursEncaissementsForMiseADispositionByBank(EncoursMiseAdispositionSearchDto searchDto, Long banqueId, Pageable pageable) {
+        // Build the specification for active mise à disposition for the specified bank in the current month
+        Specification<MiseADisposition> spec = MiseADispositionSpec.activeForBankAndUntilEndOfMonth(banqueId)
+                .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
+                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
+                .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT));
 
         // Execute the search with the specification and pagination
         Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);

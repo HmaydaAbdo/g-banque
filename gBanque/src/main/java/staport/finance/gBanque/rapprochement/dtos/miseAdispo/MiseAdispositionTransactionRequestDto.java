@@ -9,8 +9,8 @@ import java.util.Objects;
 
 public class MiseAdispositionTransactionRequestDto {
 
-    @NotBlank(message = "Le numéro de mise à disposition est obligatoire")
-    private String numeroMiseAdisposition;
+    @NotNull(message = "Le id de la mise à disposition est obligatoire")
+    private Long id;
 
     @NotNull(message = "La source de transaction est obligatoire")
     private final TransactionSource transactionSource = TransactionSource.MiseADisposition;
@@ -34,12 +34,14 @@ public class MiseAdispositionTransactionRequestDto {
     private Double tvaDeductible;
 
     //  Getters & Setters
-    public String getNumeroMiseAdisposition() {
-        return numeroMiseAdisposition;
+
+
+    public Long getId() {
+        return id;
     }
 
-    public void setNumeroMiseAdisposition(String numeroMiseAdisposition) {
-        this.numeroMiseAdisposition = numeroMiseAdisposition;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public TransactionSource getTransactionSource() {
@@ -94,30 +96,23 @@ public class MiseAdispositionTransactionRequestDto {
         this.libelle = libelle;
     }
 
-    //  equals & hashCode (generated with all fields)
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof MiseAdispositionTransactionRequestDto that)) return false;
-        return Objects.equals(numeroMiseAdisposition, that.numeroMiseAdisposition) &&
-                transactionSource == that.transactionSource &&
-                Objects.equals(dateEmission, that.dateEmission) &&
-                Objects.equals(dateValeur, that.dateValeur) &&
-                Objects.equals(dateOperation, that.dateOperation) &&
-                Objects.equals(observation, that.observation) &&
-                Objects.equals(tvaDeductible, that.tvaDeductible);
+        if (o == null || getClass() != o.getClass()) return false;
+        MiseAdispositionTransactionRequestDto that = (MiseAdispositionTransactionRequestDto) o;
+        return Objects.equals(id, that.id) && transactionSource == that.transactionSource && Objects.equals(dateEmission, that.dateEmission) && Objects.equals(dateValeur, that.dateValeur) && Objects.equals(dateOperation, that.dateOperation) && Objects.equals(observation, that.observation) && Objects.equals(libelle, that.libelle) && Objects.equals(tvaDeductible, that.tvaDeductible);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(numeroMiseAdisposition, transactionSource, dateEmission, dateValeur, dateOperation, observation, tvaDeductible);
+        return Objects.hash(id, transactionSource, dateEmission, dateValeur, dateOperation, observation, libelle, tvaDeductible);
     }
 
     //  toString (for logging/debugging)
     @Override
     public String toString() {
         return "MiseAdispositionTransactionRequestDto{" +
-                "numeroMiseAdisposition='" + numeroMiseAdisposition + '\'' +
+                "id='" + id + '\'' +
                 ", transactionSource=" + transactionSource +
                 ", dateEmission=" + dateEmission +
                 ", dateValeur=" + dateValeur +

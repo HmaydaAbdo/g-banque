@@ -5,6 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.miseADisposition.dtos.MiseADispositionSearchDto;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.virements.entities.Virement;
+import staport.finance.gBanque.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -30,6 +31,17 @@ public final class MiseADispositionSpec {
             );
         };
     }
+
+    public static Specification<MiseADisposition> hasType(Type type) {
+        return (root, query, criteriaBuilder) -> {
+            if (type == null ) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("type"), type);
+
+        };
+    }
+
 
     /**
      * Specification to filter MiseADisposition by beneficiaire (case-insensitive).
