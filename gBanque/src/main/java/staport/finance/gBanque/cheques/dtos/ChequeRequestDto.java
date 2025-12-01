@@ -9,6 +9,9 @@ import java.time.OffsetDateTime;
 
 public class ChequeRequestDto {
 
+    @NotNull(message = "le numero est obligatoire ")
+    private String numero;
+
     @NotNull(message = "la date d'émission est obligatoire ")
     private OffsetDateTime dateEmission;
 
@@ -78,10 +81,19 @@ public class ChequeRequestDto {
         this.dateEmission = dateEmission;
     }
 
+    public String getNumero() {
+        return numero;
+    }
+
+    public void setNumero(String numero) {
+        this.numero = numero;
+    }
+
     @Override
     public String toString() {
         return "ChequeRequestDto{" +
-                "dateEmission=" + dateEmission +
+                "numero='" + numero + '\'' +
+                ", dateEmission=" + dateEmission +
                 ", dateEcheance=" + dateEcheance +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", banqueId=" + banqueId +

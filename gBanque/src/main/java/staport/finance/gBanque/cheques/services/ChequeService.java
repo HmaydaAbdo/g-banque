@@ -62,6 +62,10 @@ public class ChequeService {
             throw new IllegalArgumentException("Modification interdite: le cheque with id " + id + " est déja réglé.");
         }
 
+        if (dto.getNumero() != null) {
+            existingCheque.setNumero(dto.getNumero());
+        }
+
         if(dto.getDateEmission()!=null){
             existingCheque.setDateEmission(dto.getDateEmission());
         }
@@ -138,7 +142,8 @@ public class ChequeService {
                 .and(ChequeSpec.isActive(searchDto.getActive()))
                 .and(ChequeSpec.hasMontant(searchDto.getMontant()))
                 .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur())));
+                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur())))
+                .and(ChequeSpec.hasNumero(searchDto.getNumero()));
 
         // Execute the search with the combined specification and pagination
         Page<Cheque> chequePage = chequeRepository.findAll(spec, pageable);
@@ -185,6 +190,7 @@ public class ChequeService {
                 .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
                 .and(ChequeSpec.hasMontant(searchDto.getMontant()))
+                .and(ChequeSpec.hasNumero(searchDto.getNumero()))
                 .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()));
 
         // Execute the search with the specification and pagination

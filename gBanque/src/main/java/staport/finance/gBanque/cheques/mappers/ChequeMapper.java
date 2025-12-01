@@ -41,6 +41,7 @@ public class ChequeMapper {
 
         Cheque cheque = new Cheque();
 
+        cheque.setNumero(dto.getNumero());
         cheque.setDateEmission(dto.getDateEmission());
 
         if(dto.getDateEcheance() != null){
