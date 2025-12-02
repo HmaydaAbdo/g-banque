@@ -1,4 +1,5 @@
 import {Type} from "../../Virements/Type";
+import {NatureLcn} from "./NatureLcn";
 
 export interface LcnResponseDTO {
   numero: string;
@@ -16,4 +17,5 @@ export interface LcnResponseDTO {
   banqueName: string;
   banqueId:number
   emetteur:string
+  natureLcn:NatureLcn
 }

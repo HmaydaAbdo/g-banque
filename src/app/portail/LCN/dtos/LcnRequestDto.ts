@@ -1,4 +1,5 @@
 import {Type} from "../../Virements/Type";
+import {NatureLcn} from "./NatureLcn";
 
 export  interface LcnRequestDto {
 
@@ -10,4 +11,5 @@ export  interface LcnRequestDto {
   emetteur:string
   montant:number
   type:Type
+  natureLcn:NatureLcn
 }

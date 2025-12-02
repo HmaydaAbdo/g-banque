@@ -116,6 +116,7 @@
           <th pSortableColumn="emetteur">Emetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
           <th pSortableColumn="nomBanque">Banque <p-sortIcon field="nomBanque"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="natureLcn">Nature <p-sortIcon field="natureLcn"></p-sortIcon></th>
           <th style="width: 8rem;">Statut</th>
           @if (isAdmin) {
             <th style="width: 8rem;">Action</th>
@@ -131,6 +132,7 @@
           <td>{{ lcn.emetteur }}</td>
           <td>{{ lcn.banqueName }}</td>
           <td>{{ lcn.montant | number:'1.2-2' }}</td>
+          <td>{{ lcn.natureLcn }}</td>
           <td>
             <p-tag [value]="lcn.active ? 'Encours' : 'Archivé'" [severity]="lcn.active ? 'success' : 'danger'"></p-tag>
           </td>

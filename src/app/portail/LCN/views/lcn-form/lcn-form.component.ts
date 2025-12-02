@@ -22,6 +22,8 @@ import {ChequeResponseDto} from "../../../cheques/dtos/ChequeResponseDto";
 import {Observable, of, switchMap} from "rxjs";
 import {LcnService} from "../../service/LcnService";
 import {LcnResponseDTO} from "../../dtos/LcnResponseDTO";
+import {NatureLcn} from "../../dtos/NatureLcn";
+import {RadioButtonModule} from "primeng/radiobutton";
 
 @Component({
   selector: 'app-lcn-form',
@@ -42,7 +44,8 @@ import {LcnResponseDTO} from "../../dtos/LcnResponseDTO";
     Ripple,
     RouterLinkActive,
     ToastModule,
-    NgClass
+    NgClass,
+    RadioButtonModule
   ],
   templateUrl: './lcn-form.component.html',
   styleUrl: './lcn-form.component.scss'
@@ -58,6 +61,10 @@ export class LcnFormComponent implements OnInit {
   lcnType: Type = Type.ENCAISSEMENT;
   beneficiaireFixe: string = "STAPORT";
 
+  natureLcnOptions: { label: string, value: NatureLcn }[] = [
+    { label: 'Encaissement', value: NatureLcn.ENCAISSEMENT },
+    { label: 'Escompte', value: NatureLcn.ESCOMPTE }
+  ];
   items: MenuItem[] = [
     { label: 'Accueil', routerLink: '/portail' },
     { label: 'Lcn ( Encaissements )', routerLink: '/portail/LCN/encaissements' },
@@ -92,6 +99,7 @@ export class LcnFormComponent implements OnInit {
       emetteur: [lcn ? lcn.emetteur : '', Validators.required],
       beneficiaire: [{ value: this.beneficiaireFixe, disabled: true }, Validators.required],
       type: [{ value: this.lcnType, disabled: true }, Validators.required],
+      natureLcn: [lcn ? lcn.natureLcn : null, Validators.required],
     });
   }
 
