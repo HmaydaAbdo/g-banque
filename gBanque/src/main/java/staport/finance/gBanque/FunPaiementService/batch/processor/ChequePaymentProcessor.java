@@ -7,10 +7,11 @@ import staport.finance.gBanque.FunPaiementService.dtos.FunPaymentDto;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.virements.enums.Type;
-
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
-import java.util.Optional;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * ItemProcessor for 'Cheque' payments (type = 1).
@@ -31,36 +32,51 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) {
 
-        // Check if cheque already exists by numero
-        Optional<Cheque> existingCheque = chequeRepository.findByNumero(item.getNumero());
 
-        if (existingCheque.isPresent()) {
-            log.info("Cheque with numero {} already exists. Skipping.", item.getNumero());
-            return null; // Spring Batch will skip this item
+        boolean isStaport =
+                item.getBeneficiaire() != null &&
+                        item.getBeneficiaire().trim().equalsIgnoreCase("STAPORT");
+
+        if (!isStaport) {
+            Cheque cheque = createCheque(item, banque, Type.DECAISSEMENT, item.getNumero());
+            return cheque == null ? List.of() : List.of(cheque); // TOUJOURS une liste
         }
 
-        // If not found, create a new cheque
-        Cheque cheque = new Cheque();
-        cheque.setNumero(item.getNumero());
-        OffsetDateTime dateEmission=item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime();
-        cheque.setDateEmission(dateEmission);
+        // STAPORT → create two virements with unique ids
+        String numeroEncaissement = item.getNumero() + "-EN";
+        String numeroDecaissement = item.getNumero() + "-DE";
+
+        Cheque encaissement = createCheque(item, banque, Type.ENCAISSEMENT, numeroEncaissement);
+        Cheque decaissement = createCheque(item, banque, Type.DECAISSEMENT, numeroDecaissement);
+
+        return Stream.of(encaissement, decaissement)
+                .filter(Objects::nonNull)
+                .toList();
+
+
+    }
+
+    private Cheque createCheque(FunPaymentDto item, Banque banque, Type type, String numero) {
+
+        if (chequeRepository.findByNumero(numero).isPresent()) {
+            log.warn("Cheque {} already exists, skipping", numero);
+            return null;
+        }
+
+        Cheque cheque= new Cheque();
+        cheque.setNumero(numero);
+        cheque.setType(type);
+        cheque.setDateEmission(item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime());
+        cheque.setDateEcheance(item.getDateCheque() !=null ? item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime() : null);
         cheque.setBeneficiaire(item.getBeneficiaire());
         cheque.setMontant(item.getMontant());
         cheque.setBanque(banque);
 
-        cheque.setDateEcheance(
-                item.getDateCheque() != null ?
-                        item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime() :
-                        null
-        );
-
         YearMonth currentMonth = YearMonth.from(currentDateTime);
-        YearMonth emissionMonth = YearMonth.from(dateEmission);
+        YearMonth emissionMonth = YearMonth.from(item.getDateCreation());
 
         YearMonth twoMonthThreshold = currentMonth.minusMonths(1);
-
-
-        // Business rule: inactive if cheque emission month is before current month
+        // Activation logic
         if (emissionMonth.isBefore(twoMonthThreshold)) {
             cheque.setActive(false);
             log.info("Cheque {} marked as INACTIVE (emission month {} is before current month {}).",
@@ -71,8 +87,11 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
                     item.getNumero(), emissionMonth, currentMonth);
         }
 
-        cheque.setType(Type.DECAISSEMENT);
-        log.info("Successfully processed and transformed Cheque Payment {}. Returning Cheque entity.", item.getNumero());
+        if(type==Type.ENCAISSEMENT){
+            cheque.setEmetteur("STAPORT");
+        }
+
         return cheque;
     }
+
 }

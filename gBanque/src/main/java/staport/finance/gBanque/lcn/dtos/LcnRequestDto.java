@@ -7,6 +7,9 @@ import java.time.OffsetDateTime;
 
 public class LcnRequestDto {
 
+    @NotNull(message = "le numero est obligatoire")
+    private String numero;
+
     @NotNull(message = "la date d'émission est obligatoire ")
     private OffsetDateTime dateEmission;
 
@@ -77,10 +80,19 @@ public class LcnRequestDto {
         return type;
     }
 
+    public String getNumero() {
+        return numero;
+    }
+
+    public void setNumero(String numero) {
+        this.numero = numero;
+    }
+
     @Override
     public String toString() {
         return "LcnRequestDto{" +
-                "dateEmission=" + dateEmission +
+                "numero='" + numero + '\'' +
+                ", dateEmission=" + dateEmission +
                 ", dateEcheance=" + dateEcheance +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", banqueId=" + banqueId +

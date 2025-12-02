@@ -50,6 +50,7 @@ public class LcnMapper {
         lcn.setMontant(dto.getMontant());
         lcn.setBanque(banque);
         lcn.setActive(true);
+        lcn.setNumero(dto.getNumero());
         lcn.setType(dto.getType());
         lcn.setEmetteur(dto.getEmetteur());
 

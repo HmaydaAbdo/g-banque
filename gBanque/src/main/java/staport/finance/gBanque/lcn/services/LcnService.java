@@ -67,6 +67,10 @@ public class LcnService {
             existingLcn.setDateEmission(dto.getDateEmission());
         }
 
+        if(dto.getNumero()!=null){
+            existingLcn.setNumero(dto.getNumero());
+        }
+
         if(dto.getDateEcheance()!=null){
             existingLcn.setDateEcheance(dto.getDateEcheance());
         }
@@ -141,7 +145,8 @@ public class LcnService {
                 .and(LcnSpecification.hasMontant(searchDto.getMontant()))
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
-                .and(LcnSpecification.isActive(searchDto.getActive()));
+                .and(LcnSpecification.isActive(searchDto.getActive()))
+                .and(LcnSpecification.hasNumero(searchDto.getNumero()));
         // Execute the search with the combined specification and pagination
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
 
@@ -189,7 +194,8 @@ public class LcnService {
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(LcnSpecification.hasMontant(searchDto.getMontant()))
                 .and(LcnSpecification.hasDateEcheance(searchDto.getDateEcheance()))
-                .and(LcnSpecification.hasDateEmission(searchDto.getDateEmission()));
+                .and(LcnSpecification.hasDateEmission(searchDto.getDateEmission()))
+                .and(LcnSpecification.hasNumero(searchDto.getNumero()));
 
         // Execute the search with the specification and pagination
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
