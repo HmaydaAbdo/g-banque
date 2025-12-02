@@ -71,6 +71,10 @@ public class LcnService {
             existingLcn.setNumero(dto.getNumero());
         }
 
+        if(dto.getNatureLcn()!=null){
+            existingLcn.setNatureLcn(dto.getNatureLcn());
+        }
+
         if(dto.getDateEcheance()!=null){
             existingLcn.setDateEcheance(dto.getDateEcheance());
         }

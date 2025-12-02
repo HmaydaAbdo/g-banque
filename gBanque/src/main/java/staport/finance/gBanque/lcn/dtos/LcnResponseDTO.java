@@ -22,6 +22,7 @@ public class LcnResponseDTO {
     private Long banqueId;
     private Type type;
     private String emetteur;
+    private NatureLcn natureLcn;
 
 
     public LcnResponseDTO() {}
@@ -103,5 +104,12 @@ public class LcnResponseDTO {
 
     public void setEmetteur(String emetteur) {
         this.emetteur = emetteur;
+    }
+
+    public NatureLcn getNatureLcn() {
+        return natureLcn;
+    }
+    public void setNatureLcn(NatureLcn natureLcn) {
+        this.natureLcn = natureLcn;
     }
 }

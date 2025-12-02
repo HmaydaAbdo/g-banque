@@ -31,6 +31,9 @@ public class LcnRequestDto {
     @NotNull(message = "le type est encaissement est doit etre egal à encaissement")
     private final Type type=Type.ENCAISSEMENT;
 
+    @NotNull(message = "la nature du lcn est obligatoire")
+    private NatureLcn natureLcn;
+
 
     public OffsetDateTime getDateEmission() {
         return dateEmission;
@@ -88,6 +91,14 @@ public class LcnRequestDto {
         this.numero = numero;
     }
 
+    public NatureLcn getNatureLcn() {
+        return natureLcn;
+    }
+
+    public void setNatureLcn(NatureLcn natureLcn) {
+        this.natureLcn = natureLcn;
+    }
+
     @Override
     public String toString() {
         return "LcnRequestDto{" +
@@ -99,6 +110,7 @@ public class LcnRequestDto {
                 ", emetteur='" + emetteur + '\'' +
                 ", montant=" + montant +
                 ", type=" + type +
+                ", natureLcn=" + natureLcn +
                 '}';
     }
 }

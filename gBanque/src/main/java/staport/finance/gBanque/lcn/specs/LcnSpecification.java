@@ -2,6 +2,7 @@ package staport.finance.gBanque.lcn.specs;
 
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import staport.finance.gBanque.lcn.dtos.NatureLcn;
 import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.virements.enums.Type;
 
@@ -31,6 +32,16 @@ public final class LcnSpecification {
                 return criteriaBuilder.conjunction(); // A no-op predicate
             }
             return criteriaBuilder.equal(root.get("type"), type);
+
+        };
+    }
+
+    public static Specification<Lcn> hasNatureLcn(NatureLcn natureLcn) {
+        return (root, query, criteriaBuilder) -> {
+            if (natureLcn == null ) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("natureLcn"), natureLcn);
 
         };
     }
@@ -134,7 +145,6 @@ public final class LcnSpecification {
     public static Specification<Lcn> encoursEncaissement(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
 
             // 1. Le statut du LCN doit être actif.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
@@ -147,10 +157,7 @@ public final class LcnSpecification {
                 return criteriaBuilder.disjunction();
             }
 
-            // 3. La date d'échéance du LCN doit être égale ou antérieure à la fin du mois.
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), endOfMonth));
+
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

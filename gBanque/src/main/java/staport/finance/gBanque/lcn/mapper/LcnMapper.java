@@ -9,8 +9,6 @@ import staport.finance.gBanque.lcn.entities.Lcn;
 
 public class LcnMapper {
 
-
-
     public static LcnResponseDTO toDto(Lcn lcn) {
         if (lcn == null) {
             return null;
@@ -37,9 +35,9 @@ public class LcnMapper {
         dto.setLibelle( "Bénéficiaire : " + lcn.getBeneficiaire());
         dto.setType(lcn.getType());
         dto.setEmetteur(lcn.getEmetteur() !=null ? lcn.getEmetteur() : null);
+        dto.setNatureLcn(lcn.getNatureLcn());
         return dto;
     }
-
 
     public static Lcn toEntity(LcnRequestDto dto, Banque banque) {
 
@@ -53,7 +51,7 @@ public class LcnMapper {
         lcn.setNumero(dto.getNumero());
         lcn.setType(dto.getType());
         lcn.setEmetteur(dto.getEmetteur());
-
+        lcn.setNatureLcn(dto.getNatureLcn());
         return lcn;
     }
 
