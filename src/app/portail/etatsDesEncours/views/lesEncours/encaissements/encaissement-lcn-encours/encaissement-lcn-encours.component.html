@@ -12,6 +12,11 @@
 
     <form [formGroup]="searchForm" class=" flex flex-row justify-content-between ">
 
+       <span class="p-float-label">
+          <input id="numero" type="text" pInputText formControlName="numero" />
+          <label for="numero"> numéro</label>
+        </span>
+
       <span class="p-float-label">
           <p-calendar id="dateEmission" formControlName="dateEmission" [showOnFocus]="false" dateFormat="dd/mm/yy" ></p-calendar>
           <label for="dateEmission"> Date d'émission</label>
@@ -66,6 +71,10 @@
       <ng-template pTemplate="header">
         <tr>
 
+          <th pSortableColumn="numero">
+            numero <p-sortIcon field="numero"></p-sortIcon>
+          </th>
+
           <th pSortableColumn="dateEmission">
             Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
           </th>
@@ -86,6 +95,7 @@
       </ng-template>
       <ng-template pTemplate="body" let-lcn>
         <tr>
+          <td>{{ lcn.numero }}</td>
           <td>{{ lcn.dateEmission | date : 'dd/MM/yyyy' }}</td>
           <td>{{ lcn.dateEcheance | date : 'dd/MM/yyyy' }}</td>
           <td>{{ lcn.emetteur }}</td>

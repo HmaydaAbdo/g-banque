@@ -85,6 +85,9 @@ export class LcnService {
       params = params.set('dateEmission', searchDto.dateEmission.toISOString());
     }
 
+    if(searchDto.numero){
+      params = params.set('numero', searchDto.numero)
+    }
     if (searchDto.dateEcheance) {
       params = params.set('dateEcheance', searchDto.dateEcheance.toISOString());
     }
@@ -158,6 +161,10 @@ export class LcnService {
 
     if (searchDto.emetteur) {
       params = params.set('emetteur', searchDto.emetteur.toString());
+    }
+
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
     }
     if (searchDto.dateEcheance) {
       params = params.set('dateEcheance', searchDto.dateEcheance.toISOString());

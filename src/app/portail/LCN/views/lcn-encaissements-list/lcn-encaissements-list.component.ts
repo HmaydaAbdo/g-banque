@@ -113,6 +113,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
       dateEmission: [null],
       dateEcheance: [null],
       emetteur:[''],
+      numero: [''],
       nomBanque: [null],
       montant: [null],
       active: [null],

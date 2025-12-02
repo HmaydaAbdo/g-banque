@@ -25,6 +25,12 @@
   <form [formGroup]="lcnForm" (ngSubmit)="saveLcn()" *ngIf="!loading && lcnForm">
     <div class="p-fluid formgrid grid">
 
+
+      <div class="col-12 md:col-6 field">
+        <label for="numero">numero</label>
+        <input type="text" pInputText id="numero" formControlName="numero" />
+      </div>
+
       <div class="col-12 md:col-6 field">
         <label for="banqueId">Banque  <span class="p-text-danger">*</span></label>
         <p-dropdown

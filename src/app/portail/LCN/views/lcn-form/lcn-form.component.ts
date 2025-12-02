@@ -84,6 +84,7 @@ export class LcnFormComponent implements OnInit {
   private initForm(lcn?: LcnResponseDTO): void {
 
     this.lcnForm = this.fb.group({
+      numero: [lcn ? lcn.numero : null, Validators.required],
       banqueId: [lcn ? lcn.banqueId : null, Validators.required],
       dateEmission: [lcn ? new Date(lcn.dateEmission) : null, Validators.required],
       dateEcheance: [lcn ? new Date(lcn.dateEcheance) : null,Validators.required],
