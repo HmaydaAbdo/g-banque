@@ -135,13 +135,14 @@
   <ng-container *ngIf="selectedFactoring">
     <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
       <div class="grid p-fluid mt-3">
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <p-calendar
               id="dateEmission"
               formControlName="dateEmission"
               dateFormat="dd/mm/yy"
-              [showOnFocus]="false"
+              [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"
             ></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
@@ -149,6 +150,7 @@
             La date d'émission est obligatoire.
           </small>
         </div>
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <p-dropdown
@@ -166,13 +168,14 @@
             La TVA collectée est obligatoire.
           </small>
         </div>
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <p-calendar
               id="dateOperation"
               formControlName="dateOperation"
               dateFormat="dd/mm/yy"
-              [showOnFocus]="false"
+              [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"
             ></p-calendar>
             <label for="dateOperation">Date d'opération</label>
           </span>
@@ -180,13 +183,14 @@
             La date d'opération est obligatoire.
           </small>
         </div>
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <p-calendar
               id="dateValeur"
               formControlName="dateValeur"
               dateFormat="dd/mm/yy"
-              [showOnFocus]="false"
+              [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"
             ></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
@@ -194,6 +198,7 @@
             La date de valeur est obligatoire.
           </small>
         </div>
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
@@ -203,6 +208,7 @@
             Observation est obligatoire
           </small>
         </div>
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <textarea id="libelle" pInputTextarea formControlName="libelle" rows="3"></textarea>

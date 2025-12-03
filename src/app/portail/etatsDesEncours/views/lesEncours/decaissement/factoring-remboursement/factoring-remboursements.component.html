@@ -141,7 +141,7 @@
               id="dateEmission"
               formControlName="dateEmission"
               dateFormat="dd/mm/yy"
-              [showOnFocus]="false"
+              [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"
             ></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
@@ -172,7 +172,7 @@
               id="dateOperation"
               formControlName="dateOperation"
               dateFormat="dd/mm/yy"
-              [showOnFocus]="false"
+              [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"
             ></p-calendar>
             <label for="dateOperation">Date d'opération</label>
           </span>
@@ -185,8 +185,7 @@
             <p-calendar
               id="dateValeur"
               formControlName="dateValeur"
-
-              [showOnFocus]="false"
+              [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"
               dateFormat="dd/mm/yy"
             ></p-calendar>
             <label for="dateValeur">Date de valeur</label>

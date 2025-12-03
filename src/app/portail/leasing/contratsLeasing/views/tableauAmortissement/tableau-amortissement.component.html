@@ -121,7 +121,7 @@
             <td>{{ echeance.montantTTC?.toFixed(2) }} MAD</td>
             <td><p-tag [value]="echeance.statutPaiement" [severity]="getStatutSeverity(echeance.statutPaiement)"></p-tag></td>
 
-            @if (isAdmin()){
+
               <td class="text-center">
                 <p-inputSwitch
                   [ngModel]="echeance.statutPaiement === 'PAYE'"
@@ -130,7 +130,7 @@
                   tooltipPosition="top"
                 ></p-inputSwitch>
               </td>
-            }
+
 
           </tr>
         </ng-template>

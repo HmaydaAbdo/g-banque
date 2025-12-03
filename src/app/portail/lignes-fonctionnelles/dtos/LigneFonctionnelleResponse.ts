@@ -8,6 +8,8 @@ export interface LigneFonctionnelleResponse {
   natureLigneFonctionnelleLabel: string;
   natureLigneFonctionnelleDescription: string;
   plafond: number;
+  encours:number
+  solde:number
   taux: number;
   dateDepart: Date;
   dateFin: Date;

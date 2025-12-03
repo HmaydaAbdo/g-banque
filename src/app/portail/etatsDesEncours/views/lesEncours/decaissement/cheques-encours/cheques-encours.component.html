@@ -2,7 +2,6 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
-
     <div class="p-card shadow-2 px-4 py-3 flex flex-column gap-4 ">
 
       <div class="flex flex-row gap-4 justify-content-between ">
@@ -30,11 +29,7 @@
       </form>
 
     </div>
-
-
-
-
-  <div class="pb-8">
+    <div class="pb-8">
     <p-table
       #dt
       [value]="cheques"
@@ -121,9 +116,10 @@
   <ng-container *ngIf="selectedCheque">
     <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
       <div class="grid p-fluid mt-3">
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateEmission" formControlName="dateEmission" dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
+            <p-calendar id="dateEmission" formControlName="dateEmission" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateEmission')">
@@ -145,16 +141,17 @@
 
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateValeur" formControlName="dateValeur"  dateFormat="dd/mm/yy"  [showOnFocus]="false"></p-calendar>
+            <p-calendar id="dateValeur" formControlName="dateValeur"  dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateValeur')">
             La date de valeur est obligatoire
           </small>
         </div>
+
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateOperation" formControlName="dateOperation" dateFormat="dd/mm/yy" [showOnFocus]="false"></p-calendar>
+            <p-calendar id="dateOperation" formControlName="dateOperation" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"></p-calendar>
             <label for="dateOperation">Date d'opération</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateOperation')">
