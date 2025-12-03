@@ -27,6 +27,8 @@
         @Column(nullable = true)
         private BigDecimal plafond;
 
+        private BigDecimal encours=BigDecimal.ZERO;
+
         @Column(nullable = false)
         private BigDecimal taux;
 
@@ -91,6 +93,14 @@
         public BigDecimal getPlafond() { return plafond; }
         public void setPlafond(BigDecimal plafond) { this.plafond = plafond; }
 
+        public BigDecimal getEncours() {
+            return encours != null ? encours : BigDecimal.ZERO;
+        }
+
+        public void setEncours(BigDecimal encours) {
+            this.encours = encours;
+        }
+
         public BigDecimal getTaux() { return taux; }
         public void setTaux(BigDecimal taux) { this.taux = taux; }
 
@@ -149,32 +159,34 @@
             this.dateModification = OffsetDateTime.now();
         }
 
-        // --- equals() and hashCode() ---
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             LigneFonctionnelle that = (LigneFonctionnelle) o;
-            return Objects.equals(id, that.id);
+            return actif == that.actif && Objects.equals(id, that.id) && Objects.equals(banque, that.banque) && Objects.equals(natureLigneFonctionnelle, that.natureLigneFonctionnelle) && Objects.equals(plafond, that.plafond) && Objects.equals(encours, that.encours) && Objects.equals(taux, that.taux) && Objects.equals(dateDepart, that.dateDepart) && Objects.equals(dateFin, that.dateFin) && Objects.equals(dateCreation, that.dateCreation) && Objects.equals(dateModification, that.dateModification) && Objects.equals(ligneMere, that.ligneMere) && Objects.equals(sousLignes, that.sousLignes);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(id);
+            return Objects.hash(id, banque, natureLigneFonctionnelle, plafond, encours, taux, dateDepart, dateFin, dateCreation, dateModification, actif, ligneMere, sousLignes);
         }
 
         @Override
         public String toString() {
             return "LigneFonctionnelle{" +
                     "id=" + id +
-                    ", banque=" + (banque != null ? banque.getNom() : "null") +
-                    ", natureLigneFonctionnelle=" + (natureLigneFonctionnelle != null ? natureLigneFonctionnelle.getLabel() : "null") +
+                    ", banque=" + banque +
+                    ", natureLigneFonctionnelle=" + natureLigneFonctionnelle +
                     ", plafond=" + plafond +
+                    ", encours=" + encours +
                     ", taux=" + taux +
                     ", dateDepart=" + dateDepart +
                     ", dateFin=" + dateFin +
                     ", dateCreation=" + dateCreation +
                     ", dateModification=" + dateModification +
+                    ", actif=" + actif +
+                    ", ligneMere=" + ligneMere +
+                    ", sousLignes=" + sousLignes +
                     '}';
         }
     }

@@ -58,7 +58,7 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
         // 1. Extraire l'année et le mois des dates pour la comparaison
         YearMonth currentMonth = YearMonth.from(curentDateTime);
         YearMonth echeanceMonth = YearMonth.from(dateEcheance);
-        YearMonth twoMonthThreshold = currentMonth.minusMonths(1);
+        YearMonth twoMonthThreshold = currentMonth.minusMonths(2);
 
         // Règle métier : INACTIF si le mois d'échéance est antérieur au mois actuel.
         if (echeanceMonth.isBefore(twoMonthThreshold)) {

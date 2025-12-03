@@ -75,7 +75,7 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
         YearMonth currentMonth = YearMonth.from(currentDateTime);
         YearMonth emissionMonth = YearMonth.from(item.getDateCreation());
 
-        YearMonth twoMonthThreshold = currentMonth.minusMonths(1);
+        YearMonth twoMonthThreshold = currentMonth.minusMonths(2);
         // Activation logic
         if (emissionMonth.isBefore(twoMonthThreshold)) {
             cheque.setActive(false);

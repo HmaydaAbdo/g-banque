@@ -58,7 +58,7 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
         // Extraire l'année et le mois des dates pour la comparaison
         YearMonth currentMonth = YearMonth.from(curentDateTime);
         YearMonth emissionMonth = YearMonth.from(dateEmission);
-        YearMonth twoMonthThreshold = currentMonth.minusMonths(1);
+        YearMonth twoMonthThreshold = currentMonth.minusMonths(2);
 
 
         if (emissionMonth.isBefore(twoMonthThreshold)) {

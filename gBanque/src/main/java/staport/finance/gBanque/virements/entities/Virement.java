@@ -36,7 +36,7 @@ public class Virement {
     private Banque banqueEmettrice;
     private String emetteur;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = true)
     @JoinColumn(name = "banque_beneficiare_id",  nullable =true)
     private Banque banqueBeneficiare;
 
@@ -59,9 +59,15 @@ public class Virement {
 
     // Getters & Setters
 
+
     public Long getId() {
         return id;
     }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getNumero() { return numero; }
     public void setNumero(String numero) { this.numero = numero; }
     public OffsetDateTime getDateEmission() { return dateEmission; }

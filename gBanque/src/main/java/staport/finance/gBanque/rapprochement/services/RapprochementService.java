@@ -1,6 +1,8 @@
 package staport.finance.gBanque.rapprochement.services;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,6 +10,8 @@ import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
@@ -23,6 +27,7 @@ import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.interets.repository.InteretRepository;
+import staport.finance.gBanque.lcn.dtos.NatureLcn;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.rapprochement.dtos.agios.AgiosTransactionResponse;
@@ -83,9 +88,13 @@ import staport.finance.gBanque.virements.repositories.VirementRepository;
 @Service
 public class RapprochementService {
 
+
+    private static final Logger log = LoggerFactory.getLogger(RapprochementService.class);
+
     private final LeasingTransactionMapper leasingTransactionMapper;
     private final ContratLeasingRepository contratLeasingRepository;
     private final EcheanceLeasingRepository echeanceLeasingRepository;
+    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
 
 
     private final CreditMoyenTermeRepository creditMoyenTermeRepository;
@@ -136,8 +145,9 @@ public class RapprochementService {
 
 
 
-    public RapprochementService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper) {
+    public RapprochementService(LeasingTransactionMapper mapper, LigneFonctionnelleRepository ligneFonctionnelleRepository, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper) {
         this.leasingTransactionMapper = mapper;
+        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
@@ -194,8 +204,7 @@ public class RapprochementService {
 
         // Étape 4: Mettre à jour le solde de la banque.
         Banque banque = contratLeasing.getBanqueDePrelevement();
-
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(echeanceLeasing.getMontantTTC()));
         this.banqueRepository.save(banque);
 
 
@@ -235,7 +244,7 @@ public class RapprochementService {
 
         // Étape 4: Mettre à jour le solde de la banque.
         Banque banque = creditMoyenTerme.getBanque();
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(echeanceCMT.getMontant()));
         this.banqueRepository.save(banque);
 
 
@@ -252,44 +261,44 @@ public class RapprochementService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
-        // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
-        // If the Chèque does not exist, throw a ResourceNotFoundException.
-        Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Cheque with id " + requestDto.getIdCheque() + " not found"));
-
-        // Step 2: Check if the chèque is active.
-        // If the Chèque is already used/paid (active = false), throw an exception.
-        if (!cheque.isActive()) {
-            throw new Exception("The cheque is not active, it has already been paid");
+        @Transactional(isolation = Isolation.SERIALIZABLE)
+        public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
+            // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
+            // If the Chèque does not exist, throw a ResourceNotFoundException.
+            Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Cheque with id " + requestDto.getIdCheque() + " not found"));
+    
+            // Step 2: Check if the chèque is active.
+            // If the Chèque is already used/paid (active = false), throw an exception.
+            if (!cheque.isActive()) {
+                throw new Exception("The cheque is not active, it has already been paid");
+            }
+    
+            // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
+            Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque);
+    
+            // Step 4: Save the Transaction entity to the database.
+            Transaction savedTransaction = transactionRepository.save(transactionEntity);
+    
+            // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
+            // Then save the updated bank entity.
+            Banque banque = cheque.getBanque();
+            banque.setSoldeActuel(banque.getSoldeActuel().subtract(cheque.getMontant()));
+            this.banqueRepository.save(banque);
+    
+            // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
+            cheque.setActive(false);
+            cheque.setDateOperation(savedTransaction.getDateOperations());
+            cheque.setDateValeur(savedTransaction.getDateValeur());
+            cheque.setLibelle(savedTransaction.getLibelle());
+            cheque.setObservation(savedTransaction.getObservation());
+            chequeRepository.save(cheque);
+    
+            // Step 7: Convert the saved Transaction entity into a ChequeTransactionResponseDto
+            // using the mapper and return it as the response.
+            return chequeTransactionMapper.toResponseDto(savedTransaction);
         }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
-        Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque);
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
-
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
-        Banque banque = cheque.getBanque();
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
-        this.banqueRepository.save(banque);
-
-        // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
-        cheque.setActive(false);
-        cheque.setDateOperation(savedTransaction.getDateOperations());
-        cheque.setDateValeur(savedTransaction.getDateValeur());
-        cheque.setLibelle(savedTransaction.getLibelle());
-        cheque.setObservation(savedTransaction.getObservation());
-        chequeRepository.save(cheque);
-
-        // Step 7: Convert the saved Transaction entity into a ChequeTransactionResponseDto
-        // using the mapper and return it as the response.
-        return chequeTransactionMapper.toResponseDto(savedTransaction);
-    }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public ChequeTransactionResponseDto processChequeEncaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
@@ -314,7 +323,7 @@ public class RapprochementService {
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
         Banque banque = cheque.getBanque();
-        banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().add(cheque.getMontant()));
         this.banqueRepository.save(banque);
 
         // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
@@ -353,7 +362,7 @@ public class RapprochementService {
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
         Banque banque = lcn.getBanque();
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(lcn.getMontant()));
         this.banqueRepository.save(banque);
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
@@ -392,10 +401,21 @@ public class RapprochementService {
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
         Banque banque = lcn.getBanque();
-        banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().add(lcn.getMontant()));
         this.banqueRepository.save(banque);
 
-        // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
+        //step 6 : if it's of type escompte , this operation should  affect  the functional line solde
+
+        if(lcn.getNatureLcn()== NatureLcn.ESCOMPTE){
+            LigneFonctionnelle escompteActif=ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banque.getId(),2L).orElseThrow(()->new ResourceNotFoundException("escompte commerciale inactif ou introuvable  pour la banque "+banque.getId()));
+
+            escompteActif.setEncours(escompteActif.getEncours().add(lcn.getMontant()));
+
+            ligneFonctionnelleRepository.save(escompteActif);
+        }
+
+
+        // Step 7: Mark the lcn as inactive (paid) and save the updated lcn entity.
         lcn.setActive(false);
         lcn.setDateOperation(savedTransaction.getDateOperations());
         lcn.setDateValeur(savedTransaction.getDateValeur());
@@ -403,7 +423,7 @@ public class RapprochementService {
         lcn.setObservation(savedTransaction.getObservation());
         lcnRepository.save(lcn);
 
-        // Step 7: Convert the saved Transaction entity into a LcnTransactionResponse
+        // Step 8: Convert the saved Transaction entity into a LcnTransactionResponse
         // using the mapper and return it as the response.
         return lcnTransactionMapper.toResponseDto(savedTransaction);
     }
@@ -431,7 +451,7 @@ public class RapprochementService {
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
         Banque banque = virement.getBanqueEmettrice();
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(virement.getMontant()));
         this.banqueRepository.save(banque);
 
         // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
@@ -471,7 +491,7 @@ public class RapprochementService {
         // Then save the updated bank entity.
         Banque banque = virement.getBanqueBeneficiare();
 
-        banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().add(virement.getMontant()));
         this.banqueRepository.save(banque);
 
         // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
@@ -511,7 +531,7 @@ public class RapprochementService {
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
         Banque banque = miseADisposition.getBanque();
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(miseADisposition.getMontant()));
         this.banqueRepository.save(banque);
 
         // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
@@ -550,7 +570,7 @@ public class RapprochementService {
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
         Banque banque = miseADisposition.getBanque();
-        banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().add(miseADisposition.getMontant()));
         this.banqueRepository.save(banque);
 
         // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
@@ -591,9 +611,9 @@ public class RapprochementService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         if(prefinancement.getType()== Type.REMBOURSEMENT){
-            banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+            banque.setSoldeActuel(banque.getSoldeActuel().subtract(prefinancement.getMontant()));
         }else{
-            banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
+            banque.setSoldeActuel(banque.getSoldeActuel().add(prefinancement.getMontant()));
         }
 
         this.banqueRepository.save(banque);
@@ -635,9 +655,9 @@ public class RapprochementService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         if(droitConstate.getType()== Type.REMBOURSEMENT){
-            banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+            banque.setSoldeActuel(banque.getSoldeActuel().subtract(droitConstate.getMontant()));
         }else{
-            banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
+            banque.setSoldeActuel(banque.getSoldeActuel().add(droitConstate.getMontant()));
         }
         this.banqueRepository.save(banque);
 
@@ -679,9 +699,9 @@ public class RapprochementService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         if(factoring.getType()== Type.REMBOURSEMENT){
-            banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+            banque.setSoldeActuel(banque.getSoldeActuel().subtract(factoring.getMontant()));
         }else{
-            banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
+            banque.setSoldeActuel(banque.getSoldeActuel().add(factoring.getMontant()));
         }
         this.banqueRepository.save(banque);
 
@@ -723,7 +743,7 @@ public class RapprochementService {
 
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
-        banque.setSoldeActuel(banque.getSoldeActuel().add(savedTransaction.getCredit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().add(decompte.getMontant()));
 
         this.banqueRepository.save(banque);
 
@@ -763,7 +783,7 @@ public class RapprochementService {
 
         Banque banque = banqueRepository.findById(commission.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+commission.getBanque().getId()+" not found"));
 
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(commission.getMontant()));
 
         this.banqueRepository.save(banque);
 
@@ -803,7 +823,7 @@ public class RapprochementService {
 
         Banque banque = banqueRepository.findById(agios.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+agios.getBanque().getId()+" not found"));
 
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(agios.getMontant()));
 
         this.banqueRepository.save(banque);
 
@@ -844,7 +864,7 @@ public class RapprochementService {
 
         Banque banque = banqueRepository.findById(prelevement.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+prelevement.getBanque().getId()+" not found"));
 
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(prelevement.getMontant()));
 
         this.banqueRepository.save(banque);
 
@@ -884,7 +904,7 @@ public class RapprochementService {
 
         Banque banque = banqueRepository.findById(interet.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+interet.getBanque().getId()+" not found"));
 
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(interet.getMontant()));
 
         this.banqueRepository.save(banque);
 
@@ -925,7 +945,7 @@ public class RapprochementService {
 
         Banque banque = banqueRepository.findById(fraisBancaire.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+fraisBancaire.getBanque().getId()+" not found"));
 
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(savedTransaction.getDebit()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(fraisBancaire.getMontant()));
 
         this.banqueRepository.save(banque);
 

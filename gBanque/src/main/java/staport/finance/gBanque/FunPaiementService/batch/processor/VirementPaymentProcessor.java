@@ -73,7 +73,7 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
         // Activation logic
         YearMonth currentMonth = YearMonth.from(curentDateTime);
         YearMonth emissionMonth = YearMonth.from(v.getDateEmission());
-        YearMonth oneMonthAgo = currentMonth.minusMonths(1);
+        YearMonth oneMonthAgo = currentMonth.minusMonths(2);
 
         v.setActive(!emissionMonth.isBefore(oneMonthAgo));
 

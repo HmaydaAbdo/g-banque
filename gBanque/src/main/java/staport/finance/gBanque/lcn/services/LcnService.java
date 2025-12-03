@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
 import staport.finance.gBanque.cheques.dtos.ChequeRequestDto;
 import staport.finance.gBanque.cheques.dtos.ChequeResponseDto;
 import staport.finance.gBanque.cheques.entities.Cheque;
@@ -30,16 +32,25 @@ public class LcnService {
     private static final Logger log = LoggerFactory.getLogger(LcnService.class);
     private final LcnRepository lcnRepository;
     private final BanqueRepository banqueRepository;
+    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
 
-    public LcnService(LcnRepository lcnRepository, BanqueRepository banqueRepository) {
+    public LcnService(LcnRepository lcnRepository, BanqueRepository banqueRepository, LigneFonctionnelleRepository ligneFonctionnelleRepository) {
         this.lcnRepository = lcnRepository;
         this.banqueRepository = banqueRepository;
+        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
     }
 
     @Transactional
     public LcnResponseDTO createLcn(LcnRequestDto requestDto) {
+
+
         log.info("Creating new encaissement lcn: {}", requestDto);
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(() -> new ResourceNotFoundException("Bank with id " + requestDto.getBanqueId() + " not found."));
+
+        if(requestDto.getNatureLcn()== NatureLcn.ESCOMPTE){
+            ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banque.getId(),2L).orElseThrow(()->new ResourceNotFoundException("ligne fonctionnelle escompte commerciale inactif ou introuvable  pour la banque "+banque.getId()));
+        }
+
         Lcn lcn = LcnMapper.toEntity(requestDto,banque);
         log.debug("Saving lcn entity: {}", lcn);
         lcn = lcnRepository.save(lcn);

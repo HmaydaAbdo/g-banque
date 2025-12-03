@@ -104,6 +104,8 @@ public class LigneFonctionnelleMapper {
         }
 
         response.setPlafond(ligneFonctionnelle.getPlafond());
+        response.setEncours(ligneFonctionnelle.getEncours());
+        response.setSolde(ligneFonctionnelle.getPlafond().subtract(ligneFonctionnelle.getEncours()));
         response.setTaux(ligneFonctionnelle.getTaux());
         response.setDateDepart(ligneFonctionnelle.getDateDepart());
         response.setDateFin(ligneFonctionnelle.getDateFin());

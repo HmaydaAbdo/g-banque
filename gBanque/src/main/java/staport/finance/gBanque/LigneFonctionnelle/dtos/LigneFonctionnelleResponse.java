@@ -13,6 +13,8 @@ public class LigneFonctionnelleResponse {
     private String natureLigneFonctionnelleLabel;
     private String natureLigneFonctionnelleDescription;
     private BigDecimal plafond;
+    private BigDecimal encours;
+    private BigDecimal solde;
     private BigDecimal taux;
     private OffsetDateTime dateDepart;
     private OffsetDateTime dateFin;
@@ -20,7 +22,6 @@ public class LigneFonctionnelleResponse {
     private OffsetDateTime dateModification;
     private boolean actif;
     private boolean isExpired;
-
     private Long ligneMereId;
     private List<SousLigneResponseDto> sousLignes;
     private Boolean estSousLigne;
@@ -51,6 +52,18 @@ public class LigneFonctionnelleResponse {
     public void setNatureLigneFonctionnelleDescription(String natureLigneFonctionnelleDescription) {this.natureLigneFonctionnelleDescription = natureLigneFonctionnelleDescription;}
     public BigDecimal getPlafond() { return plafond; }
     public void setPlafond(BigDecimal plafond) { this.plafond = plafond; }
+    public BigDecimal getEncours() {
+        return encours;
+    }
+    public void setEncours(BigDecimal encours) {
+        this.encours = encours;
+    }
+    public BigDecimal getSolde() {
+        return solde;
+    }
+    public void setSolde(BigDecimal solde) {
+        this.solde = solde;
+    }
     public BigDecimal getTaux() { return taux; }
     public void setTaux(BigDecimal taux) { this.taux = taux; }
     public OffsetDateTime getDateCreation() { return dateCreation; }
