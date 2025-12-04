@@ -100,14 +100,9 @@ export class DecompteService {
     return this.http.get<PageResponse<DecompteResponseDto>>(this.apiUrl, { params });
   }
 
-  /**
-   * Changes the status of a Décompte record to 'PAID'.
-   *
-   * @param id The ID of the record to update.
-   * @returns An Observable of the updated record's response DTO.
-   */
-  markAsPaid(id: number): Observable<DecompteResponseDto> {
-    return this.http.patch<DecompteResponseDto>(`${this.apiUrl}/${id}/status/paid`, {});
+
+  toggleStatus(id: number): Observable<DecompteResponseDto> {
+    return this.http.patch<DecompteResponseDto>(`${this.apiUrl}/${id}/toggle`, {});
   }
 
   /**

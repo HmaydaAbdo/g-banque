@@ -13,12 +13,23 @@
 
     <div class="flex-shrink-0">
       <p class="text-center text-xl">
+        Solde de Départ :
+        <span class="font-bold" [ngClass]="{'text-green-700': bankInfo.soldeDepart >= 0, 'text-red-500': bankInfo.soldeDepart < 0}">
+      {{bankInfo.soldeDepart | number: '1.2-2'}}
+    </span> MAD
+      </p>
+    </div>
+
+    <div class="flex-shrink-0">
+      <p class="text-center text-xl">
         Solde actuel :
         <span class="font-bold" [ngClass]="{'text-green-700': bankInfo.soldeActuelle >= 0, 'text-red-500': bankInfo.soldeActuelle < 0}">
       {{bankInfo.soldeActuelle | number: '1.2-2'}}
     </span> MAD
       </p>
     </div>
+
+
 
 
     @if (bankInfo.plafondFC) {

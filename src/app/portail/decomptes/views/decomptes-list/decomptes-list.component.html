@@ -137,6 +137,7 @@
           <td>{{ decompte.dateValeur ? (decompte.dateValeur | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ decompte.status }}</td>
           <td>
+            <p-inputSwitch [ngModel]="decompte.status==Status.PAYE" class="p-2" (onChange)="toggleStatus(decompte)"></p-inputSwitch>
             <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
                     [routerLink]="['/portail/decomptes/edit', decompte.id]"></button>
             <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"

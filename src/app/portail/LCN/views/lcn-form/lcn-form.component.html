@@ -16,7 +16,7 @@
     </p-breadcrumb>
   </div>
 
-  <p class="text-center font-bold md:text-2xl">{{ isEditMode ? 'Modifier un Chèque' : 'Ajouter un Chèque' }}</p>
+  <p class="text-center font-bold md:text-2xl">{{ isEditMode ? 'Modifier  LCN' : 'Ajouter  LCN' }}</p>
 
   <div *ngIf="loading" class="flex justify-content-center my-5">
     <p-progressSpinner></p-progressSpinner>
@@ -27,7 +27,7 @@
 
 
       <div class="col-12 md:col-4 field">
-        <label for="numero">numero</label>
+        <label for="numero">Numero</label>
         <input type="text" pInputText id="numero" formControlName="numero" />
       </div>
 
@@ -49,8 +49,9 @@
           <span *ngIf="f['banqueId'].errors?.['required']">La banque  est obligatoire.</span>
         </small>
       </div>
+
       <div class="col-12 md:col-4 field">
-        <label for="natureLcn">Nature du LCN <span class="p-text-danger">*</span></label>
+        <label for="natureLcn">Nature  LCN <span class="p-text-danger">*</span></label>
         <p-dropdown
           id="natureLcn"
           formControlName="natureLcn"
@@ -100,7 +101,7 @@
       </div>
 
       <div class="col-12 md:col-4 field">
-        <label for="type">Type de Chèque</label>
+        <label for="type">Type  LCN</label>
         <input type="text" pInputText id="type" formControlName="type" />
       </div>
 

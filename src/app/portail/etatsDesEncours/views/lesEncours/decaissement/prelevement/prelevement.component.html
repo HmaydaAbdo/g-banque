@@ -150,6 +150,7 @@
             id="dateEmission"
             formControlName="dateEmission"
             dateFormat="dd/mm/yy"
+            [showOnFocus]="false" [disabled]="true"
             [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"
             [readonlyInput]="true"
           ></p-calendar>
@@ -185,6 +186,7 @@
         <span class="p-float-label">
           <p-calendar
             id="dateValeur"
+            [showOnFocus]="false"
             formControlName="dateValeur"
             dateFormat="dd/mm/yy"
             [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"
@@ -201,6 +203,7 @@
         <span class="p-float-label">
           <p-calendar
             id="dateOperation"
+            [showOnFocus]="false"
             formControlName="dateOperation"
             dateFormat="dd/mm/yy"
             [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"

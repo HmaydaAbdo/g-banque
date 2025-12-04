@@ -66,16 +66,26 @@
             id="dateEmission"
             formControlName="dateEmission"
             dateFormat="dd/mm/yy"
-            [showIcon]="true"
-            [showButtonBar]="true"
-            appendTo="body"
+            [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"
             [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }"
           ></p-calendar>
           <small class="ng-dirty ng-invalid" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">
             La date d'émission est requise.
           </small>
         </div>
-
+        <div class="field col-12 md:col-6">
+          <label for="libelle" class="block font-medium mb-2">Libellé</label>
+          <input
+            id="libelle"
+            pInputText
+            type="text"
+            formControlName="libelle"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched }"
+          >
+          <small class="ng-dirty ng-invalid" *ngIf="f['libelle'].invalid && f['libelle'].touched">
+            Libellé est obligatoire.
+          </small>
+        </div>
         <div class="col-12 mt-4 flex flex-row gap-2">
           <button
             pButton

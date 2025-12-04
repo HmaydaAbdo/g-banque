@@ -89,7 +89,9 @@ export class DecompteFormComponent implements OnInit {
     this.decompteForm = this.fb.group({
       marcheId: [null, Validators.required],
       dateEmission: [null, Validators.required],
+      libelle: ['', Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
+
     });
   }
 
@@ -217,6 +219,7 @@ export class DecompteFormComponent implements OnInit {
       marcheId: formValue.marcheId,
       dateEmission: formValue.dateEmission,
       montant: formValue.montant,
+      libelle: formValue.libelle,
     };
 
     if (this.isEditMode && this.decompteId) {

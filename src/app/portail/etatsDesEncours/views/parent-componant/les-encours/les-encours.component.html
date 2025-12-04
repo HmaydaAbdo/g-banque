@@ -29,13 +29,13 @@
               <i *ngIf="item.items" [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
             </div>
 
-            <ul class="list-none p-0 m-0 overflow-hidden" [ngClass]="{'hidden': !item.expanded}">
+            <ul class="list-none pb-6 m-0 overflow-hidden" [ngClass]="{'hidden': !item.expanded}">
               <ng-container *ngFor="let subItem of item.items">
                 <li *ngIf="subItem.routerLink && !subItem.items">
                   <a pRipple
                      [routerLink]="subItem.routerLink"
                      routerLinkActive="active-sidebar-link"
-                     class="flex align-items-center cursor-pointer p-3 pl-5 border-round-xl transition-duration-150 transition-colors p-ripple sidebar-link">
+                     class="flex align-items-center cursor-pointer px-1 py-3 border-round-xl transition-duration-150 transition-colors p-ripple sidebar-link">
                     <i *ngIf="subItem.icon" [class]="subItem.icon + ' mr-2'"></i>
                     <span class="font-medium">{{ subItem.label }}</span>
                   </a>

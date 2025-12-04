@@ -21,6 +21,7 @@ import {MarcheService} from "../../../Marches/service/marche-service.service";
 import {PageResponse} from "../../../global/types/PageResponse";
 import {DecompteResponseDto} from "../../dtos/DecompteResponseDto";
 import {DecompteService} from "../../service/DecompteService";
+import {InputSwitchModule} from "primeng/inputswitch";
 
 @Component({
   selector: 'app-decomptes-list',
@@ -41,6 +42,7 @@ import {DecompteService} from "../../service/DecompteService";
     NgIf,
     NgFor,
     NgForOf,
+    InputSwitchModule,
   ],
   templateUrl: './decomptes-list.component.html',
   styleUrl: './decomptes-list.component.scss',
@@ -182,9 +184,9 @@ export class DecomptesListComponent implements OnInit {
   }
 
   /** Mark a droit constaté as paid */
-  markAsPaid(decompte: DecompteResponseDto) {
-    if (decompte.status === Status.PAYE) return;
-    this.decompteService.markAsPaid(decompte.id).subscribe({
+  toggleStatus(decompte: DecompteResponseDto) {
+
+    this.decompteService.toggleStatus(decompte.id).subscribe({
       next: () => {
         this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.'});
         this.loadDecomptes(this.table.createLazyLoadMetadata());
@@ -216,5 +218,7 @@ export class DecomptesListComponent implements OnInit {
       }
     });
   }
+
+  protected readonly Status = Status;
 }
 

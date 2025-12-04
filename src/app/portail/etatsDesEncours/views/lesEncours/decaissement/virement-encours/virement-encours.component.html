@@ -125,7 +125,7 @@
       <div class="grid p-fluid mt-3">
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateEmission" formControlName="dateEmission" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"></p-calendar>
+            <p-calendar id="dateEmission" formControlName="dateEmission" [showOnFocus]="false" [disabled]="true" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateEmission')">
@@ -145,7 +145,7 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateValeur" formControlName="dateValeur" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body" dateFormat="dd/mm/yy" ></p-calendar>
+            <p-calendar id="dateValeur" formControlName="dateValeur" [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body" dateFormat="dd/mm/yy" ></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateValeur')">
@@ -154,7 +154,7 @@
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
-            <p-calendar id="dateOperation" formControlName="dateOperation" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"></p-calendar>
+            <p-calendar id="dateOperation" formControlName="dateOperation" [showOnFocus]="false" dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"></p-calendar>
             <label for="dateOperation">Date de l'opération</label>
           </span>
           <small class="p-error" *ngIf="isInvalid('dateOperation')">
