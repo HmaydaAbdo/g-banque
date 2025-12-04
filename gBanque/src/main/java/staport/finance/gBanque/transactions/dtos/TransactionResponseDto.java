@@ -22,6 +22,7 @@ public class TransactionResponseDto {
     private String banqueDePrelevementNom;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private boolean isConfirmed;
 
     // Constructors, Getters, and Setters
     public TransactionResponseDto() {
@@ -172,5 +173,13 @@ public class TransactionResponseDto {
 
     public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isConfirmed() {
+        return isConfirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        isConfirmed = confirmed;
     }
 }

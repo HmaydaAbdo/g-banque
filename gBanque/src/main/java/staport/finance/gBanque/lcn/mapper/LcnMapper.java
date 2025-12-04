@@ -5,6 +5,7 @@ import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.lcn.dtos.LcnRequestDto;
 import staport.finance.gBanque.lcn.dtos.LcnResponseDTO;
 import staport.finance.gBanque.lcn.entities.Lcn;
+import staport.finance.gBanque.virements.enums.Type;
 
 
 public class LcnMapper {
@@ -31,8 +32,8 @@ public class LcnMapper {
 
         dto.setDateOperation(lcn.getDateOperation()!=null ? lcn.getDateOperation() : null);
         dto.setDateValeur(lcn.getDateValeur() !=null ? lcn.getDateValeur() : null);
-        dto.setObservation("LCN N° " + lcn.getNumero());
-        dto.setLibelle( "Bénéficiaire : " + lcn.getBeneficiaire());
+        dto.setObservation( " LCN N° " + lcn.getNumero());
+        dto.setLibelle( lcn.getType()== Type.DECAISSEMENT ? lcn.getBeneficiaire() : lcn.getEmetteur());
         dto.setType(lcn.getType());
         dto.setEmetteur(lcn.getEmetteur() !=null ? lcn.getEmetteur() : null);
         dto.setNatureLcn(lcn.getNatureLcn());

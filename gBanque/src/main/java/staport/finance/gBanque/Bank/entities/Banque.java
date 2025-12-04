@@ -62,6 +62,9 @@ public class Banque {
     @Column(name = "solde_actuel", nullable = false)
     private BigDecimal soldeActuel = BigDecimal.ZERO;
 
+    @Column(name = "solde_depart", nullable = false)
+    private BigDecimal soldeDepart = BigDecimal.ZERO;
+
 
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
@@ -121,14 +124,7 @@ public class Banque {
     // --- Constructors ---
     public Banque() {}
 
-    public Banque(byte[] logoData, String nom, String numeroDeCompte, Devise devise, String address, String agence) {
-        this.logoData = logoData;
-        this.nom = nom;
-        this.numeroDeCompte = numeroDeCompte;
-        this.devise = devise;
-        this.address = address;
-        this.agence = agence;
-    }
+
 
     // --- Getters / Setters ---
     public Long getId() { return id; }
@@ -154,6 +150,14 @@ public class Banque {
 
     public BigDecimal getSoldeActuel() { return soldeActuel; }
     public void setSoldeActuel(BigDecimal soldeActuel) { this.soldeActuel = soldeActuel; }
+
+    public BigDecimal getSoldeDepart() {
+        return soldeDepart;
+    }
+
+    public void setSoldeDepart(BigDecimal soldeDepart) {
+        this.soldeDepart = soldeDepart;
+    }
 
     public OffsetDateTime getDateCreation() { return dateCreation; }
     public OffsetDateTime getDateModification() { return dateModification; }
@@ -337,6 +341,7 @@ public class Banque {
     public int hashCode() { return Objects.hash(numeroDeCompte); }
 
     // --- toString ---
+
     @Override
     public String toString() {
         return "Banque{" +
@@ -344,6 +349,10 @@ public class Banque {
                 ", nom='" + nom + '\'' +
                 ", numeroDeCompte='" + numeroDeCompte + '\'' +
                 ", devise=" + devise +
+                ", address='" + address + '\'' +
+                ", agence='" + agence + '\'' +
+                ", soldeActuel=" + soldeActuel +
+                ", soldeDepart=" + soldeDepart +
                 '}';
     }
 }

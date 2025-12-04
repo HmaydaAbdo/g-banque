@@ -91,13 +91,8 @@ public class DecompteController {
         return ResponseEntity.ok(page);
     }
 
-    /**
-     * Changes the status of a décompte record to "PAID".
-     *
-     * @param id The ID of the record.
-     * @return A ResponseEntity with the updated record and HTTP status 200.
-     */
-    @PatchMapping("/{id}/status/paid")
+
+    @PatchMapping("/{id}/toggle")
     public ResponseEntity<DecompteResponseDto> toggleStatus(@PathVariable Long id) {
         DecompteResponseDto responseDTO = decompteService.toglleStatus(id);
         return ResponseEntity.ok(responseDTO);

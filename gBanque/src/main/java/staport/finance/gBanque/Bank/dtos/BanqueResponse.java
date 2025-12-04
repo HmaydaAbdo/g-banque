@@ -16,6 +16,7 @@ public class BanqueResponse {
     private String address;
     private String agence;
     private BigDecimal soldeActuel;
+    private BigDecimal soldeDepart;
 
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
@@ -43,4 +44,10 @@ public class BanqueResponse {
     public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
     public OffsetDateTime getDateModification() { return dateModification; }
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
+    public BigDecimal getSoldeDepart() {
+        return soldeDepart;
+    }
+    public void setSoldeDepart(BigDecimal soldeDepart) {
+        this.soldeDepart = soldeDepart;
+    }
 }

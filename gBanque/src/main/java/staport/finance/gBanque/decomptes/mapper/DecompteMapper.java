@@ -14,15 +14,7 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 public class DecompteMapper {
 
 
-    /**
-     * Converts a DecompteRequestDto to a Decompte entity.
-     * This method maps the basic fields from the DTO to the entity and sets the
-     * related Marche and banque entities are passed as argument.
-     *
-     * @param requestDTO The DroitConstateRequestDto to map.
-     * @param marche The Marche entity fetched from the database.
-     * @return A new DroitConstate entity instance with relationships set.
-     */
+
     public Decompte toEntity(DecompteRequestDto requestDTO , Marche marche) {
         if (requestDTO == null) {
             return null;
@@ -34,22 +26,14 @@ public class DecompteMapper {
 
         entity.setDateEmission(requestDTO.getDateEmission());
         entity.setMontant(requestDTO.getMontant());
-
-        entity.setObservation("decompte , Marché N° : " + marche.getNumero()  );
+        entity.setLibelle(requestDTO.getLibelle());
+        entity.setObservation( marche.getNumero()  );
         entity.setStatus(Status.PREVU);
 
         return entity;
     }
 
 
-    /**
-     * Converts a Decompte entity to a DecompteResponseDto..
-     * This method manually maps the fields from the entity, including details
-     * from the related Marche and Banque entities.
-     *
-     * @param decompte The decompte entity to map.
-     * @return A new DecompteResponseDto instance.
-     */
     public DecompteResponseDto toDto(Decompte decompte) {
         if (decompte == null) {
             return null;
@@ -64,6 +48,7 @@ public class DecompteMapper {
         dto.setDateValeur(decompte.getDateValeur() != null ? decompte.getDateValeur() : null);
         dto.setStatus(decompte.getStatus());
 
+        dto.setLibelle(decompte.getLibelle() );
         // Check if the marche and its functional lines exist to prevent NullPointerException
         Marche marche = decompte.getMarche();
 
@@ -79,7 +64,7 @@ public class DecompteMapper {
             dto.setBanqueName(banque.getNom());
         }
 
-        dto.setLibelle("Marché N° : " + decompte.getMarche().getNumero() );
+
 
         return dto;
     }

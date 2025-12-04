@@ -76,7 +76,7 @@ public class TransactionService {
      */
     public AgreratedTransactionResponseDto getTransactionsByBanque(Long banqueId, TransactionSearchDto searchDto, Pageable pageable) {
         List<Specification<Transaction>> specs = new ArrayList<>();
-        specs.add(isCurrentMonth());
+        specs.add(isConfirmed(false));
         specs.add(hasBanqueId(banqueId));
 
         if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {

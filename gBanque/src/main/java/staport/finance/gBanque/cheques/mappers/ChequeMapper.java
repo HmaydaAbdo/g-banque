@@ -4,6 +4,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cheques.dtos.ChequeRequestDto;
 import staport.finance.gBanque.cheques.entities.Cheque;
 import staport.finance.gBanque.cheques.dtos.ChequeResponseDto;
+import staport.finance.gBanque.virements.enums.Type;
 
 public class ChequeMapper {
 
@@ -32,8 +33,8 @@ public class ChequeMapper {
 
         dto.setDateOperation(cheque.getDateOperation() != null ? cheque.getDateOperation() : null);
         dto.setDateValeur(cheque.getDateValeur() != null ? cheque.getDateValeur() : null);
-        dto.setObservation("Chèque N° " + cheque.getNumero());
-        dto.setLibelle("Bénéficiaire : " + cheque.getBeneficiaire() );
+        dto.setObservation( "CHQ N°" +cheque.getNumero());
+        dto.setLibelle( cheque.getType()== Type.DECAISSEMENT ? cheque.getBeneficiaire() : cheque.getEmetteur());
         return dto;
     }
 

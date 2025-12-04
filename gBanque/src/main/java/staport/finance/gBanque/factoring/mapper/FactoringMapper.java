@@ -31,12 +31,12 @@ public class FactoringMapper {
         dto.setId(factoring.getId());
         dto.setDateEmission(factoring.getDateEmission());
         dto.setMontant(factoring.getMontant());
-        dto.setObservation(factoring.getObservation());
+
         dto.setType(factoring.getType());
         dto.setDateOperation(factoring.getDateOperation()!=null ? factoring.getDateOperation() : null);
         dto.setDateValeur(factoring.getDateValeur() != null ? factoring.getDateValeur() : null);
         dto.setStatus(factoring.getStatus());
-
+        dto.setObservation("Marche N° " + factoring.getMarche().getNumero() );
         // Check if the marche and its functional lines exist to prevent NullPointerException
         Marche marche = factoring.getMarche();
         if (marche != null) {
@@ -46,9 +46,9 @@ public class FactoringMapper {
             dto.setBanqueId(marche.getBanque().getId());
             dto.setBanqueName(marche.getBanque().getNom());
             if( factoring.getType()== Type.DEBLOCAGE){
-                dto.setLibelle("Déblocage du factoring pour le  marché " +  marche.getNom() );
+                dto.setLibelle("Déblocage factoring marché " +  marche.getNom() );
             }else {
-                dto.setLibelle("Remboursement du factoring pour le marché " + marche.getNom()  );
+                dto.setLibelle("Remboursement factoring marché " + marche.getNom()  );
             }
         }
 
@@ -74,7 +74,7 @@ public class FactoringMapper {
         Factoring entity = new Factoring();
         entity.setDateEmission(requestDTO.getDateEmission());
         entity.setMontant(requestDTO.getMontant());
-        entity.setObservation("Marche: " + marche.getNumero());
+        entity.setObservation(marche.getNumero());
         entity.setType(requestDTO.getType());
         entity.setMarche(marche);
         entity.setStatus(Status.PREVU);

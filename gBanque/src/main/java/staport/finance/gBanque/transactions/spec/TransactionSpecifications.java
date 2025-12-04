@@ -48,6 +48,11 @@ public class TransactionSpecifications {
     }
 
 
+    public static Specification<Transaction> isConfirmed(boolean confirmed) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("isConfirmed"), confirmed);
+    }
+
+
     /**
      * Filters transactions by a list of sources.
      * @param sources The list of transaction source enum values.

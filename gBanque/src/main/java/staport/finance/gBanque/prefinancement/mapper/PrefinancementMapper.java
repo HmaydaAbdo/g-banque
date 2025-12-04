@@ -36,12 +36,12 @@ public class PrefinancementMapper {
         dto.setId(prefinancement.getId());
         dto.setDateEmission(prefinancement.getDateEmission());
         dto.setMontant(prefinancement.getMontant());
-        dto.setObservation(prefinancement.getObservation());
+
         dto.setType(prefinancement.getType());
         dto.setDateOperation(prefinancement.getDateOperation()!=null ? prefinancement.getDateOperation() : null);
         dto.setDateValeur(prefinancement.getDateValeur() != null ? prefinancement.getDateValeur() : null);
         dto.setStatus(prefinancement.getStatus());
-
+        dto.setObservation("Marche N° " + prefinancement.getMarche().getNumero() );
         // Check if the marche and its functional lines exist to prevent NullPointerException
         Marche marche = prefinancement.getMarche();
         if (marche != null) {
@@ -51,9 +51,9 @@ public class PrefinancementMapper {
             dto.setBanqueId(marche.getBanque().getId());
             dto.setBanqueName(marche.getBanque().getNom());
             if( prefinancement.getType()== Type.DEBLOCAGE){
-                dto.setLibelle("Déblocage du préfinancement du marché " +  marche.getNom() );
+                dto.setLibelle("Déblocage  préfinancement  marché " +  marche.getNom() );
             }else {
-                dto.setLibelle("Remboursement du préfinancement du marché " + marche.getNom()  );
+                dto.setLibelle("Remboursement  préfinancement  marché " + marche.getNom()  );
             }
         }
 
@@ -78,7 +78,7 @@ public class PrefinancementMapper {
         Prefinancement entity = new Prefinancement();
         entity.setDateEmission(requestDTO.getDateEmission());
         entity.setMontant(requestDTO.getMontant());
-        entity.setObservation("Marche: " + marche.getNumero());
+        entity.setObservation( marche.getNumero());
         entity.setType(requestDTO.getType());
         entity.setMarche(marche);
         entity.setStatus(Status.PREVU);

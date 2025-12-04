@@ -7,6 +7,7 @@ public class BankAcceuilResponse {
     private String logoBase64;
     private String name;
     private BigDecimal soldeActuelle;
+    private BigDecimal soldeDepart;
     private BigDecimal plafondFC;
 
     public Long getBankId() {
@@ -20,43 +21,35 @@ public class BankAcceuilResponse {
     public BankAcceuilResponse() {
     }
 
-    public BankAcceuilResponse(String logoBase64, String name, BigDecimal soldeActuelle, BigDecimal plafondFC) {
-        this.logoBase64 = logoBase64;
-        this.name = name;
-        this.soldeActuelle = soldeActuelle;
-        this.plafondFC = plafondFC;
-    }
-
     // Getters and Setters
     public String getLogoBase64() {
         return logoBase64;
     }
-
     public void setLogoBase64(String logoBase64) {
         this.logoBase64 = logoBase64;
     }
-
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
-
     public BigDecimal getSoldeActuelle() {
         return soldeActuelle;
     }
-
     public void setSoldeActuelle(BigDecimal soldeActuelle) {
         this.soldeActuelle = soldeActuelle;
     }
-
     public BigDecimal getPlafondFC() {
         return plafondFC;
     }
-
     public void setPlafondFC(BigDecimal plafondFC) {
         this.plafondFC = plafondFC;
+    }
+    public BigDecimal getSoldeDepart() {
+        return soldeDepart;
+    }
+    public void setSoldeDepart(BigDecimal soldeDepart) {
+        this.soldeDepart = soldeDepart;
     }
 }

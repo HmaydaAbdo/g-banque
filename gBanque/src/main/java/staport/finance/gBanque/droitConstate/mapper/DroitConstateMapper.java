@@ -29,7 +29,7 @@ public class DroitConstateMapper {
         DroitConstate entity = new DroitConstate();
         entity.setDateEmission(requestDTO.getDateEmission());
         entity.setMontant(requestDTO.getMontant());
-        entity.setObservation("Marche: " + marche.getNumero());
+        entity.setObservation( marche.getNumero());
         entity.setType(requestDTO.getType());
         entity.setMarche(marche);
         entity.setStatus(Status.PREVU);
@@ -55,12 +55,12 @@ public class DroitConstateMapper {
         dto.setId(droitConstate.getId());
         dto.setDateEmission(droitConstate.getDateEmission());
         dto.setMontant(droitConstate.getMontant());
-        dto.setObservation(droitConstate.getObservation());
+
         dto.setType(droitConstate.getType());
         dto.setDateOperation(droitConstate.getDateOperation()!=null ? droitConstate.getDateOperation() : null);
         dto.setDateValeur(droitConstate.getDateValeur() != null ? droitConstate.getDateValeur() : null);
         dto.setStatus(droitConstate.getStatus());
-
+        dto.setObservation("Marche N° " + droitConstate.getMarche().getNumero());
         // Check if the marche and its functional lines exist to prevent NullPointerException
         Marche marche = droitConstate.getMarche();
 
@@ -73,9 +73,9 @@ public class DroitConstateMapper {
             dto.setBanqueName(marche.getBanque().getNom());
         }
         if( droitConstate.getType()== Type.DEBLOCAGE){
-            dto.setLibelle("Déblocage du droit constaté du marché " + (marche != null ? marche.getNom() : null));
+            dto.setLibelle("Déblocage  droit constaté  marché " + (marche != null ? marche.getNom() : null));
         }else {
-            dto.setLibelle("Remboursement du droit constaté du marché " + (marche != null ? marche.getNom() : null) + "");
+            dto.setLibelle("Remboursement  droit constaté  marché " + (marche != null ? marche.getNom() : null) + "");
         }
 
         return dto;

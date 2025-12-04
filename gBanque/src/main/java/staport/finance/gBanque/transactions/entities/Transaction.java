@@ -53,6 +53,8 @@ public class Transaction {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
+    private boolean isConfirmed=false;
+
     // Getters and setters
 
     public Long getId() {
@@ -174,5 +176,13 @@ public class Transaction {
 
     public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isConfirmed() {
+        return isConfirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        isConfirmed = confirmed;
     }
 }

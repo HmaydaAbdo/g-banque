@@ -7,6 +7,7 @@ import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundExcept
 import staport.finance.gBanque.virements.dtos.VirementRequestDto;
 import staport.finance.gBanque.virements.dtos.VirementResponseDto;
 import staport.finance.gBanque.virements.entities.Virement;
+import staport.finance.gBanque.virements.enums.Type;
 
 @Component
 public class VirementMapper {
@@ -41,8 +42,8 @@ public class VirementMapper {
         response.setDateOperation(virement.getDateOperation()!=null ? virement.getDateOperation() : null);
         response.setDateValeur(virement.getDateValeur()!=null ? virement.getDateValeur() : null);
         response.setType(virement.getType());
-        response.setObservation("Virement N° " + virement.getNumero());
-        response.setLibelle("Bénéficiaire " + virement.getBeneficiaire() );
+        response.setObservation(" VIREMENT N° "+virement.getNumero());
+        response.setLibelle( virement.getType()== Type.DECAISSEMENT ? virement.getBeneficiaire() : virement.getEmetteur()  );
         response.setEmetteur(virement.getEmetteur()!=null ? virement.getEmetteur() : null);
         response.setBanqueBeneficiaireId(virement.getBanqueBeneficiare()!=null ? virement.getBanqueBeneficiare().getId() : null);
         response.setBanqueEmettriceId(virement.getBanqueEmettrice()!=null ? virement.getBanqueEmettrice().getId() : null);
