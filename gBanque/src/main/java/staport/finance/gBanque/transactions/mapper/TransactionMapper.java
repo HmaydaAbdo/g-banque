@@ -22,10 +22,10 @@ public class TransactionMapper {
             dto.setDateEmission(transaction.getDateEmission());
             dto.setDateValeur(transaction.getDateValeur());
             dto.setDateOperations(transaction.getDateOperations());
-            dto.setObservation(transaction.getObservation());
+            dto.setObservation( toUpper(transaction.getObservation()) );
             dto.setTvaDeductible( transaction.getTvaDeductible());
             dto.setTvaCollectee(transaction.getTvaCollectee());
-            dto.setLibelle(transaction.getLibelle());
+            dto.setLibelle( toUpper(transaction.getLibelle()) );
             dto.setTransactionSource(transaction.getTransactionSource());
             dto.setDebit(transaction.getDebit());
             dto.setCredit(transaction.getCredit());
@@ -36,9 +36,13 @@ public class TransactionMapper {
             // Gérer la relation BanqueDePrelevement
             if (transaction.getBanqueDePrelevement() != null) {
                 dto.setBanqueDePrelevementId(transaction.getBanqueDePrelevement().getId());
-                dto.setBanqueDePrelevementNom(transaction.getBanqueDePrelevement().getNom());
+                dto.setBanqueDePrelevementNom(toUpper(transaction.getBanqueDePrelevement().getNom()));
             }
 
             return dto;
+        }
+
+        private static String toUpper(String value) {
+            return value != null ? value.toUpperCase() : null;
         }
 }
