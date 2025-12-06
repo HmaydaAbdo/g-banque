@@ -19,7 +19,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CalendarModule } from 'primeng/calendar';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
-import { TransactionSource } from '../../../etatsDesEncours/rapprochement/dtos/transactions/TransactionSource';
+import { TransactionSource } from '../../../transactions/dtos/TransactionSource';
 import { Status } from '../../../prefinancements/enums/Status';
 
 @Component({

@@ -10,13 +10,13 @@ export interface TransactionResponseDto {
   dateEmission: Date;
   dateValeur: Date;
   dateOperations: Date;
-  observation: string | null;
-  tvaDeductible: Decimal | null;
-  tvaCollectee: Decimal | null;
+  observation: string;
+  tvaDeductible: number ;
+  tvaCollectee: number;
   libelle: string;
   transactionSource: TransactionSource;
-  debit: Decimal;
-  credit: Decimal;
+  debit: number;
+  credit: number;
   traces: string;
   banqueDePrelevementId: number;
   banqueDePrelevementNom: string;

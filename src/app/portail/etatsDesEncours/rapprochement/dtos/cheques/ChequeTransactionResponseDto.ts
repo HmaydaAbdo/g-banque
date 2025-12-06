@@ -1,6 +1,6 @@
 
 import { Decimal } from 'decimal.js';
-import {TransactionSource} from "../transactions/TransactionSource";
+import {TransactionSource} from "../../../../transactions/dtos/TransactionSource";
 
 export interface ChequeTransactionResponseDto {
   id: number;

@@ -7,7 +7,7 @@ import {MiseADispositionService} from "../../../../../Mise-à-disposition/servic
 import {ActivatedRoute, RouterLink} from "@angular/router";
 import {ConfirmationService, MessageService, PrimeTemplate} from "primeng/api";
 import {DatePipe, DecimalPipe, NgIf} from "@angular/common";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {
   DonneesComplementairesRapprochementDTO
@@ -15,7 +15,7 @@ import {
 import {
   MiseAdispositionTransactionRequestDto
 } from "../../../../rapprochement/dtos/mise_a_disposition/MiseAdispositionTransactionRequestDto";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {EncoursMiseAdisposition} from "../../../../../Mise-à-disposition/dtos/EncoursMiseAdisposition";
 import {Button} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
@@ -89,7 +89,7 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
     private route: ActivatedRoute,
     private messageService: MessageService,
     private datePipe: DatePipe,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
     private decimalPipe: DecimalPipe
@@ -240,11 +240,11 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
             this.displayModal = false;
           },
           error: (error) => {
-            console.error('Erreur lors du rapprochement de la mise à disposition:', error);
+            console.error('Erreur lors du validation de la mise à disposition:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+              detail: error.error.message || 'Une erreur est survenue lors du validation.'
             });
             this.isSubmitting = false;
           }

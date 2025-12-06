@@ -5,44 +5,29 @@
     Chargement...
   </div>
 
-  <div *ngIf="!loading && bankInfo" class="w-full flex flex-row justify-content-between font-bold  shadow-2 px-4">
+  <div *ngIf="!loading && bankInfo" class="w-full flex flex-row justify-content-between px-4  ">
 
-    <div class="flex-shrink-0">
-      <p class="  text-center text-xl" > La Banque  : <span class="text-blue-700">{{bankInfo.name}} </span></p>
-    </div>
+    <p>
+      <strong>Banque : </strong><span >{{bankInfo.name}} </span>
+    </p>
 
-    <div class="flex-shrink-0">
-      <p class="text-center text-xl">
-        Solde de Départ :
-        <span class="font-bold" [ngClass]="{'text-green-700': bankInfo.soldeDepart >= 0, 'text-red-500': bankInfo.soldeDepart < 0}">
-      {{bankInfo.soldeDepart | number: '1.2-2'}}
-    </span> MAD
-      </p>
-    </div>
+    <p>
+      <strong>Solde Départ : </strong> <span >{{bankInfo.soldeDepart | number: '1.2-2'}}</span>
+    </p>
 
-    <div class="flex-shrink-0">
-      <p class="text-center text-xl">
-        Solde actuel :
-        <span class="font-bold" [ngClass]="{'text-green-700': bankInfo.soldeActuelle >= 0, 'text-red-500': bankInfo.soldeActuelle < 0}">
-      {{bankInfo.soldeActuelle | number: '1.2-2'}}
-    </span> MAD
-      </p>
-    </div>
-
-
+    <p>
+      <strong>Solde actuel : </strong><span >{{bankInfo.soldeActuelle | number: '1.2-2'}}</span>
+    </p>
 
 
     @if (bankInfo.plafondFC) {
-      <div  class="flex-shrink-0">
-        <p class="text-center text-xl" > Facilité de caisse : <span class="font-bold text-green-700">
-          {{bankInfo.plafondFC | number: '1.2-2'}} </span> MAD
+        <p >
+          <strong> Facilité de caisse :</strong><span>{{bankInfo.plafondFC | number: '1.2-2'}} </span>
         </p>
-      </div>
     } @else {
-      <div  class="flex-shrink-0">
-        <p class="text-center " > Cette banque ne dispose pas de facilité de caisse </p>
-      </div>
-    }
+      <p >
+        <strong> Facilité de caisse :</strong> Aucune
+      </p>    }
 
 
 

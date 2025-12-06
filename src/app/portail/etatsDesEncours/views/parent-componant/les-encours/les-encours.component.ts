@@ -1,12 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterOutlet, NavigationEnd } from "@angular/router";
 import { PanelMenuModule } from "primeng/panelmenu";
-import { MenuItem } from 'primeng/api';
-import { CommonModule } from '@angular/common';
+import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
+import {CommonModule, DatePipe} from '@angular/common';
 import { BankDetailsComponent } from "../../shared-componanat/bank-details/bank-details.component";
 import { Ripple } from "primeng/ripple";
 import { BreadcrumbModule } from "primeng/breadcrumb";
 import { filter } from 'rxjs/operators';
+import {Button} from "primeng/button";
+import {RapprochementRequest} from "../../../../rapprochement/dtos/RapprochementRequest";
+import {FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
+import {RapprochementService} from "../../../../rapprochement/service/rapprochement-service.service";
+import {CalendarModule} from "primeng/calendar";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {DialogModule} from "primeng/dialog";
+import {ToastModule} from "primeng/toast";
 
 @Component({
   selector: 'app-les-encours',
@@ -17,8 +25,16 @@ import { filter } from 'rxjs/operators';
     CommonModule,
     BankDetailsComponent,
     Ripple,
-    BreadcrumbModule
+    BreadcrumbModule,
+    Button,
+    CalendarModule,
+    ConfirmDialogModule,
+    DialogModule,
+    FormsModule,
+    ToastModule,
+    ReactiveFormsModule
   ],
+  providers: [ConfirmationService,MessageService,DatePipe],
   templateUrl: './les-encours.component.html',
   styleUrls: ['./les-encours.component.scss']
 })
@@ -26,14 +42,23 @@ export class LesEncoursComponent implements OnInit {
 
   items: MenuItem[] = [];
   breadcrumbItems: MenuItem[] = [];
-  banqueId: string | null = null;
+  banqueId!: number ;
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+
+  dateClotureControl!: FormControl;
+  displayClotureDialog: boolean = false;
+  clotureLoading: boolean = false;
+  clotureForm!: FormGroup;
+
+  constructor(
+    private route: ActivatedRoute, private rapprochementService: RapprochementService,
+    private datePipe:DatePipe,
+    private messageService:MessageService,private fb:FormBuilder,private confirmationService:ConfirmationService, private router: Router) {}
 
   /** Mapping entre les routes et les labels/icônes pour le fil d’Ariane **/
   private breadcrumbMap: { [key: string]: { label: string, icon: string } } = {
     // Par défaut
-    'rapprochement': { label: 'Rapprochement des encours', icon: 'pi pi-sync' },
+    'rapprochement': { label: 'Rapprochement Encours', icon: 'pi pi-sync' },
 
     //recap
     'recap-decaissement': { label: 'Récap Décaissements', icon: 'pi pi-briefcase' },
@@ -77,7 +102,7 @@ export class LesEncoursComponent implements OnInit {
 
     // Récupération du banqueId et mise à jour du menu + breadcrumb
     this.route.paramMap.subscribe(params => {
-      this.banqueId = params.get('banqueId');
+      this.banqueId = params.get('banqueId') as unknown as number;
       this.updateMenuItems();
       this.updateBreadcrumb();
     });
@@ -86,8 +111,9 @@ export class LesEncoursComponent implements OnInit {
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => this.updateBreadcrumb());
-  }
 
+    this.initClotureForm();
+  }
   /** Met à jour le fil d’Ariane dynamiquement selon la route enfant **/
   updateBreadcrumb() {
     const child = this.route.firstChild?.snapshot;
@@ -112,16 +138,25 @@ export class LesEncoursComponent implements OnInit {
         icon: 'pi pi-sync',
         routerLink: ['/portail/etats-des-encours', this.banqueId, 'rapprochement']
       },
+
       {
-        label: 'Récap des décaissements',
+        label: 'Récapitulatifs ',
         icon: 'pi pi-briefcase',
-        routerLink: ['/portail/etats-des-encours', this.banqueId, 'recap-decaissement']
+        items:[
+          {
+            label: 'Décaissements',
+            icon: 'pi pi-minus-circle',
+            routerLink: ['/portail/etats-des-encours', this.banqueId, 'recap-decaissement']
+          },
+          {
+            label: 'Encaissements',
+            icon: 'pi pi-plus-circle',
+            routerLink: ['/portail/etats-des-encours', this.banqueId, 'recap-encaissement']
+          },
+        ]
       },
-      {
-        label: 'Récap des encaissements',
-        icon: 'pi pi-briefcase',
-        routerLink: ['/portail/etats-des-encours', this.banqueId, 'recap-encaissement']
-      },
+
+
       {
         label: 'Décaissements',
         icon: 'pi pi-arrow-circle-left',
@@ -164,4 +199,91 @@ export class LesEncoursComponent implements OnInit {
       item.expanded = !item.expanded;
     }
   }
+
+
+  showClotureDialog(): void {
+    this.confirmationService.confirm({
+      message: "Attention : La clôture du rapprochement est une **action irréversible**. Elle doit être effectuée uniquement lorsque toutes les opérations du relevé bancaire ont été rapprochées. Confirmez-vous vouloir procéder à la clôture ?",
+      header: 'Avertissement',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui, Clôturer',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        // Si l'utilisateur confirme (clique sur "Oui, Clôturer")
+        this.clotureForm.reset({ dateCloture: new Date() });
+        this.clotureForm.markAsUntouched();
+        this.displayClotureDialog = true;
+      },
+      reject: () => {
+        // Si l'utilisateur annule (clique sur "Annuler")
+        this.messageService.add({ severity: 'info', summary: 'Annulé', detail: 'Opération de clôture annulée.' });
+      }
+    });
+  }
+
+  initClotureForm(): void {
+    this.clotureForm = this.fb.group({
+      dateCloture:[null, [Validators.required]]
+    });
+    this.dateClotureControl = this.clotureForm.get('dateCloture') as FormControl;
+
+  }
+  confirmCloture(): void {
+
+    if (this.clotureForm.invalid || !this.banqueId) {
+      this.clotureForm.markAllAsTouched();
+      return;
+    }
+
+    this.clotureLoading = true;
+
+    // Récupération de la date du formulaire
+    const selectedDate: Date | null | undefined = this.clotureForm.value.dateCloture;
+
+    if (!selectedDate) {
+      this.clotureLoading = false;
+      return;
+    }
+
+    // Conversion en chaîne 'YYYY-MM' (supposé par RapprochementRequest)
+    const dateRapprochementString = this.datePipe.transform(selectedDate, 'yyyy-MM');
+
+    if (!dateRapprochementString) {
+      this.messageService.add({ severity: 'error', summary: 'Erreur Date', detail: 'Format de date invalide.' });
+      this.clotureLoading = false;
+      return;
+    }
+
+
+    const requestDto: RapprochementRequest = {
+      banqueId: this.banqueId,
+      dateRapprochement: dateRapprochementString // Utilisation de la chaîne formatée
+    };
+
+    // 2. Appel au service
+    this.rapprochementService.cloturerRapprochement(requestDto)
+      .subscribe({
+        next: (response) => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: `Rapprochement clôturé pour le mois : ${response.dateRapprochement}`
+          });
+          this.displayClotureDialog = false;
+          this.clotureLoading = false;
+        },
+        error: (error) => {
+          console.error('Erreur lors de la clôture:', error);
+          const errorMessage = error.error?.message || "Une erreur est survenue lors de la clôture du rapprochement.";
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur de Clôture',
+            detail: errorMessage
+          });
+          this.clotureLoading = false;
+        }
+      });
+  }
+
+
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common'; // Ajout de CurrencyPipe
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -9,26 +9,31 @@ import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import {MenuItem, MessageService} from 'primeng/api';
+// IMPORTANT: ConfirmationService importé
+import {MenuItem, MessageService, ConfirmationService} from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { TagModule } from 'primeng/tag';
+// IMPORTANT: ConfirmDialogModule et TooltipModule
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
+
 
 // Import your DTOs and services
-import { TransactionResponseDto } from "../etatsDesEncours/rapprochement/dtos/transactions/TransactionResponseDto";
-import { BanqueResponse } from "../comptes-bancaire/dtos/BanqueResponse";
-import { TransactionService } from "../etatsDesEncours/rapprochement/services/transactions/TransactionService";
-import { BanqueService } from "../comptes-bancaire/services/BanqueService";
-import { TransactionSource } from "../etatsDesEncours/rapprochement/dtos/transactions/TransactionSource";
-import { TransactionSearchDto } from "../etatsDesEncours/rapprochement/dtos/transactions/TransactionSearchDto";
-import { PageResponse } from "../global/types/PageResponse";
+import { TransactionResponseDto } from "../../dtos/TransactionResponseDto";
+import { BanqueResponse } from "../../../comptes-bancaire/dtos/BanqueResponse";
+import { TransactionService } from "../../service/TransactionService";
+import { BanqueService } from "../../../comptes-bancaire/services/BanqueService";
+import { TransactionSource } from "../../dtos/TransactionSource";
+import { TransactionSearchDto } from "../../dtos/TransactionSearchDto";
+import { PageResponse } from "../../../global/types/PageResponse";
 import {BreadcrumbModule} from "primeng/breadcrumb";
-import {RouterLinkActive} from "@angular/router";
+import {RouterLinkActive, Router} from "@angular/router"; // Ajout de Router
 
 
 @Component({
-  selector: 'app-transaction-history',
+  selector: 'app-service',
   standalone: true,
   imports: [
     CommonModule,
@@ -42,16 +47,19 @@ import {RouterLinkActive} from "@angular/router";
     FormsModule,
     ReactiveFormsModule,
     DatePipe,
+    CurrencyPipe, // Ajout du pipe de devise
     DropdownModule,
     InputGroupModule,
     InputGroupAddonModule,
     TagModule,
     BreadcrumbModule,
-    RouterLinkActive
+    RouterLinkActive,
+    ConfirmDialogModule, // IMPORTANT
+    TooltipModule // Ajouté pour le tooltip sur les icônes
   ],
   templateUrl: './transaction-history.component.html',
   styleUrl: './transaction-history.component.scss',
-  providers: [MessageService]
+  providers: [MessageService, ConfirmationService] // IMPORTANT
 })
 export class TransactionHistoryComponent implements OnInit, OnDestroy {
 
@@ -60,6 +68,7 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
   transactions: TransactionResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  lastLazyLoadEvent: TableLazyLoadEvent | undefined; // Pour recharger les données après suppression
 
   searchForm!: FormGroup;
   transactionSources: string[] = [];
@@ -72,7 +81,9 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
     private transactionService: TransactionService,
     private banqueService: BanqueService,
     private fb: FormBuilder,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private confirmationService: ConfirmationService, // Injecté
+    private router: Router // Injecté
   ) { }
 
   ngOnInit(): void {
@@ -141,6 +152,7 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
    */
   loadTransactions(event: TableLazyLoadEvent): void {
     this.loading = true;
+    this.lastLazyLoadEvent = event; // Sauvegarde l'événement pour un rechargement futur
 
     // Get the current search criteria from the reactive form
     const searchDto: TransactionSearchDto = this.searchForm.value;
@@ -194,6 +206,66 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
       transactionSource: null
     });
     // This will trigger the form's valueChanges subscription, which in turn calls onSearch().
-    // This keeps the logic clean and centralized.
+  }
+
+
+  /**
+   * Ouvre la boîte de dialogue de confirmation avant la suppression.
+   */
+  confirmDeleteTransaction(id: number): void {
+    this.confirmationService.confirm({
+      message: 'Êtes-vous sûr de vouloir supprimer cette transaction? Cette action est irréversible.',
+      header: 'Confirmation de suppression',
+      icon: 'pi pi-info-circle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      acceptButtonStyleClass: 'p-button-danger p-button-text',
+      rejectButtonStyleClass: 'p-button-text p-button-text',
+      acceptIcon: 'none',
+      rejectIcon: 'none',
+      accept: () => {
+        this.deleteTransaction(id);
+      },
+      reject: () => {
+        this.messageService.add({ severity: 'info', summary: 'Annulé', detail: 'La suppression a été annulée.' });
+      }
+    });
+  }
+
+  /**
+   * Exécute la suppression de la transaction via le service.
+   */
+  deleteTransaction(id: number): void {
+    this.loading = true;
+    this.subscriptions.push(
+      this.transactionService.deleteTransaction(id).subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: `Transaction ID ${id} supprimée avec succès.`,
+            life: 3000
+          });
+          // Recharger les transactions après la suppression
+          if (this.lastLazyLoadEvent) {
+            this.loadTransactions(this.lastLazyLoadEvent);
+          } else {
+            // Si l'événement n'est pas disponible, forcer un rechargement par défaut
+            this.dt.first = 0;
+            this.loadTransactions(this.dt.createLazyLoadMetadata());
+          }
+        },
+        error: (error) => {
+          this.loading = false;
+          const errorMessage = error.error?.message || 'Échec de la suppression de la transaction.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: errorMessage
+          });
+          console.error('Erreur de suppression:', error);
+        }
+      })
+    );
   }
 }

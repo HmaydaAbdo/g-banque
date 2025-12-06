@@ -19,15 +19,14 @@ import {ChequesEncoursComponent} from "../../etatsDesEncours/views/lesEncours/de
 import {LcnEncoursComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/lcn-encours/lcn-encours.component";
 import {VirementEncoursComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/virement-encours/virement-encours.component";
 import {MiseADispositionEncoursComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/mise-a-disposition-encours/mise-a-disposition-encours.component";
-import {RapprochemntMensuelleComponent} from "../../etatsDesEncours/rapprochement/views/rapprochemnt-mensuelle/rapprochemnt-mensuelle.component";
-import {SelectBanquePourLEncoursComponent} from "../../etatsDesEncours/views/select-banque-pour-l-encours/select-banque-pour-l-encours.component";
+import {RapprochemntEncoursComponent} from "../../etatsDesEncours/views/lesEncours/rapprochemnt-encours/rapprochemnt-encours.component";
 import {LcnDecaissementsListComponent} from "../../LCN/views/lcn-decaissements-list/lcn-decaissements-list.component";
 import {ChequesDecaissementsListComponent} from "../../cheques/views/cheques-decaissements-list/cheques-decaissements-list.component";
 import {VirementDecaissementListComponent} from "../../Virements/views/virement-decaissement-list/virement-decaissement-list.component";
 import {MiseADispositionDecaissementListComponent} from "../../Mise-à-disposition/views/mise-a-disposition-decaissement-list/mise-a-disposition-decaissement-list.component";
 import {RecapDecaissementComponent} from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
 import {LignesFonctionnellesArchivesComponent} from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component";
-import {TransactionHistoryComponent} from "../../transaction-history/transaction-history.component";
+import {TransactionHistoryComponent} from "../../transactions/views/transaction-history/transaction-history.component";
 import {MarchesListComponent} from "../../Marches/views/marches-list/marches-list.component";
 import {MarchesFormComponent} from "../../Marches/views/marches-form/marches-form.component";
 import {SpeficLigneEncoursComponent} from "../../specific-Functional-Lignes/views/spefic-ligne-encours/spefic-ligne-encours.component";
@@ -116,6 +115,13 @@ import {
 import {
   MiseADispoEncaissementEncoursComponent
 } from "../../etatsDesEncours/views/lesEncours/encaissements/mise-a-dispo-encaissement-encours/mise-a-dispo-encaissement-encours.component";
+import {EditTransactionComponent} from "../../transactions/views/edit-transaction/edit-transaction.component";
+import {
+  HistoriqueDesRapprochementComponent
+} from "../../rapprochement/views/historique-des-rapprochement/historique-des-rapprochement.component";
+import {
+  DetailsRapprochementComponent
+} from "../../rapprochement/views/details-rapprochement/details-rapprochement.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -125,7 +131,8 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'evolution-taux-plafond', component: EvolTauxPlafondComponent, canActivate: [adminGuard] },
   { path: 'solde-par-banque', component: SoldeParBanqueComponent, canActivate: [adminGuard] },
   { path: 'tresorerie-globale', component: TresorerieGlobaleComponent, canActivate: [adminGuard] },
-
+  {path:"rapprochement/details/:id",component:DetailsRapprochementComponent},
+  {path:"rapprochement/historique",component:HistoriqueDesRapprochementComponent},
   { path: 'comptes-bancaires', component: ComptesBancairesComponent  },
   { path: "comptes-bancaires/new", component: BanqueEditComponent },
   { path: "comptes-bancaires/edit/:id", component: BanqueEditComponent },
@@ -201,7 +208,7 @@ export const PORTAIL_ROUTES: Routes = [
     children:[
       {path:'', redirectTo:'rapprochement', pathMatch:'full'},
 
-      {path: 'rapprochement',component:RapprochemntMensuelleComponent},
+      {path: 'rapprochement',component:RapprochemntEncoursComponent},
 
       {path:"recap-decaissement",component:RecapDecaissementComponent},
       {path:"recap-encaissement",component:RecapEncaissementsComponent},
@@ -253,17 +260,13 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'frais-bancaire', component:  FraisBancaireListComponent},
   {path:"frais-bancaire/new",component:FraisBancaireFormComponent},
   {path:"frais-bancaire/edit/:id",component:FraisBancaireFormComponent},
-
   { path: 'frais-bancaire', component:  FraisBancaireListComponent},
   {path:"frais-bancaire/new",component:FraisBancaireFormComponent},
   {path:"frais-bancaire/edit/:id",component:FraisBancaireFormComponent},
-
   { path: 'interets', component:  InteretListComponent},
   {path:"interets/new",component:InteretFormComponent},
   {path:"interets/edit/:id",component:InteretFormComponent},
-
-  { path: 'etats-des-encours',component:SelectBanquePourLEncoursComponent},
   {path:"historique-des-transactions",component:TransactionHistoryComponent},
-
+  {path:"transaction/edit/:id",component:EditTransactionComponent},
   { path: 'logs', component: LogsComponent , canActivate: [adminGuard]},
 ];

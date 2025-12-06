@@ -16,7 +16,7 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
 import {Decimal} from "decimal.js";
 import {ActivatedRoute} from "@angular/router";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {AgiosResponseDto} from "../../../../../agios/dtos/AgiosResponseDto";
 import {AgiosService} from "../../../../../agios/service/agios.service";
 import {AgiosSearchDto} from "../../../../../agios/dtos/AgiosSearchDto";
@@ -86,7 +86,7 @@ export class EncoursAgiosComponent implements OnInit,OnDestroy {
     private decimalPipe:DecimalPipe,
     private route: ActivatedRoute,
     private fb: FormBuilder,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
   ) {}
 
 

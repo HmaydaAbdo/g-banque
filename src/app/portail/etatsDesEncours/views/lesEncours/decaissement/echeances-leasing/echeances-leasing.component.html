@@ -1,4 +1,4 @@
-  <p-toast></p-toast>
+<p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
 <div class="card shadow-2 flex flex-column gap-4 p-2 md:p-4 w-full">
@@ -51,7 +51,7 @@
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} échéances"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{'min-width': '60rem'}" >
+      [tableStyle]="{ 'min-width': '60rem' }" >
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="contratLeasing.numeroContrat">N° contract <p-sortIcon field="contratLeasing.numeroContrat"></p-sortIcon></th>

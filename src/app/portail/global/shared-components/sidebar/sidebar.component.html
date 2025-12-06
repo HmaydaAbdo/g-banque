@@ -15,6 +15,7 @@
       <div class="overflow-y-auto">
         <ul class="list-none p-3 m-0">
           <ng-container class="white-space-nowrap" *ngFor="let item of filteredSidebarItems">
+
             <li *ngIf="item.separator">
               <hr class="mb-3 mx-3 border-top-1 border-3 surface-border" />
             </li>
@@ -33,7 +34,6 @@
             <li *ngIf="item.items">
               <div
                 pRipple
-
                 (click)="toggleMenuItem(item)"
                 [ngClass]="item.styleClass || 'p-3 flex align-items-center justify-content-between text-600 cursor-pointer p-ripple white-space-nowrap sidebar-link'">
                 <div class="flex align-items-center">
@@ -45,6 +45,7 @@
 
               <ul class="list-none p-0 m-0 overflow-hidden white-space-nowrap sidebar-link" [ngClass]="{'hidden': !item.expanded}">
                 <ng-container *ngFor="let subItem of item.items">
+
                   <li *ngIf="subItem.routerLink && !subItem.items">
                     <a pRipple
                        [routerLink]="subItem.routerLink"

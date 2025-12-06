@@ -12,8 +12,8 @@ import {RippleModule} from 'primeng/ripple';
 import {LcnResponseDTO} from "../../../../../LCN/dtos/LcnResponseDTO";
 import {LcnService} from "../../../../../LCN/service/LcnService";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {LcnTransactionRequest} from "../../../../rapprochement/dtos/lcn/LcnTransactionRequest";
 import {DonneesComplementairesRapprochementDTO} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {DialogModule} from "primeng/dialog";
@@ -66,7 +66,7 @@ export class LcnEncoursComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
 
-  // Propriétés pour la modale de rapprochement
+  // Propriétés pour la modale de validation
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedLcn: LcnResponseDTO | null = null;
@@ -92,7 +92,7 @@ export class LcnEncoursComponent implements OnInit {
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
   ) {
   }
 
@@ -243,11 +243,11 @@ export class LcnEncoursComponent implements OnInit {
             this.displayModal = false;
           },
           error: (error) => {
-            console.error('Erreur lors du rapprochement du LCN:', error);
+            console.error('Erreur lors du validation du LCN:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+              detail: error.error.message || 'Une erreur est survenue lors du validation.'
             });
             this.isSubmitting = false;
           }

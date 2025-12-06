@@ -1,4 +1,4 @@
-import {TransactionSource} from "../transactions/TransactionSource";
+import {TransactionSource} from "../../../../transactions/dtos/TransactionSource";
 
 export interface MiseAdispositionTransactionRequestDto {
   id: number;

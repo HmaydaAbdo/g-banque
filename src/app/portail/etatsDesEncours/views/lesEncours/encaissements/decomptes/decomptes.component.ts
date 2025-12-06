@@ -3,7 +3,7 @@ import {ActivatedRoute, RouterLink} from '@angular/router';
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {ConfirmationService, MessageService} from "primeng/api";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {DecompteResponseDto} from "../../../../../decomptes/dtos/DecompteResponseDto";
 import {DecompteService} from "../../../../../decomptes/service/DecompteService";
 import {DecompteTransactionRequest} from "../../../../rapprochement/dtos/decomptes/DecompteTransactionRequest";
@@ -84,7 +84,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private fb: FormBuilder,
     private route: ActivatedRoute
   ) {}
@@ -142,7 +142,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
 
 
   /**
-   * Initializes the reactive form for the rapprochement data.
+   * Initializes the reactive form for the validation data.
    */
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
@@ -229,7 +229,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
 
 
   /**
-   * Handles the form submission to send the rapprochement request.
+   * Handles the form submission to send the validation request.
    */
   submitRapprochement(): void {
 
@@ -263,11 +263,11 @@ export class DecomptesComponent implements OnInit, OnDestroy {
           this.displayModal = false;
         },
         error: (error) => {
-          console.error('Erreur lors du rapprochement du décompte:', error);
+          console.error('Erreur lors du validation du décompte:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
+            detail: error.error?.message || 'Une erreur est survenue lors du validation.',
           });
           this.isSubmitting = false;
         },

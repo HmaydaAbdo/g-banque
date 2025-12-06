@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { TransactionResponseDto } from '../../dtos/transactions/TransactionResponseDto';
+import { TransactionResponseDto } from '../../../../transactions/dtos/TransactionResponseDto';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -8,21 +8,23 @@ import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormControl } from '@angular/forms';
+import {FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormControl} from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { MessageService } from 'primeng/api';
+import {ConfirmationService, MessageService} from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
-import { TransactionSearchDto } from '../../dtos/transactions/TransactionSearchDto';
-import { TransactionService } from "../../services/transactions/TransactionService";
+import { TransactionSearchDto } from '../../../../transactions/dtos/TransactionSearchDto';
+import { TransactionService } from "../../../../transactions/service/TransactionService";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {MultiSelectModule} from "primeng/multiselect";
-import {TransactionSource} from "../../dtos/transactions/TransactionSource";
-import {AgreratedTransactionResponseDto} from "../../dtos/transactions/AgreratedTransactionResponseDto";
+import {TransactionSource} from "../../../../transactions/dtos/TransactionSource";
+import {AgreratedTransactionResponseDto} from "../../../../transactions/dtos/AgreratedTransactionResponseDto";
+import {DialogModule} from "primeng/dialog";
+import {CalendarModule} from "primeng/calendar";
 
 
 @Component({
-  selector: 'app-rapprochemnt-mensuelle',
+  selector: 'app-rapprochemnt-encours',
   standalone: true,
   imports: [
     CommonModule,
@@ -38,13 +40,15 @@ import {AgreratedTransactionResponseDto} from "../../dtos/transactions/Agrerated
     DatePipe,
     ConfirmDialogModule,
     BreadcrumbModule,
-    MultiSelectModule
+    MultiSelectModule,
+    DialogModule,
+    CalendarModule
   ],
-  templateUrl: './rapprochemnt-mensuelle.component.html',
-  styleUrls: ['./rapprochemnt-mensuelle.component.scss'],
-  providers: [MessageService]
+  templateUrl: './rapprochemnt-encours.component.html',
+  styleUrls: ['./rapprochemnt-encours.component.scss'],
+  providers: [MessageService,ConfirmationService]
 })
-export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
+export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   @ViewChild('dt') dt!: Table;
 
   agregatedData: AgreratedTransactionResponseDto | null = null;
@@ -61,6 +65,7 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
 
   transactionSourceOptions: any[] = [];
 
+
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -69,10 +74,13 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private route: ActivatedRoute,
     private datePipe: DatePipe
-  ) { }
+  ) {
+  }
 
   ngOnInit(): void {
     this.populateTransactionSourceOptions();
+
+
     this.subscriptions.push(
       this.route.parent!.paramMap.subscribe(params => {
         const id = params.get('banqueId');
@@ -114,6 +122,7 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
     this.subscriptions.push(formValueChangesSub);
   }
 
+
   loadTransactions(event: TableLazyLoadEvent): void {
     if (!this.banqueIdFromRoute) {
       console.error("L'ID de la banque n'a pas été trouvé dans la route.");
@@ -145,11 +154,11 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.loading = false;
-          console.error('Erreur lors du chargement des transactions:', error);
+          console.error('Erreur lors du chargement des dtos:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: 'Échec du chargement des transactions.'
+            detail: 'Échec du chargement des dtos.'
           });
         }
       });
@@ -161,4 +170,8 @@ export class RapprochemntMensuelleComponent implements OnInit, OnDestroy {
       this.loadTransactions(this.dt.createLazyLoadMetadata());
     }
   }
+
+
+
+
 }

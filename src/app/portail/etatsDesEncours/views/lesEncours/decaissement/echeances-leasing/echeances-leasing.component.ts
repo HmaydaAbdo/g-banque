@@ -28,10 +28,10 @@ import { OrganismeLeasingService } from "../../../../../leasing/organismesLeasin
 import { PageResponse } from "../../../../../global/types/PageResponse";
 import { OrganismeLeasingResponse } from "../../../../../leasing/organismesLeasing/dtos/OrganismeLeasingResponse";
 import { EncoursLeasingRequestDTO } from "../../../../../leasing/contratsLeasing/dtos/encours-leasing-request.dto";
-import { RapprochemntService } from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import { ValidationService } from "../../../../rapprochement/services/validation/validation.service";
 import { DonneesComplementairesRapprochementDTO } from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {LeasingTransactionRequest} from "../../../../rapprochement/dtos/leasing/LeasingTransactionRequest";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 
 
 @Component({
@@ -83,7 +83,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
   organismeLeasingOptions: { label: string, value: number }[] = [];
 
-  // Propriétés pour la modale de rapprochement
+  // Propriétés pour la modale de validation
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedEcheance: EcheanceLeasingResponse | null = null;
@@ -98,7 +98,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
   constructor(
     private echeanceLeasingService: EcheanceLeasingService,
     private organismeLeasingService: OrganismeLeasingService,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private route: ActivatedRoute,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
@@ -146,7 +146,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Nouvelle méthode pour initialiser le formulaire de rapprochement
+  // Nouvelle méthode pour initialiser le formulaire de validation
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
       dateEmission: [null, Validators.required],

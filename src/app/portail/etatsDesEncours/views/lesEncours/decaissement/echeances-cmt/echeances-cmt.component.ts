@@ -23,9 +23,9 @@ import {EncoursCMTRequestDTO} from "../../../../../cmt/dtos/EncoursCMTRequestDTO
 import {CalendarModule} from "primeng/calendar";
 import {DialogModule} from "primeng/dialog";
 import {InputTextareaModule} from "primeng/inputtextarea";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {DonneesComplementairesRapprochementDTO} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {CmtTransactionRequest} from "../../../../rapprochement/dtos/cmt/CmtTransactionRequest";
 import {EcheanceCMTResponseDto} from "../../../../../cmt/dtos/EcheanceCMTResponseDto";
 import { InputTextModule } from 'primeng/inputtext';
@@ -92,7 +92,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private messageService: MessageService,
     private fb: FormBuilder,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private confirmationService: ConfirmationService,
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe
@@ -308,11 +308,11 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
             this.isSubmitting = false;
           },
           error: (error) => {
-            console.error('Erreur lors du rapprochement CMT:', error);
+            console.error('Erreur lors du validation CMT:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+              detail: error.error.message || 'Une erreur est survenue lors du validation.'
             });
             this.isSubmitting = false;
           }

@@ -16,7 +16,7 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
 import {Decimal} from "decimal.js";
 import {ActivatedRoute} from "@angular/router";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {InteretResponseDto} from "../../../../../interest/dtos/InteretResponseDto";
 import {InteretService} from "../../../../../interest/service/InteretService";
 import {InteretSearchDto} from "../../../../../interest/dtos/InteretSearchDto";
@@ -87,7 +87,7 @@ export class EncoursInteretComponent implements OnInit {
     private decimalPipe:DecimalPipe,
     private route: ActivatedRoute,
     private fb: FormBuilder,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
   ) {}
 
   ngOnInit(): void {

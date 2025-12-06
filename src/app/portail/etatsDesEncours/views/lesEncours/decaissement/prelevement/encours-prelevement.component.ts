@@ -17,7 +17,7 @@ import { ConfirmationService, MenuItem, MessageService, SelectItem } from "prime
 import { ActivatedRoute } from "@angular/router";
 import { debounceTime, distinctUntilChanged, Subscription } from "rxjs";
 
-import { RapprochemntService } from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import { ValidationService } from "../../../../rapprochement/services/validation/validation.service";
 import { PrelevementService } from "../../../../../prelevements/service/prelevement.service";
 import { PrelevementResponseDto } from "../../../../../prelevements/dtos/PrelevementResponseDto";
 import { PrelevementSearchDto } from "../../../../../prelevements/dtos/PrelevementSearchDto";
@@ -72,7 +72,7 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
     private decimalPipe: DecimalPipe,
     private route: ActivatedRoute,
     private fb: FormBuilder,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
   ) { }
 
 

@@ -1,4 +1,4 @@
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 
 export interface DecaissementSearchDto {
   transactionSources?: TransactionSource[];

@@ -54,7 +54,8 @@
 
       <div class="col-12 md:col-6 field">
         <label for="dateEmission">Date d'Émission <span class="p-text-danger">*</span></label>
-        <p-calendar id="dateEmission" formControlName="dateEmission"  dateFormat="dd/mm/yy"   [showOnFocus]="false" placeholder="JJ/MM/YYYY"></p-calendar>
+        <p-calendar id="dateEmission"  formControlName="dateEmission"  dateFormat="dd/mm/yy"
+                    [showOnFocus]="false"  appendTo="body"  [showIcon]="true" placeholder="JJ/MM/YYYY"></p-calendar>
         <small class="p-error" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">
           <span *ngIf="f['dateEmission'].errors?.['required']">La date d'émission est obligatoire.</span>
         </small>
@@ -62,7 +63,7 @@
 
       <div class="col-12 md:col-6 field">
         <label for="dateEcheance">Date d'Échéance</label>
-        <p-calendar id="dateEcheance" formControlName="dateEcheance"  dateFormat="dd/mm/yy"   [showOnFocus]="false" placeholder="JJ/MM/YYYY"></p-calendar>
+        <p-calendar id="dateEcheance" formControlName="dateEcheance"  dateFormat="dd/mm/yy"   appendTo="body"  [showIcon]="true"  [showOnFocus]="false" placeholder="JJ/MM/YYYY"></p-calendar>
       </div>
 
       <div class="col-12 md:col-6 field">

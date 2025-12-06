@@ -16,7 +16,7 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
 import {Decimal} from "decimal.js";
 import {ActivatedRoute} from "@angular/router";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {FraisBancaireResponseDto} from "../../../../../frais-bancaire/dtos/FraisBancaireResponseDto";
 import {FraisBancaireService} from "../../../../../frais-bancaire/service/FraisBancaireService";
 import {FraisBancaireSearchDto} from "../../../../../frais-bancaire/dtos/FraisBancaireSearchDto";
@@ -87,7 +87,7 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private decimalPipe: DecimalPipe,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
   ) {}
 
 

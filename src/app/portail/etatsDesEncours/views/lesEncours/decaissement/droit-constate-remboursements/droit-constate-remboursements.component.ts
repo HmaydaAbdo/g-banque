@@ -12,7 +12,7 @@ import { DroitConstateResponseDto } from "../../../../../droitsConstate/dtos/Dro
 import { DroitConstateService } from "../../../../../droitsConstate/service/DroitConstateService";
 import { EncoursDroitConstateDto } from "../../../../../droitsConstate/dtos/EncoursDroitConstateDto";
 import { DroitConstateTransactionRequest } from "../../../../rapprochement/dtos/droits_constate/DroitConstateTransactionRequest";
-import { RapprochemntService } from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import { ValidationService } from "../../../../rapprochement/services/validation/validation.service";
 import { Decimal } from "decimal.js";
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import {  Subscription } from 'rxjs';
@@ -85,7 +85,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
     private droitConstateService: DroitConstateService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
@@ -145,7 +145,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Initializes the reactive form for the rapprochement data.
+   * Initializes the reactive form for the validation data.
    */
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
@@ -232,7 +232,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
 
 
   /**
-   * Handles the form submission to send the rapprochement request.
+   * Handles the form submission to send the validation request.
    */
   submitRapprochement(): void {
     if ( this.selectedDroitConstate &&  this.rapprochementForm.valid ) {
@@ -264,11 +264,11 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
             this.displayModal = false;
           },
           error: (error) => {
-            console.error('Erreur lors du rapprochement du droit constaté:', error);
+            console.error('Erreur lors du validation du droit constaté:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
+              detail: error.error?.message || 'Une erreur est survenue lors du validation.',
             });
             this.isSubmitting = false;
           },

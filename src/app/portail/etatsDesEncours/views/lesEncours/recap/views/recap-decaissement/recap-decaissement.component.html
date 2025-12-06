@@ -1,21 +1,20 @@
-0  <p-toast></p-toast>
+ <p-toast></p-toast>
 
-<div class="card shadow-2 flex flex-column gap-4 p-2 md:p-4 w-full">
-
-  <p-toolbar styleClass="mb-4">
-    <div class="flex flex-wrap gap-2 align-items-center justify-content-between w-full">
+<div class="  flex flex-column gap-2 px-2  w-full">
+  <div class="flex flex-wrap gap-2 align-items-center justify-content-between w-full">
+    <div class="flex flex-row w-full flex-wrap   justify-content-between">
       <div class="flex align-items-center">
-        <h3 >Récapitulatif des décaissements</h3>
+        <p>Récapitulatif des décaissements</p>
       </div>
 
       <div class="flex align-items-center">
-       <p> Total Débit : {{totalDebit | number: '1.2-2'}} MAD</p>
+        <p> Total Débit : {{totalDebit | number: '1.2-2'}} MAD</p>
       </div>
       <div class="flex align-items-center">
         <p> Total Crédit : {{totalCredit | number: '1.2-2'}} MAD</p>
       </div>
-
-      <div [formGroup]="searchForm" class="flex flex-wrap gap-2 align-items-center">
+    </div>
+    <div [formGroup]="searchForm" class="flex flex-row w-full flex-wrap   justify-content-between">
         <input pInputText
                formControlName="libelle"
                type="text"
@@ -40,10 +39,7 @@
           [style]="{'min-width':'12rem'}">
         </p-multiSelect>
       </div>
-    </div>
-  </p-toolbar>
-
-
+  </div>
   <div class="pb-8">
     <p-table
       #dt

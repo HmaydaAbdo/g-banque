@@ -14,12 +14,12 @@ import { InputTextModule } from "primeng/inputtext";
 import { CardModule } from 'primeng/card';
 import { Decimal } from 'decimal.js';
 import {CommissionResponseDto} from "../../../../../commission/dtos/commission-response.dto";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {CommissionService} from "../../../../../commission/service/commission.service";
 import {CommissionSearchDto} from "../../../../../commission/dtos/CommissionSearchDto";
 import {EncoursCommissionDto} from "../../../../../commission/dtos/EncoursCommissionDto";
 import {CommissionValidationDto} from "../../../../rapprochement/dtos/commission/CommissionValidationDto";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";
@@ -91,7 +91,7 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
     private route: ActivatedRoute,
     private authService:AuthService,
     private fb: FormBuilder,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
   ) {}
 
 

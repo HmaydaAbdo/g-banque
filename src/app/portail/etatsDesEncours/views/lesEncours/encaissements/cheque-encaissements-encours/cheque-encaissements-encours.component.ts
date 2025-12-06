@@ -4,14 +4,14 @@ import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {EncoursChequeSearchDto} from "../../../../../cheques/dtos/EncoursChequeSearchDto";
 import {ChequeService} from "../../../../../cheques/services/ChequeService";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {ActivatedRoute, RouterLink} from "@angular/router";
 import {ConfirmationService, MessageService, PrimeTemplate} from "primeng/api";
 import {DatePipe, DecimalPipe, NgIf} from "@angular/common";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {DonneesComplementairesRapprochementDTO} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {ChequeTransactionRequest} from "../../../../rapprochement/dtos/cheques/ChequeTransactionRequest";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {EncoursChequeResponseDto} from "../../../../../cheques/dtos/EncoursChequeResponseDto";
 import {Button} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
@@ -68,7 +68,7 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
   searchForm!: FormGroup;
   currentSearchDto: EncoursChequeSearchDto = {};
 
-  // Properties for the rapprochement modal
+  // Properties for the validation modal
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedCheque: ChequeResponseDto | null = null;
@@ -85,7 +85,7 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
 
   constructor(
     private chequeService: ChequeService,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private messageService: MessageService,
@@ -244,11 +244,11 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
             this.displayModal = false;
           },
           error: (error) => {
-            console.error('Erreur lors du rapprochement du chèque:', error);
+            console.error('Erreur lors du validation du chèque:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+              detail: error.error.message || 'Une erreur est survenue lors du validation.'
             });
             this.isSubmitting = false;
           }

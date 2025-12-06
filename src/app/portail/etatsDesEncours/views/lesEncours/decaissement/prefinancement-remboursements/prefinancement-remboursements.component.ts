@@ -17,7 +17,7 @@ import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import { EncoursPrefinancementSearchDto } from "../../../../../prefinancements/dtos/EncoursPrefinancementSearchDto";
 import { InputTextModule } from 'primeng/inputtext';
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {ActivatedRoute, RouterLink} from '@angular/router'; // Import ActivatedRoute
 
 import {  Subscription } from 'rxjs';
@@ -83,7 +83,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
   constructor(
     private prefinancementService: PrefinancementService,
     private messageService: MessageService,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private confirmationService: ConfirmationService,
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe,
@@ -144,7 +144,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
   }
 
   /**
-   * Initializes the reactive form for the rapprochement data.
+   * Initializes the reactive form for the validation data.
    * New: Added a tvaDeductible form control.
    */
   initRapprochementForm(): void {
@@ -233,7 +233,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
 
 
   /**
-   * Handles the form submission to send the rapprochement request.
+   * Handles the form submission to send the validation request.
    * New: Includes tvaDeductible in the request.
    */
   submitRapprochement(): void {
@@ -266,11 +266,11 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
             this.displayModal = false;
           },
           error: (error) => {
-            console.error('Erreur lors du rapprochement du préfinancement:', error);
+            console.error('Erreur lors du validation du préfinancement:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
+              detail: error.error?.message || 'Une erreur est survenue lors du validation.',
             });
             this.isSubmitting = false;
           },

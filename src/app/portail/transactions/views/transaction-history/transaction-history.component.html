@@ -1,4 +1,5 @@
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
 
 <div class="card flex flex-column gap-4 p-2 md:p-4 w-screen h-screen overflow-y-auto">
@@ -76,51 +77,90 @@
       [rows]="10"
       [totalRecords]="totalRecords"
       [loading]="loading"
-      [rowsPerPageOptions]="[10, 20, 50]"
+      [rowsPerPageOptions]="[10, 25, 50]"
       [lazy]="true"
       (onLazyLoad)="loadTransactions($event)"
-      responsiveLayout="scroll"
-      [scrollable]="true"
       scrollHeight="flex"
-      [resizableColumns]="true"
       columnResizeMode="expand"
       [rowHover]="true"
       dataKey="id"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} transactions"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{'min-width': '70rem'}"
       [selectionMode]="'single'">
+
       <ng-template pTemplate="header">
-        <tr>
+        <tr class="white-space-nowrap text-sm">
+          <th pSortableColumn="id" [style.width]="'4rem'">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateOperations">Date d'opération <p-sortIcon field="dateOperations"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur">Date de valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
-          <th pSortableColumn="banqueDePrelevement.libelle">Banque <p-sortIcon field="banqueDePrelevement.libelle"></p-sortIcon></th>
-          <th pSortableColumn="credit">Crédit <p-sortIcon field="credit"></p-sortIcon></th>
           <th pSortableColumn="debit">Débit <p-sortIcon field="debit"></p-sortIcon></th>
-          <th pSortableColumn="dateEmission">Date d'émission<p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="credit">Crédit <p-sortIcon field="credit"></p-sortIcon></th>
+          <th pSortableColumn="tvaDeductible">TVA Déductible <p-sortIcon field="tvaDeductible"></p-sortIcon></th>
+          <th pSortableColumn="tvaCollectee">TVA Collectée <p-sortIcon field="tvaCollectee"></p-sortIcon></th>
+          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
           <th pSortableColumn="transactionSource">Source <p-sortIcon field="transactionSource"></p-sortIcon></th>
+
+          <th class="text-center" [style.width]="'8rem'">Actions</th>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="body" let-transaction>
-        <tr>
+        <tr class=" text-sm">
+          <td>{{ transaction.id }}</td>
+
+          <td class="white-space-nowrap">{{ transaction.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td class="white-space-nowrap">{{ transaction.dateOperations | date:'dd/MM/yyyy' }}</td>
+          <td class="white-space-nowrap">{{ transaction.dateValeur | date:'dd/MM/yyyy' }}</td>
           <td>{{ transaction.libelle }}</td>
-          <td>{{ transaction.banqueDePrelevementNom }}</td>
-          <td>{{ transaction.credit ? transaction.credit + ' MAD' : 'N/A' }} </td>
-          <td>{{ transaction.debit ? transaction.debit + ' MAD' : 'N/A' }} </td>
-          <td>{{ transaction.dateEmission | date: 'dd/MM/yyyy' }}</td>
-          <td>{{ transaction.transactionSource }}</td>
+          <td class="white-space-nowrap font-bold text-red-600">
+            {{ transaction.debit === 0 ? '-' : (transaction.debit | currency: 'MAD': 'symbol': '1.2-2') }}
+          </td>
+          <td class="white-space-nowrap font-bold text-green-600">
+            {{ transaction.credit === 0 ? '-' : (transaction.credit | currency: 'MAD': 'symbol': '1.2-2') }}
+          </td>
+          <td class="white-space-nowrap">
+            {{ transaction.tvaDeductible !== null && transaction.tvaDeductible > 0 ? (transaction.tvaDeductible | currency: 'MAD': 'symbol': '1.2-2') : '-' }}
+          </td>
+          <td class="white-space-nowrap">
+            {{ transaction.tvaCollectee !== null && transaction.tvaCollectee > 0 ? (transaction.tvaCollectee | currency: 'MAD': 'symbol': '1.2-2') : '-' }}
+          </td>
+          <td >{{ transaction.observation }}</td>
+
+          <td><p-tag [value]="transaction.transactionSource" severity="info"></p-tag></td>
+          <td class="flex justify-content-center gap-2">
+            <button pButton
+                    icon="pi pi-pencil"
+                    class="p-button-rounded p-button-info p-button-text"
+                    [routerLink]="['/portail/transaction/edit', transaction.id]"
+                    pTooltip="Modifier"
+                    tooltipPosition="top">
+            </button>
+            <button pButton
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-danger p-button-text"
+                    (click)="confirmDeleteTransaction(transaction.id!)"
+                    pTooltip="Supprimer"
+                    tooltipPosition="top">
+            </button>
+          </td>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td [attr.colspan]="6">Aucune transaction trouvée.</td>
+          <td colspan="12">Aucune transaction trouvée.</td>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="6">Chargement des transactions. Veuillez patienter...</td>
+          <td colspan="12">Chargement des transactions. Veuillez patienter...</td>
         </tr>
       </ng-template>
+
     </p-table>
   </div>
 </div>

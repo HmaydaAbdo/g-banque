@@ -1,5 +1,5 @@
 import {Decimal} from "decimal.js";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 
 /**
  * Interface representing the consolidated disbursement item.

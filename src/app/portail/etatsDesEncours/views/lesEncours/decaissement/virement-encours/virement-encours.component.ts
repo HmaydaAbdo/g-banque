@@ -12,8 +12,8 @@ import {RippleModule} from 'primeng/ripple';
 import {VirementResponseDto} from "../../../../../Virements/dtos/VirementResponseDto";
 import {VirementService} from "../../../../../Virements/service/VirementService";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {VirementTransactionRequestDto} from "../../../../rapprochement/dtos/virements/VirementTransactionRequestDto";
 import {DonneesComplementairesRapprochementDTO} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {DividerModule} from "primeng/divider";
@@ -66,7 +66,7 @@ export class VirementEncoursComponent implements OnInit {
   currentMonthYear: string | null = null;
   @ViewChild('dt') dt: Table | undefined;
 
-  // Propriétés pour la modale de rapprochement
+  // Propriétés pour la modale de validation
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedVirement: VirementResponseDto | null = null;
@@ -88,7 +88,7 @@ export class VirementEncoursComponent implements OnInit {
     private route: ActivatedRoute,
     private messageService: MessageService,
     private datePipe: DatePipe,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private confirmationService: ConfirmationService,
     private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
@@ -240,11 +240,11 @@ export class VirementEncoursComponent implements OnInit {
             this.displayModal = false;
           },
           error: (error) => {
-            console.error('Erreur lors du rapprochement du virement:', error);
+            console.error('Erreur lors du validation du virement:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+              detail: error.error.message || 'Une erreur est survenue lors du validation.'
             });
             this.isSubmitting = false;
           }

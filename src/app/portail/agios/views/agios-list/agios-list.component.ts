@@ -20,7 +20,7 @@ import { AgiosSearchDto } from "../../dtos/AgiosSearchDto";
 // Shared imports
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
-import { TransactionSource } from "../../../etatsDesEncours/rapprochement/dtos/transactions/TransactionSource";
+import { TransactionSource } from "../../../transactions/dtos/TransactionSource";
 import { Status } from "../../../prefinancements/enums/Status";
 import { PageResponse } from "../../../global/types/PageResponse";
 import { InputTextModule } from "primeng/inputtext";

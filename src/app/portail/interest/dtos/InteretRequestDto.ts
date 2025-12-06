@@ -1,5 +1,5 @@
 import {Decimal} from "decimal.js";
-import {TransactionSource} from "../../etatsDesEncours/rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../transactions/dtos/TransactionSource";
 
 export interface InteretRequestDto {
   montant: Decimal;

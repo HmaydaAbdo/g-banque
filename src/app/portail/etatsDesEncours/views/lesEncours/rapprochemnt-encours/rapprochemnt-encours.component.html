@@ -1,19 +1,20 @@
 <p-toast></p-toast>
+<p-confirmDialog [style]="{width: '50vw'}" [baseZIndex]="1000"></p-confirmDialog>
 
-<div class="card shadow-2 p-2 md:p-4 w-full">
+<div class="flex  flex-column gap-4 w-full">
 
-  <p-toolbar styleClass="mb-2">
-    <div class="flex flex-wrap gap-2 align-items-center justify-content-between w-full">
+  <div class="flex flex-row flex-wrap justify-content-between ">
+      <span > <strong> Total Débit : </strong>{{ agregatedData?.totalDebit | number: '1.2-2' }}</span>
+      <span > <strong> Total Crédit : </strong>{{ agregatedData?.totalCredit | number: '1.2-2' }}</span>
+      <span > <strong> TVA Déductible : </strong>{{ agregatedData?.totalTvaDeductible | number: '1.2-2' }}</span>
+      <span > <strong> TVA Collectée : </strong>{{ agregatedData?.totalTvaCollectee | number: '1.2-2' }}</span>
+      <span > <strong> TVA Due : </strong> {{ agregatedData?.tvaDue | number: '1.2-2' }}  </span>
+  </div>
 
-      <div class="flex align-items-center">
-        <span class="text-lg font-medium mr-2">Le Rapprochement Bancaire pour le :</span>
-        <span class="text-lg font-bold">{{ currentMonthYear }}</span>
-      </div>
-
-      <div [formGroup]="searchForm" class="flex flex-wrap gap-2 align-items-center">
+  <div [formGroup]="searchForm" class="flex flex-wrap   align-items-center justify-content-between w-full">
         <span class="p-input-icon-left">
           <i class="pi pi-search"></i>
-          <input pInputText type="text" formControlName="libelle" placeholder="Rechercher par libellé..." />
+          <input pInputText type="text"  formControlName="libelle" placeholder="Rechercher par libellé..." />
         </span>
 
         <span class="p-input-icon-left">
@@ -30,41 +31,6 @@
           [style]="{'min-width':'12rem'}">
         </p-multiSelect>
       </div>
-    </div>
-  </p-toolbar>
-
-  <div class="summary-totals-card p-3 mb-2 surface-2 border-round text-black-alpha-80">
-
-    <div class="flex flex-row flex-wrap justify-content-around">
-
-        <div class="flex flex-column gap-1">
-          <span class=" font-bold text-500">Total Débit</span>
-          <span class="text-xl font-semibold text-color">
-          {{ agregatedData?.totalDebit | number: '1.2-2' }} MAD
-        </span>
-        </div>
-        <div class="flex flex-column gap-1">
-    <span class=" font-bold text-500">Total Crédit</span>
-    <span class="text-xl font-semibold text-color">
-          {{ agregatedData?.totalCredit | number: '1.2-2'  }} MAD
-        </span>
-  </div>
-        <div class="flex flex-column gap-1">
-          <span class=" font-bold text-500">TVA Déductible</span>
-          <span class="text-xl font-semibold text-color">
-          {{ agregatedData?.totalTvaDeductible  | number: '1.2-2' }} MAD
-        </span>
-        </div>
-        <div class="flex flex-column gap-1">
-          <span class=" font-bold text-500">TVA Collectée</span>
-          <span class="text-xl font-semibold text-color">
-          {{ agregatedData?.totalTvaCollectee | number: '1.2-2'  }} MAD
-        </span>
-        </div>
-
-    </div>
-  </div>
-
   <div class="pb-8">
   <p-table
     #dt
@@ -76,17 +42,15 @@
     [rowsPerPageOptions]="[10, 25, 50]"
     [lazy]="true"
     (onLazyLoad)="loadTransactions($event)"
-    responsiveLayout="scroll"
     [rowHover]="true"
     dataKey="id"
     currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} transactions"
     [showCurrentPageReport]="true"
     styleClass="p-datatable-gridlines"
-    [tableStyle]="{'min-width': '60rem'}"
   >
 
     <ng-template pTemplate="header">
-      <tr class="white-space-nowrap text-sm">
+      <tr class="white-space-nowrap text-xs">
         <th pSortableColumn="dateEmission">
           Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
         </th>
@@ -118,16 +82,16 @@
     </ng-template>
 
     <ng-template pTemplate="body" let-transaction>
-      <tr class="white-space-nowrap text-sm">
-        <td>{{ transaction.dateEmission | date:'dd/MM/yyyy' }}</td>
-        <td>{{ transaction.dateOperations | date:'dd/MM/yyyy' }}</td>
-        <td>{{ transaction.dateValeur | date:'dd/MM/yyyy' }}</td>
+      <tr class=" text-sm">
+        <td class="white-space-nowrap">{{ transaction.dateEmission | date:'dd/MM/yyyy' }}</td>
+        <td class="white-space-nowrap">{{ transaction.dateOperations | date:'dd/MM/yyyy' }}</td>
+        <td class="white-space-nowrap">{{ transaction.dateValeur | date:'dd/MM/yyyy' }}</td>
         <td>{{ transaction.libelle }}</td>
-        <td class="text-center">{{ transaction.debit === 0 ? '-' : (transaction.debit | number:'1.2-2') + ' MAD' }}</td>
-        <td class="text-center">{{ transaction.credit === 0 ? '-' : (transaction.credit | number:'1.2-2') + ' MAD' }}</td>
-        <td class="text-center">{{ transaction.tvaDeductible !== null ? ((transaction.tvaDeductible | number:'1.2-2') + ' MAD') : '-' }}</td>
-        <td class="text-center">{{ transaction.tvaCollectee !== null ? ((transaction.tvaCollectee | number:'1.2-2') + ' MAD') : '-' }}</td>
-        <td>{{ transaction.observation }}</td>
+        <td class="white-space-nowrap">{{ transaction.debit === 0 ? '-' : (transaction.debit | number:'1.2-2') + ' MAD' }}</td>
+        <td class="white-space-nowrap">{{ transaction.credit === 0 ? '-' : (transaction.credit | number:'1.2-2') + ' MAD' }}</td>
+        <td class="white-space-nowrap">{{ transaction.tvaDeductible !== null ? ((transaction.tvaDeductible | number:'1.2-2') + ' MAD') : '-' }}</td>
+        <td class="white-space-nowrap">{{ transaction.tvaCollectee !== null ? ((transaction.tvaCollectee | number:'1.2-2') + ' MAD') : '-' }}</td>
+        <td >{{ transaction.observation }}</td>
       </tr>
     </ng-template>
 

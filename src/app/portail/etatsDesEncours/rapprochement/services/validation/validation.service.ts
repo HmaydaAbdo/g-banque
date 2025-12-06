@@ -36,7 +36,7 @@
   @Injectable({
     providedIn: 'root'
   })
-  export class RapprochemntService {
+  export class ValidationService {
 
 
     private readonly baseUrl =  `${environment.apiUrl}rapprochement`
@@ -44,7 +44,7 @@
     constructor(private http: HttpClient) { }
 
     /**
-     * Envoie une transaction d'échéance leasing au backend pour rapprochement
+     * Envoie une transaction d'échéance leasing au backend pour validation
      * @param leasingTransactionRequest Les données de la transaction à rapprocher
      * @returns Observable<LeasingTransactionResponse>
      */
@@ -55,7 +55,7 @@
     }
 
     /**
-     * Envoie une transaction d'échéance CMT au backend pour rapprochement
+     * Envoie une transaction d'échéance CMT au backend pour validation
      * @param cmtTransactionRequest Les données de la transaction à rapprocher
      * @returns Observable<CmtTransactionResponseDto>
      */

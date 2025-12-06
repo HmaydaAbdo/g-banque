@@ -12,10 +12,10 @@ import {ChequeResponseDto} from "../../../../../cheques/dtos/ChequeResponseDto";
 import {ChequeService} from "../../../../../cheques/services/ChequeService";
 import {Ripple} from "primeng/ripple";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {DonneesComplementairesRapprochementDTO} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {ChequeTransactionRequest} from "../../../../rapprochement/dtos/cheques/ChequeTransactionRequest";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {DividerModule} from "primeng/divider";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
@@ -68,7 +68,7 @@ export class ChequesEncoursComponent implements OnInit {
   searchForm!: FormGroup;
   currentSearchDto: EncoursChequeSearchDto = {};
 
-  // Properties for the rapprochement modal
+  // Properties for the validation modal
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedCheque: ChequeResponseDto | null = null;
@@ -85,7 +85,7 @@ export class ChequesEncoursComponent implements OnInit {
 
   constructor(
     private chequeService: ChequeService,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private messageService: MessageService,
@@ -239,11 +239,11 @@ export class ChequesEncoursComponent implements OnInit {
             this.displayModal = false;
           },
           error: (error) => {
-            console.error('Erreur lors du rapprochement du chèque:', error);
+            console.error('Erreur lors du validation du chèque:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+              detail: error.error.message || 'Une erreur est survenue lors du validation.'
             });
             this.isSubmitting = false;
           }

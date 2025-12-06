@@ -3,7 +3,7 @@ import { Sidebar, SidebarModule } from 'primeng/sidebar';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { StyleClassModule } from 'primeng/styleclass';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router'; // Import de Router
 import { CommonModule } from '@angular/common';
 import {Role} from "../../../../auth/enum/Role";
 import {AuthService} from "../../../../auth/services/auth.service";
@@ -46,11 +46,16 @@ export class SidebarComponent implements OnInit {
   @ViewChild('sidebarRef') sidebarRef!: Sidebar;
 
   private authService = inject(AuthService);
+  private router = inject(Router); // Injection du Router
+
+  // Garde la référence à l'élément de menu parent de niveau 1 actuellement ouvert pour l'expansion unique.
+  private currentlyExpandedParent: SidebarItem | null = null;
 
   sidebarItems: SidebarItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
     { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
     { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires'},
+    {label:"Historique des Rapprochements ",routerLink:"/portail/rapprochement/historique",icon:"pi pi-history"},
     {
       label: 'Les Lignes Fonctionnelles',
       icon: 'pi pi-receipt',
@@ -92,7 +97,7 @@ export class SidebarComponent implements OnInit {
         },
         { label: 'LCN', icon: 'pi pi-file-o',
           items: [
-              {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/LCN/encaissements' },
+            {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/LCN/encaissements' },
             {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/LCN/decaissements' },
           ]},
         { label: 'Virements', icon: 'pi pi-arrow-right-arrow-left',
@@ -152,9 +157,12 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.filterSidebarItems();
+    this.expandActiveMenu(); // <--- Ouvre l'élément actif au rechargement
+
     // Subscribe to isAuthenticated$ to re-filter if auth state changes
     this.authService.isAuthenticated$.subscribe(() => {
       this.filterSidebarItems();
+      this.expandActiveMenu(); // <--- Ouvre l'élément actif après filtrage/changement d'authentification
     });
   }
 
@@ -163,9 +171,38 @@ export class SidebarComponent implements OnInit {
     this.sidebarVisibleChange.emit(this.sidebarVisible);
   }
 
+  // Permet d'ouvrir un seul élément de menu parent de niveau 1 à la fois, et gère l'expansion de n'importe quel sous-menu.
   toggleMenuItem(item: SidebarItem): void {
     if (item.items) {
-      item.expanded = !item.expanded;
+      // Pour les éléments de niveau 1 (ceux dans filteredSidebarItems)
+      const isTopLevelItem = this.filteredSidebarItems.includes(item);
+
+      if (item.expanded) {
+        // Si l'élément est déjà ouvert, le fermer.
+        item.expanded = false;
+        if (isTopLevelItem) {
+          this.currentlyExpandedParent = null;
+        }
+      } else {
+        // Si un autre élément parent de niveau 1 est ouvert, le fermer.
+        if (isTopLevelItem && this.currentlyExpandedParent && this.currentlyExpandedParent !== item) {
+          this.collapseItem(this.currentlyExpandedParent);
+        }
+
+        // Ouvrir l'élément cliqué
+        item.expanded = true;
+        if (isTopLevelItem) {
+          this.currentlyExpandedParent = item;
+        }
+      }
+    }
+  }
+
+  // Ferme l'élément et tous ses sous-éléments récursivement.
+  private collapseItem(item: SidebarItem): void {
+    if (item.items) {
+      item.expanded = false;
+      item.items.forEach(subItem => this.collapseItem(subItem));
     }
   }
 
@@ -186,18 +223,22 @@ export class SidebarComponent implements OnInit {
   private filterSidebarItems(): void {
     const filterAndMap = (items: SidebarItem[]): SidebarItem[] => {
       return items.filter(item => {
-        // First, check if the current item itself should be visible based on roles
+        // Si l'élément est un séparateur, on le garde toujours.
+        if (item.separator) {
+          return true;
+        }
+
+        // Check if the current item itself should be visible based on roles
         if (!this.hasRequiredRole(item)) {
-          return false; // User doesn't have the role for this item, so hide it and its children
+          return false;
         }
 
         // If the item has children, filter them recursively
         if (item.items) {
-          const originalItems = [...item.items]; // Create a shallow copy to avoid modifying the original array during filtering
-          item.items = filterAndMap(originalItems); // Recursively filter children
-          // Only keep the parent if it has at least one visible child or if the parent itself has no roles defined
-          // The hasRequiredRole(item) check ensures the parent is hidden if roles are required and not met.
-          // So, if item.items is empty after filtering, we hide the parent.
+          const originalItems = [...item.items];
+          // Utilise filterAndMap pour le filtrage récursif
+          item.items = filterAndMap(originalItems);
+          // Garder le parent s'il a au moins un enfant visible.
           return item.items.length > 0;
         }
 
@@ -207,5 +248,41 @@ export class SidebarComponent implements OnInit {
     };
 
     this.filteredSidebarItems = filterAndMap(this.sidebarItems);
+  }
+
+  /**
+   * Parcourt le menu filtré, vérifie l'URL actuelle et définit `expanded = true`
+   * pour les éléments parents de l'élément de menu actif.
+   */
+  private expandActiveMenu(): void {
+    const currentUrl = this.router.url;
+    this.currentlyExpandedParent = null;
+
+    const findActiveParent = (items: SidebarItem[], parent: SidebarItem | null = null): boolean => {
+      for (const item of items) {
+        // Vérifie si le routerLink de l'élément correspond au début de l'URL actuelle.
+        // Cela permet de gérer les chemins enfants (ex: /portail/cmt/encours correspond à /portail/cmt)
+        if (item.routerLink && currentUrl.startsWith(item.routerLink)) {
+          return true; // Un élément actif a été trouvé.
+        }
+
+        // Si l'élément a des enfants, chercher récursivement
+        if (item.items) {
+          if (findActiveParent(item.items, item)) {
+            // Un enfant actif a été trouvé, ouvrir ce parent.
+            item.expanded = true;
+
+            // Si c'est un parent de niveau 1 (parent === null), stockez-le comme l'actuel.
+            if (parent === null) {
+              this.currentlyExpandedParent = item;
+            }
+            return true;
+          }
+        }
+      }
+      return false; // Aucun élément actif trouvé dans cette branche.
+    };
+
+    findActiveParent(this.filteredSidebarItems);
   }
 }

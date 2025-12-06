@@ -13,7 +13,7 @@ import {InputTextModule} from "primeng/inputtext";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmationService, MessageService} from "primeng/api";
 import {Subscription} from "rxjs";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {ActivatedRoute, RouterLink} from "@angular/router";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {FactoringResponseDto} from "../../../../../factoring/dtos/FactoringResponseDto";
@@ -80,7 +80,7 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private fb: FormBuilder,
     private route: ActivatedRoute
   ) {}
@@ -136,7 +136,7 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
 
 
   /**
-   * Initializes the reactive form for the rapprochement data.
+   * Initializes the reactive form for the validation data.
    */
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
@@ -219,7 +219,7 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
     }
   }
   /**
-   * Handles the form submission to send the rapprochement request.
+   * Handles the form submission to send the validation request.
    */
   submitRapprochement(): void {
 
@@ -251,11 +251,11 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
           this.displayModal = false;
         },
         error: (error) => {
-          console.error('Erreur lors du rapprochement du factoring:', error);
+          console.error('Erreur lors du validation du factoring:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
+            detail: error.error?.message || 'Une erreur est survenue lors du validation.',
           });
           this.isSubmitting = false;
         },

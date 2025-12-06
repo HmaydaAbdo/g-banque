@@ -19,13 +19,13 @@ import {LcnResponseDTO} from "../../../../../LCN/dtos/LcnResponseDTO";
 import {LcnSearchDTO} from "../../../../../LCN/dtos/LcnSearchDTO";
 import {LcnService} from "../../../../../LCN/service/LcnService";
 import {ActivatedRoute, RouterLink} from "@angular/router";
-import {RapprochemntService} from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {
   DonneesComplementairesRapprochementDTO
 } from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
 import {LcnTransactionRequest} from "../../../../rapprochement/dtos/lcn/LcnTransactionRequest";
-import {TransactionSource} from "../../../../rapprochement/dtos/transactions/TransactionSource";
+import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {EncoursLcnResponse} from "../../../../../LCN/dtos/EncoursLcnResponse";
 
 @Component({
@@ -67,7 +67,7 @@ export class EncaissementLcnEncoursComponent implements OnInit {
   @ViewChild('dt') dt: Table | undefined;
 
 
-  // Propriétés pour la modale de rapprochement
+  // Propriétés pour la modale de validation
   displayModal: boolean = false;
   rapprochementForm!: FormGroup;
   selectedLcn: LcnResponseDTO | null = null;
@@ -93,7 +93,7 @@ export class EncaissementLcnEncoursComponent implements OnInit {
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
   ) {
   }
 
@@ -248,11 +248,11 @@ export class EncaissementLcnEncoursComponent implements OnInit {
             this.displayModal = false;
           },
           error: (error) => {
-            console.error('Erreur lors du rapprochement du LCN:', error);
+            console.error('Erreur lors du validation du LCN:', error);
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du rapprochement.'
+              detail: error.error.message || 'Une erreur est survenue lors du validation.'
             });
             this.isSubmitting = false;
           }

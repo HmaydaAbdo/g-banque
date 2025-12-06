@@ -18,7 +18,7 @@ import { Decimal } from 'decimal.js';
 
 import { RecapService } from "../../services/recap.service";
 import { RecaputilatifItem } from "../../dtos/RecaputilatifItem";
-import { TransactionSource } from "../../../../../rapprochement/dtos/transactions/TransactionSource";
+import { TransactionSource } from "../../../../../../transactions/dtos/TransactionSource";
 import { DecaissementSearchDto } from "../../dtos/DecaissementSearchDto";
 import { AgregatedRecapDto } from "../../dtos/AgregatedRecapDto";
 

@@ -12,7 +12,7 @@ import { PrefinancementResponseDTO } from "../../../../../prefinancements/dtos/P
 import { PrefinancementService } from "../../../../../prefinancements/service/PrefinancementService";
 import { EncoursPrefinancementDto } from "../../../../../prefinancements/dtos/EncoursPrefinancementDto";
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
-import { RapprochemntService } from "../../../../rapprochement/services/rapprochement/rapprochemnt.service";
+import { ValidationService } from "../../../../rapprochement/services/validation/validation.service";
 import { PrefinancementTransactionRequest } from "../../../../rapprochement/dtos/prefinancement/PrefinancementTransactionRequest";
 import { DialogModule } from "primeng/dialog";
 import { CalendarModule } from "primeng/calendar";
@@ -85,7 +85,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe,
     private confirmationService: ConfirmationService,
-    private rapprochementService: RapprochemntService,
+    private rapprochementService: ValidationService,
     private fb: FormBuilder,
     private route: ActivatedRoute
   ) {}
@@ -140,7 +140,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Initializes the reactive form for the rapprochement data.
+   * Initializes the reactive form for the validation data.
    */
   initRapprochementForm(): void {
     this.rapprochementForm = this.fb.group({
@@ -226,7 +226,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handles the form submission to send the rapprochement request.
+   * Handles the form submission to send the validation request.
    */
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedPrefinancement) {
@@ -258,11 +258,11 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
           this.displayModal = false;
         },
         error: (error) => {
-          console.error('Erreur lors du rapprochement du préfinancement:', error);
+          console.error('Erreur lors du validation du préfinancement:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: error.error?.message || 'Une erreur est survenue lors du rapprochement.',
+            detail: error.error?.message || 'Une erreur est survenue lors du validation.',
           });
           this.isSubmitting = false;
 

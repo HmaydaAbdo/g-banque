@@ -2,11 +2,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {environment} from "../../../../../../environments/environment";
-import {TransactionSearchDto} from "../../dtos/transactions/TransactionSearchDto";
-import {PageResponse} from "../../../../global/types/PageResponse";
-import {TransactionResponseDto} from "../../dtos/transactions/TransactionResponseDto";
-import {AgreratedTransactionResponseDto} from "../../dtos/transactions/AgreratedTransactionResponseDto";
+import {environment} from "../../../../environments/environment";
+import {TransactionSearchDto} from "../dtos/TransactionSearchDto";
+import {PageResponse} from "../../global/types/PageResponse";
+import {TransactionResponseDto} from "../dtos/TransactionResponseDto";
+import {AgreratedTransactionResponseDto} from "../dtos/AgreratedTransactionResponseDto";
+import {TransactionUpdateRequestDto} from "../dtos/TransactionUpdateRequestDto";
 
 
 @Injectable({
@@ -19,7 +20,7 @@ export class TransactionService {
   constructor(private http: HttpClient) { }
 
   /**
-   * Récupère l'historique de toutes les transactions avec des options de pagination, de tri et de recherche.
+   * Récupère l'historique de toutes les dtos avec des options de pagination, de tri et de recherche.
    * @param searchDto Les critères de recherche.
    * @param page Le numéro de page (commence à 0).
    * @param size Le nombre d'éléments par page.
@@ -53,8 +54,12 @@ export class TransactionService {
     return this.http.get<PageResponse<TransactionResponseDto>>(`${this.baseUrl}/history`, { params });
   }
 
+  getTransactionById(id: number): Observable<TransactionResponseDto> {
+    return this.http.get<TransactionResponseDto>(`${this.baseUrl}/${id}`);
+  }
+
   /**
-   * Récupère une liste paginée de transactions pour une banque spécifique pour le mois en cours.
+   * Récupère une liste paginée de dtos pour une banque spécifique pour le mois en cours.
    * @param banqueId L'ID de la banque.
    * @param searchDto Les critères de recherche (libelle).
    * @param page Le numéro de page (commence à 0).
@@ -89,6 +94,22 @@ export class TransactionService {
     }
 
     return this.http.get<AgreratedTransactionResponseDto>(`${this.baseUrl}/${banqueId}/transactions`, { params });
+  }
+
+  updateTransaction(
+    id: number,
+    dto: TransactionUpdateRequestDto
+  ): Observable<TransactionResponseDto> {
+    return this.http.put<TransactionResponseDto>(`${this.baseUrl}/${id}`, dto);
+  }
+
+  /**
+   * Supprime une transaction par son ID.
+   * @param id L'ID de la transaction à supprimer.
+   * @returns Observable<void>
+   */
+  deleteTransaction(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
 
