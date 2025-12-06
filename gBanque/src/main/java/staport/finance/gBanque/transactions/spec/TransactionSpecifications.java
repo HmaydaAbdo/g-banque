@@ -18,6 +18,16 @@ import java.util.List;
 public class TransactionSpecifications {
 
 
+
+    public static Specification<Transaction> hasRapprochementId(Long rapprochementId) {
+        return (root, query, criteriaBuilder) -> {
+            if (rapprochementId == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("rapprochement").get("id"), rapprochementId);
+        };
+    }
+
     public static Specification<Transaction> libelleContains(String keyword) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.like(criteriaBuilder.lower(root.get("libelle")), "%" + keyword.toLowerCase() + "%");
     }

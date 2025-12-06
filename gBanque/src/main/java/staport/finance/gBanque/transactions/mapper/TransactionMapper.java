@@ -4,6 +4,8 @@ package staport.finance.gBanque.transactions.mapper;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 
+import java.math.BigDecimal;
+
 public class TransactionMapper {
 
         /**
@@ -23,12 +25,12 @@ public class TransactionMapper {
             dto.setDateValeur(transaction.getDateValeur());
             dto.setDateOperations(transaction.getDateOperations());
             dto.setObservation( toUpper(transaction.getObservation()) );
-            dto.setTvaDeductible( transaction.getTvaDeductible());
-            dto.setTvaCollectee(transaction.getTvaCollectee());
+            dto.setTvaDeductible( transaction.getTvaDeductible()!=null ? transaction.getTvaDeductible() : BigDecimal.ZERO);
+            dto.setTvaCollectee(transaction.getTvaCollectee() != null ? transaction.getTvaCollectee() : BigDecimal.ZERO);
             dto.setLibelle( toUpper(transaction.getLibelle()) );
             dto.setTransactionSource(transaction.getTransactionSource());
-            dto.setDebit(transaction.getDebit());
-            dto.setCredit(transaction.getCredit());
+            dto.setDebit(transaction.getDebit() != null ? transaction.getDebit() : BigDecimal.ZERO);
+            dto.setCredit(transaction.getCredit() !=null ? transaction.getCredit() : BigDecimal.ZERO);
             dto.setTraces(transaction.getTraces());
             dto.setCreatedAt(transaction.getCreatedAt());
             dto.setUpdatedAt(transaction.getUpdatedAt());

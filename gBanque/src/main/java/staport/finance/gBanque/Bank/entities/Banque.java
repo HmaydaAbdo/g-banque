@@ -17,6 +17,7 @@ import staport.finance.gBanque.lcn.entities.Lcn;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
+import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.virements.entities.Virement;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import java.math.BigDecimal;
@@ -120,6 +121,8 @@ public class Banque {
     @OneToMany(mappedBy = "banqueDePrelevement",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL}, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<Rapprochement> rapprochements = new ArrayList<>();
 
     // --- Constructors ---
     public Banque() {}
@@ -317,6 +320,22 @@ public class Banque {
         this.prelevements.remove(prelevement);
     }
 
+    public List<Rapprochement> getRapprochements() {
+        return rapprochements;
+    }
+    public void setRapprochements(List<Rapprochement> rapprochements) {
+        this.rapprochements = rapprochements;
+    }
+
+    // --- Helper methods for bidirectional relationships (Rapprochement) ---
+    public void addRapprochement(Rapprochement rapprochement) {
+        rapprochements.add(rapprochement);
+        rapprochement.setBanque(this);
+    }
+    public void removeRapprochement(Rapprochement rapprochement) {
+        rapprochements.remove(rapprochement);
+        rapprochement.setBanque(null);
+    }
     @PrePersist
     protected void onCreate() {
         this.dateCreation = OffsetDateTime.now();

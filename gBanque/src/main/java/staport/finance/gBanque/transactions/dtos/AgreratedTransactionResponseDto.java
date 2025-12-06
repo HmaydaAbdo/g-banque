@@ -10,6 +10,7 @@ public class AgreratedTransactionResponseDto {
     private BigDecimal totalCredit;
     private BigDecimal totalTvaDeductible;
     private BigDecimal totalTvaCollectee;
+    private BigDecimal tvaDue;
     private Page<TransactionResponseDto> page;
 
     public BigDecimal getTotalDebit() {
@@ -50,5 +51,13 @@ public class AgreratedTransactionResponseDto {
 
     public void setPage(Page<TransactionResponseDto> page) {
         this.page = page;
+    }
+
+    public BigDecimal getTvaDue() {
+        return tvaDue;
+    }
+
+    public void setTvaDue(BigDecimal tvaDue) {
+        this.tvaDue = tvaDue;
     }
 }

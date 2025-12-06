@@ -4,9 +4,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
+import staport.finance.gBanque.transactions.dtos.TransactionUpdateRequestDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
@@ -20,22 +24,15 @@ import static staport.finance.gBanque.transactions.spec.TransactionSpecification
 
 @Service
 public class TransactionService {
-    private final TransactionRepository transactionRepository;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    private final TransactionRepository transactionRepository;
+    private final BanqueRepository banqueRepository;
+
+    public TransactionService(TransactionRepository transactionRepository, BanqueRepository banqueRepository) {
         this.transactionRepository = transactionRepository;
+        this.banqueRepository = banqueRepository;
     }
 
-
-
-    /**
-     * Retrieves a paginated and sortable history of all transactions,
-     * filtered by criteria provided in the search DTO.
-     *
-     * @param searchDto A DTO containing optional search criteria.
-     * @param pageable The Pageable object for pagination and sorting.
-     * @return A Page of Transaction DTOs.
-     */
     public Page<TransactionResponseDto> getTransactionHistory(TransactionSearchDto searchDto, Pageable pageable) {
         List<Specification<Transaction>> specs = new ArrayList<>();
 
@@ -63,17 +60,6 @@ public class TransactionService {
         return transactions.map(TransactionMapper::toDto);
     }
 
-
-    /**
-     * Retrieves a paginated list of transactions for a specific bank,
-     * filtered by the current month and optional criteria, and returns them
-     * with aggregated totals.
-     * @param banqueId The ID of the bank to filter by (mandatory).
-     * @param searchDto A DTO containing optional search criteria.
-     * @param pageable The Pageable object for pagination and sorting.
-     * @return An AggregatedTransactionResponseDto containing the paginated
-     * transactions and the total aggregated values.
-     */
     public AgreratedTransactionResponseDto getTransactionsByBanque(Long banqueId, TransactionSearchDto searchDto, Pageable pageable) {
         List<Specification<Transaction>> specs = new ArrayList<>();
         specs.add(isConfirmed(false));
@@ -115,6 +101,7 @@ public class TransactionService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        BigDecimal tvaDue=totalTvaCollectee.subtract(totalTvaDeductible);
         // 3. Fetch the paginated results specifically for the current page.
         Page<Transaction> paginatedTransactions = transactionRepository.findAll(combinedSpec, pageable);
 
@@ -128,7 +115,58 @@ public class TransactionService {
         aggregatedResponse.setTotalCredit(totalCredit);
         aggregatedResponse.setTotalTvaDeductible(totalTvaDeductible);
         aggregatedResponse.setTotalTvaCollectee(totalTvaCollectee);
-
+        aggregatedResponse.setTvaDue(tvaDue);
         return aggregatedResponse;
     }
+
+    public TransactionResponseDto updateTransaction(Long id, TransactionUpdateRequestDto dto) {
+
+        // 1. Vérifier transaction existe
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction with ID " + id + " not found"));
+
+        // 2. Mettre à jour tous les champs
+        transaction.setDateEmission(dto.getDateEmission());
+        transaction.setDateValeur(dto.getDateValeur());
+        transaction.setDateOperations(dto.getDateOperations());
+
+        transaction.setLibelle(dto.getLibelle());
+        transaction.setObservation(dto.getObservation());
+
+        transaction.setTvaDeductible(dto.getTvaDeductible());
+        transaction.setTvaCollectee(dto.getTvaCollectee());
+
+        transaction.setTransactionSource(dto.getTransactionSource());
+
+        transaction.setDebit(dto.getDebit());
+        transaction.setCredit(dto.getCredit());
+
+        // 3. Mise à jour banque
+        if (dto.getBanqueId() != null) {
+            Banque banque = banqueRepository.findById(dto.getBanqueId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Banque with ID " + dto.getBanqueId() + " not found"));
+            transaction.setBanqueDePrelevement(banque);
+        }
+
+        // 4. Sauvegarde
+        Transaction saved = transactionRepository.save(transaction);
+
+        // 5. Convertir en DTO response
+        return TransactionMapper.toDto(saved);
+    }
+
+    public TransactionResponseDto getTransactionById(Long id) {
+        return transactionRepository.findById(id)
+                .map(TransactionMapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction with ID " + id + " not found"));
+    }
+
+    public void deleteTransactionById(Long id) {
+        if (!transactionRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Transaction with ID " + id + " not found");
+        }
+        transactionRepository.deleteById(id);
+    }
+
+
 }

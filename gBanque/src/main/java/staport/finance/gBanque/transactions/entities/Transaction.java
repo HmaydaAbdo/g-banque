@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
@@ -20,10 +21,16 @@ public class Transaction {
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperations;
 
+    @Column(precision = 19, scale = 2)
+    private BigDecimal debit;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal credit;
+
     @Column(columnDefinition = "LONGTEXT")
     private String libelle;
-
     private String observation;
+
     private BigDecimal tvaDeductible;
     private BigDecimal tvaCollectee;
 
@@ -31,15 +38,14 @@ public class Transaction {
     @Column(length = 100)
     private TransactionSource transactionSource;
 
-    @Column(precision = 19, scale = 2)
-    private BigDecimal debit;
-
-    @Column(precision = 19, scale = 2)
-    private BigDecimal credit;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "banque_id")
     private Banque banqueDePrelevement;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rapprochement_id", nullable = true)
+    private Rapprochement rapprochement;
 
     @Column(columnDefinition = "TEXT")
     private String traces;
@@ -159,6 +165,14 @@ public class Transaction {
 
     public void setBanqueDePrelevement(Banque banqueDePrelevement) {
         this.banqueDePrelevement = banqueDePrelevement;
+    }
+
+    public Rapprochement getRapprochement() {
+        return rapprochement;
+    }
+
+    public void setRapprochement(Rapprochement rapprochement) {
+        this.rapprochement = rapprochement;
     }
 
     // Getters for the new timestamp fields
