@@ -43,17 +43,16 @@
       responsiveLayout="scroll"
       [scrollable]="true"
       scrollHeight="flex"
-      [resizableColumns]="true"
       columnResizeMode="expand"
       [rowHover]="true"
       dataKey="numero"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} chèques"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{ 'min-width': '60rem' }"
+
     >
       <ng-template pTemplate="header">
-        <tr>
+        <tr class="white-space-nowrap">
           <th pSortableColumn="numero">
             N° Chèque <p-sortIcon field="numero"></p-sortIcon>
           </th>
@@ -78,7 +77,7 @@
           <td>{{ cheque.dateEmission | date : 'dd/MM/yyyy' }}</td>
           <td>{{ cheque.dateEcheance ? (cheque.dateEcheance | date : 'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ cheque.beneficiaire }}</td>
-          <td>{{ cheque.montant | number: '1.2-2' }} MAD</td>
+          <td>{{ cheque.montant | number: '1.2-2' }} </td>
           <td>
             <p-button
               pRipple

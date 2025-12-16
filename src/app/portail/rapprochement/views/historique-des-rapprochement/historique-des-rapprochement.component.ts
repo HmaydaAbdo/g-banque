@@ -10,7 +10,7 @@ import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {TagModule} from 'primeng/tag';
 import {TooltipModule} from 'primeng/tooltip';
-import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
+import {catchError, debounceTime, distinctUntilChanged, finalize} from 'rxjs/operators';
 import { Router} from '@angular/router';
 import {BreadcrumbModule} from 'primeng/breadcrumb';
 import {DropdownModule} from "primeng/dropdown";
@@ -19,6 +19,7 @@ import {RapprochementService} from "../../service/rapprochement-service.service"
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {RapprochementSearchDto} from "../../dtos/RapprochementSearchDto";
 import {PageResponse} from "../../../global/types/PageResponse";
+import {throwError} from "rxjs";
 
 
 
@@ -60,7 +61,7 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
   banques: { id: number; nom: string }[] = [];
   loadingBanques: boolean = false;
 
-
+  loadingReport: { [key: number]: boolean } = {};
   constructor(
     private rapprochementService: RapprochementService,
     private messageService: MessageService,
@@ -179,5 +180,56 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
    */
   viewRapprochementDetails(rapprochementId: number): void {
     this.router.navigate(['/portail/rapprochement/details', rapprochementId]);
+  }
+
+  downloadRapprochementReport(rapprochement: RapprochementResponse): void {
+    if (!rapprochement.id) {
+      this.messageService.add({severity: 'warn', summary: 'Alerte', detail: 'ID du rapprochement manquant.', life: 3000});
+      return;
+    }
+
+    // Active l'indicateur de chargement spécifique
+    this.loadingReport[rapprochement.id] = true;
+
+    this.rapprochementService.downloadReport(rapprochement.id)
+      .pipe(
+        // Gère l'erreur
+        catchError(error => {
+          console.error('Erreur lors du téléchargement du rapport:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur de Téléchargement',
+            detail: 'Échec de la génération ou du téléchargement du rapport.',
+            life: 5000
+          });
+          // Propage l'erreur pour la gestion du finalize
+          return throwError(() => new Error('Download failed'));
+        }),
+        // Désactive le chargement quel que soit le résultat (succès ou erreur)
+        finalize(() => {
+          this.loadingReport[rapprochement.id] = false;
+        })
+      )
+      .subscribe((response: Blob) => {
+        // Création de l'objet Blob pour le téléchargement
+        const fileURL = URL.createObjectURL(response);
+        const link = document.createElement('a');
+
+        link.href = fileURL;
+        link.download = `Rapport_Rapprochement_${rapprochement.banqueNom}_${rapprochement.dateRapprochement}.pdf`;
+
+        // Simule le clic pour démarrer le téléchargement
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(fileURL); // Libère la mémoire
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: 'Le rapport PDF a été généré et téléchargé.',
+          life: 3000
+        });
+      });
   }
 }

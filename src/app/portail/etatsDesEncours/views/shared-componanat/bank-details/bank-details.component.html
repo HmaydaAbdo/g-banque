@@ -7,27 +7,16 @@
 
   <div *ngIf="!loading && bankInfo" class="w-full flex flex-row justify-content-between px-4  ">
 
-    <p>
-      <strong>Banque : </strong><span >{{bankInfo.name}} </span>
-    </p>
+    <p>Banque : {{bankInfo.name}}</p>
+    <p>Solde Départ : {{bankInfo.soldeDepart | number: '1.2-2'}}</p>
 
-    <p>
-      <strong>Solde Départ : </strong> <span >{{bankInfo.soldeDepart | number: '1.2-2'}}</span>
-    </p>
-
-    <p>
-      <strong>Solde actuel : </strong><span >{{bankInfo.soldeActuelle | number: '1.2-2'}}</span>
-    </p>
+    <p>Solde actuel : {{bankInfo.soldeActuelle | number: '1.2-2'}}</p>
 
 
     @if (bankInfo.plafondFC) {
-        <p >
-          <strong> Facilité de caisse :</strong><span>{{bankInfo.plafondFC | number: '1.2-2'}} </span>
-        </p>
+        <p >Facilité de caisse :{{bankInfo.plafondFC | number: '1.2-2'}}</p>
     } @else {
-      <p >
-        <strong> Facilité de caisse :</strong> Aucune
-      </p>    }
+      <p >Facilité de caisse : Aucune</p>    }
 
 
 

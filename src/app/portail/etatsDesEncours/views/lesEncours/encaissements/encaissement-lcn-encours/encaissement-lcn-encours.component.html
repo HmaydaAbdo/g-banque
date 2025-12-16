@@ -12,19 +12,9 @@
 
     <form [formGroup]="searchForm" class=" flex flex-row justify-content-between ">
 
-       <span class="p-float-label">
+      <span class="p-float-label">
           <input id="numero" type="text" pInputText formControlName="numero" />
           <label for="numero"> numéro</label>
-        </span>
-
-      <span class="p-float-label">
-          <p-calendar id="dateEmission" formControlName="dateEmission" [showOnFocus]="false" dateFormat="dd/mm/yy" ></p-calendar>
-          <label for="dateEmission"> Date d'émission</label>
-        </span>
-
-      <span class="p-float-label">
-          <p-calendar id="dateEcheance" formControlName="dateEcheance" [showOnFocus]="false" dateFormat="dd/mm/yy" ></p-calendar>
-          <label for="dateEcheance">Date d'échéance</label>
         </span>
 
       <span class="p-float-label">
@@ -59,17 +49,15 @@
       responsiveLayout="scroll"
       [scrollable]="true"
       scrollHeight="flex"
-      [resizableColumns]="true"
       columnResizeMode="expand"
       [rowHover]="true"
       dataKey="numero"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} LCNs"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{ 'min-width': '60rem' }"
     >
       <ng-template pTemplate="header">
-        <tr>
+        <tr class="white-space-nowrap">
 
           <th pSortableColumn="numero">
             numero <p-sortIcon field="numero"></p-sortIcon>
@@ -103,7 +91,7 @@
           <td>{{ lcn.dateEcheance | date : 'dd/MM/yyyy' }}</td>
           <td>{{ lcn.emetteur }}</td>
           <td>{{ lcn.beneficiaire }}</td>
-          <td>{{ lcn.montant | number: '1.2-2'}} MAD</td>
+          <td>{{ lcn.montant | number: '1.2-2'}} </td>
           <td>{{ lcn.natureLcn }}</td>
           <td>
             <p-button

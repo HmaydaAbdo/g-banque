@@ -6,7 +6,7 @@ import {CommonModule, DatePipe} from '@angular/common';
 import { BankDetailsComponent } from "../../shared-componanat/bank-details/bank-details.component";
 import { Ripple } from "primeng/ripple";
 import { BreadcrumbModule } from "primeng/breadcrumb";
-import { filter } from 'rxjs/operators';
+import { filter} from 'rxjs/operators';
 import {Button} from "primeng/button";
 import {RapprochementRequest} from "../../../../rapprochement/dtos/RapprochementRequest";
 import {FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
@@ -15,6 +15,7 @@ import {CalendarModule} from "primeng/calendar";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {DialogModule} from "primeng/dialog";
 import {ToastModule} from "primeng/toast";
+import {RecapService} from "../../lesEncours/recap/services/recap.service";
 
 @Component({
   selector: 'app-les-encours',
@@ -50,8 +51,9 @@ export class LesEncoursComponent implements OnInit {
   clotureLoading: boolean = false;
   clotureForm!: FormGroup;
 
+
   constructor(
-    private route: ActivatedRoute, private rapprochementService: RapprochementService,
+    private route: ActivatedRoute, private rapprochementService: RapprochementService,private recapService: RecapService,
     private datePipe:DatePipe,
     private messageService:MessageService,private fb:FormBuilder,private confirmationService:ConfirmationService, private router: Router) {}
 
@@ -271,6 +273,7 @@ export class LesEncoursComponent implements OnInit {
           });
           this.displayClotureDialog = false;
           this.clotureLoading = false;
+          window.location.reload();
         },
         error: (error) => {
           console.error('Erreur lors de la clôture:', error);
@@ -284,6 +287,7 @@ export class LesEncoursComponent implements OnInit {
         }
       });
   }
+
 
 
 }

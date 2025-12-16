@@ -46,17 +46,15 @@
       responsiveLayout="scroll"
       [scrollable]="true"
       scrollHeight="flex"
-      [resizableColumns]="true"
       columnResizeMode="expand"
       [rowHover]="true"
       dataKey="numero"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} LCNs"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{ 'min-width': '60rem' }"
     >
-      <ng-template pTemplate="header">
-        <tr>
+      <ng-template pTemplate="header" >
+        <tr class="white-space-nowrap">
           <th pSortableColumn="numero">
             N° LCN <p-sortIcon field="numero"></p-sortIcon>
           </th>
@@ -81,7 +79,7 @@
           <td>{{ lcn.dateEmission | date : 'dd/MM/yyyy' }}</td>
           <td>{{ lcn.dateEcheance | date : 'dd/MM/yyyy' }}</td>
           <td>{{ lcn.beneficiaire }}</td>
-          <td>{{ lcn.montant | number: '1.2-2'}} MAD</td>
+          <td>{{ lcn.montant | number: '1.2-2'}} </td>
           <td>
             <p-button
               pRipple

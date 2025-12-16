@@ -2,8 +2,6 @@ import { Injectable } from '@angular/core';
 import {environment} from "../../../../../../../environments/environment";
 import {HttpClient, HttpParams} from "@angular/common/http";
 import {Observable} from "rxjs";
-import {PageResponse} from "../../../../../global/types/PageResponse";
-import {RecaputilatifItem} from "../dtos/RecaputilatifItem";
 import {DecaissementSearchDto} from "../dtos/DecaissementSearchDto";
 import {AgregatedRecapDto} from "../dtos/AgregatedRecapDto";
 
@@ -107,5 +105,27 @@ export class RecapService {
     const url = `${this.baseUrl}/encaissement/banque/${banqueId}`;
 
     return this.http.get<AgregatedRecapDto>(url, { params });
+  }
+
+
+  /**
+   * Downloads the global summary report (PDF) for a specific bank.
+   *
+   * @param banqueId The ID of the bank.
+   * @returns Observable<Blob> An observable of the PDF file as a Blob.
+   */
+  downloadRecapGlobalByBank(banqueId: number): Observable<Blob> {
+    const url = `${this.baseUrl}/${banqueId}/pdf`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  /**
+   * Downloads the consolidated global summary report (PDF) for all banks.
+   *
+   * @returns Observable<Blob> An observable of the PDF file as a Blob.
+   */
+  downloadGlobalRecapForAllBanks(): Observable<Blob> {
+    const url = `${this.baseUrl}/global/pdf`;
+    return this.http.get(url, { responseType: 'blob' });
   }
 }

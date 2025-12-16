@@ -58,11 +58,11 @@
                 {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
                 {field: 'status', header: 'Statut', sortable: true}
              ]"
-             styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '70rem'}"
+             styleClass="p-datatable-gridlines"
              [showCurrentPageReport]="true"
              currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
       <ng-template pTemplate="header" let-columns>
-        <tr>
+        <tr class="white-space-nowrap">
           <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
@@ -77,7 +77,7 @@
         <tr>
           <td>{{ commission.libelle }}</td>
           <td>{{ commission.banqueNom }}</td>
-          <td>{{ commission.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ commission.montant | number:'1.2-2' }} </td>
           <td>{{ commission.operation }}</td>
           <td>{{ commission.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ commission.status }}</td>

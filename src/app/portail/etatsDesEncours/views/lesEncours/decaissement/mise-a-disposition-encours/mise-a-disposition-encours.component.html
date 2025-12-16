@@ -42,17 +42,15 @@
       responsiveLayout="scroll"
       [scrollable]="true"
       scrollHeight="flex"
-      [resizableColumns]="true"
       columnResizeMode="expand"
       [rowHover]="true"
       dataKey="numero"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} mises à disposition"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{ 'min-width': '60rem' }"
     >
       <ng-template pTemplate="header">
-        <tr>
+        <tr class="white-space-nowrap">
           <th pSortableColumn="numero">
             N° MAD <p-sortIcon field="numero"></p-sortIcon>
           </th>
@@ -76,7 +74,7 @@
           <td>{{ miseADisposition.numero }}</td>
           <td>{{ miseADisposition.dateEmission | date : 'dd/MM/yyyy' }}</td>
           <td>{{ miseADisposition.beneficiaire }}</td>
-          <td>{{ miseADisposition.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ miseADisposition.montant | number:'1.2-2' }} </td>
           <td>{{ miseADisposition.cinBeneficiaire }}</td>
           <td>
             <p-button

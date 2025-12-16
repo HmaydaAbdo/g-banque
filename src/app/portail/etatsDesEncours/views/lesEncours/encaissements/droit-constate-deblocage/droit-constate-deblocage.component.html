@@ -63,10 +63,9 @@
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} droits constatés"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{ 'min-width': '60rem' }"
     >
       <ng-template pTemplate="header">
-        <tr>
+        <tr class="white-space-nowrap">
           <th pSortableColumn="dateEmission">
             Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
           </th>
@@ -91,7 +90,7 @@
           <td>{{ p.dateEmission | date: 'dd/MM/yyyy' }}</td>
           <td>{{ p.marcheNumero }}</td>
           <td>{{ p.banqueName }}</td>
-          <td>{{ p.montant | number:'1.2-2'}} MAD</td>
+          <td>{{ p.montant | number:'1.2-2'}} </td>
           <td>{{ p.type }}</td>
           <td>
             <p-button

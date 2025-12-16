@@ -53,17 +53,15 @@
       responsiveLayout="scroll"
       [scrollable]="true"
       scrollHeight="flex"
-      [resizableColumns]="true"
       columnResizeMode="expand"
       [rowHover]="true"
       dataKey="numero"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} virements"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{ 'min-width': '60rem' }"
     >
       <ng-template pTemplate="header">
-        <tr>
+        <tr class="white-space-nowrap">
 
           <th pSortableColumn="dateEmission">
             Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>

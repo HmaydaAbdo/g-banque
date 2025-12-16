@@ -18,13 +18,22 @@
       </ng-template>
     </p-breadcrumb>
     <p-button
-      label="Synchroniser les états des encours"
+      label="Synchroniser l’état des encours"
       icon="pi pi-sync"
       size="small"
-      styleClass="p-button-outlined w-20rem sm:w-auto text-sm sm:text-base"
+      styleClass="p-button-outlined w-20rem sm:w-auto text-xs  text-black-alpha-90 "
       (onClick)="synchronizePayments()"
       [loading]="isLoading"
       [disabled]="isLoading"
+    />
+    <p-button
+      label="Télécharger le journal global "
+      icon="pi pi-file"
+      size="small"
+      styleClass="p-button-outlined w-20rem sm:w-auto text-xs  text-black-alpha-90"
+      (onClick)="downloadGlobalRecap()"
+      [loading]="globalRecapLoading"
+      [disabled]="globalRecapLoading"
     />
   </div>
 

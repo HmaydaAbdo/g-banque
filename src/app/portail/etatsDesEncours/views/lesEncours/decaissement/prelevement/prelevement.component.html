@@ -67,7 +67,6 @@
       [scrollable]="true"
       scrollHeight="flex"
       (onLazyLoad)="loadPrelevements($event)"
-      [resizableColumns]="true"
       [columns]="[
         { field: 'libelle', header: 'Libellé', sortable: true },
         { field: 'banqueNom', header: 'Banque', sortable: true },
@@ -76,14 +75,13 @@
         { field: 'status', header: 'Statut', sortable: true }
       ]"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{ 'min-width': '70rem' }"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
     >
 
       <!-- TABLE HEADER -->
       <ng-template pTemplate="header" let-columns>
-        <tr>
+        <tr class="white-space-nowrap">
           <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
@@ -99,7 +97,7 @@
         <tr>
           <td>{{ prelevement.libelle }}</td>
           <td>{{ prelevement.banqueNom }}</td>
-          <td>{{ prelevement.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ prelevement.montant | number:'1.2-2' }} </td>
           <td>{{ prelevement.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ prelevement.status }}</td>
           <td>

@@ -23,10 +23,6 @@
 
         </span>
         <span class="p-float-label">
-          <input id="beneficiaire" type="text" pInputText formControlName="beneficiaire" />
-          <label for="beneficiaire">Recherche par Bénéficiaire</label>
-        </span>
-        <span class="p-float-label">
           <input id="emetteur" type="text" pInputText formControlName="emetteur" />
           <label for="emetteur">Recherche par émetteur</label>
         </span>
@@ -55,18 +51,16 @@
       responsiveLayout="scroll"
       [scrollable]="true"
       scrollHeight="flex"
-      [resizableColumns]="true"
       columnResizeMode="expand"
       [rowHover]="true"
       dataKey="numero"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} virements"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines"
-      [tableStyle]="{ 'min-width': '60rem' }"
     >
       <ng-template pTemplate="header">
 
-        <tr>
+        <tr class="white-space-nowrap">
           <th pSortableColumn="dateEmission">
             Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
           </th>
@@ -74,8 +68,6 @@
           <th pSortableColumn="beneficiaire">
             Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon>
           </th>
-
-
 
           <th pSortableColumn="banqueBeneficiaire">
             Banque Bénéficiaire <p-sortIcon field="banqueBeneficiaire"></p-sortIcon>
@@ -98,7 +90,7 @@
           <td>{{ virement.beneficiaire ? virement.beneficiaire : 'N/A' }}</td>
           <td>{{ virement.banqueBeneficiaire ? virement.banqueBeneficiaire : 'N/A' }}</td>
           <td>{{ virement.emetteur ? virement.emetteur : 'N/A' }}</td>
-          <td>{{ virement.montant | number:'1.2-2'}} MAD</td>
+          <td>{{ virement.montant | number:'1.2-2'}} </td>
 
           <td>
             <p-button

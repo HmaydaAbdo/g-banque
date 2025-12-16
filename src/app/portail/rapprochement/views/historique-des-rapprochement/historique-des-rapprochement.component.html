@@ -112,11 +112,13 @@
             MAD
           </td>
 
-          <td>
+          <td class="flex flex-row gap-2">
             <button pButton pRipple icon="pi pi-eye" class="p-button-rounded p-button-info"
                     pTooltip="Voir détails"
                     (click)="viewRapprochementDetails(rapprochement.id!)">
             </button>
+            <button pButton pRipple icon="pi pi-file-pdf" class="p-button-rounded p-button-secondary"
+                    [loading]="loadingReport[rapprochement.id!]" (click)="downloadRapprochementReport(rapprochement)"></button>
           </td>
         </tr>
       </ng-template>

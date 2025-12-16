@@ -4,11 +4,11 @@
 <div class="flex  flex-column gap-4 w-full">
 
   <div class="flex flex-row flex-wrap justify-content-between ">
-      <span > <strong> Total Débit : </strong>{{ agregatedData?.totalDebit | number: '1.2-2' }}</span>
-      <span > <strong> Total Crédit : </strong>{{ agregatedData?.totalCredit | number: '1.2-2' }}</span>
-      <span > <strong> TVA Déductible : </strong>{{ agregatedData?.totalTvaDeductible | number: '1.2-2' }}</span>
-      <span > <strong> TVA Collectée : </strong>{{ agregatedData?.totalTvaCollectee | number: '1.2-2' }}</span>
-      <span > <strong> TVA Due : </strong> {{ agregatedData?.tvaDue | number: '1.2-2' }}  </span>
+      <span >  Total Débit :{{ agregatedData?.totalDebit | number: '1.2-2' }}</span>
+      <span >  Total Crédit : {{ agregatedData?.totalCredit | number: '1.2-2' }}</span>
+      <span >  TVA Déductible : {{ agregatedData?.totalTvaDeductible | number: '1.2-2' }}</span>
+      <span >  TVA Collectée : {{ agregatedData?.totalTvaCollectee | number: '1.2-2' }}</span>
+      <span >  TVA Due :  {{ agregatedData?.tvaDue | number: '1.2-2' }}  </span>
   </div>
 
   <div [formGroup]="searchForm" class="flex flex-wrap   align-items-center justify-content-between w-full">

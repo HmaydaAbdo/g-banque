@@ -142,7 +142,10 @@ export class SidebarComponent implements OnInit {
     {label:"Les Prélèvements",icon:"pi pi-list",routerLink: '/portail/prelevements'},
     {label:"Les Frais bancaire",icon:"pi pi-list",routerLink: '/portail/frais-bancaire'},
     {label:"Les Intérêts ",icon:"pi pi-list",routerLink: '/portail/interets'},
-    {label:"Historique des transactions",routerLink:"/portail/historique-des-transactions",icon:"pi pi-history"},
+    {
+      label:"Historique des transactions",
+      roles: [Role.ADMIN, Role.SUPER_ADMIN],
+      routerLink:"/portail/historique-des-transactions",icon:"pi pi-history"},
     {
       label: 'Paramètres',
       icon: 'pi pi-cog',

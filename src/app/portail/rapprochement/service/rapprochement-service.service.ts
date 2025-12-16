@@ -59,4 +59,12 @@ export class RapprochementService {
       { params: params }
     );
   }
+
+  downloadReport(rapprochementId: number): Observable<Blob> {
+    const url = `${this.baseUrl}/${rapprochementId}/report/pdf`;
+
+    return this.http.get(url, {
+      responseType: 'blob'
+    });
+  }
 }

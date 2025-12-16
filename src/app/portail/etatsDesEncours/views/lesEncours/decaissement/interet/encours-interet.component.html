@@ -34,7 +34,6 @@
     <p-table #dt [value]="interests" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
              [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
              responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadInterests($event)"
-             [resizableColumns]="true"
              [columns]="[
                 {field: 'libelle', header: 'Libellé', sortable: true},
                 {field: 'banqueNom', header: 'Banque', sortable: true},
@@ -42,7 +41,7 @@
                 {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
                 {field: 'status', header: 'Statut', sortable: true}
              ]"
-             styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '70rem'}"
+             styleClass="p-datatable-gridlines"
              [showCurrentPageReport]="true"
              currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
       <ng-template pTemplate="header" let-columns>
@@ -61,7 +60,7 @@
         <tr>
           <td>{{ interest.libelle }}</td>
           <td>{{ interest.banqueNom }}</td>
-          <td>{{ interest.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ interest.montant | number:'1.2-2' }} </td>
           <td>{{ interest.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ interest.status }}</td>
           <td>
