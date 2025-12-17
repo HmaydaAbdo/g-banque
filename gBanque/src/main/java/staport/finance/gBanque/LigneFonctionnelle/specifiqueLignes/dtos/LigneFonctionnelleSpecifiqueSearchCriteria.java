@@ -53,4 +53,6 @@ public class LigneFonctionnelleSpecifiqueSearchCriteria {
                 ", marcheId=" + marcheId +
                 '}';
     }
+
+
 }

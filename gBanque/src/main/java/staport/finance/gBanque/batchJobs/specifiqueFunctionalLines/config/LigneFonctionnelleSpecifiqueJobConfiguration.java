@@ -1,4 +1,4 @@
-package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.jobs.config;
+package staport.finance.gBanque.batchJobs.specifiqueFunctionalLines.config;
 
 import jakarta.persistence.EntityManagerFactory;
 import org.slf4j.Logger;
@@ -15,9 +15,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.jobs.dtos.ProcessedSpecificFunctionalLine;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.jobs.processors.SpecificFunctionalLineProcessor;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.jobs.writers.SpecificFunctionalLineWriter;
+import staport.finance.gBanque.batchJobs.specifiqueFunctionalLines.dtos.ProcessedSpecificFunctionalLine;
+import staport.finance.gBanque.batchJobs.specifiqueFunctionalLines.listeners.SpecificFunctionalLineJobListener;
+import staport.finance.gBanque.batchJobs.specifiqueFunctionalLines.processors.SpecificFunctionalLineProcessor;
+import staport.finance.gBanque.batchJobs.specifiqueFunctionalLines.writers.SpecificFunctionalLineWriter;
 
 @Configuration
 public class LigneFonctionnelleSpecifiqueJobConfiguration {
@@ -29,17 +30,19 @@ public class LigneFonctionnelleSpecifiqueJobConfiguration {
     private final EntityManagerFactory entityManagerFactory;
     private final SpecificFunctionalLineProcessor processor;
     private final SpecificFunctionalLineWriter writer;
+    private final SpecificFunctionalLineJobListener listener;
 
     public LigneFonctionnelleSpecifiqueJobConfiguration(JobRepository jobRepository,
                                                         PlatformTransactionManager transactionManager,
                                                         EntityManagerFactory entityManagerFactory,
                                                         SpecificFunctionalLineProcessor processor,
-                                                        SpecificFunctionalLineWriter writer) {
+                                                        SpecificFunctionalLineWriter writer, SpecificFunctionalLineJobListener listener) {
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.entityManagerFactory = entityManagerFactory;
         this.processor = processor;
         this.writer = writer;
+        this.listener = listener;
         log.info("LigneFonctionnelleSpecifiqueJobConfiguration initialized.");
     }
 
@@ -51,6 +54,7 @@ public class LigneFonctionnelleSpecifiqueJobConfiguration {
     public Job specificFunctionalLineExpirationJob() {
         log.info("Configuring 'specificFunctionalLineExpirationJob'.");
         return new JobBuilder("specificFunctionalLineExpirationJob", jobRepository)
+                .listener(listener)
                 .start(processSpecificFunctionalLinesStep())
                 .build();
     }

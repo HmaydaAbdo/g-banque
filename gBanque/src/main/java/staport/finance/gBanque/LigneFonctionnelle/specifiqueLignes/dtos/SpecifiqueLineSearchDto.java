@@ -28,4 +28,12 @@ public class SpecifiqueLineSearchDto {
     public void setMarcheId(Long marcheId) {
         this.marcheId = marcheId;
     }
+
+    @Override
+    public String toString() {
+        return "SpecifiqueLineSearchDto{" +
+                "banqueId=" + banqueId +
+                ", marcheId=" + marcheId +
+                '}';
+    }
 }

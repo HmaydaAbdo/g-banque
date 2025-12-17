@@ -1,5 +1,5 @@
 
-package staport.finance.gBanque.batchJobs.lignesFunctionnelles.config;
+package staport.finance.gBanque.batchJobs.generalFunctionalLines.config;
 
 
 import jakarta.persistence.EntityManagerFactory;
@@ -17,9 +17,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.batchJobs.lignesFunctionnelles.dtos.ProcessedFunctionalLine;
-import staport.finance.gBanque.batchJobs.lignesFunctionnelles.processors.FunctionalLineProcessor;
-import staport.finance.gBanque.batchJobs.lignesFunctionnelles.writers.FunctionalLineWriter;
+import staport.finance.gBanque.batchJobs.generalFunctionalLines.dtos.ProcessedFunctionalLine;
+import staport.finance.gBanque.batchJobs.generalFunctionalLines.listeners.FunctionalLineJobListener;
+import staport.finance.gBanque.batchJobs.generalFunctionalLines.processors.FunctionalLineProcessor;
+import staport.finance.gBanque.batchJobs.generalFunctionalLines.writers.FunctionalLineWriter;
 
 
 /**
@@ -39,9 +40,11 @@ public class LigneFonctionnelleJobConfiguration {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
     private final EntityManagerFactory entityManagerFactory;
+
     // FunctionalLineProcessor and FunctionalLineWriter are @Component, so Spring injects them directly.
     private final FunctionalLineProcessor functionalLineProcessor;
     private final FunctionalLineWriter functionalLineWriter;
+    private final FunctionalLineJobListener functionalLineJobListener;
 
     /**
      * Constructor for injecting required Spring Batch infrastructure components
@@ -57,12 +60,13 @@ public class LigneFonctionnelleJobConfiguration {
                                               PlatformTransactionManager transactionManager,
                                               EntityManagerFactory entityManagerFactory,
                                               FunctionalLineProcessor functionalLineProcessor,
-                                              FunctionalLineWriter functionalLineWriter) {
+                                              FunctionalLineWriter functionalLineWriter, FunctionalLineJobListener functionalLineJobListener) {
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.entityManagerFactory = entityManagerFactory;
         this.functionalLineProcessor = functionalLineProcessor;
         this.functionalLineWriter = functionalLineWriter;
+        this.functionalLineJobListener = functionalLineJobListener;
         log.info("LigneFonctionnelleJobConfiguration initialized.");
     }
 
@@ -78,6 +82,7 @@ public class LigneFonctionnelleJobConfiguration {
     public Job functionalLineExpirationJob() {
         log.info("Configuring 'functionalLineExpirationJob'.");
         return new JobBuilder("functionalLineExpirationJob", jobRepository)
+                .listener(functionalLineJobListener)
                 .start(processFunctionalLinesStep()) // The starting step of this job
                 .build();
     }

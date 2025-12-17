@@ -1,74 +1,89 @@
-server:
-  address: ${SERVER_ADRESSE:0.0.0.0}
-  port: ${SERVER_PORT:8080}
-  servlet:
-    contextPath: ${CONTEXTE_PATH:/gBanque/api}
+  server:
+    address: ${SERVER_ADRESSE:0.0.0.0}
+    port: ${SERVER_PORT:8080}
+    servlet:
+      contextPath: ${CONTEXTE_PATH:/gBanque/api}
 
-spring:
+  spring:
 
-  application:
-    name: gBanque
+    application:
+      name: gBanque
+    datasource:
 
-  datasource:
+      url: jdbc:mysql://localhost:3306/${MYSQL_DATABASE:Gbanque}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      username: ${MYSQL_USER:root}
+      password: ${MYSQL_PASSWORD:}
+      driver-class-name: com.mysql.cj.jdbc.Driver
 
-    url: jdbc:mysql://localhost:3306/${MYSQL_DATABASE:Gbanque}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      idle-timeout: 30000
-      connection-timeout: 20000
-      max-lifetime: 1800000
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: false
-
-
-    properties:
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 5
+        idle-timeout: 30000
+        connection-timeout: 20000
+        max-lifetime: 1800000
+    jpa:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-  batch:
-    job:
-      enabled: true
-    jdbc:
-      initialize-schema: always
+        ddl-auto: update
+      show-sql: false
 
 
-  mail:
-    host: mail.staport.ma
-    port: 465
-    username: gbanque@staport.ma
-    password: Gbanque@2026
-    protocol: smtp
-    from: gbanque@staport.ma
-    default-encoding: UTF-8
-    properties:
-      mail.smtp.auth: true
-      mail.smtp.starttls.enable: true
-      mail.smtp.starttls.required: true
-      mail.smtp.ssl.enable: false
+      properties:
+        hibernate:
+          dialect: org.hibernate.dialect.MySQL8Dialect
+    batch:
+      job:
+        enabled: true
+      jdbc:
+        initialize-schema: always
+    mail:
+        host: mail.staport.ma
+        port: 587
+        username: gbanque@staport.ma
+        password: Gbanque@2026
+        protocol: smtp
+        from: gbanque@staport.ma
+        default-encoding: UTF-8
+        properties:
+          mail.smtp.auth: true
+          mail.smtp.starttls.enable: true
+          mail.smtp.starttls.required: false
+          mail.smtp.ssl.trust: mail.staport.ma
+          mail.smtp.ssl.checkserveridentity: false
+          mail.smtp.connectiontimeout: 5000
+          mail.smtp.timeout: 5000
+          mail.smtp.writetimeout: 5000
+        notification:
+          batch-job:
+            enabled: true
+            recipients: hmayda@staport-sa.ma
+
+  functional:
+    line:
+      expiration:
+        alert:
+          threshold:
+            months: 2
+        warning:
+          threshold:
+            months: 3
+      job:
+        # Configuration individuelle des jobs
+        general:
+          enabled: true
+        specific:
+          enabled: true
+      jobs:
+        # Configuration globale du scheduler
+        enabled: true
+        cron: 0 0 12 ? * SUN  # Dimanche à 12:00 PM
+        sequential: true  # Exécution séquentielle (recommandé)
+        abort-on-general-failure: false  # Annuler job spécifique si job général échoue
 
 
-
-
-functional:
-  line:
-    expiration:
-      alert:
-        threshold:
-          months: 2
-      warning:
-        threshold:
-          months: 3
-
-leasing:
-  contract:
-    valeur-residuelle: 0.01
-    taux-tva: 0.2
+  leasing:
+    contract:
+      valeur-residuelle: 0.01
+      taux-tva: 0.2
 
 
 
