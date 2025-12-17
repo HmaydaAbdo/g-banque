@@ -66,7 +66,7 @@
           {field: 'agence', header: 'Agence', sortable: true},
           {field: 'soldeActuel', header: 'Solde Actuel', sortable: true},
         ]"
-      styleClass="p-datatable-gridlines"
+      styleClass="p-datatable-gridlines text-xs"
       [tableStyle]="{'min-width': '70rem'}"
     >
       <ng-template pTemplate="header" let-columns>
@@ -98,16 +98,16 @@
           </td>
           <td>{{ banque.address }}</td>
           <td>{{ banque.agence }}</td>
-          <td>{{ banque.soldeActuel }} MAD</td>
-          <td>
-            <button pButton pRipple icon="pi pi-chart-line" class="p-button-rounded p-button-info mr-2"
+          <td>{{ banque.soldeActuel | number}} MAD</td>
+          <td class="flex flex-row gap-1">
+            <button pButton pRipple icon="pi pi-eye" size="small" class="p-button-outlined p-button-rounded p-button-info "
                     [routerLink]="['/portail/comptes-bancaires/history', banque.id]"
                     pTooltip="Voir l'historique"></button>
-            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
-                    [routerLink]="['/portail/comptes-bancaires/edit', banque.id]"></button>
+            <button pButton pRipple icon="pi pi-pencil" size="small" class="p-button-rounded p-button-outlined p-button-secondary "
+                    pTooltip="Modifier"   [routerLink]="['/portail/comptes-bancaires/edit', banque.id]"></button>
             @if (isAdmin()) {
-              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
-                      (click)="deleteBanque(banque)"></button>
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
+                      pTooltip="Supprimer" (click)="deleteBanque(banque)"></button>
             }
 
           </td>

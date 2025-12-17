@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="h-screen overflow-y-scroll max-w-screen p-1 bg-gray-50">
+<div class="h-screen  max-w-screen p-1 bg-gray-50">
     <div class="px-4 flex flex-column gap-4 mb-8">
       <form [formGroup]="functionalLineSearchForm" >
         <div class="flex flex-row  gap-2 flex-wrap ">
@@ -52,7 +52,6 @@
                [value]="bankFunctionalLines"
                [loading]="loading"
                [scrollable]="true"
-               scrollHeight="400px"
                styleClass="p-datatable-gridlines  mb-4"
                [tableStyle]="{'min-width': '50rem'}"
                [paginator]="true"
