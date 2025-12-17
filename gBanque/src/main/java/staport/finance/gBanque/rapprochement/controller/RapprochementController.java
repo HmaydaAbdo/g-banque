@@ -2,7 +2,9 @@ package staport.finance.gBanque.rapprochement.controller;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementRequestDto;
@@ -51,5 +53,30 @@ public class RapprochementController {
                 rapprochementService.searchRapprochements(searchDto, pageable);
 
         return ResponseEntity.ok(rapprochementPage);
+    }
+
+    @GetMapping("/{id}/report/pdf")
+    public ResponseEntity<byte[]> downloadRapprochementReport(@PathVariable Long id) {
+
+        // 1. Générer le contenu du rapport (byte[])
+        byte[] pdfContent = rapprochementService.generateRapprochementPdf(id);
+
+        // 2. Définir le nom du fichier pour le téléchargement
+        String filename = "Rapport_Rapprochement_" + id + ".pdf";
+
+        // 3. Configurer les En-têtes HTTP
+        HttpHeaders headers = new HttpHeaders();
+
+        // Indique le type de contenu (PDF)
+        headers.setContentType(MediaType.APPLICATION_PDF);
+
+        // Force le téléchargement plutôt que l'affichage dans le navigateur
+        headers.setContentDispositionFormData("attachment", filename);
+
+        // Indique la taille du fichier
+        headers.setContentLength(pdfContent.length);
+
+        // 4. Retourner la réponse
+        return new ResponseEntity<>(pdfContent, headers, HttpStatus.OK);
     }
 }

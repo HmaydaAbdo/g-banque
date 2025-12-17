@@ -45,4 +45,14 @@ public class BanqueRequest {
     public String getAgence() { return agence; }
     public void setAgence(String agence) { this.agence = agence; }
 
+    @Override
+    public String toString() {
+        return "BanqueRequest{" +
+                "nom='" + nom + '\'' +
+                ", numeroDeCompte='" + numeroDeCompte + '\'' +
+                ", devise=" + devise +
+                ", address='" + address + '\'' +
+                ", agence='" + agence + '\'' +
+                '}';
+    }
 }

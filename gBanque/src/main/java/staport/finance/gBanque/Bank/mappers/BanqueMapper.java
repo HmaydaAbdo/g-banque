@@ -1,5 +1,8 @@
 package staport.finance.gBanque.Bank.mappers;
 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueRequest;
@@ -11,27 +14,27 @@ import java.util.Base64;
 @Component
 public class BanqueMapper {
 
-    /**
-     * Converts a byte array (logo data) to a Base64 encoded String.
-     * @param bytes The byte array of the logo.
-     * @return Base64 encoded string, or null if input is null or empty.
-     */
-    public String bytesToBase64(byte[] bytes) {
-        return (bytes != null && bytes.length > 0) ? Base64.getEncoder().encodeToString(bytes) : null;
-    }
 
-    /**
-     * Converts a BanqueRequest DTO to a Banque entity for creation.
-     * Fields like ID, creation/modification dates, and current balance are handled by JPA lifecycle callbacks or set separately.
-     * logoData needs to be set by the service layer from MultipartFile.
-     *
-     * @param request The BanqueRequest DTO.
-     * @return A new Banque entity.
-     */
-    public Banque toEntity(BanqueRequest request) {
-        if (request == null) {
+    private static final Logger logger = LoggerFactory.getLogger(BanqueMapper.class);
+
+
+    public String bytesToBase64(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) {
+            logger.debug("No logo data to convert to Base64");
             return null;
         }
+
+        logger.debug("Converting logo data to Base64 (size: {} bytes)", bytes.length);
+        return Base64.getEncoder().encodeToString(bytes);
+    }
+
+    public Banque toEntity(BanqueRequest request) {
+        if (request == null) {
+            logger.warn("Attempted to convert null BanqueRequest to Entity");
+            return null;
+        }
+
+        logger.debug("Converting BanqueRequest to Entity - request: {}", request);
 
         Banque banque = new Banque();
         banque.setNom(request.getNom());
@@ -40,19 +43,19 @@ public class BanqueMapper {
         banque.setAddress(request.getAddress());
         banque.setAgence(request.getAgence());
 
+        logger.debug("Successfully converted BanqueRequest to Entity for: {}", request.getNom());
         return banque;
     }
 
-    /**
-     * Converts a Banque entity to a BanqueResponse DTO.
-     *
-     * @param banque The Banque entity.
-     * @return A BanqueResponse DTO.
-     */
+
     public BanqueResponse toDto(Banque banque) {
         if (banque == null) {
+            logger.warn("Attempted to convert null Banque Entity to DTO");
             return null;
         }
+
+        logger.debug("Converting Banque Entity to DTO - ID: {}, Name: {}",
+                banque.getId(), banque.getNom());
 
         BanqueResponse response = new BanqueResponse();
         response.setId(banque.getId());
@@ -69,53 +72,57 @@ public class BanqueMapper {
         // Convert logo byte[] to Base64 String
         response.setLogoBase64(bytesToBase64(banque.getLogoData()));
 
+        logger.debug("Successfully converted Banque Entity to DTO - ID: {}, Has logo: {}",
+                banque.getId(), banque.getLogoData() != null);
         return response;
     }
 
-
-
-    /**
-     * Updates an existing Banque entity from a BanqueRequest DTO.
-     * Ignores ID, creation/modification dates, account number, and balance as they shouldn't be updated via this DTO.
-     * logoData needs to be updated by the service layer from MultipartFile.
-     *
-     * @param request The BanqueRequest DTO with updated data.
-     * @param banque The existing Banque entity to be updated.
-     */
     public void updateBanqueFromDto(BanqueRequest request, Banque banque) {
-        if (request == null || banque == null) {
-            return; // Or throw IllegalArgumentException
+        if (request == null) {
+            logger.warn("Attempted to update Banque Entity with null BanqueRequest");
+            return;
         }
+
+        if (banque == null) {
+            logger.warn("Attempted to update null Banque Entity");
+            return;
+        }
+
+        logger.debug("Updating Banque Entity ID: {} with data from request - New name: {}",
+                banque.getId(), request.getNom());
 
         banque.setNom(request.getNom());
         banque.setDevise(request.getDevise());
         banque.setAddress(request.getAddress());
         banque.setAgence(request.getAgence());
 
+        logger.debug("Successfully updated Banque Entity ID: {}", banque.getId());
     }
 
-    /**
-     * Converts a Banque entity to a BankAcceuilResponse DTO for the dashboard view.
-     *
-     * @param banque The Banque entity.
-     * @return A BankAcceuilResponse DTO.
-     */
+
     public BankAcceuilResponse toAcceuilDto(Banque banque) {
         if (banque == null) {
+            logger.warn("Attempted to convert null Banque Entity to AcceuilDTO");
             return null;
         }
+
+        logger.debug("Converting Banque Entity to AcceuilDTO - ID: {}, Name: {}, Solde: {}",
+                banque.getId(), banque.getNom(), banque.getSoldeActuel());
 
         BankAcceuilResponse response = new BankAcceuilResponse();
         response.setBankId(banque.getId());
         response.setName(banque.getNom());
         response.setSoldeActuelle(banque.getSoldeActuel());
         response.setSoldeDepart(banque.getSoldeDepart());
+
         // Convert logo byte[] to Base64 String
         response.setLogoBase64(bytesToBase64(banque.getLogoData()));
 
         // plafondFC is deliberately not set here, as it's computed/fetched in the service layer.
-        response.setPlafondFC(null); // Ensure it's null by default
+        response.setPlafondFC(null);
 
+        logger.debug("Successfully converted Banque Entity to AcceuilDTO - ID: {}, Has logo: {}",
+                banque.getId(), banque.getLogoData() != null);
         return response;
     }
 

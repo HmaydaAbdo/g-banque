@@ -113,8 +113,8 @@ public class RecapitulatifEncaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(virement.getDateEmission());
         dto.setCredit(virement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("emetteur " + virement.getEmetteur());
-        dto.setLibelle("Bénéficiaire " + virement.getBeneficiaire() );
+        dto.setObservations( virement.getEmetteur());
+        dto.setLibelle( virement.getBeneficiaire() );
         dto.setSource(TransactionSource.Virement);
         return dto;
     }
@@ -141,8 +141,8 @@ public class RecapitulatifEncaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(miseADisposition.getDateEmission());
         dto.setCredit(miseADisposition.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("emetteur  " + miseADisposition.getEmetteur());
-        dto.setLibelle("Bénéficiaire " + miseADisposition.getBeneficiaire() );
+        dto.setObservations( miseADisposition.getEmetteur());
+        dto.setLibelle(miseADisposition.getBeneficiaire() );
         dto.setSource(TransactionSource.MiseADisposition);
         return dto;
     }
@@ -155,8 +155,8 @@ public class RecapitulatifEncaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setDateEmission(lcn.getDateEmission());
         dto.setCredit(lcn.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations("emetteur  " + lcn.getEmetteur());
-        dto.setLibelle("Bénéficiaire " + lcn.getBeneficiaire() );
+        dto.setObservations( lcn.getEmetteur());
+        dto.setLibelle( lcn.getBeneficiaire() );
         dto.setSource(TransactionSource.LCN);
         return dto;
     }

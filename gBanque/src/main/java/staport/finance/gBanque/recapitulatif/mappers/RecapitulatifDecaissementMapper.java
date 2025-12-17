@@ -51,7 +51,7 @@ public class RecapitulatifDecaissementMapper {
         String libelle;
         // Logic to check if it's the final residual value payment
         if (echeance.getNumeroEcheance() == (contrat.getPeriodeEnMois() + 1)) {
-            libelle = contrat.getOrganismeLeasing().getNom() + ", V.R. pour le contrat N° " + contrat.getNumeroContrat();
+            libelle = contrat.getOrganismeLeasing().getNom() + ", V.R. contrat N° " + contrat.getNumeroContrat();
         } else {
             libelle = contrat.getOrganismeLeasing().getNom() + ", contrat N° " + contrat.getNumeroContrat();
         }
@@ -99,7 +99,7 @@ public class RecapitulatifDecaissementMapper {
         }
         dto.setDebit(cheque.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Chèque N° " + cheque.getNumero());
-        dto.setLibelle("Bénéficiaire : " + cheque.getBeneficiaire() );
+        dto.setLibelle(cheque.getBeneficiaire() );
         dto.setSource(TransactionSource.CHEQUE);
         return dto;
     }
@@ -120,7 +120,7 @@ public class RecapitulatifDecaissementMapper {
         dto.setDateEcheance(lcn.getDateEcheance());
         dto.setDebit(lcn.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("LCN N° " + lcn.getNumero());
-        dto.setLibelle( "Bénéficiaire : " + lcn.getBeneficiaire());
+        dto.setLibelle( lcn.getBeneficiaire());
         dto.setSource(TransactionSource.LCN);
         return dto;
     }
@@ -140,7 +140,7 @@ public class RecapitulatifDecaissementMapper {
         dto.setDateEmission(virement.getDateEmission());
         dto.setDebit(virement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Virement N° " + virement.getNumero());
-        dto.setLibelle("Bénéficiaire " + virement.getBeneficiaire() );
+        dto.setLibelle( virement.getBeneficiaire() );
         dto.setSource(TransactionSource.Virement);
         return dto;
     }
@@ -160,7 +160,7 @@ public class RecapitulatifDecaissementMapper {
         dto.setDateEmission(mad.getDateEmission());
         dto.setDebit(mad.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Mise à disposition N° " + mad.getNumero());
-        dto.setLibelle("Bénéficiaire " + mad.getBeneficiaire() );
+        dto.setLibelle( mad.getBeneficiaire() );
         dto.setSource(TransactionSource.MiseADisposition);
         return dto;
     }
@@ -207,7 +207,6 @@ public class RecapitulatifDecaissementMapper {
         return dto;
     }
 
-
     /**
      * Maps a Factoring entity to a RecaputilatifDecaissementItem DTO.
      *
@@ -229,7 +228,6 @@ public class RecapitulatifDecaissementMapper {
         return dto;
     }
 
-
     /**
      * Maps a Commission entity to a RecaputilatifItem DTO.
      *
@@ -250,7 +248,6 @@ public class RecapitulatifDecaissementMapper {
         dto.setSource(TransactionSource.COMMISSION);
         return dto;
     }
-
 
     public RecaputilatifItem mapAgiosToDto(Agios agios) {
 
@@ -281,7 +278,6 @@ public class RecapitulatifDecaissementMapper {
         dto.setSource(TransactionSource.PRELEVEMENT);
         return dto;
     }
-
 
     public RecaputilatifItem mapFraisBancaireToDto(FraisBancaire fraisBancaire) {
 

@@ -25,7 +25,7 @@ public class EmailNotificationJobListener implements JobExecutionListener {
     private final ProcessingSkipListener processingSkipListener;
     private final EmailService emailService;
 
-    @Value("${batch.skipped-items.report-recipient:abdoessamadhmayda@gmail.com}")
+    @Value("${batch.skipped-items.report-recipient:hmayda@staport-sa.ma}")
     private String reportRecipient;
 
     @Autowired

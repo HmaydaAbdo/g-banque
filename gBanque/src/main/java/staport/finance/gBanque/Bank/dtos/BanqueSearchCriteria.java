@@ -18,4 +18,14 @@ public class BanqueSearchCriteria {
     public void setMinSolde(BigDecimal minSolde) { this.minSolde = minSolde; }
     public BigDecimal getMaxSolde() { return maxSolde; }
     public void setMaxSolde(BigDecimal maxSolde) { this.maxSolde = maxSolde; }
+
+    @Override
+    public String toString() {
+        return "BanqueSearchCriteria{" +
+                "nom='" + nom + '\'' +
+                ", numeroDeCompte='" + numeroDeCompte + '\'' +
+                ", minSolde=" + minSolde +
+                ", maxSolde=" + maxSolde +
+                '}';
+    }
 }

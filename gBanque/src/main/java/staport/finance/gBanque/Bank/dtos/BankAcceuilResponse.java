@@ -52,4 +52,16 @@ public class BankAcceuilResponse {
     public void setSoldeDepart(BigDecimal soldeDepart) {
         this.soldeDepart = soldeDepart;
     }
+
+    @Override
+    public String toString() {
+        return "BankAcceuilResponse{" +
+                "bankId=" + bankId +
+                ", logoBase64='" + logoBase64 + '\'' +
+                ", name='" + name + '\'' +
+                ", soldeActuelle=" + soldeActuelle +
+                ", soldeDepart=" + soldeDepart +
+                ", plafondFC=" + plafondFC +
+                '}';
+    }
 }

@@ -50,4 +50,21 @@ public class BanqueResponse {
     public void setSoldeDepart(BigDecimal soldeDepart) {
         this.soldeDepart = soldeDepart;
     }
+
+    @Override
+    public String toString() {
+        return "BanqueResponse{" +
+                "id=" + id +
+                ", logoBase64='" + logoBase64 + '\'' +
+                ", nom='" + nom + '\'' +
+                ", numeroDeCompte='" + numeroDeCompte + '\'' +
+                ", devise=" + devise +
+                ", address='" + address + '\'' +
+                ", agence='" + agence + '\'' +
+                ", soldeActuel=" + soldeActuel +
+                ", soldeDepart=" + soldeDepart +
+                ", dateCreation=" + dateCreation +
+                ", dateModification=" + dateModification +
+                '}';
+    }
 }
