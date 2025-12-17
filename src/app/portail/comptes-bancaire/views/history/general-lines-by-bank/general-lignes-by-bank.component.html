@@ -67,6 +67,8 @@
 
         <ng-template pTemplate="header">
           <tr>
+            <th [pSortableColumn]="'id'">Id <p-sortIcon field="id"></p-sortIcon></th>
+
             <th [pSortableColumn]="'natureLigneFonctionnelle.label'">Nature <p-sortIcon field="natureLigneFonctionnelle.label"></p-sortIcon></th>
             <th [pSortableColumn]="'plafond'">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
             <th [pSortableColumn]="'taux'">Taux <p-sortIcon field="taux"></p-sortIcon></th>
@@ -76,6 +78,7 @@
         </ng-template>
         <ng-template pTemplate="body" let-ligne>
           <tr>
+            <td>{{ligne.id}}</td>
             <td>{{ligne.natureLigneFonctionnelleLabel}}</td>
             <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.taux | number:'1.2-2' }} %</td>

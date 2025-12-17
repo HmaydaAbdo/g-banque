@@ -56,8 +56,8 @@
       [lazy]="true"
       responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex"
       (onLazyLoad)="loadBanques($event)"
-      [resizableColumns]="true"
       [columns]="[
+           {field: 'id', header: 'id', sortable: true},
           {field: 'logoBase64', header: 'Logo', sortable: false},
           {field: 'nom', header: 'Nom', sortable: true},
           {field: 'numeroDeCompte', header: 'Numéro de Compte', sortable: true},
@@ -67,10 +67,10 @@
           {field: 'soldeActuel', header: 'Solde Actuel', sortable: true},
         ]"
       styleClass="p-datatable-gridlines text-xs"
-      [tableStyle]="{'min-width': '70rem'}"
+
     >
       <ng-template pTemplate="header" let-columns>
-        <tr>
+        <tr class="white-space-nowrap">
           <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
@@ -82,13 +82,13 @@
       </ng-template>
       <ng-template pTemplate="body" let-banque>
         <tr>
+          <td>{{ banque.id }}</td>
           <td>
             <p-image *ngIf="banque.logoBase64"
                      [src]="'data:image/png;base64,' + banque.logoBase64"
                      [alt]="banque.nom + ' logo'"
                      width="50"
-                     [preview]="true">
-            </p-image>
+                     [preview]="true"/>
             <span *ngIf="!banque.logoBase64">Pas de Logo</span>
           </td>
           <td>{{ banque.nom }}</td>
@@ -98,7 +98,7 @@
           </td>
           <td>{{ banque.address }}</td>
           <td>{{ banque.agence }}</td>
-          <td>{{ banque.soldeActuel | number}} MAD</td>
+          <td>{{ banque.soldeActuel | number}} </td>
           <td class="flex flex-row gap-1">
             <button pButton pRipple icon="pi pi-eye" size="small" class="p-button-outlined p-button-rounded p-button-info "
                     [routerLink]="['/portail/comptes-bancaires/history', banque.id]"

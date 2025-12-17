@@ -79,6 +79,7 @@
           (onLazyLoad)="loadSpecificFunctionalLines($event)"
           [resizableColumns]="true"
           [columns]="[
+          { field: 'id', header: 'id', sortable: true },
           { field: 'natureLigneFonctionnelleLabel', header: 'Nature', sortable: true },
           { field: 'marcheNom', header: 'Marché', sortable: true },
           { field: 'marcheNumero', header: 'N° Marché', sortable: true },
@@ -106,6 +107,7 @@
           </ng-template>
           <ng-template pTemplate="body" let-ligne>
             <tr>
+              <td>{{ligne.id}}</td>
               <td>{{ ligne.natureLigneFonctionnelleLabel }}</td>
               <td>{{ ligne.marcheNom}}</td>
               <td>{{ ligne.marcheNumero}}</td>
