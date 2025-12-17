@@ -1,24 +1,23 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column overflow-scroll gap-2 md:gap-5 md:p-4 w-screen h-screen">
+<div class="card flex flex-column overflow-scroll gap-2  p-2 w-screen h-screen">
 
-  <div class="flex flex-column">
     <div class="flex flex-row flex-wrap justify-content-between align-items-center bg-transparent">
 
-        <div class="flex justify-content-center align-items-center mb-2">
+        <div class="flex justify-content-center align-items-center ">
           <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
             <ng-template pTemplate="item" let-item>
               <ng-container *ngIf="item.route; else elseBlock">
                 <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-                  <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+                  <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-xl']"></span>
                   <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
                 </a>
 
               </ng-container>
               <ng-template #elseBlock>
                 <a [href]="item.url">
-                  <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+                  <span class="text-color text-sm  text-xl  text-center">{{ item.label }}</span>
                 </a>
               </ng-template>
             </ng-template>
@@ -34,59 +33,51 @@
         routerLink="/portail/lignes-fonctionnelles-encours/new"
       ></button>
     </div>
-    <form [formGroup]="searchForm" class="w-full">
-      <div class="flex flex-column px-4 md:flex-row md:align-items-end md:justify-content-between">
-        <div class="flex flex-column md:flex-row gap-3 mb-3 md:mb-0">
-          <div>
-            <label for="filterBanque" class="block text-900 text-center font-medium mb-2">Banque</label>
-            <p-dropdown
-              id="filterBanque"
-              formControlName="banqueId"
-              [options]="banquesOptions"
-              placeholder="Toutes les banques"
-              optionLabel="label"
-              optionValue="value"
-              [showClear]="true"
-              styleClass="w-full"
-            ></p-dropdown>
-          </div>
-
-          <div>
-            <label for="filterNature" class="block text-900 text-center font-medium mb-2">Nature</label>
-            <p-dropdown
-              id="filterNature"
-              formControlName="natureLigneFonctionnelleId"
-              [options]="natureLigneOptions"
-              placeholder="Toutes les natures"
-              optionLabel="label"
-              optionValue="value"
-              [showClear]="true"
-              styleClass="w-full"
-            ></p-dropdown>
-          </div>
-          <div>
-            <label for="filterStatus" class="block text-900 text-center font-medium mb-2">Statut</label>
-            <p-dropdown
-              id="filterStatus"
-              formControlName="isExpired"
-              [options]="statutOptions"
-              placeholder="Toutes les status"
-              optionLabel="label"
-              optionValue="value"
-              [showClear]="true"
-              styleClass="w-full"
-            ></p-dropdown>
-          </div>
-
+    <form [formGroup]="searchForm" class="w-full flex  flex-row  align-items-end justify-content-between px-4">
+        <div>
+          <label for="filterBanque" class="block text-900 text-center font-medium mb-2">Banque</label>
+          <p-dropdown
+            id="filterBanque"
+            formControlName="banqueId"
+            [options]="banquesOptions"
+            placeholder="Toutes les banques"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            styleClass="w-full"
+          ></p-dropdown>
         </div>
-
-        <div class="flex-shrink-0">
-          <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()" pTooltip="Effacer la recherche"></button>
+        <div>
+          <label for="filterNature" class="block text-900 text-center font-medium mb-2">Nature</label>
+          <p-dropdown
+            id="filterNature"
+            formControlName="natureLigneFonctionnelleId"
+            [options]="natureLigneOptions"
+            placeholder="Toutes les natures"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            styleClass="w-full"
+          ></p-dropdown>
         </div>
-      </div>
+        <div>
+          <label for="filterStatus" class="block text-900 text-center font-medium mb-2">Statut</label>
+          <p-dropdown
+            id="filterStatus"
+            formControlName="isExpired"
+            [options]="statutOptions"
+            placeholder="Toutes les status"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="true"
+            styleClass="w-full"
+          ></p-dropdown>
+        </div>
+      <p-button  class="m-2 " severity="danger" icon="pi pi-times" (click)="clearSearch()" pTooltip="Effacer la recherche" />
+
+
     </form>
-
-    <div class="p-4 mb-8">
+    <div class=" pt-2 mb-8">
       <p-table
         #dt
         [value]="lignesFonctionnelles"
@@ -99,8 +90,9 @@
         [sortField]="'dateFin'"
         [sortOrder]="-1"
         (onLazyLoad)="loadLignesFonctionnelles($event)"
-        [resizableColumns]="true"
         [columns]="[
+
+      {field: 'id', header: 'Id', sortable: true},
       {field: 'banqueNom', header: 'Banque', sortable: true},
       {field: 'natureLigneFonctionnelleLabel', header: 'Nature', sortable: true},
       {field: 'plafond', header: 'Plafond', sortable: true},
@@ -109,9 +101,7 @@
       {field: 'taux', header: 'Taux', sortable: true},
       {field: 'dateDepart', header: 'Date Départ', sortable: true},
       {field: 'dateFin', header: 'Date Fin', sortable: true} ]"
-
-        styleClass="p-datatable-gridlines p-datatable-sm"
-        [tableStyle]="{'min-width': '50rem'}"
+        styleClass="p-datatable-gridlines p-datatable-sm text-xs"
         [scrollable]="true"
         scrollHeight="flex"
         [showCurrentPageReport]="true"
@@ -140,14 +130,15 @@
                       (click)="dt.toggleRow(ligne)"
                       *ngIf="ligne.estLigneMere"></button>
             </td>
+            <td>{{ ligne.id }}</td>
             <td>{{ ligne.banqueNom }}</td>
             <td>{{ ligne.natureLigneFonctionnelleLabel}}</td>
             <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.encours | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.solde | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.taux | number:'1.2-2' }}%</td>
-            <td>{{ ligne.dateDepart | date:'mediumDate' }}</td>
-            <td>{{ ligne.dateFin | date:'mediumDate' }}</td>
+            <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
+            <td>{{ ligne.dateFin | date:'dd/MM/YYYY' }}</td>
             <td>
               <p-tag
                 [value]="ligne.expired ? 'Expirée' : 'En cours'"
@@ -155,28 +146,31 @@
               </p-tag>
             </td>
 
-            <td class="text-center">
-              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" [routerLink]="['/portail/lignes-fonctionnelles-encours/edit', ligne.id]"></button>
-              <button pButton pRipple icon="pi pi-ban" class=" p-button-rounded p-button-secondary mr-2" (click)="desactiver(ligne)" type="button" [disabled]="ligne?.estSousLigne || !ligne?.actif" pTooltip="Désactiver."></button>
-              @if (isAdmin()){ <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger " pTooltip="Supprimer" tooltipPosition="top" (click)="deleteLigneFonctionnelle(ligne)"> </button> } </td>
+            <td class="flex flex-row gap-1">
+              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" [routerLink]="['/portail/lignes-fonctionnelles-encours/edit', ligne.id]"></button>
+              <button pButton pRipple icon="pi pi-ban" class=" p-button-rounded p-button-outlined p-button-secondary mr-2" (click)="desactiver(ligne)" type="button" [disabled]="ligne?.estSousLigne || !ligne?.actif" pTooltip="Désactiver."></button>
+              @if (isAdmin()){ <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger " pTooltip="Supprimer" tooltipPosition="top" (click)="deleteLigneFonctionnelle(ligne)"> </button> }
+            </td>
 
           </tr>
         </ng-template>
 
         <ng-template pTemplate="rowexpansion" let-ligne>
-          <tr>
-            <td [attr.colspan]="8">
+          <tr >
+            <td colspan="12">
               <div class="p-2">
-                <h3 class="mb-2">Sous-lignes:</h3>
+                <h3 class="mb-2 text-center">Sous-lignes:</h3>
                 <p-table [value]="ligne.sousLignes" dataKey="id" styleClass="p-datatable-sm p-datatable-striped">
                   <ng-template pTemplate="header">
                     <tr>
+                      <th style="width: 30%;">Id </th>
                       <th style="width: 40%;">Nature </th>
                       <th style="width: 30%;">Plafond </th>
                     </tr>
                   </ng-template>
                   <ng-template pTemplate="body" let-sousLigne>
                     <tr>
+                      <td>{{ sousLigne.id }}</td>
                       <td>{{ sousLigne.natureLigneFonctionnelleLabel }}</td>
                       <td>{{ sousLigne.plafond ? (sousLigne.plafond | number:'1.2-2') + ' MAD' : '-' }}</td>
 
@@ -201,9 +195,6 @@
         </ng-template>
       </p-table>
     </div>
-  </div>
-
-
 
 </div>
 

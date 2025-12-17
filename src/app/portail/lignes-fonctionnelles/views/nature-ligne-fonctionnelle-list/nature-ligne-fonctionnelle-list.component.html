@@ -1,10 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="w-screen h-screen overflow-y-scroll p-4">
-
-
-  <div class="mb-3 ">
+<div class="w-screen h-screen overflow-y-scroll p-1 gap-2">
 
     <div class="flex justify-content-between align-items-center mb-2">
       <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
@@ -43,10 +40,7 @@
         </div>
       </div>
     </form>
-
-  </div>
-
-  <div class="mb-8" >
+    <div class="mb-8 pt-2" >
     <p-table #dt
              [value]="natures"
              [lazy]="true"
@@ -55,10 +49,12 @@
              [rows]="10"
              [totalRecords]="totalRecords"
              [loading]="loading" [rowsPerPageOptions]="[3,5,10, 25, 50]"
+             styleClass="p-datatable-gridlines text-xs"
              [showCurrentPageReport]="true">
 
       <ng-template pTemplate="header">
         <tr>
+          <th pSortableColumn="id">Id <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="label">Libellé <p-sortIcon field="label"></p-sortIcon></th>
           <th pSortableColumn="description">Description <p-sortIcon field="description"></p-sortIcon></th>
           <th>Actions</th>
@@ -66,12 +62,13 @@
       </ng-template>
       <ng-template pTemplate="body" let-nature>
         <tr>
+          <td>{{ nature.id }}</td>
           <td>{{ nature.label }}</td>
           <td>{{ nature.description }}</td>
-          <td>
+          <td class="flex flex-row gap-2">
             @if (isAdmin()){
-              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" (click)="editNature(nature.id!)"></button>
-              <button pButton pRipple icon="pi pi-trash"  class="p-button-rounded  p-button-danger" pTooltip="Supprimer" tooltipPosition="top" (click)="deleteNature(nature.id!)"></button>
+              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" (click)="editNature(nature.id!)"></button>
+              <button pButton pRipple icon="pi pi-trash"  class="p-button-rounded p-button-outlined p-button-danger" pTooltip="Supprimer" tooltipPosition="top" (click)="deleteNature(nature.id!)"></button>
             }
           </td>
         </tr>
