@@ -1,4 +1,4 @@
-package staport.finance.gBanque.LigneFonctionnelle.jobs.scheduler;
+package staport.finance.gBanque.batchJobs.lignesFunctionnelles.scheduler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +10,6 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
-import org.springframework.context.annotation.Profile; // 1. Import @Profile
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 

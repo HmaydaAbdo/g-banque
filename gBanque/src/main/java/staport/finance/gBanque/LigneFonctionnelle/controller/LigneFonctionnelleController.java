@@ -1,5 +1,7 @@
 package staport.finance.gBanque.LigneFonctionnelle.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import staport.finance.gBanque.LigneFonctionnelle.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.services.LigneFonctionnelleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import java.util.List;
 @RequestMapping("/lignes-fonctionnelles")
 public class LigneFonctionnelleController {
 
+    private static final Logger logger = LoggerFactory.getLogger(LigneFonctionnelleController.class);
     private final LigneFonctionnelleService ligneFonctionnelleService;
 
     @Autowired
@@ -27,7 +30,9 @@ public class LigneFonctionnelleController {
 
     @PostMapping
     public ResponseEntity<LigneFonctionnelleResponse> createLigneFonctionnelle(@Valid @RequestBody LigneFonctionnelleRequest request) {
+        logger.info("Creating new ligne fonctionnelle for banque ID: {} with request : {}", request.getBanqueId(), request);
         LigneFonctionnelleResponse createdLigne = ligneFonctionnelleService.createLigneFonctionnelle(request);
+        logger.info("Successfully created ligne fonctionnelle with ID: {}", createdLigne.getId());
         return new ResponseEntity<>(createdLigne, HttpStatus.CREATED);
     }
 
@@ -36,7 +41,10 @@ public class LigneFonctionnelleController {
     public ResponseEntity<LigneFonctionnelleResponse> updateLigneFonctionnelle(
             @PathVariable Long id,
             @Valid @RequestBody LigneFonctionnelleRequest request) {
+        logger.info("Updating ligne fonctionnelle with ID: {}", id);
+        logger.debug("Update request details: {}", request);
         LigneFonctionnelleResponse updatedLigne = ligneFonctionnelleService.updateLigneFonctionnelle(id, request);
+        logger.info("Successfully updated ligne fonctionnelle ID: {}", id);
         return ResponseEntity.ok(updatedLigne);
     }
 
@@ -44,7 +52,9 @@ public class LigneFonctionnelleController {
 
     @GetMapping("/{id}")
     public ResponseEntity<LigneFonctionnelleResponse> getLigneFonctionnelleById(@PathVariable Long id) {
+        logger.info("Fetching ligne fonctionnelle by ID: {}", id);
         LigneFonctionnelleResponse ligne = ligneFonctionnelleService.getLigneFonctionnelleById(id);
+        logger.debug("Successfully retrieved ligne fonctionnelle ID: {}", id);
         return ResponseEntity.ok(ligne);
     }
 
@@ -60,7 +70,16 @@ public class LigneFonctionnelleController {
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, size, sortOrder);
 
+        logger.info("Fetching paginated lignes fonctionnelles - Page: {}, Size: {}, Sort: {} {}", page, size, sort[0], sort[1]);
+        logger.debug("Search criteria: {}", searchCriteria);
         Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getPaginatedLigneFonctionnelles(searchCriteria, pageable);
+
+        logger.info("Successfully retrieved {} ligne(s) fonctionnelle(s) out of {} total (Page {}/{})",
+                lignes.getNumberOfElements(),
+                lignes.getTotalElements(),
+                lignes.getNumber() + 1,
+                lignes.getTotalPages());
+
         return ResponseEntity.ok(lignes);
     }
 
@@ -74,17 +93,20 @@ public class LigneFonctionnelleController {
     public ResponseEntity<Void> deactivateLigneFonctionnelle(
             @PathVariable Long ligneId)
     {
+        logger.info("Attempting to deactivate ligne fonctionnelle with ID: {}", ligneId);
         ligneFonctionnelleService.deactivateLigneFonctionnelle(ligneId);
+        logger.info("Successfully deactivated ligne fonctionnelle ID: {}", ligneId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteLigneFonctionnelle(@PathVariable Long id) {
+        logger.info("Attempting to delete ligne fonctionnelle with ID: {}", id);
         ligneFonctionnelleService.deleteLigneFonctionnelle(id);
+        logger.info("Successfully deleted ligne fonctionnelle ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
-    // --- NOUVEL ENDPOINT POUR LA GESTION DES SOUS-LIGNES ---
     /**
      * Endpoint dédié pour la gestion (création, mise à jour, suppression) des Sous-lignes
      * d'une Ligne Mère spécifique.
@@ -97,8 +119,13 @@ public class LigneFonctionnelleController {
     public ResponseEntity<LigneFonctionnelleResponse> manageSousLignes(
             @PathVariable Long ligneMereId,
             @Valid @RequestBody List<SousLigneRequestDto> sousLignesRequests) {
+        logger.info("Managing sous-lignes for ligne mère ID: {}", ligneMereId);
+        logger.debug("Number of sous-lignes requests: {}", sousLignesRequests.size());
+        logger.debug("Sous-lignes requests details: {}", sousLignesRequests);
 
         LigneFonctionnelleResponse updatedLigneMere = ligneFonctionnelleService.manageSousLignes(ligneMereId, sousLignesRequests);
+        logger.info("Successfully managed sous-lignes for ligne mère ID: {}", ligneMereId);
+
         return ResponseEntity.ok(updatedLigneMere);
     }
 
@@ -125,7 +152,19 @@ public class LigneFonctionnelleController {
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, size, sortOrder);
 
+        logger.info("Fetching paginated lignes fonctionnelles for banque ID: {} - Page: {}, Size: {}, Sort: {} {}",
+                banqueId, page, size, sort[0], sort[1]);
+        logger.debug("Search criteria for banque {}: {}", banqueId, searchCriteria);
+
         Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getPaginatedLignesFonctionnellesByBanqueId(banqueId, searchCriteria, pageable);
+
+        logger.info("Successfully retrieved {} ligne(s) fonctionnelle(s) for banque ID: {} out of {} total (Page {}/{})",
+                lignes.getNumberOfElements(),
+                banqueId,
+                lignes.getTotalElements(),
+                lignes.getNumber() + 1,
+                lignes.getTotalPages());
+
         return ResponseEntity.ok(lignes);
     }
 
@@ -141,8 +180,11 @@ public class LigneFonctionnelleController {
             @RequestParam("banqueId") Long banqueId,
             @RequestParam("natureLigneFonctionnelleId") Long natureLigneFonctionnelleId) {
 
+        logger.info("Fetching historical chart data for banque ID: {}, nature ligne fonctionnelle ID: {}",
+                banqueId, natureLigneFonctionnelleId);
         LigneFonctionnelleChartData chartData = ligneFonctionnelleService.getHistoricalChartData(banqueId, natureLigneFonctionnelleId);
-
+        logger.info("Successfully retrieved historical chart data - {} data points", chartData.getLabels() != null ? chartData.getLabels().size() : 0);
+        logger.debug("Chart data details: {}", chartData);
         return ResponseEntity.ok(chartData);
     }
 }

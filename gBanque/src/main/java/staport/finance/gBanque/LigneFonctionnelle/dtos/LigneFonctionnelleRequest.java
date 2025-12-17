@@ -68,4 +68,17 @@ public class LigneFonctionnelleRequest {
 
     public List<SousLigneRequestDto> getSousLignes() { return sousLignes; }
     public void setSousLignes(List<SousLigneRequestDto> sousLignes) { this.sousLignes = sousLignes; }
+
+    @Override
+    public String toString() {
+        return "LigneFonctionnelleRequest{" +
+                "banqueId=" + banqueId +
+                ", natureLigneFonctionnelleId=" + natureLigneFonctionnelleId +
+                ", plafond=" + plafond +
+                ", taux=" + taux +
+                ", dateDepart=" + dateDepart +
+                ", dateFin=" + dateFin +
+                ", sousLignes=" + sousLignes +
+                '}';
+    }
 }

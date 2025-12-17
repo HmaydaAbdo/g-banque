@@ -1,5 +1,5 @@
 
-package staport.finance.gBanque.LigneFonctionnelle.jobs.dtos;
+package staport.finance.gBanque.batchJobs.lignesFunctionnelles.dtos;
 
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.notification.entities.NotificationType;

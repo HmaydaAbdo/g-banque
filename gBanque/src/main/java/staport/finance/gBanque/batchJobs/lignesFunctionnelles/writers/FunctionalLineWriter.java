@@ -1,4 +1,4 @@
-package staport.finance.gBanque.LigneFonctionnelle.jobs.writers;
+package staport.finance.gBanque.batchJobs.lignesFunctionnelles.writers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.jobs.dtos.ProcessedFunctionalLine;
+import staport.finance.gBanque.batchJobs.lignesFunctionnelles.dtos.ProcessedFunctionalLine;
 import staport.finance.gBanque.notification.service.NotificationService;
 
 

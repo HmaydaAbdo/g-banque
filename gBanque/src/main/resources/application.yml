@@ -1,8 +1,8 @@
 server:
-  address: 0.0.0.0
-  port: 8080
+  address: ${SERVER_ADRESSE:0.0.0.0}
+  port: ${SERVER_PORT:8080}
   servlet:
-    contextPath: /gBanque/api
+    contextPath: ${CONTEXTE_PATH:/gBanque/api}
 
 spring:
 
@@ -11,9 +11,9 @@ spring:
 
   datasource:
 
-    url: jdbc:mysql://localhost:3306/Gbanque?useSSL=false&serverTimezone=UTC
-    username: root
-    password:
+    url: jdbc:mysql://localhost:3306/${MYSQL_DATABASE:Gbanque}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
     hikari:
@@ -37,15 +37,20 @@ spring:
     jdbc:
       initialize-schema: always
 
+
   mail:
-    host: localhost
-    port: 1025
-    username: ''
-    password: ''
-    from: no-reply@Gbanque.com
+    host: mail.staport.ma
+    port: 465
+    username: gbanque@staport.ma
+    password: Gbanque@2026
+    protocol: smtp
+    from: gbanque@staport.ma
+    default-encoding: UTF-8
     properties:
-      mail.smtp.auth: false
-      mail.smtp.starttls.enable: false
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+      mail.smtp.ssl.enable: false
 
 
 

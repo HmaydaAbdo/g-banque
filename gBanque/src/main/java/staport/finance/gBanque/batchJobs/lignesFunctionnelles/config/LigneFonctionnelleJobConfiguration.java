@@ -1,5 +1,5 @@
 
-package staport.finance.gBanque.LigneFonctionnelle.jobs.config;
+package staport.finance.gBanque.batchJobs.lignesFunctionnelles.config;
 
 
 import jakarta.persistence.EntityManagerFactory;
@@ -17,10 +17,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.jobs.dtos.ProcessedFunctionalLine;
-import staport.finance.gBanque.LigneFonctionnelle.jobs.processors.FunctionalLineProcessor;
-import staport.finance.gBanque.LigneFonctionnelle.jobs.writers.FunctionalLineWriter;
-import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.batchJobs.lignesFunctionnelles.dtos.ProcessedFunctionalLine;
+import staport.finance.gBanque.batchJobs.lignesFunctionnelles.processors.FunctionalLineProcessor;
+import staport.finance.gBanque.batchJobs.lignesFunctionnelles.writers.FunctionalLineWriter;
 
 
 /**

@@ -1,5 +1,5 @@
 
-package staport.finance.gBanque.LigneFonctionnelle.jobs.processors;
+package staport.finance.gBanque.batchJobs.lignesFunctionnelles.processors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,7 +7,7 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.jobs.dtos.ProcessedFunctionalLine;
+import staport.finance.gBanque.batchJobs.lignesFunctionnelles.dtos.ProcessedFunctionalLine;
 import staport.finance.gBanque.notification.entities.NotificationType;
 
 import java.time.OffsetDateTime;

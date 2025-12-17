@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # ---------------------------------
+  # Spring Boot Backend Service
+  # ---------------------------------
+  backend:
+    build:
+      context: . # Build from the current directory (where Dockerfile is)
+      dockerfile: Dockerfile
+    container_name: gbanque_backend
+    restart: unless-stopped
+    # Use the .env file for environment variables
+    env_file:
+      - .env
+    # Map the application properties to environment variables
+    environment:
+      # Database connection for Spring Boot
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/$${MYSQL_DATABASE:Gbanque}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      # Server config for Spring Boot (from your application.yml)
+      SERVER_ADDRESS: ${SERVER_ADRESSE}
+      SERVER_PORT: ${SERVER_PORT}
+      SERVER_SERVLET_CONTEXT_PATH: ${CONTEXTE_PATH}
+    depends_on:
+      - mysql # Ensure MySQL is running before starting the backend
+    networks:
+      - app_network
+    ports:
+      - "${SERVER_PORT}:8080" # Map host port to container port 8080
+
+  # ---------------------------------
+  # MySQL Database Service
+  # ---------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: mysql8
+    restart: unless-stopped
+    env_file:
+      - .env # Use the .env file for database credentials
+    environment:
+      # These variables are required by the mysql image
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-appdb}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - "mysql_data:/var/lib/mysql"
+    networks:
+      - app_network
+    ports:
+      - "3306:3306"
+
+  # ---------------------------------
+  # PHPMyAdmin Service
+  # ---------------------------------
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql # Must use the service name 'mysql'
+      PMA_PORT: 3306
+    networks:
+      - app_network
+    ports:
+      - "8081:80"
+
+# ---------------------------------
+# Networks and Volumes
+# ---------------------------------
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
