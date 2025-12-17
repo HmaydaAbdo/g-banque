@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column overflow-scroll gap-2 md:gap-5 md:p-4 w-screen h-screen">
+<div class="card flex flex-column overflow-scroll gap-2  p-1 w-screen h-screen">
 
   <div class="flex flex-column">
     <div class="flex flex-row flex-wrap justify-content-between align-items-center bg-transparent">
@@ -12,13 +12,13 @@
             <ng-container *ngIf="item.route; else elseBlock">
               <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
                  #rla="routerLinkActive">
-                <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+                <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-xl']"></span>
                 <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
               </a>
             </ng-container>
             <ng-template #elseBlock>
               <a [href]="item.url">
-                <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+                <span class="text-color text-sm md:text-xl  text-center">{{ item.label }}</span>
               </a>
             </ng-template>
           </ng-template>
@@ -116,8 +116,8 @@
         [rowsPerPageOptions]="[3, 5, 10, 25, 50]"
         [lazy]="true"
         (onLazyLoad)="loadLignesFonctionnellesSpecifiques($event)"
-        [resizableColumns]="true"
         [columns]="[
+          { field: 'id', header: 'Id', sortable: true },
           { field: 'banqueNom', header: 'Banque', sortable: true },
           { field: 'natureLigneFonctionnelleLabel', header: 'Nature', sortable: true },
           { field: 'marcheNumero', header: 'Marché', sortable: true },
@@ -127,10 +127,7 @@
           { field: 'dateFin', header: 'Date Fin', sortable: true },
           { field: 'statut', header: 'Statut', sortable: false }
         ]"
-        styleClass="p-datatable-gridlines p-datatable-sm"
-        [tableStyle]="{'min-width': '50rem'}"
-        [scrollable]="true"
-        scrollHeight="flex"
+        styleClass="p-datatable-gridlines p-datatable-sm text-xs"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
       >
@@ -147,6 +144,7 @@
         </ng-template>
         <ng-template pTemplate="body" let-ligne>
           <tr>
+            <td>{{ ligne.id }}</td>
             <td>{{ ligne.banqueNom }}</td>
             <td>{{ ligne.natureLigneFonctionnelleLabel }}</td>
             <td>{{ ligne.marcheNumero }}</td>
@@ -162,17 +160,17 @@
               </p-tag>
             </td>
             <td class="text-center flex flex-row gap-2  ">
-              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
+              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2"
                       pTooltip="Modifier" tooltipPosition="top"
                       [routerLink]="['/portail/lignes-fonctionnelles-specifiques-encours/edit', ligne.id]">
               </button>
 
-              <button pButton pRipple icon="pi pi-stop-circle" class="p-button-rounded p-button-secondary" pTooltip="Désactiver" tooltipPosition="top"
+              <button pButton pRipple icon="pi pi-ban" class="p-button-rounded p-button-outlined p-button-primary" pTooltip="Désactiver" tooltipPosition="top"
                       (click)="desactiver(ligne)">
               </button>
 
               @if (isAdmin()) {
-                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" pTooltip="Supprimer"
+                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" pTooltip="Supprimer"
                         tooltipPosition="top"
                         (click)="deleteLigneFonctionnelleSpecifique(ligne)">
                 </button>

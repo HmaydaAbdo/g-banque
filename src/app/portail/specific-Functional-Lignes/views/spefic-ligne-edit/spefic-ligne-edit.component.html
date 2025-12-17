@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
+<div class="w-screen h-screen overflow-y-scroll ">
 
   <div class="portail-section flex justify-content-center align-items-center">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
@@ -14,20 +14,20 @@
         </ng-container>
         <ng-template #elseBlock>
           <a [href]="item.url">
-            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            <span class="text-color text-sm md:text-xl  text-center">{{ item.label }}</span>
           </a>
         </ng-template>
       </ng-template>
     </p-breadcrumb>
   </div>
 
-  <h2 class="text-center">{{ isEditMode ? 'Modifier une Ligne Fonctionnelle Spécifique' : 'Ajouter une Ligne Fonctionnelle Spécifique' }}</h2>
+  <h4 class="text-center">{{ isEditMode ? 'Modifier une Ligne Fonctionnelle Spécifique' : 'Ajouter une Ligne Fonctionnelle Spécifique' }}</h4>
   <div class="flex justify-content-center mb-8">
     <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 600px;">
       <form [formGroup]="ligneFonctionnelleSpecifiqueForm" (ngSubmit)="onSubmit()" class="p-fluid">
         <div class="formgrid grid">
 
-          <div class="field col-12">
+          <div class="field col-12 md:col-6">
             <label for="nature" class="block text-900 font-medium mb-2">Nature <span class="p-text-danger">*</span></label>
             <p-dropdown id="nature" formControlName="natureLigneFonctionnelleId"
                         [options]="natureLigneOptions"
@@ -43,7 +43,7 @@
             </small>
           </div>
 
-          <div class="field col-12">
+          <div class="field col-12 md:col-6">
             <label for="marche" class="block text-900 font-medium mb-2">Marché <span class="p-text-danger">*</span></label>
             <p-dropdown
               id="marche"
@@ -137,11 +137,7 @@
           <button pButton pRipple label="{{ isEditMode ? 'Modifier' : 'Créer' }}" class="p-button-primary" type="submit" [disabled]="loading"></button>
         </div>
 
-        @if (isEditMode && canDeactivate()) {
-          <div class="flex justify-content-end mt-2 gap-2">
-            <button pButton pRipple label="Désactiver" class="p-button-secondary" (click)="desactiver()" type="button" pTooltip="Désactiver la ligne fonctionnelle spécifique" tooltipPosition="top"></button>
-          </div>
-        }
+
 
       </form>
     </div>

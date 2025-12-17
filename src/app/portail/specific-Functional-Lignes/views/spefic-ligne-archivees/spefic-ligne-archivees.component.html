@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column overflow-scroll gap-2 md:gap-5 md:p-4 w-screen h-screen">
+<div class="card flex flex-column overflow-scroll gap-2 p-2 w-screen h-screen">
 
   <div class="flex flex-column">
     <div class="flex flex-row flex-wrap justify-content-between align-items-center bg-transparent">
@@ -90,8 +90,8 @@
         [rowsPerPageOptions]="[3, 5, 10, 25, 50]"
         [lazy]="true"
         (onLazyLoad)="loadLignesFonctionnellesSpecifiques($event)"
-        [resizableColumns]="true"
         [columns]="[
+          { field: 'id', header: 'Id', sortable: true },
           { field: 'banqueNom', header: 'Banque', sortable: true },
           { field: 'natureLigneFonctionnelleLabel', header: 'Nature', sortable: true },
           { field: 'marcheNumero', header: 'Marché', sortable: true },
@@ -100,10 +100,8 @@
           { field: 'dateDepart', header: 'Date Départ', sortable: true },
           { field: 'dateFin', header: 'Date Fin', sortable: true }
         ]"
-        styleClass="p-datatable-gridlines p-datatable-sm"
-        [tableStyle]="{'min-width': '50rem'}"
+        styleClass="p-datatable-gridlines p-datatable-sm text-xs"
         [scrollable]="true"
-        scrollHeight="flex"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
       >
@@ -118,13 +116,14 @@
         </ng-template>
         <ng-template pTemplate="body" let-ligne>
           <tr>
+            <td>{{ ligne.id }}</td>
             <td>{{ ligne.banqueNom }}</td>
             <td>{{ligne.natureLigneFonctionnelleLabel}}</td>
             <td>{{ ligne.marcheNumero }}</td>
             <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.taux | number:'1.2-2' }}%</td>
-            <td>{{ ligne.dateDepart | date:'mediumDate' }}</td>
-            <td>{{ ligne.dateFin | date:'mediumDate' }}</td>
+            <td>{{ ligne.dateDepart | date:'dd/MM/YYYY' }}</td>
+            <td>{{ ligne.dateFin | date:'dd/MM/YYYY' }}</td>
 
           </tr>
         </ng-template>
