@@ -74,6 +74,16 @@ public class ContratLeasing {
     @Column(nullable = false)
     private boolean completed = false;
 
+    @Lob
+    @Column(name = "fichier_pdf_contenu", columnDefinition = "LONGBLOB")
+    private byte[] fichierPdfContenu;
+
+    @Column(name = "nom_fichier_pdf")
+    private String nomFichierPdf;
+
+    @Column(name = "date_upload_pdf")
+    private OffsetDateTime dateUploadPdf;
+
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
 
@@ -130,6 +140,44 @@ public class ContratLeasing {
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
 
+    // --- Getters et Setters pour le fichier PDF ---
+    public byte[] getFichierPdfContenu() { return fichierPdfContenu; }
+    public void setFichierPdfContenu(byte[] fichierPdfContenu) {
+        this.fichierPdfContenu = fichierPdfContenu;
+        if (fichierPdfContenu != null) {
+            this.dateUploadPdf = OffsetDateTime.now();
+        }
+    }
+
+    public String getNomFichierPdf() { return nomFichierPdf; }
+    public void setNomFichierPdf(String nomFichierPdf) { this.nomFichierPdf = nomFichierPdf; }
+
+    public OffsetDateTime getDateUploadPdf() { return dateUploadPdf; }
+    public void setDateUploadPdf(OffsetDateTime dateUploadPdf) { this.dateUploadPdf = dateUploadPdf; }
+
+    /**
+     * Vérifie si un fichier PDF est attaché à ce contrat
+     */
+    public boolean hasFichierPdf() {
+        return fichierPdfContenu != null && fichierPdfContenu.length > 0;
+    }
+
+    /**
+     * Retourne la taille du fichier PDF en octets
+     */
+    public Long getTailleFichierPdf() {
+        return fichierPdfContenu != null ? (long) fichierPdfContenu.length : null;
+    }
+
+    /**
+     * Supprime le fichier PDF attaché
+     */
+    public void removeFichierPdf() {
+        this.fichierPdfContenu = null;
+        this.nomFichierPdf = null;
+        this.dateUploadPdf = null;
+    }
+
     // --- Callbacks du cycle de vie JPA ---
     @PrePersist
     protected void onCreate() {
@@ -168,6 +216,8 @@ public class ContratLeasing {
                 ", dateDebut=" + dateDebut +
                 ", typeContrat=" + typeContrat +
                 ", completed=" + completed +
+                ", hasFichierPdf=" + hasFichierPdf() +
+                ", nomFichierPdf='" + nomFichierPdf + '\'' +
                 '}';
     }
 }

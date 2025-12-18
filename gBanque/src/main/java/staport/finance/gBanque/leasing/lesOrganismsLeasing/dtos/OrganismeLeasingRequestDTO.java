@@ -39,4 +39,13 @@ public class OrganismeLeasingRequestDTO {
     public OffsetDateTime getDateFin() { return dateFin; }
     public void setDateFin(OffsetDateTime dateFin) { this.dateFin = dateFin; }
 
+    @Override
+    public String toString() {
+        return "OrganismeLeasingRequestDTO{" +
+                "nom='" + nom + '\'' +
+                ", plafond=" + plafond +
+                ", dateDebut=" + dateDebut +
+                ", dateFin=" + dateFin +
+                '}';
+    }
 }

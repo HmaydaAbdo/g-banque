@@ -448,4 +448,115 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         BigDecimal valeurResiduelle = montantAchatTTC.multiply(leasingProperties.getValeurResiduelle()).setScale(2, RoundingMode.HALF_UP);
         contratLeasing.setValeurResiduelle(valeurResiduelle);
     }
+
+    /**
+     * Associe ou remplace un fichier PDF à un contrat de leasing.
+     *
+     * @param contratId L'ID du contrat
+     * @param pdfContent Le contenu binaire du fichier PDF
+     * @param fileName Le nom du fichier PDF
+     * @throws ResourceNotFoundException Si le contrat n'existe pas
+     * @throws ValidationException Si le fichier n'est pas un PDF valide
+     */
+    @Override
+    @Transactional
+    public void attachOrReplacePdfToContrat(Long contratId, byte[] pdfContent, String fileName)
+            throws ResourceNotFoundException, ValidationException {
+
+        // 1. Vérifier que le contrat existe
+        ContratLeasing contrat = contratLeasingRepository.findById(contratId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ContratLeasing with ID " + contratId + " not found."));
+
+        // 2. Valider que le fichier est un PDF
+        if (pdfContent == null || pdfContent.length == 0) {
+            throw new ValidationException("Le contenu du fichier PDF est vide.");
+        }
+
+        if (fileName == null || !fileName.toLowerCase().endsWith(".pdf")) {
+            throw new ValidationException("Seuls les fichiers PDF sont acceptés.");
+        }
+
+
+        // 4. Attacher ou remplacer le fichier PDF
+        contrat.setFichierPdfContenu(pdfContent);
+        contrat.setNomFichierPdf(fileName);
+
+        // 5. Sauvegarder
+        contratLeasingRepository.save(contrat);
+    }
+
+    /**
+     * Récupère le contenu du fichier PDF d'un contrat de leasing.
+     *
+     * @param contratId L'ID du contrat
+     * @return Un objet PdfFileDTO contenant le contenu et les métadonnées du PDF
+     * @throws ResourceNotFoundException Si le contrat n'existe pas ou n'a pas de PDF attaché
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public PdfFileDTO getPdfFromContrat(Long contratId) throws ResourceNotFoundException {
+
+        // 1. Récupérer le contrat
+        ContratLeasing contrat = contratLeasingRepository.findById(contratId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ContratLeasing with ID " + contratId + " not found."));
+
+        // 2. Vérifier qu'un PDF est attaché
+        if (!contrat.hasFichierPdf()) {
+            throw new ResourceNotFoundException(
+                    "Aucun fichier PDF n'est attaché au contrat avec l'ID " + contratId + ".");
+        }
+
+        // 3. Créer et retourner le DTO
+        PdfFileDTO pdfFileDTO = new PdfFileDTO();
+        pdfFileDTO.setContenu(contrat.getFichierPdfContenu());
+        pdfFileDTO.setNomFichier(contrat.getNomFichierPdf());
+        pdfFileDTO.setTailleFichier(contrat.getTailleFichierPdf());
+        pdfFileDTO.setDateUpload(contrat.getDateUploadPdf());
+
+        return pdfFileDTO;
+    }
+
+    /**
+     * Supprime le fichier PDF d'un contrat de leasing.
+     *
+     * @param contratId L'ID du contrat
+     * @throws ResourceNotFoundException Si le contrat n'existe pas
+     */
+    @Override
+    @Transactional
+    public void removePdfFromContrat(Long contratId) throws ResourceNotFoundException {
+
+        // 1. Récupérer le contrat
+        ContratLeasing contrat = contratLeasingRepository.findById(contratId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "ContratLeasing with ID " + contratId + " not found."));
+
+        // 2. Supprimer le PDF
+        contrat.removeFichierPdf();
+
+        // 3. Sauvegarder
+        contratLeasingRepository.save(contrat);
+    }
+
+    /**
+     * Vérifie si le contenu binaire est un fichier PDF valide
+     * en vérifiant les "magic bytes" (signature du fichier).
+     *
+     * @param content Le contenu binaire du fichier
+     * @return true si c'est un PDF valide, false sinon
+     */
+    private boolean isPdfFile(byte[] content) {
+        // Les fichiers PDF commencent par "%PDF-" (25 50 44 46 2D en hexadécimal)
+        if (content == null || content.length < 5) {
+            return false;
+        }
+
+        return content[0] == 0x25 && // %
+                content[1] == 0x50 && // P
+                content[2] == 0x44 && // D
+                content[3] == 0x46 && // F
+                content[4] == 0x2D;   // -
+    }
 }

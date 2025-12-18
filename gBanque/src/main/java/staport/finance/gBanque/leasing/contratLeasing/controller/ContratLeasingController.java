@@ -3,25 +3,27 @@ package staport.finance.gBanque.leasing.contratLeasing.controller;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException; // These are handled by global handler
 import staport.finance.gBanque.exception.customExceptions.ValidationException;     // These are handled by global handler
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingRequestDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponseDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDTO;
+import staport.finance.gBanque.leasing.contratLeasing.dto.PdfFileDTO;
 import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingSearchDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.TableauAmortissementDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.EcheanceLeasingService;
+
+import java.io.IOException;
 
 
 /**
  * REST Controller for managing ContratLeasing operations.
  * Handles incoming HTTP requests and delegates to ContratLeasingService.
  * Base path for this controller will be /gBanque/api/contratsLeasing.
- *
  * Exceptions (like ValidationException, ResourceNotFoundException) are expected to be
  * handled by a global @ControllerAdvice for consistent error responses.
  */
@@ -152,6 +154,79 @@ public class ContratLeasingController {
         // Call the service method, passing all the necessary parameters
         TableauAmortissementDTO tableau = echeanceLeasingService.getTableauAmortissementForContrat(contratId, searchDTO, pageable);
         return ResponseEntity.ok(tableau);
+    }
+
+    /**
+     * Endpoint pour uploader ou remplacer le fichier PDF d'un contrat.
+     * Maps to POST /contratsLeasing/{id}/pdf
+     *
+     * @param id L'ID du contrat
+     * @param file Le fichier PDF à uploader
+     * @return ResponseEntity avec un message de succès et HTTP Status 200 (OK)
+     * @throws ResourceNotFoundException Si le contrat n'existe pas
+     * @throws ValidationException Si le fichier n'est pas valide
+     */
+    @PostMapping("/{id}/pdf")
+    public ResponseEntity<String> uploadPdfToContrat(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) throws IOException {
+
+        // Validation du fichier
+        if (file.isEmpty()) {
+            throw new ValidationException("Le fichier est vide.");
+        }
+
+        // Appel au service pour attacher le PDF
+        contratLeasingService.attachOrReplacePdfToContrat(
+                id,
+                file.getBytes(),
+                file.getOriginalFilename()
+        );
+
+        return ResponseEntity.ok("Fichier PDF uploadé avec succès.");
+    }
+
+    /**
+     * Endpoint pour télécharger le fichier PDF d'un contrat.
+     * Maps to GET /contratsLeasing/{id}/pdf
+     *
+     * @param id L'ID du contrat
+     * @return ResponseEntity avec le contenu du PDF et les headers appropriés
+     * @throws ResourceNotFoundException Si le contrat ou le PDF n'existe pas
+     */
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> downloadPdfFromContrat(@PathVariable Long id) {
+
+        // Récupérer le PDF depuis le service
+        PdfFileDTO pdfFile = contratLeasingService.getPdfFromContrat(id);
+
+        // Configurer les headers HTTP pour le téléchargement
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(
+                ContentDisposition.builder("attachment")
+                        .filename(pdfFile.getNomFichier())
+                        .build()
+        );
+        headers.setContentLength(pdfFile.getTailleFichier());
+
+        return new ResponseEntity<>(pdfFile.getContenu(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * Endpoint pour supprimer le fichier PDF d'un contrat.
+     * Maps to DELETE /contratsLeasing/{id}/pdf
+     *
+     * @param id L'ID du contrat
+     * @return ResponseEntity avec un message de succès et HTTP Status 204 (No Content)
+     * @throws ResourceNotFoundException Si le contrat n'existe pas
+     */
+    @DeleteMapping("/{id}/pdf")
+    public ResponseEntity<Void> deletePdfFromContrat(@PathVariable Long id) {
+
+        contratLeasingService.removePdfFromContrat(id);
+
+        return ResponseEntity.noContent().build(); // Return 204 No Content
     }
 
 

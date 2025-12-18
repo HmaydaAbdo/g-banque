@@ -17,12 +17,14 @@ public class ContratLeasingResponseDTO {
     private BigDecimal montantAchatTTC;
     private OffsetDateTime dateDebut;
     private Integer periodeEnMois;
+    private OffsetDateTime dateFin;
     private TypeContratLeasing typeContrat;
     private BigDecimal valeurResiduelle;
     private List<ContratLeasingPhaseResponseDTO> phases;
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
     private boolean completed;
+    private boolean hasFichierPdf;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -45,6 +47,12 @@ public class ContratLeasingResponseDTO {
     public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
     public Integer getPeriodeEnMois() { return periodeEnMois; }
     public void setPeriodeEnMois(Integer periodeEnMois) { this.periodeEnMois = periodeEnMois; }
+    public OffsetDateTime getDateFin() {
+        return dateFin;
+    }
+    public void setDateFin(OffsetDateTime dateFin) {
+        this.dateFin = dateFin;
+    }
     public TypeContratLeasing getTypeContrat() { return typeContrat; }
     public void setTypeContrat(TypeContratLeasing typeContrat) { this.typeContrat = typeContrat; }
     public BigDecimal getValeurResiduelle() { return valeurResiduelle; }
@@ -57,4 +65,6 @@ public class ContratLeasingResponseDTO {
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
+    public boolean isHasFichierPdf() { return hasFichierPdf; }
+    public void setHasFichierPdf(boolean hasFichierPdf) { this.hasFichierPdf = hasFichierPdf; }
 }

@@ -7,6 +7,7 @@ import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingRequestDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponseDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDTO;
+import staport.finance.gBanque.leasing.contratLeasing.dto.PdfFileDTO;
 
 /**
  * Interface pour le service de gestion des contrats de leasing.
@@ -36,4 +37,8 @@ public interface ContratLeasingService {
      * @throws ValidationException Si le contrat n'est pas dans l'état "en attente de main levée".
      */
     ContratLeasingResponseDTO markAsInactive(Long id) throws ResourceNotFoundException, ValidationException;
+
+    void attachOrReplacePdfToContrat(Long contratId, byte[] pdfContent, String fileName) throws ResourceNotFoundException, ValidationException;
+    PdfFileDTO getPdfFromContrat(Long contratId) throws ResourceNotFoundException;
+    void removePdfFromContrat(Long contratId) throws ResourceNotFoundException;
 }

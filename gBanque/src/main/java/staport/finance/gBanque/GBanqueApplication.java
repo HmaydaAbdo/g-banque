@@ -18,8 +18,6 @@ public class GBanqueApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(GBanqueApplication.class, args);
-
-
 	}
 
 }

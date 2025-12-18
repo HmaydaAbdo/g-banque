@@ -35,4 +35,7 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
 
     // méthode pour vérifier l'existence d'au moins une échéance payée.
     boolean existsByContratLeasingIdAndStatutPaiement(Long contratLeasingId, StatutEcheanceLeasing statutPaiement);
+
+    List<EcheanceLeasing> findByStatutPaiement(StatutEcheanceLeasing statut);
+
 }

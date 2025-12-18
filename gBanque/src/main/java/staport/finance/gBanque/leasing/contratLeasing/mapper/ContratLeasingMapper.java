@@ -73,11 +73,14 @@ public class ContratLeasingMapper {
         dto.setMontantAchatTTC(entity.getMontantAchatTTC());
         dto.setDateDebut(entity.getDateDebut());
         dto.setPeriodeEnMois(entity.getPeriodeEnMois());
+        dto.setDateFin(entity.getDateDebut().plusMonths(entity.getPeriodeEnMois()));
         dto.setTypeContrat(entity.getTypeContrat());
         dto.setValeurResiduelle(entity.getValeurResiduelle());
         dto.setDateCreation(entity.getDateCreation());
         dto.setDateModification(entity.getDateModification());
         dto.setCompleted(entity.isCompleted());
+        dto.setHasFichierPdf(entity.hasFichierPdf());
+
 
         if (entity.getBanqueDePrelevement() != null) {
             dto.setBanqueDePrelevementId(entity.getBanqueDePrelevement().getId());

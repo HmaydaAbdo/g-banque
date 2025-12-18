@@ -1,6 +1,8 @@
 package staport.finance.gBanque.leasing.lesOrganismsLeasing.mappers;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingRequestDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingResponseDTO;
@@ -13,6 +15,9 @@ import java.util.stream.Collectors;
 @Component // Mark as a Spring component for dependency injection
 public class OrganismeLeasingMapper {
 
+
+    private static final Logger log = LoggerFactory.getLogger(OrganismeLeasingMapper.class);
+
     /**
      * Converts an OrganismeLeasingRequestDTO to an OrganismeLeasing entity for creation.
      * ID, dateCreation, and dateModification are handled by JPA lifecycle callbacks and are not mapped here.
@@ -21,15 +26,20 @@ public class OrganismeLeasingMapper {
      * @return A new OrganismeLeasing entity.
      */
     public OrganismeLeasing toEntity(OrganismeLeasingRequestDTO dto) {
+        log.debug("Début de la conversion du DTO vers l'entité OrganismeLeasing");
+
         if (dto == null) {
+            log.warn("Le DTO reçu pour la conversion est null");
             return null;
         }
+
         OrganismeLeasing entity = new OrganismeLeasing();
         entity.setNom(dto.getNom());
         entity.setPlafond(dto.getPlafond());
         entity.setDateDebut(dto.getDateDebut());
         entity.setDateFin(dto.getDateFin());
-        // ID, dateCreation, dateModification are handled by JPA @PrePersist
+
+        log.debug("Conversion du DTO vers l'entité réussie pour l'organisme : {}", dto.getNom());
         return entity;
     }
 
@@ -40,16 +50,21 @@ public class OrganismeLeasingMapper {
      * @return An OrganismeLeasingResponseDTO.
      */
     public OrganismeLeasingResponseDTO toDto(OrganismeLeasing entity) {
+        log.debug("Début de la conversion de l'entité OrganismeLeasing vers le DTO");
+
         if (entity == null) {
+            log.warn("L'entité reçue pour la conversion est null");
             return null;
         }
+
         OrganismeLeasingResponseDTO dto = new OrganismeLeasingResponseDTO();
         dto.setId(entity.getId());
         dto.setNom(entity.getNom());
         dto.setPlafond(entity.getPlafond());
         dto.setDateDebut(entity.getDateDebut());
         dto.setDateFin(entity.getDateFin());
-        // dateCreation and dateModification are not part of OrganismeLeasingResponseDTO based on your provided DTO
+
+        log.debug("Conversion de l'entité vers le DTO réussie pour l'organisme ID : {}", entity.getId());
         return dto;
     }
 
@@ -60,12 +75,19 @@ public class OrganismeLeasingMapper {
      * @return A list of OrganismeLeasingResponseDTOs.
      */
     public List<OrganismeLeasingResponseDTO> toDtoList(List<OrganismeLeasing> entities) {
+        log.debug("Début de la conversion d'une liste d'entités OrganismeLeasing vers une liste de DTOs");
+
         if (entities == null) {
-            return new ArrayList<>(); // Return empty list for robustness
+            log.warn("La liste d'entités reçue pour la conversion est null");
+            return new ArrayList<>();
         }
-        return entities.stream()
+
+        List<OrganismeLeasingResponseDTO> dtos = entities.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+
+        log.debug("Conversion de la liste terminée. Nombre d'éléments convertis : {}", dtos.size());
+        return dtos;
     }
 
     /**
@@ -76,23 +98,32 @@ public class OrganismeLeasingMapper {
      * @param entity The existing OrganismeLeasing entity to be updated.
      */
     public void updateOrganismeLeasingFromDto(OrganismeLeasingRequestDTO dto, OrganismeLeasing entity) {
+        log.debug("Début de la mise à jour de l'entité OrganismeLeasing à partir du DTO");
+
         if (dto == null || entity == null) {
+            log.warn("Le DTO ou l'entité est null, mise à jour annulée");
             return;
         }
-        // Update only the fields that are allowed to be updated from the DTO
+
+        log.debug("Mise à jour de l'organisme ID : {} avec les nouvelles données", entity.getId());
+
         if (dto.getNom() != null) {
             entity.setNom(dto.getNom());
+            log.debug("Nom mis à jour : {}", dto.getNom());
         }
         if (dto.getPlafond() != null) {
             entity.setPlafond(dto.getPlafond());
+            log.debug("Plafond mis à jour : {}", dto.getPlafond());
         }
         if (dto.getDateDebut() != null) {
             entity.setDateDebut(dto.getDateDebut());
+            log.debug("Date début mise à jour : {}", dto.getDateDebut());
         }
         if (dto.getDateFin() != null) {
             entity.setDateFin(dto.getDateFin());
+            log.debug("Date fin mise à jour : {}", dto.getDateFin());
         }
-        // ID, dateCreation are not updated.
-        // dateModification is updated automatically by JPA's @PreUpdate callback.
+
+        log.debug("Mise à jour de l'entité OrganismeLeasing terminée pour l'ID : {}", entity.getId());
     }
 }
