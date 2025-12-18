@@ -3,7 +3,6 @@ import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http'
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ContratLeasingRequestDTO, ContratLeasingResponseDTO } from "../dtos/contrat-leasing";
-import { Decimal } from 'decimal.js';
 import {PageResponse} from "../../../global/types/PageResponse";
 import {ContratLeasingSearchDTO} from "../dtos/contrat-leasing-search";
 import {environment} from "../../../../../environments/environment";
@@ -24,9 +23,7 @@ export class ContratLeasingService {
    * Helper to convert plain numbers/strings to Decimal objects.
    * Handles null or undefined values gracefully.
    */
-  private convertToDecimal(value: any): Decimal | undefined {
-    return value !== undefined && value !== null ? new Decimal(value) : undefined;
-  }
+
 
   /**
    * Processes a single ContratLeasingResponseDTO to convert all numeric fields
@@ -35,17 +32,14 @@ export class ContratLeasingService {
    * which can lose precision.
    */
   private processContratLeasingResponse(contrat: ContratLeasingResponseDTO): ContratLeasingResponseDTO {
-    contrat.montantAchatTTC = this.convertToDecimal(contrat.montantAchatTTC)!;
 
-    if (contrat.valeurResiduelle !== undefined && contrat.valeurResiduelle !== null) {
-      contrat.valeurResiduelle = this.convertToDecimal(contrat.valeurResiduelle);
-    }
+
 
     if (contrat.phases && Array.isArray(contrat.phases)) {
       contrat.phases = contrat.phases.map(phase => {
         return {
           ...phase,
-          mensualiteTTC: this.convertToDecimal(phase.mensualiteTTC)!,
+          mensualiteTTC: phase.mensualiteTTC,
         };
       });
     }
@@ -206,6 +200,68 @@ export class ContratLeasingService {
 
   deleteContratLeasing(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Upload ou remplace un fichier PDF pour un contrat.
+   * @param contratId L'ID du contrat
+   * @param file Le fichier PDF à uploader
+   * @returns Un Observable avec le message de succès
+   */
+  uploadPdfToContrat(contratId: number, file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post(`${this.apiUrl}/${contratId}/pdf`, formData, {
+      responseType: 'text'
+    }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Télécharge le fichier PDF d'un contrat.
+   * @param contratId L'ID du contrat
+   * @returns Un Observable avec le Blob du PDF
+   */
+  downloadPdfFromContrat(contratId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${contratId}/pdf`, {
+      responseType: 'blob'
+    }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Méthode helper pour déclencher le téléchargement du PDF dans le navigateur.
+   * @param contratId L'ID du contrat
+   * @param fileName Nom du fichier (optionnel, par défaut "contrat.pdf")
+   */
+  downloadPdfFile(contratId: number, fileName: string = 'contrat.pdf'): void {
+    this.downloadPdfFromContrat(contratId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error) => {
+        console.error('Erreur lors du téléchargement du PDF:', error);
+      }
+    });
+  }
+
+  /**
+   * Supprime le fichier PDF d'un contrat.
+   * @param contratId L'ID du contrat
+   * @returns Un Observable<void>
+   */
+  deletePdfFromContrat(contratId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${contratId}/pdf`).pipe(
       catchError(this.handleError)
     );
   }

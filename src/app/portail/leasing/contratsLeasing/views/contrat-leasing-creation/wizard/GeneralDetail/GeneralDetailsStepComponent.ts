@@ -54,8 +54,8 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
 
     this.formGroup = this.fb.group({
-      numeroContrat: [null, [Validators.required, Validators.maxLength(50)]],
-      immobilisation: [null, [Validators.required, Validators.maxLength(100)]],
+      numeroContrat: [null, [Validators.required]],
+      immobilisation: [null, [Validators.required]],
       montantAchatTTC: [null, [Validators.required, Validators.min(0.01)]],
       dateDebut: [null, Validators.required],
       periodeEnMois: [null, [Validators.required, Validators.min(1), Validators.max(360)]],
@@ -67,11 +67,11 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
     const contractSub = this.wizardService.contract$.pipe(
       distinctUntilChanged((prev, curr) => {
         // Deep comparison for objects from service
-        const prevMontantAchatTTC = prev.montantAchatTTC instanceof Decimal ? prev.montantAchatTTC.toString() : null;
-        const currMontantAchatTTC = curr.montantAchatTTC instanceof Decimal ? curr.montantAchatTTC.toString() : null;
+        const prevMontantAchatTTC = prev.montantAchatTTC;
+        const currMontantAchatTTC = curr.montantAchatTTC;
 
-        const prevValeurResiduelle = prev.valeurResiduelle instanceof Decimal ? prev.valeurResiduelle.toString() : null;
-        const currValeurResiduelle = curr.valeurResiduelle instanceof Decimal ? curr.valeurResiduelle.toString() : null;
+        const prevValeurResiduelle = prev.valeurResiduelle;
+        const currValeurResiduelle = curr.valeurResiduelle;
 
         const prevDateDebutISO = prev.dateDebut ? new Date(prev.dateDebut).toISOString() : null;
         const currDateDebutISO = curr.dateDebut ? new Date(curr.dateDebut).toISOString() : null;
@@ -103,7 +103,7 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         patchObject.immobilisation = contract.immobilisation;
       }
 
-      const contractMontantAchatTTCNum = contract.montantAchatTTC instanceof Decimal ? contract.montantAchatTTC.toNumber() : null;
+      const contractMontantAchatTTCNum = contract.montantAchatTTC;
       if (currentFormValue.montantAchatTTC !== contractMontantAchatTTCNum) {
         patchObject.montantAchatTTC = contractMontantAchatTTCNum;
       }
@@ -118,7 +118,7 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         patchObject.periodeEnMois = contract.periodeEnMois;
       }
 
-      const contractValResiduelleNum = contract.valeurResiduelle instanceof Decimal ? contract.valeurResiduelle.toNumber() : null;
+      const contractValResiduelleNum =  contract.valeurResiduelle;
       if (currentFormValue.valeurResiduelle !== contractValResiduelleNum) {
         patchObject.valeurResiduelle = contractValResiduelleNum;
       }
@@ -179,10 +179,8 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
       console.log('GeneralDetailsStepComponent: Form value changed locally (debounced):', value);
 
       // Safely convert form values to Decimal before updating service
-      const montantAchatTTCForService = value.montantAchatTTC !== null && value.montantAchatTTC !== undefined
-        ? new Decimal(value.montantAchatTTC) : null;
-      const valeurResiduelleForService = this.valeurResiduelleControl.value !== null && this.valeurResiduelleControl.value !== undefined
-        ? new Decimal(this.valeurResiduelleControl.value) : null;
+      const montantAchatTTCForService = value.montantAchatTTC
+      const valeurResiduelleForService = this.valeurResiduelleControl.value
 
 
       this.wizardService.updateContract({
@@ -256,7 +254,6 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
   get periodeEnMoisControl(): FormControl {
     return this.formGroup.get('periodeEnMois') as FormControl;
   }
-
 
   get valeurResiduelleControl(): FormControl {
     return this.formGroup.get('valeurResiduelle') as FormControl;

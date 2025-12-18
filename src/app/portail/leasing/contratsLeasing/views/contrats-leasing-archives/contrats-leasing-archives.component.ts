@@ -3,29 +3,29 @@ import { ContratLeasingResponseDTO} from "../../dtos/contrat-leasing";
 import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {TypeContratLeasing} from "../../dtos/type-contrat-leasing";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
-import {debounceTime, distinctUntilChanged, Subscription, take} from "rxjs";
+import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 import {ConfirmationService, MenuItem, MessageService, PrimeTemplate} from "primeng/api";
 import {ContratLeasingService} from "../../services/contrat-leasing.service";
 import {OrganismeLeasingService} from "../../../organismesLeasing/services/organisme-leasing.service";
 import {BanqueService} from "../../../../comptes-bancaire/services/BanqueService";
 import {Router, RouterLinkActive} from "@angular/router";
-import {LeasingContractWizardService} from "../../services/LeasingContractWizardService";
 import {PageResponse} from "../../../../global/types/PageResponse";
 import {OrganismeLeasingResponse} from "../../../organismesLeasing/dtos/OrganismeLeasingResponse";
 import {BanqueResponse} from "../../../../comptes-bancaire/dtos/BanqueResponse";
 import {ContratLeasingSearchDTO} from "../../dtos/contrat-leasing-search";
 import {BreadcrumbModule} from "primeng/breadcrumb";
-import {Button, ButtonDirective} from "primeng/button";
+import {Button} from "primeng/button";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {ContratLeasingDetailsComponent} from "../contrat-leasing-details/contrat-leasing-details.component";
-import {DatePipe, NgClass, NgIf} from "@angular/common";
+import {DatePipe, DecimalPipe, NgClass, NgIf} from "@angular/common";
 import {DialogModule} from "primeng/dialog";
 import {DropdownModule} from "primeng/dropdown";
 import {InputTextModule} from "primeng/inputtext";
-import {Ripple} from "primeng/ripple";
 import {TagModule} from "primeng/tag";
 import {ToastModule} from "primeng/toast";
 import {TooltipModule} from "primeng/tooltip";
+import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
+import {ProgressSpinnerModule} from "primeng/progressspinner";
 
 @Component({
   selector: 'app-contrats-leasing-archives',
@@ -33,7 +33,6 @@ import {TooltipModule} from "primeng/tooltip";
   imports: [
     BreadcrumbModule,
     Button,
-    ButtonDirective,
     ConfirmDialogModule,
     ContratLeasingDetailsComponent,
     DatePipe,
@@ -43,13 +42,14 @@ import {TooltipModule} from "primeng/tooltip";
     NgIf,
     PrimeTemplate,
     ReactiveFormsModule,
-    Ripple,
     RouterLinkActive,
     TableModule,
     TagModule,
     ToastModule,
     TooltipModule,
-    NgClass
+    NgClass,
+    DecimalPipe,
+    ProgressSpinnerModule
   ],
   templateUrl: './contrats-leasing-archives.component.html',
   styleUrl: './contrats-leasing-archives.component.scss'
@@ -84,6 +84,13 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
   selectedContratDetails: ContratLeasingResponseDTO | null = null;
   items: MenuItem[] | undefined;
 
+  // Gestion du dialog PDF
+  displayPdfDialog: boolean = false;
+  selectedContratForPdf: ContratLeasingResponseDTO | null = null;
+  pdfBlobUrl: SafeResourceUrl | null = null;
+  pdfFileName: string = '';
+  pdfFileSize: string = '';
+  loadingPdf: boolean = false;
 
   constructor(
     private contratLeasingService: ContratLeasingService,
@@ -93,7 +100,7 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
-    private wizardService: LeasingContractWizardService
+    private sanitizer: DomSanitizer,
   ) { }
 
   ngOnInit(): void {
@@ -133,9 +140,6 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
     this.loadContrats(this.lastLazyLoadEvent);
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-  }
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
@@ -280,6 +284,137 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
 
   viewAmortizationTable(contratId: number): void {
     this.router.navigate(['portail/leasing/contratsLeasing', contratId, 'tableau-amortissement']);
+  }
+
+  openPdfDialog(contrat: ContratLeasingResponseDTO): void {
+    this.selectedContratForPdf = contrat;
+    this.displayPdfDialog = true;
+
+    if (contrat.hasFichierPdf) {
+      this.loadPdfPreview(contrat.id);
+    }
+  }
+
+  hidePdfDialog(): void {
+    this.displayPdfDialog = false;
+    this.selectedContratForPdf = null;
+    this.pdfBlobUrl = null;
+    this.pdfFileName = '';
+    this.pdfFileSize = '';
+  }
+
+  loadPdfPreview(contratId: number): void {
+    this.loadingPdf = true;
+
+    this.contratLeasingService.downloadPdfFromContrat(contratId).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        this.pdfBlobUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+        this.pdfFileName = `Contrat_${contratId}.pdf`;
+        this.pdfFileSize = this.formatFileSize(blob.size);
+        this.loadingPdf = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement du PDF:', error);
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger le PDF.' });
+        this.loadingPdf = false;
+      }
+    });
+  }
+
+  downloadPdf(): void {
+    if (this.selectedContratForPdf) {
+      this.contratLeasingService.downloadPdfFile(
+        this.selectedContratForPdf.id,
+        `Contrat_${this.selectedContratForPdf.numeroContrat}.pdf`
+      );
+    }
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0 && this.selectedContratForPdf) {
+      const file = input.files[0];
+
+      if (file.type !== 'application/pdf') {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Seuls les fichiers PDF sont acceptés.' });
+        return;
+      }
+
+      this.loadingPdf = true;
+      this.contratLeasingService.uploadPdfToContrat(this.selectedContratForPdf.id, file).subscribe({
+        next: (message) => {
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: message });
+          this.selectedContratForPdf!.hasFichierPdf = true;
+          this.loadPdfPreview(this.selectedContratForPdf!.id);
+          this.refreshCurrentContratInList();
+        },
+        error: (error) => {
+          console.error('Erreur lors de l\'upload:', error);
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'upload du PDF.' });
+          this.loadingPdf = false;
+        }
+      });
+    }
+  }
+
+  confirmDeletePdf(): void {
+    this.confirmationService.confirm({
+      message: 'Êtes-vous sûr de vouloir supprimer ce fichier PDF ?',
+      header: 'Confirmation de suppression',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.deletePdf();
+      }
+    });
+  }
+
+  deletePdf(): void {
+    if (this.selectedContratForPdf) {
+      this.contratLeasingService.deletePdfFromContrat(this.selectedContratForPdf.id).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'PDF supprimé avec succès.' });
+          this.selectedContratForPdf!.hasFichierPdf = false;
+          this.pdfBlobUrl = null;
+          this.refreshCurrentContratInList();
+        },
+        error: (error) => {
+          console.error('Erreur lors de la suppression:', error);
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la suppression du PDF.' });
+        }
+      });
+    }
+  }
+
+  refreshCurrentContratInList(): void {
+    if (this.dt) {
+      this.loadContrats(this.dt.createLazyLoadMetadata());
+    } else {
+      this.loadContrats(this.lastLazyLoadEvent);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.pdfBlobUrl) {
+      const url = (this.pdfBlobUrl as any).changingThisBreaksApplicationSecurity;
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    }
   }
 
 

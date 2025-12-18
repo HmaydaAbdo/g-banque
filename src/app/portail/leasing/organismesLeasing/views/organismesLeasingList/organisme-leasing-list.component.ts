@@ -11,7 +11,6 @@ import { ConfirmationService, MessageService, ConfirmEventType } from 'primeng/a
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CardModule } from 'primeng/card';
-// Removed: OrganismeLeasingFormComponent // No longer imported directly for dialog
 import { finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { PageResponse } from "../../../../global/types/PageResponse";
@@ -58,13 +57,11 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
 
   searchForm!: FormGroup;
 
-  // Removed: private dialogRef: DynamicDialogRef | undefined;
   private subscriptions: Subscription = new Subscription();
 
   constructor(
     private organismeLeasingService: OrganismeLeasingService,
     private messageService: MessageService,
-    // Removed: private dialogService: DialogService,
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
     private router: Router // Inject Router

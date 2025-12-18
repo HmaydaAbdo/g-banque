@@ -6,8 +6,8 @@ import {Decimal} from "decimal.js";
 export interface TableauAmortissement {
   contratLeasingId: number;
   numeroContrat: string;
-  totalIndemniteAPayer: Decimal;
-  montantTotalDejaPaye: Decimal;
-  montantRestantAPayer: Decimal;
+  totalIndemniteAPayer: number;
+  montantTotalDejaPaye: number;
+  montantRestantAPayer: number;
   echeances: PageResponse<EcheanceLeasingResponse>
 }

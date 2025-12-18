@@ -228,10 +228,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
 
     this.distributeGlobalErrorsToActiveChild();
 
-    setTimeout(() => {
-      this.currentActiveChildComponent?.markFormAsTouched?.();
-      console.log(`ContratLeasingCreationComponent: Called markFormAsTouched on ${componentRef.constructor.name}`);
-    }, 0);
 
     // Special handling for RecapStepComponent (always considered valid for navigation)
     if (componentRef instanceof RecapStepComponent) {

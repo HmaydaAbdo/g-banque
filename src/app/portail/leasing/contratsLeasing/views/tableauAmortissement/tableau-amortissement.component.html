@@ -14,7 +14,7 @@
     </div>
   </div>
 
-  <div *ngIf="tableauAmortissement " class="flex flex-column  px-2">
+  <div *ngIf="tableauAmortissement " class="flex flex-column  px-2 gap-2">
     <div class="flex justify-content-between align-items-center">
       <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
         <ng-template pTemplate="item" let-item>
@@ -32,77 +32,44 @@
           </ng-template>
         </ng-template>
       </p-breadcrumb>
-      <p class="font-bold text-xl"> N° Contract : {{tableauAmortissement.numeroContrat}}</p>
     </div>
 
-    <div class="flex flex-wrap justify-content-between gap-2 text-center md:text-xl p-2 mb-2">
-      <div class="shadow-2 flex-1 max-w-20rem ">
-        <div class="p-1  shadow-1 border-round surface-card">
-          <h5 class="font-bold">Endettement</h5>
-          <h5 class="font-bold text-blue-500">
-            {{ tableauAmortissement.totalIndemniteAPayer.toFixed(2) }} MAD
-          </h5>
-        </div>
-      </div>
-      <div class=" shadow-2 flex-1 max-w-20rem ">
-        <div class=" p-1 shadow-1 border-round surface-card">
-          <h5 class="font-bold">Montant Total Déjà Payé</h5>
-          <h5 class="font-bold text-green-500">
-            {{ tableauAmortissement.montantTotalDejaPaye.toFixed(2) }} MAD
-          </h5>
-        </div>
-      </div>
-      <div class="shadow-2 flex-1 max-w-20rem  ">
-        <div class=" p-1 shadow-1 border-round surface-card">
-          <h5 class="font-bold">Montant Restant à Payer</h5>
-          <h5 class="font-bold text-red-500">
-            {{ tableauAmortissement.montantRestantAPayer.toFixed(2) }} MAD
-          </h5>
-        </div>
-      </div>
+    <div class="flex flex-row justify-content-around gap-2  ">
+      <p > N° Contract : <strong>{{tableauAmortissement.numeroContrat}} </strong></p>
+      <p > Endettement : <strong>{{tableauAmortissement.totalIndemniteAPayer | number}} </strong></p>
+      <p > Montant Déjà Payé : <strong>{{tableauAmortissement.montantTotalDejaPaye | number}} </strong></p>
+      <p > Le Reste : <strong>{{tableauAmortissement.montantRestantAPayer | number}} </strong></p>
     </div>
 
+    <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center gap-2 w-full">
+      <p-inputNumber formControlName="numeroEcheance" placeholder="N° Échéance" mode="decimal" [useGrouping]="false" styleClass="w-full" class="flex-1"></p-inputNumber>
 
-    <form [formGroup]="searchForm" class="p-fluid grid   px-4  border-round shadow-1 gap-3">
-      <div class="field col-12 md:col-2">
-        <label for="numeroEcheance" class="font-bold mb-2">N° Échéance</label>
-        <p-inputNumber id="numeroEcheance" formControlName="numeroEcheance" placeholder="Ex: 5" mode="decimal" [useGrouping]="false"></p-inputNumber>
-      </div>
-      <div class="field col-12 md:col-2">
-        <label for="month" class="font-bold mb-2">Mois</label>
-        <p-inputNumber id="month" formControlName="month" placeholder="1-12" mode="decimal" [useGrouping]="false" [min]="1" [max]="12"></p-inputNumber>
-      </div>
-      <div class="field col-12 md:col-2">
-        <label for="year" class="font-bold mb-2">Année</label>
-        <p-inputNumber id="year" formControlName="year" placeholder="Ex: 2025" mode="decimal" [useGrouping]="false"></p-inputNumber>
-      </div>
-      <div class="field col-12 md:col-3">
-        <label for="statutPaiement" class="font-bold mb-2">Statut Paiement</label>
-        <p-dropdown id="statutPaiement" formControlName="statutPaiement" [options]="statutLeasingOptions" placeholder="Sélectionner un statut" [showClear]="true" appendTo="body"></p-dropdown>
-      </div>
-      <div class="col-12 md:col-2 flex align-items-center mt-2 justify-content-end"> <p-button label="Réinitialiser Filtres" icon="pi pi-times" severity="secondary" (onClick)="clearSearch()" class="w-full"></p-button>
-      </div>
+      <p-inputNumber formControlName="month" placeholder="Mois (1-12)" mode="decimal" [useGrouping]="false" [min]="1" [max]="12" styleClass="w-full" class="flex-1"></p-inputNumber>
+
+      <p-inputNumber formControlName="year" placeholder="Année (Ex: 2025)" mode="decimal" [useGrouping]="false" styleClass="w-full" class="flex-1"></p-inputNumber>
+
+      <p-dropdown formControlName="statutPaiement" [options]="statutLeasingOptions" placeholder="Statut Paiement" [showClear]="true" appendTo="body" styleClass="w-full" class="flex-1"></p-dropdown>
+
+      <p-button icon="pi pi-times" severity="secondary" (onClick)="clearSearch()"></p-button>
     </form>
-
-    <div class=" px-4 mb-8">
+    <div class="  mb-8">
       <p-table
         [value]="echeances"
         [paginator]="true"
-        [rows]="3"
+        [rows]="10"
         [totalRecords]="totalEcheancesRecords"
         [lazy]="true"
         (onLazyLoad)="loadTableauAmortissement($event)"
         responsiveLayout="scroll"
         [scrollable]="true"
-        scrollHeight="400px"
-        styleClass="p-datatable-sm p-datatable-gridlines"
+        styleClass="p-datatable-sm p-datatable-gridlines text-xs white-space-nowrap"
         [loading]="loading"
         [rowsPerPageOptions]="[3,5,10, 25, 50, 100]"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} échéances">
         <ng-template pTemplate="header">
           <tr>
-            <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
+            <th pSortableColumn="id">Id <p-sortIcon field="id"></p-sortIcon></th>
             <th pSortableColumn="dateEcheance">Date Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
             <th pSortableColumn="montantHT">Montant HT <p-sortIcon field="montantHT"></p-sortIcon></th>
             <th pSortableColumn="montantTVA">Montant TVA <p-sortIcon field="montantTVA"></p-sortIcon></th>
@@ -114,14 +81,13 @@
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-echeance>
-          <tr > <td>{{ echeance.numeroEcheance }}</td>
+          <tr >
+            <td>{{ echeance.id }}</td>
             <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-            <td>{{ echeance.montantHT?.toFixed(2) }} MAD</td>
-            <td>{{ echeance.montantTVA?.toFixed(2) }} MAD</td>
-            <td>{{ echeance.montantTTC?.toFixed(2) }} MAD</td>
+            <td>{{ echeance.montantHT  | number }} </td>
+            <td>{{ echeance.montantTVA | number }} </td>
+            <td>{{ echeance.montantTTC | number }} </td>
             <td><p-tag [value]="echeance.statutPaiement" [severity]="getStatutSeverity(echeance.statutPaiement)"></p-tag></td>
-
-
               <td class="text-center">
                 <p-inputSwitch
                   [ngModel]="echeance.statutPaiement === 'PAYE'"

@@ -1,14 +1,14 @@
 <p-toast position="center"></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column gap-4 p-2 md:p-4 w-screen h-screen overflow-y-scroll ">
+<div class="card flex flex-column gap-2 p-2  w-screen h-screen overflow-y-scroll ">
 
-  <div class=" portail-section flex fex-wrap justify-content-between ">
+  <div class=" portail-section flex fex-wrap justify-content-between  align-items-center">
     <h3 >Liste des Organismes de Leasing</h3>
-    <button pButton pRipple label="Nouveau" icon="pi pi-plus" class="p-button-success" (click)="openNewOrganismeLeasingPage()"></button>
+    <p-button label="Nouveau Organisme de Leasing" icon="pi pi-plus" severity="primary" (click)="openNewOrganismeLeasingPage()" />
   </div>
 
-  <div class="p-fluid grid mb-3">
+  <div class="p-fluid grid ">
     <div class="field col-12 md:col-4">
       <form [formGroup]="searchForm">
         <span class="p-input-icon-left">
@@ -27,7 +27,7 @@
     [lazy]="true"
     (onLazyLoad)="loadOrganismeLeasings($event)"
     [paginator]="true"
-    [rows]="rows"
+    [rows]="10"
     [totalRecords]="totalRecords"
     [loading]="loading"
     [globalFilterFields]="['nom', 'id']"
@@ -37,9 +37,11 @@
     currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} organismes"
     [showCurrentPageReport]="true"
     [filterDelay]="0"
-    [resizableColumns]="true"
     columnResizeMode="expand"
-    responsiveLayout="scroll"   [scrollable]="true"       scrollHeight="flex"        styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '50rem'}" >
+    responsiveLayout="scroll"
+    [scrollable]="true"
+    styleClass="p-datatable-gridlines text-xs"
+    >
     <ng-template pTemplate="header">
       <tr>
         <th pSortableColumn="id" style="width: 5rem;">ID <p-sortIcon field="id"></p-sortIcon></th>
@@ -58,9 +60,9 @@
         <td>{{ organisme.dateDebut | date:'dd/MM/yyyy' }}</td>
         <td>{{ organisme.dateFin | date:'dd/MM/yyyy' }}</td>
         <td class="flex flex-row  gap-2">
-          <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success p-mr-2"
+          <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-success p-mr-2"
                   (click)="editOrganismeLeasing(organisme)" pTooltip="Modifier" tooltipPosition="top"></button>
-          <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-warning"
+          <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
                   (click)="confirmDeleteOrganismeLeasing(organisme.id, organisme.nom)" pTooltip="Supprimer" tooltipPosition="top"></button>
         </td>
       </tr>

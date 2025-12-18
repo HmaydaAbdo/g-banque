@@ -8,10 +8,10 @@ export interface ContratLeasingRequestDTO {
   banqueDePrelevementId: number | null;
   organismeLeasingId: number | null;
   immobilisation: string | null;
-  montantAchatTTC: Decimal | null;
+  montantAchatTTC: number | null;
   dateDebut: Date | null;
   periodeEnMois: number | null;
-  valeurResiduelle: Decimal | null;
+  valeurResiduelle: number | null;
   typeContrat: TypeContratLeasing | null;
   phases: ContratLeasingPhaseRequestDTO[] ;
 }
@@ -24,11 +24,13 @@ export interface ContratLeasingResponseDTO {
   organismeLeasingId: number;
   nomOrganismeLeasing: string;
   immobilisation: string;
-  montantAchatTTC: Decimal;
+  montantAchatTTC: number;
   dateDebut: Date;
   periodeEnMois: number;
+  dateFin: Date;
   typeContrat: TypeContratLeasing;
-  valeurResiduelle?: Decimal;
+  valeurResiduelle: number;
   phases?: ContratLeasingPhaseResponseDTO[];
   completed: boolean;
+  hasFichierPdf:boolean;
 }

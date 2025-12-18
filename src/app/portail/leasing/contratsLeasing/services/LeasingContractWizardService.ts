@@ -81,11 +81,11 @@ export class LeasingContractWizardService {
     const currentContract = this._contract.getValue();
     const updatedContract = { ...currentContract, ...updates };
 
-    if (updates.montantAchatTTC !== undefined && updates.montantAchatTTC !== null && !(updates.montantAchatTTC instanceof Decimal)) {
-      updatedContract.montantAchatTTC = new Decimal(updates.montantAchatTTC);
+    if (updates.montantAchatTTC != null) {
+      updatedContract.montantAchatTTC = updates.montantAchatTTC;
     }
-    if (updates.valeurResiduelle !== undefined && updates.valeurResiduelle !== null && !(updates.valeurResiduelle instanceof Decimal)) {
-      updatedContract.valeurResiduelle = new Decimal(updates.valeurResiduelle);
+    if (updates.valeurResiduelle != null) {
+      updatedContract.valeurResiduelle = updates.valeurResiduelle;
     }
 
     this._contract.next(updatedContract);
@@ -222,12 +222,10 @@ export class LeasingContractWizardService {
         }
       }
     }
-    if (contract.montantAchatTTC === null || contract.montantAchatTTC === undefined || contract.montantAchatTTC.isZero() || contract.montantAchatTTC.isNegative()) {
+    if (contract.montantAchatTTC == null || contract.montantAchatTTC <= 0) {
       errors.push('montantAchatTTC:Le Montant d\'achat TTC est requis et doit être positif.');
     }
-    if (contract.valeurResiduelle === null || contract.valeurResiduelle === undefined || contract.valeurResiduelle.isNegative()) {
-      // If valeurResiduelle can be zero for LINEAIRE, ensure isNegative() check only, not isZero().
-      // If it must be positive for some cases, then adjust logic.
+    if (contract.valeurResiduelle == null || contract.valeurResiduelle < 0) {
       errors.push('valeurResiduelle:La Valeur Résiduelle est requise et doit être positive ou nulle.');
     }
 
@@ -248,8 +246,8 @@ export class LeasingContractWizardService {
   loadContractForEdit(contract: ContratLeasingRequestDTO): void {
     const contractToLoad: ContratLeasingRequestDTO = {
       ...contract,
-      montantAchatTTC: contract.montantAchatTTC ? new Decimal(contract.montantAchatTTC) : null,
-      valeurResiduelle: contract.valeurResiduelle ? new Decimal(contract.valeurResiduelle) : null,
+      montantAchatTTC: contract.montantAchatTTC ? contract.montantAchatTTC: null,
+      valeurResiduelle: contract.valeurResiduelle ? contract.valeurResiduelle : null,
       phases: contract.phases.map(p => ({
         ...p,
         mensualiteTTC: p.mensualiteTTC ? new Decimal(p.mensualiteTTC) : new Decimal(0)
