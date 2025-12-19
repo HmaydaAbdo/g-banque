@@ -34,4 +34,14 @@ public class ContratLeasingPhaseRequestDTO {
     public void setDureeMois(Integer dureeMois) { this.dureeMois = dureeMois; }
     public BigDecimal getMensualiteTTC() { return mensualiteTTC; }
     public void setMensualiteTTC(BigDecimal mensualiteTTC) { this.mensualiteTTC = mensualiteTTC; }
+
+    @Override
+    public String toString() {
+        return "ContratLeasingPhaseRequestDTO{" +
+                "id=" + id +
+                ", numeroPhase=" + numeroPhase +
+                ", dureeMois=" + dureeMois +
+                ", mensualiteTTC=" + mensualiteTTC +
+                '}';
+    }
 }

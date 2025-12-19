@@ -1,6 +1,8 @@
 package staport.finance.gBanque.leasing.contratLeasing.controller;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
@@ -31,6 +33,8 @@ import java.io.IOException;
 @RequestMapping("/contratsLeasing") // Defines the base URL path for all endpoints in this controller
 public class ContratLeasingController {
 
+
+    private static final Logger logger = LoggerFactory.getLogger(ContratLeasingController.class);
     private final ContratLeasingService contratLeasingService;
     private final EcheanceLeasingService echeanceLeasingService;
 
@@ -58,7 +62,10 @@ public class ContratLeasingController {
      */
     @PostMapping
     public ResponseEntity<ContratLeasingResponseDTO> createContratLeasing(@Valid @RequestBody ContratLeasingRequestDTO requestDTO) {
+        logger.info("Début de la création d'un nouveau contrat de leasing");
+        logger.debug("Données reçues pour la création : {}", requestDTO);
         ContratLeasingResponseDTO createdContrat = contratLeasingService.createContratLeasing(requestDTO);
+        logger.info("Contrat de leasing créé avec succès avec l'ID : {}", createdContrat.getId());
         return new ResponseEntity<>(createdContrat, HttpStatus.CREATED); // Return 201 Created
     }
 
@@ -72,7 +79,9 @@ public class ContratLeasingController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<ContratLeasingResponseDTO> getContratLeasingById(@PathVariable Long id) {
+        logger.info("Récupération du contrat de leasing avec l'ID : {}", id);
         ContratLeasingResponseDTO contrat = contratLeasingService.getContratLeasingById(id);
+        logger.debug("Contrat de leasing trouvé : {}", contrat.getNumeroContrat());
         return ResponseEntity.ok(contrat); // Return 200 OK
     }
 
@@ -88,47 +97,67 @@ public class ContratLeasingController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<ContratLeasingResponseDTO> updateContratLeasing(@PathVariable Long id, @Valid @RequestBody ContratLeasingRequestDTO requestDTO) {
+        logger.info("Début de la mise à jour du contrat de leasing avec l'ID : {}", id);
+        logger.debug("Nouvelles données reçues : {}", requestDTO);
         ContratLeasingResponseDTO updatedContrat = contratLeasingService.updateContratLeasing(id, requestDTO);
+        logger.info("Contrat de leasing mis à jour avec succès avec l'ID : {}", id);
         return ResponseEntity.ok(updatedContrat); // Return 200 OK
     }
 
     @PutMapping("/{id}/markAsInactive")
     public ResponseEntity<ContratLeasingResponseDTO> markAsInactive(@PathVariable Long id) {
+        logger.info("Début du marquage du contrat ID : {} comme inactif", id);
         ContratLeasingResponseDTO updatedContrat = contratLeasingService.markAsInactive(id);
+        logger.info("Contrat ID : {} marqué comme inactif avec succès", id);
         return ResponseEntity.ok(updatedContrat); // Return 200 OK
     }
 
     @GetMapping("/actifs")
     public ResponseEntity<Page<ContratLeasingResponseDTO>> getAllContratsLeasing(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        logger.info("Récupération des contrats de leasing actifs");
+        logger.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
+
         Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getActiveContrats(searchDTO, pageable);
+        logger.info("Nombre de contrats actifs trouvés : {} sur {} au total", resultPage.getNumberOfElements(), resultPage.getTotalElements());
         return ResponseEntity.ok(resultPage);
     }
 
     @GetMapping("/en-attente-main-levee")
     public ResponseEntity<Page<ContratLeasingResponseDTO>> searchPendingLienReleaseContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        logger.info("Récupération des contrats en attente de main levée");
+        logger.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
+
         Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getPendingLienReleaseContrats(searchDTO, pageable);
+        logger.info("Nombre de contrats en attente de main levée trouvés : {} sur {} au total", resultPage.getNumberOfElements(), resultPage.getTotalElements());
         return ResponseEntity.ok(resultPage);
     }
 
     @GetMapping("/inactifs")
     public ResponseEntity<Page<ContratLeasingResponseDTO>> searchInactiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
+        logger.info("Récupération des contrats de leasing inactifs");
+        logger.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
         Page<ContratLeasingResponseDTO> resultPage = contratLeasingService.getInactiveContrats(searchDTO, pageable);
+        logger.info("Nombre de contrats inactifs trouvés : {} sur {} au total", resultPage.getNumberOfElements(), resultPage.getTotalElements());
         return ResponseEntity.ok(resultPage);
     }
 
 
-    /**
-     * Endpoint to delete a leasing contract by its ID.
-     * Maps to DELETE /gBanque/api/contratsLeasing/{id}
-     *
-     * @param id The ID of the contract to delete.
-     * @return ResponseEntity with no content and HTTP Status 204 (No Content) on successful deletion.
-     * @throws ResourceNotFoundException (Handled by global exception handler)
-     */
+        /**
+         * Endpoint to delete a leasing contract by its ID.
+         * Maps to DELETE /gBanque/api/contratsLeasing/{id}
+         *
+         * @param id The ID of the contract to delete.
+         * @return ResponseEntity with no content and HTTP Status 204 (No Content) on successful deletion.
+         * @throws ResourceNotFoundException (Handled by global exception handler)
+         */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteContratLeasing(@PathVariable Long id) {
+        logger.info("Début de la suppression du contrat de leasing avec l'ID : {}", id);
+
         contratLeasingService.deleteContratLeasing(id);
-        return ResponseEntity.noContent().build(); // Return 204 No Content
+
+        logger.info("Contrat de leasing supprimé avec succès avec l'ID : {}", id);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -147,12 +176,11 @@ public class ContratLeasingController {
      * @throws ResourceNotFoundException (Handled by global exception handler) if the contract is not found.
      */
     @GetMapping("/{contratId}/tableauAmortissement")
-    public ResponseEntity<TableauAmortissementDTO> getContratLeasingAmortizationTable(
-            @PathVariable Long contratId,
-            EcheanceLeasingSearchDTO searchDTO, // Spring will auto-bind query parameters here
-            Pageable pageable) { // Spring will auto-bind page, size, sort query parameters here
-        // Call the service method, passing all the necessary parameters
+    public ResponseEntity<TableauAmortissementDTO> getContratLeasingAmortizationTable(@PathVariable Long contratId, EcheanceLeasingSearchDTO searchDTO, Pageable pageable) {
+        logger.info("Récupération du tableau d'amortissement pour le contrat ID : {}", contratId);
+        logger.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
         TableauAmortissementDTO tableau = echeanceLeasingService.getTableauAmortissementForContrat(contratId, searchDTO, pageable);
+        logger.info("Tableau d'amortissement récupéré avec succès pour le contrat ID : {}", contratId);
         return ResponseEntity.ok(tableau);
     }
 
@@ -167,22 +195,22 @@ public class ContratLeasingController {
      * @throws ValidationException Si le fichier n'est pas valide
      */
     @PostMapping("/{id}/pdf")
-    public ResponseEntity<String> uploadPdfToContrat(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<String> uploadPdfToContrat(@PathVariable Long id, @RequestParam("file") MultipartFile file) throws IOException {
+        logger.info("Début de l'upload du fichier PDF pour le contrat ID : {}", id);
+        logger.debug("Nom du fichier : {}, Taille : {} octets", file.getOriginalFilename(), file.getSize());
 
-        // Validation du fichier
         if (file.isEmpty()) {
+            logger.error("Tentative d'upload d'un fichier vide pour le contrat ID : {}", id);
             throw new ValidationException("Le fichier est vide.");
         }
 
-        // Appel au service pour attacher le PDF
         contratLeasingService.attachOrReplacePdfToContrat(
                 id,
                 file.getBytes(),
                 file.getOriginalFilename()
         );
 
+        logger.info("Fichier PDF uploadé avec succès pour le contrat ID : {}", id);
         return ResponseEntity.ok("Fichier PDF uploadé avec succès.");
     }
 
@@ -196,11 +224,10 @@ public class ContratLeasingController {
      */
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> downloadPdfFromContrat(@PathVariable Long id) {
+        logger.info("Début du téléchargement du fichier PDF pour le contrat ID : {}", id);
 
-        // Récupérer le PDF depuis le service
         PdfFileDTO pdfFile = contratLeasingService.getPdfFromContrat(id);
 
-        // Configurer les headers HTTP pour le téléchargement
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDisposition(
@@ -210,9 +237,10 @@ public class ContratLeasingController {
         );
         headers.setContentLength(pdfFile.getTailleFichier());
 
+        logger.info("Fichier PDF téléchargé avec succès pour le contrat ID : {} - Nom : {}, Taille : {} octets",
+                id, pdfFile.getNomFichier(), pdfFile.getTailleFichier());
         return new ResponseEntity<>(pdfFile.getContenu(), headers, HttpStatus.OK);
     }
-
     /**
      * Endpoint pour supprimer le fichier PDF d'un contrat.
      * Maps to DELETE /contratsLeasing/{id}/pdf
@@ -223,10 +251,12 @@ public class ContratLeasingController {
      */
     @DeleteMapping("/{id}/pdf")
     public ResponseEntity<Void> deletePdfFromContrat(@PathVariable Long id) {
+        logger.info("Début de la suppression du fichier PDF pour le contrat ID : {}", id);
 
         contratLeasingService.removePdfFromContrat(id);
 
-        return ResponseEntity.noContent().build(); // Return 204 No Content
+        logger.info("Fichier PDF supprimé avec succès pour le contrat ID : {}", id);
+        return ResponseEntity.noContent().build();
     }
 
 

@@ -79,5 +79,20 @@ public class ContratLeasingRequestDTO {
         return id;
     }
 
-
+    @Override
+    public String toString() {
+        return "ContratLeasingRequestDTO{" +
+                "id=" + id +
+                ", numeroContrat='" + numeroContrat + '\'' +
+                ", banqueDePrelevementId=" + banqueDePrelevementId +
+                ", organismeLeasingId=" + organismeLeasingId +
+                ", immobilisation='" + immobilisation + '\'' +
+                ", montantAchatTTC=" + montantAchatTTC +
+                ", dateDebut=" + dateDebut +
+                ", periodeEnMois=" + periodeEnMois +
+                ", typeContrat=" + typeContrat +
+                ", valeurResiduelle=" + valeurResiduelle +
+                ", phases=" + phases +
+                '}';
+    }
 }

@@ -1,6 +1,8 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.controller;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,8 @@ import staport.finance.gBanque.leasing.echeancesLeasing.services.EcheanceLeasing
 @RequestMapping("/echeances-leasing") // Préfixe d'API recommandé
 public class EcheanceLeasingController {
 
+
+    private static final Logger logger = LoggerFactory.getLogger(EcheanceLeasingController.class);
     private final EcheanceLeasingService echeanceLeasingService;
 
     public EcheanceLeasingController(EcheanceLeasingService echeanceLeasingService) {
@@ -38,7 +42,10 @@ public class EcheanceLeasingController {
             @PathVariable Long contratId,
             EcheanceLeasingSearchDTO searchDTO,
             Pageable pageable) {
+        logger.info("Récupération du tableau d'amortissement pour le contrat ID : {}", contratId);
+        logger.debug("Critères de recherche : {}, Pagination : page={}, taille={}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
         TableauAmortissementDTO tableau = echeanceLeasingService.getTableauAmortissementForContrat(contratId, searchDTO, pageable);
+        logger.info("Tableau d'amortissement récupéré avec succès pour le contrat ID : {}", contratId);
         return ResponseEntity.ok(tableau);
     }
 
@@ -51,7 +58,9 @@ public class EcheanceLeasingController {
      */
     @PutMapping("/{id}/toggle-status")
     public ResponseEntity<EcheanceLeasingResponseDTO> markEcheanceAsPaid(@PathVariable Long id) {
+        logger.info("Début de la modification du statut de l'échéance ID : {}", id);
         EcheanceLeasingResponseDTO updatedEcheance = echeanceLeasingService.toggleStatus(id);
+        logger.info("Statut de l'échéance ID : {} modifié avec succès", id);
         return ResponseEntity.ok(updatedEcheance);
     }
 
@@ -64,10 +73,13 @@ public class EcheanceLeasingController {
      * @return ResponseEntity avec l'EncoursLeasingResponseDTO et HTTP Status 200 (OK).
      */
     @GetMapping("/encours")
-    public ResponseEntity<EncoursLeasingResponseDTO> getEncoursLeasing(
-            @Valid @ModelAttribute EncoursLeasingRequestDTO requestDTO,
+    public ResponseEntity<EncoursLeasingResponseDTO> getEncoursLeasing(@Valid @ModelAttribute EncoursLeasingRequestDTO requestDTO,
             Pageable pageable) {
+
+        logger.info("Récupération des encours de leasing pour la banque ID : {}", requestDTO.getBanqueId());
+        logger.debug("Paramètres de la requête : {}, Pagination : page={}, taille={}", requestDTO, pageable.getPageNumber(), pageable.getPageSize());
         EncoursLeasingResponseDTO encours = echeanceLeasingService.getEncoursLeasingForBanque(requestDTO, pageable);
+        logger.info("Encours de leasing récupérés avec succès pour la banque ID : {}", requestDTO.getBanqueId());
         return ResponseEntity.ok(encours);
     }
 

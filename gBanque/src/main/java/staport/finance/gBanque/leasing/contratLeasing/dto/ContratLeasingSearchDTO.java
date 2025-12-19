@@ -24,4 +24,16 @@ public class ContratLeasingSearchDTO {
     public void setTypeContrat(TypeContratLeasing typeContrat) { this.typeContrat = typeContrat; }
     public Boolean getCompleted() { return completed; }
     public void setCompleted(Boolean completed) { this.completed = completed; }
+
+    @Override
+    public String toString() {
+        return "ContratLeasingSearchDTO{" +
+                "numeroContrat='" + numeroContrat + '\'' +
+                ", banqueDePrelevementId=" + banqueDePrelevementId +
+                ", organismeLeasingId=" + organismeLeasingId +
+                ", immobilisation='" + immobilisation + '\'' +
+                ", typeContrat=" + typeContrat +
+                ", completed=" + completed +
+                '}';
+    }
 }

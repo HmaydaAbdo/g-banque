@@ -59,5 +59,14 @@ public class EcheanceLeasingSearchDTO {
         this.statutPaiement = statutPaiement;
     }
 
-
+    @Override
+    public String toString() {
+        return "EcheanceLeasingSearchDTO{" +
+                "contratLeasingId=" + contratLeasingId +
+                ", numeroEcheance=" + numeroEcheance +
+                ", month=" + month +
+                ", year=" + year +
+                ", statutPaiement=" + statutPaiement +
+                '}';
+    }
 }

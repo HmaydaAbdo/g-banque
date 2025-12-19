@@ -75,4 +75,16 @@ public class TableauAmortissementDTO {
     public void setEcheances(Page<EcheanceLeasingResponseDTO> echeances) {
         this.echeances = echeances;
     }
+
+    @Override
+    public String toString() {
+        return "TableauAmortissementDTO{" +
+                "contratLeasingId=" + contratLeasingId +
+                ", numeroContrat='" + numeroContrat + '\'' +
+                ", totalIndemniteAPayer=" + totalIndemniteAPayer +
+                ", montantTotalDejaPaye=" + montantTotalDejaPaye +
+                ", montantRestantAPayer=" + montantRestantAPayer +
+                ", echeances=" + echeances +
+                '}';
+    }
 }

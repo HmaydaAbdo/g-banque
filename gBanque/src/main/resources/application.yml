@@ -79,8 +79,15 @@
         sequential: true  # Exécution séquentielle (recommandé)
         abort-on-general-failure: false  # Annuler job spécifique si job général échoue
 
-
   leasing:
+    main-levee:
+        job:
+          # Enable/disable leasing main levée job
+          enabled: true
+
+          # CRON expression: Every Sunday at 2:00 PM (2 hours after functional lines)
+          # This ensures no database lock conflicts
+          cron: "0 0 14 ? * SUN"
     contract:
       valeur-residuelle: 0.01
       taux-tva: 0.2
