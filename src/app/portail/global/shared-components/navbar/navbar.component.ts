@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, OnDestroy, inject } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { RouterLink, RouterLinkActive } from '@angular/router';
@@ -10,12 +10,11 @@ import { AuthService } from "../../../../auth/services/auth.service";
 import { TooltipModule } from "primeng/tooltip";
 import { Role } from "../../../../auth/enum/Role";
 import { BadgeModule } from 'primeng/badge';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
-import { OverlayPanel } from 'primeng/overlaypanel';
 import { ToastModule } from 'primeng/toast';
 import { NotificationService } from "../../../notification/service/NotificationService";
 import { WebSocketService } from "../../../notification/service/WebSocketService";
 import { NotificationListComponent } from "../../../notification/views/notification-list/notification-list.component";
+import { DialogModule } from "primeng/dialog";
 
 interface MenuItem {
   label: string;
@@ -37,9 +36,9 @@ interface MenuItem {
     ConfirmDialogModule,
     TooltipModule,
     BadgeModule,
-    OverlayPanelModule,
     ToastModule,
-    NotificationListComponent
+    NotificationListComponent,
+    DialogModule
   ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
@@ -50,13 +49,13 @@ interface MenuItem {
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   @Output() openSidebar = new EventEmitter<void>();
-  @ViewChild('op') op!: OverlayPanel;
 
   loading: boolean = false;
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
 
   unreadCount: number = 0;
+  notificationDialogVisible: boolean = false;
 
   constructor(
     private confirmationService: ConfirmationService,
@@ -125,6 +124,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.unreadCount = 0;
       }
     });
+  }
+
+  showNotificationDialog(): void {
+    this.notificationDialogVisible = true;
   }
 
   private hasRequiredRole(item: MenuItem): boolean {
