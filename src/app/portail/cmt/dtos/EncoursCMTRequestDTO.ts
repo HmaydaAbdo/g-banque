@@ -1,10 +1,9 @@
-import {Decimal} from "decimal.js";
 
 
 export interface EncoursCMTRequestDTO {
   banqueId: number;
   designation:string
-  montant:Decimal
+  montant:number
   page?: number;
   size?: number;
   sort?: string;

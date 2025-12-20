@@ -3,7 +3,6 @@ import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http'
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import { Decimal } from "decimal.js";
 import { CreditMoyenTermeResponseDto } from "../dtos/CreditMoyenTermeResponseDto";
 import { CreditMoyenTermeSearchDto } from "../dtos/CreditMoyenTermeSearchDto";
 import { PageResponse } from "../../global/types/PageResponse";
@@ -112,21 +111,14 @@ export class CmtService {
   }
 
   /**
-   * Helper to convert plain numbers/strings to BigDecimal objects.
-   */
-  private convertToBigDecimal(value: any): Decimal {
-    return value !== undefined && value !== null ? new Decimal(value) : new Decimal(0);
-  }
-
-  /**
    * Processes a single CreditMoyenTermeResponseDto to convert numeric fields.
    */
   private processCmtResponse(credit: CreditMoyenTermeResponseDto): CreditMoyenTermeResponseDto {
     return {
       ...credit,
-      nominal: this.convertToBigDecimal(credit.nominal),
-      echeance: this.convertToBigDecimal(credit.echeance),
-      taux: this.convertToBigDecimal(credit.taux),
+      nominal: credit.nominal,
+      echeance: credit.echeance,
+      taux: credit.taux,
     };
   }
 

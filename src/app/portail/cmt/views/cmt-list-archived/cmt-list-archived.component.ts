@@ -13,7 +13,7 @@ import {CreditMoyenTermeSearchDto} from "../../dtos/CreditMoyenTermeSearchDto";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {Button, ButtonDirective} from "primeng/button";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {DatePipe, NgClass, NgIf} from "@angular/common";
+import {DatePipe, DecimalPipe, NgClass, NgIf} from "@angular/common";
 import {DropdownModule} from "primeng/dropdown";
 import {InputTextModule} from "primeng/inputtext";
 import {Ripple} from "primeng/ripple";
@@ -41,7 +41,8 @@ import {TooltipModule} from "primeng/tooltip";
     TagModule,
     ToastModule,
     TooltipModule,
-    NgClass
+    NgClass,
+    DecimalPipe
   ],
   templateUrl: './cmt-list-archived.component.html',
   styleUrl: './cmt-list-archived.component.scss'

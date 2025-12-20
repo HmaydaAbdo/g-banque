@@ -1,12 +1,11 @@
-import {Decimal} from "decimal.js";
 
 export interface CreditMoyenTermeRequestDto {
   banqueId: number;
   designation: string;
-  nominal: Decimal;
+  nominal: number;
   periodicite: number;
   duree: number;
-  echeance: Decimal;
-  taux: Decimal;
+  echeance: number;
+  taux: number;
   dateDebut: string;
 }

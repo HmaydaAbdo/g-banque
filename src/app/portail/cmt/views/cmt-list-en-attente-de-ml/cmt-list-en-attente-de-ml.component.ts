@@ -13,7 +13,7 @@ import {CreditMoyenTermeSearchDto} from "../../dtos/CreditMoyenTermeSearchDto";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {Button, ButtonDirective} from "primeng/button";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {DatePipe, NgClass, NgIf} from "@angular/common";
+import {DatePipe, DecimalPipe, NgClass, NgIf} from "@angular/common";
 import {DropdownModule} from "primeng/dropdown";
 import {InputTextModule} from "primeng/inputtext";
 import {Ripple} from "primeng/ripple";
@@ -31,6 +31,7 @@ import {TooltipModule} from "primeng/tooltip";
     ConfirmDialogModule,
     DatePipe,
     DropdownModule,
+    DropdownModule,
     InputTextModule,
     NgIf,
     PrimeTemplate,
@@ -41,7 +42,8 @@ import {TooltipModule} from "primeng/tooltip";
     TagModule,
     ToastModule,
     TooltipModule,
-    NgClass
+    NgClass,
+    DecimalPipe
   ],
   templateUrl: './cmt-list-en-attente-de-ml.component.html',
   styleUrl: './cmt-list-en-attente-de-ml.component.scss'
@@ -82,7 +84,7 @@ export class CmtListEnAttenteDeMLComponent  implements OnInit, OnDestroy {
 
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
-      { icon: 'pi pi-list', route: '/portail/cmt/en-attente-de-ML', label:"Les Crédits Moyens Termes en attente de ML" },
+      { icon: 'pi pi-list', route: '/portail/cmt/en-attente-de-ML', label:"Les Crédits Moyens Termes en attente de main levée" },
     ]
     this.initSearchForm();
     this.loadDropdownOptions();

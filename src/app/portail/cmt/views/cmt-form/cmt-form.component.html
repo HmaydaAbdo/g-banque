@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="w-screen h-screen overflow-y-scroll  pb-6 px-5">
+<div class="w-screen h-screen overflow-y-scroll  pb-6 ">
   <div class="flex justify-content-center ">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
       <ng-template pTemplate="item" let-item>
@@ -14,19 +14,18 @@
         </ng-container>
         <ng-template #elseBlock>
           <a [href]="item.url">
-            <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            <span class="text-color text-sm   text-center">{{ item.label }}</span>
           </a>
         </ng-template>
       </ng-template>
     </p-breadcrumb>
   </div>
-  <h2 class="text-center">{{ isEditMode ? 'Modifier un Crédit à Moyen Terme' : 'Ajouter un Crédit à Moyen Terme' }}</h2>
+  <h4 class="text-center">{{ isEditMode ? 'Modifier un Crédit à Moyen Terme' : 'Ajouter un Crédit à Moyen Terme' }}</h4>
    <div class="flex justify-content-center">
-   <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 600px;">
-   <form [formGroup]="cmtForm" (ngSubmit)="onSubmit()" class="p-fluid">
+   <form [formGroup]="cmtForm" (ngSubmit)="onSubmit()" class="p-fluid px-5">
      <div class="formgrid grid">
 
-   <div class="field col-12">
+   <div class="field col-12 md:col-6">
      <label for="designation" class="block text-900 font-medium mb-2">Désignation <span class="p-text-danger">*</span></label>
    <input pInputText id="designation"
                      type="text"
@@ -39,7 +38,7 @@
  </small>
    </div>
 
-   <div class="field col-12">
+   <div class="field col-12 md:col-6">
   <label for="banque" class="block text-900 font-medium mb-2">Banque <span class="p-text-danger">*</span></label>
    <p-dropdown id="banque"
                            formControlName="banqueId"
@@ -58,7 +57,7 @@
   </small>
  </div>
 
- <div class="field col-12 md:col-6">
+    <div class="field col-12 md:col-6">
  <label for="nominal" class="block text-900 font-medium mb-2">Montant Nominal <span class="p-text-danger">*</span></label>
  <p-inputNumber id="nominal"
                              formControlName="nominal"
@@ -166,6 +165,5 @@
    <button pButton pRipple label="{{ isEditMode ? 'Modifier' : 'Créer' }}" icon="pi pi-check" class="p-button-primary" type="submit" [disabled]="loading"></button>
    </div>
    </form>
-  </div>
    </div>
 </div>

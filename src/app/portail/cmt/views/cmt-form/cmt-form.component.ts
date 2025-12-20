@@ -203,6 +203,6 @@ export class CmtFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/cmt/list']);
+    this.router.navigate(['/portail/cmt/encours']);
   }
 }

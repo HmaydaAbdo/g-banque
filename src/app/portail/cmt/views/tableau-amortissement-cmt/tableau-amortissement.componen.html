@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card px-4 h-screen w-screen overflow-y-scroll">
+<div class="card px-2 h-screen w-screen overflow-y-scroll">
 
   <div *ngIf="loading && !tableauDetails" class="flex justify-content-center align-items-center h-full my-5">
     <p-progressSpinner></p-progressSpinner>
@@ -16,84 +16,87 @@
   </div>
 
   <div *ngIf="tableauDetails || !loading" class="flex flex-column px-2">
+
     <div class="flex justify-content-between align-items-center">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
       <ng-template pTemplate="item" let-item>
         <ng-container *ngIf="item.route; else elseBlock">
           <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color' ]"></span>
+            <span class="text-black-alpha-90  text-sm p-2 font-bold">{{ item.label }}</span>
           </a>
 
         </ng-container>
         <ng-template #elseBlock>
           <a [href]="item.url">
-            <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            <span class="text-color text-sm  text-center">{{ item.label }}</span>
           </a>
         </ng-template>
       </ng-template>
     </p-breadcrumb>
-      <p class="text-xl font-bold">Désignation CMT : "{{tableauDetails?.designationCredit}}"</p>
+      <p class="text-sm font-bold">Désignation CMT : "{{tableauDetails?.designationCredit}}"</p>
   </div>
-    <div *ngIf="tableauDetails" class="flex flex-wrap justify-content-between gap-2 text-center text-xl  ">
-      <div class="flex-1 max-w-15rem  ">
-        <div class=" p-1 shadow-1 border-round surface-card">
-          <h5 class="font-bold">Endettement</h5>
-          <h5 class="font-bold text-blue-500">
-            {{ tableauDetails.montantTotalAPayer.toFixed(2) }} MAD
-          </h5>
-        </div>
-      </div>
-      <div class="flex-1 max-w-15rem p-1 ">
-        <div class=" p-1 shadow-1 border-round surface-card">
-          <h5 class="font-bold">Montant Total Déjà Payé</h5>
-          <h5 class="font-bold text-green-500">
-            {{ tableauDetails.montantTotalDejaPaye.toFixed(2) }} MAD
-          </h5>
-        </div>
-      </div>
-      <div class="flex-1 max-w-15rem p-1 ">
-        <div class=" p-1 shadow-1 border-round surface-card">
-          <h5 class="font-bold">Montant Restant à Payer</h5>
-          <h5 class="font-bold text-red-500">
-            {{ tableauDetails.montantRestantAPayer.toFixed(2) }} MAD
-          </h5>
-        </div>
-      </div>
+
+    <div *ngIf="tableauDetails" class="flex flex-row justify-content-around gap-2 text-center text-sm  ">
+      <p>Endettement : <strong>{{ tableauDetails.montantTotalAPayer | number }} MAD</strong> </p>
+      <p>Montant Total Déjà Payé : <strong>{{ tableauDetails.montantTotalDejaPaye | number }} MAD</strong> </p>
+      <p>Montant Restant à Payer : <strong>{{ tableauDetails.montantRestantAPayer | number }} MAD</strong> </p>
     </div>
-    <form [formGroup]="searchForm" class="p-fluid grid p-2 border-round shadow-1 gap-3">
-      <div class="field col-12 md:col-2">
-        <label for="numeroEcheance" class="font-bold mb-2">N° Échéance</label>
-        <p-inputNumber id="numeroEcheance" formControlName="numeroEcheance" placeholder="Ex: 5" mode="decimal" [useGrouping]="false"></p-inputNumber>
-      </div>
-      <div class="field col-12 md:col-2">
-        <label for="month" class="font-bold mb-2">Mois</label>
-        <p-inputNumber id="month" formControlName="month" placeholder="1-12" mode="decimal" [useGrouping]="false" [min]="1" [max]="12"></p-inputNumber>
-      </div>
-      <div class="field col-12 md:col-2">
-        <label for="year" class="font-bold mb-2">Année</label>
-        <p-inputNumber id="year" formControlName="year" placeholder="Ex: 2025" mode="decimal" [useGrouping]="false"></p-inputNumber>
-      </div>
-      <div class="field col-12 md:col-3">
-        <label for="statutPaiement" class="font-bold mb-2">Statut Paiement</label>
-        <p-dropdown id="statutPaiement" formControlName="statutPaiement" [options]="statutOptions" placeholder="Sélectionner un statut" [showClear]="true" appendTo="body"></p-dropdown>
-      </div>
-      <div class="col-12 md:col-2 flex align-items-center mt-2 justify-content-end">
-        <p-button label="Réinitialiser Filtres" icon="pi pi-times" severity="secondary" (onClick)="clearSearch()" class="w-full"></p-button>
-      </div>
+
+    <form [formGroup]="searchForm" class="flex flex-row gap-2 justify-content-between w-full p-2">
+      <p-inputNumber
+        id="numeroEcheance"
+        formControlName="numeroEcheance"
+        placeholder="N° Échéance"
+        mode="decimal"
+        [useGrouping]="false"
+        class="flex-1">
+      </p-inputNumber>
+      <p-inputNumber
+        id="month"
+        formControlName="month"
+        placeholder="Mois ( Ex: 1-12 )"
+        mode="decimal"
+        [useGrouping]="false"
+        [min]="1"
+        [max]="12"
+        class="flex-1">
+      </p-inputNumber>
+      <p-inputNumber
+        id="year"
+        formControlName="year"
+        placeholder="Année (Ex: 2025)"
+        mode="decimal"
+        [useGrouping]="false"
+        class="flex-1">
+      </p-inputNumber>
+      <p-dropdown
+        id="statutPaiement"
+        formControlName="statutPaiement"
+        [options]="statutOptions"
+        placeholder="Sélectionner un statut"
+        [showClear]="true"
+        appendTo="body"
+        class="flex-1">
+      </p-dropdown>
+      <p-button
+        icon="pi pi-times"
+        severity="secondary"
+        (onClick)="clearSearch()">
+      </p-button>
     </form>
+
     <p-table
         #dt
         [value]="echeances"
         [paginator]="true"
-        [rows]="3"
+        [rows]="10"
         [totalRecords]="totalRecords"
         [lazy]="true"
         (onLazyLoad)="loadEcheances($event)"
         responsiveLayout="scroll"
         [scrollable]="true"
-        scrollHeight="400px"
-        styleClass="p-datatable-sm p-datatable-gridlines"
+        styleClass="p-datatable-sm p-datatable-gridlines text-sm pb-8"
         [loading]="loading"
         [rowsPerPageOptions]="[3,5,10, 25, 50, 100]"
         [showCurrentPageReport]="true"
@@ -101,36 +104,27 @@
       >
         <ng-template pTemplate="header">
           <tr>
+            <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
             <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
             <th pSortableColumn="dateEcheance">Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
             <th>Montant TTC</th>
-
             <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
-            @if (isAdmin()){
-              <th style="width: 8rem;">Actions</th>
-            }
+            <th style="width: 8rem;">Actions</th>
+
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-echeance>
           <tr >
+            <td>{{echeance.id}}</td>
             <td>{{ echeance.numeroEcheance }}</td>
             <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-            <td>{{ echeance.montantTtc.toFixed(2) }} MAD</td>
+            <td>{{ echeance.montantTtc | number }} MAD</td>
             <td>
               <p-tag [value]="echeance.statutPaiement" [severity]="getStatusSeverity(echeance.statutPaiement)"></p-tag>
             </td>
-
-            <td>
-              @if (isAdmin()){
-              <td class="text-center">
-                <p-inputSwitch
-                  [ngModel]="echeance.statutPaiement === 'PAYE'"
-                  (onChange)="onStatutChange(echeance)"
-                  pTooltip="changer le status de l'échéance"
-                  tooltipPosition="top"
-                ></p-inputSwitch>
-              </td>
-            }</td>
+            <td class="text-center">
+                <p-inputSwitch [ngModel]="echeance.statutPaiement" (onChange)="onStatutChange(echeance)" pTooltip="changer le status de l'échéance" tooltipPosition="top"></p-inputSwitch>
+            </td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">

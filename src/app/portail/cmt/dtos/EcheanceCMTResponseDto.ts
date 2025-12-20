@@ -1,4 +1,3 @@
-import { Decimal } from "decimal.js";
 import { StatutEcheanceCMT } from "../enums/StatutEcheanceCMT";
 
 export interface EcheanceCMTResponseDto {

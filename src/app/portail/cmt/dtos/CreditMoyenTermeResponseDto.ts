@@ -1,14 +1,13 @@
-import {Decimal} from "decimal.js";
 import {BanqueDto} from "./BanqueDto";
 
 export interface CreditMoyenTermeResponseDto {
   id: number;
   designation: string;
-  nominal: Decimal;
+  nominal: number;
   periodicite: number;
   duree: number;
-  echeance: Decimal;
-  taux: Decimal;
+  echeance: number;
+  taux: number;
   dateDebut: string;
   dateCreation: string;
   dateModification: string;
