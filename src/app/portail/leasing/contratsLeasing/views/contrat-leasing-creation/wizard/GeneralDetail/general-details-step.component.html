@@ -77,7 +77,7 @@
           formControlName="dateDebut"
           dateFormat="dd/mm/yy"
           [showIcon]="true"
-          [readonlyInput]="true"
+          appendTo="body"
           [ngClass]="{'ng-invalid ng-dirty': dateDebutControl.invalid && (dateDebutControl.dirty || dateDebutControl.touched)}"
           aria-describedby="dateDebut-help"
         ></p-calendar>

@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column gap-4 p-2 md:p-4 w-screen h-screen overflow-y-scroll">
+<div class="card flex flex-column gap-2 p-2  w-screen h-screen overflow-y-scroll">
 
   <div class="portail-section flex justify-content-between bg-transparent">
     <div class="flex justify-content-center align-items-center">
@@ -10,23 +10,22 @@
           <ng-container *ngIf="item.route; else elseBlock">
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
                #rla="routerLinkActive">
-              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+              <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
             </a>
           </ng-container>
           <ng-template #elseBlock>
             <a [href]="item.url">
-              <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+              <span class="text-color text-sm  text-center">{{ item.label }}</span>
             </a>
           </ng-template>
         </ng-template>
       </p-breadcrumb>
     </div>
 
-    <button pButton pRipple label="Ajouter Préfinancement" class="hidden md:block h-fit mt-2" size="small" icon="pi pi-plus"
+    <button pButton pRipple label="Ajouter Préfinancement" class=" h-fit " size="small" icon="pi pi-plus"
             severity="primary" routerLink="/portail/préfinancements/new"></button>
-    <button pButton pRipple pTooltip="Ajouter un Préfinancement" class="md:hidden h-fit mt-2" size="small" icon="pi pi-plus"
-            severity="primary" routerLink="/portail/préfinancements/new"></button>
+
   </div>
 
   <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2">
@@ -114,9 +113,9 @@
     <p-table #dt [value]="prefinancements" [paginator]="true"
              [rows]="10" [totalRecords]="totalRecords"
              [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
-             responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadPrefinancements($event)"
-             [resizableColumns]="true"
+             responsiveLayout="scroll" [scrollable]="true"  (onLazyLoad)="loadPrefinancements($event)"
              [columns]="[
+                {field: 'id', header: 'ID', sortable: true},
                 {field: 'marcheNumero', header: 'Marché', sortable: true},
                 {field: 'banqueName', header: 'Banque', sortable: true},
                 {field: 'montant', header: 'Montant', sortable: true},
@@ -127,11 +126,11 @@
                 {field: 'type', header: 'Type', sortable: true},
                 {field: 'status', header: 'Statut', sortable: true}
              ]"
-             styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '70rem'}"
+             styleClass="p-datatable-gridlines text-xs "
              [showCurrentPageReport]="true"
              currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
       <ng-template pTemplate="header" let-columns>
-        <tr>
+        <tr class="white-space-nowrap">
           <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
@@ -144,9 +143,10 @@
 
       <ng-template pTemplate="body" let-prefinancement>
         <tr>
+          <td>{{ prefinancement.id }}</td>
           <td>{{ prefinancement.marcheNumero }}</td>
           <td>{{ prefinancement.banqueName }}</td>
-          <td>{{ prefinancement.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ prefinancement.montant | number:'1.2-2' }} </td>
           <td>{{ prefinancement.observation }}</td>
           <td>{{ prefinancement.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ prefinancement.dateOperation ? (prefinancement.dateOperation | date:'dd/MM/yyyy') : 'N/A' }}</td>
@@ -172,13 +172,25 @@
               pTooltip="{{ prefinancement.status === Status.PAYE ? 'Marquer comme Prévu' : 'Marquer comme Payé' }}"
             ></p-inputSwitch>
 
-            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2"
-                    [routerLink]="['/portail/préfinancements/edit', prefinancement.id]"></button>
 
+            <p-button
+              icon="pi pi-pencil"
+              [rounded]="true"
+              [outlined]="true"
+              severity="secondary"
+              styleClass="p-2"
+              [routerLink]="['/portail/préfinancements/edit', prefinancement.id]">
+            </p-button>
 
+            <!-- Bouton Delete (conditionnel) -->
             @if (authService.isAdmin()) {
-              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger"
-                      (click)="deletePrefinancement(prefinancement)"></button>
+              <p-button
+                icon="pi pi-trash"
+                [rounded]="true"
+                [outlined]="true"
+                severity="danger"
+                (onClick)="deletePrefinancement(prefinancement)">
+              </p-button>
             }
 
           </td>

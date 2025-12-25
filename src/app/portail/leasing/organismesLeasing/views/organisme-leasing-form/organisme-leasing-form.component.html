@@ -27,7 +27,7 @@
 
       <div class="field col-12 md:col-6">
         <label for="dateDebut">Date Début <span class="p-error">*</span></label>
-        <p-calendar id="dateDebut" formControlName="dateDebut" dateFormat="dd/mm/yy" [showIcon]="true"
+        <p-calendar id="dateDebut" formControlName="dateDebut" [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true"  appendTo="body"  dateFormat="dd/mm/yy"
                     [ngClass]="{'ng-dirty': f['dateDebut'].invalid && f['dateDebut'].touched}"
                     placeholder="JJ/MM/AA"></p-calendar>
         <small class="p-error" *ngIf="f['dateDebut'].invalid && f['dateDebut'].touched">La date de début est requise.</small>
@@ -35,7 +35,7 @@
 
       <div class="field col-12 md:col-6">
         <label for="dateFin">Date Fin <span class="p-error">*</span></label>
-        <p-calendar id="dateFin" formControlName="dateFin" dateFormat="dd/mm/yy" [showIcon]="true"
+        <p-calendar id="dateFin" formControlName="dateFin"  [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true"  appendTo="body"  dateFormat="dd/mm/yy"
                     [ngClass]="{'ng-dirty': f['dateFin'].invalid && f['dateFin'].touched}"
                     placeholder="JJ/MM/AA"></p-calendar>
         <small class="p-error" *ngIf="f['dateFin'].errors?.['required']">La date de fin est requise.</small>

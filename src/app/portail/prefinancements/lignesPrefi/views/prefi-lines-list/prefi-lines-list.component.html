@@ -1,15 +1,15 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column gap-4 p-2 md:p-4 w-screen h-screen overflow-y-scroll">
+<div class="card flex flex-column gap-2 p-2  w-screen h-screen overflow-y-scroll">
 
   <div class="portail-section flex justify-content-between bg-transparent">
     <div class="flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items">
         <ng-template pTemplate="item" let-item>
           <a [routerLink]="item.routerLink" class="p-menuitem-link">
-            <span [ngClass]="item.icon" class="text-color text-2xl"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            <span [ngClass]="item.icon" class="text-color "></span>
+            <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
           </a>
         </ng-template>
       </p-breadcrumb>
@@ -72,11 +72,12 @@
              [rows]="10" [totalRecords]="totalRecords"
              [lazy]="true" (onLazyLoad)="loadPrefiLines($event)"
              [rowsPerPageOptions]="[10, 25, 50]" [loading]="loading"
-             responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex"
-             styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '70rem'}"
+             responsiveLayout="scroll" [scrollable]="true"
+             styleClass="p-datatable-gridlines text-xs"
              [showCurrentPageReport]="true"
              currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
              [columns]="[
+                {field: 'id', header: 'ID', sortable: true},
                 {field: 'marcheNumero', header: 'Marché', sortable: true},
                 {field: 'banqueNom', header: 'Banque', sortable: true},
                 {field: 'montant', header: 'Montant', sortable: true},
@@ -100,16 +101,17 @@
 
       <ng-template pTemplate="body" let-prefiLine>
         <tr>
+          <td>{{ prefiLine.id }} </td>
           <td>{{ prefiLine.marcheNumero }} </td>
           <td>{{ prefiLine.banqueNom }} </td>
-          <td>{{ prefiLine.montant | number:'1.2-2'}} MAD</td>
-          <td>{{ prefiLine.encours | number:'1.2-2' }} MAD</td>
-          <td>{{ prefiLine.solde | number:'1.2-2' }} MAD</td>
+          <td>{{ prefiLine.montant | number:'1.2-2'}} </td>
+          <td>{{ prefiLine.encours | number:'1.2-2' }} </td>
+          <td>{{ prefiLine.solde | number:'1.2-2' }} </td>
           <td>{{ prefiLine.taux | number:'1.2-2'}} %</td>
           <td>{{ prefiLine.dateDepart | date:'dd/MM/yyyy' }}</td>
           <td>{{ prefiLine.dateFin | date:'dd/MM/yyyy' }}</td>
           <td>
-            <button pButton pRipple icon="pi pi-eye" class="p-button-rounded p-button-secondary mr-2" [routerLink]="['/portail/prefi-line', prefiLine.id, 'encours', 'validated']">
+            <button pButton pRipple icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-secondary mr-2" [routerLink]="['/portail/prefi-line', prefiLine.id, 'encours', 'validated']">
             </button>
           </td>
         </tr>

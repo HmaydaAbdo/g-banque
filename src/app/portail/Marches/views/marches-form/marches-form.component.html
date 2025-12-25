@@ -74,7 +74,7 @@
 
       <div class="col-12 md:col-6 field">
         <label for="dateDebutDesTravaux">Date de début des travaux </label>
-        <p-calendar id="dateDebutDesTravaux" formControlName="dateDebutDesTravaux" [showIcon]="true" dateFormat="dd/mm/yy" appendTo="body"></p-calendar>
+        <p-calendar id="dateDebutDesTravaux" formControlName="dateDebutDesTravaux"  [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true"  appendTo="body"  dateFormat="dd/mm/yy"></p-calendar>
         <small class="p-error" *ngIf="f['dateDebutDesTravaux'].invalid && f['dateDebutDesTravaux'].touched">
           <span *ngIf="f['dateDebutDesTravaux'].errors?.['required']">La date de début des travaux est obligatoire.</span>
         </small>
@@ -82,7 +82,7 @@
 
       <div class="col-12 md:col-6 field">
         <label for="dateDAchievementDesTravaux">Date d'achèvement des travaux </label>
-        <p-calendar id="dateDAchievementDesTravaux" formControlName="dateDAchievementDesTravaux" [showIcon]="true" dateFormat="dd/mm/yy" appendTo="body"></p-calendar>
+        <p-calendar id="dateDAchievementDesTravaux" formControlName="dateDAchievementDesTravaux"  [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true"  appendTo="body"  dateFormat="dd/mm/yy"></p-calendar>
         <small class="p-error" *ngIf="f['dateDAchievementDesTravaux'].invalid && f['dateDAchievementDesTravaux'].touched">
           <span *ngIf="f['dateDAchievementDesTravaux'].errors?.['required']">La date d'achèvement des travaux est obligatoire.</span>
         </small>
