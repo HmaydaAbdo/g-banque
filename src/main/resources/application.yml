@@ -1,0 +1,121 @@
+  server:
+    address: ${SERVER_ADRESSE:0.0.0.0}
+    port: ${SERVER_PORT:8080}
+    servlet:
+      context-path: ${CONTEXT_PATH:/gBanque/api}
+  spring:
+    main:
+      lazy-initialization: true
+
+    application:
+      name: gBanque
+    datasource:
+
+      url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${MYSQL_DATABASE:Gbanque}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      username: ${MYSQL_USER:root}
+      password: ${MYSQL_PASSWORD:}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 5
+        idle-timeout: 30000
+        connection-timeout: 20000
+        max-lifetime: 1800000
+    jpa:
+      hibernate:
+        ddl-auto: none
+      show-sql: false
+
+
+      properties:
+        hibernate:
+          temp:
+            use_jdbc_metadata_defaults: false
+          dialect: org.hibernate.dialect.MySQLDialect
+    batch:
+      job:
+        enabled: true
+      jdbc:
+        initialize-schema: always
+    mail:
+        host: mail.staport.ma
+        port: 587
+        username: gbanque@staport.ma
+        password: Gbanque@2026
+        protocol: smtp
+        from: gbanque@staport.ma
+        default-encoding: UTF-8
+        properties:
+          mail.smtp.auth: true
+          mail.smtp.starttls.enable: true
+          mail.smtp.starttls.required: false
+          mail.smtp.ssl.trust: mail.staport.ma
+          mail.smtp.ssl.checkserveridentity: false
+          mail.smtp.connectiontimeout: 5000
+          mail.smtp.timeout: 5000
+          mail.smtp.writetimeout: 5000
+        notification:
+          batch-job:
+            enabled: true
+            recipients: hmayda@staport-sa.ma
+  functional:
+    line:
+      expiration:
+        alert:
+          threshold:
+            months: 2
+        warning:
+          threshold:
+            months: 3
+      job:
+        # Configuration individuelle des jobs
+        general:
+          enabled: true
+        specific:
+          enabled: true
+      jobs:
+        # Configuration globale du scheduler
+        enabled: true
+        cron: 0 0 12 ? * SUN  # Dimanche à 12:00 PM
+        sequential: true  # Exécution séquentielle (recommandé)
+        abort-on-general-failure: false  # Annuler job spécifique si job général échoue
+  leasing:
+    main-levee:
+        job:
+          # Enable/disable leasing main levée job
+          enabled: true
+
+          # CRON expression: Every Sunday at 2:00 PM (2 hours after functional lines)
+          # This ensures no database lock conflicts
+          cron: "0 0 14 ? * SUN"
+    contract:
+      valeur-residuelle: 0.01
+      taux-tva: 0.2
+  cmt:
+    main-levee:
+      job:
+        # Activer/désactiver le job de main levée CMT
+        enabled: true
+
+        # Expression CRON : Tous les dimanches à 14h30 (30 minutes après le job leasing)
+        # Cela garantit l'absence de conflits de verrous de base de données
+        cron: "0 30 14 ? * SUN"
+  # Management endpoints (for healthcheck)
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info,metrics
+        base-path: /actuator
+    endpoint:
+      health:
+        show-details: when-authorized
+    health:
+      db:
+        enabled: true
+
+
+
+
+
