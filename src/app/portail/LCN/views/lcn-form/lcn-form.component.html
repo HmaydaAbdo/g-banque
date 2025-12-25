@@ -8,15 +8,15 @@
       <ng-template pTemplate="item" let-item>
         <ng-container>
           <a [routerLink]="item.routerLink" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
           </a>
         </ng-container>
       </ng-template>
     </p-breadcrumb>
   </div>
 
-  <p class="text-center font-bold md:text-2xl">{{ isEditMode ? 'Modifier  LCN' : 'Ajouter  LCN' }}</p>
+  <p class="text-center font-bold ">{{ isEditMode ? 'Modifier  LCN' : 'Ajouter  LCN' }}</p>
 
   <div *ngIf="loading" class="flex justify-content-center my-5">
     <p-progressSpinner></p-progressSpinner>

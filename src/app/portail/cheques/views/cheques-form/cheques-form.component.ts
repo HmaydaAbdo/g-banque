@@ -132,10 +132,6 @@ export class ChequesFormComponent implements OnInit {
         this.initForm(chequeResponse || undefined);
         this.loading = false;
 
-        // Mettre à jour le breadcrumb
-        this.items.push({
-          label: this.isEditMode ? 'Modifier' : 'Ajouter',
-        });
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du chèque.' });

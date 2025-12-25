@@ -1,22 +1,22 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="portail-section w-screen h-screen overflow-y-scroll pt-2 pb-8 px-5">
+<div class="portail-section w-screen h-screen overflow-y-scroll  pb-8 px-5">
 
   <div class="flex justify-content-center w-full">
     <p-breadcrumb [model]="items">
       <ng-template pTemplate="item" let-item>
         <ng-container>
           <a [routerLink]="item.routerLink" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
           </a>
         </ng-container>
       </ng-template>
     </p-breadcrumb>
   </div>
 
-  <p class="text-center font-bold md:text-2xl">{{ isEditMode ? 'Modifier un Chèque' : 'Ajouter un Chèque' }}</p>
+  <p class="text-center font-bold">{{ isEditMode ? 'Modifier un Chèque' : 'Ajouter un Chèque' }}</p>
 
   <div *ngIf="loading" class="flex justify-content-center my-5">
     <p-progressSpinner></p-progressSpinner>

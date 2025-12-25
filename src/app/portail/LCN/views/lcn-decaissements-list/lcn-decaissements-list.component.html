@@ -1,45 +1,48 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="flex flex-column gap-4 py-2 px-2 md:px-4 h-screen w-screen overflow-y-scroll">
+<div class="flex flex-column gap-2  px-2  h-screen w-screen overflow-y-scroll">
 
-  <div class="flex justify-content-center align-items-center bg-transparent">
+  <div class="flex justify-content-start align-items-center bg-transparent">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
       <ng-template pTemplate="item" let-item>
         <ng-container *ngIf="item.route; else elseBlock">
           <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
           </a>
 
         </ng-container>
         <ng-template #elseBlock>
           <a [href]="item.url">
-            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            <span class="text-color text-sm  text-center">{{ item.label }}</span>
           </a>
         </ng-template>
       </ng-template>
     </p-breadcrumb>
   </div>
 
-  <form [formGroup]="searchForm" class="flex justify-content-around flex-wrap gap-3">
-    <div class="flex flex-column gap-2">
+  <form [formGroup]="searchForm" class="flex flex-wrap  align-items-end">
+
+    <div class="flex flex-column gap-2 flex-1" style="min-width: 150px;">
       <label for="numero">N° LCN</label>
-      <span class="p-input-icon-left">
-        <i class="pi pi-search"></i>
-        <input id="numero" pInputText type="text" formControlName="numero" placeholder="Rechercher par N°..." />
-      </span>
+      <span class="p-input-icon-left w-full">
+      <i class="pi pi-search"></i>
+      <input id="numero" pInputText type="text" formControlName="numero"
+             placeholder="Rechercher par N°..." class="w-full" />
+    </span>
     </div>
 
-    <div class="flex flex-column gap-2">
+    <div class="flex flex-column gap-2 flex-1" style="min-width: 180px;">
       <label for="beneficiaire">Bénéficiaire</label>
-      <span class="p-input-icon-left">
-        <i class="pi pi-search"></i>
-        <input id="beneficiaire" pInputText type="text" formControlName="beneficiaire" placeholder="Rechercher par bénéficiaire..." />
-      </span>
+      <span class="p-input-icon-left w-full">
+      <i class="pi pi-search"></i>
+      <input id="beneficiaire" pInputText type="text" formControlName="beneficiaire"
+             placeholder="Rechercher par bénéficiaire..." class="w-full" />
+    </span>
     </div>
 
-    <div class="flex flex-column gap-2">
+    <div class="flex flex-column gap-2 flex-1" style="min-width: 180px;">
       <label for="nomBanque">Nom Banque</label>
       <p-dropdown id="nomBanque"
                   [options]="banqueOptions"
@@ -47,11 +50,12 @@
                   optionLabel="label"
                   optionValue="value"
                   placeholder="Sélectionner une banque"
-                  [showClear]="true">
+                  [showClear]="true"
+                  [styleClass]="'w-full'">
       </p-dropdown>
     </div>
 
-    <div class="flex flex-column gap-2">
+    <div class="flex flex-column gap-2 flex-1" >
       <label for="status">Statut</label>
       <p-dropdown id="status"
                   [options]="statusOptions"
@@ -59,20 +63,23 @@
                   optionLabel="label"
                   optionValue="value"
                   placeholder="Sélectionner un statut"
-                  [showClear]="true">
+                  [showClear]="true"
+                  [styleClass]="'w-full'">
       </p-dropdown>
     </div>
 
-    <div class="flex align-items-end">
-      <p-button label="Effacer" icon="pi pi-times" severity="secondary" (onClick)="clearSearch()"></p-button>
+    <div class="flex-shrink-0">
+      <p-button  icon="pi pi-times" severity="secondary"
+                (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+      </p-button>
     </div>
-  </form>
 
+  </form>
   <div class="pb-8">
     <p-table #dt
              [value]="lcns"
              [paginator]="true"
-             [rows]="5"
+             [rows]="10"
              [totalRecords]="totalRecords"
              [loading]="loading"
              [rowsPerPageOptions]="[3,5,10, 25, 50]"
@@ -80,18 +87,16 @@
              (onLazyLoad)="loadLcns($event)"
              responsiveLayout="scroll"
              [scrollable]="true"
-             scrollHeight="flex"
-             [resizableColumns]="true"
              columnResizeMode="expand"
              [rowHover]="true"
              dataKey="numero"
              currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} LCNs"
              [showCurrentPageReport]="true"
-             styleClass="p-datatable-gridlines"
-             [tableStyle]="{'min-width': '70rem'}"
+             styleClass="p-datatable-gridlines text-xs"
     >
       <ng-template pTemplate="header">
         <tr>
+          <th pSortableColumn="id">ID<p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="numero">N° LCN <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
@@ -106,6 +111,7 @@
       </ng-template>
       <ng-template pTemplate="body" let-lcn>
         <tr>
+          <td>{{lcn.id }}</td>
           <td>{{ lcn.numero }}</td>
           <td>{{ lcn.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ lcn.dateEcheance ? ( lcn.dateEcheance | date:'dd/MM/yyyy' ) : 'N/A' }}</td>
@@ -116,10 +122,10 @@
             <p-tag [value]="lcn.active ? 'Encours' : 'Archivé'" [severity]="lcn.active ? 'success' : 'danger'"></p-tag>
           </td>
 
-            <td>
+            <td class="flex flex-row align-items-center gap-2">
               <p-inputSwitch [ngModel]="lcn.active" (onChange)="confirmToggleStatus(lcn)"></p-inputSwitch>
               @if (isAdmin){
-                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteLcn(lcn)"></button>
+                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteLcn(lcn)"></button>
               }
             </td>
 

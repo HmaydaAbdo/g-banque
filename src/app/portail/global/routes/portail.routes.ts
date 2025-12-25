@@ -106,9 +106,7 @@ import {LcnEncaissementsListComponent} from "../../LCN/views/lcn-encaissements-l
 import {
   EncaissementLcnEncoursComponent
 } from "../../etatsDesEncours/views/lesEncours/encaissements/encaissement-lcn-encours/encaissement-lcn-encours.component";
-import {
-  MiseADispositionEncaissementListComponent
-} from "../../Mise-à-disposition/views/mise-a-disposition-encaissement-list/mise-a-disposition-encaissement-list.component";
+
 import {
   MiseADispositionFormComponent
 } from "../../Mise-à-disposition/views/mise-a-disposition-form/mise-a-disposition-form.component";
@@ -173,7 +171,6 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'Virements/edit/:id', component: VirementFormComponent },
 
   {path:"Mise-a-disposition/decaissement",component:MiseADispositionDecaissementListComponent},
-  {path:"Mise-a-disposition/encaissement",component:MiseADispositionEncaissementListComponent},
   {path:"Mise-a-disposition/new",component:MiseADispositionFormComponent},
   { path: 'Mise-a-disposition/edit/:id', component: MiseADispositionFormComponent },
 

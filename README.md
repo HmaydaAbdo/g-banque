@@ -1,27 +1,135 @@
-# Gbanque
+# G-Banque Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.3.11.
+Angular 17 application with PrimeNG for cash flow management.
 
-## Development server
+## 🚀 Quick Start
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+### Development
 
-## Code scaffolding
+```bash
+cd Frontend
+npm install
+npm start
+# Opens at http://localhost:4200
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+### Production (Docker)
 
-## Build
+```bash
+cd G-Banque
+docker-compose up -d frontend
+# Opens at http://localhost
+```
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## 📋 Tech Stack
 
-## Running unit tests
+- Angular 17.3.0
+- PrimeNG 17.18.15
+- TypeScript 5.4.2
+- Chart.js 4.4.9
+- WebSocket (SockJS + Stomp)
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## 📁 Project Structure
 
-## Running end-to-end tests
+```
+Frontend/
+├── src/
+│   ├── app/           # Components, services, models
+│   ├── assets/        # Images, fonts
+│   ├── environments/  # API configuration
+│   └── styles.scss    # Global styles
+├── Dockerfile         # Docker build
+├── nginx.conf         # Nginx config
+└── package.json       # Dependencies
+```
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## ⚙️ Configuration
 
-## Further help
+**Development API:**
+```typescript
+// src/environments/environment.ts
+apiUrl: 'http://localhost:8080/gBanque/api/'
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+**Production API:**
+```typescript
+// src/environments/environment.prod.ts
+apiUrl: '/gBanque/api/'  // Proxied by Nginx
+```
+
+## 🛠️ Commands
+
+```bash
+# Install dependencies
+npm install
+
+# Start dev server
+npm start
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+```
+
+## 🐳 Docker
+
+```bash
+# Build image
+docker-compose build frontend
+
+# Start container
+docker-compose up -d frontend
+
+# View logs
+docker-compose logs -f frontend
+
+# Stop container
+docker-compose stop frontend
+```
+
+## 🌐 Access URLs
+
+| Service | URL |
+|---------|-----|
+| Frontend (Dev) | http://localhost:4200 |
+| Frontend (Docker) | http://localhost |
+| Backend API | http://localhost/gBanque/api |
+
+## 🔧 Common Issues
+
+**Port 4200 in use:**
+```bash
+ng serve --port 4300
+```
+
+**Node modules issue:**
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**Docker build fails:**
+```bash
+docker-compose build --no-cache frontend
+```
+
+## 📦 Build Output
+
+- **Development**: `dist/gbanque/`
+- **Docker**: Served by Nginx from `/usr/share/nginx/html`
+
+## 🎯 Features
+
+- ✅ Angular Material & PrimeNG UI
+- ✅ Real-time updates (WebSocket)
+- ✅ JWT Authentication
+- ✅ Responsive design
+- ✅ Charts & Reports
+- ✅ Production-ready Docker setup
+
+---
+
+**Version**: 0.0.0  
+**Angular**: 17.3.0

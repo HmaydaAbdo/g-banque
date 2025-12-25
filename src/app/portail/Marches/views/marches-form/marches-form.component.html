@@ -8,15 +8,15 @@
       <ng-template pTemplate="item" let-item>
         <ng-container>
           <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
           </a>
         </ng-container>
       </ng-template>
     </p-breadcrumb>
   </div>
 
-  <p class="text-center font-bold md:text-2xl">{{ isEditMode ? 'Modifier un Marché' : 'Ajouter un Marché' }}</p>
+  <p class="text-center font-bold ">{{ isEditMode ? 'Modifier un Marché' : 'Ajouter un Marché' }}</p>
 
   <form [formGroup]="marcheForm" (ngSubmit)="saveMarche()">
     <div class="p-fluid formgrid grid">
@@ -89,7 +89,7 @@
       </div>
     </div>
 
-    <div class="col-12 flex justify-content-end gap-2 mt-4">
+    <div class="col-12 flex justify-content-end gap-2 ">
       <button pButton pRipple label="Annuler" size="small" icon="pi pi-times" [routerLink]="['/portail/marches']" type="button" severity="secondary"></button>
       <button pButton pRipple label="Enregistrer" size="small" icon="pi pi-check" type="submit" [disabled]="loading"></button>
     </div>
