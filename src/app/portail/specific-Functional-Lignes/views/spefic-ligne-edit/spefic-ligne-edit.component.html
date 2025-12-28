@@ -1,9 +1,8 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="w-screen h-screen overflow-y-scroll ">
-
-  <div class="portail-section flex justify-content-center align-items-center">
+<div class="w-screen h-screen overflow-y-scroll p-4">
+  <div class="flex justify-content-center">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
       <ng-template pTemplate="item" let-item>
         <ng-container *ngIf="item.route; else elseBlock">
@@ -14,131 +13,93 @@
         </ng-container>
         <ng-template #elseBlock>
           <a [href]="item.url">
-            <span class="text-color text-sm md:text-xl  text-center">{{ item.label }}</span>
+            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
           </a>
         </ng-template>
       </ng-template>
     </p-breadcrumb>
   </div>
 
-  <h4 class="text-center">{{ isEditMode ? 'Modifier une Ligne Fonctionnelle Spécifique' : 'Ajouter une Ligne Fonctionnelle Spécifique' }}</h4>
-  <div class="flex justify-content-center mb-8">
-    <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 600px;">
-      <form [formGroup]="ligneFonctionnelleSpecifiqueForm" (ngSubmit)="onSubmit()" class="p-fluid">
-        <div class="formgrid grid">
+  <h4 class="text-center mt-4">{{ isEditMode ? 'Modifier' : 'Ajouter' }} une Ligne Fonctionnelle Spécifique</h4>
 
+  <div class="flex justify-content-center mb-8">
+    <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 700px;">
+      <form [formGroup]="ligneFonctionnelleSpecifiqueForm" (ngSubmit)="onSubmit()" class="p-fluid">
+
+        <div class="formgrid grid">
           <div class="field col-12 md:col-6">
-            <label for="nature" class="block text-900 font-medium mb-2">Nature <span class="p-text-danger">*</span></label>
-            <p-dropdown id="nature" formControlName="natureLigneFonctionnelleId"
-                        [options]="natureLigneOptions"
-                        placeholder="Sélectionnez une nature"
-                        optionLabel="label"
-                        optionValue="value"
-                        [showClear]="true"
-                        styleClass="w-full"
-                        [ngClass]="{'ng-invalid ng-dirty': f['natureLigneFonctionnelleId'].invalid && f['natureLigneFonctionnelleId'].touched}"
-            ></p-dropdown>
-            <small class="p-error" *ngIf="f['natureLigneFonctionnelleId'].invalid && f['natureLigneFonctionnelleId'].touched">
-              <span *ngIf="f['natureLigneFonctionnelleId'].errors?.['required']">La nature est obligatoire.</span>
-            </small>
+            <label >Nature *</label>
+            <p-dropdown formControlName="natureLigneFonctionnelleId" [options]="natureLigneOptions"
+                        optionLabel="label" optionValue="value" placeholder="Sélectionnez une nature">
+            </p-dropdown>
           </div>
 
           <div class="field col-12 md:col-6">
-            <label for="marche" class="block text-900 font-medium mb-2">Marché <span class="p-text-danger">*</span></label>
+            <label >Marché *</label>
             <p-dropdown
-              id="marche"
               formControlName="marcheId"
               [options]="marchesOptions"
-              placeholder="Sélectionnez un marché"
               optionLabel="label"
               optionValue="value"
-              [virtualScroll]="true"
-              [virtualScrollItemSize]="30"
-              [virtualScrollOptions]="marchesScrollerOptions"
               [filter]="true"
               filterBy="label"
+              placeholder="Sélectionnez un marché"
               [showClear]="true"
-              styleClass="w-full"
-              [ngClass]="{'ng-invalid ng-dirty': f['marcheId'].invalid && f['marcheId'].touched}"
-            ></p-dropdown>
-            <small class="p-error" *ngIf="f['marcheId'].invalid && f['marcheId'].touched">
-              <span *ngIf="f['marcheId'].errors?.['required']">Le marché est obligatoire.</span>
-            </small>
+              [virtualScroll]="true"
+              [virtualScrollItemSize]="38"
+              [lazy]="true"
+              [virtualScrollOptions]="marchesScrollerOptions"
+              (onFilter)="onFilterMarches($event)"
+              [loading]="loadingMarches">
+
+              <ng-template pTemplate="selectedItem" let-selectedOption>
+                <div class="flex align-items-center gap-2" *ngIf="selectedOption">
+                  <i class="pi pi-file p-text-secondary"></i>
+                  <div>{{ selectedOption.label }}</div>
+                </div>
+              </ng-template>
+
+              <ng-template let-marche pTemplate="item">
+                <div class="flex align-items-center gap-2" style="height: 38px">
+                  <ng-container *ngIf="marche">
+                    <i class="pi pi-file"></i>
+                    <div>{{ marche.label }}</div>
+                  </ng-container>
+                  <ng-container *ngIf="!marche">
+                    <i class="pi pi-spin pi-spinner text-secondary"></i>
+                    <span class="text-secondary">Chargement...</span>
+                  </ng-container>
+                </div>
+              </ng-template>
+            </p-dropdown>
           </div>
 
           <div class="field col-12 md:col-6">
-            <label for="plafond" class="block text-900 font-medium mb-2">Plafond <span class="p-text-danger">*</span></label>
-            <p-inputNumber id="plafond"
-                           formControlName="plafond"
-                           mode="decimal"
-                           [minFractionDigits]="2"
-                           [maxFractionDigits]="2"
-                           [min]="0.01"
-                           styleClass="w-full"
-                           [ngClass]="{'ng-invalid ng-dirty': f['plafond'].invalid && f['plafond'].touched}"
-            ></p-inputNumber>
-            <small class="p-error" *ngIf="f['plafond'].invalid && f['plafond'].touched">
-              <span *ngIf="f['plafond'].errors?.['required']">Le plafond est obligatoire.</span>
-              <span *ngIf="f['plafond'].errors?.['min']">Le plafond doit être supérieur à zéro.</span>
-              <span *ngIf="f['plafond'].errors?.['pattern']">Format de plafond invalide (ex: 123.45).</span>
-            </small>
+            <label >Plafond *</label>
+            <p-inputNumber formControlName="plafond" mode="decimal" [minFractionDigits]="2"></p-inputNumber>
           </div>
 
           <div class="field col-12 md:col-6">
-            <label for="taux" class="block text-900 font-medium mb-2">Taux (%) <span class="p-text-danger">*</span></label>
-            <p-inputNumber id="taux"
-                           formControlName="taux"
-                           mode="decimal"
-                           [minFractionDigits]="2"
-                           [maxFractionDigits]="2"
-                           [min]="0"
-                           [max]="100"
-                           suffix="%"
-                           styleClass="w-full"
-                           [ngClass]="{'ng-invalid ng-dirty': f['taux'].invalid && f['taux'].touched}"
-            ></p-inputNumber>
-            <small class="p-error" *ngIf="f['taux'].invalid && f['taux'].touched">
-              <span *ngIf="f['taux'].errors?.['required']">Le taux est obligatoire.</span>
-              <span *ngIf="f['taux'].errors?.['min'] || f['taux'].errors?.['max']">Le taux doit être entre 0 et 100.</span>
-              <span *ngIf="f['taux'].errors?.['pattern']">Format de taux invalide (ex: 5.75).</span>
-            </small>
+            <label>Taux (%) *</label>
+            <p-inputNumber formControlName="taux"  [minFractionDigits]="1" mode="decimal" locale="en-US"></p-inputNumber>
           </div>
 
           <div class="field col-12 md:col-6">
-            <label for="dateDepart" class="block text-900 font-medium mb-2">Date de Départ <span class="p-text-danger">*</span></label>
-            <p-calendar id="dateDepart"
-                        formControlName="dateDepart"
-                        [showIcon]="true"
-                        dateFormat="dd/mm/yy"
-                        [ngClass]="{'ng-invalid ng-dirty': f['dateDepart'].invalid && f['dateDepart'].touched}"
-            ></p-calendar>
-            <small class="p-error" *ngIf="f['dateDepart'].invalid && f['dateDepart'].touched">
-              <span *ngIf="f['dateDepart'].errors?.['required']">La date de départ est obligatoire.</span>
-            </small>
+            <label >Date de Départ *</label>
+            <p-calendar formControlName="dateDepart" appendTo="body" [showIcon]="true" dateFormat="dd/mm/yy"></p-calendar>
           </div>
 
           <div class="field col-12 md:col-6">
-            <label for="dateFin" class="block text-900 font-medium mb-2">Date de Fin <span class="p-text-danger">*</span></label>
-            <p-calendar id="dateFin"
-                        formControlName="dateFin"
-                        [showIcon]="true"
-                        dateFormat="dd/mm/yy"
-                        [ngClass]="{'ng-invalid ng-dirty': f['dateFin'].invalid && f['dateFin'].touched}"
-            ></p-calendar>
-            <small class="p-error" *ngIf="f['dateFin'].invalid && f['dateFin'].touched">
-              <span *ngIf="f['dateFin'].errors?.['required']">La date de fin est obligatoire.</span>
-              <span *ngIf="f['dateFin'].errors?.['minDate']">La date de fin ne peut pas être antérieure à la date de départ.</span>
-            </small>
+            <label >Date de Fin *</label>
+            <p-calendar formControlName="dateFin" appendTo="body" [showIcon]="true" dateFormat="dd/mm/yy"></p-calendar>
+            <small class="p-error" *ngIf="f['dateFin'].hasError('minDate')">La date de fin doit être après le départ.</small>
           </div>
         </div>
 
         <div class="flex justify-content-end mt-4 gap-2">
-          <button pButton pRipple label="Annuler" class="p-button-secondary" (click)="onCancel()" type="button"></button>
-          <button pButton pRipple label="{{ isEditMode ? 'Modifier' : 'Créer' }}" class="p-button-primary" type="submit" [disabled]="loading"></button>
+          <button pButton label="Annuler" class="p-button-secondary" (click)="onCancel()" type="button"></button>
+          <button pButton [label]="isEditMode ? 'Modifier' : 'Créer'" type="submit"></button>
         </div>
-
-
-
       </form>
     </div>
   </div>

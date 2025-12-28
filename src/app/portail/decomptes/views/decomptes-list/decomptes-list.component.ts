@@ -1,81 +1,68 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ConfirmationService, MenuItem, MessageService, PrimeTemplate} from "primeng/api";
-import {ButtonDirective} from "primeng/button";
-import {Ripple} from "primeng/ripple";
-import {DatePipe, DecimalPipe, NgClass, NgFor, NgForOf, NgIf} from "@angular/common";
-import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
-import {DropdownModule} from "primeng/dropdown";
-import {BreadcrumbModule} from "primeng/breadcrumb";
-import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {ToastModule} from "primeng/toast";
-import {FormsModule} from "@angular/forms";
-import {DroitConstateResponseDto} from "../../../droitsConstate/dtos/DroitConstateResponseDto";
-import {DroitConstateSearchDto} from "../../../droitsConstate/dtos/DroitConstateSearchDto";
-import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
-import {MarcheResponseDTO} from "../../../Marches/dtos/marche-response.dto";
-import {Status} from "../../../prefinancements/enums/Status";
-import {Type} from "../../../prefinancements/enums/Type";
-import {DroitConstateService} from "../../../droitsConstate/service/DroitConstateService";
-import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
-import {MarcheService} from "../../../Marches/service/marche-service.service";
-import {PageResponse} from "../../../global/types/PageResponse";
-import {DecompteResponseDto} from "../../dtos/DecompteResponseDto";
-import {DecompteService} from "../../service/DecompteService";
-import {InputSwitchModule} from "primeng/inputswitch";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+
+// PrimeNG
+import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { ConfirmationService, MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
+import { ButtonModule } from "primeng/button";
+import { RippleModule } from "primeng/ripple";
+import { DropdownModule } from "primeng/dropdown";
+import { BreadcrumbModule } from "primeng/breadcrumb";
+import { ConfirmDialogModule } from "primeng/confirmdialog";
+import { ToastModule } from "primeng/toast";
+import { TagModule } from "primeng/tag";
+import { InputSwitchModule } from "primeng/inputswitch";
+import { TooltipModule } from 'primeng/tooltip';
+
+// Services & Enums
+import { DecompteService } from "../../service/DecompteService";
+import { MarcheService } from '../../../Marches/service/marche-service.service';
+import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
+import { Status } from "../../../prefinancements/enums/Status";
+import { DecompteResponseDto } from "../../dtos/DecompteResponseDto";
 
 @Component({
   selector: 'app-decomptes-list',
   standalone: true,
-  imports: [
-    PrimeTemplate,
-    ButtonDirective,
-    Ripple,
-    DatePipe,
-    DecimalPipe,
-    TableModule,
-    DropdownModule,
-    BreadcrumbModule,
-    ConfirmDialogModule,
-    ToastModule,
-    FormsModule,
-    NgClass,
-    NgIf,
-    NgFor,
-    NgForOf,
-    InputSwitchModule,
-  ],
   templateUrl: './decomptes-list.component.html',
-  styleUrl: './decomptes-list.component.scss',
+  imports: [
+    CommonModule, FormsModule, ReactiveFormsModule, RouterLink,
+    TableModule, ButtonModule, RippleModule, DropdownModule,
+    BreadcrumbModule, ConfirmDialogModule, ToastModule,
+    TagModule, InputSwitchModule, TooltipModule, DatePipe, DecimalPipe
+  ],
   providers: [MessageService, ConfirmationService]
 })
 export class DecomptesListComponent implements OnInit {
   @ViewChild('dt') table!: Table;
 
+  searchForm!: FormGroup;
   decomptes: DecompteResponseDto[] = [];
   totalRecords = 0;
   loading = true;
-
-  // Filters
-  searchCriteria: DroitConstateSearchDto = {};
-  selectedBanque?: BanqueResponse;
-  selectedMarche?: MarcheResponseDTO;
-  selectedStatus?: Status;
-
-  // Dropdown data sources
-  banques: BanqueResponse[] = [];
-  banquesTotal = 0;
-  banquesLoading = false;
-
-  marches: MarcheResponseDTO[] = [];
-  marchesTotal = 0;
-  marchesLoading = false;
-
-  statusOptions: { label: string; value: Status | null }[] = [];
-
-  // breadcrumb items
   items: MenuItem[] = [];
 
+  // --- Configuration Marchés (Server-side Search + Virtual Scroll) ---
+  marchesOptions: any[] = [];
+  marchesLoading = false;
+  currentMarcheFilter = '';
+  rowsPerPageMarches = 10;
+  private marcheFilterTimeout: any;
+
+  marchesScrollerOptions: ScrollerOptions = {
+    delay: 250,
+    showLoader: true,
+    lazy: true,
+    onLazyLoad: this.onLazyLoadMarches.bind(this)
+  };
+
+  banquesOptions: any[] = [];
+
   constructor(
+    private fb: FormBuilder,
     private decompteService: DecompteService,
     private banqueService: BanqueService,
     private marcheService: MarcheService,
@@ -85,134 +72,126 @@ export class DecomptesListComponent implements OnInit {
 
   ngOnInit(): void {
     this.items = [
-      {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
-      {icon: 'pi pi-list', route: '/portail/decomptes', label: 'Les Décomptes'},
+      { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
+      { icon: 'pi pi-list', route: '/portail/decomptes', label: 'Les Décomptes' },
     ];
-    this.loadStatuses();
-    this.loadDecomptes({first: 0, rows: 10});
+
+    this.initForm();
+    this.initializeMarches();
+    this.loadBanquesSimple();
+
+    // Rechargement automatique de la table lors du changement des filtres
+    this.searchForm.valueChanges.pipe(
+      debounceTime(400),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      if (this.table) this.table.reset();
+    });
   }
 
-  /** Load décomptes with filters */
+  initForm(): void {
+    this.searchForm = this.fb.group({
+      marcheId: [null],
+      banqueId: [null],
+      status: [null]
+    });
+  }
+
+  // --- LOGIQUE DROPDOWN MARCHÉS (Lazy + Filter) ---
+
+  initializeMarches(filter: string = ''): void {
+    this.marchesLoading = true;
+    this.marcheService.getAllMarches({ numero: filter }, 0, this.rowsPerPageMarches, 'numero,asc').subscribe({
+      next: (res) => {
+        const total = res.page.totalElements;
+        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
+        // Initialise le tableau avec la taille totale pour le scroll
+        this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+        this.marchesOptions.splice(0, data.length, ...data);
+        this.marchesOptions = [...this.marchesOptions];
+        this.marchesLoading = false;
+      },
+      error: () => this.marchesLoading = false
+    });
+  }
+
+  onLazyLoadMarches(event: any): void {
+    const { first } = event;
+    if (this.marchesOptions[first] && this.marchesOptions[first].value !== undefined) return;
+
+    this.marchesLoading = true;
+    const page = Math.floor(first / this.rowsPerPageMarches);
+    this.marcheService.getAllMarches({ numero: this.currentMarcheFilter }, page, this.rowsPerPageMarches, 'numero,asc').subscribe({
+      next: (res) => {
+        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
+        this.marchesOptions.splice(first, data.length, ...data);
+        this.marchesOptions = [...this.marchesOptions];
+        this.marchesLoading = false;
+      },
+      error: () => this.marchesLoading = false
+    });
+  }
+
+  onFilterMarches(event: any): void {
+    const query = event.filter?.trim() || '';
+    this.currentMarcheFilter = query;
+    if (this.marcheFilterTimeout) clearTimeout(this.marcheFilterTimeout);
+    this.marcheFilterTimeout = setTimeout(() => this.initializeMarches(query), 400);
+  }
+
+  loadBanquesSimple(): void {
+    this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc').subscribe(res => {
+      this.banquesOptions = res.content.map(b => ({ label: b.nom, value: b.id }));
+    });
+  }
+
+  // --- LOGIQUE TABLE PRINCIPALE ---
+
   loadDecomptes(event: TableLazyLoadEvent) {
     this.loading = true;
-
     const page = event.first ? event.first / (event.rows ?? 10) : 0;
     const size = event.rows ?? 10;
-    const sortField = event.sortField ?? 'dateEmission';
-    const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
-    const sort = `${sortField},${sortOrder}`;
+    const sort = `${event.sortField ?? 'dateEmission'},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
 
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.marcheId = this.selectedMarche?.id;
-    this.searchCriteria.status = this.selectedStatus;
+    const criteria = this.searchForm.value;
 
-
-    this.decompteService.getAllDecomptes(this.searchCriteria, page, size, sort)
-      .subscribe({
-        next: (res: PageResponse<DecompteResponseDto>) => {
-          this.decomptes = res.content;
-          this.totalRecords = res.page.totalElements;
-          this.loading = false;
-        },
-        error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les décomptes.'
-          });
-          this.loading = false;
-        }
-      });
-  }
-
-  /** Lazy load banques for dropdown */
-  loadBanquesLazy(event: any) {
-    this.banquesLoading = true;
-    const page = Math.floor((event.first ?? 0) / (event.rows ?? 10));
-    const size = event.rows ?? 10;
-
-    this.banqueService.getAllBanques({}, page, size, 'nom,asc')
-      .subscribe({
-        next: res => {
-          this.banques = res.content;
-          this.banquesTotal = res.page.totalElements;
-          this.banquesLoading = false;
-        },
-        error: () => this.banquesLoading = false
-      });
-  }
-
-  /** Lazy load marches for dropdown */
-  loadMarchesLazy(event: any) {
-    this.marchesLoading = true;
-    const page = Math.floor((event.first ?? 0) / (event.rows ?? 10));
-    const size = event.rows ?? 10;
-
-    this.marcheService.getAllMarches({}, page, size, 'numero,asc')
-      .subscribe({
-        next: res => {
-          this.marches = res.content;
-          this.marchesTotal = res.page.totalElements;
-          this.marchesLoading = false;
-        },
-        error: () => this.marchesLoading = false
-      });
-  }
-
-  /** Load static status options */
-  loadStatuses() {
-    this.statusOptions = [
-      {label: 'Tous les statuts', value: null},
-      {label: 'Prévu', value: Status.PREVU},
-      {label: 'Payé', value: Status.PAYE}
-    ];
-  }
-
-  /** Apply filters and reload table */
-  applyFilters() {
-    if (this.table) {
-      setTimeout(() => this.table.reset(), 0);
-    }
-  }
-
-  /** Clear all filters */
-  clearFilters() {
-    this.selectedBanque = undefined;
-    this.selectedMarche = undefined;
-    this.selectedStatus = undefined;
-    this.applyFilters();
-  }
-
-  /** Mark a droit constaté as paid */
-  toggleStatus(decompte: DecompteResponseDto) {
-
-    this.decompteService.toggleStatus(decompte.id).subscribe({
-      next: () => {
-        this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.'});
-        this.loadDecomptes(this.table.createLazyLoadMetadata());
+    this.decompteService.getAllDecomptes(criteria, page, size, sort).subscribe({
+      next: (res) => {
+        this.decomptes = res.content;
+        this.totalRecords = res.page.totalElements;
+        this.loading = false;
       },
       error: () => {
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Impossible de mettre à jour le statut.'});
+        this.loading = false;
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
       }
     });
   }
 
-  /** Delete a décompte */
+  clearFilters() {
+    this.currentMarcheFilter = '';
+    this.searchForm.reset({ marcheId: null, banqueId: null, status: null });
+    this.initializeMarches();
+  }
+
+  toggleStatus(decompte: DecompteResponseDto) {
+    this.decompteService.toggleStatus(decompte.id).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
+        this.table.reset();
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de mettre à jour.' })
+    });
+  }
+
   deleteDecompte(decompte: DecompteResponseDto) {
     this.confirmationService.confirm({
       message: `Supprimer la décompte d'un montant de ${decompte.montant} MAD ?`,
       accept: () => {
         this.decompteService.deleteDecompte(decompte.id).subscribe({
           next: () => {
-            this.messageService.add({severity: 'success', summary: 'Succès', detail: 'décompte  supprimé.'});
-            this.loadDecomptes(this.table.createLazyLoadMetadata());
-          },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de supprimer la décompte.'
-            });
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Décompte supprimée.' });
+            this.table.reset();
           }
         });
       }
@@ -221,4 +200,3 @@ export class DecomptesListComponent implements OnInit {
 
   protected readonly Status = Status;
 }
-

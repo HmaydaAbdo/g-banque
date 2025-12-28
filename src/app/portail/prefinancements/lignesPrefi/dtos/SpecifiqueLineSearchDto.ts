@@ -1,6 +1,6 @@
 
 export interface SpecifiqueLineSearchDto {
 
-  marcheId?: number;
-  banqueId?: number;
+  marcheId?: number | null;
+  banqueId?: number | null;
 }

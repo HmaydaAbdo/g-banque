@@ -1,30 +1,30 @@
-
 import { Component, OnInit, ViewChild } from '@angular/core';
-import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
-import {MessageService, ConfirmationService, MenuItem, PrimeTemplate} from 'primeng/api';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { MessageService, ConfirmationService, MenuItem, ScrollerOptions } from 'primeng/api';
+import { DropdownModule } from "primeng/dropdown";
+import { BreadcrumbModule } from "primeng/breadcrumb";
+import { ConfirmDialogModule } from "primeng/confirmdialog";
+import { ToastModule } from "primeng/toast";
+import { TagModule } from "primeng/tag";
+import { InputSwitchModule } from "primeng/inputswitch";
+import { ButtonModule } from "primeng/button";
+import { RippleModule } from "primeng/ripple";
+import { TooltipModule } from "primeng/tooltip";
+
+// Services & Enums
 import { PrefinancementService } from '../../service/PrefinancementService';
 import { MarcheService } from '../../../Marches/service/marche-service.service';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
-import { PrefinancementResponseDTO } from '../../dtos/PrefinancementResponseDTO';
-import { PrefinancementSearchDTO } from '../../dtos/PrefinancementSearchDTO';
-import { PageResponse } from '../../../global/types/PageResponse';
-import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
-import { MarcheResponseDTO } from '../../../Marches/dtos/marche-response.dto';
-import {NgIf, NgForOf, NgFor} from "@angular/common";
+import { AuthService } from "../../../../auth/services/auth.service";
 import { Type } from '../../enums/Type';
 import { Status } from '../../enums/Status';
-import {ButtonDirective} from "primeng/button";
-import {Ripple} from "primeng/ripple";
-import {DatePipe, DecimalPipe, NgClass} from "@angular/common";
-import {DropdownModule} from "primeng/dropdown";
-import {BreadcrumbModule} from "primeng/breadcrumb";
-import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {ToastModule} from "primeng/toast";
-import {FormsModule} from "@angular/forms";
-import {TagModule} from "primeng/tag";
-import {AuthService} from "../../../../auth/services/auth.service";
-import {InputSwitchModule} from "primeng/inputswitch";
-import {FactoringResponseDto} from "../../../factoring/dtos/FactoringResponseDto";
+
+// DTOs
+import { PrefinancementResponseDTO } from '../../dtos/PrefinancementResponseDTO';
+import { PrefinancementSearchDTO } from '../../dtos/PrefinancementSearchDTO';
 
 @Component({
   selector: 'app-prefinancements-list',
@@ -32,56 +32,55 @@ import {FactoringResponseDto} from "../../../factoring/dtos/FactoringResponseDto
   templateUrl: './prefinancements-list.component.html',
   styleUrls: ['./prefinancements-list.component.scss'],
   imports: [
-    PrimeTemplate,
-    ButtonDirective,
-    Ripple,
-    DatePipe,
-    DecimalPipe,
+    CommonModule,
     TableModule,
     DropdownModule,
     BreadcrumbModule,
     ConfirmDialogModule,
     ToastModule,
     FormsModule,
-    NgClass,
-    NgIf,
-    NgFor,
-    NgForOf,
+    ReactiveFormsModule,
     TagModule,
     InputSwitchModule,
+    ButtonModule,
+    RippleModule,
+    TooltipModule,
+    RouterLink,
+    DatePipe,
+    DecimalPipe
   ],
   providers: [MessageService, ConfirmationService]
 })
 export class PrefinancementsListComponent implements OnInit {
   @ViewChild('dt') table!: Table;
 
+  searchForm!: FormGroup;
   prefinancements: PrefinancementResponseDTO[] = [];
   totalRecords = 0;
   loading = true;
 
-  // Filters
-  searchCriteria: PrefinancementSearchDTO = {};
-  selectedBanque?: BanqueResponse;
-  selectedMarche?: MarcheResponseDTO;
-  selectedType?: Type;
-  selectedStatus?: Status;
-
-  // Dropdown data sources
-  banques: BanqueResponse[] = [];
-  banquesTotal = 0;
-  banquesLoading = false;
-
-  marches: MarcheResponseDTO[] = [];
-  marchesTotal = 0;
+  // Dropdown Marchés (Lazy + Virtual Scroll + Server Search)
+  marchesOptions: any[] = [];
   marchesLoading = false;
+  currentMarcheFilter = '';
+  rowsPerPageMarches = 10;
+  private marcheFilterTimeout: any;
 
-  typeOptions: { label: string; value: Type | null }[] = [];
-  statusOptions: { label: string; value: Status | null }[] = [];
+  marchesScrollerOptions: ScrollerOptions = {
+    delay: 250,
+    showLoader: true,
+    lazy: true,
+    onLazyLoad: this.onLazyLoadMarches.bind(this)
+  };
 
-  // breadcrumb items
+  // Autres données dropdowns
+  banques: any[] = [];
+  typeOptions: any[] = [];
+  statusOptions: any[] = [];
   items: MenuItem[] = [];
 
   constructor(
+    private fb: FormBuilder,
     private prefinancementService: PrefinancementService,
     private banqueService: BanqueService,
     private marcheService: MarcheService,
@@ -92,156 +91,162 @@ export class PrefinancementsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.items = [
-      { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
-      { icon: 'pi pi-list', route: '/portail/préfinancements', label: 'Préfinancements' },
+      { icon: 'pi pi-home', routerLink: '/portail/accueil', label: 'Accueil' },
+      { icon: 'pi pi-list', label: 'Préfinancements' },
     ];
+
+    this.initForm();
     this.loadTypes();
     this.loadStatuses();
-    this.loadPrefinancements({ first: 0, rows: 10 });
+    this.loadBanquesSimple();
+    this.initializeMarches();
+
+    // Surveillance des changements de filtres avec debounce
+    this.searchForm.valueChanges.subscribe(() => {
+      if (this.table) {
+        this.table.reset();
+      }
+    });
   }
 
-  /** Load prefinancements with filters */
+  initForm(): void {
+    this.searchForm = this.fb.group({
+      marcheId: [null],
+      banqueId: [null],
+      type: [null],
+      status: [null]
+    });
+  }
+
+  // --- LOGIQUE DROPDOWN MARCHÉS ---
+
+  initializeMarches(filter: string = ''): void {
+    this.marchesLoading = true;
+    this.marcheService.getAllMarches({ numero: filter }, 0, this.rowsPerPageMarches, 'numero,asc').subscribe({
+      next: (res) => {
+        const total = res.page.totalElements;
+        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
+        this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+        this.marchesOptions.splice(0, data.length, ...data);
+        this.marchesOptions = [...this.marchesOptions];
+        this.marchesLoading = false;
+      },
+      error: () => this.marchesLoading = false
+    });
+  }
+
+  onLazyLoadMarches(event: any): void {
+    const { first } = event;
+    if (this.marchesOptions[first] && this.marchesOptions[first].value !== undefined) return;
+
+    this.marchesLoading = true;
+    const page = Math.floor(first / this.rowsPerPageMarches);
+
+    this.marcheService.getAllMarches({ numero: this.currentMarcheFilter }, page, this.rowsPerPageMarches, 'numero,asc').subscribe({
+      next: (res) => {
+        const newItems = res.content.map(m => ({ label: m.numero, value: m.id }));
+        this.marchesOptions.splice(first, newItems.length, ...newItems);
+        this.marchesOptions = [...this.marchesOptions];
+        this.marchesLoading = false;
+      },
+      error: () => this.marchesLoading = false
+    });
+  }
+
+  onFilterMarches(event: any): void {
+    const query = event.filter?.trim() || '';
+    this.currentMarcheFilter = query;
+
+    if (this.marcheFilterTimeout) clearTimeout(this.marcheFilterTimeout);
+    this.marcheFilterTimeout = setTimeout(() => {
+      this.initializeMarches(query);
+    }, 400);
+  }
+
+  // --- LOGIQUE TABLE PRINCIPALE ---
+
   loadPrefinancements(event: TableLazyLoadEvent) {
     this.loading = true;
-
     const page = event.first ? event.first / (event.rows ?? 10) : 0;
     const size = event.rows ?? 10;
     const sortField = event.sortField ?? 'dateEmission';
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.marcheId = this.selectedMarche?.id;
-    this.searchCriteria.type = this.selectedType;
-    this.searchCriteria.status = this.selectedStatus;
+    const searchCriteria: PrefinancementSearchDTO = {
+      ...this.searchForm.value
+    };
 
-    this.prefinancementService.getAllPrefinancements(this.searchCriteria, page, size, sort)
+    this.prefinancementService.getAllPrefinancements(searchCriteria, page, size, sort)
       .subscribe({
-        next: (res: PageResponse<PrefinancementResponseDTO>) => {
+        next: (res) => {
           this.prefinancements = res.content;
           this.totalRecords = res.page.totalElements;
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les préfinancements.'
-          });
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les données.' });
           this.loading = false;
         }
       });
   }
 
-  /** Lazy load banques for dropdown */
-  loadBanquesLazy(event: any) {
-    this.banquesLoading = true;
-    const page = Math.floor((event.first ?? 0) / (event.rows ?? 10));
-    const size = event.rows ?? 10;
-
-    this.banqueService.getAllBanques({}, page, size, 'nom,asc')
-      .subscribe({
-        next: res => {
-          this.banques = res.content;
-          this.banquesTotal = res.page.totalElements;
-          this.banquesLoading = false;
-        },
-        error: () => this.banquesLoading = false
-      });
+  loadBanquesSimple(): void {
+    this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc').subscribe(res => {
+      this.banques = res.content.map(b => ({ label: b.nom, value: b.id }));
+    });
   }
 
-  /** Lazy load marches for dropdown */
-  loadMarchesLazy(event: any) {
-    this.marchesLoading = true;
-    const page = Math.floor((event.first ?? 0) / (event.rows ?? 10));
-    const size = event.rows ?? 10;
-
-    this.marcheService.getAllMarches({}, page, size, 'numero,asc')
-      .subscribe({
-        next: res => {
-          this.marches = res.content;
-          this.marchesTotal = res.page.totalElements;
-          this.marchesLoading = false;
-        },
-        error: () => this.marchesLoading = false
-      });
-  }
-
-  /** Load static type options */
   loadTypes() {
     this.typeOptions = [
-      { label: 'Tous les types', value: null },
       { label: 'REMBOURSEMENT', value: Type.REMBOURSEMENT },
       { label: 'DEBLOCAGE', value: Type.DEBLOCAGE }
     ];
   }
 
-  /** Load static status options */
   loadStatuses() {
     this.statusOptions = [
-      { label: 'Tous les statuts', value: null },
       { label: 'Prévu', value: Status.PREVU },
       { label: 'Payé', value: Status.PAYE }
     ];
   }
 
-  /** Apply filters and reload table */
-  applyFilters() {
-    if (this.table) {
-      setTimeout(() => this.table.reset(), 0);
-    }
-  }
-
-  /** Clear all filters */
   clearFilters() {
-    this.selectedBanque = undefined;
-    this.selectedMarche = undefined;
-    this.selectedType = undefined;
-    this.selectedStatus = undefined;
-    this.applyFilters();
+    this.currentMarcheFilter = '';
+    this.searchForm.reset();
+    this.initializeMarches();
   }
 
-  toggleStatus(pref: PrefinancementResponseDTO) {
+  // --- ACTIONS ---
 
-    this.prefinancementService.toggleStatus(pref.id).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
-        this.loadPrefinancements(this.table.createLazyLoadMetadata());
-      },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de mettre à jour le statut.' });
-      }
-    });
-  }
-
-  confirmToggleStatus(pref: PrefinancementResponseDTO){
-    const confirmationMessage = `Êtes-vous sûr de vouloir ${pref.status==Status.PAYE ? 'désactiver' : 'activer'} ce préfinancement ?`;
+  confirmToggleStatus(pref: PrefinancementResponseDTO) {
     this.confirmationService.confirm({
-      message: confirmationMessage,
-      header: `Confirmation de ${pref.status ? 'désactivation' : 'activation'}`,
+      message: `Êtes-vous sûr de vouloir changer le statut de ce préfinancement ?`,
+      header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Oui',
-      rejectLabel: 'Non',
-      acceptButtonStyleClass: pref.status ? 'p-button-danger' : 'p-button-success',
-      rejectButtonStyleClass: 'p-button-text',
       accept: () => {
-        this.toggleStatus(pref);
+        this.prefinancementService.toggleStatus(pref.id).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
+            this.table.reset();
+          },
+          error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la mise à jour.' })
+        });
       }
     });
   }
 
-  /** Delete a prefinancement */
   deletePrefinancement(pref: PrefinancementResponseDTO) {
     this.confirmationService.confirm({
-      message: `Supprimer le préfinancement ${pref.montant} MAD ?`,
+      message: `Supprimer le préfinancement de ${pref.montant} MAD ?`,
+      header: 'Suppression',
+      icon: 'pi pi-trash',
+      acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.prefinancementService.deletePrefinancement(pref.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Préfinancement supprimé.' });
-            this.loadPrefinancements(this.table.createLazyLoadMetadata());
-          },
-          error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le préfinancement.' });
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Supprimé avec succès.' });
+            this.table.reset();
           }
         });
       }

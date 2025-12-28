@@ -81,7 +81,7 @@ export class ValidatedPrefiComponent implements OnInit {
       }
       this.items = [
         {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
-        {icon: 'pi pi-list', route: '/portail/prefi-lines', label: 'Les Encours des préfinancements validés'}
+        {icon: 'pi pi-list', route: '/portail/prefi-lines', label: 'Les Encours des préfinancements '}
       ];
     });
   }

@@ -1,26 +1,27 @@
-import {Component, OnInit} from '@angular/core';
-import {CommonModule, NgIf} from '@angular/common';
-import {AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidatorFn, Validators} from '@angular/forms';
-import {ActivatedRoute, ParamMap, Router, RouterLink, RouterLinkActive} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import { ActivatedRoute, ParamMap, Router, RouterLink, RouterLinkActive } from '@angular/router';
 
-import {InputTextModule} from 'primeng/inputtext';
-import {DropdownModule} from 'primeng/dropdown';
-import {InputNumberModule} from 'primeng/inputnumber';
-import {ButtonModule} from 'primeng/button';
-import {RippleModule} from 'primeng/ripple';
-import {ToastModule} from 'primeng/toast';
-import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
-import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {CalendarModule} from 'primeng/calendar';
-import {BreadcrumbModule} from "primeng/breadcrumb";
-import {TooltipModule} from "primeng/tooltip";
-import {SpecificFunctionalLigneService} from "../../service/SpecificFunctionalLigneService";
-import {MarcheService} from "../../../Marches/service/marche-service.service";
-import {NatureLigneFonctionnelleService} from "../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service";
-import {LigneFonctionnelleSpecifiqueRequest} from "../../dtos/LigneFonctionnelleSpecifiqueRequest";
-import {LigneFonctionnelleSpecifiqueResponse} from "../../dtos/LigneFonctionnelleSpecifiqueResponse";
-import {Role} from "../../../../auth/enum/Role";
-import {AuthService} from "../../../../auth/services/auth.service";
+// PrimeNG Imports
+import { InputTextModule } from 'primeng/inputtext';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ButtonModule } from 'primeng/button';
+import { RippleModule } from 'primeng/ripple';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmationService, MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { CalendarModule } from 'primeng/calendar';
+import { BreadcrumbModule } from "primeng/breadcrumb";
+import { TooltipModule } from "primeng/tooltip";
+
+// Services & DTOs
+import { SpecificFunctionalLigneService } from "../../service/SpecificFunctionalLigneService";
+import { MarcheService } from "../../../Marches/service/marche-service.service";
+import { NatureLigneFonctionnelleService } from "../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service";
+import { Role } from "../../../../auth/enum/Role";
+import { AuthService } from "../../../../auth/services/auth.service";
 
 @Component({
   selector: 'app-spefic-ligne-edit',
@@ -28,21 +29,9 @@ import {AuthService} from "../../../../auth/services/auth.service";
   styleUrls: ['./spefic-ligne-edit.component.scss'],
   standalone: true,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    NgIf,
-    InputTextModule,
-    DropdownModule,
-    InputNumberModule,
-    ButtonModule,
-    RippleModule,
-    ToastModule,
-    ConfirmDialogModule,
-    CalendarModule,
-    BreadcrumbModule,
-    RouterLink,
-    RouterLinkActive,
-    TooltipModule
+    CommonModule, ReactiveFormsModule, InputTextModule, DropdownModule,
+    InputNumberModule, ButtonModule, RippleModule, ToastModule, ConfirmDialogModule,
+    CalendarModule, BreadcrumbModule, RouterLink, RouterLinkActive, TooltipModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -51,21 +40,20 @@ export class SpeficLigneEditComponent implements OnInit {
   ligneFonctionnelleSpecifiqueForm!: FormGroup;
   isEditMode: boolean = false;
   ligneFonctionnelleSpecifiqueId: number | null = null;
-  ligneFonctionnelleSpecifique?: LigneFonctionnelleSpecifiqueResponse;
-  natureLigneOptions: { label: string; value: number }[] = [];
-  marchesOptions: { label: string; value: number | null }[] = [];
-  marchesTotalRecords: number = 0;
-  loading: boolean = false;
-
-
-
+  natureLigneOptions: any[] = [];
   items: MenuItem[] | undefined;
 
-  marchesScrollerOptions = {
+  // ✅ Configuration Dropdown Lazy (Alignée sur la Doc PrimeNG)
+  marchesOptions: any[] = [];
+  loadingMarches: boolean = false;
+  currentFilter: string = '';
+  rowsPerPage: number = 10;
+
+  marchesScrollerOptions: ScrollerOptions = {
     delay: 250,
     showLoader: true,
     lazy: true,
-    onLazyLoad: (event: any) => this.loadMarchesForDropdown(event)
+    onLazyLoad: this.onLazyLoadMarches.bind(this)
   };
 
   constructor(
@@ -81,20 +69,20 @@ export class SpeficLigneEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" }, { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-specifiques-encours', label: "Les Lignes Fonctionnelles Spécifiques" }];
+    this.items = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
+      { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-specifiques-encours', label: "Lignes Spécifiques" }
+    ];
     this.initForm();
+    this.loadNatureLigneOptions();
+    this.initializeMarches();
 
-    this.loadNatureLigneOptionsForDropdown();
-    this.loadMarchesForDropdown({ first: 0, last: 1000 });
     this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
       if (id) {
         this.isEditMode = true;
         this.ligneFonctionnelleSpecifiqueId = Number(id);
-        this.loadLigneFonctionnelleSpecifique(this.ligneFonctionnelleSpecifiqueId);
-      } else {
-        this.isEditMode = false;
-        this.ligneFonctionnelleSpecifiqueId = null;
+        this.loadEditData(this.ligneFonctionnelleSpecifiqueId);
       }
     });
   }
@@ -103,91 +91,76 @@ export class SpeficLigneEditComponent implements OnInit {
     this.ligneFonctionnelleSpecifiqueForm = this.fb.group({
       natureLigneFonctionnelleId: [null, Validators.required],
       marcheId: [null, Validators.required],
-      plafond: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)],],
-      taux: [null, [Validators.required, Validators.min(0), Validators.max(100), Validators.pattern(/^\d+(\.\d{1,2})?$/)],],
-      dateDepart: [null, [Validators.required]],
+      plafond: [null, [Validators.required, Validators.min(0.01)]],
+      taux: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
+      dateDepart: [null, Validators.required],
       dateFin: [null, Validators.required],
-    }, {
-      validators: this.dateFinAfterDateDepartValidator()
+    }, { validators: this.dateFinAfterDateDepartValidator() });
+  }
+
+  // ✅ INITIALISATION : Évite l'erreur 'optionGroup' en créant des objets {}
+  initializeMarches(): void {
+    this.marcheService.getAllMarchesForLazyLoad(0, this.rowsPerPage, 'numero,asc').subscribe(res => {
+      const total = res.page.totalElements;
+      const data = res.content.map(m => ({ label: m.numero, value: m.id }));
+
+      // IMPORTANT : .map(() => ({})) empêche PrimeNG de lire des propriétés sur undefined
+      this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+
+      // On remplace les premiers objets vides par les vraies données
+      this.marchesOptions.splice(0, data.length, ...data);
     });
   }
 
+  // ✅ LAZY LOAD : Déclenché au scroll
+  onLazyLoadMarches(event: any): void {
+    const { first, last } = event;
+    const page = Math.floor(first / this.rowsPerPage);
 
-  dateFinAfterDateDepartValidator(): ValidatorFn {
-    return (formGroup: AbstractControl): { [key: string]: any } | null => {
-      const dateDepartControl = formGroup.get('dateDepart');
-      const dateFinControl = formGroup.get('dateFin');
+    // Si l'objet à cet index a déjà une propriété 'value', on ne recharge pas
+    if (this.marchesOptions[first] && this.marchesOptions[first].value !== undefined) {
+      return;
+    }
 
-      if (!dateDepartControl || !dateFinControl || !dateDepartControl.value || !dateFinControl.value) {
-        return null;
-      }
+    this.loadingMarches = true;
+    this.marcheService.getAllMarches({ numero: this.currentFilter }, page, this.rowsPerPage, 'numero,asc').subscribe({
+      next: (res) => {
+        const newItems = res.content.map(m => ({ label: m.numero, value: m.id }));
+        const updatedOptions = [...this.marchesOptions];
+        updatedOptions.splice(first, newItems.length, ...newItems);
+        this.marchesOptions = updatedOptions;
+        this.loadingMarches = false;
+      },
+      error: () => this.loadingMarches = false
+    });
+  }
 
-      const dateDepart = dateDepartControl.value as Date;
-      const dateFin = dateFinControl.value as Date;
+  // ✅ FILTER : Déclenché à la saisie dans le champ recherche
+  onFilterMarches(event: any): void {
+    const query = event.filter?.trim() || '';
+    this.currentFilter = query;
 
-      if (dateFin < dateDepart) {
-        dateFinControl.setErrors({ ...dateFinControl.errors, 'minDate': true });
-        return { 'dateMismatch': true };
-      } else {
-        if (dateFinControl.hasError('minDate')) {
-          const errors = { ...dateFinControl.errors };
-          delete errors['minDate'];
-          dateFinControl.setErrors(Object.keys(errors).length > 0 ? errors : null);
+    this.marcheService.getAllMarches({ numero: query }, 0, this.rowsPerPage, 'numero,asc').subscribe(res => {
+      const total = res.page.totalElements;
+      const data = res.content.map(m => ({ label: m.numero, value: m.id }));
+
+      // Réinitialisation avec des objets vides pour la nouvelle taille filtrée
+      this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+      this.marchesOptions.splice(0, data.length, ...data);
+    });
+  }
+
+  // ✅ MODE ÉDITION : Assure que le marché sélectionné est dans la liste
+  loadEditData(id: number): void {
+    this.specificLigneService.getLigneFonctionnelleSpecifiqueById(id).subscribe(ligne => {
+      this.marcheService.getMarcheById(ligne.marcheId).subscribe(marche => {
+        const selected = { label: marche.numero, value: marche.id };
+
+        // Si le marché n'est pas dans le premier bloc chargé, on l'injecte au début
+        if (!this.marchesOptions.find(m => m?.value === marche.id)) {
+          this.marchesOptions[0] = selected;
         }
-      }
-      return null;
-    };
-  }
 
-  loadNatureLigneOptionsForDropdown(): void {
-    this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().subscribe({
-      next: (natures) => {
-
-        const naturesFiltrees = natures.filter(nature =>
-          ['Préfinancement', 'Droit constaté', 'Factoring'].includes(nature.label)
-        );
-
-        this.natureLigneOptions = naturesFiltrees.map(nature => ({
-          label: nature.label,
-          value: nature.id!
-        }));
-      },
-      error: (err) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des natures de ligne.',
-          life: 3000
-        });
-        console.error('Error loading natures:', err);
-      }
-    });
-  }
-
-
-  loadMarchesForDropdown(event: { first: number, last: number, filter?: string }): void {
-    this.loading = true;
-    const page = Math.floor(event.first / 10);
-    const size = 10;
-    const sort = 'nom,asc';
-
-    this.marcheService.getAllMarchesForLazyLoad(page, size, sort).subscribe({
-      next: (pageResponse) => {
-        this.marchesOptions = pageResponse.content.map(marche => ({label: marche.numero, value: marche.id!}));
-        this.marchesTotalRecords = pageResponse.page.totalElements;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des marchés.', life: 3000 });
-        this.loading = false;
-      }
-    });
-  }
-
-  loadLigneFonctionnelleSpecifique(id: number): void {
-    this.loading = true;
-    this.specificLigneService.getLigneFonctionnelleSpecifiqueById(id).subscribe({
-      next: (ligne: LigneFonctionnelleSpecifiqueResponse) => {
         this.ligneFonctionnelleSpecifiqueForm.patchValue({
           natureLigneFonctionnelleId: ligne.natureLigneFonctionnelleId,
           marcheId: ligne.marcheId,
@@ -196,120 +169,62 @@ export class SpeficLigneEditComponent implements OnInit {
           dateDepart: ligne.dateDepart ? new Date(ligne.dateDepart) : null,
           dateFin: ligne.dateFin ? new Date(ligne.dateFin) : null,
         });
-        this.ligneFonctionnelleSpecifique = ligne;
-        this.loading = false;
-
-      },
-      error: (error) => {
-        const errorMessage = error.error?.message || 'Impossible de charger la ligne fonctionnelle spécifique.';
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-        this.loading = false;
-        this.router.navigate(['/portail/lignes-fonctionnelles-specifiques-encours']);
-      }
+      });
     });
   }
 
-  get f() {
-    return this.ligneFonctionnelleSpecifiqueForm.controls;
+  loadNatureLigneOptions(): void {
+    this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().subscribe(natures => {
+      this.natureLigneOptions = natures
+        .filter(n => ['Préfinancement', 'Droit constaté', 'Factoring'].includes(n.label))
+        .map(n => ({ label: n.label, value: n.id }));
+    });
   }
+
+  dateFinAfterDateDepartValidator(): ValidatorFn {
+    return (group: AbstractControl) => {
+      const start = group.get('dateDepart')?.value;
+      const end = group.get('dateFin')?.value;
+      if (start && end && new Date(end) < new Date(start)) {
+        group.get('dateFin')?.setErrors({ minDate: true });
+        return { dateMismatch: true };
+      }
+      return null;
+    };
+  }
+
+  get f() { return this.ligneFonctionnelleSpecifiqueForm.controls; }
 
   onSubmit(): void {
-    this.ligneFonctionnelleSpecifiqueForm.markAllAsTouched();
-    this.ligneFonctionnelleSpecifiqueForm.updateValueAndValidity();
-
     if (this.ligneFonctionnelleSpecifiqueForm.invalid) {
-      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Veuillez corriger les erreurs dans le formulaire.', life: 3000 });
+      this.ligneFonctionnelleSpecifiqueForm.markAllAsTouched();
       return;
     }
-
     this.confirmationService.confirm({
-      message: this.isEditMode ? 'Êtes-vous sûr de vouloir modifier cette ligne fonctionnelle spécifique ?' : 'Êtes-vous sûr de vouloir créer cette ligne fonctionnelle spécifique ?',
-      header: 'Confirmation de l\'enregistrement',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.executeSaveLigneFonctionnelleSpecifique();
+      header: 'Confirmation',
+      message: this.isEditMode ? 'Modifier cette ligne ?' : 'Créer cette ligne ?',
+      accept: () => this.executeSave()
+    });
+  }
+
+  executeSave(): void {
+    const val = this.ligneFonctionnelleSpecifiqueForm.value;
+    const req$ = this.isEditMode && this.ligneFonctionnelleSpecifiqueId
+      ? this.specificLigneService.updateLigneFonctionnelleSpecifique(this.ligneFonctionnelleSpecifiqueId, val)
+      : this.specificLigneService.createLigneFonctionnelleSpecifique(val);
+
+    req$.subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Enregistrement réussi' });
+        this.router.navigate(['/portail/lignes-fonctionnelles-specifiques-encours']);
       },
-      reject: () => {
-        this.messageService.add({ severity: 'info', summary: 'Annulé', detail: 'Opération d\'enregistrement annulée.', life: 3000 });
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur technique' });
       }
     });
-  }
-
-  executeSaveLigneFonctionnelleSpecifique(): void {
-    this.loading = true;
-    const ligneRequest: LigneFonctionnelleSpecifiqueRequest = this.ligneFonctionnelleSpecifiqueForm.value;
-
-    if (this.isEditMode && this.ligneFonctionnelleSpecifiqueId) {
-      this.specificLigneService.updateLigneFonctionnelleSpecifique(this.ligneFonctionnelleSpecifiqueId, ligneRequest)
-        .subscribe({
-          next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle Spécifique mise à jour avec succès.', life: 3000 });
-            this.loading = false;
-            this.router.navigate(['/portail/lignes-fonctionnelles-specifiques-encours']);
-          },
-          error: (error) => {
-            const errorMessage = error.error?.message || 'Échec de la mise à jour de la ligne fonctionnelle spécifique.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-            this.loading = false;
-          }
-        });
-    } else {
-      this.specificLigneService.createLigneFonctionnelleSpecifique(ligneRequest)
-        .subscribe({
-          next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle Spécifique créée avec succès.', life: 3000 });
-            this.loading = false;
-            this.router.navigate(['/portail/lignes-fonctionnelles-specifiques-encours']);
-          },
-          error: (error) => {
-            const errorMessage = error.error?.message || 'Échec de la création de la ligne fonctionnelle spécifique.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-            this.loading = false;
-          }
-        });
-    }
-  }
-
-  desactiver(): void {
-    if (this.ligneFonctionnelleSpecifique == null) {
-      console.log("ligneFonctionnelleSpecifique est null");
-      return;
-    }
-    const ligne = this.ligneFonctionnelleSpecifique;
-    this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir désactiver la ligne fonctionnelle spécifique "${ligne.natureLigneFonctionnelleLabel}" pour la banque "${ligne.banqueNom}" ?`,
-      header: 'Confirmation de Désactivation',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.loading = true;
-        this.specificLigneService.deactivateLigneFonctionnelle(ligne.id!)
-          .subscribe({
-            next: () => {
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Succès',
-                detail: 'Ligne Fonctionnelle Spécifique désactivée avec succès.',
-                life: 3000
-              });
-              this.router.navigate(['/portail/lignes-fonctionnelles-specifiques-encours']);
-            },
-            error: (error) => {
-              const errorMessage = error.error?.message;
-              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-              this.loading = false;
-            }
-          });
-      }
-    });
-  }
-
-  canDeactivate(): boolean {
-    return this.authService.hasRole(Role.ADMIN) || this.authService.hasRole(Role.SUPER_ADMIN);
   }
 
   onCancel(): void {
     this.router.navigate(['/portail/lignes-fonctionnelles-specifiques-encours']);
   }
-
-
 }

@@ -12,7 +12,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CalendarModule } from 'primeng/calendar';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
@@ -50,8 +50,17 @@ export class DecompteFormComponent implements OnInit {
   decompteId: number | null = null;
   loading: boolean = false;
 
-  marchesOptions: { label: string; value: number }[] = [];
+  marchesOptions: any[] = [];
+  loadingMarches: boolean = false;
+  currentFilter: string = '';
+  rowsPerPage: number = 10;
 
+  marchesScrollerOptions: ScrollerOptions = {
+    delay: 250,
+    showLoader: true,
+    lazy: true,
+    onLazyLoad: this.onLazyLoadMarches.bind(this)
+  };
 
   items: MenuItem[] | undefined;
 
@@ -68,6 +77,7 @@ export class DecompteFormComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.setupBreadcrumbs();
+    this.initializeMarches();
 
     this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
@@ -82,34 +92,61 @@ export class DecompteFormComponent implements OnInit {
     });
   }
 
-  /**
-   * Initializes the form with fields corresponding to the new DecompteRequestDto.
-   */
   initForm(): void {
     this.decompteForm = this.fb.group({
       marcheId: [null, Validators.required],
       dateEmission: [null, Validators.required],
       libelle: ['', Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
-
     });
   }
 
-  // Method to handle lazy loading of marchés
-  loadMarches(event: any): void {
-    this.loading = true;
-    const { first, rows } = event;
-    const page = first / rows;
-    const size = rows;
-    const sort = 'id,asc';
+  initializeMarches(): void {
+    this.loadingMarches = true;
+    this.marcheService.getAllMarchesForLazyLoad(0, this.rowsPerPage, 'numero,asc').subscribe({
+      next: (res: PageResponse<MarcheResponseDTO>) => {
+        const total = res.page.totalElements;
+        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
 
-    this.marcheService.getAllMarchesForLazyLoad(page, size, sort).subscribe({
-      next: (pageResponse: PageResponse<MarcheResponseDTO>) => {
-        this.marchesOptions = pageResponse.content.map((marche) => ({
-          label: `${marche.numero}`,
-          value: marche.id,
-        }));
-        this.loading = false;
+        this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+
+        this.marchesOptions.splice(0, data.length, ...data);
+        this.loadingMarches = false;
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec de l\'initialisation des marchés.',
+          life: 3000,
+        });
+        this.loadingMarches = false;
+      }
+    });
+  }
+
+  onLazyLoadMarches(event: any): void {
+    const { first } = event;
+    const page = Math.floor(first / this.rowsPerPage);
+
+    if (this.marchesOptions[first] && this.marchesOptions[first].value !== undefined) {
+      return; // Pas besoin de recharger
+    }
+
+    this.loadingMarches = true;
+    this.marcheService.getAllMarches(
+      { numero: this.currentFilter },
+      page,
+      this.rowsPerPage,
+      'numero,asc'
+    ).subscribe({
+      next: (res: PageResponse<MarcheResponseDTO>) => {
+        const newItems = res.content.map(m => ({ label: m.numero, value: m.id }));
+        const updatedOptions = [...this.marchesOptions];
+
+        updatedOptions.splice(first, newItems.length, ...newItems);
+        this.marchesOptions = updatedOptions;
+        this.loadingMarches = false;
       },
       error: () => {
         this.messageService.add({
@@ -118,12 +155,35 @@ export class DecompteFormComponent implements OnInit {
           detail: 'Échec du chargement des marchés.',
           life: 3000,
         });
-        this.loading = false;
-      },
+        this.loadingMarches = false;
+      }
     });
   }
 
+  onFilterMarches(event: any): void {
+    const query = event.filter?.trim() || '';
+    this.currentFilter = query;
 
+    this.loadingMarches = true;
+    this.marcheService.getAllMarches(
+      { numero: query },
+      0,
+      this.rowsPerPage,
+      'numero,asc'
+    ).subscribe({
+      next: (res: PageResponse<MarcheResponseDTO>) => {
+        const total = res.page.totalElements;
+        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
+
+        this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+        this.marchesOptions.splice(0, data.length, ...data);
+        this.loadingMarches = false;
+      },
+      error: () => {
+        this.loadingMarches = false;
+      }
+    });
+  }
 
   setupBreadcrumbs(): void {
     this.items = [
@@ -132,32 +192,26 @@ export class DecompteFormComponent implements OnInit {
     ];
   }
 
-  /**
-   * Loads the data for an existing Decompte.
-   */
   loadDecompte(id: number): void {
     this.loading = true;
     this.decompteService.getDecompteById(id).subscribe({
       next: (decompte: DecompteResponseDto) => {
-        this.decompteForm.patchValue({
-          marcheId: decompte.marcheId,
-          dateEmission: new Date(decompte.dateEmission),
-          montant: decompte.montant,
-        });
+        this.marcheService.getMarcheById(decompte.marcheId).subscribe({
+          next: (marche: MarcheResponseDTO) => {
+            const selected = { label: marche.numero, value: marche.id };
 
-        if (
-          decompte.marcheId &&
-          !this.marchesOptions.find(m => m.value === decompte.marcheId)
-        ) {
-          this.marcheService.getMarcheById(decompte.marcheId).subscribe({
-            next: (marche: MarcheResponseDTO) => {
-              this.marchesOptions = [
-                ...this.marchesOptions,
-                { label: marche.numero, value: marche.id },
-              ];
-            },
-          });
-        }
+            if (!this.marchesOptions.find(m => m?.value === marche.id)) {
+              this.marchesOptions[0] = selected;
+            }
+
+            this.decompteForm.patchValue({
+              marcheId: decompte.marcheId,
+              dateEmission: new Date(decompte.dateEmission),
+              montant: decompte.montant,
+              libelle: decompte.libelle,
+            });
+          }
+        });
         this.loading = false;
       },
       error: () => {
@@ -209,9 +263,6 @@ export class DecompteFormComponent implements OnInit {
     });
   }
 
-  /**
-   * Executes the save logic.
-   */
   executeSave(): void {
     this.loading = true;
     const formValue = this.decompteForm.value;
@@ -222,53 +273,32 @@ export class DecompteFormComponent implements OnInit {
       libelle: formValue.libelle,
     };
 
-    if (this.isEditMode && this.decompteId) {
-      this.decompteService.updateDecompte(this.decompteId, request).subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'Décompte mis à jour avec succès.',
-            life: 3000,
-          });
-          this.loading = false;
-          this.router.navigate(['/portail/decomptes']);
-        },
-        error: (error) => {
-          const errorMessage = error.error?.message || 'Échec de la mise à jour du décompte.';
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: errorMessage,
-            life: 3000,
-          });
-          this.loading = false;
-        },
-      });
-    } else {
-      this.decompteService.createDecompte(request).subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'Décompte créé avec succès.',
-            life: 3000,
-          });
-          this.loading = false;
-          this.router.navigate(['/portail/decomptes']);
-        },
-        error: (error) => {
-          const errorMessage = error.error?.message || 'Échec de la création du décompte.';
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: errorMessage,
-            life: 3000,
-          });
-          this.loading = false;
-        },
-      });
-    }
+    const op$ = (this.isEditMode && this.decompteId)
+      ? this.decompteService.updateDecompte(this.decompteId, request)
+      : this.decompteService.createDecompte(request);
+
+    op$.subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: this.isEditMode ? 'Décompte mis à jour avec succès.' : 'Décompte créé avec succès.',
+          life: 3000,
+        });
+        this.loading = false;
+        this.router.navigate(['/portail/decomptes']);
+      },
+      error: (error) => {
+        const errorMessage = error.error?.message || 'Échec de l\'opération.';
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: errorMessage,
+          life: 3000,
+        });
+        this.loading = false;
+      },
+    });
   }
 
   onCancel(): void {

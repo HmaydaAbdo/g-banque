@@ -84,7 +84,7 @@ export class ValidatedDcComponent implements OnInit {
       }
       this.items = [
         {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
-        {icon: 'pi pi-list',route: '/portail/dc-lines', label: 'Les Encours des droit constaté validés'},
+        {icon: 'pi pi-list',route: '/portail/dc-lines', label: 'Les Encours des droit constaté '},
 
       ];
     });

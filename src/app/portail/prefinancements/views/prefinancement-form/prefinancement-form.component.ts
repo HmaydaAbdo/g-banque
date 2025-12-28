@@ -3,27 +3,26 @@ import { CommonModule, NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, ParamMap, RouterLink, RouterLinkActive } from '@angular/router';
 
-import { PrefinancementRequestDTO } from '../../dtos/PrefinancementRequestDTO';
-import { PrefinancementResponseDTO } from '../../dtos/PrefinancementResponseDTO';
-import { Type } from '../../enums/Type';
-import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
-import { MarcheService } from '../../../Marches/service/marche-service.service';
-import { PageResponse } from '../../../global/types/PageResponse';
-
+// PrimeNG Imports
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CalendarModule } from 'primeng/calendar';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
-import {PrefinancementService} from "../../service/PrefinancementService";
-import {MarcheResponseDTO} from "../../../Marches/dtos/marche-response.dto";
-import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
+
+// Services & DTOs
+import { PrefinancementService } from "../../service/PrefinancementService";
+import { MarcheService } from '../../../Marches/service/marche-service.service';
+import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
+import { Type } from '../../enums/Type';
+import { PrefinancementRequestDTO } from '../../dtos/PrefinancementRequestDTO';
+import { PrefinancementResponseDTO } from '../../dtos/PrefinancementResponseDTO';
 
 @Component({
   selector: 'app-prefinancement-form',
@@ -53,12 +52,23 @@ export class PrefinancementFormComponent implements OnInit {
   prefinancementForm!: FormGroup;
   isEditMode: boolean = false;
   prefinancementId: number | null = null;
-  loading: boolean = false;
+  loading: boolean = false; // Loading global pour le bouton submit
 
-  marchesOptions: { label: string; value: number }[] = [];
-  banquesOptions: { label: string; value: number }[] = [];
-  typeOptions: { label: string; value: Type }[] = [];
+  // ✅ Configuration pour le Dropdown Marchés (Lazy & Virtual Scroll)
+  marchesOptions: any[] = [];
+  loadingMarches: boolean = false;
+  currentFilter: string = '';
+  rowsPerPage: number = 10;
 
+  marchesScrollerOptions: ScrollerOptions = {
+    delay: 250,
+    showLoader: true,
+    lazy: true,
+    onLazyLoad: this.onLazyLoadMarches.bind(this)
+  };
+
+  banquesOptions: any[] = [];
+  typeOptions: any[] = [];
   items: MenuItem[] | undefined;
 
   constructor(
@@ -73,9 +83,10 @@ export class PrefinancementFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.initForm();
-    this.loadDropdownData();
     this.setupBreadcrumbs();
+    this.initForm();
+    this.loadStaticDropdownData();
+    this.initializeMarches(); // ✅ Initialisation de la liste des marchés
 
     this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
@@ -83,84 +94,118 @@ export class PrefinancementFormComponent implements OnInit {
         this.isEditMode = true;
         this.prefinancementId = Number(id);
         this.loadPrefinancement(this.prefinancementId);
-      } else {
-        this.isEditMode = false;
-        this.prefinancementId = null;
       }
     });
-
   }
 
-  /**
-   * Initializes the form with fields corresponding to the new PrefinancementRequestDTO.
-   */
   initForm(): void {
     this.prefinancementForm = this.fb.group({
       marcheId: [null, Validators.required],
       dateEmission: [null, Validators.required],
-      montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
+      montant: [null, [Validators.required, Validators.min(0.01)]],
       type: [null, Validators.required],
     });
   }
 
-  // New method to handle lazy loading of marchés
-  loadMarches(event: any): void {
-    this.loading = true;
-    const { first, rows } = event;
-    const page = first / rows;
-    const size = rows;
-    const sort = 'id,asc';
+  // ✅ INITIALISATION : Charge le total et évite l'erreur 'optionGroup'
+  initializeMarches(): void {
+    this.marcheService.getAllMarchesForLazyLoad(0, this.rowsPerPage, 'numero,asc').subscribe(res => {
+      const total = res.page.totalElements;
+      const data = res.content.map(m => ({ label: m.numero, value: m.id }));
 
-    this.marcheService.getAllMarchesForLazyLoad(page, size,sort ).subscribe({
-      next: (pageResponse: PageResponse<MarcheResponseDTO>) => {
-        this.marchesOptions = pageResponse.content.map((marche) => ({
-          label: `${marche.numero}`,
-          value: marche.id,
-        }));
-        this.loading = false;
-      },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des marchés.',
-          life: 3000,
-        });
-        this.loading = false;
-      },
+      // On remplit avec des objets vides {} pour satisfaire le moteur ARIA de PrimeNG
+      this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+
+      // On injecte les premières données
+      this.marchesOptions.splice(0, data.length, ...data);
     });
   }
 
-  loadDropdownData(): void {
-    this.loading = true;
+  // ✅ LAZY LOAD : Appelé lors du scroll du dropdown
+  onLazyLoadMarches(event: any): void {
+    const { first } = event;
+    const page = Math.floor(first / this.rowsPerPage);
 
-    // The marches are now loaded via lazy loading
-    // this.marcheService.getAllMarches({}, 0, 1000).subscribe({...})
-    // No need for this call anymore.
+    // Si la donnée existe déjà (value définie), on ne recharge pas
+    if (this.marchesOptions[first] && this.marchesOptions[first].value !== undefined) {
+      return;
+    }
 
-    this.banqueService.getAllBanques({}, 0, 1000).subscribe({
-      next: (pageResponse: PageResponse<BanqueResponse>) => {
-        this.banquesOptions = pageResponse.content.map((banque) => ({
-          label: banque.nom,
-          value: banque.id,
-        }));
-        this.loading = false;
+    this.loadingMarches = true;
+    this.marcheService.getAllMarches({ numero: this.currentFilter }, page, this.rowsPerPage, 'numero,asc').subscribe({
+      next: (res) => {
+        const newItems = res.content.map(m => ({ label: m.numero, value: m.id }));
+        const updatedOptions = [...this.marchesOptions];
+        updatedOptions.splice(first, newItems.length, ...newItems);
+        this.marchesOptions = updatedOptions;
+        this.loadingMarches = false;
       },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des banques.',
-          life: 3000,
-        });
-        this.loading = false;
-      },
+      error: () => this.loadingMarches = false
     });
+  }
 
+  // ✅ FILTER : Appelé lors de la saisie dans le champ recherche
+  onFilterMarches(event: any): void {
+    const query = event.filter?.trim() || '';
+    this.currentFilter = query;
+
+    this.marcheService.getAllMarches({ numero: query }, 0, this.rowsPerPage, 'numero,asc').subscribe(res => {
+      const total = res.page.totalElements;
+      const data = res.content.map(m => ({ label: m.numero, value: m.id }));
+
+      // Recréation du tableau selon la taille des résultats filtrés
+      this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+      this.marchesOptions.splice(0, data.length, ...data);
+    });
+  }
+
+  loadStaticDropdownData(): void {
+    // Type Enum
     this.typeOptions = Object.keys(Type).map((key) => ({
       label: key,
       value: Type[key as keyof typeof Type],
     }));
+
+    // Banques (Chargement simple car souvent moins volumineux)
+    this.banqueService.getAllBanques({}, 0, 1000).subscribe({
+      next: (res) => {
+        this.banquesOptions = res.content.map((banque) => ({
+          label: banque.nom,
+          value: banque.id,
+        }));
+      }
+    });
+  }
+
+  loadPrefinancement(id: number): void {
+    this.loading = true;
+    this.prefinancementService.getPrefinancementById(id).subscribe({
+      next: (prefinancement: PrefinancementResponseDTO) => {
+
+        // Charger spécifiquement le marché sélectionné pour l'afficher en mode édition
+        this.marcheService.getMarcheById(prefinancement.marcheId).subscribe(marche => {
+          const selected = { label: marche.numero, value: marche.id };
+
+          // L'injecter au début de la liste s'il n'y est pas
+          if (!this.marchesOptions.find(m => m?.value === marche.id)) {
+            this.marchesOptions[0] = selected;
+          }
+
+          this.prefinancementForm.patchValue({
+            marcheId: prefinancement.marcheId,
+            dateEmission: new Date(prefinancement.dateEmission),
+            montant: prefinancement.montant,
+            type: prefinancement.type,
+          });
+        });
+
+        this.loading = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
+        this.router.navigate(['/portail/préfinancements']);
+      }
+    });
   }
 
   setupBreadcrumbs(): void {
@@ -170,146 +215,40 @@ export class PrefinancementFormComponent implements OnInit {
     ];
   }
 
-  /**
-   * Loads the data for an existing Prefinancement.
-   * Note: We only patch the values that exist in the form.
-   */
-  loadPrefinancement(id: number): void {
-    this.loading = true;
-    this.prefinancementService.getPrefinancementById(id).subscribe({
-      next: (prefinancement: PrefinancementResponseDTO) => {
-        this.prefinancementForm.patchValue({
-          marcheId: prefinancement.marcheId,
-          dateEmission: new Date(prefinancement.dateEmission),
-          montant: prefinancement.montant,
-          type: prefinancement.type,
-        });
-
-        // 🔥 Ensure marché is added to options for edit mode
-        if (
-          prefinancement.marcheId &&
-          !this.marchesOptions.find(m => m.value === prefinancement.marcheId)
-        ) {
-          this.marcheService.getMarcheById(prefinancement.marcheId).subscribe({
-            next: (marche: MarcheResponseDTO) => {
-              this.marchesOptions = [
-                ...this.marchesOptions,
-                { label: marche.numero, value: marche.id },
-              ];
-            },
-          });
-        }
-
-        this.loading = false;
-      },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement du préfinancement.',
-          life: 3000,
-        });
-        this.loading = false;
-        this.router.navigate(['/portail/préfinancements']);
-      },
-    });
-  }
-  get f() {
-    return this.prefinancementForm.controls;
-  }
+  get f() { return this.prefinancementForm.controls; }
 
   onSubmit(): void {
-    this.prefinancementForm.markAllAsTouched();
-    this.prefinancementForm.updateValueAndValidity();
-
     if (this.prefinancementForm.invalid) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Validation',
-        detail: 'Veuillez corriger les erreurs dans le formulaire.',
-        life: 3000,
-      });
+      this.prefinancementForm.markAllAsTouched();
       return;
     }
 
     this.confirmationService.confirm({
-      message: this.isEditMode ? 'Êtes-vous sûr de vouloir modifier ce préfinancement ?' : 'Êtes-vous sûr de vouloir créer ce préfinancement ?',
-      header: 'Confirmation de l\'enregistrement',
+      message: this.isEditMode ? 'Modifier ce préfinancement ?' : 'Créer ce préfinancement ?',
+      header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.executeSave();
-      },
-      reject: () => {
-        this.messageService.add({
-          severity: 'info',
-          summary: 'Annulé',
-          detail: 'Opération d\'enregistrement annulée.',
-          life: 3000,
-        });
-      },
+      accept: () => this.executeSave()
     });
   }
 
-  /**
-   * Executes the save logic based on the new, simplified DTO.
-   */
   executeSave(): void {
     this.loading = true;
-    const formValue = this.prefinancementForm.value;
-    const request: PrefinancementRequestDTO = {
-      marcheId: formValue.marcheId,
-      dateEmission: formValue.dateEmission,
-      montant: formValue.montant,
-      type: formValue.type,
-    };
+    const request: PrefinancementRequestDTO = this.prefinancementForm.value;
 
-    if (this.isEditMode && this.prefinancementId) {
-      this.prefinancementService.updatePrefinancement(this.prefinancementId, request).subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'Préfinancement mis à jour avec succès.',
-            life: 3000,
-          });
-          this.loading = false;
-          this.router.navigate(['/portail/préfinancements']);
-        },
-        error: (error) => {
-          console.log(error)
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: error,
-            life: 3000,
-          });
-          this.loading = false;
-        },
-      });
-    } else {
-      this.prefinancementService.createPrefinancement(request).subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'Préfinancement créé avec succès.',
-            life: 3000,
-          });
-          this.loading = false;
-          this.router.navigate(['/portail/préfinancements']);
-        },
-        error: (error) => {
-          const errorMessage = error.error?.message || 'Échec de la création du préfinancement.';
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: errorMessage,
-            life: 3000,
-          });
-          this.loading = false;
-        },
-      });
-    }
+    const operation$ = (this.isEditMode && this.prefinancementId)
+      ? this.prefinancementService.updatePrefinancement(this.prefinancementId, request)
+      : this.prefinancementService.createPrefinancement(request);
+
+    operation$.subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Enregistré avec succès.' });
+        this.router.navigate(['/portail/préfinancements']);
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur technique' });
+        this.loading = false;
+      }
+    });
   }
 
   onCancel(): void {

@@ -1,72 +1,65 @@
-import {Component, OnInit, ViewChild} from "@angular/core";
-import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
-import {BreadcrumbModule} from "primeng/breadcrumb";
-import {ButtonModule} from "primeng/button";
-import {DatePipe, DecimalPipe, NgClass, NgForOf} from "@angular/common";
-import {ToastModule} from "primeng/toast";
-import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {DropdownModule} from "primeng/dropdown";
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {Ripple} from "primeng/ripple";
-import {MenuItem, MessageService, PrimeTemplate} from "primeng/api";
-import {TooltipModule} from "primeng/tooltip";
-import {MarcheResponseDTO} from "../../../../Marches/dtos/marche-response.dto";
-import {BanqueResponse} from "../../../../comptes-bancaire/dtos/BanqueResponse";
-import {Subject} from "rxjs";
-import {SpecificFunctionalLigneService} from "../../../../specific-Functional-Lignes/service/SpecificFunctionalLigneService";
-import {MarcheService} from "../../../../Marches/service/marche-service.service";
-import {BanqueService} from "../../../../comptes-bancaire/services/BanqueService";
-import {debounceTime, distinctUntilChanged} from "rxjs/operators";
-import {SpecifiqueLineSearchDto} from "../../../../prefinancements/lignesPrefi/dtos/SpecifiqueLineSearchDto";
-import {PageResponse} from "../../../../global/types/PageResponse";
-import {FactoringResponseDto} from "../../../dtos/FactoringResponseDto";
-import {SpecificLigneResponseDto} from "../../../../specific-Functional-Lignes/dtos/SpecificLigneResponseDto";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+
+// PrimeNG
+import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { ButtonModule } from 'primeng/button';
+import { MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
+import { ToastModule } from "primeng/toast";
+import { ConfirmDialogModule } from "primeng/confirmdialog";
+import { DropdownModule } from "primeng/dropdown";
+import { RippleModule } from "primeng/ripple";
+import { TooltipModule } from "primeng/tooltip";
+
+// Services & DTOs
+import { SpecificFunctionalLigneService } from "../../../../specific-Functional-Lignes/service/SpecificFunctionalLigneService";
+import { MarcheService } from "../../../../Marches/service/marche-service.service";
+import { BanqueService } from "../../../../comptes-bancaire/services/BanqueService";
+import { SpecifiqueLineSearchDto } from "../../../../prefinancements/lignesPrefi/dtos/SpecifiqueLineSearchDto";
+import { SpecificLigneResponseDto } from "../../../../specific-Functional-Lignes/dtos/SpecificLigneResponseDto";
 
 @Component({
   selector: 'app-factoring-lines-list',
   standalone: true,
   imports: [
-    TableModule,
-    BreadcrumbModule,
-    ButtonModule,
-    DatePipe,
-    NgForOf,
-    ToastModule,
-    ConfirmDialogModule,
-    NgClass,
-    DropdownModule,
-    FormsModule,
-    ReactiveFormsModule,
-    Ripple,
-    PrimeTemplate,
-    TooltipModule,
-    DecimalPipe,
+    CommonModule, TableModule, BreadcrumbModule, ButtonModule, ToastModule,
+    ConfirmDialogModule, DropdownModule, FormsModule, ReactiveFormsModule,
+    RippleModule, TooltipModule, RouterLink, DatePipe, DecimalPipe
   ],
-  templateUrl: './factoring-lines-list.component.html',
-
+  providers: [MessageService],
+  templateUrl: './factoring-lines-list.component.html'
 })
 export class FactoringLinesListComponent implements OnInit {
   @ViewChild('dt') table!: Table;
 
+  searchForm!: FormGroup;
   factoringLines: SpecificLigneResponseDto[] = [];
   totalRecords = 0;
   loading = true;
   items: MenuItem[] = [];
 
-  // Dropdown data and search criteria
-  selectedMarche?: MarcheResponseDTO;
-  selectedBanque?: BanqueResponse;
-
-  marches: MarcheResponseDTO[] = [];
+  // Configuration Marchés (Lazy + Server Search)
+  marchesOptions: any[] = [];
   marchesLoading = false;
+  currentMarcheFilter = '';
+  rowsPerPageMarches = 10;
+  private marcheFilterTimeout: any;
 
-  banques: BanqueResponse[] = [];
-  banquesLoading = false;
+  marchesScrollerOptions: ScrollerOptions = {
+    delay: 250,
+    showLoader: true,
+    lazy: true,
+    onLazyLoad: this.onLazyLoadMarches.bind(this)
+  };
 
-  // RxJS Subject for debouncing filter changes
-  private filterSubject = new Subject<void>();
+  banquesOptions: any[] = [];
 
   constructor(
+    private fb: FormBuilder,
     private specifiqueFunctionalLigneService: SpecificFunctionalLigneService,
     private messageService: MessageService,
     private marcheService: MarcheService,
@@ -76,98 +69,102 @@ export class FactoringLinesListComponent implements OnInit {
   ngOnInit(): void {
     this.items = [
       { icon: 'pi pi-home', label: 'Accueil', routerLink: '/portail/accueil' },
-      { icon: 'pi pi-list', label: 'Lignes de Factoring', routerLink: '/portail/factoring-lines' },
+      { icon: 'pi pi-list', label: 'Lignes de Factoring' }
     ];
 
-    // Subscribe to the filter subject with a debounce time
-    this.filterSubject.pipe(
+    this.initForm();
+    this.initializeMarches();
+    this.loadBanquesSimple();
+
+    // Surveillance des filtres pour reset la table
+    this.searchForm.valueChanges.pipe(
       debounceTime(400),
-      distinctUntilChanged()
+      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
     ).subscribe(() => {
-      if (this.table) {
-        this.table.reset();
-      }
+      if (this.table) this.table.reset();
     });
   }
 
-  /**
-   * Handles the lazy load event for the PrimeNG table, fetching paginated, sorted, and filtered data.
-   * @param event The lazy load event containing pagination and sorting details.
-   */
-  loadFactoringLines(event: TableLazyLoadEvent): void {
-    this.loading = true;
-    const page = event.first ? event.first / (event.rows ?? 10) : 0;
-    const size = event.rows ?? 10;
-    const sortField = event.sortField as string || 'id';
-    const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
-    const sort = `${sortField},${sortOrder}`;
-
-    const searchCriteria: SpecifiqueLineSearchDto = {
-      marcheId: this.selectedMarche?.id,
-      banqueId: this.selectedBanque?.id
-    };
-
-    this.specifiqueFunctionalLigneService.getFactoringLines(searchCriteria, page, size, sort).subscribe({
-      next: (res: PageResponse<SpecificLigneResponseDto>) => {
-        this.factoringLines= res.content;
-        this.totalRecords = res.page.totalElements;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les lignes de découvert.', life: 3000 });
-        console.error(err);
-      }
+  initForm(): void {
+    this.searchForm = this.fb.group({
+      marcheId: [null],
+      banqueId: [null]
     });
   }
 
-  /**
-   * Loads marches lazily for the dropdown.
-   * @param event The lazy load event.
-   */
-  loadMarchesLazy(event: any): void {
+  // --- LOGIQUE MARCHÉS (Server Side Search) ---
+
+  initializeMarches(filter: string = ''): void {
     this.marchesLoading = true;
-    const page = Math.floor((event.first ?? 0) / (event.rows ?? 10));
-    const size = event.rows ?? 10;
-    this.marcheService.getAllMarches({}, page, size, 'numero,asc').subscribe({
+    this.marcheService.getAllMarches({ numero: filter }, 0, this.rowsPerPageMarches, 'numero,asc').subscribe({
       next: (res) => {
-        this.marches = res.content;
+        const total = res.page.totalElements;
+        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
+        this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+        this.marchesOptions.splice(0, data.length, ...data);
+        this.marchesOptions = [...this.marchesOptions];
         this.marchesLoading = false;
       },
       error: () => this.marchesLoading = false
     });
   }
 
-  /**
-   * Loads banques lazily for the dropdown.
-   * @param event The lazy load event.
-   */
-  loadBanquesLazy(event: any): void {
-    this.banquesLoading = true;
-    const page = Math.floor((event.first ?? 0) / (event.rows ?? 10));
-    const size = event.rows ?? 10;
-    this.banqueService.getAllBanques({}, page, size, 'nom,asc').subscribe({
+  onLazyLoadMarches(event: any): void {
+    const { first } = event;
+    if (this.marchesOptions[first] && this.marchesOptions[first].value !== undefined) return;
+
+    this.marchesLoading = true;
+    const page = Math.floor(first / this.rowsPerPageMarches);
+    this.marcheService.getAllMarches({ numero: this.currentMarcheFilter }, page, this.rowsPerPageMarches, 'numero,asc').subscribe({
       next: (res) => {
-        this.banques = res.content;
-        this.banquesLoading = false;
+        const newItems = res.content.map(m => ({ label: m.numero, value: m.id }));
+        this.marchesOptions.splice(first, newItems.length, ...newItems);
+        this.marchesOptions = [...this.marchesOptions];
+        this.marchesLoading = false;
       },
-      error: () => this.banquesLoading = false
+      error: () => this.marchesLoading = false
     });
   }
 
-  /**
-   * Emits a value to the filter subject, triggering a debounced table reset.
-   */
-  applyFilters(): void {
-    this.filterSubject.next();
+  onFilterMarches(event: any): void {
+    const query = event.filter?.trim() || '';
+    this.currentMarcheFilter = query;
+    if (this.marcheFilterTimeout) clearTimeout(this.marcheFilterTimeout);
+    this.marcheFilterTimeout = setTimeout(() => this.initializeMarches(query), 400);
   }
 
-  /**
-   * Clears all filters and reloads the table.
-   */
+  loadBanquesSimple(): void {
+    this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc').subscribe(res => {
+      this.banquesOptions = res.content.map(b => ({ label: b.nom, value: b.id }));
+    });
+  }
+
+  // --- LOGIQUE TABLE PRINCIPALE ---
+
+  loadFactoringLines(event: TableLazyLoadEvent): void {
+    this.loading = true;
+    const page = event.first ? event.first / (event.rows ?? 10) : 0;
+    const size = event.rows ?? 10;
+    const sort = `${event.sortField || 'id'},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
+
+    const searchCriteria: SpecifiqueLineSearchDto = this.searchForm.value;
+
+    this.specifiqueFunctionalLigneService.getFactoringLines(searchCriteria, page, size, sort).subscribe({
+      next: (res) => {
+        this.factoringLines = res.content;
+        this.totalRecords = res.page.totalElements;
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les lignes.' });
+      }
+    });
+  }
+
   clearFilters(): void {
-    this.selectedMarche = undefined;
-    this.selectedBanque = undefined;
-    this.applyFilters();
+    this.currentMarcheFilter = '';
+    this.searchForm.reset();
+    this.initializeMarches();
   }
 }

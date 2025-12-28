@@ -41,6 +41,7 @@
               styleClass="w-full">
             </p-dropdown>
           </div>
+
           <div>
             <label for="filterNature" class="block text-900 text-center font-medium mb-2">Nature</label>
             <p-dropdown
@@ -54,6 +55,8 @@
               styleClass="w-full">
             </p-dropdown>
           </div>
+
+          <!-- ✅ DROPDOWN MARCHÉ avec virtual scroll + lazy loading + server-side filter -->
           <div>
             <label for="filterMarche" class="block text-900 text-center font-medium mb-2">Marché</label>
             <p-dropdown
@@ -65,10 +68,36 @@
               optionValue="value"
               [showClear]="true"
               styleClass="w-full"
+              [filter]="true"
+              filterBy="label"
+              (onFilter)="onFilterMarches($event)"
               [virtualScroll]="true"
-              [virtualScrollItemSize]="30"
+              [virtualScrollItemSize]="38"
+              [lazy]="true"
               [virtualScrollOptions]="marchesScrollerOptions"
-              [filter]="true">
+              [loading]="marchesLoading"
+            >
+              <!-- ✅ Template pour l'élément sélectionné -->
+              <ng-template pTemplate="selectedItem" let-selectedOption>
+                <div class="flex align-items-center gap-2" *ngIf="selectedOption">
+                  <i class="pi pi-file p-text-secondary"></i>
+                  <div>{{ selectedOption.label }}</div>
+                </div>
+              </ng-template>
+
+              <!-- ✅ Template pour les éléments de la liste avec gestion du loading -->
+              <ng-template let-marche pTemplate="item">
+                <div class="flex align-items-center gap-2" style="height: 38px">
+                  <ng-container *ngIf="marche && marche.label; else loadingTmpl">
+                    <i class="pi pi-file"></i>
+                    <div>{{ marche.label }}</div>
+                  </ng-container>
+                  <ng-template #loadingTmpl>
+                    <i class="pi pi-spin pi-spinner text-secondary"></i>
+                    <span class="text-secondary">Chargement...</span>
+                  </ng-template>
+                </div>
+              </ng-template>
             </p-dropdown>
           </div>
         </div>
@@ -111,24 +140,22 @@
               {{ col.header }}
               @if (col.sortable) { <p-sortIcon [field]="col.field"></p-sortIcon> }
             </th>
-
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-ligne>
           <tr>
             <td>{{ ligne.id }}</td>
             <td>{{ ligne.banqueNom }}</td>
-            <td>{{ligne.natureLigneFonctionnelleLabel}}</td>
+            <td>{{ ligne.natureLigneFonctionnelleLabel }}</td>
             <td>{{ ligne.marcheNumero }}</td>
             <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
             <td>{{ ligne.taux | number:'1.2-2' }}%</td>
-            <td>{{ ligne.dateDepart | date:'dd/MM/YYYY' }}</td>
-            <td>{{ ligne.dateFin | date:'dd/MM/YYYY' }}</td>
-
+            <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
+            <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>
           </tr>
         </ng-template>
         <ng-template pTemplate="emptyMessage">
-          <p> Aucune ligne fonctionnelle spécifique archivée trouvée.</p>
+          <p>Aucune ligne fonctionnelle spécifique archivée trouvée.</p>
         </ng-template>
         <ng-template pTemplate="loadingbody">
           <tr>

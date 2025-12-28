@@ -24,10 +24,12 @@
     <div class="card-header text-center mb-4">
       <h2 class="text-2xl font-bold">{{ isEditMode ? 'Modifier le Préfinancement' : 'Ajouter un Nouveau Préfinancement' }}</h2>
     </div>
+
     <form [formGroup]="prefinancementForm" (ngSubmit)="onSubmit()">
       <div class="p-fluid grid formgrid">
+
         <div class="field col-12 md:col-6">
-          <label for="marcheId" class="block font-medium mb-2">Marché</label>
+          <label for="marcheId" class="block font-medium mb-2">Marché *</label>
           <p-dropdown
             id="marcheId"
             formControlName="marcheId"
@@ -36,19 +38,43 @@
             optionLabel="label"
             optionValue="value"
             [showClear]="true"
-            [ngClass]="{ 'ng-invalid ng-dirty': f['marcheId'].invalid && f['marcheId'].touched }"
+            [filter]="true"
+            filterBy="label"
+            (onFilter)="onFilterMarches($event)"
             [virtualScroll]="true"
             [virtualScrollItemSize]="38"
             [lazy]="true"
-            (onLazyLoad)="loadMarches($event)"
-          ></p-dropdown>
-          <small class="ng-dirty ng-invalid" *ngIf="f['marcheId'].invalid && f['marcheId'].touched">
+            [virtualScrollOptions]="marchesScrollerOptions"
+            [loading]="loadingMarches"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['marcheId'].invalid && f['marcheId'].touched }">
+
+            <ng-template pTemplate="selectedItem" let-selectedOption>
+              <div class="flex align-items-center gap-2" *ngIf="selectedOption">
+                <i class="pi pi-file p-text-secondary"></i>
+                <div>{{ selectedOption.label }}</div>
+              </div>
+            </ng-template>
+
+            <ng-template let-marche pTemplate="item">
+              <div class="flex align-items-center gap-2" style="height: 38px">
+                <ng-container *ngIf="marche && marche.label; else loadingTmpl">
+                  <i class="pi pi-file"></i>
+                  <div>{{ marche.label }}</div>
+                </ng-container>
+                <ng-template #loadingTmpl>
+                  <i class="pi pi-spin pi-spinner text-secondary"></i>
+                  <span class="text-secondary">Chargement...</span>
+                </ng-template>
+              </div>
+            </ng-template>
+          </p-dropdown>
+          <small class="p-error" *ngIf="f['marcheId'].invalid && f['marcheId'].touched">
             Le marché est requis.
           </small>
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="montant" class="block font-medium mb-2">Montant (MAD)</label>
+          <label for="montant" class="block font-medium mb-2">Montant (MAD) *</label>
           <p-inputNumber
             id="montant"
             formControlName="montant"
@@ -57,13 +83,13 @@
             [maxFractionDigits]="2"
             [ngClass]="{ 'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched }"
           ></p-inputNumber>
-          <small class="ng-dirty ng-invalid" *ngIf="f['montant'].invalid && f['montant'].touched">
-            Le montant est requis et doit être un nombre valide (ex: 123.45).
+          <small class="p-error" *ngIf="f['montant'].invalid && f['montant'].touched">
+            Le montant est requis.
           </small>
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="type" class="block font-medium mb-2">Type</label>
+          <label for="type" class="block font-medium mb-2">Type *</label>
           <p-dropdown
             id="type"
             formControlName="type"
@@ -73,13 +99,13 @@
             optionValue="value"
             [ngClass]="{ 'ng-invalid ng-dirty': f['type'].invalid && f['type'].touched }"
           ></p-dropdown>
-          <small class="ng-dirty ng-invalid" *ngIf="f['type'].invalid && f['type'].touched">
+          <small class="p-error" *ngIf="f['type'].invalid && f['type'].touched">
             Le type est requis.
           </small>
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="dateEmission" class="block font-medium mb-2">Date d'émission</label>
+          <label for="dateEmission" class="block font-medium mb-2">Date d'émission *</label>
           <p-calendar
             id="dateEmission"
             formControlName="dateEmission"
@@ -89,12 +115,12 @@
             appendTo="body"
             [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }"
           ></p-calendar>
-          <small class="ng-dirty ng-invalid" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">
+          <small class="p-error" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">
             La date d'émission est requise.
           </small>
         </div>
 
-        <div class="col-12 mt-4 flex flex-row   gap-2">
+        <div class="col-12 mt-4 flex flex-row gap-2">
           <button
             pButton
             pRipple

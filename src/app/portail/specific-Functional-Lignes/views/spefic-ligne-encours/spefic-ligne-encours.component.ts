@@ -7,7 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import { MenuItem, MessageService, ConfirmationService } from 'primeng/api';
+import { MenuItem, MessageService, ConfirmationService, ScrollerOptions } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TagModule } from 'primeng/tag';
@@ -76,25 +76,28 @@ export class SpeficLigneEncoursComponent implements OnInit {
   sortField: string | string[] = 'id';
   sortOrder: number = 1;
   searchForm!: FormGroup;
+
   statutOptions: any[] = [
     { label: 'Tous', value: null },
     { label: 'En cours', value: false },
     { label: 'Expirées', value: true }
   ];
+
   banquesOptions: { label: string; value: number | null }[] = [];
-  marchesOptions: { label: string; value: number | null }[] = [];
   natureLigneOptions: { label: string; value: number | null }[] = [];
   items: MenuItem[] | undefined;
 
+  // ✅ Configuration optimisée pour le dropdown des marchés
+  marchesOptions: any[] = [];
   marchesLoading: boolean = false;
-  marchesTotalRecords: number = 0;
+  currentMarcheFilter: string = '';
+  rowsPerPageMarches: number = 10;
 
-  // The type is now inferred, removing the TS2724 error.
-  marchesScrollerOptions = {
+  marchesScrollerOptions: ScrollerOptions = {
     delay: 250,
     showLoader: true,
     lazy: true,
-    onLazyLoad: (event: any) => this.loadMarchesForDropdown(event)
+    onLazyLoad: this.onLazyLoadMarches.bind(this)
   };
 
   constructor(
@@ -109,10 +112,14 @@ export class SpeficLigneEncoursComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" }, { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-specifiques-encours', label: "Les Lignes Fonctionnelles Spécifiques Encours" }];
+    this.items = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
+      { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-specifiques-encours', label: "Les Lignes Fonctionnelles Spécifiques Encours" }
+    ];
     this.initSearchForm();
     this.setupFormListeners();
     this.loadFilterOptions();
+    this.initializeMarches(); // ✅ Initialisation des marchés
   }
 
   initSearchForm(): void {
@@ -150,7 +157,12 @@ export class SpeficLigneEncoursComponent implements OnInit {
         });
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des natures de ligne pour le filtre.', life: 3000 });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement des natures de ligne pour le filtre.',
+          life: 3000
+        });
         console.error('Error loading natures for filter:', err);
       }
     });
@@ -166,34 +178,115 @@ export class SpeficLigneEncoursComponent implements OnInit {
           });
         },
         error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques pour le filtre.', life: 3000 });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Échec du chargement des banques pour le filtre.',
+            life: 3000
+          });
           console.error('Error loading banks for filter:', err);
         }
       });
   }
 
-  loadMarchesForDropdown(event: { first: number, last: number, filter?: string }): void {
+  // ✅ Initialisation des marchés avec placeholders
+  initializeMarches(): void {
     this.marchesLoading = true;
-    const page = Math.floor(event.first / 10);
-    const size = 10;
-    const sort = 'nom,asc';
+    this.marcheService.getAllMarchesForLazyLoad(0, this.rowsPerPageMarches, 'numero,asc').subscribe({
+      next: (res) => {
+        const total = res.page.totalElements;
+        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
 
-    this.marcheService.getAllMarchesForLazyLoad(page, size, sort).subscribe({
-      next: (pageResponse) => {
-        const newItems = pageResponse.content.map(marche => ({ label: marche.numero, value: marche.id! }));
+        // ✅ Option "Tous les marchés" en première position
+        const allOption = { label: 'Tous les marchés', value: null };
 
-        if (event.first === 0) {
-          this.marchesOptions = [{ label: 'Tous les marchés', value: null }, ...newItems];
-        } else {
-          this.marchesOptions = [...this.marchesOptions, ...newItems];
-        }
+        // ✅ Crée un tableau avec l'option "Tous" + placeholders vides
+        this.marchesOptions = [allOption, ...Array.from({ length: total }).map(() => ({}))];
 
-        this.marchesTotalRecords = pageResponse.page.totalElements;
+        // ✅ Remplit les premiers éléments réels (en sautant l'index 0 qui contient "Tous")
+        this.marchesOptions.splice(1, data.length, ...data);
         this.marchesLoading = false;
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des marchés pour le filtre.', life: 3000 });
-        console.error('Error loading markets for filter:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec de l\'initialisation des marchés.',
+          life: 3000
+        });
+        console.error('Error initializing markets:', err);
+        this.marchesLoading = false;
+      }
+    });
+  }
+
+  // ✅ Chargement lazy avec cache
+  onLazyLoadMarches(event: any): void {
+    const { first } = event;
+
+    // ✅ Si c'est l'option "Tous les marchés" (index 0), on skip
+    if (first === 0) return;
+
+    const page = Math.floor((first - 1) / this.rowsPerPageMarches); // -1 car index 0 = "Tous"
+
+    // ✅ Vérifie si les données sont déjà chargées (cache)
+    if (this.marchesOptions[first] && this.marchesOptions[first].value !== undefined) {
+      return; // Pas besoin de recharger
+    }
+
+    this.marchesLoading = true;
+    this.marcheService.getAllMarches(
+      { numero: this.currentMarcheFilter },
+      page,
+      this.rowsPerPageMarches,
+      'numero,asc'
+    ).subscribe({
+      next: (res) => {
+        const newItems = res.content.map(m => ({ label: m.numero, value: m.id }));
+        const updatedOptions = [...this.marchesOptions];
+
+        // ✅ Remplace les placeholders par les vraies données
+        updatedOptions.splice(first, newItems.length, ...newItems);
+        this.marchesOptions = updatedOptions;
+        this.marchesLoading = false;
+      },
+      error: (err) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement des marchés.',
+          life: 3000
+        });
+        console.error('Error loading markets:', err);
+        this.marchesLoading = false;
+      }
+    });
+  }
+
+  // ✅ Filtrage serveur
+  onFilterMarches(event: any): void {
+    const query = event.filter?.trim() || '';
+    this.currentMarcheFilter = query;
+
+    this.marchesLoading = true;
+    this.marcheService.getAllMarches(
+      { numero: query },
+      0,
+      this.rowsPerPageMarches,
+      'numero,asc'
+    ).subscribe({
+      next: (res) => {
+        const total = res.page.totalElements;
+        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
+
+        // ✅ Option "Tous les marchés" + placeholders
+        const allOption = { label: 'Tous les marchés', value: null };
+        this.marchesOptions = [allOption, ...Array.from({ length: total }).map(() => ({}))];
+        this.marchesOptions.splice(1, data.length, ...data);
+        this.marchesLoading = false;
+      },
+      error: (err) => {
+        console.error('Error filtering markets:', err);
         this.marchesLoading = false;
       }
     });
@@ -223,7 +316,12 @@ export class SpeficLigneEncoursComponent implements OnInit {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des lignes fonctionnelles spécifiques.', life: 3000 });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Échec du chargement des lignes fonctionnelles spécifiques.',
+            life: 3000
+          });
           console.error('Error fetching specific functional lignePrefi:', err);
           this.loading = false;
         },
@@ -252,7 +350,7 @@ export class SpeficLigneEncoursComponent implements OnInit {
       natureLigneFonctionnelleId: null,
       marcheId: null,
       actif: true,
-      isExpired:false,
+      isExpired: false,
     });
   }
 
@@ -266,13 +364,23 @@ export class SpeficLigneEncoursComponent implements OnInit {
         this.specificLigneService.deleteLigneFonctionnelleSpecifique(ligne.id!)
           .subscribe({
             next: () => {
-              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle Spécifique supprimée avec succès.', life: 3000 });
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Succès',
+                detail: 'Ligne Fonctionnelle Spécifique supprimée avec succès.',
+                life: 3000
+              });
               this.reloadTableAfterAction();
             },
             error: (error) => {
               console.error('Erreur lors de la suppression de la ligne fonctionnelle spécifique:', error);
               const errorMessage = error.error?.message || 'Échec de la suppression de la ligne fonctionnelle spécifique.';
-              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Erreur',
+                detail: errorMessage,
+                life: 3000
+              });
               this.loading = false;
             }
           });
@@ -289,20 +397,30 @@ export class SpeficLigneEncoursComponent implements OnInit {
       message: `Êtes-vous sûr de vouloir désactiver la ligne fonctionnelle spécifique avec la nature "${ligne.natureLigneFonctionnelleLabel}" pour la banque "${ligne.banqueNom}" et le marché "${ligne.marcheNom}" ?`,
       header: 'Confirmation de Désactivation',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel:"Oui",
-      rejectLabel:"Non",
+      acceptLabel: "Oui",
+      rejectLabel: "Non",
       accept: () => {
         this.loading = true;
         this.specificLigneService.deactivateLigneFonctionnelle(ligne.id!)
           .subscribe({
             next: () => {
-              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle Spécifique désactivée avec succès.', life: 3000 });
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Succès',
+                detail: 'Ligne Fonctionnelle Spécifique désactivée avec succès.',
+                life: 3000
+              });
               this.reloadTableAfterAction();
             },
             error: (error) => {
               console.error('Erreur lors de la désactivation de la ligne fonctionnelle spécifique:', error);
               const errorMessage = error.error?.message || 'Échec de la désactivation de la ligne fonctionnelle spécifique.';
-              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Erreur',
+                detail: errorMessage,
+                life: 3000
+              });
               this.loading = false;
             }
           });

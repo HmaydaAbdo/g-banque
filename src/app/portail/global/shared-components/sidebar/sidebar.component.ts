@@ -55,7 +55,6 @@ export class SidebarComponent implements OnInit {
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
     { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
     { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires'},
-    {label:"Historique des Rapprochements ",routerLink:"/portail/rapprochement/historique",icon:"pi pi-history"},
     {
       label: 'Les Lignes Fonctionnelles',
       icon: 'pi pi-receipt',
@@ -72,6 +71,15 @@ export class SidebarComponent implements OnInit {
           ] },
 
         { label: 'Les Natures des lignes Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles' }
+      ]
+    },
+    {
+      label: 'Les Crédits Moyen Terme',
+      icon: 'pi pi-money-bill',
+      items: [
+        { label: 'Les Crédits encours', icon: 'pi pi-list', routerLink: '/portail/cmt/encours' },
+        { label: 'Les Crédits en attente de main levées', icon: 'pi pi-list', routerLink: '/portail/cmt/en-attente-de-ML' },
+        { label: 'Les Crédits archivés', icon: 'pi pi-list', routerLink: '/portail/cmt/archives' },
       ]
     },
     {
@@ -110,15 +118,6 @@ export class SidebarComponent implements OnInit {
       ]
     },
     {
-      label: 'Les Crédits Moyen Terme',
-      icon: 'pi pi-money-bill',
-      items: [
-        { label: 'Les Crédits encours', icon: 'pi pi-list', routerLink: '/portail/cmt/encours' },
-        { label: 'Les Crédits en attente de main levées', icon: 'pi pi-list', routerLink: '/portail/cmt/en-attente-de-ML' },
-        { label: 'Les Crédits archivés', icon: 'pi pi-list', routerLink: '/portail/cmt/archives' },
-      ]
-    },
-    {
       label:"Les Marchés ",
       icon:"pi pi-sliders-h",
       items:[
@@ -131,17 +130,18 @@ export class SidebarComponent implements OnInit {
             {label: "Les lignes",icon: "pi pi-list",routerLink: "/portail/dc-lines"},
             {label: "les encours",icon: "pi pi-list",routerLink: "/portail/droits-constate"}
           ]},
-        {label: "Les décomptes",icon: "pi pi-list",routerLink: "/portail/decomptes"},
         {label: "Factoring",icon: "pi pi-list",items: [
             {label: "Les lignes",icon: "pi pi-list",routerLink: "/portail/factoring-lines"},
             {label: "les encours",icon: "pi pi-list",routerLink: "/portail/factoring"}
           ]},
+        {label: "Les décomptes",icon: "pi pi-list",routerLink: "/portail/decomptes"},
       ]},
     {label:"Les Commissions",icon:"pi pi-list",routerLink: '/portail/commissions'},
     {label:"Les Agios",icon:"pi pi-list",routerLink: '/portail/agios'},
     {label:"Les Prélèvements",icon:"pi pi-list",routerLink: '/portail/prelevements'},
     {label:"Les Frais bancaire",icon:"pi pi-list",routerLink: '/portail/frais-bancaire'},
     {label:"Les Intérêts ",icon:"pi pi-list",routerLink: '/portail/interets'},
+    {label:"Historique des Rapprochements ",routerLink:"/portail/rapprochement/historique",icon:"pi pi-history"},
     {
       label:"Historique des transactions",
       roles: [Role.ADMIN, Role.SUPER_ADMIN],

@@ -78,7 +78,7 @@ export class ValidatedFactoringComponent implements OnInit {
       }
       this.items = [
         {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
-        {icon: 'pi pi-list',route: '/portail/factoring-line', label: 'Les Encours du factoring validés'}
+        {icon: 'pi pi-list',route: '/portail/factoring-line', label: 'Les Encours du factoring '}
       ];
     });
   }

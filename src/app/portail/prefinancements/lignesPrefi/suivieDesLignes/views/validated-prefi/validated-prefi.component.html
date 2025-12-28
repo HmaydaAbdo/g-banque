@@ -1,16 +1,16 @@
 <p-toast></p-toast>
 
-<div class="card flex flex-column gap-4 p-2 md:p-4 w-screen h-screen overflow-y-scroll">
+<div class="card flex flex-column gap-2 p-2  w-screen h-screen overflow-y-scroll">
   <div class="portail-section flex justify-content-between bg-transparent">
     <div class="flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items">
         <ng-template pTemplate="item" let-item>
           <a [routerLink]="item.route" class="p-menuitem-link" *ngIf="item.route; else elseBlock">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2  text-sm font-bold">{{ item.label }}</span>
           </a>
           <ng-template #elseBlock>
-            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            <span class="text-color text-sm   text-center">{{ item.label }}</span>
           </ng-template>
         </ng-template>
       </p-breadcrumb>
@@ -18,32 +18,13 @@
   </div>
 
   <div *ngIf="aggregatedData" class="p-card p-2">
-    <div class="flex flex-wrap gap-3 justify-content-between items-center">
-      <div class="flex flex-col items-center gap-2">
-        <h4 class="text-black-alpha-90 font-bold">Banque :</h4>
-        <h4>{{ aggregatedData.banqueName  }}</h4>
-      </div>
-      <div class="flex flex-col items-center gap-2">
-        <h4 class="text-black-alpha-90 font-bold">Marché :</h4>
-        <h4>{{ aggregatedData.marcheName }}</h4>
-      </div>
-      <div class="flex flex-col items-center gap-2">
-        <h4 class="text-black-alpha-90 font-bold">Numéro de Marché:</h4>
-        <h4>{{ aggregatedData.marcheNumero }}</h4>
-      </div>
-      <div class="flex flex-col items-center gap-2">
-        <h4 class="text-black-alpha-90 font-bold">Total Crédit:</h4>
-        <h4>{{ aggregatedData.totalCredit | number: '1.2-2' }} MAD</h4>
-      </div>
-      <div class="flex flex-col items-center gap-2">
-        <h4 class="text-black-alpha-90 font-bold">Total Débit:</h4>
-        <h4>{{ aggregatedData.totalDebit  | number: '1.2-2'}} MAD</h4>
-      </div>
-
-      <div class="flex flex-col items-center gap-2">
-        <h4 class="text-black-alpha-90 font-bold">Reste:</h4>
-        <h4>{{ aggregatedData.reste | number: '1.2-2' }} MAD</h4>
-      </div>
+    <div class="flex flex-wrap text-sm justify-content-between items-center">
+        <p >Banque :  <strong> {{ aggregatedData.banqueName  }}</strong></p>
+        <p >Marché :  <strong> {{ aggregatedData.marcheName  }}</strong></p>
+        <p >Numéro de Marché: :  <strong> {{ aggregatedData.marcheNumero  }}</strong></p>
+        <p  >Total Déblocage: :  <strong class="text-green-700"> {{ aggregatedData.totalCredit | number: '1.2-2' }}</strong></p>
+        <p  >Total Remboursements: :  <strong class="text-red-700"> {{ aggregatedData.totalDebit | number: '1.2-2' }}</strong></p>
+        <p  >Reste: :  <strong class="text-blue-700"> {{ aggregatedData.reste | number: '1.2-2' }}</strong></p>
     </div>
   </div>
 
@@ -60,10 +41,9 @@
       [lazy]="true"
       responsiveLayout="scroll"
       [scrollable]="true"
-      scrollHeight="flex"
       (onLazyLoad)="loadPrefiLines($event)"
-      [resizableColumns]="true"
       [columns]="[
+         {field: 'id', header: 'ID', sortable: true},
         {field: 'dateEmission', header: 'Date Emission', sortable: true},
         {field: 'dateOperation', header: 'Date Opération', sortable: true},
         {field: 'dateValeur', header: 'Date Valeur', sortable: true},
@@ -74,11 +54,10 @@
         {field: 'status', header: 'Statut', sortable: true},
         {field: 'type', header: 'Type', sortable: true}
       ]"
-      styleClass="p-datatable-gridlines"
-      [tableStyle]="{'min-width': '70rem'}"
+      styleClass="p-datatable-gridlines text-xs"
     >
       <ng-template pTemplate="header" let-columns>
-        <tr>
+        <tr class="white-space-nowrap">
           <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
@@ -90,12 +69,13 @@
       </ng-template>
       <ng-template pTemplate="body" let-line>
         <tr>
+          <td>{{ line.id }}</td>
           <td class="text-center">{{ line.dateEmission ? (line.dateEmission | date: 'dd/MM/yyyy') : '-' }}</td>
           <td class="text-center">{{ line.dateOperation ? (line.dateOperation | date: 'dd/MM/yyyy') : '-' }}</td>
           <td class="text-center">{{ line.dateValeur ? (line.dateValeur | date: 'dd/MM/yyyy') : '-' }}</td>
           <td>{{ line.libelle }}</td>
-          <td class="text-center">{{ line.debit != null ? (line.debit | number:'1.2-2') + ' MAD' : '-' }}</td>
-          <td class="text-center">{{ line.credit != null ? (line.credit | number:'1.2-2') + ' MAD' : '-' }}</td>
+          <td class="text-center text-red-700">{{ line.debit != null ? (line.debit | number:'1.2-2') : '-' }}</td>
+          <td class="text-center text-green-700">{{ line.credit != null ? (line.credit | number:'1.2-2') : '-' }}</td>
           <td>{{ line.observation }}</td>
           <td>{{line.status | uppercase}}</td>
           <td>{{line.type | uppercase}}</td>
