@@ -86,16 +86,16 @@
              currentPageReportTemplate="{first}-{last} / {totalRecords}" [showCurrentPageReport]="true">
 
       <ng-template pTemplate="header">
-        <tr>
+        <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="marcheNumero">Marché <p-sortIcon field="marcheNumero"></p-sortIcon></th>
           <th>Banque</th>
+          <th pSortableColumn="decompteInitial">Décompte initiale <p-sortIcon field="decompteInitial"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
           <th>Observation</th>
           <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="dateOperation">Date d'opération <p-sortIcon field="dateOperation"></p-sortIcon></th>
           <th pSortableColumn="dateValeur">Date valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
-
           <th>Type</th>
           <th>Statut</th>
           <th style="width: 10rem">Actions</th>
@@ -105,9 +105,10 @@
       <ng-template pTemplate="body" let-dc>
         <tr>
           <td>{{ dc.id }}</td>
-          <td class="font-bold">{{ dc.marcheNumero }}</td>
+          <td >{{ dc.marcheNumero }}</td>
           <td>{{ dc.banqueName }}</td>
-          <td class="font-bold">{{ dc.montant | number:'1.2-2' }}</td>
+          <td >{{ dc.decompteInitial | number:'1.2-2' }}</td>
+          <td>{{ dc.montant | number:'1.2-2' }}</td>
           <td class="text-overflow-ellipsis">{{ dc.observation }}</td>
           <td>{{ dc.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ dc.dateOperation | date:'dd/MM/yyyy' }}</td>
@@ -125,11 +126,11 @@
                              (onChange)="confirmToggleStatus(dc)"
                              pTooltip="Changer statut"></p-inputSwitch>
 
-              <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary"
+              <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
                       [routerLink]="['/portail/droits-constate/edit', dc.id]"></button>
 
               <button *ngIf="authService.isAdmin()" pButton icon="pi pi-trash"
-                      class="p-button-rounded p-button-text p-button-danger"
+                      class="p-button-rounded p-button-outlined p-button-danger"
                       (click)="deleteDroitConstate(dc)"></button>
             </div>
           </td>

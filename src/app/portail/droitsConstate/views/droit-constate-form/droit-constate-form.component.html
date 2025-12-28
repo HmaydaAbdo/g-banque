@@ -67,6 +67,22 @@
         </div>
 
         <div class="field col-12 md:col-6">
+          <label for="decompteInitial" class="block font-medium mb-2">Décompte Initial (MAD) *</label>
+          <p-inputNumber
+            id="decompteInitial"
+            formControlName="decompteInitial"
+            mode="decimal"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            placeholder="0.00"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['decompteInitial'].invalid && f['decompteInitial'].touched }"
+          ></p-inputNumber>
+          <small class="p-error" *ngIf="f['decompteInitial'].invalid && f['decompteInitial'].touched">
+            Décompte initiale est requis et doit être positif.
+          </small>
+        </div>
+
+        <div class="field col-12 md:col-6">
           <label for="montant" class="block font-medium mb-2">Montant (MAD) *</label>
           <p-inputNumber
             id="montant"

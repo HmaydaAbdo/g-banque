@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -30,7 +30,7 @@ import { DroitConstateRequestDto } from '../../dtos/DroitConstateRequestDto';
   imports: [
     CommonModule, ReactiveFormsModule, InputTextModule, DropdownModule,
     InputNumberModule, ButtonModule, RippleModule, ToastModule, ConfirmDialogModule,
-    CalendarModule, BreadcrumbModule, RouterLink, RouterLinkActive, TooltipModule,
+    CalendarModule, BreadcrumbModule, RouterLink, TooltipModule,
   ],
   templateUrl: './droit-constate-form.component.html',
   providers: [MessageService, ConfirmationService],
@@ -97,6 +97,7 @@ export class DroitConstateFormComponent implements OnInit {
       marcheId: [null, Validators.required],
       dateEmission: [null, Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01)]],
+      decompteInitial: [null, [Validators.required, Validators.min(0.01)]],
       type: [null, Validators.required],
     });
   }
@@ -160,6 +161,7 @@ export class DroitConstateFormComponent implements OnInit {
             marcheId: dto.marcheId,
             dateEmission: new Date(dto.dateEmission),
             montant: dto.montant,
+            decompteInitial: dto.decompteInitial,
             type: dto.type,
           });
         });

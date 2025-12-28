@@ -4,7 +4,8 @@ import {Decimal} from "decimal.js";
 export interface DroitConstateRequestDto {
   marcheId: number;
   dateEmission: Date;
-  montant: Decimal;
+  montant: number;
+  decompteInitial:number;
   type: Type;
 }
 
