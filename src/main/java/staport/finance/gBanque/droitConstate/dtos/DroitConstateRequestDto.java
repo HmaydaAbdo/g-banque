@@ -69,4 +69,14 @@ public class DroitConstateRequestDto {
     public void setMontant(BigDecimal montant) {
         this.montant = montant;
     }
+
+    @Override
+    public String toString() {
+        return "DroitConstateRequestDto{" +
+                "marcheId=" + marcheId +
+                ", dateEmission=" + dateEmission +
+                ", montant=" + montant +
+                ", type=" + type +
+                '}';
+    }
 }

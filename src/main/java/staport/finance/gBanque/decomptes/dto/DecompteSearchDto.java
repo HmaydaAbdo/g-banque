@@ -45,4 +45,13 @@ public class DecompteSearchDto {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    @Override
+    public String toString() {
+        return "DecompteSearchDto{" +
+                "marcheId=" + marcheId +
+                ", banqueId=" + banqueId +
+                ", status=" + status +
+                '}';
+    }
 }

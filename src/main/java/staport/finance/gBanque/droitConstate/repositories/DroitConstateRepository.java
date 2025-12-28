@@ -13,5 +13,5 @@ import java.util.List;
 public interface DroitConstateRepository extends JpaRepository<DroitConstate, Long>, JpaSpecificationExecutor<DroitConstate> {
 
 
-    List<DroitConstate> findByMarcheAndStatus(Marche marche, Status status);
+    List<DroitConstate> findByMarche(Marche marche);
 }

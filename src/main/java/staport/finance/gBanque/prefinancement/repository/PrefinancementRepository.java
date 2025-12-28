@@ -13,14 +13,7 @@ import java.util.List;
 
 @Repository
 public interface PrefinancementRepository extends JpaRepository <Prefinancement, Long>, JpaSpecificationExecutor<Prefinancement> {
-    /**
-     * Finds a list of Prefinancement entities by a given Marche and Status.
-     * This method leverages JPA's derived query capabilities.
-     *
-     * @param marche The Marche entity to filter by.
-     * @param status The Status enum to filter by (e.g., Status.PAYE).
-     * @return A list of Prefinancement entities that match the criteria.
-     */
-    List<Prefinancement> findByMarcheAndStatus(Marche marche, Status status);
+
+    List<Prefinancement> findByMarche(Marche marche);
 
 }

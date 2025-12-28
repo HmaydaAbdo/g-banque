@@ -148,25 +148,19 @@ public class LigneFonctionnelleSpecifiqueMapper {
         // montant
         response.setMontant(entity.getPlafond());
 
-        // encours
+
         List<Prefinancement> prefinancements = entity.getMarche().getPrefinancements().stream().toList();
         logger.debug("Nombre de préfinancements trouvés: {}", prefinancements.size());
 
-        BigDecimal totalDeblocages = prefinancements.stream()
-                .filter(prefinancement -> prefinancement.getType() == Type.DEBLOCAGE)
-                .map(Prefinancement::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalRemboursements = prefinancements.stream()
+        // encours =sommes des remboursements
+        BigDecimal encours = prefinancements.stream()
                 .filter(prefinancement -> prefinancement.getType() == Type.REMBOURSEMENT)
                 .map(Prefinancement::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal encours = totalDeblocages.subtract(totalRemboursements);
         response.setEncours(encours);
 
-        logger.debug("Calcul encours préfinancement - Déblocages: {}, Remboursements: {}, Encours: {}",
-                totalDeblocages, totalRemboursements, encours);
+        logger.debug("Calcul encours préfinancement : {}", encours);
 
         //solde
         BigDecimal solde = entity.getPlafond().subtract(encours);
@@ -215,9 +209,10 @@ public class LigneFonctionnelleSpecifiqueMapper {
         // montant
         response.setMontant(entity.getPlafond());
 
-        // encours
         List<DroitConstate> droitConstates = entity.getMarche().getDroitConstates().stream().toList();
         logger.debug("Nombre de droits constatés trouvés: {}", droitConstates.size());
+
+        // encours =plafond - Σ déblocage + Σ remboursement
 
         BigDecimal totalDeblocages = droitConstates.stream()
                 .filter(droitConstate -> droitConstate.getType() == Type.DEBLOCAGE)
@@ -229,14 +224,14 @@ public class LigneFonctionnelleSpecifiqueMapper {
                 .map(DroitConstate::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal encours = totalDeblocages.subtract(totalRembourssement);
+        BigDecimal encours =entity.getPlafond().subtract(totalDeblocages).add(totalRembourssement);
         response.setEncours(encours);
 
-        logger.debug("Calcul encours DC - Déblocages: {}, Remboursements: {}, Encours: {}",
-                totalDeblocages, totalRembourssement, encours);
+        logger.debug("Calcul encours DC - plafond : {} , Déblocages: {}, Remboursements: {}, Encours: {}",
+                entity.getPlafond(),totalDeblocages, totalRembourssement, encours);
 
-        //solde
-        BigDecimal solde = entity.getPlafond().subtract(encours);
+        //solde = Σ déblocage - Σ remboursement
+        BigDecimal solde = totalDeblocages.subtract(totalRembourssement);
         response.setSolde(solde);
 
         logger.debug("Solde calculé: {} (Plafond: {} - Encours: {})",
@@ -281,9 +276,10 @@ public class LigneFonctionnelleSpecifiqueMapper {
         // montant
         response.setMontant(entity.getPlafond());
 
-        // encours
         List<Factoring> factorings = entity.getMarche().getFactorings().stream().toList();
         logger.debug("Nombre de factorings trouvés: {}", factorings.size());
+
+        // encours=plafond+Σdéblocage-Σremboursement
 
         BigDecimal totalDeblocage = factorings.stream()
                 .filter(factoring -> factoring.getType() == Type.DEBLOCAGE)
@@ -295,14 +291,14 @@ public class LigneFonctionnelleSpecifiqueMapper {
                 .map(Factoring::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal encours = totalDeblocage.subtract(totalRemboursement);
+        BigDecimal encours = entity.getPlafond().subtract(totalDeblocage).add(totalRemboursement);
         response.setEncours(encours);
 
-        logger.debug("Calcul encours factoring - Déblocages: {}, Remboursements: {}, Encours: {}",
-                totalDeblocage, totalRemboursement, encours);
+        logger.debug("Calcul encours factoring - plafond : {}, Déblocages: {}, Remboursements: {}, Encours: {}",
+                entity.getPlafond(),totalDeblocage, totalRemboursement, encours);
 
-        //solde
-        BigDecimal solde = entity.getPlafond().subtract(encours);
+        //solde=Σdéblocage-Σremboursement
+        BigDecimal solde = totalDeblocage.subtract(totalRemboursement);
         response.setSolde(solde);
 
         logger.debug("Solde calculé: {} (Plafond: {} - Encours: {})",

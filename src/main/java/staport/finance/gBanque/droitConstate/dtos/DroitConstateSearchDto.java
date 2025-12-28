@@ -51,4 +51,14 @@ public class DroitConstateSearchDto {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    @Override
+    public String toString() {
+        return "DroitConstateSearchDto{" +
+                "marcheId=" + marcheId +
+                ", banqueId=" + banqueId +
+                ", type=" + type +
+                ", status=" + status +
+                '}';
+    }
 }

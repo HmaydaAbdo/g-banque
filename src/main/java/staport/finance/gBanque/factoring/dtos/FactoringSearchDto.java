@@ -44,4 +44,14 @@ public class FactoringSearchDto {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    @Override
+    public String toString() {
+        return "FactoringSearchDto{" +
+                "marcheId=" + marcheId +
+                ", banqueId=" + banqueId +
+                ", type=" + type +
+                ", status=" + status +
+                '}';
+    }
 }

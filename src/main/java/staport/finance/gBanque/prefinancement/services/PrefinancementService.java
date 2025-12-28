@@ -46,58 +46,75 @@ public class PrefinancementService {
         this.prefinancementMapper = prefinancementMapper;
         this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
+        log.info("PrefinancementService initialisé avec succès");
     }
 
     @Transactional
     public PrefinancementResponseDTO createPrefinancement(PrefinancementRequestDTO requestDTO) throws Exception {
-        log.info("Creating prefinancement for MarcheId: {}", requestDTO.getMarcheId());
+        log.info("Début de création d'un préfinancement pour le marché ID: {}", requestDTO.getMarcheId());
+        log.debug("Détails de la requête - Type: {}, Montant: {}, Date d'émission: {}",
+                requestDTO.getType(), requestDTO.getMontant(), requestDTO.getDateEmission());
 
         Marche marche = marcheRepository.findById(requestDTO.getMarcheId())
                 .orElseThrow(() -> {
-                    log.error("Marche not found with ID: {}", requestDTO.getMarcheId());
+                    log.error("Marché non trouvé avec l'ID: {}", requestDTO.getMarcheId());
                     return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
                 });
 
-        log.debug("Marche found: {}", marche.getNom());
+        log.debug("Marché trouvé - Nom: {}, Numéro: {}", marche.getNom(), marche.getNumero());
 
         NatureLigneFonctionnelle prefiNature = natureLigneFonctionnelleRepository.findByLabel("Préfinancement")
                 .orElseThrow(() -> {
-                    log.error("Nature de ligne fonctionnelle 'Préfinancement' not found");
+                    log.error("Nature de ligne fonctionnelle 'Préfinancement' non trouvée");
                     return new ResourceNotFoundException("Nature de ligne fonctionnelle 'Préfinancement' non trouvée.");
                 });
+
+        log.debug("Nature de ligne fonctionnelle 'Préfinancement' trouvée avec ID: {}", prefiNature.getId());
 
         Optional<LigneFonctionnelleSpecifique> activePrefiLine = ligneFonctionnelleSpecifiqueRepository
                 .findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, prefiNature);
 
         if (activePrefiLine.isEmpty()) {
-            log.warn("No active 'Préfinancement' line for Marche: {}", marche.getNom());
+            log.warn("Aucune ligne 'Préfinancement' active trouvée pour le marché: {}", marche.getNom());
             throw new Exception("Impossible de créer un préfinancement. Le marché '" + marche.getNom() + "' n'est pas associé à une ligne fonctionnelle 'Préfinancement' active.");
         }
 
-        log.debug("Active 'Préfinancement' line found for Marche: {}", marche.getNom());
+        log.debug("Ligne 'Préfinancement' active trouvée pour le marché: {}", marche.getNom());
 
         Prefinancement prefinancement = prefinancementMapper.toEntity(requestDTO, marche);
-        prefinancement = prefinancementRepository.save(prefinancement);
+        log.debug("Entité Prefinancement créée, prête à être sauvegardée");
 
-        log.info("Prefinancement created with ID: {}", prefinancement.getId());
-        return prefinancementMapper.toDto(prefinancement);
+        prefinancement = prefinancementRepository.save(prefinancement);
+        log.info("Préfinancement créé avec succès - ID: {}, Montant: {}", prefinancement.getId(), prefinancement.getMontant());
+
+        PrefinancementResponseDTO responseDTO = prefinancementMapper.toDto(prefinancement);
+        log.debug("DTO de réponse créé avec succès pour le préfinancement ID: {}", prefinancement.getId());
+
+        return responseDTO;
     }
 
     @Transactional
     public PrefinancementResponseDTO updatePrefinancement(Long id, PrefinancementRequestDTO requestDTO) {
-        log.info("Updating prefinancement with ID: {}", id);
+        log.info("Début de mise à jour du préfinancement ID: {}", id);
+        log.debug("Nouvelles données - Marché ID: {}, Type: {}, Montant: {}",
+                requestDTO.getMarcheId(), requestDTO.getType(), requestDTO.getMontant());
 
         Prefinancement existingPrefinancement = prefinancementRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Prefinancement not found with ID: {}", id);
+                    log.error("Préfinancement non trouvé avec l'ID: {}", id);
                     return new ResourceNotFoundException("Prefinancement not found with ID: " + id);
                 });
 
+        log.debug("Préfinancement existant trouvé - Ancien montant: {}, Ancien type: {}",
+                existingPrefinancement.getMontant(), existingPrefinancement.getType());
+
         Marche marche = marcheRepository.findById(requestDTO.getMarcheId())
                 .orElseThrow(() -> {
-                    log.error("Marche not found with ID: {}", requestDTO.getMarcheId());
+                    log.error("Marché non trouvé avec l'ID: {}", requestDTO.getMarcheId());
                     return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
                 });
+
+        log.debug("Marché trouvé pour mise à jour - Nom: {}, Numéro: {}", marche.getNom(), marche.getNumero());
 
         existingPrefinancement.setMarche(marche);
         existingPrefinancement.setDateEmission(requestDTO.getDateEmission());
@@ -105,71 +122,104 @@ public class PrefinancementService {
         existingPrefinancement.setType(requestDTO.getType());
         existingPrefinancement.setObservation("Marche: " + marche.getNumero());
 
-        Prefinancement updatedPrefinancement = prefinancementRepository.save(existingPrefinancement);
-        log.info("Prefinancement updated with ID: {}", updatedPrefinancement.getId());
+        log.debug("Propriétés du préfinancement mises à jour, sauvegarde en cours");
 
-        return prefinancementMapper.toDto(updatedPrefinancement);
+        Prefinancement updatedPrefinancement = prefinancementRepository.save(existingPrefinancement);
+        log.info("Préfinancement mis à jour avec succès - ID: {}, Nouveau montant: {}",
+                updatedPrefinancement.getId(), updatedPrefinancement.getMontant());
+
+        PrefinancementResponseDTO responseDTO = prefinancementMapper.toDto(updatedPrefinancement);
+        log.debug("DTO de réponse créé avec succès pour la mise à jour");
+
+        return responseDTO;
     }
 
     @Transactional
     public void deletePrefinancement(Long id) {
-        log.info("Deleting prefinancement with ID: {}", id);
+        log.info("Début de suppression du préfinancement ID: {}", id);
 
         if (!prefinancementRepository.existsById(id)) {
-            log.error("Prefinancement not found with ID: {}", id);
+            log.error("Impossible de supprimer - Préfinancement non trouvé avec l'ID: {}", id);
             throw new ResourceNotFoundException("Prefinancement not found with ID: " + id);
         }
 
+        log.debug("Préfinancement trouvé, suppression en cours");
         prefinancementRepository.deleteById(id);
-        log.info("Prefinancement deleted with ID: {}", id);
+        log.info("Préfinancement supprimé avec succès - ID: {}", id);
     }
 
     @Transactional(readOnly = true)
     public PrefinancementResponseDTO findById(Long id) {
-        log.info("Fetching prefinancement with ID: {}", id);
+        log.info("Recherche du préfinancement ID: {}", id);
 
         Prefinancement prefinancement = prefinancementRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Prefinancement not found with ID: {}", id);
+                    log.error("Préfinancement non trouvé avec l'ID: {}", id);
                     return new ResourceNotFoundException("Prefinancement not found with ID: " + id);
                 });
 
-        return prefinancementMapper.toDto(prefinancement);
+        log.debug("Préfinancement trouvé - Montant: {}, Type: {}, Statut: {}",
+                prefinancement.getMontant(), prefinancement.getType(), prefinancement.getStatus());
+
+        PrefinancementResponseDTO responseDTO = prefinancementMapper.toDto(prefinancement);
+        log.debug("DTO de réponse créé avec succès");
+
+        return responseDTO;
     }
 
     @Transactional(readOnly = true)
     public Page<PrefinancementResponseDTO> findAll(PrefinancementSearchDTO searchDTO, Pageable pageable) {
-        log.info("Fetching prefinancements with search criteria: {}", searchDTO);
+        log.info("Recherche de préfinancement avec critères - Marché ID: {}, Banque ID: {}, Type: {}, Statut: {}",
+                searchDTO.getMarcheId(), searchDTO.getBanqueId(), searchDTO.getType(), searchDTO.getStatus());
+        log.debug("Pagination - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<Prefinancement> spec = PrefinancementSpecification.bySearchCriteria(searchDTO);
+        log.debug("Spécification de recherche créée");
+
         Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable);
 
-        log.info("Found {} prefinancement records", prefinancementPage.getTotalElements());
-        return prefinancementPage.map(prefinancementMapper::toDto);
+        log.info("Recherche terminée - {} enregistrement(s) trouvé(s) sur {} page(s)",
+                prefinancementPage.getTotalElements(), prefinancementPage.getTotalPages());
+        log.debug("Nombre d'éléments dans la page actuelle: {}", prefinancementPage.getNumberOfElements());
+
+        Page<PrefinancementResponseDTO> result = prefinancementPage.map(prefinancementMapper::toDto);
+        log.debug("Conversion des entités en DTOs terminée");
+
+        return result;
     }
 
     @Transactional
     public PrefinancementResponseDTO toggleStatus(Long id) {
-        log.info("Toggling status for prefinancement ID: {}", id);
+        log.info("Début de basculement du statut pour le préfinancement ID: {}", id);
 
         Prefinancement prefinancement = prefinancementRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Prefinancement not found with ID: {}", id);
+                    log.error("Préfinancement non trouvé avec l'ID: {}", id);
                     return new ResourceNotFoundException("Prefinancement not found with ID: " + id);
                 });
 
         Status existingStatus = prefinancement.getStatus();
-        prefinancement.setStatus(existingStatus == Status.PAYE ? Status.PREVU : Status.PAYE);
+        Status newStatus = existingStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
+
+        log.debug("Changement de statut - Ancien: {}, Nouveau: {}", existingStatus, newStatus);
+        prefinancement.setStatus(newStatus);
 
         Prefinancement updatedPrefinancement = prefinancementRepository.save(prefinancement);
-        log.info("Prefinancement status updated to {} for ID: {}", updatedPrefinancement.getStatus(), updatedPrefinancement.getId());
+        log.info("Statut du préfinancement basculé avec succès - ID: {}, Nouveau statut: {}",
+                updatedPrefinancement.getId(), updatedPrefinancement.getStatus());
 
-        return prefinancementMapper.toDto(updatedPrefinancement);
+        PrefinancementResponseDTO responseDTO = prefinancementMapper.toDto(updatedPrefinancement);
+        log.debug("DTO de réponse créé avec succès");
+
+        return responseDTO;
     }
 
     @Transactional(readOnly = true)
     public EncoursPrefinancementDto getRemboursementEncoursForBanque(EncoursPrefinancementSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Fetching remboursement encours for banque ID: {}, searchDto: {}", banqueId, searchDto);
+        log.info("Recherche des encours de remboursement pour la banque ID: {}", banqueId);
+        log.debug("Critères de recherche - Nom marché: {}, Numéro marché: {}, Montant: {}",
+                searchDto.getMarcheName(), searchDto.getMarcheNumero(), searchDto.getMontant());
+        log.debug("Pagination - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
                 .and(PrefinancementSpecification.outstandingRemboursementForCurrentMonth())
@@ -177,24 +227,35 @@ public class PrefinancementService {
                 .and(PrefinancementSpecification.byMarcheNumero(searchDto.getMarcheNumero()))
                 .and(PrefinancementSpecification.hasMontant(searchDto.getMontant()));
 
+        log.debug("Spécification de recherche créée pour les remboursements en cours");
+
         Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable);
+        log.debug("{} préfinancement(s) de remboursement trouvé(s) dans la page actuelle",
+                prefinancementPage.getNumberOfElements());
+
         BigDecimal totalDesEncours = prefinancementRepository.findAll(spec).stream()
                 .map(Prefinancement::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        log.info("Total remboursement encours: {}", totalDesEncours);
+        log.info("Total des encours de remboursement calculé: {} pour la banque ID: {}", totalDesEncours, banqueId);
 
         Page<PrefinancementResponseDTO> pageDto = prefinancementPage.map(prefinancementMapper::toDto);
+        log.debug("Conversion des entités en DTOs terminée");
+
         EncoursPrefinancementDto result = new EncoursPrefinancementDto();
         result.setPage(pageDto);
         result.setTotalDesEncours(totalDesEncours);
 
+        log.debug("DTO d'encours de remboursement créé avec succès");
         return result;
     }
 
     @Transactional(readOnly = true)
     public EncoursPrefinancementDto getDeblocageEncoursForBanque(EncoursPrefinancementSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Fetching deblocage encours for banque ID: {}, searchDto: {}", banqueId, searchDto);
+        log.info("Recherche des encours de déblocage pour la banque ID: {}", banqueId);
+        log.debug("Critères de recherche - Nom marché: {}, Numéro marché: {}, Montant: {}",
+                searchDto.getMarcheName(), searchDto.getMarcheNumero(), searchDto.getMontant());
+        log.debug("Pagination - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
                 .and(PrefinancementSpecification.outstandingDeblocageForCurrentMonth())
@@ -202,18 +263,26 @@ public class PrefinancementService {
                 .and(PrefinancementSpecification.byMarcheNumero(searchDto.getMarcheNumero()))
                 .and(PrefinancementSpecification.hasMontant(searchDto.getMontant()));
 
+        log.debug("Spécification de recherche créée pour les déblocages en cours");
+
         Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable);
+        log.debug("{} préfinancement(s) de déblocage trouvé(s) dans la page actuelle",
+                prefinancementPage.getNumberOfElements());
+
         BigDecimal totalDesEncours = prefinancementRepository.findAll(spec).stream()
                 .map(Prefinancement::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        log.info("Total deblocage encours: {}", totalDesEncours);
+        log.info("Total des encours de déblocage calculé: {} pour la banque ID: {}", totalDesEncours, banqueId);
 
         Page<PrefinancementResponseDTO> pageDto = prefinancementPage.map(prefinancementMapper::toDto);
+        log.debug("Conversion des entités en DTOs terminée");
+
         EncoursPrefinancementDto result = new EncoursPrefinancementDto();
         result.setPage(pageDto);
         result.setTotalDesEncours(totalDesEncours);
 
+        log.debug("DTO d'encours de déblocage créé avec succès");
         return result;
     }
 }

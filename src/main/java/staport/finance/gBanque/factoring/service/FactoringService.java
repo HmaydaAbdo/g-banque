@@ -1,5 +1,7 @@
 package staport.finance.gBanque.factoring.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -24,6 +26,8 @@ import java.util.Optional;
 @Service
 public class FactoringService {
 
+
+    private static final Logger log = LoggerFactory.getLogger(FactoringService.class);
     private final FactoringRepository factoringRepository;
     private final MarcheRepository marcheRepository;
     private final FactoringMapper factoringMapper;
@@ -36,56 +40,76 @@ public class FactoringService {
         this.factoringMapper = factoringMapper;
         this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
+        log.info("FactoringService initialisé avec succès");
     }
 
-
-    /**
-     * Creates a new Factoring record.
-     *
-     * @param requestDTO The DTO containing the data for the new record.
-     * @return The DTO of the newly created record.
-     */
     @Transactional
     public FactoringResponseDto createFactoring(FactoringRequestDto requestDTO) throws Exception {
-
+        log.info("Début de la création d'un factoring pour le marché ID: {}", requestDTO.getMarcheId());
+        log.debug("Données reçues: {}", requestDTO);
 
         Marche marche = marcheRepository.findById(requestDTO.getMarcheId())
-                .orElseThrow(() -> new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId()));
+                .orElseThrow(() -> {
+                    log.error("Marché non trouvé avec l'ID: {}", requestDTO.getMarcheId());
+                    return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
+                });
+
+        log.debug("Marché récupéré: {} (Numéro: {})", marche.getNom(), marche.getNumero());
 
         // vérifiez si le marché a une ligne spécifique actif de nature Factoring
 
         // Step 1: Find the "Factoring" nature line by its label
+        log.debug("Recherche de la nature de ligne fonctionnelle 'Factoring'");
         NatureLigneFonctionnelle factoringNature = natureLigneFonctionnelleRepository.findByLabel("Factoring")
-                .orElseThrow(() -> new ResourceNotFoundException("Nature de ligne fonctionnelle 'Factoring' non trouvée."));
+                .orElseThrow(() -> {
+                    log.error("Nature de ligne fonctionnelle 'Factoring' non trouvée");
+                    return new ResourceNotFoundException("Nature de ligne fonctionnelle 'Factoring' non trouvée.");
+                });
+
+        log.debug("Nature de ligne fonctionnelle trouvée: ID {}", factoringNature.getId());
 
         // Step 2: Check for an active 'Factoring' specific line for the Marche
+        log.debug("Vérification de l'existence d'une ligne fonctionnelle 'Factoring' active pour le marché");
         Optional<LigneFonctionnelleSpecifique> activeFactoringLine = ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, factoringNature);
 
         // Step 3: If no active line is found, throw a business validation exception
         if (activeFactoringLine.isEmpty()) {
+            log.error("Aucune ligne fonctionnelle 'Factoring' active trouvée pour le marché '{}'", marche.getNom());
             throw new Exception("Impossible de créer un factoring. Le marché '" + marche.getNom() + "' n'est pas associé à une ligne fonctionnelle 'Factoring' active.");
         }
 
+        log.debug("Ligne fonctionnelle active trouvée pour le marché");
+
         Factoring factoring = factoringMapper.toEntity(requestDTO, marche);
         factoring = factoringRepository.save(factoring);
+
+        log.info("Factoring créé avec succès - ID: {}, Type: {}, Montant: {}",
+                factoring.getId(), factoring.getType(), factoring.getMontant());
+
         return factoringMapper.toDto(factoring);
     }
 
-    /**
-     * Updates an existing Factoring record.
-     *
-     * @param id The ID of the record to update.
-     * @param requestDTO The DTO containing the updated data.
-     * @return The DTO of the updated record.
-     */
     @Transactional
     public FactoringResponseDto updateFactoring(Long id, FactoringRequestDto requestDTO) {
+        log.info("Début de la modification du factoring ID: {}", id);
+        log.debug("Nouvelles données reçues: {}", requestDTO);
 
         Factoring existingFactoring = factoringRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Factoring not found with ID: " + id));
+                .orElseThrow(() -> {
+                    log.error("Factoring non trouvé avec l'ID: {}", id);
+                    return new ResourceNotFoundException("Factoring not found with ID: " + id);
+                });
+
+        log.debug("Factoring existant récupéré - Ancien montant: {}, Ancien type: {}",
+                existingFactoring.getMontant(), existingFactoring.getType());
 
         Marche marche = marcheRepository.findById(requestDTO.getMarcheId())
-                .orElseThrow(() -> new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId()));
+                .orElseThrow(() -> {
+                    log.error("Marché non trouvé avec l'ID: {}", requestDTO.getMarcheId());
+                    return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
+                });
+
+        log.debug("Marché récupéré pour la mise à jour: {}", marche.getNom());
 
         existingFactoring.setMarche(marche);
         existingFactoring.setDateEmission(requestDTO.getDateEmission());
@@ -93,73 +117,84 @@ public class FactoringService {
         existingFactoring.setType(requestDTO.getType());
         existingFactoring.setObservation("Marche: " + marche.getNumero() );
         Factoring updatedFactoring = factoringRepository.save(existingFactoring);
+
+        log.info("Factoring modifié avec succès - ID: {}, Nouveau montant: {}, Nouveau type: {}",
+                id, updatedFactoring.getMontant(), updatedFactoring.getType());
+
         return factoringMapper.toDto(updatedFactoring);
     }
 
-    /**
-     * Deletes a Factoring record by its ID.
-     *
-     * @param id The ID of the record to delete.
-     */
     @Transactional
     public void deleteFactoring(Long id) {
+        log.info("Tentative de suppression du factoring ID: {}", id);
 
         if (!factoringRepository.existsById(id)) {
+            log.error("Impossible de supprimer - Factoring non trouvé avec l'ID: {}", id);
             throw new ResourceNotFoundException("Factoring not found with ID: " + id);
         }
+
         factoringRepository.deleteById(id);
+        log.info("Factoring ID: {} supprimé avec succès", id);
     }
 
-    /**
-     * Finds a Factoring record by its ID.
-     *
-     * @param id The ID of the record to find.
-     * @return The DTO of the found record.
-     */
     @Transactional(readOnly = true)
     public FactoringResponseDto findById(Long id) {
+        log.debug("Recherche du factoring avec l'ID: {}", id);
 
         Factoring factoring = factoringRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Factoring not found with ID: " + id));
+                .orElseThrow(() -> {
+                    log.error("Factoring non trouvé avec l'ID: {}", id);
+                    return new ResourceNotFoundException("Factoring not found with ID: " + id);
+                });
+
+        log.debug("Factoring trouvé - Marché: {}, Montant: {}",
+                factoring.getMarche().getNom(), factoring.getMontant());
 
         return factoringMapper.toDto(factoring);
     }
 
-
-
-    /**
-     * Searches for Factoring records based on criteria.
-     *
-     * @param searchDTO The DTO containing the search criteria.
-     * @param pageable Pagination and sorting information.
-     * @return A Page of FactoringResponseDto matching the criteria.
-     */
     @Transactional(readOnly = true)
     public Page<FactoringResponseDto> findAll(FactoringSearchDto searchDTO, Pageable pageable) {
+        log.info("Recherche de factorings avec critères: {}", searchDTO);
+        log.debug("Pagination demandée - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
+
         Specification<Factoring> spec = FactoringSpec.bySearchCriteria(searchDTO);
         Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
+
+        log.info("Recherche terminée - {} résultat(s) trouvé(s) sur {} élément(s) au total",
+                factoringPage.getNumberOfElements(), factoringPage.getTotalElements());
+
         return factoringPage.map(factoringMapper::toDto);
     }
 
-    /**
-     * Changes the status of a Factoring record.
-     *
-     * @param id The ID of the record.
-     * @return The DTO of the updated record.
-     */
     @Transactional
     public FactoringResponseDto toggleStatus(Long id ) {
+        log.info("Changement du statut du factoring ID: {}", id);
+
         Factoring factoring = factoringRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Factoring not found with ID: " + id));
+                .orElseThrow(() -> {
+                    log.error("Factoring non trouvé avec l'ID: {}", id);
+                    return new ResourceNotFoundException("Factoring not found with ID: " + id);
+                });
 
         Status existingStatus = factoring.getStatus();
-        factoring.setStatus(existingStatus==Status.PAYE ? Status.PREVU: Status.PAYE);
+        Status newStatus = existingStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
+
+        log.debug("Changement de statut - Ancien: {}, Nouveau: {}", existingStatus, newStatus);
+
+        factoring.setStatus(newStatus);
         Factoring updatedFactoring = factoringRepository.save(factoring);
+
+        log.info("Statut du factoring ID: {} modifié avec succès de {} vers {}",
+                id, existingStatus, newStatus);
+
         return factoringMapper.toDto(updatedFactoring);
     }
 
     @Transactional(readOnly = true)
     public EncoursFactoringDto getRemboursementEncoursForBanque(EncoursFactoringSearchDto searchDto, Long banqueId, Pageable pageable) {
+        log.info("Récupération des encours de remboursement factoring pour la banque ID: {}", banqueId);
+        log.debug("Critères de recherche: {}", searchDto);
 
         // Build the specification to filter the records
         Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
@@ -171,10 +206,15 @@ public class FactoringService {
         // Fetch the paginated list of factoring records
         Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
 
+        log.debug("Nombre de résultats paginés: {}", factoringPage.getNumberOfElements());
+
         // Fetch the total sum of the montant for the same criteria
         BigDecimal totalDesEncours = factoringRepository.findAll(spec).stream()
                 .map(Factoring::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        log.info("Total des encours de remboursement factoring calculé: {} pour {} enregistrement(s)",
+                totalDesEncours, factoringPage.getTotalElements());
 
         // Map the page of entities to a page of DTOs
         Page<FactoringResponseDto> pageDto = factoringPage.map(factoringMapper::toDto);
@@ -189,6 +229,8 @@ public class FactoringService {
 
     @Transactional(readOnly = true)
     public EncoursFactoringDto getDeblocageEncoursForBanque(EncoursFactoringSearchDto searchDto,Long banqueId, Pageable pageable) {
+        log.info("Récupération des encours de déblocage factoring pour la banque ID: {}", banqueId);
+        log.debug("Critères de recherche: {}", searchDto);
 
         // Build the specification to filter the records
         Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
@@ -200,10 +242,15 @@ public class FactoringService {
         // Fetch the paginated list of factoring records
         Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
 
+        log.debug("Nombre de résultats paginés: {}", factoringPage.getNumberOfElements());
+
         // Fetch the total sum of the montant for the same criteria
         BigDecimal totalDesEncours = factoringRepository.findAll(spec).stream()
                 .map(Factoring::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        log.info("Total des encours de déblocage factoring calculé: {} pour {} enregistrement(s)",
+                totalDesEncours, factoringPage.getTotalElements());
 
         // Map the page of entities to a page of DTOs
         Page<FactoringResponseDto> pageDto = factoringPage.map(factoringMapper::toDto);

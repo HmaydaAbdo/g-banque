@@ -12,14 +12,6 @@ import java.util.List;
 @Repository
 public interface FactoringRepository extends JpaRepository<Factoring,Long> , JpaSpecificationExecutor<Factoring> {
 
-    /**
-     * Finds a list of Factoring entities by a given Marche and Status.
-     * This method leverages JPA's derived query capabilities.
-     *
-     * @param marche The Marche entity to filter by.
-     * @param status The Status enum to filter by (e.g., Status.PAYE).
-     * @return A list of Factoring entities that match the criteria.
-     */
-    List<Factoring> findByMarcheAndStatus(Marche marche, Status status);
+    List<Factoring> findByMarche(Marche marche);
 
 }

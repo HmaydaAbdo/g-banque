@@ -414,13 +414,13 @@ public class LigneFonctionnelleSpecifiqueService {
 
         log.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
 
-        List<Prefinancement> allPaidPrefi = prefinancementRepository.findByMarcheAndStatus(marche, Status.PAYE);
-        log.debug("{} préfinancements payés trouvés", allPaidPrefi.size());
+        List<Prefinancement> allPrefi = prefinancementRepository.findByMarche(marche);
+        log.debug("{} préfinancements  trouvés", allPrefi.size());
 
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
 
-        for (Prefinancement prefi : allPaidPrefi) {
+        for (Prefinancement prefi : allPrefi) {
             if (prefi.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(prefi.getMontant());
             else if (prefi.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(prefi.getMontant());
         }
@@ -428,8 +428,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
         log.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
-        Specification<Prefinancement> spec = Specification.where(PrefinancementSpecification.byMarcheId(marche.getId()))
-                .and(PrefinancementSpecification.byStatus(Status.PAYE));
+        Specification<Prefinancement> spec = Specification.where(PrefinancementSpecification.byMarcheId(marche.getId()));
 
         Page<Prefinancement> prefiPage = prefinancementRepository.findAll(spec, pageable);
         log.debug("{} préfinancements récupérés pour la page courante", prefiPage.getNumberOfElements());
@@ -467,13 +466,13 @@ public class LigneFonctionnelleSpecifiqueService {
 
         log.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
 
-        List<DroitConstate> allPaidDc = droitConstateRepository.findByMarcheAndStatus(marche, Status.PAYE);
-        log.debug("{} droits constatés payés trouvés", allPaidDc.size());
+        List<DroitConstate> allDc = droitConstateRepository.findByMarche(marche);
+        log.debug("{} droits constatés  trouvés", allDc.size());
 
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
 
-        for (DroitConstate dc : allPaidDc) {
+        for (DroitConstate dc : allDc) {
             if (dc.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(dc.getMontant());
             else if (dc.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(dc.getMontant());
         }
@@ -482,8 +481,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
         log.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
-        Specification<DroitConstate> spec = Specification.where(DroitConstateSpec.byMarcheId(marche.getId()))
-                .and(DroitConstateSpec.byStatus(Status.PAYE));
+        Specification<DroitConstate> spec = Specification.where(DroitConstateSpec.byMarcheId(marche.getId())) ;
         Page<DroitConstate> dcPage = droitConstateRepository.findAll(spec, pageable);
 
         log.debug("{} droits constatés récupérés pour la page courante", dcPage.getNumberOfElements());
@@ -521,7 +519,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
         log.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
 
-        List<Factoring> allPaidFactoring = factoringRepository.findByMarcheAndStatus(marche, Status.PAYE);
+        List<Factoring> allPaidFactoring = factoringRepository.findByMarche(marche);
         log.debug("{} factorings payés trouvés", allPaidFactoring.size());
 
         BigDecimal totalDebit = BigDecimal.ZERO;
@@ -534,9 +532,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
         log.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
-        Specification<Factoring> spec = Specification.where(FactoringSpec.byMarcheId(marche.getId()))
-                .and(FactoringSpec.byStatus(Status.PAYE));
-
+        Specification<Factoring> spec = Specification.where(FactoringSpec.byMarcheId(marche.getId()));
         Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
 
         log.debug("{} factorings récupérés pour la page courante", factoringPage.getNumberOfElements());

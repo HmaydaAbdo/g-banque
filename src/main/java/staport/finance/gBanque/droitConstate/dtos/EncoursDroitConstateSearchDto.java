@@ -27,4 +27,13 @@ public class EncoursDroitConstateSearchDto {
     public void setMontant(BigDecimal montant) {
         this.montant = montant;
     }
+
+    @Override
+    public String toString() {
+        return "EncoursDroitConstateSearchDto{" +
+                "marcheName='" + marcheName + '\'' +
+                ", marcheNumero='" + marcheNumero + '\'' +
+                ", montant=" + montant +
+                '}';
+    }
 }

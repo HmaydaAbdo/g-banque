@@ -2,6 +2,8 @@ package staport.finance.gBanque.droitConstate.controller;
 
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -20,103 +22,109 @@ import staport.finance.gBanque.droitConstate.service.DroitConstateService;
 @RequestMapping("/droitsConstate")
 public class DroitConstateController {
 
+
+    private static final Logger log = LoggerFactory.getLogger(DroitConstateController.class);
     private final DroitConstateService droitConstateService;
 
     public DroitConstateController(DroitConstateService droitConstateService) {
         this.droitConstateService = droitConstateService;
     }
 
-    /**
-     * Creates a new DroitConstate record.
-     *
-     * @param requestDTO The DTO containing the data for the new record.
-     * @return A ResponseEntity with the newly created record and HTTP status 201.
-     */
+
     @PostMapping
     public ResponseEntity<DroitConstateResponseDto> createDroitConstate(@Valid @RequestBody DroitConstateRequestDto requestDTO) throws Exception {
+        log.info("POST /droitsConstate - Réception d'une demande de création de droit constaté");
+        log.debug("Données de la requête: {}", requestDTO);
         DroitConstateResponseDto responseDTO = droitConstateService.createDroitConstate(requestDTO);
+        log.info("POST /droitsConstate - Droit constaté créé avec succès, ID: {}", responseDTO.getId());
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 
-    /**
-     * Updates an existing Droit constate record.
-     *
-     * @param id The ID of the record to update.
-     * @param requestDTO The DTO containing the updated data.
-     * @return A ResponseEntity with the updated record and HTTP status 200.
-     */
+
     @PutMapping("/{id}")
     public ResponseEntity<DroitConstateResponseDto> updateDroitConstate(@PathVariable Long id, @Valid @RequestBody DroitConstateRequestDto requestDTO) {
+        log.info("PUT /droitsConstate/{} - Réception d'une demande de modification", id);
+        log.debug("Nouvelles données: {}", requestDTO);
+
         DroitConstateResponseDto responseDTO = droitConstateService.updateDroitConstate(id, requestDTO);
+
+        log.info("PUT /droitsConstate/{} - Droit constaté modifié avec succès", id);
         return ResponseEntity.ok(responseDTO);
     }
 
-    /**
-     * Deletes a DroitConstate record by its ID.
-     *
-     * @param id The ID of the record to delete.
-     * @return A ResponseEntity with HTTP status 204.
-     */
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDroitConstate(@PathVariable Long id) {
+        log.info("DELETE /droitsConstate/{} - Réception d'une demande de suppression", id);
+
         droitConstateService.deleteDroitConstate(id);
+
+        log.info("DELETE /droitsConstate/{} - Droit constaté supprimé avec succès", id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Retrieves a DroitConstate record by its ID.
-     *
-     * @param id The ID of the record to retrieve.
-     * @return A ResponseEntity with the found record and HTTP status 200.
-     */
+
     @GetMapping("/{id}")
     public ResponseEntity<DroitConstateResponseDto> getDroitConstateById(@PathVariable Long id) {
+        log.info("GET /droitsConstate/{} - Réception d'une demande de consultation", id);
+
         DroitConstateResponseDto responseDTO = droitConstateService.findById(id);
+
+        log.debug("GET /droitsConstate/{} - Droit constaté trouvé: Marché {}, Montant {}",
+                id, responseDTO.getMarcheName(), responseDTO.getMontant());
         return ResponseEntity.ok(responseDTO);
     }
 
-
-
-    /**
-     * Searches for DC records based on criteria.
-     *
-     * @param searchDTO The DTO containing the search criteria.
-     * @param pageable Pagination and sorting information.
-     * @return A Page of DroitConstateResponseDto matching the criteria.
-     */
     @GetMapping
     public ResponseEntity<Page<DroitConstateResponseDto>> searchDroitConstates(DroitConstateSearchDto searchDTO, @PageableDefault Pageable pageable) {
+        log.info("GET /droitsConstate - Réception d'une demande de recherche");
+        log.debug("Critères de recherche: {}, Page: {}, Taille: {}",
+                searchDTO, pageable.getPageNumber(), pageable.getPageSize());
+
         Page<DroitConstateResponseDto> page = droitConstateService.findAll(searchDTO, pageable);
+
+        log.info("GET /droitsConstate - Recherche terminée: {} résultat(s) trouvé(s)", page.getTotalElements());
         return ResponseEntity.ok(page);
     }
 
-    /**
-     * Changes the status of a DC record to "PAID".
-     *
-     * @param id The ID of the record.
-     * @return A ResponseEntity with the updated record and HTTP status 200.
-     */
     @PatchMapping("/{id}/status/toggle")
     public ResponseEntity<DroitConstateResponseDto> toggleStatus(@PathVariable Long id) {
+        log.info("PATCH /droitsConstate/{}/status/toggle - Réception d'une demande de changement de statut", id);
+
         DroitConstateResponseDto responseDTO = droitConstateService.toggleStatus(id);
+
+        log.info("PATCH /droitsConstate/{}/status/toggle - Statut changé avec succès vers: {}",
+                id, responseDTO.getStatus());
         return ResponseEntity.ok(responseDTO);
     }
 
     @GetMapping("/remboursement/encours/{banqueId}")
     public ResponseEntity<EncoursDroitConstateDto> getEncoursForRemboursement(
-            @PathVariable Long banqueId,
-            EncoursDroitConstateSearchDto searchDTO,
+            @PathVariable Long banqueId, EncoursDroitConstateSearchDto searchDTO,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursDroitConstateDto result = droitConstateService.getRemboursementEncoursForBanque(searchDTO,banqueId, pageable);
+
+        log.info("GET /droitsConstate/remboursement/encours/{} - Consultation des encours de remboursement", banqueId);
+        log.debug("Critères de recherche encours remboursement: {}", searchDTO);
+
+        EncoursDroitConstateDto result = droitConstateService.getRemboursementEncoursForBanque(searchDTO, banqueId, pageable);
+
+        log.info("GET /droitsConstate/remboursement/encours/{} - Total encours: {}, Nombre d'éléments: {}", banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
+
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/deblocage/encours/{banqueId}")
     public ResponseEntity<EncoursDroitConstateDto> getEncoursForDeblocage(
-            @PathVariable Long banqueId,
-            EncoursDroitConstateSearchDto searchDTO,
+            @PathVariable Long banqueId, EncoursDroitConstateSearchDto searchDTO,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursDroitConstateDto result = droitConstateService.getDeblocageEncoursForBanque(searchDTO,banqueId, pageable);
+
+        log.info("GET /droitsConstate/deblocage/encours/{} - Consultation des encours de déblocage", banqueId);
+        log.debug("Critères de recherche encours déblocage: {}", searchDTO);
+
+        EncoursDroitConstateDto result = droitConstateService.getDeblocageEncoursForBanque(searchDTO, banqueId, pageable);
+
+        log.info("GET /droitsConstate/deblocage/encours/{} - Total encours: {}, Nombre d'éléments: {}", banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
+
         return ResponseEntity.ok(result);
     }
 

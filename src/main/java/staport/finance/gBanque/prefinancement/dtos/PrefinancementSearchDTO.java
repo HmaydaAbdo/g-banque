@@ -57,4 +57,14 @@ public class PrefinancementSearchDTO {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    @Override
+    public String toString() {
+        return "PrefinancementSearchDTO{" +
+                "marcheId=" + marcheId +
+                ", banqueId=" + banqueId +
+                ", type=" + type +
+                ", status=" + status +
+                '}';
+    }
 }

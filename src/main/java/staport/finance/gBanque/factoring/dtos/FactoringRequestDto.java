@@ -57,4 +57,14 @@ public class FactoringRequestDto {
     public void setType(Type type) {
         this.type = type;
     }
+
+    @Override
+    public String toString() {
+        return "FactoringRequestDto{" +
+                "marcheId=" + marcheId +
+                ", dateEmission=" + dateEmission +
+                ", montant=" + montant +
+                ", type=" + type +
+                '}';
+    }
 }

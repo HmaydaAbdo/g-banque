@@ -67,4 +67,14 @@ public class PrefinancementRequestDTO {
     public void setType(Type type) {
         this.type = type;
     }
+
+    @Override
+    public String toString() {
+        return "PrefinancementRequestDTO{" +
+                "marcheId=" + marcheId +
+                ", dateEmission=" + dateEmission +
+                ", montant=" + montant +
+                ", type=" + type +
+                '}';
+    }
 }

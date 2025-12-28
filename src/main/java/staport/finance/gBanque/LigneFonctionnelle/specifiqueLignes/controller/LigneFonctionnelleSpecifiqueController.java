@@ -188,12 +188,12 @@ public class LigneFonctionnelleSpecifiqueController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        logger.info("Requête de suivi des préfinانcements pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
+        logger.info("Requête de suivi des préfinancements pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, size, sortOrder);
         AgregatedSuiviePrefiLigneResponseDto res = ligneFonctionnelleSpecifiqueService.getSuiviePrefiLigneResponse(id, pageable);
-        logger.info("Suivi des préfinانcements récupéré avec succès pour la ligne ID: {}", id);
+        logger.info("Suivi des préfinancements récupéré avec succès pour la ligne ID: {}", id);
 
         return ResponseEntity.ok(res);
     }
