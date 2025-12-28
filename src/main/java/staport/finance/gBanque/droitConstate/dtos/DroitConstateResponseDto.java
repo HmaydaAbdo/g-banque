@@ -26,6 +26,7 @@ public class DroitConstateResponseDto {
     private String banqueName;
     private OffsetDateTime dateEmission;
     private BigDecimal montant;
+    private BigDecimal decompteInitial;
     private String observation;
     private Type type;
     private OffsetDateTime dateOperation;
@@ -99,6 +100,14 @@ public class DroitConstateResponseDto {
 
     public void setMontant(BigDecimal montant) {
         this.montant = montant;
+    }
+
+    public BigDecimal getDecompteInitial() {
+        return decompteInitial;
+    }
+
+    public void setDecompteInitial(BigDecimal decompteInitial) {
+        this.decompteInitial = decompteInitial;
     }
 
     public String getObservation() {

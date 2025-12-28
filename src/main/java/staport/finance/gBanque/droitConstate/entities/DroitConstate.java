@@ -24,6 +24,8 @@ public class DroitConstate {
 
     private BigDecimal montant;
 
+    private BigDecimal decompteInitial;
+
     @Enumerated(EnumType.STRING)
     private Type type;
 
@@ -37,18 +39,6 @@ public class DroitConstate {
     private OffsetDateTime dateValeur;
 
     public DroitConstate() {
-    }
-
-    public DroitConstate(Long id, Marche marche, OffsetDateTime dateEmission, BigDecimal montant, Type type, String observation, Status status, OffsetDateTime dateOperation, OffsetDateTime dateValeur) {
-        this.id = id;
-        this.marche = marche;
-        this.dateEmission = dateEmission;
-        this.montant = montant;
-        this.type = type;
-        this.observation = observation;
-        this.status = status;
-        this.dateOperation = dateOperation;
-        this.dateValeur = dateValeur;
     }
 
     public Long getId() {
@@ -81,6 +71,14 @@ public class DroitConstate {
 
     public void setMontant(BigDecimal montant) {
         this.montant = montant;
+    }
+
+    public BigDecimal getDecompteInitial() {
+        return decompteInitial;
+    }
+
+    public void setDecompteInitial(BigDecimal decompteInitial) {
+        this.decompteInitial = decompteInitial;
     }
 
     public Type getType() {
@@ -150,8 +148,10 @@ public class DroitConstate {
                 ", marche=" + marche +
                 ", dateEmission=" + dateEmission +
                 ", montant=" + montant +
+                ", decompteInitial=" + decompteInitial +
                 ", type=" + type +
                 ", observation='" + observation + '\'' +
+                ", libelle='" + libelle + '\'' +
                 ", status=" + status +
                 ", dateOperation=" + dateOperation +
                 ", dateValeur=" + dateValeur +
