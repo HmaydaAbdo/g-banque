@@ -321,6 +321,37 @@ public class LigneFonctionnelleSpecifiqueService {
     }
 
     @Transactional(readOnly = true)
+    public Page<SpecificLigneResposneDto> getLinesByMarche(Long marcheId, Pageable pageable) {
+
+        log.info("Récupération de toutes les lignes pour le marché ID: {}", marcheId);
+
+        // 1. Vérifier que le marché existe
+        if (!marcheRepository.existsById(marcheId)) {
+            log.error("Marché non trouvé avec l'ID: {}", marcheId);
+            throw new ResourceNotFoundException("Marché non trouvé avec l'ID: " + marcheId);
+        }
+
+        log.debug("Marché ID {} validé", marcheId);
+
+        // 2. Construire la spécification pour récupérer toutes les lignes du marché
+        Specification<LigneFonctionnelleSpecifique> spec = (root, query, cb) -> {
+            return cb.equal(root.get("marche").get("id"), marcheId);
+        };
+
+        // 3. Récupérer les lignes
+        Page<LigneFonctionnelleSpecifique> page =
+                ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable);
+
+        log.info("{} lignes trouvées pour le marché ID: {} sur {} au total",
+                page.getNumberOfElements(), marcheId, page.getTotalElements());
+
+        // 4. Mapper chaque ligne avec le mapper approprié selon sa nature
+        return page.map(entity -> mapEntityToSpecificDto(entity));
+    }
+
+
+
+    @Transactional(readOnly = true)
     public Page<SpecificLigneResposneDto> getPrefiLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
         log.info("Récupération des lignes de préfinancement - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
         log.debug("Critères de recherche: {}", searchCriteria);
@@ -552,4 +583,27 @@ public class LigneFonctionnelleSpecifiqueService {
         return aggregatedDto;
     }
 
+
+    private SpecificLigneResposneDto mapEntityToSpecificDto(LigneFonctionnelleSpecifique entity) {
+        String natureLabel = entity.getNatureLigneFonctionnelle().getLabel();
+
+        log.debug("Mapping entity ID: {} avec nature: {}", entity.getId(), natureLabel);
+
+        switch (natureLabel) {
+            case "Préfinancement":
+                return ligneFonctionnelleSpecifiqueMapper.toPrefinancementResponseDto(entity);
+
+            case "Droit constaté":
+                return ligneFonctionnelleSpecifiqueMapper.toDCResponseDto(entity);
+
+            case "Factoring":
+                return ligneFonctionnelleSpecifiqueMapper.toFactoringResponseDto(entity);
+
+            default:
+                log.warn("Nature de ligne inconnue: '{}' pour entity ID: {}. " +
+                                "Utilisation du mapper préfinancement par défaut.",
+                        natureLabel, entity.getId());
+                return ligneFonctionnelleSpecifiqueMapper.toPrefinancementResponseDto(entity);
+        }
     }
+}

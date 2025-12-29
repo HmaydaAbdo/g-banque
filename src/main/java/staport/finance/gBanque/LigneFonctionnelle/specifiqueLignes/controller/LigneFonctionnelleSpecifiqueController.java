@@ -124,6 +124,31 @@ public class LigneFonctionnelleSpecifiqueController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/marche/{marcheId}")
+    public ResponseEntity<Page<SpecificLigneResposneDto>> getLinesByMarche(
+            @PathVariable Long marcheId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+
+        logger.info("Requête des lignes pour le marché ID: {}",marcheId);
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        Page<SpecificLigneResposneDto> lines = ligneFonctionnelleSpecifiqueService.getLinesByMarche(
+                marcheId,
+                pageable
+        );
+
+        logger.info("Lignes récupérées pour marché {} - {} résultats sur {} au total",
+                marcheId, lines.getNumberOfElements(), lines.getTotalElements());
+
+        return ResponseEntity.ok(lines);
+    }
+
+
     @GetMapping("/prefi-lines")
     public ResponseEntity<Page<SpecificLigneResposneDto>> getPrefiLines(
             @RequestParam(defaultValue = "0") int page,
