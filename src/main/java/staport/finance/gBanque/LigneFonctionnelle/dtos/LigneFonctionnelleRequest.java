@@ -14,6 +14,8 @@ public class LigneFonctionnelleRequest {
     @NotNull(message = "L'ID de la nature de ligne fonctionnelle est obligatoire.")
     private Long natureLigneFonctionnelleId;
 
+    private Long marcheId;
+
     @DecimalMin(value = "0.0", inclusive = false, message = "Le plafond doit être supérieur à zéro.")
     private BigDecimal plafond;
 
@@ -57,6 +59,13 @@ public class LigneFonctionnelleRequest {
         this.natureLigneFonctionnelleId = natureLigneFonctionnelleId;
     }
 
+    public Long getMarcheId() {
+        return marcheId;
+    }
+    public void setMarcheId(Long marcheId) {
+        this.marcheId = marcheId;
+    }
+
     public BigDecimal getPlafond() { return plafond; }
     public void setPlafond(BigDecimal plafond) { this.plafond = plafond; }
     public BigDecimal getTaux() { return taux; }
@@ -75,6 +84,7 @@ public class LigneFonctionnelleRequest {
                 "banqueId=" + banqueId +
                 ", natureLigneFonctionnelleId=" + natureLigneFonctionnelleId +
                 ", plafond=" + plafond +
+                ", marcheId=" + marcheId +
                 ", taux=" + taux +
                 ", dateDepart=" + dateDepart +
                 ", dateFin=" + dateFin +

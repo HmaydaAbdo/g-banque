@@ -125,7 +125,7 @@ public class LigneFonctionnelleSpecifiqueController {
     }
 
     @GetMapping("/marche/{marcheId}")
-    public ResponseEntity<Page<SpecificLigneResposneDto>> getLinesByMarche(
+    public ResponseEntity<Page<LigneFonctionnelleSpecifiqueResponse>> getLinesByMarche(
             @PathVariable Long marcheId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -137,7 +137,7 @@ public class LigneFonctionnelleSpecifiqueController {
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, size, sortOrder);
 
-        Page<SpecificLigneResposneDto> lines = ligneFonctionnelleSpecifiqueService.getLinesByMarche(
+        Page<LigneFonctionnelleSpecifiqueResponse> lines = ligneFonctionnelleSpecifiqueService.getLinesByMarche(
                 marcheId,
                 pageable
         );
@@ -146,63 +146,6 @@ public class LigneFonctionnelleSpecifiqueController {
                 marcheId, lines.getNumberOfElements(), lines.getTotalElements());
 
         return ResponseEntity.ok(lines);
-    }
-
-
-    @GetMapping("/prefi-lines")
-    public ResponseEntity<Page<SpecificLigneResposneDto>> getPrefiLines(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort,
-            @ModelAttribute SpecifiqueLineSearchDto searchCriteria
-    ){
-
-        logger.info("Requête des lignes de préfinancement - Page: {}, Size: {}", page, size);
-        logger.debug("Critères de recherche: {}", searchCriteria);
-
-        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
-        Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
-        Page<SpecificLigneResposneDto> prefinancementResponseDtoPage =ligneFonctionnelleSpecifiqueService.getPrefiLines(searchCriteria,pageable);
-        logger.info("Lignes de préfinancement récupérées - {} lignes trouvées", prefinancementResponseDtoPage.getTotalElements());
-
-        return ResponseEntity.ok(prefinancementResponseDtoPage);
-    }
-
-    @GetMapping("/dc-lines")
-    public ResponseEntity<Page<SpecificLigneResposneDto>> getDcLines(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort,
-            @ModelAttribute SpecifiqueLineSearchDto searchCriteria
-    ){
-        logger.info("Requête des lignes de droit constaté - Page: {}, Size: {}", page, size);
-        logger.debug("Critères de recherche: {}", searchCriteria);
-
-        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
-        Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
-        Page<SpecificLigneResposneDto> resposne =ligneFonctionnelleSpecifiqueService.getDCLines(searchCriteria,pageable);
-        logger.info("Lignes de droit constaté récupérées - {} lignes trouvées", resposne.getTotalElements());
-        return ResponseEntity.ok(resposne);
-    }
-
-    @GetMapping("/factoring-lines")
-    public ResponseEntity<Page<SpecificLigneResposneDto>> getFactoringLines(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort,
-            @ModelAttribute SpecifiqueLineSearchDto searchCriteria
-    ){
-        logger.info("Requête des lignes de factoring - Page: {}, Size: {}", page, size);
-        logger.debug("Critères de recherche: {}", searchCriteria);
-
-        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
-        Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
-        Page<SpecificLigneResposneDto> resposne =ligneFonctionnelleSpecifiqueService.getFactoringLines(searchCriteria,pageable);
-        logger.info("Lignes de factoring récupérées - {} lignes trouvées", resposne.getTotalElements());
-        return ResponseEntity.ok(resposne);
     }
 
 
