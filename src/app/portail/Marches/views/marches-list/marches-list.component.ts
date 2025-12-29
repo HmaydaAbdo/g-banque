@@ -13,7 +13,7 @@ import {ToolbarModule} from 'primeng/toolbar';
 import {TagModule} from 'primeng/tag';
 import {TooltipModule} from 'primeng/tooltip';
 import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
-import {RouterLink, RouterLinkActive} from '@angular/router';
+import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import {BreadcrumbModule} from 'primeng/breadcrumb';
 
 // Import DTOs, service, and models for Marche
@@ -77,6 +77,7 @@ export class MarchesListComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private banqueService: BanqueService,
     private authService: AuthService,
+    private router:Router,
     private fb: FormBuilder
   ) { }
 
@@ -225,6 +226,10 @@ export class MarchesListComponent implements OnInit {
           });
       }
     });
+  }
+
+  viewSpecificLines(marcheId: number): void {
+    this.router.navigate(['/portail/lignes-fonctionnelles-specifiques/marche', marcheId]);
   }
 
   isAdmin():boolean{

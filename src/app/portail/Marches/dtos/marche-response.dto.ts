@@ -4,7 +4,7 @@ export interface MarcheResponseDTO {
   id: number;
   numero: string;
   nom: string;
-  montant: Decimal;
+  montant: number;
   maitreDouvrage: string;
   dateDebutDesTravaux?: Date;
   dateDAchievementDesTravaux?: Date;

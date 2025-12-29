@@ -254,4 +254,21 @@ export class SpecificFunctionalLigneService {
     return this.http.get<AgregatedSuivieFactoringLigneResponseDto>(`${this.apiUrl}/${id}/factoring`, { params });
   }
 
+
+  getLinesByMarche(
+    marcheId: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<PageResponse<SpecificLigneResponseDto>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    return this.http.get<PageResponse<SpecificLigneResponseDto>>(
+      `${this.apiUrl}/marche/${marcheId}`,
+      { params }
+    );
+  }
 }

@@ -120,6 +120,9 @@ import {
 import {
   DetailsRapprochementComponent
 } from "../../rapprochement/views/details-rapprochement/details-rapprochement.component";
+import {
+  SpecificLinesByMarcheComponent
+} from "../../Marches/views/specific-lines-by-marche/specific-lines-by-marche.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -145,7 +148,7 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'lignes-fonctionnelles-specifiques-encours/new', component: SpeficLigneEditComponent },
   { path: 'lignes-fonctionnelles-specifiques-encours/edit/:id', component: SpeficLigneEditComponent },
   { path: 'lignes-fonctionnelles-specifiques-archived', component: SpeficLigneArchiveesComponent },
-
+  { path: 'lignes-fonctionnelles-specifiques/marche/:id', component: SpecificLinesByMarcheComponent },
   { path: 'natures-fonctionnelles', component: NatureLigneFonctionnelleListComponent },
   { path: 'natures-fonctionnelles/new', component: NatureLigneFonctionnelleEditComponent },
   { path: 'natures-fonctionnelles/edit/:id', component: NatureLigneFonctionnelleEditComponent },

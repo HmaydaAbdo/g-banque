@@ -101,6 +101,11 @@
           <td>{{ marche.dateDebutDesTravaux ? (marche.dateDebutDesTravaux | date:'dd/MM/yyyy') : '—' }}</td>
           <td>{{ marche.dateDAchievementDesTravaux ? (marche.dateDAchievementDesTravaux | date:'dd/MM/yyyy') : '—' }}</td>
           <td class="flex flex-row gap-2">
+            <button pButton pRipple icon="pi pi-eye"
+                    class="p-button-rounded p-button-outlined p-button-info"
+                    (click)="viewSpecificLines(marche.id)"
+                    pTooltip="Voir les lignes spécifiques"
+                    tooltipPosition="top"></button>
             <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2"
                     [routerLink]="['/portail/marches/edit', marche.id]"></button>
             @if (isAdmin()){

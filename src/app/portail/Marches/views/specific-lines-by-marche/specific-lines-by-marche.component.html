@@ -1,0 +1,100 @@
+<p-toast></p-toast>
+
+<div class="card flex flex-column gap-4 p-2 w-screen h-screen overflow-y-scroll">
+
+  <!-- Breadcrumb et titre -->
+  <div class="portail-section flex flex-column gap-3 bg-transparent">
+    <div class="flex justify-content-between align-items-center">
+      <p-breadcrumb [model]="items">
+        <ng-template pTemplate="item" let-item>
+          <a [routerLink]="item.routerLink" class="p-menuitem-link">
+            <span [ngClass]="item.icon" class="text-color"></span>
+            <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
+          </a>
+        </ng-template>
+      </p-breadcrumb>
+
+    </div>
+
+    <!-- Informations du marché -->
+    <div *ngIf="marche" class="surface-card p-2 border-round shadow-4">
+      <div class="flex flex-column md:flex-row  md:justify-content-around gap-4">
+        <p>Nom : <strong> {{ marche.nom }}</strong></p>
+        <p>Numéro : <strong> {{ marche.numero }}</strong></p>
+        <p>Banque : <strong> {{ marche.banqueNom }}</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table des lignes spécifiques -->
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="specificLines"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [lazy]="true"
+      (onLazyLoad)="loadSpecificLines($event)"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      styleClass="p-datatable-gridlines text-xs"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
+
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
+          <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
+          <th pSortableColumn="montant" >Montant <p-sortIcon field="montant"></p-sortIcon></th>
+          <th pSortableColumn="encours" >Encours <p-sortIcon field="encours"></p-sortIcon></th>
+          <th pSortableColumn="solde" >Solde <p-sortIcon field="solde"></p-sortIcon></th>
+          <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
+          <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
+          <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-line>
+        <tr>
+          <td>{{ line.id }}</td>
+          <td> {{line.natureLigneFonctionnelleLabel | uppercase}}</td>
+          <td>{{ line.banqueNom }}</td>
+          <td>{{ line.montant | number:'1.2-2' }}</td>
+          <td>{{ line.encours | number:'1.2-2' }}</td>
+          <td>
+            <span [ngClass]="{'text-green-600 font-bold': line.solde > 0, 'text-red-600 font-bold': line.solde < 0}">
+              {{ line.solde | number:'1.2-2' }}
+            </span>
+          </td>
+          <td>{{ line.taux | number:'1.2-2' }} %</td>
+          <td>{{ line.dateDepart | date:'dd/MM/yyyy' }}</td>
+          <td>{{ line.dateFin | date:'dd/MM/yyyy' }}</td>
+
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td colspan="10" class="text-center p-4">
+            <i class="pi pi-info-circle text-4xl text-400 mb-3"></i>
+            <p class="text-600">Aucune ligne spécifique trouvée pour ce marché.</p>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="10" class="text-center p-4">
+            <i class="pi pi-spin pi-spinner text-2xl"></i>
+            <p class="mt-2">Chargement des données...</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
