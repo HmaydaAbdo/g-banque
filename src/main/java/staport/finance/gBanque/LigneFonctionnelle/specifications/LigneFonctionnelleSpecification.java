@@ -28,6 +28,10 @@
                     predicates.add(criteriaBuilder.equal(root.get("natureLigneFonctionnelle").get("id"), criteria.getNatureLigneFonctionnelleId()));
                 }
 
+                if (criteria.getMarcheId() != null) {
+                    predicates.add(criteriaBuilder.equal(root.get("marche").get("id"), criteria.getMarcheId()));
+                }
+
                 // Search by Year of dateDepart
                 if (criteria.getYearDepart() != null) {
                     predicates.add(criteriaBuilder.equal(
@@ -68,6 +72,10 @@
                 // Le prédicat pour vérifier si la colonne 'ligneMere' est NULL
                 return criteriaBuilder.isNull(root.get("ligneMere"));
             };
+        }
+
+        public static Specification<LigneFonctionnelle> hasMarche() {
+            return (Root<LigneFonctionnelle> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> criteriaBuilder.isNotNull(root.get("marche"));
         }
 
     }

@@ -3,6 +3,8 @@
     import jakarta.persistence.*;
     import staport.finance.gBanque.Bank.entities.Banque;
     import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
+    import staport.finance.gBanque.marches.entities.Marche;
+
     import java.math.BigDecimal;
     import java.time.OffsetDateTime;
     import java.util.List;
@@ -23,6 +25,11 @@
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "nature_ligne_id", nullable = false)
         private NatureLigneFonctionnelle natureLigneFonctionnelle;
+
+
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "marche_id", nullable = true)
+        private Marche marche;
 
         @Column(nullable = true)
         private BigDecimal plafond;
@@ -88,6 +95,14 @@
 
         public void setNatureLigneFonctionnelle(NatureLigneFonctionnelle natureLigneFonctionnelle) {
             this.natureLigneFonctionnelle = natureLigneFonctionnelle;
+        }
+
+        public Marche getMarche() {
+            return marche;
+        }
+
+        public void setMarche(Marche marche) {
+            this.marche = marche;
         }
 
         public BigDecimal getPlafond() { return plafond; }
@@ -177,6 +192,7 @@
                     "id=" + id +
                     ", banque=" + banque +
                     ", natureLigneFonctionnelle=" + natureLigneFonctionnelle +
+                    ", marche=" + marche +
                     ", plafond=" + plafond +
                     ", encours=" + encours +
                     ", taux=" + taux +

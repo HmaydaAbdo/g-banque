@@ -321,7 +321,7 @@ public class LigneFonctionnelleSpecifiqueService {
     }
 
     @Transactional(readOnly = true)
-    public Page<SpecificLigneResposneDto> getLinesByMarche(Long marcheId, Pageable pageable) {
+    public Page<LigneFonctionnelleSpecifiqueResponse> getLinesByMarche(Long marcheId, Pageable pageable) {
 
         log.info("Récupération de toutes les lignes pour le marché ID: {}", marcheId);
 
@@ -346,85 +346,9 @@ public class LigneFonctionnelleSpecifiqueService {
                 page.getNumberOfElements(), marcheId, page.getTotalElements());
 
         // 4. Mapper chaque ligne avec le mapper approprié selon sa nature
-        return page.map(entity -> mapEntityToSpecificDto(entity));
+        return page.map(entity -> ligneFonctionnelleSpecifiqueMapper.toDto(entity));
     }
 
-
-
-    @Transactional(readOnly = true)
-    public Page<SpecificLigneResposneDto> getPrefiLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
-        log.info("Récupération des lignes de préfinancement - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
-        log.debug("Critères de recherche: {}", searchCriteria);
-
-        NatureLigneFonctionnelle prefiNature = natureLigneFonctionnelleRepository.findByLabel("Préfinancement")
-                .orElseThrow(() -> {
-                    log.error("Nature 'Préfinancement' non trouvée en base de données");
-                    return new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Préfinancement");
-                });
-
-        log.debug("Nature 'Préfinancement' trouvée avec ID: {}", prefiNature.getId());
-
-        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, cb) -> cb.equal(root.get("natureLigneFonctionnelle"), prefiNature);
-        Specification<LigneFonctionnelleSpecifique> searchSpec = LigneFonctionnelleSpecifiqueSpecification.searchForPrefi(searchCriteria);
-        Specification<LigneFonctionnelleSpecifique> finalSpec = Specification.where(natureSpec).and(searchSpec);
-
-        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(finalSpec, pageable);
-
-        log.info("{} lignes de préfinancement trouvées sur {} au total",
-                page.getNumberOfElements(), page.getTotalElements());
-
-        return page.map(ligneFonctionnelleSpecifiqueMapper::toPrefinancementResponseDto);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<SpecificLigneResposneDto> getDCLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
-
-        log.info("Récupération des lignes de droit constaté - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
-        log.debug("Critères de recherche: {}", searchCriteria);
-
-        NatureLigneFonctionnelle dcLine = natureLigneFonctionnelleRepository.findByLabel("Droit constaté")
-                .orElseThrow(() -> {
-                    log.error("Nature 'Droit constaté' non trouvée en base de données");
-                    return new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Droit constaté");
-                });
-
-        log.debug("Nature 'Droit constaté' trouvée avec ID: {}", dcLine.getId());
-
-        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, cb) -> cb.equal(root.get("natureLigneFonctionnelle"), dcLine);
-        Specification<LigneFonctionnelleSpecifique> searchSpec = LigneFonctionnelleSpecifiqueSpecification.searchForPrefi(searchCriteria);
-        Specification<LigneFonctionnelleSpecifique> finalSpec = Specification.where(natureSpec).and(searchSpec);
-
-        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(finalSpec, pageable);
-
-        log.info("{} lignes de droit constaté trouvées sur {} au total", page.getNumberOfElements(), page.getTotalElements());
-
-        return page.map(ligneFonctionnelleSpecifiqueMapper::toDCResponseDto);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<SpecificLigneResposneDto> getFactoringLines(SpecifiqueLineSearchDto searchCriteria, Pageable pageable) {
-
-        log.info("Récupération des lignes de factoring - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
-        log.debug("Critères de recherche: {}", searchCriteria);
-
-        NatureLigneFonctionnelle factoringLine = natureLigneFonctionnelleRepository.findByLabel("Factoring")
-                .orElseThrow(() -> {
-                    log.error("Nature 'Factoring' non trouvée en base de données");
-                    return new ResourceNotFoundException("Aucune nature de ligne fonctionnelle trouvée avec le label : Factoring");
-                });
-
-        log.debug("Nature 'Factoring' trouvée avec ID: {}", factoringLine.getId());
-
-        Specification<LigneFonctionnelleSpecifique> natureSpec = (root, query, cb) -> cb.equal(root.get("natureLigneFonctionnelle"), factoringLine);
-        Specification<LigneFonctionnelleSpecifique> searchSpec = LigneFonctionnelleSpecifiqueSpecification.searchForPrefi(searchCriteria);
-        Specification<LigneFonctionnelleSpecifique> finalSpec = Specification.where(natureSpec).and(searchSpec);
-
-        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(finalSpec, pageable);
-
-        log.info("{} lignes de factoring trouvées sur {} au total", page.getNumberOfElements(), page.getTotalElements());
-
-        return page.map(ligneFonctionnelleSpecifiqueMapper::toFactoringResponseDto);
-    }
 
     @Transactional(readOnly = true)
     public AgregatedSuiviePrefiLigneResponseDto getSuiviePrefiLigneResponse(Long lineId, Pageable pageable) {
@@ -584,26 +508,4 @@ public class LigneFonctionnelleSpecifiqueService {
     }
 
 
-    private SpecificLigneResposneDto mapEntityToSpecificDto(LigneFonctionnelleSpecifique entity) {
-        String natureLabel = entity.getNatureLigneFonctionnelle().getLabel();
-
-        log.debug("Mapping entity ID: {} avec nature: {}", entity.getId(), natureLabel);
-
-        switch (natureLabel) {
-            case "Préfinancement":
-                return ligneFonctionnelleSpecifiqueMapper.toPrefinancementResponseDto(entity);
-
-            case "Droit constaté":
-                return ligneFonctionnelleSpecifiqueMapper.toDCResponseDto(entity);
-
-            case "Factoring":
-                return ligneFonctionnelleSpecifiqueMapper.toFactoringResponseDto(entity);
-
-            default:
-                log.warn("Nature de ligne inconnue: '{}' pour entity ID: {}. " +
-                                "Utilisation du mapper préfinancement par défaut.",
-                        natureLabel, entity.getId());
-                return ligneFonctionnelleSpecifiqueMapper.toPrefinancementResponseDto(entity);
-        }
-    }
 }

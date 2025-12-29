@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
@@ -47,6 +48,10 @@ public class Marche implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
+
+    @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LigneFonctionnelle> lignesFonctionnelles = new ArrayList<>();
+
 
     @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneFonctionnelleSpecifique> lignesFonctionnellesSpecifiques = new ArrayList<>();
@@ -137,6 +142,24 @@ public class Marche implements Serializable {
         this.banque = banque;
     }
 
+    public List<LigneFonctionnelle> getLignesFonctionnelles() {
+        return lignesFonctionnelles;
+    }
+
+    public void setLignesFonctionnelles(List<LigneFonctionnelle> lignesFonctionnelles) {
+        this.lignesFonctionnelles = lignesFonctionnelles;
+    }
+
+    public void addLigneFonctionnelle(LigneFonctionnelle ligne) {
+        this.lignesFonctionnelles.add(ligne);
+        ligne.setMarche(this);
+    }
+
+    public void removeLigneFonctionnelle(LigneFonctionnelle ligne) {
+        this.lignesFonctionnelles.remove(ligne);
+        ligne.setMarche(null);
+    }
+
     public List<LigneFonctionnelleSpecifique> getLignesFonctionnellesSpecifiques() {
         return lignesFonctionnellesSpecifiques;
     }
@@ -154,6 +177,7 @@ public class Marche implements Serializable {
         this.lignesFonctionnellesSpecifiques.remove(ligne);
         ligne.setMarche(null);
     }
+
     public List<Prefinancement> getPrefinancements() {
         return prefinancements;
     }

@@ -46,5 +46,15 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
     List<LigneFonctionnelle> findByBanqueIdAndNatureLigneFonctionnelleIdOrderByDateDepartAsc(Long banqueId, Long natureLigneFonctionnelleId);
 
 
+    Optional<LigneFonctionnelle> findByBanqueIdAndNatureLigneFonctionnelleIdAndMarcheIsNullAndActifTrue(
+            Long banqueId,
+            Long natureLigneFonctionnelleId
+    );
+
+    // Pour vérifier les doublons de lignes spécifiques à un marché
+    Optional<LigneFonctionnelle> findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(
+            Long marcheId,
+            Long natureLigneFonctionnelleId
+    );
 
 }

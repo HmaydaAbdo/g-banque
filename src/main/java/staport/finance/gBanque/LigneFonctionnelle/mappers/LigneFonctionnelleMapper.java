@@ -1,6 +1,5 @@
 package staport.finance.gBanque.LigneFonctionnelle.mappers;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -11,7 +10,10 @@ import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleRespons
 import staport.finance.gBanque.LigneFonctionnelle.dtos.SousLigneRequestDto;
 import staport.finance.gBanque.LigneFonctionnelle.dtos.SousLigneResponseDto;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.services.EncoursCalculatorService;
+import staport.finance.gBanque.marches.entities.Marche;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,16 +22,21 @@ import java.util.stream.Collectors;
 @Component
 public class LigneFonctionnelleMapper {
 
-
     private static final Logger logger = LoggerFactory.getLogger(LigneFonctionnelleMapper.class);
+
+    private final EncoursCalculatorService encoursCalculatorService;
+
+    public LigneFonctionnelleMapper(EncoursCalculatorService encoursCalculatorService) {
+        this.encoursCalculatorService = encoursCalculatorService;
+    }
 
     /**
      * Converts a LigneFonctionnelleRequest DTO to a LigneFonctionnelle entity for creation (Mother or Independent).
-     * The service is responsible for creating and linking child entities (SousLignes).
      */
     public LigneFonctionnelle toEntity(LigneFonctionnelleRequest request,
                                        Banque banque,
-                                       NatureLigneFonctionnelle natureLigneFonctionnelle) {
+                                       NatureLigneFonctionnelle natureLigneFonctionnelle,
+                                       Marche marche) {
         if (request == null) {
             logger.warn("Attempted to convert null LigneFonctionnelleRequest to Entity");
             return null;
@@ -39,27 +46,22 @@ public class LigneFonctionnelleMapper {
 
         LigneFonctionnelle ligneFonctionnelle = new LigneFonctionnelle();
 
-        // Mappage des propriétés directes
         ligneFonctionnelle.setBanque(banque);
         ligneFonctionnelle.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
+        ligneFonctionnelle.setMarche(marche);
         ligneFonctionnelle.setPlafond(request.getPlafond());
         ligneFonctionnelle.setTaux(request.getTaux());
         ligneFonctionnelle.setDateDepart(request.getDateDepart());
         ligneFonctionnelle.setDateFin(request.getDateFin());
-
-        // Initialisation de la collection de Sous-lignes pour la cascade
         ligneFonctionnelle.setSousLignes(new ArrayList<>());
 
-        logger.debug("Successfully converted LigneFonctionnelleRequest to Entity - Plafond: {}, Taux: {}", request.getPlafond(), request.getTaux());
+        logger.debug("Successfully converted LigneFonctionnelleRequest to Entity");
 
         return ligneFonctionnelle;
     }
 
-
-
     /**
      * Helper : Converts a SousLigneRequestDto to a LigneFonctionnelle entity (Sub-line).
-     * The Service must provide the LigneMere entity (for inherited properties) and the NatureLigneFonctionnelle entity.
      */
     public LigneFonctionnelle toSousLigneEntity(SousLigneRequestDto request,
                                                 LigneFonctionnelle ligneMere,
@@ -79,31 +81,23 @@ public class LigneFonctionnelleMapper {
 
         LigneFonctionnelle sousLigne = new LigneFonctionnelle();
 
-        // Propriétés spécifiques du DTO Fille
-        sousLigne.setId(request.getId()); // Essentiel pour la modification/suppression dans le Service
+        sousLigne.setId(request.getId());
         sousLigne.setPlafond(request.getPlafond());
         sousLigne.setNatureLigneFonctionnelle(natureSousLigne);
-
-        // Propriétés héritées (EXTRAITES DIRECTEMENT DE LA MÈRE)
         sousLigne.setBanque(ligneMere.getBanque());
+        sousLigne.setMarche(ligneMere.getMarche());
         sousLigne.setTaux(ligneMere.getTaux());
         sousLigne.setDateDepart(ligneMere.getDateDepart());
         sousLigne.setDateFin(ligneMere.getDateFin());
-
-        // Lien Parent
         sousLigne.setLigneMere(ligneMere);
 
-        logger.debug("Successfully converted SousLigneRequestDto to Entity ");
+        logger.debug("Successfully converted SousLigneRequestDto to Entity");
 
         return sousLigne;
     }
 
-
-
-
     /**
-     * Converts a LigneFonctionnelle entity to a LigneFonctionnelleResponse DTO,
-     * incluant les informations de hiérarchie.
+     * Converts a LigneFonctionnelle entity to a LigneFonctionnelleResponse DTO.
      */
     public LigneFonctionnelleResponse toDto(LigneFonctionnelle ligneFonctionnelle) {
 
@@ -112,10 +106,7 @@ public class LigneFonctionnelleMapper {
             return null;
         }
 
-        logger.debug("Converting LigneFonctionnelle Entity to DTO - ID: {}, Plafond: {}, Encours: {}",
-                ligneFonctionnelle.getId(),
-                ligneFonctionnelle.getPlafond(),
-                ligneFonctionnelle.getEncours());
+        logger.debug("Converting LigneFonctionnelle Entity to DTO - ID: {}", ligneFonctionnelle.getId());
 
         LigneFonctionnelleResponse response = new LigneFonctionnelleResponse();
         response.setId(ligneFonctionnelle.getId());
@@ -123,23 +114,21 @@ public class LigneFonctionnelleMapper {
         if (ligneFonctionnelle.getBanque() != null) {
             response.setBanqueId(ligneFonctionnelle.getBanque().getId());
             response.setBanqueNom(ligneFonctionnelle.getBanque().getNom());
-            logger.debug("Mapped banque info - ID: {}, Name: {}",
-                    ligneFonctionnelle.getBanque().getId(),
-                    ligneFonctionnelle.getBanque().getNom());
+        }
+
+        if (ligneFonctionnelle.getMarche() != null) {
+            response.setMarcheId(ligneFonctionnelle.getMarche().getId());
+            response.setNumeroMarche(ligneFonctionnelle.getMarche().getNumero());
+            response.setNomMarche(ligneFonctionnelle.getMarche().getNom());
         }
 
         if (ligneFonctionnelle.getNatureLigneFonctionnelle() != null) {
             response.setNatureLigneFonctionnelleId(ligneFonctionnelle.getNatureLigneFonctionnelle().getId());
             response.setNatureLigneFonctionnelleLabel(ligneFonctionnelle.getNatureLigneFonctionnelle().getLabel());
             response.setNatureLigneFonctionnelleDescription(ligneFonctionnelle.getNatureLigneFonctionnelle().getDescription());
-            logger.debug("Mapped nature info - ID: {}, Label: {}",
-                    ligneFonctionnelle.getNatureLigneFonctionnelle().getId(),
-                    ligneFonctionnelle.getNatureLigneFonctionnelle().getLabel());
         }
 
         response.setPlafond(ligneFonctionnelle.getPlafond());
-        response.setEncours(ligneFonctionnelle.getEncours());
-        response.setSolde(ligneFonctionnelle.getPlafond().subtract(ligneFonctionnelle.getEncours()));
         response.setTaux(ligneFonctionnelle.getTaux());
         response.setDateDepart(ligneFonctionnelle.getDateDepart());
         response.setDateFin(ligneFonctionnelle.getDateFin());
@@ -148,6 +137,9 @@ public class LigneFonctionnelleMapper {
         response.setActif(ligneFonctionnelle.isActif());
         response.setExpired(isExpired(ligneFonctionnelle.getDateFin()));
 
+        // ✅ UTILISATION DU SERVICE CENTRALISÉ
+        mapEncoursAndSolde(ligneFonctionnelle, response);
+
         // GESTION HIÉRARCHIQUE
         final boolean estSousLigne = ligneFonctionnelle.getLigneMere() != null;
         final boolean estLigneMere = ligneFonctionnelle.getSousLignes() != null && !ligneFonctionnelle.getSousLignes().isEmpty();
@@ -155,33 +147,24 @@ public class LigneFonctionnelleMapper {
         response.setEstSousLigne(estSousLigne);
         response.setEstLigneMere(estLigneMere);
 
-        logger.debug("Ligne fonctionnelle ID {} hierarchy - Is sous-ligne: {}, Is ligne mère: {}",
-                ligneFonctionnelle.getId(), estSousLigne, estLigneMere);
-
         if (estSousLigne) {
             response.setLigneMereId(ligneFonctionnelle.getLigneMere().getId());
-            logger.debug("Mapped ligne mère ID: {}", ligneFonctionnelle.getLigneMere().getId());
         }
 
         if (estLigneMere) {
             List<SousLigneResponseDto> sousLignesDto = ligneFonctionnelle.getSousLignes().stream()
                     .map(this::toSousLigneDto)
                     .collect(Collectors.toList());
-
             response.setSousLignes(sousLignesDto);
-            logger.debug("Mapped {} sous-ligne(s) for ligne mère ID: {}",
-                    sousLignesDto.size(), ligneFonctionnelle.getId());
         } else {
             response.setSousLignes(new ArrayList<>());
         }
 
-        logger.debug("Successfully converted LigneFonctionnelle Entity to DTO - ID: {}, Actif: {}, Expired: {}",
-                ligneFonctionnelle.getId(),
-                ligneFonctionnelle.isActif(),
-                response.isExpired());
+        logger.debug("Successfully converted LigneFonctionnelle Entity to DTO - ID: {}", ligneFonctionnelle.getId());
 
         return response;
     }
+
     /**
      * Private helper method to convert a LigneFonctionnelle entity into the lightweight SousLigneResponseDto.
      */
@@ -191,8 +174,7 @@ public class LigneFonctionnelleMapper {
             return null;
         }
 
-        logger.debug("Converting sous-ligne Entity to DTO - ID: {}, Plafond: {}",
-                sousLigne.getId(), sousLigne.getPlafond());
+        logger.debug("Converting sous-ligne Entity to DTO - ID: {}", sousLigne.getId());
 
         SousLigneResponseDto dto = new SousLigneResponseDto();
         dto.setId(sousLigne.getId());
@@ -205,77 +187,99 @@ public class LigneFonctionnelleMapper {
 
         dto.setActif(sousLigne.isActif());
 
-        logger.debug("Successfully converted sous-ligne Entity to DTO - ID: {}, Actif: {}",
-                sousLigne.getId(), sousLigne.isActif());
-
         return dto;
     }
+
     /**
-     * Updates an existing LigneFonctionnelle entity (Mother or Independent) with data from the request DTO.
-     * The Service handles the update logic for SousLignes.
+     * Updates an existing LigneFonctionnelle entity.
      */
     public void updateLigneFonctionnelleFromDto(LigneFonctionnelleRequest request,
                                                 LigneFonctionnelle ligneFonctionnelle,
                                                 Banque newBanque,
-                                                NatureLigneFonctionnelle newNature) {
-        if (request == null) {
-            logger.warn("Attempted to update LigneFonctionnelle Entity with null Request");
+                                                NatureLigneFonctionnelle newNature,
+                                                Marche newMarche) {
+        if (request == null || ligneFonctionnelle == null) {
+            logger.warn("Attempted to update with null request or entity");
             return;
         }
 
-        if (ligneFonctionnelle == null) {
-            logger.warn("Attempted to update null LigneFonctionnelle Entity");
-            return;
-        }
+        logger.debug("Updating LigneFonctionnelle Entity ID: {}", ligneFonctionnelle.getId());
 
-        logger.debug("Updating LigneFonctionnelle Entity ID: {} with request data - New plafond: {}, New taux: {}",
-                ligneFonctionnelle.getId(), request.getPlafond(), request.getTaux());
-
-        // 1. Mise à jour des propriétés directes
         ligneFonctionnelle.setPlafond(request.getPlafond());
 
         if (request.getTaux() != null) {
             ligneFonctionnelle.setTaux(request.getTaux());
-            logger.debug("Updated taux to: {}", request.getTaux());
         }
 
         if (request.getDateDepart() != null) {
             ligneFonctionnelle.setDateDepart(request.getDateDepart());
-            logger.debug("Updated dateDepart to: {}", request.getDateDepart());
         }
 
         if (request.getDateFin() != null) {
             ligneFonctionnelle.setDateFin(request.getDateFin());
-            logger.debug("Updated dateFin to: {}", request.getDateFin());
         }
 
-        // 2. Mise à jour des relations
         if (newBanque != null) {
             ligneFonctionnelle.setBanque(newBanque);
-            logger.debug("Updated banque to ID: {}, Name: {}", newBanque.getId(), newBanque.getNom());
         }
 
         if (newNature != null) {
             ligneFonctionnelle.setNatureLigneFonctionnelle(newNature);
-            logger.debug("Updated nature to ID: {}, Label: {}", newNature.getId(), newNature.getLabel());
         }
+
+        ligneFonctionnelle.setMarche(newMarche);
 
         logger.debug("Successfully updated LigneFonctionnelle Entity ID: {}", ligneFonctionnelle.getId());
     }
 
-
     private boolean isExpired(OffsetDateTime dateFin) {
         if (dateFin == null) {
-            logger.debug("DateFin is null, ligne is not expired");
             return false;
         }
-
         OffsetDateTime now = OffsetDateTime.now();
-        boolean expired = now.isAfter(dateFin);
+        return now.isAfter(dateFin);
+    }
 
-        logger.debug("Checked expiration - DateFin: {}, Now: {}, Expired: {}",
-                dateFin, now, expired);
+    /**
+     *Utilise EncoursCalculatorService de manière centralisée
+     */
+    private void mapEncoursAndSolde(LigneFonctionnelle ligneFonctionnelle, LigneFonctionnelleResponse response) {
+        if (ligneFonctionnelle.getNatureLigneFonctionnelle() == null) {
+            logger.warn("No nature found for ligne ID: {} - Encours and Solde set to null", ligneFonctionnelle.getId());
+            response.setEncours(null);
+            response.setSolde(null);
+            return;
+        }
 
-        return expired;
+        Long natureId = ligneFonctionnelle.getNatureLigneFonctionnelle().getId();
+        Long ligneId = ligneFonctionnelle.getId();
+        Marche marche = ligneFonctionnelle.getMarche();
+        BigDecimal plafond = ligneFonctionnelle.getPlafond();
+        BigDecimal encoursStocke = ligneFonctionnelle.getEncours(); // Pour Escompte Commercial
+
+        logger.debug("Calculating encours and solde for ligne ID: {}, nature ID: {}", ligneId, natureId);
+
+        // Calcul de l'encours via le service centralisé
+        BigDecimal encours = encoursCalculatorService.calculateEncours(
+                ligneId,
+                natureId,
+                marche,
+                plafond,
+                encoursStocke
+        );
+
+        // Calcul du solde via le service centralisé
+        BigDecimal solde = encoursCalculatorService.calculateSolde(
+                ligneId,
+                natureId,
+                marche,
+                plafond,
+                encours
+        );
+
+        response.setEncours(encours);
+        response.setSolde(solde);
+
+        logger.debug("Mapped encours: {}, solde: {} for ligne ID: {}", encours, solde, ligneId);
     }
 }
