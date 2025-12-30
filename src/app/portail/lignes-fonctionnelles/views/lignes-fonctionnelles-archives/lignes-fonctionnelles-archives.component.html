@@ -162,6 +162,7 @@
           <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
           <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
           <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+          <th >Actions</th>
         </tr>
       </ng-template>
 
@@ -191,6 +192,8 @@
           <td>{{ ligne.taux | number:'1.2-2' }}%</td>
           <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
           <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td> <button pButton icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-primary"
+                       tooltipPosition="left"   pTooltip="les encours" (click)="redirectToLineDetails(ligne.id,ligne.natureLigneFonctionnelleLabel)"></button></td>
         </tr>
       </ng-template>
 

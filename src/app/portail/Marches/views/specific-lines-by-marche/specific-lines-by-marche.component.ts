@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
-import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
+import {ActivatedRoute, Router, RouterLink, RouterLinkActive} from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
@@ -42,7 +42,8 @@ export class SpecificLinesByMarcheComponent implements OnInit {
     private specificFunctionalLigneService: SpecificFunctionalLigneService,
     private marcheService: MarcheService,
     private messageService: MessageService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -100,7 +101,35 @@ export class SpecificLinesByMarcheComponent implements OnInit {
     return solde < 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold';
   }
 
-  isAdmin(): boolean {
-    return this.authService.hasRole(Role.ADMIN);
+  redirectToLineDetails(lineId: number, label: string): void {
+    // Normalisation pour éviter les erreurs de casse ou d'espaces
+    const nature = label?.trim();
+
+    switch (nature) {
+      case 'Factoring':
+        this.router.navigate(['/portail/factoring-encours', lineId]);
+        break;
+
+      case 'Préfinancement':
+        this.router.navigate(['/portail/prefi-encours', lineId]);
+        break;
+
+      case 'Droit constaté':
+        this.router.navigate(['/portail/dc-encours', lineId]);
+        break;
+
+      default:
+        // Message d'avertissement en français
+        this.messageService.add
+        ({ severity: 'warning',
+          summary: 'Aucun écran de suivi n\'est configuré',
+          detail:    `Aucun écran de suivi n'est configuré pour la nature : "${nature}"`+'Action impossible'
+        });
+
+        console.warn(`Redirection non gérée pour le label: ${nature}`);
+        break;
+    }
+
   }
+
 }

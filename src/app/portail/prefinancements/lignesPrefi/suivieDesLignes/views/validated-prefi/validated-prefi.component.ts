@@ -59,7 +59,7 @@ export class ValidatedPrefiComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
-      const idParam = params.get('id');
+      const idParam = params.get('lineId');
       if (idParam === null) {
         this.messageService.add({
           severity: 'error',

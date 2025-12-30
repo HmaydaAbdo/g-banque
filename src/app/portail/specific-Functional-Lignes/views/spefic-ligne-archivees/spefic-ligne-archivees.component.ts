@@ -1,7 +1,7 @@
 import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
@@ -83,7 +83,8 @@ export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
     private marcheService: MarcheService,
     private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
     private fb: FormBuilder,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private router:Router
   ) {
     this.marchesScrollerOptions = {
       delay: 250,
@@ -237,5 +238,36 @@ export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
 
   clearSearch(): void {
     this.searchForm.reset({ banqueId: null, natureLigneFonctionnelleId: null, marcheId: null, actif: false });
+  }
+
+  redirectToLineDetails(lineId: number, label: string): void {
+    // Normalisation pour éviter les erreurs de casse ou d'espaces
+    const nature = label?.trim();
+
+    switch (nature) {
+      case 'Factoring':
+        this.router.navigate(['/portail/factoring-encours', lineId]);
+        break;
+
+      case 'Préfinancement':
+        this.router.navigate(['/portail/prefi-encours', lineId]);
+        break;
+
+      case 'Droit constaté':
+        this.router.navigate(['/portail/dc-encours', lineId]);
+        break;
+
+      default:
+        // Message d'avertissement en français
+        this.messageService.add
+        ({ severity: 'warning',
+          summary: 'Aucun écran de suivi n\'est configuré',
+          detail:    `Aucun écran de suivi n'est configuré pour la nature : "${nature}"`+'Action impossible'
+        });
+
+        console.warn(`Redirection non gérée pour le label: ${nature}`);
+        break;
+    }
+
   }
 }

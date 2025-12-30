@@ -502,7 +502,34 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
     }
   }
 
-  get selectedBanqueId(): number | null {
-    return this.selectedBanqueId$.value;
+  redirectToLineDetails(lineId: number, label: string): void {
+    // Normalisation pour éviter les erreurs de casse ou d'espaces
+    const nature = label?.trim();
+
+    switch (nature) {
+      case 'Factoring':
+        this.router.navigate(['/portail/factoring-encours', lineId]);
+        break;
+
+      case 'Préfinancement':
+        this.router.navigate(['/portail/prefi-encours', lineId]);
+        break;
+
+      case 'Droit constaté':
+        this.router.navigate(['/portail/dc-encours', lineId]);
+        break;
+
+      default:
+        // Message d'avertissement en français
+        this.messageService.add
+        ({ severity: 'warning',
+          summary: 'Aucun écran de suivi n\'est configuré',
+          detail:    `Aucun écran de suivi n'est configuré pour la nature :''${nature}''`
+        });
+
+        console.warn(`Redirection non gérée pour le label: ${nature}`);
+        break;
+    }
+
   }
 }

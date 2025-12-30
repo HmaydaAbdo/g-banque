@@ -8,7 +8,7 @@ import { PaginatorModule } from "primeng/paginator";
 import { ConfirmationService, MenuItem, MessageService, PrimeTemplate, ScrollerOptions } from "primeng/api";
 import { FormBuilder, FormGroup, ReactiveFormsModule } from "@angular/forms";
 import { Ripple } from "primeng/ripple";
-import { RouterLinkActive } from "@angular/router";
+import {Router, RouterLinkActive} from "@angular/router";
 import { Table, TableLazyLoadEvent, TableModule } from "primeng/table";
 import { TagModule } from "primeng/tag";
 import { ToastModule } from "primeng/toast";
@@ -92,7 +92,8 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
     private marcheService: MarcheService,
     private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
     private fb: FormBuilder,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private router: Router,
   ) {
     this.marchesScrollerOptions = {
       delay: 250,
@@ -386,7 +387,35 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
     });
   }
 
-  get selectedBanqueId(): number | null {
-    return this.selectedBanqueId$.value;
+  redirectToLineDetails(lineId: number, label: string): void {
+    // Normalisation pour éviter les erreurs de casse ou d'espaces
+    const nature = label?.trim();
+
+    switch (nature) {
+      case 'Factoring':
+        this.router.navigate(['/portail/factoring-encours', lineId]);
+        break;
+
+      case 'Préfinancement':
+        this.router.navigate(['/portail/prefi-encours', lineId]);
+        break;
+
+      case 'Droit constaté':
+        this.router.navigate(['/portail/dc-encours', lineId]);
+        break;
+
+      default:
+        // Message d'avertissement en français
+        this.messageService.add
+        ({ severity: 'warning',
+          summary: 'Aucun écran de suivi n\'est configuré',
+          detail:    `Aucun écran de suivi n'est configuré pour la nature :''${nature}''`
+        });
+
+        console.warn(`Redirection non gérée pour le label: ${nature}`);
+        break;
+    }
+
   }
+
 }

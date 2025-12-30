@@ -117,6 +117,9 @@
 
           <td class="text-center">
             <div class="flex gap-1 justify-content-center">
+              <button pButton icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-primary"
+                      pTooltip="les encours" (click)="redirectToLineDetails(ligne.id,ligne.natureLigneFonctionnelleLabel)"></button>
+
               <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
                       [routerLink]="['/portail/lignes-fonctionnelles-specifiques-encours/edit', ligne.id]" pTooltip="Modifier"></button>
 

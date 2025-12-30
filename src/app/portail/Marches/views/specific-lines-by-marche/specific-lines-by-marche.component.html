@@ -56,7 +56,8 @@
           <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
           <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
           <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
-          <th style="width: 80px">Statut</th>
+          <th >Statut</th>
+          <th >Action</th>
         </tr>
       </ng-template>
 
@@ -82,6 +83,10 @@
           <td>
             <p-tag [value]="line.expired ? 'Expirée' : 'Active'"
                    [severity]="line.expired ? 'danger' : 'success'"></p-tag>
+          </td>
+          <td>
+            <button pButton icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-primary"
+                    pTooltip="les encours" (click)="redirectToLineDetails(line.id,line.natureLigneFonctionnelleLabel)"></button>
           </td>
         </tr>
       </ng-template>

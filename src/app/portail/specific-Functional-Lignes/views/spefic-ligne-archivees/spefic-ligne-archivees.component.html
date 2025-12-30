@@ -79,7 +79,9 @@
           <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
 
           <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
-          <th style="width: 80px">Statut</th>
+          <th >Statut</th>
+          <th >Action</th>
+
         </tr>
       </ng-template>
 
@@ -104,6 +106,10 @@
           <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>
           <td>
             <p-tag class="white-space-nowrap" value="Archivée" severity="secondary"></p-tag>
+          </td>
+          <td>
+            <button pButton icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-primary"
+                                     pTooltip="les encours" (click)="redirectToLineDetails(ligne.id,ligne.natureLigneFonctionnelleLabel)"></button>
           </td>
         </tr>
       </ng-template>

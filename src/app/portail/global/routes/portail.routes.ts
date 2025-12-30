@@ -144,6 +144,11 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'lignes-fonctionnelles-specifiques-encours/edit/:id', component: SpeficLigneEditComponent },
   { path: 'lignes-fonctionnelles-specifiques-archived', component: SpeficLigneArchiveesComponent },
   { path: 'lignes-fonctionnelles-specifiques/marche/:id', component: SpecificLinesByMarcheComponent },
+  { path:"factoring-encours/:lineId",component:ValidatedFactoringComponent},
+  { path:"prefi-encours/:lineId",component:ValidatedPrefiComponent},
+  { path:"dc-encours/:lineId",component:ValidatedDcComponent},
+
+
   { path: 'natures-fonctionnelles', component: NatureLigneFonctionnelleListComponent },
   { path: 'natures-fonctionnelles/new', component: NatureLigneFonctionnelleEditComponent },
   { path: 'natures-fonctionnelles/edit/:id', component: NatureLigneFonctionnelleEditComponent },
@@ -180,17 +185,14 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'préfinancements', component: PrefinancementsListComponent },
   { path: 'préfinancements/new', component: PrefinancementFormComponent },
   { path: 'préfinancements/edit/:id', component: PrefinancementFormComponent },
-  { path:"prefi-line/:id/encours/validated",component:ValidatedPrefiComponent},
 
   {path:"droits-constate",component:DroitConstateListComponent},
   {path:"droits-constate/new",component:DroitConstateFormComponent},
   {path:"droits-constate/edit/:id",component:DroitConstateFormComponent},
-  {path:"dc-line/:id/encours/validated",component:ValidatedDcComponent},
 
   {path:"factoring",component:FactoringListComponent},
   {path:"factoring/new",component:FactoringFormComponent},
   {path:"factoring/edit/:id",component:FactoringFormComponent},
-  {path:"factoring-line/:id/encours/validated",component:ValidatedFactoringComponent},
 
   {path:"decomptes",component:DecomptesListComponent},
   {path:"decomptes/new",component:DecompteFormComponent},
