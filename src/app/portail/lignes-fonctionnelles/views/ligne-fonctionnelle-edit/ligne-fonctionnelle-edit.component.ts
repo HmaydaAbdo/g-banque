@@ -1,33 +1,65 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidatorFn, FormArray} from '@angular/forms';
-import {ActivatedRoute, Router, ParamMap, RouterLink, RouterLinkActive} from '@angular/router';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+  AbstractControl,
+  ValidatorFn,
+  FormArray
+} from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 
+// RxJS
+import {
+  Subject,
+  BehaviorSubject,
+  combineLatest,
+  of,
+  EMPTY
+} from 'rxjs';
+import {
+  takeUntil,
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  tap,
+  catchError,
+  filter,
+  map
+} from 'rxjs/operators';
+
+// PrimeNG
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import {MenuItem, MessageService} from 'primeng/api';
+import { MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
+import { BreadcrumbModule } from "primeng/breadcrumb";
+import { TooltipModule } from "primeng/tooltip";
 
+// Services & DTOs
 import { LigneFonctionnelleService } from "../../services/LigneFonctionnelleService";
 import { BanqueService } from "../../../comptes-bancaire/services/BanqueService";
 import { LigneFonctionnelleRequest } from "../../dtos/LigneFonctionnelleRequest";
 import { LigneFonctionnelleResponse } from '../../dtos/LigneFonctionnelleResponse';
-import {NatureLigneFonctionnelleService} from "../../services/nature-ligne-fonctionnelle.service";
-import {BreadcrumbModule} from "primeng/breadcrumb";
-import {TooltipModule} from "primeng/tooltip";
-import {SousLigneResponseDto} from "../../dtos/SousLigneResponseDto";
-import {SousLigneRequestDto} from "../../dtos/SousLigneRequestDto";
+import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fonctionnelle.service";
+import { SousLigneResponseDto } from "../../dtos/SousLigneResponseDto";
+import { SousLigneRequestDto } from "../../dtos/SousLigneRequestDto";
+import { MarcheService } from "../../../Marches/service/marche-service.service";
 
+// ========== CONSTANTS ==========
 const CAUTION_ADMINISTRATIVE_ID = 16;
-
+const MARCHE_PAGE_SIZE = 10;
+const DEBOUNCE_TIME = 300;
 
 @Component({
   selector: 'app-ligne-fonctionnelle-edit',
@@ -35,102 +67,384 @@ const CAUTION_ADMINISTRATIVE_ID = 16;
   styleUrls: ['./ligne-fonctionnelle-edit.component.scss'],
   standalone: true,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    NgIf,
-    InputTextModule,
-    DropdownModule,
-    InputNumberModule,
-    ButtonModule,
-    RippleModule,
-    ToastModule,
-    ConfirmDialogModule,
-    CalendarModule,
-    BreadcrumbModule,
-    RouterLink,
-    RouterLinkActive,
-    TooltipModule,
-    DialogModule,
-    TableModule
+    CommonModule, ReactiveFormsModule, NgIf, InputTextModule, DropdownModule,
+    InputNumberModule, ButtonModule, RippleModule, ToastModule, ConfirmDialogModule,
+    CalendarModule, BreadcrumbModule, RouterLink, RouterLinkActive, TooltipModule,
+    DialogModule, TableModule
   ],
   providers: [MessageService, ConfirmationService]
 })
-export class LigneFonctionnelleEditComponent implements OnInit {
+export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
 
+  // ========== REACTIVE STREAMS ==========
+  private readonly destroy$ = new Subject<void>();
+  private readonly selectedBanqueId$ = new BehaviorSubject<number | null>(null);
+  private readonly marcheFilter$ = new BehaviorSubject<string>('');
 
-  totalSousLignesPlafond: number = 0;
+  // ========== FORM GROUPS ==========
   ligneFonctionnelleForm!: FormGroup;
-  isEditMode: boolean = false;
-  ligneFonctionnelleId: number | null = null;
-  ligneFonctionnelle?: LigneFonctionnelleResponse ;
-  natureLigneOptions: { label: string; value: number }[] = [];
-  banquesOptions: { label: string; value: number }[] = [];
-  loading: boolean = false;
-  items: MenuItem[] | undefined;
-
-
-  displaySousLigneDialog: boolean = false;
   sousLigneForm!: FormGroup;
-  sousLigneEditMode: boolean = false;
+
+  // ========== STATE ==========
+  isEditMode = false;
+  ligneFonctionnelleId: number | null = null;
+  loading = false;
+
+  // ========== UI DATA ==========
+  totalSousLignesPlafond = 0;
+  natureLigneOptions: Array<{ label: string; value: number }> = [];
+  banquesOptions: Array<{ label: string; value: number }> = [];
+  marchesOptions: any[] = [];
+  items: MenuItem[] = [];
+
+  // ========== DIALOG STATE ==========
+  displaySousLigneDialog = false;
+  sousLigneEditMode = false;
   currentSousLigneIndex: number | null = null;
 
+  // ========== MARCHÉ LAZY LOADING ==========
+  loadingMarches = false;
+  marchesScrollerOptions: ScrollerOptions;
+
   constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router,
-    private ligneFonctionnelleService: LigneFonctionnelleService,
-    private banqueService: BanqueService,
-    private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) { }
+    private readonly fb: FormBuilder,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly ligneFonctionnelleService: LigneFonctionnelleService,
+    private readonly banqueService: BanqueService,
+    private readonly natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
+    private readonly messageService: MessageService,
+    private readonly confirmationService: ConfirmationService,
+    private readonly marcheService: MarcheService
+  ) {
+    this.marchesScrollerOptions = {
+      delay: 250,
+      showLoader: true,
+      lazy: true,
+      onLazyLoad: this.onLazyLoadMarches.bind(this)
+    };
+  }
+
+  // ========== LIFECYCLE HOOKS ==========
 
   ngOnInit(): void {
-    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },{ icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-encours', label:"Les Lignes fonctionnelles " } ]
-    this.initForm()
-    this.loadBanquesForDropdown();
-    this.loadNatureLigneOptionsForDropdown();
-    this.route.paramMap.subscribe((params: ParamMap) => {
-      const id = params.get('id');
-      if (id) {
-        this.isEditMode = true;
-        this.ligneFonctionnelleId = Number(id);
-        this.loadLigneFonctionnelle(this.ligneFonctionnelleId);
-      } else {
-        this.isEditMode = false;
-        this.ligneFonctionnelleId = null;
-        this.ligneFonctionnelleForm.get('dateDepart')?.updateValueAndValidity();
+    this.initBreadcrumb();
+    this.initForm();
+    this.loadStaticDropdowns();
+    this.setupReactiveStreams();
+    this.handleRouteParams();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ========== INITIALIZATION ==========
+
+  private initBreadcrumb(): void {
+    this.items = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
+      { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-encours', label: "Lignes fonctionnelles" }
+    ];
+  }
+
+  private initForm(): void {
+    this.ligneFonctionnelleForm = this.fb.group({
+      banqueId: [null, Validators.required],
+      natureLigneFonctionnelleId: [null, Validators.required],
+      marcheId: [null], // ✅ Optionnel
+      plafond: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
+      taux: [null, [Validators.required, Validators.min(0), Validators.max(100), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
+      dateDepart: [null, Validators.required],
+      dateFin: [null, Validators.required],
+      sousLignes: this.fb.array([], [this.sousLigneNatureUniquenessValidator()])
+    }, {
+      validators: [this.dateFinAfterDateDepartValidator()]
+    });
+
+    this.sousLigneForm = this.fb.group({
+      id: [null],
+      natureLigneFonctionnelleId: [null, Validators.required],
+      plafond: [null, [Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]]
+    });
+  }
+
+  private loadStaticDropdowns(): void {
+    combineLatest([
+      this.loadBanques(),
+      this.loadNatureLignes()
+    ]).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: ([banques, natures]) => {
+        this.banquesOptions = banques;
+        this.natureLigneOptions = natures;
+      },
+      error: (err) => {
+        console.error('Error loading dropdowns:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement des données de référence',
+          life: 3000
+        });
       }
     });
   }
 
-  initForm(){
-    this.ligneFonctionnelleForm = this.fb.group(
-      {
-        banqueId: [null, Validators.required],
-        natureLigneFonctionnelleId: [null, Validators.required],
-        plafond: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)],],
-        taux: [null, [Validators.required, Validators.min(0), Validators.max(100), Validators.pattern(/^\d+(\.\d{1,2})?$/)],],
-        dateDepart: [null, [Validators.required]],
-        dateFin: [null, Validators.required],
-        sousLignes: this.fb.array([], [this.sousLigneNatureUniquenessValidator()])
-      },
-      { validators: [this.dateFinAfterDateDepartValidator()]}
+  private loadBanques() {
+    return this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc').pipe(
+      map(response => response.content.map(banque => ({
+        label: banque.nom,
+        value: banque.id!
+      }))),
+      catchError(err => {
+        console.error('Error loading banques:', err);
+        return of([]);
+      })
     );
-
-    // Formulaire dédié pour la modale des sous-lignes
-    this.sousLigneForm = this.fb.group({
-      id: [null],
-      natureLigneFonctionnelleId: [null, Validators.required],
-      plafond: [null, [Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]
-      ],
-    });
-
-    this.setupHierarchicalListeners();
   }
 
+  private loadNatureLignes() {
+    return this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().pipe(
+      map(natures => natures.map(nature => ({
+        label: nature.label,
+        value: nature.id!
+      }))),
+      catchError(err => {
+        console.error('Error loading natures:', err);
+        return of([]);
+      })
+    );
+  }
 
-  /** Ouvre le dialogue en mode ajout. */
+  // ========== REACTIVE STREAMS SETUP ==========
+
+  private setupReactiveStreams(): void {
+    this.setupBanqueChangeStream();
+    this.setupMarcheFilterStream();
+    this.setupSousLignesStream();
+    this.setupNatureChangeStream();
+  }
+
+  private setupBanqueChangeStream(): void {
+    this.ligneFonctionnelleForm.get('banqueId')!.valueChanges.pipe(
+      takeUntil(this.destroy$),
+      tap(banqueId => {
+        // Reset marché quand banque change
+        this.ligneFonctionnelleForm.patchValue({ marcheId: null }, { emitEvent: false });
+        this.selectedBanqueId$.next(banqueId);
+        this.marchesOptions = []; // Clear previous options
+      }),
+      filter(banqueId => !!banqueId),
+      switchMap(banqueId => this.loadMarchesForBanque(banqueId, 0))
+    ).subscribe({
+      next: (response) => {
+        this.initializeMarchesOptions(response);
+      },
+      error: (err) => {
+        console.error('Error loading marchés:', err);
+        this.marchesOptions = [];
+      }
+    });
+  }
+
+  private setupMarcheFilterStream(): void {
+    combineLatest([
+      this.marcheFilter$.pipe(debounceTime(DEBOUNCE_TIME), distinctUntilChanged()),
+      this.selectedBanqueId$.pipe(filter(id => id !== null))
+    ]).pipe(
+      takeUntil(this.destroy$),
+      switchMap(([filter, banqueId]) =>
+        this.loadMarchesForBanque(banqueId!, 0, filter)
+      )
+    ).subscribe({
+      next: (response) => {
+        this.initializeMarchesOptions(response);
+      },
+      error: (err) => {
+        console.error('Error filtering marchés:', err);
+      }
+    });
+  }
+
+  private setupSousLignesStream(): void {
+    this.sousLignesArray.valueChanges.pipe(
+      takeUntil(this.destroy$),
+      debounceTime(100)
+    ).subscribe(() => {
+      this.calculateTotalSousLignesPlafond();
+      this.ligneFonctionnelleForm.updateValueAndValidity();
+    });
+
+    this.ligneFonctionnelleForm.get('plafond')!.valueChanges.pipe(
+      takeUntil(this.destroy$),
+      debounceTime(100)
+    ).subscribe(() => {
+      this.ligneFonctionnelleForm.updateValueAndValidity();
+    });
+  }
+
+  private setupNatureChangeStream(): void {
+    this.ligneFonctionnelleForm.get('natureLigneFonctionnelleId')!.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(natureId => {
+      if (natureId !== CAUTION_ADMINISTRATIVE_ID) {
+        this.sousLignesArray.clear();
+      }
+      this.ligneFonctionnelleForm.updateValueAndValidity();
+    });
+  }
+
+  // ========== MARCHÉ LOADING ==========
+
+  private loadMarchesForBanque(banqueId: number, page: number, filter: string = '') {
+    return this.marcheService.getAllMarches(
+      { banqueId, numero: filter },
+      page,
+      MARCHE_PAGE_SIZE,
+      'numero,asc'
+    ).pipe(
+      catchError(err => {
+        console.error('Error loading marchés:', err);
+        return of({ content: [], page: { totalElements: 0 } });
+      })
+    );
+  }
+
+  private initializeMarchesOptions(response: any): void {
+    const total = response.page.totalElements;
+    const data = response.content.map((m: any) => ({ label: m.numero, value: m.id }));
+
+    this.marchesOptions = Array.from({ length: total }).map(() => ({}));
+    this.marchesOptions.splice(0, data.length, ...data);
+  }
+
+  onLazyLoadMarches(event: any): void {
+    const banqueId = this.selectedBanqueId$.value;
+    if (!banqueId) return;
+
+    const { first } = event;
+    const page = Math.floor(first / MARCHE_PAGE_SIZE);
+
+    if (this.marchesOptions[first]?.value !== undefined) {
+      return;
+    }
+
+    this.loadingMarches = true;
+    this.loadMarchesForBanque(banqueId, page, this.marcheFilter$.value)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          const newItems = response.content.map((m: any) => ({ label: m.numero, value: m.id }));
+          const updatedOptions = [...this.marchesOptions];
+          updatedOptions.splice(first, newItems.length, ...newItems);
+          this.marchesOptions = updatedOptions;
+          this.loadingMarches = false;
+        },
+        error: () => {
+          this.loadingMarches = false;
+        }
+      });
+  }
+
+  onFilterMarches(event: any): void {
+    const query = event.filter?.trim() || '';
+    this.marcheFilter$.next(query);
+  }
+
+  // ========== ROUTE HANDLING ==========
+
+  private handleRouteParams(): void {
+    this.route.paramMap.pipe(
+      takeUntil(this.destroy$),
+      map(params => params.get('id')),
+      tap(id => {
+        this.isEditMode = !!id;
+        this.ligneFonctionnelleId = id ? Number(id) : null;
+      }),
+      filter(id => !!id),
+      switchMap(id => this.loadLigneFonctionnelle(Number(id)))
+    ).subscribe();
+  }
+
+  private loadLigneFonctionnelle(id: number) {
+    this.loading = true;
+
+    return this.ligneFonctionnelleService.getLigneFonctionnelleById(id).pipe(
+      takeUntil(this.destroy$),
+      tap(ligne => this.patchFormWithLigne(ligne)),
+      catchError(error => {
+        console.error('Error loading ligne:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: error.error?.message || 'Impossible de charger la ligne',
+          life: 3000
+        });
+        this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
+        return EMPTY;
+      }),
+      tap(() => this.loading = false)
+    );
+  }
+
+  private patchFormWithLigne(ligne: LigneFonctionnelleResponse): void {
+    // Patch banque first pour trigger marché loading
+    this.ligneFonctionnelleForm.patchValue({
+      banqueId: ligne.banqueId
+    }, { emitEvent: true });
+
+    // Attendre que les marchés soient chargés
+    setTimeout(() => {
+      if (ligne.marcheId) {
+        this.ensureMarcheInOptions(ligne.marcheId).pipe(
+          takeUntil(this.destroy$)
+        ).subscribe(() => {
+          this.patchRemainingFields(ligne);
+        });
+      } else {
+        this.patchRemainingFields(ligne);
+      }
+    }, 500);
+  }
+
+  private ensureMarcheInOptions(marcheId: number) {
+    if (this.marchesOptions.find(m => m?.value === marcheId)) {
+      return of(null);
+    }
+
+    return this.marcheService.getMarcheById(marcheId).pipe(
+      tap(marche => {
+        const selected = { label: marche.numero, value: marche.id };
+        this.marchesOptions[0] = selected;
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  private patchRemainingFields(ligne: LigneFonctionnelleResponse): void {
+    this.ligneFonctionnelleForm.patchValue({
+      marcheId: ligne.marcheId,
+      natureLigneFonctionnelleId: ligne.natureLigneFonctionnelleId,
+      plafond: ligne.plafond,
+      taux: ligne.taux,
+      dateDepart: ligne.dateDepart ? new Date(ligne.dateDepart) : null,
+      dateFin: ligne.dateFin ? new Date(ligne.dateFin) : null
+    }, { emitEvent: false });
+
+    if (ligne.estLigneMere && ligne.sousLignes?.length) {
+      this.sousLignesArray.clear();
+      ligne.sousLignes.forEach(sl => {
+        this.sousLignesArray.push(this.createSousLigneFormGroup(sl));
+      });
+      this.calculateTotalSousLignesPlafond();
+    }
+  }
+
+  // ========== SOUS-LIGNES MANAGEMENT ==========
+
   openAddSousLigneDialog(): void {
     this.sousLigneEditMode = false;
     this.currentSousLigneIndex = null;
@@ -138,115 +452,73 @@ export class LigneFonctionnelleEditComponent implements OnInit {
     this.displaySousLigneDialog = true;
   }
 
-  /** Ouvre le dialogue en mode édition. */
   openEditSousLigneDialog(index: number): void {
     this.sousLigneEditMode = true;
     this.currentSousLigneIndex = index;
-    // PatchValue avec la valeur du contrôle existant dans le FormArray
-    const sousLigneControl = this.sousLignesArray.at(index);
-    this.sousLigneForm.patchValue(sousLigneControl.value);
+    this.sousLigneForm.patchValue(this.sousLignesArray.at(index).value);
     this.displaySousLigneDialog = true;
   }
 
-  /** Action lors de la fermeture du dialogue. */
   onSousLigneDialogHide(): void {
     this.sousLigneForm.reset();
     this.sousLigneEditMode = false;
     this.currentSousLigneIndex = null;
   }
 
-  /** Sauvegarde la sous-ligne (ajout ou modification) dans le FormArray. */
   saveSousLigne(): void {
     this.sousLigneForm.markAllAsTouched();
 
     if (this.sousLigneForm.invalid) {
-      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Veuillez corriger les erreurs dans le formulaire de la sous-ligne.', life: 3000 });
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation',
+        detail: 'Veuillez corriger les erreurs',
+        life: 3000
+      });
       return;
     }
 
     const sousLigneValue = this.sousLigneForm.value;
 
     if (this.sousLigneEditMode && this.currentSousLigneIndex !== null) {
-      // Mode Édition : Mettre à jour le contrôle existant dans le FormArray
       this.sousLignesArray.at(this.currentSousLigneIndex).patchValue(sousLigneValue);
-      this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Sous-ligne modifiée.', life: 1500 });
-    } else {
-      // Mode Ajout : Ajouter un nouveau FormGroup au FormArray
-      const newSousLigneGroup = this.createSousLigneFormGroup(sousLigneValue); // Utiliser la méthode de création
-      this.sousLignesArray.push(newSousLigneGroup);
-      this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Sous-ligne ajoutée.', life: 1500 });
-    }
-
-    // Déclencher la validation globale (y compris l'unicité) et recalculer le total
-    this.ligneFonctionnelleForm.updateValueAndValidity();
-    this.calculateTotalSousLignesPlafond();
-
-    // Afficher un message d'erreur si la validation d'unicité a échoué après l'opération
-    if(this.sousLignesArray.hasError('duplicateSousLigneNature')){
-      this.messageService.add({ severity: 'error', summary: 'Doublon Détecté', detail: 'Cette nature de sous-ligne existe déjà. Veuillez la modifier ou la supprimer.', life: 5000 });
-    }
-
-    this.displaySousLigneDialog = false; // Fermer la modale
-  }
-
-  /** Retourne le label d'une nature à partir de son ID (pour l'affichage dans le tableau). */
-  getNatureLabel(id: number | null): string {
-    const nature = this.natureLigneOptions.find(n => n.value === id);
-    return nature ? nature.label : 'Nature Inconnue';
-  }
-
-
-  // Méthodes de chargement existantes
-  loadNatureLigneOptionsForDropdown(): void {
-    this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().subscribe({
-      next: (natures) => {
-
-        this.natureLigneOptions = natures.map(nature => ({
-          label: nature.label,
-          value: nature.id!
-        }));
-      },
-      error: (err) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des natures de ligne.',
-          life: 3000
-        });
-        console.error('Error loading natures:', err);
-      }
-    });
-  }
-
-  loadBanquesForDropdown(): void {
-    this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc')
-      .subscribe({
-        next: (pageResponse) => {
-          this.banquesOptions = pageResponse.content.map(banque => ({ label: banque.nom, value: banque.id! }));
-        },
-        error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.', life: 3000 });
-          console.error('Error loading banks:', err);
-        }
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Succès',
+        detail: 'Sous-ligne modifiée',
+        life: 1500
       });
-  }
-
-  // Getters et méthodes du FormArray
-  get sousLignesArray(): FormArray {
-    return this.ligneFonctionnelleForm.get('sousLignes') as FormArray;
-  }
-
-
-  createSousLigneFormGroup(sousLigne?: SousLigneResponseDto | SousLigneRequestDto): FormGroup {
-    let initialId = null;
-
-    if (sousLigne && 'id' in sousLigne) {
-      initialId = sousLigne.id || null;
+    } else {
+      this.sousLignesArray.push(this.createSousLigneFormGroup(sousLigneValue));
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Succès',
+        detail: 'Sous-ligne ajoutée',
+        life: 1500
+      });
     }
 
-    // Plafond est facultatif pour la sous-ligne, mais doit être valide s'il est présent.
+    if (this.sousLignesArray.hasError('duplicateSousLigneNature')) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Doublon',
+        detail: 'Cette nature existe déjà',
+        life: 5000
+      });
+    }
+
+    this.displaySousLigneDialog = false;
+  }
+
+  removeSousLigne(index: number): void {
+    this.sousLignesArray.removeAt(index);
+  }
+
+  private createSousLigneFormGroup(sousLigne?: SousLigneResponseDto | SousLigneRequestDto): FormGroup {
+    const id = (sousLigne && 'id' in sousLigne) ? sousLigne.id : null;
+
     return this.fb.group({
-      id: [initialId],
+      id: [id],
       plafond: [
         sousLigne?.plafond ?? null,
         [Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]
@@ -258,213 +530,128 @@ export class LigneFonctionnelleEditComponent implements OnInit {
     });
   }
 
-  removeSousLigne(index: number): void {
-    this.sousLignesArray.removeAt(index);
-    // Important: forcer la validation après suppression
-    this.ligneFonctionnelleForm.get('plafond')?.updateValueAndValidity();
-    this.calculateTotalSousLignesPlafond();
-    this.ligneFonctionnelleForm.updateValueAndValidity(); // Réexécute le validateur d'unicité
-  }
-
-  get isCautionAdministrativeSelected(): boolean {
-    const selectedId = this.ligneFonctionnelleForm.get('natureLigneFonctionnelleId')?.value;
-    return selectedId === CAUTION_ADMINISTRATIVE_ID;
-  }
-
-  loadLigneFonctionnelle(id: number): void {
-    this.loading = true;
-    this.ligneFonctionnelleService.getLigneFonctionnelleById(id).subscribe({
-      next: (ligne: LigneFonctionnelleResponse) => {
-        this.ligneFonctionnelleForm.patchValue({
-          banqueId: ligne.banqueId,
-          natureLigneFonctionnelleId: ligne.natureLigneFonctionnelleId,
-          plafond: ligne.plafond,
-          taux: ligne.taux,
-          dateDepart: ligne.dateDepart ? new Date(ligne.dateDepart) : null,
-          dateFin: ligne.dateFin ? new Date(ligne.dateFin) : null,
-        });
-
-        if (ligne.estLigneMere && ligne.sousLignes && ligne.sousLignes.length > 0) {
-          this.sousLignesArray.clear(); // Vider avant de populer
-          ligne.sousLignes.forEach(sousLigne => {
-            this.sousLignesArray.push(this.createSousLigneFormGroup(sousLigne));
-          });
-          this.calculateTotalSousLignesPlafond();
-        }
-
-        this.ligneFonctionnelle = ligne;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement de la ligne fonctionnelle:', error);
-        const errorMessage = error.error?.message || 'Impossible de charger la ligne fonctionnelle.';
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-        this.loading = false;
-        this.router.navigate(['/portail/lignes-fonctionnelles']);
-      }
-    });
-  }
-
-  onSubmit(): void {
-    this.ligneFonctionnelleForm.markAllAsTouched();
-    // Re-run validation on the form group level for cross-field validators
-    this.ligneFonctionnelleForm.updateValueAndValidity();
-
-    if (this.ligneFonctionnelleForm.invalid) {
-      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Veuillez corriger les erreurs dans le formulaire.', life: 3000 });
-      return;
-    }
-
-    this.confirmationService.confirm({
-      message: this.isEditMode ? 'Êtes-vous sûr de vouloir modifier cette ligne fonctionnelle ?' : 'Êtes-vous sûr de vouloir créer cette ligne fonctionnelle ?',
-      header: 'Confirmation de l\'enregistrement',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.executeSaveLigneFonctionnelle();
-      },
-      reject: () => {
-        this.messageService.add({ severity: 'info', summary: 'Annulé', detail: 'Opération d\'enregistrement annulée.', life: 3000 });
-      }
-    });
-  }
-
-  executeSaveLigneFonctionnelle(): void {
-    this.loading = true;
-
-    // 1. Récupérer la valeur brute du formulaire (y compris le FormArray 'sousLignes')
-    const formValue = this.ligneFonctionnelleForm.value;
-
-    // 2. Déterminer les sous-lignes à envoyer :
-    //    - On les inclut UNIQUEMENT si la nature est "Caution Administrative" ET qu'il y en a dans le FormArray.
-    //    - Sinon, on envoie un tableau vide.
-    const sousLignesToSend: SousLigneRequestDto[] = this.isCautionAdministrativeSelected && formValue.sousLignes.length > 0
-      ? formValue.sousLignes
-      : [];
-
-    // 3. Construction de la requête principale
-    const ligneRequest: LigneFonctionnelleRequest = {
-      banqueId: formValue.banqueId,
-      natureLigneFonctionnelleId: formValue.natureLigneFonctionnelleId,
-      plafond: formValue.plafond,
-      taux: formValue.taux,
-      dateDepart: formValue.dateDepart,
-      dateFin: formValue.dateFin,
-      // Les sous-lignes sont incluses ici pour le POST (Création en cascade)
-      sousLignes: sousLignesToSend
-    };
-
-    if (this.isEditMode && this.ligneFonctionnelleId) {
-      // --- SCÉNARIO MISE À JOUR (PUT /lignes-fonctionnelles/{id}) ---
-
-      // IMPORTANT: Pour l'édition de la Ligne Mère/Indépendante, on met à jour SEULEMENT
-      // les attributs principaux (taux, dates, plafond) et on s'assure que le tableau sousLignes
-      // est vide. La gestion des enfants se fait par l'endpoint dédié `manageSousLignes`.
-      const mereUpdateRequest: LigneFonctionnelleRequest = { ...ligneRequest, sousLignes: [] };
-
-      this.ligneFonctionnelleService.updateLigneFonctionnelle(this.ligneFonctionnelleId, mereUpdateRequest)
-        .subscribe({
-          next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle mise à jour avec succès.', life: 3000 });
-            this.loading = false;
-            this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
-          },
-          error: (error) => {
-            console.error('Erreur lors de la mise à jour de la ligne fonctionnelle:', error);
-            const errorMessage = error.error?.message || 'Échec de la mise à jour de la ligne fonctionnelle.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-            this.loading = false;
-          }
-        });
-    } else {
-      // --- SCÉNARIO CRÉATION (POST /lignes-fonctionnelles) ---
-      this.ligneFonctionnelleService.createLigneFonctionnelle(ligneRequest)
-        .subscribe({
-          next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle créée avec succès.', life: 3000 });
-            this.loading = false;
-            this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
-          },
-          error: (error) => {
-            console.error('Erreur lors de la création de la ligne fonctionnelle:', error);
-            const errorMessage = error.error?.message || 'Échec de la création de la ligne fonctionnelle.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-            this.loading = false;
-          }
-        });
-    }
-  }
-
-
-  // Écouteurs pour recalculer le total et valider
-  setupHierarchicalListeners(): void {
-    // Écoute les changements dans le FormArray
-    this.sousLignesArray.valueChanges.subscribe(() => {
-      this.calculateTotalSousLignesPlafond();
-      this.ligneFonctionnelleForm.updateValueAndValidity(); // Réexécute le validateur de groupe
-    });
-    // Écoute les changements dans le plafond mere
-    this.ligneFonctionnelleForm.get('plafond')?.valueChanges.subscribe(() => {
-      this.ligneFonctionnelleForm.updateValueAndValidity(); // Réexécute le validateur de groupe
-    });
-
-    // Gérer la désactivation du FormArray si la Nature n'est pas "Caution Administrative"
-    this.ligneFonctionnelleForm.get('natureLigneFonctionnelleId')?.valueChanges.subscribe((value) => {
-      if (value !== CAUTION_ADMINISTRATIVE_ID) {
-        // Si la nature change, vider et nettoyer le FormArray pour éviter l'envoi de données
-        this.sousLignesArray.clear();
-      }
-      // Force la réévaluation des erreurs de validation croisée au changement de nature.
-      this.ligneFonctionnelleForm.updateValueAndValidity();
-    });
-  }
-
-  // Calcule la somme pour l'affichage (UX) et la validation
-  calculateTotalSousLignesPlafond(): void {
+  private calculateTotalSousLignesPlafond(): void {
     this.totalSousLignesPlafond = this.sousLignesArray.controls.reduce((sum, control) => {
       const plafond = control.get('plafond')?.value;
-      // S'assurer que le plafond est un nombre valide (> 0) avant l'addition
       return sum + (typeof plafond === 'number' && plafond > 0 ? plafond : 0);
     }, 0);
   }
 
+  // ========== FORM SUBMISSION ==========
 
+  onSubmit(): void {
+    this.ligneFonctionnelleForm.markAllAsTouched();
+    this.ligneFonctionnelleForm.updateValueAndValidity();
+
+    if (this.ligneFonctionnelleForm.invalid) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation',
+        detail: 'Veuillez corriger les erreurs dans le formulaire',
+        life: 3000
+      });
+      return;
+    }
+
+    this.confirmationService.confirm({
+      message: this.isEditMode
+        ? 'Êtes-vous sûr de vouloir modifier cette ligne ?'
+        : 'Êtes-vous sûr de vouloir créer cette ligne ?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => this.executeSave(),
+      reject: () => {
+        this.messageService.add({
+          severity: 'info',
+          summary: 'Annulé',
+          detail: 'Opération annulée',
+          life: 2000
+        });
+      }
+    });
+  }
+
+  private executeSave(): void {
+    this.loading = true;
+
+    const request = this.buildRequest();
+
+    const save$ = this.isEditMode && this.ligneFonctionnelleId
+      ? this.ligneFonctionnelleService.updateLigneFonctionnelle(this.ligneFonctionnelleId, request)
+      : this.ligneFonctionnelleService.createLigneFonctionnelle(request);
+
+    save$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: `Ligne ${this.isEditMode ? 'modifiée' : 'créée'} avec succès`,
+          life: 3000
+        });
+        this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
+      },
+      error: (error) => {
+        console.error('Save error:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: error.error?.message || 'Échec de l\'enregistrement',
+          life: 3000
+        });
+        this.loading = false;
+      }
+    });
+  }
+
+  private buildRequest(): LigneFonctionnelleRequest {
+    const formValue = this.ligneFonctionnelleForm.value;
+
+    const sousLignes = this.isCautionAdministrativeSelected && formValue.sousLignes.length > 0
+      ? formValue.sousLignes
+      : [];
+
+    return {
+      banqueId: formValue.banqueId,
+      natureLigneFonctionnelleId: formValue.natureLigneFonctionnelleId,
+      marcheId: formValue.marcheId || null, // ✅ Peut être null
+      plafond: formValue.plafond,
+      taux: formValue.taux,
+      dateDepart: formValue.dateDepart,
+      dateFin: formValue.dateFin,
+      sousLignes: this.isEditMode ? [] : sousLignes
+    };
+  }
 
   onCancel(): void {
     this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
   }
 
+  // ========== VALIDATORS ==========
 
-  //  dateFin must be after dateDepart
-  dateFinAfterDateDepartValidator(): ValidatorFn {
-    return (formGroup: AbstractControl): { [key: string]: any } | null => {
-      const dateDepartControl = formGroup.get('dateDepart');
-      const dateFinControl = formGroup.get('dateFin');
+  private dateFinAfterDateDepartValidator(): ValidatorFn {
+    return (group: AbstractControl): { [key: string]: any } | null => {
+      const depart = group.get('dateDepart');
+      const fin = group.get('dateFin');
 
-      if (!dateDepartControl || !dateFinControl || !dateDepartControl.value || !dateFinControl.value) {
-        return null; // Don't validate if dates are not yet set
+      if (!depart?.value || !fin?.value) {
+        return null;
       }
 
-      const dateDepart = dateDepartControl.value as Date;
-      const dateFin = dateFinControl.value as Date;
-
-      if (dateFin < dateDepart) {
-        dateFinControl.setErrors({ ...dateFinControl.errors, 'minDate': true }); // Set error on dateFin
-      } else {
-        // This is crucial because errors are additive in Reactive Forms
-        if (dateFinControl.hasError('minDate')) {
-          const errors = { ...dateFinControl.errors }; // Get existing errors
-          delete errors['minDate']; // Remove the specific error
-          dateFinControl.setErrors(Object.keys(errors).length > 0 ? errors : null); // Set remaining errors or null
-        }
+      if (new Date(fin.value) < new Date(depart.value)) {
+        fin.setErrors({ ...fin.errors, minDate: true });
+      } else if (fin.hasError('minDate')) {
+        const errors = { ...fin.errors };
+        delete errors['minDate'];
+        fin.setErrors(Object.keys(errors).length > 0 ? errors : null);
       }
+
       return null;
     };
   }
-  /**
-   * Validateur personnalisé pour vérifier que les natures de ligne sont uniques
-   * à l'intérieur du FormArray des sous-lignes.
-   */
-  sousLigneNatureUniquenessValidator(): ValidatorFn {
+
+  private sousLigneNatureUniquenessValidator(): ValidatorFn {
     return (formArray: AbstractControl): { [key: string]: any } | null => {
       if (!(formArray instanceof FormArray)) {
         return null;
@@ -473,34 +660,53 @@ export class LigneFonctionnelleEditComponent implements OnInit {
       const natures: number[] = [];
       let hasDuplicate = false;
 
-      // Parcourir tous les FormGroups du FormArray
       for (const control of formArray.controls) {
-        const natureId = control.get('natureLigneFonctionnelleId')?.value;
+        const natureControl = control.get('natureLigneFonctionnelleId');
+        const natureId = natureControl?.value;
 
-        // Réinitialiser l'erreur spécifique à la nature dupliquée sur chaque contrôle
-        const errors = control.get('natureLigneFonctionnelleId')?.errors;
-        if (errors && errors['duplicateNature']) {
-          const newErrors = { ...errors };
-          delete newErrors['duplicateNature'];
-          control.get('natureLigneFonctionnelleId')?.setErrors(Object.keys(newErrors).length > 0 ? newErrors : null);
+        // Reset duplicate error
+        if (natureControl?.hasError('duplicateNature')) {
+          const errors = { ...natureControl.errors };
+          delete errors['duplicateNature'];
+          natureControl.setErrors(Object.keys(errors).length > 0 ? errors : null);
         }
 
-        if (natureId !== null && natureId !== undefined) {
+        if (natureId != null) {
           if (natures.includes(natureId)) {
             hasDuplicate = true;
-            // Définir l'erreur sur le contrôle dupliqué
-            control.get('natureLigneFonctionnelleId')?.setErrors({ ...control.get('natureLigneFonctionnelleId')?.errors, 'duplicateNature': true });
+            natureControl?.setErrors({
+              ...natureControl.errors,
+              duplicateNature: true
+            });
           } else {
             natures.push(natureId);
           }
         }
       }
 
-      // Retourner l'erreur globale au niveau du FormArray
-      return hasDuplicate ? { 'duplicateSousLigneNature': true } : null;
+      return hasDuplicate ? { duplicateSousLigneNature: true } : null;
     };
   }
+
+  // ========== GETTERS & HELPERS ==========
+
+  get sousLignesArray(): FormArray {
+    return this.ligneFonctionnelleForm.get('sousLignes') as FormArray;
+  }
+
+  get isCautionAdministrativeSelected(): boolean {
+    return this.ligneFonctionnelleForm.get('natureLigneFonctionnelleId')?.value === CAUTION_ADMINISTRATIVE_ID;
+  }
+
   get f() {
     return this.ligneFonctionnelleForm.controls;
+  }
+
+  get selectedBanqueId(): number | null {
+    return this.selectedBanqueId$.value;
+  }
+
+  getNatureLabel(id: number | null): string {
+    return this.natureLigneOptions.find(n => n.value === id)?.label || 'Inconnue';
   }
 }

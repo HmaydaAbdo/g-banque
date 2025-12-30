@@ -1,445 +1,297 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
-import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { RippleModule } from 'primeng/ripple';
-import { ToastModule } from 'primeng/toast';
-import { MenuItem, MessageService, ConfirmationService, ScrollerOptions } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToolbarModule } from 'primeng/toolbar';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
-import { DropdownModule } from 'primeng/dropdown';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { CalendarModule } from 'primeng/calendar';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { InputSwitchModule } from 'primeng/inputswitch';
-import { BreadcrumbModule } from 'primeng/breadcrumb';
+  import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+  import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
+  import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+  import { RouterLink, RouterLinkActive } from '@angular/router';
+  import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
+  import { InputTextModule } from 'primeng/inputtext';
+  import { ButtonModule } from 'primeng/button';
+  import { RippleModule } from 'primeng/ripple';
+  import { ToastModule } from 'primeng/toast';
+  import { MenuItem, MessageService, ConfirmationService, ScrollerOptions } from 'primeng/api';
+  import { ConfirmDialogModule } from 'primeng/confirmdialog';
+  import { ToolbarModule } from 'primeng/toolbar';
+  import { TagModule } from 'primeng/tag';
+  import { TooltipModule } from 'primeng/tooltip';
+  import { DropdownModule } from 'primeng/dropdown';
+  import { InputNumberModule } from 'primeng/inputnumber';
+  import { CalendarModule } from 'primeng/calendar';
+  import { InputSwitchModule } from 'primeng/inputswitch';
+  import { BreadcrumbModule } from 'primeng/breadcrumb';
 
-import { Role } from "../../../../auth/enum/Role";
-import { AuthService } from "../../../../auth/services/auth.service";
-import { LigneFonctionnelleSpecifiqueResponse } from "../../dtos/LigneFonctionnelleSpecifiqueResponse";
-import { LigneFonctionnelleSpecifiqueSearchCriteria } from "../../dtos/LigneFonctionnelleSpecifiqueSearchCriteria";
-import { SpecificFunctionalLigneService } from "../../service/SpecificFunctionalLigneService";
-import { BanqueService } from "../../../comptes-bancaire/services/BanqueService";
-import { MarcheService } from "../../../Marches/service/marche-service.service";
+  // RxJS
+  import { Subject, BehaviorSubject, of } from 'rxjs';
+  import { debounceTime, distinctUntilChanged, takeUntil, switchMap, catchError, tap } from 'rxjs/operators';
 
-import {
-  NatureLigneFonctionnelleResponse
-} from "../../../lignes-fonctionnelles/dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleResponse";
-import {
-  NatureLigneFonctionnelleService
-} from "../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service";
+  // Auth & Services
+  import { Role } from "../../../../auth/enum/Role";
+  import { AuthService } from "../../../../auth/services/auth.service";
+  import { LigneFonctionnelleSpecifiqueResponse } from "../../dtos/LigneFonctionnelleSpecifiqueResponse";
+  import { LigneFonctionnelleSpecifiqueSearchCriteria } from "../../dtos/LigneFonctionnelleSpecifiqueSearchCriteria";
+  import { SpecificFunctionalLigneService } from "../../service/SpecificFunctionalLigneService";
+  import { BanqueService } from "../../../comptes-bancaire/services/BanqueService";
+  import { MarcheService } from "../../../Marches/service/marche-service.service";
+  import { NatureLigneFonctionnelleService } from "../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service";
 
-@Component({
-  selector: 'app-spefic-ligne-encours',
-  templateUrl: './spefic-ligne-encours.component.html',
-  styleUrls: ['./spefic-ligne-encours.component.scss'],
-  standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    FormsModule,
-    DecimalPipe,
-    DatePipe,
-    RouterLink,
-    TableModule,
-    InputTextModule,
-    ButtonModule,
-    RippleModule,
-    ToastModule,
-    ConfirmDialogModule,
-    ToolbarModule,
-    TagModule,
-    TooltipModule,
-    DropdownModule,
-    InputNumberModule,
-    CalendarModule,
-    InputSwitchModule,
-    BreadcrumbModule,
-    RouterLinkActive
-  ],
-  providers: [MessageService, ConfirmationService]
-})
-export class SpeficLigneEncoursComponent implements OnInit {
+  const MARCHE_PAGE_SIZE = 10;
+  const DEBOUNCE_TIME = 300;
 
-  @ViewChild('dt') dt: Table | undefined;
+  @Component({
+    selector: 'app-spefic-ligne-encours',
+    templateUrl: './spefic-ligne-encours.component.html',
+    styleUrls: ['./spefic-ligne-encours.component.scss'],
+    standalone: true,
+    imports: [
+      CommonModule, ReactiveFormsModule, FormsModule, DecimalPipe, DatePipe,
+      RouterLink, RouterLinkActive, TableModule, InputTextModule, ButtonModule,
+      RippleModule, ToastModule, ConfirmDialogModule, ToolbarModule, TagModule,
+      TooltipModule, DropdownModule, InputNumberModule, CalendarModule,
+      InputSwitchModule, BreadcrumbModule
+    ],
+    providers: [MessageService, ConfirmationService]
+  })
+  export class SpeficLigneEncoursComponent implements OnInit, OnDestroy {
 
-  lignesFonctionnellesSpecifiques: LigneFonctionnelleSpecifiqueResponse[] = [];
-  totalRecords: number = 0;
-  loading: boolean = false;
-  first: number = 0;
-  rows: number = 10;
-  sortField: string | string[] = 'id';
-  sortOrder: number = 1;
-  searchForm!: FormGroup;
+    @ViewChild('dt') dt: Table | undefined;
+    private readonly destroy$ = new Subject<void>();
 
-  statutOptions: any[] = [
-    { label: 'Tous', value: null },
-    { label: 'En cours', value: false },
-    { label: 'Expirées', value: true }
-  ];
+    // ========== REACTIVE STREAMS ==========
+    private readonly selectedBanqueId$ = new BehaviorSubject<number | null>(null);
+    private readonly marcheFilter$ = new BehaviorSubject<string>('');
 
-  banquesOptions: { label: string; value: number | null }[] = [];
-  natureLigneOptions: { label: string; value: number | null }[] = [];
-  items: MenuItem[] | undefined;
+    // ========== DATA TABLE ==========
+    lignesFonctionnellesSpecifiques: LigneFonctionnelleSpecifiqueResponse[] = [];
+    totalRecords = 0;
+    loading = false;
+    first = 0;
+    rows = 10;
+    sortField = 'id';
+    sortOrder = -1;
 
-  // ✅ Configuration optimisée pour le dropdown des marchés
-  marchesOptions: any[] = [];
-  marchesLoading: boolean = false;
-  currentMarcheFilter: string = '';
-  rowsPerPageMarches: number = 10;
-
-  marchesScrollerOptions: ScrollerOptions = {
-    delay: 250,
-    showLoader: true,
-    lazy: true,
-    onLazyLoad: this.onLazyLoadMarches.bind(this)
-  };
-
-  constructor(
-    private specificLigneService: SpecificFunctionalLigneService,
-    private banqueService: BanqueService,
-    private marcheService: MarcheService,
-    private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private fb: FormBuilder,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private authService: AuthService
-  ) { }
-
-  ngOnInit(): void {
-    this.items = [
-      { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
-      { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-specifiques-encours', label: "Les Lignes Fonctionnelles Spécifiques Encours" }
+    // ========== FORMS & OPTIONS ==========
+    searchForm!: FormGroup;
+    banquesOptions: any[] = [];
+    natureLigneOptions: any[] = [];
+    statutOptions = [
+      { label: 'Tous', value: null },
+      { label: 'En cours', value: false },
+      { label: 'Expirées', value: true }
     ];
-    this.initSearchForm();
-    this.setupFormListeners();
-    this.loadFilterOptions();
-    this.initializeMarches(); // ✅ Initialisation des marchés
-  }
 
-  initSearchForm(): void {
-    this.searchForm = this.fb.group({
-      banqueId: [null],
-      natureLigneFonctionnelleId: [null],
-      marcheId: [null],
-      actif: [true],
-      isExpired: [null]
-    });
-  }
+    // ========== MARCHÉ DROPDOWN ==========
+    marchesOptions: any[] = [];
+    marchesLoading = false;
+    marchesScrollerOptions: ScrollerOptions;
 
-  setupFormListeners(): void {
-    this.searchForm.valueChanges
-      .pipe(
+    items: MenuItem[] = [];
+
+    constructor(
+      private specificLigneService: SpecificFunctionalLigneService,
+      private banqueService: BanqueService,
+      private marcheService: MarcheService,
+      private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
+      private fb: FormBuilder,
+      private messageService: MessageService,
+      private confirmationService: ConfirmationService,
+      private authService: AuthService
+    ) {
+      this.marchesScrollerOptions = {
+        delay: 250,
+        showLoader: true,
+        lazy: true,
+        onLazyLoad: this.onLazyLoadMarches.bind(this)
+      };
+    }
+
+    ngOnInit(): void {
+      this.initBreadcrumb();
+      this.initSearchForm();
+      this.loadFilterOptions();
+      this.setupReactiveStreams();
+    }
+
+    ngOnDestroy(): void {
+      this.destroy$.next();
+      this.destroy$.complete();
+    }
+
+    private initBreadcrumb(): void {
+      this.items = [
+        { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
+        { icon: 'pi pi-list', label: "Lignes Spécifiques" }
+      ];
+    }
+
+    private initSearchForm(): void {
+      this.searchForm = this.fb.group({
+        banqueId: [null],
+        natureLigneFonctionnelleId: [null],
+        marcheId: [null],
+        actif: [true],
+        isExpired: [null]
+      });
+    }
+
+    private setupReactiveStreams(): void {
+      // 1. Détection des changements dans le formulaire (recherche globale)
+      this.searchForm.valueChanges.pipe(
+        takeUntil(this.destroy$),
         debounceTime(500),
         distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
-      )
-      .subscribe(() => {
-        this.onSearch();
+      ).subscribe(() => this.onSearch());
+
+      // 2. Gestion de la dépendance Banque -> Marché
+      this.searchForm.get('banqueId')!.valueChanges.pipe(
+        takeUntil(this.destroy$),
+        tap(id => this.selectedBanqueId$.next(id))
+      ).subscribe();
+
+      // 3. Gestion du filtre texte du dropdown Marché
+      this.marcheFilter$.pipe(
+        takeUntil(this.destroy$),
+        debounceTime(DEBOUNCE_TIME),
+        distinctUntilChanged(),
+        switchMap(filter => this.loadMarchesData(0, filter, this.selectedBanqueId$.value))
+      ).subscribe(res => this.initializeMarchesOptions(res));
+
+      // Initialisation initiale des marchés
+      this.loadMarchesData(0).subscribe(res => this.initializeMarchesOptions(res));
+    }
+
+    // ========== MARCHÉS DROPDOWN LOGIC ==========
+
+    private loadMarchesData(page: number, filter: string = '', banqueId?: number | null) {
+      const criteria: any = {};
+      if (filter) criteria.numero = filter;
+      if (banqueId) criteria.banqueId = banqueId;
+
+      return this.marcheService.getAllMarches(criteria, page, MARCHE_PAGE_SIZE, 'numero,asc').pipe(
+        catchError(() => of({ content: [], page: { totalElements: 0 } }))
+      );
+    }
+
+    private initializeMarchesOptions(response: any): void {
+      const total = response.page.totalElements;
+      const data = [{ label: 'Tous les marchés', value: null }];
+      response.content.forEach((m: any) => data.push({ label: m.numero, value: m.id }));
+
+      // On prépare le tableau pour le Virtual Scroll (placeholders)
+      this.marchesOptions = Array.from({ length: total + 1 }).map(() => ({}));
+      this.marchesOptions.splice(0, data.length, ...data);
+    }
+
+    onLazyLoadMarches(event: any): void {
+      const { first } = event;
+      if (this.marchesOptions[first]?.value !== undefined) return;
+
+      this.marchesLoading = true;
+      const page = Math.floor(first / MARCHE_PAGE_SIZE);
+
+      this.loadMarchesData(page, this.marcheFilter$.value, this.selectedBanqueId$.value)
+        .subscribe(res => {
+          const newItems = res.content.map((m: any) => ({ label: m.numero, value: m.id }));
+          const updated = [...this.marchesOptions];
+          updated.splice(first, newItems.length, ...newItems);
+          this.marchesOptions = updated;
+          this.marchesLoading = false;
+        });
+    }
+
+    onFilterMarches(event: any): void {
+      this.marcheFilter$.next(event.filter?.trim() || '');
+    }
+
+    // ========== FILTERS LOAD ==========
+
+    loadFilterOptions(): void {
+      this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc').pipe(takeUntil(this.destroy$)).subscribe(res => {
+        this.banquesOptions = [{ label: 'Toutes les banques', value: null }, ...res.content.map(b => ({ label: b.nom, value: b.id }))];
       });
-  }
 
-  loadFilterOptions(): void {
-    this.loadBanques();
-    this.loadNatureLigneOptions();
-  }
+      this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().pipe(takeUntil(this.destroy$)).subscribe(res => {
+        this.natureLigneOptions = [{ label: 'Toutes les natures', value: null }, ...res.map(n => ({ label: n.label, value: n.id }))];
+      });
+    }
 
-  loadNatureLigneOptions(): void {
-    this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().subscribe({
-      next: (natures: NatureLigneFonctionnelleResponse[]) => {
-        this.natureLigneOptions = [{ label: 'Toutes les natures', value: null }];
-        natures.forEach(nature => {
-          this.natureLigneOptions.push({ label: nature.label, value: nature.id! });
+    // ========== MAIN TABLE LOGIC ==========
+
+    loadLignesFonctionnellesSpecifiques(event: TableLazyLoadEvent): void {
+      this.loading = true;
+      this.first = event.first ?? 0;
+      this.rows = event.rows ?? 10;
+      this.sortField = (Array.isArray(event.sortField) ? event.sortField[0] : event.sortField) || 'id';
+      this.sortOrder = event.sortOrder ?? -1;
+
+      const sort = `${this.sortField},${this.sortOrder === 1 ? 'asc' : 'desc'}`;
+      const criteria: LigneFonctionnelleSpecifiqueSearchCriteria = this.searchForm.value;
+
+      this.specificLigneService.getLignesFonctionnellesSpecifiques(criteria, this.first / this.rows, this.rows, sort)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (data) => {
+            this.lignesFonctionnellesSpecifiques = data.content;
+            this.totalRecords = data.page.totalElements;
+            this.loading = false;
+          },
+          error: () => {
+            this.loading = false;
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
+          }
         });
-      },
-      error: (err) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des natures de ligne pour le filtre.',
-          life: 3000
-        });
-        console.error('Error loading natures for filter:', err);
+    }
+
+    onSearch(): void {
+      if (this.dt) {
+        this.dt.first = 0;
+        this.dt.onLazyLoad.emit(this.dt.createLazyLoadMetadata());
       }
-    });
-  }
+    }
 
-  loadBanques(): void {
-    this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc')
-      .subscribe({
-        next: (pageResponse) => {
-          this.banquesOptions = [{ label: 'Toutes les banques', value: null }];
-          pageResponse.content.forEach(banque => {
-            this.banquesOptions.push({ label: banque.nom, value: banque.id! });
+    clearSearch(): void {
+      this.searchForm.reset({ banqueId: null, natureLigneFonctionnelleId: null, marcheId: null, actif: true, isExpired: null });
+    }
+
+    // ========== UI HELPERS ==========
+
+    getSoldeClass(solde: number | null): string {
+      if (solde === null || solde === undefined) return '';
+      return solde < 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold';
+    }
+
+    isAdmin(): boolean {
+      return this.authService.hasRole(Role.ADMIN);
+    }
+
+    private reloadTableAfterAction(): void {
+      if (this.dt) this.dt.onLazyLoad.emit(this.dt.createLazyLoadMetadata());
+    }
+
+    // ========== ACTIONS ==========
+
+    desactiver(ligne: LigneFonctionnelleSpecifiqueResponse): void {
+      this.confirmationService.confirm({
+        message: `Désactiver la ligne ${ligne.natureLigneFonctionnelleLabel} ?`,
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.specificLigneService.deactivateLigneFonctionnelle(ligne.id!).subscribe(() => {
+            this.messageService.add({ severity: 'success', summary: 'Désactivée' });
+            this.reloadTableAfterAction();
           });
-        },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des banques pour le filtre.',
-            life: 3000
-          });
-          console.error('Error loading banks for filter:', err);
         }
       });
-  }
-
-  // ✅ Initialisation des marchés avec placeholders
-  initializeMarches(): void {
-    this.marchesLoading = true;
-    this.marcheService.getAllMarchesForLazyLoad(0, this.rowsPerPageMarches, 'numero,asc').subscribe({
-      next: (res) => {
-        const total = res.page.totalElements;
-        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
-
-        // ✅ Option "Tous les marchés" en première position
-        const allOption = { label: 'Tous les marchés', value: null };
-
-        // ✅ Crée un tableau avec l'option "Tous" + placeholders vides
-        this.marchesOptions = [allOption, ...Array.from({ length: total }).map(() => ({}))];
-
-        // ✅ Remplit les premiers éléments réels (en sautant l'index 0 qui contient "Tous")
-        this.marchesOptions.splice(1, data.length, ...data);
-        this.marchesLoading = false;
-      },
-      error: (err) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec de l\'initialisation des marchés.',
-          life: 3000
-        });
-        console.error('Error initializing markets:', err);
-        this.marchesLoading = false;
-      }
-    });
-  }
-
-  // ✅ Chargement lazy avec cache
-  onLazyLoadMarches(event: any): void {
-    const { first } = event;
-
-    // ✅ Si c'est l'option "Tous les marchés" (index 0), on skip
-    if (first === 0) return;
-
-    const page = Math.floor((first - 1) / this.rowsPerPageMarches); // -1 car index 0 = "Tous"
-
-    // ✅ Vérifie si les données sont déjà chargées (cache)
-    if (this.marchesOptions[first] && this.marchesOptions[first].value !== undefined) {
-      return; // Pas besoin de recharger
     }
 
-    this.marchesLoading = true;
-    this.marcheService.getAllMarches(
-      { numero: this.currentMarcheFilter },
-      page,
-      this.rowsPerPageMarches,
-      'numero,asc'
-    ).subscribe({
-      next: (res) => {
-        const newItems = res.content.map(m => ({ label: m.numero, value: m.id }));
-        const updatedOptions = [...this.marchesOptions];
-
-        // ✅ Remplace les placeholders par les vraies données
-        updatedOptions.splice(first, newItems.length, ...newItems);
-        this.marchesOptions = updatedOptions;
-        this.marchesLoading = false;
-      },
-      error: (err) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des marchés.',
-          life: 3000
-        });
-        console.error('Error loading markets:', err);
-        this.marchesLoading = false;
-      }
-    });
-  }
-
-  // ✅ Filtrage serveur
-  onFilterMarches(event: any): void {
-    const query = event.filter?.trim() || '';
-    this.currentMarcheFilter = query;
-
-    this.marchesLoading = true;
-    this.marcheService.getAllMarches(
-      { numero: query },
-      0,
-      this.rowsPerPageMarches,
-      'numero,asc'
-    ).subscribe({
-      next: (res) => {
-        const total = res.page.totalElements;
-        const data = res.content.map(m => ({ label: m.numero, value: m.id }));
-
-        // ✅ Option "Tous les marchés" + placeholders
-        const allOption = { label: 'Tous les marchés', value: null };
-        this.marchesOptions = [allOption, ...Array.from({ length: total }).map(() => ({}))];
-        this.marchesOptions.splice(1, data.length, ...data);
-        this.marchesLoading = false;
-      },
-      error: (err) => {
-        console.error('Error filtering markets:', err);
-        this.marchesLoading = false;
-      }
-    });
-  }
-
-  loadLignesFonctionnellesSpecifiques(event: TableLazyLoadEvent): void {
-    this.loading = true;
-
-    this.first = event.first !== undefined ? event.first : 0;
-    this.rows = (event.rows !== undefined ? event.rows : 10) as number;
-    this.sortField = event.sortField || 'id';
-    this.sortOrder = event.sortOrder === 1 ? 1 : -1;
-
-    const page = this.first / this.rows;
-
-    const actualSortField = Array.isArray(this.sortField) ? this.sortField[0] : this.sortField;
-    const sort = `${actualSortField},${this.sortOrder === 1 ? 'asc' : 'desc'}`;
-
-    const searchCriteria: LigneFonctionnelleSpecifiqueSearchCriteria = this.searchForm.value;
-
-    this.specificLigneService
-      .getLignesFonctionnellesSpecifiques(searchCriteria, page, this.rows, sort)
-      .subscribe({
-        next: (data) => {
-          this.lignesFonctionnellesSpecifiques = data.content;
-          this.totalRecords = data.page.totalElements;
-          this.loading = false;
-        },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des lignes fonctionnelles spécifiques.',
-            life: 3000
+    deleteLigneFonctionnelleSpecifique(ligne: LigneFonctionnelleSpecifiqueResponse): void {
+      this.confirmationService.confirm({
+        message: `Supprimer définitivement cette ligne ?`,
+        header: 'Attention',
+        icon: 'pi pi-trash',
+        accept: () => {
+          this.specificLigneService.deleteLigneFonctionnelleSpecifique(ligne.id!).subscribe(() => {
+            this.messageService.add({ severity: 'success', summary: 'Supprimée' });
+            this.reloadTableAfterAction();
           });
-          console.error('Error fetching specific functional lignePrefi:', err);
-          this.loading = false;
-        },
-      });
-  }
-
-  onSearch(): void {
-    if (this.dt) {
-      this.dt.first = 0;
-      this.dt.filterTimeout = 0;
-      this.dt.onLazyLoad.emit(this.dt.createLazyLoadMetadata());
-    } else {
-      this.loadLignesFonctionnellesSpecifiques({
-        first: 0,
-        rows: this.rows,
-        sortField: this.sortField,
-        sortOrder: this.sortOrder,
-        filters: {}
+        }
       });
     }
   }
-
-  clearSearch(): void {
-    this.searchForm.reset({
-      banqueId: null,
-      natureLigneFonctionnelleId: null,
-      marcheId: null,
-      actif: true,
-      isExpired: false,
-    });
-  }
-
-  deleteLigneFonctionnelleSpecifique(ligne: LigneFonctionnelleSpecifiqueResponse): void {
-    this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer la ligne fonctionnelle spécifique avec la nature "${ligne.natureLigneFonctionnelleLabel}" pour la banque "${ligne.banqueNom}" et le marché "${ligne.marcheNom}" ?`,
-      header: 'Confirmation de Suppression',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.loading = true;
-        this.specificLigneService.deleteLigneFonctionnelleSpecifique(ligne.id!)
-          .subscribe({
-            next: () => {
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Succès',
-                detail: 'Ligne Fonctionnelle Spécifique supprimée avec succès.',
-                life: 3000
-              });
-              this.reloadTableAfterAction();
-            },
-            error: (error) => {
-              console.error('Erreur lors de la suppression de la ligne fonctionnelle spécifique:', error);
-              const errorMessage = error.error?.message || 'Échec de la suppression de la ligne fonctionnelle spécifique.';
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Erreur',
-                detail: errorMessage,
-                life: 3000
-              });
-              this.loading = false;
-            }
-          });
-      }
-    });
-  }
-
-  isAdmin(): boolean {
-    return this.authService.hasRole(Role.ADMIN);
-  }
-
-  desactiver(ligne: LigneFonctionnelleSpecifiqueResponse): void {
-    this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir désactiver la ligne fonctionnelle spécifique avec la nature "${ligne.natureLigneFonctionnelleLabel}" pour la banque "${ligne.banqueNom}" et le marché "${ligne.marcheNom}" ?`,
-      header: 'Confirmation de Désactivation',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: "Oui",
-      rejectLabel: "Non",
-      accept: () => {
-        this.loading = true;
-        this.specificLigneService.deactivateLigneFonctionnelle(ligne.id!)
-          .subscribe({
-            next: () => {
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Succès',
-                detail: 'Ligne Fonctionnelle Spécifique désactivée avec succès.',
-                life: 3000
-              });
-              this.reloadTableAfterAction();
-            },
-            error: (error) => {
-              console.error('Erreur lors de la désactivation de la ligne fonctionnelle spécifique:', error);
-              const errorMessage = error.error?.message || 'Échec de la désactivation de la ligne fonctionnelle spécifique.';
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Erreur',
-                detail: errorMessage,
-                life: 3000
-              });
-              this.loading = false;
-            }
-          });
-      }
-    });
-  }
-
-  private reloadTableAfterAction(): void {
-    if (this.dt) {
-      this.dt.first = 0;
-      this.dt.onLazyLoad.emit(this.dt.createLazyLoadMetadata());
-    } else {
-      this.loadLignesFonctionnellesSpecifiques({
-        first: this.first,
-        rows: this.rows,
-        sortField: this.sortField,
-        sortOrder: this.sortOrder,
-        filters: {}
-      });
-    }
-  }
-}

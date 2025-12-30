@@ -1,13 +1,13 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
-import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {Router, RouterLink, RouterLinkActive} from '@angular/router';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import {MenuItem, MessageService} from 'primeng/api';
+import { MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -16,21 +16,26 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { CalendarModule } from 'primeng/calendar';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { SpeedDialModule } from 'primeng/speeddial';
 
+// RxJS
+import { Subject, BehaviorSubject, combineLatest, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil, switchMap, catchError, tap } from 'rxjs/operators';
 
-// Application-specific imports
+// Services & DTOs
 import { LigneFonctionnelleResponse } from "../../dtos/LigneFonctionnelleResponse";
-
 import { LigneFonctionnelleSearchCriteria } from "../../dtos/LigneFonctionnelleSearchCriteria";
 import { LigneFonctionnelleService } from "../../services/LigneFonctionnelleService";
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
+import { MarcheService } from '../../../Marches/service/marche-service.service';
+import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fonctionnelle.service";
 import { AuthService } from "../../../../auth/services/auth.service";
 import { Role } from "../../../../auth/enum/Role";
-import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fonctionnelle.service";
-import {BreadcrumbModule} from "primeng/breadcrumb";
-import { SpeedDialModule } from 'primeng/speeddial';
+
+const MARCHE_PAGE_SIZE = 10;
+const DEBOUNCE_TIME = 300;
 
 @Component({
   selector: 'app-lignes-fonctionnelles-encours',
@@ -38,143 +43,322 @@ import { SpeedDialModule } from 'primeng/speeddial';
   styleUrls: ['./lignes-fonctionnelles.component.scss'],
   standalone: true,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    FormsModule,
-    DecimalPipe,
-    DatePipe,
-    RouterLink,
-    TableModule,
-    InputTextModule,
-    ButtonModule,
-    RippleModule,
-    ToastModule,
-    ConfirmDialogModule,
-    ToolbarModule,
-    TagModule,
-    TooltipModule,
-    DropdownModule,
-    InputNumberModule,
-    CalendarModule,
-    InputSwitchModule,
-    BreadcrumbModule,
-    RouterLinkActive,
-    SpeedDialModule
+    CommonModule, ReactiveFormsModule, FormsModule, DecimalPipe, DatePipe,
+    RouterLink, RouterLinkActive, TableModule, InputTextModule, ButtonModule,
+    RippleModule, ToastModule, ConfirmDialogModule, ToolbarModule, TagModule,
+    TooltipModule, DropdownModule, InputNumberModule, CalendarModule,
+    InputSwitchModule, BreadcrumbModule, SpeedDialModule
   ],
   providers: [MessageService, ConfirmationService]
 })
-export class LignesFonctionnellesComponent implements OnInit {
+export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
 
+  // ========== REACTIVE STREAMS ==========
+  private readonly destroy$ = new Subject<void>();
+  private readonly selectedBanqueId$ = new BehaviorSubject<number | null>(null);
+  private readonly marcheFilter$ = new BehaviorSubject<string>('');
+
+  // ========== TABLE ==========
   @ViewChild('dt') dt: Table | undefined;
-
   lignesFonctionnelles: LigneFonctionnelleResponse[] = [];
-  totalRecords: number = 0;
-  loading: boolean = false;
-  first: number = 0;
-  rows: number = 10;
-  sortField: string | string[] | null | undefined
-  sortOrder: number | null | undefined
+  totalRecords = 0;
+  loading = false;
+  first = 0;
+  rows = 10;
+  sortField: string | string[] | null | undefined;
+  sortOrder: number | null | undefined;
+  expandedRows = {};
+
+  // ========== FORMS ==========
   searchForm!: FormGroup;
-  natureLigneOptions: { label: string; value: number | null }[] = [];
-  banquesOptions: { label: string; value: number | null }[] = [];
-  statutOptions: any[] = [
+
+  // ========== DROPDOWNS ==========
+  natureLigneOptions: Array<{ label: string; value: number | null }> = [];
+  banquesOptions: Array<{ label: string; value: number | null }> = [];
+  marchesOptions: any[] = [];
+  statutOptions = [
     { label: 'Tous', value: null },
     { label: 'En cours', value: false },
     { label: 'Expirées', value: true }
   ];
-  items: MenuItem[] | undefined;
-  expandedRows={}
+
+  // ========== MARCHÉ LAZY LOADING ==========
+  loadingMarches = false;
+  marchesScrollerOptions: ScrollerOptions;
+
+  // ========== UI ==========
+  items: MenuItem[] = [];
 
   constructor(
-    private ligneFonctionnelleService: LigneFonctionnelleService,
-    private banqueService: BanqueService,
-    private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private fb: FormBuilder,
-    private router: Router,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private authService: AuthService,
-  ) { }
-
-  ngOnInit(): void {
-    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },{ icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-encours', label:"Les Lignes fonctionnelles Encours" } ]
-    this.initSearchForm();
-    this.setupFormListeners();
-    this.loadBanques();
-    this.loadNatureLigneOptions();
+    private readonly ligneFonctionnelleService: LigneFonctionnelleService,
+    private readonly banqueService: BanqueService,
+    private readonly marcheService: MarcheService,
+    private readonly natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
+    private readonly fb: FormBuilder,
+    private readonly router: Router,
+    private readonly messageService: MessageService,
+    private readonly confirmationService: ConfirmationService,
+    private readonly authService: AuthService
+  ) {
+    this.marchesScrollerOptions = {
+      delay: 250,
+      showLoader: true,
+      lazy: true,
+      onLazyLoad: this.onLazyLoadMarches.bind(this)
+    };
   }
 
-  initSearchForm(): void {
+  // ========== LIFECYCLE ==========
+
+  ngOnInit(): void {
+    this.initBreadcrumb();
+    this.initSearchForm();
+    this.loadStaticDropdowns();
+    this.setupReactiveStreams();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ========== INITIALIZATION ==========
+
+  private initBreadcrumb(): void {
+    this.items = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
+      { icon: 'pi pi-list', route: '/portail/lignes-fonctionnelles-encours', label: "Lignes fonctionnelles" }
+    ];
+  }
+
+  private initSearchForm(): void {
     this.searchForm = this.fb.group({
       banqueId: [null],
       natureLigneFonctionnelleId: [null],
+      marcheId: [null],
       actif: [true],
-      isExpired: [null],
+      isExpired: [null]
     });
   }
 
-  setupFormListeners(): void {
-    this.searchForm.valueChanges
-      .pipe(
-        debounceTime(500),
-        distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
-      )
-      .subscribe(() => {
-        this.onSearch();
-      });
-  }
-
-  loadNatureLigneOptions(): void {
-
-
-    this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().subscribe({
-      next: (natures) => {
-        this.natureLigneOptions = [{ label: 'Toutes les natures', value: null }];
-        natures.forEach(nature => {
-          this.natureLigneOptions.push({ label: nature.label, value: nature.id! });
-        });
+  private loadStaticDropdowns(): void {
+    combineLatest([
+      this.loadBanques(),
+      this.loadNatureLignes()
+    ]).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: ([banques, natures]) => {
+        this.banquesOptions = banques;
+        this.natureLigneOptions = natures;
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des natures de ligne pour le filtre.', life: 3000 });
-        console.error('Error loading natures for filter:', err);
+        console.error('Error loading dropdowns:', err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement des filtres',
+          life: 3000
+        });
       }
     });
   }
 
-  loadBanques(): void {
-    this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc')
+  private loadBanques() {
+    return this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc').pipe(
+      takeUntil(this.destroy$),
+      catchError(err => {
+        console.error('Error loading banques:', err);
+        return of({ content: [] });
+      }),
+      switchMap(response => {
+        const options = [{ label: 'Toutes les banques', value: null }];
+        response.content.forEach((banque: any) => {
+          options.push({ label: banque.nom, value: banque.id });
+        });
+        return of(options);
+      })
+    );
+  }
+
+  private loadNatureLignes() {
+    return this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().pipe(
+      takeUntil(this.destroy$),
+      catchError(err => {
+        console.error('Error loading natures:', err);
+        return of([]);
+      }),
+      switchMap(natures => {
+        const options = [{ label: 'Toutes les natures', value: null }];
+        natures.forEach((nature: any) => {
+          options.push({ label: nature.label, value: nature.id });
+        });
+        return of(options);
+      })
+    );
+  }
+
+  // ========== REACTIVE STREAMS ==========
+
+  private setupReactiveStreams(): void {
+    this.setupSearchFormStream();
+    this.setupBanqueChangeStream();
+    this.setupMarcheFilterStream();
+  }
+
+  private setupSearchFormStream(): void {
+    this.searchForm.valueChanges.pipe(
+      takeUntil(this.destroy$),
+      debounceTime(500),
+      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
+    ).subscribe(() => {
+      this.onSearch();
+    });
+  }
+
+  private setupBanqueChangeStream(): void {
+    // ✅ Charger tous les marchés au démarrage (sans filtre banque)
+    this.loadAllMarches(0).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        this.initializeMarchesOptions(response);
+      },
+      error: (err) => {
+        console.error('Error loading marchés:', err);
+        this.marchesOptions = [];
+      }
+    });
+
+    // ✅ Optionnel: Si une banque est sélectionnée, filtrer les marchés
+    this.searchForm.get('banqueId')!.valueChanges.pipe(
+      takeUntil(this.destroy$),
+      tap(banqueId => {
+        this.selectedBanqueId$.next(banqueId);
+        // Ne pas reset marcheId pour permettre la recherche indépendante
+      })
+    ).subscribe();
+  }
+
+  private setupMarcheFilterStream(): void {
+    // ✅ Recherche réactive avec debounce (sans dépendance obligatoire à banqueId)
+    this.marcheFilter$.pipe(
+      takeUntil(this.destroy$),
+      debounceTime(DEBOUNCE_TIME),
+      distinctUntilChanged(),
+      switchMap(filter => {
+        const banqueId = this.selectedBanqueId$.value;
+        return this.loadAllMarches(0, filter, banqueId);
+      })
+    ).subscribe({
+      next: (response) => {
+        this.initializeMarchesOptions(response);
+      },
+      error: (err) => {
+        console.error('Error filtering marchés:', err);
+      }
+    });
+  }
+
+  // ========== MARCHÉ LOADING ==========
+
+  /**
+   * ✅ Charge tous les marchés, avec filtres optionnels
+   * @param page Page à charger
+   * @param filter Filtre par numéro (optionnel)
+   * @param banqueId Filtre par banque (optionnel)
+   */
+  private loadAllMarches(page: number, filter: string = '', banqueId?: number | null) {
+    const criteria: any = {};
+
+    if (filter) {
+      criteria.numero = filter;
+    }
+
+    if (banqueId) {
+      criteria.banqueId = banqueId;
+    }
+
+    return this.marcheService.getAllMarches(
+      criteria,
+      page,
+      MARCHE_PAGE_SIZE,
+      'numero,asc'
+    ).pipe(
+      catchError(err => {
+        console.error('Error loading marchés:', err);
+        return of({ content: [], page: { totalElements: 0 } });
+      })
+    );
+  }
+
+  private initializeMarchesOptions(response: any): void {
+    const total = response.page.totalElements;
+    const data = [{ label: 'Tous les marchés', value: null }];
+
+    response.content.forEach((m: any) => {
+      data.push({ label: m.numero, value: m.id });
+    });
+
+    // Pour virtual scroll, créer des placeholders
+    this.marchesOptions = Array.from({ length: total + 1 }).map(() => ({}));
+    this.marchesOptions.splice(0, data.length, ...data);
+  }
+
+  onLazyLoadMarches(event: any): void {
+    const { first } = event;
+    const page = Math.floor(first / MARCHE_PAGE_SIZE);
+
+    // Skip si déjà chargé
+    if (this.marchesOptions[first]?.value !== undefined) {
+      return;
+    }
+
+    this.loadingMarches = true;
+    const banqueId = this.selectedBanqueId$.value;
+    const filter = this.marcheFilter$.value;
+
+    this.loadAllMarches(page, filter, banqueId)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (pageResponse) => {
-          this.banquesOptions = [{ label: 'Toutes les banques', value: null }];
-          pageResponse.content.forEach(banque => {
-            this.banquesOptions.push({ label: banque.nom, value: banque.id! });
-          });
+        next: (response) => {
+          const newItems = response.content.map((m: any) => ({ label: m.numero, value: m.id }));
+          const updatedOptions = [...this.marchesOptions];
+          updatedOptions.splice(first, newItems.length, ...newItems);
+          this.marchesOptions = updatedOptions;
+          this.loadingMarches = false;
         },
-        error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques pour le filtre.', life: 3000 });
-          console.error('Error loading banks for filter:', err);
+        error: () => {
+          this.loadingMarches = false;
         }
       });
   }
+
+  onFilterMarches(event: any): void {
+    const query = event.filter?.trim() || '';
+    this.marcheFilter$.next(query);
+  }
+
+  // ========== TABLE DATA LOADING ==========
 
   loadLignesFonctionnelles(event: TableLazyLoadEvent): void {
     this.loading = true;
 
     this.first = event.first !== undefined ? event.first : 0;
     this.rows = (event.rows !== undefined ? event.rows : 10) as number;
-    this.sortField = event.sortField
-    this.sortOrder = event.sortOrder
+    this.sortField = event.sortField;
+    this.sortOrder = event.sortOrder;
 
     const page = this.first / this.rows;
 
     const actualSortField = Array.isArray(this.sortField) ? this.sortField[0] : this.sortField;
     const sort = `${actualSortField},${this.sortOrder === 1 ? 'asc' : 'desc'}`;
 
-    // Get search criteria directly from the form
     const searchCriteria: LigneFonctionnelleSearchCriteria = this.searchForm.value;
 
     this.ligneFonctionnelleService
       .getCurrentLigneFonctionnelles(searchCriteria, page, this.rows, sort)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
           this.lignesFonctionnelles = data.content;
@@ -182,18 +366,23 @@ export class LignesFonctionnellesComponent implements OnInit {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des lignes fonctionnelles.', life: 3000 });
-          console.error('Error fetching functional lignePrefi:', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Échec du chargement des lignes',
+            life: 3000
+          });
+          console.error('Error fetching lignes:', err);
           this.loading = false;
-        },
+        }
       });
   }
 
   onSearch(): void {
     if (this.dt) {
-      this.dt.first = 0; // Reset to first page when new search criteria are applied
-      this.dt.filterTimeout = 0; // Ensure immediate filter application
-      this.dt.onLazyLoad.emit(this.dt.createLazyLoadMetadata()); // Trigger lazy load
+      this.dt.first = 0;
+      this.dt.filterTimeout = 0;
+      this.dt.onLazyLoad.emit(this.dt.createLazyLoadMetadata());
     } else {
       this.loadLignesFonctionnelles({
         first: 0,
@@ -209,67 +398,48 @@ export class LignesFonctionnellesComponent implements OnInit {
     this.searchForm.reset({
       banqueId: null,
       natureLigneFonctionnelleId: null,
-      actif:  true,
-      isExpired: false,
+      marcheId: null,
+      actif: true,
+      isExpired: false
     });
-    // The valueChanges subscription will automatically trigger a reload
   }
 
-  desactiver(ligne:LigneFonctionnelleResponse): void {
-    if (ligne == null) {
-      console.log("ligneFonctionnelle est null")
-    } else {
-      ;
-      this.confirmationService.confirm({
-        message: `Êtes-vous sûr de vouloir désactiver la ligne fonctionnelle "${ligne.natureLigneFonctionnelleLabel}" avec  "${ligne.banqueNom}" ?`,
-        header: 'Confirmation de Désactivation',
-        icon: 'pi pi-exclamation-triangle',
-        acceptLabel:"Oui",
-        rejectLabel:"Non",
-        accept: () => {
-          this.loading = true;
-          this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.id!)
-            .subscribe({
-              next: () => {
-                this.messageService.add({
-                  severity: 'success',
-                  summary: 'Succès',
-                  detail: 'Ligne Fonctionnelle désactivées avec succès.',
-                  life: 3000
-                });
-                this.loading=false
-                this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
-              },
-              error: (error) => {
-                console.error('Erreur lors de la désactivation de la ligne fonctionnelle:', error);
-                const errorMessage = error.error?.message;
-                this.messageService.add({severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000});
-                this.loading = false;
-              }
-            });
-        }
-      });
+  // ========== ACTIONS ==========
+
+  desactiver(ligne: LigneFonctionnelleResponse): void {
+    if (!ligne) {
+      console.error('Ligne is null');
+      return;
     }
 
-  }
-
-  deleteLigneFonctionnelle(ligne: LigneFonctionnelleResponse): void {
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer la ligne fonctionnelle avec la nature "${ligne.natureLigneFonctionnelleLabel}" pour la banque "${ligne.banqueNom}" ?`,
-      header: 'Confirmation de Suppression',
+      message: `Êtes-vous sûr de vouloir désactiver la ligne "${ligne.natureLigneFonctionnelleLabel}" avec "${ligne.banqueNom}" ?`,
+      header: 'Confirmation de Désactivation',
       icon: 'pi pi-exclamation-triangle',
+      acceptLabel: "Oui",
+      rejectLabel: "Non",
       accept: () => {
         this.loading = true;
-        this.ligneFonctionnelleService.deleteLigneFonctionnelle(ligne.id!)
+        this.ligneFonctionnelleService.deactivateLigneFonctionnelle(ligne.id)
+          .pipe(takeUntil(this.destroy$))
           .subscribe({
             next: () => {
-              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Ligne Fonctionnelle supprimée avec succès.', life: 3000 });
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Succès',
+                detail: 'Ligne désactivée avec succès',
+                life: 3000
+              });
               this.reloadTableAfterAction();
             },
             error: (error) => {
-              console.error('Erreur lors de la suppression de la ligne fonctionnelle:', error);
-              const errorMessage = error.error?.message || 'Échec de la suppression de la ligne fonctionnelle.';
-              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
+              console.error('Error deactivating ligne:', error);
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Erreur',
+                detail: error.error?.message || 'Échec de la désactivation',
+                life: 3000
+              });
               this.loading = false;
             }
           });
@@ -277,19 +447,51 @@ export class LignesFonctionnellesComponent implements OnInit {
     });
   }
 
-  // Check if the user is ADMIN
+  deleteLigneFonctionnelle(ligne: LigneFonctionnelleResponse): void {
+    this.confirmationService.confirm({
+      message: `Êtes-vous sûr de vouloir supprimer la ligne "${ligne.natureLigneFonctionnelleLabel}" pour "${ligne.banqueNom}" ?`,
+      header: 'Confirmation de Suppression',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.loading = true;
+        this.ligneFonctionnelleService.deleteLigneFonctionnelle(ligne.id)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Succès',
+                detail: 'Ligne supprimée avec succès',
+                life: 3000
+              });
+              this.reloadTableAfterAction();
+            },
+            error: (error) => {
+              console.error('Error deleting ligne:', error);
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Erreur',
+                detail: error.error?.message || 'Échec de la suppression',
+                life: 3000
+              });
+              this.loading = false;
+            }
+          });
+      }
+    });
+  }
+
+  // ========== HELPERS ==========
+
   isAdmin(): boolean {
     return this.authService.hasRole(Role.ADMIN);
   }
 
-
-  // Helper to reload the table after an action (delete/toggle)
   private reloadTableAfterAction(): void {
     if (this.dt) {
-      this.dt.first = 0; // Go back to first page
-      this.dt.onLazyLoad.emit(this.dt.createLazyLoadMetadata()); // Reload data
+      this.dt.first = 0;
+      this.dt.onLazyLoad.emit(this.dt.createLazyLoadMetadata());
     } else {
-      // Fallback in case dt is not ready, though with @ViewChild it usually is
       this.loadLignesFonctionnelles({
         first: this.first,
         rows: this.rows,
@@ -300,43 +502,7 @@ export class LignesFonctionnellesComponent implements OnInit {
     }
   }
 
-  getActions(ligne: any) {
-    const actions: any[] = [];
-
-    // ✏️ Modifier
-    actions.push({
-      icon: 'pi pi-pencil',
-      tooltip: 'Modifier',
-      command: () => this.router.navigate(['/portail/lignes-fonctionnelles-encours/edit', ligne.id])
-    });
-
-    // 🚫 Désactiver
-    actions.push({
-      icon: 'pi pi-ban',
-      tooltip: 'Désactiver',
-      disabled: ligne?.estSousLigne || !ligne?.actif,
-      command: () => this.desactiver(ligne)
-    });
-
-    // 🌿 Gérer les sous-lignes
-    if (ligne?.estLigneMere) {
-      actions.push({
-        icon: 'pi pi-sitemap',
-        tooltip: 'Gérer les Sous-lignes',
-
-      });
-    }
-
-    // 🗑️ Supprimer (si admin)
-    if (this.isAdmin()) {
-      actions.push({
-        icon: 'pi pi-trash',
-        tooltip: 'Supprimer',
-        command: () => this.deleteLigneFonctionnelle(ligne)
-      });
-    }
-
-    return actions;
+  get selectedBanqueId(): number | null {
+    return this.selectedBanqueId$.value;
   }
-
 }

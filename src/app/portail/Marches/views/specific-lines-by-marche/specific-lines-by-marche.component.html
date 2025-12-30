@@ -1,33 +1,31 @@
 <p-toast></p-toast>
 
-<div class="card flex flex-column gap-4 p-2 w-screen h-screen overflow-y-scroll">
+<div class="card flex flex-column overflow-scroll gap-2 p-2 w-screen h-screen">
 
-  <!-- Breadcrumb et titre -->
-  <div class="portail-section flex flex-column gap-3 bg-transparent">
-    <div class="flex justify-content-between align-items-center">
-      <p-breadcrumb [model]="items">
+  <div class="flex flex-row flex-wrap justify-content-between align-items-center bg-transparent gap-2">
+    <div class="flex align-items-center">
+      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
         <ng-template pTemplate="item" let-item>
-          <a [routerLink]="item.routerLink" class="p-menuitem-link">
-            <span [ngClass]="item.icon" class="text-color"></span>
-            <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
-          </a>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-xl']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <span class="text-black-alpha-90 font-bold p-2">{{ item.label }}</span>
+          </ng-template>
         </ng-template>
       </p-breadcrumb>
-
     </div>
 
-    <!-- Informations du marché -->
-    <div *ngIf="marche" class="surface-card p-2 border-round shadow-4">
-      <div class="flex flex-column md:flex-row  md:justify-content-around gap-4">
-        <p>Nom : <strong> {{ marche.nom }}</strong></p>
-        <p>Numéro : <strong> {{ marche.numero }}</strong></p>
-        <p>Banque : <strong> {{ marche.banqueNom }}</strong></p>
-      </div>
+    <div *ngIf="marche" class="flex gap-3 px-3 py-2 border-round bg-primary-reverse shadow-1 border-1 border-primary-100">
+      <span class="text-sm"><i class="pi pi-bookmark mr-1"></i> {{ marche.numero }}</span>
+      <span class="text-sm"><i class="pi pi-building mr-1"></i> {{ marche.banqueNom }}</span>
     </div>
   </div>
 
-  <!-- Table des lignes spécifiques -->
-  <div class="pb-8">
+  <div class="flex-grow-1">
     <p-table
       #dt
       [value]="specificLines"
@@ -38,61 +36,59 @@
       (onLazyLoad)="loadSpecificLines($event)"
       [rowsPerPageOptions]="[10, 25, 50]"
       [loading]="loading"
-      responsiveLayout="scroll"
+      styleClass="p-datatable-gridlines p-datatable-sm text-xs"
       [scrollable]="true"
-      styleClass="p-datatable-gridlines text-xs"
+      scrollHeight="flex"
       [showCurrentPageReport]="true"
-      currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
-
+      currentPageReportTemplate="{first}-{last} sur {totalRecords}">
 
       <ng-template pTemplate="header">
-        <tr>
-          <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
+        <tr class="white-space-nowrap">
+          <th pSortableColumn="id" style="width: 50px">ID <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
-          <th pSortableColumn="montant" >Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th pSortableColumn="encours" >Encours <p-sortIcon field="encours"></p-sortIcon></th>
-          <th pSortableColumn="solde" >Solde <p-sortIcon field="solde"></p-sortIcon></th>
+          <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
+          <th pSortableColumn="marcheNumero">Marché <p-sortIcon field="marcheNumero"></p-sortIcon></th>
+          <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
+
+          <th pSortableColumn="encours">Encours <p-sortIcon field="encours"></p-sortIcon></th>
+          <th pSortableColumn="solde">Solde <p-sortIcon field="solde"></p-sortIcon></th>
+
           <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
-          <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
           <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+          <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
+          <th style="width: 80px">Statut</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-line>
         <tr>
           <td>{{ line.id }}</td>
-          <td> {{line.natureLigneFonctionnelleLabel | uppercase}}</td>
           <td>{{ line.banqueNom }}</td>
-          <td>{{ line.montant | number:'1.2-2' }}</td>
-          <td>{{ line.encours | number:'1.2-2' }}</td>
+          <td class="font-bold">{{ line.natureLigneFonctionnelleLabel | uppercase }}</td>
+          <td>{{ marche?.numero }}</td>
+          <td>{{ line.plafond | number:'1.2-2' }}</td>
+
           <td>
-            <span [ngClass]="{'text-green-600 font-bold': line.solde > 0, 'text-red-600 font-bold': line.solde < 0}">
-              {{ line.solde | number:'1.2-2' }}
-            </span>
+            {{ (line.encours !== null && line.encours !== undefined) ? (line.encours | number:'1.2-2') : '***' }}
           </td>
-          <td>{{ line.taux | number:'1.2-2' }} %</td>
-          <td>{{ line.dateDepart | date:'dd/MM/yyyy' }}</td>
+
+          <td [ngClass]="getSoldeClass(line.solde)">
+            {{ (line.solde !== null && line.solde !== undefined) ? (line.solde | number:'1.2-2') : '***' }}
+          </td>
+
+          <td>{{ line.taux | number:'1.2-2' }}%</td>
           <td>{{ line.dateFin | date:'dd/MM/yyyy' }}</td>
-
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="emptyMessage">
-        <tr>
-          <td colspan="10" class="text-center p-4">
-            <i class="pi pi-info-circle text-4xl text-400 mb-3"></i>
-            <p class="text-600">Aucune ligne spécifique trouvée pour ce marché.</p>
+          <td>{{ line.dateDepart | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <p-tag [value]="line.expired ? 'Expirée' : 'Active'"
+                   [severity]="line.expired ? 'danger' : 'success'"></p-tag>
           </td>
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="loadingbody">
+      <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="10" class="text-center p-4">
-            <i class="pi pi-spin pi-spinner text-2xl"></i>
-            <p class="mt-2">Chargement des données...</p>
-          </td>
+          <td colspan="11" class="text-center p-4">Aucune ligne spécifique trouvée pour ce marché.</td>
         </tr>
       </ng-template>
     </p-table>

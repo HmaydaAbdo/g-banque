@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
@@ -10,26 +10,18 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 
 import { SpecificFunctionalLigneService } from "../../../specific-Functional-Lignes/service/SpecificFunctionalLigneService";
-import { SpecificLigneResponseDto } from "../../../specific-Functional-Lignes/dtos/SpecificLigneResponseDto";
 import { MarcheService } from "../../service/marche-service.service";
 import { MarcheResponseDTO } from "../../dtos/marche-response.dto";
-import {Ripple} from "primeng/ripple";
+import { LigneFonctionnelleSpecifiqueResponse } from "../../../specific-Functional-Lignes/dtos/LigneFonctionnelleSpecifiqueResponse";
+import { AuthService } from "../../../../auth/services/auth.service";
+import { Role } from "../../../../auth/enum/Role";
 
 @Component({
   selector: 'app-specific-lines-by-marche',
   standalone: true,
   imports: [
-    CommonModule,
-    TableModule,
-    BreadcrumbModule,
-    ButtonModule,
-    ToastModule,
-    TooltipModule,
-    TagModule,
-    DecimalPipe,
-    DatePipe,
-    RouterLink,
-    Ripple
+    CommonModule, TableModule, BreadcrumbModule, ButtonModule, ToastModule,
+    TooltipModule, TagModule, DecimalPipe, DatePipe, RouterLink, RouterLinkActive
   ],
   providers: [MessageService],
   templateUrl: './specific-lines-by-marche.component.html',
@@ -40,7 +32,7 @@ export class SpecificLinesByMarcheComponent implements OnInit {
 
   marcheId!: number;
   marche?: MarcheResponseDTO;
-  specificLines: SpecificLigneResponseDto[] = [];
+  specificLines: LigneFonctionnelleSpecifiqueResponse[] = [];
   totalRecords = 0;
   loading = true;
   items: MenuItem[] = [];
@@ -49,36 +41,32 @@ export class SpecificLinesByMarcheComponent implements OnInit {
     private route: ActivatedRoute,
     private specificFunctionalLigneService: SpecificFunctionalLigneService,
     private marcheService: MarcheService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    // Récupérer l'ID du marché depuis l'URL
     this.marcheId = Number(this.route.snapshot.paramMap.get('id'));
-
-    // Charger les informations du marché
     this.loadMarcheInfo();
+    this.initBreadcrumb();
+  }
 
-    // Initialiser le breadcrumb
+  private initBreadcrumb(): void {
     this.items = [
-      { icon: 'pi pi-home', label: 'Accueil', routerLink: '/portail/accueil' },
-      { icon: 'pi pi-list', label: 'Marchés', routerLink: '/portail/marches' },
+      { icon: 'pi pi-home', label: 'Accueil', route: '/portail/accueil' },
+      { icon: 'pi pi-list', label: 'Marchés', route: '/portail/marches' },
       { icon: 'pi pi-eye', label: 'Lignes Spécifiques' }
     ];
   }
 
   loadMarcheInfo(): void {
     this.marcheService.getMarcheById(this.marcheId).subscribe({
-      next: (marche) => {
-        this.marche = marche;
-      },
-      error: (err) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Impossible de charger les informations du marché.'
-        });
-      }
+      next: (marche) => this.marche = marche,
+      error: () => this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Impossible de charger les informations du marché.'
+      })
     });
   }
 
@@ -96,7 +84,7 @@ export class SpecificLinesByMarcheComponent implements OnInit {
         this.totalRecords = res.page.totalElements;
         this.loading = false;
       },
-      error: (err) => {
+      error: () => {
         this.loading = false;
         this.messageService.add({
           severity: 'error',
@@ -107,7 +95,12 @@ export class SpecificLinesByMarcheComponent implements OnInit {
     });
   }
 
+  getSoldeClass(solde: number | null): string {
+    if (solde === null || solde === undefined) return '';
+    return solde < 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold';
+  }
 
-
-
+  isAdmin(): boolean {
+    return this.authService.hasRole(Role.ADMIN);
+  }
 }

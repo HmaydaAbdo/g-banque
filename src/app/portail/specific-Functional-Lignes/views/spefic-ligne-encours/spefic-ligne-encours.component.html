@@ -1,221 +1,138 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column overflow-scroll gap-2 p-1 w-screen h-screen">
+<div class="card flex flex-column overflow-scroll gap-2 p-2 w-screen h-screen">
 
-  <div class="flex flex-column">
-    <div class="flex flex-row flex-wrap justify-content-between align-items-center bg-transparent">
-
-      <div class="flex justify-content-center align-items-center mb-2">
-        <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
-          <ng-template pTemplate="item" let-item>
-            <ng-container *ngIf="item.route; else elseBlock">
-              <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
-                 #rla="routerLinkActive">
-                <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-xl']"></span>
-                <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
-              </a>
-            </ng-container>
-            <ng-template #elseBlock>
-              <a [href]="item.url">
-                <span class="text-color text-sm md:text-xl text-center">{{ item.label }}</span>
-              </a>
-            </ng-template>
+  <div class="flex flex-row flex-wrap justify-content-between align-items-center bg-transparent gap-2">
+    <div class="flex align-items-center">
+      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-xl']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <span class=" text-black-alpha-90 font-bold p-2">{{ item.label }}</span>
           </ng-template>
-        </p-breadcrumb>
-      </div>
-
-      <button
-        pButton
-        pRipple
-        class="white-space-nowrap w-full md:w-auto"
-        label="Ajouter Ligne Fonctionnelle Spécifique"
-        icon="pi pi-plus"
-        severity="primary"
-        routerLink="/portail/lignes-fonctionnelles-specifiques-encours/new"
-      ></button>
+        </ng-template>
+      </p-breadcrumb>
     </div>
 
-    <form [formGroup]="searchForm" class="w-full">
-      <div class="flex flex-column px-4 md:flex-row md:align-items-end md:justify-content-between">
-        <div class="flex flex-column md:flex-row gap-3 mb-3 md:mb-0">
-          <div>
-            <label for="filterBanque" class="block text-900 text-center font-medium mb-2">Banque</label>
-            <p-dropdown
-              id="filterBanque"
-              formControlName="banqueId"
-              [options]="banquesOptions"
-              placeholder="Toutes les banques"
-              optionLabel="label"
-              optionValue="value"
-              [showClear]="true"
-              styleClass="w-full"
-            ></p-dropdown>
-          </div>
+    <button pButton pRipple label="Ajouter Spécifique" icon="pi pi-plus" severity="primary"
+            routerLink="/portail/lignes-fonctionnelles-specifiques-encours/new" class="w-full md:w-auto"></button>
+  </div>
 
-          <div>
-            <label for="filterNature" class="block text-900 text-center font-medium mb-2">Nature</label>
-            <p-dropdown
-              id="filterNature"
-              formControlName="natureLigneFonctionnelleId"
-              [options]="natureLigneOptions"
-              placeholder="Toutes les natures"
-              optionLabel="label"
-              optionValue="value"
-              [showClear]="true"
-              styleClass="w-full"
-            ></p-dropdown>
-          </div>
+  <form [formGroup]="searchForm" class="w-full bg-gray-50 p-3 border-round shadow-1">
+    <div class="flex flex-wrap gap-3 align-items-end justify-content-between">
 
-          <!-- ✅ DROPDOWN MARCHÉ avec virtual scroll + lazy loading + filter -->
-          <div>
-            <label for="filterMarche" class="block text-900 text-center font-medium mb-2">Marché</label>
-            <p-dropdown
-              id="filterMarche"
-              formControlName="marcheId"
-              [options]="marchesOptions"
-              placeholder="Tous les marchés"
-              optionLabel="label"
-              optionValue="value"
-              [showClear]="true"
-              styleClass="w-full"
-              [filter]="true"
-              filterBy="label"
-              (onFilter)="onFilterMarches($event)"
-              [virtualScroll]="true"
-              [virtualScrollItemSize]="38"
-              [lazy]="true"
-              [virtualScrollOptions]="marchesScrollerOptions"
-              [loading]="marchesLoading"
-            >
-              <!-- ✅ Template pour l'élément sélectionné -->
-              <ng-template pTemplate="selectedItem" let-selectedOption>
-                <div class="flex align-items-center gap-2" *ngIf="selectedOption">
-                  <i class="pi pi-file p-text-secondary"></i>
-                  <div>{{ selectedOption.label }}</div>
-                </div>
-              </ng-template>
-
-              <!-- ✅ Template pour les éléments de la liste avec gestion du loading -->
-              <ng-template let-marche pTemplate="item">
-                <div class="flex align-items-center gap-2" style="height: 38px">
-                  <ng-container *ngIf="marche && marche.label; else loadingTmpl">
-                    <i class="pi pi-file"></i>
-                    <div>{{ marche.label }}</div>
-                  </ng-container>
-                  <ng-template #loadingTmpl>
-                    <i class="pi pi-spin pi-spinner text-secondary"></i>
-                    <span class="text-secondary">Chargement...</span>
-                  </ng-template>
-                </div>
-              </ng-template>
-            </p-dropdown>
-          </div>
-
-          <div>
-            <label for="filterStatus" class="block text-900 text-center font-medium mb-2">Statut</label>
-            <p-dropdown
-              id="filterStatus"
-              formControlName="isExpired"
-              [options]="statutOptions"
-              placeholder="Toutes les status"
-              optionLabel="label"
-              optionValue="value"
-              [showClear]="true"
-              styleClass="w-full"
-            ></p-dropdown>
-          </div>
-        </div>
-
-        <div class="flex-shrink-0">
-          <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()"
-                  pTooltip="Effacer la recherche"></button>
-        </div>
+      <div class="flex-1" style="min-width: 200px;">
+        <label class="block text-900 font-medium mb-2">Banque</label>
+        <p-dropdown formControlName="banqueId" [options]="banquesOptions" placeholder="Toutes les banques"
+                    optionLabel="label" optionValue="value" [showClear]="true" styleClass="w-full"></p-dropdown>
       </div>
-    </form>
 
-    <div class="p-4">
-      <p-table
-        #dt
-        [value]="lignesFonctionnellesSpecifiques"
-        [paginator]="true"
-        [rows]="rows"
-        [totalRecords]="totalRecords"
-        [loading]="loading"
-        [rowsPerPageOptions]="[3, 5, 10, 25, 50]"
-        [lazy]="true"
-        (onLazyLoad)="loadLignesFonctionnellesSpecifiques($event)"
-        [columns]="[
-          { field: 'id', header: 'Id', sortable: true },
-          { field: 'banqueNom', header: 'Banque', sortable: true },
-          { field: 'natureLigneFonctionnelleLabel', header: 'Nature', sortable: true },
-          { field: 'marcheNumero', header: 'Marché', sortable: true },
-          { field: 'plafond', header: 'Plafond', sortable: true },
-          { field: 'taux', header: 'Taux', sortable: true },
-          { field: 'dateDepart', header: 'Date Départ', sortable: true },
-          { field: 'dateFin', header: 'Date Fin', sortable: true },
-          { field: 'statut', header: 'Statut', sortable: false }
-        ]"
-        styleClass="p-datatable-gridlines p-datatable-sm text-xs"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
-      >
-        <ng-template pTemplate="header" let-columns>
-          <tr>
-            <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
-              {{ col.header }}
-              @if (col.sortable) {
-                <p-sortIcon [field]="col.field"></p-sortIcon>
-              }
-            </th>
-            <th style="width: 8rem; text-align: center;">Actions</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-ligne>
-          <tr>
-            <td>{{ ligne.id }}</td>
-            <td>{{ ligne.banqueNom }}</td>
-            <td>{{ ligne.natureLigneFonctionnelleLabel }}</td>
-            <td>{{ ligne.marcheNumero }}</td>
-            <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
-            <td>{{ ligne.taux | number:'1.2-2' }}%</td>
-            <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
-            <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>
+      <div class="flex-1" style="min-width: 200px;">
+        <label class="block text-900 font-medium mb-2">Nature</label>
+        <p-dropdown formControlName="natureLigneFonctionnelleId" [options]="natureLigneOptions" placeholder="Toutes les natures"
+                    optionLabel="label" optionValue="value" [showClear]="true" styleClass="w-full"></p-dropdown>
+      </div>
 
-            <td>
-              <p-tag
-                [value]="ligne.expired ? 'Expirée' : 'En cours'"
-                [severity]="ligne.expired ? 'danger' : 'success'">
-              </p-tag>
-            </td>
-            <td class="text-center flex flex-row gap-2">
-              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2"
-                      pTooltip="Modifier" tooltipPosition="top"
-                      [routerLink]="['/portail/lignes-fonctionnelles-specifiques-encours/edit', ligne.id]">
-              </button>
+      <div class="flex-1" style="min-width: 250px;">
+        <label class="block text-900 font-medium mb-2">Marché </label>
+        <p-dropdown formControlName="marcheId" [options]="marchesOptions" placeholder="Tous les marchés"
+                    optionLabel="label" optionValue="value" [filter]="true" (onFilter)="onFilterMarches($event)"
+                    [virtualScroll]="true" [virtualScrollItemSize]="38" [lazy]="true"
+                    [virtualScrollOptions]="marchesScrollerOptions" [loading]="marchesLoading" styleClass="w-full">
+          <ng-template let-marche pTemplate="item">
+            <div class="flex align-items-center gap-2" style="height: 38px">
+              <ng-container *ngIf="marche && marche.label; else loadingTmpl">
+                <i class="pi pi-file"></i> <span>{{ marche.label }}</span>
+              </ng-container>
+              <ng-template #loadingTmpl><i class="pi pi-spin pi-spinner"></i> Chargement...</ng-template>
+            </div>
+          </ng-template>
+        </p-dropdown>
+      </div>
 
-              <button pButton pRipple icon="pi pi-ban" class="p-button-rounded p-button-outlined p-button-primary" pTooltip="Désactiver" tooltipPosition="top"
-                      (click)="desactiver(ligne)">
-              </button>
+      <div class="flex-1" style="min-width: 150px;">
+        <label class="block text-900 font-medium mb-2">Statut</label>
+        <p-dropdown formControlName="isExpired" [options]="statutOptions" optionLabel="label" optionValue="value"
+                    styleClass="w-full"></p-dropdown>
+      </div>
 
-              @if (isAdmin()) {
-                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" pTooltip="Supprimer"
-                        tooltipPosition="top"
-                        (click)="deleteLigneFonctionnelleSpecifique(ligne)">
-                </button>
-              }
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptyMessage">
-          <p>Aucune ligne fonctionnelle spécifique trouvée.</p>
-        </ng-template>
-        <ng-template pTemplate="loadingbody">
-          <tr>
-            <td [attr.colspan]="10">Chargement des lignes fonctionnelles spécifiques. Veuillez patienter...</td>
-          </tr>
-        </ng-template>
-      </p-table>
+      <p-button icon="pi pi-times" severity="danger" (click)="clearSearch()" pTooltip="Réinitialiser"></p-button>
     </div>
+  </form>
+
+  <div class="flex-grow-1">
+    <p-table #dt [value]="lignesFonctionnellesSpecifiques" [paginator]="true" [rows]="rows"
+             [totalRecords]="totalRecords" [loading]="loading" [lazy]="true"
+             (onLazyLoad)="loadLignesFonctionnellesSpecifiques($event)"
+             styleClass="p-datatable-gridlines p-datatable-sm text-xs" [scrollable]="true" scrollHeight="flex">
+
+      <ng-template pTemplate="header">
+        <tr class="white-space-nowrap">
+          <th pSortableColumn="id" style="width: 50px">ID <p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
+          <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
+          <th pSortableColumn="marcheNumero">Marché <p-sortIcon field="marcheNumero"></p-sortIcon></th>
+          <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
+
+          <th pSortableColumn="encours">Encours <p-sortIcon field="encours"></p-sortIcon></th>
+          <th pSortableColumn="solde">Solde <p-sortIcon field="solde"></p-sortIcon></th>
+
+          <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
+          <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+
+          <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
+          <th style="width: 80px">Statut</th>
+          <th style="width: 120px; text-align: center;">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-ligne>
+        <tr>
+          <td>{{ ligne.id }}</td>
+          <td>{{ ligne.banqueNom }}</td>
+          <td>{{ ligne.natureLigneFonctionnelleLabel }}</td>
+          <td >{{ ligne.marcheNumero }}</td>
+          <td>{{ ligne.plafond | number:'1.2-2' }}</td>
+          <td>
+            {{ (ligne.encours !== null && ligne.encours !== undefined) ? (ligne.encours | number:'1.2-2') : '***' }}
+          </td>
+
+          <td>
+            {{ (ligne.solde !== null && ligne.solde !== undefined) ? (ligne.solde | number:'1.2-2') : '***' }}
+          </td>
+
+          <td>{{ ligne.taux | number:'1.2-2' }}%</td>
+          <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
+          <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td >
+            <p-tag class="white-space-nowrap" [value]="ligne.expired ? 'Expirée' : 'En cours'"
+                   [severity]="ligne.expired ? 'danger' : 'success'"></p-tag>
+          </td>
+
+          <td class="text-center">
+            <div class="flex gap-1 justify-content-center">
+              <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
+                      [routerLink]="['/portail/lignes-fonctionnelles-specifiques-encours/edit', ligne.id]" pTooltip="Modifier"></button>
+
+              <button pButton icon="pi pi-ban" class="p-button-rounded p-button-outlined p-button-warning"
+                      (click)="desactiver(ligne)" [disabled]="!ligne.actif" pTooltip="Désactiver"></button>
+
+              <button *ngIf="isAdmin()" pButton icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
+                      (click)="deleteLigneFonctionnelleSpecifique(ligne)" pTooltip="Supprimer"></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="11" class="text-center p-4">Aucune ligne spécifique trouvée.</td></tr>
+      </ng-template>
+    </p-table>
   </div>
 </div>

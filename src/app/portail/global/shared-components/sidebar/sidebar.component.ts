@@ -122,18 +122,9 @@ export class SidebarComponent implements OnInit {
       icon:"pi pi-sliders-h",
       items:[
         {label: "la liste des marchés",icon: "pi pi-list",routerLink: "/portail/marches"},
-        {label: "les préfinancements",icon: "pi pi-list",items: [
-            {label:"les lignes",icon:"pi pi-list",routerLink:'/portail/prefi-lines'},
-            {label: "les encours",icon: "pi pi-list",routerLink: "/portail/préfinancements"}
-          ]},
-        {label: "les droits constatés",icon: "pi pi-list",items: [
-            {label: "Les lignes",icon: "pi pi-list",routerLink: "/portail/dc-lines"},
-            {label: "les encours",icon: "pi pi-list",routerLink: "/portail/droits-constate"}
-          ]},
-        {label: "Factoring",icon: "pi pi-list",items: [
-            {label: "Les lignes",icon: "pi pi-list",routerLink: "/portail/factoring-lines"},
-            {label: "les encours",icon: "pi pi-list",routerLink: "/portail/factoring"}
-          ]},
+        {label: "les préfinancements",icon: "pi pi-list",routerLink: "/portail/préfinancements"},
+        {label: "les droits constatés",icon: "pi pi-list",routerLink: "/portail/droits-constate"},
+        {label: "Factoring",icon: "pi pi-list",routerLink: "/portail/factoring"},
         {label: "Les décomptes",icon: "pi pi-list",routerLink: "/portail/decomptes"},
       ]},
     {label:"Les Commissions",icon:"pi pi-list",routerLink: '/portail/commissions'},
