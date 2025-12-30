@@ -52,7 +52,7 @@ public class FactoringController {
      * @return A ResponseEntity with the updated record and HTTP status 200.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<FactoringResponseDto> updateFactoring(@PathVariable Long id, @Valid @RequestBody FactoringRequestDto requestDTO) {
+    public ResponseEntity<FactoringResponseDto> updateFactoring(@PathVariable Long id, @Valid @RequestBody FactoringRequestDto requestDTO) throws Exception {
         log.info("PUT /factoring/{} - Réception d'une demande de modification", id);
         log.debug("Nouvelles données: {}", requestDTO);
 

@@ -264,6 +264,7 @@ public class LigneFonctionnelleMapper {
                 ligneId,
                 natureId,
                 marche,
+                ligneFonctionnelle.getBanque(),
                 plafond,
                 encoursStocke
         );

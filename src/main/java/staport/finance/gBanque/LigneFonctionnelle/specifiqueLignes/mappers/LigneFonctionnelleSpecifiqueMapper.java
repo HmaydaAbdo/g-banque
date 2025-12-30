@@ -113,6 +113,7 @@ public class LigneFonctionnelleSpecifiqueMapper {
                     entity.getId(),
                     natureId,
                     entity.getMarche(),
+                    entity.getMarche().getBanque(),
                     entity.getPlafond(),
                     null
             );

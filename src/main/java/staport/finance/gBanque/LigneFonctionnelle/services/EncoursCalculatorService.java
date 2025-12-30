@@ -3,6 +3,7 @@ package staport.finance.gBanque.LigneFonctionnelle.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.factoring.entities.Factoring;
@@ -22,23 +23,27 @@ public class EncoursCalculatorService {
 
     private static final Logger logger = LoggerFactory.getLogger(EncoursCalculatorService.class);
 
-
     /**
      * Calcule l'encours selon la nature de la ligne et le marché associé.
      *
+     * @param ligneId ID de la ligne fonctionnelle
      * @param natureId ID de la nature de ligne fonctionnelle
      * @param marche Marché associé (peut être null pour lignes générales)
+     * @param banque Banque associée (pour Facilité de Caisse)
      * @param plafond Plafond de la ligne
      * @param encoursStocke Encours stocké en base (pour Escompte Commercial)
      * @return L'encours calculé, ou null si la nature ne nécessite pas de calcul
      */
-    public BigDecimal calculateEncours(Long ligneId,Long natureId, Marche marche, BigDecimal plafond, BigDecimal encoursStocke) {
+    public BigDecimal calculateEncours(Long ligneId, Long natureId, Marche marche, Banque banque,
+                                       BigDecimal plafond, BigDecimal encoursStocke) {
         if (natureId == null) {
             logger.warn("Nature ID is null, cannot calculate encours");
             return null;
         }
 
         return switch (natureId.intValue()) {
+            case 1 -> // Facilité de Caisse
+                    calculateEncoursFaciliteCaisse(ligneId, banque, natureId);
             case 2 -> // Escompte Commercial
                     calculateEncoursEscompteCommercial(encoursStocke);
             case 11 -> // Préfinancement
@@ -57,18 +62,22 @@ public class EncoursCalculatorService {
     /**
      * Calcule le solde selon la nature de la ligne.
      *
+     * @param ligneId ID de la ligne fonctionnelle
      * @param natureId ID de la nature de ligne fonctionnelle
      * @param marche Marché associé (peut être null)
      * @param plafond Plafond de la ligne
      * @param encours Encours calculé
      * @return Le solde calculé, ou null si la nature ne nécessite pas de calcul
      */
-    public BigDecimal calculateSolde(Long ligneId,Long natureId, Marche marche, BigDecimal plafond, BigDecimal encours) {
+    public BigDecimal calculateSolde(Long ligneId, Long natureId, Marche marche,
+                                     BigDecimal plafond, BigDecimal encours) {
         if (natureId == null || encours == null) {
             return null;
         }
 
         return switch (natureId.intValue()) {
+            case 1 -> // Facilité de Caisse
+                    calculateSoldeFaciliteCaisse(plafond, encours);
             case 2 -> // Escompte Commercial
                     calculateSoldeEscompteCommercial(plafond, encours);
             case 11 -> // Préfinancement
@@ -82,6 +91,41 @@ public class EncoursCalculatorService {
                 yield null;
             }
         };
+    }
+
+    // ========== FACILITÉ DE CAISSE (ID: 1) ==========
+
+    /**
+     * Facilité de Caisse : encours = solde de la banque
+     * ⚠️ REQUIS : Une banque DOIT être associée pour cette nature
+     *
+     * @param ligneId ID de la ligne fonctionnelle
+     * @param banque Banque associée
+     * @param natureId ID de la nature
+     * @return Le solde de la banque (encours)
+     */
+    private BigDecimal calculateEncoursFaciliteCaisse(Long ligneId, Banque banque, Long natureId) {
+        validateBanqueRequired(ligneId, banque, natureId);
+
+        BigDecimal soldeBanque = banque.getSoldeActuel();
+        logger.debug("Encours Facilité de Caisse = Solde de la banque '{}': {}",
+                banque.getNom(), soldeBanque);
+
+        return soldeBanque != null ? soldeBanque : BigDecimal.ZERO;
+    }
+
+    /**
+     * Facilité de Caisse : solde = plafond - encours
+     *
+     * @param plafond Plafond de la ligne
+     * @param encours Encours (= solde de la banque)
+     * @return Le solde disponible
+     */
+    private BigDecimal calculateSoldeFaciliteCaisse(BigDecimal plafond, BigDecimal encours) {
+        BigDecimal solde = plafond.subtract(encours);
+        logger.debug("Solde Facilité de Caisse: {} (Plafond: {} - Encours/Solde Banque: {})",
+                solde, plafond, encours);
+        return solde;
     }
 
     // ========== ESCOMPTE COMMERCIAL (ID: 2) ==========
@@ -109,8 +153,8 @@ public class EncoursCalculatorService {
      * Préfinancement : encours = Σ remboursements
      * REQUIS : Un marché DOIT être associé pour cette nature
      */
-    private BigDecimal calculateEncoursPrefinancement(Long ligneId,Marche marche, Long natureId) {
-        validateMarcheRequired(ligneId,marche, natureId, "Préfinancement");
+    private BigDecimal calculateEncoursPrefinancement(Long ligneId, Marche marche, Long natureId) {
+        validateMarcheRequired(ligneId, marche, natureId, "Préfinancement");
 
         List<Prefinancement> prefinancements = marche.getPrefinancements();
         logger.debug("Calculating encours Préfinancement from {} prefinancements",
@@ -146,8 +190,8 @@ public class EncoursCalculatorService {
      * Droit Constaté : encours = plafond - Σ déblocages + Σ remboursements
      * ⚠ REQUIS : Un marché DOIT être associé pour cette nature
      */
-    private BigDecimal calculateEncoursDroitConstate(Long ligneId,Marche marche, BigDecimal plafond, Long natureId) {
-        validateMarcheRequired(ligneId,marche, natureId, "Droit Constaté");
+    private BigDecimal calculateEncoursDroitConstate(Long ligneId, Marche marche, BigDecimal plafond, Long natureId) {
+        validateMarcheRequired(ligneId, marche, natureId, "Droit Constaté");
 
         List<DroitConstate> droitConstates = marche.getDroitConstates();
         logger.debug("Calculating encours Droit Constaté from {} droits constatés",
@@ -179,8 +223,8 @@ public class EncoursCalculatorService {
      * Droit Constaté : solde = Σ déblocages - Σ remboursements
      *  REQUIS : Un marché DOIT être associé pour cette nature
      */
-    private BigDecimal calculateSoldeDroitConstate(Long ligneId,Marche marche, Long natureId) {
-        validateMarcheRequired(ligneId,marche, natureId, "Droit Constaté");
+    private BigDecimal calculateSoldeDroitConstate(Long ligneId, Marche marche, Long natureId) {
+        validateMarcheRequired(ligneId, marche, natureId, "Droit Constaté");
 
         List<DroitConstate> droitConstates = marche.getDroitConstates();
 
@@ -212,8 +256,8 @@ public class EncoursCalculatorService {
      * Factoring : encours = plafond - Σ déblocages + Σ remboursements
      * REQUIS : Un marché DOIT être associé pour cette nature
      */
-    private BigDecimal calculateEncoursFactoring(Long ligneId,Marche marche, BigDecimal plafond, Long natureId) {
-        validateMarcheRequired(ligneId,marche, natureId, "Factoring");
+    private BigDecimal calculateEncoursFactoring(Long ligneId, Marche marche, BigDecimal plafond, Long natureId) {
+        validateMarcheRequired(ligneId, marche, natureId, "Factoring");
 
         List<Factoring> factorings = marche.getFactorings();
         logger.debug("Calculating encours Factoring from {} factorings",
@@ -245,8 +289,8 @@ public class EncoursCalculatorService {
      * Factoring : solde = Σ déblocages - Σ remboursements
      * REQUIS : Un marché DOIT être associé pour cette nature
      */
-    private BigDecimal calculateSoldeFactoring(Long ligneId,Marche marche, Long natureId) {
-        validateMarcheRequired(ligneId,marche, natureId, "Factoring");
+    private BigDecimal calculateSoldeFactoring(Long ligneId, Marche marche, Long natureId) {
+        validateMarcheRequired(ligneId, marche, natureId, "Factoring");
 
         List<Factoring> factorings = marche.getFactorings();
 
@@ -272,20 +316,38 @@ public class EncoursCalculatorService {
         return solde;
     }
 
-    // ========== VALIDATION ==========
+    // ========== VALIDATIONS ==========
+
+    /**
+     * Valide qu'une banque est présente pour les natures qui l'exigent.
+     *
+     * @param ligneId  ID de la ligne fonctionnelle
+     * @param banque   La banque (peut être null)
+     * @param natureId ID de la nature
+     */
+    private void validateBanqueRequired(Long ligneId, Banque banque, Long natureId) {
+        if (banque == null) {
+            logger.error("Banque requise mais absente pour la nature '{}' (ID: {})", "Facilité de Caisse", natureId);
+            throw new ResourceNotFoundException(
+                    "Une banque est obligatoire pour la ligne avec l'id " + ligneId + " et de nature '" + "Facilité de Caisse" + "'. " +
+                            "Impossible de calculer l'encours et le solde sans banque associée."
+            );
+        }
+    }
 
     /**
      * Valide qu'un marché est présent pour les natures qui l'exigent.
      *
+     * @param ligneId ID de la ligne fonctionnelle
      * @param marche Le marché (peut être null)
      * @param natureId ID de la nature
      * @param natureLabel Label de la nature (pour le message d'erreur)
      */
-    private void validateMarcheRequired(Long ligneId,Marche marche, Long natureId, String natureLabel) {
+    private void validateMarcheRequired(Long ligneId, Marche marche, Long natureId, String natureLabel) {
         if (marche == null) {
             logger.error("Marché requis mais absent pour la nature '{}' (ID: {})", natureLabel, natureId);
             throw new ResourceNotFoundException(
-                    "Un marché est obligatoire pour la ligne avec l'id "+ligneId+"et de nature '" + natureLabel + "'. " +
+                    "Un marché est obligatoire pour la ligne avec l'id " + ligneId + " et de nature '" + natureLabel + "'. " +
                             "Impossible de calculer l'encours et le solde sans marché associé."
             );
         }

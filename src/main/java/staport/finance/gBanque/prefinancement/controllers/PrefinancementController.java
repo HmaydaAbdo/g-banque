@@ -47,7 +47,7 @@ public class PrefinancementController {
      * @return A ResponseEntity with the updated record and HTTP status 200.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<PrefinancementResponseDTO> updatePrefinancement(@PathVariable Long id, @Valid @RequestBody PrefinancementRequestDTO requestDTO) {
+    public ResponseEntity<PrefinancementResponseDTO> updatePrefinancement(@PathVariable Long id, @Valid @RequestBody PrefinancementRequestDTO requestDTO) throws Exception {
         PrefinancementResponseDTO responseDTO = prefinancementService.updatePrefinancement(id, requestDTO);
         return ResponseEntity.ok(responseDTO);
     }

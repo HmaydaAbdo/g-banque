@@ -9,6 +9,8 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,17 +44,19 @@ public class LigneFonctionnelleService {
     private final BanqueRepository banqueRepository;
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
     private final MarcheRepository marcheRepository;
+    private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
 
     @Autowired
     public LigneFonctionnelleService(LigneFonctionnelleRepository ligneFonctionnelleRepository,
                                      LigneFonctionnelleMapper ligneFonctionnelleMapper,
                                      BanqueRepository banqueRepository,
-                                     NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, MarcheRepository marcheRepository) {
+                                     NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, MarcheRepository marcheRepository, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository) {
         this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
         this.ligneFonctionnelleMapper = ligneFonctionnelleMapper;
         this.banqueRepository = banqueRepository;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
         this.marcheRepository = marcheRepository;
+        this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
     }
 
 
@@ -596,6 +600,9 @@ public class LigneFonctionnelleService {
      */
     private void avoidDuplicateActifLines(Banque banque, NatureLigneFonctionnelle nature, Marche marche) {
 
+
+        checkNoConflictWithSpecificLine(marche, nature);
+
         if (marche == null) {
             // Cas 1 : Ligne sans marché
             Optional<LigneFonctionnelle> existingGeneralLine = ligneFonctionnelleRepository
@@ -719,6 +726,9 @@ public class LigneFonctionnelleService {
     private void avoidDuplicateActifLinesForUpdate(Long currentId, Banque banque,
                                                    NatureLigneFonctionnelle nature, Marche marche) {
 
+
+        checkNoConflictWithSpecificLine(marche, nature);
+
         if (marche == null) {
             // Cas 1 : Ligne générale (sans marché)
             Optional<LigneFonctionnelle> existingGeneralLine = ligneFonctionnelleRepository
@@ -761,5 +771,38 @@ public class LigneFonctionnelleService {
         }
 
         logger.debug("No duplicate active ligne found for update - validation passed");
+    }
+
+    /**
+     * Vérifie qu'il n'existe pas de LigneFonctionnelleSpecifique active avec la même nature
+     * pour le marché spécifié.
+     * Cette règle garantit qu'un marché ne peut avoir qu'UNE ligne active par nature,
+     * qu'elle soit générale ou spécifique.
+     */
+    private void checkNoConflictWithSpecificLine(Marche marche, NatureLigneFonctionnelle nature) {
+        if (marche == null) {
+            // Pas de marché = ligne générale sans marché spécifique
+            // Pas besoin de vérifier les lignes spécifiques
+            return;
+        }
+
+        Optional<LigneFonctionnelleSpecifique> existingSpecificLine =
+                ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
+                        marche, nature
+                );
+
+        existingSpecificLine.ifPresent(existing -> {
+            logger.error("Conflit détecté - Une LigneFonctionnelleSpecifique active existe déjà - Marché: '{}', Nature: '{}', ID: {}",
+                    marche.getNumero(), nature.getLabel(), existing.getId());
+
+            throw new DuplicateEntryException(
+                    "Impossible de créer une ligne générale. " +
+                            "Le marché '" + marche.getNumero() + "' possède déjà une ligne fonctionnelle SPÉCIFIQUE active " +
+                            "de type '" + nature.getLabel() + "' (ID: " + existing.getId() + "). " +
+                            "Un marché ne peut avoir qu'une seule ligne active par nature."
+            );
+        });
+
+        logger.debug("Aucun conflit avec les lignes spécifiques - validation réussie");
     }
 }

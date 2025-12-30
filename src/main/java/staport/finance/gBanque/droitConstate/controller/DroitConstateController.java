@@ -42,7 +42,7 @@ public class DroitConstateController {
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<DroitConstateResponseDto> updateDroitConstate(@PathVariable Long id, @Valid @RequestBody DroitConstateRequestDto requestDTO) {
+    public ResponseEntity<DroitConstateResponseDto> updateDroitConstate(@PathVariable Long id, @Valid @RequestBody DroitConstateRequestDto requestDTO) throws Exception {
         log.info("PUT /droitsConstate/{} - Réception d'une demande de modification", id);
         log.debug("Nouvelles données: {}", requestDTO);
 

@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.mappers.LigneFonctionnelleSpecifiqueMapper;
@@ -43,6 +45,7 @@ import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class LigneFonctionnelleSpecifiqueService {
@@ -50,6 +53,7 @@ public class LigneFonctionnelleSpecifiqueService {
     private static final Logger log = LoggerFactory.getLogger(LigneFonctionnelleSpecifiqueService.class);
 
     private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
+    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
     private final LigneFonctionnelleSpecifiqueMapper ligneFonctionnelleSpecifiqueMapper;
     private final BanqueRepository banqueRepository;
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
@@ -66,12 +70,13 @@ public class LigneFonctionnelleSpecifiqueService {
 
 
     public LigneFonctionnelleSpecifiqueService(
-            LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
+            LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, LigneFonctionnelleRepository ligneFonctionnelleRepository,
             LigneFonctionnelleSpecifiqueMapper ligneFonctionnelleSpecifiqueMapper,
             BanqueRepository banqueRepository,
             NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository,
             MarcheRepository marcheRepository, PrefinancementRepository prefinancementRepository, PrefinancementMapper prefinancementMapper, DroitConstateRepository droitConstateRepository, DroitConstateMapper droitConstateMapper, FactoringRepository factoringRepository, FactoringMapper factoringMapper) {
         this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
+        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
         this.ligneFonctionnelleSpecifiqueMapper = ligneFonctionnelleSpecifiqueMapper;
         this.banqueRepository = banqueRepository;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
@@ -113,6 +118,9 @@ public class LigneFonctionnelleSpecifiqueService {
         // Vérification doublon actif
         boolean isActif = request.getActif() == null || request.getActif();
         if (isActif) {
+
+            log.debug("Vérification des conflits avec les lignes générales");
+            checkNoConflictWithGeneralLine(marche, nature);
             log.debug("Vérification des doublons actifs pour Marché '{}' et Nature '{}'", marche.getNom(), nature.getLabel());
             ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, nature)
                     .ifPresent(existing -> {
@@ -243,6 +251,9 @@ public class LigneFonctionnelleSpecifiqueService {
         // Vérification des doublons actifs
         boolean requestedActif = request.getActif() != null ? request.getActif() : existingEntity.isActif();
         if (requestedActif) {
+            log.debug("Vérification des conflits avec les lignes générales");
+            checkNoConflictWithGeneralLine(targetMarche, targetNature);
+
             log.debug("Vérification des doublons actifs");
             ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(targetMarche, targetNature)
                     .ifPresent(existingActiveDuplicate -> {
@@ -508,4 +519,31 @@ public class LigneFonctionnelleSpecifiqueService {
     }
 
 
+    /**
+     * Vérifie qu'il n'existe pas de LigneFonctionnelle générale active avec la même nature
+     * pour le marché spécifié.
+     *
+     * Cette règle garantit qu'un marché ne peut avoir qu'UNE ligne active par nature,
+     * qu'elle soit générale ou spécifique.
+     */
+    private void checkNoConflictWithGeneralLine(Marche marche, NatureLigneFonctionnelle nature) {
+        Optional<LigneFonctionnelle> existingGeneralLine =
+                ligneFonctionnelleRepository.findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(
+                        marche.getId(),
+                        nature.getId()
+                );
+
+        existingGeneralLine.ifPresent(existing -> {
+            log.error("Conflit détecté - Une LigneFonctionnelle générale active existe déjà - Marché: '{}', Nature: '{}', ID: {}",
+                    marche.getNumero(), nature.getLabel(), existing.getId());
+            throw new DuplicateEntryException(
+                    "Impossible de créer une ligne spécifique. " +
+                            "Le marché '" + marche.getNumero() + "' possède déjà une ligne fonctionnelle GÉNÉRALE active " +
+                            "de type '" + nature.getLabel() + "' (ID: " + existing.getId() + "). " +
+                            "Un marché ne peut avoir qu'une seule ligne active par nature."
+            );
+        });
+
+        log.debug("Aucun conflit avec les lignes générales - validation réussie");
+    }
 }
