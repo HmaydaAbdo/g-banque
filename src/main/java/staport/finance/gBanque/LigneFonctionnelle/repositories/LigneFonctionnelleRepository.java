@@ -57,4 +57,6 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
             Long natureLigneFonctionnelleId
     );
 
+    List<LigneFonctionnelle> findByActifFalse();
+
 }

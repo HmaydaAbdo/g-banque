@@ -11,6 +11,12 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entit
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
+import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.SuivieDcLigneResponseDto;
+import staport.finance.gBanque.droitConstate.entities.DroitConstate;
+import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;
+import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
+import staport.finance.gBanque.droitConstate.spec.DroitConstateSpec;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +34,21 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import staport.finance.gBanque.factoring.dtos.AgregatedSuivieFactoringLigneResponseDto;
+import staport.finance.gBanque.factoring.dtos.SuivieFactoringLineResponseDto;
+import staport.finance.gBanque.factoring.entities.Factoring;
+import staport.finance.gBanque.factoring.mapper.FactoringMapper;
+import staport.finance.gBanque.factoring.repository.FactoringRepository;
+import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
+import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
+import staport.finance.gBanque.prefinancement.dtos.SuiviePrefiLigneResponseDto;
+import staport.finance.gBanque.prefinancement.entities.Prefinancement;
+import staport.finance.gBanque.prefinancement.enums.Type;
+import staport.finance.gBanque.prefinancement.mapper.PrefinancementMapper;
+import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
+import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 
 
 @Service
@@ -45,18 +64,30 @@ public class LigneFonctionnelleService {
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
     private final MarcheRepository marcheRepository;
     private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
+    private final PrefinancementRepository prefinancementRepository;
+    private final FactoringRepository factoringRepository;
+    private final DroitConstateRepository droitConstateRepository;
+    private final PrefinancementMapper prefinancementMapper;
+    private final FactoringMapper factoringMapper;
+    private final DroitConstateMapper droitConstateMapper;
 
     @Autowired
     public LigneFonctionnelleService(LigneFonctionnelleRepository ligneFonctionnelleRepository,
                                      LigneFonctionnelleMapper ligneFonctionnelleMapper,
                                      BanqueRepository banqueRepository,
-                                     NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, MarcheRepository marcheRepository, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository) {
+                                     NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, MarcheRepository marcheRepository, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, PrefinancementRepository prefinancementRepository, FactoringRepository factoringRepository, DroitConstateRepository droitConstateRepository, PrefinancementMapper prefinancementMapper, FactoringMapper factoringMapper, DroitConstateMapper droitConstateMapper) {
         this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
         this.ligneFonctionnelleMapper = ligneFonctionnelleMapper;
         this.banqueRepository = banqueRepository;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
         this.marcheRepository = marcheRepository;
         this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
+        this.prefinancementRepository = prefinancementRepository;
+        this.factoringRepository = factoringRepository;
+        this.droitConstateRepository = droitConstateRepository;
+        this.prefinancementMapper = prefinancementMapper;
+        this.factoringMapper = factoringMapper;
+        this.droitConstateMapper = droitConstateMapper;
     }
 
 
@@ -805,4 +836,164 @@ public class LigneFonctionnelleService {
 
         logger.debug("Aucun conflit avec les lignes spécifiques - validation réussie");
     }
+
+
+    @Transactional(readOnly = true)
+    public AgregatedSuiviePrefiLigneResponseDto getSuiviePrefiLigneResponse(Long lineId, Pageable pageable) {
+        logger.info("Récupération du suivi de préfinancement pour la ligne ID: {}", lineId);
+
+        LigneFonctionnelle Line = ligneFonctionnelleRepository.findById(lineId)
+                .orElseThrow(() -> {
+                    logger.error("Ligne fonctionnelle générale non trouvée avec l'ID: {}", lineId);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle générale non trouvée avec l'ID: " + lineId);
+                });
+
+        Marche marche = Line.getMarche();
+
+        if (marche == null) {
+            logger.error("Aucun marché associé à la ligne ID: {}", lineId);
+            throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle générale avec l'ID: " + lineId);
+        }
+
+        logger.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
+
+        List<Prefinancement> allPrefi = prefinancementRepository.findByMarche(marche);
+        logger.debug("{} préfinancements  trouvés", allPrefi.size());
+
+        BigDecimal totalDebit = BigDecimal.ZERO;
+        BigDecimal totalCredit = BigDecimal.ZERO;
+
+        for (Prefinancement prefi : allPrefi) {
+            if (prefi.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(prefi.getMontant());
+            else if (prefi.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(prefi.getMontant());
+        }
+        BigDecimal reste = totalCredit.subtract(totalDebit);
+
+        logger.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
+
+        Specification<Prefinancement> spec = Specification.where(PrefinancementSpecification.byMarcheId(marche.getId()));
+
+        Page<Prefinancement> prefiPage = prefinancementRepository.findAll(spec, pageable);
+        logger.debug("{} préfinancements récupérés pour la page courante", prefiPage.getNumberOfElements());
+
+        Page<SuiviePrefiLigneResponseDto> pageOfDtos = prefiPage.map(prefinancementMapper::toSuiviePrefiLigneResponseDto);
+
+        AgregatedSuiviePrefiLigneResponseDto aggregatedDto = new AgregatedSuiviePrefiLigneResponseDto();
+        aggregatedDto.setBanqueName(Line.getMarche().getBanque().getNom());
+        aggregatedDto.setMarcheName(marche.getNom());
+        aggregatedDto.setMarcheNumero(marche.getNumero());
+        aggregatedDto.setTotalDebit(totalDebit);
+        aggregatedDto.setTotalCredit(totalCredit);
+        aggregatedDto.setReste(reste);
+        aggregatedDto.setPage(pageOfDtos);
+
+        logger.info("Suivi de préfinancement récupéré avec succès pour la ligne ID: {}", lineId);
+        return aggregatedDto;
+    }
+
+    @Transactional(readOnly = true)
+    public AgregatedSuivieDcLigneResponseDto getSuivieDcLigneResponse(Long lineId, Pageable pageable) {
+        logger.info("Récupération du suivi de droit constaté pour la ligne ID: {}", lineId);
+
+        LigneFonctionnelle line = ligneFonctionnelleRepository.findById(lineId)
+                .orElseThrow(() -> {
+                    logger.error("Ligne fonctionnelle général non trouvée avec l'ID: {}", lineId);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle général non trouvée avec l'ID: " + lineId);
+                });
+
+        Marche marche = line.getMarche();
+        if (marche == null) {
+            logger.error("Aucun marché associé à la ligne ID: {}", lineId);
+            throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
+        }
+
+        logger.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
+
+        List<DroitConstate> allDc = droitConstateRepository.findByMarche(marche);
+        logger.debug("{} droits constatés  trouvés", allDc.size());
+
+        BigDecimal totalDebit = BigDecimal.ZERO;
+        BigDecimal totalCredit = BigDecimal.ZERO;
+
+        for (DroitConstate dc : allDc) {
+            if (dc.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(dc.getMontant());
+            else if (dc.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(dc.getMontant());
+        }
+
+        BigDecimal reste = totalCredit.subtract(totalDebit);
+
+        logger.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
+
+        Specification<DroitConstate> spec = Specification.where(DroitConstateSpec.byMarcheId(marche.getId())) ;
+        Page<DroitConstate> dcPage = droitConstateRepository.findAll(spec, pageable);
+
+        logger.debug("{} droits constatés récupérés pour la page courante", dcPage.getNumberOfElements());
+
+        Page<SuivieDcLigneResponseDto> pageOfDtos = dcPage.map(droitConstateMapper::toSuivieDcLigneResponseDto);
+
+        AgregatedSuivieDcLigneResponseDto aggregatedDto = new AgregatedSuivieDcLigneResponseDto();
+        aggregatedDto.setBanqueName(line.getMarche().getBanque().getNom());
+        aggregatedDto.setMarcheName(marche.getNom());
+        aggregatedDto.setMarcheNumero(marche.getNumero());
+        aggregatedDto.setTotalDebit(totalDebit);
+        aggregatedDto.setTotalCredit(totalCredit);
+        aggregatedDto.setReste(reste);
+        aggregatedDto.setPage(pageOfDtos);
+
+        logger.info("Suivi de droit constaté récupéré avec succès pour la ligne ID: {}", lineId);
+        return aggregatedDto;
+    }
+
+    @Transactional(readOnly = true)
+    public AgregatedSuivieFactoringLigneResponseDto getSuivieFactoringLigneResponse(Long lineId, Pageable pageable) {
+        logger.info("Récupération du suivi de factoring pour la ligne ID: {}", lineId);
+
+        LigneFonctionnelle line = ligneFonctionnelleRepository.findById(lineId)
+                .orElseThrow(() -> {
+                    logger.error("Ligne fonctionnelle général non trouvée avec l'ID: {}", lineId);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle général non trouvée avec l'ID: " + lineId);
+                });
+
+        Marche marche = line.getMarche();
+        if (marche == null) {
+            logger.error("Aucun marché associé à la ligne ID: {}", lineId);
+            throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
+        }
+
+        logger.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
+
+        List<Factoring> allPaidFactoring = factoringRepository.findByMarche(marche);
+        logger.debug("{} factorings payés trouvés", allPaidFactoring.size());
+
+        BigDecimal totalDebit = BigDecimal.ZERO;
+        BigDecimal totalCredit = BigDecimal.ZERO;
+        for (Factoring f : allPaidFactoring) {
+            if (f.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(f.getMontant());
+            else if (f.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(f.getMontant());
+        }
+        BigDecimal reste = totalCredit.subtract(totalDebit);
+
+        logger.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
+
+        Specification<Factoring> spec = Specification.where(FactoringSpec.byMarcheId(marche.getId()));
+        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
+
+        logger.debug("{} factorings récupérés pour la page courante", factoringPage.getNumberOfElements());
+
+        Page<SuivieFactoringLineResponseDto> pageOfDtos = factoringPage.map(factoringMapper::toSuivieFactoringLigneResponseDto);
+
+        AgregatedSuivieFactoringLigneResponseDto aggregatedDto = new AgregatedSuivieFactoringLigneResponseDto();
+        aggregatedDto.setBanqueName(line.getMarche().getBanque().getNom());
+        aggregatedDto.setMarcheName(marche.getNom());
+        aggregatedDto.setMarcheNumero(marche.getNumero());
+        aggregatedDto.setTotalDebit(totalDebit);
+        aggregatedDto.setTotalCredit(totalCredit);
+        aggregatedDto.setReste(reste);
+        aggregatedDto.setPage(pageOfDtos);
+
+        logger.info("Suivi de factoring récupéré avec succès pour la ligne ID: {}", lineId);
+        return aggregatedDto;
+    }
+
+
 }

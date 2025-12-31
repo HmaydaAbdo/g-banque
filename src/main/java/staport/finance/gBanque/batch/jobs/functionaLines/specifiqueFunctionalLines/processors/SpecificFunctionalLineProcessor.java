@@ -55,8 +55,6 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
             // Règle 1: Ligne expirée
             if (endDate.isBefore(currentProcessingTime)) {
                 if (item.isActif()) {
-                    item.setActif(false); // Désactiver la ligne
-                    needsPersistence = true; //  Marquer pour persistence
 
                     notificationTitle = String.format("Ligne Spécifique %s Expirée - Marché %s",
                             natureLabel, marcheNom);
@@ -111,7 +109,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
                                             String banqueNom, OffsetDateTime endDate) {
         return String.format(
                 "La ligne spécifique ID '%d' (Banque: '%s', Marché: '%s', Nature: '%s') " +
-                        "a expiré le %s et a été automatiquement désactivée.",
+                        "a expiré le %s.",
                 item.getId(),
                 banqueNom,
                 marcheNom,

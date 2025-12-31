@@ -54,8 +54,6 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
             // Règle 1: Ligne expirée
             if (endDate.isBefore(currentProcessingTime)) {
                 if (item.isActif()) {
-                    item.setActif(false); //  Désactiver la ligne
-                    needsPersistence = true; //  Marquer pour persistence
 
                     notificationTitle = "Ligne Fonctionnelle Expirée";
                     notificationContent = buildExpiredNotification(item, endDate);
@@ -104,7 +102,7 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
     private String buildExpiredNotification(LigneFonctionnelle item, OffsetDateTime endDate) {
         return String.format(
                 "La ligne fonctionnelle ID '%d' (Banque: '%s', Nature: '%s') " +
-                        "a expiré le %s et a été automatiquement désactivée.",
+                        "a expiré le %s .",
                 item.getId(),
                 getBankName(item),
                 getNatureName(item),

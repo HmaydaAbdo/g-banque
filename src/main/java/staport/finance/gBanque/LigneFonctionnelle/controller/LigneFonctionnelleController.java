@@ -13,6 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
+import staport.finance.gBanque.factoring.dtos.AgregatedSuivieFactoringLigneResponseDto;
+import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
 
 import java.util.List;
 
@@ -167,6 +170,66 @@ public class LigneFonctionnelleController {
 
         return ResponseEntity.ok(lignes);
     }
+
+
+
+
+    @GetMapping("/{id}/prefinancements")
+    public ResponseEntity<AgregatedSuiviePrefiLigneResponseDto> getPrefinancementsByLineId(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+
+        logger.info("Requête de suivi des préfinancements pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        AgregatedSuiviePrefiLigneResponseDto res = ligneFonctionnelleService.getSuiviePrefiLigneResponse(id, pageable);
+        logger.info("Suivi des préfinancements récupéré avec succès pour la ligne ID: {}", id);
+
+        return ResponseEntity.ok(res);
+    }
+
+
+    @GetMapping("/{id}/dc")
+    public ResponseEntity<AgregatedSuivieDcLigneResponseDto> getDroitConstateByLineId(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+
+        logger.info("Requête de suivi des droits constatés pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
+
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        AgregatedSuivieDcLigneResponseDto res = ligneFonctionnelleService.getSuivieDcLigneResponse(id, pageable);
+        logger.info("Suivi des droits constatés récupéré avec succès pour la ligne ID: {}", id);
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/{id}/factoring")
+    public ResponseEntity<AgregatedSuivieFactoringLigneResponseDto> getFactoringByLineId(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+
+        logger.info("Requête de suivi du factoring pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        AgregatedSuivieFactoringLigneResponseDto res = ligneFonctionnelleService.getSuivieFactoringLigneResponse(id, pageable);
+
+        logger.info("Suivi du factoring récupéré avec succès pour la ligne ID: {}", id);
+        return ResponseEntity.ok(res);
+    }
+
 
     /**
      * Retrieves historical plafond and taux data for a specific bank and nature of functional line,
