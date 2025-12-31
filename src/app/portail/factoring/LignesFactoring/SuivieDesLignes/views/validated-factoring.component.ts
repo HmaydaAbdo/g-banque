@@ -15,6 +15,7 @@ import {SpecificFunctionalLigneService} from "../../../../specific-Functional-Li
 import {ActivatedRoute} from "@angular/router";
 import {AgregatedSuivieFactoringLigneResponseDto} from "../dtos/AgregatedSuivieFactoringLigneResponseDto";
 import {SuivieFactoringLineResponseDto} from "../dtos/SuivieFactoringLineResponseDto";
+import {LigneFonctionnelleService} from "../../../../lignes-fonctionnelles/services/LigneFonctionnelleService";
 
 @Component({
   selector: 'app-validated-factoring',
@@ -45,10 +46,12 @@ export class ValidatedFactoringComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   lineId!: number;
+  lineType: 'general' | 'specific' = 'specific';
   items: MenuItem[] | undefined;
 
   constructor(
     private specificLigneService: SpecificFunctionalLigneService,
+    private generalLigneService: LigneFonctionnelleService,
     private messageService: MessageService,
     private route: ActivatedRoute
   ) {
@@ -76,12 +79,26 @@ export class ValidatedFactoringComponent implements OnInit {
         });
         return;
       }
-      this.items = [
-        {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
-        {icon: 'pi pi-list',route: '/portail/factoring-line', label: 'Les Encours du factoring '}
-      ];
+
+      this.route.queryParamMap.subscribe(queryParams => {
+        const type = queryParams.get('type');
+        this.lineType = (type === 'general') ? 'general' : 'specific';
+
+        this.updateBreadcrumb();
+      });
+
     });
   }
+
+  private updateBreadcrumb(): void {
+    const lineTypeLabel = this.lineType === 'general' ? 'Générale' : 'Spécifique';
+    this.items = [
+      {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
+      {icon: 'pi pi-list',route: '/portail/factoring-line', label: `Les Encours du factoring - Ligne ${lineTypeLabel}`}
+    ];
+  }
+
+
 
   loadFactoringLines(event: TableLazyLoadEvent): void {
     if (!this.lineId) {
@@ -95,7 +112,11 @@ export class ValidatedFactoringComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.specificLigneService.getFactoringByLineId(this.lineId, page, size, sort).subscribe({
+    const service = this.lineType === 'general'
+      ? this.generalLigneService
+      : this.specificLigneService;
+
+    service.getFactoringByLineId(this.lineId, page, size, sort).subscribe({
       next: (response) => {
         this.aggregatedData = response;
         this.factoringLines = response.page.content;

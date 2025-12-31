@@ -11,6 +11,9 @@ import { PageResponse } from "../../global/types/PageResponse";
 import { LigneFonctionnelleChartData } from "../dtos/LigneFonctionnelleChartData";
 import { LigneFonctionnelleChartHistoryRequest } from "../dtos/LigneFonctionnelleChartHistoryRequest";
 import { SousLigneRequestDto } from "../dtos/SousLigneRequestDto";
+import { AgregatedSuiviePrefiLigneResponseDto } from "../../prefinancements/lignesPrefi/suivieDesLignes/dtos/AgregatedSuiviePrefiLigneResponseDto";
+import { AgregatedSuivieDcLigneResponseDto } from "../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/Dtos/AgregatedSuivieDcLigneResponseDto";
+import { AgregatedSuivieFactoringLigneResponseDto } from "../../factoring/LignesFactoring/SuivieDesLignes/dtos/AgregatedSuivieFactoringLigneResponseDto";
 
 @Injectable({
   providedIn: 'root',
@@ -20,17 +23,30 @@ export class LigneFonctionnelleService {
 
   constructor(private http: HttpClient) {}
 
-  // 1. Create LigneFonctionnelle (POST /lignes-fonctionnelles-encours)
+  // ==========================================================================
+  // CRUD OPERATIONS
+  // ==========================================================================
+
+  /**
+   * Create LigneFonctionnelle
+   * POST /lignes-fonctionnelles
+   */
   createLigneFonctionnelle(request: LigneFonctionnelleRequest): Observable<LigneFonctionnelleResponse> {
     return this.http.post<LigneFonctionnelleResponse>(this.apiUrl, request);
   }
 
-  // 2. Get LigneFonctionnelle by ID (GET /lignes-fonctionnelles-encours/{id})
+  /**
+   * Get LigneFonctionnelle by ID
+   * GET /lignes-fonctionnelles/{id}
+   */
   getLigneFonctionnelleById(id: number): Observable<LigneFonctionnelleResponse> {
     return this.http.get<LigneFonctionnelleResponse>(`${this.apiUrl}/${id}`);
   }
 
-  // 3. Get Active LigneFonctionnelles (GET /lignes-fonctionnelles-encours)
+  /**
+   * Get Active LigneFonctionnelles with search criteria
+   * GET /lignes-fonctionnelles
+   */
   getCurrentLigneFonctionnelles(
     criteria: LigneFonctionnelleSearchCriteria,
     page: number,
@@ -52,6 +68,7 @@ export class LigneFonctionnelleService {
       params = params.append('natureLigneFonctionnelleId', criteria.natureLigneFonctionnelleId.toString());
     }
 
+    // Marche filter
     if (criteria.marcheId !== undefined && criteria.marcheId !== null) {
       params = params.append('marcheId', criteria.marcheId.toString());
     }
@@ -74,7 +91,10 @@ export class LigneFonctionnelleService {
     return this.http.get<PageResponse<LigneFonctionnelleResponse>>(this.apiUrl, { params });
   }
 
-  // 4. Get LignesFonctionnelles by BanqueOfDebit ID (GET /lignes-fonctionnelles-encours/banque/{banqueId})
+  /**
+   * Get LignesFonctionnelles by Banque ID
+   * GET /lignes-fonctionnelles/banque/{banqueId}
+   */
   getLignesFonctionnellesByBanqueId(
     banqueId: number,
     criteria: LigneFonctionnelleSearchCriteria,
@@ -92,6 +112,7 @@ export class LigneFonctionnelleService {
       params = params.append('natureLigneFonctionnelleId', criteria.natureLigneFonctionnelleId.toString());
     }
 
+    // Marche filter
     if (criteria.marcheId !== undefined && criteria.marcheId !== null) {
       params = params.append('marcheId', criteria.marcheId.toString());
     }
@@ -109,33 +130,130 @@ export class LigneFonctionnelleService {
     return this.http.get<PageResponse<LigneFonctionnelleResponse>>(`${this.apiUrl}/banque/${banqueId}`, { params });
   }
 
-  // 5. Update LigneFonctionnelle (PUT /lignes-fonctionnelles-encours/{id})
+  /**
+   * Update LigneFonctionnelle
+   * PUT /lignes-fonctionnelles/{id}
+   */
   updateLigneFonctionnelle(id: number, request: LigneFonctionnelleRequest): Observable<LigneFonctionnelleResponse> {
     return this.http.put<LigneFonctionnelleResponse>(`${this.apiUrl}/${id}`, request);
   }
 
-  // 6. Delete LigneFonctionnelle (DELETE /lignes-fonctionnelles-encours/{id})
+  /**
+   * Delete LigneFonctionnelle
+   * DELETE /lignes-fonctionnelles/{id}
+   */
   deleteLigneFonctionnelle(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  // 7. Deactivate a functional ligne (PUT /lignes-fonctionnelles-encours/deactivate/{ligneId})
+  /**
+   * Deactivate a functional ligne
+   * PUT /lignes-fonctionnelles/deactivate/{ligneId}
+   */
   deactivateLigneFonctionnelle(ligneId: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/deactivate/${ligneId}`, {});
   }
 
-  // 8. Manage Sous-Lignes (PUT /lignes-fonctionnelles-encours/{ligneMereId}/sous-lignes)
+  // ==========================================================================
+  // SOUS-LIGNES MANAGEMENT
+  // ==========================================================================
+
+  /**
+   * Manage Sous-Lignes (create, update, delete)
+   * PUT /lignes-fonctionnelles/{ligneMereId}/sous-lignes
+   */
   manageSousLignes(ligneMereId: number, sousLignes: SousLigneRequestDto[]): Observable<LigneFonctionnelleResponse> {
     const url = `${this.apiUrl}/${ligneMereId}/sous-lignes`;
     return this.http.put<LigneFonctionnelleResponse>(url, sousLignes);
   }
 
-  // 9. Get LigneFonctionnelle Chart History (GET /lignes-fonctionnelles-encours/history)
+  // ==========================================================================
+  // CHART / HISTORY
+  // ==========================================================================
+
+  /**
+   * Get LigneFonctionnelle Chart History
+   * GET /lignes-fonctionnelles/history
+   */
   getLigneFonctionnelleChartHistory(request: LigneFonctionnelleChartHistoryRequest): Observable<LigneFonctionnelleChartData> {
     let params = new HttpParams();
     params = params.append('banqueId', request.banqueId.toString());
     params = params.append('natureLigneFonctionnelleId', request.natureLigneFonctionnelleId.toString());
 
     return this.http.get<LigneFonctionnelleChartData>(`${this.apiUrl}/history`, { params });
+  }
+
+  // ==========================================================================
+  // AGGREGATED TRACKING (SUIVI) - FOR GENERAL LINES
+  // ==========================================================================
+
+  /**
+   * Helper to build pagination params
+   */
+  private buildParams(page: number, size: number, sort: string): HttpParams {
+    return new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+  }
+
+  /**
+   * Get Préfinancements by Line ID (General Line)
+   * GET /lignes-fonctionnelles/{id}/prefinancements
+   *
+   * @param id - Line ID
+   * @param page - Page number (0-indexed)
+   * @param size - Page size
+   * @param sort - Sort criteria (e.g., 'id,asc')
+   * @returns Observable of aggregated préfinancements data with pagination
+   */
+  getPrefinancementsByLineId(
+    id: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<AgregatedSuiviePrefiLigneResponseDto> {
+    const params = this.buildParams(page, size, sort);
+    return this.http.get<AgregatedSuiviePrefiLigneResponseDto>(`${this.apiUrl}/${id}/prefinancements`, { params });
+  }
+
+  /**
+   * Get Droits Constatés by Line ID (General Line)
+   * GET /lignes-fonctionnelles/{id}/dc
+   *
+   * @param id - Line ID
+   * @param page - Page number (0-indexed)
+   * @param size - Page size
+   * @param sort - Sort criteria (e.g., 'id,asc')
+   * @returns Observable of aggregated droits constatés data with pagination
+   */
+  getDroitConstateByLineId(
+    id: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<AgregatedSuivieDcLigneResponseDto> {
+    const params = this.buildParams(page, size, sort);
+    return this.http.get<AgregatedSuivieDcLigneResponseDto>(`${this.apiUrl}/${id}/dc`, { params });
+  }
+
+  /**
+   * Get Factoring by Line ID (General Line)
+   * GET /lignes-fonctionnelles/{id}/factoring
+   *
+   * @param id - Line ID
+   * @param page - Page number (0-indexed)
+   * @param size - Page size
+   * @param sort - Sort criteria (e.g., 'id,asc')
+   * @returns Observable of aggregated factoring data with pagination
+   */
+  getFactoringByLineId(
+    id: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<AgregatedSuivieFactoringLigneResponseDto> {
+    const params = this.buildParams(page, size, sort);
+    return this.http.get<AgregatedSuivieFactoringLigneResponseDto>(`${this.apiUrl}/${id}/factoring`, { params });
   }
 }

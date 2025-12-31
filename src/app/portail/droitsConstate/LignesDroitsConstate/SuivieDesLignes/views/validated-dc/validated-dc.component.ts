@@ -18,6 +18,7 @@ import {
 } from "../../../../../specific-Functional-Lignes/service/SpecificFunctionalLigneService";
 import {AgregatedSuivieDcLigneResponseDto} from "../../Dtos/AgregatedSuivieDcLigneResponseDto";
 import {SuivieDcLigneResponseDto} from "../../Dtos/SuivieDcLigneResponseDto";
+import {LigneFonctionnelleService} from "../../../../../lignes-fonctionnelles/services/LigneFonctionnelleService";
 
 
 
@@ -51,10 +52,12 @@ export class ValidatedDcComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   lineId!: number;
+  lineType: 'general' | 'specific' = 'specific';
   items: MenuItem[] | undefined;
 
   constructor(
     private specificLigneService: SpecificFunctionalLigneService,
+    private generalLigneService: LigneFonctionnelleService,
     private messageService: MessageService,
     private route: ActivatedRoute
   ) {
@@ -82,12 +85,24 @@ export class ValidatedDcComponent implements OnInit {
         });
         return;
       }
-      this.items = [
-        {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
-        {icon: 'pi pi-list',route: '/portail/dc-lines', label: 'Les Encours des droit constaté '},
 
-      ];
+
+      this.route.queryParamMap.subscribe(queryParams => {
+        const type = queryParams.get('type');
+        this.lineType = (type === 'general') ? 'general' : 'specific';
+
+        this.updateBreadcrumb();
+      });
+
     });
+  }
+
+  private updateBreadcrumb(): void {
+    const lineTypeLabel = this.lineType === 'general' ? 'Générale' : 'Spécifique';
+    this.items = [
+      {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
+      {icon: 'pi pi-list', label: `Encours Droits Constatés - Ligne ${lineTypeLabel}`}
+    ];
   }
 
   loadDcLines(event: TableLazyLoadEvent): void {
@@ -102,7 +117,12 @@ export class ValidatedDcComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.specificLigneService.getDroitConstateByLineId(this.lineId, page, size, sort).subscribe({
+    const service = this.lineType === 'general'
+      ? this.generalLigneService
+      : this.specificLigneService;
+
+
+    service.getDroitConstateByLineId(this.lineId, page, size, sort).subscribe({
       next: (response) => {
         this.aggregatedData = response;
         this.dcLines = response.page.content;

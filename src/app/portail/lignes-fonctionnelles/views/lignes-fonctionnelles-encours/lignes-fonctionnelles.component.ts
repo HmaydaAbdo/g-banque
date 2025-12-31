@@ -33,6 +33,8 @@ import { MarcheService } from '../../../Marches/service/marche-service.service';
 import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fonctionnelle.service";
 import { AuthService } from "../../../../auth/services/auth.service";
 import { Role } from "../../../../auth/enum/Role";
+import {LineNavigationService, LineType} from "../../services/LineNavigationService";
+
 
 const MARCHE_PAGE_SIZE = 10;
 const DEBOUNCE_TIME = 300;
@@ -98,7 +100,9 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly messageService: MessageService,
     private readonly confirmationService: ConfirmationService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly lineNavigationService: LineNavigationService
+
   ) {
     this.marchesScrollerOptions = {
       delay: 250,
@@ -503,33 +507,7 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
   }
 
   redirectToLineDetails(lineId: number, label: string): void {
-    // Normalisation pour éviter les erreurs de casse ou d'espaces
-    const nature = label?.trim();
-
-    switch (nature) {
-      case 'Factoring':
-        this.router.navigate(['/portail/factoring-encours', lineId]);
-        break;
-
-      case 'Préfinancement':
-        this.router.navigate(['/portail/prefi-encours', lineId]);
-        break;
-
-      case 'Droit constaté':
-        this.router.navigate(['/portail/dc-encours', lineId]);
-        break;
-
-      default:
-        // Message d'avertissement en français
-        this.messageService.add
-        ({ severity: 'warning',
-          summary: 'Aucun écran de suivi n\'est configuré',
-          detail:    `Aucun écran de suivi n'est configuré pour la nature :''${nature}''`
-        });
-
-        console.warn(`Redirection non gérée pour le label: ${nature}`);
-        break;
-    }
-
+    // Pour les lignes GÉNÉRALES, on utilise LineType.GENERAL
+    this.lineNavigationService.redirectToLineDetails(lineId, label, LineType.GENERAL);
   }
 }

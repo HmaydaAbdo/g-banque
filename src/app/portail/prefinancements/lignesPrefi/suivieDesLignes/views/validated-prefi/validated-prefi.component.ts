@@ -16,6 +16,7 @@ import {MenuItem} from 'primeng/api';
 import {SpecificFunctionalLigneService} from "../../../../../specific-Functional-Lignes/service/SpecificFunctionalLigneService";
 import {AgregatedSuiviePrefiLigneResponseDto} from "../../dtos/AgregatedSuiviePrefiLigneResponseDto";
 import {SuiviePrefiLigneResponseDto} from "../../dtos/SuiviePrefiLigneResponseDto";
+import {LigneFonctionnelleService} from "../../../../../lignes-fonctionnelles/services/LigneFonctionnelleService";
 
 
 @Component({
@@ -48,12 +49,16 @@ export class ValidatedPrefiComponent implements OnInit {
   totalRecords: number = 0;
   loading: boolean = false;
   lineId!: number;
+  lineType: 'general' | 'specific' = 'specific';
+
   items: MenuItem[] | undefined;
 
   constructor(
     private specificLigneService: SpecificFunctionalLigneService,
     private messageService: MessageService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private generalLigneService: LigneFonctionnelleService,
+
   ) {
   }
 
@@ -79,11 +84,24 @@ export class ValidatedPrefiComponent implements OnInit {
         });
         return;
       }
-      this.items = [
-        {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
-        {icon: 'pi pi-list', route: '/portail/prefi-lines', label: 'Les Encours des préfinancements '}
-      ];
+
     });
+
+    this.route.queryParamMap.subscribe(queryParams => {
+      const type = queryParams.get('type');
+      this.lineType = (type === 'general') ? 'general' : 'specific';
+
+      this.updateBreadcrumb();
+    });
+  }
+
+  private updateBreadcrumb(): void {
+    const lineTypeLabel = this.lineType === 'general' ? 'Générale' : 'Spécifique';
+
+    this.items = [
+      {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
+      {icon: 'pi pi-list', route: '/portail/prefi-lines', label: `Les Encours des préfinancements - Ligne ${lineTypeLabel}`}
+    ];
   }
 
   loadPrefiLines(event: TableLazyLoadEvent): void {
@@ -97,7 +115,11 @@ export class ValidatedPrefiComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.specificLigneService.getPrefinancementsByLineId(this.lineId, page, size, sort).subscribe({
+    const service = this.lineType === 'general'
+      ? this.generalLigneService
+      : this.specificLigneService;
+
+    service.getPrefinancementsByLineId(this.lineId, page, size, sort).subscribe({
       next: (response) => {
         this.aggregatedData = response;
         this.prefiLines = response.page.content;

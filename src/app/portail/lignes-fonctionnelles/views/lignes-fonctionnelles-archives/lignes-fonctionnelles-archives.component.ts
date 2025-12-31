@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { BreadcrumbModule } from "primeng/breadcrumb";
 import { ButtonDirective } from "primeng/button";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
-import { DatePipe, DecimalPipe, NgClass, NgForOf, NgIf } from "@angular/common";
+import { DatePipe, DecimalPipe, NgClass, NgIf } from "@angular/common";
 import { DropdownModule } from "primeng/dropdown";
 import { PaginatorModule } from "primeng/paginator";
 import { ConfirmationService, MenuItem, MessageService, PrimeTemplate, ScrollerOptions } from "primeng/api";
@@ -23,6 +23,7 @@ import { LigneFonctionnelleSearchCriteria } from "../../dtos/LigneFonctionnelleS
 // RxJS
 import { Subject, BehaviorSubject, combineLatest, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil, switchMap, catchError, tap } from 'rxjs/operators';
+import {LineNavigationService, LineType} from "../../services/LineNavigationService";
 
 const MARCHE_PAGE_SIZE = 10;
 const DEBOUNCE_TIME = 300;
@@ -94,6 +95,8 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
     private fb: FormBuilder,
     private messageService: MessageService,
     private router: Router,
+    private readonly lineNavigationService: LineNavigationService
+
   ) {
     this.marchesScrollerOptions = {
       delay: 250,
@@ -388,34 +391,8 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
   }
 
   redirectToLineDetails(lineId: number, label: string): void {
-    // Normalisation pour éviter les erreurs de casse ou d'espaces
-    const nature = label?.trim();
-
-    switch (nature) {
-      case 'Factoring':
-        this.router.navigate(['/portail/factoring-encours', lineId]);
-        break;
-
-      case 'Préfinancement':
-        this.router.navigate(['/portail/prefi-encours', lineId]);
-        break;
-
-      case 'Droit constaté':
-        this.router.navigate(['/portail/dc-encours', lineId]);
-        break;
-
-      default:
-        // Message d'avertissement en français
-        this.messageService.add
-        ({ severity: 'warning',
-          summary: 'Aucun écran de suivi n\'est configuré',
-          detail:    `Aucun écran de suivi n'est configuré pour la nature :''${nature}''`
-        });
-
-        console.warn(`Redirection non gérée pour le label: ${nature}`);
-        break;
-    }
-
+    // Pour les lignes GÉNÉRALES, on utilise LineType.GENERAL
+    this.lineNavigationService.redirectToLineDetails(lineId, label, LineType.GENERAL);
   }
 
 }
