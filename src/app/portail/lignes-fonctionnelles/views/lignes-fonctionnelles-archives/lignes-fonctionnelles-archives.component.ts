@@ -52,7 +52,7 @@ const DEBOUNCE_TIME = 300;
   ],
   templateUrl: './lignes-fonctionnelles-archives.component.html',
   styleUrl: './lignes-fonctionnelles-archives.component.scss',
-  providers: [MessageService, ConfirmationService]
+  providers: [ ConfirmationService]
 })
 export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy {
 

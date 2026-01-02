@@ -51,7 +51,7 @@ const DEBOUNCE_TIME = 300;
     TooltipModule, DropdownModule, InputNumberModule, CalendarModule,
     InputSwitchModule, BreadcrumbModule, SpeedDialModule
   ],
-  providers: [MessageService, ConfirmationService]
+  providers: [ ConfirmationService]
 })
 export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
 

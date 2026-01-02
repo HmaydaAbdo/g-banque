@@ -46,7 +46,7 @@ const DEBOUNCE_TIME = 300;
     DropdownModule, InputNumberModule, CalendarModule, InputSwitchModule,
     BreadcrumbModule, RouterLinkActive
   ],
-  providers: [MessageService, ConfirmationService]
+  providers: [ ConfirmationService]
 })
 export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
 

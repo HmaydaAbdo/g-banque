@@ -18,7 +18,7 @@ export enum LineType {
  * Supporte les lignes générales (LigneFonctionnelle) et spécifiques (LigneFonctionnelleSpecifique)
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LineNavigationService {
 
@@ -63,6 +63,12 @@ export class LineNavigationService {
 
       case 'Droit constaté':
         this.router.navigate(['/portail', 'dc-encours', lineId], {
+          queryParams: { type: typeParam }
+        });
+        break;
+
+      case 'Escompte Commercial':
+        this.router.navigate(['/portail', 'lcn-encours', lineId], {
           queryParams: { type: typeParam }
         });
         break;

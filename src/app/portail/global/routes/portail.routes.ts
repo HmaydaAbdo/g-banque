@@ -118,6 +118,7 @@ import {
 import {
   SpecificLinesByMarcheComponent
 } from "../../Marches/views/specific-lines-by-marche/specific-lines-by-marche.component";
+import {LcnEscompteByLineComponent} from "../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -147,6 +148,7 @@ export const PORTAIL_ROUTES: Routes = [
   { path:"factoring-encours/:lineId",component:ValidatedFactoringComponent},
   { path:"prefi-encours/:lineId",component:ValidatedPrefiComponent},
   { path:"dc-encours/:lineId",component:ValidatedDcComponent},
+  {path:"lcn-encours/:lineId",component:LcnEscompteByLineComponent},
 
 
   { path: 'natures-fonctionnelles', component: NatureLigneFonctionnelleListComponent },

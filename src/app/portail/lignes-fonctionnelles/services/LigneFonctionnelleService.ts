@@ -14,6 +14,7 @@ import { SousLigneRequestDto } from "../dtos/SousLigneRequestDto";
 import { AgregatedSuiviePrefiLigneResponseDto } from "../../prefinancements/lignesPrefi/suivieDesLignes/dtos/AgregatedSuiviePrefiLigneResponseDto";
 import { AgregatedSuivieDcLigneResponseDto } from "../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/Dtos/AgregatedSuivieDcLigneResponseDto";
 import { AgregatedSuivieFactoringLigneResponseDto } from "../../factoring/LignesFactoring/SuivieDesLignes/dtos/AgregatedSuivieFactoringLigneResponseDto";
+import {AgregatedSuivieLcnLigneResponseDto} from "../../LCN/dtos/AgregatedSuivieLcnLigneResponseDto";
 
 @Injectable({
   providedIn: 'root',
@@ -256,4 +257,16 @@ export class LigneFonctionnelleService {
     const params = this.buildParams(page, size, sort);
     return this.http.get<AgregatedSuivieFactoringLigneResponseDto>(`${this.apiUrl}/${id}/factoring`, { params });
   }
+
+  getLcnByLineId(
+    id: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission,desc'
+  ): Observable<AgregatedSuivieLcnLigneResponseDto> {
+    const params = this.buildParams(page, size, sort);
+    return this.http.get<AgregatedSuivieLcnLigneResponseDto>(`${this.apiUrl}/${id}/lcn`, { params });
+  }
+
+
 }

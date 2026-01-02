@@ -48,7 +48,7 @@
       TooltipModule, DropdownModule, InputNumberModule, CalendarModule,
       InputSwitchModule, BreadcrumbModule
     ],
-    providers: [MessageService, ConfirmationService]
+    providers: [ ConfirmationService]
   })
   export class SpeficLigneEncoursComponent implements OnInit, OnDestroy {
 
