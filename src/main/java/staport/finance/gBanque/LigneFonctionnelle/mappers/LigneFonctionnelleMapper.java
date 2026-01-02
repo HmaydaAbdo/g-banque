@@ -255,7 +255,6 @@ public class LigneFonctionnelleMapper {
         Long ligneId = ligneFonctionnelle.getId();
         Marche marche = ligneFonctionnelle.getMarche();
         BigDecimal plafond = ligneFonctionnelle.getPlafond();
-        BigDecimal encoursStocke = ligneFonctionnelle.getEncours(); // Pour Escompte Commercial
 
         logger.debug("Calculating encours and solde for ligne ID: {}, nature ID: {}", ligneId, natureId);
 
@@ -265,8 +264,7 @@ public class LigneFonctionnelleMapper {
                 natureId,
                 marche,
                 ligneFonctionnelle.getBanque(),
-                plafond,
-                encoursStocke
+                plafond
         );
 
         // Calcul du solde via le service centralisé

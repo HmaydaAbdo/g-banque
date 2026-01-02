@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.moyensDePaiements.lcn.dtos.*;
@@ -35,28 +36,61 @@ public class LcnService {
         this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
     }
 
+
     @Transactional
     public LcnResponseDTO createLcn(LcnRequestDto requestDto) {
         log.info("Création d'un nouveau LCN d'encaissement: {}", requestDto);
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(() -> {
-            log.error("Banque avec l'ID {} introuvable", requestDto.getBanqueId());
-            return new ResourceNotFoundException("Bank with id " + requestDto.getBanqueId() + " not found.");
-        });
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
+                .orElseThrow(() -> {
+                    log.error("Banque avec l'ID {} introuvable", requestDto.getBanqueId());
+                    return new ResourceNotFoundException(
+                            "Bank with id " + requestDto.getBanqueId() + " not found.");
+                });
 
+        LigneFonctionnelle ligneFonctionnelle = null;
+
+        //  Association automatique pour les LCN de type ESCOMPTE
         if (requestDto.getNatureLcn() == NatureLcn.ESCOMPTE) {
-            log.debug("Vérification de la ligne fonctionnelle escompte commerciale pour la banque ID: {}", banque.getId());
-            ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banque.getId(), 2L)
+            log.debug("LCN de type ESCOMPTE détecté - recherche de la ligne fonctionnelle escompte commerciale pour la banque ID: {}",
+                    banque.getId());
+
+            ligneFonctionnelle = ligneFonctionnelleRepository
+                    .findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banque.getId(), 2L)
                     .orElseThrow(() -> {
-                        log.error("Ligne fonctionnelle escompte commerciale inactive ou introuvable pour la banque ID: {}", banque.getId());
-                        return new ResourceNotFoundException("ligne fonctionnelle escompte commerciale inactif ou introuvable  pour la banque " + banque.getId());
+                        log.error("Ligne fonctionnelle escompte commerciale active introuvable pour la banque ID: {}",
+                                banque.getId());
+                        return new ResourceNotFoundException(
+                                "Aucune ligne fonctionnelle escompte commerciale active n'a été trouvée pour la banque '" +
+                                        banque.getNom() + "' (ID: " + banque.getId() + "). " +
+                                        "Veuillez activer une ligne fonctionnelle escompte commerciale avant de créer un LCN de type ESCOMPTE.");
                     });
+
+            log.info("Ligne fonctionnelle escompte commerciale trouvée: ID={}, Plafond={}",
+                    ligneFonctionnelle.getId(),
+                    ligneFonctionnelle.getPlafond());
+
+
         }
 
+        // Création de l'entité LCN
         Lcn lcn = LcnMapper.toEntity(requestDto, banque);
+
+        //  Association de la ligne fonctionnelle si type ESCOMPTE
+        if (ligneFonctionnelle != null) {
+            lcn.setLigneFonctionnelle(ligneFonctionnelle);
+            log.debug("LCN associé à la ligne fonctionnelle ID={}", ligneFonctionnelle.getId());
+        }
+
         log.debug("Enregistrement de l'entité LCN: {}", lcn);
         lcn = lcnRepository.save(lcn);
-        log.info("LCN créé avec succès avec l'ID: {}", lcn.getId());
+
+        log.info("LCN créé avec succès - ID: {}, Type: {}, Nature: {}, Ligne fonctionnelle: {}",
+                lcn.getId(),
+                lcn.getType(),
+                lcn.getNatureLcn(),
+                ligneFonctionnelle != null ? ligneFonctionnelle.getId() : "N/A");
+
         return LcnMapper.toDto(lcn);
     }
 
@@ -64,19 +98,22 @@ public class LcnService {
     public LcnResponseDTO editEncaissementLcn(Long id, LcnRequestDto dto) {
         log.info("Modification du LCN d'encaissement ID={} avec les données={}", id, dto);
 
-        Lcn existingLcn = lcnRepository.findById(id).orElseThrow(() -> {
-            log.error("LCN avec l'ID {} introuvable", id);
-            return new ResourceNotFoundException("Lcn with id " + id + " not found.");
-        });
+        Lcn existingLcn = lcnRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("LCN avec l'ID {} introuvable", id);
+                    return new ResourceNotFoundException("Lcn with id " + id + " not found.");
+                });
 
         if (existingLcn.getType() != Type.ENCAISSEMENT) {
             log.warn("Tentative de modification d'un LCN qui n'est pas de type ENCAISSEMENT, ID={}", id);
-            throw new IllegalArgumentException("Modification interdite: le lcn with id " + id + " n'est pas de type ENCAISSEMENT.");
+            throw new IllegalArgumentException(
+                    "Modification interdite: le lcn with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
         if (!existingLcn.isActive()) {
             log.warn("Tentative de modification d'un LCN inactif (déjà réglé), ID={}", id);
-            throw new IllegalArgumentException("Modification interdite: le lcn with id " + id + " est déja réglé.");
+            throw new IllegalArgumentException(
+                    "Modification interdite: le lcn with id " + id + " est déja réglé.");
         }
 
         if (dto.getDateEmission() != null) {
@@ -91,6 +128,34 @@ public class LcnService {
 
         if (dto.getNatureLcn() != null) {
             log.debug("Mise à jour de la nature du LCN pour l'ID={}", id);
+
+            //  Si on change la nature vers ESCOMPTE, il faut associer la ligne fonctionnelle
+            if (dto.getNatureLcn() == NatureLcn.ESCOMPTE &&
+                    existingLcn.getNatureLcn() != NatureLcn.ESCOMPTE) {
+
+                log.debug("Changement de nature vers ESCOMPTE - recherche de la ligne fonctionnelle");
+                LigneFonctionnelle ligneFonctionnelle = ligneFonctionnelleRepository
+                        .findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(
+                                existingLcn.getBanque().getId(), 2L)
+                        .orElseThrow(() -> {
+                            log.error("Ligne fonctionnelle escompte commerciale active introuvable pour la banque ID: {}",
+                                    dto.getBanqueId());
+                            return new ResourceNotFoundException(
+                                    "Aucune ligne fonctionnelle escompte commerciale active n'a été trouvée pour cette banque.");
+                        });
+
+                existingLcn.setLigneFonctionnelle(ligneFonctionnelle);
+                log.debug("Ligne fonctionnelle ID={} associée au LCN", ligneFonctionnelle.getId());
+            }
+
+            // Si on change la nature depuis ESCOMPTE vers autre chose, on dissocie la ligne
+            if (dto.getNatureLcn() != NatureLcn.ESCOMPTE &&
+                    existingLcn.getNatureLcn() == NatureLcn.ESCOMPTE) {
+
+                log.debug("Changement de nature depuis ESCOMPTE - dissociation de la ligne fonctionnelle");
+                existingLcn.setLigneFonctionnelle(null);
+            }
+
             existingLcn.setNatureLcn(dto.getNatureLcn());
         }
 
@@ -104,7 +169,8 @@ public class LcnService {
             Banque banque = banqueRepository.findById(dto.getBanqueId())
                     .orElseThrow(() -> {
                         log.error("Banque avec l'ID {} introuvable", dto.getBanqueId());
-                        return new ResourceNotFoundException("Bank with id " + dto.getBanqueId() + " not found.");
+                        return new ResourceNotFoundException(
+                                "Bank with id " + dto.getBanqueId() + " not found.");
                     });
             existingLcn.setBanque(banque);
         }

@@ -10,8 +10,6 @@ import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
@@ -27,7 +25,6 @@ import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.interets.repository.InteretRepository;
-import staport.finance.gBanque.moyensDePaiements.lcn.dtos.NatureLcn;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.validation.dtos.agios.AgiosTransactionResponse;
@@ -94,7 +91,6 @@ public class ValidationService {
     private final LeasingTransactionMapper leasingTransactionMapper;
     private final ContratLeasingRepository contratLeasingRepository;
     private final EcheanceLeasingRepository echeanceLeasingRepository;
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
 
 
     private final CreditMoyenTermeRepository creditMoyenTermeRepository;
@@ -145,9 +141,8 @@ public class ValidationService {
 
 
 
-    public ValidationService(LeasingTransactionMapper mapper, LigneFonctionnelleRepository ligneFonctionnelleRepository, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper) {
+    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper) {
         this.leasingTransactionMapper = mapper;
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
@@ -404,18 +399,8 @@ public class ValidationService {
         banque.setSoldeActuel(banque.getSoldeActuel().add(lcn.getMontant()));
         this.banqueRepository.save(banque);
 
-        //step 6 : if it's of type escompte , this operation should  affect  the functional line solde
 
-        if(lcn.getNatureLcn()== NatureLcn.ESCOMPTE){
-            LigneFonctionnelle escompteActif=ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banque.getId(),2L).orElseThrow(()->new ResourceNotFoundException("escompte commerciale inactif ou introuvable  pour la banque "+banque.getId()));
-
-            escompteActif.setEncours(escompteActif.getEncours().add(lcn.getMontant()));
-
-            ligneFonctionnelleRepository.save(escompteActif);
-        }
-
-
-        // Step 7: Mark the lcn as inactive (paid) and save the updated lcn entity.
+        // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
         lcn.setActive(false);
         lcn.setDateOperation(savedTransaction.getDateOperations());
         lcn.setDateValeur(savedTransaction.getDateValeur());
@@ -423,7 +408,7 @@ public class ValidationService {
         lcn.setObservation(savedTransaction.getObservation());
         lcnRepository.save(lcn);
 
-        // Step 8: Convert the saved Transaction entity into a LcnTransactionResponse
+        // Step 7: Convert the saved Transaction entity into a LcnTransactionResponse
         // using the mapper and return it as the response.
         return lcnTransactionMapper.toResponseDto(savedTransaction);
     }

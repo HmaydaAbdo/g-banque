@@ -14,6 +14,17 @@ import java.util.List;
 
 public final class LcnSpecification {
 
+
+    public static Specification<Lcn> hasLigneFonctionnelle(Long ligneFonctionnelleId) {
+        return (root, query, criteriaBuilder) -> {
+            if (ligneFonctionnelleId == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("ligneFonctionnelle").get("id"), ligneFonctionnelleId);
+        };
+    }
+
+
     public static Specification<Lcn> hasNumero(String numero) {
         return (root, query, criteriaBuilder) -> {
             if (numero == null || numero.trim().isEmpty()) {

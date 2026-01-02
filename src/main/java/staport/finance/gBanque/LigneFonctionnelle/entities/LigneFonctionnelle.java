@@ -4,6 +4,7 @@
     import staport.finance.gBanque.Bank.entities.Banque;
     import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
     import staport.finance.gBanque.marches.entities.Marche;
+    import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 
     import java.math.BigDecimal;
     import java.time.OffsetDateTime;
@@ -26,15 +27,12 @@
         @JoinColumn(name = "nature_ligne_id", nullable = false)
         private NatureLigneFonctionnelle natureLigneFonctionnelle;
 
-
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "marche_id", nullable = true)
         private Marche marche;
 
-        @Column(nullable = true)
+        @Column
         private BigDecimal plafond;
-
-        private BigDecimal encours=BigDecimal.ZERO;
 
         @Column(nullable = false)
         private BigDecimal taux;
@@ -62,6 +60,9 @@
 
         @OneToMany(mappedBy = "ligneMere", cascade = CascadeType.ALL, orphanRemoval = true)
         private List<LigneFonctionnelle> sousLignes;
+
+        @OneToMany(mappedBy = "ligneFonctionnelle", cascade = CascadeType.ALL)
+        private List<Lcn> lcns;
 
         // --- Constructors ---
         public LigneFonctionnelle() {
@@ -108,14 +109,6 @@
         public BigDecimal getPlafond() { return plafond; }
         public void setPlafond(BigDecimal plafond) { this.plafond = plafond; }
 
-        public BigDecimal getEncours() {
-            return encours != null ? encours : BigDecimal.ZERO;
-        }
-
-        public void setEncours(BigDecimal encours) {
-            this.encours = encours;
-        }
-
         public BigDecimal getTaux() { return taux; }
         public void setTaux(BigDecimal taux) { this.taux = taux; }
 
@@ -158,6 +151,13 @@
             this.sousLignes = sousLignes;
         }
 
+        public List<Lcn> getLcns() {
+            return lcns;
+        }
+
+        public void setLcns(List<Lcn> lcns) {
+            this.lcns = lcns;
+        }
 
         @PrePersist
         protected void onCreate() {
@@ -178,12 +178,12 @@
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
             LigneFonctionnelle that = (LigneFonctionnelle) o;
-            return actif == that.actif && Objects.equals(id, that.id) && Objects.equals(banque, that.banque) && Objects.equals(natureLigneFonctionnelle, that.natureLigneFonctionnelle) && Objects.equals(plafond, that.plafond) && Objects.equals(encours, that.encours) && Objects.equals(taux, that.taux) && Objects.equals(dateDepart, that.dateDepart) && Objects.equals(dateFin, that.dateFin) && Objects.equals(dateCreation, that.dateCreation) && Objects.equals(dateModification, that.dateModification) && Objects.equals(ligneMere, that.ligneMere) && Objects.equals(sousLignes, that.sousLignes);
+            return actif == that.actif && Objects.equals(id, that.id) && Objects.equals(banque, that.banque) && Objects.equals(natureLigneFonctionnelle, that.natureLigneFonctionnelle) && Objects.equals(plafond, that.plafond)  && Objects.equals(taux, that.taux) && Objects.equals(dateDepart, that.dateDepart) && Objects.equals(dateFin, that.dateFin) && Objects.equals(dateCreation, that.dateCreation) && Objects.equals(dateModification, that.dateModification) && Objects.equals(ligneMere, that.ligneMere) && Objects.equals(sousLignes, that.sousLignes);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(id, banque, natureLigneFonctionnelle, plafond, encours, taux, dateDepart, dateFin, dateCreation, dateModification, actif, ligneMere, sousLignes);
+            return Objects.hash(id, banque, natureLigneFonctionnelle, plafond, taux, dateDepart, dateFin, dateCreation, dateModification, actif, ligneMere, sousLignes);
         }
 
         @Override
@@ -194,7 +194,6 @@
                     ", natureLigneFonctionnelle=" + natureLigneFonctionnelle +
                     ", marche=" + marche +
                     ", plafond=" + plafond +
-                    ", encours=" + encours +
                     ", taux=" + taux +
                     ", dateDepart=" + dateDepart +
                     ", dateFin=" + dateFin +

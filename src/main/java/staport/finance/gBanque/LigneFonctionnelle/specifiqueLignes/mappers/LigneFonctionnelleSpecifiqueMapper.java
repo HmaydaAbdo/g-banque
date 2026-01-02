@@ -114,8 +114,7 @@ public class LigneFonctionnelleSpecifiqueMapper {
                     natureId,
                     entity.getMarche(),
                     entity.getMarche().getBanque(),
-                    entity.getPlafond(),
-                    null
+                    entity.getPlafond()
             );
 
             BigDecimal solde = encoursCalculatorService.calculateSolde(

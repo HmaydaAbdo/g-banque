@@ -2,6 +2,7 @@ package staport.finance.gBanque.moyensDePaiements.lcn.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.moyensDePaiements.lcn.dtos.NatureLcn;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
@@ -54,6 +55,10 @@ public class Lcn {
     private NatureLcn natureLcn;
 
     private String emetteur;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ligne_fonctionnelle_id", nullable = true)
+    private LigneFonctionnelle ligneFonctionnelle;
 
     public Lcn() {}
 
@@ -126,6 +131,12 @@ public class Lcn {
     public void setNatureLcn(NatureLcn natureLcn) {
         this.natureLcn = natureLcn;
     }
+    public LigneFonctionnelle getLigneFonctionnelle() {
+        return ligneFonctionnelle;
+    }
+    public void setLigneFonctionnelle(LigneFonctionnelle ligneFonctionnelle) {
+        this.ligneFonctionnelle = ligneFonctionnelle;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -151,6 +162,7 @@ public class Lcn {
                 ", dateValeur=" + dateValeur +
                 ", montant=" + montant +
                 ", banque=" + banque +
+                ", ligneFonctionnelle=" + (ligneFonctionnelle != null ? ligneFonctionnelle.getId() : null) +
                 ", active=" + active +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
