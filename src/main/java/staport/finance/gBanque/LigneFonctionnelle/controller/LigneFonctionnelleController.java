@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieLcnLigneResponseDto;
 import staport.finance.gBanque.factoring.dtos.AgregatedSuivieFactoringLigneResponseDto;
 import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
 
@@ -230,6 +231,26 @@ public class LigneFonctionnelleController {
         return ResponseEntity.ok(res);
     }
 
+
+
+    @GetMapping("/{id}/lcn")
+    public ResponseEntity<AgregatedSuivieLcnLigneResponseDto> getLcnByLineId(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+
+        logger.info("Requête de suivi LCN pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        AgregatedSuivieLcnLigneResponseDto res = ligneFonctionnelleService.getSuivieLcnLigneResponse(id, pageable);
+
+        logger.info("Suivi LCN récupéré avec succès pour la ligne ID: {}", id);
+        return ResponseEntity.ok(res);
+    }
 
     /**
      * Retrieves historical plafond and taux data for a specific bank and nature of functional line,

@@ -60,6 +60,18 @@ public class Lcn {
     @JoinColumn(name = "ligne_fonctionnelle_id", nullable = true)
     private LigneFonctionnelle ligneFonctionnelle;
 
+
+    @PrePersist
+    @PreUpdate
+    private void validateBusinessRules() {
+        if (this.natureLcn == NatureLcn.ESCOMPTE && this.type != Type.ENCAISSEMENT) {
+            throw new IllegalStateException(
+                    "Violation de règle métier: Un LCN de nature ESCOMPTE doit obligatoirement être de type ENCAISSEMENT. " +
+                            "Type actuel: " + this.type + ", Nature: " + this.natureLcn
+            );
+        }
+
+    }
     public Lcn() {}
 
 

@@ -12,6 +12,7 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repos
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
 import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieLcnLigneResponseDto;
 import staport.finance.gBanque.droitConstate.dtos.SuivieDcLigneResponseDto;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;
@@ -42,6 +43,11 @@ import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
+import staport.finance.gBanque.moyensDePaiements.lcn.dtos.LcnResponseDTO;
+import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
+import staport.finance.gBanque.moyensDePaiements.lcn.mapper.LcnMapper;
+import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
+import staport.finance.gBanque.moyensDePaiements.lcn.specs.LcnSpecification;
 import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
 import staport.finance.gBanque.prefinancement.dtos.SuiviePrefiLigneResponseDto;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
@@ -68,6 +74,7 @@ public class LigneFonctionnelleService {
     private final FactoringRepository factoringRepository;
     private final DroitConstateRepository droitConstateRepository;
     private final PrefinancementMapper prefinancementMapper;
+    private final LcnRepository lcnRepository;
     private final FactoringMapper factoringMapper;
     private final DroitConstateMapper droitConstateMapper;
 
@@ -75,7 +82,7 @@ public class LigneFonctionnelleService {
     public LigneFonctionnelleService(LigneFonctionnelleRepository ligneFonctionnelleRepository,
                                      LigneFonctionnelleMapper ligneFonctionnelleMapper,
                                      BanqueRepository banqueRepository,
-                                     NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, MarcheRepository marcheRepository, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, PrefinancementRepository prefinancementRepository, FactoringRepository factoringRepository, DroitConstateRepository droitConstateRepository, PrefinancementMapper prefinancementMapper, FactoringMapper factoringMapper, DroitConstateMapper droitConstateMapper) {
+                                     NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, MarcheRepository marcheRepository, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, PrefinancementRepository prefinancementRepository, FactoringRepository factoringRepository, DroitConstateRepository droitConstateRepository, PrefinancementMapper prefinancementMapper, LcnRepository lcnRepository, FactoringMapper factoringMapper, DroitConstateMapper droitConstateMapper) {
         this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
         this.ligneFonctionnelleMapper = ligneFonctionnelleMapper;
         this.banqueRepository = banqueRepository;
@@ -86,6 +93,7 @@ public class LigneFonctionnelleService {
         this.factoringRepository = factoringRepository;
         this.droitConstateRepository = droitConstateRepository;
         this.prefinancementMapper = prefinancementMapper;
+        this.lcnRepository = lcnRepository;
         this.factoringMapper = factoringMapper;
         this.droitConstateMapper = droitConstateMapper;
     }
@@ -623,7 +631,6 @@ public class LigneFonctionnelleService {
      *
      * Vérifie qu'il n'existe pas déjà une ligne fonctionnelle active avec la même combinaison
      * Banque + Nature + Marché.
-     *
      * RÈGLE MÉTIER :
      * - Une banque ne peut avoir qu'UNE SEULE ligne générale active par nature (sans marché)
      * - Une banque peut avoir plusieurs lignes actives de la même nature SI elles sont pour des marchés différents
@@ -995,5 +1002,35 @@ public class LigneFonctionnelleService {
         return aggregatedDto;
     }
 
+    @Transactional(readOnly = true)
+    public AgregatedSuivieLcnLigneResponseDto getSuivieLcnLigneResponse(Long lineId, Pageable pageable) {
+        logger.info("Récupération du suivi LCN pour la ligne ID: {}", lineId);
 
+        LigneFonctionnelle line = ligneFonctionnelleRepository.findById(lineId)
+                .orElseThrow(() -> {
+                    logger.error("Ligne fonctionnelle générale non trouvée avec l'ID: {}", lineId);
+                    return new ResourceNotFoundException("Ligne Fonctionnelle générale non trouvée avec l'ID: " + lineId);
+                });
+
+
+        Specification<Lcn> spec = Specification.where(LcnSpecification.hasLigneFonctionnelle(lineId));
+
+        List<Lcn> allLcn = lcnRepository.findAll(spec);
+        logger.debug("{} LCN trouvés", allLcn.size());
+
+
+        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
+
+        logger.debug("{} LCN récupérés pour la page courante", lcnPage.getNumberOfElements());
+
+        Page<LcnResponseDTO> pageOfDtos = lcnPage.map(LcnMapper::toDto);
+
+        AgregatedSuivieLcnLigneResponseDto aggregatedDto = new AgregatedSuivieLcnLigneResponseDto();
+        aggregatedDto.setBanqueName(line.getBanque().getNom());
+        aggregatedDto.setTotal(allLcn.stream().map(Lcn::getMontant).reduce(BigDecimal.ZERO,BigDecimal::add));
+        aggregatedDto.setPage(pageOfDtos);
+
+        logger.info("Suivi LCN récupéré avec succès pour la ligne ID: {}", lineId);
+        return aggregatedDto;
+    }
 }

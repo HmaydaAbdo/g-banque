@@ -41,6 +41,8 @@ public class LcnService {
     public LcnResponseDTO createLcn(LcnRequestDto requestDto) {
         log.info("Création d'un nouveau LCN d'encaissement: {}", requestDto);
 
+        validateEscompteBusinessRule(requestDto.getType(), requestDto.getNatureLcn());
+
         Banque banque = banqueRepository.findById(requestDto.getBanqueId())
                 .orElseThrow(() -> {
                     log.error("Banque avec l'ID {} introuvable", requestDto.getBanqueId());
@@ -336,4 +338,19 @@ public class LcnService {
         // Map the result to DTOs and return
         return new EncoursLcnResponse(totalDesEncours, result);
     }
+
+    private void validateEscompteBusinessRule(Type type, NatureLcn nature) {
+        if (nature == NatureLcn.ESCOMPTE && type != Type.ENCAISSEMENT) {
+            log.error("Règle métier violée: tentative de création d'un LCN ESCOMPTE avec le type {}", type);
+            throw new IllegalArgumentException(
+                    "Règle métier violée: Un LCN de nature ESCOMPTE ne peut être créé que pour des opérations d'ENCAISSEMENT. " +
+                            "Type fourni: " + type + ". Veuillez corriger le type ou la nature du LCN.");
+        }
+
+        if (nature == NatureLcn.ESCOMPTE) {
+            log.debug("Validation réussie: LCN ESCOMPTE avec type ENCAISSEMENT");
+        }
+    }
+
+
 }
