@@ -88,6 +88,45 @@ public class LigneFonctionnelleController {
     }
 
     /**
+     * Get functional lines associated with a specific marche ID, with pagination, sorting,
+     * and search by nature ligne fonctionnelle, year of dateDepart, and 'actif' status.
+     * GET /lignes-fonctionnelles/marche/{marcheId}
+     * @param marcheId The ID of the marche.
+     * @param page Page number (0-indexed, default 0).
+     * @param size Page size (default 10).
+     * @param sort Sort criteria (e.g., "dateDepart,desc", "plafond,asc").
+     * @param searchCriteria DTO for search filters (natureLigneFonctionnelleId, yearDepart, actif).
+     * @return A paginated list of functional lines as DTOs with HTTP status 200 OK.
+     */
+    @GetMapping("/marche/{marcheId}")
+    public ResponseEntity<Page<LigneFonctionnelleResponse>> getPaginatedLignesFonctionnellesByMarcheId(
+            @PathVariable Long marcheId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort,
+            @ModelAttribute LigneFonctionnelleSearchCriteria searchCriteria) {
+
+        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
+        Sort sortOrder = Sort.by(direction, sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        logger.info("Fetching paginated lignes fonctionnelles for marche ID: {} - Page: {}, Size: {}, Sort: {} {}",
+                marcheId, page, size, sort[0], sort[1]);
+        logger.debug("Search criteria for marche {}: {}", marcheId, searchCriteria);
+
+        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getPaginatedLignesFonctionnellesByMarcheId(marcheId, searchCriteria, pageable);
+
+        logger.info("Successfully retrieved {} ligne(s) fonctionnelle(s) for marche ID: {} out of {} total (Page {}/{})",
+                lignes.getNumberOfElements(),
+                marcheId,
+                lignes.getTotalElements(),
+                lignes.getNumber() + 1,
+                lignes.getTotalPages());
+
+        return ResponseEntity.ok(lignes);
+    }
+
+    /**
      * Deactivates a specific  functional line by id
      * PUT /lignes-fonctionnelles/deactivate/{ligneId}
      * @param ligneId The ID of the functional line.

@@ -114,6 +114,12 @@
     health:
       db:
         enabled: true
+  commission:
+    leasing:
+      CIH: 11
+      BMCI: 16.5
+      SGMB: 11
+
 
 
 
