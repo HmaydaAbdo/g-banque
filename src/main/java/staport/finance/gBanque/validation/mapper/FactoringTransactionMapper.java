@@ -51,6 +51,7 @@ public class FactoringTransactionMapper {
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
+        transaction.setReferent(factoring.getId());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setObservation(requestDto.getObservation());
         transaction.setTransactionSource(TransactionSource.FACTORING);

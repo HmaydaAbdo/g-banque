@@ -41,6 +41,7 @@ public class MiseAdispositionTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        transaction.setReferent(miseADispo.getId());
         transaction.setObservation(requestDto.getObservation());
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());

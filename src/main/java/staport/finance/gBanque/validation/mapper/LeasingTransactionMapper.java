@@ -42,6 +42,7 @@ public class LeasingTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        transaction.setReferent(echeanceLeasing.getId());
         transaction.setObservation(requestDto.getObservation());
         // Mapping dates (ensuring consistency with OffsetDateTime)
         transaction.setDateEmission(requestDto.getDateEmission());

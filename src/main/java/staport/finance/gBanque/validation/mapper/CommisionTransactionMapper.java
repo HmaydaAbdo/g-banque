@@ -42,6 +42,7 @@ public class CommisionTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        transaction.setReferent(commission.getId());
         transaction.setObservation(requestDto.getObservation());
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());

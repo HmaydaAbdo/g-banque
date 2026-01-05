@@ -127,15 +127,28 @@ public class EncoursCalculatorService {
      * Facilité de Caisse : solde = plafond - encours
      *
      * @param plafond Plafond de la ligne
-     * @param encours Encours (= solde de la banque)
      * @return Le solde disponible
      */
-    private BigDecimal calculateSoldeFaciliteCaisse(BigDecimal plafond, BigDecimal encours) {
-        BigDecimal solde = plafond.subtract(encours);
-        logger.debug("Solde Facilité de Caisse: {} (Plafond: {} - Encours/Solde Banque: {})",
-                solde, plafond, encours);
+    private BigDecimal calculateSoldeFaciliteCaisse(BigDecimal plafond, BigDecimal soldeBanque) {
+
+        BigDecimal solde;
+
+        if (soldeBanque.signum() >= 0) {
+            // Pas d'utilisation de la facilité
+            solde = plafond;
+        } else {
+            // Utilisation de la facilité
+            solde = plafond.subtract(soldeBanque.abs());
+        }
+
+        logger.debug(
+                "Solde Facilité de Caisse: {} (Plafond: {}, Solde Banque: {})",
+                solde, plafond, soldeBanque
+        );
+
         return solde;
     }
+
 
     // ========== ESCOMPTE COMMERCIAL (ID: 2) ==========
 

@@ -35,6 +35,7 @@ public class PrelevementTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        transaction.setReferent(prelevement.getId());
         transaction.setObservation(requestDto.getObservation());
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());

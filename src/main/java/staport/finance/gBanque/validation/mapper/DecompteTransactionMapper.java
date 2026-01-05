@@ -59,6 +59,7 @@ public class DecompteTransactionMapper {
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
 
+        transaction.setReferent(decompte.getId());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setObservation(requestDto.getObservation());
         transaction.setDateEmission(requestDto.getDateEmission());

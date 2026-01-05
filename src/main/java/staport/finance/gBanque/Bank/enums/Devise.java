@@ -5,7 +5,8 @@ package staport.finance.gBanque.Bank.enums;
 public enum Devise {
     MAD("Dirham Marocain"),
     EUR("Euro"),
-    USD("US Dollar");
+    USD("US Dollar"),
+    GNS("GNS");
 
     private final String description;
 

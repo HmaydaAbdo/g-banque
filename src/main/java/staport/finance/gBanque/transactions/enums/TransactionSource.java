@@ -15,5 +15,6 @@ public enum TransactionSource {
     FRAIS_BANCAIRE,
     INTERETS,
     FACTORING,
-    PRELEVEMENT
+    PRELEVEMENT,
+    CAUTION
 }

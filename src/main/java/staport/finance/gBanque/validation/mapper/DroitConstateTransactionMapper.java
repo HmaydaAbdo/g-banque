@@ -58,6 +58,7 @@ public class DroitConstateTransactionMapper {
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
+        transaction.setReferent(droitConstate.getId());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setObservation(requestDto.getObservation());
         transaction.setTransactionSource(TransactionSource.DROIT_CONSTATE);

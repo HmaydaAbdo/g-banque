@@ -33,6 +33,7 @@ public  class  ChequeTransactionMapper {
         }
 
         Transaction transaction = new Transaction();
+        transaction.setReferent(cheque.getId());
         transaction.setObservation(requestDto.getObservation());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setDateEmission(requestDto.getDateEmission());

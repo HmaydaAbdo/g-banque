@@ -58,6 +58,7 @@ public class PrefinancementTransactionMapper {
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
 
+        transaction.setReferent(prefinancement.getId());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());

@@ -14,5 +14,7 @@ public interface BanqueRepository extends JpaRepository<Banque, Long>, JpaSpecif
 
     Optional<Banque> findByNumeroDeCompte(String numeroDeCompte);
     Optional<Banque> findByNom(String nom);
+    Optional<Banque> findByNomIgnoreCase(String nom);
+
 
 }

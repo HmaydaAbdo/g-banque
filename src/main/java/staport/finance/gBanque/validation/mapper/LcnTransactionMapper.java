@@ -41,6 +41,7 @@ public class LcnTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        transaction.setReferent(lcn.getId());
         transaction.setObservation(requestDto.getObservation());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setDateEmission(requestDto.getDateEmission());

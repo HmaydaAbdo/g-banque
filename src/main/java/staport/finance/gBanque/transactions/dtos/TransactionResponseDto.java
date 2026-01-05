@@ -23,6 +23,7 @@ public class TransactionResponseDto {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private boolean isConfirmed;
+    private long referent;
 
     // Constructors, Getters, and Setters
     public TransactionResponseDto() {
@@ -181,5 +182,13 @@ public class TransactionResponseDto {
 
     public void setConfirmed(boolean confirmed) {
         isConfirmed = confirmed;
+    }
+
+    public long getReferent() {
+        return referent;
+    }
+
+    public void setReferent(long referent) {
+        this.referent = referent;
     }
 }
