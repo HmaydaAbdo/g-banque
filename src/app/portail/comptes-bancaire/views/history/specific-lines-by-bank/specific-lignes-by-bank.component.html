@@ -1,5 +1,5 @@
 <p-toast></p-toast>
-<div class="h-screen  max-w-screen p-1 bg-gray-50">
+<div class="h-screen  max-w-screen p-1 ">
 
     <div class="px-4 flex flex-column gap-4 mb-8">
 
@@ -84,14 +84,14 @@
           { field: 'marcheNom', header: 'Marché', sortable: true },
           { field: 'marcheNumero', header: 'N° Marché', sortable: true },
           { field: 'plafond', header: 'Plafond', sortable: true },
+          { field: 'encours', header: 'encours', sortable: false },
+          { field: 'solde', header: 'solde', sortable: false },
           { field: 'taux', header: 'Taux', sortable: true },
           { field: 'dateDepart', header: 'Date Départ', sortable: true },
           { field: 'dateFin', header: 'Date Fin', sortable: true }
         ]"
-          styleClass="p-datatable-gridlines p-datatable-sm"
-          [tableStyle]="{'min-width': '50rem'}"
+          styleClass="p-datatable-gridlines p-datatable-sm text-xs"
           [scrollable]="true"
-          scrollHeight="flex"
           [showCurrentPageReport]="true"
           currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
         >
@@ -111,7 +111,18 @@
               <td>{{ ligne.natureLigneFonctionnelleLabel }}</td>
               <td>{{ ligne.marcheNom}}</td>
               <td>{{ ligne.marcheNumero}}</td>
-              <td>{{ ligne.plafond | number:'1.2-2' }} MAD</td>
+              <td>{{ ligne.plafond | number:'1.2-2' }} </td>
+              <td>
+            <span [ngClass]="{'text-green-600': ligne.encours > 0, 'text-red-600': ligne.encours < 0, 'text-gray-400': ligne.encours == null}">
+              {{ ligne.encours != null ? (ligne.encours | number:'1.2-2') : '**' }}
+            </span>
+              </td>
+
+              <td>
+            <span [ngClass]="{'text-green-600': ligne.solde > 0,    'text-red-600': ligne.solde < 0,   'text-gray-400': ligne.solde == null }">
+              {{ ligne.solde != null ? (ligne.solde | number:'1.2-2') : '**' }}
+            </span>
+              </td>
               <td>{{ ligne.taux | number:'1.2-2' }}%</td>
               <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
               <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>

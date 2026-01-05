@@ -98,7 +98,9 @@
           </td>
           <td>{{ banque.address }}</td>
           <td>{{ banque.agence }}</td>
-          <td>{{ banque.soldeActuel | number}} </td>
+          <td   [ngClass]="{ 'text-green-600': banque.soldeActuel >= 0,'text-red-600': banque.soldeActuel < 0}">
+            {{ banque.soldeActuel | number}}
+          </td>
           <td class="flex flex-row gap-1">
             <button pButton pRipple icon="pi pi-eye" size="small" class="p-button-outlined p-button-rounded p-button-info "
                     [routerLink]="['/portail/comptes-bancaires/history', banque.id]"

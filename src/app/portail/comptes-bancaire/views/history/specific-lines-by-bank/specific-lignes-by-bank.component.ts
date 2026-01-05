@@ -124,7 +124,6 @@ export class SpecificLignesByBankComponent implements OnInit {
       marcheId: [null],
       yearDepart: [null],
       actif: [true],
-      isExpired: [false]
     });
   }
 
