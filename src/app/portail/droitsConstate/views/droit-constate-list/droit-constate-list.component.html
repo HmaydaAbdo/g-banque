@@ -129,7 +129,7 @@
               <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
                       [routerLink]="['/portail/droits-constate/edit', dc.id]"></button>
 
-              <button *ngIf="authService.isAdmin()" pButton icon="pi pi-trash"
+              <button  pButton icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
                       (click)="deleteDroitConstate(dc)"></button>
             </div>

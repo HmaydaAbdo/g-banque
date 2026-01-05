@@ -23,6 +23,7 @@ import { MarcheService } from '../../../Marches/service/marche-service.service';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { Status } from "../../../prefinancements/enums/Status";
 import { DecompteResponseDto } from "../../dtos/DecompteResponseDto";
+import {AuthService} from "../../../../auth/services/auth.service";
 
 @Component({
   selector: 'app-decomptes-list',
@@ -41,6 +42,7 @@ export class DecomptesListComponent implements OnInit {
 
   searchForm!: FormGroup;
   decomptes: DecompteResponseDto[] = [];
+  isAdmin = false;
   totalRecords = 0;
   loading = true;
   items: MenuItem[] = [];
@@ -67,7 +69,8 @@ export class DecomptesListComponent implements OnInit {
     private banqueService: BanqueService,
     private marcheService: MarcheService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private authService: AuthService,
   ) {}
 
   ngOnInit(): void {
@@ -87,6 +90,8 @@ export class DecomptesListComponent implements OnInit {
     ).subscribe(() => {
       if (this.table) this.table.reset();
     });
+
+    this.isAdmin=this.authService.isAdmin()
   }
 
   initForm(): void {

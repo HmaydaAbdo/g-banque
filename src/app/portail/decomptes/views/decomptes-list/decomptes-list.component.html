@@ -115,9 +115,12 @@
               <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
                       [routerLink]="['/portail/decomptes/edit', d.id]"></button>
 
-              <button pButton icon="pi pi-trash"
-                      class="p-button-rounded p-button-outlined p-button-danger"
-                      (click)="deleteDecompte(d)"></button>
+
+                <button pButton icon="pi pi-trash"
+                        class="p-button-rounded p-button-outlined p-button-danger"
+                        (click)="deleteDecompte(d)"></button>
+
+
             </div>
           </td>
         </tr>

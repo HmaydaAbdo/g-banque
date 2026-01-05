@@ -25,7 +25,7 @@
     </div>
   </div>
 
-  <div class="flex-grow-1">
+  <div >
     <p-table
       #dt
       [value]="specificLines"
@@ -36,7 +36,7 @@
       (onLazyLoad)="loadSpecificLines($event)"
       [rowsPerPageOptions]="[10, 25, 50]"
       [loading]="loading"
-      styleClass="p-datatable-gridlines p-datatable-sm text-xs"
+      styleClass="p-datatable-gridlines p-datatable-sm text-xs "
       [scrollable]="true"
       scrollHeight="flex"
       [showCurrentPageReport]="true"
