@@ -67,4 +67,10 @@ export class RapprochementService {
       responseType: 'blob'
     });
   }
+
+  annulerTransaction(transactionId: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/annuler/${transactionId}`
+    );
+  }
 }

@@ -116,8 +116,8 @@ import {
   DetailsRapprochementComponent
 } from "../../rapprochement/views/details-rapprochement/details-rapprochement.component";
 import {
-  SpecificLinesByMarcheComponent
-} from "../../Marches/views/specific-lines-by-marche/specific-lines-by-marche.component";
+  FunctionalLinesByMarcheComponent
+} from "../../Marches/views/specific-lines-by-marche/functionalLines-by-marche.component";
 import {LcnEscompteByLineComponent} from "../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component";
 
 export const PORTAIL_ROUTES: Routes = [
@@ -144,7 +144,7 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'lignes-fonctionnelles-specifiques-encours/new', component: SpeficLigneEditComponent },
   { path: 'lignes-fonctionnelles-specifiques-encours/edit/:id', component: SpeficLigneEditComponent },
   { path: 'lignes-fonctionnelles-specifiques-archived', component: SpeficLigneArchiveesComponent },
-  { path: 'lignes-fonctionnelles-specifiques/marche/:id', component: SpecificLinesByMarcheComponent },
+  { path: 'lignes-fonctionnelles-specifiques/marche/:id', component: FunctionalLinesByMarcheComponent },
   { path:"factoring-encours/:lineId",component:ValidatedFactoringComponent},
   { path:"prefi-encours/:lineId",component:ValidatedPrefiComponent},
   { path:"dc-encours/:lineId",component:ValidatedDcComponent},

@@ -1,0 +1,204 @@
+<p-toast></p-toast>
+
+<div class="card flex flex-column overflow-scroll gap-2 p-2 w-screen h-screen">
+
+  <!-- BREADCRUMB & MARCHE INFO -->
+  <div class="flex flex-row flex-wrap justify-content-between align-items-center bg-transparent gap-2">
+    <div class="flex align-items-center">
+      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-xl']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <span class="text-black-alpha-90 font-bold p-2">{{ item.label }}</span>
+          </ng-template>
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+
+    <div *ngIf="marche" class="flex gap-3 px-3 py-2 border-round bg-primary-reverse shadow-1 border-1 border-primary-100">
+      <span class="text-sm"><i class="pi pi-bookmark mr-1"></i> {{ marche.numero }}</span>
+      <span class="text-sm"><i class="pi pi-building mr-1"></i> {{ marche.banqueNom }}</span>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <p-tabView [(activeIndex)]="activeTabIndex" styleClass="h-full">
+
+    <!-- ============================================================ -->
+    <!-- TAB 1: LIGNES SPÉCIFIQUES                                    -->
+    <!-- ============================================================ -->
+    <p-tabPanel header="Lignes Spécifiques" leftIcon="pi pi-list">
+      <p-table
+        #dtSpecific
+        [value]="specificLines"
+        [paginator]="true"
+        [rows]="10"
+        [totalRecords]="totalRecordsSpecific"
+        [lazy]="true"
+        (onLazyLoad)="loadSpecificLines($event)"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [loading]="loadingSpecific"
+        styleClass="p-datatable-gridlines p-datatable-sm text-xs"
+        [scrollable]="true"
+        scrollHeight="flex"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first}-{last} sur {totalRecords}">
+
+        <ng-template pTemplate="header">
+          <tr class="white-space-nowrap">
+            <th pSortableColumn="id" style="width: 50px">ID <p-sortIcon field="id"></p-sortIcon></th>
+            <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
+            <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
+            <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
+            <th pSortableColumn="encours">Encours <p-sortIcon field="encours"></p-sortIcon></th>
+            <th pSortableColumn="solde">Solde <p-sortIcon field="solde"></p-sortIcon></th>
+            <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
+            <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+            <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-line>
+          <tr>
+            <td>{{ line.id }}</td>
+            <td>{{ line.banqueNom }}</td>
+            <td class="font-bold">{{ line.natureLigneFonctionnelleLabel | uppercase }}</td>
+            <td>{{ line.plafond | number:'1.2-2' }}</td>
+            <td>
+              {{ (line.encours !== null && line.encours !== undefined) ? (line.encours | number:'1.2-2') : '***' }}
+            </td>
+            <td [ngClass]="getSoldeClass(line.solde)">
+              {{ (line.solde !== null && line.solde !== undefined) ? (line.solde | number:'1.2-2') : '***' }}
+            </td>
+            <td>{{ line.taux | number:'1.2-2' }}%</td>
+            <td>{{ line.dateFin | date:'dd/MM/yyyy' }}</td>
+            <td>{{ line.dateDepart | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <p-tag [value]="line.expired ? 'Expirée' : 'Active'"
+                     [severity]="line.expired ? 'danger' : 'success'"></p-tag>
+            </td>
+            <td>
+              <button
+                pButton
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-outlined p-button-primary"
+                pTooltip="Voir les encours"
+                tooltipPosition="top"
+                (click)="redirectToLineDetails(line.id, line.natureLigneFonctionnelleLabel, LineType.SPECIFIC)">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="11" class="text-center p-4">
+              <i class="pi pi-info-circle mr-2"></i>
+              Aucune ligne spécifique trouvée pour ce marché.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-tabPanel>
+
+    <!-- ============================================================ -->
+    <!-- TAB 2: LIGNES GÉNÉRALES                                      -->
+    <!-- ============================================================ -->
+    <p-tabPanel header="Lignes Générales" leftIcon="pi pi-sitemap">
+      <p-table
+        #dtGeneral
+        [value]="generalLines"
+        [paginator]="true"
+        [rows]="10"
+        [totalRecords]="totalRecordsGeneral"
+        [lazy]="true"
+        (onLazyLoad)="loadGeneralLines($event)"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [loading]="loadingGeneral"
+        styleClass="p-datatable-gridlines p-datatable-sm text-xs"
+        [scrollable]="true"
+        scrollHeight="flex"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first}-{last} sur {totalRecords}">
+
+        <ng-template pTemplate="header">
+          <tr class="white-space-nowrap">
+            <th pSortableColumn="id" style="width: 50px">ID <p-sortIcon field="id"></p-sortIcon></th>
+            <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
+            <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
+            <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
+            <th pSortableColumn="encours">Encours <p-sortIcon field="encours"></p-sortIcon></th>
+            <th pSortableColumn="solde">Solde <p-sortIcon field="solde"></p-sortIcon></th>
+            <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
+            <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+            <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
+            <th>Statut</th>
+            <th>Sous-lignes</th>
+            <th>Action</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-line>
+          <tr>
+            <td>{{ line.id }}</td>
+            <td>{{ line.banqueNom }}</td>
+            <td class="font-bold">{{ line.natureLigneFonctionnelleLabel | uppercase }}</td>
+            <td>{{ line.plafond | number:'1.2-2' }}</td>
+            <td>
+              {{ (line.encours !== null && line.encours !== undefined) ? (line.encours | number:'1.2-2') : '***' }}
+            </td>
+            <td [ngClass]="getSoldeClass(line.solde)">
+              {{ (line.solde !== null && line.solde !== undefined) ? (line.solde | number:'1.2-2') : '***' }}
+            </td>
+            <td>{{ line.taux | number:'1.2-2' }}%</td>
+            <td>{{ line.dateFin | date:'dd/MM/yyyy' }}</td>
+            <td>{{ line.dateDepart | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <p-tag [value]="line.expired ? 'Expirée' : 'Active'"
+                     [severity]="line.expired ? 'danger' : 'success'"></p-tag>
+            </td>
+            <td class="text-center">
+              <p-tag
+                *ngIf="line.sousLignes && line.sousLignes.length > 0"
+                [value]="line.sousLignes.length + ' sous-ligne' + (line.sousLignes.length > 1 ? 's' : '')"
+                severity="info"
+                icon="pi pi-sitemap">
+              </p-tag>
+              <span *ngIf="!line.sousLignes || line.sousLignes.length === 0" class="text-gray-400">
+                <i class="pi pi-minus"></i>
+              </span>
+            </td>
+            <td>
+              <button
+                pButton
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-outlined p-button-primary"
+                pTooltip="Voir les encours"
+                tooltipPosition="top"
+                (click)="redirectToLineDetails(line.id, line.natureLigneFonctionnelleLabel, LineType.GENERAL)">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="12" class="text-center p-4">
+              <i class="pi pi-info-circle mr-2"></i>
+              Aucune ligne générale trouvée pour ce marché.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-tabPanel>
+
+  </p-tabView>
+
+</div>

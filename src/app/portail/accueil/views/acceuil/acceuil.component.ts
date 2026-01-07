@@ -77,17 +77,18 @@ export class AcceuilComponent  implements OnInit{
   synchronizePayments(): void {
     this.isLoading = true; // Set loading state to true
 
-    this.funPaymentService.synchronizePayments().subscribe({
+    this.funPaymentService.synchronizePayments().pipe(
+      finalize(()=>this.isLoading=false))
+      .subscribe({
       next: (response) => {
         // Handle success
         this.messageService.add({
           severity: 'success',
           summary: 'Succès',
-          detail: response, // The success message from the backend
+          detail: "La synchronisation des paiements depuis l’application FunPayment s’est déroulée avec succès. ",
           life: 5000
         });
-        // You might want to refresh the bank data after a successful sync
-        this.fetchAccueilBankInfo();
+
       },
       error: (err) => {
         // Handle error
@@ -98,9 +99,6 @@ export class AcceuilComponent  implements OnInit{
           detail: 'Échec de la synchronisation des paiements: ' + (err.error || err.message),
           life: 5000
         });
-      },
-      complete: () => {
-        this.isLoading = false; // Set loading state to false when the call is complete (success or error)
       }
     });
   }

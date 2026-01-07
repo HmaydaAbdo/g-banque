@@ -14,7 +14,7 @@ import { SousLigneRequestDto } from "../dtos/SousLigneRequestDto";
 import { AgregatedSuiviePrefiLigneResponseDto } from "../../prefinancements/lignesPrefi/suivieDesLignes/dtos/AgregatedSuiviePrefiLigneResponseDto";
 import { AgregatedSuivieDcLigneResponseDto } from "../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/Dtos/AgregatedSuivieDcLigneResponseDto";
 import { AgregatedSuivieFactoringLigneResponseDto } from "../../factoring/LignesFactoring/SuivieDesLignes/dtos/AgregatedSuivieFactoringLigneResponseDto";
-import {AgregatedSuivieLcnLigneResponseDto} from "../../LCN/dtos/AgregatedSuivieLcnLigneResponseDto";
+import { AgregatedSuivieLcnLigneResponseDto } from "../../LCN/dtos/AgregatedSuivieLcnLigneResponseDto";
 
 @Injectable({
   providedIn: 'root',
@@ -23,6 +23,30 @@ export class LigneFonctionnelleService {
   private apiUrl = `${environment.apiUrl}lignes-fonctionnelles`;
 
   constructor(private http: HttpClient) {}
+
+  // ==========================================================================
+  // HELPER METHOD
+  // ==========================================================================
+
+  /**
+   * Helper to build pagination and search params
+   */
+  private buildParams(criteria: any, page: number, size: number, sort: string): HttpParams {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    if (criteria) {
+      Object.keys(criteria).forEach(key => {
+        const value = criteria[key];
+        if (value !== undefined && value !== null) {
+          params = params.append(key, value.toString());
+        }
+      });
+    }
+    return params;
+  }
 
   // ==========================================================================
   // CRUD OPERATIONS
@@ -54,41 +78,7 @@ export class LigneFonctionnelleService {
     size: number,
     sort: string
   ): Observable<PageResponse<LigneFonctionnelleResponse>> {
-    let params = new HttpParams();
-    params = params.append('page', page.toString());
-    params = params.append('size', size.toString());
-    params = params.append('sort', sort);
-
-    // Banque filter
-    if (criteria.banqueId !== undefined && criteria.banqueId !== null) {
-      params = params.append('banqueId', criteria.banqueId.toString());
-    }
-
-    // Nature filter
-    if (criteria.natureLigneFonctionnelleId !== undefined && criteria.natureLigneFonctionnelleId !== null) {
-      params = params.append('natureLigneFonctionnelleId', criteria.natureLigneFonctionnelleId.toString());
-    }
-
-    // Marche filter
-    if (criteria.marcheId !== undefined && criteria.marcheId !== null) {
-      params = params.append('marcheId', criteria.marcheId.toString());
-    }
-
-    // Year filter
-    if (criteria.yearDepart !== undefined && criteria.yearDepart !== null) {
-      params = params.append('yearDepart', criteria.yearDepart.toString());
-    }
-
-    // Active status filter
-    if (criteria.actif !== undefined && criteria.actif !== null) {
-      params = params.append('actif', criteria.actif.toString());
-    }
-
-    // Expired status filter
-    if (criteria.isExpired !== undefined && criteria.isExpired !== null) {
-      params = params.append('isExpired', criteria.isExpired.toString());
-    }
-
+    const params = this.buildParams(criteria, page, size, sort);
     return this.http.get<PageResponse<LigneFonctionnelleResponse>>(this.apiUrl, { params });
   }
 
@@ -103,32 +93,22 @@ export class LigneFonctionnelleService {
     size: number = 10,
     sort: string = 'id,asc'
   ): Observable<PageResponse<LigneFonctionnelleResponse>> {
-    let params = new HttpParams();
-    params = params.append('page', page.toString());
-    params = params.append('size', size.toString());
-    params = params.append('sort', sort);
-
-    // Nature filter
-    if (criteria.natureLigneFonctionnelleId !== undefined && criteria.natureLigneFonctionnelleId !== null) {
-      params = params.append('natureLigneFonctionnelleId', criteria.natureLigneFonctionnelleId.toString());
-    }
-
-    // Marche filter
-    if (criteria.marcheId !== undefined && criteria.marcheId !== null) {
-      params = params.append('marcheId', criteria.marcheId.toString());
-    }
-
-    // Year filter
-    if (criteria.yearDepart !== undefined && criteria.yearDepart !== null) {
-      params = params.append('yearDepart', criteria.yearDepart.toString());
-    }
-
-    // Active status filter
-    if (criteria.actif !== undefined && criteria.actif !== null) {
-      params = params.append('actif', criteria.actif.toString());
-    }
-
+    const params = this.buildParams(criteria, page, size, sort);
     return this.http.get<PageResponse<LigneFonctionnelleResponse>>(`${this.apiUrl}/banque/${banqueId}`, { params });
+  }
+
+  /**
+   * Get LignesFonctionnelles by Marche ID
+   * GET /lignes-fonctionnelles/marche/{marcheId}
+   */
+  getLignesFonctionnellesByMarcheId(
+    marcheId: number,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<PageResponse<LigneFonctionnelleResponse>> {
+    const params = this.buildParams(null, page, size, sort);
+    return this.http.get<PageResponse<LigneFonctionnelleResponse>>(`${this.apiUrl}/marche/${marcheId}`, { params });
   }
 
   /**
@@ -189,16 +169,6 @@ export class LigneFonctionnelleService {
   // ==========================================================================
 
   /**
-   * Helper to build pagination params
-   */
-  private buildParams(page: number, size: number, sort: string): HttpParams {
-    return new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-  }
-
-  /**
    * Get Préfinancements by Line ID (General Line)
    * GET /lignes-fonctionnelles/{id}/prefinancements
    *
@@ -214,7 +184,7 @@ export class LigneFonctionnelleService {
     size: number = 10,
     sort: string = 'id,asc'
   ): Observable<AgregatedSuiviePrefiLigneResponseDto> {
-    const params = this.buildParams(page, size, sort);
+    const params = this.buildParams(null, page, size, sort);
     return this.http.get<AgregatedSuiviePrefiLigneResponseDto>(`${this.apiUrl}/${id}/prefinancements`, { params });
   }
 
@@ -234,7 +204,7 @@ export class LigneFonctionnelleService {
     size: number = 10,
     sort: string = 'id,asc'
   ): Observable<AgregatedSuivieDcLigneResponseDto> {
-    const params = this.buildParams(page, size, sort);
+    const params = this.buildParams(null, page, size, sort);
     return this.http.get<AgregatedSuivieDcLigneResponseDto>(`${this.apiUrl}/${id}/dc`, { params });
   }
 
@@ -254,19 +224,27 @@ export class LigneFonctionnelleService {
     size: number = 10,
     sort: string = 'id,asc'
   ): Observable<AgregatedSuivieFactoringLigneResponseDto> {
-    const params = this.buildParams(page, size, sort);
+    const params = this.buildParams(null, page, size, sort);
     return this.http.get<AgregatedSuivieFactoringLigneResponseDto>(`${this.apiUrl}/${id}/factoring`, { params });
   }
 
+  /**
+   * Get LCN by Line ID (General Line)
+   * GET /lignes-fonctionnelles/{id}/lcn
+   *
+   * @param id - Line ID
+   * @param page - Page number (0-indexed)
+   * @param size - Page size
+   * @param sort - Sort criteria (e.g., 'dateEmission,desc')
+   * @returns Observable of aggregated LCN data with pagination
+   */
   getLcnByLineId(
     id: number,
     page: number = 0,
     size: number = 10,
     sort: string = 'dateEmission,desc'
   ): Observable<AgregatedSuivieLcnLigneResponseDto> {
-    const params = this.buildParams(page, size, sort);
+    const params = this.buildParams(null, page, size, sort);
     return this.http.get<AgregatedSuivieLcnLigneResponseDto>(`${this.apiUrl}/${id}/lcn`, { params });
   }
-
-
 }

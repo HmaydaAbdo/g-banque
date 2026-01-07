@@ -180,4 +180,9 @@
       );
     }
 
+
+    rollBackTransaction(id: number): Observable<void> {
+      return this.http.delete<void>(`${this.baseUrl}/annuler/${id}`);
+    }
+
   }

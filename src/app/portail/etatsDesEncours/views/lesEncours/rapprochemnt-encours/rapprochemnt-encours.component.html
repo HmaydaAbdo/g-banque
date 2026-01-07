@@ -78,6 +78,7 @@
         <th pSortableColumn="observation">
           Observation <p-sortIcon field="observation"></p-sortIcon>
         </th>
+        <th>Actions</th>
       </tr>
     </ng-template>
 
@@ -92,6 +93,7 @@
         <td class="white-space-nowrap">{{ transaction.tvaDeductible !== null ? ((transaction.tvaDeductible | number:'1.2-2') + ' MAD') : '-' }}</td>
         <td class="white-space-nowrap">{{ transaction.tvaCollectee !== null ? ((transaction.tvaCollectee | number:'1.2-2') + ' MAD') : '-' }}</td>
         <td >{{ transaction.observation }}</td>
+        <td> <p-button [outlined]="true" [rounded]="true" severity="danger" pTooltip="Supprimer " tooltipPosition="left"  size="small" icon="pi pi-trash" (onClick)="rollbackTransaction(transaction.id)"></p-button></td>
       </tr>
     </ng-template>
 

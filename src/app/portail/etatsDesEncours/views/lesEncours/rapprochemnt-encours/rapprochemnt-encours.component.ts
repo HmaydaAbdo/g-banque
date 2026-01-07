@@ -21,6 +21,7 @@ import {TransactionSource} from "../../../../transactions/dtos/TransactionSource
 import {AgreratedTransactionResponseDto} from "../../../../transactions/dtos/AgreratedTransactionResponseDto";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
+import {ValidationService} from "../../../rapprochement/services/validation/validation.service";
 
 
 @Component({
@@ -71,6 +72,7 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   constructor(
     private transactionService: TransactionService,
     private fb: FormBuilder,
+    private validationService: ValidationService,
     private messageService: MessageService,
     private route: ActivatedRoute,
     private datePipe: DatePipe
@@ -172,6 +174,17 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   }
 
 
+  rollbackTransaction(transactionId: number): void {
+    this.validationService.rollBackTransaction(transactionId).subscribe({
+      next: () => {
+        this.messageService.add({severity: 'success',summary: 'Transaction supprimé avec success'});
+        this.loadTransactions(this.dt.createLazyLoadMetadata());
+        },
+      error: (error) => {
+        this.messageService.add({severity: 'error',summary: 'Erreur lors de la suppression de la transaction .',})
+      }
+    });
+  }
 
 
 }
