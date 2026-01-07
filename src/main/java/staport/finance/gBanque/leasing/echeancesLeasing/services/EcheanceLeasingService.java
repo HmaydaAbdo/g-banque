@@ -28,6 +28,8 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -140,10 +142,53 @@ public class EcheanceLeasingService {
      * @return La liste des échéances générées (non sauvegardées)
      */
     private List<EcheanceLeasing> _generateEcheancesInternal(ContratLeasing contrat) {
-        log.debug("Début du calcul interne des échéances pour le contrat ID : {}", contrat.getId());
+        log.info("========== DÉBUT CALCUL ÉCHÉANCES LEASING - Contrat ID: {} ==========", contrat.getId());
 
         List<EcheanceLeasing> echeances = new ArrayList<>();
-        OffsetDateTime dateEcheanceCourante = contrat.getDateDebut().minusMonths(1);
+
+        //  LOG 1 : Date originale stockée en base
+        OffsetDateTime dateOriginal = contrat.getDateDebut();
+        log.info(" [ÉTAPE 1] Date ORIGINALE stockée en base : {}", dateOriginal);
+        log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h, Zone={}",
+                dateOriginal.getYear(),
+                dateOriginal.getMonthValue(),
+                dateOriginal.getDayOfMonth(),
+                dateOriginal.getHour(),
+                dateOriginal.getOffset());
+
+        //  Convertir en timezone du Maroc d'abord
+        ZoneId moroccoZone = ZoneId.of("Africa/Casablanca");
+
+        //  LOG 2 : Conversion en heure locale du Maroc
+        var zonedDateTime = contrat.getDateDebut().atZoneSameInstant(moroccoZone);
+        log.info(" [ÉTAPE 2] Après conversion en heure Maroc : {}", zonedDateTime);
+        log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h",
+                zonedDateTime.getYear(),
+                zonedDateTime.getMonthValue(),
+                zonedDateTime.getDayOfMonth(),
+                zonedDateTime.getHour());
+
+        //  LOG 3 : Extraction de la date locale
+        var localDate = zonedDateTime.toLocalDate();
+        log.info(" [ÉTAPE 3] Date locale extraite : {}", localDate);
+
+        //  LOG 4 : Date de référence (1 mois avant)
+        var localDateReference = localDate.minusMonths(1);
+        log.info(" [ÉTAPE 4] Date de référence (1 mois avant) : {}", localDateReference);
+
+        //  LOG 5 : Date normalisée finale
+        OffsetDateTime dateReference = localDateReference
+                .atTime(12, 0)
+                .atOffset(ZoneOffset.UTC);
+
+        log.info(" [ÉTAPE 5] Date de référence NORMALISÉE (12h UTC) : {}", dateReference);
+        log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h, Zone={}",
+                dateReference.getYear(),
+                dateReference.getMonthValue(),
+                dateReference.getDayOfMonth(),
+                dateReference.getHour(),
+                dateReference.getOffset());
+
         int numeroEcheanceGlobal = 0;
 
         // Trier les phases par numeroPhase
@@ -151,7 +196,7 @@ public class EcheanceLeasingService {
                 .sorted((p1, p2) -> Integer.compare(p1.getNumeroPhase(), p2.getNumeroPhase()))
                 .toList();
 
-        log.debug("Nombre de phases à traiter : {}", sortedPhases.size());
+        log.info(" Génération des échéances - {} phase(s) à traiter", sortedPhases.size());
 
         // Génération des échéances de loyer
         for (ContratLeasingPhase phase : sortedPhases) {
@@ -162,7 +207,20 @@ public class EcheanceLeasingService {
 
             for (int i = 0; i < phase.getDureeMois(); i++) {
                 numeroEcheanceGlobal++;
-                dateEcheanceCourante = dateEcheanceCourante.plusMonths(1);
+
+                // Calculer chaque date à partir de la date de référence
+                OffsetDateTime dateEcheanceCourante = dateReference.plusMonths(numeroEcheanceGlobal);
+
+                //  LOG 6 : Échéances générées (les 3 premières et les 2 dernières de chaque phase)
+                if (i < 3 || i >= phase.getDureeMois() - 2) {
+                    log.info("   ✓ Phase {} - Échéance {} : {} (ref + {} mois)",
+                            phase.getNumeroPhase(),
+                            numeroEcheanceGlobal,
+                            dateEcheanceCourante.toLocalDate(),
+                            numeroEcheanceGlobal);
+                } else if (i == 3) {
+                    log.info("   ... ({} échéances intermédiaires) ...", phase.getDureeMois() - 5);
+                }
 
                 StatutEcheanceLeasing statut = StatutEcheanceLeasing.PREVU;
 
@@ -176,28 +234,36 @@ public class EcheanceLeasingService {
                 echeances.add(echeance);
             }
         }
-        log.debug("Nombre d'échéances de loyer générées : {}", echeances.size());
+        log.info(" {} échéances de loyer générées", echeances.size());
 
         // Ajout de l'échéance dédiée pour la valeur résiduelle
         numeroEcheanceGlobal++;
-        dateEcheanceCourante = dateEcheanceCourante.plusMonths(1);
+
+        // Calculer la date de la valeur résiduelle à partir de la date de référence
+        OffsetDateTime dateValeurResiduelle = dateReference.plusMonths(numeroEcheanceGlobal);
+
+        log.info("  Échéance {} (Valeur résiduelle) : {} (ref + {} mois)",
+                numeroEcheanceGlobal,
+                dateValeurResiduelle.toLocalDate(),
+                numeroEcheanceGlobal);
 
         StatutEcheanceLeasing statut = StatutEcheanceLeasing.PREVU;
 
         EcheanceLeasing echeanceValeurResiduelle = new EcheanceLeasing(
                 contrat,
                 numeroEcheanceGlobal,
-                dateEcheanceCourante,
+                dateValeurResiduelle,
                 contrat.getValeurResiduelle().setScale(SCALE, RoundingMode.HALF_UP),
                 statut
         );
 
         echeances.add(echeanceValeurResiduelle);
 
-        log.debug("Échéance de valeur résiduelle ajoutée. Total d'échéances : {}", echeances.size());
+        log.info(" Total échéances générées : {} (dont 1 valeur résiduelle)", echeances.size());
+        log.info("========== FIN CALCUL ÉCHÉANCES LEASING ==========\n");
+
         return echeances;
     }
-
     /**
      * Génère les commissions pour toutes les échéances d'un contrat.
      * Les commissions sont créées uniquement si la banque est configurée dans le YAML.

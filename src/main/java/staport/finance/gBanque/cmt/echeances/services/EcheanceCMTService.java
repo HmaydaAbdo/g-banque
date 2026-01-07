@@ -24,6 +24,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,23 +61,73 @@ public class EcheanceCMTService {
 
     }
 
+
     @Transactional
     public void generateEcheances(CreditMoyenTerme credit) {
 
-        log.info("Début de génération des échéances pour le crédit CMT ID: {}", credit.getId());
-        log.debug("Paramètres du crédit - Durée: {} mois, Périodicité: {} mois, Montant échéance: {}", credit.getDuree(), credit.getPeriodicite(), credit.getEcheance());
+        log.info("========== DÉBUT GÉNÉRATION ÉCHÉANCES CMT ID: {} ==========", credit.getId());
+        log.info("Paramètres - Durée: {} mois, Périodicité: {} mois, Montant: {}",
+                credit.getDuree(), credit.getPeriodicite(), credit.getEcheance());
+
+        //  LOG 1 : Date originale stockée en base
+        OffsetDateTime dateOriginal = credit.getDateDebut();
+        log.info(" [ÉTAPE 1] Date ORIGINALE stockée en base : {}", dateOriginal);
+        log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h, Zone={}",
+                dateOriginal.getYear(),
+                dateOriginal.getMonthValue(),
+                dateOriginal.getDayOfMonth(),
+                dateOriginal.getHour(),
+                dateOriginal.getOffset());
 
         List<EcheanceCMT> echeances = new ArrayList<>();
 
-        OffsetDateTime dateEcheanceCourante = credit.getDateDebut();
-        YearMonth currentMonth = YearMonth.from(dateDeDepartPaymentCmt);
+        //  SOLUTION : Convertir en timezone du Maroc d'abord !
+        ZoneId moroccoZone = ZoneId.of("Africa/Casablanca");
 
-        log.debug("Date de début du crédit: {}, Mois actuel de référence: {}", credit.getDateDebut(), currentMonth);
+        //  LOG 2 : Conversion en heure locale du Maroc
+        var zonedDateTime = credit.getDateDebut().atZoneSameInstant(moroccoZone);
+        log.info(" [ÉTAPE 2] Après conversion en heure Maroc : {}", zonedDateTime);
+        log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h",
+                zonedDateTime.getYear(),
+                zonedDateTime.getMonthValue(),
+                zonedDateTime.getDayOfMonth(),
+                zonedDateTime.getHour());
+
+        //  LOG 3 : Extraction de la date locale
+        var localDate = zonedDateTime.toLocalDate();
+        log.info(" [ÉTAPE 3] Date locale extraite : {}", localDate);
+        log.info("   └─ Détails : Année={}, Mois={}, Jour={}",
+                localDate.getYear(),
+                localDate.getMonthValue(),
+                localDate.getDayOfMonth());
+
+        //  LOG 4 : Date normalisée finale
+        OffsetDateTime dateDebut = localDate
+                .atTime(12, 0)
+                .atOffset(ZoneOffset.UTC);
+
+        log.info(" [ÉTAPE 4] Date NORMALISÉE (12h UTC) : {}", dateDebut);
+        log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h, Zone={}",
+                dateDebut.getYear(),
+                dateDebut.getMonthValue(),
+                dateDebut.getDayOfMonth(),
+                dateDebut.getHour(),
+                dateDebut.getOffset());
+
+        log.info(" Génération de {} échéances...", credit.getDuree());
 
         for (int i = 1; i <= credit.getDuree(); i++) {
 
-            if (i > 1) {
-                dateEcheanceCourante = dateEcheanceCourante.plusMonths(credit.getPeriodicite());
+            OffsetDateTime dateEcheanceCourante = dateDebut.plusMonths((long) (i - 1) * credit.getPeriodicite());
+
+            //  LOG 5 : Chaque échéance générée (seulement les 5 premières et les 3 dernières)
+            if (i <= 5 || i > credit.getDuree() - 3) {
+                log.info("   ✓ Échéance {} : {} (calcul: dateDebut + {} mois)",
+                        i,
+                        dateEcheanceCourante.toLocalDate(),
+                        (i - 1) * credit.getPeriodicite());
+            } else if (i == 6) {
+                log.info("   ... ({} échéances intermédiaires) ...", credit.getDuree() - 8);
             }
 
             StatutEcheanceCMT statut = StatutEcheanceCMT.PREVU;
@@ -86,12 +138,11 @@ public class EcheanceCMTService {
             echeance.setMontant(credit.getEcheance());
             echeance.setStatutPaiement(statut);
             echeances.add(echeance);
-            log.trace("Échéance {} créée - Date: {}, Statut: {}", i, dateEcheanceCourante, statut);
-
         }
 
         echeanceCmtRepository.saveAll(echeances);
-        log.info("Génération des échéances terminée avec succès - {} échéances créées pour le crédit ID: {}", echeances.size(), credit.getId());
+        log.info(" {} échéances sauvegardées avec succès pour le crédit ID: {}", echeances.size(), credit.getId());
+        log.info("========== FIN GÉNÉRATION ÉCHÉANCES ==========\n");
     }
 
     @Transactional
