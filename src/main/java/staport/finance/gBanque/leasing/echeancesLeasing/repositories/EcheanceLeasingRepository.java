@@ -38,4 +38,6 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
 
     List<EcheanceLeasing> findByStatutPaiement(StatutEcheanceLeasing statut);
 
+    List<EcheanceLeasing> findByContratLeasingId(Long contratId);
+
 }

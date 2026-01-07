@@ -35,6 +35,7 @@ import staport.finance.gBanque.validation.dtos.prelevements.PrelevementTransacti
 import staport.finance.gBanque.validation.dtos.prelevements.PrelevementValidationRequest;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
+import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import staport.finance.gBanque.validation.services.ValidationService;
 
 @RestController
@@ -42,9 +43,11 @@ import staport.finance.gBanque.validation.services.ValidationService;
 public class ValidationController {
 
     private final ValidationService validationService;
+    private final ReverseTransactionService reverseTransactionService;
 
-    public ValidationController(ValidationService validationService) {
+    public ValidationController(ValidationService validationService, ReverseTransactionService reverseTransactionService) {
         this.validationService = validationService;
+        this.reverseTransactionService = reverseTransactionService;
     }
 
 
@@ -210,6 +213,13 @@ public class ValidationController {
         InteretTransactionResponse responseDto = validationService.processInteretToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
+
+    @DeleteMapping("/annuler/{transactionId}")
+    public void annulerTransaction(@PathVariable Long transactionId) throws  Exception{
+         reverseTransactionService.annulerTransaction(transactionId);
+    }
+
+
 
 
 

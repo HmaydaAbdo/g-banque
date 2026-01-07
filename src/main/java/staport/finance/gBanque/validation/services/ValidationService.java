@@ -92,7 +92,6 @@ public class ValidationService {
     private final ContratLeasingRepository contratLeasingRepository;
     private final EcheanceLeasingRepository echeanceLeasingRepository;
 
-
     private final CreditMoyenTermeRepository creditMoyenTermeRepository;
     private final EcheanceCMTRepository echeanceCMTRepository;
     private final CmtTransactionMapper cmtTransactionMapper;
@@ -138,8 +137,6 @@ public class ValidationService {
 
     private final TransactionRepository transactionRepository;
     private final BanqueRepository banqueRepository;
-
-
 
     public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper) {
         this.leasingTransactionMapper = mapper;
@@ -256,8 +253,8 @@ public class ValidationService {
     }
 
 
-        @Transactional(isolation = Isolation.SERIALIZABLE)
-        public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
             // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
             // If the Chèque does not exist, throw a ResourceNotFoundException.
             Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
@@ -906,7 +903,6 @@ public class ValidationService {
         return interetTransactionMapper.toResponseDto(savedTransaction);
     }
 
-
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public FraisBancaireTransactionResponse processFraisBancaireToTransaction(FraisBanciareValidationRequest requestDto) throws Exception{
         // Step 1: Fetch frais bancaire from the database using it's id from the request.
@@ -946,7 +942,6 @@ public class ValidationService {
         // using the mapper and return it as the response.
         return fraisBancaireTransactionMapper.toResponseDto(savedTransaction);
     }
-
 
 
 }

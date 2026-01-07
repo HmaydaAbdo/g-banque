@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.commision.config.CommissionLeasingConfig;
+import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
+import staport.finance.gBanque.commision.service.CommissionService;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
@@ -20,61 +23,77 @@ import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeas
 import staport.finance.gBanque.leasing.echeancesLeasing.mapper.EcheanceLeasingMapper;
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
 import staport.finance.gBanque.leasing.echeancesLeasing.specification.EcheanceLeasingSpecification;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
-import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
 
 /**
  * Service pour la gestion (consultation, mise à jour de statut) et les calculs agrégés
- * des échéances de leasing.
+ * des échéances de leasing avec génération automatique des commissions.
  */
 @Service
 public class EcheanceLeasingService {
 
-
     private static final Logger log = LoggerFactory.getLogger(EcheanceLeasingService.class);
 
+    private final CommissionService commissionService;
+    private final CommissionLeasingConfig commissionConfig;
     private final EcheanceLeasingRepository echeanceLeasingRepository;
     private final ContratLeasingRepository contratLeasingRepository;
     private final EcheanceLeasingMapper echeanceLeasingMapper;
     private final BanqueRepository banqueRepository;
     private static final int SCALE = 2;
 
-
-
-    public EcheanceLeasingService(EcheanceLeasingRepository echeanceLeasingRepository,
+    public EcheanceLeasingService(CommissionService commissionService,
+                                  CommissionLeasingConfig commissionConfig,
+                                  EcheanceLeasingRepository echeanceLeasingRepository,
                                   ContratLeasingRepository contratLeasingRepository,
                                   EcheanceLeasingMapper echeanceLeasingMapper,
                                   BanqueRepository banqueRepository) {
+        this.commissionService = commissionService;
+        this.commissionConfig = commissionConfig;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.contratLeasingRepository = contratLeasingRepository;
         this.echeanceLeasingMapper = echeanceLeasingMapper;
         this.banqueRepository = banqueRepository;
-
     }
-
-
 
     /**
      * Génère l'ensemble des échéances pour un nouveau contrat de leasing donné.
      * Cette méthode est appelée uniquement lors de la création initiale du contrat.
-     * Elle ne gère pas la régénération/modification des échéances existantes.
+     * Elle génère aussi automatiquement les commissions pour les banques éligibles.
      *
      * @param contrat Le contrat de leasing pour lequel les échéances doivent être générées.
      * @throws ValidationException si les données du contrat sont insuffisantes pour le calcul.
      */
-    @Transactional // L'ensemble de l'opération (création) est atomique
+    @Transactional
     public void generateEcheances(ContratLeasing contrat) {
         log.info("Début de la génération des échéances pour le contrat ID : {}", contrat.getId());
-        _generateEcheancesInternal(contrat);
+
+        // 1. Générer les échéances
+        List<EcheanceLeasing> echeances = _generateEcheancesInternal(contrat);
+
+        // 2. Sauvegarder les échéances
+        List<EcheanceLeasing> savedEcheances = echeanceLeasingRepository.saveAll(echeances);
+        log.info("Échéances sauvegardées avec succès : {} échéances créées", savedEcheances.size());
+
+        // 3. Générer les commissions pour les banques éligibles
+        generateCommissionsForEcheances(contrat, savedEcheances);
+
         log.info("Génération des échéances terminée avec succès pour le contrat ID : {}", contrat.getId());
     }
 
-
+    /**
+     * Régénère les échéances ET les commissions pour un contrat existant.
+     * Supprime d'abord les anciennes commissions et échéances avant de tout régénérer.
+     *
+     * @param contratId L'ID du contrat
+     */
     @Transactional
     public void regenerateEcheances(Long contratId) {
         log.info("Début de la régénération des échéances pour le contrat ID : {}", contratId);
@@ -88,43 +107,46 @@ public class EcheanceLeasingService {
 
         log.debug("Contrat trouvé : {}", contrat.getNumeroContrat());
 
-        // 2. Vérifier s'il existe des échéances PAYE pour ce contrat
-        // Si oui, la régénération complète est risquée et potentiellement incorrecte.
-        boolean hasPaidEcheances =this.hasPaidEcheances(contratId);
+        // 2. Vérifier s'il existe des échéances PAYÉES pour ce contrat
+        boolean hasPaidEcheances = this.hasPaidEcheances(contratId);
 
         if (hasPaidEcheances) {
             log.error("Tentative de régénération d'échéances pour le contrat ID : {} avec des échéances déjà payées", contratId);
             throw new ValidationException("Impossible de régénérer les échéances pour le contrat " + contratId +
-                    " car il contient des échéances déjà payées  . c-à-d qu on a déja commencer l ammortisement pour cette contract Veuillez contacter l'administrateur.");
+                    " car il contient des échéances déjà payées. c-à-d qu'on a déjà commencé l'amortissement pour ce contrat. Veuillez contacter l'administrateur.");
         }
 
+        // 3. Supprimer d'abord les anciennes commissions
+        log.debug("Suppression des anciennes commissions pour le contrat ID : {}", contratId);
+        deleteCommissionsForContrat(contratId);
+
+        // 4. Supprimer les anciennes échéances
         log.debug("Suppression des anciennes échéances pour le contrat ID : {}", contratId);
         echeanceLeasingRepository.deleteByContratLeasing(contrat);
-        log.debug("Génération des nouvelles échéances pour le contrat ID : {}", contratId);
-        //  Régénérer les nouvelles échéances en utilisant la logique existante
-        generateEcheances(contrat);
-        log.info("Régénération des échéances terminée avec succès pour le contrat ID : {}", contratId);
 
+        // 5. Régénérer les nouvelles échéances et commissions
+        log.debug("Génération des nouvelles échéances pour le contrat ID : {}", contratId);
+        generateEcheances(contrat);
+
+        log.info("Régénération des échéances terminée avec succès pour le contrat ID : {}", contratId);
     }
 
     /**
-     * Méthode interne pour le calcul et la persistance des échéances.
-     * Elle ne gère pas la suppression d'anciennes échéances.
+     * Méthode interne pour le calcul des échéances.
+     * Elle ne gère pas la sauvegarde des échéances.
      * Appelée uniquement par `generateEcheances`.
      *
      * @param contrat Le contrat de leasing
+     * @return La liste des échéances générées (non sauvegardées)
      */
-    private void _generateEcheancesInternal(ContratLeasing contrat) {
-
+    private List<EcheanceLeasing> _generateEcheancesInternal(ContratLeasing contrat) {
         log.debug("Début du calcul interne des échéances pour le contrat ID : {}", contrat.getId());
 
         List<EcheanceLeasing> echeances = new ArrayList<>();
-        // La première échéance est à la date de début du contrat, donc initialiser à (date de début - 1 mois)
-        // pour que le premier .plus(1, ChronoUnit.MONTHS) donne la date de début.
         OffsetDateTime dateEcheanceCourante = contrat.getDateDebut().minusMonths(1);
-        int numeroEcheanceGlobal = 0; // Compteur pour le numéro de l'échéance à travers toutes les phases
+        int numeroEcheanceGlobal = 0;
 
-        // Assurez-vous que les phases sont triées par numeroPhase pour un ordre correct
+        // Trier les phases par numeroPhase
         List<ContratLeasingPhase> sortedPhases = contrat.getPhases().stream()
                 .sorted((p1, p2) -> Integer.compare(p1.getNumeroPhase(), p2.getNumeroPhase()))
                 .toList();
@@ -133,22 +155,22 @@ public class EcheanceLeasingService {
 
         // Génération des échéances de loyer
         for (ContratLeasingPhase phase : sortedPhases) {
-            log.debug("Traitement de la phase {} - Durée : {} mois, Mensualité TTC : {}", phase.getNumeroPhase(), phase.getDureeMois(), phase.getMensualiteTTC());
+            log.debug("Traitement de la phase {} - Durée : {} mois, Mensualité TTC : {}",
+                    phase.getNumeroPhase(), phase.getDureeMois(), phase.getMensualiteTTC());
 
             BigDecimal mensualiteTTCDuMois = phase.getMensualiteTTC().setScale(SCALE, RoundingMode.HALF_UP);
 
             for (int i = 0; i < phase.getDureeMois(); i++) {
                 numeroEcheanceGlobal++;
-                dateEcheanceCourante = dateEcheanceCourante.plusMonths(1); // Incrémente la date de l'échéance
+                dateEcheanceCourante = dateEcheanceCourante.plusMonths(1);
 
-                // Check if the echeance's date is before or equal to the cut-off date
-                StatutEcheanceLeasing statut =StatutEcheanceLeasing.PREVU;
+                StatutEcheanceLeasing statut = StatutEcheanceLeasing.PREVU;
 
                 EcheanceLeasing echeance = new EcheanceLeasing(
                         contrat,
                         numeroEcheanceGlobal,
                         dateEcheanceCourante,
-                        mensualiteTTCDuMois, // Le montant est directement la mensualité TTC de la phase
+                        mensualiteTTCDuMois,
                         statut
                 );
                 echeances.add(echeance);
@@ -157,31 +179,155 @@ public class EcheanceLeasingService {
         log.debug("Nombre d'échéances de loyer générées : {}", echeances.size());
 
         // Ajout de l'échéance dédiée pour la valeur résiduelle
+        numeroEcheanceGlobal++;
+        dateEcheanceCourante = dateEcheanceCourante.plusMonths(1);
 
-        numeroEcheanceGlobal++; // Le numéro de l'échéance sera (période en mois + 1)
-        dateEcheanceCourante = dateEcheanceCourante.plusMonths(1); // Un mois après la dernière échéance de loyer
-
-        StatutEcheanceLeasing statut =  StatutEcheanceLeasing.PREVU;
+        StatutEcheanceLeasing statut = StatutEcheanceLeasing.PREVU;
 
         EcheanceLeasing echeanceValeurResiduelle = new EcheanceLeasing(
-                    contrat,
-                    numeroEcheanceGlobal,
-                    dateEcheanceCourante,
-                    contrat.getValeurResiduelle().setScale(SCALE, RoundingMode.HALF_UP),
-                    statut
-            );
+                contrat,
+                numeroEcheanceGlobal,
+                dateEcheanceCourante,
+                contrat.getValeurResiduelle().setScale(SCALE, RoundingMode.HALF_UP),
+                statut
+        );
 
         echeances.add(echeanceValeurResiduelle);
 
-        log.debug("Échéance de valeur résiduelle ajoutée. Total d'échéances à sauvegarder : {}", echeances.size());
-        echeanceLeasingRepository.saveAll(echeances);
-        log.debug("Toutes les échéances ont été sauvegardées en base de données");
-
+        log.debug("Échéance de valeur résiduelle ajoutée. Total d'échéances : {}", echeances.size());
+        return echeances;
     }
 
+    /**
+     * Génère les commissions pour toutes les échéances d'un contrat.
+     * Les commissions sont créées uniquement si la banque est configurée dans le YAML.
+     *
+     * @param contrat Le contrat de leasing
+     * @param echeances La liste des échéances générées et sauvegardées
+     */
+    private void generateCommissionsForEcheances(ContratLeasing contrat, List<EcheanceLeasing> echeances) {
+        String nomBanque = contrat.getBanqueDePrelevement().getNom();
 
+        log.info("Vérification de l'éligibilité pour la génération de commissions - Banque : {}", nomBanque);
+
+        // Vérifier si la banque a une commission configurée
+        if (!commissionConfig.hasCommission(nomBanque)) {
+            log.info("Aucune commission configurée pour la banque '{}'. Génération de commissions ignorée.", nomBanque);
+            return;
+        }
+
+        BigDecimal montantCommission = commissionConfig.getCommission(nomBanque);
+        log.info("Commission configurée pour {} : {} DH par échéance", nomBanque, montantCommission);
+
+        int commissionsCreees = 0;
+        int commissionsEchec = 0;
+
+        // Créer une commission pour chaque échéance
+        for (EcheanceLeasing echeance : echeances) {
+            try {
+                CommissionRequestDto commissionDto = creerCommissionDto(contrat, echeance, montantCommission);
+                commissionService.createCommission(commissionDto);
+                commissionsCreees++;
+
+                log.debug("Commission créée pour l'échéance {} - Montant : {} DH",
+                        echeance.getNumeroEcheance(), montantCommission);
+
+            } catch (Exception e) {
+                commissionsEchec++;
+                log.error("Erreur lors de la création de la commission pour l'échéance {} : {}",
+                        echeance.getNumeroEcheance(), e.getMessage());
+            }
+        }
+
+        log.info("Génération des commissions terminée - Créées : {}, Échecs : {}, Total : {}",
+                commissionsCreees, commissionsEchec, echeances.size());
+
+        if (commissionsEchec > 0) {
+            log.warn("⚠️  {} commission(s) n'ont pas pu être créées pour le contrat {}",
+                    commissionsEchec, contrat.getNumeroContrat());
+        }
+    }
+
+    /**
+     * Crée un DTO de commission à partir d'une échéance.
+     *
+     * @param contrat Le contrat de leasing
+     * @param echeance L'échéance concernée
+     * @param montantCommission Le montant de la commission (depuis la config YAML)
+     * @return Le DTO de commission prêt à être créé
+     */
+    private CommissionRequestDto creerCommissionDto(
+            ContratLeasing contrat,
+            EcheanceLeasing echeance,
+            BigDecimal montantCommission) {
+
+        CommissionRequestDto dto = new CommissionRequestDto();
+
+        // Libellé et observation avec le numéro de contrat et d'échéance
+        String texte = String.format(
+                "Commission Prelevement Leasing contrat N°%s",
+                contrat.getNumeroContrat()
+        );
+        dto.setLibelle(texte);
+        dto.setObservation(texte);
+
+        // Montant de la commission (montant fixe depuis la config YAML)
+        dto.setMontant(montantCommission);
+
+        // Banque
+        dto.setBanqueId(contrat.getBanqueDePrelevement().getId());
+
+        // Opération
+        dto.setOperation(TransactionSource.LEASING);
+
+        // Date d'émission = date d'échéance
+        dto.setDateEmission(echeance.getDateEcheance());
+
+        return dto;
+    }
+
+    /**
+     * Supprime toutes les commissions liées aux échéances d'un contrat.
+     * Utilisé lors de la régénération des échéances.
+     *
+     * @param contratId L'ID du contrat
+     */
+    private void deleteCommissionsForContrat(Long contratId) {
+        try {
+            // Récupérer le contrat pour avoir le numéro
+            ContratLeasing contrat = contratLeasingRepository.findById(contratId)
+                    .orElse(null);
+
+            if (contrat == null) {
+                log.warn("Contrat non trouvé pour suppression des commissions : {}", contratId);
+                return;
+            }
+
+            // Pattern pour trouver toutes les commissions de ce contrat
+            String numeroContrat = contrat.getNumeroContrat();
+            String libellePattern = "Commission Prelevement Leasing contrat N°" + numeroContrat + "%";
+
+            // Récupérer toutes les échéances pour avoir les dates
+            List<EcheanceLeasing> echeances = echeanceLeasingRepository.findByContratLeasing(contrat);
+
+            // Supprimer les commissions pour chaque date d'échéance
+            for (EcheanceLeasing echeance : echeances) {
+                commissionService.deleteCommissionsByLibellePattern(libellePattern, echeance.getDateEcheance());
+            }
+
+            log.debug("Commissions supprimées pour le contrat N° : {}", numeroContrat);
+
+        } catch (Exception e) {
+            log.warn("Erreur lors de la suppression des commissions pour le contrat {} : {}",
+                    contratId, e.getMessage());
+            // On continue quand même pour ne pas bloquer la régénération
+        }
+    }
+
+    // ==================== MÉTHODES EXISTANTES (INCHANGÉES) ====================
+
+    @Transactional(readOnly = true)
     public TableauAmortissementDTO getTableauAmortissementForContrat(Long contratId, EcheanceLeasingSearchDTO searchDTO, Pageable pageable) {
-
         log.info("Récupération du tableau d'amortissement pour le contrat ID : {}", contratId);
         log.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
 
@@ -190,29 +336,21 @@ public class EcheanceLeasingService {
                     log.error("Contrat de leasing non trouvé avec l'ID : {}", contratId);
                     return new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found.");
                 });
-        // Utilise la nouvelle méthode buildSpecification pour une gestion unifiée des filtres.
+
         Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.buildSpecification(searchDTO)
                 .and(EcheanceLeasingSpecification.byContratId(contratId));
 
-        // Fetch a PAGE of Echeances based on search criteria and Pageable
         Page<EcheanceLeasing> echeancesPage = echeanceLeasingRepository.findAll(spec, pageable);
-
-        // Map the Page of entities to a Page of DTOs
         Page<EcheanceLeasingResponseDTO> echeancesDtoPage = echeancesPage.map(echeanceLeasingMapper::toDto);
 
         log.debug("Nombre d'échéances dans la page : {}", echeancesPage.getNumberOfElements());
 
-        // Calculate totals based on ALL échéances for the contract, regardless of the current page.
-        // This ensures the summary totals are always accurate for the entire contract.
-        // NB : la VR est considere aussi comme échéance
         List<EcheanceLeasing> allEcheancesForTotals = echeanceLeasingRepository.findByContratLeasing(contrat);
 
-        // totalIndemniteAPayer should be the sum of ALL échéances (loyers + valeur résiduelle).
         BigDecimal totalIndemniteAPayer = allEcheancesForTotals.stream()
                 .map(EcheanceLeasing::getMontantTTC)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(SCALE, RoundingMode.HALF_UP);
-
 
         BigDecimal montantTotalDejaPaye = allEcheancesForTotals.stream()
                 .filter(e -> e.getStatutPaiement() == StatutEcheanceLeasing.PAYE)
@@ -233,7 +371,6 @@ public class EcheanceLeasingService {
         );
     }
 
-    // we only change the status , no banque operation are involved
     @Transactional
     public EcheanceLeasingResponseDTO toggleStatus(Long echeanceId) {
         log.info("Début de la modification du statut de l'échéance ID : {}", echeanceId);
@@ -243,8 +380,11 @@ public class EcheanceLeasingService {
                     log.error("Échéance de leasing non trouvée avec l'ID : {}", echeanceId);
                     return new ResourceNotFoundException("EcheanceLeasing with ID " + echeanceId + " not found.");
                 });
+
         StatutEcheanceLeasing currentStatus = echeance.getStatutPaiement();
-        StatutEcheanceLeasing newStatus = currentStatus == StatutEcheanceLeasing.PAYE ? StatutEcheanceLeasing.PREVU : StatutEcheanceLeasing.PAYE;
+        StatutEcheanceLeasing newStatus = currentStatus == StatutEcheanceLeasing.PAYE
+                ? StatutEcheanceLeasing.PREVU
+                : StatutEcheanceLeasing.PAYE;
 
         log.debug("Changement du statut de {} à {} pour l'échéance ID : {}", currentStatus, newStatus, echeanceId);
         echeance.setStatutPaiement(newStatus);
@@ -259,7 +399,6 @@ public class EcheanceLeasingService {
         log.info("Récupération des encours de leasing pour la banque ID : {}", requestDTO.getBanqueId());
         log.debug("Paramètres de requête : {}, Page : {}, Taille : {}", requestDTO, pageable.getPageNumber(), pageable.getPageSize());
 
-        // 1. Validate the bank's existence and retrieve the entity
         Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
                 .orElseThrow(() -> {
                     log.error("Banque non trouvée avec l'ID : {}", requestDTO.getBanqueId());
@@ -268,11 +407,9 @@ public class EcheanceLeasingService {
 
         log.debug("Banque trouvée : {}", banque.getNom());
 
-        // 2. Start building the specification with the mandatory filters
         Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratBanqueId(requestDTO.getBanqueId())
                 .and(EcheanceLeasingSpecification.outstandingUntil());
 
-        // 3. Add the optional filter for the leasing agency if it exists
         if (requestDTO.getOrganismeLeasingId() != null) {
             log.debug("Filtre par organisme de leasing ID : {}", requestDTO.getOrganismeLeasingId());
             spec = spec.and(EcheanceLeasingSpecification.byContratOrganismeLeasingId(requestDTO.getOrganismeLeasingId()));
@@ -283,23 +420,17 @@ public class EcheanceLeasingService {
             spec = spec.and(EcheanceLeasingSpecification.byContratNumeroContrat(requestDTO.getNumeroContrat()));
         }
 
-        if (requestDTO.getMontant()!=null ){
+        if (requestDTO.getMontant() != null) {
             log.debug("Filtre par montant : {}", requestDTO.getMontant());
-            spec=spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.getMontant()));
+            spec = spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.getMontant()));
         }
 
-        // 4. Fetch the paginated list of outstanding payments
         Page<EcheanceLeasing> encoursEcheancesPage = echeanceLeasingRepository.findAll(spec, pageable);
-
-        // 5. Map the Page of entities to a Page of DTOs
         Page<EcheanceLeasingResponseDTO> echeancesDtoPage = encoursEcheancesPage.map(echeanceLeasingMapper::toDto);
 
         log.debug("Nombre d'échéances en encours dans la page : {}", encoursEcheancesPage.getNumberOfElements());
 
-        // 6. Calculate totals based on ALL outstanding payments for the summary
         List<EcheanceLeasing> allOutstandingEcheances = echeanceLeasingRepository.findAll(spec);
-
-        // ... (calculation logic for totalEncours
 
         BigDecimal totalEncours = allOutstandingEcheances.stream()
                 .map(EcheanceLeasing::getMontantTTC)
@@ -308,7 +439,6 @@ public class EcheanceLeasingService {
 
         log.info("Encours total calculé pour la banque {} : {}", banque.getNom(), totalEncours);
 
-        // 7. Return the combined DTO
         return new EncoursLeasingResponseDTO(
                 banque.getId(),
                 banque.getNom(),
@@ -317,23 +447,16 @@ public class EcheanceLeasingService {
         );
     }
 
-
-    /**
-     * Vérifie si au moins une échéance d'un contrat a déjà été payée.
-     * Cette méthode est utilisée pour valider la suppression du contrat.
-     * @param contratId L'ID du contrat.
-     * @return true si au moins une échéance est PAYE, false sinon.
-     */
     @Transactional(readOnly = true)
     public boolean hasPaidEcheances(Long contratId) {
         log.debug("Vérification de l'existence d'échéances payées pour le contrat ID : {}", contratId);
 
-        boolean hasPaid = echeanceLeasingRepository.existsByContratLeasingIdAndStatutPaiement(contratId, StatutEcheanceLeasing.PAYE);
+        boolean hasPaid = echeanceLeasingRepository.existsByContratLeasingIdAndStatutPaiement(
+                contratId, StatutEcheanceLeasing.PAYE);
 
-        log.debug("Le contrat ID : {} {} d'échéances payées", contratId, hasPaid ? "possède" : "ne possède pas");
+        log.debug("Le contrat ID : {} {} d'échéances payées",
+                contratId, hasPaid ? "possède" : "ne possède pas");
 
         return hasPaid;
     }
-
-
 }

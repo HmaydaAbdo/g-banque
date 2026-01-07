@@ -17,6 +17,8 @@ import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
 
 
 @Service
@@ -150,5 +152,15 @@ public class CommissionService {
         result.setTotalDesEncours(totalDesEncours);
 
         return result;
+    }
+
+    @Transactional
+    public void deleteCommissionsByLibellePattern(String libellePattern, OffsetDateTime dateEmission) {
+        List<Commission> commissions = commissionRepository.findByLibelleLikeAndDateEmission(
+                libellePattern, dateEmission);
+
+        if (!commissions.isEmpty()) {
+            commissionRepository.deleteAll(commissions);
+        }
     }
 }
