@@ -1,0 +1,20 @@
+package staport.finance.gBanque.impot_taxes.enums;
+
+public enum Motif {
+
+    TVA("TVA"),
+    IR("IR"),
+    RETENUE_A_LA_SOURCE("Retenue à la source"),
+    PENALITE_DE_RETARD("Pénalité de retard");
+
+
+    private  final String motif;
+
+    Motif(String motif) {
+        this.motif = motif;
+    }
+
+    public String getMotif(){
+        return this.motif;
+    }
+}

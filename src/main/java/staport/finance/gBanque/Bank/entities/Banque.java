@@ -10,6 +10,7 @@ import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
+import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
@@ -118,6 +119,9 @@ public class Banque {
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Prelevement> prelevements = new ArrayList<>();
 
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<ImpotEtTaxe> impotEtTaxes=new ArrayList<>();
+
     @OneToMany(mappedBy = "banqueDePrelevement",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
 
@@ -185,6 +189,7 @@ public class Banque {
 
     public List<Virement> getVirementsRecus() { return virementsRecus; }
     public void setVirementsRecus(List<Virement> virementsRecus) { this.virementsRecus = virementsRecus; }
+
     public List<MiseADisposition> getMisesADisposition() { return misesADisposition; }
     public void setMisesADisposition(List<MiseADisposition> misesADisposition) { this.misesADisposition = misesADisposition; }
 
@@ -236,8 +241,6 @@ public class Banque {
 
     public void addTransaction(Transaction t) { transactions.add(t); t.setBanqueDePrelevement(this); }
     public void removeTransaction(Transaction t) { transactions.remove(t); t.setBanqueDePrelevement(null); }
-
-
 
     public List<Commission> getCommissions() {
         return commissions;
@@ -320,6 +323,12 @@ public class Banque {
         this.prelevements.remove(prelevement);
     }
 
+    public List<ImpotEtTaxe> getImpotEtTaxes(){ return this.impotEtTaxes;}
+    public void setImpotEtTaxes(List<ImpotEtTaxe> impotEtTaxes){this.impotEtTaxes=impotEtTaxes;}
+
+    public void addImpotEtTaxe(ImpotEtTaxe impotEtTaxe){this.impotEtTaxes.add(impotEtTaxe);}
+    public void removeImpotEtTaxe(ImpotEtTaxe impotEtTaxe){this.impotEtTaxes.remove(impotEtTaxe);}
+
     public List<Rapprochement> getRapprochements() {
         return rapprochements;
     }
@@ -332,10 +341,12 @@ public class Banque {
         rapprochements.add(rapprochement);
         rapprochement.setBanque(this);
     }
+
     public void removeRapprochement(Rapprochement rapprochement) {
         rapprochements.remove(rapprochement);
         rapprochement.setBanque(null);
     }
+
     @PrePersist
     protected void onCreate() {
         this.dateCreation = OffsetDateTime.now();
