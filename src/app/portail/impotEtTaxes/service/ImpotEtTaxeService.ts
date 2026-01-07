@@ -1,0 +1,82 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
+import { ImpotEtTaxeRequestDto } from "../dtos/ImpotEtTaxeRequestDto";
+import { ImpotEtTaxeResponseDto } from "../dtos/ImpotEtTaxeResponseDto";
+import { ImpotEtTaxeSearchDto } from "../dtos/ImpotEtTaxeSearchDto";
+import { PageResponse } from "../../global/types/PageResponse";
+import { EncoursImpotEtTaxeDto } from "../dtos/EncoursImpotEtTaxeDto";
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ImpotEtTaxeService {
+
+  private apiUrl = `${environment.apiUrl}impots-taxes`;
+
+  constructor(private http: HttpClient) {}
+
+  // --- Create ---
+  createImpotEtTaxe(requestDto: ImpotEtTaxeRequestDto): Observable<ImpotEtTaxeResponseDto> {
+    return this.http.post<ImpotEtTaxeResponseDto>(this.apiUrl, requestDto);
+  }
+
+  // --- Get by ID ---
+  getImpotEtTaxeById(id: number): Observable<ImpotEtTaxeResponseDto> {
+    return this.http.get<ImpotEtTaxeResponseDto>(`${this.apiUrl}/${id}`);
+  }
+
+  // --- Search with pagination ---
+  searchImpotEtTaxes(
+    searchDto: ImpotEtTaxeSearchDto,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'id,asc'
+  ): Observable<PageResponse<ImpotEtTaxeResponseDto>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    return this.http.post<PageResponse<ImpotEtTaxeResponseDto>>(`${this.apiUrl}/search`, searchDto, { params });
+  }
+
+  // --- Update ---
+  updateImpotEtTaxe(id: number, requestDto: ImpotEtTaxeRequestDto): Observable<ImpotEtTaxeResponseDto> {
+    return this.http.put<ImpotEtTaxeResponseDto>(`${this.apiUrl}/${id}`, requestDto);
+  }
+
+  // --- Delete ---
+  deleteImpotEtTaxe(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  // --- Get outstanding impots et taxes ---
+  getOutstandingImpotEtTaxes(
+    banqueId: number,
+    searchDto: ImpotEtTaxeSearchDto,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission'
+  ): Observable<EncoursImpotEtTaxeDto> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    if (searchDto.libelle) {
+      params = params.set('libelle', searchDto.libelle);
+    }
+
+    if (searchDto.motif) {
+      params = params.set('motif', searchDto.motif);
+    }
+
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+
+    return this.http.get<EncoursImpotEtTaxeDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
+  }
+}

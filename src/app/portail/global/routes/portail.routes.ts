@@ -119,6 +119,8 @@ import {
   FunctionalLinesByMarcheComponent
 } from "../../Marches/views/specific-lines-by-marche/functionalLines-by-marche.component";
 import {LcnEscompteByLineComponent} from "../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component";
+import {ImpotEtTaxeListComponent} from "../../impotEtTaxes/views/impot-et-taxe-list/impot-et-taxe-list.component";
+import {ImpotEtTaxeFormComponent} from "../../impotEtTaxes/views/impot-et-taxe-form/impot-et-taxe-form.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -244,6 +246,10 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'commissions', component: CommissionListComponent },
   {path:"commissions/new",component:CommissionFormComponent},
   {path:"commissions/edit/:id",component:CommissionFormComponent},
+
+  { path: 'impots-taxes', component: ImpotEtTaxeListComponent },
+  { path: "impots-taxes/new", component: ImpotEtTaxeFormComponent },
+  { path: "impots-taxes/edit/:id", component: ImpotEtTaxeFormComponent },
 
   { path: 'agios', component: AgiosListComponent },
   {path:"agios/new",component:AgiosFormComponent},
