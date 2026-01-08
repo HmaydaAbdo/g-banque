@@ -2,6 +2,7 @@ package staport.finance.gBanque.recapitulatif.mappers;
 
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Agios.entities.Agios;
+import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.commision.entities.Commission;
@@ -246,6 +247,22 @@ public class RecapitulatifDecaissementMapper {
         dto.setObservations(commission.getObservation() );
         dto.setLibelle(commission.getLibelle());
         dto.setSource(TransactionSource.COMMISSION);
+        return dto;
+    }
+
+
+    public RecaputilatifItem mapImpotEtTaxrToDto(ImpotEtTaxe impotEtTaxe) {
+
+        if (impotEtTaxe == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(impotEtTaxe.getDateEmission());
+        dto.setDebit(impotEtTaxe.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(impotEtTaxe.getObservation() );
+        dto.setLibelle(impotEtTaxe.getLibelle());
+        dto.setSource(TransactionSource.IMPOT_TAXE);
         return dto;
     }
 

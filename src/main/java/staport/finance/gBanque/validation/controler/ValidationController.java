@@ -17,6 +17,8 @@ import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionReq
 import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
+import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
+import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
 import staport.finance.gBanque.validation.dtos.interet.InteretTransactionResponse;
 import staport.finance.gBanque.validation.dtos.interet.InteretValidationRequest;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
@@ -214,10 +216,19 @@ public class ValidationController {
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+
+    @PostMapping("/process/impot-taxe")
+    public ResponseEntity<ImpotEtTaxeTransactionResponse> processImpotEtTaxeToTransaction(
+            @Valid @RequestBody ImpotEtTaxeValidationRequest requestDto) throws Exception {
+        ImpotEtTaxeTransactionResponse responseDto = validationService.processImpotEtTaxeToTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
     @DeleteMapping("/annuler/{transactionId}")
     public void annulerTransaction(@PathVariable Long transactionId) throws  Exception{
          reverseTransactionService.annulerTransaction(transactionId);
     }
+
 
 
 

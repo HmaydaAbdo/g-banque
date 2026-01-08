@@ -23,6 +23,8 @@ import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
+import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
+import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.interets.repository.InteretRepository;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
@@ -74,6 +76,8 @@ public class ReverseTransactionService {
     private final InteretRepository interetRepository;
     private final FraisBancaireRepository fraisBancaireRepository;
     private final FactoringRepository factoringRepository;
+    private final ImpotEtTaxeRepository impotEtTaxeRepository;
+
 
     public ReverseTransactionService(
             TransactionRepository transactionRepository,
@@ -92,7 +96,7 @@ public class ReverseTransactionService {
             PrelevementRepository prelevementRepository,
             InteretRepository interetRepository,
             FraisBancaireRepository fraisBancaireRepository,
-            FactoringRepository factoringRepository) {
+            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository) {
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
@@ -110,6 +114,7 @@ public class ReverseTransactionService {
         this.interetRepository = interetRepository;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.factoringRepository = factoringRepository;
+        this.impotEtTaxeRepository = impotEtTaxeRepository;
     }
 
     /**
@@ -224,6 +229,9 @@ public class ReverseTransactionService {
                 break;
             case FACTORING:
                 resetFactoring(referentId);
+                break;
+            case IMPOT_TAXE:
+                resetImpotEtTaxe(referentId);
                 break;
             default:
                 throw new Exception("Type de transaction non supporté pour l'annulation: " + source);
@@ -395,5 +403,16 @@ public class ReverseTransactionService {
         factoring.setDateValeur(null);
         factoringRepository.save(factoring);
         log.debug("Factoring {} remis à NON_PAYE", factoringId);
+    }
+
+    private void resetImpotEtTaxe(Long impotEtTaxeId) throws Exception {
+        ImpotEtTaxe impotEtTaxe = impotEtTaxeRepository.findById(impotEtTaxeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Impôt/Taxe introuvable: " + impotEtTaxeId));
+
+        impotEtTaxe.setStatus(Status.PREVU);
+        impotEtTaxe.setDateOperation(null);
+        impotEtTaxe.setDateValeur(null);
+        impotEtTaxeRepository.save(impotEtTaxe);
+        log.debug("Impôt/Taxe {} remis(e) à PREVU", impotEtTaxeId);
     }
 }

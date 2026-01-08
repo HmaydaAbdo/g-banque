@@ -16,5 +16,6 @@ public enum TransactionSource {
     INTERETS,
     FACTORING,
     PRELEVEMENT,
-    CAUTION
+    CAUTION,
+    IMPOT_TAXE
 }

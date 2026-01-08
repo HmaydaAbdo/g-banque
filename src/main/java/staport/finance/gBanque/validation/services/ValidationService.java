@@ -10,6 +10,8 @@ import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
+import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
@@ -53,6 +55,8 @@ import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionReq
 import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
+import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
+import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
 import staport.finance.gBanque.validation.dtos.interet.InteretTransactionResponse;
 import staport.finance.gBanque.validation.dtos.interet.InteretValidationRequest;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
@@ -138,7 +142,10 @@ public class ValidationService {
     private final TransactionRepository transactionRepository;
     private final BanqueRepository banqueRepository;
 
-    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper) {
+    private final ImpotEtTaxeRepository impotEtTaxeRepository;
+    private final ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper;
+
+    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -173,6 +180,8 @@ public class ValidationService {
         this.fraisBancaireTransactionMapper = fraisBancaireTransactionMapper;
         this.factoringRepository = factoringRepository;
         this.factoringTransactionMapper = factoringTransactionMapper;
+        this.impotEtTaxeRepository = impotEtTaxeRepository;
+        this.impotEtTaxeTransactionMapper = impotEtTaxeTransactionMapper;
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -941,6 +950,46 @@ public class ValidationService {
         // Step 7: Convert the saved Transaction entity into a FraisBancaireTransactionResponse
         // using the mapper and return it as the response.
         return fraisBancaireTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public ImpotEtTaxeTransactionResponse processImpotEtTaxeToTransaction(ImpotEtTaxeValidationRequest requestDto) throws Exception {
+        // Step 1: Fetch impot et taxe from the database using its id from the request.
+        ImpotEtTaxe impotEtTaxe = this.impotEtTaxeRepository.findById(requestDto.getIdImpotEtTaxe())
+                .orElseThrow(() -> new ResourceNotFoundException("Impôt/Taxe with id " + requestDto.getIdImpotEtTaxe() + " not found"));
+
+        // Step 2: Check if the impot et taxe is not already paid.
+        // If it's already paid, throw an exception.
+        if (impotEtTaxe.getStatus() == Status.PAYE) {
+            throw new Exception("L'impôt/taxe est déjà payé(e)");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
+        Transaction transactionEntity = impotEtTaxeTransactionMapper.toEntity(requestDto, impotEtTaxe);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+        Banque banque = banqueRepository.findById(impotEtTaxe.getBanque().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Banque with id " + impotEtTaxe.getBanque().getId() + " not found"));
+
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(impotEtTaxe.getMontant()));
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the impot et taxe as paid and save the updated entity.
+        impotEtTaxe.setStatus(Status.PAYE);
+        impotEtTaxe.setObservation(savedTransaction.getObservation());
+        impotEtTaxe.setLibelle(savedTransaction.getLibelle());
+        impotEtTaxe.setDateValeur(savedTransaction.getDateValeur());
+        impotEtTaxe.setDateOperation(savedTransaction.getDateOperations());
+        impotEtTaxeRepository.save(impotEtTaxe);
+
+        // Step 7: Convert the saved Transaction entity into an ImpotEtTaxeTransactionResponse
+        // using the mapper and return it as the response.
+        return impotEtTaxeTransactionMapper.toResponseDto(savedTransaction);
     }
 
 
