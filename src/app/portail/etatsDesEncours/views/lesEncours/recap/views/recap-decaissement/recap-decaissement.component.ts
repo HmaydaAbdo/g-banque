@@ -102,12 +102,11 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
   }
 
   populateTransactionSourceOptions(): void {
-    this.transactionSourceOptions = Object.values(TransactionSource).map(source => ({
-      label: source,
-      value: source
+    this.transactionSourceOptions = Object.entries(TransactionSource).map(([key, value]) => ({
+      label: value,
+      value: key
     }));
   }
-
   onFilterChange(): void {
     if (this.dt) {
       this.dt.first = 0;

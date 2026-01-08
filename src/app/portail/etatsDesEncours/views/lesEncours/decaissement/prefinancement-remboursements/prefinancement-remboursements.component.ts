@@ -12,12 +12,12 @@ import {PrefinancementResponseDTO} from "../../../../../prefinancements/dtos/Pre
 import {PrefinancementService} from "../../../../../prefinancements/service/PrefinancementService";
 import {EncoursPrefinancementDto} from "../../../../../prefinancements/dtos/EncoursPrefinancementDto";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {PrefinancementTransactionRequest} from "../../../../rapprochement/dtos/prefinancement/PrefinancementTransactionRequest";
+import {PrefinancementTransactionRequest} from "../../../../dtos/prefinancement/PrefinancementTransactionRequest";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import { EncoursPrefinancementSearchDto } from "../../../../../prefinancements/dtos/EncoursPrefinancementSearchDto";
 import { InputTextModule } from 'primeng/inputtext';
-import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {ValidationService} from "../../../../services/validation/validation.service";
 import {ActivatedRoute, RouterLink} from '@angular/router'; // Import ActivatedRoute
 
 import {  Subscription } from 'rxjs';

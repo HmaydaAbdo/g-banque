@@ -19,12 +19,12 @@ import {LcnResponseDTO} from "../../../../../LCN/dtos/LcnResponseDTO";
 import {LcnSearchDTO} from "../../../../../LCN/dtos/LcnSearchDTO";
 import {LcnService} from "../../../../../LCN/service/LcnService";
 import {ActivatedRoute, RouterLink} from "@angular/router";
-import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {ValidationService} from "../../../../services/validation/validation.service";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {
   DonneesComplementairesRapprochementDTO
-} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
-import {LcnTransactionRequest} from "../../../../rapprochement/dtos/lcn/LcnTransactionRequest";
+} from "../../../../dtos/DonneesComplementairesRapprochementDTO";
+import {LcnTransactionRequest} from "../../../../dtos/lcn/LcnTransactionRequest";
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {EncoursLcnResponse} from "../../../../../LCN/dtos/EncoursLcnResponse";
 

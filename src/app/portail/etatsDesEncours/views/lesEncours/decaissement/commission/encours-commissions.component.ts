@@ -18,8 +18,8 @@ import {TransactionSource} from "../../../../../transactions/dtos/TransactionSou
 import {CommissionService} from "../../../../../commission/service/commission.service";
 import {CommissionSearchDto} from "../../../../../commission/dtos/CommissionSearchDto";
 import {EncoursCommissionDto} from "../../../../../commission/dtos/EncoursCommissionDto";
-import {CommissionValidationDto} from "../../../../rapprochement/dtos/commission/CommissionValidationDto";
-import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {CommissionValidationDto} from "../../../../dtos/commission/CommissionValidationDto";
+import {ValidationService} from "../../../../services/validation/validation.service";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";

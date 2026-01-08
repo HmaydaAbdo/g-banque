@@ -28,9 +28,9 @@ import { OrganismeLeasingService } from "../../../../../leasing/organismesLeasin
 import { PageResponse } from "../../../../../global/types/PageResponse";
 import { OrganismeLeasingResponse } from "../../../../../leasing/organismesLeasing/dtos/OrganismeLeasingResponse";
 import { EncoursLeasingRequestDTO } from "../../../../../leasing/contratsLeasing/dtos/encours-leasing-request.dto";
-import { ValidationService } from "../../../../rapprochement/services/validation/validation.service";
-import { DonneesComplementairesRapprochementDTO } from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
-import {LeasingTransactionRequest} from "../../../../rapprochement/dtos/leasing/LeasingTransactionRequest";
+import { ValidationService } from "../../../../services/validation/validation.service";
+import { DonneesComplementairesRapprochementDTO } from "../../../../dtos/DonneesComplementairesRapprochementDTO";
+import {LeasingTransactionRequest} from "../../../../dtos/leasing/LeasingTransactionRequest";
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 
 

@@ -83,6 +83,7 @@ export class LesEncoursComponent implements OnInit {
     'prelevements': { label: 'Décaissements ⇒ Prélèvements', icon: 'pi pi-list' },
     'interests': { label: 'Décaissements ⇒ Intérêts', icon: 'pi pi-list' },
     'fraisBancaire': { label: 'Décaissements ⇒ Frais Bancaires', icon: 'pi pi-list' },
+    'impots-taxes': { label: 'Décaissements ⇒ Impôts et Taxes', icon: 'pi pi-list' },
 
     // Encaissements
     'lcn-encaissements': { label: 'Encaissements ⇒ LCN', icon: 'pi pi-list' },
@@ -177,6 +178,8 @@ export class LesEncoursComponent implements OnInit {
           { label: 'Prélèvements', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prelevements'] },
           { label: 'Intérêts', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'interests'] },
           { label: 'Frais Bancaire', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'fraisBancaire'] },
+          { label: 'Impôts et Taxes', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'impots-taxes'] },
+
         ]
       },
       {

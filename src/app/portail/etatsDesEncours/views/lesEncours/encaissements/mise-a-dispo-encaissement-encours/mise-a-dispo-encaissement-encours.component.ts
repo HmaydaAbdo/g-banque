@@ -7,14 +7,14 @@ import {MiseADispositionService} from "../../../../../Mise-à-disposition/servic
 import {ActivatedRoute, RouterLink} from "@angular/router";
 import {ConfirmationService, MessageService, PrimeTemplate} from "primeng/api";
 import {DatePipe, DecimalPipe, NgIf} from "@angular/common";
-import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {ValidationService} from "../../../../services/validation/validation.service";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {
   DonneesComplementairesRapprochementDTO
-} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+} from "../../../../dtos/DonneesComplementairesRapprochementDTO";
 import {
   MiseAdispositionTransactionRequestDto
-} from "../../../../rapprochement/dtos/mise_a_disposition/MiseAdispositionTransactionRequestDto";
+} from "../../../../dtos/mise_a_disposition/MiseAdispositionTransactionRequestDto";
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {EncoursMiseAdisposition} from "../../../../../Mise-à-disposition/dtos/EncoursMiseAdisposition";
 import {Button} from "primeng/button";

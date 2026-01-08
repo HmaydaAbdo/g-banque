@@ -57,7 +57,7 @@ export class RecapService {
     }
 
     if (searchDto.observation && searchDto.observation.length > 0) {
-        params = params.append('observations', searchDto.observation);
+        params = params.append('observation', searchDto.observation);
     }
 
 

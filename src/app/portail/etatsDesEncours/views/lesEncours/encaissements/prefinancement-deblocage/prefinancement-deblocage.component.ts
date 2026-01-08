@@ -12,8 +12,8 @@ import { PrefinancementResponseDTO } from "../../../../../prefinancements/dtos/P
 import { PrefinancementService } from "../../../../../prefinancements/service/PrefinancementService";
 import { EncoursPrefinancementDto } from "../../../../../prefinancements/dtos/EncoursPrefinancementDto";
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
-import { ValidationService } from "../../../../rapprochement/services/validation/validation.service";
-import { PrefinancementTransactionRequest } from "../../../../rapprochement/dtos/prefinancement/PrefinancementTransactionRequest";
+import { ValidationService } from "../../../../services/validation/validation.service";
+import { PrefinancementTransactionRequest } from "../../../../dtos/prefinancement/PrefinancementTransactionRequest";
 import { DialogModule } from "primeng/dialog";
 import { CalendarModule } from "primeng/calendar";
 import { InputTextModule } from 'primeng/inputtext';

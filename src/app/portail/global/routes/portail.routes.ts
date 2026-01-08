@@ -121,6 +121,9 @@ import {
 import {LcnEscompteByLineComponent} from "../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component";
 import {ImpotEtTaxeListComponent} from "../../impotEtTaxes/views/impot-et-taxe-list/impot-et-taxe-list.component";
 import {ImpotEtTaxeFormComponent} from "../../impotEtTaxes/views/impot-et-taxe-form/impot-et-taxe-form.component";
+import {
+  EncoursImpotsEtTaxesComponent
+} from "../../etatsDesEncours/views/lesEncours/decaissement/encours-impots-taxes/encours-impots-taxes.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -240,6 +243,8 @@ export const PORTAIL_ROUTES: Routes = [
       {path:"prelevements",component:EncoursPrelevementComponent},
       {path:"interests",component:EncoursInteretComponent},
       {path:"fraisBancaire",component:EncoursFraisBancaireComponent},
+      {path: "impots-taxes", component: EncoursImpotsEtTaxesComponent},
+
     ]
   },
 

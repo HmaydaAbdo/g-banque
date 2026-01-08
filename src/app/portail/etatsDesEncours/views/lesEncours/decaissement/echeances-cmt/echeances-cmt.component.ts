@@ -23,10 +23,10 @@ import {EncoursCMTRequestDTO} from "../../../../../cmt/dtos/EncoursCMTRequestDTO
 import {CalendarModule} from "primeng/calendar";
 import {DialogModule} from "primeng/dialog";
 import {InputTextareaModule} from "primeng/inputtextarea";
-import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
-import {DonneesComplementairesRapprochementDTO} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+import {ValidationService} from "../../../../services/validation/validation.service";
+import {DonneesComplementairesRapprochementDTO} from "../../../../dtos/DonneesComplementairesRapprochementDTO";
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
-import {CmtTransactionRequest} from "../../../../rapprochement/dtos/cmt/CmtTransactionRequest";
+import {CmtTransactionRequest} from "../../../../dtos/cmt/CmtTransactionRequest";
 import {EcheanceCMTResponseDto} from "../../../../../cmt/dtos/EcheanceCMTResponseDto";
 import { InputTextModule } from 'primeng/inputtext';
 

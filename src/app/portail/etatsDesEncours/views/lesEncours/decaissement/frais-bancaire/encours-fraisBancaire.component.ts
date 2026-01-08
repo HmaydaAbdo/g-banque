@@ -16,12 +16,12 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
 import {Decimal} from "decimal.js";
 import {ActivatedRoute} from "@angular/router";
-import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {ValidationService} from "../../../../services/validation/validation.service";
 import {FraisBancaireResponseDto} from "../../../../../frais-bancaire/dtos/FraisBancaireResponseDto";
 import {FraisBancaireService} from "../../../../../frais-bancaire/service/FraisBancaireService";
 import {FraisBancaireSearchDto} from "../../../../../frais-bancaire/dtos/FraisBancaireSearchDto";
 import {EncoursFraisBancaireDto} from "../../../../../frais-bancaire/dtos/EncoursFraisBancaireDto";
-import {FraisBancaireValidationRequest} from "../../../../rapprochement/dtos/frais-bancaire/frais-bancaire-validation-request.dto";
+import {FraisBancaireValidationRequest} from "../../../../dtos/frais-bancaire/frais-bancaire-validation-request.dto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 

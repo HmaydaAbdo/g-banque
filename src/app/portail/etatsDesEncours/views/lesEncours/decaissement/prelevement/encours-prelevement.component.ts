@@ -17,12 +17,12 @@ import { ConfirmationService, MenuItem, MessageService, SelectItem } from "prime
 import { ActivatedRoute } from "@angular/router";
 import { debounceTime, distinctUntilChanged, Subscription } from "rxjs";
 
-import { ValidationService } from "../../../../rapprochement/services/validation/validation.service";
+import { ValidationService } from "../../../../services/validation/validation.service";
 import { PrelevementService } from "../../../../../prelevements/service/prelevement.service";
 import { PrelevementResponseDto } from "../../../../../prelevements/dtos/PrelevementResponseDto";
 import { PrelevementSearchDto } from "../../../../../prelevements/dtos/PrelevementSearchDto";
 import { EncoursPrelevement } from "../../../../../prelevements/dtos/EncoursPrelevement";
-import { PrelevementValidationRequestDto } from "../../../../rapprochement/dtos/prelevement/prelevement-validation-request.dto";
+import { PrelevementValidationRequestDto } from "../../../../dtos/prelevement/prelevement-validation-request.dto";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
 
 

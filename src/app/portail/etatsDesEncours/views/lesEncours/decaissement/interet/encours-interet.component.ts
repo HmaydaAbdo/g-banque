@@ -16,12 +16,12 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
 import {Decimal} from "decimal.js";
 import {ActivatedRoute} from "@angular/router";
-import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {ValidationService} from "../../../../services/validation/validation.service";
 import {InteretResponseDto} from "../../../../../interest/dtos/InteretResponseDto";
 import {InteretService} from "../../../../../interest/service/InteretService";
 import {InteretSearchDto} from "../../../../../interest/dtos/InteretSearchDto";
 import {EncoursInteretDto} from "../../../../../interest/dtos/EncoursInteretDto";
-import {InteretValidationRequest} from "../../../../rapprochement/dtos/interets/interet-validation-request.dto";
+import {InteretValidationRequest} from "../../../../dtos/interets/interet-validation-request.dto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 

@@ -1,14 +1,13 @@
 import {Component, Input, numberAttribute, OnInit} from '@angular/core';
 import {RecapitulatifCompte} from "../../../../accueil/dtos/RecapitulatifCompte";
 import {BanqueService} from "../../../../comptes-bancaire/services/BanqueService";
-import {DecimalPipe, NgClass, NgIf} from "@angular/common";
+import {DecimalPipe, NgIf} from "@angular/common";
 
 @Component({
   selector: 'app-bank-details',
   standalone: true,
   imports: [
     NgIf,
-    NgClass,
     DecimalPipe
   ],
   templateUrl: './bank-details.component.html',

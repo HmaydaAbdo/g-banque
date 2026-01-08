@@ -16,12 +16,12 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
 import {Decimal} from "decimal.js";
 import {ActivatedRoute} from "@angular/router";
-import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {ValidationService} from "../../../../services/validation/validation.service";
 import {AgiosResponseDto} from "../../../../../agios/dtos/AgiosResponseDto";
 import {AgiosService} from "../../../../../agios/service/agios.service";
 import {AgiosSearchDto} from "../../../../../agios/dtos/AgiosSearchDto";
 import {EncoursAgiosDto} from "../../../../../agios/dtos/EncoursAgiosDto";
-import {AgiosValidationRequest} from "../../../../rapprochement/dtos/agios/agios-validation-request.dto";
+import {AgiosValidationRequest} from "../../../../dtos/agios/agios-validation-request.dto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 

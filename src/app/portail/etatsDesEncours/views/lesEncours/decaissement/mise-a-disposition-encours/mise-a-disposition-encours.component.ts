@@ -13,14 +13,14 @@ import {MiseADispositionResponseDto} from "../../../../../Mise-à-disposition/dt
 import {MiseADispositionService} from "../../../../../Mise-à-disposition/service/MiseADispositionService";
 import {PageResponse} from "../../../../../global/types/PageResponse";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
-import {ValidationService} from "../../../../rapprochement/services/validation/validation.service";
+import {ValidationService} from "../../../../services/validation/validation.service";
 import {
   MiseAdispositionTransactionRequestDto
-} from "../../../../rapprochement/dtos/mise_a_disposition/MiseAdispositionTransactionRequestDto";
+} from "../../../../dtos/mise_a_disposition/MiseAdispositionTransactionRequestDto";
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {
   DonneesComplementairesRapprochementDTO
-} from "../../../../rapprochement/dtos/DonneesComplementairesRapprochementDTO";
+} from "../../../../dtos/DonneesComplementairesRapprochementDTO";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {InputTextareaModule} from "primeng/inputtextarea";

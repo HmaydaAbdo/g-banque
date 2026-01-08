@@ -21,7 +21,7 @@ import {TransactionSource} from "../../../../transactions/dtos/TransactionSource
 import {AgreratedTransactionResponseDto} from "../../../../transactions/dtos/AgreratedTransactionResponseDto";
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
-import {ValidationService} from "../../../rapprochement/services/validation/validation.service";
+import {ValidationService} from "../../../services/validation/validation.service";
 
 
 @Component({
@@ -100,9 +100,9 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
   // Populates the options for the multi-select from the TransactionSource enum.
   populateTransactionSourceOptions(): void {
-    this.transactionSourceOptions = Object.values(TransactionSource).map(source => ({
-      label: source,
-      value: source
+    this.transactionSourceOptions = Object.entries(TransactionSource).map(([key, value]) => ({
+      label: value,
+      value: key
     }));
   }
 
