@@ -2,6 +2,8 @@ package staport.finance.gBanque.leasing.contratLeasing.dto;
 
 import staport.finance.gBanque.leasing.contratLeasing.enums.TypeContratLeasing;
 
+import java.math.BigDecimal;
+
 public class ContratLeasingSearchDTO {
 
     private String numeroContrat;
@@ -10,6 +12,8 @@ public class ContratLeasingSearchDTO {
     private String immobilisation;
     private TypeContratLeasing typeContrat;
     private Boolean completed;
+    private BigDecimal montantEcheance;
+
 
     // Getters and Setters
     public String getNumeroContrat() { return numeroContrat; }
@@ -25,6 +29,14 @@ public class ContratLeasingSearchDTO {
     public Boolean getCompleted() { return completed; }
     public void setCompleted(Boolean completed) { this.completed = completed; }
 
+    public BigDecimal getMontantEcheance() {
+        return montantEcheance;
+    }
+
+    public void setMontantEcheance(BigDecimal montantEcheance) {
+        this.montantEcheance = montantEcheance;
+    }
+
     @Override
     public String toString() {
         return "ContratLeasingSearchDTO{" +
@@ -34,6 +46,7 @@ public class ContratLeasingSearchDTO {
                 ", immobilisation='" + immobilisation + '\'' +
                 ", typeContrat=" + typeContrat +
                 ", completed=" + completed +
+                ", montantEcheance=" + montantEcheance +
                 '}';
     }
 }

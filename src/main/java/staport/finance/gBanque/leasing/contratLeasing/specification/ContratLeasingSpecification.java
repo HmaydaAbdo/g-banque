@@ -1,10 +1,12 @@
 package staport.finance.gBanque.leasing.contratLeasing.specification;
 
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDTO;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
+import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasingPhase;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import java.util.ArrayList;
@@ -44,9 +46,23 @@ public class ContratLeasingSpecification {
                 predicates.add(criteriaBuilder.equal(root.get("completed"), searchDTO.getCompleted()));
             }
 
-            // Combine all predicates with AND
+            if (searchDTO.getMontantEcheance() != null) {
+                Subquery<Long> phaseSubquery = query.subquery(Long.class);
+                Root<ContratLeasingPhase> phaseRoot = phaseSubquery.from(ContratLeasingPhase.class);
+
+                phaseSubquery.select(phaseRoot.get("id"))
+                        .where(criteriaBuilder.and(
+                                criteriaBuilder.equal(phaseRoot.get("contratLeasing").get("id"), root.get("id")),
+                                criteriaBuilder.equal(phaseRoot.get("mensualiteTTC"), searchDTO.getMontantEcheance())
+                        ));
+
+                predicates.add(criteriaBuilder.exists(phaseSubquery));
+            }
+
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
+
+
     }
 
     /**
