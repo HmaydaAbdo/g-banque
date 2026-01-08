@@ -32,9 +32,6 @@ export class ContratLeasingService {
    * which can lose precision.
    */
   private processContratLeasingResponse(contrat: ContratLeasingResponseDTO): ContratLeasingResponseDTO {
-
-
-
     if (contrat.phases && Array.isArray(contrat.phases)) {
       contrat.phases = contrat.phases.map(phase => {
         return {
@@ -66,6 +63,46 @@ export class ContratLeasingService {
     return throwError(() => new Error(errorMessage));
   }
 
+  /**
+   * Helper method to build HttpParams from search criteria and pagination settings.
+   * @param searchDTO The search criteria
+   * @param page Page number
+   * @param size Page size
+   * @param sort Sort configuration
+   * @returns HttpParams object ready to use in HTTP requests
+   */
+  private buildSearchParams(
+    searchDTO: ContratLeasingSearchDTO,
+    page: number,
+    size: number,
+    sort: string
+  ): HttpParams {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    if (searchDTO.numeroContrat) {
+      params = params.set('numeroContrat', searchDTO.numeroContrat);
+    }
+    if (searchDTO.immobilisation) {
+      params = params.set('immobilisation', searchDTO.immobilisation);
+    }
+    if (searchDTO.typeContrat) {
+      params = params.set('typeContrat', searchDTO.typeContrat);
+    }
+    if (searchDTO.organismeLeasingId) {
+      params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString());
+    }
+    if (searchDTO.banqueDePrelevementId) {
+      params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString());
+    }
+    if (searchDTO.montantEcheance !== undefined && searchDTO.montantEcheance !== null) {
+      params = params.set('montantEcheance', searchDTO.montantEcheance.toString());
+    }
+
+    return params;
+  }
 
   /**
    * Retrieves a paginated list of active leasing contracts.
@@ -77,16 +114,7 @@ export class ContratLeasingService {
     size: number = 10,
     sort: string = 'id,asc'
   ): Observable<PageResponse<ContratLeasingResponseDTO>> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDTO.numeroContrat) { params = params.set('numeroContrat', searchDTO.numeroContrat); }
-    if (searchDTO.immobilisation) { params = params.set('immobilisation', searchDTO.immobilisation); }
-    if (searchDTO.typeContrat) { params = params.set('typeContrat', searchDTO.typeContrat); }
-    if (searchDTO.organismeLeasingId) { params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString()); }
-    if (searchDTO.banqueDePrelevementId) { params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString()); }
+    const params = this.buildSearchParams(searchDTO, page, size, sort);
 
     return this.http.get<PageResponse<ContratLeasingResponseDTO>>(`${this.apiUrl}/actifs`, { params }).pipe(
       map(pageResponse => ({
@@ -107,16 +135,7 @@ export class ContratLeasingService {
     size: number = 10,
     sort: string = 'id,asc'
   ): Observable<PageResponse<ContratLeasingResponseDTO>> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDTO.numeroContrat) { params = params.set('numeroContrat', searchDTO.numeroContrat); }
-    if (searchDTO.immobilisation) { params = params.set('immobilisation', searchDTO.immobilisation); }
-    if (searchDTO.typeContrat) { params = params.set('typeContrat', searchDTO.typeContrat); }
-    if (searchDTO.organismeLeasingId) { params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString()); }
-    if (searchDTO.banqueDePrelevementId) { params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString()); }
+    const params = this.buildSearchParams(searchDTO, page, size, sort);
 
     return this.http.get<PageResponse<ContratLeasingResponseDTO>>(`${this.apiUrl}/en-attente-main-levee`, { params }).pipe(
       map(pageResponse => ({
@@ -137,16 +156,7 @@ export class ContratLeasingService {
     size: number = 10,
     sort: string = 'id,asc'
   ): Observable<PageResponse<ContratLeasingResponseDTO>> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
-      .set('sort', sort);
-
-    if (searchDTO.numeroContrat) { params = params.set('numeroContrat', searchDTO.numeroContrat); }
-    if (searchDTO.immobilisation) { params = params.set('immobilisation', searchDTO.immobilisation); }
-    if (searchDTO.typeContrat) { params = params.set('typeContrat', searchDTO.typeContrat); }
-    if (searchDTO.organismeLeasingId) { params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString()); }
-    if (searchDTO.banqueDePrelevementId) { params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString()); }
+    const params = this.buildSearchParams(searchDTO, page, size, sort);
 
     return this.http.get<PageResponse<ContratLeasingResponseDTO>>(`${this.apiUrl}/inactifs`, { params }).pipe(
       map(pageResponse => ({
@@ -168,6 +178,7 @@ export class ContratLeasingService {
       catchError(this.handleError)
     );
   }
+
   getContratLeasingById(id: number): Observable<ContratLeasingResponseDTO> {
     return this.http.get<ContratLeasingResponseDTO>(`${this.apiUrl}/${id}`).pipe(
       map(response => this.processContratLeasingResponse(response)),

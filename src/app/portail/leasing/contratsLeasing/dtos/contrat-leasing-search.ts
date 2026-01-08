@@ -7,4 +7,5 @@ export interface ContratLeasingSearchDTO {
   organismeLeasingId?: number;
   banqueDePrelevementId?: number;
   completed?: boolean;
+  montantEcheance?:number;
 }

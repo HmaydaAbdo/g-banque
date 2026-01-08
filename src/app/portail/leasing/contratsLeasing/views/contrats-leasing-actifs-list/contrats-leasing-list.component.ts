@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ContratLeasingService } from '../../services/contrat-leasing.service';
-import {ConfirmationService, MenuItem, MessageService} from "primeng/api";
+import { ConfirmationService, MenuItem, MessageService } from "primeng/api";
 import { DialogService } from "primeng/dynamicdialog";
 import { ContratLeasingResponseDTO } from "../../dtos/contrat-leasing";
 import { ContratLeasingSearchDTO } from "../../dtos/contrat-leasing-search";
@@ -27,17 +27,14 @@ import { BanqueService } from "../../../../comptes-bancaire/services/BanqueServi
 import { OrganismeLeasingResponse } from "../../../organismesLeasing/dtos/OrganismeLeasingResponse";
 import { BanqueResponse } from "../../../../comptes-bancaire/dtos/BanqueResponse";
 import { DialogModule } from 'primeng/dialog';
-
 import { LeasingContractWizardService } from '../../services/LeasingContractWizardService';
-import { ContratLeasingRequestDTO } from "../../dtos/contrat-leasing"; // Ensure this is imported
-
+import { ContratLeasingRequestDTO } from "../../dtos/contrat-leasing";
 import { DividerModule } from "primeng/divider";
 import { ContratLeasingDetailsComponent } from '../contrat-leasing-details/contrat-leasing-details.component';
-import {Decimal} from "decimal.js";
-import {BreadcrumbModule} from "primeng/breadcrumb";
-import {ProgressSpinnerModule} from "primeng/progressspinner";
+import { BreadcrumbModule } from "primeng/breadcrumb";
+import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-
+import { InputNumberModule } from "primeng/inputnumber";
 
 @Component({
   selector: 'app-contrat-leasing-list',
@@ -62,7 +59,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
     DividerModule,
     ContratLeasingDetailsComponent,
     BreadcrumbModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    InputNumberModule
   ],
   providers: [MessageService, DialogService, ConfirmationService]
 })
@@ -116,42 +114,25 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.items = [
-      { icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
-      { icon: 'pi pi-list', route: '/portail/leasing', label:"Les Contrats Leasing Encours" },
-    ]
+      { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
+      { icon: 'pi pi-list', route: '/portail/leasing', label: "Les Contrats Leasing Encours" },
+    ];
 
     this.initSearchForm();
     this.loadDropdownOptions();
 
-    const numeroContratSub = this.searchForm.get('numeroContrat')?.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
+    // ⭐ OPTIMISATION : Une seule subscription pour tout le formulaire
+    const searchFormSub = this.searchForm.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
       .subscribe(() => this.onSearch());
 
-    const immobilisationSub = this.searchForm.get('immobilisation')?.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => this.onSearch());
-
-    const typeContratSub = this.searchForm.get('typeContrat')?.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => this.onSearch());
-
-    const organismeLeasingSub = this.searchForm.get('organismeLeasingId')?.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => this.onSearch());
-
-    const banqueDePrelevementSub = this.searchForm.get('banqueDePrelevementId')?.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => this.onSearch());
-
-
-
-
-    this.subscriptions.push(numeroContratSub!, immobilisationSub!, typeContratSub!, organismeLeasingSub!, banqueDePrelevementSub!);
+    this.subscriptions.push(searchFormSub);
 
     this.loadContrats(this.lastLazyLoadEvent);
   }
-
-
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
@@ -160,7 +141,8 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       typeContrat: [null],
       organismeLeasingId: [null],
       banqueDePrelevementId: [null],
-      completed: [false]
+      completed: [false],
+      montantEcheance: [null]
     });
   }
 
@@ -175,7 +157,11 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading organisme leasing options:', error);
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load leasing organisms.' });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Échec du chargement des organismes de leasing.'
+          });
         }
       });
 
@@ -189,12 +175,16 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading bank options:', error);
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load banks.' });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Échec du chargement des banques.'
+          });
         }
       });
   }
 
-  loadContrats(event: TableLazyLoadEvent) {
+  loadContrats(event: TableLazyLoadEvent): void {
     this.loading = true;
     this.lastLazyLoadEvent = event;
 
@@ -208,11 +198,12 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
     }
 
     const searchCriteria: ContratLeasingSearchDTO = {
-      numeroContrat: this.searchForm.get('numeroContrat')?.value,
-      immobilisation: this.searchForm.get('immobilisation')?.value,
-      typeContrat: this.searchForm.get('typeContrat')?.value,
-      organismeLeasingId: this.searchForm.get('organismeLeasingId')?.value,
-      banqueDePrelevementId: this.searchForm.get('banqueDePrelevementId')?.value
+      numeroContrat: this.searchForm.get('numeroContrat')?.value || undefined,
+      immobilisation: this.searchForm.get('immobilisation')?.value || undefined,
+      typeContrat: this.searchForm.get('typeContrat')?.value || undefined,
+      organismeLeasingId: this.searchForm.get('organismeLeasingId')?.value || undefined,
+      banqueDePrelevementId: this.searchForm.get('banqueDePrelevementId')?.value || undefined,
+      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined
     };
 
     this.contratLeasingService.getActiveContrats(
@@ -229,7 +220,11 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.loading = false;
         console.error('Erreur lors du chargement des contrats:', error);
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des contrats.' });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement des contrats.'
+        });
       }
     });
   }
@@ -254,7 +249,8 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       typeContrat: null,
       organismeLeasingId: null,
       banqueDePrelevementId: null,
-      completed: null // ⭐ Réinitialisation du filtre
+      completed: null,
+      montantEcheance: null
     });
 
     if (this.dt) {
@@ -286,7 +282,11 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error fetching contract details:', error);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load contract details.' });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement des détails du contrat.'
+        });
         this.loading = false;
       }
     });
@@ -300,34 +300,28 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
   viewAmortizationTable(contratId: number): void {
     this.router.navigate(['portail/leasing/contratsLeasing', contratId, 'tableau-amortissement']);
   }
+
   editContrat(id: number): void {
     this.loading = true;
     this.contratLeasingService.getContratLeasingById(id).pipe(
       take(1)
     ).subscribe({
       next: (contrat: ContratLeasingResponseDTO) => {
-        // Ensure that 'contrat.phases' is treated as an array, even if it could be null/undefined
-        // And ensure Decimal types are correctly assigned to Decimal | null if that's the DTO type.
-        // Your ContratLeasingService's processContratLeasingResponse should already ensure
-        // montantAchatTTC, valeurResiduelle, and mensualiteTTC are Decimal or null.
         const contratRequest: ContratLeasingRequestDTO = {
           id: contrat.id,
           numeroContrat: contrat.numeroContrat,
           immobilisation: contrat.immobilisation,
-          // These should already be Decimal | null from ContratLeasingService
           montantAchatTTC: contrat.montantAchatTTC,
           dateDebut: contrat.dateDebut,
           periodeEnMois: contrat.periodeEnMois,
           organismeLeasingId: contrat.organismeLeasingId,
           banqueDePrelevementId: contrat.banqueDePrelevementId,
           typeContrat: contrat.typeContrat,
-          valeurResiduelle: contrat.valeurResiduelle ,
-          // Use a nullish coalescing operator to ensure phases is always an array
+          valeurResiduelle: contrat.valeurResiduelle,
           phases: (contrat.phases ?? []).map(p => ({
             id: p.id,
             numeroPhase: p.numeroPhase,
             dureeMois: p.dureeMois,
-            // mensualiteTTC should also be Decimal | null
             mensualiteTTC: p.mensualiteTTC,
           }))
         };
@@ -338,7 +332,11 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error fetching contract for edit:', error);
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du contrat pour modification.' });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement du contrat pour modification.'
+        });
         this.loading = false;
       }
     });
@@ -353,29 +351,28 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       rejectLabel: 'Non',
       acceptButtonStyleClass: 'p-button-danger',
       rejectButtonStyleClass: 'p-button-text',
-      accept: () => {
-        this.deleteContrat(contrat.id);
-      }
+      accept: () => this.deleteContrat(contrat.id)
     });
   }
 
   deleteContrat(id: number): void {
     this.contratLeasingService.deleteContratLeasing(id).subscribe({
       next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Contrat supprimé avec succès.' });
-        if (this.dt) {
-          this.loadContrats(this.dt.createLazyLoadMetadata());
-        } else {
-          this.loadContrats(this.lastLazyLoadEvent);
-        }
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: 'Contrat supprimé avec succès.'
+        });
+        this.refreshCurrentContratInList();
       },
       error: (error) => {
         console.error('Erreur lors de la suppression:', error);
-        let errorMessage = 'Échec de la suppression du contrat.';
-        if (error.error && error.error.message) {
-          errorMessage = error.error.message;
-        }
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage });
+        const errorMessage = error.error?.message || 'Échec de la suppression du contrat.';
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: errorMessage
+        });
       }
     });
   }
@@ -410,7 +407,11 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Erreur lors du chargement du PDF:', error);
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger le PDF.' });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Impossible de charger le PDF.'
+        });
         this.loadingPdf = false;
       }
     });
@@ -422,21 +423,33 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       const file = input.files[0];
 
       if (file.type !== 'application/pdf') {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Seuls les fichiers PDF sont acceptés.' });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Seuls les fichiers PDF sont acceptés.'
+        });
         return;
       }
 
       this.loadingPdf = true;
       this.contratLeasingService.uploadPdfToContrat(this.selectedContratForPdf.id, file).subscribe({
         next: (message) => {
-          this.messageService.add({ severity: 'success', summary: 'Succès', detail: message });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: message
+          });
           this.selectedContratForPdf!.hasFichierPdf = true;
           this.loadPdfPreview(this.selectedContratForPdf!.id);
           this.refreshCurrentContratInList();
         },
         error: (error) => {
           console.error('Erreur lors de l\'upload:', error);
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de l\'upload du PDF.' });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Échec de l\'upload du PDF.'
+          });
           this.loadingPdf = false;
         }
       });
@@ -461,9 +474,7 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       rejectLabel: 'Non',
       acceptButtonStyleClass: 'p-button-danger',
       rejectButtonStyleClass: 'p-button-text',
-      accept: () => {
-        this.deletePdf();
-      }
+      accept: () => this.deletePdf()
     });
   }
 
@@ -471,14 +482,22 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
     if (this.selectedContratForPdf) {
       this.contratLeasingService.deletePdfFromContrat(this.selectedContratForPdf.id).subscribe({
         next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'PDF supprimé avec succès.' });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'PDF supprimé avec succès.'
+          });
           this.selectedContratForPdf!.hasFichierPdf = false;
           this.pdfBlobUrl = null;
           this.refreshCurrentContratInList();
         },
         error: (error) => {
           console.error('Erreur lors de la suppression:', error);
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la suppression du PDF.' });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: 'Échec de la suppression du PDF.'
+          });
         }
       });
     }
@@ -492,6 +511,61 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   }
 
+  /**
+   * Retourne l'affichage des échéances pour le tableau
+   * - Si une seule phase : affiche le montant unique
+   * - Si plusieurs phases : affiche la plage (min - max)
+   */
+  getEcheancesDisplay(contrat: ContratLeasingResponseDTO): string {
+    if (!contrat.phases || contrat.phases.length === 0) {
+      return 'N/A';
+    }
+
+    if (contrat.phases.length === 1) {
+      return this.formatCurrency(contrat.phases[0].mensualiteTTC);
+    }
+
+    const montants = contrat.phases.map(p => Number(p.mensualiteTTC));
+    const min = Math.min(...montants);
+    const max = Math.max(...montants);
+
+    if (min === max) {
+      return this.formatCurrency(min);
+    }
+
+    return `${this.formatCurrency(min)} - ${this.formatCurrency(max)}`;
+  }
+
+  /**
+   * Retourne le contenu du tooltip avec toutes les échéances détaillées
+   */
+  getEcheancesTooltip(contrat: ContratLeasingResponseDTO): string {
+    if (!contrat.phases || contrat.phases.length === 0) {
+      return 'Aucune phase définie';
+    }
+
+    if (contrat.phases.length === 1) {
+      return `Mensualité unique: ${this.formatCurrency(contrat.phases[0].mensualiteTTC)}`;
+    }
+
+    const sortedPhases = [...contrat.phases].sort((a, b) => a.numeroPhase - b.numeroPhase);
+
+    let tooltip = 'Détail des échéances:\n';
+    sortedPhases.forEach(phase => {
+      tooltip += `\n• Phase ${phase.numeroPhase} (${phase.dureeMois} mois): ${this.formatCurrency(phase.mensualiteTTC)}`;
+    });
+
+    return tooltip;
+  }
+
+  /**
+   * Formate un nombre en devise MAD
+   */
+  private formatCurrency(amount: number | any): string {
+    const numAmount = typeof amount === 'number' ? amount : Number(amount);
+    return `${numAmount.toFixed(2)} MAD`;
+  }
+
   refreshCurrentContratInList(): void {
     if (this.dt) {
       this.loadContrats(this.dt.createLazyLoadMetadata());
@@ -502,6 +576,7 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+
     if (this.pdfBlobUrl) {
       const url = (this.pdfBlobUrl as any).changingThisBreaksApplicationSecurity;
       if (url) {

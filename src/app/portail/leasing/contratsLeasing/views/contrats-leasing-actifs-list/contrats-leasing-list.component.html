@@ -3,19 +3,19 @@
 
 <div class="card flex flex-column gap-2 p-2 w-screen h-screen overflow-y-auto">
 
+  <!-- Breadcrumb et bouton nouveau contrat -->
   <div class="flex justify-content-between align-items-center bg-transparent gap-3">
-    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
       <ng-template pTemplate="item" let-item>
         <ng-container *ngIf="item.route; else elseBlock">
           <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
             <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
           </a>
-
         </ng-container>
         <ng-template #elseBlock>
           <a [href]="item.url">
-            <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
           </a>
         </ng-template>
       </ng-template>
@@ -24,24 +24,41 @@
     <button pButton pRipple pTooltip="Nouveau Contrat" class="md:hidden h-fit" size="small" icon="pi pi-plus" severity="primary" (click)="createNewContrat()"></button>
   </div>
 
+  <!-- Formulaire de recherche -->
   <form [formGroup]="searchForm" class="w-full">
     <div class="flex flex-row justify-content-between gap-1 w-full">
-    <span class="p-input-icon-left flex-1">
-      <i class="pi pi-search"></i>
-      <input pInputText type="text"
-             formControlName="numeroContrat"
-             placeholder="Rechercher N° Contrat..."
-             class="w-full" />
-    </span>
-
+      <!-- Numéro de contrat -->
       <span class="p-input-icon-left flex-1">
-      <i class="pi pi-search"></i>
-      <input pInputText type="text"
-             formControlName="immobilisation"
-             placeholder="Rechercher Immobilisation..."
-             class="w-full" />
-    </span>
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="numeroContrat"
+               placeholder="N° Contrat..."
+               class="w-full" />
+      </span>
 
+      <!-- Immobilisation -->
+      <span class="p-input-icon-left flex-1">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="immobilisation"
+               placeholder="Immobilisation..."
+               class="w-full" />
+      </span>
+
+      <!-- Montant Échéance -->
+      <span class="flex-1">
+        <p-inputNumber
+          formControlName="montantEcheance"
+          placeholder="Montant Échéance..."
+          [minFractionDigits]="2"
+          [maxFractionDigits]="2"
+          mode="decimal"
+          [showButtons]="false"
+          styleClass="w-full"
+        ></p-inputNumber>
+      </span>
+
+      <!-- Type de contrat -->
       <p-dropdown
         [options]="typeContratOptions"
         formControlName="typeContrat"
@@ -52,6 +69,7 @@
         styleClass="w-full"
       ></p-dropdown>
 
+      <!-- Organisme Leasing -->
       <p-dropdown
         [options]="organismeLeasingOptions"
         formControlName="organismeLeasingId"
@@ -62,6 +80,7 @@
         styleClass="w-full"
       ></p-dropdown>
 
+      <!-- Banque de Prélèvement -->
       <p-dropdown
         [options]="banqueOptions"
         formControlName="banqueDePrelevementId"
@@ -72,15 +91,18 @@
         styleClass="w-full"
       ></p-dropdown>
 
+      <!-- Bouton Clear -->
       <p-button
         icon="pi pi-times"
         severity="secondary"
         (onClick)="clearSearch()"
         class="flex-shrink-0"
+        pTooltip="Effacer les filtres"
       ></p-button>
     </div>
   </form>
 
+  <!-- Tableau des contrats -->
   <div class="pb-8">
     <p-table
       #dt
@@ -89,7 +111,7 @@
       [rows]="10"
       [totalRecords]="totalRecords"
       [loading]="loading"
-      [rowsPerPageOptions]="[3,5,10, 25, 50]"
+      [rowsPerPageOptions]="[3, 5, 10, 25, 50]"
       [lazy]="true"
       (onLazyLoad)="loadContrats($event)"
       responsiveLayout="scroll"
@@ -103,7 +125,8 @@
       styleClass="p-datatable-gridlines text-xs white-space-nowrap"
       [globalFilterFields]="['numeroContrat', 'immobilisation', 'typeContrat', 'nomBanqueDePrelevement', 'nomOrganismeLeasing']"
       (onRowSelect)="onRowSelect($event)"
-      [selectionMode]="'single'" >
+      [selectionMode]="'single'">
+
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="id">Id <p-sortIcon field="id"></p-sortIcon></th>
@@ -112,6 +135,7 @@
           <th pSortableColumn="nomOrganismeLeasing">Organisme Leasing <p-sortIcon field="nomOrganismeLeasing"></p-sortIcon></th>
           <th pSortableColumn="typeContrat">Type <p-sortIcon field="typeContrat"></p-sortIcon></th>
           <th pSortableColumn="montantAchatTTC">Montant Achat TTC <p-sortIcon field="montantAchatTTC"></p-sortIcon></th>
+          <th>Échéances</th>
           <th pSortableColumn="dateDebut">Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
           <th pSortableColumn="periodeEnMois">Durée <p-sortIcon field="periodeEnMois"></p-sortIcon></th>
           <th pSortableColumn="dateFin">Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
@@ -119,66 +143,137 @@
           <th style="width: 8rem;">Actions</th>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="body" let-contrat>
         <tr [pSelectableRow]="contrat">
           <td>{{ contrat.id }}</td>
           <td>{{ contrat.numeroContrat }}</td>
           <td>{{ contrat.nomBanqueDePrelevement }}</td>
           <td>{{ contrat.nomOrganismeLeasing }}</td>
-          <td><p-tag [value]="contrat.typeContrat" [severity]="contrat.typeContrat === 'LINEAIRE' ? 'info' : (contrat.typeContrat === 'PROGRESSIF' ? 'success' : 'warning')"></p-tag></td>
-          <td>{{ contrat.montantAchatTTC | number }} </td>
+          <td>
+            <p-tag
+              [value]="contrat.typeContrat"
+              [severity]="contrat.typeContrat === 'LINEAIRE' ? 'info' : (contrat.typeContrat === 'PROGRESSIF' ? 'success' : 'warning')">
+            </p-tag>
+          </td>
+          <td>{{ contrat.montantAchatTTC | number:'1.2-2' }} MAD</td>
+          <td>
+            <div class="flex align-items-center gap-2">
+              <span class="font-semibold">{{ getEcheancesDisplay(contrat) }}</span>
+              <p-tag
+                *ngIf="contrat.phases && contrat.phases.length > 1"
+                [value]="contrat.phases.length + ' phases'"
+                severity="info"
+                [pTooltip]="getEcheancesTooltip(contrat)"
+                tooltipPosition="top"
+                [escape]="false">
+              </p-tag>
+              <i
+                *ngIf="contrat.phases && contrat.phases.length > 1"
+                class="pi pi-info-circle text-primary cursor-pointer"
+                [pTooltip]="getEcheancesTooltip(contrat)"
+                tooltipPosition="top"
+                [escape]="false">
+              </i>
+            </div>
+          </td>
           <td>{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</td>
           <td>{{ contrat.periodeEnMois }} mois</td>
           <td>{{ contrat.dateFin | date:'dd/MM/yyyy' }}</td>
           <td>
-            <p-tag [severity]="contrat.completed ? 'success' : 'info'" [value]="contrat.completed ? 'Terminé' : 'En Cours'"></p-tag>
+            <p-tag
+              [severity]="contrat.completed ? 'success' : 'info'"
+              [value]="contrat.completed ? 'Terminé' : 'En Cours'">
+            </p-tag>
           </td>
-
           <td class="flex flex-row justify-content-between gap-2">
-            <p-button icon="pi pi-file-pdf" severity="secondary" [outlined]="true" size="small" [rounded]="true" pTooltip="Contrat PDF" (onClick)="openPdfDialog(contrat)"></p-button>
-            <p-button icon="pi pi-eye" severity="secondary" [outlined]="true" size="small" [rounded]="true" pTooltip="Tableau d'Amortissement" (onClick)="viewAmortizationTable(contrat.id)"></p-button>
-            <p-button icon="pi pi-pencil" severity="info" [outlined]="true" size="small" [rounded]="true" pTooltip="Modifier" (onClick)="editContrat(contrat.id)"></p-button>
-            <p-button icon="pi pi-trash" severity="danger" [outlined]="true" size="small" [rounded]="true" pTooltip="Supprimer" (onClick)="confirmDeleteContrat(contrat)"></p-button>
+            <p-button
+              icon="pi pi-file-pdf"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              [rounded]="true"
+              pTooltip="Contrat PDF"
+              (onClick)="openPdfDialog(contrat)">
+            </p-button>
+            <p-button
+              icon="pi pi-eye"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              [rounded]="true"
+              pTooltip="Tableau d'Amortissement"
+              (onClick)="viewAmortizationTable(contrat.id)">
+            </p-button>
+            <p-button
+              icon="pi pi-pencil"
+              severity="info"
+              [outlined]="true"
+              size="small"
+              [rounded]="true"
+              pTooltip="Modifier"
+              (onClick)="editContrat(contrat.id)">
+            </p-button>
+            <p-button
+              icon="pi pi-trash"
+              severity="danger"
+              [outlined]="true"
+              size="small"
+              [rounded]="true"
+              pTooltip="Supprimer"
+              (onClick)="confirmDeleteContrat(contrat)">
+            </p-button>
           </td>
-
         </tr>
       </ng-template>
+
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td [attr.colspan]="10">Aucun contrat trouvé.</td>
+          <td [attr.colspan]="12">Aucun contrat trouvé.</td>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="10">Chargement des contrats. Veuillez patienter...</td>
+          <td [attr.colspan]="12">Chargement des contrats. Veuillez patienter...</td>
         </tr>
       </ng-template>
     </p-table>
   </div>
 
-  <p-dialog header="Détails du Contrat de Leasing"
-            [(visible)]="displayDetailsDialog"
-            (onHide)="hideDetailsDialog()"
-            [modal]="true"
-            [style]="{ width: '75vw' }"
-            [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
-            [draggable]="false"
-            [resizable]="false">
+  <!-- Dialog Détails du Contrat -->
+  <p-dialog
+    header="Détails du Contrat de Leasing"
+    [(visible)]="displayDetailsDialog"
+    (onHide)="hideDetailsDialog()"
+    [modal]="true"
+    [style]="{ width: '75vw' }"
+    [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
+    [draggable]="false"
+    [resizable]="false">
 
     <app-contrat-leasing-details [contratDetails]="selectedContratDetails"></app-contrat-leasing-details>
 
     <ng-template pTemplate="footer">
-      <p-button label="Fermer" icon="pi pi-times" (click)="hideDetailsDialog()" class="p-button-text"></p-button>
+      <p-button
+        label="Fermer"
+        icon="pi pi-times"
+        (click)="hideDetailsDialog()"
+        class="p-button-text">
+      </p-button>
     </ng-template>
   </p-dialog>
-  <p-dialog header="Gestion du PDF du Contrat"
-            [(visible)]="displayPdfDialog"
-            (onHide)="hidePdfDialog()"
-            [modal]="true"
-            [style]="{ width: '80vw', height: '90vh' }"
-            [breakpoints]="{'960px': '90vw', '640px': '95vw'}"
-            [draggable]="false"
-            [resizable]="false">
+
+  <!-- Dialog Gestion PDF -->
+  <p-dialog
+    header="Gestion du PDF du Contrat"
+    [(visible)]="displayPdfDialog"
+    (onHide)="hidePdfDialog()"
+    [modal]="true"
+    [style]="{ width: '80vw', height: '90vh' }"
+    [breakpoints]="{'960px': '90vw', '640px': '95vw'}"
+    [draggable]="false"
+    [resizable]="false">
 
     <!-- Cas 1 : Aucun PDF attaché -->
     <div *ngIf="!selectedContratForPdf?.hasFichierPdf" class="flex flex-column align-items-center justify-content-center gap-3 p-5">
@@ -187,7 +282,11 @@
 
       <div class="flex gap-2 mt-3">
         <input #fileInput type="file" accept="application/pdf" (change)="onFileSelected($event)" style="display: none" />
-        <p-button label="Uploader un PDF" icon="pi pi-upload" (onClick)="fileInput.click()"></p-button>
+        <p-button
+          label="Uploader un PDF"
+          icon="pi pi-upload"
+          (onClick)="fileInput.click()">
+        </p-button>
       </div>
     </div>
 
@@ -205,9 +304,30 @@
 
         <div class="flex gap-2">
           <input #fileInputReplace type="file" accept="application/pdf" (change)="onFileSelected($event)" style="display: none" />
-          <p-button icon="pi pi-upload" severity="info" [outlined]="true" size="small" pTooltip="Remplacer" (onClick)="fileInputReplace.click()"></p-button>
-          <p-button icon="pi pi-download" severity="success" [outlined]="true" size="small" pTooltip="Télécharger" (onClick)="downloadPdf()"></p-button>
-          <p-button icon="pi pi-trash" severity="danger" [outlined]="true" size="small" pTooltip="Supprimer" (onClick)="confirmDeletePdf()"></p-button>
+          <p-button
+            icon="pi pi-upload"
+            severity="info"
+            [outlined]="true"
+            size="small"
+            pTooltip="Remplacer"
+            (onClick)="fileInputReplace.click()">
+          </p-button>
+          <p-button
+            icon="pi pi-download"
+            severity="success"
+            [outlined]="true"
+            size="small"
+            pTooltip="Télécharger"
+            (onClick)="downloadPdf()">
+          </p-button>
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            [outlined]="true"
+            size="small"
+            pTooltip="Supprimer"
+            (onClick)="confirmDeletePdf()">
+          </p-button>
         </div>
       </div>
 
@@ -221,7 +341,12 @@
     </div>
 
     <ng-template pTemplate="footer">
-      <p-button label="Fermer" icon="pi pi-times" (onClick)="hidePdfDialog()" class="p-button-text"></p-button>
+      <p-button
+        label="Fermer"
+        icon="pi pi-times"
+        (onClick)="hidePdfDialog()"
+        class="p-button-text">
+      </p-button>
     </ng-template>
   </p-dialog>
 </div>
