@@ -35,6 +35,8 @@ import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransa
 import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.prelevements.PrelevementTransactionResponse;
 import staport.finance.gBanque.validation.dtos.prelevements.PrelevementValidationRequest;
+import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
+import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
 import staport.finance.gBanque.validation.services.ReverseTransactionService;
@@ -221,6 +223,14 @@ public class ValidationController {
     public ResponseEntity<ImpotEtTaxeTransactionResponse> processImpotEtTaxeToTransaction(
             @Valid @RequestBody ImpotEtTaxeValidationRequest requestDto) throws Exception {
         ImpotEtTaxeTransactionResponse responseDto = validationService.processImpotEtTaxeToTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+
+    @PostMapping("/process/restitution")
+    public ResponseEntity<RestitutionTransactionResponse> processRestitutionToTransaction(
+            @Valid @RequestBody RestitutionValidationRequest requestDto) throws Exception {
+        RestitutionTransactionResponse responseDto = validationService.processRestitutionToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

@@ -20,6 +20,7 @@ import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseA
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
+import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -67,10 +68,8 @@ public class Banque {
     @Column(name = "solde_depart", nullable = false)
     private BigDecimal soldeDepart = BigDecimal.ZERO;
 
-
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
-
 
     @Column(name = "date_modification", nullable = false)
     private OffsetDateTime dateModification;
@@ -103,7 +102,6 @@ public class Banque {
     @OneToMany(mappedBy = "banque", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Marche> marches = new ArrayList<>();
 
-
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Commission> commissions = new ArrayList<>();
 
@@ -122,6 +120,9 @@ public class Banque {
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<ImpotEtTaxe> impotEtTaxes=new ArrayList<>();
 
+    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
+    private List<Restitution> restitutions=new ArrayList<>();
+
     @OneToMany(mappedBy = "banqueDePrelevement",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
 
@@ -130,8 +131,6 @@ public class Banque {
 
     // --- Constructors ---
     public Banque() {}
-
-
 
     // --- Getters / Setters ---
     public Long getId() { return id; }
@@ -161,7 +160,6 @@ public class Banque {
     public BigDecimal getSoldeDepart() {
         return soldeDepart;
     }
-
     public void setSoldeDepart(BigDecimal soldeDepart) {
         this.soldeDepart = soldeDepart;
     }
@@ -224,7 +222,6 @@ public class Banque {
     public List<Marche> getMarches() {
         return marches;
     }
-
     public void setMarches(List<Marche> marches) {
         this.marches = marches;
     }
@@ -233,7 +230,6 @@ public class Banque {
         marches.add(marche);
         marche.setBanque(this);
     }
-
     public void removeMarche(Marche marche) {
         marches.remove(marche);
         marche.setBanque(null);
@@ -245,15 +241,23 @@ public class Banque {
     public List<Commission> getCommissions() {
         return commissions;
     }
-
     public void setCommissions(List<Commission> commissions) {
         this.commissions = commissions;
+    }
+
+    public List<Restitution> getRestitutions(){return  restitutions;}
+    public void setRestitutions(List<Restitution> restitutions){ this.restitutions=restitutions;}
+
+    public void addRestitution(Restitution restitution){
+        this.restitutions.add(restitution);
+    }
+    public void removeRestitution(Restitution restitution){
+        this.restitutions.remove(restitution);
     }
 
     public void addCommission(Commission commission){
         this.commissions.add(commission);
     }
-
     public void removeCommission(Commission commission){
         this.commissions.remove(commission);
     }
@@ -261,7 +265,6 @@ public class Banque {
     public List<FraisBancaire> getFraisBancaires() {
         return fraisBancaires;
     }
-
     public void setFraisBancaires(List<FraisBancaire> fraisBancaires) {
         this.fraisBancaires = fraisBancaires;
     }
@@ -269,7 +272,6 @@ public class Banque {
     public void addFraisBancaire(FraisBancaire fraisBancaire){
         this.fraisBancaires.add(fraisBancaire);
     }
-
     public void removeFraisBancaire(FraisBancaire fraisBancaire){
         this.fraisBancaires.remove(fraisBancaire);
     }
@@ -277,7 +279,6 @@ public class Banque {
     public List<Interet> getInterets() {
         return interets;
     }
-
     public void setInterets(List<Interet> interets) {
         this.interets = interets;
     }
@@ -285,7 +286,6 @@ public class Banque {
     public void addInterest(Interet interet){
         this.interets.add(interet);
     }
-
     public void removeInterest(Interet interet){
         this.interets.remove(interet);
     }
@@ -293,7 +293,6 @@ public class Banque {
     public List<Agios> getAgios() {
         return agios;
     }
-
     public void setAgios(List<Agios> agios) {
         this.agios = agios;
     }
@@ -301,7 +300,6 @@ public class Banque {
     public void addAgios(Agios agios){
         this.agios.add(agios);
     }
-
     public void removeAgios(Agios agios){
         this.agios.remove(agios);
     }
@@ -310,7 +308,6 @@ public class Banque {
     public List<Prelevement> getPrelevements() {
         return prelevements;
     }
-
     public void setPrelevements(List<Prelevement> prelevements) {
         this.prelevements = prelevements;
     }
@@ -318,7 +315,6 @@ public class Banque {
     public void addPrelevement(Prelevement prelevement){
         this.prelevements.add(prelevement);
     }
-
     public void removePrelevement(Prelevement prelevement){
         this.prelevements.remove(prelevement);
     }
@@ -341,7 +337,6 @@ public class Banque {
         rapprochements.add(rapprochement);
         rapprochement.setBanque(this);
     }
-
     public void removeRapprochement(Rapprochement rapprochement) {
         rapprochements.remove(rapprochement);
         rapprochement.setBanque(null);

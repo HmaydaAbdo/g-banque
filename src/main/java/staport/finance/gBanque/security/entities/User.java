@@ -1,10 +1,6 @@
 package staport.finance.gBanque.security.entities;
 
-
 import jakarta.persistence.*;
-
-
-
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -14,9 +10,20 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(unique = true)
     private String username;
+
     private String password;
+
+    private boolean enabled;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    private Collection<Role> roles = new ArrayList<>();
+
+    // ========== CONSTRUCTORS ==========
+    public User() {
+    }
 
     public User(String username, String password, boolean enabled, Collection<Role> roles) {
         this.username = username;
@@ -25,9 +32,7 @@ public class User {
         this.roles = roles;
     }
 
-    public User() {
-    }
-
+    // ========== GETTERS ==========
     public Long getId() {
         return id;
     }
@@ -45,10 +50,27 @@ public class User {
     }
 
     public boolean isEnabled() {
-        return this.enabled;
+        return enabled;
     }
-    private boolean enabled;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    private Collection<Role> roles = new ArrayList<>();
+    // ========== SETTERS (ADDED) ==========
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public void setRoles(Collection<Role> roles) {
+        this.roles = roles;
+    }
 }

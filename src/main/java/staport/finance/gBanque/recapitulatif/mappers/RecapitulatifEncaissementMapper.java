@@ -9,6 +9,7 @@ import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
+import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 
@@ -158,6 +159,26 @@ public class RecapitulatifEncaissementMapper {
         dto.setObservations( lcn.getEmetteur());
         dto.setLibelle( lcn.getBeneficiaire() );
         dto.setSource(TransactionSource.LCN);
+        return dto;
+    }
+
+    /**
+     * Maps a Restitution entity to a RecaputilatifItem DTO.
+     *
+     * @param restitution The Restitution entity to map.
+     * @return The mapped RecaputilatifItem DTO.
+     */
+    public RecaputilatifItem mapRestitutionToDto(Restitution restitution) {
+        if (restitution == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(restitution.getDateEmission());
+        dto.setCredit(restitution.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(restitution.getObservation());
+        dto.setLibelle(restitution.getLibelle());
+        dto.setSource(TransactionSource.RESTITUTION);
         return dto;
     }
 

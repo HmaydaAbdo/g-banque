@@ -43,6 +43,8 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
+import staport.finance.gBanque.restitution.entities.Restitution;
+import staport.finance.gBanque.restitution.repository.RestitutionRepository;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
@@ -77,7 +79,7 @@ public class ReverseTransactionService {
     private final FraisBancaireRepository fraisBancaireRepository;
     private final FactoringRepository factoringRepository;
     private final ImpotEtTaxeRepository impotEtTaxeRepository;
-
+    private final RestitutionRepository restitutionRepository;
 
     public ReverseTransactionService(
             TransactionRepository transactionRepository,
@@ -96,7 +98,7 @@ public class ReverseTransactionService {
             PrelevementRepository prelevementRepository,
             InteretRepository interetRepository,
             FraisBancaireRepository fraisBancaireRepository,
-            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository) {
+            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository) {
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
@@ -115,6 +117,7 @@ public class ReverseTransactionService {
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.factoringRepository = factoringRepository;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
+        this.restitutionRepository = restitutionRepository;
     }
 
     /**
@@ -232,6 +235,9 @@ public class ReverseTransactionService {
                 break;
             case IMPOT_TAXE:
                 resetImpotEtTaxe(referentId);
+                break;
+            case RESTITUTION:
+                resetRestitution(referentId);
                 break;
             default:
                 throw new Exception("Type de transaction non supporté pour l'annulation: " + source);
@@ -414,5 +420,16 @@ public class ReverseTransactionService {
         impotEtTaxe.setDateValeur(null);
         impotEtTaxeRepository.save(impotEtTaxe);
         log.debug("Impôt/Taxe {} remis(e) à PREVU", impotEtTaxeId);
+    }
+
+    private void resetRestitution(Long restitutionId) throws Exception {
+        Restitution restitution = restitutionRepository.findById(restitutionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Restitution introuvable: " + restitutionId));
+
+        restitution.setStatus(Status.PREVU);
+        restitution.setDateOperation(null);
+        restitution.setDateValeur(null);
+        restitutionRepository.save(restitution);
+        log.debug("Restitution {} remise à PREVU", restitutionId);
     }
 }
