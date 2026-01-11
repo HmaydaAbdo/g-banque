@@ -45,7 +45,7 @@ public class CmtTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
-        transaction.setReferent(creditMoyenTerme.getId());
+        transaction.setReferent(echeanceCMT.getId());
         transaction.setObservation(requestDto.getObservation());
         transaction.setLibelle(requestDto.getLibelle());
         // Mapping dates (ensuring consistency with OffsetDateTime)
