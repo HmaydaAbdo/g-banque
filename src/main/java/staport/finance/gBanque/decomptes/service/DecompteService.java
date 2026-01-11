@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.decomptes.dto.*;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.decomptes.mapper.DecompteMapper;
@@ -26,11 +28,14 @@ public class DecompteService {
     private final DecompteRepository decompteRepository;
     private final DecompteMapper decompteMapper;
     private final MarcheRepository marcheRepository;
+    private final BanqueRepository banqueRepository;
 
-    public DecompteService(DecompteRepository decompteRepository, DecompteMapper decompteMapper, MarcheRepository marcheRepository) {
+
+    public DecompteService(DecompteRepository decompteRepository, DecompteMapper decompteMapper, MarcheRepository marcheRepository, BanqueRepository banqueRepository) {
         this.decompteRepository = decompteRepository;
         this.decompteMapper = decompteMapper;
         this.marcheRepository = marcheRepository;
+        this.banqueRepository = banqueRepository;
     }
 
     @Transactional
@@ -44,13 +49,64 @@ public class DecompteService {
                     return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
                 });
 
-        log.debug("Marché récupéré: {} (Numéro: {})", marche.getNom(), marche.getNumero());
+        log.debug("Marché récupéré: {} (Numéro: {}, Nanti: {})", marche.getNom(), marche.getNumero(), marche.isNanti());
 
-        Decompte decompte = decompteMapper.toEntity(requestDTO, marche);
+        // Déterminer la banque d'encaissement selon le statut du marché
+        Banque banqueDEncaissement;
+
+        if (marche.isNanti()) {
+            // MARCHÉ NANTI → La banque d'encaissement doit être celle du marché (ou null)
+
+            // Vérifier si une banque d'encaissement a été fournie
+            if (requestDTO.getBanqueEncaissementId() != null) {
+                // Si une banque est fournie, elle DOIT être la même que celle du marché
+                if (!requestDTO.getBanqueEncaissementId().equals(marche.getBanque().getId())) {
+                    log.error("Banque d'encaissement invalide (ID: {}) pour le marché nanti {}. " +
+                                    "Le marché nanti doit utiliser sa banque associée (ID: {})",
+                            requestDTO.getBanqueEncaissementId(), marche.getNumero(), marche.getBanque().getId());
+                    throw new IllegalArgumentException(
+                            "Le marché '" + marche.getNumero() + "' est nanti et doit utiliser sa banque associée '" +
+                                    marche.getBanque().getNom() + "'. " +
+                                    "Vous ne pouvez pas spécifier une autre banque d'encaissement pour un marché nanti."
+                    );
+                }
+                // Si c'est la même banque, c'est OK (mais redondant)
+                log.debug("Banque d'encaissement fournie correspond à la banque du marché nanti");
+            }
+
+            log.info("Marché {} est nanti, utilisation automatique de la banque du marché: {}",
+                    marche.getNumero(), marche.getBanque().getNom());
+            banqueDEncaissement = marche.getBanque();
+
+        } else {
+            // MARCHÉ NON NANTI → banqueEncaissementId DOIT être fournie
+            if (requestDTO.getBanqueEncaissementId() == null) {
+                log.error("Banque d'encaissement manquante pour le marché non nanti: {}", marche.getNumero());
+                throw new IllegalArgumentException(
+                        "La banque d'encaissement est obligatoire pour un marché non nanti. " +
+                                "Le marché '" + marche.getNumero() + "' nécessite une banque d'encaissement."
+                );
+            }
+
+            log.info("Marché {} n'est pas nanti, utilisation de la banque d'encaissement fournie (ID: {})",
+                    marche.getNumero(), requestDTO.getBanqueEncaissementId());
+
+            banqueDEncaissement = banqueRepository.findById(requestDTO.getBanqueEncaissementId())
+                    .orElseThrow(() -> {
+                        log.error("Banque d'encaissement non trouvée avec l'ID: {}", requestDTO.getBanqueEncaissementId());
+                        return new ResourceNotFoundException(
+                                "Banque non trouvée avec l'ID " + requestDTO.getBanqueEncaissementId()
+                        );
+                    });
+        }
+
+        Decompte decompte = decompteMapper.toEntity(requestDTO, marche, banqueDEncaissement);
 
         decompte = decompteRepository.save(decompte);
 
-        log.info("Décompte créé avec succès - ID: {}, Montant: {}, Libellé: {}", decompte.getId(), decompte.getMontant(), decompte.getLibelle());
+        log.info("Décompte créé avec succès - ID: {}, Montant: {}, Libellé: {}, Banque encaissement: {}, Marché nanti: {}",
+                decompte.getId(), decompte.getMontant(), decompte.getLibelle(),
+                banqueDEncaissement.getNom(), marche.isNanti());
 
         return decompteMapper.toDto(decompte);
     }
@@ -75,20 +131,72 @@ public class DecompteService {
                     return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
                 });
 
-        log.debug("Marché récupéré pour la mise à jour: {}", marche.getNom());
+        log.debug("Marché récupéré pour la mise à jour: {} (Nanti: {})", marche.getNom(), marche.isNanti());
 
+        // Déterminer la banque d'encaissement selon le statut du marché
+        Banque banqueDEncaissement;
+
+        if (marche.isNanti()) {
+            // MARCHÉ NANTI → La banque d'encaissement doit être celle du marché (ou null)
+
+            // Vérifier si une banque d'encaissement a été fournie
+            if (requestDTO.getBanqueEncaissementId() != null) {
+                // Si une banque est fournie, elle DOIT être la même que celle du marché
+                if (!requestDTO.getBanqueEncaissementId().equals(marche.getBanque().getId())) {
+                    log.error("Banque d'encaissement invalide (ID: {}) pour le marché nanti {}. " +
+                                    "Le marché nanti doit utiliser sa banque associée (ID: {})",
+                            requestDTO.getBanqueEncaissementId(), marche.getNumero(), marche.getBanque().getId());
+                    throw new IllegalArgumentException(
+                            "Le marché '" + marche.getNumero() + "' est nanti et doit utiliser sa banque associée '" +
+                                    marche.getBanque().getNom() + "'. " +
+                                    "Vous ne pouvez pas spécifier une autre banque d'encaissement pour un marché nanti."
+                    );
+                }
+                // Si c'est la même banque, c'est OK (mais redondant)
+                log.debug("Banque d'encaissement fournie correspond à la banque du marché nanti");
+            }
+
+            log.info("Marché {} est nanti, utilisation automatique de la banque du marché: {}",
+                    marche.getNumero(), marche.getBanque().getNom());
+            banqueDEncaissement = marche.getBanque();
+
+        } else {
+            // MARCHÉ NON NANTI → banqueEncaissementId DOIT être fournie
+            if (requestDTO.getBanqueEncaissementId() == null) {
+                log.error("Banque d'encaissement manquante pour le marché non nanti: {}", marche.getNumero());
+                throw new IllegalArgumentException(
+                        "La banque d'encaissement est obligatoire pour un marché non nanti. " +
+                                "Le marché '" + marche.getNumero() + "' nécessite une banque d'encaissement."
+                );
+            }
+
+            log.info("Marché {} n'est pas nanti, utilisation de la banque d'encaissement fournie (ID: {})",
+                    marche.getNumero(), requestDTO.getBanqueEncaissementId());
+
+            banqueDEncaissement = banqueRepository.findById(requestDTO.getBanqueEncaissementId())
+                    .orElseThrow(() -> {
+                        log.error("Banque d'encaissement non trouvée avec l'ID: {}", requestDTO.getBanqueEncaissementId());
+                        return new ResourceNotFoundException(
+                                "Banque non trouvée avec l'ID " + requestDTO.getBanqueEncaissementId()
+                        );
+                    });
+        }
+
+        // Mettre à jour tous les champs
         existingDecompte.setMarche(marche);
+        existingDecompte.setBanqueEncaissement(banqueDEncaissement);
         existingDecompte.setDateEmission(requestDTO.getDateEmission());
         existingDecompte.setMontant(requestDTO.getMontant());
-        existingDecompte.setObservation("Marche: " + marche.getNumero() );
+        existingDecompte.setLibelle(requestDTO.getLibelle());
+        existingDecompte.setObservation("Marche: " + marche.getNumero());
+
         Decompte updatedDecompte = decompteRepository.save(existingDecompte);
 
-        log.info("Décompte modifié avec succès - ID: {}, Nouveau montant: {}",
-                id, updatedDecompte.getMontant());
+        log.info("Décompte modifié avec succès - ID: {}, Nouveau montant: {}, Banque encaissement: {}, Marché nanti: {}",
+                id, updatedDecompte.getMontant(), banqueDEncaissement.getNom(), marche.isNanti());
 
         return decompteMapper.toDto(updatedDecompte);
     }
-
     @Transactional
     public void deleteDecompte(Long id) {
         log.info("Tentative de suppression du décompte ID: {}", id);
@@ -190,5 +298,6 @@ public class DecompteService {
 
         return result;
     }
+
 
 }

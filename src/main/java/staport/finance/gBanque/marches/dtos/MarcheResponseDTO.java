@@ -14,6 +14,8 @@ public class MarcheResponseDTO {
     private OffsetDateTime dateDAchievementDesTravaux;
     private Long banqueId;
     private String banqueNom;
+    private boolean isNanti;
+
     private OffsetDateTime createdAt;
     private OffsetDateTime modifiedAt;
 
@@ -88,6 +90,14 @@ public class MarcheResponseDTO {
 
     public void setBanqueNom(String banqueNom) {
         this.banqueNom = banqueNom;
+    }
+
+    public boolean isNanti() {
+        return isNanti;
+    }
+
+    public void setNanti(boolean nanti) {
+        isNanti = nanti;
     }
 
     public OffsetDateTime getCreatedAt() {

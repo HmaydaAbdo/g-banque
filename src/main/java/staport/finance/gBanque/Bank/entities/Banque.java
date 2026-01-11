@@ -9,6 +9,7 @@ import staport.finance.gBanque.Bank.enums.Devise;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.interets.entities.Interet;
@@ -129,6 +130,10 @@ public class Banque {
     @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL}, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Rapprochement> rapprochements = new ArrayList<>();
 
+    @OneToMany(mappedBy = "banqueEncaissement", cascade = {CascadeType.ALL}, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<Decompte> decomptes = new ArrayList<>();
+
+
     // --- Constructors ---
     public Banque() {}
 
@@ -224,6 +229,26 @@ public class Banque {
     }
     public void setMarches(List<Marche> marches) {
         this.marches = marches;
+    }
+
+
+    public List<Decompte> getDecomptes() {
+        return decomptes;
+    }
+
+    public void setDecomptes(List<Decompte> decomptes) {
+        this.decomptes = decomptes;
+    }
+
+    // Helper methods
+    public void addDecompte(Decompte decompte) {
+        decomptes.add(decompte);
+        decompte.setBanqueEncaissement(this);
+    }
+
+    public void removeDecompte(Decompte decompte) {
+        decomptes.remove(decompte);
+        decompte.setBanqueEncaissement(null);
     }
 
     public void addMarche(Marche marche) {

@@ -1,6 +1,7 @@
 package staport.finance.gBanque.decomptes.entities;
 
 import jakarta.persistence.*;
+import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
@@ -19,6 +20,10 @@ public class Decompte {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "marche_id")
     private Marche marche;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "banque_encaissement_id",nullable = false)
+    private Banque banqueEncaissement;
 
     @Column(name = "date_emission")
     private OffsetDateTime dateEmission;
@@ -125,7 +130,14 @@ public class Decompte {
         this.status = status;
     }
 
-    // Equals & HashCode (based on id)
+    public Banque getBanqueEncaissement() {
+        return banqueEncaissement;
+    }
+
+    public void setBanqueEncaissement(Banque banqueEncaissement) {
+        this.banqueEncaissement = banqueEncaissement;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -139,12 +151,12 @@ public class Decompte {
         return Objects.hash(id);
     }
 
-    // ToString
     @Override
     public String toString() {
         return "Decompte{" +
                 "id=" + id +
                 ", marche=" + (marche != null ? marche.getId() : null) +
+                ", banqueEncaissement=" + (banqueEncaissement != null ? banqueEncaissement.getId() : null) +
                 ", dateEmission=" + dateEmission +
                 ", montant=" + montant +
                 ", observation='" + observation + '\'' +

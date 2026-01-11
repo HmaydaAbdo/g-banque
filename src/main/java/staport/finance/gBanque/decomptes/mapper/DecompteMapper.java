@@ -11,15 +11,20 @@ import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundExcept
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
-
-
 @Component
 public class DecompteMapper {
 
-
     private static final Logger log = LoggerFactory.getLogger(DecompteMapper.class);
 
-    public Decompte toEntity(DecompteRequestDto requestDTO , Marche marche) {
+    /**
+     * Convertit DecompteRequestDto en entité Decompte
+     *
+     * @param requestDTO Le DTO de requête
+     * @param marche Le marché associé
+     * @param banqueEncaissement La banque d'encaissement (déterminée par le service)
+     * @return L'entité Decompte
+     */
+    public Decompte toEntity(DecompteRequestDto requestDTO, Marche marche, Banque banqueEncaissement) {
         log.debug("Début de la conversion du DecompteRequestDto vers l'entité Decompte");
 
         if (requestDTO == null) {
@@ -27,25 +32,31 @@ public class DecompteMapper {
             return null;
         }
 
-        log.debug("Mapping du DTO vers l'entité pour le marché ID: {}", marche != null ? marche.getId() : "null");
+        log.debug("Mapping du DTO vers l'entité pour le marché ID: {}, banque encaissement ID: {}",
+                marche != null ? marche.getId() : "null",
+                banqueEncaissement != null ? banqueEncaissement.getId() : "null");
 
         Decompte entity = new Decompte();
 
         entity.setMarche(marche);
-
+        entity.setBanqueEncaissement(banqueEncaissement);
         entity.setDateEmission(requestDTO.getDateEmission());
         entity.setMontant(requestDTO.getMontant());
         entity.setLibelle(requestDTO.getLibelle());
-        entity.setObservation( marche.getNumero()  );
+        entity.setObservation(marche.getNumero());
         entity.setStatus(Status.PREVU);
 
-        log.info("Decompte créé avec succès - Montant: {}, Libellé: {}, Marché: {}",
-                requestDTO.getMontant(), requestDTO.getLibelle(), marche != null ? marche.getNumero() : "null");
+        log.info("Decompte créé avec succès {}",requestDTO);
 
         return entity;
     }
 
-
+    /**
+     * Convertit l'entité Decompte en DecompteResponseDto
+     *
+     * @param decompte L'entité Decompte
+     * @return Le DTO de réponse
+     */
     public DecompteResponseDto toDto(Decompte decompte) {
         log.debug("Début de la conversion de l'entité Decompte vers le DTO de réponse");
 
@@ -61,39 +72,50 @@ public class DecompteMapper {
         dto.setDateEmission(decompte.getDateEmission());
         dto.setMontant(decompte.getMontant());
         dto.setObservation(decompte.getObservation());
-        dto.setDateOperation(decompte.getDateOperation()!=null ? decompte.getDateOperation() : null);
+        dto.setDateOperation(decompte.getDateOperation() != null ? decompte.getDateOperation() : null);
         dto.setDateValeur(decompte.getDateValeur() != null ? decompte.getDateValeur() : null);
         dto.setStatus(decompte.getStatus());
+        dto.setLibelle(decompte.getLibelle());
 
-        dto.setLibelle(decompte.getLibelle() );
-        // Check if the marche and its functional lines exist to prevent NullPointerException
+        // Mapper les informations du marché
         Marche marche = decompte.getMarche();
-
         if (marche != null) {
             log.debug("Récupération des informations du marché: {}", marche.getNom());
 
             dto.setMarcheId(marche.getId());
             dto.setMarcheName(marche.getNom());
             dto.setMarcheNumero(marche.getNumero());
+            dto.setMarcheNanti(marche.isNanti());
+
+            // Mapper la banque du marché
+            Banque marcheBanque = marche.getBanque();
+            if (marcheBanque != null) {
+                log.debug("Récupération de la banque du marché: {}", marcheBanque.getNom());
+                dto.setMarcheBanqueId(marcheBanque.getId());
+                dto.setMarcheBanqueName(marcheBanque.getNom());
+            } else {
+                log.warn("La banque du marché associée au Decompte ID: {} est null", decompte.getId());
+                throw new ResourceNotFoundException("La banque du marché associée au Decompte ID: " + decompte.getId() + " est null");
+            }
         } else {
             log.warn("Le marché associé au Decompte ID: {} est null", decompte.getId());
-            throw new ResourceNotFoundException("Le marché associé au Decompte Id"+decompte.getId()+"est null");
+            throw new ResourceNotFoundException("Le marché associé au Decompte ID: " + decompte.getId() + " est null");
         }
 
-        Banque banque = decompte.getMarche().getBanque();
-        if (banque != null) {
-            log.debug("Récupération des informations de la banque: {}", banque.getNom());
-
-            dto.setBanqueId(banque.getId());
-            dto.setBanqueName(banque.getNom());
-        } else {
-            log.warn("La banque associée au Decompte ID: {} est null", decompte.getId());
-            throw new ResourceNotFoundException("la banque associée au Decompte ID: "+decompte.getId()+" est null");
+        // Mapper la banque d'encaissement
+        Banque banqueEncaissement = decompte.getBanqueEncaissement();
+        if (banqueEncaissement != null) {
+            log.debug("Récupération de la banque d'encaissement: {}", banqueEncaissement.getNom());
+            dto.setBanqueEncaissementId(banqueEncaissement.getId());
+            dto.setBanqueEncaissementName(banqueEncaissement.getNom());
         }
 
-        log.info("Conversion vers DecompteResponseDto terminée avec succès pour l'ID: {}", decompte.getId());
+        log.info("Conversion vers DecompteResponseDto terminée avec succès pour l'ID: {} - Marché nanti: {}, Banque marché: {}, Banque encaissement: {}",
+                decompte.getId(),
+                marche != null ? marche.isNanti() : "N/A",
+                marche != null && marche.getBanque() != null ? marche.getBanque().getNom() : "null",
+                banqueEncaissement != null ? banqueEncaissement.getNom() : "null");
 
         return dto;
     }
-
 }

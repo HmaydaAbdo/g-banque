@@ -36,7 +36,7 @@ public class TransactionMapper {
             dto.setUpdatedAt(transaction.getUpdatedAt());
             dto.setConfirmed(transaction.isConfirmed());
             dto.setReferent(transaction.getReferent());
-            // Gérer la relation BanqueDePrelevement
+            // Gérer la relation Banque
             if (transaction.getBanqueDePrelevement() != null) {
                 dto.setBanqueDePrelevementId(transaction.getBanqueDePrelevement().getId());
                 dto.setBanqueDePrelevementNom(toUpper(transaction.getBanqueDePrelevement().getNom()));

@@ -70,17 +70,17 @@ public class DecompteSpec {
         };
     }
 
-    /**
-     * Filter by Banque ID (direct relation).
+    /*
+     * Filter by Banque d'encaissement ID.
+     * @return A Specification for filtering by banque d'encaissement
      */
     public static Specification<Decompte> byBanqueId(Long banqueId) {
         return (root, query, cb) -> {
             if (banqueId == null) {
                 return cb.conjunction();
             }
-            Join<Decompte, Marche> marcheJoin = root.join("marche", JoinType.INNER);
-            Join<Marche, Banque> banqueJoin = marcheJoin.join("banque", JoinType.INNER);
-            return cb.equal(banqueJoin.get("id"), banqueId);
+            Join<Decompte, Banque> banqueEncaissementJoin = root.join("banqueEncaissement", JoinType.INNER);
+            return cb.equal(banqueEncaissementJoin.get("id"), banqueId);
         };
     }
 

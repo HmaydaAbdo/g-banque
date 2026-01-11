@@ -20,7 +20,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "marches")
-public class Marche implements Serializable {
+public class Marche  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,6 +48,9 @@ public class Marche implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
+
+    @Column(name = "is_nanti", nullable = false)
+    private boolean isNanti = true;
 
     @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneFonctionnelle> lignesFonctionnelles = new ArrayList<>();
@@ -254,6 +257,14 @@ public class Marche implements Serializable {
         return modifiedAt;
     }
 
+    public boolean isNanti() {
+        return isNanti;
+    }
+
+    public void setNanti(boolean nanti) {
+        isNanti = nanti;
+    }
+
     // --- Object Methods ---
 
     @Override
@@ -279,6 +290,14 @@ public class Marche implements Serializable {
                 ", maitreDouvrage='" + maitreDouvrage + '\'' +
                 ", dateDebutDesTravaux=" + dateDebutDesTravaux +
                 ", dateDAchievementDesTravaux=" + dateDAchievementDesTravaux +
+                ", banque=" + banque +
+                ", isNanti=" + isNanti +
+                ", lignesFonctionnelles=" + lignesFonctionnelles +
+                ", lignesFonctionnellesSpecifiques=" + lignesFonctionnellesSpecifiques +
+                ", prefinancements=" + prefinancements +
+                ", droitConstates=" + droitConstates +
+                ", factorings=" + factorings +
+                ", decomptes=" + decomptes +
                 ", createdAt=" + createdAt +
                 ", modifiedAt=" + modifiedAt +
                 '}';

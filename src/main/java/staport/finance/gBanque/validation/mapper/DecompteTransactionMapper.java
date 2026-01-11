@@ -51,12 +51,6 @@ public class DecompteTransactionMapper {
         Decompte decompte=this.decompteRepository.findById(requestDto.getDecompteId())
                 .orElseThrow(()->new Exception("décompte  with id "+requestDto.getDecompteId()+" not found"));
 
-        Marche marche=decompte.getMarche();
-
-        if(marche==null){
-            throw new Exception("Marche null for décompte with id "+requestDto.getDecompteId());
-        }
-
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         transaction.setReferent(decompte.getId());
@@ -66,7 +60,6 @@ public class DecompteTransactionMapper {
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setTransactionSource(TransactionSource.DECOMPTES);
-
         transaction.setBanqueDePrelevement(banque);
         transaction.setDebit(BigDecimal.ZERO);
         transaction.setCredit(decompte.getMontant());
@@ -78,17 +71,6 @@ public class DecompteTransactionMapper {
         transaction.setTvaCollectee(montantTva);
 
 
-        // Mapping traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueId", requestDto.getBanqueId());
-            tracesMap.put("decompteId", requestDto.getDecompteId());
-            tracesMap.put("marcheNumero", marche.getNumero());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
-        }
 
         return transaction;
     }

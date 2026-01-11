@@ -113,6 +113,7 @@ public class MarcheService {
         existingMarche.setMaitreDouvrage(requestDTO.getMaitreDouvrage());
         existingMarche.setDateDebutDesTravaux(requestDTO.getDateDebutDesTravaux());
         existingMarche.setDateDAchievementDesTravaux(requestDTO.getDateDAchievementDesTravaux());
+        existingMarche.setNanti(requestDTO.getIsNanti() != null ? requestDTO.getIsNanti() : false);
 
         if (requestDTO.getBanqueId() != null) {
             Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
@@ -157,7 +158,9 @@ public class MarcheService {
         Specification<Marche> spec = Specification.where(MarcheSpecification.hasNom(searchDTO.getNom()))
                 .and(MarcheSpecification.hasNumero(searchDTO.getNumero()))
                 .and(MarcheSpecification.hasMaitreDouvrage(searchDTO.getMaitreDouvrage()))
-                .and(MarcheSpecification.hasBanqueId(searchDTO.getBanqueId()));
+                .and(MarcheSpecification.hasBanqueId(searchDTO.getBanqueId()))
+                .and(MarcheSpecification.isNanti(searchDTO.getIsNanti()));
+
 
         Page<Marche> marchePage = marcheRepository.findAll(spec, pageable);
         logger.debug("Trouvé {} marchés correspondant aux critères", marchePage.getTotalElements());

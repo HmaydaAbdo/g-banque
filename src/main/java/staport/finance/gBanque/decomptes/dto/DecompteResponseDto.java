@@ -8,11 +8,21 @@ import java.time.OffsetDateTime;
 public class DecompteResponseDto {
 
     private Long id;
+
+    // Informations du marché
     private Long marcheId;
     private String marcheName;
     private String marcheNumero;
-    private Long banqueId;
-    private String banqueName;
+    private boolean marcheNanti;  // ← AJOUTER pour savoir si le marché est nanti
+
+    // Banque du marché (celle associée au nantissement)
+    private Long marcheBanqueId;
+    private String marcheBanqueName;
+
+    // Banque d'encaissement (celle où le décompte sera encaissé)
+    private Long banqueEncaissementId;
+    private String banqueEncaissementName;
+
     private OffsetDateTime dateEmission;
     private BigDecimal montant;
     private String observation;
@@ -24,6 +34,7 @@ public class DecompteResponseDto {
     public DecompteResponseDto() {
     }
 
+    // Getters and Setters
 
     public Long getId() {
         return id;
@@ -57,20 +68,44 @@ public class DecompteResponseDto {
         this.marcheNumero = marcheNumero;
     }
 
-    public Long getBanqueId() {
-        return banqueId;
+    public boolean isMarcheNanti() {
+        return marcheNanti;
     }
 
-    public void setBanqueId(Long banqueId) {
-        this.banqueId = banqueId;
+    public void setMarcheNanti(boolean marcheNanti) {
+        this.marcheNanti = marcheNanti;
     }
 
-    public String getBanqueName() {
-        return banqueName;
+    public Long getMarcheBanqueId() {
+        return marcheBanqueId;
     }
 
-    public void setBanqueName(String banqueName) {
-        this.banqueName = banqueName;
+    public void setMarcheBanqueId(Long marcheBanqueId) {
+        this.marcheBanqueId = marcheBanqueId;
+    }
+
+    public String getMarcheBanqueName() {
+        return marcheBanqueName;
+    }
+
+    public void setMarcheBanqueName(String marcheBanqueName) {
+        this.marcheBanqueName = marcheBanqueName;
+    }
+
+    public Long getBanqueEncaissementId() {
+        return banqueEncaissementId;
+    }
+
+    public void setBanqueEncaissementId(Long banqueEncaissementId) {
+        this.banqueEncaissementId = banqueEncaissementId;
+    }
+
+    public String getBanqueEncaissementName() {
+        return banqueEncaissementName;
+    }
+
+    public void setBanqueEncaissementName(String banqueEncaissementName) {
+        this.banqueEncaissementName = banqueEncaissementName;
     }
 
     public OffsetDateTime getDateEmission() {

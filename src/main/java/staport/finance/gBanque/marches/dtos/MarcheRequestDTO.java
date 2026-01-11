@@ -13,6 +13,7 @@ public class MarcheRequestDTO {
     @NotNull(message = "Le marche doit etre rattache a une banque")
     private Long banqueId;
 
+
     @NotBlank(message = "Le numero du marche ne peut pas etre vide")
     @Size(max = 50, message = "Le numero doit avoir au maximum 50 caracteres")
     private String numero;
@@ -29,11 +30,14 @@ public class MarcheRequestDTO {
     @Size(max = 255, message = "Le maitre d'ouvrage doit avoir au maximum 255 caracteres")
     private String maitreDouvrage;
 
+    @NotNull(message = "Le statut nanti doit etre specifie")
+    private Boolean isNanti = false;
 
     private OffsetDateTime dateDebutDesTravaux;
 
 
     private OffsetDateTime dateDAchievementDesTravaux;
+
 
     // Getters and Setters
 
@@ -94,6 +98,14 @@ public class MarcheRequestDTO {
         this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
     }
 
+    public Boolean getIsNanti() {
+        return isNanti;
+    }
+
+    public void setIsNanti(Boolean isNanti) {
+        this.isNanti = isNanti;
+    }
+
     @Override
     public String toString() {
         return "MarcheRequestDTO{" +
@@ -104,6 +116,7 @@ public class MarcheRequestDTO {
                 ", maitreDouvrage='" + maitreDouvrage + '\'' +
                 ", dateDebutDesTravaux=" + dateDebutDesTravaux +
                 ", dateDAchievementDesTravaux=" + dateDAchievementDesTravaux +
+                ", isNanti=" + isNanti +
                 '}';
     }
 }

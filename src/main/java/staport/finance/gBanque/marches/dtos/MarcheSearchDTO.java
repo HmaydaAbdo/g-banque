@@ -18,6 +18,8 @@ public class MarcheSearchDTO {
     private String maitreDouvrage;
 
     private Long banqueId;
+    private Boolean isNanti;
+
 
 
     // Getters and Setters (omitted for brevity)
@@ -56,6 +58,14 @@ public class MarcheSearchDTO {
         this.banqueId = banqueId;
     }
 
+    public Boolean getIsNanti() {
+        return isNanti;
+    }
+
+    public void setIsNanti(Boolean isNanti) {
+        this.isNanti = isNanti;
+    }
+
     @Override
     public String toString() {
         return "MarcheSearchDTO{" +
@@ -63,6 +73,7 @@ public class MarcheSearchDTO {
                 ", numero='" + numero + '\'' +
                 ", maitreDouvrage='" + maitreDouvrage + '\'' +
                 ", banqueId=" + banqueId +
+                ", isNanti=" + isNanti +
                 '}';
     }
 }

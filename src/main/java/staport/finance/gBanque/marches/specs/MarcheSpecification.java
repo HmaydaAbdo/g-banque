@@ -80,4 +80,20 @@ public final class MarcheSpecification {
             return cb.equal(root.get("banque").get("id"), banqueId);
         };
     }
+
+    /**
+     * Creates a Specification to filter by 'isNanti' status.
+     * This allows filtering markets that are nanti (true) or non-nanti (false).
+     *
+     * @param isNanti The nanti status to filter by (true for nanti, false for non-nanti).
+     * @return A Specification for isNanti.
+     */
+    public static Specification<Marche> isNanti(Boolean isNanti) {
+        return (root, query, cb) -> {
+            if (isNanti == null) {
+                return cb.conjunction(); // Return an "always true" predicate if null
+            }
+            return cb.equal(root.get("isNanti"), isNanti);
+        };
+    }
 }

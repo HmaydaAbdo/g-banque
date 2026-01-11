@@ -12,6 +12,9 @@ public class DecompteRequestDto {
     @NotNull(message = "Marche ID cannot be null")
     private Long marcheId;
 
+    // ← OPTIONNEL : si null, on utilise la banque du marché (marché nanti)
+    private Long banqueEncaissementId;
+
     @NotNull(message = "Date of emission cannot be null")
     private OffsetDateTime dateEmission;
 
@@ -60,10 +63,19 @@ public class DecompteRequestDto {
         this.libelle = libelle;
     }
 
+    public Long getBanqueEncaissementId() {
+        return banqueEncaissementId;
+    }
+
+    public void setBanqueEncaissementId(Long banqueEncaissementId) {
+        this.banqueEncaissementId = banqueEncaissementId;
+    }
+
     @Override
     public String toString() {
         return "DecompteRequestDto{" +
                 "marcheId=" + marcheId +
+                ", banqueEncaissementId=" + banqueEncaissementId +
                 ", dateEmission=" + dateEmission +
                 ", montant=" + montant +
                 ", libelle='" + libelle + '\'' +
