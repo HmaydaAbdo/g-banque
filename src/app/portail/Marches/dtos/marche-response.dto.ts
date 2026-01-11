@@ -10,6 +10,7 @@ export interface MarcheResponseDTO {
   dateDAchievementDesTravaux?: Date;
   banqueNom:string;
   banqueId:number;
+  nanti: boolean;
   createdAt: Date;
   modifiedAt: Date;
 }

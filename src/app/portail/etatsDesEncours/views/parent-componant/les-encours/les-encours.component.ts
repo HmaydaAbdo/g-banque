@@ -92,7 +92,9 @@ export class LesEncoursComponent implements OnInit {
     'factoring-deblocage': { label: 'Encaissements ⇒ Factoring (Déblocage)', icon: 'pi pi-list' },
     'prefinancement-deblocage': { label: 'Encaissements ⇒ Préfinancement (Déblocage)', icon: 'pi pi-list' },
     'dc-deblocage': { label: 'Encaissements ⇒ Droits Constatés (Déblocage)', icon: 'pi pi-list' },
-    'decomptes': { label: 'Encaissements ⇒ Décomptes', icon: 'pi pi-list' }
+    'decomptes': { label: 'Encaissements ⇒ Décomptes', icon: 'pi pi-list' },
+    'restitutions': { label: 'Encaissements ⇒ Restitutions', icon: 'pi pi-list' }
+
   };
 
   ngOnInit() {
@@ -158,8 +160,21 @@ export class LesEncoursComponent implements OnInit {
           },
         ]
       },
+      {
+        label: 'Encaissements',
+        icon: 'pi pi-arrow-circle-right',
+        items: [
+          {label: "Virements", icon: "pi pi-list", routerLink: ["/portail/etats-des-encours", this.banqueId, "virements-encaissements"]},
+          { label: 'Chèques', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'cheques-encaissements'] },
+          { label: 'LCN', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'lcn-encaissements'] },
+          { label: 'Préfinancement', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-deblocage'] },
+          { label: 'Droits Constatés', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-deblocage'] },
+          { label: 'Factoring', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'factoring-deblocage'] },
+          { label: 'Décomptes', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'decomptes'] },
+          { label: 'Restitutions', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'restitutions'] }
 
-
+        ]
+      },
       {
         label: 'Décaissements',
         icon: 'pi pi-arrow-circle-left',
@@ -182,26 +197,25 @@ export class LesEncoursComponent implements OnInit {
 
         ]
       },
-      {
-        label: 'Encaissements',
-        icon: 'pi pi-arrow-circle-right',
-        items: [
-          {label: "Virements", icon: "pi pi-list", routerLink: ["/portail/etats-des-encours", this.banqueId, "virements-encaissements"]},
-          { label: 'Chèques', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'cheques-encaissements'] },
-          { label: 'LCN', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'lcn-encaissements'] },
-          { label: 'Préfinancement', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-deblocage'] },
-          { label: 'Droits Constatés', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-deblocage'] },
-          { label: 'Factoring', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'factoring-deblocage'] },
-          { label: 'Décomptes', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'decomptes'] }
-        ]
-      }
+
     ];
   }
 
   /** Ouvre ou ferme les sous-menus **/
   toggleMenuItem(item: MenuItem): void {
     if (item.items) {
-      item.expanded = !item.expanded;
+      // Si l'item est déjà ouvert, on le ferme
+      if (item.expanded) {
+        item.expanded = false;
+      } else {
+        // Sinon, on ferme tous les autres items et on ouvre celui-ci
+        this.items.forEach(i => {
+          if (i.items) {
+            i.expanded = false;
+          }
+        });
+        item.expanded = true;
+      }
     }
   }
 

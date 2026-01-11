@@ -15,6 +15,7 @@ export enum TransactionSource {
   FACTORING="FACTORING",
   PRELEVEMENT="PRELEVEMENT",
   CAUTION="CAUTION",
-  IMPOT_TAXE="Impots et taxes"
+  IMPOT_TAXE="Impots et taxes",
+  RESTITUTION="RESTITUTION",
 
 }

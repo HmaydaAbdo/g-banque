@@ -70,6 +70,10 @@ export class MarcheService {
       params = params.set('banqueId', criteria.banqueId);
     }
 
+    if (criteria.isNanti !== undefined && criteria.isNanti !== null) {
+      params = params.set('isNanti', criteria.isNanti.toString());
+    }
+
     return this.http.get<PageResponse<MarcheResponseDTO>>(this.apiUrl, {params});
   }
 

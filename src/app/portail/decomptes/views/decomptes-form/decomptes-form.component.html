@@ -6,7 +6,7 @@
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
       <ng-template pTemplate="item" let-item>
         <ng-container *ngIf="item.route; else elseBlock">
-          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
             <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
           </a>
@@ -26,7 +26,7 @@
     </div>
     <form [formGroup]="decompteForm" (ngSubmit)="onSubmit()">
       <div class="p-fluid grid formgrid">
-        <!-- ✅ DROPDOWN avec virtual scroll + lazy loading + filter -->
+
         <div class="field col-12 md:col-6">
           <label for="marcheId" class="block font-medium mb-2">Marché *</label>
           <p-dropdown
@@ -38,7 +38,6 @@
             optionValue="value"
             [showClear]="true"
             [filter]="true"
-            filterBy="label"
             (onFilter)="onFilterMarches($event)"
             [virtualScroll]="true"
             [virtualScrollItemSize]="38"
@@ -47,15 +46,12 @@
             [loading]="loadingMarches"
             [ngClass]="{ 'ng-invalid ng-dirty': f['marcheId'].invalid && f['marcheId'].touched }"
           >
-            <!-- ✅ Template pour l'élément sélectionné -->
             <ng-template pTemplate="selectedItem" let-selectedOption>
               <div class="flex align-items-center gap-2" *ngIf="selectedOption">
                 <i class="pi pi-file p-text-secondary"></i>
                 <div>{{ selectedOption.label }}</div>
               </div>
             </ng-template>
-
-            <!-- ✅ Template pour les éléments de la liste (avec gestion du loading) -->
             <ng-template let-marche pTemplate="item">
               <div class="flex align-items-center gap-2" style="height: 38px">
                 <ng-container *ngIf="marche && marche.label; else loadingTmpl">
@@ -69,8 +65,28 @@
               </div>
             </ng-template>
           </p-dropdown>
-          <small class="p-error" *ngIf="f['marcheId'].invalid && f['marcheId'].touched">
-            Le marché est requis.
+        </div>
+
+        <div class="field col-12 md:col-6">
+          <label for="banqueEncaissementId" class="block font-medium mb-2">
+            Banque d'encaissement {{ isMarcheNanti ? '(Automatique)' : '*' }}
+          </label>
+          <p-dropdown
+            id="banqueEncaissementId"
+            formControlName="banqueEncaissementId"
+            [options]="banquesOptions"
+            placeholder="Sélectionner une banque"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['banqueEncaissementId'].invalid && f['banqueEncaissementId'].touched }"
+          >
+            <ng-template pTemplate="selectedItem" let-selectedOption>
+              <div class="flex align-items-center gap-2" *ngIf="selectedOption">
+                <i [class]="isMarcheNanti ? 'pi pi-lock text-primary' : 'pi pi-unlock'"></i>
+                <div>{{ selectedOption.label }}</div>
+              </div>
+            </ng-template>
+          </p-dropdown>
+          <small class="text-primary font-italic" *ngIf="isMarcheNanti">
+            Marché nanti : la banque est verrouillée sur celle du marché.
           </small>
         </div>
 
@@ -81,12 +97,8 @@
             formControlName="montant"
             mode="decimal"
             [minFractionDigits]="2"
-            [maxFractionDigits]="2"
             [ngClass]="{ 'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched }"
           ></p-inputNumber>
-          <small class="p-error" *ngIf="f['montant'].invalid && f['montant'].touched">
-            Le montant est requis et doit être un nombre valide (ex: 123.45).
-          </small>
         </div>
 
         <div class="field col-12 md:col-6">
@@ -95,50 +107,25 @@
             id="dateEmission"
             formControlName="dateEmission"
             dateFormat="dd/mm/yy"
-            [iconDisplay]="'input'"
             [showIcon]="true"
-            inputId="icondisplay"
             appendTo="body"
             [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }"
           ></p-calendar>
-          <small class="p-error" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">
-            La date d'émission est requise.
-          </small>
         </div>
 
-        <div class="field col-12 md:col-6">
+        <div class="field col-12">
           <label for="libelle" class="block font-medium mb-2">Libellé *</label>
           <input
             id="libelle"
             pInputText
-            type="text"
             formControlName="libelle"
             [ngClass]="{ 'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched }"
           >
-          <small class="p-error" *ngIf="f['libelle'].invalid && f['libelle'].touched">
-            Libellé est obligatoire.
-          </small>
         </div>
 
         <div class="col-12 mt-4 flex flex-row gap-2">
-          <button
-            pButton
-            pRipple
-            label="Annuler"
-            icon="pi pi-times"
-            type="button"
-            class="p-button-secondary"
-            (click)="onCancel()"
-          ></button>
-          <button
-            pButton
-            pRipple
-            [label]="isEditMode ? 'Modifier' : 'Créer'"
-            [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
-            type="submit"
-            class="p-button-success"
-            [disabled]="decompteForm.invalid || loading"
-          ></button>
+          <button pButton pRipple label="Annuler" icon="pi pi-times" type="button" class="p-button-secondary" (click)="onCancel()"></button>
+          <button pButton pRipple [label]="isEditMode ? 'Modifier' : 'Créer'" [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'" type="submit" class="p-button-success" [disabled]="decompteForm.invalid || loading"></button>
         </div>
       </div>
     </form>

@@ -36,7 +36,7 @@
 
 <div class="flex h-screen w-full">
     <!-- Sidebar -->
-    <div class="col-fixed w-12rem  h-full text-sm  bg-white white-space-nowrap overflow-y-scroll">
+    <div class="col-fixed w-14rem  h-full text-sm  bg-white white-space-nowrap overflow-y-scroll">
         <ul class="list-none pl-1 ">
             @for (item of items ;track item.url){
 
@@ -50,7 +50,7 @@
                 </a>
               </li>
 
-              <li *ngIf="item.items">
+              <li *ngIf="item.items" >
                 <div
                   pRipple
                   (click)="toggleMenuItem(item)"
@@ -62,13 +62,13 @@
                   <i *ngIf="item.items" [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
                 </div>
 
-                <ul class="list-none pb-2 pl-3 overflow-hidden" [ngClass]="{'hidden': !item.expanded}">
+                <ul class="list-none pb-6 pl-3 " [ngClass]="{'hidden': !item.expanded}">
                   <ng-container *ngFor="let subItem of item.items">
                     <li *ngIf="subItem.routerLink && !subItem.items">
                       <a pRipple
                          [routerLink]="subItem.routerLink"
                          routerLinkActive="active-sidebar-link"
-                         class="flex align-items-center cursor-pointer  py-3 border-round-xl transition-duration-150 transition-colors p-ripple sidebar-link">
+                         class="flex align-items-center cursor-pointer  py-2 border-round-xl transition-duration-150 transition-colors p-ripple sidebar-link">
                         <i *ngIf="subItem.icon" [class]="subItem.icon + ' mr-2'"></i>
                         <span class="font-medium">{{ subItem.label }}</span>
                       </a>

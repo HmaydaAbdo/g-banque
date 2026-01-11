@@ -68,7 +68,11 @@ export class MarchesListComponent implements OnInit {
 
   banques: { id: number; nom: string }[] = [];
   loadingBanques: boolean = false;
-
+  nantiOptions = [
+    { label: 'Tous', value: null },
+    { label: 'Nanti', value: true },
+    { label: 'Non Nanti', value: false }
+  ];
 
 
   constructor(
@@ -99,7 +103,8 @@ export class MarchesListComponent implements OnInit {
       nom: [''],
       numero: [''],
       maitreDouvrage: [''],
-      banqueId: [null]
+      banqueId: [null],
+      isNanti: [null]
     });
   }
 

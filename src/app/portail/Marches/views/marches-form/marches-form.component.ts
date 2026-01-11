@@ -18,6 +18,7 @@ import { MarcheResponseDTO } from '../../dtos/marche-response.dto';
 import {MarcheService} from "../../service/marche-service.service";
 import {DropdownModule} from "primeng/dropdown";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
+import {InputSwitchModule} from "primeng/inputswitch";
 
 
 @Component({
@@ -35,7 +36,8 @@ import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
     ConfirmDialogModule,
     BreadcrumbModule,
     InputNumberModule,
-    DropdownModule
+    DropdownModule,
+    InputSwitchModule
   ],
   templateUrl: './marches-form.component.html',
   styleUrl: './marches-form.component.scss',
@@ -90,7 +92,9 @@ export class MarchesFormComponent implements OnInit {
       maitreDouvrage: ['', Validators.required],
       dateDebutDesTravaux: [''],
       dateDAchievementDesTravaux: [''],
-      banqueId: [null, Validators.required]
+      banqueId: [null, Validators.required],
+      isNanti: [false, Validators.required]
+
     });
   }
 
@@ -107,7 +111,8 @@ export class MarchesFormComponent implements OnInit {
           maitreDouvrage: data.maitreDouvrage,
           dateDebutDesTravaux: data.dateDebutDesTravaux ? new Date(data.dateDebutDesTravaux) : null,
           dateDAchievementDesTravaux: data.dateDAchievementDesTravaux ? new Date(data.dateDAchievementDesTravaux) : null,
-          banqueId: data.banqueId
+          banqueId: data.banqueId,
+          isNanti: data.nanti
         });
 
         this.loading = false;
@@ -177,7 +182,8 @@ export class MarchesFormComponent implements OnInit {
       maitreDouvrage: formValue.maitreDouvrage,
       dateDebutDesTravaux: formValue.dateDebutDesTravaux || null,
       dateDAchievementDesTravaux: formValue.dateDAchievementDesTravaux || null,
-      banqueId: formValue.banqueId
+      banqueId: formValue.banqueId,
+      isNanti: formValue.isNanti
     };
 
 

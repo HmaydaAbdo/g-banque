@@ -1,0 +1,293 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-2 p-2 h-screen overflow-y-scroll">
+
+  <div class="p-card shadow-2 p-2 flex flex-column gap-4">
+
+    <div class="flex flex-row justify-content-between align-items-center">
+      <span class="text-lg font-medium">Restitutions en cours</span>
+      <span class="text-lg font-medium">
+        Total des encours <strong>{{ totalEncours | number:'1.2-2' }} MAD</strong>
+      </span>
+    </div>
+
+    <form
+      [formGroup]="searchForm"
+      (ngSubmit)="applyFilters()"
+      class="flex flex-row justify-content-between flex-wrap"
+    >
+      <div class="w-full sm:w-auto">
+        <input
+          pInputText
+          type="text"
+          formControlName="libelle"
+          placeholder="Rechercher par libellé"
+          (keyup.enter)="applyFilters()"
+          class="w-full"
+        />
+      </div>
+
+      <div class="w-full sm:w-auto">
+        <input
+          pInputText
+          type="number"
+          formControlName="montant"
+          placeholder="Montant"
+          (keyup.enter)="applyFilters()"
+          class="w-full"
+        />
+      </div>
+
+      <button
+        pButton
+        pRipple
+        label="Ajouter restitution"
+        class="h-fit"
+        size="small"
+        icon="pi pi-plus"
+        severity="primary"
+        routerLink="/portail/restitutions/new"
+      ></button>
+    </form>
+
+  </div>
+
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="restitutions"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [lazy]="true"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      (onLazyLoad)="loadRestitutions($event)"
+      [columns]="[
+        { field: 'libelle', header: 'Libellé', sortable: true },
+        { field: 'banqueNom', header: 'Banque', sortable: true },
+        { field: 'montant', header: 'Montant', sortable: true },
+        { field: 'dateEmission', header: 'Date d\'émission', sortable: true },
+        { field: 'status', header: 'Statut', sortable: true }
+      ]"
+      styleClass="p-datatable-gridlines"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
+    >
+
+      <!-- TABLE HEADER -->
+      <ng-template pTemplate="header" let-columns>
+        <tr class="white-space-nowrap">
+          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
+            {{ col.header }}
+            @if (col.sortable) {
+              <p-sortIcon [field]="col.field"></p-sortIcon>
+            }
+          </th>
+          <th style="width: 8rem">Actions</th>
+        </tr>
+      </ng-template>
+
+      <!-- TABLE BODY -->
+      <ng-template pTemplate="body" let-restitution>
+        <tr>
+          <td>{{ restitution.libelle }}</td>
+          <td>{{ restitution.banqueNom }}</td>
+          <td>{{ restitution.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ restitution.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <span
+              [class]="restitution.status === 'PAYE' ? 'badge badge-success' : 'badge badge-warning'">
+              {{ restitution.status }}
+            </span>
+          </td>
+          <td>
+            <p-button
+              icon="pi pi-check"
+              label="Valider"
+              class="p-button-rounded p-button-success"
+              (onClick)="openRapprochementModal(restitution)"
+            ></p-button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- EMPTY MESSAGE -->
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="6">
+            <div class="flex flex-column align-items-center justify-content-center py-5">
+              <i class="pi pi-inbox text-4xl text-400 mb-3"></i>
+              <span class="text-xl text-500">Aucune restitution en cours trouvée.</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- LOADING MESSAGE -->
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="6" class="text-center">
+            <i class="pi pi-spin pi-spinner text-2xl"></i>
+            <span class="ml-2">Chargement en cours...</span>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>
+
+<!-- MODAL DIALOG -->
+<p-dialog
+  header="Valider la restitution"
+  [(visible)]="displayModal"
+  [modal]="true"
+  [closable]="!isSubmitting"
+  [style]="{ width: '40vw' }"
+  [breakpoints]="{ '960px': '75vw', '640px': '95vw' }"
+>
+  <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
+
+    <div class="grid p-fluid mt-3">
+
+      <!-- DATE EMISSION -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar
+            id="dateEmission"
+            formControlName="dateEmission"
+            dateFormat="dd/mm/yy"
+            [showOnFocus]="false"
+            [disabled]="true"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            inputId="icondisplay"
+            appendTo="body"
+            [readonlyInput]="true"
+          ></p-calendar>
+          <label for="dateEmission">Date d'émission</label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('dateEmission')">
+          La date d'émission est obligatoire
+        </small>
+      </div>
+
+      <!-- TVA COLLECTÉE -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-dropdown
+            id="tvaCollectee"
+            formControlName="tvaCollectee"
+            [options]="tvaOptions"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            placeholder="TVA Collectée"
+            [required]="true"
+          ></p-dropdown>
+          <label for="tvaCollectee">TVA Collectée</label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('tvaCollectee')">
+          La TVA collectée est obligatoire
+        </small>
+      </div>
+
+      <!-- DATE VALEUR -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar
+            id="dateValeur"
+            [showOnFocus]="false"
+            formControlName="dateValeur"
+            dateFormat="dd/mm/yy"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            inputId="icondisplay"
+            appendTo="body"
+          ></p-calendar>
+          <label for="dateValeur">Date de valeur</label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('dateValeur')">
+          La date de valeur est obligatoire
+        </small>
+      </div>
+
+      <!-- DATE OPERATION -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar
+            id="dateOperation"
+            [showOnFocus]="false"
+            formControlName="dateOperation"
+            dateFormat="dd/mm/yy"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            inputId="icondisplay"
+            appendTo="body"
+          ></p-calendar>
+          <label for="dateOperation">Date de l'opération</label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('dateOperation')">
+          La date de l'opération est obligatoire
+        </small>
+      </div>
+
+      <!-- LIBELLE -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <textarea
+            id="libelle"
+            pInputTextarea
+            formControlName="libelle"
+            rows="3"
+          ></textarea>
+          <label for="libelle">Libellé</label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('libelle')">
+          Le libellé est obligatoire
+        </small>
+      </div>
+
+      <!-- OBSERVATION -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <textarea
+            id="observation"
+            pInputTextarea
+            formControlName="observation"
+            rows="3"
+          ></textarea>
+          <label for="observation">Observation</label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('observation')">
+          L'observation est obligatoire
+        </small>
+      </div>
+
+    </div>
+
+    <div class="flex justify-content-end gap-2 mt-4">
+      <p-button
+        label="Annuler"
+        icon="pi pi-times"
+        [outlined]="true"
+        (onClick)="displayModal = false"
+        [disabled]="isSubmitting"
+      ></p-button>
+
+      <p-button
+        label="Valider"
+        icon="pi pi-check"
+        type="submit"
+        [disabled]="rapprochementForm.invalid || isSubmitting"
+        [loading]="isSubmitting"
+      ></p-button>
+    </div>
+
+  </form>
+</p-dialog>

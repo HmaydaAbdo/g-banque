@@ -97,7 +97,7 @@
         <tr>
           <td>{{ d.id }}</td>
           <td class="font-bold">{{ d.marcheNumero }}</td>
-          <td>{{ d.banqueName }}</td>
+          <td>{{ d.banqueEncaissementName }}</td>
           <td class="font-bold">{{ d.montant | number:'1.2-2' }} MAD</td>
           <td class="text-overflow-ellipsis">{{ d.observation || '***' }}</td>
           <td>{{ d.dateEmission ? (d.dateEmission | date:'dd/MM/yyyy') : '***' }}</td>
@@ -111,16 +111,11 @@
               <p-inputSwitch [ngModel]="d.status === Status.PAYE"
                              (onChange)="toggleStatus(d)"
                              pTooltip="Changer statut"></p-inputSwitch>
-
               <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
                       [routerLink]="['/portail/decomptes/edit', d.id]"></button>
-
-
-                <button pButton icon="pi pi-trash"
+              <button pButton icon="pi pi-trash"
                         class="p-button-rounded p-button-outlined p-button-danger"
                         (click)="deleteDecompte(d)"></button>
-
-
             </div>
           </td>
         </tr>

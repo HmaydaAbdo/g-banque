@@ -124,6 +124,11 @@ import {ImpotEtTaxeFormComponent} from "../../impotEtTaxes/views/impot-et-taxe-f
 import {
   EncoursImpotsEtTaxesComponent
 } from "../../etatsDesEncours/views/lesEncours/decaissement/encours-impots-taxes/encours-impots-taxes.component";
+import {RestitutionListComponent} from "../../restitution/views/restitution-list/restitution-list.component";
+import {RestitutionFormComponent} from "../../restitution/views/restitution-form/restitution-form.component";
+import {
+  EncoursRestitutionComponent
+} from "../../etatsDesEncours/views/lesEncours/encaissements/restitution/encours-restitution.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -244,6 +249,7 @@ export const PORTAIL_ROUTES: Routes = [
       {path:"interests",component:EncoursInteretComponent},
       {path:"fraisBancaire",component:EncoursFraisBancaireComponent},
       {path: "impots-taxes", component: EncoursImpotsEtTaxesComponent},
+      {path: "restitutions", component: EncoursRestitutionComponent},
 
     ]
   },
@@ -255,6 +261,10 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'impots-taxes', component: ImpotEtTaxeListComponent },
   { path: "impots-taxes/new", component: ImpotEtTaxeFormComponent },
   { path: "impots-taxes/edit/:id", component: ImpotEtTaxeFormComponent },
+
+  { path: 'restitutions', component: RestitutionListComponent },
+  { path: "restitutions/new", component: RestitutionFormComponent },
+  { path: "restitutions/edit/:id", component: RestitutionFormComponent },
 
   { path: 'agios', component: AgiosListComponent },
   {path:"agios/new",component:AgiosFormComponent},

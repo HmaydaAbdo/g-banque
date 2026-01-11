@@ -240,7 +240,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
     const decompteTransactionRequest:DecompteTransactionRequest= {
       dateEmission:this.rapprochementForm.value.dateEmission,
       decompteId: this.selectedDecompte.id,
-      banqueId: this.selectedDecompte.banqueId,
+      banqueId: this.selectedDecompte.banqueEncaissementId,
       dateOperation: this.rapprochementForm.value.dateOperation,
       dateValeur: this.rapprochementForm.value.dateValeur,
       tva: this.rapprochementForm.value.tva,

@@ -132,6 +132,7 @@ export class SidebarComponent implements OnInit {
     {label:"Les Prélèvements",icon:"pi pi-list",routerLink: '/portail/prelevements'},
     {label:"Les Frais bancaire",icon:"pi pi-list",routerLink: '/portail/frais-bancaire'},
     {label:"Les Intérêts ",icon:"pi pi-list",routerLink: '/portail/interets'},
+    {label:"Les Restitutions",icon:"pi pi-list  ",routerLink: '/portail/restitutions'},
     {label:"Impôts et Taxes  ",icon:"pi pi-list",routerLink: '/portail/impots-taxes'},
     {label:"Historique des Rapprochements ",routerLink:"/portail/rapprochement/historique",icon:"pi pi-history"},
     {

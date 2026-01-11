@@ -34,6 +34,8 @@
   import {PrelevementTransactionResponse} from "../../dtos/prelevement/PrelevementTransactionResponse";
   import {ImpotEtTaxeTransactionResponse} from "../../dtos/impotsEtTaxes/ImpotEtTaxeTransactionResponse";
   import {ImpotEtTaxeValidationRequest} from "../../dtos/impotsEtTaxes/ImpotEtTaxeValidationRequest";
+  import {RestitutionTransactionResponse} from "../../dtos/restitution/RestitutionTransactionResponse";
+  import {RestitutionValidationRequest} from "../../dtos/restitution/RestitutionValidationRequest";
 
   @Injectable({
     providedIn: 'root'
@@ -188,6 +190,14 @@
         `${this.baseUrl}/process/impot-taxe`, impotEtTaxe
       );
     }
+
+    restitutionToRapprochement(restitution: RestitutionValidationRequest): Observable<RestitutionTransactionResponse> {
+      return this.http.post<RestitutionTransactionResponse>(
+        `${this.baseUrl}/process/restitution`,
+        restitution
+      );
+    }
+
     rollBackTransaction(id: number): Observable<void> {
       return this.http.delete<void>(`${this.baseUrl}/annuler/${id}`);
     }

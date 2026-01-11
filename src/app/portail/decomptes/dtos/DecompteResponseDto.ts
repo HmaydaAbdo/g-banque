@@ -2,11 +2,17 @@ import {Status} from "../../prefinancements/enums/Status";
 
 export interface DecompteResponseDto {
   id: number;
+
   marcheId: number;
   marcheName: string;
   marcheNumero: string;
-  banqueId: number;
-  banqueName: string;
+  marcheNanti: boolean;
+  marcheBanqueId: number;
+  marcheBanqueName: string;
+
+  banqueEncaissementId: number;
+  banqueEncaissementName: string;
+
   dateEmission: Date;
   montant: number;
   observation: string;
