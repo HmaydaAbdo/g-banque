@@ -24,6 +24,7 @@ import {EncoursInteretDto} from "../../../../../interest/dtos/EncoursInteretDto"
 import {InteretValidationRequest} from "../../../../dtos/interets/interet-validation-request.dto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-encours-interest',
@@ -88,6 +89,8 @@ export class EncoursInteretComponent implements OnInit {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private rapprochementService: ValidationService,
+    private bankStateService: BankStateService
+
   ) {}
 
   ngOnInit(): void {
@@ -284,6 +287,8 @@ export class EncoursInteretComponent implements OnInit {
         this.isSubmitting = false;
         this.displayModal = false;
         this.table.reset(); // recharge ton tableau existant
+        this.bankStateService.refreshBankInfo(this.banqueId as number);
+
       },
       error: () => {
         this.messageService.add({

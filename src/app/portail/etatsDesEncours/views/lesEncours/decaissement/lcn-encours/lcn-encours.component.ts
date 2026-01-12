@@ -27,6 +27,7 @@ import {DropdownModule} from "primeng/dropdown";
 import {InputNumberModule} from "primeng/inputnumber";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 
 @Component({
@@ -93,6 +94,7 @@ export class LcnEncoursComponent implements OnInit {
     private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
     private rapprochementService: ValidationService,
+    private bankStateService: BankStateService
   ) {
   }
 
@@ -241,6 +243,8 @@ export class LcnEncoursComponent implements OnInit {
             this.isSubmitting = false;
             this.loadOutstandingLcns();
             this.displayModal = false;
+            this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+
           },
           error: (error) => {
             console.error('Erreur lors du validation du LCN:', error);

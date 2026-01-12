@@ -25,6 +25,7 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import _default from "chart.js/dist/plugins/plugin.tooltip";
 import numbers = _default.defaults.animations.numbers;
 import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 
 @Component({
@@ -86,7 +87,8 @@ export class DecomptesComponent implements OnInit, OnDestroy {
     private decimalPipe: DecimalPipe,
     private rapprochementService: ValidationService,
     private fb: FormBuilder,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private bankStateService: BankStateService
   ) {}
 
   ngOnInit(): void {
@@ -261,6 +263,8 @@ export class DecomptesComponent implements OnInit, OnDestroy {
           this.isSubmitting = false;
           this.loadEncoursDecomptes();
           this.displayModal = false;
+          this.bankStateService.refreshBankInfo(this.banqueId);
+
         },
         error: (error) => {
           console.error('Erreur lors du validation du décompte:', error);

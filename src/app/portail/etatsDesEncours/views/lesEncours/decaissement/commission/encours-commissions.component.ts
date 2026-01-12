@@ -26,6 +26,7 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 import {AuthService} from "../../../../../../auth/services/auth.service";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-encours-commissions',
@@ -92,6 +93,8 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
     private authService:AuthService,
     private fb: FormBuilder,
     private rapprochementService: ValidationService,
+    private bankStateService: BankStateService
+
   ) {}
 
 
@@ -292,6 +295,8 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
           this.isSubmitting = false;
           this.displayModal = false;
           this.table.reset(); // recharge ton tableau existant
+          this.bankStateService.refreshBankInfo(this.banqueId as number);
+
         },
         error: () => {
           this.messageService.add({

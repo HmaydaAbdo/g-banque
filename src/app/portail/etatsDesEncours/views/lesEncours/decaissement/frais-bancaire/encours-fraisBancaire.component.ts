@@ -24,6 +24,7 @@ import {EncoursFraisBancaireDto} from "../../../../../frais-bancaire/dtos/Encour
 import {FraisBancaireValidationRequest} from "../../../../dtos/frais-bancaire/frais-bancaire-validation-request.dto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-encours-fraisBancaire',
@@ -88,6 +89,8 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
     private fb: FormBuilder,
     private decimalPipe: DecimalPipe,
     private rapprochementService: ValidationService,
+    private bankStateService: BankStateService
+
   ) {}
 
 
@@ -284,6 +287,8 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
           this.isSubmitting = false;
           this.displayModal = false;
           this.table.reset(); // recharge ton tableau existant
+          this.bankStateService.refreshBankInfo(this.banqueId as number);
+
         },
         error: () => {
           this.messageService.add({

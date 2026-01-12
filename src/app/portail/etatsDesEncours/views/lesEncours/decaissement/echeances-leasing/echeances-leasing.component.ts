@@ -32,6 +32,7 @@ import { ValidationService } from "../../../../services/validation/validation.se
 import { DonneesComplementairesRapprochementDTO } from "../../../../dtos/DonneesComplementairesRapprochementDTO";
 import {LeasingTransactionRequest} from "../../../../dtos/leasing/LeasingTransactionRequest";
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 
 @Component({
@@ -104,7 +105,9 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
     private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe
+    private decimalPipe: DecimalPipe,
+    private bankStateService: BankStateService
+
   ) { }
 
   ngOnInit(): void {
@@ -344,6 +347,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
             });
             this.isSubmitting = false;
             this.onSearch()
+            this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
           },
           error: (error) => {
             this.messageService.add({

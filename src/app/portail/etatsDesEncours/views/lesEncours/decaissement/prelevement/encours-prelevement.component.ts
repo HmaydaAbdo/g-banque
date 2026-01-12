@@ -24,6 +24,7 @@ import { PrelevementSearchDto } from "../../../../../prelevements/dtos/Preleveme
 import { EncoursPrelevement } from "../../../../../prelevements/dtos/EncoursPrelevement";
 import { PrelevementValidationRequestDto } from "../../../../dtos/prelevement/prelevement-validation-request.dto";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 
 @Component({
@@ -73,6 +74,8 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private rapprochementService: ValidationService,
+    private bankStateService: BankStateService
+
   ) { }
 
 
@@ -267,6 +270,8 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
           this.displayModal = false;
           this.isSubmitting = false;
           this.table.reset();
+          this.bankStateService.refreshBankInfo(this.banqueId as  number);
+
         },
         error: () => {
           this.messageService.add({

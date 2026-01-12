@@ -24,6 +24,7 @@ import { RestitutionSearchDto } from "../../../../../restitution/dtos/Restitutio
 import { EncoursRestitution } from "../../../../../restitution/dtos/EncoursRestitution";
 import { RestitutionValidationRequest } from "../../../../dtos/restitution/RestitutionValidationRequest";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-encours-restitution',
@@ -44,8 +45,7 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
   totalRecords = 0;
   loading = true;
   totalEncours!: number;
-  banqueId?: number;
-
+  banqueId: number | undefined ;
   displayModal: boolean = false;
   selectedRestitution: any = null;
   rapprochementForm!: FormGroup;
@@ -72,6 +72,7 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private rapprochementService: ValidationService,
+    private bankStateService: BankStateService
   ) { }
 
   ngOnInit(): void {
@@ -258,6 +259,7 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
           this.displayModal = false;
           this.isSubmitting = false;
           this.table.reset();
+          this.bankStateService.refreshBankInfo(this.banqueId as number);
         },
         error: () => {
           this.messageService.add({

@@ -25,6 +25,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-prefinancement-deblocage',
@@ -87,7 +88,8 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private rapprochementService: ValidationService,
     private fb: FormBuilder,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private bankStateService: BankStateService
   ) {}
 
   ngOnInit(): void {
@@ -256,6 +258,8 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
           this.isSubmitting = false;
           this.loadEncoursDeblocages();
           this.displayModal = false;
+          this.bankStateService.refreshBankInfo(this.banqueId);
+
         },
         error: (error) => {
           console.error('Erreur lors du validation du préfinancement:', error);

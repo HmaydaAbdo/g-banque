@@ -22,6 +22,7 @@ import {AgreratedTransactionResponseDto} from "../../../../transactions/dtos/Agr
 import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {ValidationService} from "../../../services/validation/validation.service";
+import {BankStateService} from "../../../../comptes-bancaire/services/bank-state.service";
 
 
 @Component({
@@ -75,7 +76,8 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
     private validationService: ValidationService,
     private messageService: MessageService,
     private route: ActivatedRoute,
-    private datePipe: DatePipe
+    private datePipe: DatePipe,
+    private bankStateService: BankStateService
   ) {
   }
 
@@ -179,7 +181,8 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
       next: () => {
         this.messageService.add({severity: 'success',summary: 'Transaction supprimé avec success'});
         this.loadTransactions(this.dt.createLazyLoadMetadata());
-        },
+        this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+      },
       error: (error) => {
         this.messageService.add({severity: 'error',summary: 'Erreur lors de la suppression de la transaction .',})
       }

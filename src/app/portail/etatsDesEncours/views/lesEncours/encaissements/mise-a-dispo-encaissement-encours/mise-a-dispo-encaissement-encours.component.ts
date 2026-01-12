@@ -28,6 +28,7 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {Ripple} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
 import {TooltipModule} from "primeng/tooltip";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-mise-a-dispo-encaissement-encours',
@@ -92,7 +93,8 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
     private rapprochementService: ValidationService,
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
-    private decimalPipe: DecimalPipe
+    private decimalPipe: DecimalPipe,
+    private bankStateService: BankStateService
   ) {
   }
 
@@ -238,6 +240,7 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
             this.isSubmitting = false;
             this.loadOutstandingMisesADisposition();
             this.displayModal = false;
+            this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
           },
           error: (error) => {
             console.error('Erreur lors du validation de la mise à disposition:', error);

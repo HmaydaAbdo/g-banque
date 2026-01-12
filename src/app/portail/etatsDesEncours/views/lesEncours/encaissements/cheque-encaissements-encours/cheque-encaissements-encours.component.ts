@@ -25,6 +25,7 @@ import {PaginatorModule} from "primeng/paginator";
 import {Ripple} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
 import {TooltipModule} from "primeng/tooltip";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-cheque-encaissements-encours',
@@ -91,7 +92,8 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
     private messageService: MessageService,
     private ConfirmationService:ConfirmationService,
     private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe
+    private decimalPipe: DecimalPipe,
+    private bankStateService: BankStateService
   ) {}
 
   ngOnInit(): void {
@@ -148,7 +150,6 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
     });
     this.displayModal = true;
   }
-
 
   confirmRapprochement(): void {
 
@@ -211,8 +212,6 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
     }
   }
 
-
-
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedCheque) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
@@ -242,6 +241,8 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
             this.isSubmitting = false;
             this.loadOutstandingCheques();
             this.displayModal = false;
+            this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+
           },
           error: (error) => {
             console.error('Erreur lors du validation du chèque:', error);

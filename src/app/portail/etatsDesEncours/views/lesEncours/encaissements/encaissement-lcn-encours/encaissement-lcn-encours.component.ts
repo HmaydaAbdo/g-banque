@@ -27,6 +27,7 @@ import {
 import {LcnTransactionRequest} from "../../../../dtos/lcn/LcnTransactionRequest";
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {EncoursLcnResponse} from "../../../../../LCN/dtos/EncoursLcnResponse";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-encaissement-lcn-encours',
@@ -94,6 +95,7 @@ export class EncaissementLcnEncoursComponent implements OnInit {
     private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
     private rapprochementService: ValidationService,
+    private bankStateService: BankStateService
   ) {
   }
 
@@ -246,6 +248,7 @@ export class EncaissementLcnEncoursComponent implements OnInit {
             this.isSubmitting = false;
             this.loadOutstandingLcns();
             this.displayModal = false;
+            this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
           },
           error: (error) => {
             console.error('Erreur lors du validation du LCN:', error);

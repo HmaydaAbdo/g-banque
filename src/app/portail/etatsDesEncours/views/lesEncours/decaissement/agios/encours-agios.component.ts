@@ -24,6 +24,7 @@ import {EncoursAgiosDto} from "../../../../../agios/dtos/EncoursAgiosDto";
 import {AgiosValidationRequest} from "../../../../dtos/agios/agios-validation-request.dto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-encours-agios',
@@ -87,6 +88,8 @@ export class EncoursAgiosComponent implements OnInit,OnDestroy {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private rapprochementService: ValidationService,
+    private bankStateService: BankStateService
+
   ) {}
 
 
@@ -288,6 +291,8 @@ export class EncoursAgiosComponent implements OnInit,OnDestroy {
         this.displayModal = false;
         this.isSubmitting = false;
         this.table.reset();
+        this.bankStateService.refreshBankInfo(this.banqueId as number);
+
       },
       error: () => {
         this.messageService.add({

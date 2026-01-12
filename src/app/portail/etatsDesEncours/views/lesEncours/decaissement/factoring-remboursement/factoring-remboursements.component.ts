@@ -25,6 +25,7 @@ import {FactoringTransactionRequest} from "../../../../dtos/factoring/FactoringT
 import {EncoursFactoringSearchDto} from "../../../../../factoring/dtos/EncoursFactoringSearchDto";
 import {EncoursFactoringDto} from "../../../../../factoring/dtos/EncoursFactoringDto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-factoring-remboursements',
@@ -88,7 +89,9 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe,
-    private route: ActivatedRoute // Inject ActivatedRoute
+    private route: ActivatedRoute ,
+    private bankStateService: BankStateService
+
   ) {}
 
   ngOnInit(): void {
@@ -249,6 +252,8 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
             this.dt?.reset();
             this.isSubmitting = false;
             this.displayModal = false;
+            this.bankStateService.refreshBankInfo(this.banqueId);
+
           },
           error: (error) => {
             console.error('Erreur lors du validation du factoring:', error);

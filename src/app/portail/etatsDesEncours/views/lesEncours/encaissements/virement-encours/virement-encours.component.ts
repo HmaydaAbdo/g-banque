@@ -28,6 +28,7 @@ import {DropdownModule} from "primeng/dropdown";
 import {InputNumberModule} from "primeng/inputnumber";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 
 @Component({
@@ -92,7 +93,9 @@ export class VirementEncaissementEncoursComponent implements OnInit {
     private rapprochementService: ValidationService,
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
+    private bankStateService: BankStateService
   ) {
+
   }
 
   ngOnInit(): void {
@@ -241,6 +244,7 @@ export class VirementEncaissementEncoursComponent implements OnInit {
             this.isSubmitting = false;
             this.loadOutstandingVirements();
             this.displayModal = false;
+            this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
           },
           error: (error) => {
             console.error('Erreur lors du validation du virement:', error);

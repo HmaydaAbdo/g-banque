@@ -27,6 +27,7 @@ import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {DropdownModule} from "primeng/dropdown";
 import {InputNumberModule} from "primeng/inputnumber";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-cheques-encours',
@@ -91,8 +92,10 @@ export class ChequesEncoursComponent implements OnInit {
     private messageService: MessageService,
     private ConfirmationService:ConfirmationService,
     private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe
-  ) {}
+    private decimalPipe: DecimalPipe,
+  private bankStateService: BankStateService
+
+) {}
 
   ngOnInit(): void {
     this.route.parent!.paramMap.subscribe((params) => {
@@ -237,6 +240,8 @@ export class ChequesEncoursComponent implements OnInit {
             this.isSubmitting = false;
             this.loadOutstandingCheques();
             this.displayModal = false;
+            this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+
           },
           error: (error) => {
             console.error('Erreur lors du validation du chèque:', error);

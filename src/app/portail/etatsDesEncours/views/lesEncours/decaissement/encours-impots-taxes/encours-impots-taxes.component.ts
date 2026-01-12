@@ -25,6 +25,7 @@ import {Motif, MotifLabels} from "../../../../../impotEtTaxes/dtos/Motif";
 import {ImpotEtTaxeService} from "../../../../../impotEtTaxes/service/ImpotEtTaxeService";
 import {ValidationService} from "../../../../services/validation/validation.service";
 import {ImpotEtTaxeValidationRequest} from "../../../../dtos/impotsEtTaxes/ImpotEtTaxeValidationRequest";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-encours-impots-taxes',
@@ -91,6 +92,7 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private fb: FormBuilder,
     private rapprochementService: ValidationService,
+    private bankStateService: BankStateService
   ) {}
 
   ngOnInit(): void {
@@ -282,6 +284,7 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
           this.isSubmitting = false;
           this.displayModal = false;
           this.table.reset();
+          this.bankStateService.refreshBankInfo(this.banqueId as number);
         },
         error: () => {
           this.messageService.add({

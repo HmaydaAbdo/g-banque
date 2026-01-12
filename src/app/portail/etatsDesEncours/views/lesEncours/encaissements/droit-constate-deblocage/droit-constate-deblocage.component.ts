@@ -23,6 +23,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EncoursDroitConstateSearchDto } from "../../../../../droitsConstate/dtos/EncoursDroitConstateSearchDto";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 
 @Component({
@@ -86,7 +87,8 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
     private decimalPipe: DecimalPipe,
     private rapprochementService: ValidationService,
     private fb: FormBuilder,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private bankStateService: BankStateService
   ) {}
 
   ngOnInit(): void {
@@ -258,6 +260,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
           this.isSubmitting = false;
           this.dt?.reset();
           this.displayModal = false;
+          this.bankStateService.refreshBankInfo(this.banqueId);
         },
         error: (error) => {
           console.error('Erreur lors du validation du droit constaté:', error);

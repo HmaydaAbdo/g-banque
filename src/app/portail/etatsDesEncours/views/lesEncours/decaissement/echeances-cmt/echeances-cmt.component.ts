@@ -29,6 +29,7 @@ import {TransactionSource} from "../../../../../transactions/dtos/TransactionSou
 import {CmtTransactionRequest} from "../../../../dtos/cmt/CmtTransactionRequest";
 import {EcheanceCMTResponseDto} from "../../../../../cmt/dtos/EcheanceCMTResponseDto";
 import { InputTextModule } from 'primeng/inputtext';
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 
 @Component({
@@ -95,7 +96,9 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     private rapprochementService: ValidationService,
     private confirmationService: ConfirmationService,
     private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe
+    private decimalPipe: DecimalPipe,
+    private bankStateService: BankStateService
+
   ) { }
 
   ngOnInit(): void {
@@ -306,6 +309,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
             });
             this.onSearch();
             this.isSubmitting = false;
+            this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+
           },
           error: (error) => {
             console.error('Erreur lors du validation CMT:', error);

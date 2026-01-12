@@ -25,6 +25,7 @@ import { CalendarModule } from "primeng/calendar";
 import {ActivatedRoute, RouterLink} from '@angular/router';
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 
 
 @Component({
@@ -89,7 +90,9 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
     private datePipe: DatePipe,
     private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private bankStateService: BankStateService
+
   ) {}
 
   ngOnInit(): void {
@@ -262,6 +265,8 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
             this.dt?.reset();
             this.isSubmitting = false;
             this.displayModal = false;
+            this.bankStateService.refreshBankInfo(this.banqueId);
+
           },
           error: (error) => {
             console.error('Erreur lors du validation du droit constaté:', error);
