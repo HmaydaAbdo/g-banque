@@ -127,7 +127,7 @@
              styleClass="p-datatable-gridlines text-xs"
     >
       <ng-template pTemplate="header">
-        <tr>
+        <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
@@ -141,7 +141,7 @@
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-virement>
-        <tr>
+        <tr >
           <td>{{ virement.id }}</td>
           <td>{{ virement.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ virement.beneficiaire }}</td>
@@ -151,7 +151,7 @@
           <td>{{ virement.type }}</td>
           <td><p-tag [value]="virement.active ? 'Encours' : 'Archivé'" [severity]="virement.active ? 'success' : 'danger'"></p-tag></td>
 
-          <td class="flex flex-row align-content-center justify-content-center gap-2 flex-wrap">
+          <td class="flex flex-row align-content-center justify-content-center gap-2 ">
             <p-inputSwitch [ngModel]="virement.active" class="py-2" (onChange)="confirmToggleStatus(virement)"></p-inputSwitch>
             @if (isAdmin){
               <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteVirement(virement)"></button>

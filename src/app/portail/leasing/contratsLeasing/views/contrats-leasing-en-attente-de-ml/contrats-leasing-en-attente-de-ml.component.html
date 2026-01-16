@@ -121,8 +121,7 @@
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines text-xs white-space-nowrap"
       [globalFilterFields]="['numeroContrat', 'immobilisation', 'typeContrat', 'nomBanqueDePrelevement', 'nomOrganismeLeasing']"
-      (onRowSelect)="onRowSelect($event)"
-      [selectionMode]="'single'">
+      >
 
       <ng-template pTemplate="header">
         <tr>
@@ -185,6 +184,15 @@
           </td>
           <td class="flex flex-row justify-content-between gap-2">
             <p-button
+              icon="pi pi-table"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              [rounded]="true"
+              pTooltip="Tableau d'Amortissement"
+              (onClick)="viewAmortizationTable(contrat.id)">
+            </p-button>
+            <p-button
               icon="pi pi-file-pdf"
               severity="secondary"
               [outlined]="true"
@@ -192,15 +200,6 @@
               [rounded]="true"
               pTooltip="Contrat PDF"
               (onClick)="openPdfDialog(contrat)">
-            </p-button>
-            <p-button
-              icon="pi pi-eye"
-              severity="secondary"
-              [outlined]="true"
-              size="small"
-              [rounded]="true"
-              pTooltip="Tableau d'Amortissement"
-              (onClick)="viewAmortizationTable(contrat.id)">
             </p-button>
             <p-button
               icon="pi pi-ban"

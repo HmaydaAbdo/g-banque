@@ -66,7 +66,7 @@
     </div>
 
     <div class="flex flex-column gap-2 flex-1" style="min-width: 180px;">
-      <label for="nomBanque">Banque</label>
+      <label for="nomBanque">Banque d'encaissement</label>
       <p-dropdown id="nomBanque"
                   [options]="banqueOptions"
                   formControlName="nomBanque"
@@ -114,10 +114,10 @@
              dataKey="numero"
              currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} chèques"
              [showCurrentPageReport]="true"
-             styleClass="p-datatable-gridlines text-xs"
+             styleClass="p-datatable-gridlines text-xs "
     >
       <ng-template pTemplate="header">
-        <tr>
+        <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="numero">numero <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
@@ -125,7 +125,7 @@
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
           <th pSortableColumn="emetteur">Emetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
-          <th pSortableColumn="nomBanque">Banque <p-sortIcon field="nomBanque"></p-sortIcon></th>
+          <th pSortableColumn="nomBanque">Banque d'encaissement<p-sortIcon field="nomBanque"></p-sortIcon></th>
           <th >Statut</th>
           <th >Action</th>
         </tr>
@@ -141,11 +141,11 @@
           <td>{{ cheque.beneficiaire }}</td>
           <td>{{ cheque.nomBanque }}</td>
           <td><p-tag [value]="cheque.active ? 'Encours' : 'Archivé'" [severity]="cheque.active ? 'success' : 'danger'"></p-tag></td>
-          <td>
+          <td class="flex flex-row gap-1">
             <p-inputSwitch [ngModel]="cheque.active" class="p-2" (onChange)="confirmToggleStatus(cheque)"></p-inputSwitch>
-            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-secondary mr-2" [routerLink]="['/portail/Cheques/edit', cheque.id]"></button>
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-primary mr-2" [routerLink]="['/portail/Cheques/edit', cheque.id]"></button>
             @if (isAdmin){
-              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteCheque(cheque)"></button>
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteCheque(cheque)"></button>
             }
           </td>
 

@@ -1,3 +1,4 @@
+import {Devise} from "../../comptes-bancaire/enums/Devise";
 
 export interface RecapitulatifCompte {
   bankId: number;
@@ -6,4 +7,5 @@ export interface RecapitulatifCompte {
   soldeActuelle: number;
   soldeDepart:number
   plafondFC?: number;
+  devise:Devise
 }
