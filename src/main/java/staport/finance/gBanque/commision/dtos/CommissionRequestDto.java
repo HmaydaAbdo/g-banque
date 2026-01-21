@@ -77,4 +77,16 @@ public class CommissionRequestDto {
     public void setObservation(String observation) {
         this.observation = observation;
     }
+
+    @Override
+    public String toString() {
+        return "CommissionRequestDto{" +
+                "libelle='" + libelle + '\'' +
+                ", observation='" + observation + '\'' +
+                ", montant=" + montant +
+                ", banqueId=" + banqueId +
+                ", operation=" + operation +
+                ", dateEmission=" + dateEmission +
+                '}';
+    }
 }

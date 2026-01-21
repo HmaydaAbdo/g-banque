@@ -216,19 +216,48 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
      * @param id The ID of the contract to delete.
      * @throws ResourceNotFoundException If no contract exists with the given ID.
      */
+    /**
+     * Supprime un contrat de leasing ainsi que toutes ses données associées (échéances et commissions).
+     * La suppression est bloquée si le contrat contient des échéances déjà payées.
+     *
+     * @param id L'ID du contrat à supprimer
+     * @throws ResourceNotFoundException Si le contrat n'existe pas
+     * @throws ValidationException Si le contrat contient des échéances payées
+     */
     @Override
     @Transactional
-    public void deleteContratLeasing(Long id) throws ResourceNotFoundException {
+    public void deleteContratLeasing(Long id) throws ResourceNotFoundException, ValidationException {
         log.info("Début de la suppression du contrat de leasing avec l'ID : {} dans la couche service", id);
 
-        if (!contratLeasingRepository.existsById(id)) {
-            log.error("Contrat de leasing non trouvé avec l'ID : {}", id);
-            throw new ResourceNotFoundException("ContratLeasing with ID " + id + " not found.");
+        // 1. Récupérer le contrat
+        ContratLeasing contrat = contratLeasingRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Contrat de leasing non trouvé avec l'ID : {}", id);
+                    return new ResourceNotFoundException("ContratLeasing with ID " + id + " not found.");
+                });
+
+        log.debug("Contrat trouvé : {}", contrat.getNumeroContrat());
+
+        // 2. Vérifier s'il y a des échéances payées (protection métier)
+        boolean hasPaidEcheances = echeanceLeasingService.hasPaidEcheances(id);
+        if (hasPaidEcheances) {
+            log.error("Tentative de suppression d'un contrat avec échéances payées : ID {}", id);
+            throw new ValidationException(
+                    "Impossible de supprimer le contrat avec l'ID " + id +
+                            " car il contient des échéances déjà payées. " +
+                            "Veuillez le marquer comme inactif au lieu de le supprimer."
+            );
         }
 
+        // 3. Supprimer les échéances et commissions
+        log.debug("Suppression des échéances et commissions pour le contrat ID : {}", id);
+        echeanceLeasingService.deleteEcheancesAndCommissionByContrat(contrat);
+
+        // 4. Supprimer le contrat
+        log.debug("Suppression du contrat ID : {}", id);
         contratLeasingRepository.deleteById(id);
 
-        log.info("Contrat de leasing supprimé avec succès avec l'ID : {}", id);
+        log.info("Contrat de leasing et toutes les données associées supprimés avec succès pour l'ID : {}", id);
     }
 
 

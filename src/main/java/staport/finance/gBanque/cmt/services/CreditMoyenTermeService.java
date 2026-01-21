@@ -167,30 +167,53 @@ public class CreditMoyenTermeService {
         return creditMoyenTermeMapper.toResponseDto(updatedCredit);
     }
 
+    /**
+     * Supprime un crédit à moyen terme ainsi que toutes ses échéances associées.
+     * La suppression est bloquée si le crédit contient des échéances déjà payées.
+     *
+     * @param id L'ID du crédit à supprimer
+     * @return Un DTO de confirmation de suppression
+     * @throws ResourceNotFoundException Si le crédit n'existe pas
+     * @throws ValidationException Si le crédit contient des échéances payées
+     */
     @Transactional
     public DeleteResponceDto delete(Long id) {
-        log.warn("Tentative de suppression du crédit CMT - ID: {}", id);
+        log.info("Début de la suppression du crédit CMT avec l'ID : {}", id);
 
+        // 1. Récupérer le crédit
         CreditMoyenTerme credit = creditMoyenTermeRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Crédit CMT introuvable lors de la suppression - ID: {}", id);
                     return new ResourceNotFoundException("Credit moyen terme introuvable avec l'ID : " + id);
                 });
 
-        log.debug("Vérification des échéances payées pour le crédit ID: {}", id);
+        log.debug("Crédit trouvé : {} - ID: {}", credit.getDesignation(), credit.getId());
 
+        // 2. Vérifier s'il y a des échéances payées (protection métier)
+        log.debug("Vérification des échéances payées pour le crédit ID: {}", id);
         if (echeanceCmtService.hasPaidEcheances(id)) {
             log.error("Tentative de suppression d'un crédit avec échéances payées - ID: {}", id);
-            throw new ValidationException("Impossible de supprimer le crédit car certaines de ses échéances ont déjà été payées.");
+            throw new ValidationException(
+                    "Impossible de supprimer le crédit avec l'ID " + id +
+                            " car certaines de ses échéances ont déjà été payées. " +
+                            "Veuillez l'archiver au lieu de le supprimer."
+            );
         }
 
-        log.info("Suppression du crédit CMT - ID: {}, Désignation: {}", credit.getId(), credit.getDesignation());
+        // 3. Supprimer les échéances associées
+        log.debug("Suppression des échéances pour le crédit ID: {}", id);
+        int echeancesDeleted = echeanceCmtService.deleteEcheancesByCreditMoyenTerme(credit);
+        log.info("{} échéance(s) supprimée(s) pour le crédit CMT ID: {}", echeancesDeleted, id);
+
+        // 4. Supprimer le crédit
+        log.debug("Suppression du crédit CMT ID: {}", id);
         creditMoyenTermeRepository.delete(credit);
 
-        log.info("Crédit CMT supprimé avec succès - ID: {}", id);
-        return new DeleteResponceDto("Credit moyen terme deleted");
-    }
+        log.info("Crédit CMT et toutes ses échéances supprimés avec succès - ID: {}, Désignation: {}",
+                id, credit.getDesignation());
 
+        return new DeleteResponceDto("Credit moyen terme deleted successfully");
+    }
     @Transactional
     public CreditMoyenTermeResponseDto markAsArchived(Long id) {
         log.info("Tentative d'archivage du crédit CMT - ID: {}", id);

@@ -312,4 +312,31 @@ public class EcheanceCMTService {
     }
 
 
+    /**
+     * Supprime toutes les échéances d'un crédit à moyen terme.
+     * Utilisé lors de la suppression complète d'un crédit CMT.
+     *
+     * @param credit Le crédit dont les échéances doivent être supprimées
+     * @return Le nombre d'échéances supprimées
+     */
+    @Transactional
+    public int deleteEcheancesByCreditMoyenTerme(CreditMoyenTerme credit) {
+        log.info("Suppression de toutes les échéances pour le crédit CMT ID : {}", credit.getId());
+        log.debug("Crédit concerné : {}", credit.getDesignation());
+
+        // Récupérer le nombre d'échéances avant suppression
+        List<EcheanceCMT> echeances = echeanceCmtRepository.findByCreditMoyenTerme(credit);
+        int nombreEcheances = echeances.size();
+
+        log.debug("Nombre d'échéances à supprimer : {}", nombreEcheances);
+
+        // Supprimer toutes les échéances
+        echeanceCmtRepository.deleteByCreditMoyenTerme(credit);
+
+        log.info("{} échéance(s) supprimée(s) pour le crédit CMT ID : {}", nombreEcheances, credit.getId());
+
+        return nombreEcheances;
+    }
+
+
 }

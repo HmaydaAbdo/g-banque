@@ -1,5 +1,7 @@
 package staport.finance.gBanque.Bank.dtos;
 
+import staport.finance.gBanque.Bank.enums.Devise;
+
 import java.math.BigDecimal;
 
 public class BankAcceuilResponse {
@@ -9,6 +11,7 @@ public class BankAcceuilResponse {
     private BigDecimal soldeActuelle;
     private BigDecimal soldeDepart;
     private BigDecimal plafondFC;
+    private Devise devise;
 
     public Long getBankId() {
         return bankId;
@@ -52,6 +55,12 @@ public class BankAcceuilResponse {
     public void setSoldeDepart(BigDecimal soldeDepart) {
         this.soldeDepart = soldeDepart;
     }
+    public Devise getDevise() {
+        return devise;
+    }
+    public void setDevise(Devise devise) {
+        this.devise = devise;
+    }
 
     @Override
     public String toString() {
@@ -62,6 +71,7 @@ public class BankAcceuilResponse {
                 ", soldeActuelle=" + soldeActuelle +
                 ", soldeDepart=" + soldeDepart +
                 ", plafondFC=" + plafondFC +
+                ", devise=" + devise +
                 '}';
     }
 }

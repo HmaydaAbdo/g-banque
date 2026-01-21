@@ -1,89 +1,166 @@
 package staport.finance.gBanque.commision.config;
 
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Configuration des commissions de leasing par banque.
- * Les valeurs sont chargées depuis application.yml : commission.leasing
- * Structure YAML attendue :
+ * Configuration des commissions de leasing avec gestion des règles spécifiques par banque/organisme.
+ *
+ * Exemple de configuration YAML :
  * commission:
  *   leasing:
- *     CIH: 11
- *     BMCI: 16.5
- *     SGMB: 11
+ *     default-commissions:
+ *       CIH: 11
+ *       SGMB: 11
+ *     organisme-rules:
+ *       BMCI:
+ *         organisme-name: "BMCI Leasing"
+ *         commission-if-match: 16.5
+ *         commission-if-not-match: 55
  */
-@Configuration
-@ConfigurationProperties(prefix = "commission")
+@Component
+@ConfigurationProperties(prefix = "commission.leasing")
 public class CommissionLeasingConfig {
 
-    /**
-     * Map des commissions de leasing par nom de banque
-     * Clé: nom de la banque (CIH, BMCI, SGMB)
-     * Valeur: montant de la commission en DH
-     */
-    private Map<String, BigDecimal> leasing = new HashMap<>();
+    private static final Logger log = LoggerFactory.getLogger(CommissionLeasingConfig.class);
 
-    /**
-     * Retourne toutes les commissions de leasing configurées
-     */
-    public Map<String, BigDecimal> getLeasing() {
-        return leasing;
+    private Map<String, BigDecimal> defaultCommissions = new HashMap<>();
+    private Map<String, OrganismeRule> organismeRules = new HashMap<>();
+
+    // ========== GETTERS ET SETTERS OBLIGATOIRES ==========
+
+    public Map<String, BigDecimal> getDefaultCommissions() {
+        return defaultCommissions;
+    }
+
+    public void setDefaultCommissions(Map<String, BigDecimal> defaultCommissions) {
+        this.defaultCommissions = defaultCommissions;
+    }
+
+    public Map<String, OrganismeRule> getOrganismeRules() {
+        return organismeRules;
+    }
+
+    public void setOrganismeRules(Map<String, OrganismeRule> organismeRules) {
+        this.organismeRules = organismeRules;
     }
 
     /**
-     * Définit les commissions de leasing (utilisé par Spring Boot)
-     */
-    public void setLeasing(Map<String, BigDecimal> leasing) {
-        this.leasing = leasing;
-    }
-
-    /**
-     * Récupère la commission pour une banque spécifique
+     * Récupère le montant de la commission en fonction de la banque et de l'organisme.
+     * Logique de résolution :
+     * 1. Si une règle conditionnelle existe pour la banque (organismeRules)
+     *    - Compare le nom de l'organisme avec celui de la règle
+     *    - Retourne commissionIfMatch si correspondance
+     *    - Retourne commissionIfNotMatch sinon
+     * 2. Sinon, cherche dans les commissions par défaut (defaultCommissions)
      *
-     * @param nomBanque Le nom de la banque (CIH, BMCI, SGMB)
-     * @return Le montant de commission en DH, ou null si non trouvé
+     * @param nomBanque Nom de la banque de prélèvement
+     * @param nomOrganisme Nom de l'organisme de leasing
+     * @return Le montant de la commission, ou null si aucune commission n'est configurée
      */
-    public BigDecimal getCommission(String nomBanque) {
-        return leasing.get(nomBanque);
+    public BigDecimal getCommission(String nomBanque, String nomOrganisme) {
+        if (nomBanque == null) {
+            log.warn("Tentative de récupération de commission avec nomBanque null");
+            return null;
+        }
+
+        log.debug("Recherche de commission pour Banque: {}, Organisme: {}", nomBanque, nomOrganisme);
+
+        // Vérifier si une règle spécifique existe pour cette banque
+        OrganismeRule rule = organismeRules.get(nomBanque);
+        if (rule != null) {
+            log.debug("Règle conditionnelle trouvée pour la banque: {}", nomBanque);
+
+            // Si l'organisme correspond à la règle spécifique
+            if (nomOrganisme != null && nomOrganisme.equalsIgnoreCase(rule.getOrganismeName())) {
+                log.debug("Organisme '{}' correspond à la règle. Commission: {}",
+                        nomOrganisme, rule.getCommissionIfMatch());
+                return rule.getCommissionIfMatch();
+            }
+
+            // Sinon, utiliser la commission par défaut de la règle
+            log.debug("Organisme '{}' ne correspond pas à '{}'. Commission: {}",
+                    nomOrganisme, rule.getOrganismeName(), rule.getCommissionIfNotMatch());
+            return rule.getCommissionIfNotMatch();
+        }
+
+        // Pas de règle spécifique, utiliser la commission par défaut
+        BigDecimal commission = defaultCommissions.get(nomBanque);
+        if (commission != null) {
+            log.debug("Commission par défaut trouvée pour {}: {}", nomBanque, commission);
+        } else {
+            log.debug("Aucune commission configurée pour la banque: {}", nomBanque);
+        }
+
+        return commission;
     }
 
     /**
-     * Récupère la commission pour une banque, avec une valeur par défaut
+     * Vérifie si une commission est configurée pour une banque donnée
      *
-     * @param nomBanque Le nom de la banque
-     * @param defaultValue Valeur par défaut si la banque n'est pas trouvée
-     * @return Le montant de commission en DH
-     */
-    public BigDecimal getCommissionOrDefault(String nomBanque, BigDecimal defaultValue) {
-        return leasing.getOrDefault(nomBanque, defaultValue);
-    }
-
-    /**
-     * Vérifie si une commission existe pour une banque
-     *
-     * @param nomBanque Le nom de la banque
-     * @return true si la commission existe
+     * @param nomBanque Nom de la banque
+     * @return true si une commission existe (règle ou défaut), false sinon
      */
     public boolean hasCommission(String nomBanque) {
-        return leasing.containsKey(nomBanque);
+        boolean hasDefault = defaultCommissions.containsKey(nomBanque);
+        boolean hasRule = organismeRules.containsKey(nomBanque);
+
+        log.debug("Vérification commission pour {}: hasDefault={}, hasRule={}",
+                nomBanque, hasDefault, hasRule);
+
+        //LOG AJOUTÉ POUR DEBUG
+        log.debug("  → defaultCommissions keys: {}", defaultCommissions.keySet());
+        log.debug("  → organismeRules keys: {}", organismeRules.keySet());
+
+        return hasDefault || hasRule;
     }
 
     /**
-     * Retourne toutes les banques configurées
+     * Classe interne représentant une règle conditionnelle basée sur l'organisme
      */
-    public java.util.Set<String> getBanquesConfigurees() {
-        return leasing.keySet();
-    }
+    public static class OrganismeRule {
+        private String organismeName;           // Nom de l'organisme à matcher
+        private BigDecimal commissionIfMatch;    // Commission si l'organisme correspond
+        private BigDecimal commissionIfNotMatch; // Commission si l'organisme ne correspond pas
 
-    /**
-     * Retourne le Map complet des commissions (alias pour compatibilité)
-     */
-    public Map<String, BigDecimal> getCommissions() {
-        return leasing;
+        public String getOrganismeName() {
+            return organismeName;
+        }
+
+        public void setOrganismeName(String organismeName) {
+            this.organismeName = organismeName;
+        }
+
+        public BigDecimal getCommissionIfMatch() {
+            return commissionIfMatch;
+        }
+
+        public void setCommissionIfMatch(BigDecimal commissionIfMatch) {
+            this.commissionIfMatch = commissionIfMatch;
+        }
+
+        public BigDecimal getCommissionIfNotMatch() {
+            return commissionIfNotMatch;
+        }
+
+        public void setCommissionIfNotMatch(BigDecimal commissionIfNotMatch) {
+            this.commissionIfNotMatch = commissionIfNotMatch;
+        }
+
+        @Override
+        public String toString() {
+            return "OrganismeRule{" +
+                    "organismeName='" + organismeName + '\'' +
+                    ", commissionIfMatch=" + commissionIfMatch +
+                    ", commissionIfNotMatch=" + commissionIfNotMatch +
+                    '}';
+        }
     }
 }

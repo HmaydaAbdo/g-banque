@@ -114,7 +114,7 @@ public class BanqueMapper {
         response.setName(banque.getNom());
         response.setSoldeActuelle(banque.getSoldeActuel());
         response.setSoldeDepart(banque.getSoldeDepart());
-
+        response.setDevise(banque.getDevise());
         // Convert logo byte[] to Base64 String
         response.setLogoBase64(bytesToBase64(banque.getLogoData()));
 

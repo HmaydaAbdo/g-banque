@@ -116,9 +116,17 @@
         enabled: true
   commission:
     leasing:
-      CIH: 11
-      BMCI: 16.5
-      SGMB: 11
+      # Commissions par défaut pour les banques sans règles spéciales
+      default-commissions:
+        CIH: 11
+        SGMB: 11
+
+      # Règles conditionnelles basées sur l'organisme de leasing
+      organisme-rules:
+        BMCI:
+          organisme-name: "BMCI LEASING"
+          commission-if-match: 16.5
+          commission-if-not-match: 55
 
 
 

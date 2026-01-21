@@ -86,5 +86,15 @@ public class CommissionController {
         EncoursCommissionDto result = commissionService.getOutstandingCommissions(searchDto, pageable);
         return ResponseEntity.ok(result);
     }
+
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<Void> toggleCommissionStatus(@PathVariable Long id) {
+        log.info("REST request pour basculer le statut de la commission avec l'id={}", id);
+        commissionService.toggleCommisionStatus(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+
 }
 

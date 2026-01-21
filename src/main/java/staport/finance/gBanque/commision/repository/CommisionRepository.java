@@ -11,5 +11,6 @@ import java.util.List;
 @Repository
 public interface CommisionRepository extends JpaRepository<Commission, Long> , JpaSpecificationExecutor<Commission> {
     List<Commission> findByLibelleLikeAndDateEmission(String libellePattern, OffsetDateTime dateEmission);
+    List<Commission> findByLibelleLike(String libellePattern);
 
 }

@@ -15,9 +15,10 @@ import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.mapper.CommissionMapper;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.List;
 
 
@@ -154,13 +155,63 @@ public class CommissionService {
         return result;
     }
 
-    @Transactional
-    public void deleteCommissionsByLibellePattern(String libellePattern, OffsetDateTime dateEmission) {
-        List<Commission> commissions = commissionRepository.findByLibelleLikeAndDateEmission(
-                libellePattern, dateEmission);
 
-        if (!commissions.isEmpty()) {
-            commissionRepository.deleteAll(commissions);
+    /**
+     * Supprime toutes les commissions liées à un contrat de leasing.
+     * Utilise le numéro de contrat pour identifier les commissions via leur libellé.
+     *
+     * @param numeroContrat Le numéro du contrat de leasing
+     */
+    @Transactional
+    public void deleteCommissionsByContratLeasing(String numeroContrat) {
+        log.info("Début de la suppression des commissions pour le contrat N° : {}", numeroContrat);
+
+        if (numeroContrat == null || numeroContrat.trim().isEmpty()) {
+            log.warn("Tentative de suppression de commissions avec un numéro de contrat vide");
+            return;
         }
+
+        // Pattern de recherche : toutes les commissions dont le libellé contient le numéro du contrat
+        String libellePattern = "Commission Prelevement Leasing contrat N°" + numeroContrat + "%";
+
+        log.debug("Pattern de recherche : {}", libellePattern);
+
+        // Rechercher toutes les commissions correspondantes (sans filtre de date)
+        List<Commission> commissions = commissionRepository.findByLibelleLike(libellePattern);
+
+        if (commissions.isEmpty()) {
+            log.info("Aucune commission trouvée pour le contrat N° : {}", numeroContrat);
+            return;
+        }
+
+        int nombreCommissions = commissions.size();
+        log.debug("Nombre de commissions trouvées : {}", nombreCommissions);
+
+        // Supprimer toutes les commissions
+        commissionRepository.deleteAll(commissions);
+
+        log.info("Suppression terminée : {} commission(s) supprimée(s) pour le contrat N° : {}",
+                nombreCommissions, numeroContrat);
+
     }
+
+    @Transactional
+    public void toggleCommisionStatus(Long commissionId) {
+
+        Commission commission = commissionRepository.findById(commissionId)
+                .orElseThrow(() -> {
+                    log.error("Commission avec l'id {} introuvable", commissionId);
+                    return new ResourceNotFoundException(
+                            "Commission avec l'id " + commissionId + " introuvable"
+                    );
+                });
+
+        log.info("Commission avec l'id {} trouvée. Statut actuel : {}", commissionId, commission.getStatus());
+        commission.setStatus(commission.getStatus() == Status.PAYE ? Status.PREVU : Status.PAYE);
+
+        log.info("Statut de la commission avec l'id {} mis à jour. Nouveau statut : {}", commissionId, commission.getStatus());
+
+        commissionRepository.save(commission);
+    }
+
 }
