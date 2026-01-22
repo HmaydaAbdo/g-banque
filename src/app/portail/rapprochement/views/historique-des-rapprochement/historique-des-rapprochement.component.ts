@@ -20,6 +20,7 @@ import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {RapprochementSearchDto} from "../../dtos/RapprochementSearchDto";
 import {PageResponse} from "../../../global/types/PageResponse";
 import {throwError} from "rxjs";
+import {ToolbarModule} from "primeng/toolbar";
 
 
 
@@ -38,7 +39,8 @@ import {throwError} from "rxjs";
     TagModule,
     TooltipModule,
     BreadcrumbModule,
-    DropdownModule
+    DropdownModule,
+    ToolbarModule
   ],
   templateUrl: './historique-des-rapprochement.component.html',
   styleUrls: ['./historique-des-rapprochement.component.scss'],

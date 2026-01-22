@@ -1,166 +1,142 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
+<div class=" flex flex-column gap-2 p-2 w-screen h-screen overflow-y-scroll">
 
-<div class="card flex flex-column gap-4 p-2 md:p-4 w-screen h-screen overflow-y-auto">
+  <div class="portail-section flex justify-content-between">
 
-  <div class="flex justify-content-center align-items-center bg-transparent gap-3">
-    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+  <p-breadcrumb [model]="items" class="bg-transparent">
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
-          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
             <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
           </a>
 
-        </ng-container>
         <ng-template #elseBlock>
-          <a [href]="item.url">
-            <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-          </a>
+          <span class="text-color text-sm md:text-xl font-medium">{{ item.label }}</span>
         </ng-template>
       </ng-template>
     </p-breadcrumb>
   </div>
+  <p-toolbar styleClass="bg-white py-2 px-3 border-round-sm shadow-1">
+    <ng-template pTemplate="left">
+      <form [formGroup]="searchForm" class="flex flex-wrap gap-2 align-items-center">
 
-  <form [formGroup]="searchForm" class="flex justify-content-around flex-wrap gap-3">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" formControlName="libelle"
+                 placeholder="Libellé..." class="p-inputtext-sm" style="width: 180px" />
+        </span>
 
-    <div>
-      <span class="p-input-icon-left w-full">
-        <i class="pi pi-search"></i>
-        <input pInputText type="text"
-               formControlName="libelle"
-               placeholder="Rechercher par libellé..."
-               class="w-full" />
-      </span>
-    </div>
+        <p-dropdown [options]="banquesOptions" formControlName="banqueId"
+                    placeholder="Banque" [showClear]="true" [filter]="true"
+                    filterBy="label" appendTo="body" class="p-inputtext-sm"
+                    [style]="{'min-width': '180px'}">
+        </p-dropdown>
 
-    <div>
-      <p-dropdown
-        [options]="banquesOptions"
-        formControlName="banqueId"
-        placeholder="Banque de Prélèvement"
-        [showClear]="true"
-        appendTo="body"
-        class="w-full"
-      ></p-dropdown>
-    </div>
+        <p-multiSelect [options]="sourcesOptions"
+                       formControlName="transactionSources"
+                       display="chip"
+                       appendTo="body"
+                       placeholder="Sources des transactions"
+                       class="p-inputtext-sm"
+                       [style]="{'min-width': '200px'}">
+        </p-multiSelect>
 
-    <div>
-      <p-dropdown
-        [options]="transactionSources"
-        formControlName="transactionSource"
-        placeholder="Source de transaction"
-        [showClear]="true"
-        appendTo="body"
-        class="w-full"
-      ></p-dropdown>
-    </div>
+        <p-dropdown [options]="statutOptions" formControlName="isConfirmed"
+                    placeholder="Statut" [showClear]="true"
+                    appendTo="body" class="p-inputtext-sm"
+                    [style]="{'min-width': '140px'}">
+        </p-dropdown>
+      </form>
+    </ng-template>
 
+    <ng-template pTemplate="right">
+      <button pButton pRipple label="Effacer" icon="pi pi-filter-slash"
+              class="p-button-outlined p-button-secondary p-button-sm"
+              (click)="clearSearch()">
+      </button>
+    </ng-template>
+  </p-toolbar>
 
-    <div>
-      <p-button
-        label="Effacer"
-        icon="pi pi-times"
-        severity="secondary"
-        (onClick)="clearSearch()"
-        class="w-full"
-      ></p-button>
-    </div>
-  </form>
-
-  <div class="pb-8">
-    <p-table
-      #dt
-      [value]="transactions"
-      [paginator]="true"
-      [rows]="10"
-      [totalRecords]="totalRecords"
-      [loading]="loading"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      [lazy]="true"
-      (onLazyLoad)="loadTransactions($event)"
-      scrollHeight="flex"
-      columnResizeMode="expand"
-      [rowHover]="true"
-      dataKey="id"
-      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} transactions"
-      [showCurrentPageReport]="true"
-      styleClass="p-datatable-gridlines"
-      [selectionMode]="'single'">
+  <div class="pb-8 px-1">
+    <p-table #dt
+             [value]="transactions"
+             [paginator]="true"
+             [rows]="10"
+             [totalRecords]="totalRecords"
+             [loading]="loading"
+             [lazy]="true"
+             (onLazyLoad)="loadTransactions($event)"
+             [rowsPerPageOptions]="[10, 25, 50]"
+             styleClass="p-datatable-gridlines p-datatable-sm text-xs"
+             [responsiveLayout]="'scroll'"
+             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} transactions"
+             [showCurrentPageReport]="true"
+             [scrollable]="true"
+             scrollHeight="flex"
+             [rowHover]="true">
 
       <ng-template pTemplate="header">
-        <tr class="white-space-nowrap text-sm">
-          <th pSortableColumn="id" [style.width]="'4rem'">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
-          <th pSortableColumn="dateOperations">Date d'opération <p-sortIcon field="dateOperations"></p-sortIcon></th>
-          <th pSortableColumn="dateValeur">Date de valeur <p-sortIcon field="dateValeur"></p-sortIcon></th>
+        <tr class="white-space-nowrap">
+          <th >ID</th>
+          <th >Banque</th>
+          <th pSortableColumn="dateEmission" >Date émission<p-sortIcon field="dateEmission"></p-sortIcon></th>
+          <th pSortableColumn="dateOperations" >Date opération<p-sortIcon field="dateOperations"></p-sortIcon></th>
+          <th pSortableColumn="dateValeur" >Date valuer<p-sortIcon field="dateValeur"></p-sortIcon></th>
+          <th pSortableColumn="debit" >Débit <p-sortIcon field="debit"></p-sortIcon></th>
+          <th pSortableColumn="credit" >Crédit <p-sortIcon field="credit"></p-sortIcon></th>
+          <th >TVA Déductible</th>
+          <th >TVA Collectée</th>
+          <th >Source</th>
+          <th  class="text-center">Statut</th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
-          <th pSortableColumn="debit">Débit <p-sortIcon field="debit"></p-sortIcon></th>
-          <th pSortableColumn="credit">Crédit <p-sortIcon field="credit"></p-sortIcon></th>
-          <th pSortableColumn="tvaDeductible">TVA Déductible <p-sortIcon field="tvaDeductible"></p-sortIcon></th>
-          <th pSortableColumn="tvaCollectee">TVA Collectée <p-sortIcon field="tvaCollectee"></p-sortIcon></th>
-          <th pSortableColumn="observation">Observation <p-sortIcon field="observation"></p-sortIcon></th>
-          <th pSortableColumn="transactionSource">Source <p-sortIcon field="transactionSource"></p-sortIcon></th>
 
-          <th class="text-center" [style.width]="'8rem'">Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-transaction>
-        <tr class=" text-sm">
-          <td>{{ transaction.id }}</td>
+        <tr class="white-space-nowrap">
+          <td >{{ transaction.id }}</td>
+          <td>{{ transaction.banqueDePrelevementNom }}</td>
+          <td>{{ transaction.dateEmission ? (transaction.dateEmission | date:'dd/MM/yyyy') : '****' }}</td>
+          <td>{{ transaction.dateOperations ? (transaction.dateOperations | date:'dd/MM/yyyy') : '****' }}</td>
+          <td>{{ transaction.dateValeur ? (transaction.dateValeur | date:'dd/MM/yyyy') : '****' }}</td>
+          <td class="text-red-600">
+            {{ transaction.debit > 0 ? (transaction.debit | currency: 'MAD': '') : '-' }}
+          </td>
+          <td class="text-green-600">
+            {{ transaction.credit > 0 ? (transaction.credit | currency: 'MAD': '') : '-' }}
+          </td>
 
-          <td class="white-space-nowrap">{{ transaction.dateEmission | date:'dd/MM/yyyy' }}</td>
-          <td class="white-space-nowrap">{{ transaction.dateOperations | date:'dd/MM/yyyy' }}</td>
-          <td class="white-space-nowrap">{{ transaction.dateValeur | date:'dd/MM/yyyy' }}</td>
-          <td>{{ transaction.libelle }}</td>
-          <td class="white-space-nowrap font-bold text-red-600">
-            {{ transaction.debit === 0 ? '-' : (transaction.debit | currency: 'MAD': 'symbol': '1.2-2') }}
-          </td>
-          <td class="white-space-nowrap font-bold text-green-600">
-            {{ transaction.credit === 0 ? '-' : (transaction.credit | currency: 'MAD': 'symbol': '1.2-2') }}
-          </td>
-          <td class="white-space-nowrap">
-            {{ transaction.tvaDeductible !== null && transaction.tvaDeductible > 0 ? (transaction.tvaDeductible | currency: 'MAD': 'symbol': '1.2-2') : '-' }}
-          </td>
-          <td class="white-space-nowrap">
-            {{ transaction.tvaCollectee !== null && transaction.tvaCollectee > 0 ? (transaction.tvaCollectee | currency: 'MAD': 'symbol': '1.2-2') : '-' }}
-          </td>
-          <td >{{ transaction.observation }}</td>
+          <td class="text-red-600">{{transaction.tvaDeductible | number:'1.2-2'}}</td>
+          <td class="text-green-600">{{transaction.tvaCollectee | number:'1.2-2'}}</td>
 
-          <td><p-tag [value]="transaction.transactionSource" severity="info"></p-tag></td>
-          <td class="flex justify-content-center gap-2">
-            <button pButton
-                    icon="pi pi-pencil"
-                    class="p-button-rounded p-button-info p-button-text"
-                    [routerLink]="['/portail/transaction/edit', transaction.id]"
-                    pTooltip="Modifier"
-                    tooltipPosition="top">
-            </button>
-            <button pButton
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger p-button-text"
-                    (click)="confirmDeleteTransaction(transaction.id!)"
-                    pTooltip="Supprimer"
-                    tooltipPosition="top">
-            </button>
+          <td>{{transaction.transactionSource}}</td>
+
+
+          <td class="text-center">
+            <p-tag
+              [value]="transaction.confirmed  ? 'Rapproché' : 'En cours'"
+              [severity]="transaction.confirmed  ? 'success' : 'warning'">
+            </p-tag>
           </td>
+
+          <td class="white-space-normal" style="max-width: 8rem;" >
+            {{ transaction.libelle }}
+          </td>
+
+
+
+
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td colspan="12">Aucune transaction trouvée.</td>
+          <td colspan="9" class="text-center p-4">Aucune transaction trouvée.</td>
         </tr>
       </ng-template>
-
-      <ng-template pTemplate="loadingbody">
-        <tr>
-          <td colspan="12">Chargement des transactions. Veuillez patienter...</td>
-        </tr>
-      </ng-template>
-
     </p-table>
   </div>
 </div>

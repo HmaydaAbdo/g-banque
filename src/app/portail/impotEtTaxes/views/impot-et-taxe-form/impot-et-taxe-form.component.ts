@@ -20,6 +20,7 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
 import {Motif, MotifLabels} from "../../dtos/Motif";
 import {ImpotEtTaxeService} from "../../service/ImpotEtTaxeService";
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 @Component({
   selector: 'app-impot-et-taxe-form',
@@ -37,6 +38,7 @@ import {ImpotEtTaxeService} from "../../service/ImpotEtTaxeService";
     CalendarModule,
     BreadcrumbModule,
     TooltipModule,
+    InputTextareaModule,
   ],
   templateUrl: './impot-et-taxe-form.component.html',
   providers: [MessageService, ConfirmationService],

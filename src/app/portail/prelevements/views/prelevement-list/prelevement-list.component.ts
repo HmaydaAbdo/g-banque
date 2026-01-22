@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { MessageService, ConfirmationService, MenuItem } from 'primeng/api';
-import { CommonModule } from '@angular/common';
+import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
+import { CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
@@ -10,15 +10,20 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
+import { RouterLink } from '@angular/router';
+import { TagModule } from 'primeng/tag';
+import { ToolbarModule } from 'primeng/toolbar';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { InputTextModule } from 'primeng/inputtext';
+
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
 import { Status } from "../../../prefinancements/enums/Status";
 import { PageResponse } from "../../../global/types/PageResponse";
-import { InputTextModule } from "primeng/inputtext";
-import {PrelevementResponseDto} from "../../dtos/PrelevementResponseDto";
-import {PrelevementSearchDto} from "../../dtos/PrelevementSearchDto";
-import {PrelevementService} from "../../service/prelevement.service";
-
+import { PrelevementResponseDto } from "../../dtos/PrelevementResponseDto";
+import { PrelevementSearchDto } from "../../dtos/PrelevementSearchDto";
+import { PrelevementService } from "../../service/prelevement.service";
+import { AuthService } from "../../../../auth/services/auth.service";
 
 @Component({
   selector: 'app-prelevement-list',
@@ -34,7 +39,17 @@ import {PrelevementService} from "../../service/prelevement.service";
     ConfirmDialogModule,
     ToastModule,
     TooltipModule,
-    InputTextModule
+    RouterLink,
+    PrimeTemplate,
+    DatePipe,
+    DecimalPipe,
+    NgClass,
+    NgFor,
+    NgIf,
+    InputTextModule,
+    TagModule,
+    ToolbarModule,
+    InputSwitchModule
   ],
   templateUrl: './prelevement-list.component.html',
   styleUrl: './prelevement-list.component.scss',
@@ -65,7 +80,8 @@ export class PrelevementListComponent implements OnInit {
     private prelevementService: PrelevementService,
     private banqueService: BanqueService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -99,7 +115,7 @@ export class PrelevementListComponent implements OnInit {
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: 'Impossible de charger les prélèvements.' // Changement de message
+            detail: 'Impossible de charger les prélèvements.'
           });
           this.loading = false;
         }
@@ -121,7 +137,6 @@ export class PrelevementListComponent implements OnInit {
       });
   }
 
-
   loadStatusOptions() {
     this.statusOptions = Object.values(Status).map(s => ({
       label: s,
@@ -142,20 +157,81 @@ export class PrelevementListComponent implements OnInit {
     this.applyFilters();
   }
 
-  deletePrelevement(prelevement: PrelevementResponseDto) { // Changement: deleteAgios -> deletePrelevement
+  deletePrelevement(prelevement: PrelevementResponseDto) {
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer le prélèvement ?`, // Changement de message
+      message: `Êtes-vous sûr de vouloir supprimer le prélèvement "${prelevement.libelle}" ?`,
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.prelevementService.deletePrelevement(prelevement.id).subscribe({ // Changement de service
+        this.prelevementService.deletePrelevement(prelevement.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Prélèvement supprimé.' }); // Changement de message
-            this.loadPrelevements(this.table.createLazyLoadMetadata()); // Changement de méthode
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Prélèvement supprimé.'
+            });
+            this.loadPrelevements(this.table.createLazyLoadMetadata());
           },
           error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le prélèvement.' }); // Changement de message
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Impossible de supprimer le prélèvement.'
+            });
           }
         });
       }
     });
   }
+
+  /**
+   * Toggle le statut d'un prélèvement (PREVU <-> REALISE)
+   */
+  togglePrelevementStatus(prelevement: PrelevementResponseDto) {
+    const message = prelevement.status === Status.PAYE
+      ? 'Voulez-vous marquer ce prélèvement comme prévu ?'
+      : 'Voulez-vous marquer ce prélèvement comme payé ?';
+
+    this.confirmationService.confirm({
+      message: message,
+      header: 'Confirmation',
+      icon: 'pi pi-info-circle',
+      accept: () => {
+        this.prelevementService.toggleStatus(prelevement.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: `Statut modifié.`
+            });
+            this.loadPrelevements(this.table.createLazyLoadMetadata());
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Impossible de modifier le statut du prélèvement.'
+            });
+            this.loadPrelevements(this.table.createLazyLoadMetadata());
+          }
+        });
+      },
+      reject: () => {
+        this.loadPrelevements(this.table.createLazyLoadMetadata());
+      }
+    });
+  }
+
+  /**
+   * Retourne la couleur du tag en fonction du statut
+   */
+  getStatusSeverity(status: Status): 'success' | 'danger' | 'warning' | 'info' {
+    return status === Status.PAYE ? 'success' : 'danger';
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  protected readonly Status = Status;
 }

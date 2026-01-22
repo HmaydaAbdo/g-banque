@@ -112,7 +112,8 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       libelle: [''],
       transactionSources: [[]],
-      observation:['']
+      observation:[''],
+      montant: [null]
     });
 
     this.libelleControl = this.searchForm.get('libelle') as FormControl;
@@ -135,7 +136,7 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
     this.loading = true;
 
-    const { libelle, transactionSources ,observation} = this.searchForm.value;
+    const { libelle, transactionSources ,observation,montant} = this.searchForm.value;
     const page = event.first! / event.rows!;
     const size = event.rows!;
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
@@ -143,8 +144,9 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
     const searchDto: TransactionSearchDto = {
       libelle: libelle,
-      transactionSource: transactionSources,
-      observation:observation
+      transactionSources: transactionSources,
+      observation:observation,
+      montant: montant
     };
 
     this.transactionService.getTransactionsByBanque(this.banqueIdFromRoute, searchDto, page, size, sort)

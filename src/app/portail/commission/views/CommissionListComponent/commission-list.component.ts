@@ -1,27 +1,30 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
-import { CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { DropdownModule } from 'primeng/dropdown';
-import { ButtonModule } from 'primeng/button';
-import { RippleModule } from 'primeng/ripple';
-import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToastModule } from 'primeng/toast';
-import { TooltipModule } from 'primeng/tooltip';
-import { RouterLink } from '@angular/router';
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
+import {ConfirmationService, MenuItem, MessageService, PrimeTemplate} from 'primeng/api';
+import {CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {DropdownModule} from 'primeng/dropdown';
+import {ButtonModule} from 'primeng/button';
+import {RippleModule} from 'primeng/ripple';
+import {BreadcrumbModule} from 'primeng/breadcrumb';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {ToastModule} from 'primeng/toast';
+import {TooltipModule} from 'primeng/tooltip';
+import {RouterLink} from '@angular/router';
 
-import { CommissionService } from '../../service/commission.service';
-import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
-import { CommissionResponseDto } from '../../dtos/commission-response.dto';
-import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
+import {CommissionService} from '../../service/commission.service';
+import {BanqueService} from '../../../comptes-bancaire/services/BanqueService';
+import {CommissionResponseDto} from '../../dtos/commission-response.dto';
+import {BanqueResponse} from '../../../comptes-bancaire/dtos/BanqueResponse';
 import {CommissionSearchDto} from "../../dtos/CommissionSearchDto";
 import {TransactionSource} from "../../../transactions/dtos/TransactionSource";
 import {Status} from "../../../prefinancements/enums/Status";
 import {PageResponse} from "../../../global/types/PageResponse";
 import {InputTextModule} from "primeng/inputtext";
 import {AuthService} from "../../../../auth/services/auth.service";
+import {TagModule} from "primeng/tag";
+import {ToolbarModule} from "primeng/toolbar";
+import { InputSwitchModule} from "primeng/inputswitch";
 
 
 @Component({
@@ -45,7 +48,10 @@ import {AuthService} from "../../../../auth/services/auth.service";
     NgClass,
     NgFor,
     NgIf,
-    InputTextModule
+    InputTextModule,
+    TagModule,
+    ToolbarModule,
+    InputSwitchModule
   ],
   templateUrl: './commission-list.component.html',
 
@@ -183,7 +189,57 @@ export class CommissionListComponent implements OnInit {
     });
   }
 
+
+  /**
+   * Toggle le statut d'une commission (PAYE <-> NON_PAYE)
+   */
+  toggleCommissionStatus( commission: CommissionResponseDto) {
+    const message = commission.status === Status.PAYE
+      ? 'Voulez-vous marquer cette commission comme prévu ?'
+      : 'Voulez-vous marquer cette commission comme payée ?';
+
+    this.confirmationService.confirm({
+      message: message,
+      header: 'Confirmation',
+      icon: 'pi pi-info-circle',
+      accept: () => {
+        this.commissionService.toggleCommissionStatus(commission.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: `Statut modifié.`
+            });
+            this.loadCommissions(this.table.createLazyLoadMetadata());
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Impossible de modifier le statut de la commission.'
+            });
+            // Recharger pour restaurer l'état en cas d'erreur
+            this.loadCommissions(this.table.createLazyLoadMetadata());
+          }
+        });
+      },
+      reject: () => {
+        // Recharger pour annuler le changement visuel du switch
+        this.loadCommissions(this.table.createLazyLoadMetadata());
+      }
+    });
+  }
+
+  /**
+   * Retourne la couleur du tag en fonction du statut
+   */
+  getStatusSeverity(status: Status): 'success' | 'danger' | 'warning' | 'info' {
+    return status === Status.PAYE ? 'success' : 'danger';
+  }
+
   isAdmin(): boolean {
     return this.authService.isAdmin();
   }
+
+  protected readonly Status = Status;
 }

@@ -108,7 +108,6 @@ import {
 import {
   MiseADispoEncaissementEncoursComponent
 } from "../../etatsDesEncours/views/lesEncours/encaissements/mise-a-dispo-encaissement-encours/mise-a-dispo-encaissement-encours.component";
-import {EditTransactionComponent} from "../../transactions/views/edit-transaction/edit-transaction.component";
 import {
   HistoriqueDesRapprochementComponent
 } from "../../rapprochement/views/historique-des-rapprochement/historique-des-rapprochement.component";
@@ -284,6 +283,5 @@ export const PORTAIL_ROUTES: Routes = [
   {path:"interets/new",component:InteretFormComponent},
   {path:"interets/edit/:id",component:InteretFormComponent},
   {path:"historique-des-transactions",component:TransactionHistoryComponent},
-  {path:"transaction/edit/:id",component:EditTransactionComponent},
   { path: 'logs', component: LogsComponent , canActivate: [adminGuard]},
 ];

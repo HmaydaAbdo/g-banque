@@ -21,6 +21,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { RestitutionService } from '../../service/restitution.service';
 import { RestitutionResponseDto } from '../../dtos/RestitutionResponseDto';
 import { RestitutionRequestDto } from '../../dtos/RestitutionRequestDto';
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 @Component({
   selector: 'app-restitution-form',
@@ -39,6 +40,7 @@ import { RestitutionRequestDto } from '../../dtos/RestitutionRequestDto';
     CalendarModule,
     BreadcrumbModule,
     TooltipModule,
+    InputTextareaModule,
   ],
   templateUrl: './restitution-form.component.html',
   styleUrl: './restitution-form.component.scss',

@@ -80,4 +80,9 @@ export class InteretService {
 
     return this.http.get<EncoursInteretDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
   }
+
+  toggleStatus(id: number): Observable<InteretResponseDto> {
+    return this.http.patch<InteretResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
+  }
+
 }

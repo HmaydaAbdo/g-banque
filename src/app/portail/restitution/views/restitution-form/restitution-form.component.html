@@ -1,18 +1,13 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
+<div class="w-screen h-screen overflow-y-scroll p-2">
   <div class="portail-section flex justify-content-center align-items-center">
     <div class="flex justify-content-center w-full">
       <p-breadcrumb [model]="items">
         <ng-template pTemplate="item" let-item>
           <ng-container>
-            <a
-              [routerLink]="item.route"
-              class="p-menuitem-link"
-              routerLinkActive="active-breadcrumb"
-              #rla="routerLinkActive"
-            >
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
               <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
             </a>
@@ -22,8 +17,8 @@
     </div>
   </div>
 
-  <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto mt-4">
-    <div class="card-header text-center mb-4">
+  <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto">
+    <div class="card-header text-center">
       <h2 class="text-2xl font-bold">
         {{ isEditMode ? 'Modifier la Restitution' : 'Ajouter une Nouvelle Restitution' }}
       </h2>
@@ -32,13 +27,9 @@
     <form [formGroup]="restitutionForm" (ngSubmit)="onSubmit()">
       <div class="p-fluid grid formgrid">
 
-        <!-- Banque -->
-        <div class="field col-12 md:col-6">
-          <label for="banque" class="font-semibold">
-            Banque <span class="text-red-500">*</span>
-          </label>
+        <div class="field col-12 md:col-4">
+          <label class="font-semibold">Banque <span class="text-red-500">*</span></label>
           <p-dropdown
-            id="banque"
             formControlName="banqueId"
             [options]="banquesOptions"
             optionLabel="nom"
@@ -52,87 +43,63 @@
             [ngClass]="{'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched}"
             appendTo="body"
           ></p-dropdown>
-          <small *ngIf="f['banqueId'].invalid && f['banqueId'].touched" class="p-error">
-            La banque est obligatoire.
-          </small>
+          <small *ngIf="f['banqueId'].invalid && f['banqueId'].touched" class="p-error">Obligatoire.</small>
         </div>
 
-        <!-- Montant -->
-        <div class="field col-12 md:col-6">
-          <label for="montant" class="font-semibold">
-            Montant (MAD) <span class="text-red-500">*</span>
-          </label>
+        <div class="field col-12 md:col-4">
+          <label class="font-semibold">Montant (MAD) <span class="text-red-500">*</span></label>
           <p-inputNumber
-            id="montant"
             formControlName="montant"
             mode="decimal"
             [minFractionDigits]="2"
             [maxFractionDigits]="2"
-            [min]="0.01"
             placeholder="0.00"
             [ngClass]="{'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched}"
           ></p-inputNumber>
-          <small *ngIf="f['montant'].invalid && f['montant'].touched" class="p-error">
-            Le montant est obligatoire et doit être supérieur à 0.
-          </small>
+          <small *ngIf="f['montant'].invalid && f['montant'].touched" class="p-error">Montant invalide.</small>
         </div>
 
-        <!-- Date d'émission -->
-        <div class="field col-12 md:col-6">
-          <label for="dateEmission" class="font-semibold">
-            Date d'émission <span class="text-red-500">*</span>
-          </label>
+        <div class="field col-12 md:col-4">
+          <label class="font-semibold">Date d'émission <span class="text-red-500">*</span></label>
           <p-calendar
-            id="dateEmission"
             formControlName="dateEmission"
             dateFormat="dd/mm/yy"
             [showIcon]="true"
             [showButtonBar]="true"
             appendTo="body"
-            placeholder="Sélectionner une date"
+            placeholder="jj/mm/aaaa"
             [ngClass]="{'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched}"
           ></p-calendar>
-          <small *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched" class="p-error">
-            La date d'émission est obligatoire.
-          </small>
+          <small *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched" class="p-error">Date requise.</small>
         </div>
 
-        <!-- Libellé -->
         <div class="field col-12 md:col-6">
-          <label for="libelle" class="font-semibold">
-            Libellé <span class="text-red-500">*</span>
-          </label>
-          <input
-            id="libelle"
-            pInputText
+          <label class="font-semibold">Libellé <span class="text-red-500">*</span></label>
+          <textarea
+            pInputTextarea
             formControlName="libelle"
+            rows="3"
+            autoResize="true"
             placeholder="Entrez le libellé"
-            [ngClass]="{'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched}"
-          />
-          <small *ngIf="f['libelle'].invalid && f['libelle'].touched" class="p-error">
-            Le libellé est obligatoire.
-          </small>
+            [ngClass]="{'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched}">
+          </textarea>
+          <small *ngIf="f['libelle'].invalid && f['libelle'].touched" class="p-error">Libellé requis.</small>
         </div>
 
-        <!-- Observation -->
-        <div class="field col-12">
-          <label for="observation" class="font-semibold">
-            Observation <span class="text-red-500">*</span>
-          </label>
-          <input
-            id="observation"
-            pInputText
+        <div class="field col-12 md:col-6">
+          <label class="font-semibold">Observation <span class="text-red-500">*</span></label>
+          <textarea
+            pInputTextarea
             formControlName="observation"
+            rows="3"
+            autoResize="true"
             placeholder="Entrez une observation"
-            [ngClass]="{'ng-invalid ng-dirty': f['observation'].invalid && f['observation'].touched}"
-          />
-          <small *ngIf="f['observation'].invalid && f['observation'].touched" class="p-error">
-            L'observation est obligatoire.
-          </small>
+            [ngClass]="{'ng-invalid ng-dirty': f['observation'].invalid && f['observation'].touched}">
+          </textarea>
+          <small *ngIf="f['observation'].invalid && f['observation'].touched" class="p-error">Observation requise.</small>
         </div>
 
-        <!-- Boutons -->
-        <div class="col-12 mt-4 flex flex-row gap-2 justify-content-end">
+        <div class="col-12 mt-4 flex flex-row gap-2">
           <button
             pButton
             pRipple
@@ -141,8 +108,8 @@
             type="button"
             class="p-button-secondary"
             (click)="onCancel()"
-            [disabled]="loading"
-          ></button>
+            [disabled]="loading">
+          </button>
           <button
             pButton
             pRipple
@@ -151,8 +118,8 @@
             type="submit"
             class="p-button-success"
             [disabled]="restitutionForm.invalid || loading"
-            [loading]="loading"
-          ></button>
+            [loading]="loading">
+          </button>
         </div>
       </div>
     </form>

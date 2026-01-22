@@ -1,9 +1,9 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import { ContratLeasingResponseDTO} from "../../dtos/contrat-leasing";
+import {ContratLeasingRequestDTO, ContratLeasingResponseDTO} from "../../dtos/contrat-leasing";
 import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {TypeContratLeasing} from "../../dtos/type-contrat-leasing";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
-import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
+import {debounceTime, distinctUntilChanged, Subscription, take} from "rxjs";
 import {ConfirmationService, MenuItem, MessageService, PrimeTemplate} from "primeng/api";
 import {ContratLeasingService} from "../../services/contrat-leasing.service";
 import {OrganismeLeasingService} from "../../../organismesLeasing/services/organisme-leasing.service";
@@ -27,6 +27,7 @@ import {TooltipModule} from "primeng/tooltip";
 import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
 import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {InputNumberModule} from "primeng/inputnumber";
+import {LeasingContractWizardService} from "../../services/LeasingContractWizardService";
 
 @Component({
   selector: 'app-contrats-leasing-en-attente-de-ml',
@@ -68,6 +69,7 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
   organismeLeasingOptions: { label: string, value: number }[] = [];
   banqueOptions: { label: string, value: number }[] = [];
 
+
   @ViewChild('dt') dt: Table | undefined;
 
   private subscriptions: Subscription[] = [];
@@ -100,7 +102,8 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private wizardService:LeasingContractWizardService
   ) { }
 
   ngOnInit(): void {
@@ -303,6 +306,46 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
     });
   }
 
+  editContrat(id: number): void {
+    this.loading = true;
+    this.contratLeasingService.getContratLeasingById(id).pipe(
+      take(1)
+    ).subscribe({
+      next: (contrat: ContratLeasingResponseDTO) => {
+        const contratRequest: ContratLeasingRequestDTO = {
+          id: contrat.id,
+          numeroContrat: contrat.numeroContrat,
+          immobilisation: contrat.immobilisation,
+          montantAchatTTC: contrat.montantAchatTTC,
+          dateDebut: contrat.dateDebut,
+          periodeEnMois: contrat.periodeEnMois,
+          organismeLeasingId: contrat.organismeLeasingId,
+          banqueDePrelevementId: contrat.banqueDePrelevementId,
+          typeContrat: contrat.typeContrat,
+          valeurResiduelle: contrat.valeurResiduelle,
+          phases: (contrat.phases ?? []).map(p => ({
+            id: p.id,
+            numeroPhase: p.numeroPhase,
+            dureeMois: p.dureeMois,
+            mensualiteTTC: p.mensualiteTTC,
+          }))
+        };
+
+        this.wizardService.loadContractForEdit(contratRequest);
+        this.router.navigate(['portail/leasing/contratsLeasing/creation/organisme']);
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error fetching contract for edit:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement du contrat pour modification.'
+        });
+        this.loading = false;
+      }
+    });
+  }
   /**
    * Archives a contract by calling the service.
    */

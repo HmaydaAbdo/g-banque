@@ -83,4 +83,8 @@ export class CommissionService {
 
     return this.http.get<EncoursCommissionDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
   }
+
+  toggleCommissionStatus(id: number): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${id}/toggle-status`, {});
+  }
 }

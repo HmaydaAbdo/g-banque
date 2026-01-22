@@ -21,6 +21,16 @@
           <i class="pi pi-search"></i>
           <input pInputText type="text" formControlName="observation" placeholder="Rechercher par observation..." />
         </span>
+
+        <span class="p-input-icon-left">
+           <i class="pi pi-money-bill"></i>
+           <input pInputText
+             type="number"
+             formControlName="montant"
+            placeholder="Rechercher par montant..."
+            class="p-inputtext-sm" />
+        </span>
+
         <p-multiSelect
           formControlName="transactionSources"
           [options]="transactionSourceOptions"

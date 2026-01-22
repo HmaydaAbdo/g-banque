@@ -16,10 +16,10 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CalendarModule } from 'primeng/calendar';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
-import { Status } from '../../../prefinancements/enums/Status';
-import {AgiosService} from "../../service/agios.service";
-import {AgiosResponseDto} from "../../dtos/AgiosResponseDto";
-import {AgiosRequestDto} from "../../dtos/AgiosRequestDto";
+import { InputTextareaModule } from 'primeng/inputtextarea';
+import { AgiosService } from "../../service/agios.service";
+import { AgiosResponseDto } from "../../dtos/AgiosResponseDto";
+import { AgiosRequestDto } from "../../dtos/AgiosRequestDto";
 
 @Component({
   selector: 'app-agios-form',
@@ -37,6 +37,7 @@ import {AgiosRequestDto} from "../../dtos/AgiosRequestDto";
     CalendarModule,
     BreadcrumbModule,
     TooltipModule,
+    InputTextareaModule,
   ],
   templateUrl: './agios.form.component.html',
   providers: [MessageService, ConfirmationService],
@@ -48,12 +49,10 @@ export class AgiosFormComponent implements OnInit {
   loading = false;
 
   banquesOptions: BanqueResponse[] = [];
-  statusOptions: { label: string; value: Status | null }[] = [];
 
   items: MenuItem[] | undefined;
 
   selectedBanque?: BanqueResponse;
-
 
   constructor(
     private fb: FormBuilder,
@@ -133,7 +132,11 @@ export class AgiosFormComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement de l\'agios.' });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement de l\'agios.'
+        });
         this.loading = false;
         this.router.navigate(['/portail/agios']);
       },
@@ -148,12 +151,19 @@ export class AgiosFormComponent implements OnInit {
     this.agiosForm.markAllAsTouched();
 
     if (this.agiosForm.invalid) {
-      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Veuillez corriger les erreurs.', life: 3000 });
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation',
+        detail: 'Veuillez corriger les erreurs.',
+        life: 3000
+      });
       return;
     }
 
     this.confirmationService.confirm({
-      message: this.isEditMode ? 'Êtes-vous sûr de cette modification  ?' : 'Êtes-vous sûr de vouloir créer l\'agios ?',
+      message: this.isEditMode
+        ? 'Êtes-vous sûr de vouloir modifier cet agios ?'
+        : 'Êtes-vous sûr de vouloir créer cet agios ?',
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       accept: () => this.executeSave(),
@@ -166,7 +176,7 @@ export class AgiosFormComponent implements OnInit {
     const request: AgiosRequestDto = {
       banqueId: formValue.banqueId,
       libelle: formValue.libelle,
-      observation:formValue.observation,
+      observation: formValue.observation,
       montant: formValue.montant,
       dateEmission: formValue.dateEmission,
     };
@@ -174,24 +184,44 @@ export class AgiosFormComponent implements OnInit {
     if (this.isEditMode && this.agiosId) {
       this.agiosService.updateAgios(this.agiosId, request).subscribe({
         next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Agios mit à jour.', life: 3000 });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Agios mis à jour.',
+            life: 3000
+          });
           this.loading = false;
           this.router.navigate(['/portail/agios']);
         },
         error: (error) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la mise à jour.', life: 3000 });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: error.error?.message || 'Échec de la mise à jour.',
+            life: 3000
+          });
           this.loading = false;
         },
       });
     } else {
       this.agiosService.createAgios(request).subscribe({
         next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Agio créé.', life: 3000 });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Agios créé.',
+            life: 3000
+          });
           this.loading = false;
           this.router.navigate(['/portail/agios']);
         },
         error: (error) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la création.', life: 3000 });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: error.error?.message || 'Échec de la création.',
+            life: 3000
+          });
           this.loading = false;
         },
       });

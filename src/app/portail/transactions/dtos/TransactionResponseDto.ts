@@ -20,6 +20,8 @@ export interface TransactionResponseDto {
   traces: string;
   banqueDePrelevementId: number;
   banqueDePrelevementNom: string;
+  confirmed: boolean;
+  referent: number;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
+<div class="w-screen h-screen overflow-y-scroll p-2">
   <div class="portail-section flex justify-content-center align-items-center">
     <div class="flex justify-content-center w-full">
       <p-breadcrumb [model]="items">
@@ -17,15 +17,14 @@
     </div>
   </div>
 
-  <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto mt-4">
-    <div class="card-header text-center mb-4">
-      <h2 class="text-2xl font-bold">{{ isEditMode ? 'Modifier l\'Agio' : 'Ajouter un Nouvel Agio' }}</h2>
+  <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto">
+    <div class="card-header text-center">
+      <h2 class="text-2xl font-bold">{{ isEditMode ? 'Modifier l\'Agios' : 'Ajouter un Nouvel Agios' }}</h2>
     </div>
 
     <form [formGroup]="agiosForm" (ngSubmit)="onSubmit()">
       <div class="p-fluid grid formgrid">
-
-        <div class="field col-12 md:col-6">
+        <div class="field col-12 md:col-4">
           <label>Banque</label>
           <p-dropdown
             formControlName="banqueId"
@@ -42,8 +41,7 @@
           ></p-dropdown>
         </div>
 
-
-        <div class="field col-12 md:col-6">
+        <div class="field col-12 md:col-4">
           <label>Montant (MAD)</label>
           <p-inputNumber
             formControlName="montant"
@@ -54,12 +52,11 @@
           ></p-inputNumber>
         </div>
 
-        <div class="field col-12 md:col-6">
+        <div class="field col-12 md:col-4">
           <label>Date d'émission</label>
           <p-calendar
             formControlName="dateEmission"
             dateFormat="dd/mm/yy"
-            [showOnFocus]="false"
             [showIcon]="true"
             [showButtonBar]="true"
             appendTo="body"
@@ -69,12 +66,24 @@
 
         <div class="field col-12 md:col-6">
           <label>Libellé</label>
-          <input pInputText formControlName="libelle" [ngClass]="{'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched}" />
+          <textarea
+            pInputTextarea
+            formControlName="libelle"
+            rows="3"
+            autoResize="true"
+            [ngClass]="{'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched}">
+          </textarea>
         </div>
 
         <div class="field col-12 md:col-6">
           <label>Observation</label>
-          <input pInputText formControlName="observation" [ngClass]="{'ng-invalid ng-dirty': f['observation'].invalid && f['observation'].touched}" />
+          <textarea
+            pInputTextarea
+            formControlName="observation"
+            rows="3"
+            autoResize="true"
+            [ngClass]="{'ng-invalid ng-dirty': f['observation'].invalid && f['observation'].touched}">
+          </textarea>
         </div>
 
         <div class="col-12 mt-4 flex flex-row gap-2">
@@ -85,8 +94,8 @@
             [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
             type="submit"
             class="p-button-success"
-            [disabled]="agiosForm.invalid || loading"
-          ></button>
+            [disabled]="agiosForm.invalid || loading">
+          </button>
         </div>
       </div>
     </form>

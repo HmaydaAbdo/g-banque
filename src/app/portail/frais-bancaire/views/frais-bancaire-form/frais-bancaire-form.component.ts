@@ -18,7 +18,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { CalendarModule } from 'primeng/calendar';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
-import {FraisBancaireService} from "../../service/FraisBancaireService";
+import { InputTextareaModule } from 'primeng/inputtextarea';
+import { FraisBancaireService } from "../../service/FraisBancaireService";
 
 @Component({
   selector: 'app-frais-bancaire-form',
@@ -36,6 +37,7 @@ import {FraisBancaireService} from "../../service/FraisBancaireService";
     CalendarModule,
     BreadcrumbModule,
     TooltipModule,
+    InputTextareaModule,
   ],
   templateUrl: './frais-bancaire-form.component.html',
   providers: [MessageService, ConfirmationService],
@@ -63,7 +65,6 @@ export class FraisBancaireFormComponent implements OnInit {
     this.initForm();
     this.setupBreadcrumbs();
 
-
     this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
       if (id) {
@@ -79,8 +80,8 @@ export class FraisBancaireFormComponent implements OnInit {
       banqueId: [null, Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       dateEmission: [null, Validators.required],
-      observation:  [null, Validators.required],
-      libelle:  [null, Validators.required],
+      observation: [null, Validators.required],
+      libelle: [null, Validators.required],
     });
   }
 
@@ -98,8 +99,6 @@ export class FraisBancaireFormComponent implements OnInit {
       error: () => (this.loading = false),
     });
   }
-
-
 
   setupBreadcrumbs(): void {
     this.items = [
@@ -130,7 +129,11 @@ export class FraisBancaireFormComponent implements OnInit {
         this.loading = false;
       },
       error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du frais bancaire.' });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Échec du chargement du frais bancaire.'
+        });
         this.loading = false;
         this.router.navigate(['/portail/frais-bancaire']);
       },
@@ -145,12 +148,19 @@ export class FraisBancaireFormComponent implements OnInit {
     this.fraisForm.markAllAsTouched();
 
     if (this.fraisForm.invalid) {
-      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Veuillez corriger les erreurs.', life: 3000 });
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation',
+        detail: 'Veuillez corriger les erreurs.',
+        life: 3000
+      });
       return;
     }
 
     this.confirmationService.confirm({
-      message: this.isEditMode ? 'Êtes-vous sûr de vouloir modifier ce frais bancaire ?' : 'Êtes-vous sûr de vouloir créer ce frais bancaire ?',
+      message: this.isEditMode
+        ? 'Êtes-vous sûr de vouloir modifier ce frais bancaire ?'
+        : 'Êtes-vous sûr de vouloir créer ce frais bancaire ?',
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       accept: () => this.executeSave(),
@@ -171,24 +181,44 @@ export class FraisBancaireFormComponent implements OnInit {
     if (this.isEditMode && this.fraisId) {
       this.fraisService.updateFraisBancaire(this.fraisId, request).subscribe({
         next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Frais bancaire mis à jour.', life: 3000 });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Frais bancaire mis à jour.',
+            life: 3000
+          });
           this.loading = false;
           this.router.navigate(['/portail/frais-bancaire']);
         },
         error: (error) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la mise à jour.', life: 3000 });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: error.error?.message || 'Échec de la mise à jour.',
+            life: 3000
+          });
           this.loading = false;
         },
       });
     } else {
       this.fraisService.createFraisBancaire(request).subscribe({
         next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Frais bancaire créé.', life: 3000 });
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Frais bancaire créé.',
+            life: 3000
+          });
           this.loading = false;
           this.router.navigate(['/portail/frais-bancaire']);
         },
         error: (error) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la création.', life: 3000 });
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: error.error?.message || 'Échec de la création.',
+            life: 3000
+          });
           this.loading = false;
         },
       });

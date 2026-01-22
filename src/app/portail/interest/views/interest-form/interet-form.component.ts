@@ -27,6 +27,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import {InteretService} from "../../service/InteretService";
 import {InteretResponseDto} from "../../dtos/InteretResponseDto";
 import {InteretRequestDto} from "../../dtos/InteretRequestDto";
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 @Component({
   selector: 'app-interet-form',
@@ -44,7 +45,7 @@ import {InteretRequestDto} from "../../dtos/InteretRequestDto";
     CalendarModule,
     BreadcrumbModule,
     TooltipModule,
-    DatePipe,
+    InputTextareaModule,
   ],
   templateUrl: './interet-form.component.html',
   providers: [MessageService, ConfirmationService],

@@ -21,6 +21,7 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
 import { TransactionSource } from '../../../transactions/dtos/TransactionSource';
 import { Status } from '../../../prefinancements/enums/Status';
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 @Component({
   selector: 'app-commission-form',
@@ -38,6 +39,7 @@ import { Status } from '../../../prefinancements/enums/Status';
     CalendarModule,
     BreadcrumbModule,
     TooltipModule,
+    InputTextareaModule,
   ],
   templateUrl: './commission-form.component.html',
   providers: [MessageService, ConfirmationService],

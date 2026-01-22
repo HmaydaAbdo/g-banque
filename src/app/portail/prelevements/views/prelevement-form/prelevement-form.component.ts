@@ -23,6 +23,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import {PrelevementService} from "../../service/prelevement.service";
 import {PrelevementResponseDto} from "../../dtos/PrelevementResponseDto";
 import {PrelevementRequestDto} from "../../dtos/PrelevementRequestDto";
+import {InputTextareaModule} from "primeng/inputtextarea";
 
 
 @Component({
@@ -41,6 +42,7 @@ import {PrelevementRequestDto} from "../../dtos/PrelevementRequestDto";
     CalendarModule,
     BreadcrumbModule,
     TooltipModule,
+    InputTextareaModule,
   ],
   templateUrl: './prelevement-form.component.html',
   styleUrl: './prelevement-form.component.scss',

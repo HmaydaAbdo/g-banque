@@ -19,17 +19,35 @@ export class FraisBancaireService {
 
   constructor(private http: HttpClient) {}
 
-  /** Create a new Frais Bancaire */
+  /**
+   * Creates a new Frais Bancaire record.
+   *
+   * @param requestDto Data required to create the Frais Bancaire.
+   * @returns Observable emitting the created FraisBancaireResponseDto.
+   */
   createFraisBancaire(requestDto: FraisBancaireRequestDto): Observable<FraisBancaireResponseDto> {
     return this.http.post<FraisBancaireResponseDto>(this.apiUrl, requestDto);
   }
 
-  /** Get Frais Bancaire by ID */
+  /**
+   * Retrieves a Frais Bancaire record by its ID.
+   *
+   * @param id Identifier of the Frais Bancaire to retrieve.
+   * @returns Observable emitting the FraisBancaireResponseDto.
+   */
   getById(id: number): Observable<FraisBancaireResponseDto> {
     return this.http.get<FraisBancaireResponseDto>(`${this.apiUrl}/${id}`);
   }
 
-  /** Search Frais Bancaire with pagination */
+  /**
+   * Searches for Frais Bancaires with pagination and sorting.
+   *
+   * @param searchDto Criteria for filtering Frais Bancaire records.
+   * @param page Current page number (0-indexed).
+   * @param size Number of records per page.
+   * @param sort Sorting criteria, e.g., 'dateEmission,desc'.
+   * @returns Observable emitting a paginated list of FraisBancaireResponseDto.
+   */
   searchFraisBancaire(
     searchDto: FraisBancaireSearchDto,
     page: number = 0,
@@ -45,18 +63,37 @@ export class FraisBancaireService {
     return this.http.post<PageResponse<FraisBancaireResponseDto>>(`${this.apiUrl}/search`, searchDto, { params });
   }
 
-  /** Update Frais Bancaire */
+  /**
+   * Updates an existing Frais Bancaire record.
+   *
+   * @param id Identifier of the Frais Bancaire to update.
+   * @param requestDto Updated data for the Frais Bancaire.
+   * @returns Observable emitting the updated FraisBancaireResponseDto.
+   */
   updateFraisBancaire(id: number, requestDto: FraisBancaireRequestDto): Observable<FraisBancaireResponseDto> {
     return this.http.put<FraisBancaireResponseDto>(`${this.apiUrl}/${id}`, requestDto);
   }
 
-  /** Delete Frais Bancaire */
+  /**
+   * Deletes a Frais Bancaire record by its ID.
+   *
+   * @param id Identifier of the Frais Bancaire to delete.
+   * @returns Observable emitting void upon success.
+   */
   deleteFraisBancaire(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
   /**
-   * Get outstanding Frais Bancaires (encours) for a given bank
+   * Retrieves a paginated list of outstanding Frais Bancaires for a specific bank,
+   * including the total outstanding amount.
+   *
+   * @param banqueId ID of the bank for which to retrieve Frais Bancaires.
+   * @param searchDto Optional filter criteria.
+   * @param page Current page number (0-indexed).
+   * @param size Number of records per page.
+   * @param sort Sorting criteria, e.g., 'dateEmission,desc'.
+   * @returns Observable emitting the EncoursFraisBancaireDto.
    */
   getOutstandingFraisBancaire(
     banqueId: number,
@@ -80,5 +117,10 @@ export class FraisBancaireService {
     }
 
     return this.http.get<EncoursFraisBancaireDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
+  }
+
+
+  toggleStatus(id: number): Observable<FraisBancaireResponseDto> {
+    return this.http.patch<FraisBancaireResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
 }

@@ -11,6 +11,10 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { RouterLink } from '@angular/router';
+import { TagModule } from 'primeng/tag';
+import { ToolbarModule } from 'primeng/toolbar';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { InputTextModule } from 'primeng/inputtext';
 
 // Agios specific imports
 import { AgiosService } from '../../service/agios.service';
@@ -20,11 +24,9 @@ import { AgiosSearchDto } from "../../dtos/AgiosSearchDto";
 // Shared imports
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
-import { TransactionSource } from "../../../transactions/dtos/TransactionSource";
 import { Status } from "../../../prefinancements/enums/Status";
 import { PageResponse } from "../../../global/types/PageResponse";
-import { InputTextModule } from "primeng/inputtext";
-
+import { AuthService } from "../../../../auth/services/auth.service";
 
 @Component({
   selector: 'app-agios-list',
@@ -47,7 +49,10 @@ import { InputTextModule } from "primeng/inputtext";
     NgClass,
     NgFor,
     NgIf,
-    InputTextModule
+    InputTextModule,
+    TagModule,
+    ToolbarModule,
+    InputSwitchModule
   ],
   templateUrl: './agios-list.component.html',
   providers: [MessageService, ConfirmationService]
@@ -69,7 +74,6 @@ export class AgiosListComponent implements OnInit {
   banques: BanqueResponse[] = [];
   banquesTotal = 0;
   banquesLoading = false;
-  operationOptions: { label: string; value: TransactionSource | null }[] = [];
   statusOptions: { label: string; value: Status | null }[] = [];
 
   // Breadcrumb items
@@ -79,7 +83,8 @@ export class AgiosListComponent implements OnInit {
     private agiosService: AgiosService,
     private banqueService: BanqueService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -135,8 +140,6 @@ export class AgiosListComponent implements OnInit {
       });
   }
 
-
-
   loadStatusOptions() {
     this.statusOptions = Object.values(Status).map(s => ({
       label: s,
@@ -146,7 +149,6 @@ export class AgiosListComponent implements OnInit {
 
   applyFilters() {
     if (this.table) {
-      // Use a setTimeout to ensure PrimeNG's change detection cycle correctly handles the reset.
       setTimeout(() => this.table.reset(), 0);
     }
   }
@@ -158,20 +160,81 @@ export class AgiosListComponent implements OnInit {
     this.applyFilters();
   }
 
-  deleteAgios(agios: AgiosResponseDto) { // Updated method name and DTO
+  deleteAgios(agios: AgiosResponseDto) {
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer l'agio " ?`,
+      message: `Êtes-vous sûr de vouloir supprimer l'agios "${agios.libelle}" ?`,
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.agiosService.deleteAgios(agios.id).subscribe({ // Updated service call
+        this.agiosService.deleteAgios(agios.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Agio supprimé.' }); // Updated message
-            this.loadAgios(this.table.createLazyLoadMetadata()); // Updated method call
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Agios supprimé.'
+            });
+            this.loadAgios(this.table.createLazyLoadMetadata());
           },
           error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer l\'agio.' }); // Updated message
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Impossible de supprimer l\'agios.'
+            });
           }
         });
       }
     });
   }
+
+  /**
+   * Toggle le statut d'un agios (PREVU <-> REALISE)
+   */
+  toggleAgiosStatus(agios: AgiosResponseDto) {
+    const message = agios.status === Status.PAYE
+      ? 'Voulez-vous marquer cet agios comme prévu ?'
+      : 'Voulez-vous marquer cet agios comme payée ?';
+
+    this.confirmationService.confirm({
+      message: message,
+      header: 'Confirmation',
+      icon: 'pi pi-info-circle',
+      accept: () => {
+        this.agiosService.toggleStatus(agios.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: `Statut modifié.`
+            });
+            this.loadAgios(this.table.createLazyLoadMetadata());
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Impossible de modifier le statut de l\'agios.'
+            });
+            this.loadAgios(this.table.createLazyLoadMetadata());
+          }
+        });
+      },
+      reject: () => {
+        this.loadAgios(this.table.createLazyLoadMetadata());
+      }
+    });
+  }
+
+  /**
+   * Retourne la couleur du tag en fonction du statut
+   */
+  getStatusSeverity(status: Status): 'success' | 'danger' | 'warning' | 'info' {
+    return status === Status.PAYE ? 'success' : 'danger';
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  protected readonly Status = Status;
 }

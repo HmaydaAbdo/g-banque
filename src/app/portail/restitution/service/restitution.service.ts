@@ -108,4 +108,12 @@ export class RestitutionService {
 
     return this.http.get<EncoursRestitution>(`${this.apiUrl}/encours/${banqueId}`, { params });
   }
+
+  toggleStatus(id: number): Observable<RestitutionResponseDto> {
+    return this.http.patch<RestitutionResponseDto>(
+      `${this.apiUrl}/${id}/toggle-status`,
+      null
+    );
+  }
+
 }

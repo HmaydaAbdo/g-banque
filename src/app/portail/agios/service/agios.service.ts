@@ -118,4 +118,8 @@ export class AgiosService {
 
     return this.http.get<EncoursAgiosDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
   }
+
+  toggleStatus(id: number): Observable<AgiosResponseDto> {
+    return this.http.patch<AgiosResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
+  }
 }

@@ -79,4 +79,8 @@ export class ImpotEtTaxeService {
 
     return this.http.get<EncoursImpotEtTaxeDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
   }
+
+  toggleStatus(id: number): Observable<ImpotEtTaxeResponseDto> {
+    return this.http.patch<ImpotEtTaxeResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
+  }
 }

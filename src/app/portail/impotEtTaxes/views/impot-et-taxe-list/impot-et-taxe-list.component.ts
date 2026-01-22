@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
-import { CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe, NgClass, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
@@ -22,6 +22,9 @@ import { InputTextModule } from "primeng/inputtext";
 import { AuthService } from "../../../../auth/services/auth.service";
 import {Motif, MotifLabels} from "../../dtos/Motif";
 import {ImpotEtTaxeService} from "../../service/ImpotEtTaxeService";
+import {ToolbarModule} from "primeng/toolbar";
+import {TagModule} from "primeng/tag";
+import {InputSwitchModule} from "primeng/inputswitch";
 
 @Component({
   selector: 'app-impot-et-taxe-list',
@@ -42,9 +45,11 @@ import {ImpotEtTaxeService} from "../../service/ImpotEtTaxeService";
     DatePipe,
     DecimalPipe,
     NgClass,
-    NgFor,
     NgIf,
-    InputTextModule
+    InputTextModule,
+    ToolbarModule,
+    TagModule,
+    InputSwitchModule
   ],
   templateUrl: './impot-et-taxe-list.component.html',
   providers: [MessageService, ConfirmationService]
@@ -73,8 +78,6 @@ export class ImpotEtTaxeListComponent implements OnInit {
   // Breadcrumb items
   items: MenuItem[] = [];
 
-  // Expose MotifLabels to template
-  motifLabels:Record<Motif, string> = MotifLabels;
 
   constructor(
     private impotEtTaxeService: ImpotEtTaxeService,
@@ -184,7 +187,41 @@ export class ImpotEtTaxeListComponent implements OnInit {
     });
   }
 
+
+  toggleStatus(impotEtTaxe: ImpotEtTaxeResponseDto) {
+    const message = impotEtTaxe.status === Status.PAYE
+      ? 'Voulez-vous marquer cet impôt comme prévu ?'
+      : 'Voulez-vous marquer cet impôt comme payé ?';
+
+    this.confirmationService.confirm({
+      message: message,
+      header: 'Confirmation',
+      icon: 'pi pi-info-circle',
+      accept: () => {
+        this.impotEtTaxeService.toggleStatus(impotEtTaxe.id).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: `Statut modifié.` });
+            this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de modification.' });
+            this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
+          }
+        });
+      },
+      reject: () => {
+        this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
+      }
+    });
+  }
+
+  getStatusSeverity(status: Status): 'success' | 'danger' {
+    return status === Status.PAYE ? 'success' : 'danger';
+  }
+
+  protected readonly Status = Status;
   isAdmin(): boolean {
     return this.authService.isAdmin();
   }
+
 }

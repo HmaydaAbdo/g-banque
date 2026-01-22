@@ -12,14 +12,18 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
-import {FraisBancaireResponseDto} from "../../dtos/FraisBancaireResponseDto";
-import {FraisBancaireSearchDto} from "../../dtos/FraisBancaireSearchDto";
-import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
-import {Status} from "../../../prefinancements/enums/Status";
-import {FraisBancaireService} from "../../service/FraisBancaireService";
-import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
-import {PageResponse} from "../../../global/types/PageResponse";
+import { TagModule } from 'primeng/tag';
+import { ToolbarModule } from 'primeng/toolbar';
+import { InputSwitchModule } from 'primeng/inputswitch';
 
+import { FraisBancaireResponseDto } from "../../dtos/FraisBancaireResponseDto";
+import { FraisBancaireSearchDto } from "../../dtos/FraisBancaireSearchDto";
+import { BanqueResponse } from "../../../comptes-bancaire/dtos/BanqueResponse";
+import { Status } from "../../../prefinancements/enums/Status";
+import { FraisBancaireService } from "../../service/FraisBancaireService";
+import { BanqueService } from "../../../comptes-bancaire/services/BanqueService";
+import { PageResponse } from "../../../global/types/PageResponse";
+import { AuthService } from "../../../../auth/services/auth.service";
 
 @Component({
   selector: 'app-frais-bancaire-list',
@@ -42,7 +46,10 @@ import {PageResponse} from "../../../global/types/PageResponse";
     NgClass,
     NgFor,
     NgIf,
-    InputTextModule
+    InputTextModule,
+    TagModule,
+    ToolbarModule,
+    InputSwitchModule
   ],
   templateUrl: './frais-bancaire-list.component.html',
   providers: [MessageService, ConfirmationService]
@@ -73,7 +80,8 @@ export class FraisBancaireListComponent implements OnInit {
     private fraisBancaireService: FraisBancaireService,
     private banqueService: BanqueService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -129,8 +137,6 @@ export class FraisBancaireListComponent implements OnInit {
       });
   }
 
-
-
   loadStatusOptions() {
     this.statusOptions = Object.values(Status).map(s => ({
       label: s,
@@ -154,17 +160,78 @@ export class FraisBancaireListComponent implements OnInit {
   deleteFraisBancaire(frais: FraisBancaireResponseDto) {
     this.confirmationService.confirm({
       message: `Êtes-vous sûr de vouloir supprimer le frais bancaire "${frais.libelle}" ?`,
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.fraisBancaireService.deleteFraisBancaire(frais.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Frais bancaire supprimé.' });
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Frais bancaire supprimé.'
+            });
             this.loadFraisBancaires(this.table.createLazyLoadMetadata());
           },
           error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer le frais bancaire.' });
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Impossible de supprimer le frais bancaire.'
+            });
           }
         });
       }
     });
   }
+
+  /**
+   * Toggle le statut d'un frais bancaire (PREVU <-> REALISE)
+   */
+  toggleFraisBancaireStatus(frais: FraisBancaireResponseDto) {
+    const message = frais.status === Status.PAYE
+      ? 'Voulez-vous marquer ce frais bancaire comme prévu ?'
+      : 'Voulez-vous marquer ce frais bancaire comme réalisé ?';
+
+    this.confirmationService.confirm({
+      message: message,
+      header: 'Confirmation',
+      icon: 'pi pi-info-circle',
+      accept: () => {
+        this.fraisBancaireService.toggleStatus(frais.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: `Statut modifié.`
+            });
+            this.loadFraisBancaires(this.table.createLazyLoadMetadata());
+          },
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Impossible de modifier le statut du frais bancaire.'
+            });
+            this.loadFraisBancaires(this.table.createLazyLoadMetadata());
+          }
+        });
+      },
+      reject: () => {
+        this.loadFraisBancaires(this.table.createLazyLoadMetadata());
+      }
+    });
+  }
+
+  /**
+   * Retourne la couleur du tag en fonction du statut
+   */
+  getStatusSeverity(status: Status): 'success' | 'danger' | 'warning' | 'info' {
+    return status === Status.PAYE ? 'success' : 'danger';
+  }
+
+  isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  protected readonly Status = Status;
 }
