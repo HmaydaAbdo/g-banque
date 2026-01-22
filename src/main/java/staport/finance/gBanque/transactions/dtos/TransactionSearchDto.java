@@ -2,6 +2,7 @@ package staport.finance.gBanque.transactions.dtos;
 
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -13,6 +14,8 @@ public class TransactionSearchDto {
     private Long banqueId;
     private List<TransactionSource> transactionSources;
     private String observation;
+    private Boolean isConfirmed;
+    private BigDecimal montant;
     // Getters and Setters
 
     public String getLibelle() {
@@ -31,6 +34,14 @@ public class TransactionSearchDto {
         this.banqueId = banqueId;
     }
 
+    public Boolean getConfirmed() {
+        return isConfirmed;
+    }
+
+    public void setConfirmed(Boolean confirmed) {
+        isConfirmed = confirmed;
+    }
+
     public List<TransactionSource> getTransactionSources() {
         return transactionSources;
     }
@@ -45,5 +56,25 @@ public class TransactionSearchDto {
 
     public void setObservation(String observation) {
         this.observation = observation;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    @Override
+    public String toString() {
+        return "TransactionSearchDto{" +
+                "libelle='" + libelle + '\'' +
+                ", banqueId=" + banqueId +
+                ", transactionSources=" + transactionSources +
+                ", observation='" + observation + '\'' +
+                ", isConfirmed=" + isConfirmed +
+                ", montant=" + montant +
+                '}';
     }
 }

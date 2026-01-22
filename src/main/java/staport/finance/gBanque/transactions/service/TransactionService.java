@@ -1,16 +1,15 @@
 package staport.finance.gBanque.transactions.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
-import staport.finance.gBanque.transactions.dtos.TransactionUpdateRequestDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
@@ -25,42 +24,52 @@ import static staport.finance.gBanque.transactions.spec.TransactionSpecification
 @Service
 public class TransactionService {
 
+    private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
     private final TransactionRepository transactionRepository;
-    private final BanqueRepository banqueRepository;
 
-    public TransactionService(TransactionRepository transactionRepository, BanqueRepository banqueRepository) {
+    public TransactionService(TransactionRepository transactionRepository) {
         this.transactionRepository = transactionRepository;
-        this.banqueRepository = banqueRepository;
     }
 
     public Page<TransactionResponseDto> getTransactionHistory(TransactionSearchDto searchDto, Pageable pageable) {
+        log.info("Récupération de l'historique des transactions. Filtres: {}", searchDto);
+
         List<Specification<Transaction>> specs = new ArrayList<>();
 
-        // Apply filters from the DTO only if the values are present.
         if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
             specs.add(libelleContains(searchDto.getLibelle()));
+            log.debug("Filtre appliqué: libellé contient '{}'", searchDto.getLibelle());
         }
+
+
 
         if (searchDto.getBanqueId() != null) {
             specs.add(hasBanqueId(searchDto.getBanqueId()));
+            log.debug("Filtre appliqué: ID banque = {}", searchDto.getBanqueId());
         }
-
 
         if (searchDto.getTransactionSources() != null && !searchDto.getTransactionSources().isEmpty()) {
             specs.add(hasTransactionSources(searchDto.getTransactionSources()));
+            log.debug("Filtre appliqué: sources = {}", searchDto.getTransactionSources());
         }
 
-        // Combine all specifications with an 'AND' clause
-        Specification<Transaction> combinedSpec = withFilters(specs);
+        if (searchDto.getConfirmed() != null) {
+            specs.add(isConfirmed(searchDto.getConfirmed()));
+            log.debug("Filtre appliqué: confirmé = {}", searchDto.getConfirmed());
+        }
 
-        // Retrieve the paginated and sorted results from the repository
+        Specification<Transaction> combinedSpec = withFilters(specs);
         Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, pageable);
 
-        // Map the entity page to a DTO page and return
+        log.info("Historique récupéré: {} transactions trouvées (Page {}/{})",
+                transactions.getTotalElements(), transactions.getNumber(), transactions.getTotalPages());
+
         return transactions.map(TransactionMapper::toDto);
     }
 
     public AgreratedTransactionResponseDto getTransactionsByBanque(Long banqueId, TransactionSearchDto searchDto, Pageable pageable) {
+        log.info("Calcul des agrégations et récupération des transactions pour la banque ID: {}", banqueId);
+
         List<Specification<Transaction>> specs = new ArrayList<>();
         specs.add(isConfirmed(false));
         specs.add(hasBanqueId(banqueId));
@@ -72,23 +81,26 @@ public class TransactionService {
         if (searchDto.getObservation() != null && !searchDto.getObservation().isEmpty()) {
             specs.add(observationContains(searchDto.getObservation()));
         }
-        if (searchDto.getTransactionSources() != null && !searchDto.getTransactionSources().isEmpty()) {
-            specs.add(hasTransactionSources(searchDto.getTransactionSources()));
+
+        if(searchDto.getMontant()!=null){
+            specs.add(hasMontant(searchDto.getMontant()));
+            log.debug("Filtre appliqué: montant égal  '{}'", searchDto.getMontant());
+
         }
+
 
         Specification<Transaction> combinedSpec = withFilters(specs);
 
-        // 1. Fetch ALL transactions that match the combined specification.
-        // This is necessary to calculate the totals for the entire filtered dataset.
+        // 1. Calcul des totaux sur l'ensemble filtré
         List<Transaction> allFilteredTransactions = transactionRepository.findAll(combinedSpec);
+        log.debug("Agrégation sur {} transactions correspondantes", allFilteredTransactions.size());
 
-        // 2. Perform the aggregation on the complete filtered list.
         BigDecimal totalDebit = allFilteredTransactions.stream()
-                .map(Transaction::getDebit)
+                .map(t -> t.getDebit() != null ? t.getDebit() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalCredit = allFilteredTransactions.stream()
-                .map(Transaction::getCredit)
+                .map(t -> t.getCredit() != null ? t.getCredit() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalTvaDeductible = allFilteredTransactions.stream()
@@ -101,14 +113,12 @@ public class TransactionService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal tvaDue=totalTvaCollectee.subtract(totalTvaDeductible);
-        // 3. Fetch the paginated results specifically for the current page.
-        Page<Transaction> paginatedTransactions = transactionRepository.findAll(combinedSpec, pageable);
+        BigDecimal tvaDue = totalTvaCollectee.subtract(totalTvaDeductible);
 
-        // 4. Map the paginated transactions to DTOs.
+        // 2. Pagination
+        Page<Transaction> paginatedTransactions = transactionRepository.findAll(combinedSpec, pageable);
         Page<TransactionResponseDto> paginatedDtos = paginatedTransactions.map(TransactionMapper::toDto);
 
-        // 5. Create and populate the AggregatedTransactionResponseDto.
         AgreratedTransactionResponseDto aggregatedResponse = new AgreratedTransactionResponseDto();
         aggregatedResponse.setPage(paginatedDtos);
         aggregatedResponse.setTotalDebit(totalDebit);
@@ -116,57 +126,23 @@ public class TransactionService {
         aggregatedResponse.setTotalTvaDeductible(totalTvaDeductible);
         aggregatedResponse.setTotalTvaCollectee(totalTvaCollectee);
         aggregatedResponse.setTvaDue(tvaDue);
+
+        log.info("Agrégation terminée pour la banque {}. Débit total: {}, Crédit total: {}, TVA due: {}",
+                banqueId, totalDebit, totalCredit, tvaDue);
+
         return aggregatedResponse;
     }
 
-    public TransactionResponseDto updateTransaction(Long id, TransactionUpdateRequestDto dto) {
-
-        // 1. Vérifier transaction existe
-        Transaction transaction = transactionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Transaction with ID " + id + " not found"));
-
-        // 2. Mettre à jour tous les champs
-        transaction.setDateEmission(dto.getDateEmission());
-        transaction.setDateValeur(dto.getDateValeur());
-        transaction.setDateOperations(dto.getDateOperations());
-
-        transaction.setLibelle(dto.getLibelle());
-        transaction.setObservation(dto.getObservation());
-
-        transaction.setTvaDeductible(dto.getTvaDeductible());
-        transaction.setTvaCollectee(dto.getTvaCollectee());
-
-        transaction.setTransactionSource(dto.getTransactionSource());
-
-        transaction.setDebit(dto.getDebit());
-        transaction.setCredit(dto.getCredit());
-
-        // 3. Mise à jour banque
-        if (dto.getBanqueId() != null) {
-            Banque banque = banqueRepository.findById(dto.getBanqueId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Banque with ID " + dto.getBanqueId() + " not found"));
-            transaction.setBanqueDePrelevement(banque);
-        }
-
-        // 4. Sauvegarde
-        Transaction saved = transactionRepository.save(transaction);
-
-        // 5. Convertir en DTO response
-        return TransactionMapper.toDto(saved);
-    }
-
     public TransactionResponseDto getTransactionById(Long id) {
+        log.info("Recherche de la transaction ID: {}", id);
         return transactionRepository.findById(id)
-                .map(TransactionMapper::toDto)
-                .orElseThrow(() -> new ResourceNotFoundException("Transaction with ID " + id + " not found"));
+                .map(transaction -> {
+                    log.debug("Transaction ID: {} trouvée", id);
+                    return TransactionMapper.toDto(transaction);
+                })
+                .orElseThrow(() -> {
+                    log.error("Erreur: Transaction ID: {} introuvable", id);
+                    return new ResourceNotFoundException("La transaction avec l'ID " + id + " n'a pas été trouvée");
+                });
     }
-
-    public void deleteTransactionById(Long id) {
-        if (!transactionRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Transaction with ID " + id + " not found");
-        }
-        transactionRepository.deleteById(id);
-    }
-
-
 }

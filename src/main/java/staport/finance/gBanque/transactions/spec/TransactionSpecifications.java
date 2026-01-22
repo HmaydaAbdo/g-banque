@@ -7,6 +7,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -43,24 +44,25 @@ public class TransactionSpecifications {
         };
     }
 
-    /**
-     * Filters transactions to only include those that occurred in the current month.
-     * This implementation is more robust with OffsetDateTime.
-     * @return a Specification for the current month.
-     */
-    public static Specification<Transaction> isCurrentMonth() {
-        return (root, query, criteriaBuilder) -> {
-            OffsetDateTime now = OffsetDateTime.now();
-            OffsetDateTime startOfMonth = now.with(TemporalAdjusters.firstDayOfMonth()).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
-            return criteriaBuilder.between(root.get("createdAt"), startOfMonth, endOfMonth);
-        };
-    }
 
 
     public static Specification<Transaction> isConfirmed(boolean confirmed) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("isConfirmed"), confirmed);
     }
+
+    public static Specification<Transaction> hasMontant(BigDecimal montant) {
+        return (root, query, criteriaBuilder) -> {
+            if (montant == null) {
+                return null; // ou criteriaBuilder.conjunction() pour ne rien filtrer
+            }
+
+            return criteriaBuilder.or(
+                    criteriaBuilder.equal(root.get("debit"), montant),
+                    criteriaBuilder.equal(root.get("credit"), montant)
+            );
+        };
+    }
+
 
 
     /**
