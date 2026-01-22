@@ -61,4 +61,15 @@ public class InteretRequestDto {
     public void setDateEmission(OffsetDateTime dateEmission) {
         this.dateEmission = dateEmission;
     }
+
+    @Override
+    public String toString() {
+        return "InteretRequestDto{" +
+                "montant=" + montant +
+                ", banqueId=" + banqueId +
+                ", dateEmission=" + dateEmission +
+                ", libelle='" + libelle + '\'' +
+                ", observation='" + observation + '\'' +
+                '}';
+    }
 }

@@ -1,87 +1,86 @@
 package staport.finance.gBanque.interets.controller;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.interets.dtos.EncoursInteretDto;
-import staport.finance.gBanque.interets.dtos.InteretRequestDto;
-import staport.finance.gBanque.interets.dtos.InteretResponseDto;
-import staport.finance.gBanque.interets.dtos.InteretSearchDto;
+import staport.finance.gBanque.interets.dtos.*;
 import staport.finance.gBanque.interets.service.InteretService;
 
 @RestController
 @RequestMapping("/interest")
 public class InteretController {
 
-    private static final Logger log = LogManager.getLogger(InteretController.class);
+    private static final Logger log = LoggerFactory.getLogger(InteretController.class);
     private final InteretService interetService;
 
     public InteretController(InteretService interetService) {
         this.interetService = interetService;
+        log.info("Initialisation du contrôleur Interet");
     }
 
-
-    // --- Create ---
     @PostMapping
     public ResponseEntity<InteretResponseDto> createInterest(@Validated @RequestBody InteretRequestDto requestDto) {
-        log.info("REST request to create interest: {}", requestDto);
-        InteretResponseDto responseDto = interetService.createInterest(requestDto);
-        return ResponseEntity.ok(responseDto);
+        log.info("Requête REST pour créer un intérêt - Libellé: '{}', Montant: {}",
+                requestDto.getLibelle(), requestDto.getMontant());
+
+        InteretResponseDto response = interetService.createInterest(requestDto);
+        log.info("Intérêt créé avec succès - ID: {}", response.getId());
+        return ResponseEntity.ok(response);
     }
 
-    // --- Get by ID ---
     @GetMapping("/{id}")
     public ResponseEntity<InteretResponseDto> getById(@PathVariable Long id) {
-        log.info("REST request to get interest with id={}", id);
-        InteretResponseDto responseDto = interetService.getById(id);
-        return ResponseEntity.ok(responseDto);
+        log.info("Requête REST pour récupérer l'intérêt ID: {}", id);
+        InteretResponseDto response = interetService.getById(id);
+        return ResponseEntity.ok(response);
     }
 
-    // --- Search with pagination ---
     @PostMapping("/search")
     public ResponseEntity<Page<InteretResponseDto>> searchInterest(@RequestBody InteretSearchDto searchDto, Pageable pageable) {
-        log.info("REST request to search interest with criteria: {}", searchDto);
+        log.info("Requête REST pour rechercher des intérêts - Critères: {}", searchDto);
         Page<InteretResponseDto> page = interetService.searchInterest(searchDto, pageable);
+        log.info("Recherche terminée - {} résultat(s)", page.getTotalElements());
         return ResponseEntity.ok(page);
     }
 
-    // --- Update ---
     @PutMapping("/{id}")
     public ResponseEntity<InteretResponseDto> updateInterest(@PathVariable Long id, @Validated @RequestBody InteretRequestDto requestDto) {
-        log.info("REST request to update interest id={}", id);
-        InteretResponseDto responseDto = interetService.updateInterest(id, requestDto);
-        return ResponseEntity.ok(responseDto);
+        log.info("Requête REST pour mettre à jour l'intérêt ID: {}", id);
+        InteretResponseDto response = interetService.updateInterest(id, requestDto);
+        log.info("Intérêt ID: {} mis à jour avec succès", id);
+        return ResponseEntity.ok(response);
     }
 
-    // --- Delete ---
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteInterest(@PathVariable Long id) {
-        log.info("REST request to delete interest id={}", id);
+        log.info("Requête REST pour supprimer l'intérêt ID: {}", id);
         interetService.deleteInterest(id);
+        log.info("Intérêt ID: {} supprimé avec succès", id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Retrieves a paginated list of outstanding interest and their total amount for a specific bank.
-     *
-     * @param banqueId  The ID of the bank to filter by.
-     * @param searchDto Optional search criteria (e.g., for filtering by libelle, etc.).
-     * @param pageable  Pagination and sorting information.
-     * @return An EncoursInteretDto containing the page of interest and the total outstanding amount.
-     */
     @GetMapping("/encours/{banqueId}")
-    public ResponseEntity<EncoursInteretDto> getOutstandingInterest(@PathVariable Long banqueId, @ModelAttribute InteretSearchDto searchDto,
+    public ResponseEntity<EncoursInteretDto> getOutstandingInterest(
+            @PathVariable Long banqueId,
+            @ModelAttribute InteretSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("REST request to get outstanding interest for banqueId={}", banqueId);
-        searchDto.setBanqueId(banqueId); // Set the bank ID from the path variable
+        log.info("Requête REST pour récupérer les intérêts en cours - Banque ID: {}", banqueId);
+        searchDto.setBanqueId(banqueId);
         EncoursInteretDto result = interetService.getOutstandingInterest(searchDto, pageable);
+        log.info("Intérêts en cours récupérés - Total: {}", result.getTotalDesEncours());
         return ResponseEntity.ok(result);
     }
+
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<InteretResponseDto> toggleStatus(@PathVariable Long id) {
+        log.info("Requête REST pour basculer le statut de l'intérêt ID: {}", id);
+        InteretResponseDto response = interetService.toggleStatus(id);
+        log.info("Statut de l'intérêt ID: {} basculé vers {}", id, response.getStatus());
+        return ResponseEntity.ok(response);
+    }
 }
-
-

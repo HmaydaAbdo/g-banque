@@ -1,93 +1,89 @@
 package staport.finance.gBanque.fraisBancaires.controller;
 
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.fraisBancaires.dtos.EncoursFraisBancaireDto;
-import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireRequestDto;
-import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireResposneDto;
-import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireSearchDto;
+import staport.finance.gBanque.fraisBancaires.dtos.*;
 import staport.finance.gBanque.fraisBancaires.service.FraisBancaireService;
 
 @RestController
 @RequestMapping("/frais-bancaire")
 public class FraisBancaireController {
 
-    private static final Logger log = LogManager.getLogger(FraisBancaireController.class);
+    private static final Logger log = LoggerFactory.getLogger(FraisBancaireController.class);
     private final FraisBancaireService fraisBancaireService;
 
     public FraisBancaireController(FraisBancaireService fraisBancaireService) {
         this.fraisBancaireService = fraisBancaireService;
+        log.info("Initialisation du contrôleur FraisBancaire");
     }
 
-    // --- Create ---
     @PostMapping
     public ResponseEntity<FraisBancaireResposneDto> createFraisBancaire(
             @Validated @RequestBody FraisBancaireRequestDto requestDto) {
-        log.info("REST request to create frais bancaire: {}", requestDto);
-        FraisBancaireResposneDto responseDto = fraisBancaireService.createFraisBancaire(requestDto);
-        return ResponseEntity.ok(responseDto);
+        log.info("Requête REST pour créer un frais bancaire - Libellé: '{}', Montant: {}",
+                requestDto.getLibelle(), requestDto.getMontant());
+
+        FraisBancaireResposneDto response = fraisBancaireService.createFraisBancaire(requestDto);
+        log.info("Frais bancaire créé avec succès - ID: {}", response.getId());
+        return ResponseEntity.ok(response);
     }
 
-    // --- Get by ID ---
     @GetMapping("/{id}")
     public ResponseEntity<FraisBancaireResposneDto> getById(@PathVariable Long id) {
-        log.info("REST request to get frais bancaire with id={}", id);
-        FraisBancaireResposneDto responseDto = fraisBancaireService.getById(id);
-        return ResponseEntity.ok(responseDto);
+        log.info("Requête REST pour récupérer le frais bancaire ID: {}", id);
+        FraisBancaireResposneDto response = fraisBancaireService.getById(id);
+        return ResponseEntity.ok(response);
     }
 
-    // --- Search with pagination ---
     @PostMapping("/search")
     public ResponseEntity<Page<FraisBancaireResposneDto>> searchFraisBancaire(
-            @RequestBody FraisBancaireSearchDto searchDto,
-            Pageable pageable) {
-        log.info("REST request to search frais bancaires with criteria: {}", searchDto);
+            @RequestBody FraisBancaireSearchDto searchDto, Pageable pageable) {
+        log.info("Requête REST pour rechercher des frais bancaires - Critères: {}", searchDto);
         Page<FraisBancaireResposneDto> page = fraisBancaireService.searchFraisBancaire(searchDto, pageable);
+        log.info("Recherche terminée - {} résultat(s)", page.getTotalElements());
         return ResponseEntity.ok(page);
     }
 
-    // --- Update ---
     @PutMapping("/{id}")
     public ResponseEntity<FraisBancaireResposneDto> updateFraisBancaire(
-            @PathVariable Long id,
-            @Validated @RequestBody FraisBancaireRequestDto requestDto) {
-        log.info("REST request to update frais bancaire id={}", id);
-        FraisBancaireResposneDto responseDto = fraisBancaireService.updateFraisBancaire(id, requestDto);
-        return ResponseEntity.ok(responseDto);
+            @PathVariable Long id, @Validated @RequestBody FraisBancaireRequestDto requestDto) {
+        log.info("Requête REST pour mettre à jour le frais bancaire ID: {}", id);
+        FraisBancaireResposneDto response = fraisBancaireService.updateFraisBancaire(id, requestDto);
+        log.info("Frais bancaire ID: {} mis à jour avec succès", id);
+        return ResponseEntity.ok(response);
     }
 
-    // --- Delete ---
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteFraisBancaire(@PathVariable Long id) {
-        log.info("REST request to delete frais bancaire id={}", id);
+        log.info("Requête REST pour supprimer le frais bancaire ID: {}", id);
         fraisBancaireService.deleteFraisBancaire(id);
+        log.info("Frais bancaire ID: {} supprimé avec succès", id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Retrieves a paginated list of outstanding fraisBancaire and their total amount for a specific bank.
-     *
-     * @param banqueId  The ID of the bank to filter by.
-     * @param searchDto Optional search criteria (e.g., for filtering by libelle, etc.).
-     * @param pageable  Pagination and sorting information.
-     * @return An EncoursFraisBancaireDto containing the page of frais bancaires and the total outstanding amount.
-     */
     @GetMapping("/encours/{banqueId}")
     public ResponseEntity<EncoursFraisBancaireDto> getOutstandingFraisBancaire(
             @PathVariable Long banqueId,
             @ModelAttribute FraisBancaireSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("REST request to get outstanding frais bancaire for banqueId={}", banqueId);
-        searchDto.setBanqueId(banqueId); // Set the bank ID from the path variable
+        log.info("Requête REST pour récupérer les frais bancaires en cours - Banque ID: {}", banqueId);
+        searchDto.setBanqueId(banqueId);
         EncoursFraisBancaireDto result = fraisBancaireService.getOutstandingFraisBancaire(searchDto, pageable);
+        log.info("Frais bancaires en cours récupérés - Total: {}", result.getTotalDesEncours());
         return ResponseEntity.ok(result);
     }
-}
 
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<FraisBancaireResposneDto> toggleStatus(@PathVariable Long id) {
+        log.info("Requête REST pour basculer le statut du frais bancaire ID: {}", id);
+        FraisBancaireResposneDto response = fraisBancaireService.toggleStatus(id);
+        log.info("Statut du frais bancaire ID: {} basculé vers {}", id, response.getStatus());
+        return ResponseEntity.ok(response);
+    }
+}

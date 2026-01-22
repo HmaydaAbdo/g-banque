@@ -191,4 +191,28 @@ public class TransactionResponseDto {
     public void setReferent(long referent) {
         this.referent = referent;
     }
+
+    @Override
+    public String toString() {
+        return "TransactionResponseDto{" +
+                "id=" + id +
+                ", dateEmission=" + dateEmission +
+                ", dateValeur=" + dateValeur +
+                ", dateOperations=" + dateOperations +
+                ", observation='" + observation + '\'' +
+                ", tvaDeductible=" + tvaDeductible +
+                ", tvaCollectee=" + tvaCollectee +
+                ", libelle='" + libelle + '\'' +
+                ", transactionSource=" + transactionSource +
+                ", debit=" + debit +
+                ", credit=" + credit +
+                ", traces='" + traces + '\'' +
+                ", banqueDePrelevementId=" + banqueDePrelevementId +
+                ", banqueDePrelevementNom='" + banqueDePrelevementNom + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", isConfirmed=" + isConfirmed +
+                ", referent=" + referent +
+                '}';
+    }
 }

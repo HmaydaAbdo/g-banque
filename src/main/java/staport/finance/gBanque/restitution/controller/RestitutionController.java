@@ -82,10 +82,19 @@ public class RestitutionController {
             @ModelAttribute RestitutionSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         log.info("Requête REST pour récupérer les encours de restitutions pour la banque id={}", banqueId);
-        searchDto.setBanqueId(banqueId); // Définir l'ID de la banque depuis le path variable
+        searchDto.setBanqueId(banqueId);
         EncoursRestitution result = restitutionService.getOutstandingRestitutions(searchDto, pageable);
         log.info("Encours de restitutions récupérés: {} restitutions, total des encours={}",
                 result.getPage().getTotalElements(), result.getTotalDesEncours());
         return ResponseEntity.ok(result);
+    }
+
+    // --- Toggle Status ---
+    @PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<RestitutionResponseDto> toggleStatus(@PathVariable Long id) {
+        log.info("Requête REST pour basculer le statut de la restitution ID: {}", id);
+        RestitutionResponseDto response = restitutionService.toggleStatus(id);
+        log.info("Statut de la restitution ID: {} basculé vers {}", id, response.getStatus());
+        return ResponseEntity.ok(response);
     }
 }

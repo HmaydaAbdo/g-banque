@@ -96,4 +96,20 @@ public class FraisBancaireResposneDto {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    @Override
+    public String toString() {
+        return "FraisBancaireResposneDto{" +
+                "id=" + id +
+                ", libelle='" + libelle + '\'' +
+                ", observation='" + observation + '\'' +
+                ", montant=" + montant +
+                ", banqueId=" + banqueId +
+                ", banqueNom='" + banqueNom + '\'' +
+                ", dateEmission=" + dateEmission +
+                ", dateValeur=" + dateValeur +
+                ", dateOperation=" + dateOperation +
+                ", status=" + status +
+                '}';
+    }
 }

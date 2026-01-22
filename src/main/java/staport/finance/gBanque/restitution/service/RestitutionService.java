@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionResponseDto;
@@ -156,5 +157,26 @@ public class RestitutionService {
                 pageDto.getTotalElements(), totalDesEncours);
 
         return result;
+    }
+
+    // --- Toggle Status ---
+    @Transactional
+    public RestitutionResponseDto toggleStatus(Long id) {
+        log.info("Basculement du statut de la restitution ID: {}", id);
+
+        Restitution restitution = restitutionRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Restitution introuvable avec l'id={}", id);
+                    return new IllegalArgumentException("Restitution introuvable avec l'id: " + id);
+                });
+
+        Status oldStatus = restitution.getStatus();
+        Status newStatus = oldStatus == Status.PAYE ? Status.PREVU : Status.PAYE;
+
+        restitution.setStatus(newStatus);
+        Restitution updated = restitutionRepository.save(restitution);
+
+        log.info("Statut de la restitution ID: {} basculé de {} vers {}", id, oldStatus, newStatus);
+        return restitutionMapper.toResponseDto(updated);
     }
 }

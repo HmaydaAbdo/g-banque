@@ -66,4 +66,15 @@ public class AgiosRequestDto {
     public void setDateEmission(OffsetDateTime dateEmission) {
         this.dateEmission = dateEmission;
     }
+
+    @Override
+    public String toString() {
+        return "AgiosRequestDto{" +
+                "libelle='" + libelle + '\'' +
+                ", observation='" + observation + '\'' +
+                ", montant=" + montant +
+                ", banqueId=" + banqueId +
+                ", dateEmission=" + dateEmission +
+                '}';
+    }
 }

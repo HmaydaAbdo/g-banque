@@ -24,4 +24,12 @@ public class EncoursImpotEtTaxeDto {
     public void setPage(Page<ImpotEtTaxeResponseDto> page) {
         this.page = page;
     }
+
+    @Override
+    public String toString() {
+        return "EncoursImpotEtTaxeDto{" +
+                "totalDesEncours=" + totalDesEncours +
+                ", page=" + page +
+                '}';
+    }
 }

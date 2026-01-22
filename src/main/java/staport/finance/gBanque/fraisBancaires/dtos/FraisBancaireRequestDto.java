@@ -68,4 +68,15 @@ public class FraisBancaireRequestDto {
     public void setDateEmission(OffsetDateTime dateEmission) {
         this.dateEmission = dateEmission;
     }
+
+    @Override
+    public String toString() {
+        return "FraisBancaireRequestDto{" +
+                "libelle='" + libelle + '\'' +
+                ", observation='" + observation + '\'' +
+                ", montant=" + montant +
+                ", banqueId=" + banqueId +
+                ", dateEmission=" + dateEmission +
+                '}';
+    }
 }

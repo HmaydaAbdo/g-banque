@@ -14,6 +14,7 @@ import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.mapper.ImpotEtTaxeMapper;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.impot_taxes.specs.ImpotEtTaxeSpecifications;
+import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
 
@@ -33,62 +34,49 @@ public class ImpotEtTaxeService {
         this.impotEtTaxeMapper = impotEtTaxeMapper;
     }
 
-    // --- Create ---
     @Transactional
     public ImpotEtTaxeResponseDto createImpotEtTaxe(ImpotEtTaxeRequestDto requestDto) {
-        log.info("Creating impot et taxe avec les données suivantes {} ", requestDto);
+        log.info("Début de création d'un impôt/taxe avec les données: {}", requestDto);
 
         Banque banque = banqueRepository.findById(requestDto.getBanqueId())
                 .orElseThrow(() -> {
-                    log.error("Banque not found with id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque not found");
+                    log.error("Banque introuvable avec l'id={}", requestDto.getBanqueId());
+                    return new IllegalArgumentException("Banque introuvable");
                 });
 
         ImpotEtTaxe impotEtTaxe = impotEtTaxeMapper.toEntity(requestDto, banque);
         impotEtTaxeRepository.save(impotEtTaxe);
 
-        log.info("Impot et taxe created with id={}", impotEtTaxe.getId());
+        log.info("Impôt/taxe créé avec succès: id={}", impotEtTaxe.getId());
         return impotEtTaxeMapper.toResponseDto(impotEtTaxe);
     }
 
-    // --- Get by ID ---
     @Transactional(readOnly = true)
     public ImpotEtTaxeResponseDto getById(Long id) {
-        log.info("Fetching impot et taxe with id={}", id);
-
+        log.info("Récupération de l'impôt/taxe id={}", id);
         ImpotEtTaxe impotEtTaxe = impotEtTaxeRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Impot et taxe not found with id={}", id);
-                    return new IllegalArgumentException("Impot et taxe not found");
-                });
-
+                .orElseThrow(() -> new IllegalArgumentException("Impôt/taxe introuvable"));
         return impotEtTaxeMapper.toResponseDto(impotEtTaxe);
     }
 
-    // --- Search with pagination ---
     @Transactional(readOnly = true)
     public Page<ImpotEtTaxeResponseDto> searchImpotEtTaxes(ImpotEtTaxeSearchDto searchDto, Pageable pageable) {
-        log.info("Searching impots et taxes with criteria: {}", searchDto);
-        return impotEtTaxeRepository.findAll(ImpotEtTaxeSpecifications.buildSpecification(searchDto), pageable)
+        log.info("Recherche d'impôts/taxes - Critères: {}", searchDto);
+        Page<ImpotEtTaxeResponseDto> result = impotEtTaxeRepository.findAll(ImpotEtTaxeSpecifications.buildSpecification(searchDto), pageable)
                 .map(impotEtTaxeMapper::toResponseDto);
+        log.info("Recherche terminée: {} éléments trouvés", result.getTotalElements());
+        return result;
     }
 
-    // --- Update ---
     @Transactional
     public ImpotEtTaxeResponseDto updateImpotEtTaxe(Long id, ImpotEtTaxeRequestDto requestDto) {
-        log.info("Updating impot et taxe avec ces nouvelles données {}",requestDto);
+        log.info("Mise à jour de l'impôt/taxe id={}", id);
 
         ImpotEtTaxe impotEtTaxe = impotEtTaxeRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Impot et taxe not found with id={}", id);
-                    return new IllegalArgumentException("Impot et taxe not found");
-                });
+                .orElseThrow(() -> new IllegalArgumentException("Impôt/taxe introuvable"));
 
         Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque not found with id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque not found");
-                });
+                .orElseThrow(() -> new IllegalArgumentException("Banque introuvable"));
 
         impotEtTaxe.setLibelle(requestDto.getLibelle());
         impotEtTaxe.setMontant(requestDto.getMontant());
@@ -98,57 +86,63 @@ public class ImpotEtTaxeService {
         impotEtTaxe.setObservation(requestDto.getObservation());
 
         impotEtTaxeRepository.save(impotEtTaxe);
-        log.info("Impot et taxe updated successfully id={}", impotEtTaxe.getId());
+        log.info("Impôt/taxe mis à jour avec succès: id={}", id);
         return impotEtTaxeMapper.toResponseDto(impotEtTaxe);
     }
 
-    // --- Delete ---
     @Transactional
     public void deleteImpotEtTaxe(Long id) {
-        log.info("Deleting impot et taxe with id={}", id);
+        log.info("Suppression de l'impôt/taxe id={}", id);
         if (!impotEtTaxeRepository.existsById(id)) {
-            log.error("Impot et taxe not found with id={}", id);
-            throw new IllegalArgumentException("Impot et taxe not found");
+            throw new IllegalArgumentException("Impôt/taxe introuvable");
         }
         impotEtTaxeRepository.deleteById(id);
-        log.info("Impot et taxe deleted successfully id={}", id);
+        log.info("Impôt/taxe supprimé avec succès: id={}", id);
     }
 
-    /**
-     * Retrieves a paginated list of outstanding impots et taxes and calculates their total amount.
-     * Outstanding impots et taxes are those with a 'PREVU' status and an emission date in the past.
-     *
-     * @param pageable Pagination and sorting information.
-     * @param searchDto Optional search criteria (e.g., for filtering by bank, libelle, etc.).
-     * @return An EncoursImpotEtTaxeDto containing the page of impots et taxes and the total outstanding amount.
-     */
+    @Transactional
+    public ImpotEtTaxeResponseDto toggleStatus(Long id) {
+        log.info("Basculement du statut de l'impôt/taxe ID: {}", id);
+
+        ImpotEtTaxe impotEtTaxe = impotEtTaxeRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Impôt/taxe introuvable avec l'id={}", id);
+                    return new IllegalArgumentException("Impôt/taxe introuvable");
+                });
+
+        Status oldStatus = impotEtTaxe.getStatus();
+        Status newStatus = (oldStatus == Status.PAYE) ? Status.PREVU : Status.PAYE;
+
+        impotEtTaxe.setStatus(newStatus);
+        ImpotEtTaxe updated = impotEtTaxeRepository.save(impotEtTaxe);
+
+        log.info("Statut basculé pour ID {}: {} -> {}", id, oldStatus, newStatus);
+        return impotEtTaxeMapper.toResponseDto(updated);
+    }
+
     @Transactional(readOnly = true)
     public EncoursImpotEtTaxeDto getOutstandingImpotEtTaxes(ImpotEtTaxeSearchDto searchDto, Pageable pageable) {
-        // Build the specification to filter the records
+        log.info("Récupération des encours impôts/taxes - Critères: {}", searchDto);
+
         Specification<ImpotEtTaxe> spec = Specification.where(ImpotEtTaxeSpecifications.outstandingImpotEtTaxes())
                 .and(ImpotEtTaxeSpecifications.hasBanque(searchDto.getBanqueId()))
                 .and(ImpotEtTaxeSpecifications.hasLibelle(searchDto.getLibelle()))
                 .and(ImpotEtTaxeSpecifications.hasMotif(searchDto.getMotif()))
                 .and(ImpotEtTaxeSpecifications.hasMontant(searchDto.getMontant()));
 
-        // Fetch the paginated list of impots et taxes
         Page<ImpotEtTaxe> impotEtTaxePage = impotEtTaxeRepository.findAll(spec, pageable);
 
-        // Fetch the total sum of the montant for the same criteria
         BigDecimal totalDesEncours = impotEtTaxeRepository.findAll(spec).stream()
                 .map(ImpotEtTaxe::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Map the page of entities to a page of DTOs
         Page<ImpotEtTaxeResponseDto> pageDto = impotEtTaxePage.map(impotEtTaxeMapper::toResponseDto);
 
-        // Create and return the final DTO
         EncoursImpotEtTaxeDto result = new EncoursImpotEtTaxeDto();
         result.setPage(pageDto);
         result.setTotalDesEncours(totalDesEncours);
 
+        log.info("Encours récupérés: {} éléments, Total: {}", pageDto.getTotalElements(), totalDesEncours);
         return result;
     }
-
-
 }

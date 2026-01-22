@@ -60,4 +60,16 @@ public class AgreratedTransactionResponseDto {
     public void setTvaDue(BigDecimal tvaDue) {
         this.tvaDue = tvaDue;
     }
+
+    @Override
+    public String toString() {
+        return "AgreratedTransactionResponseDto{" +
+                "totalDebit=" + totalDebit +
+                ", totalCredit=" + totalCredit +
+                ", totalTvaDeductible=" + totalTvaDeductible +
+                ", totalTvaCollectee=" + totalTvaCollectee +
+                ", tvaDue=" + tvaDue +
+                ", page=" + page +
+                '}';
+    }
 }

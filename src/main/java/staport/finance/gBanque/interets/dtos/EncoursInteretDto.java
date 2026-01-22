@@ -24,4 +24,12 @@ public class EncoursInteretDto {
     public void setPage(Page<InteretResponseDto> page) {
         this.page = page;
     }
+
+    @Override
+    public String toString() {
+        return "EncoursInteretDto{" +
+                "totalDesEncours=" + totalDesEncours +
+                ", page=" + page +
+                '}';
+    }
 }

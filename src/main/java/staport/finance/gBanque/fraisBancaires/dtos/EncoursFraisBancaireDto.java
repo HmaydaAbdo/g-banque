@@ -23,4 +23,12 @@ public class EncoursFraisBancaireDto {
     public void setPage(Page<FraisBancaireResposneDto> page) {
         this.page = page;
     }
+
+    @Override
+    public String toString() {
+        return "EncoursFraisBancaireDto{" +
+                "totalDesEncours=" + totalDesEncours +
+                ", page=" + page +
+                '}';
+    }
 }

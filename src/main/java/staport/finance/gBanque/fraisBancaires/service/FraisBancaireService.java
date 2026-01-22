@@ -1,7 +1,7 @@
 package staport.finance.gBanque.fraisBancaires.service;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -9,95 +9,94 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
-import staport.finance.gBanque.fraisBancaires.dtos.EncoursFraisBancaireDto;
-import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireRequestDto;
-import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireResposneDto;
-import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireSearchDto;
+import staport.finance.gBanque.fraisBancaires.dtos.*;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.mapper.FraisBancaireMapper;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpec;
+import staport.finance.gBanque.prefinancement.enums.Status;
+
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 @Service
 public class FraisBancaireService {
 
-    private static final Logger log = LogManager.getLogger(FraisBancaireService.class);
+    private static final Logger log = LoggerFactory.getLogger(FraisBancaireService.class);
     private final FraisBancaireRepository fraisBancaireRepository;
     private final BanqueRepository banqueRepository;
     private final FraisBancaireMapper fraisBancaireMapper;
 
-    public FraisBancaireService(FraisBancaireRepository fraisBancaireRepository, BanqueRepository banqueRepository, FraisBancaireMapper fraisBancaireMapper) {
+    public FraisBancaireService(FraisBancaireRepository fraisBancaireRepository,
+                                BanqueRepository banqueRepository,
+                                FraisBancaireMapper fraisBancaireMapper) {
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.banqueRepository = banqueRepository;
         this.fraisBancaireMapper = fraisBancaireMapper;
+        log.info("Initialisation du service FraisBancaire");
     }
 
-    // --- Create ---
     @Transactional
     public FraisBancaireResposneDto createFraisBancaire(FraisBancaireRequestDto requestDto) {
-
-        log.info("Creating FraisBancaire for banqueId={} libelle={}", requestDto.getBanqueId(), requestDto.getLibelle());
+        log.info("Création d'un frais bancaire - Banque ID: {}, Libellé: '{}', Montant: {}",
+                requestDto.getBanqueId(), requestDto.getLibelle(), requestDto.getMontant());
 
         Banque banque = banqueRepository.findById(requestDto.getBanqueId())
                 .orElseThrow(() -> {
-                    log.error("Banque not found with id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque not found");
+                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
+                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
                 });
 
+        log.debug("Banque trouvée: {} (ID: {})", banque.getNom(), banque.getId());
         FraisBancaire fraisBancaire = fraisBancaireMapper.toEntity(requestDto, banque);
+        FraisBancaire saved = fraisBancaireRepository.save(fraisBancaire);
 
-        fraisBancaireRepository.save(fraisBancaire);
-
-        log.info("Frais created with id={}", fraisBancaire.getId());
-
-        return fraisBancaireMapper.toResponseDto(fraisBancaire);
+        log.info("Frais bancaire créé avec succès - ID: {}, Statut: {}", saved.getId(), saved.getStatus());
+        return fraisBancaireMapper.toResponseDto(saved);
     }
 
-
-    // --- Get by ID ---
     @Transactional(readOnly = true)
     public FraisBancaireResposneDto getById(Long id) {
-
-        log.info("Fetching frais Bancaire with id={}", id);
+        log.info("Récupération du frais bancaire avec l'ID: {}", id);
 
         FraisBancaire fraisBancaire = fraisBancaireRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Frais Bancaire not found with id={}", id);
-                    return new IllegalArgumentException("Frais Bancaire not found  not found");
+                    log.error("Frais bancaire non trouvé avec l'ID: {}", id);
+                    return new IllegalArgumentException("Frais bancaire non trouvé avec l'ID: " + id);
                 });
 
+        log.debug("Frais bancaire trouvé - Libellé: '{}', Montant: {}", fraisBancaire.getLibelle(), fraisBancaire.getMontant());
         return fraisBancaireMapper.toResponseDto(fraisBancaire);
     }
 
-    // --- Search with pagination ---
     @Transactional(readOnly = true)
     public Page<FraisBancaireResposneDto> searchFraisBancaire(FraisBancaireSearchDto searchDto, Pageable pageable) {
+        log.info("Recherche de frais bancaires - Critères: {}, Page: {}, Taille: {}",
+                searchDto, pageable.getPageNumber(), pageable.getPageSize());
 
-        log.info("Searching frais bancaire with criteria: {}", searchDto);
+        Page<FraisBancaireResposneDto> result = fraisBancaireRepository.findAll(
+                        FraisBancaireSpec.buildSpecification(searchDto), pageable)
+                .map(fraisBancaireMapper::toResponseDto);
 
-        return fraisBancaireRepository.findAll(
-                        FraisBancaireSpec.buildSpecification(searchDto),
-                        pageable
-                ).map(fraisBancaireMapper::toResponseDto);
+        log.info("Recherche terminée - {} frais bancaire(s) trouvé(s) sur {} au total",
+                result.getNumberOfElements(), result.getTotalElements());
+        return result;
     }
 
-    // --- Update ---
     @Transactional
     public FraisBancaireResposneDto updateFraisBancaire(Long id, FraisBancaireRequestDto requestDto) {
-
-        log.info("Updating frais bancaire id={} with libelle={}", id, requestDto.getLibelle());
+        log.info("Mise à jour du frais bancaire ID: {} - Nouveau libellé: '{}'", id, requestDto.getLibelle());
 
         FraisBancaire fraisBancaire = fraisBancaireRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Frais Bancaire not found with id={}", id);
-                    return new IllegalArgumentException("Frais Bancaire not found");
+                    log.error("Frais bancaire non trouvé avec l'ID: {}", id);
+                    return new IllegalArgumentException("Frais bancaire non trouvé avec l'ID: " + id);
                 });
 
         Banque banque = banqueRepository.findById(requestDto.getBanqueId())
                 .orElseThrow(() -> {
-                    log.error("Banque not found with id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque not found");
+                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
+                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
                 });
 
         fraisBancaire.setLibelle(requestDto.getLibelle());
@@ -105,58 +104,62 @@ public class FraisBancaireService {
         fraisBancaire.setBanque(banque);
         fraisBancaire.setDateEmission(requestDto.getDateEmission());
 
-        fraisBancaireRepository.save(fraisBancaire);
-        log.info("Frais Bancaire updated successfully id={}", fraisBancaire.getId());
-        return fraisBancaireMapper.toResponseDto(fraisBancaire);
+        FraisBancaire updated = fraisBancaireRepository.save(fraisBancaire);
+        log.info("Frais bancaire ID: {} mis à jour avec succès", id);
+        return fraisBancaireMapper.toResponseDto(updated);
     }
 
-    // --- Delete ---
     @Transactional
     public void deleteFraisBancaire(Long id) {
-        log.info("Deleting Frais Bancaire with id={}", id);
+        log.info("Suppression du frais bancaire avec l'ID: {}", id);
 
         if (!fraisBancaireRepository.existsById(id)) {
-            log.error("Frais Bancaire not found with id={}", id);
-            throw new IllegalArgumentException("Frais Bancaire not found");
+            log.error("Frais bancaire non trouvé avec l'ID: {}", id);
+            throw new IllegalArgumentException("Frais bancaire non trouvé avec l'ID: " + id);
         }
 
         fraisBancaireRepository.deleteById(id);
-        log.info("FraisBancaire deleted successfully id={}", id);
+        log.info("Frais bancaire ID: {} supprimé avec succès", id);
     }
 
-    /**
-     * Retrieves a paginated list of outstanding frais bancaires and calculates their total amount.
-     * Outstanding frais bancaires are those with a 'PREVU' status and an emission date in the past.
-     *
-     * @param pageable Pagination and sorting information.
-     * @param searchDto Optional search criteria (e.g., for filtering by bank, libelle, etc.).
-     * @return An EncoursFraisBancaireDto containing the page of frais bancaires and the total outstanding amount.
-     */
     @Transactional(readOnly = true)
     public EncoursFraisBancaireDto getOutstandingFraisBancaire(FraisBancaireSearchDto searchDto, Pageable pageable) {
+        log.info("Récupération des frais bancaires en cours - Critères: {}", searchDto);
 
-        // Build the specification to filter the records
         Specification<FraisBancaire> spec = Specification.where(FraisBancaireSpec.outstandingFraisBancaires())
                 .and(FraisBancaireSpec.hasBanque(searchDto.getBanqueId()))
                 .and(FraisBancaireSpec.hasLibelle(searchDto.getLibelle()))
                 .and(FraisBancaireSpec.hasMontant(searchDto.getMontant()));
 
-        // Fetch the paginated list of frais bancaires
-        Page<FraisBancaire> fraisBancairePage = fraisBancaireRepository.findAll(spec, pageable);
-
-        // Fetch the total sum of the montant for the same criteria
-        BigDecimal totalDesEncours = fraisBancaireRepository.findAll(spec).stream()
+        Page<FraisBancaire> page = fraisBancaireRepository.findAll(spec, pageable);
+        BigDecimal total = fraisBancaireRepository.findAll(spec).stream()
                 .map(FraisBancaire::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Map the page of entities to a page of DTOs
-        Page<FraisBancaireResposneDto> pageDto = fraisBancairePage.map(fraisBancaireMapper::toResponseDto);
+        log.info("Encours calculé: {}, Nombre de frais: {}", total, page.getTotalElements());
 
-        // Create and return the final DTO
         EncoursFraisBancaireDto result = new EncoursFraisBancaireDto();
-        result.setPage(pageDto);
-        result.setTotalDesEncours(totalDesEncours);
-
+        result.setPage(page.map(fraisBancaireMapper::toResponseDto));
+        result.setTotalDesEncours(total);
         return result;
+    }
+
+    @Transactional
+    public FraisBancaireResposneDto toggleStatus(Long id) {
+        log.info("Basculement du statut du frais bancaire ID: {}", id);
+
+        FraisBancaire fraisBancaire = fraisBancaireRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Frais bancaire non trouvé avec l'ID: {}", id);
+                    return new IllegalArgumentException("Frais bancaire non trouvé avec l'ID: " + id);
+                });
+
+        Status oldStatus = fraisBancaire.getStatus();
+        Status newStatus=oldStatus==Status.PAYE ? Status.PREVU : Status.PAYE;
+        fraisBancaire.setStatus(newStatus);
+        FraisBancaire updated = fraisBancaireRepository.save(fraisBancaire);
+
+        log.info("Statut du frais bancaire ID: {} basculé de {} vers {}", id, oldStatus, newStatus);
+        return fraisBancaireMapper.toResponseDto(updated);
     }
 }
