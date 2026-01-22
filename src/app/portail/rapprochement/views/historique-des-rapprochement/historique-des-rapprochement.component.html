@@ -106,10 +106,10 @@
         <tr>
           <td >{{ rapprochement.dateRapprochement  | date:'MM/yyyy'}}</td>
           <td>{{ rapprochement.banqueNom }}</td>
-          <td>{{ rapprochement.soldeDebut | number:'1.2-2' }} MAD</td>
-          <td>{{ rapprochement.soldeFin | number:'1.2-2' }} MAD</td>
-          <td class="text-red-600">{{ rapprochement.totalDebit | number:'1.2-2' }} MAD</td>
-          <td class="text-green-600">{{ rapprochement.totalCredit | number:'1.2-2' }} MAD</td>
+          <td>{{ rapprochement.soldeDebut | number:'1.2-2' }} </td>
+          <td>{{ rapprochement.soldeFin | number:'1.2-2' }} </td>
+          <td class="text-red-600">{{ rapprochement.totalDebit | number:'1.2-2' }} </td>
+          <td class="text-green-600">{{ rapprochement.totalCredit | number:'1.2-2' }} </td>
           <td>
             <span [ngClass]="{
                 'text-green-600 font-bold': rapprochement.tvaDue > 0,
@@ -117,7 +117,7 @@
                 'text-600': rapprochement.tvaDue === 0
               }">
               {{ rapprochement.tvaDue | number:'1.2-2' }}
-            </span> MAD
+            </span>
           </td>
           <td>
             <div class="flex flex-row align-items-center gap-2">
