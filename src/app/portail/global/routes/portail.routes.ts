@@ -128,6 +128,15 @@ import {RestitutionFormComponent} from "../../restitution/views/restitution-form
 import {
   EncoursRestitutionComponent
 } from "../../etatsDesEncours/views/lesEncours/encaissements/restitution/encours-restitution.component";
+import {
+  VirementErroneListComponent
+} from "../../Virements/virementsErronées/views/virement-errone-list/virement-errone-list.component";
+import {
+  VirementErroneFormComponent
+} from "../../Virements/virementsErronées/views/virement-errone-form/virement-errone-form.component";
+import {
+  EncoursVirementErroneComponent
+} from "../../etatsDesEncours/views/lesEncours/decaissement/virement-errone/virement-errone.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full'},
@@ -183,6 +192,10 @@ export const PORTAIL_ROUTES: Routes = [
   {path:"Virements/encaissement",component:VirementEncaissementListComponent},
   { path: 'Virements/new', component: VirementFormComponent },
   { path: 'Virements/edit/:id', component: VirementFormComponent },
+
+  { path: 'Virements/errones', component: VirementErroneListComponent },
+  { path: 'Virements/errones/new', component: VirementErroneFormComponent },
+  { path: 'Virements/errones/edit/:id', component: VirementErroneFormComponent },
 
   {path:"Mise-a-disposition/decaissement",component:MiseADispositionDecaissementListComponent},
   {path:"Mise-a-disposition/new",component:MiseADispositionFormComponent},
@@ -249,6 +262,7 @@ export const PORTAIL_ROUTES: Routes = [
       {path:"fraisBancaire",component:EncoursFraisBancaireComponent},
       {path: "impots-taxes", component: EncoursImpotsEtTaxesComponent},
       {path: "restitutions", component: EncoursRestitutionComponent},
+      {path: "virements-errones", component: EncoursVirementErroneComponent},
 
     ]
   },

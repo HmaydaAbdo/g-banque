@@ -114,6 +114,11 @@ export class SidebarComponent implements OnInit {
             {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/Virements/decaissement' },
           ]
         },
+        {
+          label: 'Virements Erronés ( Décaissements )',
+          icon: 'pi pi-exclamation-triangle',
+          routerLink: '/portail/Virements/errones'
+        },
         { label: 'Mises à disposition ( Décaissements ) ', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Mise-a-disposition/decaissement'}
       ]
     },

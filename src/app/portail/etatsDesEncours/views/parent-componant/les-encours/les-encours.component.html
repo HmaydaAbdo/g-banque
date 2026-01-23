@@ -38,7 +38,7 @@
 <div class="flex h-screen w-full">
 
   <!-- Sidebar Améliorée -->
-  <div class="col-fixed w-14rem h-full text-sm sidebar-gradient white-space-nowrap overflow-y-auto border-right-1 surface-border">
+  <div class="col-fixed w-14rem h-full text-xs sidebar-gradient white-space-nowrap overflow-y-auto border-right-1 surface-border">
     <ul class="list-none p-2">
       @for (item of items; track item.url) {
         <!-- Items sans sous-menu -->
@@ -48,7 +48,7 @@
              routerLinkActive="active-sidebar-link"
              class="flex align-items-center cursor-pointer p-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:bg-blue-100">
             <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
-            <span class="font-medium">{{ item.label }}</span>
+            <span >{{ item.label }}</span>
           </a>
         </li>
 
@@ -57,10 +57,10 @@
           <div
             pRipple
             (click)="toggleMenuItem(item)"
-            class="flex align-items-center justify-content-between  p-2 text-600 cursor-pointer border-round-lg hover:bg-blue-100 transition-all transition-duration-150 p-ripple">
+            class="flex align-items-center justify-content-between  p-2  cursor-pointer border-round-lg hover:bg-blue-100 transition-all transition-duration-150 p-ripple">
             <div class="flex align-items-center">
               <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
-              <span class="font-medium">{{ item.label }}</span>
+              <span >{{ item.label }}</span>
             </div>
             <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="text-xs"></i>
           </div>
@@ -73,8 +73,8 @@
                    [routerLink]="subItem.routerLink"
                    routerLinkActive="active-sidebar-link"
                    class="flex align-items-center cursor-pointer m-0 px-3 py-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:bg-blue-50">
-                  <i *ngIf="subItem.icon" [class]="subItem.icon + ' mr-2 text-sm'"></i>
-                  <span class="font-medium text-sm">{{ subItem.label }}</span>
+                  <i *ngIf="subItem.icon" [class]="subItem.icon + ' mr-2 '"></i>
+                  <span class="font-medium ">{{ subItem.label }}</span>
                 </a>
               </li>
             </ng-container>

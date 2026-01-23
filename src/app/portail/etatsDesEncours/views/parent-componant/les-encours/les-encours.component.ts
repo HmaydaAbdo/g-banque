@@ -84,6 +84,7 @@ export class LesEncoursComponent implements OnInit {
     'interests': { label: 'Décaissements ⇒ Intérêts', icon: 'pi pi-list' },
     'fraisBancaire': { label: 'Décaissements ⇒ Frais Bancaires', icon: 'pi pi-list' },
     'impots-taxes': { label: 'Décaissements ⇒ Impôts et Taxes', icon: 'pi pi-list' },
+    'virements-errones': { label: 'Décaissements ⇒ Virements Erronés', icon: 'pi pi-exclamation-triangle' },
 
     // Encaissements
     'lcn-encaissements': { label: 'Encaissements ⇒ LCN', icon: 'pi pi-list' },
@@ -179,11 +180,12 @@ export class LesEncoursComponent implements OnInit {
         label: 'Décaissements',
         icon: 'pi pi-arrow-circle-left',
         items: [
-          { label: 'Échéances leasing', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-leasing'] },
-          { label: 'Échéances CMT', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-cmt'] },
+          { label: 'Leasing', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-leasing'] },
+          { label: 'CMT', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'echeances-cmt'] },
           { label: 'Chèques', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'cheques-decaissements'] },
           { label: 'LCN', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'lcn-decaissements'] },
           { label: 'Virements', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'virements-decaissements'] },
+          { label: 'Virements Erronés', icon: 'pi pi-exclamation-triangle', routerLink: ['/portail/etats-des-encours', this.banqueId, 'virements-errones'] },
           { label: 'Mise à disposition', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'mise-a-disposition-decaissements'] },
           { label: 'Préfinancement', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prefinancement-remboursement'] },
           { label: 'Droits Constatés', icon: 'pi pi-list', routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-remboursement'] },

@@ -36,6 +36,8 @@
   import {ImpotEtTaxeValidationRequest} from "../../dtos/impotsEtTaxes/ImpotEtTaxeValidationRequest";
   import {RestitutionTransactionResponse} from "../../dtos/restitution/RestitutionTransactionResponse";
   import {RestitutionValidationRequest} from "../../dtos/restitution/RestitutionValidationRequest";
+  import {VirementErroneValidationRequest} from "../../dtos/virement-erronés/VirementErroneValidationRequest";
+  import {VirementErroneTransactionResponse} from "../../dtos/virement-erronés/VirementErroneTransactionResponse";
 
   @Injectable({
     providedIn: 'root'
@@ -195,6 +197,15 @@
       return this.http.post<RestitutionTransactionResponse>(
         `${this.baseUrl}/process/restitution`,
         restitution
+      );
+    }
+
+    processVirementErroneToTransaction(
+      request: VirementErroneValidationRequest
+    ): Observable<VirementErroneTransactionResponse> {
+      return this.http.post<VirementErroneTransactionResponse>(
+        `${this.baseUrl}/process/virement-errone`,
+        request
       );
     }
 
