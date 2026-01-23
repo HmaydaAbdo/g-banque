@@ -38,8 +38,8 @@ import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseA
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
-import staport.finance.gBanque.moyensDePaiements.virements.virementErrone.entities.VirementErrone;
-import staport.finance.gBanque.moyensDePaiements.virements.virementErrone.repositories.VirementErroneRepository;
+import staport.finance.gBanque.operationErrone.entities.OperationErrone;
+import staport.finance.gBanque.operationErrone.repositories.OperationErroneRepository;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
@@ -82,7 +82,7 @@ public class ReverseTransactionService {
     private final FactoringRepository factoringRepository;
     private final ImpotEtTaxeRepository impotEtTaxeRepository;
     private final RestitutionRepository restitutionRepository;
-    private final VirementErroneRepository virementErroneRepository;
+    private final OperationErroneRepository operationErroneRepository;
 
     public ReverseTransactionService(
             TransactionRepository transactionRepository,
@@ -101,7 +101,7 @@ public class ReverseTransactionService {
             PrelevementRepository prelevementRepository,
             InteretRepository interetRepository,
             FraisBancaireRepository fraisBancaireRepository,
-            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, VirementErroneRepository virementErroneRepository) {
+            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository) {
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
@@ -121,7 +121,7 @@ public class ReverseTransactionService {
         this.factoringRepository = factoringRepository;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
         this.restitutionRepository = restitutionRepository;
-        this.virementErroneRepository = virementErroneRepository;
+        this.operationErroneRepository = operationErroneRepository;
     }
 
     /**
@@ -243,8 +243,8 @@ public class ReverseTransactionService {
             case RESTITUTION:
                 resetRestitution(referentId);
                 break;
-            case VIREMENT_ERRONE:
-                resetVirementErrone(referentId);
+            case OPERATION_ERRONE:
+                resetOperationErrone(referentId);
                 break;
             default:
                 throw new Exception("Type de transaction non supporté pour l'annulation: " + source);
@@ -440,14 +440,14 @@ public class ReverseTransactionService {
         log.debug("Restitution {} remise à PREVU", restitutionId);
     }
 
-    private void resetVirementErrone(Long virementErroneId) throws Exception {
-        VirementErrone virementErrone = virementErroneRepository.findById(virementErroneId)
-                .orElseThrow(() -> new ResourceNotFoundException("Virement erroné introuvable: " + virementErroneId));
+    private void resetOperationErrone(Long operationErroneId) throws Exception {
+        OperationErrone operationErrone = operationErroneRepository.findById(operationErroneId)
+                .orElseThrow(() -> new ResourceNotFoundException("Operation erroné introuvable: " + operationErroneId));
 
-        virementErrone.setStatus(Status.PREVU);
-        virementErrone.setDateOperation(null);
-        virementErrone.setDateValeur(null);
-        virementErroneRepository.save(virementErrone);
-        log.debug("Virement erroné {} remis à PREVU", virementErroneId);
+        operationErrone.setStatus(Status.PREVU);
+        operationErrone.setDateOperation(null);
+        operationErrone.setDateValeur(null);
+        operationErroneRepository.save(operationErrone);
+        log.debug("Operation erroné {} remis à PREVU", operationErroneId);
     }
 }

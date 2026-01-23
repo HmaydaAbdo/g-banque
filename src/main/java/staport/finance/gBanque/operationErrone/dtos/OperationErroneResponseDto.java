@@ -1,12 +1,12 @@
-package staport.finance.gBanque.moyensDePaiements.virements.virementErrone.dtos;
-
+package staport.finance.gBanque.operationErrone.dtos;
 
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-public class VirementErroneResponseDto {
+public class OperationErroneResponseDto {
 
     private Long id;
     private String libelle;
@@ -18,8 +18,9 @@ public class VirementErroneResponseDto {
     private OffsetDateTime dateValeur;
     private OffsetDateTime dateOperation;
     private Status status;
+    private TransactionSource motif;
 
-    public VirementErroneResponseDto() {}
+    public OperationErroneResponseDto() {}
 
     public Long getId() {
         return id;
@@ -99,5 +100,13 @@ public class VirementErroneResponseDto {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public TransactionSource getMotif() {
+        return motif;
+    }
+
+    public void setMotif(TransactionSource motif) {
+        this.motif = motif;
     }
 }

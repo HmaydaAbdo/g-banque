@@ -1,13 +1,13 @@
-package staport.finance.gBanque.moyensDePaiements.virements.virementErrone.dtos;
-
+package staport.finance.gBanque.operationErrone.dtos;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-public class VirementErroneRequestDto {
+public class OperationErroneRequestDto {
 
     @NotNull(message = "Le montant est obligatoire")
     @Positive(message = "Le montant doit être positif")
@@ -18,6 +18,9 @@ public class VirementErroneRequestDto {
 
     @NotNull(message = "La date d'émission est obligatoire")
     private OffsetDateTime dateEmission;
+
+    @NotNull(message = "Le motif est obligatoire")
+    private TransactionSource motif;
 
     private String libelle;
     private String observation;
@@ -62,12 +65,21 @@ public class VirementErroneRequestDto {
         this.dateEmission = dateEmission;
     }
 
+    public TransactionSource getMotif() {
+        return motif;
+    }
+
+    public void setMotif(TransactionSource motif) {
+        this.motif = motif;
+    }
+
     @Override
     public String toString() {
-        return "VirementErroneRequestDto{" +
+        return "OperationErroneRequestDto{" +
                 "montant=" + montant +
                 ", banqueId=" + banqueId +
                 ", dateEmission=" + dateEmission +
+                ", motif=" + motif +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
                 '}';

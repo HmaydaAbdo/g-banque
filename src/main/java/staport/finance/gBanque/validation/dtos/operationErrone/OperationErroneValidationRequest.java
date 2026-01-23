@@ -1,13 +1,13 @@
-package staport.finance.gBanque.validation.dtos.virementErrone;
+package staport.finance.gBanque.validation.dtos.operationErrone;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.OffsetDateTime;
 
-public class VirementErroneValidationRequest {
+public class OperationErroneValidationRequest {
 
-    @NotNull(message = "L'id du virement erroné est obligatoire")
-    private Long idVirementErrone;
+    @NotNull(message = "L'id de l operation  erronée est obligatoire")
+    private Long idOperationErrone;
 
     @NotNull(message = "TVA est obligatoire")
     private Double tva;
@@ -27,15 +27,16 @@ public class VirementErroneValidationRequest {
     @NotBlank(message = "libelle est obligatoire")
     private String libelle;
 
-    public VirementErroneValidationRequest() {
+    public OperationErroneValidationRequest() {
     }
 
-    public Long getIdVirementErrone() {
-        return idVirementErrone;
+
+    public Long getIdOperationErrone() {
+        return idOperationErrone;
     }
 
-    public void setIdVirementErrone(Long idVirementErrone) {
-        this.idVirementErrone = idVirementErrone;
+    public void setIdOperationErrone(Long idOperationErrone) {
+        this.idOperationErrone = idOperationErrone;
     }
 
     public Double getTva() {

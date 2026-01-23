@@ -4,46 +4,44 @@ package staport.finance.gBanque.validation.mapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.moyensDePaiements.virements.virementErrone.entities.VirementErrone;
-import staport.finance.gBanque.validation.dtos.virementErrone.VirementErroneTransactionResponse;
-import staport.finance.gBanque.validation.dtos.virementErrone.VirementErroneValidationRequest;
+import staport.finance.gBanque.operationErrone.entities.OperationErrone;
+import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneTransactionResponse;
+import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneValidationRequest;
 import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
-public class VirementErroneTransactionMapper {
+public class OperationErroneTransactionMapper {
 
     private final ObjectMapper objectMapper;
 
-    public VirementErroneTransactionMapper(ObjectMapper objectMapper) {
+    public OperationErroneTransactionMapper(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
-    public Transaction toEntity(VirementErroneValidationRequest requestDto, VirementErrone virementErrone) throws Exception {
-        if (requestDto == null || virementErrone == null) {
+    public Transaction toEntity(OperationErroneValidationRequest requestDto, OperationErrone operationErrone) throws Exception {
+        if (requestDto == null || operationErrone == null) {
             return null;
         }
 
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
-        transaction.setReferent(virementErrone.getId());
+        transaction.setReferent(operationErrone.getId());
         transaction.setObservation(requestDto.getObservation());
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setLibelle(requestDto.getLibelle());
-        transaction.setTransactionSource(TransactionSource.VIREMENT_ERRONE);
-        transaction.setDebit(virementErrone.getMontant());
+        transaction.setTransactionSource(TransactionSource.OPERATION_ERRONE);
+        transaction.setDebit(operationErrone.getMontant());
         transaction.setCredit(BigDecimal.ZERO);
-        transaction.setBanqueDePrelevement(virementErrone.getBanque());
+        transaction.setBanqueDePrelevement(operationErrone.getBanque());
 
-        BigDecimal ttc = virementErrone.getMontant();
+        BigDecimal ttc = operationErrone.getMontant();
         BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
 
         // Calculer uniquement le montant de la TVA
@@ -55,12 +53,12 @@ public class VirementErroneTransactionMapper {
         return transaction;
     }
 
-    public VirementErroneTransactionResponse toResponseDto(Transaction transaction) throws Exception {
+    public OperationErroneTransactionResponse toResponseDto(Transaction transaction) throws Exception {
         if (transaction == null) {
             return null;
         }
 
-        VirementErroneTransactionResponse responseDto = new VirementErroneTransactionResponse();
+        OperationErroneTransactionResponse responseDto = new OperationErroneTransactionResponse();
 
         // Mapping fields from the entity to the DTO
         responseDto.setId(transaction.getId());

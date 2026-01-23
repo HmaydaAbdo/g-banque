@@ -1,15 +1,16 @@
-package staport.finance.gBanque.moyensDePaiements.virements.virementErrone.entities;
+package staport.finance.gBanque.operationErrone.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Entity
-public class VirementErrone {
+public class OperationErrone {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,29 +31,21 @@ public class VirementErrone {
 
     @Column(length = 150)
     private String libelle;
-
     @Column(length = 500)
     private String observation;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
+    private TransactionSource motif;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
     private Status status = Status.PREVU;
 
-    public VirementErrone() {
+
+    public OperationErrone() {
     }
 
-    public VirementErrone(BigDecimal montant, Banque banque, OffsetDateTime dateEmission,
-                          OffsetDateTime dateValeur, OffsetDateTime dateOperation,
-                          String libelle, String observation, Status status) {
-        this.montant = montant;
-        this.banque = banque;
-        this.dateEmission = dateEmission;
-        this.dateValeur = dateValeur;
-        this.dateOperation = dateOperation;
-        this.libelle = libelle;
-        this.observation = observation;
-        this.status = status;
-    }
 
     public Long getId() {
         return id;
@@ -122,30 +115,28 @@ public class VirementErrone {
         this.status = status;
     }
 
+    public TransactionSource getMotif() {
+        return motif;
+    }
+
+    public void setMotif(TransactionSource motif) {
+        this.motif = motif;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        VirementErrone that = (VirementErrone) o;
-        return Objects.equals(id, that.id) &&
-                Objects.equals(montant, that.montant) &&
-                Objects.equals(banque, that.banque) &&
-                Objects.equals(dateEmission, that.dateEmission) &&
-                Objects.equals(dateValeur, that.dateValeur) &&
-                Objects.equals(dateOperation, that.dateOperation) &&
-                Objects.equals(libelle, that.libelle) &&
-                Objects.equals(observation, that.observation) &&
-                status == that.status;
+        if (!(o instanceof OperationErrone that)) return false;
+        return Objects.equals(id, that.id) && Objects.equals(montant, that.montant) && Objects.equals(banque, that.banque) && Objects.equals(dateEmission, that.dateEmission) && Objects.equals(dateValeur, that.dateValeur) && Objects.equals(dateOperation, that.dateOperation) && Objects.equals(libelle, that.libelle) && Objects.equals(observation, that.observation) && motif == that.motif && status == that.status;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, montant, banque, dateEmission, dateValeur,
-                dateOperation, libelle, observation, status);
+        return Objects.hash(id, montant, banque, dateEmission, dateValeur, dateOperation, libelle, observation, motif, status);
     }
 
     @Override
     public String toString() {
-        return "VirementErrone{" +
+        return "OperationErrone{" +
                 "id=" + id +
                 ", montant=" + montant +
                 ", banque=" + banque +
@@ -154,6 +145,7 @@ public class VirementErrone {
                 ", dateOperation=" + dateOperation +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
+                ", motif=" + motif +
                 ", status=" + status +
                 '}';
     }

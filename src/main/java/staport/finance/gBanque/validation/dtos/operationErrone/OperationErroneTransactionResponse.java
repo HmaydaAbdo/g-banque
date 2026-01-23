@@ -1,4 +1,4 @@
-package staport.finance.gBanque.validation.dtos.virementErrone;
+package staport.finance.gBanque.validation.dtos.operationErrone;
 
 
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -6,7 +6,7 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-public class VirementErroneTransactionResponse {
+public class OperationErroneTransactionResponse {
 
     private Long id;
     private String banqueName;
@@ -19,9 +19,9 @@ public class VirementErroneTransactionResponse {
     private BigDecimal tvaCollectee;
     private BigDecimal debit;
     private BigDecimal credit;
-    private final TransactionSource transactionSource = TransactionSource.VIREMENT_ERRONE;
+    private final TransactionSource transactionSource = TransactionSource.OPERATION_ERRONE;
 
-    public VirementErroneTransactionResponse() {
+    public OperationErroneTransactionResponse() {
     }
 
     public Long getId() {

@@ -1,17 +1,22 @@
-package staport.finance.gBanque.moyensDePaiements.virements.virementErrone.dtos;
+// ============================================================
+// OperationErroneSearchDto.java
+// ============================================================
+package staport.finance.gBanque.operationErrone.dtos;
 
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 
-public class VirementErroneSearchDto {
+public class OperationErroneSearchDto {
 
     private Long banqueId;
     private String libelle;
     private BigDecimal montant;
     private Status status;
+    private TransactionSource motif;
 
-    public VirementErroneSearchDto() {}
+    public OperationErroneSearchDto() {}
 
     public Long getBanqueId() {
         return banqueId;
@@ -45,13 +50,22 @@ public class VirementErroneSearchDto {
         this.montant = montant;
     }
 
+    public TransactionSource getMotif() {
+        return motif;
+    }
+
+    public void setMotif(TransactionSource motif) {
+        this.motif = motif;
+    }
+
     @Override
     public String toString() {
-        return "VirementErroneSearchDto{" +
+        return "OperationErroneSearchDto{" +
                 "banqueId=" + banqueId +
                 ", libelle='" + libelle + '\'' +
                 ", montant=" + montant +
                 ", status=" + status +
+                ", motif=" + motif +
                 '}';
     }
 }

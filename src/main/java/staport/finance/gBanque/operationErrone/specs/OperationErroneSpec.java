@@ -1,16 +1,18 @@
-package staport.finance.gBanque.moyensDePaiements.virements.virementErrone.specs;
+package staport.finance.gBanque.operationErrone.specs;
 
 import org.springframework.data.jpa.domain.Specification;
-import staport.finance.gBanque.moyensDePaiements.virements.virementErrone.dtos.VirementErroneSearchDto;
-import staport.finance.gBanque.moyensDePaiements.virements.virementErrone.entities.VirementErrone;
+import staport.finance.gBanque.operationErrone.dtos.OperationErroneSearchDto;
+import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 
-public class VirementErroneSpec {
+public class OperationErroneSpec {
 
-    public static Specification<VirementErrone> hasBanque(Long banqueId) {
+    public static Specification<OperationErrone> hasBanque(Long banqueId) {
         return (root, query, cb) -> {
             if (banqueId == null) {
                 return null;
@@ -19,7 +21,7 @@ public class VirementErroneSpec {
         };
     }
 
-    public static Specification<VirementErrone> hasLibelle(String libelle) {
+    public static Specification<OperationErrone> hasLibelle(String libelle) {
         return (root, query, cb) -> {
             if (libelle == null || libelle.trim().isEmpty()) {
                 return null;
@@ -28,7 +30,7 @@ public class VirementErroneSpec {
         };
     }
 
-    public static Specification<VirementErrone> hasStatus(Enum<?> status) {
+    public static Specification<OperationErrone> hasStatus(Enum<?> status) {
         return (root, query, cb) -> {
             if (status == null) {
                 return null;
@@ -37,7 +39,7 @@ public class VirementErroneSpec {
         };
     }
 
-    public static Specification<VirementErrone> hasMontant(BigDecimal montant) {
+    public static Specification<OperationErrone> hasMontant(BigDecimal montant) {
         return (root, query, cb) -> {
             if (montant == null) {
                 return null;
@@ -46,23 +48,33 @@ public class VirementErroneSpec {
         };
     }
 
-    public static Specification<VirementErrone> buildSpecification(VirementErroneSearchDto dto) {
+    public static Specification<OperationErrone> hasMotif(TransactionSource motif) {
+        return (root, query, cb) -> {
+            if (motif == null) {
+                return null;
+            }
+            return cb.equal(root.get("motif"), motif);
+        };
+    }
+
+    public static Specification<OperationErrone> buildSpecification(OperationErroneSearchDto dto) {
         return Specification
                 .where(hasBanque(dto.getBanqueId()))
                 .and(hasLibelle(dto.getLibelle()))
-                .and(hasStatus(dto.getStatus()));
+                .and(hasStatus(dto.getStatus()))
+                .and(hasMotif(dto.getMotif()));
     }
 
     /**
-     * Creates a Specification to filter for virements erronés that are "outstanding."
+     * Creates a Specification to filter for operations erronées that are "outstanding."
      * Outstanding is defined as having a status of PREVU and an emission date that is in the past or present.
      *
-     * @return A Specification for outstanding virements erronés.
+     * @return A Specification for outstanding operations erronées.
      */
-    public static Specification<VirementErrone> outstandingVirements() {
+    public static Specification<OperationErrone> outstandingOperations() {
         return (root, query, cb) -> {
             // Condition 1 : statut = PREVU
-            Specification<VirementErrone> hasStatusPrev = hasStatus(Status.PREVU);
+            Specification<OperationErrone> hasStatusPrev = hasStatus(Status.PREVU);
 
             // Calcul de la fin du mois courant
             OffsetDateTime endOfMonth = OffsetDateTime.now()
@@ -73,7 +85,7 @@ public class VirementErroneSpec {
                     .withNano(999_999_999);
 
             // Condition 2 : dateEmission <= fin du mois courant
-            Specification<VirementErrone> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
+            Specification<OperationErrone> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
                     cbDate.lessThanOrEqualTo(rootDate.get("dateEmission"), endOfMonth);
 
             // Combinaison des deux conditions

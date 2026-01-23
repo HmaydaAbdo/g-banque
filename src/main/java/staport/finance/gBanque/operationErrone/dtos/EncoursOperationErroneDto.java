@@ -1,12 +1,12 @@
-package staport.finance.gBanque.moyensDePaiements.virements.virementErrone.dtos;
+package staport.finance.gBanque.operationErrone.dtos;
 
 import org.springframework.data.domain.Page;
 import java.math.BigDecimal;
 
-public class EncoursVirementErroneDto {
+public class EncoursOperationErroneDto {
 
     private BigDecimal totalDesEncours;
-    private Page<VirementErroneResponseDto> page;
+    private Page<OperationErroneResponseDto> page;
 
     public BigDecimal getTotalDesEncours() {
         return totalDesEncours;
@@ -16,17 +16,17 @@ public class EncoursVirementErroneDto {
         this.totalDesEncours = totalDesEncours;
     }
 
-    public Page<VirementErroneResponseDto> getPage() {
+    public Page<OperationErroneResponseDto> getPage() {
         return page;
     }
 
-    public void setPage(Page<VirementErroneResponseDto> page) {
+    public void setPage(Page<OperationErroneResponseDto> page) {
         this.page = page;
     }
 
     @Override
     public String toString() {
-        return "EncoursVirementErroneDto{" +
+        return "EncoursOperationErroneDto{" +
                 "totalDesEncours=" + totalDesEncours +
                 ", page=" + page +
                 '}';
