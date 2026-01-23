@@ -27,6 +27,8 @@ import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.interets.repository.InteretRepository;
+import staport.finance.gBanque.moyensDePaiements.virements.virementErrone.entities.VirementErrone;
+import staport.finance.gBanque.moyensDePaiements.virements.virementErrone.repositories.VirementErroneRepository;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.restitution.entities.Restitution;
@@ -81,6 +83,8 @@ import staport.finance.gBanque.validation.dtos.prelevements.PrelevementTransacti
 import staport.finance.gBanque.validation.dtos.prelevements.PrelevementValidationRequest;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
+import staport.finance.gBanque.validation.dtos.virementErrone.VirementErroneTransactionResponse;
+import staport.finance.gBanque.validation.dtos.virementErrone.VirementErroneValidationRequest;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
 import staport.finance.gBanque.validation.mapper.*;
@@ -152,7 +156,11 @@ public class ValidationService {
     private final RestitutionRepository restitutionRepository;
     private final RestitutionTransactionMapper restitutionTransactionMapper;
 
-    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper) {
+    private final VirementErroneRepository virementErroneRepository;
+    private final VirementErroneTransactionMapper virementErroneTransactionMapper;
+
+
+    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, VirementErroneRepository virementErroneRepository, VirementErroneTransactionMapper virementErroneTransactionMapper) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -191,6 +199,8 @@ public class ValidationService {
         this.impotEtTaxeTransactionMapper = impotEtTaxeTransactionMapper;
         this.restitutionRepository = restitutionRepository;
         this.restitutionTransactionMapper = restitutionTransactionMapper;
+        this.virementErroneRepository = virementErroneRepository;
+        this.virementErroneTransactionMapper = virementErroneTransactionMapper;
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -1053,4 +1063,42 @@ public class ValidationService {
         return response;
     }
 
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public VirementErroneTransactionResponse processVirementErroneToTransaction(VirementErroneValidationRequest requestDto) throws Exception {
+        // Step 1: Fetch virement erroné from the database using its id from the request.
+        VirementErrone virementErrone = this.virementErroneRepository.findById(requestDto.getIdVirementErrone())
+                .orElseThrow(() -> new ResourceNotFoundException("Virement erroné with id " + requestDto.getIdVirementErrone() + " not found"));
+
+        // Step 2: Check if the virement erroné is not already paid.
+        // If it's already paid, throw an exception.
+        if (virementErrone.getStatus() == Status.PAYE) {
+            throw new Exception("Le virement erroné est déjà payé");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
+        Transaction transactionEntity = virementErroneTransactionMapper.toEntity(requestDto, virementErrone);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
+        Banque banque = banqueRepository.findById(virementErrone.getBanque().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Banque with id " + virementErrone.getBanque().getId() + " not found"));
+
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(virementErrone.getMontant()));
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the virement erroné as paid and save the updated entity.
+        virementErrone.setStatus(Status.PAYE);
+        virementErrone.setObservation(savedTransaction.getObservation());
+        virementErrone.setLibelle(savedTransaction.getLibelle());
+        virementErrone.setDateValeur(savedTransaction.getDateValeur());
+        virementErrone.setDateOperation(savedTransaction.getDateOperations());
+        virementErroneRepository.save(virementErrone);
+
+        // Step 7: Convert the saved Transaction entity into a VirementErroneTransactionResponse
+        // using the mapper and return it as the response.
+        return virementErroneTransactionMapper.toResponseDto(savedTransaction);
+    }
 }

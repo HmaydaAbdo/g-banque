@@ -37,6 +37,8 @@ import staport.finance.gBanque.validation.dtos.prelevements.PrelevementTransacti
 import staport.finance.gBanque.validation.dtos.prelevements.PrelevementValidationRequest;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
+import staport.finance.gBanque.validation.dtos.virementErrone.VirementErroneTransactionResponse;
+import staport.finance.gBanque.validation.dtos.virementErrone.VirementErroneValidationRequest;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
 import staport.finance.gBanque.validation.services.ReverseTransactionService;
@@ -231,6 +233,13 @@ public class ValidationController {
     public ResponseEntity<RestitutionTransactionResponse> processRestitutionToTransaction(
             @Valid @RequestBody RestitutionValidationRequest requestDto) throws Exception {
         RestitutionTransactionResponse responseDto = validationService.processRestitutionToTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/process/virement-errone")
+    public ResponseEntity<VirementErroneTransactionResponse> processVirementErroneToTransaction(
+            @Valid @RequestBody VirementErroneValidationRequest requestDto) throws Exception {
+        VirementErroneTransactionResponse responseDto = validationService.processVirementErroneToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

@@ -18,5 +18,6 @@ public enum TransactionSource {
     PRELEVEMENT,
     CAUTION,
     IMPOT_TAXE,
-    RESTITUTION
+    RESTITUTION,
+    VIREMENT_ERRONE
 }

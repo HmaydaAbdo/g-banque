@@ -14,6 +14,7 @@ import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
+import staport.finance.gBanque.moyensDePaiements.virements.virementErrone.entities.VirementErrone;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
@@ -327,5 +328,17 @@ public class RecapitulatifDecaissementMapper {
     }
 
 
+    public RecaputilatifItem mapVirementErroneToDto(VirementErrone virementErrone) {
+        if (virementErrone == null) {
+            return null;
+        }
 
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setDateEmission(virementErrone.getDateEmission());
+        dto.setDebit(virementErrone.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(virementErrone.getObservation());
+        dto.setLibelle(virementErrone.getLibelle());
+        dto.setSource(TransactionSource.VIREMENT_ERRONE);
+        return dto;
+    }
 }
