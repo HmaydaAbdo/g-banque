@@ -17,6 +17,6 @@ export enum TransactionSource {
   CAUTION="CAUTION",
   IMPOT_TAXE="Impots et taxes",
   RESTITUTION="Restitution",
-  VIREMENT_ERRONE="Virement erroné",
+  OPERATION_ERRONE="Opération erronée",
 
 }

@@ -3,11 +3,10 @@ import { Sidebar, SidebarModule } from 'primeng/sidebar';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { StyleClassModule } from 'primeng/styleclass';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router'; // Import de Router
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import {Role} from "../../../../auth/enum/Role";
-import {AuthService} from "../../../../auth/services/auth.service";
-
+import { Role } from "../../../../auth/enum/Role";
+import { AuthService } from "../../../../auth/services/auth.service";
 
 interface SidebarItem {
   label?: string;
@@ -46,30 +45,33 @@ export class SidebarComponent implements OnInit {
   @ViewChild('sidebarRef') sidebarRef!: Sidebar;
 
   private authService = inject(AuthService);
-  private router = inject(Router); // Injection du Router
+  private router = inject(Router);
 
   // Garde la référence à l'élément de menu parent de niveau 1 actuellement ouvert pour l'expansion unique.
   private currentlyExpandedParent: SidebarItem | null = null;
 
   sidebarItems: SidebarItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
-    { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
-    { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires'},
+    { label: 'Tableau de bord', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
+    { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires' },
     {
       label: 'Les Lignes Fonctionnelles',
       icon: 'pi pi-receipt',
       items: [
-        { label: 'Les Lignes ponctuelles', icon: 'pi pi-list',
-          items:[
+        {
+          label: 'Les Lignes ponctuelles', icon: 'pi pi-list',
+          items: [
             { label: 'Les Lignes encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-encours' },
             { label: 'Les Lignes archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-archived' },
-          ] },
-        { label: 'Les Lignes spécifiques', icon: 'pi pi-list',
-          items:[
-            { label: 'Les lignes encours',icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-encours' },
-            { label: 'Les lignes archivées',icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-archived' },
-          ] },
-
+          ]
+        },
+        {
+          label: 'Les Lignes spécifiques', icon: 'pi pi-list',
+          items: [
+            { label: 'Les lignes encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-encours' },
+            { label: 'Les lignes archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-archived' },
+          ]
+        },
         { label: 'Les Natures des lignes Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles' }
       ]
     },
@@ -86,70 +88,73 @@ export class SidebarComponent implements OnInit {
       label: 'Leasing',
       icon: 'pi pi-money-bill',
       items: [
-        { label: 'Les Contras encours', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/encours' },
-        { label: 'Les Contras en attente de main levées ', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/en-attente-de-ML' },
-        { label: 'Les Contras archivés', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/archives' },
+        { label: 'Les Contrats encours', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/encours' },
+        { label: 'Les Contrats en attente de main levées', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/en-attente-de-ML' },
+        { label: 'Les Contrats archivés', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/archives' },
         { label: 'Les organismes leasing', icon: 'pi pi-list', routerLink: '/portail/leasing/organismesLeasing' },
-
       ]
     },
     {
       label: 'Les moyens de paiement',
       icon: 'pi pi-credit-card',
       items: [
-        { label: 'Chèques', icon: 'pi pi-arrow-right-arrow-left',
+        {
+          label: 'Chèques', icon: 'pi pi-arrow-right-arrow-left',
           items: [
-            {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/Cheques/encaissements' },
-            {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/Cheques/decaissements' },
-          ]
-        },
-        { label: 'LCN', icon: 'pi pi-file-o',
-          items: [
-            {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/LCN/encaissements' },
-            {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/LCN/decaissements' },
-          ]},
-        { label: 'Virements', icon: 'pi pi-arrow-right-arrow-left',
-          items: [
-            {label:"Encaissements", icon: 'pi pi-plus-circle' , routerLink: '/portail/Virements/encaissement' },
-            {label:"Décaissements", icon: 'pi pi-minus-circle' , routerLink: '/portail/Virements/decaissement' },
+            { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/Cheques/encaissements' },
+            { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/Cheques/decaissements' },
           ]
         },
         {
-          label: 'Virements Erronés ( Décaissements )',
-          icon: 'pi pi-exclamation-triangle',
-          routerLink: '/portail/Virements/errones'
+          label: 'LCN', icon: 'pi pi-file-o',
+          items: [
+            { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/LCN/encaissements' },
+            { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/LCN/decaissements' },
+          ]
         },
-        { label: 'Mises à disposition ( Décaissements ) ', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Mise-a-disposition/decaissement'}
+        {
+          label: 'Virements', icon: 'pi pi-arrow-right-arrow-left',
+          items: [
+            { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/Virements/encaissement' },
+            { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/Virements/decaissement' },
+          ]
+        },
+
+        { label: 'Mises à disposition (Décaissements)', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Mise-a-disposition/decaissement' }
       ]
     },
     {
-      label:"Les Marchés ",
-      icon:"pi pi-sliders-h",
-      items:[
-        {label: "la liste des marchés",icon: "pi pi-list",routerLink: "/portail/marches"},
-        {label: "les préfinancements",icon: "pi pi-list",routerLink: "/portail/préfinancements"},
-        {label: "les droits constatés",icon: "pi pi-list",routerLink: "/portail/droits-constate"},
-        {label: "Factoring",icon: "pi pi-list",routerLink: "/portail/factoring"},
-        {label: "Les décomptes",icon: "pi pi-list",routerLink: "/portail/decomptes"},
-      ]},
-    {label:"Les Commissions",icon:"pi pi-list",routerLink: '/portail/commissions'},
-    {label:"Les Agios",icon:"pi pi-list",routerLink: '/portail/agios'},
-    {label:"Les Prélèvements",icon:"pi pi-list",routerLink: '/portail/prelevements'},
-    {label:"Les Frais bancaire",icon:"pi pi-list",routerLink: '/portail/frais-bancaire'},
-    {label:"Les Intérêts ",icon:"pi pi-list",routerLink: '/portail/interets'},
-    {label:"Les Restitutions",icon:"pi pi-list  ",routerLink: '/portail/restitutions'},
-    {label:"Impôts et Taxes  ",icon:"pi pi-list",routerLink: '/portail/impots-taxes'},
-    {label:"Historique des Rapprochements ",routerLink:"/portail/rapprochement/historique",icon:"pi pi-history"},
+      label: "Les Marchés",
+      icon: "pi pi-sliders-h",
+      items: [
+        { label: "La liste des marchés", icon: "pi pi-list", routerLink: "/portail/marches" },
+        { label: "Les préfinancements", icon: "pi pi-list", routerLink: "/portail/préfinancements" },
+        { label: "Les droits constatés", icon: "pi pi-list", routerLink: "/portail/droits-constate" },
+        { label: "Factoring", icon: "pi pi-list", routerLink: "/portail/factoring" },
+        { label: "Les décomptes", icon: "pi pi-list", routerLink: "/portail/decomptes" },
+      ]
+    },
+    { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions' },
+    { label: "Les Agios", icon: "pi pi-list", routerLink: '/portail/agios' },
+    { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements' },
+    { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire' },
+    { label: "Les Intérêts", icon: "pi pi-list", routerLink: '/portail/interets' },
+    { label: "Les Restitutions", icon: "pi pi-list", routerLink: '/portail/restitutions' },
+    { label: "Impôts et Taxes", icon: "pi pi-list", routerLink: '/portail/impots-taxes' },
+    {label: 'Opérations Erronées', icon: 'pi pi-exclamation-triangle', routerLink: '/portail/operations/errones'},
+    { label: "Historique des Rapprochements", routerLink: "/portail/rapprochement/historique", icon: "pi pi-history" },
     {
-      label:"Historique des transactions",
+      label: "Historique des transactions",
       roles: [Role.ADMIN, Role.SUPER_ADMIN],
-      routerLink:"/portail/historique-des-transactions",icon:"pi pi-history"},
+      routerLink: "/portail/historique-des-transactions",
+      icon: "pi pi-history"
+    },
     {
       label: 'Paramètres',
       icon: 'pi pi-cog',
       roles: [Role.ADMIN, Role.SUPER_ADMIN],
       items: [
-        { label: 'Les Journaux du portail ', icon: 'pi pi-history',routerLink: '/portail/logs' },
+        { label: 'Les Journaux du portail', icon: 'pi pi-history', routerLink: '/portail/logs' },
       ]
     },
   ];
@@ -158,12 +163,12 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.filterSidebarItems();
-    this.expandActiveMenu(); // <--- Ouvre l'élément actif au rechargement
+    this.expandActiveMenu();
 
     // Subscribe to isAuthenticated$ to re-filter if auth state changes
     this.authService.isAuthenticated$.subscribe(() => {
       this.filterSidebarItems();
-      this.expandActiveMenu(); // <--- Ouvre l'élément actif après filtrage/changement d'authentification
+      this.expandActiveMenu();
     });
   }
 

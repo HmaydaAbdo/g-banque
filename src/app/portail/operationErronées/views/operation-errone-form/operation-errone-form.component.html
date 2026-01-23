@@ -19,13 +19,16 @@
 
   <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto">
     <div class="card-header text-center">
-      <h2 class="text-2xl font-bold">{{ isEditMode ? 'Modifier le Virement Erroné' : 'Ajouter un Nouveau Virement Erroné' }}</h2>
+      <h2 class="text-2xl font-bold">
+        {{ isEditMode ? 'Modifier l\'Opération Erronée' : 'Ajouter une Nouvelle Opération Erronée' }}
+      </h2>
     </div>
 
-    <form [formGroup]="virementForm" (ngSubmit)="onSubmit()">
+    <form [formGroup]="operationForm" (ngSubmit)="onSubmit()">
       <div class="p-fluid grid formgrid">
-        <div class="field col-12 md:col-4">
-          <label>Banque</label>
+        <!-- Banque -->
+        <div class="field col-12 md:col-6">
+          <label>Banque <span class="text-red-500">*</span></label>
           <p-dropdown
             formControlName="banqueId"
             [options]="banquesOptions"
@@ -39,10 +42,32 @@
             (onLazyLoad)="loadBanques($event)"
             [ngClass]="{'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched}"
           ></p-dropdown>
+          <small class="p-error" *ngIf="f['banqueId'].invalid && f['banqueId'].touched">
+            La banque est obligatoire
+          </small>
         </div>
 
-        <div class="field col-12 md:col-4">
-          <label>Montant (MAD)</label>
+        <!-- Motif -->
+        <div class="field col-12 md:col-6">
+          <label>Motif <span class="text-red-500">*</span></label>
+          <p-dropdown
+            formControlName="motif"
+            [options]="motifOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner un motif"
+            [showClear]="true"
+            appendTo="body"
+            [ngClass]="{'ng-invalid ng-dirty': f['motif'].invalid && f['motif'].touched}"
+          ></p-dropdown>
+          <small class="p-error" *ngIf="f['motif'].invalid && f['motif'].touched">
+            Le motif est obligatoire
+          </small>
+        </div>
+
+        <!-- Montant -->
+        <div class="field col-12 md:col-6">
+          <label>Montant (MAD) <span class="text-red-500">*</span></label>
           <p-inputNumber
             formControlName="montant"
             mode="decimal"
@@ -50,10 +75,14 @@
             [maxFractionDigits]="2"
             [ngClass]="{'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched}"
           ></p-inputNumber>
+          <small class="p-error" *ngIf="f['montant'].invalid && f['montant'].touched">
+            Le montant est obligatoire et doit être positif
+          </small>
         </div>
 
-        <div class="field col-12 md:col-4">
-          <label>Date d'émission</label>
+        <!-- Date d'émission -->
+        <div class="field col-12 md:col-6">
+          <label>Date d'émission <span class="text-red-500">*</span></label>
           <p-calendar
             formControlName="dateEmission"
             dateFormat="dd/mm/yy"
@@ -62,10 +91,14 @@
             appendTo="body"
             [ngClass]="{'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched}"
           ></p-calendar>
+          <small class="p-error" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">
+            La date d'émission est obligatoire
+          </small>
         </div>
 
+        <!-- Libellé -->
         <div class="field col-12 md:col-6">
-          <label>Libellé</label>
+          <label>Libellé <span class="text-red-500">*</span></label>
           <textarea
             pInputTextarea
             formControlName="libelle"
@@ -73,10 +106,14 @@
             autoResize="true"
             [ngClass]="{'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched}">
           </textarea>
+          <small class="p-error" *ngIf="f['libelle'].invalid && f['libelle'].touched">
+            Le libellé est obligatoire
+          </small>
         </div>
 
+        <!-- Observation -->
         <div class="field col-12 md:col-6">
-          <label>Observation</label>
+          <label>Observation <span class="text-red-500">*</span></label>
           <textarea
             pInputTextarea
             formControlName="observation"
@@ -84,10 +121,22 @@
             autoResize="true"
             [ngClass]="{'ng-invalid ng-dirty': f['observation'].invalid && f['observation'].touched}">
           </textarea>
+          <small class="p-error" *ngIf="f['observation'].invalid && f['observation'].touched">
+            L'observation est obligatoire
+          </small>
         </div>
 
+        <!-- Boutons -->
         <div class="col-12 mt-4 flex flex-row gap-2">
-          <button pButton pRipple label="Annuler" icon="pi pi-times" type="button" class="p-button-secondary" (click)="onCancel()"></button>
+          <button
+            pButton
+            pRipple
+            label="Annuler"
+            icon="pi pi-times"
+            type="button"
+            class="p-button-secondary"
+            (click)="onCancel()">
+          </button>
           <button
             pButton
             pRipple
@@ -95,7 +144,7 @@
             [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
             type="submit"
             class="p-button-success"
-            [disabled]="virementForm.invalid || loading">
+            [disabled]="operationForm.invalid || loading">
           </button>
         </div>
       </div>

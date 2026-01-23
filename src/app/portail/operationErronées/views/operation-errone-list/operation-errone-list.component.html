@@ -22,10 +22,10 @@
       </p-breadcrumb>
     </div>
 
-    <button pButton pRipple label="Ajouter virement erroné" class="hidden md:block h-fit mt-2" size="small"
-            icon="pi pi-plus" severity="primary" routerLink="/portail/Virements/errones/new"></button>
-    <button pButton pRipple pTooltip="Ajouter virement erroné" class="md:hidden h-fit mt-2" size="small"
-            icon="pi pi-plus" severity="primary" routerLink="/portail/Virements/errones/new"></button>
+    <button pButton pRipple label="Ajouter opération erronée" class="hidden md:block h-fit mt-2" size="small"
+            icon="pi pi-plus" severity="primary" routerLink="/portail/operations/errones/new"></button>
+    <button pButton pRipple pTooltip="Ajouter opération erronée" class="md:hidden h-fit mt-2" size="small"
+            icon="pi pi-plus" severity="primary" routerLink="/portail/operations/errones/new"></button>
   </div>
 
   <p-toolbar styleClass="bg-white">
@@ -69,6 +69,22 @@
 
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
+          <p-dropdown
+            name="motif"
+            [options]="motifOptions"
+            [(ngModel)]="selectedMotif"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Tous les motifs"
+            (onChange)="applyFilters()"
+            [showClear]="true"
+            appendTo="body"
+            [style]="{'min-width': '200px'}"
+          ></p-dropdown>
+        </div>
+
+        <div class="p-input-icon-left">
+          <i class="pi pi-search"></i>
           <input pInputText type="text" name="libelleFilter" placeholder="Rechercher par libellé"
                  [(ngModel)]="libelleFilter" (input)="applyFilters()"
                  [style]="{'min-width': '200px'}" />
@@ -91,12 +107,13 @@
   </p-toolbar>
 
   <div class="pb-8">
-    <p-table #dt [value]="virements" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
+    <p-table #dt [value]="operations" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
              [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
-             responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadVirements($event)"
+             responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadOperations($event)"
              [columns]="[
                {field: 'libelle', header: 'Libellé', sortable: true},
                {field: 'banqueNom', header: 'Banque', sortable: true},
+               {field: 'motif', header: 'Motif', sortable: true},
                {field: 'montant', header: 'Montant', sortable: true},
                {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
                {field: 'status', header: 'Statut', sortable: true}
@@ -117,33 +134,34 @@
         </tr>
       </ng-template>
 
-      <ng-template pTemplate="body" let-virement>
+      <ng-template pTemplate="body" let-operation>
         <tr>
-          <td>{{ virement.libelle }}</td>
-          <td>{{ virement.banqueNom }}</td>
-          <td>{{ virement.montant | number:'1.2-2' }} MAD</td>
-          <td>{{ virement.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ operation.libelle }}</td>
+          <td>{{ operation.banqueNom }}</td>
+          <td>{{ formatMotifLabel(operation.motif) }}</td>
+          <td>{{ operation.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ operation.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>
             <p-tag
-              [value]="virement.status"
-              [severity]="getStatusSeverity(virement.status)"
+              [value]="operation.status"
+              [severity]="getStatusSeverity(operation.status)"
             ></p-tag>
           </td>
           <td class="flex flex-row align-items-center gap-2">
             <button pButton pRipple icon="pi pi-pencil"
                     class="p-button-rounded p-button-outlined p-button-secondary mr-2"
-                    [routerLink]="['/portail/Virements/errones/edit', virement.id]"></button>
+                    [routerLink]="['/portail/operations/errones/edit', operation.id]"></button>
 
             @if (isAdmin()) {
               <p-inputSwitch
-                [ngModel]="virement.status === Status.PAYE"
-                (click)="toggleVirementStatus(virement)"
-                [pTooltip]="virement.status === 'PAYE' ? 'Marquer comme prévu' : 'Marquer comme payé'"
+                [ngModel]="operation.status === Status.PAYE"
+                (click)="toggleOperationStatus(operation)"
+                [pTooltip]="operation.status === 'PAYE' ? 'Marquer comme prévu' : 'Marquer comme payé'"
                 tooltipPosition="left"
               ></p-inputSwitch>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
-                      (click)="deleteVirement(virement)"></button>
+                      (click)="deleteOperation(operation)"></button>
             }
           </td>
         </tr>
@@ -151,13 +169,13 @@
 
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td [attr.colspan]="8">Aucun virement erroné trouvé.</td>
+          <td [attr.colspan]="9">Aucune opération erronée trouvée.</td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="8">Chargement en cours...</td>
+          <td [attr.colspan]="9">Chargement en cours...</td>
         </tr>
       </ng-template>
     </p-table>

@@ -1,5 +1,5 @@
-export interface VirementErroneValidationRequest {
-  idVirementErrone: number;
+export interface OperationErroneValidationRequest {
+  idOperationErrone: number;
   tva: number;
   dateEmission: string;
   dateValeur: string;

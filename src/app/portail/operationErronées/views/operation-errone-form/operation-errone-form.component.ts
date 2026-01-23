@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, ParamMap } from '@angular/router';
 
-
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -16,15 +15,17 @@ import { CalendarModule } from 'primeng/calendar';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import {BanqueResponse} from "../../../../comptes-bancaire/dtos/BanqueResponse";
-import {VirementErroneService} from "../../service/virement-errone.service";
-import {BanqueService} from "../../../../comptes-bancaire/services/BanqueService";
-import {PageResponse} from "../../../../global/types/PageResponse";
-import {VirementErroneResponseDto} from "../../dtos/VirementErroneResponseDto";
-import {VirementErroneRequestDto} from "../../dtos/VirementErroneRequestDto";
+
+import { BanqueResponse } from "../../../comptes-bancaire/dtos/BanqueResponse";
+import { OperationErroneService } from "../../service/operation-errone.service";
+import { BanqueService } from "../../../comptes-bancaire/services/BanqueService";
+import { PageResponse } from "../../../global/types/PageResponse";
+import { OperationErroneResponseDto } from "../../dtos/OperationErroneResponseDto";
+import { OperationErroneRequestDto } from "../../dtos/OperationErroneRequestDto";
+import { TransactionSource } from "../../../transactions/dtos/TransactionSource";
 
 @Component({
-  selector: 'app-virement-errone-form',
+  selector: 'app-operation-errone-form',
   standalone: true,
   imports: [
     CommonModule,
@@ -41,23 +42,24 @@ import {VirementErroneRequestDto} from "../../dtos/VirementErroneRequestDto";
     TooltipModule,
     InputTextareaModule,
   ],
-  templateUrl: './virement-errone-form.component.html',
+  templateUrl: './operation-errone-form.component.html',
   providers: [MessageService, ConfirmationService],
 })
-export class VirementErroneFormComponent implements OnInit {
-  virementForm!: FormGroup;
+export class OperationErroneFormComponent implements OnInit {
+  operationForm!: FormGroup;
   isEditMode = false;
-  virementId: number | null = null;
+  operationId: number | null = null;
   loading = false;
 
   banquesOptions: BanqueResponse[] = [];
+  motifOptions: { label: string; value: TransactionSource }[] = [];
   items: MenuItem[] | undefined;
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private virementErroneService: VirementErroneService,
+    private operationErroneService: OperationErroneService,
     private banqueService: BanqueService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService
@@ -65,26 +67,42 @@ export class VirementErroneFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.loadMotifOptions();
     this.setupBreadcrumbs();
 
     this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
       if (id) {
         this.isEditMode = true;
-        this.virementId = Number(id);
-        this.loadVirement(this.virementId);
+        this.operationId = Number(id);
+        this.loadOperation(this.operationId);
       }
     });
   }
 
   initForm(): void {
-    this.virementForm = this.fb.group({
+    this.operationForm = this.fb.group({
       banqueId: [null, Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       dateEmission: [null, Validators.required],
+      motif: [null, Validators.required],
       observation: [null, Validators.required],
       libelle: [null, Validators.required],
     });
+  }
+
+  loadMotifOptions(): void {
+    this.motifOptions = Object.values(TransactionSource).map(m => ({
+      label: this.formatMotifLabel(m),
+      value: m
+    }));
+  }
+
+  formatMotifLabel(motif: TransactionSource): string {
+    return motif.replace(/_/g, ' ').toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   loadBanques(event: any): void {
@@ -105,24 +123,25 @@ export class VirementErroneFormComponent implements OnInit {
   setupBreadcrumbs(): void {
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
-      { icon: 'pi pi-exclamation-triangle', route: '/portail/Virements/errones', label: 'Virements Erronés' },
+      { icon: 'pi pi-exclamation-triangle', route: '/portail/operations/errones', label: 'Opérations Erronées' },
     ];
   }
 
-  loadVirement(id: number): void {
+  loadOperation(id: number): void {
     this.loading = true;
-    this.virementErroneService.getById(id).subscribe({
-      next: (virement: VirementErroneResponseDto) => {
-        this.virementForm.patchValue({
-          banqueId: virement.banqueId,
-          observation: virement.observation,
-          libelle: virement.libelle,
-          montant: virement.montant,
-          dateEmission: new Date(virement.dateEmission),
+    this.operationErroneService.getById(id).subscribe({
+      next: (operation: OperationErroneResponseDto) => {
+        this.operationForm.patchValue({
+          banqueId: operation.banqueId,
+          observation: operation.observation,
+          libelle: operation.libelle,
+          montant: operation.montant,
+          dateEmission: new Date(operation.dateEmission),
+          motif: operation.motif,
         });
 
-        if (virement.banqueId && !this.banquesOptions.find(b => b.id === virement.banqueId)) {
-          this.banqueService.getBanqueById(virement.banqueId).subscribe(banque => {
+        if (operation.banqueId && !this.banquesOptions.find(b => b.id === operation.banqueId)) {
+          this.banqueService.getBanqueById(operation.banqueId).subscribe(banque => {
             this.banquesOptions = [...this.banquesOptions, banque];
           });
         }
@@ -133,22 +152,22 @@ export class VirementErroneFormComponent implements OnInit {
         this.messageService.add({
           severity: 'error',
           summary: 'Erreur',
-          detail: 'Échec du chargement du virement erroné.'
+          detail: 'Échec du chargement de l\'opération erronée.'
         });
         this.loading = false;
-        this.router.navigate(['/portail/Virements/errones']);
+        this.router.navigate(['/portail/operations/errones']);
       },
     });
   }
 
   get f() {
-    return this.virementForm.controls;
+    return this.operationForm.controls;
   }
 
   onSubmit(): void {
-    this.virementForm.markAllAsTouched();
+    this.operationForm.markAllAsTouched();
 
-    if (this.virementForm.invalid) {
+    if (this.operationForm.invalid) {
       this.messageService.add({
         severity: 'error',
         summary: 'Validation',
@@ -160,8 +179,8 @@ export class VirementErroneFormComponent implements OnInit {
 
     this.confirmationService.confirm({
       message: this.isEditMode
-        ? 'Êtes-vous sûr de vouloir modifier ce virement erroné ?'
-        : 'Êtes-vous sûr de vouloir créer ce virement erroné ?',
+        ? 'Êtes-vous sûr de vouloir modifier cette opération erronée ?'
+        : 'Êtes-vous sûr de vouloir créer cette opération erronée ?',
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       accept: () => this.executeSave(),
@@ -170,27 +189,28 @@ export class VirementErroneFormComponent implements OnInit {
 
   executeSave(): void {
     this.loading = true;
-    const formValue = this.virementForm.value;
+    const formValue = this.operationForm.value;
 
-    const request: VirementErroneRequestDto = {
+    const request: OperationErroneRequestDto = {
       banqueId: formValue.banqueId,
       libelle: formValue.libelle,
       observation: formValue.observation,
       montant: formValue.montant,
       dateEmission: formValue.dateEmission.toISOString(),
+      motif: formValue.motif,
     };
 
-    if (this.isEditMode && this.virementId) {
-      this.virementErroneService.updateVirementErrone(this.virementId, request).subscribe({
+    if (this.isEditMode && this.operationId) {
+      this.operationErroneService.updateOperationErrone(this.operationId, request).subscribe({
         next: () => {
           this.messageService.add({
             severity: 'success',
             summary: 'Succès',
-            detail: 'Virement erroné mis à jour.',
+            detail: 'Opération erronée mise à jour.',
             life: 3000
           });
           this.loading = false;
-          this.router.navigate(['/portail/Virements/errones']);
+          this.router.navigate(['/portail/operations/errones']);
         },
         error: (error) => {
           this.messageService.add({
@@ -203,16 +223,16 @@ export class VirementErroneFormComponent implements OnInit {
         },
       });
     } else {
-      this.virementErroneService.createVirementErrone(request).subscribe({
+      this.operationErroneService.createOperationErrone(request).subscribe({
         next: () => {
           this.messageService.add({
             severity: 'success',
             summary: 'Succès',
-            detail: 'Virement erroné créé.',
+            detail: 'Opération erronée créée.',
             life: 3000
           });
           this.loading = false;
-          this.router.navigate(['/portail/Virements/errones']);
+          this.router.navigate(['/portail/operations/errones']);
         },
         error: (error) => {
           this.messageService.add({
@@ -228,6 +248,6 @@ export class VirementErroneFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/Virements/errones']);
+    this.router.navigate(['/portail/operations/errones']);
   }
 }

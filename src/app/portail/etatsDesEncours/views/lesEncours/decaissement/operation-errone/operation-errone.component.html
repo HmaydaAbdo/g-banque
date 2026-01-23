@@ -1,0 +1,308 @@
+<!-- encours-operation-errone.component.html -->
+
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-2 p-2 h-screen overflow-y-scroll">
+  <div class="p-card shadow-2 p-2 flex flex-column gap-4">
+
+    <div class="flex flex-row justify-content-between">
+      <span class="text-lg font-medium">Opérations Erronées en cours</span>
+      <span class="text-lg font-medium">Total des encours <strong>{{ totalEncours | number:'1.2-2' }} MAD</strong></span>
+    </div>
+
+    <form [formGroup]="searchForm" (ngSubmit)="applyFilters()" class="flex flex-row justify-content-between flex-wrap gap-2">
+
+      <!-- Filtre 1: Libellé (Input) -->
+      <div class="w-full sm:w-auto">
+        <input
+          pInputText
+          type="text"
+          formControlName="libelle"
+          placeholder="Rechercher par libellé"
+          (keyup.enter)="applyFilters()"
+          class="w-full"
+        />
+      </div>
+
+      <!-- Filtre 2: Montant (Input Numérique) -->
+      <div class="w-full sm:w-auto">
+        <input
+          pInputText
+          type="number"
+          formControlName="montant"
+          placeholder="Montant"
+          (keyup.enter)="applyFilters()"
+          class="w-full"
+        />
+      </div>
+
+      <button
+        pButton
+        pRipple
+        label="Ajouter opération erronée"
+        class="h-fit"
+        size="small"
+        icon="pi pi-plus"
+        severity="primary"
+        routerLink="/portail/operations/errones/new">
+      </button>
+
+    </form>
+
+  </div>
+
+  <div class="pb-8">
+    <p-table
+      #dt
+      [value]="operations"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [lazy]="true"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      (onLazyLoad)="loadOperations($event)"
+      [columns]="[
+        {field: 'libelle', header: 'Libellé', sortable: true},
+        {field: 'banqueNom', header: 'Banque', sortable: true},
+        {field: 'motif', header: 'Motif', sortable: true},
+        {field: 'montant', header: 'Montant', sortable: true},
+        {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
+        {field: 'status', header: 'Statut', sortable: true}
+      ]"
+      styleClass="p-datatable-gridlines"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
+
+      <ng-template pTemplate="header" let-columns>
+        <tr>
+          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
+            {{ col.header }}
+            @if (col.sortable) {
+              <p-sortIcon [field]="col.field"></p-sortIcon>
+            }
+          </th>
+          <th style="width: 8rem">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-operation>
+        <tr>
+          <td>{{ operation.libelle }}</td>
+          <td>{{ operation.banqueNom }}</td>
+          <td>{{ operation.motif }}</td>
+          <td>{{ operation.montant | number:'1.2-2' }} MAD</td>
+          <td>{{ operation.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <p-tag
+              [value]="operation.status"
+              [severity]="operation.status === 'PAYE' ? 'success' : 'danger'"
+            ></p-tag>
+          </td>
+          <td>
+            <p-button
+              icon="pi pi-check"
+              label="Valider"
+              size="small"
+              severity="success"
+              [rounded]="true"
+              (onClick)="openRapprochementModal(operation)"
+            ></p-button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptyMessage">
+        <tr>
+          <td [attr.colspan]="7">Aucune opération erronée en cours trouvée.</td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="7">Chargement en cours...</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Dialog de validation -->
+<p-dialog
+  header="Valider l'Opération Erronée"
+  [(visible)]="displayModal"
+  [modal]="true"
+  [closable]="!isSubmitting"
+  [style]="{ width: '50vw' }"
+  [breakpoints]="{ '960px': '75vw', '640px': '90vw' }"
+>
+  <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
+
+    <!-- Informations sur l'opération sélectionnée -->
+    <div class="mb-4 p-3 surface-100 border-round" *ngIf="selectedOperation">
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <div class="text-sm text-500">Opération ID</div>
+          <div class="font-semibold">{{ selectedOperation.id }}</div>
+        </div>
+        <div class="col-12 md:col-6">
+          <div class="text-sm text-500">Banque</div>
+          <div class="font-semibold">{{ selectedOperation.banqueNom }}</div>
+        </div>
+        <div class="col-12 md:col-6">
+          <div class="text-sm text-500">Motif</div>
+          <div class="font-semibold">{{ selectedOperation.motif }}</div>
+        </div>
+        <div class="col-12 md:col-6">
+          <div class="text-sm text-500">Montant</div>
+          <div class="font-semibold text-primary">
+            {{ selectedOperation.montant | number:'1.2-2' }} MAD
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid p-fluid mt-3">
+
+      <!-- Date d'émission -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar
+            id="dateEmission"
+            [showOnFocus]="false"
+            [disabled]="true"
+            formControlName="dateEmission"
+            dateFormat="dd/mm/yy"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            inputId="icondisplay"
+            appendTo="body"
+            [readonlyInput]="true">
+          </p-calendar>
+          <label for="dateEmission">Date d'émission <span class="text-red-500">*</span></label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('dateEmission')">
+          La date d'émission est obligatoire
+        </small>
+      </div>
+
+      <!-- TVA Déductible -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-dropdown
+            id="tvaDeductible"
+            formControlName="tvaDeductible"
+            [options]="tvaOptions"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="body"
+            placeholder="Sélectionner TVA"
+            [required]="true">
+          </p-dropdown>
+          <label for="tvaDeductible">TVA Déductible <span class="text-red-500">*</span></label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
+          La TVA déductible est obligatoire
+        </small>
+      </div>
+
+      <!-- Date de valeur -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar
+            id="dateValeur"
+            [showOnFocus]="false"
+            formControlName="dateValeur"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            inputId="icondisplay"
+            appendTo="body"
+            dateFormat="dd/mm/yy">
+          </p-calendar>
+          <label for="dateValeur">Date de valeur <span class="text-red-500">*</span></label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('dateValeur')">
+          La date de valeur est obligatoire
+        </small>
+      </div>
+
+      <!-- Date de l'opération -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <p-calendar
+            id="dateOperation"
+            [showOnFocus]="false"
+            formControlName="dateOperation"
+            dateFormat="dd/mm/yy"
+            [iconDisplay]="'input'"
+            [showIcon]="true"
+            inputId="icondisplay"
+            appendTo="body">
+          </p-calendar>
+          <label for="dateOperation">Date de l'opération <span class="text-red-500">*</span></label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('dateOperation')">
+          La date de l'opération est obligatoire
+        </small>
+      </div>
+
+      <!-- Libellé -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <textarea
+            id="libelle"
+            pInputTextarea
+            formControlName="libelle"
+            rows="3"
+            [autoResize]="true">
+          </textarea>
+          <label for="libelle">Libellé <span class="text-red-500">*</span></label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('libelle')">
+          Le libellé est obligatoire
+        </small>
+      </div>
+
+      <!-- Observation -->
+      <div class="col-12 md:col-6 mb-3">
+        <span class="p-float-label">
+          <textarea
+            id="observation"
+            pInputTextarea
+            formControlName="observation"
+            rows="3"
+            [autoResize]="true">
+          </textarea>
+          <label for="observation">Observation <span class="text-red-500">*</span></label>
+        </span>
+        <small class="p-error" *ngIf="isInvalid('observation')">
+          L'observation est obligatoire
+        </small>
+      </div>
+
+    </div>
+
+    <div class="flex justify-content-end gap-2 mt-4">
+      <p-button
+        label="Annuler"
+        icon="pi pi-times"
+        [outlined]="true"
+        severity="secondary"
+        [disabled]="isSubmitting"
+        (onClick)="displayModal = false"
+      ></p-button>
+      <p-button
+        label="Valider"
+        icon="pi pi-check"
+        type="submit"
+        severity="success"
+        [disabled]="rapprochementForm.invalid || isSubmitting"
+        [loading]="isSubmitting"
+      ></p-button>
+    </div>
+  </form>
+</p-dialog>

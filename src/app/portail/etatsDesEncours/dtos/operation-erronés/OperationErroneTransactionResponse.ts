@@ -1,6 +1,6 @@
 import {TransactionSource} from "../../../transactions/dtos/TransactionSource";
 
-export interface VirementErroneTransactionResponse {
+export interface OperationErroneTransactionResponse {
   id: number;
   banqueName: string;
   libelle: string;
@@ -12,5 +12,5 @@ export interface VirementErroneTransactionResponse {
   tvaCollectee: number;
   debit: number;
   credit: number;
-  transactionSource: TransactionSource.VIREMENT_ERRONE;
+  transactionSource: TransactionSource.OPERATION_ERRONE;
 }

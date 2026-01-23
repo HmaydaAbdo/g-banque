@@ -1,4 +1,3 @@
-
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
@@ -16,19 +15,19 @@ import { InputTextModule } from "primeng/inputtext";
 import { TagModule } from 'primeng/tag';
 import { ToolbarModule } from 'primeng/toolbar';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import {VirementErroneResponseDto} from "../../dtos/VirementErroneResponseDto";
-import {VirementErroneSearchDto} from "../../dtos/VirementErroneSearchDto";
-import {BanqueResponse} from "../../../../comptes-bancaire/dtos/BanqueResponse";
-import {VirementErroneService} from "../../service/virement-errone.service";
-import {BanqueService} from "../../../../comptes-bancaire/services/BanqueService";
-import {AuthService} from "../../../../../auth/services/auth.service";
-import {Status} from "../../../../prefinancements/enums/Status";
-import {PageResponse} from "../../../../global/types/PageResponse";
 
-
+import { OperationErroneResponseDto } from "../../dtos/OperationErroneResponseDto";
+import { OperationErroneSearchDto } from "../../dtos/OperationErroneSearchDto";
+import { BanqueResponse } from "../../../comptes-bancaire/dtos/BanqueResponse";
+import { OperationErroneService } from "../../service/operation-errone.service";
+import { BanqueService } from "../../../comptes-bancaire/services/BanqueService";
+import { AuthService } from "../../../../auth/services/auth.service";
+import { Status } from "../../../prefinancements/enums/Status";
+import { PageResponse } from "../../../global/types/PageResponse";
+import { TransactionSource } from "../../../transactions/dtos/TransactionSource";
 
 @Component({
-  selector: 'app-virement-errone-list',
+  selector: 'app-operation-errone-list',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
@@ -36,30 +35,32 @@ import {PageResponse} from "../../../../global/types/PageResponse";
     PrimeTemplate, DatePipe, DecimalPipe, NgClass, NgFor, NgIf, InputTextModule,
     TagModule, ToolbarModule, InputSwitchModule
   ],
-  templateUrl: './virement-errone-list.component.html',
+  templateUrl: './operation-errone-list.component.html',
   providers: [MessageService, ConfirmationService]
 })
-export class VirementErroneListComponent implements OnInit {
+export class OperationErroneListComponent implements OnInit {
   @ViewChild('dt') table!: Table;
 
-  virements: VirementErroneResponseDto[] = [];
+  operations: OperationErroneResponseDto[] = [];
   totalRecords = 0;
   loading = true;
 
-  searchCriteria: VirementErroneSearchDto = {};
+  searchCriteria: OperationErroneSearchDto = {};
   selectedBanque?: BanqueResponse;
   selectedStatus?: Status;
+  selectedMotif?: TransactionSource;
   libelleFilter: string | null = null;
 
   banques: BanqueResponse[] = [];
   banquesTotal = 0;
   banquesLoading = false;
   statusOptions: { label: string; value: Status | null }[] = [];
+  motifOptions: { label: string; value: TransactionSource | null }[] = [];
 
   items: MenuItem[] = [];
 
   constructor(
-    private virementErroneService: VirementErroneService,
+    private operationErroneService: OperationErroneService,
     private banqueService: BanqueService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
@@ -69,12 +70,13 @@ export class VirementErroneListComponent implements OnInit {
   ngOnInit(): void {
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
-      { icon: 'pi pi-exclamation-triangle', route: '/portail/Virements/errones', label: 'Virements Erronés' },
+      { icon: 'pi pi-exclamation-triangle', route: '/portail/operations/errones', label: 'Opérations Erronées' },
     ];
     this.loadStatusOptions();
+    this.loadMotifOptions();
   }
 
-  loadVirements(event: TableLazyLoadEvent) {
+  loadOperations(event: TableLazyLoadEvent) {
     this.loading = true;
     const page = event.first ? event.first / (event.rows ?? 10) : 0;
     const size = event.rows ?? 10;
@@ -84,12 +86,13 @@ export class VirementErroneListComponent implements OnInit {
 
     this.searchCriteria.banqueId = this.selectedBanque?.id;
     this.searchCriteria.status = this.selectedStatus;
+    this.searchCriteria.motif = this.selectedMotif;
     this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
 
-    this.virementErroneService.searchVirementErrone(this.searchCriteria, page, size, sort)
+    this.operationErroneService.searchOperationErrone(this.searchCriteria, page, size, sort)
       .subscribe({
-        next: (res: PageResponse<VirementErroneResponseDto>) => {
-          this.virements = res.content;
+        next: (res: PageResponse<OperationErroneResponseDto>) => {
+          this.operations = res.content;
           this.totalRecords = res.page.totalElements;
           this.loading = false;
         },
@@ -97,7 +100,7 @@ export class VirementErroneListComponent implements OnInit {
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: 'Impossible de charger les virements erronés.'
+            detail: 'Impossible de charger les opérations erronées.'
           });
           this.loading = false;
         }
@@ -126,6 +129,20 @@ export class VirementErroneListComponent implements OnInit {
     }));
   }
 
+  loadMotifOptions() {
+    this.motifOptions = Object.values(TransactionSource).map(m => ({
+      label: this.formatMotifLabel(m),
+      value: m
+    }));
+  }
+
+  formatMotifLabel(motif: TransactionSource): string {
+    return motif.replace(/_/g, ' ').toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
   applyFilters() {
     if (this.table) {
       setTimeout(() => this.table.reset(), 0);
@@ -135,30 +152,31 @@ export class VirementErroneListComponent implements OnInit {
   clearFilters() {
     this.selectedBanque = undefined;
     this.selectedStatus = undefined;
+    this.selectedMotif = undefined;
     this.libelleFilter = null;
     this.applyFilters();
   }
 
-  deleteVirement(virement: VirementErroneResponseDto) {
+  deleteOperation(operation: OperationErroneResponseDto) {
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer le virement erroné "${virement.libelle}" ?`,
+      message: `Êtes-vous sûr de vouloir supprimer l'opération erronée "${operation.libelle}" ?`,
       header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.virementErroneService.deleteVirementErrone(virement.id).subscribe({
+        this.operationErroneService.deleteOperationErrone(operation.id).subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
-              detail: 'Virement erroné supprimé.'
+              detail: 'Opération erronée supprimée.'
             });
-            this.loadVirements(this.table.createLazyLoadMetadata());
+            this.loadOperations(this.table.createLazyLoadMetadata());
           },
           error: () => {
             this.messageService.add({
               severity: 'error',
               summary: 'Erreur',
-              detail: 'Impossible de supprimer le virement erroné.'
+              detail: 'Impossible de supprimer l\'opération erronée.'
             });
           }
         });
@@ -166,24 +184,24 @@ export class VirementErroneListComponent implements OnInit {
     });
   }
 
-  toggleVirementStatus(virement: VirementErroneResponseDto) {
-    const message = virement.status === Status.PAYE
-      ? 'Voulez-vous marquer ce virement erroné comme prévu ?'
-      : 'Voulez-vous marquer ce virement erroné comme payé ?';
+  toggleOperationStatus(operation: OperationErroneResponseDto) {
+    const message = operation.status === Status.PAYE
+      ? 'Voulez-vous marquer cette opération erronée comme prévue ?'
+      : 'Voulez-vous marquer cette opération erronée comme payée ?';
 
     this.confirmationService.confirm({
       message: message,
       header: 'Confirmation',
       icon: 'pi pi-info-circle',
       accept: () => {
-        this.virementErroneService.toggleStatus(virement.id).subscribe({
+        this.operationErroneService.toggleStatus(operation.id).subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
               detail: `Statut modifié.`
             });
-            this.loadVirements(this.table.createLazyLoadMetadata());
+            this.loadOperations(this.table.createLazyLoadMetadata());
           },
           error: () => {
             this.messageService.add({
@@ -191,12 +209,12 @@ export class VirementErroneListComponent implements OnInit {
               summary: 'Erreur',
               detail: 'Impossible de modifier le statut.'
             });
-            this.loadVirements(this.table.createLazyLoadMetadata());
+            this.loadOperations(this.table.createLazyLoadMetadata());
           }
         });
       },
       reject: () => {
-        this.loadVirements(this.table.createLazyLoadMetadata());
+        this.loadOperations(this.table.createLazyLoadMetadata());
       }
     });
   }
