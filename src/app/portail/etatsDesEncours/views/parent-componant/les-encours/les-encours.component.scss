@@ -1,19 +1,25 @@
+
 .sidebar-link {
+  color: #424242;
   text-decoration: none;
-  color: black !important;
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
-.active-sidebar-link .font-medium {
-  text-decoration: underline;
-  text-decoration-color: rgb(30, 92, 172);
-  text-underline-offset: 0.7rem;
-  text-decoration-thickness: 1rem;
+.sidebar-link:hover {
+  color: #1976D2;
 }
 
-.p-sidebar .p-sidebar-content .p-ripple.text-600 {
-  &:hover {
-    background-color: var(--blue-50, #e3f2fd) !important;
-    border-radius: var(--border-radius, 0.5rem);
-  }
+.active-sidebar-link {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
+  color: white !important;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.active-sidebar-link i {
+  color: white !important;
+}
+
+.active-breadcrumb {
+  color: #2196F3 !important;
+  font-weight: 600;
 }

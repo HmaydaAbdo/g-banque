@@ -1,0 +1,73 @@
+/* ==========================================
+   bank-details.component.scss - TRANSITIONS UNIQUEMENT
+   ========================================== */
+
+/* Transition sur la carte principale */
+.surface-card {
+  transition: all 0.3s ease;
+}
+
+.surface-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Transition sur les KPI items */
+.flex.align-items-center.gap-2,
+.flex.align-items-center.gap-3 {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.flex.align-items-center.gap-2:hover,
+.flex.align-items-center.gap-3:hover {
+  background: rgba(248, 249, 250, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Transition sur les icônes */
+.border-round-lg {
+  transition: all 0.3s ease;
+}
+
+.flex.align-items-center.gap-2:hover .border-round-lg,
+.flex.align-items-center.gap-3:hover .border-round-lg {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Transition sur le logo de la banque */
+img.border-round {
+  transition: transform 0.3s ease;
+}
+
+img.border-round:hover {
+  transform: scale(1.05);
+}
+
+/* Animation du badge de pourcentage */
+.px-2.py-1.border-round-lg {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+/* Transition sur les textes */
+.font-bold {
+  transition: color 0.3s ease;
+}
+
+/* Smooth scroll si nécessaire */
+* {
+  scroll-behavior: smooth;
+}

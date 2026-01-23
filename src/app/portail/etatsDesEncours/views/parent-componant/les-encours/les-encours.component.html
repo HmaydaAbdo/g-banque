@@ -1,13 +1,12 @@
-
 <p-toast></p-toast>
 <p-confirmDialog [style]="{width: '50vw'}" [baseZIndex]="1000"></p-confirmDialog>
 
+<!-- Dialog Clôture -->
 <p-dialog [(visible)]="displayClotureDialog" header="Clôturer Le Rapprochement" [modal]="true"
           [style]="{width: '50rem'}" [draggable]="false" [resizable]="false">
-
   <form [formGroup]="clotureForm" class="p-fluid h-6rem">
     <div class="field">
-      <label for="dateCloture" class="font-medium mb-2 block">Sélectionner le mois et l'année </label>
+      <label for="dateCloture" class="font-medium mb-2 block">Sélectionner le mois et l'année</label>
       <p-calendar
         [formControl]="dateClotureControl"
         view="month"
@@ -21,95 +20,99 @@
         placeholder="MM/AAAA"
       ></p-calendar>
     </div>
-    <div *ngIf="dateClotureControl.invalid && (dateClotureControl.dirty || dateClotureControl.touched)" class="p-error text-sm text-red-500 mt-1">
+    <div *ngIf="dateClotureControl.invalid && (dateClotureControl.dirty || dateClotureControl.touched)"
+         class="p-error text-sm text-red-500 mt-1">
       Le mois et l'année sont obligatoires.
     </div>
   </form>
-
   <ng-template pTemplate="footer">
-    <p-button label="Annuler" icon="pi pi-times" (click)="displayClotureDialog = false" styleClass="p-button-text p-button-secondary"></p-button>
+    <p-button label="Annuler" icon="pi pi-times" (click)="displayClotureDialog = false"
+              styleClass="p-button-text p-button-secondary"></p-button>
     <p-button label="Clôturer" icon="pi pi-check" (click)="confirmCloture()"
               [disabled]="clotureLoading || clotureForm.invalid"
               [loading]="clotureLoading"></p-button>
   </ng-template>
 </p-dialog>
 
+<!-- Layout Principal -->
 <div class="flex h-screen w-full">
-    <!-- Sidebar -->
-    <div class="col-fixed w-14rem  h-full text-sm  bg-white white-space-nowrap overflow-y-scroll">
-        <ul class="list-none pl-1 ">
-            @for (item of items ;track item.url){
 
-              <li *ngIf="item.routerLink && !item.items">
+  <!-- Sidebar Améliorée -->
+  <div class="col-fixed w-14rem h-full text-sm sidebar-gradient white-space-nowrap overflow-y-auto border-right-1 surface-border">
+    <ul class="list-none p-2">
+      @for (item of items; track item.url) {
+        <!-- Items sans sous-menu -->
+        <li *ngIf="item.routerLink && !item.items" class="mb-1 ">
+          <a pRipple
+             [routerLink]="item.routerLink"
+             routerLinkActive="active-sidebar-link"
+             class="flex align-items-center cursor-pointer p-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:bg-blue-100">
+            <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
+            <span class="font-medium">{{ item.label }}</span>
+          </a>
+        </li>
+
+        <!-- Items avec sous-menu -->
+        <li *ngIf="item.items" class="mb-1">
+          <div
+            pRipple
+            (click)="toggleMenuItem(item)"
+            class="flex align-items-center justify-content-between  p-2 text-600 cursor-pointer border-round-lg hover:bg-blue-100 transition-all transition-duration-150 p-ripple">
+            <div class="flex align-items-center">
+              <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
+              <span class="font-medium">{{ item.label }}</span>
+            </div>
+            <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="text-xs"></i>
+          </div>
+
+          <!-- Sous-menu -->
+          <ul class="list-none pl-4 mt-1" [ngClass]="{'hidden': !item.expanded}">
+            <ng-container *ngFor="let subItem of item.items">
+              <li *ngIf="subItem.routerLink && !subItem.items" class="mb-1">
                 <a pRipple
-                   [routerLink]="item.routerLink"
+                   [routerLink]="subItem.routerLink"
                    routerLinkActive="active-sidebar-link"
-                   class="flex align-items-center cursor-pointer py-2 border-round-xl transition-duration-150 transition-colors p-ripple sidebar-link">
-                  <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
-                  <span class="font-medium">{{ item.label }}</span>
+                   class="flex align-items-center cursor-pointer m-0 px-3 py-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:bg-blue-50">
+                  <i *ngIf="subItem.icon" [class]="subItem.icon + ' mr-2 text-sm'"></i>
+                  <span class="font-medium text-sm">{{ subItem.label }}</span>
                 </a>
               </li>
-
-              <li *ngIf="item.items" >
-                <div
-                  pRipple
-                  (click)="toggleMenuItem(item)"
-                  [ngClass]="item.styleClass || 'py-3 flex align-items-center justify-content-between text-600 cursor-pointer p-ripple sidebar-link'">
-                  <div class="flex align-items-center">
-                    <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
-                    <span class="font-medium">{{ item.label }}</span>
-                  </div>
-                  <i *ngIf="item.items" [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
-                </div>
-
-                <ul class="list-none pb-6 pl-3 " [ngClass]="{'hidden': !item.expanded}">
-                  <ng-container *ngFor="let subItem of item.items">
-                    <li *ngIf="subItem.routerLink && !subItem.items">
-                      <a pRipple
-                         [routerLink]="subItem.routerLink"
-                         routerLinkActive="active-sidebar-link"
-                         class="flex align-items-center cursor-pointer  py-2 border-round-xl transition-duration-150 transition-colors p-ripple sidebar-link">
-                        <i *ngIf="subItem.icon" [class]="subItem.icon + ' mr-2'"></i>
-                        <span class="font-medium">{{ subItem.label }}</span>
-                      </a>
-                    </li>
-
-
-                  </ng-container>
-                </ul>
-              </li>
-            }
-
-
-        </ul>
-      </div>
-    <!-- Main Content Area -->
-    <div class="flex flex-column   overflow-y-auto px-1  w-full ">
-      <div class="flex justify-content-between ">
-        <p-breadcrumb [model]="breadcrumbItems" [style]="{'background-color': 'transparent', 'border': 'none'}" >
-          <ng-template pTemplate="item" let-item>
-            <ng-container *ngIf="item.route; else elseBlock">
-              <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-                <span [ngClass]="[item.icon ? item.icon : '', 'text-color', '']"></span>
-                <span class="text-black-alpha-90 p-2 ">{{ item.label }}</span>
-              </a>
-
             </ng-container>
-            <ng-template #elseBlock>
-              <a [href]="item.url">
-                <span class="text-color  text-center">{{ item.label }}</span>
-              </a>
-            </ng-template>
-          </ng-template>
-        </p-breadcrumb>
-        <p-button label="Cloturer le rapprochement encours"
-                  styleClass="p-button-outlined  text-xs  mt-2 "
-                   size="small"  (onClick)="showClotureDialog()" />
-
-
-      </div>
-
-      <app-bank-details [banqueId]="banqueId"></app-bank-details>
-      <router-outlet></router-outlet>
-    </div>
+          </ul>
+        </li>
+      }
+    </ul>
   </div>
+
+  <!-- Zone de Contenu Principale -->
+  <div class="flex flex-column  px-2 gap-2 bg-white text-xs overflow-y-auto w-full ">
+
+    <!-- Header avec Breadcrumb et Action -->
+    <div class="flex align-items-center justify-content-between   ">
+      <p-breadcrumb [model]="breadcrumbItems" [style]="{'background-color': 'transparent', 'border': 'none'}">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '']"></span>
+              <span class="text-700 font-medium ml-2">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <a [href]="item.url">
+              <span class="text-700 font-medium">{{ item.label }}</span>
+            </a>
+          </ng-template>
+        </ng-template>
+      </p-breadcrumb>
+
+      <p-button label="Clôturer le rapprochement"
+                icon="pi pi-check-circle"
+                styleClass="p-button-primary p-button-sm"
+                (onClick)="showClotureDialog()"></p-button>
+    </div>
+    <app-bank-details [banqueId]="banqueId"></app-bank-details>
+    <div class="pb-8"> <router-outlet></router-outlet> </div>
+
+
+  </div>
+</div>

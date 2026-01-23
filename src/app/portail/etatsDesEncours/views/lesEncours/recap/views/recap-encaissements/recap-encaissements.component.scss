@@ -1,0 +1,84 @@
+.stat-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  background: rgba(248, 249, 250, 0.5);
+  transform: scale(1.02);
+}
+
+.stat-icon {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+// Badges pour montants
+.amount-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.debit-badge {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.credit-badge {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.amount-badge:hover {
+  transform: scale(1.05);
+}
+
+.debit-badge:hover {
+  background: #FFE0B2;
+}
+
+.credit-badge:hover {
+  background: #C8E6C9;
+}
+
+// Lignes du tableau
+.table-row {
+  transition: all 0.2s ease;
+}
+
+.table-row:hover {
+  background: #F8F9FA !important;
+  transform: scale(1.001);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+// Inputs
+.p-inputtext {
+  transition: all 0.3s ease;
+}
+
+.p-inputtext:hover {
+  border-color: #2196F3;
+}
+
+.p-inputtext:focus {
+  border-color: #2196F3;
+  box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25);
+}
+
+// Multiselect
+.p-multiselect {
+  transition: all 0.3s ease;
+}
+
+.p-multiselect:hover {
+  border-color: #2196F3;
+}

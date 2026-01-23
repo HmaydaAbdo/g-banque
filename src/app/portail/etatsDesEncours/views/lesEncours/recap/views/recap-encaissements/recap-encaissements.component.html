@@ -1,27 +1,67 @@
 <p-toast></p-toast>
 
-<div class="  flex flex-column gap-2 px-2  w-full">
-  <div class="flex flex-wrap gap-2 align-items-center justify-content-between w-full">
+<div class="flex flex-column gap-3 w-full">
 
-    <div class="flex flex-row w-full flex-wrap   justify-content-around">
-        <p> Total Débit : {{totalDebit | number: '1.2-2'}} </p>
-        <p> Total Crédit : {{totalCredit | number: '1.2-2'}} </p>
+  <!-- Section Stats -->
+
+    <div class="flex flex-row   justify-content-around ">
+      <div class="w-fit h-fit">
+        <div class="flex align-items-center gap-2 p-2 border-round-lg stat-card">
+          <div class="flex align-items-center justify-content-center border-round-lg stat-icon"
+               style="width: 40px; height: 40px; background: #4CAF50;">
+            <i class="pi pi-arrow-up text-white"></i>
+          </div>
+          <div>
+            <div class="text-xs text-600 mb-1">Total Crédit</div>
+            <div class="font-bold text-base text-900">
+              {{ totalCredit | number: '1.2-2' }} MAD
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="w-fit h-fit">
+        <div class="flex align-items-center   gap-2 p-2 border-round-lg stat-card">
+          <div class="flex align-items-center justify-content-center border-round-lg stat-icon"
+               style="width: 40px; height: 40px; background: #FF9800;">
+            <i class="pi pi-arrow-down text-white"></i>
+          </div>
+          <div>
+            <div class="text-xs text-600 mb-1">Total Débit</div>
+            <div class="font-bold text-base text-900">
+              {{ totalDebit | number: '1.2-2' }} MAD
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div  [formGroup]="searchForm" class="flex flex-row w-full flex-wrap   justify-content-between">
-        <input pInputText
-               formControlName="libelle"
-               type="text"
-               placeholder="Recherche par libellé"
-               class="p-inputtext-sm"
-               [style]="{'min-width':'12rem'}" />
 
-        <input pInputText
-               formControlName="observation"
-               type="text"
-               placeholder="Recherche par observation"
-               class="p-inputtext-sm"
-               [style]="{'min-width':'12rem'}" />
 
+  <!-- Section Recherche -->
+  <div [formGroup]="searchForm" class="surface-card border-round-xl shadow-2 p-2">
+    <div class="grid">
+      <div class="col-12 md:col-4">
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input pInputText
+                 formControlName="libelle"
+                 type="text"
+                 placeholder="Rechercher par libellé..."
+                 class="w-full" />
+        </span>
+      </div>
+
+      <div class="col-12 md:col-4">
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-search"></i>
+          <input pInputText
+                 formControlName="observation"
+                 type="text"
+                 placeholder="Rechercher par observation..."
+                 class="w-full" />
+        </span>
+      </div>
+
+      <div class="col-12 md:col-4">
         <p-multiSelect
           formControlName="transactionSources"
           [options]="transactionSourceOptions"
@@ -29,11 +69,14 @@
           placeholder="Type de transaction"
           [showClear]="true"
           appendTo="body"
-          [style]="{'min-width':'12rem'}">
+          [style]="{'width':'100%'}">
         </p-multiSelect>
       </div>
     </div>
-  <div class="pb-8">
+  </div>
+
+  <!-- Section Tableau -->
+  <div class="surface-card border-round-xl shadow-2 ">
     <p-table
       #dt
       [value]="recapEncaissements"
@@ -41,50 +84,105 @@
       [rows]="10"
       [totalRecords]="totalRecords"
       [loading]="loading"
-      [rowsPerPageOptions]="[5,10, 25, 50]"
+      [rowsPerPageOptions]="[5, 10, 25, 50]"
       [lazy]="true"
       (onLazyLoad)="loadEncaissements($event)"
-      responsiveLayout="scroll"
-      [scrollable]="true"
-      scrollHeight="flex"
-      [resizableColumns]="true"
-      columnResizeMode="expand"
       [rowHover]="true"
       dataKey="dateEmission"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} encaissements"
       [showCurrentPageReport]="true"
-      styleClass="p-datatable-gridlines"
-      [tableStyle]="{'min-width': '60rem'}" >
+      styleClass="p-datatable-sm text-xs"
+      [tableStyle]="{'min-width': '60rem'}">
+
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="dateEmission"> Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
-          <th pSortableColumn="dateEcheance"> Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
-          <th pSortableColumn="debit"> Débit <p-sortIcon field="debit"></p-sortIcon></th>
-          <th pSortableColumn="credit"> Crédit <p-sortIcon field="credit"></p-sortIcon></th>
+          <th pSortableColumn="dateEmission" class="white-space-nowrap">
+            <div class="flex align-items-center gap-2">
+              Date d'émission
+              <p-sortIcon field="dateEmission"></p-sortIcon>
+            </div>
+          </th>
+          <th pSortableColumn="dateEcheance" class="white-space-nowrap">
+            <div class="flex align-items-center gap-2">
+              Date d'échéance
+              <p-sortIcon field="dateEcheance"></p-sortIcon>
+            </div>
+          </th>
+          <th pSortableColumn="debit" class="text-right">
+            <div class="flex align-items-center justify-content-end gap-2">
+              Débit
+              <p-sortIcon field="debit"></p-sortIcon>
+            </div>
+          </th>
+          <th pSortableColumn="credit" class="text-right">
+            <div class="flex align-items-center justify-content-end gap-2">
+              Crédit
+              <p-sortIcon field="credit"></p-sortIcon>
+            </div>
+          </th>
           <th>Observations</th>
-          <th pSortableColumn="libelle"> Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
+          <th pSortableColumn="libelle">
+            <div class="flex align-items-center gap-2">
+              Libellé
+              <p-sortIcon field="libelle"></p-sortIcon>
+            </div>
+          </th>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="body" let-item>
-        <tr>
-          <td>{{ item.dateEmission | date:'dd/MM/yyyy' }}</td>
-          <td class="text-center">{{ item.dateEcheance ? (item.dateEcheance | date:'dd/MM/yyyy') : '-' }}</td>
-          <td>{{item.debit ? (item.debit | number:'1.2-2') : 0}} MAD</td>
-          <td>{{ item.credit ? ( item.credit  | number:'1.2-2') : 0}} MAD</td>
-          <td>{{ item.observations }}</td>
-          <td>{{ item.libelle }}</td>
+        <tr class="table-row">
+          <td class="white-space-nowrap">
+            <span class="text-700">{{ item.dateEmission | date:'dd/MM/yyyy' }}</span>
+          </td>
+          <td class="text-center white-space-nowrap">
+            <span class="text-700">{{ item.dateEcheance ? (item.dateEcheance | date:'dd/MM/yyyy') : '-' }}</span>
+          </td>
+          <td class="text-right white-space-nowrap">
+            <span *ngIf="item.debit" class="amount-badge debit-badge">
+              {{ item.debit | number:'1.2-2' }} MAD
+            </span>
+            <span *ngIf="!item.debit" class="text-500">-</span>
+          </td>
+          <td class="text-right white-space-nowrap">
+            <span *ngIf="item.credit" class="amount-badge credit-badge">
+              {{ item.credit | number:'1.2-2' }} MAD
+            </span>
+            <span *ngIf="!item.credit" class="text-500">-</span>
+          </td>
+          <td>
+            <span class="text-700">{{ item.observations }}</span>
+          </td>
+          <td>
+            <span class="font-medium text-900">{{ item.libelle }}</span>
+          </td>
         </tr>
       </ng-template>
-      <ng-template pTemplate="emptyMessage">
+
+      <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="4">Aucun encaissement trouvé pour le mois en cours.</td>
+          <td colspan="6" class="text-center p-4">
+            <div class="flex flex-column align-items-center gap-3">
+              <i class="pi pi-inbox text-4xl text-400"></i>
+              <div class="text-700 font-semibold">Aucun encaissement trouvé</div>
+              <div class="text-500 text-sm">Il n'y a aucun encaissement pour le mois en cours.</div>
+            </div>
+          </td>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="4">Chargement des encaissements. Veuillez patienter...</td>
+          <td colspan="6" class="text-center p-4">
+            <div class="flex flex-column align-items-center gap-3">
+              <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+              <div class="text-700 font-semibold">Chargement des encaissements...</div>
+              <div class="text-500 text-sm">Veuillez patienter</div>
+            </div>
+          </td>
         </tr>
       </ng-template>
     </p-table>
   </div>
+
 </div>

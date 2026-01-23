@@ -43,15 +43,6 @@
         <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
         <div class="text-center mt-2 text-sm text-color-secondary">Synchronisation en cours, veuillez patienter...</div>
       </div>
-    }
-
-    @if (recapitulatifComptes.length === 0) {
-      <div class="flex flex-column align-items-center justify-content-center p-5 text-center" style="min-height: 50vh;">
-        <i class="pi pi-info-circle" style="font-size: 3rem; color: var(--surface-400);"></i>
-        <p class="text-xl font-bold mt-3">Aucune banque trouvée.</p>
-        <p class="text-lg text-color-secondary mb-4">Il semble qu'aucune banque n'ait encore été ajoutée. Voulez-vous en ajouter une ?</p>
-        <p-button label="Ajouter une Banque" icon="pi pi-plus" styleClass="p-button-success" [routerLink]="['/portail/comptes-bancaires/new']"></p-button>
-      </div>
     } @else {
       <div class="flex flex-wrap justify-content-center mb-8">
         @for (account of recapitulatifComptes; track account.bankId) {
@@ -87,5 +78,8 @@
         }
       </div>
     }
+
+
+
   </div>
 </div>

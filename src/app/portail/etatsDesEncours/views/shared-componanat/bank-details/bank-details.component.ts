@@ -1,6 +1,6 @@
 import {Component, Input, numberAttribute, OnInit, OnDestroy} from '@angular/core';
 import {RecapitulatifCompte} from "../../../../accueil/dtos/RecapitulatifCompte";
-import {DecimalPipe, NgIf} from "@angular/common";
+import {DecimalPipe, NgIf, NgStyle, NgClass} from "@angular/common";
 import {Subscription} from "rxjs";
 import {BankStateService} from "../../../../comptes-bancaire/services/bank-state.service";
 
@@ -9,7 +9,9 @@ import {BankStateService} from "../../../../comptes-bancaire/services/bank-state
   standalone: true,
   imports: [
     NgIf,
-    DecimalPipe
+    DecimalPipe,
+    NgStyle,
+    NgClass
   ],
   templateUrl: './bank-details.component.html',
   styleUrl: './bank-details.component.scss'
@@ -64,6 +66,24 @@ export class BankDetailsComponent implements OnInit, OnDestroy {
         this.loading = false;
       }
     });
+  }
+
+  /**
+   * Calcule la variation entre le solde actuel et le solde de départ
+   */
+  getVariation(): number {
+    if (!this.bankInfo) return 0;
+    return this.bankInfo.soldeActuelle - this.bankInfo.soldeDepart;
+  }
+
+  /**
+   * Calcule le pourcentage de variation
+   */
+  getVariationPercent(): string {
+    if (!this.bankInfo || this.bankInfo.soldeDepart === 0) return '0.00';
+    const variation = this.getVariation();
+    const percent = (variation / this.bankInfo.soldeDepart) * 100;
+    return percent.toFixed(2);
   }
 
   /**

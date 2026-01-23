@@ -1,0 +1,141 @@
+/* ==========================================
+   rapprochement-encours.component.scss - TRANSITIONS UNIQUEMENT
+   ========================================== */
+
+/* Transition sur les cartes principales */
+.surface-card {
+  transition: all 0.3s ease;
+}
+
+.surface-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Transition sur les KPI stats (Total Débit, Crédit, etc.) */
+.grid > div > div.flex.align-items-center {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.grid > div > div.flex.align-items-center:hover {
+  background: rgba(248, 249, 250, 0.5) !important;
+  transform: scale(1.02);
+}
+
+/* Transition sur les icônes des stats */
+.border-round-lg {
+  transition: all 0.3s ease;
+}
+
+.grid > div > div.flex.align-items-center:hover .border-round-lg {
+  transform: scale(1.1) ;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Transition sur les inputs de recherche */
+.p-inputtext {
+  transition: all 0.3s ease;
+}
+
+.p-inputtext:hover {
+  border-color: #2196F3;
+  box-shadow: 0 0 0 0.1rem rgba(33, 150, 243, 0.1);
+}
+
+.p-inputtext:focus {
+  transform: scale(1.01);
+  border-color: #2196F3;
+  box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25);
+}
+
+/* Transition sur le multiselect */
+.p-multiselect {
+  transition: all 0.3s ease;
+}
+
+.p-multiselect:hover {
+  border-color: #2196F3;
+}
+
+/* Transition sur les lignes du tableau */
+.p-datatable-tbody > tr {
+  transition: all 0.2s ease;
+}
+
+.p-datatable-tbody > tr:hover {
+  background: #F8F9FA !important;
+  transform: scale(1.001);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Transition sur les cellules du tableau */
+.p-datatable-tbody > tr > td {
+  transition: all 0.2s ease;
+}
+
+/* Badge pour les montants avec transition */
+.text-orange-600,
+.text-green-600 {
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.text-orange-600:hover {
+  background: #FFE0B2;
+  transform: scale(1.05);
+}
+
+.text-green-600:hover {
+  background: #C8E6C9;
+  transform: scale(1.05);
+}
+
+/* Animation du bouton de suppression */
+.p-button {
+  transition: all 0.3s ease;
+}
+
+.p-button:hover {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+/* Animation de chargement */
+.pi-spinner {
+  animation: spin-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spin-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+/* Transition sur les headers de tableau */
+.p-datatable-thead > tr > th {
+  transition: all 0.3s ease;
+}
+
+.p-datatable-thead > tr > th:hover {
+  background: linear-gradient(135deg, #E9ECEF 0%, #DEE2E6 100%);
+}
+
+/* Smooth scroll */
+* {
+  scroll-behavior: smooth;
+}
+
+/* Animation des icônes de tri */
+.p-sortable-column-icon {
+  transition: all 0.3s ease;
+}
+
+.p-sortable-column:hover .p-sortable-column-icon {
+  transform: scale(1.2);
+}
