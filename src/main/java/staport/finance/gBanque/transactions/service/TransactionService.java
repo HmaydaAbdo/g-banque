@@ -88,6 +88,10 @@ public class TransactionService {
 
         }
 
+        if (searchDto.getTransactionSources() != null && !searchDto.getTransactionSources().isEmpty()) {
+            specs.add(hasTransactionSources(searchDto.getTransactionSources()));
+            log.debug("Filtre appliqué: sources = {}", searchDto.getTransactionSources());
+        }
 
         Specification<Transaction> combinedSpec = withFilters(specs);
 
