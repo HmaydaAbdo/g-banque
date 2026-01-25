@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.HistoriqueSoldeBanqueService;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
@@ -38,17 +39,20 @@ public class RapprochementService {
     private final BanqueRepository banqueRepository;
     private final RapprochementMapper rapprochementMapper;
     private final StaportPdfReportService pdfReportService;
+    private final HistoriqueSoldeBanqueService historiqueSoldeBanqueService;
+
     public RapprochementService(
             RapprochementRepository rapprochementRepository,
             TransactionRepository transactionRepository,
             BanqueRepository banqueRepository,
-            RapprochementMapper rapprochementMapper, StaportPdfReportService pdfReportService
+            RapprochementMapper rapprochementMapper, StaportPdfReportService pdfReportService, HistoriqueSoldeBanqueService historiqueSoldeBanqueService
     ) {
         this.rapprochementRepository = rapprochementRepository;
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
         this.rapprochementMapper = rapprochementMapper;
         this.pdfReportService = pdfReportService;
+        this.historiqueSoldeBanqueService = historiqueSoldeBanqueService;
     }
 
 
@@ -109,6 +113,19 @@ public class RapprochementService {
         rapprochement.setTvaCollectee(totalTvaCollectee);
 
         Rapprochement savedRapprochement = rapprochementRepository.save(rapprochement);
+
+        // Extraire mois et année de la date de rapprochement
+        int mois = requestDto.getDateRapprochement().getMonthValue();
+        int annee = requestDto.getDateRapprochement().getYear();
+
+        // Sauvegarder l'historique via le service dédié (avec toutes les validations)
+        historiqueSoldeBanqueService.createHistorique(
+                banque,
+                mois,
+                annee,
+                banque.getSoldeDepart(),
+                banque.getSoldeActuel()
+        );
 
         banque.setSoldeDepart(banque.getSoldeActuel());
         banqueRepository.save(banque);
