@@ -199,17 +199,6 @@ public class Banque {
     public List<Transaction> getTransactions() { return transactions; }
     public void setTransactions(List<Transaction> transactions) { this.transactions = transactions; }
 
-    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL}, fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<HistoriqueSoldeBanque> historiqueSoldes = new ArrayList<>();
-
-    public List<HistoriqueSoldeBanque> getHistoriqueSoldes() {
-        return historiqueSoldes;
-    }
-
-    public void setHistoriqueSoldes(List<HistoriqueSoldeBanque> historiqueSoldes) {
-        this.historiqueSoldes = historiqueSoldes;
-    }
-
     // --- Helper methods for bidirectional relationships ---
     public void addLigneFonctionnelle(LigneFonctionnelle l) { ligneFonctionnelles.add(l); l.setBanque(this); }
     public void removeLigneFonctionnelle(LigneFonctionnelle l) { ligneFonctionnelles.remove(l); l.setBanque(null); }
