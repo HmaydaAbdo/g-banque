@@ -18,6 +18,7 @@ import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
@@ -96,6 +97,9 @@ public class Banque {
 
     @OneToMany(mappedBy = "banqueBeneficiare", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Virement> virementsRecus = new ArrayList<>();
+
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<VirementInternational> virementInternationals = new ArrayList<>();
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY, orphanRemoval = true)
     private List<MiseADisposition> misesADisposition = new ArrayList<>();
@@ -192,6 +196,14 @@ public class Banque {
 
     public List<Virement> getVirementsRecus() { return virementsRecus; }
     public void setVirementsRecus(List<Virement> virementsRecus) { this.virementsRecus = virementsRecus; }
+
+    public List<VirementInternational> getVirementInternationals() {
+        return virementInternationals;
+    }
+
+    public void setVirementInternationals(List<VirementInternational> virementInternationals) {
+        this.virementInternationals = virementInternationals;
+    }
 
     public List<MiseADisposition> getMisesADisposition() { return misesADisposition; }
     public void setMisesADisposition(List<MiseADisposition> misesADisposition) { this.misesADisposition = misesADisposition; }
