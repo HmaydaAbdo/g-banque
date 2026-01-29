@@ -19,5 +19,6 @@ public enum TransactionSource {
     CAUTION,
     IMPOT_TAXE,
     RESTITUTION,
-    OPERATION_ERRONE
+    OPERATION_ERRONE,
+    VIREMENT_INTERNATIONAL
 }

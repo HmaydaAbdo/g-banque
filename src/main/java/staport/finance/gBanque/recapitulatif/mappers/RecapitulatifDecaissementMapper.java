@@ -14,6 +14,7 @@ import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
@@ -44,6 +45,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(echeance.getId());
         dto.setDateEmission(echeance.getDateEcheance());
         dto.setDebit(echeance.getMontantTTC().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Prélèvement leasing");
@@ -74,6 +76,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(echeance.getId());
         dto.setDateEmission(echeance.getDateEcheance());
         dto.setDebit(echeance.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Prélèvement CMT");
@@ -95,6 +98,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(cheque.getId());
         dto.setDateEmission(cheque.getDateEmission());
         if ( dto.getDateEcheance() != null) {
             dto.setDateEcheance(cheque.getDateEcheance());
@@ -118,6 +122,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(lcn.getId());
         dto.setDateEmission(lcn.getDateEmission());
         dto.setDateEcheance(lcn.getDateEcheance());
         dto.setDebit(lcn.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
@@ -139,6 +144,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(virement.getId());
         dto.setDateEmission(virement.getDateEmission());
         dto.setDebit(virement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Virement N° " + virement.getNumero());
@@ -159,6 +165,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(mad.getId());
         dto.setDateEmission(mad.getDateEmission());
         dto.setDebit(mad.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Mise à disposition N° " + mad.getNumero());
@@ -180,6 +187,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(prefinancement.getId());
         dto.setDateEmission(prefinancement.getDateEmission());
         dto.setDebit(prefinancement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Remboursement du préfinancement" );
@@ -201,6 +209,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(droitConstate.getId());
         dto.setDateEmission(droitConstate.getDateEmission());
         dto.setDebit(droitConstate.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Remboursement du droit constaté" );
@@ -222,6 +231,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(factoring.getId());
         dto.setDateEmission(factoring.getDateEmission());
         dto.setDebit(factoring.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("Remboursement du factoring" );
@@ -243,6 +253,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(commission.getId());
         dto.setDateEmission(commission.getDateEmission());
         dto.setDebit(commission.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations(commission.getObservation() );
@@ -259,6 +270,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(impotEtTaxe.getId());
         dto.setDateEmission(impotEtTaxe.getDateEmission());
         dto.setDebit(impotEtTaxe.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations(impotEtTaxe.getObservation() );
@@ -274,6 +286,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(agios.getId());
         dto.setDateEmission(agios.getDateEmission());
         dto.setDebit(agios.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations(agios.getObservation() );
@@ -289,6 +302,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(prelevement.getId());
         dto.setDateEmission(prelevement.getDateEmission());
         dto.setDebit(prelevement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations(prelevement.getObservation() );
@@ -304,6 +318,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(fraisBancaire.getId());
         dto.setDateEmission(fraisBancaire.getDateEmission());
         dto.setDebit(fraisBancaire.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations(fraisBancaire.getObservation() );
@@ -319,6 +334,7 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(interet.getId());
         dto.setDateEmission(interet.getDateEmission());
         dto.setDebit(interet.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations(interet.getObservation() );
@@ -334,11 +350,27 @@ public class RecapitulatifDecaissementMapper {
         }
 
         RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(operationErrone.getId());
         dto.setDateEmission(operationErrone.getDateEmission());
         dto.setDebit(operationErrone.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations(operationErrone.getObservation());
         dto.setLibelle(operationErrone.getLibelle());
         dto.setSource(TransactionSource.OPERATION_ERRONE);
+        return dto;
+    }
+
+    public RecaputilatifItem mapVirementInternationalToDto(VirementInternational virement){
+        if (virement == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(virement.getId());
+        dto.setDateEmission(virement.getDateEmission());
+        dto.setDebit(virement.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(virement.getObservation());
+        dto.setLibelle(virement.getLibelle());
+        dto.setSource(TransactionSource.VIREMENT_INTERNATIONAL);
         return dto;
     }
 }

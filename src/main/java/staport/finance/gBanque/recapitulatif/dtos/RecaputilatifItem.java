@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public class RecaputilatifItem {
+    private Long id;
     private OffsetDateTime dateEmission;
     private OffsetDateTime dateEcheance;
     private String libelle;
@@ -15,6 +16,14 @@ public class RecaputilatifItem {
     private TransactionSource source;
 
     public RecaputilatifItem() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     // Getters

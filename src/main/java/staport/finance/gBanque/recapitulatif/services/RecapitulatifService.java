@@ -48,6 +48,9 @@ import staport.finance.gBanque.leasing.echeancesLeasing.specification.EcheanceLe
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.specs.MiseADispositionSpec;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.repositories.VirementInternationalRepository;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.specs.VirementInternationalSpec;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.operationErrone.repositories.OperationErroneRepository;
 import staport.finance.gBanque.operationErrone.specs.OperationErroneSpec;
@@ -113,13 +116,14 @@ public class RecapitulatifService {
     private final ImpotEtTaxeRepository impotEtTaxeRepository;
     private final RestitutionRepository restitutionRepository;
     private final OperationErroneRepository operationErroneRepository;
+    private final VirementInternationalRepository virementInternationalRepository;
 
 
 
     public RecapitulatifService(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
-            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, BanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository) {
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, BanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.decaissementMapper = mapper;
@@ -142,6 +146,7 @@ public class RecapitulatifService {
         this.impotEtTaxeRepository = impotEtTaxeRepository;
         this.restitutionRepository = restitutionRepository;
         this.operationErroneRepository = operationErroneRepository;
+        this.virementInternationalRepository = virementInternationalRepository;
     }
 
     /**
@@ -174,6 +179,9 @@ public class RecapitulatifService {
         Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banqueId);
         Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banqueId);
         Specification<MiseADisposition> madSpec = MiseADispositionSpec.encoursDecaissementForMiseAdispo(banqueId);
+        Specification<VirementInternational> virementInternationalSpec= VirementInternationalSpec.encoursDecaissement(banqueId);
+
+        //operation erronées
         Specification<OperationErrone> operationErroneSpec = OperationErroneSpec.outstandingOperations()
                 .and(OperationErroneSpec.hasBanque(banqueId));
 
@@ -221,6 +229,7 @@ public class RecapitulatifService {
         List<Lcn> activeLcns = lcnRepository.findAll(lcnSpec);
         List<Virement> activeVirements = virementRepository.findAll(virementSpec);
         List<MiseADisposition> activeMisesADisposition = miseADispositionRepository.findAll(madSpec);
+        List<VirementInternational> activeVirementInternationals=virementInternationalRepository.findAll(virementInternationalSpec);
         List<OperationErrone> outstandingOperationsErrones = operationErroneRepository.findAll(operationErroneSpec);
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
         List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
@@ -241,6 +250,7 @@ public class RecapitulatifService {
         combinedItems.addAll(activeLcns.stream().map(decaissementMapper::mapLcnToDto).toList());
         combinedItems.addAll(activeVirements.stream().map(decaissementMapper::mapVirementToDto).toList());
         combinedItems.addAll(activeMisesADisposition.stream().map(decaissementMapper::mapMiseADispositionToDto).toList());
+        combinedItems.addAll(activeVirementInternationals.stream().map(decaissementMapper::mapVirementInternationalToDto).toList());
         combinedItems.addAll(outstandingOperationsErrones.stream().map(decaissementMapper::mapOperationErroneToDto).toList());
         combinedItems.addAll(outstandingPrefinancements.stream().map(decaissementMapper::mapPrefinancementToDto).toList());
         combinedItems.addAll(outstandingDroitsConstate.stream().map(decaissementMapper::mapDroitConstateToDto).toList());
@@ -326,6 +336,7 @@ public class RecapitulatifService {
         Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom());
         Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId());
         Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banqueId);
+        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banqueId);
 
         // préfinancement (Déblocage only)
         Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingDeblocageForCurrentMonth()
@@ -351,6 +362,7 @@ public class RecapitulatifService {
         List<Virement> outstandingVirements = virementRepository.findAll(virementSpec);
         List<Cheque> outstandingCheques = chequeRepository.findAll(chequeSpec);
         List<Lcn> outstandingLcns = lcnRepository.findAll(lcnSpec);
+        List<VirementInternational> outstandingInternationalVirements=virementInternationalRepository.findAll(virementInternationalSpec);
 
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
         List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
@@ -368,6 +380,7 @@ public class RecapitulatifService {
         combinedItems.addAll(outstandingFactoring.stream().map(encaissementMapper::mapFactoringToDto).toList());
         combinedItems.addAll(outstandingDecomptes.stream().map(encaissementMapper::mapDecompteToDto).toList());
         combinedItems.addAll(outstandingVirements.stream().map(encaissementMapper::mapVirementToDto).toList());
+        combinedItems.addAll(outstandingInternationalVirements.stream().map(encaissementMapper::mapVirementInternationalToDto).toList());
         combinedItems.addAll(outstandingCheques.stream().map(encaissementMapper::mapChequeToDto).toList());
         combinedItems.addAll(outstandingLcns.stream().map(encaissementMapper::mapLcnToDto).toList());
         combinedItems.addAll(outstandingRestitutions.stream().map(encaissementMapper::mapRestitutionToDto).toList());
@@ -456,6 +469,7 @@ public class RecapitulatifService {
                 decaissements
         );
     }
+
     public List<RecaputilatifItem> getDecaissementByBanque(Banque banque) {
 
         List<RecaputilatifItem> decaissementList=new ArrayList<RecaputilatifItem>();
@@ -472,8 +486,12 @@ public class RecapitulatifService {
         Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banque.getId());
         Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banque.getId());
         Specification<MiseADisposition> madSpec = MiseADispositionSpec.encoursDecaissementForMiseAdispo(banque.getId());
+        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursDecaissement(banque.getId());
+
+        //operation erronées
         Specification<OperationErrone> operationErroneSpec = OperationErroneSpec.outstandingOperations()
                 .and(OperationErroneSpec.hasBanque(banque.getId()));
+
         // préfinancement (Remboursement only)
         Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingRemboursementForCurrentMonth()
                 .and(PrefinancementSpecification.byBanqueId(banque.getId()));
@@ -516,6 +534,7 @@ public class RecapitulatifService {
         List<Lcn> activeLcns = lcnRepository.findAll(lcnSpec);
         List<Virement> activeVirements = virementRepository.findAll(virementSpec);
         List<MiseADisposition> activeMisesADisposition = miseADispositionRepository.findAll(madSpec);
+        List<VirementInternational> activevirementInternationals=virementInternationalRepository.findAll(virementInternationalSpec);
         List<OperationErrone> outstandingOperationsErrones = operationErroneRepository.findAll(operationErroneSpec);
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
         List<DroitConstate> outstandingDroitsConstate = droitConstateRepository.findAll(droitConstateSpecification);
@@ -535,6 +554,7 @@ public class RecapitulatifService {
         decaissementList.addAll(activeLcns.stream().map(decaissementMapper::mapLcnToDto).toList());
         decaissementList.addAll(activeVirements.stream().map(decaissementMapper::mapVirementToDto).toList());
         decaissementList.addAll(activeMisesADisposition.stream().map(decaissementMapper::mapMiseADispositionToDto).toList());
+        decaissementList.addAll(activevirementInternationals.stream().map(decaissementMapper::mapVirementInternationalToDto).toList());
         decaissementList.addAll(outstandingOperationsErrones.stream().map(decaissementMapper::mapOperationErroneToDto).toList());
         decaissementList.addAll(outstandingPrefinancements.stream().map(decaissementMapper::mapPrefinancementToDto).toList());
         decaissementList.addAll(outstandingDroitsConstate.stream().map(decaissementMapper::mapDroitConstateToDto).toList());
@@ -556,7 +576,7 @@ public class RecapitulatifService {
         Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom());
         Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId());
         Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banque.getId());
-
+        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banque.getId());
         // préfinancement (Déblocage only)
         Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingDeblocageForCurrentMonth()
                 .and(PrefinancementSpecification.byBanqueId(banque.getId()));
@@ -586,6 +606,8 @@ public class RecapitulatifService {
         List<Virement> outstandingVirements = virementRepository.findAll(virementSpec);
         List<Cheque> outstandingCheques = chequeRepository.findAll(chequeSpec);
         List<Lcn> outstandingLcns = lcnRepository.findAll(lcnSpec);
+        List<VirementInternational> outstandingInternationalVirements=virementInternationalRepository.findAll(virementInternationalSpec);
+
         List<Restitution> outstandingRestitutions = restitutionRepository.findAll(restitutionSpecification);
 
         encaissements.addAll(outstandingPrefinancements.stream().map(encaissementMapper::mapPrefinancementToDto).toList());
@@ -593,6 +615,7 @@ public class RecapitulatifService {
         encaissements.addAll(outstandingFactoring.stream().map(encaissementMapper::mapFactoringToDto).toList());
         encaissements.addAll(outstandingDecomptes.stream().map(encaissementMapper::mapDecompteToDto).toList());
         encaissements.addAll(outstandingVirements.stream().map(encaissementMapper::mapVirementToDto).toList());
+        encaissements.addAll(outstandingInternationalVirements.stream().map(encaissementMapper::mapVirementInternationalToDto).toList());
         encaissements.addAll(outstandingCheques.stream().map(encaissementMapper::mapChequeToDto).toList());
         encaissements.addAll(outstandingLcns.stream().map(encaissementMapper::mapLcnToDto).toList());
         encaissements.addAll(outstandingRestitutions.stream().map(encaissementMapper::mapRestitutionToDto).toList());
@@ -620,7 +643,6 @@ public class RecapitulatifService {
                 .reduce(Comparator::thenComparing)
                 .orElse(Comparator.comparing(RecaputilatifItem::getDateEmission));
     }
-
 
     public List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux() {
         // 1. Récupérer la liste de tous les IDs de banque disponibles.
