@@ -30,7 +30,6 @@ import { DialogModule } from 'primeng/dialog';
 import { LeasingContractWizardService } from '../../services/LeasingContractWizardService';
 import { ContratLeasingRequestDTO } from "../../dtos/contrat-leasing";
 import { DividerModule } from "primeng/divider";
-import { ContratLeasingDetailsComponent } from '../contrat-leasing-details/contrat-leasing-details.component';
 import { BreadcrumbModule } from "primeng/breadcrumb";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -57,7 +56,6 @@ import { InputNumberModule } from "primeng/inputnumber";
     RippleModule,
     DialogModule,
     DividerModule,
-    ContratLeasingDetailsComponent,
     BreadcrumbModule,
     ProgressSpinnerModule,
     InputNumberModule

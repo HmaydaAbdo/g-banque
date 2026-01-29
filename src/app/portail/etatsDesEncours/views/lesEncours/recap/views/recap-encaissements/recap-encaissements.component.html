@@ -96,6 +96,12 @@
 
       <ng-template pTemplate="header">
         <tr>
+          <th pSortableColumn="id" class="white-space-nowrap">
+            <div class="flex align-items-center gap-2">
+              ID
+              <p-sortIcon field="id"></p-sortIcon>
+            </div>
+          </th>
           <th pSortableColumn="dateEmission" class="white-space-nowrap">
             <div class="flex align-items-center gap-2">
               Date d'émission
@@ -120,18 +126,36 @@
               <p-sortIcon field="credit"></p-sortIcon>
             </div>
           </th>
-          <th>Observations</th>
-          <th pSortableColumn="libelle">
-            <div class="flex align-items-center gap-2">
-              Libellé
-              <p-sortIcon field="libelle"></p-sortIcon>
+          <th pSortableColumn="Source" class="text-right">
+            <div class="flex align-items-center justify-content-end gap-2">
+              Source
+              <p-sortIcon field="Source"></p-sortIcon>
             </div>
           </th>
+
+          <th pSortableColumn="Observations" class="text-right">
+            <div class="flex align-items-center justify-content-end gap-2">
+              Observations
+              <p-sortIcon field="Observations"></p-sortIcon>
+            </div>
+          </th>
+
+          <th pSortableColumn="Libellé" class="text-right">
+            <div class="flex align-items-center justify-content-end gap-2">
+              Libellé
+              <p-sortIcon field="Libellé"></p-sortIcon>
+            </div>
+          </th>
+
+
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-item>
         <tr class="table-row">
+          <td class="white-space-nowrap">
+            {{item.id}}
+          </td>
           <td class="white-space-nowrap">
             <span class="text-700">{{ item.dateEmission | date:'dd/MM/yyyy' }}</span>
           </td>
@@ -150,6 +174,7 @@
             </span>
             <span *ngIf="!item.credit" class="text-500">-</span>
           </td>
+          <td> {{item.source}}</td>
           <td>
             <span class="text-700">{{ item.observations }}</span>
           </td>
@@ -161,7 +186,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="6" class="text-center p-4">
+          <td colspan="12" class="text-center p-4">
             <div class="flex flex-column align-items-center gap-3">
               <i class="pi pi-inbox text-4xl text-400"></i>
               <div class="text-700 font-semibold">Aucun encaissement trouvé</div>

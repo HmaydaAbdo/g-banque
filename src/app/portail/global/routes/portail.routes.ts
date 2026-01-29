@@ -93,6 +93,12 @@ import { OperationErroneFormComponent } from "../../operationErronées/views/ope
 import {
   EncoursOperationErroneComponent
 } from "../../etatsDesEncours/views/lesEncours/decaissement/operation-errone/operation-errone.component";
+import {
+  VirementInternationalListComponent
+} from "../../virementInternational/views/virement-international-list/virement-international-list.component";
+import {
+  VirementInternationalFormComponent
+} from "../../virementInternational/views/virement-international-form/virement-international-form.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
@@ -146,6 +152,10 @@ export const PORTAIL_ROUTES: Routes = [
   { path: "Virements/encaissement", component: VirementEncaissementListComponent },
   { path: 'Virements/new', component: VirementFormComponent },
   { path: 'Virements/edit/:id', component: VirementFormComponent },
+
+  {path: 'virements-internationaux', component: VirementInternationalListComponent},
+  {path: 'virements-internationaux/new', component: VirementInternationalFormComponent},
+  {path: 'virements-internationaux/edit/:id', component: VirementInternationalFormComponent},
 
   { path: 'operations/errones', component: OperationErroneListComponent },
   { path: 'operations/errones/new', component: OperationErroneFormComponent },

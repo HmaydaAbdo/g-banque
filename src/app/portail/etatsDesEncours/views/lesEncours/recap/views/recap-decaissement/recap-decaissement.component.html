@@ -86,7 +86,7 @@
       [lazy]="true"
       (onLazyLoad)="loadDecaissements($event)"
       [rowHover]="true"
-      dataKey="dateEmission"
+      dataKey="id"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} décaissements"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-sm text-xs"
@@ -94,6 +94,12 @@
 
       <ng-template pTemplate="header">
         <tr>
+          <th pSortableColumn="id" class="white-space-nowrap">
+            <div class="flex align-items-center gap-2">
+              ID
+              <p-sortIcon field="id"></p-sortIcon>
+            </div>
+          </th>
           <th pSortableColumn="dateEmission" class="white-space-nowrap">
             <div class="flex align-items-center gap-2">
               Date d'émission
@@ -118,7 +124,19 @@
               <p-sortIcon field="credit"></p-sortIcon>
             </div>
           </th>
-          <th>Observations</th>
+          <th pSortableColumn="source">
+            <div class="flex align-items-center gap-2">
+              source
+              <p-sortIcon field="source"></p-sortIcon>
+            </div>
+          </th>
+          <th pSortableColumn="Observations">
+            <div class="flex align-items-center gap-2">
+              Observations
+              <p-sortIcon field="Observations"></p-sortIcon>
+            </div>
+          </th>
+
           <th pSortableColumn="libelle">
             <div class="flex align-items-center gap-2">
               Libellé
@@ -130,6 +148,9 @@
 
       <ng-template pTemplate="body" let-item>
         <tr class="table-row">
+          <td class="white-space-nowrap">
+            <span class="text-700">{{ item.id }}</span>
+          </td>
           <td class="white-space-nowrap">
             <span class="text-700">{{ item.dateEmission | date:'dd/MM/yyyy' }}</span>
           </td>
@@ -147,6 +168,9 @@
               {{ item.credit | number:'1.2-2' }} MAD
             </span>
             <span *ngIf="!item.credit" class="text-500">-</span>
+          </td>
+          <td>
+            <span class="text-700">{{ item.source }}</span>
           </td>
           <td>
             <span class="text-700">{{ item.observations }}</span>

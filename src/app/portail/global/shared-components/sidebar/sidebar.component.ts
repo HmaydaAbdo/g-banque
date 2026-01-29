@@ -113,11 +113,16 @@ export class SidebarComponent implements OnInit {
           ]
         },
         {
-          label: 'Virements', icon: 'pi pi-arrow-right-arrow-left',
+          label: 'Virements nationaux', icon: 'pi pi-arrow-right-arrow-left',
           items: [
             { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/Virements/encaissement' },
             { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/Virements/decaissement' },
           ]
+        },
+        {
+          label: 'Virements internationaux',
+          icon: 'pi pi-globe',
+          routerLink: '/portail/virements-internationaux',
         },
 
         { label: 'Mises à disposition (Décaissements)', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Mise-a-disposition/decaissement' }

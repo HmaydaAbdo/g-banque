@@ -241,28 +241,7 @@
     </p-table>
   </div>
 
-  <!-- Dialog Détails du Contrat -->
-  <p-dialog
-    header="Détails du Contrat de Leasing"
-    [(visible)]="displayDetailsDialog"
-    (onHide)="hideDetailsDialog()"
-    [modal]="true"
-    [style]="{ width: '75vw' }"
-    [breakpoints]="{'960px': '75vw', '640px': '95vw'}"
-    [draggable]="false"
-    [resizable]="false">
 
-    <app-contrat-leasing-details [contratDetails]="selectedContratDetails"></app-contrat-leasing-details>
-
-    <ng-template pTemplate="footer">
-      <p-button
-        label="Fermer"
-        icon="pi pi-times"
-        (click)="hideDetailsDialog()"
-        class="p-button-text">
-      </p-button>
-    </ng-template>
-  </p-dialog>
 
   <!-- Dialog Gestion PDF -->
   <p-dialog
