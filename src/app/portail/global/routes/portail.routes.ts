@@ -99,6 +99,12 @@ import {
 import {
   VirementInternationalFormComponent
 } from "../../virementInternational/views/virement-international-form/virement-international-form.component";
+import {
+  VirementInternationalEncoursDecaissementComponent
+} from "../../etatsDesEncours/views/lesEncours/decaissement/virementInternationaux/VirementInternationalEncoursDecaissement.component";
+import {
+  VirementInternationalEncoursEncaissementComponent
+} from "../../etatsDesEncours/views/lesEncours/encaissements/virementInternationaux/VirementInternationalEncoursEncaissementComponent";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
@@ -203,11 +209,15 @@ export const PORTAIL_ROUTES: Routes = [
 
       { path: 'virements-decaissements', component: VirementEncoursComponent },
       { path: 'virements-encaissements', component: VirementEncaissementEncoursComponent },
+
       { path: 'cheques-decaissements', component: ChequesEncoursComponent },
       { path: 'cheques-encaissements', component: ChequeEncaissementsEncoursComponent },
 
       { path: 'mise-a-disposition-decaissements', component: MiseADispositionEncoursComponent },
       { path: 'mise-a-disposition-encaissements', component: MiseADispoEncaissementEncoursComponent },
+
+      { path: 'virements-internationaux-decaissements', component: VirementInternationalEncoursDecaissementComponent },
+      { path: 'virements-internationaux-encaissements', component: VirementInternationalEncoursEncaissementComponent },
 
       { path: "prefinancement-remboursement", component: PrefinancementRemboursementsComponent },
       { path: "dc-remboursement", component: DroitConstateRemboursementsComponent },

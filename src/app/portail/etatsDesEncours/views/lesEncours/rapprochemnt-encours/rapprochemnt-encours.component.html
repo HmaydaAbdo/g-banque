@@ -211,6 +211,12 @@
               <p-sortIcon field="observation"></p-sortIcon>
             </div>
           </th>
+          <th pSortableColumn="transactionSource">
+            <div class="flex align-items-center gap-2">
+              Source
+              <p-sortIcon field="transactionSource"></p-sortIcon>
+            </div>
+          </th>
           <th class="text-center">Actions</th>
         </tr>
       </ng-template>
@@ -255,6 +261,9 @@
           </td>
           <td>
             <span class="text-700">{{ transaction.observation }}</span>
+          </td>
+          <td>
+            <span class="text-700">{{ transaction.transactionSource }}</span>
           </td>
           <td class="text-center">
             <p-button

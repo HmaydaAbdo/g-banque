@@ -72,35 +72,6 @@ export class VirementInternationalService {
     );
   }
 
-  getEncaissementVirementsInternationaux(
-    searchDto: VirementInternationalSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<PageResponse<VirementInternationalResponseDto>> {
-
-    let params = this.buildSearchParams(searchDto, page, size, sort);
-
-    return this.http.get<PageResponse<VirementInternationalResponseDto>>(
-      `${this.apiUrl}/encaissements`,
-      { params }
-    );
-  }
-
-  getDecaissementVirementsInternationaux(
-    searchDto: VirementInternationalSearchDto,
-    page: number = 0,
-    size: number = 10,
-    sort: string = 'dateEmission,desc'
-  ): Observable<PageResponse<VirementInternationalResponseDto>> {
-
-    let params = this.buildSearchParams(searchDto, page, size, sort);
-
-    return this.http.get<PageResponse<VirementInternationalResponseDto>>(
-      `${this.apiUrl}/decaissements`,
-      { params }
-    );
-  }
 
   /* ===================== TOGGLE STATUS ===================== */
 

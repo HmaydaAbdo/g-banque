@@ -38,6 +38,12 @@
   import {RestitutionValidationRequest} from "../../dtos/restitution/RestitutionValidationRequest";
   import {OperationErroneValidationRequest} from "../../dtos/operation-erronés/OperationErroneValidationRequest";
   import {OperationErroneTransactionResponse} from "../../dtos/operation-erronés/OperationErroneTransactionResponse";
+  import {
+    VirementInternationalTransactionRequestDto
+  } from "../../dtos/virementsInternationaux/VirementInternationalTransactionRequestDto";
+  import {
+    VirementInternationalTransactionResponseDto
+  } from "../../dtos/virementsInternationaux/VirementInternationalTransactionResponseDto";
 
   @Injectable({
     providedIn: 'root'
@@ -210,6 +216,34 @@
       return this.http.post<OperationErroneTransactionResponse>(
         `${this.baseUrl}/process/operation-errone`,
         request
+      );
+    }
+
+    /**
+     * Envoie une transaction de virement international (DÉCAISSEMENT) au backend pour validation
+     * @param virementInternational Les données de la transaction à rapprocher
+     * @returns Observable<VirementInternationalTransactionResponseDto>
+     */
+    virementInternationalDecaissementToRapprochement(
+      virementInternational: VirementInternationalTransactionRequestDto
+    ): Observable<VirementInternationalTransactionResponseDto> {
+      return this.http.post<VirementInternationalTransactionResponseDto>(
+        `${this.baseUrl}/process/decaissement/virement-international`,
+        virementInternational
+      );
+    }
+
+    /**
+     * Envoie une transaction de virement international (ENCAISSEMENT) au backend pour validation
+     * @param virementInternational Les données de la transaction à rapprocher
+     * @returns Observable<VirementInternationalTransactionResponseDto>
+     */
+    virementInternationalEncaissementToRapprochement(
+      virementInternational: VirementInternationalTransactionRequestDto
+    ): Observable<VirementInternationalTransactionResponseDto> {
+      return this.http.post<VirementInternationalTransactionResponseDto>(
+        `${this.baseUrl}/process/encaissement/virement-international`,
+        virementInternational
       );
     }
 
