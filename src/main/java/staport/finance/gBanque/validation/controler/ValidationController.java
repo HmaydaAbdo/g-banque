@@ -39,6 +39,8 @@ import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransacti
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneTransactionResponse;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneValidationRequest;
+import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionRequestDto;
+import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
 import staport.finance.gBanque.validation.services.ReverseTransactionService;
@@ -240,6 +242,34 @@ public class ValidationController {
     public ResponseEntity<OperationErroneTransactionResponse> processOperationErroneToTransaction(
             @Valid @RequestBody OperationErroneValidationRequest requestDto) throws Exception {
         OperationErroneTransactionResponse responseDto = validationService.processOperationErroneToTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    /**
+     * Endpoint pour traiter une transaction de rapprochement de virement international (DECAISSEMENT).
+     *
+     * @param requestDto Le DTO de la requête de transaction de virement international.
+     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     */
+    @PostMapping("/process/decaissement/virement-international")
+    public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalDecaissementTransaction(
+            @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) throws Exception {
+        VirementInternationalTransactionResponseDto responseDto =
+                validationService.processVirementInternationalDecaissementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    /**
+     * Endpoint pour traiter une transaction de rapprochement de virement international (ENCAISSEMENT).
+     *
+     * @param requestDto Le DTO de la requête de transaction de virement international.
+     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     */
+    @PostMapping("/process/encaissement/virement-international")
+    public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalEncaissementTransaction(
+            @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) throws Exception {
+        VirementInternationalTransactionResponseDto responseDto =
+                validationService.processVirementInternationalEncaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

@@ -27,6 +27,8 @@ import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.interets.repository.InteretRepository;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.repositories.VirementInternationalRepository;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.operationErrone.repositories.OperationErroneRepository;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
@@ -85,6 +87,8 @@ import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransacti
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneTransactionResponse;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneValidationRequest;
+import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionRequestDto;
+import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
 import staport.finance.gBanque.validation.mapper.*;
@@ -159,8 +163,11 @@ public class ValidationService {
     private final OperationErroneRepository operationErroneRepository;
     private final OperationErroneTransactionMapper operationErroneTransactionMapper;
 
+    private final VirementInternationalTransactionMapper virementInternationalTransactionMapper;
+    private final VirementInternationalRepository virementInternationalRepository;
 
-    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper) {
+
+    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -201,6 +208,8 @@ public class ValidationService {
         this.restitutionTransactionMapper = restitutionTransactionMapper;
         this.operationErroneRepository = operationErroneRepository;
         this.operationErroneTransactionMapper = operationErroneTransactionMapper;
+        this.virementInternationalTransactionMapper = virementInternationalTransactionMapper;
+        this.virementInternationalRepository = virementInternationalRepository;
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -1100,5 +1109,89 @@ public class ValidationService {
         // Step 7: Convert the saved Transaction entity into response dto
         // using the mapper and return it as the response.
         return operationErroneTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public VirementInternationalTransactionResponseDto processVirementInternationalDecaissementTransaction(
+            VirementInternationalTransactionRequestDto requestDto) throws Exception {
+
+        // Step 1: Fetch virement international entity from the database using its id from the request.
+        // If the virement international does not exist, throw a ResourceNotFoundException.
+        VirementInternational virementInternational = virementInternationalRepository.findById(requestDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Virement international with id " + requestDto.getId() + " not found"));
+
+        // Step 2: Check if the virement international is active.
+        // If the virement international is already used/paid (active = false), throw an exception.
+        if (!virementInternational.isActive()) {
+            throw new Exception("The virement international is not active, it has already been paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
+        Transaction transactionEntity = virementInternationalTransactionMapper.toEntity(requestDto, virementInternational);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
+        // Then save the updated bank entity.
+        Banque banque = virementInternational.getBanque();
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(virementInternational.getMontant()));
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
+        virementInternational.setActive(false);
+        virementInternational.setDateOperation(savedTransaction.getDateOperations());
+        virementInternational.setDateValeur(savedTransaction.getDateValeur());
+        virementInternational.setLibelle(savedTransaction.getLibelle());
+        virementInternational.setObservation(savedTransaction.getObservation());
+        virementInternationalRepository.save(virementInternational);
+
+        // Step 7: Convert the saved Transaction entity into a VirementInternationalTransactionResponseDto
+        // using the mapper and return it as the response.
+        return virementInternationalTransactionMapper.toResponseDto(savedTransaction);
+    }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public VirementInternationalTransactionResponseDto processVirementInternationalEncaissementTransaction(
+            VirementInternationalTransactionRequestDto requestDto) throws Exception {
+
+        // Step 1: Fetch virement international entity from the database using its id from the request.
+        // If the virement international does not exist, throw a ResourceNotFoundException.
+        VirementInternational virementInternational = virementInternationalRepository.findById(requestDto.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Virement international with id " + requestDto.getId() + " not found"));
+
+        // Step 2: Check if the virement international is active.
+        // If the virement international is already used/paid (active = false), throw an exception.
+        if (!virementInternational.isActive()) {
+            throw new Exception("The virement international is not active, it has already been paid");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
+        Transaction transactionEntity = virementInternationalTransactionMapper.toEntity(requestDto, virementInternational);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+
+        // Step 5: Update the bank's current balance by adding the transaction credit amount.
+        // Then save the updated bank entity.
+        Banque banque = virementInternational.getBanque();
+        banque.setSoldeActuel(banque.getSoldeActuel().add(virementInternational.getMontant()));
+        this.banqueRepository.save(banque);
+
+        // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
+        virementInternational.setActive(false);
+        virementInternational.setDateOperation(savedTransaction.getDateOperations());
+        virementInternational.setDateValeur(savedTransaction.getDateValeur());
+        virementInternational.setLibelle(savedTransaction.getLibelle());
+        virementInternational.setObservation(savedTransaction.getObservation());
+        virementInternationalRepository.save(virementInternational);
+
+        // Step 7: Convert the saved Transaction entity into a VirementInternationalTransactionResponseDto
+        // using the mapper and return it as the response.
+        return virementInternationalTransactionMapper.toResponseDto(savedTransaction);
     }
 }

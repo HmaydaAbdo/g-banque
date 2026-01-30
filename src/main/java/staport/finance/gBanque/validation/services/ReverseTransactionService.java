@@ -36,6 +36,8 @@ import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.repositories.VirementInternationalRepository;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
@@ -83,6 +85,7 @@ public class ReverseTransactionService {
     private final ImpotEtTaxeRepository impotEtTaxeRepository;
     private final RestitutionRepository restitutionRepository;
     private final OperationErroneRepository operationErroneRepository;
+    private final VirementInternationalRepository virementInternationalRepository;
 
     public ReverseTransactionService(
             TransactionRepository transactionRepository,
@@ -101,7 +104,7 @@ public class ReverseTransactionService {
             PrelevementRepository prelevementRepository,
             InteretRepository interetRepository,
             FraisBancaireRepository fraisBancaireRepository,
-            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository) {
+            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository) {
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
@@ -122,6 +125,7 @@ public class ReverseTransactionService {
         this.impotEtTaxeRepository = impotEtTaxeRepository;
         this.restitutionRepository = restitutionRepository;
         this.operationErroneRepository = operationErroneRepository;
+        this.virementInternationalRepository = virementInternationalRepository;
     }
 
     /**
@@ -245,6 +249,9 @@ public class ReverseTransactionService {
                 break;
             case OPERATION_ERRONE:
                 resetOperationErrone(referentId);
+                break;
+            case VIREMENT_INTERNATIONAL:
+                resetVirementInternational(referentId);
                 break;
             default:
                 throw new Exception("Type de transaction non supporté pour l'annulation: " + source);
@@ -449,5 +456,16 @@ public class ReverseTransactionService {
         operationErrone.setDateValeur(null);
         operationErroneRepository.save(operationErrone);
         log.debug("Operation erroné {} remis à PREVU", operationErroneId);
+    }
+
+    private void resetVirementInternational(Long virementInternationalId) throws Exception {
+        VirementInternational virementInternational = virementInternationalRepository.findById(virementInternationalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Virement international introuvable: " + virementInternationalId));
+
+        virementInternational.setActive(true);
+        virementInternational.setDateOperation(null);
+        virementInternational.setDateValeur(null);
+        virementInternationalRepository.save(virementInternational);
+        log.debug("Virement international {} remis à actif", virementInternationalId);
     }
 }
