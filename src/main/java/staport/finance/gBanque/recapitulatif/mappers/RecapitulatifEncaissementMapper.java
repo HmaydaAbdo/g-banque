@@ -1,6 +1,7 @@
 package staport.finance.gBanque.recapitulatif.mappers;
 
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
@@ -157,12 +158,6 @@ public class RecapitulatifEncaissementMapper {
         return dto;
     }
 
-    /**
-     * Maps a Restitution entity to a RecaputilatifItem DTO.
-     *
-     * @param restitution The Restitution entity to map.
-     * @return The mapped RecaputilatifItem DTO.
-     */
     public RecaputilatifItem mapRestitutionToDto(Restitution restitution) {
         if (restitution == null) {
             return null;
@@ -177,6 +172,22 @@ public class RecapitulatifEncaissementMapper {
         dto.setSource(TransactionSource.RESTITUTION);
         return dto;
     }
+
+    public RecaputilatifItem mapImpayeeToDto(Impayee impayee) {
+        if (impayee == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(impayee.getId());
+        dto.setDateEmission(impayee.getDateEmission());
+        dto.setCredit(impayee.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(impayee.getObservation());
+        dto.setLibelle(impayee.getLibelle());
+        dto.setSource(TransactionSource.IMPAYEE);
+        return dto;
+    }
+
 
     public RecaputilatifItem mapVirementInternationalToDto(VirementInternational virement){
         if (virement == null) {
