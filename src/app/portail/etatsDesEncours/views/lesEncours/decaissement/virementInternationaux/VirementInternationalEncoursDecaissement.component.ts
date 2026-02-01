@@ -1,5 +1,5 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, RouterLink} from '@angular/router';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {CardModule} from 'primeng/card';
@@ -58,6 +58,7 @@ import {
     DropdownModule,
     InputNumberModule,
     ConfirmDialogModule,
+    RouterLink,
   ],
   templateUrl: './virement-international-encours-decaissement.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe],

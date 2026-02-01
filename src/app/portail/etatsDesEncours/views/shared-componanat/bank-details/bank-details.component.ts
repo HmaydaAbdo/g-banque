@@ -76,15 +76,7 @@ export class BankDetailsComponent implements OnInit, OnDestroy {
     return this.bankInfo.soldeActuelle - this.bankInfo.soldeDepart;
   }
 
-  /**
-   * Calcule le pourcentage de variation
-   */
-  getVariationPercent(): string {
-    if (!this.bankInfo || this.bankInfo.soldeDepart === 0) return '0.00';
-    const variation = this.getVariation();
-    const percent = (variation / this.bankInfo.soldeDepart) * 100;
-    return percent.toFixed(2);
-  }
+
 
   /**
    * Nettoyage lors de la destruction du composant

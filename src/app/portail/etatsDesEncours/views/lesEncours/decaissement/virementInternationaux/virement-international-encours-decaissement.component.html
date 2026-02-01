@@ -9,7 +9,7 @@
       <span class="text-lg font-medium mr-2">Total des encours <strong>{{ totalEncours | number :'1.2-2'}} MAD</strong></span>
     </div>
 
-    <form [formGroup]="searchForm" class="grid p-fluid flex flex-row justify-content-between flex-wrap">
+    <form [formGroup]="searchForm" class="grid p-fluid flex flex-row justify-content-between ">
 
       <span class="p-float-label">
         <p-calendar id="dateEmission"
@@ -30,6 +30,10 @@
         <input id="montant" type="number" pInputText formControlName="montant" />
         <label for="montant">Recherche par Montant</label>
       </span>
+
+      <button pButton pRipple label="Ajouter" class=" h-fit w-fit " size="small" icon="pi pi-plus"
+              severity="primary" routerLink="/portail/virements-internationaux/new"></button>
+
     </form>
 
   </div>

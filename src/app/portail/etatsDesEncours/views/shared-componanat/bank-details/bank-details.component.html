@@ -79,12 +79,7 @@
                   }">
               {{ getVariation() >= 0 ? '+' : '' }}{{ getVariation() | number: '1.2-2' }}
             </span>
-            <span class="px-2 py-1 border-round-lg text-xs font-bold text-white"
-                  [ngStyle]="{
-                    'background': getVariation() >= 0 ? '#4CAF50' : '#F44336'
-                  }">
-              {{ getVariation() >= 0 ? '+' : '' }}{{ getVariationPercent() }}%
-            </span>
+
           </div>
         </div>
       </div>

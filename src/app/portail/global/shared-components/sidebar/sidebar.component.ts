@@ -146,6 +146,7 @@ export class SidebarComponent implements OnInit {
     { label: "Les Intérêts", icon: "pi pi-list", routerLink: '/portail/interets' },
     { label: "Les Restitutions", icon: "pi pi-list", routerLink: '/portail/restitutions' },
     { label: "Impôts et Taxes", icon: "pi pi-list", routerLink: '/portail/impots-taxes' },
+    { label: "Impayées", icon: "pi pi-list", routerLink: '/portail/impayees' },
     {label: 'Opérations Erronées', icon: 'pi pi-exclamation-triangle', routerLink: '/portail/operations/errones'},
     { label: "Historique des Rapprochements", routerLink: "/portail/rapprochement/historique", icon: "pi pi-history" },
     {

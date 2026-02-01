@@ -89,7 +89,9 @@ export class LesEncoursComponent implements OnInit {
     'prefinancement-deblocage': { label: 'Encaissements ⇒ Préfinancement (Déblocage)', icon: 'pi pi-unlock' },
     'dc-deblocage': { label: 'Encaissements ⇒ Droits Constatés (Déblocage)', icon: 'pi pi-unlock' },
     'decomptes': { label: 'Encaissements ⇒ Décomptes', icon: 'pi pi-calculator' },
-    'restitutions': { label: 'Encaissements ⇒ Restitutions', icon: 'pi pi-refresh' }
+    'restitutions': { label: 'Encaissements ⇒ Restitutions', icon: 'pi pi-refresh' },
+    'impayees': { label: 'Encaissements ⇒ Impayés', icon: 'pi pi-exclamation-circle' },
+
   };
 
   constructor(
@@ -165,7 +167,10 @@ export class LesEncoursComponent implements OnInit {
           { label: 'Droits Constatés', icon: 'pi pi-unlock', routerLink: ['/portail/etats-des-encours', this.banqueId, 'dc-deblocage'] },
           { label: 'Factoring', icon: 'pi pi-unlock', routerLink: ['/portail/etats-des-encours', this.banqueId, 'factoring-deblocage'] },
           { label: 'Décomptes', icon: 'pi pi-calculator', routerLink: ['/portail/etats-des-encours', this.banqueId, 'decomptes'] },
-          { label: 'Restitutions', icon: 'pi pi-refresh', routerLink: ['/portail/etats-des-encours', this.banqueId, 'restitutions'] }
+          { label: 'Restitutions', icon: 'pi pi-refresh', routerLink: ['/portail/etats-des-encours', this.banqueId, 'restitutions'] },
+          {label: 'Impayés', icon: 'pi pi-exclamation-circle', routerLink: ['/portail/etats-des-encours', this.banqueId, 'impayees']
+          },
+
         ]
       },
       {

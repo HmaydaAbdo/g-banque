@@ -105,6 +105,11 @@ import {
 import {
   VirementInternationalEncoursEncaissementComponent
 } from "../../etatsDesEncours/views/lesEncours/encaissements/virementInternationaux/VirementInternationalEncoursEncaissementComponent";
+import {ImpayeeListComponent} from "../../impayees/views/ImpayeeList/Impayee-list.component";
+import {ImpayeeFormComponent} from "../../impayees/views/ImpayeeForm/Impayee-form.component";
+import {
+  EncoursImpayeeComponent
+} from "../../etatsDesEncours/views/lesEncours/encaissements/impayee/EncoursImpayee.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
@@ -236,6 +241,7 @@ export const PORTAIL_ROUTES: Routes = [
       { path: "fraisBancaire", component: EncoursFraisBancaireComponent },
       { path: "impots-taxes", component: EncoursImpotsEtTaxesComponent },
       { path: "restitutions", component: EncoursRestitutionComponent },
+      { path: "impayees", component: EncoursImpayeeComponent },
       { path: "operations-errones", component: EncoursOperationErroneComponent },
     ]
   },
@@ -256,6 +262,14 @@ export const PORTAIL_ROUTES: Routes = [
   { path: "agios/new", component: AgiosFormComponent },
   { path: "agios/edit/:id", component: AgiosFormComponent },
 
+  {
+    path: 'impayees',
+    children: [
+      { path: '', component: ImpayeeListComponent },
+      { path: 'new', component: ImpayeeFormComponent },
+      { path: 'edit/:id', component: ImpayeeFormComponent }
+    ]
+  },
   { path: 'prelevements', component: PrelevementListComponent },
   { path: "prelevements/new", component: PrelevementFormComponent },
   { path: "prelevements/edit/:id", component: PrelevementFormComponent },

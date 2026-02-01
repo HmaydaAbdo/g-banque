@@ -44,6 +44,8 @@
   import {
     VirementInternationalTransactionResponseDto
   } from "../../dtos/virementsInternationaux/VirementInternationalTransactionResponseDto";
+  import {ImpayeeValidationRequest} from "../../dtos/impayee/Impayeevalidationrequest";
+  import {ImpayeeTransactionResponse} from "../../dtos/impayee/Impayeetransactionresponse";
 
   @Injectable({
     providedIn: 'root'
@@ -244,6 +246,14 @@
       return this.http.post<VirementInternationalTransactionResponseDto>(
         `${this.baseUrl}/process/encaissement/virement-international`,
         virementInternational
+      );
+    }
+
+
+    impayeeToRapprochement(impayee: ImpayeeValidationRequest): Observable<ImpayeeTransactionResponse> {
+      return this.http.post<ImpayeeTransactionResponse>(
+        `${this.baseUrl}/process/impayee`,
+        impayee
       );
     }
 
