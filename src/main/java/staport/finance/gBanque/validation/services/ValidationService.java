@@ -10,6 +10,8 @@ import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.impayees.entities.Impayee;
+import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
@@ -61,6 +63,8 @@ import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionReq
 import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
+import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
+import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
 import staport.finance.gBanque.validation.dtos.interet.InteretTransactionResponse;
@@ -166,8 +170,10 @@ public class ValidationService {
     private final VirementInternationalTransactionMapper virementInternationalTransactionMapper;
     private final VirementInternationalRepository virementInternationalRepository;
 
+     private final ImpayeeRepository impayeeRepository;
+     private final ImpayeeTransactionMapper impayeeTransactionMapper;
 
-    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository) {
+    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -210,6 +216,8 @@ public class ValidationService {
         this.operationErroneTransactionMapper = operationErroneTransactionMapper;
         this.virementInternationalTransactionMapper = virementInternationalTransactionMapper;
         this.virementInternationalRepository = virementInternationalRepository;
+        this.impayeeRepository = impayeeRepository;
+        this.impayeeTransactionMapper = impayeeTransactionMapper;
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -1194,4 +1202,60 @@ public class ValidationService {
         // using the mapper and return it as the response.
         return virementInternationalTransactionMapper.toResponseDto(savedTransaction);
     }
+
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public ImpayeeTransactionResponse processImpayeeToTransaction(ImpayeeValidationRequest requestDto) throws Exception {
+        log.info("Début du traitement de l'impayée ID: {}", requestDto.getIdImpayee());
+
+        // Step 1: Fetch impayee from the database using its id from the request.
+        Impayee impayee = this.impayeeRepository.findById(requestDto.getIdImpayee())
+                .orElseThrow(() -> {
+                    log.error("Impayée introuvable avec l'ID: {}", requestDto.getIdImpayee());
+                    return new ResourceNotFoundException("Impayée introuvable avec l'ID: " + requestDto.getIdImpayee());
+                });
+
+        // Step 2: Check if the impayee is not already paid.
+        // If it's already paid, throw an exception.
+        if (impayee.getStatus() == Status.PAYE) {
+            log.error("L'impayée ID {} est déjà payée", requestDto.getIdImpayee());
+            throw new Exception("L'impayée est déjà payée");
+        }
+
+        // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
+        Transaction transactionEntity = impayeeTransactionMapper.toEntity(requestDto, impayee);
+
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
+
+        // Step 5: Update the bank's current balance
+        // Les impayées sont des ENCAISSEMENTS (crédit) donc on AJOUTE au solde
+        Banque banque = banqueRepository.findById(impayee.getBanqueEncaissement().getId())
+                .orElseThrow(() -> {
+                    log.error("Banque d'encaissement introuvable avec l'ID: {}", impayee.getBanqueEncaissement().getId());
+                    return new ResourceNotFoundException("Banque d'encaissement introuvable avec l'ID: " + impayee.getBanqueEncaissement().getId());
+                });
+
+        banque.setSoldeActuel(banque.getSoldeActuel().add(impayee.getMontant()));
+        this.banqueRepository.save(banque);
+        log.info("Solde de la banque {} mis à jour: {}", banque.getNom(), banque.getSoldeActuel());
+
+        // Step 6: Mark the impayee as paid and save the updated entity.
+        impayee.setStatus(Status.PAYE);
+        impayee.setObservation(savedTransaction.getObservation());
+        impayee.setLibelle(savedTransaction.getLibelle());
+        impayee.setDateValeur(savedTransaction.getDateValeur());
+        impayee.setDateOperation(savedTransaction.getDateOperations());
+        impayeeRepository.save(impayee);
+        log.info("Impayée ID {} marquée comme payée", impayee.getId());
+
+        // Step 7: Convert the saved Transaction entity into an ImpayeeTransactionResponse
+        // using the mapper and return it as the response.
+        ImpayeeTransactionResponse response = impayeeTransactionMapper.toResponseDto(savedTransaction);
+        log.info("Traitement de l'impayée terminé avec succès");
+
+        return response;
+    }
+
 }

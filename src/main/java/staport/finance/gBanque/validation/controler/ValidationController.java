@@ -17,6 +17,8 @@ import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionReq
 import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
+import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
+import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
 import staport.finance.gBanque.validation.dtos.interet.InteretTransactionResponse;
@@ -259,17 +261,19 @@ public class ValidationController {
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
-    /**
-     * Endpoint pour traiter une transaction de rapprochement de virement international (ENCAISSEMENT).
-     *
-     * @param requestDto Le DTO de la requête de transaction de virement international.
-     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
-     */
+
     @PostMapping("/process/encaissement/virement-international")
     public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalEncaissementTransaction(
             @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) throws Exception {
         VirementInternationalTransactionResponseDto responseDto =
                 validationService.processVirementInternationalEncaissementTransaction(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/process/impayee")
+    public ResponseEntity<ImpayeeTransactionResponse> processImpayeeToTransaction(
+            @Valid @RequestBody ImpayeeValidationRequest requestDto) throws Exception {
+        ImpayeeTransactionResponse responseDto = validationService.processImpayeeToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
