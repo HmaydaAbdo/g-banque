@@ -78,6 +78,22 @@ public class TransactionSpecifications {
             return root.get("transactionSource").in(sources);
         };
     }
+
+    public static Specification<Transaction> hasDateOperationBetween(OffsetDateTime dateDebut, OffsetDateTime dateFin) {
+        return (root, query, criteriaBuilder) -> {
+            if (dateDebut == null && dateFin == null) {
+                return criteriaBuilder.conjunction();
+            }
+
+            if (dateDebut != null && dateFin != null) {
+                return criteriaBuilder.between(root.get("dateOperations"), dateDebut, dateFin);
+            } else if (dateDebut != null) {
+                return criteriaBuilder.greaterThanOrEqualTo(root.get("dateOperations"), dateDebut);
+            } else {
+                return criteriaBuilder.lessThanOrEqualTo(root.get("dateOperations"), dateFin);
+            }
+        };
+    }
     /**
      * Combines multiple specifications with an 'AND' clause.
      * @param specifications a list of Specifications to combine

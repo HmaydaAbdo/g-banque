@@ -67,6 +67,7 @@ public class TransactionService {
         return transactions.map(TransactionMapper::toDto);
     }
 
+    //rapprochement encour
     public AgreratedTransactionResponseDto getTransactionsByBanque(Long banqueId, TransactionSearchDto searchDto, Pageable pageable) {
         log.info("Calcul des agrégations et récupération des transactions pour la banque ID: {}", banqueId);
 
@@ -86,6 +87,12 @@ public class TransactionService {
             specs.add(hasMontant(searchDto.getMontant()));
             log.debug("Filtre appliqué: montant égal  '{}'", searchDto.getMontant());
 
+        }
+
+        if (searchDto.getDateOperationDebut() != null || searchDto.getDateOperationFin() != null) {
+            specs.add(hasDateOperationBetween(searchDto.getDateOperationDebut(), searchDto.getDateOperationFin()));
+            log.debug("Filtre appliqué: date opération entre '{}' et '{}'",
+                    searchDto.getDateOperationDebut(), searchDto.getDateOperationFin());
         }
 
         if (searchDto.getTransactionSources() != null && !searchDto.getTransactionSources().isEmpty()) {
