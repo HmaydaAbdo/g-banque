@@ -94,44 +94,70 @@
   <!-- Section Recherche -->
   <div [formGroup]="searchForm" class="surface-card border-round-xl shadow-2 p-1">
     <div class="grid">
-      <div class="col-12 md:col-6 lg:col-3">
+      <div class="col-12 md:col-3 lg:col-2">
         <span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
           <input pInputText type="text" formControlName="libelle"
-                 placeholder="Rechercher par libellé..."
+                 placeholder=" libellé..."
                  class="w-full" />
         </span>
       </div>
-
-      <div class="col-12 md:col-6 lg:col-3">
+      <div class="col-12 md:col-6 lg:col-2">
         <span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
           <input pInputText type="text" formControlName="observation"
-                 placeholder="Rechercher par observation..."
+                 placeholder="observation..."
                  class="w-full" />
         </span>
       </div>
-
-      <div class="col-12 md:col-6 lg:col-3">
+      <div class="col-12 md:col-6 lg:col-2">
         <span class="p-input-icon-left w-full">
           <i class="pi pi-money-bill"></i>
           <input pInputText type="number" formControlName="montant"
-                 placeholder="Rechercher par montant..."
+                 placeholder="montant..."
                  class="w-full" />
         </span>
       </div>
-
-      <div class="col-12 md:col-6 lg:col-3">
+      <div class="col-12 md:col-6 lg:col-2">
         <p-multiSelect
           formControlName="transactionSources"
           [options]="transactionSourceOptions"
           optionLabel="label"
-          placeholder="Type de transaction"
+          placeholder="Source"
           [showClear]="true"
           appendTo="body"
           [style]="{'width':'100%'}">
         </p-multiSelect>
       </div>
+      <div class="col-12 md:col-6 lg:col-2">
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-calendar"></i>
+          <p-calendar
+            formControlName="dateOperationDebut"
+            placeholder="date min"
+            dateFormat="dd/mm/yy"
+            [showIcon]="false"
+            [showClear]="true"
+            appendTo="body"
+            >
+          </p-calendar>
+        </span>
+      </div>
+      <div class="col-12 md:col-6 lg:col-2">
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-calendar"></i>
+          <p-calendar
+            formControlName="dateOperationFin"
+            placeholder="date max"
+            dateFormat="dd/mm/yy"
+            [showIcon]="false"
+            [showClear]="true"
+            appendTo="body"
+            [style]="{'width':'100%'}">
+          </p-calendar>
+        </span>
+      </div>
+
     </div>
   </div>
 
@@ -163,10 +189,10 @@
               <p-sortIcon field="dateEmission"></p-sortIcon>
             </div>
           </th>
-          <th pSortableColumn="dateOperation" class="white-space-nowrap">
+          <th pSortableColumn="dateOperations" class="white-space-nowrap">
             <div class="flex align-items-center gap-2">
               Date opération
-              <p-sortIcon field="dateOperation"></p-sortIcon>
+              <p-sortIcon field="dateOperations"></p-sortIcon>
             </div>
           </th>
           <th pSortableColumn="dateValeur" class="white-space-nowrap">

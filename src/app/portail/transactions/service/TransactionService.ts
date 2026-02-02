@@ -91,6 +91,20 @@ export class TransactionService {
       params = params.set('montant', searchDto.montant.toString());
     }
 
+
+    if (searchDto.dateOperationDebut) {
+      params = params.set(
+        'dateOperationDebut',
+        new Date(searchDto.dateOperationDebut).toISOString()
+      );
+    }
+
+    if (searchDto.dateOperationFin) {
+      params = params.set(
+        'dateOperationFin',
+        new Date(searchDto.dateOperationFin).toISOString()
+      );
+    }
     return params;
   }
 }

@@ -8,7 +8,7 @@ import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
-import {FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormControl} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule, FormBuilder, FormGroup} from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
@@ -61,9 +61,6 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   currentMonthYear: string | null = null;
 
   searchForm!: FormGroup;
-  libelleControl!: FormControl;
-  observationControl!: FormControl;
-  transactionSourcesControl!: FormControl;
 
   transactionSourceOptions: any[] = [];
 
@@ -113,12 +110,13 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
       libelle: [''],
       transactionSources: [[]],
       observation:[''],
-      montant: [null]
+      montant: [null],
+      dateOperationDebut: [null],
+      dateOperationFin: [null]
+
     });
 
-    this.libelleControl = this.searchForm.get('libelle') as FormControl;
-    this.transactionSourcesControl = this.searchForm.get('transactionSources') as FormControl;
-    this.observationControl = this.searchForm.get('observation') as FormControl;
+
 
     const formValueChangesSub = this.searchForm.valueChanges
       .pipe(debounceTime(300), distinctUntilChanged())
@@ -136,18 +134,12 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
     this.loading = true;
 
-    const { libelle, transactionSources ,observation,montant} = this.searchForm.value;
     const page = event.first! / event.rows!;
     const size = event.rows!;
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = event.sortField ? `${event.sortField},${sortOrder}` : 'createdAt,desc';
 
-    const searchDto: TransactionSearchDto = {
-      libelle: libelle,
-      transactionSources: transactionSources,
-      observation:observation,
-      montant: montant
-    };
+    const searchDto: TransactionSearchDto = this.searchForm.value as TransactionSearchDto;
 
     this.transactionService.getTransactionsByBanque(this.banqueIdFromRoute, searchDto, page, size, sort)
       .subscribe({

@@ -7,4 +7,6 @@ export interface TransactionSearchDto {
   transactionSources?: TransactionSource[];
   isConfirmed?: boolean;
   montant?: number;
+  dateOperationDebut?: Date;
+  dateOperationFin?: Date;
 }
