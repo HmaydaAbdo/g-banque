@@ -60,32 +60,24 @@ export class AuthService {
       try {
         const decodedToken: DecodedToken = jwtDecode(token);
         const currentTime = Date.now() / 1000;
-        return decodedToken.exp > currentTime && this.isAuthenticatedSubject.value;
+        return decodedToken.exp > currentTime ;
       } catch (error) {
         console.error("Error decoding token or token expired:", error);
         return false;
       }
     }
-    return this.isAuthenticatedSubject.value;
+    return false;
   }
 
   /**
    * Logs out the user by removing the token and navigating to the login page.
    * Returns an Observable<boolean> to indicate success/failure of the logout process.
    */
-  logout(): Observable<boolean> { // Changed return type to Observable<boolean>
-    // Simulate an asynchronous operation, even for local storage clearing
-    // This allows the NavbarComponent to show loading state and messages
-    return of(true).pipe( // 'of(true)' creates an observable that immediately emits 'true'
-      delay(500), // Simulate a 500ms delay for demonstration
-      tap(() => {
-        localStorage.removeItem("token");
-        this.isAuthenticatedSubject.next(false);
-        this.router.navigate(['/login']);
-      }),
-      // Optional: add any finalization logic if needed
-      finalize(() => console.log('Logout process finished'))
-    );
+  logout(): void {
+    localStorage.removeItem("token");
+    this.isAuthenticatedSubject.next(false);
+    this.router.navigate(['/login']);
+    console.log('Logout process finished');
   }
 
   private decodeToken(): DecodedToken | null {

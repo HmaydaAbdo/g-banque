@@ -4,44 +4,50 @@ import { AuthService } from '../services/auth.service';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-export const appHttpInterceptorInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
-  // Inject AuthService to get access to the token and logout functionality
+export const appHttpInterceptorInterceptor: HttpInterceptorFn = (
+  req: HttpRequest<unknown>,
+  next: HttpHandlerFn
+): Observable<HttpEvent<unknown>> => {
   const authService = inject(AuthService);
+
+  // Skip interceptor for login endpoint
+  if (req.url.includes("/auth/login")) {
+    return next(req);
+  }
 
   // Get the authentication token
   const authToken = authService.getToken();
 
-  if(!req.url.includes("/auth/login") )
-  {
-    // Check if a token exists and if it's valid
-    if (authToken && authService.isTokenValid()) {
-      // If a token exists and is valid, clone the request and add the Authorization header
-      const clonedRequest = req.clone({
-        headers: req.headers.set('Authorization', `Bearer ${authToken}`)
-      });
-      // Pass the cloned request to the next handler and catch errors
-      return next(clonedRequest).pipe(
-        catchError((error: HttpErrorResponse) => {
-          // If the server responds with 401 Unauthorized or 403 Forbidden, it might mean the token is
-          // invalid on the server side, or the user doesn't have permission.
-          // In such cases, log out the user.
-          if (error.status === 401 || error.status === 403) {
-            console.warn('Unauthorized or Forbidden response received. Logging out...');
-            authService.logout().subscribe(() => {});
-          }
+  // If token exists and is valid, add it to the request
+  if (authToken && authService.isTokenValid()) {
+    const clonedRequest = req.clone({
+      headers: req.headers.set('Authorization', `Bearer ${authToken}`)
+    });
 
-          return throwError(() => error);
-        })
-      );
-    } else {
-      // If no token exists or the token is invalid, log out the user
-      console.warn('No token found or token is invalid. Logging out...');
-      authService.logout().subscribe(() => {
+    return next(clonedRequest).pipe(
+      catchError((error: HttpErrorResponse) => {
+        // Only logout on 401/403 from the server
+        if (error.status === 401 || error.status === 403) {
+          console.warn('Server rejected authentication. Logging out...');
+          authService.logout();
+        }
+        return throwError(() => error);
+      })
+    );
+  }
 
-      });
+  // CRITICAL: If no token or invalid token, proceed WITHOUT forcing logout
+  // Let the backend decide if authentication is required
+  console.log('No valid token found. Proceeding without authentication header.');
 
-      return throwError(() => new Error('Authentication required or token invalid. User logged out.'));
-    }
-  } else  return next(req)
-
+  return next(req).pipe(
+    catchError((error: HttpErrorResponse) => {
+      // If backend requires auth, it will return 401/403
+      if (error.status === 401 || error.status === 403) {
+        console.warn('Authentication required by server. Logging out...');
+        authService.logout();
+      }
+      return throwError(() => error);
+    })
+  );
 };
