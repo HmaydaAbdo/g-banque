@@ -453,6 +453,7 @@ public class ReverseTransactionService {
         restitutionRepository.save(restitution);
         log.debug("Restitution {} remise à PREVU", restitutionId);
     }
+
     private void resetImpayee(Long impayeeId) throws Exception {
         Impayee impayee = impayeeRepository.findById(impayeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Impayée introuvable: " + impayeeId));
@@ -463,6 +464,7 @@ public class ReverseTransactionService {
         impayeeRepository.save(impayee);
         log.debug("Impayée {} remise à PREVU", impayeeId);
     }
+
     private void resetOperationErrone(Long operationErroneId) throws Exception {
         OperationErrone operationErrone = operationErroneRepository.findById(operationErroneId)
                 .orElseThrow(() -> new ResourceNotFoundException("Operation erroné introuvable: " + operationErroneId));

@@ -1230,14 +1230,14 @@ public class ValidationService {
         log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
 
         // Step 5: Update the bank's current balance
-        // Les impayées sont des ENCAISSEMENTS (crédit) donc on AJOUTE au solde
+        // Les impayées sont des DECAISSEMENTS (débit) donc on déduit au solde
         Banque banque = banqueRepository.findById(impayee.getBanqueEncaissement().getId())
                 .orElseThrow(() -> {
                     log.error("Banque d'encaissement introuvable avec l'ID: {}", impayee.getBanqueEncaissement().getId());
                     return new ResourceNotFoundException("Banque d'encaissement introuvable avec l'ID: " + impayee.getBanqueEncaissement().getId());
                 });
 
-        banque.setSoldeActuel(banque.getSoldeActuel().add(impayee.getMontant()));
+        banque.setSoldeActuel(banque.getSoldeActuel().subtract(impayee.getMontant()));
         this.banqueRepository.save(banque);
         log.info("Solde de la banque {} mis à jour: {}", banque.getNom(), banque.getSoldeActuel());
 

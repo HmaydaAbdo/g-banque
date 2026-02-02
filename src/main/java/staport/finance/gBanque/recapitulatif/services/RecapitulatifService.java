@@ -192,9 +192,7 @@ public class RecapitulatifService {
         Specification<Restitution> restitutionSpecification = RestitutionSpec.outstandingRestitution()
                 .and(RestitutionSpec.hasBanque(banqueId));
 
-        // Impayée
-        Specification<Impayee> impayeeSpecification= ImpayeeSpecifications.outstandingImpayees()
-                .and(ImpayeeSpecifications.hasBanqueEncaissement(banqueId));
+
 
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<Virement> outstandingVirements = virementRepository.findAll(virementSpec);
@@ -208,7 +206,6 @@ public class RecapitulatifService {
         List<Decompte> outstandingDecomptes = decompteRepository.findAll(decompteSpecification);
 
         List<Restitution> outstandingRestitutions = restitutionRepository.findAll(restitutionSpecification);
-        List<Impayee> impayeesEncours=impayeeRepository.findAll(impayeeSpecification);
 
 
         // Step 3: Combine all lists and map them to the unified DTO.
@@ -222,7 +219,7 @@ public class RecapitulatifService {
         combinedItems.addAll(outstandingCheques.stream().map(encaissementMapper::mapChequeToDto).toList());
         combinedItems.addAll(outstandingLcns.stream().map(encaissementMapper::mapLcnToDto).toList());
         combinedItems.addAll(outstandingRestitutions.stream().map(encaissementMapper::mapRestitutionToDto).toList());
-        combinedItems.addAll(impayeesEncours.stream().map(encaissementMapper::mapImpayeeToDto).toList());
+
         // Apply the filters from the DTO
         if (transactionSources != null && !transactionSources.isEmpty()) {
             combinedItems = combinedItems.stream()
@@ -290,6 +287,7 @@ public class RecapitulatifService {
         Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId());
         Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banque.getId());
         Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banque.getId());
+
         // préfinancement (Déblocage only)
         Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingDeblocageForCurrentMonth()
                 .and(PrefinancementSpecification.byBanqueId(banque.getId()));
@@ -310,9 +308,7 @@ public class RecapitulatifService {
         Specification<Restitution> restitutionSpecification = RestitutionSpec.outstandingRestitution()
                 .and(RestitutionSpec.hasBanque(banque.getId()));
 
-        // Impayee
-        Specification<Impayee> impayeeSpecification=ImpayeeSpecifications.outstandingImpayees()
-                .and(ImpayeeSpecifications.hasBanqueEncaissement(banque.getId()));
+
 
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<Prefinancement> outstandingPrefinancements = prefinancementRepository.findAll(prefinancementSpecification);
@@ -326,7 +322,6 @@ public class RecapitulatifService {
         List<VirementInternational> outstandingInternationalVirements=virementInternationalRepository.findAll(virementInternationalSpec);
 
         List<Restitution> outstandingRestitutions = restitutionRepository.findAll(restitutionSpecification);
-        List<Impayee> impayeesEncours=impayeeRepository.findAll(impayeeSpecification);
 
         encaissements.addAll(outstandingPrefinancements.stream().map(encaissementMapper::mapPrefinancementToDto).toList());
         encaissements.addAll(outstandingDroitsConstate.stream().map(encaissementMapper::mapDroitConstateToDto).toList());
@@ -337,7 +332,6 @@ public class RecapitulatifService {
         encaissements.addAll(outstandingCheques.stream().map(encaissementMapper::mapChequeToDto).toList());
         encaissements.addAll(outstandingLcns.stream().map(encaissementMapper::mapLcnToDto).toList());
         encaissements.addAll(outstandingRestitutions.stream().map(encaissementMapper::mapRestitutionToDto).toList());
-        encaissements.addAll(impayeesEncours.stream().map(encaissementMapper::mapImpayeeToDto).toList());
 
         return encaissements;
     }
@@ -407,6 +401,10 @@ public class RecapitulatifService {
         Specification<ImpotEtTaxe> impotEtTaxeSpecification= ImpotEtTaxeSpecifications.outstandingImpotEtTaxes()
                 .and(ImpotEtTaxeSpecifications.hasBanque(banqueId));
 
+        //impayee
+        Specification<Impayee> impayeeSpec=ImpayeeSpecifications.outstandingImpayees()
+                .and(ImpayeeSpecifications.hasBanque(banqueId));
+
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<EcheanceLeasing> outstandingLeasingPayments = echeanceLeasingRepository.findAll(leasingSpec);
         List<EcheanceCMT> outstandingCmtPayments = echeanceCMTRepository.findAll(cmtSpec);
@@ -425,6 +423,7 @@ public class RecapitulatifService {
         List<FraisBancaire> outstandingFraisBancaire=fraisBancaireRepository.findAll(fraisBancaireSpecification);
         List<Interet> outstandingInterets=interetRepository.findAll(interetSpecification);
         List<ImpotEtTaxe> outstandingImpotsEtTaxes=impotEtTaxeRepository.findAll(impotEtTaxeSpecification);
+        List<Impayee> outstandingImpayee=impayeeRepository.findAll(impayeeSpec);
 
         // Step 3: Combine all lists and map them to the unified DTO.
         List<RecaputilatifItem> combinedItems = new ArrayList<>();
@@ -446,6 +445,7 @@ public class RecapitulatifService {
         combinedItems.addAll(outstandingFraisBancaire.stream().map(decaissementMapper::mapFraisBancaireToDto).toList());
         combinedItems.addAll(outstandingInterets.stream().map(decaissementMapper::mapInteretToDto).toList());
         combinedItems.addAll(outstandingImpotsEtTaxes.stream().map(decaissementMapper::mapImpotEtTaxrToDto).toList());
+        combinedItems.addAll(outstandingImpayee.stream().map(decaissementMapper::mapImpayeeToDto).toList());
 
         // Apply the filter using the DTO value
         if (transactionSources != null && !transactionSources.isEmpty()) {
@@ -562,6 +562,9 @@ public class RecapitulatifService {
         Specification<ImpotEtTaxe> impotEtTaxeSpecification=ImpotEtTaxeSpecifications.outstandingImpotEtTaxes()
                 .and(ImpotEtTaxeSpecifications.hasBanque(banque.getId()));
 
+        Specification<Impayee> impayeeSpecification=ImpayeeSpecifications.outstandingImpayees()
+                .and(ImpayeeSpecifications.hasBanque(banque.getId()));
+
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<EcheanceLeasing> outstandingLeasingPayments = echeanceLeasingRepository.findAll(leasingSpec);
         List<EcheanceCMT> outstandingCmtPayments = echeanceCMTRepository.findAll(cmtSpec);
@@ -580,6 +583,7 @@ public class RecapitulatifService {
         List<FraisBancaire> outstandingFraisBancaire=fraisBancaireRepository.findAll(fraisBancaireSpecification);
         List<Interet> outstandingInterets=interetRepository.findAll(interetSpecification);
         List<ImpotEtTaxe> outstandingImpotEtTaxes=impotEtTaxeRepository.findAll(impotEtTaxeSpecification);
+        List<Impayee> outstandingImpayee=impayeeRepository.findAll(impayeeSpecification);
 
         // Step 3: Combine all lists and map them to the unified DTO.
         // Add items from the new data sources.
@@ -600,6 +604,8 @@ public class RecapitulatifService {
         decaissementList.addAll(outstandingFraisBancaire.stream().map(decaissementMapper::mapFraisBancaireToDto).toList());
         decaissementList.addAll(outstandingInterets.stream().map(decaissementMapper::mapInteretToDto).toList());
         decaissementList.addAll(outstandingImpotEtTaxes.stream().map(decaissementMapper::mapImpotEtTaxrToDto).toList());
+        decaissementList.addAll(outstandingImpayee.stream().map(decaissementMapper::mapImpayeeToDto).toList());
+
         return decaissementList;
     }
 

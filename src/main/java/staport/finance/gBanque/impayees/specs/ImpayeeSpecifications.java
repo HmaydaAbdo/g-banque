@@ -11,12 +11,12 @@ import java.time.temporal.TemporalAdjusters;
 
 public class ImpayeeSpecifications {
 
-    public static Specification<Impayee> hasBanqueEncaissement(Long banqueEncaissementId) {
+    public static Specification<Impayee> hasBanque(Long banqueId) {
         return (root, query, cb) -> {
-            if (banqueEncaissementId == null) {
+            if (banqueId == null) {
                 return null;
             }
-            return cb.equal(root.get("banqueEncaissement").get("id"), banqueEncaissementId);
+            return cb.equal(root.get("banqueEncaissement").get("id"), banqueId);
         };
     }
 
@@ -58,7 +58,7 @@ public class ImpayeeSpecifications {
 
     public static Specification<Impayee> buildSpecification(ImpayeeSearchDto dto) {
         return Specification
-                .where(hasBanqueEncaissement(dto.getBanqueEncaissementId()))
+                .where(hasBanque(dto.getBanqueEncaissementId()))
                 .and(hasLibelle(dto.getLibelle()))
                 .and(hasMotif(dto.getMotif()))
                 .and(hasStatus(dto.getStatus()));

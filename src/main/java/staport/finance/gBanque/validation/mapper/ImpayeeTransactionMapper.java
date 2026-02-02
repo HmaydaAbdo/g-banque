@@ -50,15 +50,16 @@ public class ImpayeeTransactionMapper {
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setTransactionSource(TransactionSource.IMPAYEE);
 
-        // Les impayées sont des ENCAISSEMENTS donc on met le montant en CREDIT
-        transaction.setCredit(impayee.getMontant());
-        transaction.setDebit(BigDecimal.ZERO);
+        // Les impayées sont des DECAISSEMENTS donc on met le montant en debit
+        transaction.setDebit(impayee.getMontant());
+        transaction.setCredit(BigDecimal.ZERO);
+
         transaction.setBanqueDePrelevement(impayee.getBanqueEncaissement());
 
         BigDecimal ttc = impayee.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
-        transaction.setTvaCollectee(montantTva);
+        transaction.setTvaDeductible(montantTva);
 
         // Mapping traces
         try {

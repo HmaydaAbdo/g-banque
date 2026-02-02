@@ -130,7 +130,7 @@ public class ImpayeeService {
         log.info("Récupération des encours impayées - Critères: {}", searchDto);
 
         Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingImpayees())
-                .and(ImpayeeSpecifications.hasBanqueEncaissement(searchDto.getBanqueEncaissementId()))
+                .and(ImpayeeSpecifications.hasBanque(searchDto.getBanqueEncaissementId()))
                 .and(ImpayeeSpecifications.hasLibelle(searchDto.getLibelle()))
                 .and(ImpayeeSpecifications.hasMotif(searchDto.getMotif()))
                 .and(ImpayeeSpecifications.hasMontant(searchDto.getMontant()));

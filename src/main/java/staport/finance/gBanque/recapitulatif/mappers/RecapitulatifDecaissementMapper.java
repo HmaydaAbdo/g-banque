@@ -2,6 +2,7 @@ package staport.finance.gBanque.recapitulatif.mappers;
 
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Agios.entities.Agios;
+import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
@@ -371,6 +372,21 @@ public class RecapitulatifDecaissementMapper {
         dto.setObservations(virement.getObservation());
         dto.setLibelle(virement.getLibelle());
         dto.setSource(TransactionSource.VIREMENT_INTERNATIONAL);
+        return dto;
+    }
+
+    public RecaputilatifItem mapImpayeeToDto(Impayee impayee) {
+        if (impayee == null) {
+            return null;
+        }
+
+        RecaputilatifItem dto = new RecaputilatifItem();
+        dto.setId(impayee.getId());
+        dto.setDateEmission(impayee.getDateEmission());
+        dto.setCredit(impayee.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setObservations(impayee.getObservation());
+        dto.setLibelle(impayee.getLibelle());
+        dto.setSource(TransactionSource.IMPAYEE);
         return dto;
     }
 }
