@@ -109,7 +109,7 @@ import {ImpayeeListComponent} from "../../impayees/views/ImpayeeList/Impayee-lis
 import {ImpayeeFormComponent} from "../../impayees/views/ImpayeeForm/Impayee-form.component";
 import {
   EncoursImpayeeComponent
-} from "../../etatsDesEncours/views/lesEncours/encaissements/impayee/EncoursImpayee.component";
+} from "../../etatsDesEncours/views/lesEncours/decaissement/impayee/EncoursImpayee.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
