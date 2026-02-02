@@ -160,18 +160,24 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   logout() {
     this.loading = true;
-
-    // Since logout is now synchronous, we can call it directly
-    this.authService.logout();
-
-    // Show success message
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Succès',
-      detail: 'Vous avez été déconnecté(e) avec succès !'
+    this.authService.logout().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (success) => {
+        if (success) {
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Vous avez été déconnecté(e) avec succès !' });
+        } else {
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la déconnexion. Veuillez réessayer.' });
+        }
+      },
+      error: (err) => {
+        console.error('Logout error:', err);
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue lors de la déconnexion.' });
+      },
+      complete: () => {
+        this.loading = false;
+      }
     });
-
-    this.loading = false;
   }
 
   ngOnDestroy(): void {

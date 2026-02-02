@@ -54,33 +54,23 @@ export class LoginComponent implements OnInit {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Attention',
-        detail: 'Veuillez remplir tous les champs obligatoires.'
-      });
+      this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir tous les champs obligatoires.' });
       return;
     }
 
     this.isLoading = true;
+
     const credentials: LoginCredentials = this.loginForm.value;
 
     this.authService.login(credentials).subscribe({
       next: () => {
         this.isLoading = false;
-        // Add a small delay to ensure state propagates
-        setTimeout(() => {
-          this.router.navigate(['/portail']);
-        }, 100);
+        this.router.navigate(['/portail']);
       },
       error: (error) => {
         this.isLoading = false;
         this.errorMessage = 'Identifiants incorrects';
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Identifiants incorrects.'
-        });
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Identifiants incorrects.' });
         console.error('Login error:', error);
       }
     });
