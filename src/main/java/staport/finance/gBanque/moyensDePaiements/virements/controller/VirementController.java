@@ -51,7 +51,7 @@ public class VirementController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVirement(@PathVariable Long id) {
         log.info("Réception d'une demande de suppression du virement ID: {}", id);
-        virementService.deleteEncaissementVirement(id);
+        virementService.deleteVirement(id);
         log.info("Virement ID: {} supprimé avec succès", id);
         return ResponseEntity.noContent().build();
     }

@@ -11,6 +11,7 @@ import staport.finance.gBanque.rapprochement.dtos.RapprochementRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
 import staport.finance.gBanque.rapprochement.services.RapprochementService;
+import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
 
 @RestController
 @RequestMapping("/rapprochement")
@@ -37,9 +38,10 @@ public class RapprochementController {
     @GetMapping("/{id}")
     public ResponseEntity<RapprochementResponseDto> getRapprochementById(
             @PathVariable Long id,
+            @ModelAttribute TransactionSearchDto searchDto,
             Pageable pageable) {
 
-        RapprochementResponseDto dto = rapprochementService.getRapprochementById(id, pageable);
+        RapprochementResponseDto dto = rapprochementService.getRapprochementById(id,searchDto, pageable);
 
         return ResponseEntity.ok(dto);
     }

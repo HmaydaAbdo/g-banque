@@ -129,10 +129,6 @@ public class ChequeService {
             return new ResourceNotFoundException("Cheque with id " + id + " not found.");
         });
 
-        if (cheque.getType() != Type.ENCAISSEMENT) {
-            log.warn("Tentative de suppression d'un chèque qui n'est pas de type ENCAISSEMENT, ID={}", id);
-            throw new IllegalArgumentException("Suppression interdite: le cheque with id " + id + " n'est pas de type ENCAISSEMENT.");
-        }
 
         if (!cheque.isActive()) {
             log.warn("Tentative de suppression d'un chèque inactif (déjà réglé), ID={}", id);

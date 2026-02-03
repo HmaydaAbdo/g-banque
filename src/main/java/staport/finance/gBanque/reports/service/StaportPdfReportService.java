@@ -135,7 +135,6 @@ public class StaportPdfReportService {
                         //  SECTION : TOTAUX DÉBIT/CRÉDIT/TVA (Style final)
                         // ----------------------------------------------------
 
-                        document.add(Chunk.NEWLINE);
 
                         // Tableau pour les totaux (4 colonnes: Label, Value, Label, Value)
                         PdfPTable totalsTable = new PdfPTable(4);
@@ -208,7 +207,6 @@ public class StaportPdfReportService {
                         // ----------------------------------------------------
                         // SECTION 3 : MONTANTS FINAUX (Solde Fin et TVA Due)
                         // ----------------------------------------------------
-                        document.add(Chunk.NEWLINE);
 
                         PdfPTable finalTable = new PdfPTable(4);
                         finalTable.setWidthPercentage(100);
@@ -217,26 +215,26 @@ public class StaportPdfReportService {
 
                         // Ligne 1 : Solde Fin
                         PdfPCell soldeFinLabel = new PdfPCell(new Phrase("SOLDE FINAL :", BOLD_FONT));
-                        soldeFinLabel.setBorder(Rectangle.TOP);
+                        soldeFinLabel.setBorder(Rectangle.NO_BORDER);
                         soldeFinLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
                         soldeFinLabel.setBackgroundColor(Color.decode("#f0f0f0"));
                         finalTable.addCell(soldeFinLabel);
 
                         PdfPCell soldeFinValue = new PdfPCell(new Phrase(formatCurrency(dto.getSoldeFin()), BOLD_FONT));
-                        soldeFinValue.setBorder(Rectangle.TOP);
+                        soldeFinValue.setBorder(Rectangle.NO_BORDER);
                         soldeFinValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
                         soldeFinValue.setBackgroundColor(Color.decode("#f0f0f0"));
                         finalTable.addCell(soldeFinValue);
 
                         // Ligne 1 suite: TVA Due
                         PdfPCell tvaDueLabel = new PdfPCell(new Phrase("TVA DUE :", BOLD_FONT));
-                        tvaDueLabel.setBorder(Rectangle.TOP);
+                        tvaDueLabel.setBorder(Rectangle.NO_BORDER);
                         tvaDueLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
                         tvaDueLabel.setBackgroundColor(Color.decode("#f0f0f0"));
                         finalTable.addCell(tvaDueLabel);
 
                         PdfPCell tvaDueValue = new PdfPCell(new Phrase(formatCurrency(dto.getTvaDue()), BOLD_FONT));
-                        tvaDueValue.setBorder(Rectangle.TOP);
+                        tvaDueValue.setBorder(Rectangle.NO_BORDER);
                         tvaDueValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
                         tvaDueValue.setBackgroundColor(Color.decode("#f0f0f0"));
                         finalTable.addCell(tvaDueValue);
@@ -261,6 +259,7 @@ public class StaportPdfReportService {
         // Largeurs ajustées pour éviter l'enveloppement excessif des dates/montants
         table.setWidths(new float[]{2.5f, 2.5f, 2.5f, 3f, 3f, 3f, 3f, 3f, 2.5f});
         table.setSpacingBefore(3);
+        table.setSpacingAfter(3);
 
         // --- 1. Répéter l'en-tête sur chaque page ---
         table.setHeaderRows(1);

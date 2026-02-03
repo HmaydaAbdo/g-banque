@@ -18,12 +18,14 @@ import staport.finance.gBanque.rapprochement.mapper.RapprochementMapper;
 import staport.finance.gBanque.rapprochement.specs.RapprochementSpecifications;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
+import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
 import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.spec.TransactionSpecifications;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -123,19 +125,49 @@ public class RapprochementService {
     }
 
     @Transactional(readOnly = true)
-    public RapprochementResponseDto getRapprochementById(Long id, Pageable pageable) {
+    public RapprochementResponseDto getRapprochementById(Long id, TransactionSearchDto searchDto, Pageable pageable) {
 
         Rapprochement rapprochement = rapprochementRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Rapprochement not found with id: " + id));
 
-        // Récupérer les Transactions paginées associées
-        Specification<Transaction> spec = TransactionSpecifications.hasRapprochementId(id);
+        // Construire les spécifications de recherche
+        List<Specification<Transaction>> specs = new ArrayList<>();
 
-        Page<Transaction> transactionPage = transactionRepository.findAll(spec, pageable);
+        // Filtre obligatoire : transactions du rapprochement
+        specs.add(TransactionSpecifications.hasRapprochementId(id));
+
+        // Filtres optionnels basés sur searchDto
+        if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
+            specs.add(TransactionSpecifications.libelleContains(searchDto.getLibelle()));
+        }
+
+        if (searchDto.getObservation() != null && !searchDto.getObservation().isEmpty()) {
+            specs.add(TransactionSpecifications.observationContains(searchDto.getObservation()));
+        }
+
+        if (searchDto.getMontant() != null) {
+            specs.add(TransactionSpecifications.hasMontant(searchDto.getMontant()));
+        }
+
+        if (searchDto.getDateOperationDebut() != null || searchDto.getDateOperationFin() != null) {
+            specs.add(TransactionSpecifications.hasDateOperationBetween(
+                    searchDto.getDateOperationDebut(),
+                    searchDto.getDateOperationFin()
+            ));
+        }
+
+        if (searchDto.getTransactionSources() != null && !searchDto.getTransactionSources().isEmpty()) {
+            specs.add(TransactionSpecifications.hasTransactionSources(searchDto.getTransactionSources()));
+        }
+
+        // Combiner toutes les spécifications
+        Specification<Transaction> combinedSpec = TransactionSpecifications.withFilters(specs);
+
+        // Récupérer les Transactions paginées avec les filtres
+        Page<Transaction> transactionPage = transactionRepository.findAll(combinedSpec, pageable);
 
         // Mapper les transactions vers des DTOs
-        Page<TransactionResponseDto> transactionDtos =
-                transactionPage.map(TransactionMapper::toDto);
+        Page<TransactionResponseDto> transactionDtos = transactionPage.map(TransactionMapper::toDto);
 
         // Mapper le Rapprochement vers le DTO de réponse
         RapprochementResponseDto responseDto = rapprochementMapper.toResponseDto(rapprochement);

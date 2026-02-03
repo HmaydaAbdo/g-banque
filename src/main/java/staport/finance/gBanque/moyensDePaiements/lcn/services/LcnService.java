@@ -213,11 +213,6 @@ public class LcnService {
             return new ResourceNotFoundException("lcn with id " + id + " not found.");
         });
 
-        if (lcn.getType() != Type.ENCAISSEMENT) {
-            log.warn("Tentative de suppression d'un LCN qui n'est pas de type ENCAISSEMENT, ID={}", id);
-            throw new IllegalArgumentException("Suppression interdite: le lcn with id " + id + " n'est pas de type ENCAISSEMENT.");
-        }
-
         if (!lcn.isActive()) {
             log.warn("Tentative de suppression d'un LCN inactif (déjà réglé), ID={}", id);
             throw new IllegalArgumentException("Suppression interdite: le lcn with id " + id + " est déja réglé.");

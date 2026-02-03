@@ -119,10 +119,7 @@ public class MiseADispositionService {
             return new ResourceNotFoundException("Mise à disposition  with id " + id + " not found.");
         });
 
-        if (miseADisposition.getType() != Type.ENCAISSEMENT) {
-            log.warn("Tentative de suppression d'une mise à disposition qui n'est pas de type ENCAISSEMENT, ID={}", id);
-            throw new IllegalArgumentException("Suppression interdite: la Mise à dispo  with id " + id + " n'est pas de type ENCAISSEMENT.");
-        }
+
 
         if (!miseADisposition.isActive()) {
             log.warn("Tentative de suppression d'une mise à disposition inactive (déjà réglée), ID={}", id);

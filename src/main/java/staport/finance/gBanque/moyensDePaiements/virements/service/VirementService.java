@@ -201,8 +201,8 @@ public class VirementService {
     }
 
     @Transactional
-    public void deleteEncaissementVirement(Long id) {
-        log.info("Suppression du virement d'encaissement ID={}", id);
+    public void deleteVirement(Long id) {
+        log.info("Suppression du virement  ID={}", id);
 
         Virement virement = virementRepository.findById(id)
                 .orElseThrow(() -> {
@@ -210,10 +210,6 @@ public class VirementService {
                     return new NoSuchElementException("Virement with id " + id + " not found.");
                 });
 
-        if (virement.getType() != Type.ENCAISSEMENT) {
-            log.warn("Tentative de suppression d'un virement qui n'est pas de type ENCAISSEMENT, ID={}", id);
-            throw new IllegalArgumentException("Suppression interdite: le virement with id " + id + " n'est pas de type ENCAISSEMENT.");
-        }
 
         if (!virement.isActive()) {
             log.warn("Tentative de suppression d'un virement inactif (déjà réglé), ID={}", id);
