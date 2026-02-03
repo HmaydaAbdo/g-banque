@@ -6,6 +6,7 @@ import {RapprochementRequest} from "../dtos/RapprochementRequest";
 import {RapprochementResponse} from "../dtos/RapprochementResponse";
 import {RapprochementSearchDto} from "../dtos/RapprochementSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
+import {TransactionSearchDto} from "../../transactions/dtos/TransactionSearchDto";
 
 @Injectable({
   providedIn: 'root'
@@ -25,17 +26,21 @@ export class RapprochementService {
   }
 
 
-  getRapprochementById(rapprochementId: number, page: number = 0, size: number = 10): Observable<RapprochementResponse> {
-    let params = new HttpParams();
-    params = params.append('page', page.toString());
-    params = params.append('size', size.toString());
+  getRapprochementById(
+    rapprochementId: number,
+    searchDto: TransactionSearchDto,
+    page: number = 0,
+    size: number = 10,
+    sort: string = 'dateEmission,desc'
+  ): Observable<RapprochementResponse> {
+
+    const params = this.buildParams(searchDto, page, size, sort);
 
     return this.http.get<RapprochementResponse>(
       `${this.baseUrl}/${rapprochementId}`,
       { params: params }
     );
   }
-
   searchRapprochements(
     searchDto: RapprochementSearchDto,
     page: number = 0,
@@ -73,4 +78,48 @@ export class RapprochementService {
       `${this.baseUrl}/annuler/${transactionId}`
     );
   }
+
+  private buildParams(searchDto: TransactionSearchDto, page: number, size: number, sort: string): HttpParams {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', sort);
+
+    if (searchDto.libelle) {
+      params = params.set('libelle', searchDto.libelle);
+    }
+
+    if (searchDto.observation) {
+      params = params.set('observation', searchDto.observation);
+    }
+
+
+    // Gestion propre du tableau Enum pour le backend Spring
+    if (searchDto.transactionSources && searchDto.transactionSources.length > 0) {
+      searchDto.transactionSources.forEach(source => {
+        params = params.append('transactionSources', source);
+      });
+    }
+
+    if (searchDto.montant !== undefined && searchDto.montant !== null) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+
+
+    if (searchDto.dateOperationDebut) {
+      params = params.set(
+        'dateOperationDebut',
+        new Date(searchDto.dateOperationDebut).toISOString()
+      );
+    }
+
+    if (searchDto.dateOperationFin) {
+      params = params.set(
+        'dateOperationFin',
+        new Date(searchDto.dateOperationFin).toISOString()
+      );
+    }
+    return params;
+  }
+
 }

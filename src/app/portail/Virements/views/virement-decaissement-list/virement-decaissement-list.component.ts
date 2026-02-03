@@ -30,7 +30,6 @@ import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {Role} from "../../../../auth/enum/Role";
 import {Type} from "../../Type";
-import {MarcheResponseDTO} from "../../../Marches/dtos/marche-response.dto";
 import {CalendarModule} from "primeng/calendar";
 import {InputNumberModule} from "primeng/inputnumber";
 
@@ -285,13 +284,13 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
         this.virementService.deleteVirement(virement.id!)
           .subscribe({
             next: () => {
-              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le marché a été supprimé avec succès.', life: 3000 });
+              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le virement a été supprimé avec succès.', life: 3000 });
               this.loadVirements(this.lastLazyLoadEvent)
               this.loading = false;
             },
             error: (error) => {
-              console.error('Erreur lors de la suppression du marché:', error);
-              const errorMessage = error.error.detail || 'Échec de la suppression du marché.';
+              console.error('Erreur lors de la suppression du virement:', error);
+              const errorMessage = error.error.detail || 'Échec de la suppression du virement.';
               this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
               this.loading = false;
             }

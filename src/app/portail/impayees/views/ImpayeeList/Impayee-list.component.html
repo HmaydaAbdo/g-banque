@@ -36,7 +36,7 @@
             [options]="banques"
             [(ngModel)]="selectedBanqueEncaissement"
             optionLabel="nom"
-            placeholder="Banque d'encaissement"
+            placeholder="Banque décaissement"
             [virtualScroll]="true"
             [virtualScrollItemSize]="40"
             [lazy]="true"
@@ -115,7 +115,7 @@
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="banqueEncaissementNom">Banque d'encaissement <p-sortIcon field="banqueEncaissementNom"></p-sortIcon></th>
+          <th pSortableColumn="banqueEncaissementNom">Banque décaissement <p-sortIcon field="banqueEncaissementNom"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="motif">Motif <p-sortIcon field="motif"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>

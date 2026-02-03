@@ -1,24 +1,31 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
-import {ActivatedRoute} from '@angular/router';
-import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
-import {ToastModule} from 'primeng/toast';
-import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
-import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {CardModule} from 'primeng/card';
-import {ButtonModule} from 'primeng/button';
-import {TagModule} from 'primeng/tag';
-import {BreadcrumbModule} from 'primeng/breadcrumb';
-import {take} from 'rxjs/operators';
-import {RapprochementResponse} from '../../dtos/RapprochementResponse';
-import {TransactionResponseDto} from '../../../transactions/dtos/TransactionResponseDto';
-import {RapprochementService} from "../../service/rapprochement-service.service";
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { CardModule } from 'primeng/card';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { InputTextModule } from 'primeng/inputtext';
+import { CalendarModule } from 'primeng/calendar';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { RapprochementResponse } from '../../dtos/RapprochementResponse';
+import { TransactionResponseDto } from '../../../transactions/dtos/TransactionResponseDto';
+import { TransactionSearchDto } from '../../../transactions/dtos/TransactionSearchDto';
+import { TransactionSource } from '../../../transactions/dtos/TransactionSource';
+import { RapprochementService } from "../../service/rapprochement-service.service";
 
 @Component({
   selector: 'app-details-rapprochement',
   standalone: true,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     TableModule,
     ToastModule,
     ConfirmDialogModule,
@@ -26,12 +33,15 @@ import {RapprochementService} from "../../service/rapprochement-service.service"
     ButtonModule,
     TagModule,
     BreadcrumbModule,
+    InputTextModule,
+    CalendarModule,
+    MultiSelectModule
   ],
   templateUrl: './details-rapprochement.component.html',
   styleUrls: ['./details-rapprochement.component.scss'],
   providers: [MessageService, ConfirmationService, DecimalPipe, DatePipe]
 })
-export class DetailsRapprochementComponent implements OnInit {
+export class DetailsRapprochementComponent implements OnInit, OnDestroy {
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -45,35 +55,90 @@ export class DetailsRapprochementComponent implements OnInit {
   loadingTransactions: boolean = false;
   rows: number = 10;
 
+  // Formulaire de recherche
+  searchForm!: FormGroup;
+  transactionSourceOptions: any[] = [];
+
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private rapprochementService: RapprochementService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private fb: FormBuilder
   ) { }
 
   ngOnInit(): void {
-    this.route.paramMap.pipe(take(1)).subscribe(params => {
+    this.populateTransactionSourceOptions();
+
+    this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {
         this.rapprochementId = +id;
-        this.loadRapprochementDetails();
+        this.initSearchForm();
       } else {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'ID de rapprochement manquant.', life: 5000 });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'ID de rapprochement manquant.',
+          life: 5000
+        });
       }
     });
   }
 
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
   /**
-   * Charge les détails du rapprochement principal (KPI et première page de transactions).
+   * Initialise le formulaire de recherche.
    */
-  loadRapprochementDetails(page: number = 0, size: number = this.rows): void {
+  initSearchForm(): void {
+    this.searchForm = this.fb.group({
+      libelle: [''],
+      observation: [''],
+      montant: [null],
+      transactionSources: [[]],
+      dateOperationDebut: [null],
+      dateOperationFin: [null]
+    });
+
+    // Écouter les changements du formulaire avec debounce
+    const formValueChangesSub = this.searchForm.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(() => this.onSearch());
+
+    this.subscriptions.push(formValueChangesSub);
+
+    // Charger les données initiales
+    this.loadRapprochementDetails();
+  }
+
+  /**
+   * Remplit les options pour le multi-select des sources de transaction.
+   */
+  populateTransactionSourceOptions(): void {
+    this.transactionSourceOptions = Object.entries(TransactionSource).map(([key, value]) => ({
+      label: value,
+      value: key
+    }));
+  }
+
+  /**
+   * Charge les détails du rapprochement avec les transactions filtrées et paginées.
+   */
+  loadRapprochementDetails(page: number = 0, size: number = this.rows, sort: string = 'dateEmission,desc'): void {
     if (!this.rapprochementId) return;
 
     this.loadingTransactions = true;
 
-    // Le service charge les transactions paginées à l'intérieur du RapprochementResponse
-    this.rapprochementService.getRapprochementById(this.rapprochementId, page, size)
+    const searchDto: TransactionSearchDto = this.searchForm ? this.searchForm.value : {};
+
+    this.rapprochementService.getRapprochementById(this.rapprochementId, searchDto, page, size, sort)
       .subscribe({
         next: (data: RapprochementResponse) => {
           this.rapprochementDetails = data;
@@ -99,13 +164,43 @@ export class DetailsRapprochementComponent implements OnInit {
    * Gère l'événement de chargement paresseux de la table de transactions.
    */
   loadTransactionsLazy(event: TableLazyLoadEvent): void {
-    if (!this.rapprochementId || !this.rapprochementDetails) return;
+    if (!this.rapprochementId) return;
 
     const page = event.first! / event.rows!;
     const size = event.rows!;
+    const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
+    const sort = event.sortField ? `${event.sortField},${sortOrder}` : 'dateEmission,desc';
 
-    // Recharge les détails, ce qui recharge les transactions paginées à l'intérieur
-    this.loadRapprochementDetails(page, size);
+    this.loadRapprochementDetails(page, size, sort);
+  }
+
+  /**
+   * Déclenche une nouvelle recherche en réinitialisant la pagination.
+   */
+  onSearch(): void {
+    if (this.dt) {
+      this.dt.first = 0;
+      this.loadTransactionsLazy(this.dt.createLazyLoadMetadata());
+    }
+  }
+
+  /**
+   * Réinitialise le formulaire de recherche.
+   */
+  clearSearch(): void {
+    this.searchForm.reset({
+      libelle: '',
+      observation: '',
+      montant: null,
+      transactionSources: [],
+      dateOperationDebut: null,
+      dateOperationFin: null
+    });
+
+    if (this.dt) {
+      this.dt.first = 0;
+      this.loadTransactionsLazy(this.dt.createLazyLoadMetadata());
+    }
   }
 
   /**
@@ -116,12 +211,13 @@ export class DetailsRapprochementComponent implements OnInit {
       this.items = [
         { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
         { icon: 'pi pi-history', route: '/portail/rapprochement/historique', label: 'Historique des rapprochements' },
+
       ];
     }
   }
 
   /**
-   * Détermine la couleur de la balise TVA Due
+   * Détermine la couleur de la balise TVA Due.
    */
   getTvaTagSeverity(tvaDue: number): 'success' | 'danger' | 'info' {
     if (tvaDue > 0) return 'success';
