@@ -72,40 +72,7 @@ public class EtasDesEncoursService {
         return jobExecution;
     }
 
-    @Transactional
-    public DeactivationResult deactivateOldPayments() {
-        log.info("Début de la désactivation des paiements dont les dates sont antérieures à 2026...");
 
-        LocalDate cutoffDate = LocalDate.of(2026, 1, 1);
-        OffsetDateTime cutoffDateTime = cutoffDate.atStartOfDay().atOffset(OffsetDateTime.now().getOffset());
-
-        log.debug("Date limite utilisée: {}", cutoffDateTime);
-
-        // Désactivation des Chèques (date d'émission < 2026)
-        log.info("Désactivation des chèques avec date d'émission antérieure à 2026...");
-        int chequesDeactivated = chequeRepository.deactivateByDateEmissionBefore(cutoffDateTime);
-        log.info("{} chèque(s) désactivé(s)", chequesDeactivated);
-
-        // Désactivation des Virements (date d'émission < 2026)
-        log.info("Désactivation des virements avec date d'émission antérieure à 2026...");
-        int virementsDeactivated = virementRepository.deactivateByDateEmissionBefore(cutoffDateTime);
-        log.info("{} virement(s) désactivé(s)", virementsDeactivated);
-
-        // Désactivation des Mises à Disposition (date d'émission < 2026)
-        log.info("Désactivation des mises à disposition avec date d'émission antérieure à 2026...");
-        int miseADispositionsDeactivated = miseADispositionRepository.deactivateByDateEmissionBefore(cutoffDateTime);
-        log.info("{} mise(s) à disposition désactivée(s)", miseADispositionsDeactivated);
-
-        // Désactivation des LCN (date d'échéance < 2026)
-        log.info("Désactivation des LCN avec date d'échéance antérieure à 2026...");
-        int lcnsDeactivated = lcnRepository.deactivateByDateEcheanceBefore(cutoffDateTime);
-        log.info("{} LCN désactivé(s)", lcnsDeactivated);
-
-        int totalDeactivated = chequesDeactivated + virementsDeactivated + miseADispositionsDeactivated + lcnsDeactivated;
-        log.info("Désactivation terminée. Total: {} paiement(s) désactivé(s)", totalDeactivated);
-
-        return new DeactivationResult(chequesDeactivated, virementsDeactivated, miseADispositionsDeactivated, lcnsDeactivated);
-    }
 
 
 }

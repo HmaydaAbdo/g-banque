@@ -6,15 +6,11 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import staport.finance.gBanque.moyensDePaiements.synchronisation.dtos.DeactivationResult;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.services.EtasDesEncoursService;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * REST Controller to expose endpoints for managing and triggering
@@ -58,33 +54,5 @@ public class EtatsDesEncoursController {
         }
     }
 
-    @PatchMapping("/deactivate-old-payments")
-    public ResponseEntity<Map<String, Object>> deactivateOldPayments() {
-        log.info("Réception d'une demande de désactivation des paiements antérieurs à 2026.");
-        try {
-            DeactivationResult result = etasDesEncoursService.deactivateOldPayments();
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Désactivation des paiements terminée avec succès");
-            response.put("chequesDesactives", result.getChequesDeactivated());
-            response.put("virementsDesactives", result.getVirementsDeactivated());
-            response.put("misesADispositionDesactivees", result.getMiseADispositionsDeactivated());
-            response.put("lcnDesactives", result.getLcnsDeactivated());
-            response.put("totalDesactive", result.getTotalDeactivated());
-
-            log.info("Désactivation terminée avec succès: {}", result);
-            return ResponseEntity.ok(response); // HTTP 200 OK
-
-        } catch (Exception e) {
-            String errorMessage = "Une erreur s'est produite lors de la désactivation des paiements: " + e.getMessage();
-            log.error(errorMessage, e);
-
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", errorMessage);
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse); // HTTP 500
-        }
-    }
 }
