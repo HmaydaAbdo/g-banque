@@ -2,12 +2,16 @@ package staport.finance.gBanque.Agios.dtos;
 
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 
+import java.time.LocalDate;
+
 public class AgiosJournalierSearchDto {
 
     private Long banqueId;
     private TypeAgios type;
     private Integer trimestre;
     private Integer annee;
+    private LocalDate dateLimite;
+
 
     public Long getBanqueId() {
         return banqueId;
@@ -41,6 +45,14 @@ public class AgiosJournalierSearchDto {
         this.annee = annee;
     }
 
+    public LocalDate getDateLimite() {
+        return dateLimite;
+    }
+
+    public void setDateLimite(LocalDate dateLimite) {
+        this.dateLimite = dateLimite;
+    }
+
     @Override
     public String toString() {
         return "AgiosJournalierSearchDto{" +
@@ -48,6 +60,7 @@ public class AgiosJournalierSearchDto {
                 ", type=" + type +
                 ", trimestre=" + trimestre +
                 ", annee=" + annee +
+                ", dateLimite=" + dateLimite +
                 '}';
     }
 }

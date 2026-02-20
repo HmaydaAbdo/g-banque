@@ -27,10 +27,17 @@ public class AgiosJournalierSpecification {
         };
     }
 
+    public static Specification<AgiosJournalier> dateValeurBefore(LocalDate dateLimite) {
+        return (root, query, cb) -> dateLimite == null ? null :
+                cb.lessThanOrEqualTo(root.get("dateValeur"), dateLimite);
+    }
+
     public static Specification<AgiosJournalier> buildSpec(Long banqueId, TypeAgios type,
-                                                           LocalDate debut, LocalDate fin) {
+                                                           LocalDate debut, LocalDate fin,
+                                                           LocalDate dateLimite) {
+        LocalDate finEffective = (dateLimite != null && dateLimite.isBefore(fin)) ? dateLimite : fin;
         return Specification.where(banqueId(banqueId))
                 .and(typeAgios(type))
-                .and(dateValeurBetween(debut, fin));
+                .and(dateValeurBetween(debut, finEffective));
     }
 }
