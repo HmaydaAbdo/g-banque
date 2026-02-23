@@ -140,7 +140,14 @@ export class SidebarComponent implements OnInit {
       ]
     },
     { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions' },
-    { label: "Les Agios", icon: "pi pi-list", routerLink: '/portail/agios' },
+    {
+      label: 'Les Agios',
+      icon: 'pi pi-money-bill',
+      items: [
+        { label: 'Liste des Agios', icon: 'pi pi-list', routerLink: '/portail/agios' },
+        { label: 'Calcul des Agios', icon: 'pi pi-calculator', routerLink: '/portail/agios-calcul' },
+      ]
+    },
     { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements' },
     { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire' },
     { label: "Les Intérêts", icon: "pi pi-list", routerLink: '/portail/interets' },

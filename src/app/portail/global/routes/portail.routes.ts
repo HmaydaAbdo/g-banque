@@ -110,6 +110,10 @@ import {ImpayeeFormComponent} from "../../impayees/views/ImpayeeForm/Impayee-for
 import {
   EncoursImpayeeComponent
 } from "../../etatsDesEncours/views/lesEncours/decaissement/impayee/EncoursImpayee.component";
+import {
+  AgiosCalculDashboardComponent
+} from "../../agios-calcul/views/agios-calcul-dashboard/agios-calcul-dashboard.component";
+import {AgiosCalculDetailComponent} from "../../agios-calcul/views/agios-calcul-detail/agios-calcul-detail.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
@@ -261,6 +265,8 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'agios', component: AgiosListComponent },
   { path: "agios/new", component: AgiosFormComponent },
   { path: "agios/edit/:id", component: AgiosFormComponent },
+  { path: 'agios-calcul', component: AgiosCalculDashboardComponent },
+  { path: 'agios-calcul/detail/:banqueId/:type/:trim/:annee', component: AgiosCalculDetailComponent },
 
   {
     path: 'impayees',

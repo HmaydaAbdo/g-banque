@@ -1,0 +1,218 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card flex flex-column gap-2 p-2 w-screen h-screen overflow-y-scroll">
+
+  <!-- BREADCRUMB -->
+  <div class="portail-section flex justify-content-between align-items-center">
+    <p-breadcrumb [model]="items">
+      <ng-template pTemplate="item" let-item>
+        <ng-container *ngIf="item.route; else elseBlock">
+          <a [routerLink]="item.route" class="p-menuitem-link">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          </a>
+        </ng-container>
+        <ng-template #elseBlock>
+          <span class="text-color text-sm md:text-xl lg:text-2xl text-center font-bold">{{ item.label }}</span>
+        </ng-template>
+      </ng-template>
+    </p-breadcrumb>
+
+    <button pButton pRipple icon="pi pi-arrow-left" label="Retour"
+            class="p-button-text h-fit mt-2" size="small"
+            (click)="retour()">
+    </button>
+  </div>
+
+  <!-- RÉSUMÉ TRIMESTRIEL — compact bar -->
+  <div *ngIf="trimestreInfo" class="surface-card border-round border-1 surface-border px-3 py-2 mt-2">
+    <div class="flex flex-column lg:flex-row align-items-start lg:align-items-center justify-content-between gap-2">
+
+      <!-- Identité -->
+      <div class="flex flex-column gap-0 flex-shrink-0">
+        <div class="flex align-items-center gap-2">
+          <span class="font-bold text-800">{{ typeLabel }}</span>
+          <p-tag [value]="getStatutLabel(trimestreInfo.statut)"
+                 [severity]="getStatutSeverity(trimestreInfo.statut)"
+                 styleClass="text-xs">
+          </p-tag>
+          <span *ngIf="hasDateFilter"
+                class="text-xs bg-blue-100 text-blue-700 border-round px-2 py-1 font-semibold">
+            <i class="pi pi-filter text-xs mr-1"></i>Filtré
+          </span>
+        </div>
+        <span class="text-600 text-sm">{{ banqueNom }}</span>
+        <span class="text-500 text-xs">
+          Période : {{ trimestreInfo.dateDebut | date:'dd/MM/yyyy' }} — {{ (dateLimite ? dateLimite : trimestreInfo.dateFin) | date:'dd/MM/yyyy' }}
+        </span>
+        <span class="text-500 text-xs" *ngIf="trimestreInfo.dateDernierCalcul">
+          Dernier calcul : {{ trimestreInfo.dateDernierCalcul | date:'dd/MM/yyyy à HH:mm' }}
+        </span>
+      </div>
+
+      <!-- Métriques dynamiques (depuis agrégats) -->
+      <div class="flex align-items-center gap-4 flex-wrap" *ngIf="aggregates">
+        <div class="text-center">
+          <div class="text-500 text-xs">Agios HT</div>
+          <div class="font-semibold text-800">{{ aggregates.totalAgiosHT | number:'1.2-2' }}</div>
+        </div>
+        <div class="text-center">
+          <div class="text-500 text-xs">TVA</div>
+          <div class="font-semibold text-800">{{ aggregates.totalTVA | number:'1.2-2' }}</div>
+        </div>
+        <div class="text-center">
+          <div class="text-500 text-xs">Total TTC</div>
+          <div class="font-bold text-primary text-lg">{{ aggregates.totalAgiosTTC | number:'1.2-2' }} MAD</div>
+        </div>
+        <div class="text-center">
+          <div class="text-500 text-xs">Jours découvert</div>
+          <div class="font-semibold text-800">{{ aggregates.nbJoursDecouvert }} / {{ aggregates.nbJoursTotal }}</div>
+        </div>
+
+        <button *ngIf="isAdmin() && trimestreInfo.statut === StatutTrimestre.OUVERT"
+                pButton pRipple icon="pi pi-lock" label="Clôturer"
+                class="p-button-danger p-button-sm ml-2"
+                (click)="cloturer()">
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TABLE DÉTAIL JOURNALIER — LAZY -->
+  <div class="pb-8 mt-2">
+    <div class="flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+      <h3 class="text-lg font-semibold text-800 m-0">
+        <i class="pi pi-list mr-2"></i>Détail journalier
+      </h3>
+
+      <div class="flex align-items-center gap-2">
+        <!-- DATE LIMITE -->
+        <span class="text-600 text-sm">Calculer jusqu'au :</span>
+        <p-calendar
+          [(ngModel)]="dateLimite"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          [minDate]="minDate"
+          [maxDate]="maxDate"
+          placeholder="Fin du trimestre"
+          [showClear]="true"
+          (onSelect)="onDateLimiteChange(dt)"
+          (onClear)="clearDateLimite(dt)"
+          [style]="{'max-width': '180px'}"
+          [inputStyle]="{'width': '100%'}"
+          appendTo="body">
+        </p-calendar>
+
+
+      </div>
+    </div>
+
+    <p-table #dt
+             [value]="jours"
+             [lazy]="true"
+             [paginator]="true"
+             [rows]="rows"
+             [totalRecords]="totalRecords"
+             [rowsPerPageOptions]="[15, 31, 60, 90]"
+             [loading]="loading"
+             [first]="first"
+             (onLazyLoad)="loadJours($event)"
+             responsiveLayout="scroll"
+             [scrollable]="true"
+             scrollHeight="flex"
+             styleClass="p-datatable-gridlines p-datatable-sm text-xs"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}-{last} sur {totalRecords} jours"
+             sortField="dateValeur"
+             [sortOrder]="1"
+             [exportFilename]="'agios_T' + trimestre + '_' + annee + '_' + banqueNom">
+
+      <ng-template pTemplate="header">
+        <tr class="white-space-nowrap">
+          <th pSortableColumn="dateValeur">
+            Date <p-sortIcon field="dateValeur"></p-sortIcon>
+          </th>
+          <th pSortableColumn="soldeJournalier">
+            Solde <p-sortIcon field="soldeJournalier"></p-sortIcon>
+          </th>
+          <th pSortableColumn="baseCalcul">
+            Base calcul <p-sortIcon field="baseCalcul"></p-sortIcon>
+          </th>
+          <th>Taux (%)</th>
+          <th pSortableColumn="agiosHT">
+            Agios HT <p-sortIcon field="agiosHT"></p-sortIcon>
+          </th>
+          <th>TVA</th>
+          <th pSortableColumn="agiosTTC">
+            Agios TTC <p-sortIcon field="agiosTTC"></p-sortIcon>
+          </th>
+          <th>Recalculs</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-jour>
+        <tr [ngClass]="{'bg-red-50': isDecouvert(jour)}">
+          <td class="font-semibold">{{ jour.dateValeur | date:'dd/MM/yyyy' }}</td>
+          <td class="text-right" [ngClass]="{'text-red-600 font-bold': isDecouvert(jour), 'text-green-600': !isDecouvert(jour)}">
+            {{ jour.soldeJournalier | number:'1.2-2' }}
+          </td>
+          <td class="text-right">
+            <span *ngIf="jour.baseCalcul > 0">{{ jour.baseCalcul | number:'1.2-2' }}</span>
+            <span *ngIf="jour.baseCalcul === 0" class="text-400">—</span>
+          </td>
+          <td class="text-center">
+            <span *ngIf="jour.baseCalcul > 0">{{ jour.tauxApplique | number:'1.4-4' }}</span>
+            <span *ngIf="jour.baseCalcul === 0" class="text-400">—</span>
+          </td>
+          <td class="text-right">
+            <span *ngIf="jour.agiosHT > 0" class="font-semibold">{{ jour.agiosHT | number:'1.4-4' }}</span>
+            <span *ngIf="jour.agiosHT === 0" class="text-400">0</span>
+          </td>
+          <td class="text-right">
+            <span *ngIf="jour.tva > 0">{{ jour.tva | number:'1.4-4' }}</span>
+            <span *ngIf="jour.tva === 0" class="text-400">0</span>
+          </td>
+          <td class="text-right font-semibold">
+            <span *ngIf="jour.agiosTTC > 0" class="text-red-600">{{ jour.agiosTTC | number:'1.4-4' }}</span>
+            <span *ngIf="jour.agiosTTC === 0" class="text-400">0</span>
+          </td>
+          <td class="text-center">
+            <span class="text-500 text-xs">{{ jour.nbRecalculs }}</span>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- FOOTER TOTAUX (dynamiques) -->
+      <ng-template pTemplate="footer">
+        <tr class="font-bold bg-gray-100" *ngIf="aggregates">
+          <td>TOTAL</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td class="text-right">{{ aggregates.totalAgiosHT | number:'1.2-2' }}</td>
+          <td class="text-right">{{ aggregates.totalTVA | number:'1.2-2' }}</td>
+          <td class="text-right text-primary">{{ aggregates.totalAgiosTTC | number:'1.2-2' }} MAD</td>
+          <td></td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center p-4">
+            Aucun détail journalier trouvé. Lancez un recalcul depuis le dashboard.
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="8">Chargement en cours...</td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>

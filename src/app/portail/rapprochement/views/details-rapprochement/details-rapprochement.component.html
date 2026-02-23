@@ -135,16 +135,16 @@
                  [ngStyle]="{
                    'width': '48px',
                    'height': '48px',
-                   'background': (rapprochementDetails.tvaDue ?? 0) >= 0 ? '#FFA726' : '#66BB6A'
+                   'background': (rapprochementDetails.tvaDue ) >= 0 ? '#FFA726' : '#66BB6A'
                  }">
               <i class="text-white text-xl"
-                 [ngClass]="(rapprochementDetails.tvaDue ?? 0) >= 0 ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle'"></i>
+                 [ngClass]="(rapprochementDetails.tvaDue ) >= 0 ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle'"></i>
             </div>
             <div>
               <div class="text-xs text-500 mb-1">TVA Due</div>
               <div class="font-bold text-lg white-space-nowrap"
                    [ngStyle]="{
-                     'color': (rapprochementDetails.tvaDue ?? 0) >= 0 ? '#E65100' : '#2E7D32'
+                     'color': (rapprochementDetails.tvaDue ) >= 0 ? '#E65100' : '#2E7D32'
                    }">
                 {{ rapprochementDetails.tvaDue | number:'1.2-2' }}
               </div>
