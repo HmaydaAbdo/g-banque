@@ -92,14 +92,30 @@ public class AgiosCalculController {
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * Déclenche manuellement le recalcul de tous les types pour toutes les banques.
+     * Déclenche manuellement le recalcul du trimestre courant pour toutes les banques.
      * POST /agios/calcul/recalculer
      */
     @PostMapping("/recalculer")
     public ResponseEntity<String> recalculerTout() {
-        log.info("Recalcul manuel déclenché");
+        log.info("Recalcul manuel déclenché (trimestre courant, toutes banques)");
         orchestrateur.calculQuotidienAutomatique();
-        return ResponseEntity.ok("Recalcul terminé");
+        return ResponseEntity.ok("Recalcul du trimestre courant terminé");
+    }
+
+    /**
+     * Recalcul manuel d'un trimestre précis pour une banque donnée.
+     * Utilisable pour les trimestres passés non encore clôturés.
+     * POST /agios/calcul/banque/{banqueId}/recalculer/{trim}/{annee}
+     */
+    @PostMapping("/banque/{banqueId}/recalculer/{trim}/{annee}")
+    public ResponseEntity<String> recalculerTrimestreManuel(
+            @PathVariable Long banqueId,
+            @PathVariable int trim,
+            @PathVariable int annee) {
+        log.info("Recalcul manuel T{}/{} banque {}", trim, annee, banqueId);
+        orchestrateur.recalculerTrimestreManuel(banqueId, trim, annee);
+        return ResponseEntity.ok(
+                String.format("Recalcul T%d/%d terminé pour banque %d", trim, annee, banqueId));
     }
 
     /**

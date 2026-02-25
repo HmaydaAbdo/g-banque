@@ -12,6 +12,9 @@ import staport.finance.gBanque.Agios.spec.AgiosSpec;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.Bank.services.BanqueService;
+import staport.finance.gBanque.rapprochement.entities.Rapprochement;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
+import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
 import staport.finance.gBanque.impayees.specs.ImpayeeSpecifications;
@@ -78,6 +81,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.repositories.Virement
 import staport.finance.gBanque.moyensDePaiements.virements.specs.VirementSpec;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -121,13 +125,14 @@ public class RecapitulatifService {
     private final OperationErroneRepository operationErroneRepository;
     private final VirementInternationalRepository virementInternationalRepository;
     private final ImpayeeRepository impayeeRepository;
+    private final RapprochementRepository rapprochementRepository;
 
 
 
     public RecapitulatifService(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
-            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, BanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, BanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, RapprochementRepository rapprochementRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.decaissementMapper = mapper;
@@ -152,6 +157,18 @@ public class RecapitulatifService {
         this.operationErroneRepository = operationErroneRepository;
         this.virementInternationalRepository = virementInternationalRepository;
         this.impayeeRepository = impayeeRepository;
+        this.rapprochementRepository = rapprochementRepository;
+    }
+
+    /**
+     * Retourne la période du rapprochement EN_COURS pour la banque donnée,
+     * ou le mois courant si aucun rapprochement EN_COURS n'existe.
+     */
+    private YearMonth getPeriodeForBanque(Long banqueId) {
+        return rapprochementRepository
+                .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
+                .map(Rapprochement::getDateRapprochement)
+                .orElse(YearMonth.now());
     }
 
 
@@ -381,7 +398,7 @@ public class RecapitulatifService {
                 .and(CommissionSpecifications.hasBanque(banqueId));
 
         //Agios
-        Specification<Agios> agiosSpecification= AgiosSpec.outstandingAgios()
+        Specification<Agios> agiosSpecification= AgiosSpec.outstandingAgiosByPeriod(getPeriodeForBanque(banqueId))
                 .and(AgiosSpec.hasBanque(banqueId));
 
 
@@ -543,7 +560,7 @@ public class RecapitulatifService {
         Specification<Commission> commissionSpecification= CommissionSpecifications.outstandingCommissions()
                 .and(CommissionSpecifications.hasBanque(banque.getId()));
         //Agios
-        Specification<Agios> agiosSpecification= AgiosSpec.outstandingAgios()
+        Specification<Agios> agiosSpecification= AgiosSpec.outstandingAgiosByPeriod(getPeriodeForBanque(banque.getId()))
                 .and(AgiosSpec.hasBanque(banque.getId()));
 
         //prelevement
