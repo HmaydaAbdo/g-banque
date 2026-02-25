@@ -35,6 +35,8 @@ import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.operationErrone.repositories.OperationErroneRepository;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
+import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.restitution.repository.RestitutionRepository;
 import staport.finance.gBanque.validation.dtos.agios.AgiosTransactionResponse;
@@ -170,10 +172,13 @@ public class ValidationService {
     private final VirementInternationalTransactionMapper virementInternationalTransactionMapper;
     private final VirementInternationalRepository virementInternationalRepository;
 
-     private final ImpayeeRepository impayeeRepository;
-     private final ImpayeeTransactionMapper impayeeTransactionMapper;
+    private final ImpayeeRepository impayeeRepository;
+    private final ImpayeeTransactionMapper impayeeTransactionMapper;
 
-    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper) {
+    private final RapprochementRepository rapprochementRepository;
+
+
+    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, InteretRepository interetRepository, InteretTransactionMapper interetTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -218,6 +223,7 @@ public class ValidationService {
         this.virementInternationalRepository = virementInternationalRepository;
         this.impayeeRepository = impayeeRepository;
         this.impayeeTransactionMapper = impayeeTransactionMapper;
+        this.rapprochementRepository = rapprochementRepository;
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -239,8 +245,11 @@ public class ValidationService {
         // Étape 3: Sauvegarder la nouvelle transaction.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
 
-        // Étape 4: Mettre à jour le solde de la banque.
         Banque banque = contratLeasing.getBanqueDePrelevement();
+
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+
+        // Étape 4: Mettre à jour le solde de la banque.
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(echeanceLeasing.getMontantTTC()));
         this.banqueRepository.save(banque);
 
@@ -278,9 +287,10 @@ public class ValidationService {
 
         // Étape 3: Sauvegarder la nouvelle transaction.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-
-        // Étape 4: Mettre à jour le solde de la banque.
         Banque banque = creditMoyenTerme.getBanque();
+
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+        // Étape 4: Mettre à jour le solde de la banque.
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(echeanceCMT.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -317,10 +327,12 @@ public class ValidationService {
     
             // Step 4: Save the Transaction entity to the database.
             Transaction savedTransaction = transactionRepository.save(transactionEntity);
-    
+            Banque banque = cheque.getBanque();
+
+            this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+
             // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
             // Then save the updated bank entity.
-            Banque banque = cheque.getBanque();
             banque.setSoldeActuel(banque.getSoldeActuel().subtract(cheque.getMontant()));
             this.banqueRepository.save(banque);
     
@@ -354,12 +366,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
         Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque);
 
+        Banque banque = cheque.getBanque();
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
 
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
-        Banque banque = cheque.getBanque();
         banque.setSoldeActuel(banque.getSoldeActuel().add(cheque.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -393,12 +407,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched lcn entity into a Transaction entity.
         Transaction transactionEntity = lcnTransactionMapper.toEntity(requestDto, lcn);
 
+        Banque banque = lcn.getBanque();
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
-        Banque banque = lcn.getBanque();
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(lcn.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -431,13 +447,14 @@ public class ValidationService {
 
         // Step 3: Use the mapper to convert the DTO and the fetched lcn entity into a Transaction entity.
         Transaction transactionEntity = lcnTransactionMapper.toEntity(requestDto, lcn);
+        Banque banque = lcn.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
-        Banque banque = lcn.getBanque();
         banque.setSoldeActuel(banque.getSoldeActuel().add(lcn.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -472,12 +489,13 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
         Transaction transactionEntity = virementTransactionMapper.toEntity(requestDto, virement);
 
+        Banque banque = virement.getBanqueEmettrice();
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
-        Banque banque = virement.getBanqueEmettrice();
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(virement.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -511,12 +529,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
         Transaction transactionEntity = virementTransactionMapper.toEntity(requestDto, virement);
 
+        Banque banque = virement.getBanqueBeneficiare();
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
-        Banque banque = virement.getBanqueBeneficiare();
 
         banque.setSoldeActuel(banque.getSoldeActuel().add(virement.getMontant()));
         this.banqueRepository.save(banque);
@@ -552,12 +572,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched miseADisposition entity into a Transaction entity.
         Transaction transactionEntity = miseAdispositionTransactionMapper.toEntity(requestDto, miseADisposition);
 
+        Banque banque = miseADisposition.getBanque();
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
-        Banque banque = miseADisposition.getBanque();
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(miseADisposition.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -591,12 +613,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched miseADisposition entity into a Transaction entity.
         Transaction transactionEntity = miseAdispositionTransactionMapper.toEntity(requestDto, miseADisposition);
 
+        Banque banque = miseADisposition.getBanque();
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
-        Banque banque = miseADisposition.getBanque();
         banque.setSoldeActuel(banque.getSoldeActuel().add(miseADisposition.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -629,14 +653,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched prefi entity into a Transaction entity.
         Transaction transactionEntity = prefinancementTransactionMapper.toEntity(requestDto);
 
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance
         // Then save the updated bank entity.
-
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
-
         if(prefinancement.getType()== Type.REMBOURSEMENT){
             banque.setSoldeActuel(banque.getSoldeActuel().subtract(prefinancement.getMontant()));
         }else{
@@ -673,14 +697,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
         Transaction transactionEntity = droitConstateTransactionMapper.toEntity(requestDto);
 
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance
         // Then save the updated bank entity.
-
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
-
         if(droitConstate.getType()== Type.REMBOURSEMENT){
             banque.setSoldeActuel(banque.getSoldeActuel().subtract(droitConstate.getMontant()));
         }else{
@@ -717,14 +741,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
         Transaction transactionEntity = factoringTransactionMapper.toEntity(requestDto);
 
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance
         // Then save the updated bank entity.
-
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
-
         if(factoring.getType()== Type.REMBOURSEMENT){
             banque.setSoldeActuel(banque.getSoldeActuel().subtract(factoring.getMontant()));
         }else{
@@ -762,14 +786,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
         Transaction transactionEntity = decompteTransactionMapper.toEntity(requestDto);
 
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance
         // Then save the updated bank entity.
-
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
-
         banque.setSoldeActuel(banque.getSoldeActuel().add(decompte.getMontant()));
 
         this.banqueRepository.save(banque);
@@ -802,14 +826,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
         Transaction transactionEntity = commisionTransactionMapper.toEntity(requestDto,commission);
 
+        Banque banque = banqueRepository.findById(commission.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+commission.getBanque().getId()+" not found"));
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance
         // Then save the updated bank entity.
-
-        Banque banque = banqueRepository.findById(commission.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+commission.getBanque().getId()+" not found"));
-
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(commission.getMontant()));
 
         this.banqueRepository.save(banque);
@@ -842,14 +866,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
         Transaction transactionEntity = agiosTransactionMapper.toEntity(requestDto,agios);
 
+        Banque banque = banqueRepository.findById(agios.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+agios.getBanque().getId()+" not found"));
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance
         // Then save the updated bank entity.
-
-        Banque banque = banqueRepository.findById(agios.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+agios.getBanque().getId()+" not found"));
-
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(agios.getMontant()));
 
         this.banqueRepository.save(banque);
@@ -883,14 +907,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
         Transaction transactionEntity = prelevementTransactionMapper.toEntity(requestDto,prelevement);
 
+        Banque banque = banqueRepository.findById(prelevement.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+prelevement.getBanque().getId()+" not found"));
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance
         // Then save the updated bank entity.
-
-        Banque banque = banqueRepository.findById(prelevement.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+prelevement.getBanque().getId()+" not found"));
-
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(prelevement.getMontant()));
 
         this.banqueRepository.save(banque);
@@ -923,13 +947,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
         Transaction transactionEntity = interetTransactionMapper.toEntity(requestDto,interet);
 
+        Banque banque = banqueRepository.findById(interet.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+interet.getBanque().getId()+" not found"));
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance
         // Then save the updated bank entity.
-
-        Banque banque = banqueRepository.findById(interet.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+interet.getBanque().getId()+" not found"));
 
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(interet.getMontant()));
 
@@ -962,15 +987,14 @@ public class ValidationService {
 
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
         Transaction transactionEntity = fraisBancaireTransactionMapper.toEntity(requestDto,fraisBancaire);
+        Banque banque = banqueRepository.findById(fraisBancaire.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+fraisBancaire.getBanque().getId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance
         // Then save the updated bank entity.
-
-        Banque banque = banqueRepository.findById(fraisBancaire.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+fraisBancaire.getBanque().getId()+" not found"));
-
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(fraisBancaire.getMontant()));
 
         this.banqueRepository.save(banque);
@@ -1004,14 +1028,15 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
         Transaction transactionEntity = impotEtTaxeTransactionMapper.toEntity(requestDto, impotEtTaxe);
 
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
-
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
         Banque banque = banqueRepository.findById(impotEtTaxe.getBanque().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Banque with id " + impotEtTaxe.getBanque().getId() + " not found"));
 
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(impotEtTaxe.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -1048,18 +1073,20 @@ public class ValidationService {
         // Step 3: Mapper le DTO et l'entité restitution vers une Transaction
         Transaction transactionEntity = restitutionTransactionMapper.toEntity(requestDto, restitution);
 
-        // Step 4: Sauvegarder la transaction
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
-
-        // Step 5: Mettre à jour le solde de la banque
-        // Les restitutions sont des ENCAISSEMENTS (crédit) donc on AJOUTE au solde
         Banque banque = banqueRepository.findById(restitution.getBanque().getId())
                 .orElseThrow(() -> {
                     log.error("Banque introuvable avec l'ID: {}", restitution.getBanque().getId());
                     return new ResourceNotFoundException("Banque introuvable avec l'ID: " + restitution.getBanque().getId());
                 });
 
+        // Step 4: Sauvegarder la transaction
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+
+        log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
+
+        // Step 5: Mettre à jour le solde de la banque
+        // Les restitutions sont des ENCAISSEMENTS (crédit) donc on AJOUTE au solde
         banque.setSoldeActuel(banque.getSoldeActuel().add(restitution.getMontant()));
         this.banqueRepository.save(banque);
         log.info("Solde de la banque {} mis à jour: {}", banque.getNom(), banque.getSoldeActuel());
@@ -1095,14 +1122,15 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
         Transaction transactionEntity = operationErroneTransactionMapper.toEntity(requestDto, operationErrone);
 
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
-
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
         Banque banque = banqueRepository.findById(operationErrone.getBanque().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Banque with id " + operationErrone.getBanque().getId() + " not found"));
 
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+
+        // Step 5: Update the bank's current balance
+        // Then save the updated bank entity.
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(operationErrone.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -1139,13 +1167,14 @@ public class ValidationService {
 
         // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
         Transaction transactionEntity = virementInternationalTransactionMapper.toEntity(requestDto, virementInternational);
+        Banque banque = virementInternational.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
         // Then save the updated bank entity.
-        Banque banque = virementInternational.getBanque();
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(virementInternational.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -1181,12 +1210,14 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
         Transaction transactionEntity = virementInternationalTransactionMapper.toEntity(requestDto, virementInternational);
 
+        Banque banque = virementInternational.getBanque();
+
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 5: Update the bank's current balance by adding the transaction credit amount.
         // Then save the updated bank entity.
-        Banque banque = virementInternational.getBanque();
         banque.setSoldeActuel(banque.getSoldeActuel().add(virementInternational.getMontant()));
         this.banqueRepository.save(banque);
 
@@ -1225,18 +1256,19 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
         Transaction transactionEntity = impayeeTransactionMapper.toEntity(requestDto, impayee);
 
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
-
-        // Step 5: Update the bank's current balance
-        // Les impayées sont des DECAISSEMENTS (débit) donc on déduit au solde
         Banque banque = banqueRepository.findById(impayee.getBanqueEncaissement().getId())
                 .orElseThrow(() -> {
                     log.error("Banque d'encaissement introuvable avec l'ID: {}", impayee.getBanqueEncaissement().getId());
                     return new ResourceNotFoundException("Banque d'encaissement introuvable avec l'ID: " + impayee.getBanqueEncaissement().getId());
                 });
+        // Step 4: Save the Transaction entity to the database.
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
+        log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
+
+        // Step 5: Update the bank's current balance
+        // Les impayées sont des DECAISSEMENTS (débit) donc on déduit au solde
         banque.setSoldeActuel(banque.getSoldeActuel().subtract(impayee.getMontant()));
         this.banqueRepository.save(banque);
         log.info("Solde de la banque {} mis à jour: {}", banque.getNom(), banque.getSoldeActuel());
@@ -1258,4 +1290,12 @@ public class ValidationService {
         return response;
     }
 
+    private void attachToRapprochementEnCours(Transaction savedTransaction, Long banqueId) {
+        rapprochementRepository
+                .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
+                .ifPresent(r -> {
+                    savedTransaction.setRapprochement(r);
+                    transactionRepository.save(savedTransaction);
+                });
+    }
 }

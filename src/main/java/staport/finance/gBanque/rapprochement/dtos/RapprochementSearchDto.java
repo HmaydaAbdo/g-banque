@@ -3,31 +3,36 @@ package staport.finance.gBanque.rapprochement.dtos;
 import java.time.YearMonth;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+
 public class RapprochementSearchDto {
 
     private Long banqueId;
-
-    @DateTimeFormat(pattern = "MM/yyyy")
     private YearMonth dateRapprochement;
 
-    // --- Constructeur ---
     public RapprochementSearchDto() {}
 
-    // --- Getters et Setters ---
+    public Long getBanqueId() { return banqueId; }
+    public void setBanqueId(Long banqueId) { this.banqueId = banqueId; }
 
-    public Long getBanqueId() {
-        return banqueId;
-    }
+    public YearMonth getDateRapprochement() { return dateRapprochement; }
 
-    public void setBanqueId(Long banqueId) {
-        this.banqueId = banqueId;
-    }
-
-    public YearMonth getDateRapprochement() {
-        return dateRapprochement;
-    }
-
-    public void setDateRapprochement(YearMonth dateRapprochement) {
-        this.dateRapprochement = dateRapprochement;
+    // Accepte "1/2026" ET "01/2026"
+    @JsonSetter("dateRapprochement")
+    public void setDateRapprochement(String dateRapprochement) {
+        if (dateRapprochement == null || dateRapprochement.isBlank()) {
+            this.dateRapprochement = null;
+            return;
+        }
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.MONTH_OF_YEAR)   // 1 ou 2 chiffres
+                .appendLiteral('/')
+                .appendValue(ChronoField.YEAR, 4)
+                .toFormatter();
+        this.dateRapprochement = YearMonth.parse(dateRapprochement.trim(), formatter);
     }
 }

@@ -28,10 +28,7 @@ public class RapprochementController {
     // --- 1. POST pour clôturer (201 Created) ---
     @PostMapping("/cloturer")
     public ResponseEntity<RapprochementResponseDto> cloturerRapprochement(@RequestBody RapprochementRequestDto requestDto) {
-
-        RapprochementResponseDto responseDto = rapprochementService.addRapprochement(requestDto);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+        return ResponseEntity.ok(rapprochementService.cloturerRapprochement(requestDto.getBanqueId()));
     }
 
     // --- 2. GET by ID (Récupération avec transactions paginées) ---

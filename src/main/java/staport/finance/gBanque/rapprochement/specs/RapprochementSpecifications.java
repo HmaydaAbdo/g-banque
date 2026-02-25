@@ -3,6 +3,7 @@ package staport.finance.gBanque.rapprochement.specs;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 
 import java.time.YearMonth;
 
@@ -31,6 +32,11 @@ public class RapprochementSpecifications {
             }
             return criteriaBuilder.equal(root.get("dateRapprochement"), dateRapprochement);
         };
+    }
+
+    public static Specification<Rapprochement> hasStatut(StatutRapprochement statut) {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("statut"), statut);
     }
 
     /**

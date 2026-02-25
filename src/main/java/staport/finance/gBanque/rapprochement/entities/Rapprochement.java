@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.entities.Transaction;
 
 import java.math.BigDecimal;
@@ -33,6 +34,10 @@ public class Rapprochement {
     private BigDecimal totalCredit;
     private BigDecimal tvaDeductible;
     private BigDecimal tvaCollectee;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StatutRapprochement statut = StatutRapprochement.EN_COURS;
 
     @OneToMany(mappedBy = "rapprochement", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Transaction> transactions = new ArrayList<>();
@@ -79,6 +84,13 @@ public class Rapprochement {
     public BigDecimal getTvaCollectee() { return tvaCollectee; }
     public void setTvaCollectee(BigDecimal tvaCollectee) { this.tvaCollectee = tvaCollectee; }
 
+    public StatutRapprochement getStatut() {
+        return statut;
+    }
+
+    public void setStatut(StatutRapprochement statut) {
+        this.statut = statut;
+    }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

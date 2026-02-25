@@ -9,8 +9,7 @@ public class RapprochementRequestDto {
     @NotNull(message = "id de la banque est obligatoire ")
     private Long banqueId;
 
-    @NotNull(message = "la date du rapprochement est obligatoire ")
-    private YearMonth dateRapprochement;
+
 
     public Long getBanqueId() {
         return banqueId;
@@ -20,19 +19,12 @@ public class RapprochementRequestDto {
         this.banqueId = banqueId;
     }
 
-    public YearMonth getDateRapprochement() {
-        return dateRapprochement;
-    }
 
-    public void setDateRapprochement(YearMonth dateRapprochement) {
-        this.dateRapprochement = dateRapprochement;
-    }
 
     @Override
     public String toString() {
         return "RapprochementRequestDto{" +
                 "banqueId=" + banqueId +
-                ", dateRapprochement=" + dateRapprochement +
                 '}';
     }
 }

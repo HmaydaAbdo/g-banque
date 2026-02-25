@@ -13,6 +13,7 @@ import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
 import staport.finance.gBanque.rapprochement.dtos.ReportDto;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.mapper.RapprochementMapper;
 import staport.finance.gBanque.rapprochement.specs.RapprochementSpecifications;
@@ -40,6 +41,7 @@ public class RapprochementService {
     private final BanqueRepository banqueRepository;
     private final RapprochementMapper rapprochementMapper;
     private final StaportPdfReportService pdfReportService;
+
     public RapprochementService(
             RapprochementRepository rapprochementRepository,
             TransactionRepository transactionRepository,
@@ -61,7 +63,8 @@ public class RapprochementService {
     public Page<RapprochementResponseDto> searchRapprochements(RapprochementSearchDto searchDto, Pageable pageable) {
 
         // 1. Créer la Specification à partir du DTO de recherche
-        Specification<Rapprochement> spec = RapprochementSpecifications.bySearchDto(searchDto);
+        Specification<Rapprochement> spec = RapprochementSpecifications.bySearchDto(searchDto)
+                .and(RapprochementSpecifications.hasStatut(StatutRapprochement.CLOTURE));
 
         // 2. Exécuter la recherche paginée avec les spécifications
         Page<Rapprochement> rapprochementPage = rapprochementRepository.findAll(spec, pageable);
@@ -72,21 +75,31 @@ public class RapprochementService {
         return rapprochementPage.map(rapprochementMapper::toResponseDto);
     }
 
-    @Transactional()
-    public RapprochementResponseDto addRapprochement(RapprochementRequestDto requestDto) {
+    @Transactional
+    public RapprochementResponseDto cloturerRapprochement(Long banqueId) {
 
-        Banque banque=banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque not found with id: "+requestDto.getBanqueId()));
+        // 1. Trouver le rapprochement EN_COURS de cette banque
+        Rapprochement rapprochement = rapprochementRepository
+                .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Aucun rapprochement EN_COURS trouvé pour la banque id: " + banqueId));
 
-        Specification<Transaction> specification=isConfirmed(false).and(hasBanqueId(requestDto.getBanqueId()));
-        List<Transaction> transactions=transactionRepository.findAll(specification);
+        Banque banque = banqueRepository.findById(banqueId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Banque introuvable avec l'id: " + banqueId));
 
-        // --- Calculs des totaux ---
+        // 2. Récupérer toutes les transactions non confirmées de ce rapprochement
+        Specification<Transaction> spec = TransactionSpecifications.hasRapprochementId(rapprochement.getId())
+                .and(TransactionSpecifications.isConfirmed(false));
+        List<Transaction> transactions = transactionRepository.findAll(spec);
+
+        // 3. Calculer les agrégats
         BigDecimal totalDebit = transactions.stream()
-                .map(Transaction::getDebit)
+                .map(t -> t.getDebit() != null ? t.getDebit() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalCredit = transactions.stream()
-                .map(Transaction::getCredit)
+                .map(t -> t.getCredit() != null ? t.getCredit() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalTvaDeductible = transactions.stream()
@@ -99,29 +112,36 @@ public class RapprochementService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Rapprochement rapprochement=new Rapprochement();
+        BigDecimal soldeFin = banque.getSoldeActuel();
 
-        rapprochement.setBanque(banque);
-        rapprochement.setDateRapprochement(requestDto.getDateRapprochement());
-        rapprochement.setSoldeDebut(banque.getSoldeDepart());
-        rapprochement.setSoldeFin(banque.getSoldeActuel());
+        // 4. Mettre à jour et clôturer le rapprochement courant
+        rapprochement.setStatut(StatutRapprochement.CLOTURE);
+        rapprochement.setSoldeFin(soldeFin);
         rapprochement.setTotalDebit(totalDebit);
         rapprochement.setTotalCredit(totalCredit);
         rapprochement.setTvaDeductible(totalTvaDeductible);
         rapprochement.setTvaCollectee(totalTvaCollectee);
 
-        Rapprochement savedRapprochement = rapprochementRepository.save(rapprochement);
+        // 5. Confirmer toutes les transactions
+        transactions.forEach(t -> t.setConfirmed(true));
+        transactionRepository.saveAll(transactions);
 
+        // 6. Réinitialiser le solde de départ de la banque
         banque.setSoldeDepart(banque.getSoldeActuel());
         banqueRepository.save(banque);
 
-        transactions.forEach((transaction) -> {
-            transaction.setConfirmed(true);
-            transaction.setRapprochement(savedRapprochement);
-        });
-        transactionRepository.saveAll(transactions);
+        // 7. Sauvegarder le rapprochement clôturé
+        Rapprochement rapprochementCloture = rapprochementRepository.save(rapprochement);
 
-        return rapprochementMapper.toResponseDto(savedRapprochement);
+        // 8. Créer automatiquement le rapprochement du mois suivant
+        Rapprochement prochainRapprochement = new Rapprochement();
+        prochainRapprochement.setBanque(banque);
+        prochainRapprochement.setDateRapprochement(rapprochement.getDateRapprochement().plusMonths(1));
+        prochainRapprochement.setSoldeDebut(soldeFin);
+        prochainRapprochement.setStatut(StatutRapprochement.EN_COURS);
+        rapprochementRepository.save(prochainRapprochement);
+
+        return rapprochementMapper.toResponseDto(rapprochementCloture);
     }
 
     @Transactional(readOnly = true)

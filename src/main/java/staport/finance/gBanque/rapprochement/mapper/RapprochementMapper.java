@@ -39,6 +39,7 @@ public class RapprochementMapper {
         // Calcul de la TVA Due (à la différence des deux montants)
         dto.setTvaDue(tvaCollectee.subtract(tvaDeductible));
 
+        dto.setStatutRapprochement(entity.getStatut());
         // Mappage des champs d'audit
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());

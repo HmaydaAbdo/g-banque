@@ -1,6 +1,7 @@
 package staport.finance.gBanque.rapprochement.dtos;
 
 import org.springframework.data.domain.Page;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -23,7 +24,7 @@ public class RapprochementResponseDto {
     private BigDecimal tvaDeductible;
     private BigDecimal tvaCollectee;
     private BigDecimal tvaDue;
-
+    private StatutRapprochement statutRapprochement;
     private Page<TransactionResponseDto> transactions;
 
     private OffsetDateTime createdAt;
@@ -116,6 +117,14 @@ public class RapprochementResponseDto {
 
     public void setTvaDue(BigDecimal tvaDue) {
         this.tvaDue = tvaDue;
+    }
+
+    public StatutRapprochement getStatutRapprochement() {
+        return statutRapprochement;
+    }
+
+    public void setStatutRapprochement(StatutRapprochement statutRapprochement) {
+        this.statutRapprochement = statutRapprochement;
     }
 
     public Page<TransactionResponseDto> getTransactions() {
