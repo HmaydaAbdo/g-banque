@@ -18,9 +18,12 @@ import staport.finance.gBanque.Agios.spec.AgiosSpec;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
+import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.YearMonth;
 
 @Service
 public class AgiosService {
@@ -29,11 +32,13 @@ public class AgiosService {
     private final AgiosRepository agiosRepository;
     private final BanqueRepository banqueRepository;
     private final AgiosMapper agiosMapper;
+    private final RapprochementRepository rapprochementRepository;
 
-    public AgiosService(AgiosRepository agiosRepository, BanqueRepository banqueRepository, AgiosMapper agiosMapper) {
+    public AgiosService(AgiosRepository agiosRepository, BanqueRepository banqueRepository, AgiosMapper agiosMapper, RapprochementRepository rapprochementRepository) {
         this.agiosRepository = agiosRepository;
         this.banqueRepository = banqueRepository;
         this.agiosMapper = agiosMapper;
+        this.rapprochementRepository = rapprochementRepository;
         log.info("Initialisation du service Agios");
     }
 
@@ -171,39 +176,33 @@ public class AgiosService {
      */
     @Transactional(readOnly = true)
     public EncoursAgiosDto getOutstandingAgios(AgiosSearchDto searchDto, Pageable pageable) {
-        log.info("Récupération des agios en cours - Critères: {}", searchDto);
 
-        // Construction de la spécification pour filtrer les enregistrements
-        Specification<Agios> spec = Specification.where(AgiosSpec.outstandingAgios())
+        // Déterminer la période : rapprochement EN_COURS si disponible, sinon mois courant
+        YearMonth periode = rapprochementRepository
+                .findByBanqueIdAndStatut(searchDto.getBanqueId(), StatutRapprochement.EN_COURS)
+                .map(r -> r.getDateRapprochement())
+                .orElse(YearMonth.now()); // fallback si pas encore de rapprochement EN_COURS
+
+        Specification<Agios> spec = Specification
+                .where(AgiosSpec.outstandingAgiosByPeriod(periode))
                 .and(AgiosSpec.hasBanque(searchDto.getBanqueId()))
                 .and(AgiosSpec.hasLibelle(searchDto.getLibelle()))
                 .and(AgiosSpec.hasMontant(searchDto.getMontant()));
 
-        // Récupération de la liste paginée d'agios
         Page<Agios> agiosPage = agiosRepository.findAll(spec, pageable);
-        log.debug("Page d'agios récupérée: {} éléments sur {}",
-                agiosPage.getNumberOfElements(), agiosPage.getTotalElements());
 
-        // Calcul du montant total des encours
         BigDecimal totalDesEncours = agiosRepository.findAll(spec).stream()
                 .map(Agios::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        log.info("Montant total des encours calculé: {}", totalDesEncours);
-
-        // Mapping de la page d'entités vers une page de DTOs
         Page<AgiosResponseDto> pageDto = agiosPage.map(agiosMapper::toResponseDto);
 
-        // Création et retour du DTO final
         EncoursAgiosDto result = new EncoursAgiosDto();
         result.setPage(pageDto);
         result.setTotalDesEncours(totalDesEncours);
 
-        log.info("Encours d'agios récupérés avec succès - Total: {}, Nombre d'agios: {}",
-                totalDesEncours, agiosPage.getTotalElements());
         return result;
     }
-
 
     @Transactional
     public AgiosResponseDto toggleStatus(Long id) {

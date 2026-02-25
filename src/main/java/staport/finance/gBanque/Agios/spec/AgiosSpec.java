@@ -7,6 +7,7 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 
 public class AgiosSpec {
@@ -62,29 +63,21 @@ public class AgiosSpec {
      *
      * @return A Specification for outstanding agios.
      */
-    public static Specification<Agios> outstandingAgios() {
+    public static Specification<Agios> outstandingAgiosByPeriod(YearMonth period) {
         return (root, query, cb) -> {
-            // Condition 1 : statut = PREVU
-            Specification<Agios> hasStatusPrev = hasStatus(Status.PREVU);
 
-            // Fin du mois courant (dernier jour à 23h59m59s999999999)
-            OffsetDateTime endOfMonth = OffsetDateTime.now()
-                    .with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23)
-                    .withMinute(59)
-                    .withSecond(59)
-                    .withNano(999_999_999);
+            OffsetDateTime endOfPeriod = period.atEndOfMonth()
+                    .atTime(23, 59, 59, 999_999_999)
+                    .atOffset(java.time.ZoneOffset.UTC);
 
-            // Condition 2 : dateEmission <= fin du mois courant
-            Specification<Agios> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
-                    cbDate.lessThanOrEqualTo(rootDate.get("dateEmission"), endOfMonth);
+            Specification<Agios> hasStatusPrevu = hasStatus(Status.PREVU);
 
-            // Combinaison des deux conditions avec un AND logique
-            return Specification
-                    .where(hasStatusPrev)
-                    .and(hasDateBeforeEndOfMonth)
+            Specification<Agios> hasDateBeforeEndOfPeriod = (r, q, crit) ->
+                    crit.lessThanOrEqualTo(r.get("dateEmission"), endOfPeriod);
+
+            return Specification.where(hasStatusPrevu)
+                    .and(hasDateBeforeEndOfPeriod)
                     .toPredicate(root, query, cb);
         };
     }
-
 }
