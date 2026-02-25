@@ -242,7 +242,6 @@ export class LesEncoursComponent implements OnInit {
 
     this.rapprochementService.cloturerRapprochement({
       banqueId: this.banqueId,
-      dateRapprochement: dateStr!
     }).subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Clôture réussie' });

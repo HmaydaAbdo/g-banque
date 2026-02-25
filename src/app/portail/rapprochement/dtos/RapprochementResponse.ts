@@ -1,5 +1,6 @@
 import {TransactionResponseDto} from "../../transactions/dtos/TransactionResponseDto";
 import {PageResponse} from "../../global/types/PageResponse";
+import {StatutRapprochement} from "../enums/StatutRapprochement";
 
 export interface RapprochementResponse {
 
@@ -8,15 +9,17 @@ export interface RapprochementResponse {
   banqueNom: string;
   dateRapprochement: string;
 
-  soldeFin:number
-  soldeDebut:number
+  soldeFin: number;
+  soldeDebut: number;
 
-  totalCredit:number
-  totalDebit:number
+  totalCredit: number;
+  totalDebit: number;
 
-  tvaDeductible:number
-  tvaCollectee:number
-  tvaDue:number
+  tvaDeductible: number;
+  tvaCollectee: number;
+  tvaDue: number;
 
- transactions:PageResponse<TransactionResponseDto>
+  statutRapprochement: StatutRapprochement;
+
+  transactions: PageResponse<TransactionResponseDto>;
 }

@@ -94,6 +94,20 @@ export class AgiosCalculService {
   //  ACTIONS
   // ═══════════════════════════════════════════════════════════════
 
+  /**
+   * Recalcul manuel d'un trimestre précis pour une banque donnée.
+   * POST /agios/calcul/banque/{banqueId}/recalculer/{trim}/{annee}
+   */
+  recalculerParBanque(banqueId: number, trim: number, annee: number): Observable<string> {
+    return this.http.post(
+      `${this.apiUrl}/banque/${banqueId}/recalculer/${trim}/${annee}`,
+      {},
+      { responseType: 'text' }
+    ).pipe(
+      tap(() => this.triggerRefresh())
+    );
+  }
+
   /** POST /agios/calcul/recalculer */
   recalculerTout(): Observable<string> {
     return this.http.post(`${this.apiUrl}/recalculer`, {}, { responseType: 'text' }).pipe(
