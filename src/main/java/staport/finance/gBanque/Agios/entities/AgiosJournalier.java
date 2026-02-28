@@ -44,13 +44,13 @@ public class AgiosJournalier {
     @Column(name = "taux_applique", nullable = false, precision = 8, scale = 4)
     private BigDecimal tauxApplique;
 
-    @Column(name = "agios_ht", nullable = false, precision = 19, scale = 4)
+    @Column(name = "agios_ht", nullable = false, precision = 19, scale = 2)
     private BigDecimal agiosHT;
 
-    @Column(nullable = false, precision = 19, scale = 4)
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal tva;
 
-    @Column(name = "agios_ttc", nullable = false, precision = 19, scale = 4)
+    @Column(name = "agios_ttc", nullable = false, precision = 19, scale = 2)
     private BigDecimal agiosTTC;
 
     @ManyToOne(fetch = FetchType.LAZY)

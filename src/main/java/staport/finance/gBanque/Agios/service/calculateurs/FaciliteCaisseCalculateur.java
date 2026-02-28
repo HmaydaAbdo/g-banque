@@ -23,7 +23,7 @@ public class FaciliteCaisseCalculateur implements AgiosCalculateur {
     private static final Logger log = LoggerFactory.getLogger(FaciliteCaisseCalculateur.class);
     private static final String NATURE_FC_LABEL = "Facilité de Caisse";
     private static final BigDecimal DIVISEUR_360 = new BigDecimal("360");
-    private static final int SCALE = 4;
+    private static final int SCALE = 2;
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
     private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
@@ -67,9 +67,8 @@ public class FaciliteCaisseCalculateur implements AgiosCalculateur {
         // Agios HT = (découvert × taux / 100) / 360
         BigDecimal agiosHT = decouvert
                 .multiply(taux)
-                .divide(BigDecimal.valueOf(100), SCALE + 4, ROUNDING)
-                .divide(DIVISEUR_360, SCALE, ROUNDING);
-
+                .divide(BigDecimal.valueOf(100).multiply(DIVISEUR_360), 8, ROUNDING)
+                .setScale(SCALE, ROUNDING);
         String metadata = "ligneFC_id=" + ligneFC.getId();
 
         return new ResultatJournalier(decouvert, taux, agiosHT, metadata);

@@ -47,7 +47,7 @@ public class AgiosOrchestrateurService {
 
     private static final Logger log = LoggerFactory.getLogger(AgiosOrchestrateurService.class);
     private static final BigDecimal TAUX_TVA = new BigDecimal("10");
-    private static final int SCALE = 4;
+    private static final int SCALE = 2;
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
     /**
@@ -260,6 +260,7 @@ public class AgiosOrchestrateurService {
             BigDecimal tvaJour = resultat.agiosHT()
                     .multiply(TAUX_TVA)
                     .divide(BigDecimal.valueOf(100), SCALE, ROUNDING);
+
             BigDecimal ttcJour = resultat.agiosHT().add(tvaJour);
 
             enregistrerJournalier(jour, banque, type, trimestre, soldeCourant, resultat, tvaJour, ttcJour);
@@ -271,9 +272,9 @@ public class AgiosOrchestrateurService {
         }
 
         // Mettre à jour les totaux du trimestre
-        trimestre.setTotalAgiosHT(totalHT.setScale(2, ROUNDING));
-        trimestre.setTotalTVA(totalTVA.setScale(2, ROUNDING));
-        trimestre.setTotalAgiosTTC(totalTTC.setScale(2, ROUNDING));
+        trimestre.setTotalAgiosHT(totalHT);
+        trimestre.setTotalTVA(totalTVA);
+        trimestre.setTotalAgiosTTC(totalTTC);
         trimestre.setNbJoursCalcules(nbJoursCalcules);
         trimestre.setNbJoursTotal((int) nbJours);
         trimestre.setDateDernierCalcul(OffsetDateTime.now(ZONE_MAROC));
@@ -371,9 +372,9 @@ public class AgiosOrchestrateurService {
         }
 
         return new AgiosDetailAggregateDto(
-                totalHT.setScale(2, RoundingMode.HALF_UP),
-                totalTVA.setScale(2, RoundingMode.HALF_UP),
-                totalTTC.setScale(2, RoundingMode.HALF_UP),
+                totalHT,
+                totalTVA,
+                totalTTC,
                 nbJoursDecouvert,
                 jours.size()
         );
