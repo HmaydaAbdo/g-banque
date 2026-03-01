@@ -238,6 +238,38 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  recalculerParBanque(trim: AgiosTrimestrielResponseDto, dt: Table): void {
+    this.confirmationService.confirm({
+      message: `Recalculer les agios <strong>${TypeAgiosLabels[trim.typeAgios]}</strong> T${trim.trimestre}/${trim.annee} pour <strong>${trim.banqueNom}</strong> ?`,
+      header: 'Confirmer le recalcul',
+      icon: 'pi pi-refresh',
+      acceptLabel: 'Recalculer',
+      rejectLabel: 'Annuler',
+      acceptButtonStyleClass: 'p-button-warning',
+      accept: () => {
+        this.loading = true;
+        this.agiosCalculService.recalculerParBanque(trim.banqueId, trim.trimestre, trim.annee)
+          .pipe(
+            takeUntil(this.destroy$),
+            finalize(() => this.loading = false)
+          )
+          .subscribe({
+            next: () => {
+              this.messageService.add({
+                severity: 'success', summary: 'Recalcul terminé',
+                detail: `T${trim.trimestre}/${trim.annee} — ${trim.banqueNom} recalculé avec succès.`
+              });
+              this.onFilterChange(dt);
+            },
+            error: () => this.messageService.add({
+              severity: 'error', summary: 'Erreur',
+              detail: 'Le recalcul a échoué.'
+            })
+          });
+      }
+    });
+  }
+
   cloturer(trim: AgiosTrimestrielResponseDto, dt: Table): void {
     this.confirmationService.confirm({
       message: `Clôturer définitivement ${TypeAgiosLabels[trim.typeAgios]} T${trim.trimestre}/${trim.annee} pour ${trim.banqueNom} ?\nMontant TTC: ${trim.totalAgiosTTC.toFixed(2)} MAD — un agios PREVU sera créé.`,

@@ -227,19 +227,14 @@ export class LesEncoursComponent implements OnInit {
   }
 
   initClotureForm(): void {
-    this.clotureForm = this.fb.group({
-      dateCloture: [null, [Validators.required]]
-    });
-    this.dateClotureControl = this.clotureForm.get('dateCloture') as FormControl;
+    // Plus besoin de date — le backend identifie automatiquement le rapprochement EN_COURS
+    this.clotureForm = this.fb.group({});
   }
 
   confirmCloture(): void {
-    if (this.clotureForm.invalid || !this.banqueId) return;
+    if (!this.banqueId) return;
 
     this.clotureLoading = true;
-    const selectedDate = this.clotureForm.value.dateCloture;
-    const dateStr = this.datePipe.transform(selectedDate, 'yyyy-MM');
-
     this.rapprochementService.cloturerRapprochement({
       banqueId: this.banqueId,
     }).subscribe({

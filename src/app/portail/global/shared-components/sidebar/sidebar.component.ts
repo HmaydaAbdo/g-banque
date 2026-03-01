@@ -139,7 +139,6 @@ export class SidebarComponent implements OnInit {
         { label: "Les décomptes", icon: "pi pi-list", routerLink: "/portail/decomptes" },
       ]
     },
-    { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions' },
     {
       label: 'Les Agios',
       icon: 'pi pi-money-bill',
@@ -148,6 +147,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Calcul des Agios', icon: 'pi pi-calculator', routerLink: '/portail/agios-calcul' },
       ]
     },
+    { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions' },
     { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements' },
     { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire' },
     { label: "Les Intérêts", icon: "pi pi-list", routerLink: '/portail/interets' },

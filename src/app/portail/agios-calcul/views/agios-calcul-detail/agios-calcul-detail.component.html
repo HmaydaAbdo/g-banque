@@ -1,112 +1,149 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column gap-2 p-2 w-screen h-screen overflow-y-scroll">
+<div class="flex flex-column gap-3 p-3 pb-6"
+     style="height:100vh;overflow-y:auto;background:#f4f6fb;box-sizing:border-box">
 
-  <!-- BREADCRUMB -->
-  <div class="portail-section flex justify-content-between align-items-center">
-    <p-breadcrumb [model]="items">
-      <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
-          <a [routerLink]="item.route" class="p-menuitem-link">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
-          </a>
-        </ng-container>
-        <ng-template #elseBlock>
-          <span class="text-color text-sm md:text-xl lg:text-2xl text-center font-bold">{{ item.label }}</span>
-        </ng-template>
-      </ng-template>
-    </p-breadcrumb>
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
+  <div class="flex align-items-start justify-content-between gap-2">
 
-    <button pButton pRipple icon="pi pi-arrow-left" label="Retour"
-            class="p-button-text h-fit mt-2" size="small"
-            (click)="retour()">
-    </button>
-  </div>
-
-  <!-- RÉSUMÉ TRIMESTRIEL — compact bar -->
-  <div *ngIf="trimestreInfo" class="surface-card border-round border-1 surface-border px-3 py-2 mt-2">
-    <div class="flex flex-column lg:flex-row align-items-start lg:align-items-center justify-content-between gap-2">
-
-      <!-- Identité -->
-      <div class="flex flex-column gap-0 flex-shrink-0">
-        <div class="flex align-items-center gap-2">
-          <span class="font-bold text-800">{{ typeLabel }}</span>
-          <p-tag [value]="getStatutLabel(trimestreInfo.statut)"
-                 [severity]="getStatutSeverity(trimestreInfo.statut)"
-                 styleClass="text-xs">
-          </p-tag>
-          <span *ngIf="hasDateFilter"
-                class="text-xs bg-blue-100 text-blue-700 border-round px-2 py-1 font-semibold">
-            <i class="pi pi-filter text-xs mr-1"></i>Filtré
-          </span>
-        </div>
-        <span class="text-600 text-sm">{{ banqueNom }}</span>
-        <span class="text-500 text-xs">
-          Période : {{ trimestreInfo.dateDebut | date:'dd/MM/yyyy' }} — {{ (dateLimite ? dateLimite : trimestreInfo.dateFin) | date:'dd/MM/yyyy' }}
-        </span>
-        <span class="text-500 text-xs" *ngIf="trimestreInfo.dateDernierCalcul">
-          Dernier calcul : {{ trimestreInfo.dateDernierCalcul | date:'dd/MM/yyyy à HH:mm' }}
+    <div class="flex flex-column gap-1">
+      <div class="flex align-items-center gap-2 flex-wrap">
+        <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+          {{ typeLabel }}
+          <span class="ml-2 font-normal text-500 text-base">T{{ trimestre }} / {{ annee }}</span>
+        </h2>
+        <p-tag *ngIf="trimestreInfo"
+               [value]="getStatutLabel(trimestreInfo.statut)"
+               [severity]="getStatutSeverity(trimestreInfo.statut)"
+               styleClass="text-xs">
+        </p-tag>
+        <span *ngIf="hasDateFilter"
+              class="text-xs px-2 py-1 border-round font-semibold"
+              style="background:#dbeafe;color:#1d4ed8">
+          Filtré
         </span>
       </div>
 
-      <!-- Métriques dynamiques (depuis agrégats) -->
-      <div class="flex align-items-center gap-4 flex-wrap" *ngIf="aggregates">
-        <div class="text-center">
-          <div class="text-500 text-xs">Agios HT</div>
-          <div class="font-semibold text-800">{{ aggregates.totalAgiosHT | number:'1.2-2' }}</div>
-        </div>
-        <div class="text-center">
-          <div class="text-500 text-xs">TVA</div>
-          <div class="font-semibold text-800">{{ aggregates.totalTVA | number:'1.2-2' }}</div>
-        </div>
-        <div class="text-center">
-          <div class="text-500 text-xs">Total TTC</div>
-          <div class="font-bold text-primary text-lg">{{ aggregates.totalAgiosTTC | number:'1.2-2' }} MAD</div>
-        </div>
-        <div class="text-center">
-          <div class="text-500 text-xs">Jours découvert</div>
-          <div class="font-semibold text-800">{{ aggregates.nbJoursDecouvert }} / {{ aggregates.nbJoursTotal }}</div>
-        </div>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+          </ng-template>
+        </ng-template>
+      </p-breadcrumb>
+    </div>
 
-        <button *ngIf="isAdmin() && trimestreInfo.statut === StatutTrimestre.OUVERT"
-                pButton pRipple icon="pi pi-lock" label="Clôturer"
-                class="p-button-danger p-button-sm ml-2"
-                (click)="cloturer()">
-        </button>
+    <div class="flex align-items-center gap-2 flex-shrink-0">
+      <button *ngIf="isAdmin() && trimestreInfo && trimestreInfo.statut === StatutTrimestre.OUVERT"
+              pButton pRipple icon="pi pi-lock" label="Clôturer"
+              severity="danger" size="small"
+              (click)="cloturer()">
+      </button>
+      <button pButton pRipple icon="pi pi-arrow-left" label="Retour"
+              class="p-button-text p-button-secondary" size="small"
+              (click)="retour()">
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ BARRE INFOS + KPIs ════════════════════════════════════════ -->
+  <div *ngIf="trimestreInfo" class="surface-card border-round-xl border-1 surface-border px-4 py-3"
+       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+    <div class="flex flex-wrap align-items-center gap-4">
+
+      <!-- Identité -->
+      <div class="flex flex-column gap-1" style="min-width:160px">
+        <span class="font-bold text-800">{{ banqueNom }}</span>
+        <span class="text-500 text-xs">
+          {{ trimestreInfo.dateDebut | date:'dd/MM/yyyy' }} —
+          {{ (dateLimite ? dateLimite : trimestreInfo.dateFin) | date:'dd/MM/yyyy' }}
+        </span>
+        <span class="text-400 text-xs" *ngIf="trimestreInfo.dateDernierCalcul">
+          Calculé le {{ trimestreInfo.dateDernierCalcul | date:'dd/MM/yyyy HH:mm' }}
+        </span>
+      </div>
+
+      <!-- Séparateur -->
+      <div class="hidden md:block" style="width:1px;height:2.5rem;background:#e2e8f0"></div>
+
+      <!-- KPI: Agios HT -->
+      <div *ngIf="aggregates" class="flex flex-column align-items-center gap-0">
+        <span class="text-400 text-xs font-medium" style="letter-spacing:0.04em">AGIOS HT</span>
+        <span class="font-bold text-800 text-base">
+          {{ aggregates.totalAgiosHT | number:'1.2-2' }}
+          <span class="text-400 text-xs font-normal ml-1">MAD</span>
+        </span>
+      </div>
+
+      <!-- KPI: TVA -->
+      <div *ngIf="aggregates" class="flex flex-column align-items-center gap-0">
+        <span class="text-400 text-xs font-medium" style="letter-spacing:0.04em">TVA 10%</span>
+        <span class="font-bold text-800 text-base">
+          {{ aggregates.totalTVA | number:'1.2-2' }}
+          <span class="text-400 text-xs font-normal ml-1">MAD</span>
+        </span>
+      </div>
+
+      <!-- KPI: Total TTC — mis en avant -->
+      <div *ngIf="aggregates"
+           class="flex flex-column align-items-center gap-0 px-3 py-2 border-round-lg"
+           style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">
+        <span class="text-xs font-semibold" style="letter-spacing:0.04em;color:#1e40af">TOTAL TTC</span>
+        <span class="font-bold text-base" style="color:#1d4ed8">
+          {{ aggregates.totalAgiosTTC | number:'1.2-2' }}
+          <span class="text-xs font-normal ml-1">MAD</span>
+        </span>
+      </div>
+
+      <!-- KPI: Jours découvert -->
+      <div *ngIf="aggregates" class="flex flex-column align-items-center gap-0">
+        <span class="text-400 text-xs font-medium" style="letter-spacing:0.04em">JOURS DÉC.</span>
+        <span class="font-bold text-800 text-base">
+          {{ aggregates.nbJoursDecouvert }}
+          <span class="text-400 text-xs font-normal"> / {{ aggregates.nbJoursTotal }}</span>
+        </span>
+      </div>
+
+      <!-- Séparateur -->
+      <div class="hidden md:block" style="width:1px;height:2.5rem;background:#e2e8f0"></div>
+
+      <!-- Filtre date limite -->
+      <div class="flex align-items-center gap-2">
+        <span class="text-500 text-xs" style="white-space:nowrap">Jusqu'au :</span>
+        <p-calendar [(ngModel)]="dateLimite"
+                    dateFormat="dd/mm/yy"
+                    [showIcon]="false"
+                    [minDate]="minDate"
+                    [maxDate]="maxDate"
+                    placeholder="Fin trimestre"
+                    [showClear]="true"
+                    (onSelect)="onDateLimiteChange(dt)"
+                    (onClear)="clearDateLimite(dt)"
+                    [style]="{'width':'145px'}"
+                    [inputStyle]="{'width':'100%','font-size':'0.82rem'}"
+                    appendTo="body">
+        </p-calendar>
       </div>
 
     </div>
   </div>
 
-  <!-- TABLE DÉTAIL JOURNALIER — LAZY -->
-  <div class="pb-8 mt-2">
-    <div class="flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-      <h3 class="text-lg font-semibold text-800 m-0">
-        <i class="pi pi-list mr-2"></i>Détail journalier
-      </h3>
+  <!-- ═══ TABLE JOURNALIER ══════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border "
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
 
-      <div class="flex align-items-center gap-2">
-        <!-- DATE LIMITE -->
-        <span class="text-600 text-sm">Calculer jusqu'au :</span>
-        <p-calendar
-          [(ngModel)]="dateLimite"
-          dateFormat="dd/mm/yy"
-          [showIcon]="true"
-          [minDate]="minDate"
-          [maxDate]="maxDate"
-          placeholder="Fin du trimestre"
-          [showClear]="true"
-          (onSelect)="onDateLimiteChange(dt)"
-          (onClear)="clearDateLimite(dt)"
-          [style]="{'max-width': '180px'}"
-          [inputStyle]="{'width': '100%'}"
-          appendTo="body">
-        </p-calendar>
-
-
-      </div>
+    <div class="px-3 py-2 border-bottom-1 surface-border flex align-items-center justify-content-between"
+         style="background:#f8f9fc">
+      <span class="font-semibold text-700 text-sm">Détail journalier</span>
+      <span class="text-400 text-xs">{{ totalRecords }} jours</span>
     </div>
 
     <p-table #dt
@@ -120,95 +157,110 @@
              [first]="first"
              (onLazyLoad)="loadJours($event)"
              responsiveLayout="scroll"
-             [scrollable]="true"
-             scrollHeight="flex"
-             styleClass="p-datatable-gridlines p-datatable-sm text-xs"
+             styleClass="p-datatable-sm"
              [showCurrentPageReport]="true"
-             currentPageReportTemplate="{first}-{last} sur {totalRecords} jours"
+             currentPageReportTemplate="{first}–{last} sur {totalRecords} jours"
              sortField="dateValeur"
              [sortOrder]="1"
-             [exportFilename]="'agios_T' + trimestre + '_' + annee + '_' + banqueNom">
+             rowHover>
 
       <ng-template pTemplate="header">
-        <tr class="white-space-nowrap">
-          <th pSortableColumn="dateValeur">
+        <tr style="background:#f8f9fc">
+          <th pSortableColumn="dateValeur" style="min-width:110px">
             Date <p-sortIcon field="dateValeur"></p-sortIcon>
           </th>
-          <th pSortableColumn="soldeJournalier">
+          <th pSortableColumn="soldeJournalier" class="text-right" style="min-width:120px">
             Solde <p-sortIcon field="soldeJournalier"></p-sortIcon>
           </th>
-          <th pSortableColumn="baseCalcul">
+          <th pSortableColumn="baseCalcul" class="text-right" style="min-width:115px">
             Base calcul <p-sortIcon field="baseCalcul"></p-sortIcon>
           </th>
-          <th>Taux (%)</th>
-          <th pSortableColumn="agiosHT">
+          <th class="text-center" style="width:80px">Taux %</th>
+          <th pSortableColumn="agiosHT" class="text-right" style="min-width:110px">
             Agios HT <p-sortIcon field="agiosHT"></p-sortIcon>
           </th>
-          <th>TVA</th>
-          <th pSortableColumn="agiosTTC">
+          <th class="text-right" style="min-width:90px">TVA</th>
+          <th pSortableColumn="agiosTTC" class="text-right" style="min-width:110px">
             Agios TTC <p-sortIcon field="agiosTTC"></p-sortIcon>
           </th>
-          <th>Recalculs</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-jour>
-        <tr [ngClass]="{'bg-red-50': isDecouvert(jour)}">
-          <td class="font-semibold">{{ jour.dateValeur | date:'dd/MM/yyyy' }}</td>
-          <td class="text-right" [ngClass]="{'text-red-600 font-bold': isDecouvert(jour), 'text-green-600': !isDecouvert(jour)}">
+        <tr [style]="isDecouvert(jour) ? 'background:#fff5f5' : ''">
+
+          <td class="font-semibold text-800">{{ jour.dateValeur | date:'dd/MM/yyyy' }}</td>
+
+          <td class="text-right font-semibold"
+              [style]="isDecouvert(jour) ? 'color:#dc2626' : 'color:#16a34a'">
             {{ jour.soldeJournalier | number:'1.2-2' }}
           </td>
+
+          <td class="text-right text-700">
+            <ng-container *ngIf="jour.baseCalcul > 0">{{ jour.baseCalcul | number:'1.2-2' }}</ng-container>
+            <span *ngIf="jour.baseCalcul === 0" class="text-300">—</span>
+          </td>
+
+          <td class="text-center text-500 text-xs">
+            <ng-container *ngIf="jour.baseCalcul > 0">{{ jour.tauxApplique | number:'1.2-2' }}</ng-container>
+            <span *ngIf="jour.baseCalcul === 0" class="text-300">—</span>
+          </td>
+
           <td class="text-right">
-            <span *ngIf="jour.baseCalcul > 0">{{ jour.baseCalcul | number:'1.2-2' }}</span>
-            <span *ngIf="jour.baseCalcul === 0" class="text-400">—</span>
+            <span *ngIf="jour.agiosHT > 0" class="font-semibold text-700">{{ jour.agiosHT | number:'1.2-2' }}</span>
+            <span *ngIf="jour.agiosHT === 0" class="text-300">0</span>
           </td>
-          <td class="text-center">
-            <span *ngIf="jour.baseCalcul > 0">{{ jour.tauxApplique | number:'1.4-4' }}</span>
-            <span *ngIf="jour.baseCalcul === 0" class="text-400">—</span>
+
+          <td class="text-right text-600">
+            <ng-container *ngIf="jour.tva > 0">{{ jour.tva | number:'1.2-2' }}</ng-container>
+            <span *ngIf="jour.tva === 0" class="text-300">0</span>
           </td>
+
           <td class="text-right">
-            <span *ngIf="jour.agiosHT > 0" class="font-semibold">{{ jour.agiosHT | number:'1.4-4' }}</span>
-            <span *ngIf="jour.agiosHT === 0" class="text-400">0</span>
+            <span *ngIf="jour.agiosTTC > 0" class="font-bold" style="color:#dc2626">
+              {{ jour.agiosTTC | number:'1.2-2' }}
+            </span>
+            <span *ngIf="jour.agiosTTC === 0" class="text-300">0</span>
           </td>
-          <td class="text-right">
-            <span *ngIf="jour.tva > 0">{{ jour.tva | number:'1.4-4' }}</span>
-            <span *ngIf="jour.tva === 0" class="text-400">0</span>
-          </td>
-          <td class="text-right font-semibold">
-            <span *ngIf="jour.agiosTTC > 0" class="text-red-600">{{ jour.agiosTTC | number:'1.4-4' }}</span>
-            <span *ngIf="jour.agiosTTC === 0" class="text-400">0</span>
-          </td>
-          <td class="text-center">
-            <span class="text-500 text-xs">{{ jour.nbRecalculs }}</span>
-          </td>
+
+
         </tr>
       </ng-template>
 
-      <!-- FOOTER TOTAUX (dynamiques) -->
+      <!-- Footer totaux -->
       <ng-template pTemplate="footer">
-        <tr class="font-bold bg-gray-100" *ngIf="aggregates">
-          <td>TOTAL</td>
+        <tr *ngIf="aggregates"
+            style="background:#eef2ff;font-weight:700;border-top:2px solid #c7d2fe">
+          <td class="font-bold text-700 text-sm">TOTAL</td>
           <td></td>
           <td></td>
           <td></td>
-          <td class="text-right">{{ aggregates.totalAgiosHT | number:'1.2-2' }}</td>
-          <td class="text-right">{{ aggregates.totalTVA | number:'1.2-2' }}</td>
-          <td class="text-right text-primary">{{ aggregates.totalAgiosTTC | number:'1.2-2' }} MAD</td>
+          <td class="text-right text-800">{{ aggregates.totalAgiosHT | number:'1.2-2' }}</td>
+          <td class="text-right text-800">{{ aggregates.totalTVA | number:'1.2-2' }}</td>
+          <td class="text-right font-bold" style="color:#1d4ed8;font-size:0.95rem">
+            {{ aggregates.totalAgiosTTC | number:'1.2-2' }}
+            <span class="text-xs font-normal ml-1">MAD</span>
+          </td>
           <td></td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="8" class="text-center p-4">
-            Aucun détail journalier trouvé. Lancez un recalcul depuis le dashboard.
+          <td colspan="8">
+            <div class="flex flex-column align-items-center gap-2 py-6">
+              <div class="text-600 font-medium">Aucun détail journalier</div>
+              <div class="text-400 text-sm">Lancez un recalcul depuis le dashboard.</div>
+            </div>
           </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="8">Chargement en cours...</td>
+          <td colspan="8" class="text-center p-4 text-500 text-sm">
+            <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+          </td>
         </tr>
       </ng-template>
 

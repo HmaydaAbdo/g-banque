@@ -1,141 +1,102 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column gap-2 p-2 w-screen h-screen overflow-y-scroll">
+<div class="flex flex-column  w-screen h-screen overflow-y-scroll  gap-3 p-3 pb-6 "
+     style="  background:#f4f6fb;box-sizing:border-box">
 
-  <!-- BREADCRUMB + ACTIONS -->
-  <div class="portail-section flex justify-content-between">
-    <div class="flex justify-content-center align-items-center">
-      <p-breadcrumb [model]="items">
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
+  <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
+
+    <div class="flex flex-column gap-1">
+      <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">Calcul des Agios</h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
         <ng-template pTemplate="item" let-item>
           <ng-container *ngIf="item.route; else elseBlock">
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
-              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
             </a>
           </ng-container>
           <ng-template #elseBlock>
-            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
           </ng-template>
         </ng-template>
       </p-breadcrumb>
     </div>
 
-    <!-- Bouton Recalculer (admin) — desktop -->
-    <button *ngIf="isAdmin()" pButton pRipple
-            label="Recalculer tout"
-            icon="pi pi-refresh"
-            class="hidden md:block h-fit mt-2"
-            size="small"
-            severity="warning"
-            [loading]="recalculEnCours"
-            (click)="recalculer(dt)">
-    </button>
-    <!-- Bouton Recalculer (admin) — mobile -->
-    <button *ngIf="isAdmin()" pButton pRipple
-            pTooltip="Recalculer tout"
-            icon="pi pi-refresh"
-            class="md:hidden h-fit mt-2"
-            size="small"
-            severity="warning"
-            [loading]="recalculEnCours"
-            (click)="recalculer(dt)">
-    </button>
+    <div class="flex align-items-center gap-2 flex-shrink-0" *ngIf="isAdmin()">
+      <button pButton pRipple
+              label="Recalculer tout"
+              icon="pi pi-refresh"
+              severity="warning"
+              size="small"
+              [loading]="recalculEnCours"
+              (click)="recalculer(dt)"
+              pTooltip="Recalcul global — toutes les banques, trimestre en cours"
+              tooltipPosition="bottom">
+      </button>
+    </div>
   </div>
 
-  <!-- PROGRESS BAR -->
-  <p-progressBar *ngIf="recalculEnCours" mode="indeterminate" [style]="{'height': '4px'}"></p-progressBar>
+  <p-progressBar *ngIf="recalculEnCours" mode="indeterminate"
+                 [style]="{'height':'2px','border-radius':'2px','margin':'-6px 0 0'}">
+  </p-progressBar>
 
-  <!-- TOOLBAR FILTRES -->
-  <p-toolbar styleClass="bg-white">
-    <ng-template pTemplate="left">
-      <div class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full flex-wrap">
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-3"
+       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+    <div class="flex flex-wrap gap-2 align-items-center">
 
-        <!-- Banque (lazy dropdown) -->
-        <p-dropdown
-          [options]="banques"
-          [(ngModel)]="selectedBanque"
-          optionLabel="nom"
-          placeholder="Toutes les banques"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="40"
-          [lazy]="true"
-          [loading]="banquesLoading"
-          (onLazyLoad)="loadBanquesLazy($event)"
-          (onChange)="onBanqueChange(dt)"
-          [showClear]="true"
-          appendTo="body"
-          [style]="{'min-width': '200px'}">
-        </p-dropdown>
+      <span class="text-500 text-xs font-medium mr-1" style="white-space:nowrap">
+        <i class="pi pi-sliders-h mr-1"></i>Filtres
+      </span>
 
-        <!-- Type -->
-        <p-dropdown
-          [options]="typeOptions"
-          [(ngModel)]="searchDto.type"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Tous les types"
-          (onChange)="onFilterChange(dt)"
-          [showClear]="true"
-          appendTo="body"
-          [style]="{'min-width': '180px'}">
-        </p-dropdown>
+      <p-dropdown [options]="banques" [(ngModel)]="selectedBanque"
+                  optionLabel="nom" placeholder="Toutes les banques"
+                  [virtualScroll]="true" [virtualScrollItemSize]="40" [lazy]="true"
+                  [loading]="banquesLoading" (onLazyLoad)="loadBanquesLazy($event)"
+                  (onChange)="onBanqueChange(dt)" [showClear]="true" appendTo="body"
+                  [style]="{'min-width':'200px'}">
+      </p-dropdown>
 
-        <!-- Année (saisie libre) -->
-        <p-inputNumber
-          [(ngModel)]="anneeInput"
-          placeholder="Année"
-          [useGrouping]="false"
-          [min]="2000"
-          [max]="2099"
-          (onInput)="onAnneeChange(dt)"
-          (onKeyDown)="$event.key === 'Enter' && onAnneeChange(dt)"
-          [style]="{'min-width': '100px', 'max-width': '120px'}"
-          [inputStyle]="{'width': '100%'}">
-        </p-inputNumber>
+      <p-dropdown [options]="typeOptions" [(ngModel)]="searchDto.type"
+                  optionLabel="label" optionValue="value" placeholder="Type d'agios"
+                  (onChange)="onFilterChange(dt)" [showClear]="true" appendTo="body"
+                  [style]="{'min-width':'170px'}">
+      </p-dropdown>
 
-        <!-- Trimestre -->
-        <p-dropdown
-          [options]="trimestreOptions"
-          [(ngModel)]="searchDto.trimestre"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Tous les trimestres"
-          (onChange)="onFilterChange(dt)"
-          [showClear]="true"
-          appendTo="body"
-          [style]="{'min-width': '160px'}">
-        </p-dropdown>
+      <p-inputNumber [(ngModel)]="anneeInput" placeholder="Année"
+                     [useGrouping]="false" [min]="2000" [max]="2099"
+                     (onInput)="onAnneeChange(dt)"
+                     (onKeyDown)="$event.key === 'Enter' && onAnneeChange(dt)"
+                     [style]="{'width':'90px'}" [inputStyle]="{'width':'100%'}">
+      </p-inputNumber>
 
-        <!-- Statut -->
-        <p-dropdown
-          [options]="statutOptions"
-          [(ngModel)]="searchDto.statut"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Tous les statuts"
-          (onChange)="onFilterChange(dt)"
-          [showClear]="true"
-          appendTo="body"
-          [style]="{'min-width': '150px'}">
-        </p-dropdown>
+      <p-dropdown [options]="trimestreOptions" [(ngModel)]="searchDto.trimestre"
+                  optionLabel="label" optionValue="value" placeholder="Trimestre"
+                  (onChange)="onFilterChange(dt)" [showClear]="true" appendTo="body"
+                  [style]="{'min-width':'130px'}">
+      </p-dropdown>
 
-      </div>
-    </ng-template>
+      <p-dropdown [options]="statutOptions" [(ngModel)]="searchDto.statut"
+                  optionLabel="label" optionValue="value" placeholder="Statut"
+                  (onChange)="onFilterChange(dt)" [showClear]="true" appendTo="body"
+                  [style]="{'min-width':'130px'}">
+      </p-dropdown>
 
-    <ng-template pTemplate="right">
-      <button pButton pRipple
-              icon="pi pi-filter-slash"
-              class="p-button-outlined p-button-secondary"
+      <button pButton pRipple icon="pi pi-times"
+              class="p-button-text p-button-secondary p-button-sm"
               (click)="clearFilters(dt)"
-              pTooltip="Effacer les filtres"
-              label="Effacer">
+              pTooltip="Réinitialiser" tooltipPosition="bottom">
       </button>
-    </ng-template>
-  </p-toolbar>
+    </div>
+  </div>
 
-  <!-- TABLE LAZY -->
-  <div class="pb-8">
+  <!-- ═══ TABLE ════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border "
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+
     <p-table #dt
              [value]="trimestres"
              [lazy]="true"
@@ -147,81 +108,117 @@
              [first]="first"
              (onLazyLoad)="loadTrimestres($event)"
              responsiveLayout="scroll"
-             [scrollable]="true"
-             scrollHeight="flex"
-             styleClass="p-datatable-gridlines text-xs text-center"
+             styleClass="p-datatable-sm"
              [showCurrentPageReport]="true"
-             currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
+             currentPageReportTemplate="{first}–{last} sur {totalRecords}"
              sortField="annee"
-             [sortOrder]="-1">
+             [sortOrder]="-1"
+             rowHover>
 
       <ng-template pTemplate="header">
-        <tr class="white-space-nowrap">
-          <th pSortableColumn="banque.nom">
+        <tr style="background:#f8f9fc">
+          <th pSortableColumn="banque.nom" style="min-width:155px">
             Banque <p-sortIcon field="banque.nom"></p-sortIcon>
           </th>
-          <th pSortableColumn="typeAgios">
+          <th pSortableColumn="typeAgios" style="min-width:130px">
             Type <p-sortIcon field="typeAgios"></p-sortIcon>
           </th>
-          <th pSortableColumn="trimestre">
-            Trimestre <p-sortIcon field="trimestre"></p-sortIcon>
+          <th pSortableColumn="trimestre" class="text-center" style="width:80px">
+            Trim. <p-sortIcon field="trimestre"></p-sortIcon>
           </th>
-          <th pSortableColumn="annee">
+          <th pSortableColumn="annee" class="text-center" style="width:76px">
             Année <p-sortIcon field="annee"></p-sortIcon>
           </th>
-          <th pSortableColumn="totalAgiosTTC">
+          <th pSortableColumn="totalAgiosTTC" class="text-right" style="min-width:145px">
             Total TTC <p-sortIcon field="totalAgiosTTC"></p-sortIcon>
           </th>
-          <th>Jours</th>
-          <th pSortableColumn="statut">
+          <th class="text-center" style="width:90px">Jours</th>
+          <th pSortableColumn="statut" class="text-center" style="width:105px">
             Statut <p-sortIcon field="statut"></p-sortIcon>
           </th>
-          <th>Dernier calcul</th>
-          <th style="width: 10rem;">Actions</th>
+          <th class="text-center" style="width:120px">Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-trim>
         <tr>
-          <td class="font-semibold">{{ trim.banqueNom }}</td>
-          <td>{{ getTypeLabel(trim) }}</td>
-          <td class="text-center font-semibold">T{{ trim.trimestre }}</td>
-          <td class="text-center">{{ trim.annee }}</td>
-          <td class="text-right font-bold">{{ trim.totalAgiosTTC | number:'1.2-2' }} MAD</td>
-          <td class="text-center">{{ trim.nbJoursCalcules }}/{{ trim.nbJoursTotal }}</td>
-          <td>
+
+          <td class="font-semibold text-800">{{ trim.banqueNom }}</td>
+
+          <td class="text-600 text-sm">{{ getTypeLabel(trim) }}</td>
+
+          <td class="text-center">
+            <span class="inline-flex align-items-center justify-content-center border-round font-bold text-sm"
+                  style="width:1.9rem;height:1.9rem;background:#e0e7ff;color:#3730a3">
+              T{{ trim.trimestre }}
+            </span>
+          </td>
+
+          <td class="text-center font-semibold text-700">{{ trim.annee }}</td>
+
+          <td class="text-right">
+            <span class="font-bold text-900" style="font-size:0.92rem">
+              {{ trim.totalAgiosTTC | number:'1.2-2' }}
+            </span>
+            <span class="text-400 text-xs ml-1">MAD</span>
+          </td>
+
+          <td class="text-center">
+            <span class="font-semibold text-700 text-sm">{{ trim.nbJoursCalcules }}</span>
+            <span class="text-400 text-xs"> / {{ trim.nbJoursTotal }}</span>
+          </td>
+
+          <td class="text-center">
             <p-tag [value]="getStatutLabel(trim.statut)"
-                   [severity]="getStatutSeverity(trim.statut)">
+                   [severity]="getStatutSeverity(trim.statut)"
+                   styleClass="text-xs">
             </p-tag>
           </td>
-          <td>{{ trim.dateDernierCalcul | date:'dd/MM/yyyy HH:mm' }}</td>
-          <td class="flex flex-row align-items-center gap-2">
-            <button pButton pRipple icon="pi pi-eye"
-                    class="p-button-rounded p-button-outlined p-button-secondary"
-                    pTooltip="Voir le détail journalier"
-                    (click)="voirDetail(trim)">
-            </button>
 
-            @if (isAdmin() && trim.statut === StatutTrimestre.OUVERT) {
-              <button pButton pRipple icon="pi pi-lock"
-                      class="p-button-rounded p-button-outlined p-button-danger"
-                      pTooltip="Clôturer ce trimestre"
-                      (click)="cloturer(trim, dt)">
+
+
+          <td>
+            <div class="flex align-items-center justify-content-center gap-1">
+              <button pButton pRipple icon="pi pi-eye"
+                      class="p-button-rounded p-button-text p-button-info p-button-sm"
+                      pTooltip="Voir le détail" tooltipPosition="top"
+                      (click)="voirDetail(trim)">
               </button>
-            }
+
+              @if (isAdmin() && trim.statut === StatutTrimestre.OUVERT) {
+                <button pButton pRipple icon="pi pi-refresh"
+                        class="p-button-rounded p-button-text p-button-warning p-button-sm"
+                        pTooltip="Recalculer" tooltipPosition="top"
+                        (click)="recalculerParBanque(trim, dt)">
+                </button>
+                <button pButton pRipple icon="pi pi-lock"
+                        class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                        pTooltip="Clôturer" tooltipPosition="top"
+                        (click)="cloturer(trim, dt)">
+                </button>
+              }
+            </div>
           </td>
+
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [attr.colspan]="9" class="text-center p-4">Aucun trimestre trouvé.</td>
+          <td [attr.colspan]="9">
+            <div class="flex flex-column align-items-center gap-2 py-5">
+              <div class="text-600 font-medium">Aucun trimestre trouvé</div>
+              <div class="text-400 text-sm">Modifiez les filtres ou lancez un recalcul global.</div>
+            </div>
+          </td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="9">Chargement en cours...</td>
+          <td [attr.colspan]="9" class="text-center p-4 text-500 text-sm">
+            <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+          </td>
         </tr>
       </ng-template>
 
