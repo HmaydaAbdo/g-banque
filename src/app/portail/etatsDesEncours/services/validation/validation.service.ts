@@ -24,8 +24,6 @@
   import {CommissionTransactionResponse} from "../../dtos/commission/CommissionTransactionResponse";
   import {AgiosValidationRequest} from "../../dtos/agios/agios-validation-request.dto";
   import {AgiosTransactionResponse} from "../../dtos/agios/AgiosTransactionResponse";
-  import {InteretValidationRequest} from "../../dtos/interets/interet-validation-request.dto";
-  import {InteretTransactionResponse} from "../../dtos/interets/interet-transaction-response.dto";
   import {FraisBancaireValidationRequest} from "../../dtos/frais-bancaire/frais-bancaire-validation-request.dto";
   import {FraisBancaireTransactionResponse} from "../../dtos/frais-bancaire/frais-bancaire-transaction-response.dto";
   import {FactoringTransactionRequest} from "../../dtos/factoring/FactoringTransactionRequest";
@@ -179,12 +177,7 @@
     }
 
 
-    interetToRapprochement(interet: InteretValidationRequest): Observable<InteretTransactionResponse> {
-      return this.http.post<InteretTransactionResponse>(
-        `${this.baseUrl}/process/interet`,
-        interet
-      );
-    }
+
 
 
     fraisBancaireToRapprochement(fraisBancaire: FraisBancaireValidationRequest): Observable<FraisBancaireTransactionResponse> {

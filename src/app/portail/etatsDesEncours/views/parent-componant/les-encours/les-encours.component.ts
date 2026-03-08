@@ -8,7 +8,6 @@ import { Ripple } from "primeng/ripple";
 import { BreadcrumbModule } from "primeng/breadcrumb";
 import { filter } from 'rxjs/operators';
 import { Button } from "primeng/button";
-import { RapprochementRequest } from "../../../../rapprochement/dtos/RapprochementRequest";
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RapprochementService } from "../../../../rapprochement/service/rapprochement-service.service";
 import { CalendarModule } from "primeng/calendar";
@@ -74,7 +73,6 @@ export class LesEncoursComponent implements OnInit {
     'commissions': { label: 'Décaissements ⇒ Commissions', icon: 'pi pi-ticket' },
     'agios': { label: 'Décaissements ⇒ Agios', icon: 'pi pi-percentage' },
     'prelevements': { label: 'Décaissements ⇒ Prélèvements', icon: 'pi pi-sign-out' },
-    'interests': { label: 'Décaissements ⇒ Intérêts', icon: 'pi pi-percentage' },
     'fraisBancaire': { label: 'Décaissements ⇒ Frais Bancaires', icon: 'pi pi-credit-card' },
     'impots-taxes': { label: 'Décaissements ⇒ Impôts et Taxes', icon: 'pi pi-file' },
     'operations-errones': { label: 'Décaissements ⇒ Opérations Erronées', icon: 'pi pi-exclamation-triangle' },
@@ -188,7 +186,6 @@ export class LesEncoursComponent implements OnInit {
           { label: 'Commissions', icon: 'pi pi-ticket', routerLink: ['/portail/etats-des-encours', this.banqueId, 'commissions'] },
           { label: 'Agios', icon: 'pi pi-percentage', routerLink: ['/portail/etats-des-encours', this.banqueId, 'agios'] },
           { label: 'Prélèvements', icon: 'pi pi-sign-out', routerLink: ['/portail/etats-des-encours', this.banqueId, 'prelevements'] },
-          { label: 'Intérêts', icon: 'pi pi-percentage', routerLink: ['/portail/etats-des-encours', this.banqueId, 'interests'] },
           { label: 'Frais Bancaires', icon: 'pi pi-credit-card', routerLink: ['/portail/etats-des-encours', this.banqueId, 'fraisBancaire'] },
           { label: 'Impôts et Taxes', icon: 'pi pi-file', routerLink: ['/portail/etats-des-encours', this.banqueId, 'impots-taxes'] },
           { label: 'Opérations Erronées', icon: 'pi pi-exclamation-triangle', routerLink: ['/portail/etats-des-encours', this.banqueId, 'operations-errones'] },

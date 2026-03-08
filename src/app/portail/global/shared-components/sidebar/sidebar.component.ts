@@ -150,7 +150,6 @@ export class SidebarComponent implements OnInit {
     { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions' },
     { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements' },
     { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire' },
-    { label: "Les Intérêts", icon: "pi pi-list", routerLink: '/portail/interets' },
     { label: "Les Restitutions", icon: "pi pi-list", routerLink: '/portail/restitutions' },
     { label: "Impôts et Taxes", icon: "pi pi-list", routerLink: '/portail/impots-taxes' },
     { label: "Impayées", icon: "pi pi-list", routerLink: '/portail/impayees' },

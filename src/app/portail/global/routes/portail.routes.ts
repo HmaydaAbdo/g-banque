@@ -54,10 +54,7 @@ import { AgiosListComponent } from "../../agios/views/agios-list/agios-list.comp
 import { AgiosFormComponent } from "../../agios/views/agios-form/agios.form.component";
 import { FraisBancaireListComponent } from "../../frais-bancaire/views/frais-bancaire-list/frais-bancaire-list.component";
 import { FraisBancaireFormComponent } from "../../frais-bancaire/views/frais-bancaire-form/frais-bancaire-form.component";
-import { InteretListComponent } from "../../interest/views/interest-list/interet-list.component";
-import { InteretFormComponent } from "../../interest/views/interest-form/interet-form.component";
 import { EncoursAgiosComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/agios/encours-agios.component";
-import { EncoursInteretComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/interet/encours-interet.component";
 import { EncoursFraisBancaireComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/frais-bancaire/encours-fraisBancaire.component";
 import { FactoringFormComponent } from "../../factoring/views/factoring-form/factoring-form.component";
 import { FactoringListComponent } from "../../factoring/views/factoring-list/factoring-list.component";
@@ -241,7 +238,6 @@ export const PORTAIL_ROUTES: Routes = [
       { path: "commissions", component: EncoursCommissionsComponent },
       { path: "agios", component: EncoursAgiosComponent },
       { path: "prelevements", component: EncoursPrelevementComponent },
-      { path: "interests", component: EncoursInteretComponent },
       { path: "fraisBancaire", component: EncoursFraisBancaireComponent },
       { path: "impots-taxes", component: EncoursImpotsEtTaxesComponent },
       { path: "restitutions", component: EncoursRestitutionComponent },
@@ -284,9 +280,6 @@ export const PORTAIL_ROUTES: Routes = [
   { path: "frais-bancaire/new", component: FraisBancaireFormComponent },
   { path: "frais-bancaire/edit/:id", component: FraisBancaireFormComponent },
 
-  { path: 'interets', component: InteretListComponent },
-  { path: "interets/new", component: InteretFormComponent },
-  { path: "interets/edit/:id", component: InteretFormComponent },
 
   { path: "historique-des-transactions", component: TransactionHistoryComponent },
   { path: 'logs', component: LogsComponent, canActivate: [adminGuard] },
