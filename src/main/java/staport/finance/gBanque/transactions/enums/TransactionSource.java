@@ -13,7 +13,6 @@ public enum TransactionSource {
     COMMISSION,
     AGIOS,
     FRAIS_BANCAIRE,
-    INTERETS,
     FACTORING,
     PRELEVEMENT,
     CAUTION,
