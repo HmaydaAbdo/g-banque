@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
+import staport.finance.gBanque.transactions.dtos.TransactionUpdateRequestDto;
 import staport.finance.gBanque.transactions.service.TransactionService;
 
 @RestController
@@ -63,6 +64,11 @@ public class TransactionController {
 
         log.info("Réponse API : Agrégation calculée pour la banque {}. Solde agrégé prêt.", banqueId);
         return ResponseEntity.ok(res);
+    }
+
+    @PatchMapping("/{transactionId}")
+    public ResponseEntity<TransactionResponseDto> updateTransaction(@PathVariable Long transactionId, @RequestBody TransactionUpdateRequestDto updateRequestDto){
+        return ResponseEntity.ok(transactionService.updateTransactionById(transactionId,updateRequestDto));
     }
 
 

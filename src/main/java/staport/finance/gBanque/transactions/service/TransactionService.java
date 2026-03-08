@@ -6,10 +6,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
+import staport.finance.gBanque.transactions.dtos.TransactionUpdateRequestDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
@@ -31,6 +33,7 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
     }
 
+    @Transactional(readOnly = true)
     public Page<TransactionResponseDto> getTransactionHistory(TransactionSearchDto searchDto, Pageable pageable) {
         log.info("Récupération de l'historique des transactions. Filtres: {}", searchDto);
 
@@ -67,7 +70,7 @@ public class TransactionService {
         return transactions.map(TransactionMapper::toDto);
     }
 
-    //rapprochement encour
+    @Transactional(readOnly = true)
     public AgreratedTransactionResponseDto getTransactionsByBanque(Long banqueId, TransactionSearchDto searchDto, Pageable pageable) {
         log.info("Calcul des agrégations et récupération des transactions pour la banque ID: {}", banqueId);
 
@@ -144,6 +147,7 @@ public class TransactionService {
         return aggregatedResponse;
     }
 
+    @Transactional(readOnly = true)
     public TransactionResponseDto getTransactionById(Long id) {
         log.info("Recherche de la transaction ID: {}", id);
         return transactionRepository.findById(id)
@@ -155,5 +159,16 @@ public class TransactionService {
                     log.error("Erreur: Transaction ID: {} introuvable", id);
                     return new ResourceNotFoundException("La transaction avec l'ID " + id + " n'a pas été trouvée");
                 });
+    }
+
+    @Transactional
+    public TransactionResponseDto updateTransactionById(Long id, TransactionUpdateRequestDto updateRequestDto){
+
+        Transaction transaction=transactionRepository.findById(id)
+                .orElseThrow(()->new ResourceNotFoundException("Transaction with id "+id+" not found"));
+
+        transaction.setDateValeur(updateRequestDto.getDateValeur());
+
+        return TransactionMapper.toDto(transactionRepository.save(transaction));
     }
 }
