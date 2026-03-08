@@ -6,6 +6,7 @@ import { TransactionSearchDto } from "../dtos/TransactionSearchDto";
 import { PageResponse } from "../../global/types/PageResponse";
 import { TransactionResponseDto } from "../dtos/TransactionResponseDto";
 import { AgreratedTransactionResponseDto } from "../dtos/AgreratedTransactionResponseDto";
+import {TransactionUpdateRequestDto} from "../dtos/TransactionUpdateRequestDto";
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +52,9 @@ export class TransactionService {
   }
 
 
+  updateTransactionById(id: number, updateTransactionDto: TransactionUpdateRequestDto): Observable<TransactionResponseDto> {
+    return this.http.patch<TransactionResponseDto>(`${this.baseUrl}/${id}`, updateTransactionDto);
+  }
 
 
   /**

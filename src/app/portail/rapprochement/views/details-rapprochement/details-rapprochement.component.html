@@ -298,6 +298,7 @@
                 <p-sortIcon field="transactionSource"></p-sortIcon>
               </div>
             </th>
+            <th class="w-fit"> Actions</th>
           </tr>
         </ng-template>
 
@@ -351,6 +352,13 @@
             <td>
               <p-tag [value]="transaction.transactionSource" severity="info"></p-tag>
             </td>
+
+            <td>
+              <button pButton pRipple icon="pi pi-pencil"
+                      class="p-button-rounded p-button-outlined p-button-secondary"
+                      pTooltip="mettre à jour la date valeur "
+                      (click)="openEditDateDialog(transaction)"></button>
+            </td>
           </tr>
         </ng-template>
 
@@ -384,3 +392,50 @@
   </div>
 
 </div>
+
+
+<p-dialog
+  header="Modifier la date de valeur"
+  [(visible)]="displayDateValuerDialog"
+  [modal]="true"
+  [style]="{width:'400px'}"
+  [closable]="true">
+
+  <div *ngIf="selectedTransaction">
+    <div class="mb-3">
+      <label class="font-semibold text-sm">Ancienne Date</label>
+      <div class="text-900">
+        {{ selectedTransaction.dateValeur | date:'dd/MM/yyyy' }}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="font-semibold text-sm">Nouvelle Date</label>
+      <p-calendar
+        #calendar
+        [(ngModel)]="newDateValeur"
+        dateFormat="dd/mm/yy"
+        appendTo="body"
+        [showIcon]="true"
+        [readonlyInput]="true"
+        [inputStyle]="{'cursor':'pointer'}"
+        (onFocus)="calendar.hideOverlay()"
+      >
+      </p-calendar>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      severity="secondary"
+      (click)="closeDateValeurDialog()">
+    </p-button>
+
+    <p-button
+      label="Enregistrer"
+      icon="pi pi-check"
+      (click)="updateDateValeur()">
+    </p-button>
+  </ng-template>
+</p-dialog>

@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -19,6 +19,10 @@ import { TransactionResponseDto } from '../../../transactions/dtos/TransactionRe
 import { TransactionSearchDto } from '../../../transactions/dtos/TransactionSearchDto';
 import { TransactionSource } from '../../../transactions/dtos/TransactionSource';
 import { RapprochementService } from "../../service/rapprochement-service.service";
+import {DialogModule} from "primeng/dialog";
+import {TransactionUpdateRequestDto} from "../../../transactions/dtos/TransactionUpdateRequestDto";
+import {TransactionService} from "../../../transactions/service/TransactionService";
+import {Ripple} from "primeng/ripple";
 
 @Component({
   selector: 'app-details-rapprochement',
@@ -35,7 +39,10 @@ import { RapprochementService } from "../../service/rapprochement-service.servic
     BreadcrumbModule,
     InputTextModule,
     CalendarModule,
-    MultiSelectModule
+    MultiSelectModule,
+    DialogModule,
+    FormsModule,
+    Ripple
   ],
   templateUrl: './details-rapprochement.component.html',
   styleUrls: ['./details-rapprochement.component.scss'],
@@ -59,11 +66,16 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   transactionSourceOptions: any[] = [];
 
+  displayDateValuerDialog: boolean = false;
+  selectedTransaction: TransactionResponseDto | null = null;
+  newDateValeur: Date | null = null;
+
   private subscriptions: Subscription[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private rapprochementService: RapprochementService,
+    private transactionService: TransactionService,
     private messageService: MessageService,
     private fb: FormBuilder
   ) { }
@@ -184,6 +196,8 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
     }
   }
 
+
+
   /**
    * Réinitialise le formulaire de recherche.
    */
@@ -202,6 +216,62 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
       this.loadTransactionsLazy(this.dt.createLazyLoadMetadata());
     }
   }
+
+
+  openEditDateDialog(transaction: TransactionResponseDto): void {
+    this.selectedTransaction = transaction;
+    this.newDateValeur = transaction.dateValeur;
+    this.displayDateValuerDialog = true;
+  }
+
+  closeDateValeurDialog(): void {
+    this.displayDateValuerDialog = false;
+    this.selectedTransaction = null;
+    this.newDateValeur = null;
+  }
+
+  updateDateValeur(): void {
+    if (!this.selectedTransaction || !this.newDateValeur) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Attention',
+        detail: 'Veuillez sélectionner une date valide.'
+      });
+      return;
+    }
+
+    const updateDto: TransactionUpdateRequestDto = { dateValeur: this.newDateValeur };
+
+    this.transactionService.updateTransactionById(this.selectedTransaction.id, updateDto)
+      .subscribe({
+        next: (updatedTransaction) => {
+          // Met à jour la transaction localement pour voir le changement immédiatement
+          const index = this.transactions.findIndex(t => t.id === updatedTransaction.id);
+          if (index !== -1) {
+            this.transactions[index] = updatedTransaction;
+          }
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Date de valeur mise à jour avec succès.'
+          });
+
+          this.closeDateValeurDialog();
+        },
+        error: (err) => {
+          console.error('Erreur lors de la mise à jour de la date de valeur', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: `Impossible de mettre à jour la date : ${err.error?.message || 'Erreur inconnue'}`
+          });
+        }
+      });
+  }
+
+
+
 
   /**
    * Met à jour le fil d'Ariane avec les informations spécifiques du rapprochement.
