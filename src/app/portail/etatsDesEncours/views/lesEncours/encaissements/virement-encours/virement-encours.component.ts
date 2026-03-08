@@ -1,5 +1,5 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, RouterLink} from '@angular/router';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {CardModule} from 'primeng/card';
@@ -29,6 +29,7 @@ import {InputNumberModule} from "primeng/inputnumber";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import {NavigationStateService} from "../../../../../global/services/navigation-state.service";
 
 
 @Component({
@@ -53,7 +54,6 @@ import {BankStateService} from "../../../../../comptes-bancaire/services/bank-st
     DropdownModule,
     InputNumberModule,
     ConfirmDialogModule,
-    RouterLink,
   ],
   templateUrl: './virement-encours.component.html',
   providers: [MessageService,ConfirmationService,DecimalPipe],
@@ -93,7 +93,9 @@ export class VirementEncaissementEncoursComponent implements OnInit {
     private rapprochementService: ValidationService,
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
-    private bankStateService: BankStateService
+    private bankStateService: BankStateService,
+    private router: Router,
+    private navState: NavigationStateService
   ) {
 
   }
@@ -300,4 +302,18 @@ export class VirementEncaissementEncoursComponent implements OnInit {
         },
       });
   }
+
+  navigateToNew(): void {
+    this.navState.navigateWithReturnUrl(
+      ['/portail/Virements/new'],
+      this.router.url
+    );
+  }
+
+  navigateToEdit(id: number): void {
+    this.navState.navigateWithReturnUrl(
+      [`/portail/Virements/edit/${id}`],
+      this.router.url
+    );
+}
 }

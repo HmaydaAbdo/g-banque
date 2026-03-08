@@ -23,6 +23,7 @@ import { Type } from '../../../Virements/Type';
 import { VirementInternationalService } from '../../service/virement-international.service';
 import { VirementInternationalResponseDto } from '../../dtos/VirementInternationalResponseDto';
 import { VirementInternationalRequestDto } from '../../dtos/VirementInternationalRequestDto';
+import {NavigationStateService} from "../../../global/services/navigation-state.service";
 
 @Component({
   selector: 'app-virement-international-form',
@@ -64,14 +65,21 @@ export class VirementInternationalFormComponent implements OnInit {
     { label: 'Formulaire' }
   ];
 
+  public returnUrl: string;
+  private readonly DEFAULT_URL = '/portail/virements-internationaux';
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
     private banqueService: BanqueService,
     private virementService: VirementInternationalService,
-    private messageService: MessageService
-  ) {}
+    private messageService: MessageService,
+    public router: Router,
+    private navState: NavigationStateService
+  ) {
+    // Lit le returnUrl depuis NavigationExtras.state (voyage avec la navigation)
+    this.returnUrl = this.navState.getReturnUrl(this.DEFAULT_URL);
+  }
 
   ngOnInit(): void {
     this.checkModeAndLoadData();
@@ -193,8 +201,7 @@ export class VirementInternationalFormComponent implements OnInit {
           summary: 'Succès',
           detail: successMessage
         });
-        // Rediriger après un petit délai
-        setTimeout(() => this.router.navigate(['/portail/virements-internationaux']), 1000);
+        this.router.navigate([this.returnUrl]);
       },
       error: (err) => {
         this.messageService.add({

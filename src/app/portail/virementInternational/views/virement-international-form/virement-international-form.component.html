@@ -132,7 +132,7 @@
         label="Annuler"
         size="small"
         icon="pi pi-times"
-        [routerLink]="['/portail/virements-internationaux']"
+        (click)="router.navigate([returnUrl])"
         type="button"
         severity="secondary">
       </button>

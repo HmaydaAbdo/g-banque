@@ -7,7 +7,7 @@ import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
 // PrimeNG Modules
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
-import { CalendarModule } from 'primeng/calendar';
+import {CalendarModule, NavigationState} from 'primeng/calendar';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
@@ -22,6 +22,7 @@ import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {VirementRequestDto} from "../../dtos/VirementRequestDto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {Ripple} from "primeng/ripple";
+import {NavigationStateService} from "../../../global/services/navigation-state.service";
 
 
 
@@ -63,14 +64,20 @@ export class VirementFormComponent implements OnInit {
     { label: 'Virements ( encaissements )', routerLink: '/portail/Virements/encaissement' },
   ];
 
+  public returnUrl: string;
+  private readonly DEFAULT_URL = '/portail/Virements/encaissement';
+
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    public router: Router,
     private banqueService: BanqueService,
     private virementService: VirementService,
-    private messageService: MessageService
-  ) {}
+    private messageService: MessageService,
+    private navState:NavigationStateService
+  ) {
+    this.returnUrl = this.navState.getReturnUrl(this.DEFAULT_URL);
+  }
 
   ngOnInit(): void {
     this.checkModeAndLoadData();
@@ -184,8 +191,7 @@ export class VirementFormComponent implements OnInit {
     operation$.subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: successMessage });
-        // Rediriger après un petit délai ou immédiatement
-        setTimeout(() => this.router.navigate(['/portail/Virements/encaissement']), 1000);
+        this.router.navigate([this.returnUrl]);
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Échec de l\'opération.' });

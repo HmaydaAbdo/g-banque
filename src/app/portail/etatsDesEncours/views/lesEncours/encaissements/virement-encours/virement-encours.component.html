@@ -30,8 +30,8 @@
           <input id="montant" type="number" pInputText formControlName="montant" />
           <label for="montant">Recherche par Montant</label>
         </span>
-        <button pButton pRipple label="Ajouter Virement" class=" h-fit " size="small" icon="pi pi-plus"
-                severity="primary" routerLink="/portail/Virements/new"></button>
+        <button pButton pRipple label="Ajouter " class=" h-fit " size="small" icon="pi pi-plus"
+                severity="primary" (click)="navigateToNew()"></button>
       </form>
 
     </div>
@@ -92,14 +92,24 @@
           <td>{{ virement.emetteur ? virement.emetteur : 'N/A' }}</td>
           <td>{{ virement.montant | number:'1.2-2'}} </td>
 
-          <td>
-            <p-button
+          <td class="flex flex-row gap-2">
+            <button
+              type="button"
               pRipple
-              class="p-button-rounded p-button-success"
+              class="p-button p-button-rounded p-button-outlined p-button-success pi pi-check"
               pTooltip="Valider"
-              label="Valider"
-              (onClick)="openRapprochementModal(virement)"
-            ></p-button>
+              tooltipPosition="top"
+              (click)="openRapprochementModal(virement)"
+            ></button>
+
+            <button
+              type="button"
+              pRipple
+              class=" p-button p-button-rounded p-button-outlined  p-button-primary pi pi-pencil"
+              pTooltip="Modifier"
+              tooltipPosition="top"
+              (click)="navigateToEdit(virement.id)"
+            ></button>
           </td>
         </tr>
       </ng-template>

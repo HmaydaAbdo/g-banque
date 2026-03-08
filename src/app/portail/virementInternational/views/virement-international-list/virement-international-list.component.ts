@@ -15,7 +15,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { RippleModule } from 'primeng/ripple';
-import { RouterLinkActive } from '@angular/router';
+import {Router, RouterLinkActive} from '@angular/router';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { Subscription } from 'rxjs';
@@ -29,6 +29,7 @@ import { BanqueService } from '../../../comptes-bancaire/services/BanqueService'
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
 import { AuthService } from '../../../../auth/services/auth.service';
 import { Role } from '../../../../auth/enum/Role';
+import {NavigationStateService} from "../../../global/services/navigation-state.service";
 
 @Component({
   selector: 'app-virement-international-list',
@@ -96,7 +97,9 @@ export class VirementInternationalListComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private banqueService: BanqueService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router,
+    private navState: NavigationStateService
   ) {}
 
   ngOnInit(): void {
@@ -306,5 +309,19 @@ export class VirementInternationalListComponent implements OnInit, OnDestroy {
           });
       }
     });
+  }
+
+  navigateToNew(): void {
+    this.navState.navigateWithReturnUrl(
+      ['/portail/virements-internationaux/new'],
+      this.router.url
+    );
+  }
+
+  navigateToEdit(id: number): void {
+    this.navState.navigateWithReturnUrl(
+      [`/portail/virements-internationaux/edit/${id}`],
+      this.router.url
+    );
   }
 }
