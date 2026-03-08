@@ -21,8 +21,6 @@ import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionRespons
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
-import staport.finance.gBanque.validation.dtos.interet.InteretTransactionResponse;
-import staport.finance.gBanque.validation.dtos.interet.InteretValidationRequest;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
 import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionRequest;
@@ -218,11 +216,6 @@ public class ValidationController {
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
-    @PostMapping("/process/interet")
-    public ResponseEntity<InteretTransactionResponse> processInteretToTransaction(@Valid @RequestBody InteretValidationRequest requestDto) throws Exception {
-        InteretTransactionResponse responseDto = validationService.processInteretToTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
-    }
 
 
     @PostMapping("/process/impot-taxe")

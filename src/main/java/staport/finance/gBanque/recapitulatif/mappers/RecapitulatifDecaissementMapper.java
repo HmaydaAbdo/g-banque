@@ -10,7 +10,6 @@ import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
-import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
@@ -327,23 +326,6 @@ public class RecapitulatifDecaissementMapper {
         dto.setSource(TransactionSource.FRAIS_BANCAIRE);
         return dto;
     }
-
-    public RecaputilatifItem mapInteretToDto(Interet interet) {
-
-        if (interet == null) {
-            return null;
-        }
-
-        RecaputilatifItem dto = new RecaputilatifItem();
-        dto.setId(interet.getId());
-        dto.setDateEmission(interet.getDateEmission());
-        dto.setDebit(interet.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
-        dto.setObservations(interet.getObservation() );
-        dto.setLibelle(interet.getLibelle());
-        dto.setSource(TransactionSource.INTERETS);
-        return dto;
-    }
-
 
     public RecaputilatifItem mapOperationErroneToDto(OperationErrone operationErrone) {
         if (operationErrone == null) {

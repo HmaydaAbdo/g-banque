@@ -12,7 +12,6 @@ import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
-import staport.finance.gBanque.interets.entities.Interet;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
@@ -112,9 +111,6 @@ public class Banque {
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<FraisBancaire> fraisBancaires = new ArrayList<>();
-
-    @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
-    private List<Interet> interets = new ArrayList<>();
 
     @OneToMany(mappedBy = "banque",cascade = {CascadeType.ALL},fetch = FetchType.LAZY,orphanRemoval = true)
     private List<Agios> agios = new ArrayList<>();
@@ -311,20 +307,6 @@ public class Banque {
     }
     public void removeFraisBancaire(FraisBancaire fraisBancaire){
         this.fraisBancaires.remove(fraisBancaire);
-    }
-
-    public List<Interet> getInterets() {
-        return interets;
-    }
-    public void setInterets(List<Interet> interets) {
-        this.interets = interets;
-    }
-
-    public void addInterest(Interet interet){
-        this.interets.add(interet);
-    }
-    public void removeInterest(Interet interet){
-        this.interets.remove(interet);
     }
 
     public List<Agios> getAgios() {

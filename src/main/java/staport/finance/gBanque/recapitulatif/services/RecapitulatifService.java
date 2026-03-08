@@ -42,9 +42,6 @@ import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpec;
-import staport.finance.gBanque.interets.entities.Interet;
-import staport.finance.gBanque.interets.repository.InteretRepository;
-import staport.finance.gBanque.interets.specs.InteretSpec;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.moyensDePaiements.lcn.specs.LcnSpecification;
@@ -118,7 +115,6 @@ public class RecapitulatifService {
     private final AgiosRepository agiosRepository;
     private final PrelevementRepository prelevementRepository;
     private  final FraisBancaireRepository fraisBancaireRepository;
-    private final InteretRepository interetRepository;
     private final FactoringRepository factoringRepository;
     private final ImpotEtTaxeRepository impotEtTaxeRepository;
     private final RestitutionRepository restitutionRepository;
@@ -132,7 +128,7 @@ public class RecapitulatifService {
     public RecapitulatifService(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
-            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, BanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, InteretRepository interetRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, RapprochementRepository rapprochementRepository) {
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, BanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, RapprochementRepository rapprochementRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.decaissementMapper = mapper;
@@ -150,7 +146,6 @@ public class RecapitulatifService {
         this.agiosRepository = agiosRepository;
         this.prelevementRepository = prelevementRepository;
         this.fraisBancaireRepository = fraisBancaireRepository;
-        this.interetRepository = interetRepository;
         this.factoringRepository = factoringRepository;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
         this.restitutionRepository = restitutionRepository;
@@ -406,10 +401,6 @@ public class RecapitulatifService {
         Specification<Prelevement> prelevementSpecification= PrelevementSpec.outstandingPrelevement()
                 .and(PrelevementSpec.hasBanque(banqueId));
 
-        // interet
-        Specification<Interet> interetSpecification= InteretSpec.outstandingInterests()
-                .and(InteretSpec.hasBanque(banqueId));
-
         // frais bancaire
         Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingFraisBancaires()
                 .and(FraisBancaireSpec.hasBanque(banqueId));
@@ -438,7 +429,6 @@ public class RecapitulatifService {
         List<Agios> outstandingAgios=agiosRepository.findAll(agiosSpecification);
         List<Prelevement> outstandingPrelevements=prelevementRepository.findAll(prelevementSpecification);
         List<FraisBancaire> outstandingFraisBancaire=fraisBancaireRepository.findAll(fraisBancaireSpecification);
-        List<Interet> outstandingInterets=interetRepository.findAll(interetSpecification);
         List<ImpotEtTaxe> outstandingImpotsEtTaxes=impotEtTaxeRepository.findAll(impotEtTaxeSpecification);
         List<Impayee> outstandingImpayee=impayeeRepository.findAll(impayeeSpec);
 
@@ -460,7 +450,6 @@ public class RecapitulatifService {
         combinedItems.addAll(outstandingAgios.stream().map(decaissementMapper::mapAgiosToDto).toList());
         combinedItems.addAll(outstandingPrelevements.stream().map(decaissementMapper::mapPrelevementToDto).toList());
         combinedItems.addAll(outstandingFraisBancaire.stream().map(decaissementMapper::mapFraisBancaireToDto).toList());
-        combinedItems.addAll(outstandingInterets.stream().map(decaissementMapper::mapInteretToDto).toList());
         combinedItems.addAll(outstandingImpotsEtTaxes.stream().map(decaissementMapper::mapImpotEtTaxrToDto).toList());
         combinedItems.addAll(outstandingImpayee.stream().map(decaissementMapper::mapImpayeeToDto).toList());
 
@@ -567,9 +556,6 @@ public class RecapitulatifService {
         Specification<Prelevement> prelevementSpecification= PrelevementSpec.outstandingPrelevement()
                 .and(PrelevementSpec.hasBanque(banque.getId()));
 
-        // interet
-        Specification<Interet> interetSpecification= InteretSpec.outstandingInterests()
-                .and(InteretSpec.hasBanque(banque.getId()));
 
         // frais bancaire
         Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingFraisBancaires()
@@ -598,7 +584,6 @@ public class RecapitulatifService {
         List<Agios> outstandingAgios=agiosRepository.findAll(agiosSpecification);
         List<Prelevement> outstandingPrelevements=prelevementRepository.findAll(prelevementSpecification);
         List<FraisBancaire> outstandingFraisBancaire=fraisBancaireRepository.findAll(fraisBancaireSpecification);
-        List<Interet> outstandingInterets=interetRepository.findAll(interetSpecification);
         List<ImpotEtTaxe> outstandingImpotEtTaxes=impotEtTaxeRepository.findAll(impotEtTaxeSpecification);
         List<Impayee> outstandingImpayee=impayeeRepository.findAll(impayeeSpecification);
 
@@ -619,7 +604,6 @@ public class RecapitulatifService {
         decaissementList.addAll(outstandingAgios.stream().map(decaissementMapper::mapAgiosToDto).toList());
         decaissementList.addAll(outstandingPrelevements.stream().map(decaissementMapper::mapPrelevementToDto).toList());
         decaissementList.addAll(outstandingFraisBancaire.stream().map(decaissementMapper::mapFraisBancaireToDto).toList());
-        decaissementList.addAll(outstandingInterets.stream().map(decaissementMapper::mapInteretToDto).toList());
         decaissementList.addAll(outstandingImpotEtTaxes.stream().map(decaissementMapper::mapImpotEtTaxrToDto).toList());
         decaissementList.addAll(outstandingImpayee.stream().map(decaissementMapper::mapImpayeeToDto).toList());
 

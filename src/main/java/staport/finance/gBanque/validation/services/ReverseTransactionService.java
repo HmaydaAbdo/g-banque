@@ -27,8 +27,6 @@ import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
-import staport.finance.gBanque.interets.entities.Interet;
-import staport.finance.gBanque.interets.repository.InteretRepository;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
@@ -81,7 +79,6 @@ public class ReverseTransactionService {
     private final CommisionRepository commisionRepository;
     private final AgiosRepository agiosRepository;
     private final PrelevementRepository prelevementRepository;
-    private final InteretRepository interetRepository;
     private final FraisBancaireRepository fraisBancaireRepository;
     private final FactoringRepository factoringRepository;
     private final ImpotEtTaxeRepository impotEtTaxeRepository;
@@ -105,7 +102,6 @@ public class ReverseTransactionService {
             CommisionRepository commisionRepository,
             AgiosRepository agiosRepository,
             PrelevementRepository prelevementRepository,
-            InteretRepository interetRepository,
             FraisBancaireRepository fraisBancaireRepository,
             FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
         this.transactionRepository = transactionRepository;
@@ -122,7 +118,6 @@ public class ReverseTransactionService {
         this.commisionRepository = commisionRepository;
         this.agiosRepository = agiosRepository;
         this.prelevementRepository = prelevementRepository;
-        this.interetRepository = interetRepository;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.factoringRepository = factoringRepository;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
@@ -240,9 +235,6 @@ public class ReverseTransactionService {
                 break;
             case PRELEVEMENT:
                 resetPrelevement(referentId);
-                break;
-            case INTERETS:
-                resetInteret(referentId);
                 break;
             case FRAIS_BANCAIRE:
                 resetFraisBancaire(referentId);
@@ -404,16 +396,6 @@ public class ReverseTransactionService {
         log.debug("Prélèvement {} remis à NON_PAYE", prelevementId);
     }
 
-    private void resetInteret(Long interetId) throws Exception {
-        Interet interet = interetRepository.findById(interetId)
-                .orElseThrow(() -> new ResourceNotFoundException("Intérêt introuvable: " + interetId));
-
-        interet.setStatus(Status.PREVU);
-        interet.setDateOperation(null);
-        interet.setDateValeur(null);
-        interetRepository.save(interet);
-        log.debug("Intérêt {} remis à NON_PAYE", interetId);
-    }
 
     private void resetFraisBancaire(Long fraisBancaireId) throws Exception {
         FraisBancaire fraisBancaire = fraisBancaireRepository.findById(fraisBancaireId)
