@@ -3,7 +3,8 @@ export enum Motif {
   IR = 'IR',
   RETENUE_A_LA_SOURCE = 'RETENUE_A_LA_SOURCE',
   PENALITE_DE_RETARD = 'PENALITE_DE_RETARD',
-  DGI="DGI"
+  DGI="DGI",
+  COMMUNAL="COMMUNAL",
 }
 
 export const MotifLabels: Record<Motif, string> = {
@@ -12,4 +13,5 @@ export const MotifLabels: Record<Motif, string> = {
   [Motif.RETENUE_A_LA_SOURCE]: 'Retenue à la source',
   [Motif.PENALITE_DE_RETARD]: 'Pénalité de retard',
   [Motif.DGI]: 'DGI',
+  [Motif.COMMUNAL]: 'COMMUNAL',
 };
