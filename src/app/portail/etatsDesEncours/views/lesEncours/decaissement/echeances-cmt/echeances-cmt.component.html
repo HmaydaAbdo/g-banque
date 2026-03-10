@@ -1,16 +1,13 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
+<div class="card flex flex-column gap-4 p-2 w-full">
 
-  <div class="p-card shadow-2 px-4 py-3 flex flex-column flex-wrap   gap-3">
+  <div class="p-card shadow-2 p-2  flex flex-column flex-wrap   gap-3">
 
-    <div class="flex flex-row gap-2 justify-content-between">
-      <span class="text-lg font-medium">Liste des échéances CMT encours pour le mois : <span class="text-lg font-bold">{{ this.currentMonthYear }}</span></span>
-      <span class="text-lg font-medium">Total des encours : <span class="text-lg font-bold"> {{ encoursResponse?.totalEncours | number: '1.2-2' }} MAD</span></span>
-    </div>
+    <form [formGroup]="searchForm" class="flex  flex-row justify-content-between align-items-center gap-3 ">
+      <span class="text-lg font-medium">Total = <span class="text-lg font-bold"> {{ encoursResponse?.totalEncours | number: '1.2-2' }} MAD</span></span>
 
-    <form [formGroup]="searchForm" class="flex  flex-row justify-content-between gap-3 ">
       <input type="text" pInputText formControlName="designation" placeholder="Désignation du crédit" class="p-inputtext-sm" />
 
       <span class="p-float-label">

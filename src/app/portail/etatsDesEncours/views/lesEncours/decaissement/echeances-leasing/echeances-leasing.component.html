@@ -1,19 +1,17 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card shadow-2 flex flex-column gap-4 p-2 md:p-4 w-full">
+<div class="card shadow-2 flex flex-column gap-4 p-2  w-full">
 
 
-  <div class="p-card shadow-2 px-4 py-3 flex flex-column gap-4 justify-content-between">
-
-    <div class="flex flex-row gap-2 justify-content-between">
-      <span class="text-lg font-medium white-space-nowrap">Les encours Leasing  pour le <strong>{{ this.currentMonthYear }}</strong> </span>
-      <span class="text-lg font-medium white-space-nowrap">Total des encours : <strong>{{ encoursResponse?.totalEncours | number: '1.2-2' }} MAD</strong> </span>
-    </div>
+  <div class="p-card shadow-2 p-2 flex flex-column gap-4 justify-content-between">
 
 
-    <form [formGroup]="searchForm" class="flex flex-row justify-content-between  gap-2">
-        <span class="p-float-label">
+
+    <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center  gap-2">
+      <span class="text-lg font-medium white-space-nowrap">Total = <strong>{{ encoursResponse?.totalEncours | number: '1.2-2' }} MAD</strong> </span>
+
+      <span class="p-float-label">
           <p-dropdown id="organismeLeasingId" formControlName="organismeLeasingId" [options]="organismeLeasingOptions" optionLabel="label" optionValue="value" [showClear]="true"></p-dropdown>
           <label for="organismeLeasingId">Organisme de Leasing</label>
         </span>
