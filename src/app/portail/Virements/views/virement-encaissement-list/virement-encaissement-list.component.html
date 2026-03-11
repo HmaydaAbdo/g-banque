@@ -24,7 +24,7 @@
       </p-breadcrumb>
     </div>
 
-    <button pButton pRipple label="Ajouter Virement" class=" h-fit mt-2" size="small" icon="pi pi-plus" severity="primary" (click)="navigateToNew()"></button>
+    <button pButton pRipple label="Ajouter Virement" class=" h-fit mt-2" size="small" icon="pi pi-plus" severity="primary" routerLink="/portail/Virements/new"></button>
 
   </div>
 
@@ -151,7 +151,7 @@
           <td><p-tag [value]="virement.active ? 'Encours' : 'Archivé'" [severity]="virement.active ? 'success' : 'danger'"></p-tag></td>
           <td class="flex flex-row justify-content-center align-items-center gap-2">
             <p-inputSwitch [ngModel]="virement.active"  (onChange)="confirmToggleStatus(virement)"></p-inputSwitch>
-            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2" (click)="navigateToEdit(virement.id)"></button>
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2" [routerLink]="['/portail/Virements/edit', virement.id]"></button>
             @if (isAdmin){
               <button pButton pRipple icon="pi pi-trash" class="p-button-rounded  p-button-outlined p-button-danger" (click)="deleteVirement(virement)"></button>
             }

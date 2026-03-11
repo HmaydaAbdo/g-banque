@@ -9,7 +9,7 @@ import {InputSwitchModule} from "primeng/inputswitch";
 import {InputTextModule} from "primeng/inputtext";
 import {ConfirmationService, MenuItem, MessageService, PrimeTemplate, SelectItem} from "primeng/api";
 import {Ripple} from "primeng/ripple";
-import {Router, RouterLink, RouterLinkActive} from "@angular/router";
+import { RouterLink, RouterLinkActive} from "@angular/router";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {TagModule} from "primeng/tag";
 import {ToastModule} from "primeng/toast";
@@ -25,7 +25,6 @@ import {PageResponse} from "../../../global/types/PageResponse";
 import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
 import {CalendarModule} from "primeng/calendar";
 import {InputNumberModule} from "primeng/inputnumber";
-import {NavigationStateService} from "../../../global/services/navigation-state.service";
 
 @Component({
   selector: 'app-virement-encaissement-list',
@@ -97,8 +96,6 @@ export class VirementEncaissementListComponent  implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private banqueService: BanqueService,
     private authService: AuthService,
-    private router: Router,
-    private navState: NavigationStateService
   ) {}
 
   ngOnInit(): void {
@@ -298,18 +295,7 @@ export class VirementEncaissementListComponent  implements OnInit, OnDestroy {
   }
 
 
-  navigateToNew(): void {
-    this.navState.navigateWithReturnUrl(
-      ['/portail/Virements/new'],
-      this.router.url
-    );
-  }
 
-  navigateToEdit(id: number): void {
-    this.navState.navigateWithReturnUrl(
-      [`/portail/Virements/edit/${id}`],
-      this.router.url
-    );
-  }
+
 }
 

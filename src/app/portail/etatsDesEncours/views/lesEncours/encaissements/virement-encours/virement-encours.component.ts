@@ -1,5 +1,5 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {ActivatedRoute, RouterLink} from '@angular/router';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {CardModule} from 'primeng/card';
@@ -21,7 +21,6 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {CalendarModule} from "primeng/calendar";
 import {DialogModule} from "primeng/dialog";
 import {EncoursVirementResponseDto} from "../../../../../Virements/dtos/EncoursVirementResponseDto";
-import {Decimal} from "decimal.js";
 import {EncoursVirementsSearchDto} from "../../../../../Virements/dtos/EncoursVirementsSearchDto";
 import {InputTextModule} from "primeng/inputtext";
 import {DropdownModule} from "primeng/dropdown";
@@ -29,7 +28,6 @@ import {InputNumberModule} from "primeng/inputnumber";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
-import {NavigationStateService} from "../../../../../global/services/navigation-state.service";
 
 
 @Component({
@@ -54,6 +52,7 @@ import {NavigationStateService} from "../../../../../global/services/navigation-
     DropdownModule,
     InputNumberModule,
     ConfirmDialogModule,
+    RouterLink,
   ],
   templateUrl: './virement-encours.component.html',
   providers: [MessageService,ConfirmationService,DecimalPipe],
@@ -94,8 +93,6 @@ export class VirementEncaissementEncoursComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
     private bankStateService: BankStateService,
-    private router: Router,
-    private navState: NavigationStateService
   ) {
 
   }
@@ -303,17 +300,4 @@ export class VirementEncaissementEncoursComponent implements OnInit {
       });
   }
 
-  navigateToNew(): void {
-    this.navState.navigateWithReturnUrl(
-      ['/portail/Virements/new'],
-      this.router.url
-    );
-  }
-
-  navigateToEdit(id: number): void {
-    this.navState.navigateWithReturnUrl(
-      [`/portail/Virements/edit/${id}`],
-      this.router.url
-    );
-}
 }
