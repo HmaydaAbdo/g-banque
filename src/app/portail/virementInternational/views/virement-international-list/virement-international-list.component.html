@@ -29,7 +29,8 @@
         label="Ajouter"
         icon="pi pi-plus"
         class="p-button-primary"
-        (click)="navigateToNew()">
+        [routerLink]="['/portail/virements-internationaux/new']"
+      >
       </button>
     </div>
   </div>
@@ -192,7 +193,7 @@
               pRipple
               icon="pi pi-pencil"
               class="p-button-rounded p-button-outlined p-button-primary"
-              (click)="navigateToEdit(virement.id)"
+              [routerLink]="['/portail/virements-internationaux/edit',virement.id]"
               pTooltip="Modifier"
               tooltipPosition="top">
             </button>

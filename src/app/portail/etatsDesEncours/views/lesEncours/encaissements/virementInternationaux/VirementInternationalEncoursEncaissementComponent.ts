@@ -1,5 +1,5 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {ActivatedRoute, RouterLink} from '@angular/router';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {CardModule} from 'primeng/card';
@@ -35,7 +35,6 @@ import {
 import {
   EncoursVirementInternationalResponseDto
 } from "../../../../../virementInternational/dtos/EncoursVirementInternationalResponseDto";
-import {NavigationStateService} from "../../../../../global/services/navigation-state.service";
 
 @Component({
   selector: 'app-virement-international-encours-encaissement',
@@ -59,6 +58,7 @@ import {NavigationStateService} from "../../../../../global/services/navigation-
     DropdownModule,
     InputNumberModule,
     ConfirmDialogModule,
+    RouterLink,
   ],
   templateUrl: './virement-international-encours-encaissement.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe],
@@ -99,8 +99,6 @@ export class VirementInternationalEncoursEncaissementComponent implements OnInit
     private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
     private bankStateService: BankStateService,
-    private router: Router,
-    private navState: NavigationStateService
   ) {}
 
   ngOnInit(): void {
@@ -300,17 +298,5 @@ export class VirementInternationalEncoursEncaissementComponent implements OnInit
       });
   }
 
-  navigateToNew(): void {
-    this.navState.navigateWithReturnUrl(
-      ['/portail/virements-internationaux/new'],
-      this.router.url
-    );
-  }
 
-  navigateToEdit(id: number): void {
-    this.navState.navigateWithReturnUrl(
-      [`/portail/virements-internationaux/edit/${id}`],
-      this.router.url
-    );
-  }
 }

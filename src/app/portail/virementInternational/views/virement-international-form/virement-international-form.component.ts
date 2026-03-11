@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule,Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -23,7 +23,6 @@ import { Type } from '../../../Virements/Type';
 import { VirementInternationalService } from '../../service/virement-international.service';
 import { VirementInternationalResponseDto } from '../../dtos/VirementInternationalResponseDto';
 import { VirementInternationalRequestDto } from '../../dtos/VirementInternationalRequestDto';
-import {NavigationStateService} from "../../../global/services/navigation-state.service";
 
 @Component({
   selector: 'app-virement-international-form',
@@ -65,9 +64,6 @@ export class VirementInternationalFormComponent implements OnInit {
     { label: 'Formulaire' }
   ];
 
-  public returnUrl: string;
-  private readonly DEFAULT_URL = '/portail/virements-internationaux';
-
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -75,10 +71,8 @@ export class VirementInternationalFormComponent implements OnInit {
     private virementService: VirementInternationalService,
     private messageService: MessageService,
     public router: Router,
-    private navState: NavigationStateService
+    public location:Location
   ) {
-    // Lit le returnUrl depuis NavigationExtras.state (voyage avec la navigation)
-    this.returnUrl = this.navState.getReturnUrl(this.DEFAULT_URL);
   }
 
   ngOnInit(): void {
@@ -146,7 +140,7 @@ export class VirementInternationalFormComponent implements OnInit {
           detail: 'Échec du chargement du virement international.'
         });
         this.loading = false;
-        this.router.navigate(['/portail/virements-internationaux']);
+        this.location.back();
       }
     });
   }
@@ -201,7 +195,7 @@ export class VirementInternationalFormComponent implements OnInit {
           summary: 'Succès',
           detail: successMessage
         });
-        this.router.navigate([this.returnUrl]);
+          this.location.back();
       },
       error: (err) => {
         this.messageService.add({

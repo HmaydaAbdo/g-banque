@@ -30,7 +30,7 @@
       </span>
 
       <button pButton pRipple label="Ajouter" type="button" class=" h-fit w-fit " size="small" icon="pi pi-plus"
-              severity="primary" (click)="navigateToNew()"></button>
+              severity="primary" routerLink="/portail/virements-internationaux/new" ></button>
 
     </form>
 
@@ -105,7 +105,8 @@
               class="p-button-rounded p-button-outlined p-button-primary pi pi-pencil"
               pTooltip="Modifier"
               tooltipPosition="top"
-              (click)="navigateToEdit(virement.id)">
+              [routerLink]="['/portail/virements-internationaux/edit',virement.id]"
+              >
             </button>
           </td>
         </tr>

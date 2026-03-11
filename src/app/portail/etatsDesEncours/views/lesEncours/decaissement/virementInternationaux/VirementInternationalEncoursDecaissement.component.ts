@@ -35,7 +35,6 @@ import {
 import {
   EncoursVirementInternationalResponseDto
 } from "../../../../../virementInternational/dtos/EncoursVirementInternationalResponseDto";
-import {NavigationStateService} from "../../../../../global/services/navigation-state.service";
 
 @Component({
   selector: 'app-virement-international-encours-decaissement',
@@ -100,8 +99,6 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
     private decimalPipe: DecimalPipe,
     private fb: FormBuilder,
     private bankStateService: BankStateService,
-    private router: Router,
-    private navState: NavigationStateService
   ) {}
 
   ngOnInit(): void {
@@ -301,17 +298,5 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
       });
   }
 
-  navigateToNew(): void {
-    this.navState.navigateWithReturnUrl(
-      ['/portail/virements-internationaux/new'],
-      this.router.url
-    );
-  }
 
-  navigateToEdit(id: number): void {
-    this.navState.navigateWithReturnUrl(
-      [`/portail/virements-internationaux/edit/${id}`],
-      this.router.url
-    );
-  }
 }
