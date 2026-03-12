@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgIf } from '@angular/common';
+import { CommonModule, NgIf,Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, ParamMap, RouterLink, RouterLinkActive } from '@angular/router';
 
@@ -41,7 +41,7 @@ export class FactoringFormComponent implements OnInit {
   factoringId: number | null = null;
   loading: boolean = false;
 
-  // ✅ Configuration Marchés (Lazy + Virtual Scroll)
+  // Configuration Marchés (Lazy + Virtual Scroll)
   marchesOptions: any[] = [];
   loadingMarches: boolean = false;
   currentFilter: string = '';
@@ -60,7 +60,7 @@ export class FactoringFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    private location:Location,
     private factoringService: FactoringService,
     private marcheService: MarcheService,
     private messageService: MessageService,
@@ -92,7 +92,7 @@ export class FactoringFormComponent implements OnInit {
     });
   }
 
-  // ✅ Initialisation de la liste avec des objets vides pour éviter les erreurs de rendu
+  //  Initialisation de la liste avec des objets vides pour éviter les erreurs de rendu
   initializeMarches(): void {
     this.marcheService.getAllMarchesForLazyLoad(0, this.rowsPerPage, 'numero,asc').subscribe(res => {
       const total = res.page.totalElements;
@@ -102,7 +102,7 @@ export class FactoringFormComponent implements OnInit {
     });
   }
 
-  // ✅ Chargement à la demande lors du scroll
+  //  Chargement à la demande lors du scroll
   onLazyLoadMarches(event: any): void {
     const { first } = event;
     const page = Math.floor(first / this.rowsPerPage);
@@ -165,7 +165,7 @@ export class FactoringFormComponent implements OnInit {
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Chargement échoué.' });
-        this.router.navigate(['/portail/factoring']);
+        this.location.back();
       }
     });
   }
@@ -202,7 +202,7 @@ export class FactoringFormComponent implements OnInit {
     op$.subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Opération réussie.' });
-        this.router.navigate(['/portail/factoring']);
+        this.location.back();
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur technique' });
@@ -211,5 +211,7 @@ export class FactoringFormComponent implements OnInit {
     });
   }
 
-  onCancel(): void { this.router.navigate(['/portail/factoring']); }
+  onCancel(): void {
+    this.location.back();
+  }
 }

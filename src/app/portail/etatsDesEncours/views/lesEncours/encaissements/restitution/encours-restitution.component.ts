@@ -15,7 +15,7 @@ import { CalendarModule } from "primeng/calendar";
 import { InputTextareaModule } from "primeng/inputtextarea";
 import { ConfirmationService, MenuItem, MessageService, SelectItem } from "primeng/api";
 import { ActivatedRoute } from "@angular/router";
-import { debounceTime, distinctUntilChanged, Subscription } from "rxjs";
+import {debounceTime, distinctUntilChanged, reduce, Subscription} from "rxjs";
 
 import { ValidationService } from "../../../../services/validation/validation.service";
 import { RestitutionService } from "../../../../../restitution/service/restitution.service";
@@ -287,4 +287,6 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.searchSubscription.unsubscribe();
   }
+
+  protected readonly reduce = reduce;
 }

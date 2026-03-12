@@ -108,9 +108,9 @@
           <td>{{ dc.banqueName }}</td>
           <td>{{ dc.montant | number:'1.2-2' }}</td>
           <td class="text-overflow-ellipsis">{{ dc.observation }}</td>
-          <td>{{ dc.dateEmission | date:'dd/MM/yyyy' }}</td>
-          <td>{{ dc.dateOperation | date:'dd/MM/yyyy' }}</td>
-          <td>{{ dc.dateValeur | date:'dd/MM/yyyy' }}</td>
+          <td>{{ dc.dateEmission ? (dc.dateEmission | date:'dd/MM/yyyy') : 'NA' }}</td>
+          <td>{{ dc.dateOperation ? (dc.dateOperation | date:'dd/MM/yyyy') : 'NA' }}</td>
+          <td>{{ dc.dateValeur ? (dc.dateValeur | date:'dd/MM/yyyy') : 'NA' }}</td>
 
           <td>
             <p-tag [value]="dc.type" [severity]="dc.type === Type.DEBLOCAGE ? 'success' : 'warning'"></p-tag>

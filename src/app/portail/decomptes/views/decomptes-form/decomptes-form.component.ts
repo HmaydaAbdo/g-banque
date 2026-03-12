@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule , Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 // PrimeNG
 import { MessageService, ConfirmationService, MenuItem, ScrollerOptions } from 'primeng/api';
@@ -57,11 +57,10 @@ export class DecompteFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    private location:Location,
     private decompteService: DecompteService,
     private marcheService: MarcheService,
     private banqueService: BanqueService,
-    private messageService: MessageService,
     private confirmationService: ConfirmationService
   ) {}
 
@@ -199,7 +198,8 @@ export class DecompteFormComponent implements OnInit {
           : this.decompteService.createDecompte(request);
 
         action$.subscribe({
-          next: () => this.router.navigate(['/portail/decomptes']),
+
+          next: () => this.location.back(),
           error: () => this.loading = false
         });
       }
@@ -209,6 +209,6 @@ export class DecompteFormComponent implements OnInit {
   get f() { return this.decompteForm.controls; }
 
   onCancel(): void {
-    this.router.navigate(['/portail/decomptes']);
+   this.location.back();
   }
 }

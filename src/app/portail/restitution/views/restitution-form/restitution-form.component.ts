@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule,Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule, ParamMap } from '@angular/router';
+import { ActivatedRoute, RouterModule, ParamMap } from '@angular/router';
 
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
@@ -59,7 +59,7 @@ export class RestitutionFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    private location: Location,
     private restitutionService: RestitutionService,
     private banqueService: BanqueService,
     private messageService: MessageService,
@@ -145,7 +145,7 @@ export class RestitutionFormComponent implements OnInit {
           detail: 'Échec du chargement de la restitution.'
         });
         this.loading = false;
-        this.router.navigate(['/portail/restitutions']);
+        this.location.back();
       },
     });
   }
@@ -198,7 +198,7 @@ export class RestitutionFormComponent implements OnInit {
             life: 3000
           });
           this.loading = false;
-          this.router.navigate(['/portail/restitutions']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({
@@ -220,7 +220,7 @@ export class RestitutionFormComponent implements OnInit {
             life: 3000
           });
           this.loading = false;
-          this.router.navigate(['/portail/restitutions']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({
@@ -236,6 +236,6 @@ export class RestitutionFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/restitutions']);
+    this.location.back();
   }
 }
