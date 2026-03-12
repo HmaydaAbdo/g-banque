@@ -90,7 +90,6 @@
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="marcheNumero">Marché <p-sortIcon field="marcheNumero"></p-sortIcon></th>
           <th>Banque</th>
-          <th pSortableColumn="decompteInitial">Décompte initiale <p-sortIcon field="decompteInitial"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
           <th>Observation</th>
           <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
@@ -107,7 +106,6 @@
           <td>{{ dc.id }}</td>
           <td >{{ dc.marcheNumero }}</td>
           <td>{{ dc.banqueName }}</td>
-          <td >{{ dc.decompteInitial | number:'1.2-2' }}</td>
           <td>{{ dc.montant | number:'1.2-2' }}</td>
           <td class="text-overflow-ellipsis">{{ dc.observation }}</td>
           <td>{{ dc.dateEmission | date:'dd/MM/yyyy' }}</td>

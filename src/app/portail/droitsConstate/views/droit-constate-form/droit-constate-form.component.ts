@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule ,Location} from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -61,11 +61,11 @@ export class DroitConstateFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
     private droitConstateService: DroitConstateService,
     private marcheService: MarcheService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private location: Location,
   ) {}
 
   ngOnInit(): void {
@@ -97,7 +97,6 @@ export class DroitConstateFormComponent implements OnInit {
       marcheId: [null, Validators.required],
       dateEmission: [null, Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01)]],
-      decompteInitial: [null, [Validators.required, Validators.min(0.01)]],
       type: [null, Validators.required],
     });
   }
@@ -161,7 +160,6 @@ export class DroitConstateFormComponent implements OnInit {
             marcheId: dto.marcheId,
             dateEmission: new Date(dto.dateEmission),
             montant: dto.montant,
-            decompteInitial: dto.decompteInitial,
             type: dto.type,
           });
         });
@@ -169,7 +167,7 @@ export class DroitConstateFormComponent implements OnInit {
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
-        this.router.navigate(['/portail/droits-constate']);
+        this.location.back();
       }
     });
   }
@@ -213,7 +211,7 @@ export class DroitConstateFormComponent implements OnInit {
     op$.subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Opération réussie.' });
-        this.router.navigate(['/portail/droits-constate']);
+        this.location.back();
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur technique' });
@@ -222,5 +220,7 @@ export class DroitConstateFormComponent implements OnInit {
     });
   }
 
-  onCancel(): void { this.router.navigate(['/portail/droits-constate']); }
+  onCancel(): void {
+    this.location.back();
+  }
 }

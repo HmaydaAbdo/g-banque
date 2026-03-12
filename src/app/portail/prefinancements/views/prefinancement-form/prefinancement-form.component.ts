@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgIf } from '@angular/common';
+import { CommonModule, NgIf,Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, ParamMap, RouterLink, RouterLinkActive } from '@angular/router';
 
 // PrimeNG Imports
 import { InputTextModule } from 'primeng/inputtext';
@@ -54,7 +54,7 @@ export class PrefinancementFormComponent implements OnInit {
   prefinancementId: number | null = null;
   loading: boolean = false; // Loading global pour le bouton submit
 
-  // ✅ Configuration pour le Dropdown Marchés (Lazy & Virtual Scroll)
+  // Configuration pour le Dropdown Marchés (Lazy & Virtual Scroll)
   marchesOptions: any[] = [];
   loadingMarches: boolean = false;
   currentFilter: string = '';
@@ -74,19 +74,19 @@ export class PrefinancementFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
     private prefinancementService: PrefinancementService,
     private marcheService: MarcheService,
     private banqueService: BanqueService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private location: Location,
   ) {}
 
   ngOnInit(): void {
     this.setupBreadcrumbs();
     this.initForm();
     this.loadStaticDropdownData();
-    this.initializeMarches(); // ✅ Initialisation de la liste des marchés
+    this.initializeMarches(); // Initialisation de la liste des marchés
 
     this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
@@ -203,7 +203,7 @@ export class PrefinancementFormComponent implements OnInit {
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
-        this.router.navigate(['/portail/préfinancements']);
+        this.location.back();
       }
     });
   }
@@ -242,7 +242,7 @@ export class PrefinancementFormComponent implements OnInit {
     operation$.subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Enregistré avec succès.' });
-        this.router.navigate(['/portail/préfinancements']);
+        this.location.back();
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur technique' });
@@ -252,6 +252,6 @@ export class PrefinancementFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/préfinancements']);
+    this.location.back();
   }
 }

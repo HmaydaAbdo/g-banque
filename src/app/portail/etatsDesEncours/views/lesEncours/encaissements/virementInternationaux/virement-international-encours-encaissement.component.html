@@ -86,28 +86,19 @@
           <td>{{ virement.beneficiaire ? virement.beneficiaire : 'N/A' }}</td>
           <td>{{ virement.montant | number:'1.2-2'}} MAD</td>
           <td class="flex flex-row gap-2">
-            <!-- Bouton Valider -->
-            <button
-              pButton
-              type="button"
-              pRipple
-              class="p-button-rounded p-button-outlined p-button-success pi pi-check"
-              pTooltip="Valider"
-              tooltipPosition="top"
-              (click)="openRapprochementModal(virement)">
-            </button>
 
-            <!-- Bouton Modifier -->
-            <button
-              pButton
-              type="button"
-              pRipple
-              class="p-button-rounded p-button-outlined p-button-primary pi pi-pencil"
-              pTooltip="Modifier"
-              tooltipPosition="top"
-              [routerLink]="['/portail/virements-internationaux/edit',virement.id]"
-              >
-            </button>
+            <button type="button" pButton pRipple icon="pi pi-check"
+                    class="p-button-rounded  p-button-success "
+                    pTooltip="Valider" tooltipPosition="top"
+                    (click)="openRapprochementModal(virement)"
+            ></button>
+
+            <button type="button" pButton pRipple icon="pi pi-pencil"
+                    class="p-button-rounded  p-button-primary  "
+                    pTooltip="Modifier" tooltipPosition="top"
+                    [routerLink]="['/portail/virements-internationaux/edit',virement.id]"
+            ></button>
+
           </td>
         </tr>
       </ng-template>

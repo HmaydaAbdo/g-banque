@@ -5,7 +5,6 @@ export interface DroitConstateRequestDto {
   marcheId: number;
   dateEmission: Date;
   montant: number;
-  decompteInitial:number;
   type: Type;
 }
 

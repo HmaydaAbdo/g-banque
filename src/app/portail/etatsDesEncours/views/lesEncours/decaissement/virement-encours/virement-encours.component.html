@@ -81,13 +81,11 @@
           <td>{{ virement.banqueBeneficiaire ? virement.banqueBeneficiaire : 'N/A' }}</td>
           <td>{{ virement.montant | number:'1.2-2'}} MAD</td>
           <td>
-            <p-button
-              pRipple
-              class="p-button-rounded p-button-success"
-              pTooltip="Valider"
-              label="Valider"
-              (onClick)="openRapprochementModal(virement)"
-            ></p-button>
+            <button type="button" pButton pRipple icon="pi pi-check"
+                    class="p-button-rounded  p-button-success "
+                    pTooltip="Valider" tooltipPosition="top"
+                    (click)="openRapprochementModal(virement)"
+            ></button>
           </td>
         </tr>
       </ng-template>

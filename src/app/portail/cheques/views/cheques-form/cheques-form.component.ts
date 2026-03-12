@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule,Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -69,7 +69,8 @@ export class ChequesFormComponent implements OnInit {
     private router: Router,
     private banqueService: BanqueService,
     private chequeService: ChequeService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private location: Location,
   ) {}
 
   ngOnInit(): void {
@@ -136,8 +137,7 @@ export class ChequesFormComponent implements OnInit {
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du chèque.' });
         this.loading = false;
-        // Redirection en cas d'erreur de chargement
-        this.router.navigate(['/portail/Cheques/encaissements']);
+        this.location.back();
       }
     });
   }
@@ -185,8 +185,7 @@ export class ChequesFormComponent implements OnInit {
     operation$.subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: successMessage });
-        // Rediriger après un petit délai
-         this.router.navigate(['/portail/Cheques/encaissements'])
+        this.location.back();
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Échec de l\'opération.' });

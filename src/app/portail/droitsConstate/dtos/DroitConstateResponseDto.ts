@@ -11,7 +11,6 @@ export interface DroitConstateResponseDto {
   banqueName: string;
   dateEmission: Date;
   montant: number;
-  decompteInitial:number
   observation: string;
   type: Type;
   dateOperation: string;

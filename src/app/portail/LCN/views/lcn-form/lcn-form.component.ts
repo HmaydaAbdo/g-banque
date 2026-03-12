@@ -6,7 +6,7 @@ import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {DropdownModule} from "primeng/dropdown";
 import {InputNumberModule} from "primeng/inputnumber";
 import {InputTextModule} from "primeng/inputtext";
-import {NgClass, NgIf} from "@angular/common";
+import {NgClass, NgIf,Location} from "@angular/common";
 import {PaginatorModule} from "primeng/paginator";
 import {MenuItem, MessageService, PrimeTemplate} from "primeng/api";
 import {ProgressSpinnerModule} from "primeng/progressspinner";
@@ -17,8 +17,6 @@ import {ToastModule} from "primeng/toast";
 import {BanqueDto} from "../../../cmt/dtos/BanqueDto";
 import {Type} from "../../../Virements/Type";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
-import {ChequeService} from "../../../cheques/services/ChequeService";
-import {ChequeResponseDto} from "../../../cheques/dtos/ChequeResponseDto";
 import {Observable, of, switchMap} from "rxjs";
 import {LcnService} from "../../service/LcnService";
 import {LcnResponseDTO} from "../../dtos/LcnResponseDTO";
@@ -76,7 +74,8 @@ export class LcnFormComponent implements OnInit {
     private router: Router,
     private banqueService: BanqueService,
     private lcnService: LcnService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private location: Location,
   ) {}
 
   ngOnInit(): void {
@@ -144,8 +143,7 @@ export class LcnFormComponent implements OnInit {
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du lcn.' });
         this.loading = false;
-        // Redirection en cas d'erreur de chargement
-        this.router.navigate(['/portail/LCN/encaissements']);
+        this.location.back();
       }
     });
   }
@@ -193,8 +191,7 @@ export class LcnFormComponent implements OnInit {
     operation$.subscribe({
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: successMessage });
-        // Rediriger après un petit délai
-        this.router.navigate(['/portail/LCN/encaissements'])
+        this.location.back();
       },
       error: (err) => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Échec de l\'opération.' });
