@@ -24,10 +24,6 @@ public class DroitConstateRequestDto {
     @DecimalMin(value = "0.01", message = "Montant must be a positive value")
     private BigDecimal montant;
 
-    @NotNull(message = "Décompte initiale cannot be null")
-    @DecimalMin(value = "0.01", message = "Décompte initiale must be a positive value")
-    private BigDecimal decompteInitial;
-
     @NotNull(message = "Type cannot be null")
     private Type type;
 
@@ -74,13 +70,6 @@ public class DroitConstateRequestDto {
         this.montant = montant;
     }
 
-    public BigDecimal getDecompteInitial() {
-        return decompteInitial;
-    }
-
-    public void setDecompteInitial(BigDecimal decompteInitial) {
-        this.decompteInitial = decompteInitial;
-    }
 
     @Override
     public String toString() {
@@ -88,7 +77,6 @@ public class DroitConstateRequestDto {
                 "marcheId=" + marcheId +
                 ", dateEmission=" + dateEmission +
                 ", montant=" + montant +
-                ", decompteInitial=" + decompteInitial +
                 ", type=" + type +
                 '}';
     }

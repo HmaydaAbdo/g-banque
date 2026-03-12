@@ -40,7 +40,6 @@ public class DroitConstateMapper {
         DroitConstate entity = new DroitConstate();
         entity.setDateEmission(requestDTO.getDateEmission());
         entity.setMontant(requestDTO.getMontant());
-        entity.setDecompteInitial(requestDTO.getDecompteInitial());
         entity.setObservation( marche.getNumero());
         entity.setType(requestDTO.getType());
         entity.setMarche(marche);
@@ -75,7 +74,6 @@ public class DroitConstateMapper {
         dto.setId(droitConstate.getId());
         dto.setDateEmission(droitConstate.getDateEmission());
         dto.setMontant(droitConstate.getMontant());
-        dto.setDecompteInitial(droitConstate.getDecompteInitial());
 
         dto.setType(droitConstate.getType());
         dto.setDateOperation(droitConstate.getDateOperation()!=null ? droitConstate.getDateOperation() : null);

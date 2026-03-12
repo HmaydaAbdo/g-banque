@@ -1,14 +1,10 @@
 package staport.finance.gBanque.droitConstate.dtos;
 
 
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import staport.finance.gBanque.droitConstate.entities.DroitConstate;
-import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.List;
 
 /**
  * DTO for responding to the client with DroitConstate details.
@@ -26,7 +22,6 @@ public class DroitConstateResponseDto {
     private String banqueName;
     private OffsetDateTime dateEmission;
     private BigDecimal montant;
-    private BigDecimal decompteInitial;
     private String observation;
     private Type type;
     private OffsetDateTime dateOperation;
@@ -102,13 +97,6 @@ public class DroitConstateResponseDto {
         this.montant = montant;
     }
 
-    public BigDecimal getDecompteInitial() {
-        return decompteInitial;
-    }
-
-    public void setDecompteInitial(BigDecimal decompteInitial) {
-        this.decompteInitial = decompteInitial;
-    }
 
     public String getObservation() {
         return observation;

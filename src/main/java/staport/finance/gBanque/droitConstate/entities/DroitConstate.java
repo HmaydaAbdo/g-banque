@@ -24,8 +24,6 @@ public class DroitConstate {
 
     private BigDecimal montant;
 
-    private BigDecimal decompteInitial;
-
     @Enumerated(EnumType.STRING)
     private Type type;
 
@@ -71,14 +69,6 @@ public class DroitConstate {
 
     public void setMontant(BigDecimal montant) {
         this.montant = montant;
-    }
-
-    public BigDecimal getDecompteInitial() {
-        return decompteInitial;
-    }
-
-    public void setDecompteInitial(BigDecimal decompteInitial) {
-        this.decompteInitial = decompteInitial;
     }
 
     public Type getType() {
@@ -148,7 +138,6 @@ public class DroitConstate {
                 ", marche=" + marche +
                 ", dateEmission=" + dateEmission +
                 ", montant=" + montant +
-                ", decompteInitial=" + decompteInitial +
                 ", type=" + type +
                 ", observation='" + observation + '\'' +
                 ", libelle='" + libelle + '\'' +
