@@ -7,6 +7,7 @@ public enum Motif {
     RETENUE_A_LA_SOURCE("Retenue à la source"),
     PENALITE_DE_RETARD("Pénalité de retard"),
     DGI("Direction Générale des Impôts"),
+    ADII("Administration des Douanes et Impôts Indirects"),
     COMMUNAL("COMMUNAL");
 
     private  final String motif;
