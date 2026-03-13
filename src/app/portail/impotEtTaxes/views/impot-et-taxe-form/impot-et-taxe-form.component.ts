@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule ,Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { ImpotEtTaxeRequestDto } from '../../dtos/ImpotEtTaxeRequestDto';
 import { ImpotEtTaxeResponseDto } from '../../dtos/ImpotEtTaxeResponseDto';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
@@ -58,7 +58,7 @@ export class ImpotEtTaxeFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    private location:Location,
     private impotEtTaxeService: ImpotEtTaxeService,
     private banqueService: BanqueService,
     private messageService: MessageService,
@@ -145,7 +145,7 @@ export class ImpotEtTaxeFormComponent implements OnInit {
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement de l\'impôt/taxe.' });
         this.loading = false;
-        this.router.navigate(['/portail/impots-taxes']);
+        this.location.back();
       },
     });
   }
@@ -187,7 +187,7 @@ export class ImpotEtTaxeFormComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Impôt/taxe mis(e) à jour.', life: 3000 });
           this.loading = false;
-          this.router.navigate(['/portail/impots-taxes']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la mise à jour.', life: 3000 });
@@ -199,7 +199,7 @@ export class ImpotEtTaxeFormComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Impôt/taxe créé(e).', life: 3000 });
           this.loading = false;
-          this.router.navigate(['/portail/impots-taxes']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la création.', life: 3000 });
@@ -210,6 +210,6 @@ export class ImpotEtTaxeFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/impots-taxes']);
+    this.location.back();
   }
 }

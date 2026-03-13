@@ -49,7 +49,7 @@
       dataKey="numero"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} LCNs"
       [showCurrentPageReport]="true"
-      styleClass="p-datatable-gridlines"
+      styleClass="p-datatable-gridlines text-xs"
     >
       <ng-template pTemplate="header" >
         <tr class="white-space-nowrap">
@@ -79,13 +79,12 @@
           <td>{{ lcn.beneficiaire }}</td>
           <td>{{ lcn.montant | number: '1.2-2'}} </td>
           <td>
-            <p-button
-              pRipple
-              class="p-button-rounded p-button-success"
-              pTooltip="Valider"
-              label="Valider"
-              (onClick)="openRapprochementModal(lcn)"
-            ></p-button>
+            <button
+              type="button" pButton pRipple icon="pi pi-check"
+              class="p-button-rounded  p-button-success "
+              pTooltip="Valider" tooltipPosition="top"
+              (click)="openRapprochementModal(lcn)"
+            ></button>
           </td>
         </tr>
       </ng-template>

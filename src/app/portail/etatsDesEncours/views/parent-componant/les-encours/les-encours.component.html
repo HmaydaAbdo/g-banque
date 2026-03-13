@@ -1,33 +1,6 @@
 <p-toast></p-toast>
 <p-confirmDialog [style]="{width: '42vw'}" [baseZIndex]="1000"></p-confirmDialog>
 
-<!-- Dialog Clôture — plus besoin de sélection de date, le backend trouve le rapprochement EN_COURS automatiquement -->
-<p-dialog [(visible)]="displayClotureDialog" header="Clôturer le Rapprochement" [modal]="true"
-          [style]="{width: '38rem'}" [draggable]="false" [resizable]="false">
-
-  <div class="flex flex-column align-items-center gap-3 py-3">
-    <div class="flex align-items-center justify-content-center border-round-xl"
-         style="width:4rem;height:4rem;background:linear-gradient(135deg,#fff3cd,#ffe69c)">
-      <i class="pi pi-lock text-2xl" style="color:#856404"></i>
-    </div>
-    <div class="text-center">
-      <p class="text-900 font-semibold text-lg m-0">Confirmer la clôture</p>
-      <p class="text-500 text-sm mt-2 mb-0">
-        Le système identifiera automatiquement le rapprochement en cours et le clôturera.<br>
-        Cette action est <strong>irréversible</strong>.
-      </p>
-    </div>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <p-button label="Annuler" icon="pi pi-times" (click)="displayClotureDialog = false"
-              styleClass="p-button-text p-button-secondary"></p-button>
-    <p-button label="Clôturer" icon="pi pi-check" (click)="confirmCloture()"
-              [disabled]="clotureLoading"
-              [loading]="clotureLoading"
-              styleClass="p-button-warning"></p-button>
-  </ng-template>
-</p-dialog>
 
 <!-- Layout Principal -->
 <div class="flex h-screen w-full">
@@ -86,7 +59,6 @@
         <ng-template pTemplate="item" let-item>
           <ng-container *ngIf="item.route; else elseBlock">
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
-              <span [ngClass]="[item.icon ? item.icon : '']"></span>
               <span class="text-700 font-medium ml-2">{{ item.label }}</span>
             </a>
           </ng-container>
@@ -98,8 +70,9 @@
         </ng-template>
       </p-breadcrumb>
 
-      <p-button label="Clôturer le rapprochement"
-                icon="pi pi-check-circle"
+      <p-button label="Clôturer "
+                pTooltip="Clôturer le rapprochement"
+                tooltipPosition="left"
                 styleClass="p-button-primary p-button-sm"
                 (onClick)="showClotureDialog()"></p-button>
     </div>
@@ -109,3 +82,31 @@
 
   </div>
 </div>
+
+<!-- Dialog Clôture — plus besoin de sélection de date, le backend trouve le rapprochement EN_COURS automatiquement -->
+<p-dialog [(visible)]="displayClotureDialog" header="Clôturer le Rapprochement" [modal]="true"
+          [style]="{width: '38rem'}" [draggable]="false" [resizable]="false">
+
+  <div class="flex flex-column align-items-center gap-3 py-3">
+    <div class="flex align-items-center justify-content-center border-round-xl"
+         style="width:4rem;height:4rem;background:linear-gradient(135deg,#fff3cd,#ffe69c)">
+      <i class="pi pi-lock text-2xl" style="color:#856404"></i>
+    </div>
+    <div class="text-center">
+      <p class="text-900 font-semibold text-lg m-0">Confirmer la clôture</p>
+      <p class="text-500 text-sm mt-2 mb-0">
+        Le système identifiera automatiquement le rapprochement en cours et le clôturera.<br>
+        Cette action est <strong>irréversible</strong>.
+      </p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Annuler" icon="pi pi-times" (click)="displayClotureDialog = false"
+              styleClass="p-button-text p-button-secondary"></p-button>
+    <p-button label="Clôturer" icon="pi pi-check" (click)="confirmCloture()"
+              [disabled]="clotureLoading"
+              [loading]="clotureLoading"
+              styleClass="p-button-warning"></p-button>
+  </ng-template>
+</p-dialog>

@@ -35,15 +35,9 @@
         />
       </div>
 
-      <button
-        pButton
-        pRipple
-        label="Ajouter opération erronée"
-        class="h-fit"
-        size="small"
-        icon="pi pi-plus"
-        severity="primary"
-        routerLink="/portail/operations/errones/new">
+      <button type="button" pButton pRipple label="Ajouter"
+        class="h-fit" size="small" icon="pi pi-plus"
+        severity="primary" routerLink="/portail/operations/errones/new">
       </button>
 
     </form>
@@ -72,7 +66,7 @@
         {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
         {field: 'status', header: 'Statut', sortable: true}
       ]"
-      styleClass="p-datatable-gridlines"
+      styleClass="p-datatable-gridlines text-xs"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
 
@@ -101,15 +95,17 @@
               [severity]="operation.status === 'PAYE' ? 'success' : 'danger'"
             ></p-tag>
           </td>
-          <td>
-            <p-button
-              icon="pi pi-check"
-              label="Valider"
-              size="small"
-              severity="success"
-              [rounded]="true"
-              (onClick)="openRapprochementModal(operation)"
-            ></p-button>
+          <td class="flex flex-row gap-2">
+            <button type="button" pButton pRipple icon="pi pi-check"
+                    class="p-button-rounded  p-button-success "
+                    pTooltip="Valider" tooltipPosition="top"
+                    (click)="openRapprochementModal(operation)"
+            ></button>
+            <button type="button" pButton pRipple icon="pi pi-pencil"
+                    class="p-button-rounded  p-button-primary "
+                    pTooltip="Modifier" tooltipPosition="top"
+                    [routerLink]="['/portail/operations/errones/edit', operation.id]"
+            ></button>
           </td>
         </tr>
       </ng-template>

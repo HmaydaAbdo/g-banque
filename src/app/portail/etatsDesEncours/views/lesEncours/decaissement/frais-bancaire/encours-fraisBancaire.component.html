@@ -21,7 +21,7 @@
         <input pInputText type="number" formControlName="montant" placeholder="Montant" (keyup.enter)="applyFilters()" class="w-full" />
       </div>
 
-      <button pButton pRipple label="Ajouter" class="h-fit " size="small"
+      <button type="button" pButton pRipple label="Ajouter" class="h-fit " size="small"
               icon="pi pi-plus" severity="primary" routerLink="/portail/frais-bancaire/new"></button>
 
     </form>
@@ -39,7 +39,7 @@
                 {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
                 {field: 'status', header: 'Statut', sortable: true}
              ]"
-             styleClass="p-datatable-gridlines"
+             styleClass="p-datatable-gridlines text-xs"
              [showCurrentPageReport]="true"
              currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
       <ng-template pTemplate="header" let-columns>
@@ -61,13 +61,17 @@
           <td>{{ fraisBancaire.montant | number:'1.2-2' }} </td>
           <td>{{ fraisBancaire.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ fraisBancaire.status }}</td>
-          <td>
-            <p-button
-              icon="pi pi-check"
-              label="Valider"
-              class="p-button-rounded p-button-success"
-              (onClick)="openRapprochementModal(fraisBancaire)"
-            ></p-button>
+          <td class="flex flex-row gap-2">
+            <button type="button" pButton pRipple icon="pi pi-check"
+                    class="p-button-rounded  p-button-success "
+                    pTooltip="Valider" tooltipPosition="top"
+                    (click)="openRapprochementModal(fraisBancaire)"
+            ></button>
+            <button type="button" pButton pRipple icon="pi pi-pencil"
+                    class="p-button-rounded  p-button-primary "
+                    pTooltip="Modifier" tooltipPosition="top"
+                    [routerLink]="['/portail/frais-bancaire/edit', fraisBancaire.id]"
+            ></button>
           </td>
         </tr>
       </ng-template>

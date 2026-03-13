@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule ,Location} from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
 import { PageResponse } from '../../../global/types/PageResponse';
@@ -54,7 +54,7 @@ export class FraisBancaireFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    private location:Location,
     private fraisService: FraisBancaireService,
     private banqueService: BanqueService,
     private messageService: MessageService,
@@ -135,7 +135,7 @@ export class FraisBancaireFormComponent implements OnInit {
           detail: 'Échec du chargement du frais bancaire.'
         });
         this.loading = false;
-        this.router.navigate(['/portail/frais-bancaire']);
+        this.location.back();
       },
     });
   }
@@ -188,7 +188,7 @@ export class FraisBancaireFormComponent implements OnInit {
             life: 3000
           });
           this.loading = false;
-          this.router.navigate(['/portail/frais-bancaire']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({
@@ -210,7 +210,7 @@ export class FraisBancaireFormComponent implements OnInit {
             life: 3000
           });
           this.loading = false;
-          this.router.navigate(['/portail/frais-bancaire']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({
@@ -226,6 +226,6 @@ export class FraisBancaireFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/frais-bancaire']);
+    this.location.back();
   }
 }

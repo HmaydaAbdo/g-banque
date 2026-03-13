@@ -48,7 +48,7 @@
       dataKey="id"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} échéances"
       [showCurrentPageReport]="true"
-      styleClass="p-datatable-gridlines"
+      styleClass="p-datatable-gridlines text-xs"
       [tableStyle]="{ 'min-width': '60rem' }" >
       <ng-template pTemplate="header">
         <tr>
@@ -66,12 +66,12 @@
           <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
           <td>{{ echeance.montantTTC | number: '1.2-2'}} MAD</td>
           <td>
-            <p-button
-              pRipple
-              class="p-button-rounded p-button-success"
-              pTooltip="Marquer comme payé"
+            <button
+              type="button" pButton pRipple icon="pi pi-check"
+              class="p-button-rounded  p-button-success "
+              pTooltip="Valider" tooltipPosition="top"
               (click)="openRapprochementModal(echeance)"
-            >valider</p-button>
+            ></button>
           </td>
         </tr>
       </ng-template>

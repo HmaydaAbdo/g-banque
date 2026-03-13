@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule,Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
@@ -58,7 +58,7 @@ export class OperationErroneFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    private location:Location,
     private operationErroneService: OperationErroneService,
     private banqueService: BanqueService,
     private messageService: MessageService,
@@ -155,7 +155,7 @@ export class OperationErroneFormComponent implements OnInit {
           detail: 'Échec du chargement de l\'opération erronée.'
         });
         this.loading = false;
-        this.router.navigate(['/portail/operations/errones']);
+        this.location.back();
       },
     });
   }
@@ -210,7 +210,7 @@ export class OperationErroneFormComponent implements OnInit {
             life: 3000
           });
           this.loading = false;
-          this.router.navigate(['/portail/operations/errones']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({
@@ -232,7 +232,7 @@ export class OperationErroneFormComponent implements OnInit {
             life: 3000
           });
           this.loading = false;
-          this.router.navigate(['/portail/operations/errones']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({
@@ -248,6 +248,6 @@ export class OperationErroneFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/operations/errones']);
+    this.location.back();
   }
 }

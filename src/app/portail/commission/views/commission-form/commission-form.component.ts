@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule ,Location} from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { CommissionRequestDto } from '../../dtos/CommissionRequestDto';
 import { CommissionResponseDto } from '../../dtos/commission-response.dto';
 import { CommissionService } from '../../service/commission.service';
@@ -62,7 +62,7 @@ export class CommissionFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    private location: Location,
     private commissionService: CommissionService,
     private banqueService: BanqueService,
     private messageService: MessageService,
@@ -149,7 +149,7 @@ export class CommissionFormComponent implements OnInit {
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement de la commission.' });
         this.loading = false;
-        this.router.navigate(['/portail/commissions']);
+        this.location.back();
       },
     });
   }
@@ -191,7 +191,7 @@ export class CommissionFormComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Commission mise à jour.', life: 3000 });
           this.loading = false;
-          this.router.navigate(['/portail/commissions']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la mise à jour.', life: 3000 });
@@ -203,7 +203,7 @@ export class CommissionFormComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Commission créée.', life: 3000 });
           this.loading = false;
-          this.router.navigate(['/portail/commissions']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la création.', life: 3000 });
@@ -214,6 +214,6 @@ export class CommissionFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/commissions']);
+    this.location.back();
   }
 }

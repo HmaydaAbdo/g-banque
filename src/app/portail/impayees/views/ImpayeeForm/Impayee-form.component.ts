@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule ,Location} from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { ImpayeeRequestDto } from '../../dtos/ImpayeeRequestDto';
 import { ImpayeeResponseDto } from '../../dtos/ImpayeeResponseDto';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
@@ -53,12 +53,11 @@ export class ImpayeeFormComponent implements OnInit {
   motifOptions: { label: string; value: TransactionSource | null }[] = [];
 
   items: MenuItem[] | undefined;
-  selectedBanqueEncaissement?: BanqueResponse;
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    private location:Location,
     private impayeeService: ImpayeeService,
     private banqueService: BanqueService,
     private messageService: MessageService,
@@ -145,7 +144,7 @@ export class ImpayeeFormComponent implements OnInit {
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement de l\'impayée.' });
         this.loading = false;
-        this.router.navigate(['/portail/impayees']);
+        this.location.back();
       },
     });
   }
@@ -187,7 +186,7 @@ export class ImpayeeFormComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Impayée mise à jour.', life: 3000 });
           this.loading = false;
-          this.router.navigate(['/portail/impayees']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la mise à jour.', life: 3000 });
@@ -199,7 +198,7 @@ export class ImpayeeFormComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Impayée créée.', life: 3000 });
           this.loading = false;
-          this.router.navigate(['/portail/impayees']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la création.', life: 3000 });
@@ -210,6 +209,6 @@ export class ImpayeeFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/impayees']);
+    this.location.back();
   }
 }

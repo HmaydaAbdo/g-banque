@@ -47,7 +47,7 @@
       dataKey="numero"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} chèques"
       [showCurrentPageReport]="true"
-      styleClass="p-datatable-gridlines"
+      styleClass="p-datatable-gridlines text-xs"
 
     >
       <ng-template pTemplate="header">
@@ -78,13 +78,12 @@
           <td>{{ cheque.beneficiaire }}</td>
           <td>{{ cheque.montant | number: '1.2-2' }} </td>
           <td>
-            <p-button
-              pRipple
-              class="p-button-rounded p-button-success"
-              pTooltip="Valider"
-              label="Valider"
-              (onClick)="openRapprochementModal(cheque)"
-            ></p-button>
+            <button
+              type="button" pButton pRipple icon="pi pi-check"
+              class="p-button-rounded  p-button-success "
+              pTooltip="Valider" tooltipPosition="top"
+              (click)="openRapprochementModal(cheque)"
+            ></button>
           </td>
         </tr>
       </ng-template>

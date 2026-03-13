@@ -65,7 +65,7 @@
         { field: 'dateEmission', header: 'Date d\'émission', sortable: true },
         { field: 'status', header: 'Statut', sortable: true }
       ]"
-      styleClass="p-datatable-gridlines"
+      styleClass="p-datatable-gridlines text-xs"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
     >
@@ -97,7 +97,6 @@
             </span>
           </td>
           <td class="flex flex-row gap-2">
-
             <button type="button" pButton pRipple icon="pi pi-check"
                     class="p-button-rounded  p-button-success "
                     pTooltip="Valider" tooltipPosition="top"

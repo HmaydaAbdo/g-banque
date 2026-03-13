@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule ,Location} from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
@@ -65,7 +65,7 @@ export class PrelevementFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
+    private location: Location,
     private prelevementService: PrelevementService,
     private banqueService: BanqueService,
     private messageService: MessageService,
@@ -142,7 +142,7 @@ export class PrelevementFormComponent implements OnInit {
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du prélèvement.' });
         this.loading = false;
-        this.router.navigate(['/portail/prelevements']);
+        this.location.back();
       },
     });
   }
@@ -183,7 +183,7 @@ export class PrelevementFormComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Prélèvement mis à jour.', life: 3000 });
           this.loading = false;
-          this.router.navigate(['/portail/prelevements']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la mise à jour.', life: 3000 });
@@ -195,7 +195,7 @@ export class PrelevementFormComponent implements OnInit {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Prélèvement créé.', life: 3000 });
           this.loading = false;
-          this.router.navigate(['/portail/prelevements']);
+          this.location.back();
         },
         error: (error) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la création.', life: 3000 });
@@ -206,6 +206,6 @@ export class PrelevementFormComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/portail/prelevements']);
+    this.location.back();
   }
 }
