@@ -1,6 +1,6 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
-import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {InputTextModule} from 'primeng/inputtext';
 import {ButtonModule} from 'primeng/button';
@@ -21,6 +21,8 @@ import {RapprochementSearchDto} from "../../dtos/RapprochementSearchDto";
 import {PageResponse} from "../../../global/types/PageResponse";
 import {throwError} from "rxjs";
 import {ToolbarModule} from "primeng/toolbar";
+import {DialogModule} from "primeng/dialog";
+import {SelectButtonModule} from "primeng/selectbutton";
 
 
 
@@ -40,7 +42,10 @@ import {ToolbarModule} from "primeng/toolbar";
     TooltipModule,
     BreadcrumbModule,
     DropdownModule,
-    ToolbarModule
+    ToolbarModule,
+    DialogModule,
+    SelectButtonModule,
+    FormsModule
   ],
   templateUrl: './historique-des-rapprochement.component.html',
   styleUrls: ['./historique-des-rapprochement.component.scss'],
@@ -64,6 +69,25 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
   loadingBanques: boolean = false;
 
   loadingReport: { [key: number]: boolean } = {};
+
+  showReportTypeModal: boolean = false;
+  selectedReportType: 'FINANCE' | 'COMPTABILITE' | null = null;
+  pendingRapprochement: RapprochementResponse | null = null;
+  reportTypeOptions = [
+    {
+      label: 'Finance',
+      value: 'FINANCE',
+      icon: 'pi pi-chart-bar',
+      description: 'Inclut TVA et date d\'émission'
+    },
+    {
+      label: 'Comptabilité',
+      value: 'COMPTABILITE',
+      icon: 'pi pi-book',
+      description: 'Sans TVA ni date d\'émission'
+    }
+  ];
+
   constructor(
     private rapprochementService: RapprochementService,
     private messageService: MessageService,
@@ -186,16 +210,32 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
 
   downloadRapprochementReport(rapprochement: RapprochementResponse): void {
     if (!rapprochement.id) {
-      this.messageService.add({severity: 'warn', summary: 'Alerte', detail: 'ID du rapprochement manquant.', life: 3000});
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Alerte',
+        detail: 'ID du rapprochement manquant.',
+        life: 3000
+      });
       return;
     }
+    // Ouvre la modal et mémorise le rapprochement en attente
+    this.pendingRapprochement = rapprochement;
+    this.selectedReportType = 'FINANCE'; // Finance par défaut
+    this.showReportTypeModal = true;
+  }
 
-    // Active l'indicateur de chargement spécifique
+// Ajouter cette méthode
+  confirmDownload(): void {
+    if (!this.pendingRapprochement || !this.selectedReportType) return;
+
+    const rapprochement = this.pendingRapprochement;
+    const reportType = this.selectedReportType;
+
+    this.showReportTypeModal = false;
     this.loadingReport[rapprochement.id] = true;
 
-    this.rapprochementService.downloadReport(rapprochement.id)
+    this.rapprochementService.downloadReport(rapprochement.id, reportType)
       .pipe(
-        // Gère l'erreur
         catchError(error => {
           console.error('Erreur lors du téléchargement du rapport:', error);
           this.messageService.add({
@@ -204,34 +244,29 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
             detail: 'Échec de la génération ou du téléchargement du rapport.',
             life: 5000
           });
-          // Propage l'erreur pour la gestion du finalize
           return throwError(() => new Error('Download failed'));
         }),
-        // Désactive le chargement quel que soit le résultat (succès ou erreur)
         finalize(() => {
           this.loadingReport[rapprochement.id] = false;
+          this.pendingRapprochement = null;
+          this.selectedReportType = null;
         })
       )
       .subscribe((response: Blob) => {
-        // Création de l'objet Blob pour le téléchargement
         const fileURL = URL.createObjectURL(response);
         const link = document.createElement('a');
-
         link.href = fileURL;
         link.download = `Rapport_Rapprochement_${rapprochement.banqueNom}_${rapprochement.dateRapprochement}.pdf`;
-
-        // Simule le clic pour démarrer le téléchargement
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(fileURL); // Libère la mémoire
+        URL.revokeObjectURL(fileURL);
 
         this.messageService.add({
           severity: 'success',
           summary: 'Succès',
-          detail: 'Le rapport PDF a été généré et téléchargé.',
+          detail: `Rapport ${reportType} téléchargé avec succès.`,
           life: 3000
         });
       });
-  }
-}
+  }}

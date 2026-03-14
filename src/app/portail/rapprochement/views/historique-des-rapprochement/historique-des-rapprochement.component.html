@@ -144,3 +144,56 @@
     </p-table>
   </div>
 </div>
+
+
+
+<!-- Modal choix type de rapport -->
+<p-dialog
+  header="Choisir le type de rapport"
+  [(visible)]="showReportTypeModal"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false">
+
+  <div class="flex flex-column gap-3 p-3">
+
+    <p class="text-color-secondary m-0">
+      Sélectionnez la version du rapport à télécharger :
+    </p>
+
+    <p-selectButton
+      [options]="reportTypeOptions"
+      [(ngModel)]="selectedReportType"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="w-full flex"
+      [style]="{ width: '100%' }">
+
+      <ng-template pTemplate="item" let-option>
+        <div class="flex flex-row align-items-center justify-content-center gap-2 px-3 py-2 w-full">
+          <div class="flex flex-column align-items-start">
+            <span class="font-semibold">{{ option.label }}</span>
+          </div>
+        </div>
+      </ng-template>
+
+    </p-selectButton>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      styleClass="p-button-text"
+      (click)="showReportTypeModal = false">
+    </p-button>
+    <p-button
+      label="Télécharger"
+      icon="pi pi-download"
+      [disabled]="!selectedReportType"
+      (click)="confirmDownload()">
+    </p-button>
+  </ng-template>
+
+</p-dialog>
