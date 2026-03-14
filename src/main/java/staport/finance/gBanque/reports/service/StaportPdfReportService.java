@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import staport.finance.gBanque.rapprochement.dtos.ReportDto;
 import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifGlobal;
 import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
+import staport.finance.gBanque.reports.enums.ReportType;
 import staport.finance.gBanque.reports.utils.StaportPdfPageEventHelper;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -73,16 +74,17 @@ public class StaportPdfReportService {
      * Génère un rapport PDF spécifique au rapprochement bancaire à partir du DTO.
      * La signature est mise à jour pour utiliser ReportDto.
      */
-    public byte[] generateRapprochementReport(ReportDto dto) throws DocumentException {
+    public byte[] generateRapprochementReport(ReportDto dto, ReportType reportType) throws DocumentException {
 
         String reportTitle = "Rapprochement Bancaire";
+        boolean isFinance = reportType == ReportType.FINANCE;
 
         return generateReport(
                 reportTitle,
                 (document, writer) -> {
                     try {
                         // ----------------------------------------------------
-                        // SECTION 1 : SYNTHÈSE ET EN-TÊTES
+                        // SECTION 1 : TITRE + EN-TÊTE
                         // ----------------------------------------------------
                         Paragraph title = new Paragraph(reportTitle, TITLE_FONT_BLACK);
                         title.setAlignment(Element.ALIGN_CENTER);
@@ -91,25 +93,21 @@ public class StaportPdfReportService {
                         document.add(Chunk.NEWLINE);
                         document.add(title);
 
-                        // --- Tableau d'en-tête (Banque, Date, Solde Initial) ---
                         PdfPTable headerTable = new PdfPTable(3);
                         headerTable.setWidthPercentage(100);
                         headerTable.setWidths(new float[]{3f, 2f, 3f});
                         headerTable.setSpacingAfter(10);
 
-                        // Cellule 1: Banque
                         PdfPCell bankCell = new PdfPCell(new Phrase("Banque: " + dto.getBanqueNom(), BOLD_FONT));
                         bankCell.setBorder(Rectangle.NO_BORDER);
                         bankCell.setPadding(3);
                         headerTable.addCell(bankCell);
 
-                        // Cellule 2: Date
                         PdfPCell dateCell = new PdfPCell(new Phrase("Date: " + dto.getDateRapprochement().format(DATE_FORMATTER), BOLD_FONT));
                         dateCell.setBorder(Rectangle.NO_BORDER);
                         dateCell.setPadding(3);
                         headerTable.addCell(dateCell);
 
-                        // Cellule 3: Solde Initial (Ajouté ici)
                         PdfPCell soldeDebutCell = new PdfPCell(new Phrase("Solde Initial: " + formatCurrency(dto.getSoldeDebut()), BOLD_FONT));
                         soldeDebutCell.setBorder(Rectangle.NO_BORDER);
                         soldeDebutCell.setPadding(3);
@@ -118,158 +116,102 @@ public class StaportPdfReportService {
 
                         document.add(headerTable);
 
-
                         // ----------------------------------------------------
-                        // SECTION 2 : TABLEAU DES OPÉRATIONS (Transactions)
+                        // SECTION 2 : TABLEAU DES TRANSACTIONS
                         // ----------------------------------------------------
-
-
                         if (dto.getTransactions() != null && !dto.getTransactions().isEmpty()) {
-                            // Appel de la méthode avec la LISTE de transactions (getContent() n'est plus nécessaire)
-                            generateTransactionsTable(document, dto.getTransactions());
+                            generateTransactionsTable(document, dto.getTransactions(), isFinance);
                         } else {
                             document.add(new Paragraph("Aucune transaction trouvée pour cette période.", SUBTITLE_FONT));
                         }
 
                         // ----------------------------------------------------
-                        //  SECTION : TOTAUX DÉBIT/CRÉDIT/TVA (Style final)
+                        // SECTION 3 : TOTAUX DÉBIT / CRÉDIT (+ TVA si Finance)
                         // ----------------------------------------------------
+                        if (isFinance) {
+                            PdfPTable totalsTable = new PdfPTable(4);
+                            totalsTable.setWidthPercentage(100);
+                            totalsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalsTable.setWidths(new float[]{3f, 2f, 3f, 2f});
 
+                            addTotalCell(totalsTable, "TOTAL DÉBIT :", formatCurrency(dto.getTotalDebit()));
+                            addTotalCell(totalsTable, "TOTAL CRÉDIT :", formatCurrency(dto.getTotalCredit()));
+                            addTotalCell(totalsTable, "TOTAL TVA DÉDUCTIBLE :", formatCurrency(dto.getTvaDeductible()));
+                            addTotalCell(totalsTable, "TOTAL TVA COLLECTÉE :", formatCurrency(dto.getTvaCollectee()));
 
-                        // Tableau pour les totaux (4 colonnes: Label, Value, Label, Value)
-                        PdfPTable totalsTable = new PdfPTable(4);
-                        totalsTable.setWidthPercentage(100);
-                        totalsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        totalsTable.setWidths(new float[]{3f, 2f, 3f, 2f});
+                            document.add(totalsTable);
+                        } else {
+                            PdfPTable totalsTable = new PdfPTable(2);
+                            totalsTable.setWidthPercentage(50);
+                            totalsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalsTable.setWidths(new float[]{3f, 2f});
 
-                        // Ligne 1 : Total Débit / Total Crédit
+                            addTotalCell(totalsTable, "TOTAL DÉBIT :", formatCurrency(dto.getTotalDebit()));
+                            addTotalCell(totalsTable, "TOTAL CRÉDIT :", formatCurrency(dto.getTotalCredit()));
 
-                        // Total Débit Label
-                        PdfPCell totalDebitLabel = new PdfPCell(new Phrase("TOTAL DÉBIT :", BOLD_FONT));
-                        totalDebitLabel.setBorder(Rectangle.NO_BORDER);
-                        totalDebitLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        totalDebitLabel.setBackgroundColor(Color.decode("#f0f0f0"));
-                        totalsTable.addCell(totalDebitLabel);
-
-                        // Total Débit Value
-                        PdfPCell totalDebitValue = new PdfPCell(new Phrase(formatCurrency(dto.getTotalDebit()), BOLD_FONT));
-                        totalDebitValue.setBorder(Rectangle.NO_BORDER);
-                        totalDebitValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        totalDebitValue.setBackgroundColor(Color.decode("#f0f0f0"));
-                        totalsTable.addCell(totalDebitValue);
-
-                        // Total Crédit Label
-                        PdfPCell totalCreditLabel = new PdfPCell(new Phrase("TOTAL CRÉDIT :", BOLD_FONT));
-                        totalCreditLabel.setBorder(Rectangle.NO_BORDER);
-                        totalCreditLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        totalCreditLabel.setBackgroundColor(Color.decode("#f0f0f0"));
-                        totalsTable.addCell(totalCreditLabel);
-
-                        // Total Crédit Value
-                        PdfPCell totalCreditValue = new PdfPCell(new Phrase(formatCurrency(dto.getTotalCredit()), BOLD_FONT));
-                        totalCreditValue.setBorder(Rectangle.NO_BORDER);
-                        totalCreditValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        totalCreditValue.setBackgroundColor(Color.decode("#f0f0f0"));
-                        totalsTable.addCell(totalCreditValue);
-
-                        // Ligne 2 : TVA Déductible / TVA Collectée
-
-                        // TVA Déductible Label
-                        PdfPCell tvaDedLabel = new PdfPCell(new Phrase("TOTAL TVA DÉDUCTIBLE :", BOLD_FONT));
-                        tvaDedLabel.setBorder(Rectangle.NO_BORDER);
-                        tvaDedLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        tvaDedLabel.setBackgroundColor(Color.decode("#f0f0f0"));
-                        totalsTable.addCell(tvaDedLabel);
-
-                        // TVA Déductible Value
-                        PdfPCell tvaDedValue = new PdfPCell(new Phrase(formatCurrency(dto.getTvaDeductible()), BOLD_FONT));
-                        tvaDedValue.setBorder(Rectangle.NO_BORDER);
-                        tvaDedValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        tvaDedValue.setBackgroundColor(Color.decode("#f0f0f0"));
-                        totalsTable.addCell(tvaDedValue);
-
-                        // TVA Collectée Label
-                        PdfPCell tvaCollLabel = new PdfPCell(new Phrase("TOTAL TVA COLLECTÉE :", BOLD_FONT));
-                        tvaCollLabel.setBorder(Rectangle.NO_BORDER);
-                        tvaCollLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        tvaCollLabel.setBackgroundColor(Color.decode("#f0f0f0"));
-                        totalsTable.addCell(tvaCollLabel);
-
-                        // TVA Collectée Value
-                        PdfPCell tvaCollValue = new PdfPCell(new Phrase(formatCurrency(dto.getTvaCollectee()), BOLD_FONT));
-                        tvaCollValue.setBorder(Rectangle.NO_BORDER);
-                        tvaCollValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        tvaCollValue.setBackgroundColor(Color.decode("#f0f0f0"));
-                        totalsTable.addCell(tvaCollValue);
-
-                        document.add(totalsTable);
+                            document.add(totalsTable);
+                        }
 
                         // ----------------------------------------------------
-                        // SECTION 3 : MONTANTS FINAUX (Solde Fin et TVA Due)
+                        // SECTION 4 : SOLDE FINAL (+ TVA Due si Finance)
                         // ----------------------------------------------------
+                        if (isFinance) {
+                            PdfPTable finalTable = new PdfPTable(4);
+                            finalTable.setWidthPercentage(100);
+                            finalTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            finalTable.setWidths(new float[]{3f, 2f, 3f, 2f});
 
-                        PdfPTable finalTable = new PdfPTable(4);
-                        finalTable.setWidthPercentage(100);
-                        finalTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        finalTable.setWidths(new float[]{3f, 2f, 3f, 2f});
+                            addTotalCell(finalTable, "SOLDE FINAL :", formatCurrency(dto.getSoldeFin()));
+                            addTotalCell(finalTable, "TVA DUE :", formatCurrency(dto.getTvaDue()));
 
-                        // Ligne 1 : Solde Fin
-                        PdfPCell soldeFinLabel = new PdfPCell(new Phrase("SOLDE FINAL :", BOLD_FONT));
-                        soldeFinLabel.setBorder(Rectangle.NO_BORDER);
-                        soldeFinLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        soldeFinLabel.setBackgroundColor(Color.decode("#f0f0f0"));
-                        finalTable.addCell(soldeFinLabel);
+                            document.add(finalTable);
+                        } else {
+                            PdfPTable finalTable = new PdfPTable(2);
+                            finalTable.setWidthPercentage(50);
+                            finalTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            finalTable.setWidths(new float[]{3f, 2f});
 
-                        PdfPCell soldeFinValue = new PdfPCell(new Phrase(formatCurrency(dto.getSoldeFin()), BOLD_FONT));
-                        soldeFinValue.setBorder(Rectangle.NO_BORDER);
-                        soldeFinValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        soldeFinValue.setBackgroundColor(Color.decode("#f0f0f0"));
-                        finalTable.addCell(soldeFinValue);
+                            addTotalCell(finalTable, "SOLDE FINAL :", formatCurrency(dto.getSoldeFin()));
 
-                        // Ligne 1 suite: TVA Due
-                        PdfPCell tvaDueLabel = new PdfPCell(new Phrase("TVA DUE :", BOLD_FONT));
-                        tvaDueLabel.setBorder(Rectangle.NO_BORDER);
-                        tvaDueLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        tvaDueLabel.setBackgroundColor(Color.decode("#f0f0f0"));
-                        finalTable.addCell(tvaDueLabel);
-
-                        PdfPCell tvaDueValue = new PdfPCell(new Phrase(formatCurrency(dto.getTvaDue()), BOLD_FONT));
-                        tvaDueValue.setBorder(Rectangle.NO_BORDER);
-                        tvaDueValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        tvaDueValue.setBackgroundColor(Color.decode("#f0f0f0"));
-                        finalTable.addCell(tvaDueValue);
-
-                        document.add(finalTable);
+                            document.add(finalTable);
+                        }
 
                     } catch (DocumentException e) {
                         throw new RuntimeException("Erreur lors de la génération du contenu du rapport de rapprochement.", e);
                     }
                 }
         );
-    }
-
-    /**
+    }    /**
      * Génère le tableau des transactions (sans ligne de totaux interne).
      */
-    private void generateTransactionsTable(Document document, List<TransactionResponseDto> transactions) throws DocumentException {
-        // Nouvelle configuration : 9 colonnes
-        PdfPTable table = new PdfPTable(9);
-        table.setWidthPercentage(100);
+    private void generateTransactionsTable(Document document,
+                                           List<TransactionResponseDto> transactions,
+                                           boolean isFinance) throws DocumentException {
 
-        // Largeurs ajustées pour éviter l'enveloppement excessif des dates/montants
-        table.setWidths(new float[]{2.5f, 2.5f, 2.5f, 3f, 3f, 3f, 3f, 3f, 2.5f});
+        PdfPTable table = new PdfPTable(isFinance ? 9 : 6);
+        table.setWidthPercentage(100);
         table.setSpacingBefore(3);
         table.setSpacingAfter(3);
-
-        // --- 1. Répéter l'en-tête sur chaque page ---
         table.setHeaderRows(1);
 
-        // Headers pour 9 colonnes (Autorisé à wrapper par défaut)
-        String[] headers = {
-                "Date d'émission", "Date d'opération", "Date de valeur", "Libellé", "Débit", "Crédit",
+        if (isFinance) {
+            table.setWidths(new float[]{2.5f, 2.5f, 2.5f, 3f, 3f, 3f, 3f, 3f, 2.5f});
+        } else {
+            table.setWidths(new float[]{2.5f, 2.5f, 4f, 3f, 3f, 3f});
+        }
+
+        // --- Headers ---
+        String[] headersFinance = {
+                "Date d'émission", "Date d'opération", "Date de valeur",
+                "Libellé", "Débit", "Crédit",
                 "TVA Déductible", "TVA Collectée", "Observation"
         };
-        for (String header : headers) {
+        String[] headersCompta = {
+                "Date d'opération", "Date de valeur",
+                "Libellé", "Débit", "Crédit", "Observation"
+        };
+
+        for (String header : isFinance ? headersFinance : headersCompta) {
             PdfPCell cell = new PdfPCell(new Phrase(header, TRANSACTION_HEADER_FONT));
             cell.setBackgroundColor(STAPORT_BLUE);
             cell.setNoWrap(false);
@@ -279,54 +221,62 @@ public class StaportPdfReportService {
             table.addCell(cell);
         }
 
-        // --- 2. Données ---
+        // --- Données ---
         for (TransactionResponseDto tx : transactions) {
 
-            // 1. Date Émission (NoWrap)
-            PdfPCell dateEmCell = createCell(tx.getDateEmission() != null ? tx.getDateEmission().format(DATETIME_FORMATTER) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER);
-            dateEmCell.setNoWrap(true);
-            table.addCell(dateEmCell);
+            // Date Émission — Finance uniquement
+            if (isFinance) {
+                PdfPCell dateEmCell = createCell(
+                        tx.getDateEmission() != null ? tx.getDateEmission().format(DATETIME_FORMATTER) : "-",
+                        TRANSACTION_DATA_FONT, Element.ALIGN_CENTER);
+                dateEmCell.setNoWrap(true);
+                table.addCell(dateEmCell);
+            }
 
-            // 2. Date Opérations (NoWrap)
-            PdfPCell dateOpCell = createCell(tx.getDateOperations() != null ? tx.getDateOperations().format(DATETIME_FORMATTER) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER);
+            // Date Opération
+            PdfPCell dateOpCell = createCell(
+                    tx.getDateOperations() != null ? tx.getDateOperations().format(DATETIME_FORMATTER) : "-",
+                    TRANSACTION_DATA_FONT, Element.ALIGN_CENTER);
             dateOpCell.setNoWrap(true);
             table.addCell(dateOpCell);
 
-            // 3. Date Valeur (NoWrap)
-            PdfPCell dateValCell = createCell(tx.getDateValeur() != null ? tx.getDateValeur().format(DATETIME_FORMATTER) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER);
+            // Date Valeur
+            PdfPCell dateValCell = createCell(
+                    tx.getDateValeur() != null ? tx.getDateValeur().format(DATETIME_FORMATTER) : "-",
+                    TRANSACTION_DATA_FONT, Element.ALIGN_CENTER);
             dateValCell.setNoWrap(true);
             table.addCell(dateValCell);
 
-            // 4. Libellé (Wrapped)
+            // Libellé
             table.addCell(createCell(tx.getLibelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
 
-            // 5. Débit (NoWrap)
+            // Débit
             PdfPCell debitCell = createCell(formatCurrency(tx.getDebit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
             debitCell.setNoWrap(true);
             table.addCell(debitCell);
 
-            // 6. Crédit (NoWrap)
+            // Crédit
             PdfPCell creditCell = createCell(formatCurrency(tx.getCredit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
             creditCell.setNoWrap(true);
             table.addCell(creditCell);
 
-            // 7. TVA Déductible (NoWrap)
-            PdfPCell tvaDedCell = createCell(formatCurrency(tx.getTvaDeductible()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
-            tvaDedCell.setNoWrap(true);
-            table.addCell(tvaDedCell);
+            // TVA Déductible + TVA Collectée — Finance uniquement
+            if (isFinance) {
+                PdfPCell tvaDedCell = createCell(formatCurrency(tx.getTvaDeductible()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+                tvaDedCell.setNoWrap(true);
+                table.addCell(tvaDedCell);
 
-            // 8. TVA Collectée (NoWrap)
-            PdfPCell tvaCollCell = createCell(formatCurrency(tx.getTvaCollectee()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
-            tvaCollCell.setNoWrap(true);
-            table.addCell(tvaCollCell);
+                PdfPCell tvaCollCell = createCell(formatCurrency(tx.getTvaCollectee()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+                tvaCollCell.setNoWrap(true);
+                table.addCell(tvaCollCell);
+            }
 
-            // 9. Observation (Wrapped)
+            // Observation
             table.addCell(createCell(tx.getObservation(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
         }
 
         document.add(table);
     }
-
     // Utilitaires de formatage
     private String formatCurrency(BigDecimal amount) {
         if (amount == null) {
@@ -720,5 +670,19 @@ public class StaportPdfReportService {
         }
 
         document.add(table);
+    }
+
+    private void addTotalCell(PdfPTable table, String label, String value) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, BOLD_FONT));
+        labelCell.setBorder(Rectangle.NO_BORDER);
+        labelCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        labelCell.setBackgroundColor(Color.decode("#f0f0f0"));
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase(value, BOLD_FONT));
+        valueCell.setBorder(Rectangle.NO_BORDER);
+        valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        valueCell.setBackgroundColor(Color.decode("#f0f0f0"));
+        table.addCell(valueCell);
     }
 }

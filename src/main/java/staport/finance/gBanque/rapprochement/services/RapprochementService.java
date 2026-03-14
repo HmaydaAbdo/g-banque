@@ -17,6 +17,7 @@ import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.mapper.RapprochementMapper;
 import staport.finance.gBanque.rapprochement.specs.RapprochementSpecifications;
+import staport.finance.gBanque.reports.enums.ReportType;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
@@ -233,14 +234,14 @@ public class RapprochementService {
      * @return Le tableau d'octets représentant le fichier PDF.
      */
     @Transactional(readOnly = true)
-    public byte[] generateRapprochementPdf(Long rapprochementId) {
+    public byte[] generateRapprochementPdf(Long rapprochementId, ReportType reportType) {
 
         ReportDto reportDto = getReportDataById(rapprochementId);
 
         try {
             // 2. Appeler le service de génération de rapport avec le ReportDto
             // (Assurez-vous que StaportPdfReportService accepte ReportDto)
-            return pdfReportService.generateRapprochementReport(reportDto);
+            return pdfReportService.generateRapprochementReport(reportDto,reportType);
 
         } catch (Exception e) {
             // DocumentException est une exception vérifiée, donc nous l'encapsulons dans un RuntimeException

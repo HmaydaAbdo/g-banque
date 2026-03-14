@@ -11,6 +11,7 @@ import staport.finance.gBanque.rapprochement.dtos.RapprochementRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
 import staport.finance.gBanque.rapprochement.services.RapprochementService;
+import staport.finance.gBanque.reports.enums.ReportType;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
 
 @RestController
@@ -55,10 +56,12 @@ public class RapprochementController {
     }
 
     @GetMapping("/{id}/report/pdf")
-    public ResponseEntity<byte[]> downloadRapprochementReport(@PathVariable Long id) {
+    public ResponseEntity<byte[]> downloadRapprochementReport(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "FINANCE") ReportType reportType) {
 
         // 1. Générer le contenu du rapport (byte[])
-        byte[] pdfContent = rapprochementService.generateRapprochementPdf(id);
+        byte[] pdfContent = rapprochementService.generateRapprochementPdf(id,reportType);
 
         // 2. Définir le nom du fichier pour le téléchargement
         String filename = "Rapport_Rapprochement_" + id + ".pdf";
