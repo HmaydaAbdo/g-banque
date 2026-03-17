@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Positive;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class ImpayeeRequestDto {
 
@@ -28,7 +28,7 @@ public class ImpayeeRequestDto {
     private TransactionSource motif;
 
     @NotNull(message = "La date d'émission est obligatoire")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
 
     // Getters & Setters
@@ -72,11 +72,11 @@ public class ImpayeeRequestDto {
         this.motif = motif;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
