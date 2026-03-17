@@ -6,7 +6,7 @@ import staport.finance.gBanque.restitution.dtos.RestitutionSearchDto;
 import staport.finance.gBanque.restitution.entities.Restitution;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 public class RestitutionSpec {
@@ -60,12 +60,7 @@ public class RestitutionSpec {
             Specification<Restitution> hasStatusPrev = hasStatus(Status.PREVU);
 
             // Fin du mois courant (dernier jour à 23h59m59s999999999)
-            OffsetDateTime endOfMonth = OffsetDateTime.now()
-                    .with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23)
-                    .withMinute(59)
-                    .withSecond(59)
-                    .withNano(999_999_999);
+            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
             // Condition 2 : dateEmission <= fin du mois courant
             Specification<Restitution> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
