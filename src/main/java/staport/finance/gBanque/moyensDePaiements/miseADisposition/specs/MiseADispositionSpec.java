@@ -7,7 +7,7 @@ import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseA
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ public final class MiseADispositionSpec {
 
         };
     }
-    public static Specification<MiseADisposition> hasDateEmission(OffsetDateTime dateEmission) {
+    public static Specification<MiseADisposition> hasDateEmission(LocalDate dateEmission) {
         return (root, query, criteriaBuilder) -> {
             if (dateEmission == null ) {
                 return criteriaBuilder.conjunction();
@@ -183,7 +183,7 @@ public final class MiseADispositionSpec {
     public static Specification<MiseADisposition> encoursDecaissementForMiseAdispo(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDate now = LocalDate.now();
 
             // 1. Le statut de la mise à disposition doit être actif.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
@@ -197,8 +197,7 @@ public final class MiseADispositionSpec {
             }
 
             // 3. La date d'émission doit être égale ou antérieure à la fin du mois.
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
@@ -208,7 +207,7 @@ public final class MiseADispositionSpec {
     public static Specification<MiseADisposition> encoursEncaissementForMiseAdispo(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDate now = LocalDate.now();
 
             // 1. Le statut de la mise à disposition doit être actif.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
@@ -222,8 +221,7 @@ public final class MiseADispositionSpec {
             }
 
             // 3. La date d'émission doit être égale ou antérieure à la fin du mois.
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

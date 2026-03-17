@@ -8,7 +8,7 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.dtos.FunPayment
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Optional;
 
 /**
@@ -43,7 +43,7 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
         MiseADisposition miseADisposition = new MiseADisposition();
         miseADisposition.setNumero(item.getNumero());
 
-        OffsetDateTime dateEmission=item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime();
+        LocalDate dateEmission = item.getDateCreation();
 
         miseADisposition.setDateEmission(dateEmission);
         miseADisposition.setBeneficiaire(item.getBeneficiaire());

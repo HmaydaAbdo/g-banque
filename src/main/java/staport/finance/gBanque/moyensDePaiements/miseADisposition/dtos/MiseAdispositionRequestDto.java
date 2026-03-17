@@ -4,12 +4,12 @@ import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class MiseAdispositionRequestDto {
 
     @NotNull(message = "la date d'émission est obligatoire ")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     @NotNull(message = "le beneficiaire est obligatoire ")
     private final String beneficiaire="STAPORT";
@@ -26,11 +26,11 @@ public class MiseAdispositionRequestDto {
     @NotNull(message = "le type est encaissement est doit etre egal à encaissement")
     private final Type type=Type.ENCAISSEMENT;
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 

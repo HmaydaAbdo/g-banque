@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Repository
@@ -23,5 +23,5 @@ public interface MiseADispositionRepository extends JpaRepository<MiseADispositi
      */
     @Modifying
     @Query("UPDATE MiseADisposition m SET m.active = false WHERE m.dateEmission < :cutoffDate AND m.active = true")
-    int deactivateByDateEmissionBefore(@Param("cutoffDate") OffsetDateTime cutoffDate);
+    int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
 }

@@ -5,7 +5,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
@@ -20,11 +20,11 @@ public class MiseADisposition {
     private String numero;
 
     @Column(name = "date_emission", nullable = false)
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
-    private OffsetDateTime dateOperation;
+    private LocalDate dateOperation ;
 
-    private OffsetDateTime dateValeur;
+    private LocalDate dateValeur ;
 
     @Column(name = "beneficiaire", nullable = false)
     private String beneficiaire;
@@ -57,8 +57,8 @@ public class MiseADisposition {
     // Getters & Setters
     public String getNumero() { return numero; }
     public void setNumero(String numero) { this.numero = numero; }
-    public OffsetDateTime getDateEmission() { return dateEmission; }
-    public void setDateEmission(OffsetDateTime dateEmission) { this.dateEmission = dateEmission; }
+    public LocalDate getDateEmission() { return dateEmission; }
+    public void setDateEmission(LocalDate dateEmission) { this.dateEmission = dateEmission; }
     public String getBeneficiaire() { return beneficiaire; }
     public void setBeneficiaire(String beneficiaire) { this.beneficiaire = beneficiaire; }
     public BigDecimal getMontant() { return montant; }
@@ -68,16 +68,16 @@ public class MiseADisposition {
     public String getCinBeneficiaire() { return cinBeneficiaire; }
     public void setCinBeneficiaire(String cinBeneficiaire) { this.cinBeneficiaire = cinBeneficiaire; }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
