@@ -1,12 +1,12 @@
 package staport.finance.gBanque.moyensDePaiements.cheques.dtos;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class EncoursChequeSearchDto {
 
     private String numero;
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
     private String emetteur;
     private String beneficiaire;
     private BigDecimal montant;
@@ -45,11 +45,11 @@ public class EncoursChequeSearchDto {
         this.montant = montant;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 

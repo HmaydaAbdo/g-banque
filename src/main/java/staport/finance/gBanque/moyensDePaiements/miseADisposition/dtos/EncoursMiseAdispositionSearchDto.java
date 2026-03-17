@@ -1,7 +1,7 @@
 package staport.finance.gBanque.moyensDePaiements.miseADisposition.dtos;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class EncoursMiseAdispositionSearchDto {
 
@@ -9,7 +9,7 @@ public class EncoursMiseAdispositionSearchDto {
     private String beneficiaire;
     private BigDecimal montant;
     private String emetteur;
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     public EncoursMiseAdispositionSearchDto() {
     }
@@ -22,11 +22,11 @@ public class EncoursMiseAdispositionSearchDto {
         this.emetteur = emetteur;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
