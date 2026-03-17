@@ -2,12 +2,12 @@ package staport.finance.gBanque.moyensDePaiements.lcn.dtos;
 
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class LcnSearchDTO {
 
-    private OffsetDateTime dateEmission;
-    private OffsetDateTime dateEcheance;
+    private LocalDate dateEmission ;
+    private LocalDate dateEcheance ;
     private String emetteur;
     private BigDecimal montant;
     private String numero;
@@ -18,11 +18,11 @@ public class LcnSearchDTO {
     public LcnSearchDTO() {
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
@@ -34,11 +34,11 @@ public class LcnSearchDTO {
         this.emetteur = emetteur;
     }
 
-    public OffsetDateTime getDateEcheance() {
+    public LocalDate getDateEcheance() {
         return dateEcheance;
     }
 
-    public void setDateEcheance(OffsetDateTime dateEcheance) {
+    public void setDateEcheance(LocalDate dateEcheance) {
         this.dateEcheance = dateEcheance;
     }
 

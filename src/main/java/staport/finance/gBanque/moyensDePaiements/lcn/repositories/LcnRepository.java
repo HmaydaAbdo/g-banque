@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Repository
@@ -28,5 +28,5 @@ public interface LcnRepository extends JpaRepository<Lcn, Long> , JpaSpecificati
      */
     @Modifying
     @Query("UPDATE Lcn l SET l.active = false WHERE l.dateEcheance < :cutoffDate AND l.active = true")
-    int deactivateByDateEcheanceBefore(@Param("cutoffDate") OffsetDateTime cutoffDate);
+    int deactivateByDateEcheanceBefore(@Param("cutoffDate") LocalDate cutoffDate);
 }

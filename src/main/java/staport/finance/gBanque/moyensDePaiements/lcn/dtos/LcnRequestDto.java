@@ -3,7 +3,7 @@ package staport.finance.gBanque.moyensDePaiements.lcn.dtos;
 import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class LcnRequestDto {
 
@@ -11,10 +11,10 @@ public class LcnRequestDto {
     private String numero;
 
     @NotNull(message = "la date d'émission est obligatoire ")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     @NotNull(message = "la date d'échéance  est obligatoire ")
-    private OffsetDateTime dateEcheance;
+    private LocalDate dateEcheance ;
 
     @NotNull(message = "le beneficiaire est obligatoire ")
     private final String beneficiaire="STAPORT";
@@ -35,19 +35,19 @@ public class LcnRequestDto {
     private NatureLcn natureLcn;
 
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
-    public OffsetDateTime getDateEcheance() {
+    public LocalDate getDateEcheance() {
         return dateEcheance;
     }
 
-    public void setDateEcheance(OffsetDateTime dateEcheance) {
+    public void setDateEcheance(LocalDate dateEcheance) {
         this.dateEcheance = dateEcheance;
     }
 

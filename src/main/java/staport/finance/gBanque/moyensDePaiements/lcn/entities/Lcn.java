@@ -7,7 +7,7 @@ import staport.finance.gBanque.moyensDePaiements.lcn.dtos.NatureLcn;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
@@ -22,16 +22,16 @@ public class Lcn {
     private String numero;
 
     @Column(name = "date_emission", nullable = false)
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     @Column(name = "beneficiaire", nullable = false)
     private String beneficiaire;
 
     @Column(name = "date_echeance", nullable = false)
-    private OffsetDateTime dateEcheance;
+    private LocalDate dateEcheance ;
 
-    private OffsetDateTime dateOperation;
-    private OffsetDateTime dateValeur;
+    private LocalDate dateOperation ;
+    private LocalDate dateValeur ;
 
     @Column(name = "montant", nullable = false, precision = 19, scale = 2)
     private BigDecimal montant;
@@ -79,12 +79,12 @@ public class Lcn {
     // Getters & Setters
     public String getNumero() { return numero; }
     public void setNumero(String numero) { this.numero = numero; }
-    public OffsetDateTime getDateEmission() { return dateEmission; }
-    public void setDateEmission(OffsetDateTime dateEmission) { this.dateEmission = dateEmission; }
+    public LocalDate getDateEmission() { return dateEmission; }
+    public void setDateEmission(LocalDate dateEmission) { this.dateEmission = dateEmission; }
     public String getBeneficiaire() { return beneficiaire; }
     public void setBeneficiaire(String beneficiaire) { this.beneficiaire = beneficiaire; }
-    public OffsetDateTime getDateEcheance() { return dateEcheance; }
-    public void setDateEcheance(OffsetDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
+    public LocalDate getDateEcheance() { return dateEcheance; }
+    public void setDateEcheance(LocalDate dateEcheance) { this.dateEcheance = dateEcheance; }
     public BigDecimal getMontant() { return montant; }
     public void setMontant(BigDecimal montant) { this.montant = montant; }
     public Banque getBanque() { return banque; }
@@ -95,16 +95,16 @@ public class Lcn {
     public void setActive(boolean active) {
         this.active = active;
     }
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
     public String getLibelle() {

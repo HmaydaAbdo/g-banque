@@ -8,7 +8,7 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.dtos.FunPayment
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Optional;
 
 /**
@@ -44,9 +44,9 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
         // Création de l'entité et mapping des champs
         Lcn lcn = new Lcn();
         lcn.setNumero(item.getNumero());
-        lcn.setDateEmission(item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime());
+        lcn.setDateEmission(item.getDateCreation());
         lcn.setBeneficiaire(item.getBeneficiaire());
-        OffsetDateTime dateEcheance = item.getDateEcheance().atStartOfDay(systemZone).toOffsetDateTime();
+        LocalDate dateEcheance = item.getDateEcheance();
         lcn.setDateEcheance(dateEcheance);
         lcn.setMontant(item.getMontant());
         lcn.setBanque(banque);
