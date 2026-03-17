@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class CommissionRequestDto {
 
@@ -27,7 +27,7 @@ public class CommissionRequestDto {
     private TransactionSource operation;
 
     @NotNull(message = "La date d’émission est obligatoire")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     // Getters & Setters
     public String getLibelle() {
@@ -62,11 +62,11 @@ public class CommissionRequestDto {
         this.operation = operation;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 

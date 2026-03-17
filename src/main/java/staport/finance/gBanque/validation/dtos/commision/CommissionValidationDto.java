@@ -2,7 +2,7 @@ package staport.finance.gBanque.validation.dtos.commision;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class CommissionValidationDto {
 
@@ -13,13 +13,13 @@ public class CommissionValidationDto {
     private Double tva;
 
     @NotNull(message = "date d'mission est obligatoire ")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     @NotNull(message = "La date de valeur est obligatoire")
-    private OffsetDateTime dateValeur;
+    private LocalDate dateValeur ;
 
     @NotNull(message = "La date d’opération est obligatoire")
-    private OffsetDateTime dateOperation;
+    private LocalDate dateOperation ;
 
     @NotBlank(message = "L'observation' est obligatoire")
     private String observation;
@@ -41,19 +41,19 @@ public class CommissionValidationDto {
         this.idCommission = idCommission;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
@@ -65,11 +65,11 @@ public class CommissionValidationDto {
         this.observation = observation;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
