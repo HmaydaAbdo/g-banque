@@ -8,8 +8,7 @@ import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.time.temporal.TemporalAdjusters;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,7 +78,7 @@ public class TransactionSpecifications {
         };
     }
 
-    public static Specification<Transaction> hasDateOperationBetween(OffsetDateTime dateDebut, OffsetDateTime dateFin) {
+    public static Specification<Transaction> hasDateOperationBetween(LocalDate dateDebut, LocalDate dateFin) {
         return (root, query, criteriaBuilder) -> {
             if (dateDebut == null && dateFin == null) {
                 return criteriaBuilder.conjunction();

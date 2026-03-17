@@ -3,7 +3,7 @@ package staport.finance.gBanque.transactions.dtos;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -17,8 +17,8 @@ public class TransactionSearchDto {
     private String observation;
     private Boolean isConfirmed;
     private BigDecimal montant;
-    private OffsetDateTime dateOperationDebut;
-    private OffsetDateTime   dateOperationFin;
+    private LocalDate dateOperationDebut;
+    private LocalDate dateOperationFin;
     // Getters and Setters
 
     public String getLibelle() {
@@ -69,19 +69,19 @@ public class TransactionSearchDto {
         this.montant = montant;
     }
 
-    public OffsetDateTime getDateOperationDebut() {
+    public LocalDate getDateOperationDebut() {
         return dateOperationDebut;
     }
 
-    public void setDateOperationDebut(OffsetDateTime dateOperationDebut) {
+    public void setDateOperationDebut(LocalDate dateOperationDebut) {
         this.dateOperationDebut = dateOperationDebut;
     }
 
-    public OffsetDateTime getDateOperationFin() {
+    public LocalDate getDateOperationFin() {
         return dateOperationFin;
     }
 
-    public void setDateOperationFin(OffsetDateTime dateOperationFin) {
+    public void setDateOperationFin(LocalDate dateOperationFin) {
         this.dateOperationFin = dateOperationFin;
     }
 

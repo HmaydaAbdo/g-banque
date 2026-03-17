@@ -2,14 +2,15 @@ package staport.finance.gBanque.transactions.dtos;
 
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 public class TransactionResponseDto {
 
     private Long id;
-    private OffsetDateTime dateEmission;
-    private OffsetDateTime dateValeur;
-    private OffsetDateTime dateOperations;
+    private LocalDate dateEmission;
+    private LocalDate dateValeur;
+    private LocalDate dateOperations;
     private String observation;
     private BigDecimal tvaDeductible;
     private BigDecimal tvaCollectee;
@@ -29,7 +30,7 @@ public class TransactionResponseDto {
     public TransactionResponseDto() {
     }
 
-    public TransactionResponseDto(Long id, OffsetDateTime dateEmission, OffsetDateTime dateValeur, OffsetDateTime dateOperations, String observation, BigDecimal tvaDeductible, BigDecimal tvaCollectee, String libelle, TransactionSource transactionSource, BigDecimal debit, BigDecimal credit, String traces, Long banqueDePrelevementId, String banqueDePrelevementNom, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public TransactionResponseDto(Long id, LocalDate dateEmission, LocalDate dateValeur, LocalDate dateOperations, String observation, BigDecimal tvaDeductible, BigDecimal tvaCollectee, String libelle, TransactionSource transactionSource, BigDecimal debit, BigDecimal credit, String traces, Long banqueDePrelevementId, String banqueDePrelevementNom, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
         this.id = id;
         this.dateEmission = dateEmission;
         this.dateValeur = dateValeur;
@@ -56,27 +57,27 @@ public class TransactionResponseDto {
         this.id = id;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
-    public OffsetDateTime getDateOperations() {
+    public LocalDate getDateOperations() {
         return dateOperations;
     }
 
-    public void setDateOperations(OffsetDateTime dateOperations) {
+    public void setDateOperations(LocalDate dateOperations) {
         this.dateOperations = dateOperations;
     }
 

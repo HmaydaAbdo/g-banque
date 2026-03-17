@@ -1,18 +1,18 @@
 package staport.finance.gBanque.transactions.dtos;
 
 import jakarta.validation.constraints.NotNull;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class TransactionUpdateRequestDto {
 
     @NotNull(message = "date de valeur est obligatoire")
-    private OffsetDateTime dateValeur;
+    private LocalDate dateValeur;
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
