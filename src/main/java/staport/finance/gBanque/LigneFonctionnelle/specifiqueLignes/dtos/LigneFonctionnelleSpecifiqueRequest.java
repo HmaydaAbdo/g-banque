@@ -4,7 +4,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class LigneFonctionnelleSpecifiqueRequest {
 
@@ -22,10 +22,10 @@ public class LigneFonctionnelleSpecifiqueRequest {
     private BigDecimal taux;
 
     @NotNull(message = "La date de départ est obligatoire.")
-    private OffsetDateTime dateDepart;
+    private LocalDate dateDepart ;
 
     @NotNull(message = "La date de fin est obligatoire.")
-    private OffsetDateTime dateFin;
+    private LocalDate dateFin ;
 
     private Boolean actif;
 
@@ -37,7 +37,7 @@ public class LigneFonctionnelleSpecifiqueRequest {
     }
 
     // You will need a new constructor with all fields
-    public LigneFonctionnelleSpecifiqueRequest( Long natureLigneFonctionnelleId, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, Boolean actif, Long marcheId) {
+    public LigneFonctionnelleSpecifiqueRequest( Long natureLigneFonctionnelleId, BigDecimal plafond, BigDecimal taux, LocalDate dateDepart, LocalDate dateFin, Boolean actif, Long marcheId) {
         this.natureLigneFonctionnelleId = natureLigneFonctionnelleId;
         this.plafond = plafond;
         this.taux = taux;
@@ -54,10 +54,10 @@ public class LigneFonctionnelleSpecifiqueRequest {
     public void setPlafond(BigDecimal plafond) { this.plafond = plafond; }
     public BigDecimal getTaux() { return taux; }
     public void setTaux(BigDecimal taux) { this.taux = taux; }
-    public OffsetDateTime getDateDepart() { return dateDepart; }
-    public void setDateDepart(OffsetDateTime dateDepart) { this.dateDepart = dateDepart; }
-    public OffsetDateTime getDateFin() { return dateFin; }
-    public void setDateFin(OffsetDateTime dateFin) { this.dateFin = dateFin; }
+    public LocalDate getDateDepart() { return dateDepart; }
+    public void setDateDepart(LocalDate dateDepart) { this.dateDepart = dateDepart; }
+    public LocalDate getDateFin() { return dateFin; }
+    public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
     public Boolean getActif() { return actif; }
     public void setActif(Boolean actif) { this.actif = actif; }
     public Long getMarcheId() { return marcheId; }

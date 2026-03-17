@@ -1,6 +1,7 @@
 package staport.finance.gBanque.LigneFonctionnelle.dtos;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -21,8 +22,8 @@ public class LigneFonctionnelleResponse {
     private BigDecimal encours;
     private BigDecimal solde;
     private BigDecimal taux;
-    private OffsetDateTime dateDepart;
-    private OffsetDateTime dateFin;
+    private LocalDate dateDepart ;
+    private LocalDate dateFin ;
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
     private boolean actif;
@@ -143,19 +144,19 @@ public class LigneFonctionnelleResponse {
         this.taux = taux;
     }
 
-    public OffsetDateTime getDateDepart() {
+    public LocalDate getDateDepart() {
         return dateDepart;
     }
 
-    public void setDateDepart(OffsetDateTime dateDepart) {
+    public void setDateDepart(LocalDate dateDepart) {
         this.dateDepart = dateDepart;
     }
 
-    public OffsetDateTime getDateFin() {
+    public LocalDate getDateFin() {
         return dateFin;
     }
 
-    public void setDateFin(OffsetDateTime dateFin) {
+    public void setDateFin(LocalDate dateFin) {
         this.dateFin = dateFin;
     }
 

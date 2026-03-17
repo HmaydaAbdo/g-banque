@@ -11,7 +11,7 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.Lign
 import staport.finance.gBanque.marches.entities.Marche;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 @Component
 public class LigneFonctionnelleSpecifiqueMapper {
@@ -139,11 +139,11 @@ public class LigneFonctionnelleSpecifiqueMapper {
 
 
 
-    private boolean isExpired(OffsetDateTime dateFin) {
+    private boolean isExpired(LocalDate dateFin) {
         if (dateFin == null) {
             return false;
         }
-        OffsetDateTime now = OffsetDateTime.now();
+        LocalDate now = LocalDate.now();
         return now.isAfter(dateFin);
     }
 }

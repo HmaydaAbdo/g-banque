@@ -11,7 +11,7 @@ import staport.finance.gBanque.batch.jobs.functionaLines.generalFunctionalLines.
 import staport.finance.gBanque.exception.customExceptions.ProcessingException;
 import staport.finance.gBanque.notification.entities.NotificationType;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -39,11 +39,11 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
     @Override
     public ProcessedFunctionalLine process(LigneFonctionnelle item) {
 
-        OffsetDateTime currentProcessingTime = OffsetDateTime.now();
+        LocalDate currentProcessingTime = LocalDate.now();
 
         log.debug("Processing LigneFonctionnelle ID: {} at {}", item.getId(), currentProcessingTime);
 
-        OffsetDateTime endDate = item.getDateFin();
+        LocalDate endDate = item.getDateFin();
         String notificationTitle = null;
         String notificationContent = null;
         NotificationType notificationType = null;
@@ -60,15 +60,12 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
                     notificationType = NotificationType.ALERT;
 
                     log.warn("LigneFonctionnelle ID: {} deactivated (expired on {})",
-                            item.getId(), endDate.toLocalDate());
+                            item.getId(), endDate);
                 }
             }
             // Règle 2: Ligne active à venir
             else {
-                long remainingMonths = ChronoUnit.MONTHS.between(
-                        currentProcessingTime.toLocalDate(),
-                        endDate.toLocalDate()
-                );
+                long remainingMonths = ChronoUnit.MONTHS.between(currentProcessingTime, endDate);
 
                 if (remainingMonths <= alertThresholdMonths) {
                     notificationTitle = "Ligne Fonctionnelle - Expiration Imminente";
@@ -99,37 +96,37 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
         );
     }
 
-    private String buildExpiredNotification(LigneFonctionnelle item, OffsetDateTime endDate) {
+    private String buildExpiredNotification(LigneFonctionnelle item, LocalDate endDate) {
         return String.format(
                 "La ligne fonctionnelle ID '%d' (Banque: '%s', Nature: '%s') " +
                         "a expiré le %s .",
                 item.getId(),
                 getBankName(item),
                 getNatureName(item),
-                endDate.toLocalDate()
+                endDate
         );
     }
 
-    private String buildUrgentNotification(LigneFonctionnelle item, OffsetDateTime endDate, long months) {
+    private String buildUrgentNotification(LigneFonctionnelle item, LocalDate endDate, long months) {
         return String.format(
                 "URGENT: La ligne fonctionnelle ID '%d' (Banque: '%s', Nature: '%s') " +
                         "expire le %s. Il reste %d mois. Action immédiate requise!",
                 item.getId(),
                 getBankName(item),
                 getNatureName(item),
-                endDate.toLocalDate(),
+                endDate,
                 months
         );
     }
 
-    private String buildWarningNotification(LigneFonctionnelle item, OffsetDateTime endDate, long months) {
+    private String buildWarningNotification(LigneFonctionnelle item, LocalDate endDate, long months) {
         return String.format(
                 "La ligne fonctionnelle ID '%d' (Banque: '%s', Nature: '%s') " +
                         "expire le %s. Il reste %d mois. Planifiez son renouvellement.",
                 item.getId(),
                 getBankName(item),
                 getNatureName(item),
-                endDate.toLocalDate(),
+                endDate,
                 months
         );
     }

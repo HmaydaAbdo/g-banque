@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.marches.entities.Marche;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
@@ -26,10 +27,10 @@ public class LigneFonctionnelleSpecifique {
     private BigDecimal taux;
 
     @Column(name = "date_depart", nullable = false)
-    private OffsetDateTime dateDepart;
+    private LocalDate dateDepart ;
 
     @Column(name = "date_fin", nullable = false)
-    private OffsetDateTime dateFin;
+    private LocalDate dateFin ;
 
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
@@ -49,7 +50,7 @@ public class LigneFonctionnelleSpecifique {
         // Default constructor required by JPA
     }
 
-    public LigneFonctionnelleSpecifique(Long id , NatureLigneFonctionnelle natureLigneFonctionnelle, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification, boolean actif, Marche marche) {
+    public LigneFonctionnelleSpecifique(Long id , NatureLigneFonctionnelle natureLigneFonctionnelle, BigDecimal plafond, BigDecimal taux, LocalDate dateDepart, LocalDate dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification, boolean actif, Marche marche) {
         this.id = id;
         this.natureLigneFonctionnelle = natureLigneFonctionnelle;
         this.plafond = plafond;
@@ -80,11 +81,11 @@ public class LigneFonctionnelleSpecifique {
     public BigDecimal getTaux() { return taux; }
     public void setTaux(BigDecimal taux) { this.taux = taux; }
 
-    public OffsetDateTime getDateDepart() { return dateDepart; }
-    public void setDateDepart(OffsetDateTime dateDepart) { this.dateDepart = dateDepart; }
+    public LocalDate getDateDepart() { return dateDepart; }
+    public void setDateDepart(LocalDate dateDepart) { this.dateDepart = dateDepart; }
 
-    public OffsetDateTime getDateFin() { return dateFin; }
-    public void setDateFin(OffsetDateTime dateFin) { this.dateFin = dateFin; }
+    public LocalDate getDateFin() { return dateFin; }
+    public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
 
     public OffsetDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }

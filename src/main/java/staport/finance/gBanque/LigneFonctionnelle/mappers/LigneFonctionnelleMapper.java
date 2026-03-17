@@ -14,7 +14,7 @@ import staport.finance.gBanque.LigneFonctionnelle.services.EncoursCalculatorServ
 import staport.finance.gBanque.marches.entities.Marche;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -232,11 +232,11 @@ public class LigneFonctionnelleMapper {
         logger.debug("Successfully updated LigneFonctionnelle Entity ID: {}", ligneFonctionnelle.getId());
     }
 
-    private boolean isExpired(OffsetDateTime dateFin) {
+    private boolean isExpired(LocalDate dateFin) {
         if (dateFin == null) {
             return false;
         }
-        OffsetDateTime now = OffsetDateTime.now();
+        LocalDate now = LocalDate.now();
         return now.isAfter(dateFin);
     }
 

@@ -1,7 +1,8 @@
     package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos;
 
     import java.math.BigDecimal;
-    import java.time.OffsetDateTime;
+    import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
     /**
      * DTO de réponse complet pour les lignes fonctionnelles spécifiques.
@@ -26,8 +27,8 @@
         private BigDecimal solde;    // NULL si non applicable à la nature
 
         private BigDecimal taux;
-        private OffsetDateTime dateDepart;
-        private OffsetDateTime dateFin;
+        private LocalDate dateDepart ;
+        private LocalDate dateFin ;
         private OffsetDateTime dateCreation;
         private OffsetDateTime dateModification;
         private boolean actif;
@@ -51,8 +52,8 @@
                 BigDecimal encours,  // ✅ Ajouté
                 BigDecimal solde,    // ✅ Ajouté
                 BigDecimal taux,
-                OffsetDateTime dateDepart,
-                OffsetDateTime dateFin,
+                LocalDate dateDepart,
+                LocalDate dateFin,
                 OffsetDateTime dateCreation,
                 OffsetDateTime dateModification,
                 boolean actif,
@@ -117,11 +118,11 @@
         public BigDecimal getTaux() { return taux; }
         public void setTaux(BigDecimal taux) { this.taux = taux; }
 
-        public OffsetDateTime getDateDepart() { return dateDepart; }
-        public void setDateDepart(OffsetDateTime dateDepart) { this.dateDepart = dateDepart; }
+        public LocalDate getDateDepart() { return dateDepart; }
+        public void setDateDepart(LocalDate dateDepart) { this.dateDepart = dateDepart; }
 
-        public OffsetDateTime getDateFin() { return dateFin; }
-        public void setDateFin(OffsetDateTime dateFin) { this.dateFin = dateFin; }
+        public LocalDate getDateFin() { return dateFin; }
+        public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
 
         public OffsetDateTime getDateCreation() { return dateCreation; }
         public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }

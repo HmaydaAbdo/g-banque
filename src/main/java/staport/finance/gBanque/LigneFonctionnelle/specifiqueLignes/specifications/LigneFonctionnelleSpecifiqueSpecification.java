@@ -5,7 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueSearchCriteria;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.SpecifiqueLineSearchDto;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +14,7 @@ public class LigneFonctionnelleSpecifiqueSpecification {
     public static Specification<LigneFonctionnelleSpecifique> searchByCriteria(LigneFonctionnelleSpecifiqueSearchCriteria criteria) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDate now = LocalDate.now();
 
             // Add predicates for the common fields
 

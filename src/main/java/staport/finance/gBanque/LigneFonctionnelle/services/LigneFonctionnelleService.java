@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -425,8 +425,8 @@ public class LigneFonctionnelleService {
 
         Banque mereBanque = ligneMere.getBanque();
         BigDecimal mereTaux = ligneMere.getTaux();
-        OffsetDateTime mereDateDepart = ligneMere.getDateDepart();
-        OffsetDateTime mereDateFin = ligneMere.getDateFin();
+        LocalDate mereDateDepart = ligneMere.getDateDepart();
+        LocalDate mereDateFin = ligneMere.getDateFin();
         Marche mereMarche = ligneMere.getMarche();
 
 
@@ -642,8 +642,8 @@ public class LigneFonctionnelleService {
                                            NatureLigneFonctionnelle newNatureSousLigne,
                                            Banque mereBanque,
                                            BigDecimal mereTaux,
-                                           OffsetDateTime mereDateDepart,
-                                           OffsetDateTime mereDateFin,Marche mereMarche) {
+                                           LocalDate mereDateDepart,
+                                           LocalDate mereDateFin,Marche mereMarche) {
 
         // Propriétés spécifiques
         sousLigneEntity.setPlafond(request.getPlafond());
@@ -848,7 +848,7 @@ public class LigneFonctionnelleService {
         return aggregatedDto;
     }
 
-    private void validateDateRange(OffsetDateTime dateDepart, OffsetDateTime dateFin) {
+    private void validateDateRange(LocalDate dateDepart, LocalDate dateFin) {
         if (dateDepart != null && dateFin != null && dateFin.isBefore(dateDepart)) {
             logger.warn("Validation de date échouée: dateFin ({}) est antérieure à dateDepart ({}).", dateFin, dateDepart);
             throw new IllegalArgumentException("La date de fin ne peut pas être antérieure à la date de départ.");

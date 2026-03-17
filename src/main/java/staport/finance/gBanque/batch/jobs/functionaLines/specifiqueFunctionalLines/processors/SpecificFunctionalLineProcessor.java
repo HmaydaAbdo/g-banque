@@ -9,7 +9,7 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.Lign
 import staport.finance.gBanque.batch.jobs.functionaLines.specifiqueFunctionalLines.dtos.ProcessedSpecificFunctionalLine;
 import staport.finance.gBanque.notification.entities.NotificationType;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -32,7 +32,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
 
     @Override
     public ProcessedSpecificFunctionalLine process(LigneFonctionnelleSpecifique item) {
-        OffsetDateTime currentProcessingTime = OffsetDateTime.now();
+        LocalDate currentProcessingTime = LocalDate.now();
 
         log.debug("Processing LigneFonctionnelleSpecifique ID: {} (Marché: {}, Bank: {}, EndDate: {}) at {}",
                 item.getId(),
@@ -41,7 +41,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
                 item.getDateFin(),
                 currentProcessingTime);
 
-        OffsetDateTime endDate = item.getDateFin();
+        LocalDate endDate = item.getDateFin();
         String notificationTitle = null;
         String notificationContent = null;
         NotificationType notificationType = null;
@@ -62,15 +62,12 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
                     notificationType = NotificationType.ALERT;
 
                     log.warn("LigneFonctionnelleSpecifique ID: {} deactivated (expired on {})",
-                            item.getId(), endDate.toLocalDate());
+                            item.getId(), endDate);
                 }
             }
             // Règle 2: Ligne active à venir
             else {
-                long remainingMonths = ChronoUnit.MONTHS.between(
-                        currentProcessingTime.toLocalDate(),
-                        endDate.toLocalDate()
-                );
+                long remainingMonths = ChronoUnit.MONTHS.between(currentProcessingTime, endDate);
 
                 if (remainingMonths <= alertThresholdMonths) {
                     notificationTitle = String.format("Ligne Spécifique %s - Expiration Imminente - Marché %s",
@@ -106,7 +103,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
     }
 
     private String buildExpiredNotification(LigneFonctionnelleSpecifique item, String marcheNom,
-                                            String banqueNom, OffsetDateTime endDate) {
+                                            String banqueNom, LocalDate endDate) {
         return String.format(
                 "La ligne spécifique ID '%d' (Banque: '%s', Marché: '%s', Nature: '%s') " +
                         "a expiré le %s.",
@@ -114,12 +111,12 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
                 banqueNom,
                 marcheNom,
                 getNatureLabel(item),
-                endDate.toLocalDate()
+                endDate
         );
     }
 
     private String buildUrgentNotification(LigneFonctionnelleSpecifique item, String marcheNom,
-                                           String banqueNom, OffsetDateTime endDate, long months) {
+                                           String banqueNom, LocalDate endDate, long months) {
         return String.format(
                 "URGENT: La ligne spécifique ID '%d' (Banque: '%s', Marché: '%s', Nature: '%s') " +
                         "expire le %s. Il reste %d mois. Action immédiate requise!",
@@ -127,13 +124,13 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
                 banqueNom,
                 marcheNom,
                 getNatureLabel(item),
-                endDate.toLocalDate(),
+                endDate,
                 months
         );
     }
 
     private String buildWarningNotification(LigneFonctionnelleSpecifique item, String marcheNom,
-                                            String banqueNom, OffsetDateTime endDate, long months) {
+                                            String banqueNom, LocalDate endDate, long months) {
         return String.format(
                 "La ligne spécifique ID '%d' (Banque: '%s', Marché: '%s', Nature: '%s') " +
                         "expire le %s. Il reste %d mois. Planifiez son renouvellement.",
@@ -141,7 +138,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
                 banqueNom,
                 marcheNom,
                 getNatureLabel(item),
-                endDate.toLocalDate(),
+                endDate,
                 months
         );
     }

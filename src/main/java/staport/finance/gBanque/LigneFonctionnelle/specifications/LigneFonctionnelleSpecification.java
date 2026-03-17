@@ -8,7 +8,7 @@
     import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
     import org.springframework.data.jpa.domain.Specification;
 
-    import java.time.OffsetDateTime;
+    import java.time.LocalDate;
     import java.util.ArrayList;
     import java.util.List;
 
@@ -17,7 +17,7 @@
         public static Specification<LigneFonctionnelle> searchByCriteria(LigneFonctionnelleSearchCriteria criteria) {
             return (root, query, criteriaBuilder) -> {
                 List<Predicate> predicates = new ArrayList<>();
-                OffsetDateTime now = OffsetDateTime.now();
+                LocalDate now = LocalDate.now();
                 // Search by Banque ID
                 if (criteria.getBanqueId() != null) {
                     predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), criteria.getBanqueId()));

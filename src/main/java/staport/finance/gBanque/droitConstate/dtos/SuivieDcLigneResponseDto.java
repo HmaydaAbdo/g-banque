@@ -4,14 +4,14 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class SuivieDcLigneResponseDto {
 
     private Long id;
-    private OffsetDateTime dateEmission;
-    private OffsetDateTime dateOperation;
-    private OffsetDateTime dateValeur;
+    private LocalDate dateEmission ;
+    private LocalDate dateOperation ;
+    private LocalDate dateValeur ;
     private String libelle;
     private BigDecimal debit;
     private BigDecimal credit;
@@ -33,27 +33,27 @@ public class SuivieDcLigneResponseDto {
         this.id = id;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 

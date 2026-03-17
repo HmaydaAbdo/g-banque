@@ -43,7 +43,7 @@ import staport.finance.gBanque.prefinancement.repository.PrefinancementRepositor
 import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -225,8 +225,8 @@ public class LigneFonctionnelleSpecifiqueService {
                 existingEntity.isActif());
 
         // Validation des dates
-        OffsetDateTime effectiveDateDepart = request.getDateDepart() != null ? request.getDateDepart() : existingEntity.getDateDepart();
-        OffsetDateTime effectiveDateFin = request.getDateFin() != null ? request.getDateFin() : existingEntity.getDateFin();
+        LocalDate effectiveDateDepart = request.getDateDepart() != null ? request.getDateDepart() : existingEntity.getDateDepart();
+        LocalDate effectiveDateFin = request.getDateFin() != null ? request.getDateFin() : existingEntity.getDateFin();
         validateDateRange(effectiveDateDepart, effectiveDateFin);
 
         // Mise à jour des relations
@@ -320,7 +320,7 @@ public class LigneFonctionnelleSpecifiqueService {
         log.info("Ligne fonctionnelle spécifique ID {} supprimée avec succès", id);
     }
 
-    private void validateDateRange(OffsetDateTime dateDepart, OffsetDateTime dateFin) {
+    private void validateDateRange(LocalDate dateDepart, LocalDate dateFin) {
         log.debug("Validation de la plage de dates - DateDepart: {}, DateFin: {}", dateDepart, dateFin);
 
         if (dateDepart != null && dateFin != null && dateFin.isBefore(dateDepart)) {

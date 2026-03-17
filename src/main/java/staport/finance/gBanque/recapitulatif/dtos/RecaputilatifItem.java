@@ -3,12 +3,12 @@ package staport.finance.gBanque.recapitulatif.dtos;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class RecaputilatifItem {
     private Long id;
-    private OffsetDateTime dateEmission;
-    private OffsetDateTime dateEcheance;
+    private LocalDate dateEmission;
+    private LocalDate dateEcheance;
     private String libelle;
     private BigDecimal debit;
     private BigDecimal credit;
@@ -27,7 +27,7 @@ public class RecaputilatifItem {
     }
 
     // Getters
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
@@ -44,7 +44,7 @@ public class RecaputilatifItem {
     }
 
     // Setters
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
@@ -60,10 +60,10 @@ public class RecaputilatifItem {
         this.observations = observations;
     }
 
-    public OffsetDateTime getDateEcheance() {
+    public LocalDate getDateEcheance() {
         return dateEcheance;
     }
-    public void setDateEcheance(OffsetDateTime dateEcheance) {
+    public void setDateEcheance(LocalDate dateEcheance) {
         this.dateEcheance = dateEcheance;
     }
 

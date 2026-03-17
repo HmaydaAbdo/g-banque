@@ -7,7 +7,8 @@
     import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 
     import java.math.BigDecimal;
-    import java.time.OffsetDateTime;
+    import java.time.LocalDate;
+import java.time.OffsetDateTime;
     import java.util.List;
     import java.util.Objects;
 
@@ -38,10 +39,10 @@
         private BigDecimal taux;
 
         @Column(name = "date_depart", nullable = false)
-        private OffsetDateTime dateDepart;
+        private LocalDate dateDepart ;
 
         @Column(name = "date_fin", nullable = false)
-        private OffsetDateTime dateFin;
+        private LocalDate dateFin ;
 
         @Column(name = "date_creation", nullable = false, updatable = false)
         private OffsetDateTime dateCreation;
@@ -70,7 +71,7 @@
         }
 
 
-        public LigneFonctionnelle(Long id, Banque banque, NatureLigneFonctionnelle natureLigneFonctionnelle, BigDecimal plafond, BigDecimal taux, OffsetDateTime dateDepart, OffsetDateTime dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification, boolean actif) {
+        public LigneFonctionnelle(Long id, Banque banque, NatureLigneFonctionnelle natureLigneFonctionnelle, BigDecimal plafond, BigDecimal taux, LocalDate dateDepart, LocalDate dateFin, OffsetDateTime dateCreation, OffsetDateTime dateModification, boolean actif) {
             this.id = id;
             this.banque = banque;
             this.natureLigneFonctionnelle = natureLigneFonctionnelle;
@@ -112,11 +113,11 @@
         public BigDecimal getTaux() { return taux; }
         public void setTaux(BigDecimal taux) { this.taux = taux; }
 
-        public OffsetDateTime getDateDepart() { return dateDepart; }
-        public void setDateDepart(OffsetDateTime dateDepart) { this.dateDepart = dateDepart; }
+        public LocalDate getDateDepart() { return dateDepart; }
+        public void setDateDepart(LocalDate dateDepart) { this.dateDepart = dateDepart; }
 
-        public OffsetDateTime getDateFin() { return dateFin; }
-        public void setDateFin(OffsetDateTime dateFin) { this.dateFin = dateFin; }
+        public LocalDate getDateFin() { return dateFin; }
+        public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
 
         public OffsetDateTime getDateCreation() { return dateCreation; }
         public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
