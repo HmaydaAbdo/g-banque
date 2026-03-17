@@ -5,7 +5,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
@@ -30,13 +30,13 @@ public class VirementInternational {
     private BigDecimal montant;
 
     @Column(name = "date_emission", nullable = false)
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     @Column(name = "date_operation")
-    private OffsetDateTime dateOperation;
+    private LocalDate dateOperation ;
 
     @Column(name = "date_valeur")
-    private OffsetDateTime dateValeur;
+    private LocalDate dateValeur ;
 
     @Column(name = "libelle")
     private String libelle;
@@ -96,27 +96,27 @@ public class VirementInternational {
         this.montant = montant;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 

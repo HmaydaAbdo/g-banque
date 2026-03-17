@@ -7,7 +7,7 @@ import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +81,7 @@ public final class VirementInternationalSpec {
      * @param dateEmission The emission date to match.
      * @return A Specification for the emission date.
      */
-    public static Specification<VirementInternational> hasDateEmission(OffsetDateTime dateEmission) {
+    public static Specification<VirementInternational> hasDateEmission(LocalDate dateEmission) {
         return (root, query, criteriaBuilder) -> {
             if (dateEmission == null) {
                 return criteriaBuilder.conjunction();
@@ -95,7 +95,7 @@ public final class VirementInternationalSpec {
      * @param dateOperation The operation date to match.
      * @return A Specification for the operation date.
      */
-    public static Specification<VirementInternational> hasDateOperation(OffsetDateTime dateOperation) {
+    public static Specification<VirementInternational> hasDateOperation(LocalDate dateOperation) {
         return (root, query, criteriaBuilder) -> {
             if (dateOperation == null) {
                 return criteriaBuilder.conjunction();
@@ -109,7 +109,7 @@ public final class VirementInternationalSpec {
      * @param dateValeur The value date to match.
      * @return A Specification for the value date.
      */
-    public static Specification<VirementInternational> hasDateValeur(OffsetDateTime dateValeur) {
+    public static Specification<VirementInternational> hasDateValeur(LocalDate dateValeur) {
         return (root, query, criteriaBuilder) -> {
             if (dateValeur == null) {
                 return criteriaBuilder.conjunction();
@@ -245,7 +245,7 @@ public final class VirementInternationalSpec {
     public static Specification<VirementInternational> encoursDecaissement(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDate now = LocalDate.now();
 
             // 1. Le statut du virement doit être actif.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
@@ -257,8 +257,7 @@ public final class VirementInternationalSpec {
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
 
             // 4. La date d'émission du virement doit être égale ou antérieure à la fin du mois.
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
@@ -275,7 +274,7 @@ public final class VirementInternationalSpec {
     public static Specification<VirementInternational> encoursEncaissement(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDate now = LocalDate.now();
 
             // 1. Le statut du virement doit être actif.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
@@ -287,8 +286,7 @@ public final class VirementInternationalSpec {
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
 
             // 4. La date d'émission du virement doit être égale ou antérieure à la fin du mois.
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

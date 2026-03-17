@@ -4,7 +4,7 @@ import jakarta.validation.constraints.*;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class VirementInternationalRequestDto {
 
@@ -22,7 +22,7 @@ public class VirementInternationalRequestDto {
     private BigDecimal montant;
 
     @NotNull(message = "La date d'émission est obligatoire")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     @NotNull(message = "Le type de virement est obligatoire")
     private Type type;
@@ -62,11 +62,11 @@ public class VirementInternationalRequestDto {
         this.montant = montant;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
