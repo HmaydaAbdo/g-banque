@@ -6,7 +6,7 @@ import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 
@@ -66,9 +66,9 @@ public class AgiosSpec {
     public static Specification<Agios> outstandingAgiosByPeriod(YearMonth period) {
         return (root, query, cb) -> {
 
-            OffsetDateTime endOfPeriod = period.atEndOfMonth()
-                    .atTime(23, 59, 59, 999_999_999)
-                    .atOffset(java.time.ZoneOffset.UTC);
+
+            LocalDate endOfPeriod = period.atEndOfMonth().with(TemporalAdjusters.lastDayOfMonth());
+
 
             Specification<Agios> hasStatusPrevu = hasStatus(Status.PREVU);
 

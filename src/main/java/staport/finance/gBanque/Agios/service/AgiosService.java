@@ -22,7 +22,6 @@ import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.time.YearMonth;
 
 @Service

@@ -17,7 +17,6 @@ import staport.finance.gBanque.Agios.entities.AgiosJournalier;
 import staport.finance.gBanque.Agios.entities.AgiosTrimestriel;
 import staport.finance.gBanque.Agios.enums.StatutTrimestre;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
-import staport.finance.gBanque.Agios.mapper.AgiosMapper;
 import staport.finance.gBanque.Agios.repository.AgiosJournalierRepository;
 import staport.finance.gBanque.Agios.repository.AgiosTrimestrielRepository;
 import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateur;
@@ -215,7 +214,7 @@ public class AgiosOrchestrateurService {
         // l'intègre directement dans le soldeInitial plutôt que dans la boucle.
         for (Transaction tx : transactions) {
             if (tx.getDateValeur() == null) continue;
-            LocalDate dv = tx.getDateValeur().atZoneSameInstant(ZONE_MAROC).toLocalDate();
+            LocalDate dv = tx.getDateValeur();
             if (dv.isBefore(debutTrim)) {
                 BigDecimal credit = tx.getCredit() != null ? tx.getCredit() : BigDecimal.ZERO;
                 BigDecimal debit  = tx.getDebit()  != null ? tx.getDebit()  : BigDecimal.ZERO;
@@ -231,12 +230,10 @@ public class AgiosOrchestrateurService {
         Map<LocalDate, List<Transaction>> txParJour = transactions.stream()
                 .filter(t -> t.getDateValeur() != null)
                 .filter(t -> {
-                    LocalDate dv = t.getDateValeur().atZoneSameInstant(ZONE_MAROC).toLocalDate();
+                    LocalDate dv = t.getDateValeur();
                     return !dv.isBefore(debutTrim) && !dv.isAfter(finCalcul);
                 })
-                .collect(Collectors.groupingBy(
-                        t -> t.getDateValeur().atZoneSameInstant(ZONE_MAROC).toLocalDate()
-                ));
+                .collect(Collectors.groupingBy(Transaction::getDateValeur));
 
         // ── Calcul jour par jour ───────────────────────────────────────
         BigDecimal soldeCourant = soldeInitial;
@@ -313,7 +310,7 @@ public class AgiosOrchestrateurService {
                     trimestre.getNbJoursCalcules(), trimestre.getNbJoursTotal()));
             req.setMontant(trimestre.getTotalAgiosTTC());
             req.setBanqueId(banqueId);
-            req.setDateEmission(OffsetDateTime.now(ZONE_MAROC));
+            req.setDateEmission(LocalDate.now(ZONE_MAROC));
 
             var agiosCree = agiosService.createAgios(req);
             trimestre.setAgiosDefinitifId(agiosCree.getId());
