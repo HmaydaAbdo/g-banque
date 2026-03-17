@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Positive;
 import staport.finance.gBanque.impot_taxes.enums.Motif;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class ImpotEtTaxeRequestDto {
 
@@ -28,7 +28,7 @@ public class ImpotEtTaxeRequestDto {
     private Motif motif;
 
     @NotNull(message = "La date d'émission est obligatoire")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     // Getters & Setters
     public String getLibelle() {
@@ -71,11 +71,11 @@ public class ImpotEtTaxeRequestDto {
         this.motif = motif;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
