@@ -6,7 +6,7 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
@@ -23,11 +23,11 @@ public class OperationErrone {
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
-    private OffsetDateTime dateValeur;
+    private LocalDate dateValeur ;
 
-    private OffsetDateTime dateOperation;
+    private LocalDate dateOperation ;
 
     @Column(length = 150)
     private String libelle;
@@ -67,27 +67,27 @@ public class OperationErrone {
         this.banque = banque;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 

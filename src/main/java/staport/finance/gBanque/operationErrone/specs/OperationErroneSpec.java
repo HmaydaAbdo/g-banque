@@ -7,7 +7,7 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 public class OperationErroneSpec {
@@ -77,12 +77,7 @@ public class OperationErroneSpec {
             Specification<OperationErrone> hasStatusPrev = hasStatus(Status.PREVU);
 
             // Calcul de la fin du mois courant
-            OffsetDateTime endOfMonth = OffsetDateTime.now()
-                    .with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23)
-                    .withMinute(59)
-                    .withSecond(59)
-                    .withNano(999_999_999);
+            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
             // Condition 2 : dateEmission <= fin du mois courant
             Specification<OperationErrone> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
