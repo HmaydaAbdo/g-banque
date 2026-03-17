@@ -11,8 +11,8 @@ import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,10 +40,10 @@ public class Marche  {
 
     // New fields
     @Column(name = "date_debut_des_travaux")
-    private OffsetDateTime dateDebutDesTravaux;
+    private LocalDate dateDebutDesTravaux ;
 
     @Column(name = "date_d_achievement_des_travaux")
-    private OffsetDateTime dateDAchievementDesTravaux;
+    private LocalDate dateDAchievementDesTravaux ;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "banque_id", nullable = false)
@@ -77,7 +77,7 @@ public class Marche  {
 
     @UpdateTimestamp
     @Column(name = "modified_at", nullable = false)
-    private OffsetDateTime modifiedAt;
+    private LocalDate modifiedAt ;
 
     public Marche() {
     }
@@ -121,19 +121,19 @@ public class Marche  {
         this.maitreDouvrage = maitreDouvrage;
     }
 
-    public OffsetDateTime getDateDebutDesTravaux() {
+    public LocalDate getDateDebutDesTravaux() {
         return dateDebutDesTravaux;
     }
 
-    public void setDateDebutDesTravaux(OffsetDateTime dateDebutDesTravaux) {
+    public void setDateDebutDesTravaux(LocalDate dateDebutDesTravaux) {
         this.dateDebutDesTravaux = dateDebutDesTravaux;
     }
 
-    public OffsetDateTime getDateDAchievementDesTravaux() {
+    public LocalDate getDateDAchievementDesTravaux() {
         return dateDAchievementDesTravaux;
     }
 
-    public void setDateDAchievementDesTravaux(OffsetDateTime dateDAchievementDesTravaux) {
+    public void setDateDAchievementDesTravaux(LocalDate dateDAchievementDesTravaux) {
         this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
     }
 
@@ -253,7 +253,7 @@ public class Marche  {
         return createdAt;
     }
 
-    public OffsetDateTime getModifiedAt() {
+    public LocalDate getModifiedAt() {
         return modifiedAt;
     }
 

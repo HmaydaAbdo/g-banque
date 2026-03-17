@@ -1,6 +1,7 @@
 package staport.finance.gBanque.marches.dtos;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 public class MarcheResponseDTO {
@@ -10,14 +11,14 @@ public class MarcheResponseDTO {
     private String nom;
     private BigDecimal montant;
     private String maitreDouvrage;
-    private OffsetDateTime dateDebutDesTravaux;
-    private OffsetDateTime dateDAchievementDesTravaux;
+    private LocalDate dateDebutDesTravaux ;
+    private LocalDate dateDAchievementDesTravaux ;
     private Long banqueId;
     private String banqueNom;
     private boolean isNanti;
 
     private OffsetDateTime createdAt;
-    private OffsetDateTime modifiedAt;
+    private LocalDate modifiedAt ;
 
     // Getters and Setters
     public Long getId() {
@@ -60,19 +61,19 @@ public class MarcheResponseDTO {
         this.maitreDouvrage = maitreDouvrage;
     }
 
-    public OffsetDateTime getDateDebutDesTravaux() {
+    public LocalDate getDateDebutDesTravaux() {
         return dateDebutDesTravaux;
     }
 
-    public void setDateDebutDesTravaux(OffsetDateTime dateDebutDesTravaux) {
+    public void setDateDebutDesTravaux(LocalDate dateDebutDesTravaux) {
         this.dateDebutDesTravaux = dateDebutDesTravaux;
     }
 
-    public OffsetDateTime getDateDAchievementDesTravaux() {
+    public LocalDate getDateDAchievementDesTravaux() {
         return dateDAchievementDesTravaux;
     }
 
-    public void setDateDAchievementDesTravaux(OffsetDateTime dateDAchievementDesTravaux) {
+    public void setDateDAchievementDesTravaux(LocalDate dateDAchievementDesTravaux) {
         this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
     }
 
@@ -108,11 +109,11 @@ public class MarcheResponseDTO {
         this.createdAt = createdAt;
     }
 
-    public OffsetDateTime getModifiedAt() {
+    public LocalDate getModifiedAt() {
         return modifiedAt;
     }
 
-    public void setModifiedAt(OffsetDateTime modifiedAt) {
+    public void setModifiedAt(LocalDate modifiedAt) {
         this.modifiedAt = modifiedAt;
     }
 }

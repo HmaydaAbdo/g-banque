@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class MarcheRequestDTO {
 
@@ -33,10 +33,10 @@ public class MarcheRequestDTO {
     @NotNull(message = "Le statut nanti doit etre specifie")
     private Boolean isNanti = false;
 
-    private OffsetDateTime dateDebutDesTravaux;
+    private LocalDate dateDebutDesTravaux ;
 
 
-    private OffsetDateTime dateDAchievementDesTravaux;
+    private LocalDate dateDAchievementDesTravaux ;
 
 
     // Getters and Setters
@@ -82,19 +82,19 @@ public class MarcheRequestDTO {
         this.maitreDouvrage = maitreDouvrage;
     }
 
-    public OffsetDateTime getDateDebutDesTravaux() {
+    public LocalDate getDateDebutDesTravaux() {
         return dateDebutDesTravaux;
     }
 
-    public void setDateDebutDesTravaux(OffsetDateTime dateDebutDesTravaux) {
+    public void setDateDebutDesTravaux(LocalDate dateDebutDesTravaux) {
         this.dateDebutDesTravaux = dateDebutDesTravaux;
     }
 
-    public OffsetDateTime getDateDAchievementDesTravaux() {
+    public LocalDate getDateDAchievementDesTravaux() {
         return dateDAchievementDesTravaux;
     }
 
-    public void setDateDAchievementDesTravaux(OffsetDateTime dateDAchievementDesTravaux) {
+    public void setDateDAchievementDesTravaux(LocalDate dateDAchievementDesTravaux) {
         this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
     }
 
