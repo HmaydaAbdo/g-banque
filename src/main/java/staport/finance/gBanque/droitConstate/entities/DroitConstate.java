@@ -6,7 +6,7 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
@@ -20,7 +20,7 @@ public class DroitConstate {
     @JoinColumn(name = "marche_id")
     private Marche marche;
 
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     private BigDecimal montant;
 
@@ -33,8 +33,8 @@ public class DroitConstate {
     @Enumerated(EnumType.STRING)
     private Status status=Status.PREVU;
 
-    private OffsetDateTime dateOperation;
-    private OffsetDateTime dateValeur;
+    private LocalDate dateOperation ;
+    private LocalDate dateValeur ;
 
     public DroitConstate() {
     }
@@ -55,11 +55,11 @@ public class DroitConstate {
         this.marche = marche;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
@@ -103,19 +103,19 @@ public class DroitConstate {
         this.status = status;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 

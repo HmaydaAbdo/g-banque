@@ -11,7 +11,7 @@ import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -146,12 +146,8 @@ public class DecompteSpec {
 
             // Condition 3: Filter by date
             // The dateEmission must be less than or equal to the end of the current month
-            OffsetDateTime now = OffsetDateTime.now();
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23)
-                    .withMinute(59)
-                    .withSecond(59)
-                    .withNano(999999999);
+            LocalDate now = LocalDate.now();
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
 
             predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 

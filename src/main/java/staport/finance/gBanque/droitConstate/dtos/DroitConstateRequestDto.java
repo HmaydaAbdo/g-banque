@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 /**
  * DTO for creating or updating a DroitConstate entity.
@@ -18,7 +18,7 @@ public class DroitConstateRequestDto {
     private Long marcheId;
 
     @NotNull(message = "Date of emission cannot be null")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     @NotNull(message = "Montant cannot be null")
     @DecimalMin(value = "0.01", message = "Montant must be a positive value")
@@ -30,7 +30,7 @@ public class DroitConstateRequestDto {
     public DroitConstateRequestDto() {
     }
 
-    public DroitConstateRequestDto(Long marcheId, OffsetDateTime dateEmission, BigDecimal montant, Type type) {
+    public DroitConstateRequestDto(Long marcheId, LocalDate dateEmission, BigDecimal montant, Type type) {
         this.marcheId = marcheId;
         this.dateEmission = dateEmission;
         this.montant = montant;
@@ -46,11 +46,11 @@ public class DroitConstateRequestDto {
         this.marcheId = marcheId;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 

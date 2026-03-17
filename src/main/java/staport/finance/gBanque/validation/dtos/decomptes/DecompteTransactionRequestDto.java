@@ -3,7 +3,7 @@ package staport.finance.gBanque.validation.dtos.decomptes;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class DecompteTransactionRequestDto {
 
@@ -14,13 +14,13 @@ public class DecompteTransactionRequestDto {
     private Long  banqueId;
 
     @NotNull(message = "La date d'émission est obligatoire.")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     @NotNull(message = "La date de valeur est obligatoire.")
-    private OffsetDateTime dateValeur;
+    private LocalDate dateValeur ;
 
     @NotNull(message = "la date d'opération est obligatoire ")
-    private OffsetDateTime dateOperation;
+    private LocalDate dateOperation ;
 
     @NotNull(message = "TVA est obligatoire")
     private double tva;
@@ -47,19 +47,19 @@ public class DecompteTransactionRequestDto {
         this.banqueId = banqueId;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
@@ -70,11 +70,11 @@ public class DecompteTransactionRequestDto {
         this.tva = tva;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 

@@ -3,7 +3,7 @@ package staport.finance.gBanque.decomptes.dto;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class DecompteResponseDto {
 
@@ -23,11 +23,11 @@ public class DecompteResponseDto {
     private Long banqueEncaissementId;
     private String banqueEncaissementName;
 
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
     private BigDecimal montant;
     private String observation;
-    private OffsetDateTime dateOperation;
-    private OffsetDateTime dateValeur;
+    private LocalDate dateOperation ;
+    private LocalDate dateValeur ;
     private Status status;
     private String libelle;
 
@@ -108,11 +108,11 @@ public class DecompteResponseDto {
         this.banqueEncaissementName = banqueEncaissementName;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
@@ -132,19 +132,19 @@ public class DecompteResponseDto {
         this.observation = observation;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
