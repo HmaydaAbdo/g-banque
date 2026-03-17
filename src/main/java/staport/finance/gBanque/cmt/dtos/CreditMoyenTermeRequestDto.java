@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 /**
  * DTO utilisé pour la création ou la mise à jour d'un crédit moyen terme.
@@ -34,7 +34,7 @@ public class CreditMoyenTermeRequestDto {
     @DecimalMin(value = "0.01", message = "Le taux doit être supérieur à zéro")
     private BigDecimal taux;
     @NotNull(message = "La date de début est obligatoire")
-    private OffsetDateTime dateDebut;
+    private LocalDate dateDebut ;
 
     // Constructeur par défaut
     public CreditMoyenTermeRequestDto() {}
@@ -54,8 +54,8 @@ public class CreditMoyenTermeRequestDto {
     public void setEcheance(BigDecimal echeance) { this.echeance = echeance; }
     public BigDecimal getTaux() { return taux; }
     public void setTaux(BigDecimal taux) { this.taux = taux; }
-    public OffsetDateTime getDateDebut() { return dateDebut; }
-    public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
+    public LocalDate getDateDebut() { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
 
     @Override
     public String toString() {

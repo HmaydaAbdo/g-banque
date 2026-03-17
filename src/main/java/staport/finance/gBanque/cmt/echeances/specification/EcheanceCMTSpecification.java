@@ -11,7 +11,7 @@ import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,28 +48,20 @@ public class EcheanceCMTSpecification {
 
             if (year != null && month != null) {
                 // Cas : Année + Mois
-                OffsetDateTime startOfMonth = OffsetDateTime.now()
-                        .withYear(year)
-                        .withMonth(month)
-                        .with(TemporalAdjusters.firstDayOfMonth())
-                        .withHour(0).withMinute(0).withSecond(0).withNano(0);
+                LocalDate startOfMonth = LocalDate.of(year, month, 1)
+                        .with(TemporalAdjusters.firstDayOfMonth());
 
-                OffsetDateTime endOfMonth = startOfMonth
-                        .with(TemporalAdjusters.lastDayOfMonth())
-                        .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+                LocalDate endOfMonth = startOfMonth
+                        .with(TemporalAdjusters.lastDayOfMonth());
 
                 predicates.add(builder.between(root.get("dateEcheance"), startOfMonth, endOfMonth));
 
             } else if (year != null) {
                 // Cas : Année seule
-                OffsetDateTime startOfYear = OffsetDateTime.now()
-                        .withYear(year)
-                        .with(TemporalAdjusters.firstDayOfYear())
-                        .withHour(0).withMinute(0).withSecond(0).withNano(0);
+                LocalDate startOfYear = LocalDate.of(year, 1, 1);
 
-                OffsetDateTime endOfYear = startOfYear
-                        .with(TemporalAdjusters.lastDayOfYear())
-                        .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+                LocalDate endOfYear = startOfYear
+                        .with(TemporalAdjusters.lastDayOfYear());
 
                 predicates.add(builder.between(root.get("dateEcheance"), startOfYear, endOfYear));
 
@@ -140,9 +132,8 @@ public class EcheanceCMTSpecification {
             // Filtre les échéances dont le statut est "PREVU" (non payé)
             predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), StatutEcheanceCMT.PREVU));
 
-            OffsetDateTime dateButoir;
             // Calcule la date butoir à la fin du dernier jour du mois
-            dateButoir = OffsetDateTime.now().with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate dateButoir = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
             // Ajoute la condition de date
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), dateButoir));

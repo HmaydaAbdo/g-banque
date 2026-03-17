@@ -8,6 +8,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +55,7 @@ public class CreditMoyenTerme {
 
     @NotNull(message = "La date de début est obligatoire")
     @Column(name = "date_debut", nullable = false)
-    private OffsetDateTime dateDebut;
+    private LocalDate dateDebut ;
 
     @OneToMany(mappedBy = "creditMoyenTerme", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EcheanceCMT> echeanceCMTS = new ArrayList<>();
@@ -89,8 +90,8 @@ public class CreditMoyenTerme {
     public void setEcheance(BigDecimal echeance) { this.echeance = echeance; }
     public BigDecimal getTaux() { return taux; }
     public void setTaux(BigDecimal taux) { this.taux = taux; }
-    public OffsetDateTime getDateDebut() { return dateDebut; }
-    public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
+    public LocalDate getDateDebut() { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
     public OffsetDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
     public OffsetDateTime getDateModification() { return dateModification; }

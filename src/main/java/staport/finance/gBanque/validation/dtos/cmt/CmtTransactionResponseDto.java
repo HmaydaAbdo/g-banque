@@ -3,7 +3,7 @@ package staport.finance.gBanque.validation.dtos.cmt;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 public class CmtTransactionResponseDto {
@@ -14,9 +14,9 @@ public class CmtTransactionResponseDto {
     private String observation;
     private Long creditoMoyenTermeId;
     private Long echeanceId;
-    private OffsetDateTime dateEmission;
-    private OffsetDateTime dateValeur;
-    private OffsetDateTime dateOperations;
+    private LocalDate dateEmission ;
+    private LocalDate dateValeur ;
+    private LocalDate dateOperations ;
     private BigDecimal tvaDeductible;
     private BigDecimal tvaCollectee;
     private BigDecimal debit;
@@ -27,8 +27,8 @@ public class CmtTransactionResponseDto {
     }
 
     public CmtTransactionResponseDto(Long id, String banqueName, String libelle, String observation,
-                                     Long creditoMoyenTermeId, Long echeanceId, OffsetDateTime dateEmission,
-                                     OffsetDateTime dateValeur, OffsetDateTime dateOperations,
+                                     Long creditoMoyenTermeId, Long echeanceId, LocalDate dateEmission,
+                                     LocalDate dateValeur, LocalDate dateOperations,
                                      BigDecimal tvaDeductible, BigDecimal tvaCollectee,
                                      BigDecimal debit, BigDecimal credit,
                                      TransactionSource transactionSource) {
@@ -96,27 +96,27 @@ public class CmtTransactionResponseDto {
         this.echeanceId = echeanceId;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
-    public OffsetDateTime getDateOperations() {
+    public LocalDate getDateOperations() {
         return dateOperations;
     }
 
-    public void setDateOperations(OffsetDateTime dateOperations) {
+    public void setDateOperations(LocalDate dateOperations) {
         this.dateOperations = dateOperations;
     }
 

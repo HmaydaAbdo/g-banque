@@ -1,6 +1,7 @@
 package staport.finance.gBanque.cmt.dtos;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 /**
@@ -16,7 +17,7 @@ public class CreditMoyenTermeResponseDto {
     private Integer duree;
     private BigDecimal echeance;
     private BigDecimal taux;
-    private OffsetDateTime dateDebut;
+    private LocalDate dateDebut ;
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
     private boolean completed;
@@ -40,8 +41,8 @@ public class CreditMoyenTermeResponseDto {
     public void setEcheance(BigDecimal echeance) { this.echeance = echeance; }
     public BigDecimal getTaux() { return taux; }
     public void setTaux(BigDecimal taux) { this.taux = taux; }
-    public OffsetDateTime getDateDebut() { return dateDebut; }
-    public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
+    public LocalDate getDateDebut() { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
     public OffsetDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(OffsetDateTime dateCreation) { this.dateCreation = dateCreation; }
     public OffsetDateTime getDateModification() { return dateModification; }

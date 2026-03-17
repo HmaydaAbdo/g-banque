@@ -22,10 +22,8 @@ import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundExcept
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,8 +45,6 @@ public class EcheanceCMTService {
 
     private static final int SCALE = 2;
 
-    private final OffsetDateTime dateDeDepartPaymentCmt=OffsetDateTime.now();
-
     public EcheanceCMTService(EcheanceCMTRepository echeanceCmtRepository,
                               CreditMoyenTermeRepository creditMoyenTermeRepository,
                               BanqueRepository banqueRepository,
@@ -69,62 +65,23 @@ public class EcheanceCMTService {
         log.info("Paramètres - Durée: {} mois, Périodicité: {} mois, Montant: {}",
                 credit.getDuree(), credit.getPeriodicite(), credit.getEcheance());
 
-        //  LOG 1 : Date originale stockée en base
-        OffsetDateTime dateOriginal = credit.getDateDebut();
-        log.info(" [ÉTAPE 1] Date ORIGINALE stockée en base : {}", dateOriginal);
-        log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h, Zone={}",
-                dateOriginal.getYear(),
-                dateOriginal.getMonthValue(),
-                dateOriginal.getDayOfMonth(),
-                dateOriginal.getHour(),
-                dateOriginal.getOffset());
+        // Date de début du crédit (déjà en LocalDate — pas de conversion timezone nécessaire)
+        LocalDate dateDebut = credit.getDateDebut();
+        log.info(" Date de début du crédit CMT : {}", dateDebut);
 
         List<EcheanceCMT> echeances = new ArrayList<>();
-
-        //  SOLUTION : Convertir en timezone du Maroc d'abord !
-        ZoneId moroccoZone = ZoneId.of("Africa/Casablanca");
-
-        //  LOG 2 : Conversion en heure locale du Maroc
-        var zonedDateTime = credit.getDateDebut().atZoneSameInstant(moroccoZone);
-        log.info(" [ÉTAPE 2] Après conversion en heure Maroc : {}", zonedDateTime);
-        log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h",
-                zonedDateTime.getYear(),
-                zonedDateTime.getMonthValue(),
-                zonedDateTime.getDayOfMonth(),
-                zonedDateTime.getHour());
-
-        //  LOG 3 : Extraction de la date locale
-        var localDate = zonedDateTime.toLocalDate();
-        log.info(" [ÉTAPE 3] Date locale extraite : {}", localDate);
-        log.info("   └─ Détails : Année={}, Mois={}, Jour={}",
-                localDate.getYear(),
-                localDate.getMonthValue(),
-                localDate.getDayOfMonth());
-
-        //  LOG 4 : Date normalisée finale
-        OffsetDateTime dateDebut = localDate
-                .atTime(12, 0)
-                .atOffset(ZoneOffset.UTC);
-
-        log.info(" [ÉTAPE 4] Date NORMALISÉE (12h UTC) : {}", dateDebut);
-        log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h, Zone={}",
-                dateDebut.getYear(),
-                dateDebut.getMonthValue(),
-                dateDebut.getDayOfMonth(),
-                dateDebut.getHour(),
-                dateDebut.getOffset());
 
         log.info(" Génération de {} échéances...", credit.getDuree());
 
         for (int i = 1; i <= credit.getDuree(); i++) {
 
-            OffsetDateTime dateEcheanceCourante = dateDebut.plusMonths((long) (i - 1) * credit.getPeriodicite());
+            LocalDate dateEcheanceCourante = dateDebut.plusMonths((long) (i - 1) * credit.getPeriodicite());
 
             //  LOG 5 : Chaque échéance générée (seulement les 5 premières et les 3 dernières)
             if (i <= 5 || i > credit.getDuree() - 3) {
                 log.info("   ✓ Échéance {} : {} (calcul: dateDebut + {} mois)",
                         i,
-                        dateEcheanceCourante.toLocalDate(),
+                        dateEcheanceCourante,
                         (i - 1) * credit.getPeriodicite());
             } else if (i == 6) {
                 log.info("   ... ({} échéances intermédiaires) ...", credit.getDuree() - 8);

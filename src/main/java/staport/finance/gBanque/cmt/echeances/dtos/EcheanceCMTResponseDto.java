@@ -2,6 +2,7 @@ package staport.finance.gBanque.cmt.echeances.dtos;
 
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 /**
@@ -11,9 +12,9 @@ public class EcheanceCMTResponseDto {
 
     private Long id;
     private Integer numeroEcheance;
-    private OffsetDateTime dateEcheance;
-    private OffsetDateTime dateValuer;
-    private OffsetDateTime dateOperation;
+    private LocalDate dateEcheance ;
+    private LocalDate dateValuer ;
+    private LocalDate dateOperation ;
     private BigDecimal montantTtc;
 
     private String observation;
@@ -30,8 +31,8 @@ public class EcheanceCMTResponseDto {
     public void setId(Long id) { this.id = id; }
     public Integer getNumeroEcheance() { return numeroEcheance; }
     public void setNumeroEcheance(Integer numeroEcheance) { this.numeroEcheance = numeroEcheance; }
-    public OffsetDateTime getDateEcheance() { return dateEcheance; }
-    public void setDateEcheance(OffsetDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
+    public LocalDate getDateEcheance() { return dateEcheance; }
+    public void setDateEcheance(LocalDate dateEcheance) { this.dateEcheance = dateEcheance; }
     public StatutEcheanceCMT getStatutPaiement() { return statutPaiement; }
     public void setStatutPaiement(StatutEcheanceCMT statutPaiement) { this.statutPaiement = statutPaiement; }
     public OffsetDateTime getDateCreation() { return dateCreation; }
@@ -41,19 +42,19 @@ public class EcheanceCMTResponseDto {
     public CreditMoyenTermeDto getCredit() { return credit; }
     public void setCredit(CreditMoyenTermeDto credit) { this.credit = credit; }
 
-    public OffsetDateTime getDateValuer() {
+    public LocalDate getDateValuer() {
         return dateValuer;
     }
 
-    public void setDateValuer(OffsetDateTime dateValuer) {
+    public void setDateValuer(LocalDate dateValuer) {
         this.dateValuer = dateValuer;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 

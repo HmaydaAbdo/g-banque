@@ -8,6 +8,7 @@ import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
@@ -33,10 +34,10 @@ public class EcheanceCMT {
 
     @NotNull(message = "La date d'échéance est obligatoire")
     @Column(name = "date_echeance", nullable = false)
-    private OffsetDateTime dateEcheance;
+    private LocalDate dateEcheance ;
 
-    private OffsetDateTime dateOperation;
-    private  OffsetDateTime dateValeur;
+    private LocalDate dateOperation ;
+    private LocalDate dateValeur ;
 
     @NotNull(message = "Le montant de l'échéance est obligatoire")
     @DecimalMin(value = "0.01", message = "Le montant de l'échéance doit être supérieur à zéro")
@@ -60,7 +61,7 @@ public class EcheanceCMT {
 
     // Constructeurs
     public EcheanceCMT() {}
-    public EcheanceCMT(CreditMoyenTerme creditMoyenTerme, Integer numeroEcheance, OffsetDateTime dateEcheance, BigDecimal montant, StatutEcheanceCMT statutPaiement) {
+    public EcheanceCMT(CreditMoyenTerme creditMoyenTerme, Integer numeroEcheance, LocalDate dateEcheance, BigDecimal montant, StatutEcheanceCMT statutPaiement) {
         this.creditMoyenTerme = creditMoyenTerme;
         this.numeroEcheance = numeroEcheance;
         this.dateEcheance = dateEcheance;
@@ -75,8 +76,8 @@ public class EcheanceCMT {
     public void setCreditMoyenTerme(CreditMoyenTerme creditMoyenTerme) { this.creditMoyenTerme = creditMoyenTerme; }
     public Integer getNumeroEcheance() { return numeroEcheance; }
     public void setNumeroEcheance(Integer numeroEcheance) { this.numeroEcheance = numeroEcheance; }
-    public OffsetDateTime getDateEcheance() { return dateEcheance; }
-    public void setDateEcheance(OffsetDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
+    public LocalDate getDateEcheance() { return dateEcheance; }
+    public void setDateEcheance(LocalDate dateEcheance) { this.dateEcheance = dateEcheance; }
     public BigDecimal getMontant() { return montant; }
     public void setMontant(BigDecimal montant) { this.montant = montant; }
     public StatutEcheanceCMT getStatutPaiement() { return statutPaiement; }
@@ -86,19 +87,19 @@ public class EcheanceCMT {
     public OffsetDateTime getDateModification() { return dateModification; }
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
