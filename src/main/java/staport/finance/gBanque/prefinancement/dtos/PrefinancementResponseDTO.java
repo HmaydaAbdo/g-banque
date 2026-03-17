@@ -3,7 +3,7 @@ package staport.finance.gBanque.prefinancement.dtos;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 
 /**
@@ -19,12 +19,12 @@ public class PrefinancementResponseDTO {
     private String marcheNumero;
     private Long banqueId;
     private String banqueName;
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
     private BigDecimal montant;
     private String observation;
     private Type type;
-    private OffsetDateTime dateOperation;
-    private OffsetDateTime dateValeur;
+    private LocalDate dateOperation ;
+    private LocalDate dateValeur ;
     private Status status;
     private String libelle;
 
@@ -80,11 +80,11 @@ public class PrefinancementResponseDTO {
         this.banqueName = banqueName;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
@@ -112,19 +112,19 @@ public class PrefinancementResponseDTO {
         this.type = type;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 

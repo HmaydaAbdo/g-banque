@@ -6,7 +6,7 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
@@ -20,7 +20,7 @@ public class Prefinancement {
     @JoinColumn(name = "marche_id")
     private Marche marche;
 
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     private BigDecimal montant;
 
@@ -33,15 +33,15 @@ public class Prefinancement {
     @Enumerated(EnumType.STRING) // Best practice for enums
     private Status status=Status.PREVU;
 
-    private OffsetDateTime dateOperation;
-    private OffsetDateTime dateValeur;
+    private LocalDate dateOperation ;
+    private LocalDate dateValeur ;
 
     // Default no-argument constructor is required by JPA
     public Prefinancement() {
     }
 
     // You can add a parameterized constructor for convenience
-    public Prefinancement(Marche marche, OffsetDateTime dateEmission, BigDecimal montant, String observation, Type type, OffsetDateTime dateOperation, OffsetDateTime dateValeur, Status status) {
+    public Prefinancement(Marche marche, LocalDate dateEmission, BigDecimal montant, String observation, Type type, LocalDate dateOperation, LocalDate dateValeur, Status status) {
         this.marche = marche;
         this.dateEmission = dateEmission;
         this.montant = montant;
@@ -70,11 +70,11 @@ public class Prefinancement {
     }
 
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
@@ -110,19 +110,19 @@ public class Prefinancement {
         this.type = type;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 

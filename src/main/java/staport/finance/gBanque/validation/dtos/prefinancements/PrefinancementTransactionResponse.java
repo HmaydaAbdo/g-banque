@@ -4,7 +4,7 @@ package staport.finance.gBanque.validation.dtos.prefinancements;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class PrefinancementTransactionResponse {
 
@@ -13,9 +13,9 @@ public class PrefinancementTransactionResponse {
     private String marcheNumero;
     private String libelle;
     private String observation;
-    private OffsetDateTime dateEmission;
-    private OffsetDateTime dateValeur;
-    private OffsetDateTime dateOperations;
+    private LocalDate dateEmission ;
+    private LocalDate dateValeur ;
+    private LocalDate dateOperations ;
     private BigDecimal debit;
     private BigDecimal credit;
     private final TransactionSource transactionSource = TransactionSource.PREFINANCEMENT;
@@ -52,27 +52,27 @@ public class PrefinancementTransactionResponse {
 
 
 
-    public OffsetDateTime getDateOperations() {
+    public LocalDate getDateOperations() {
         return dateOperations;
     }
 
-    public void setDateOperations(OffsetDateTime dateOperations) {
+    public void setDateOperations(LocalDate dateOperations) {
         this.dateOperations = dateOperations;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
