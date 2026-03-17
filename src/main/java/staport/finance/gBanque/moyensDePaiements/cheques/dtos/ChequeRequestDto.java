@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class ChequeRequestDto {
 
@@ -13,9 +13,9 @@ public class ChequeRequestDto {
     private String numero;
 
     @NotNull(message = "la date d'émission est obligatoire ")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
-    private OffsetDateTime dateEcheance;
+    private LocalDate dateEcheance ;
 
     @NotNull(message = "le beneficiaire est obligatoire ")
     private final String beneficiaire="STAPORT";
@@ -65,19 +65,19 @@ public class ChequeRequestDto {
         return beneficiaire;
     }
 
-    public OffsetDateTime getDateEcheance() {
+    public LocalDate getDateEcheance() {
         return dateEcheance;
     }
 
-    public void setDateEcheance(OffsetDateTime dateEcheance) {
+    public void setDateEcheance(LocalDate dateEcheance) {
         this.dateEcheance = dateEcheance;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 

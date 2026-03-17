@@ -6,7 +6,7 @@ import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -111,7 +111,7 @@ public final class ChequeSpec {
 
 
 
-    public static Specification<Cheque> hasDateEmission(OffsetDateTime dateEmission) {
+    public static Specification<Cheque> hasDateEmission(LocalDate dateEmission) {
         return (root, query, criteriaBuilder) -> {
             if (dateEmission == null) {
                 return criteriaBuilder.conjunction();
@@ -124,7 +124,7 @@ public final class ChequeSpec {
     public static Specification<Cheque> encoursDecaissements(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDate now = LocalDate.now();
 
             // 1. Check if the cheque is active.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
@@ -140,8 +140,7 @@ public final class ChequeSpec {
             }
 
             // 3. Check if the emission date is on or before the last day of the current month.
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
 
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 
@@ -152,7 +151,7 @@ public final class ChequeSpec {
     public static Specification<Cheque> encoursEncaissements(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDate now = LocalDate.now();
 
             // 1. Check if the cheque is active.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
@@ -168,8 +167,7 @@ public final class ChequeSpec {
             }
 
             // 3. Check if the emission date is on or before the last day of the current month.
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
 
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 

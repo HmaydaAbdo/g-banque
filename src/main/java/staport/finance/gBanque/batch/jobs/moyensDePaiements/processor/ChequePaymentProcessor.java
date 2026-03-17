@@ -63,8 +63,8 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
         Cheque cheque= new Cheque();
         cheque.setNumero(numero);
         cheque.setType(type);
-        cheque.setDateEmission(item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime());
-        cheque.setDateEcheance(item.getDateCheque() !=null ? item.getDateCheque().atStartOfDay(systemZone).toOffsetDateTime() : null);
+        cheque.setDateEmission(item.getDateCreation());
+        cheque.setDateEcheance(item.getDateCheque());
         cheque.setBeneficiaire(item.getBeneficiaire());
         cheque.setMontant(item.getMontant());
         cheque.setBanque(banque);

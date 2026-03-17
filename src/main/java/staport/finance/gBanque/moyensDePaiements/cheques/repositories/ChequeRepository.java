@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Repository
@@ -29,5 +29,5 @@ public interface ChequeRepository extends JpaRepository<Cheque, Long>, JpaSpecif
      */
     @Modifying
     @Query("UPDATE Cheque c SET c.active = false WHERE c.dateEmission < :cutoffDate AND c.active = true")
-    int deactivateByDateEmissionBefore(@Param("cutoffDate") OffsetDateTime cutoffDate);
+    int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
 }
