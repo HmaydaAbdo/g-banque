@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class FraisBancaireRequestDto {
 
@@ -25,7 +25,7 @@ public class FraisBancaireRequestDto {
 
 
     @NotNull(message = "La date d’émission est obligatoire")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
 
     public String getLibelle() {
@@ -61,11 +61,11 @@ public class FraisBancaireRequestDto {
     }
 
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 

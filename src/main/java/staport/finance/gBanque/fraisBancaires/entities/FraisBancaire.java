@@ -5,7 +5,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
@@ -22,9 +22,9 @@ public class FraisBancaire {
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 
-    private OffsetDateTime dateEmission;
-    private OffsetDateTime dateValeur;
-    private OffsetDateTime dateOperation;
+    private LocalDate dateEmission ;
+    private LocalDate dateValeur ;
+    private LocalDate dateOperation ;
 
     @Column( length = 150)
     private String libelle;
@@ -37,7 +37,7 @@ public class FraisBancaire {
 
     public FraisBancaire() {}
 
-    public FraisBancaire(BigDecimal montant, Banque banque , OffsetDateTime dateEmission, OffsetDateTime dateValeur, OffsetDateTime dateOperation, String libelle, String observation, Status status) {
+    public FraisBancaire(BigDecimal montant, Banque banque , LocalDate dateEmission, LocalDate dateValeur, LocalDate dateOperation, String libelle, String observation, Status status) {
         this.montant = montant;
         this.banque = banque;
         this.dateEmission = dateEmission;
@@ -69,27 +69,27 @@ public class FraisBancaire {
     }
 
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 

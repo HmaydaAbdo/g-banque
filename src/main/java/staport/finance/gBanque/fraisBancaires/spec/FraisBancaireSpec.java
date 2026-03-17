@@ -6,7 +6,7 @@ import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 public class FraisBancaireSpec {
@@ -69,12 +69,7 @@ public class FraisBancaireSpec {
             Specification<FraisBancaire> hasStatusPrev = hasStatus(Status.PREVU);
 
             // Fin du mois courant : dernier jour à 23h59m59s999999999
-            OffsetDateTime endOfMonth = OffsetDateTime.now()
-                    .with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23)
-                    .withMinute(59)
-                    .withSecond(59)
-                    .withNano(999_999_999);
+            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
             // Condition 2 : dateEmission <= fin du mois courant
             Specification<FraisBancaire> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
