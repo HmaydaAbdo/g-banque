@@ -11,7 +11,7 @@ import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,27 +43,27 @@ public class EcheanceLeasingSpecification {
 
             if (year != null && month != null) {
                 // Cas mois + année
-                OffsetDateTime start = OffsetDateTime.now()
+                LocalDate start = LocalDate.now()
                         .withYear(year).withMonth(month)
                         .with(TemporalAdjusters.firstDayOfMonth())
-                        .withHour(0).withMinute(0).withSecond(0).withNano(0);
+                        ;
 
-                OffsetDateTime end = start.with(TemporalAdjusters.lastDayOfMonth())
-                        .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+                LocalDate end = start.with(TemporalAdjusters.lastDayOfMonth())
+                        ;
 
                 predicates.add(criteriaBuilder.between(root.get("dateEcheance"), start, end));
 
             } else if (year != null) {
                 // Cas année seule
-                OffsetDateTime start = OffsetDateTime.now()
+                LocalDate start = LocalDate.now()
                         .withYear(year)
                         .withMonth(1).with(TemporalAdjusters.firstDayOfMonth())
-                        .withHour(0).withMinute(0).withSecond(0).withNano(0);
+                        ;
 
-                OffsetDateTime end = OffsetDateTime.now()
+                LocalDate end = LocalDate.now()
                         .withYear(year)
                         .withMonth(12).with(TemporalAdjusters.lastDayOfMonth())
-                        .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+                        ;
 
                 predicates.add(criteriaBuilder.between(root.get("dateEcheance"), start, end));
 
@@ -144,8 +144,7 @@ public class EcheanceLeasingSpecification {
             // récupérer les échéances prévues
             predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), StatutEcheanceLeasing.PREVU));
 
-            OffsetDateTime dateButoir;
-            dateButoir = OffsetDateTime.now().with(TemporalAdjusters.lastDayOfMonth()).withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate dateButoir = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), dateButoir));
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

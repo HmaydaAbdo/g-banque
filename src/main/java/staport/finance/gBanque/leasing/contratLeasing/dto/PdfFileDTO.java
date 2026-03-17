@@ -1,6 +1,6 @@
 package staport.finance.gBanque.leasing.contratLeasing.dto;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 /**
  * DTO pour transférer les données d'un fichier PDF
@@ -10,7 +10,7 @@ public class PdfFileDTO {
     private byte[] contenu;
     private String nomFichier;
     private Long tailleFichier;
-    private OffsetDateTime dateUpload;
+    private LocalDate dateUpload ;
 
     // Constructeurs
     public PdfFileDTO() {}
@@ -25,6 +25,6 @@ public class PdfFileDTO {
     public Long getTailleFichier() { return tailleFichier; }
     public void setTailleFichier(Long tailleFichier) { this.tailleFichier = tailleFichier; }
 
-    public OffsetDateTime getDateUpload() { return dateUpload; }
-    public void setDateUpload(OffsetDateTime dateUpload) { this.dateUpload = dateUpload; }
+    public LocalDate getDateUpload() { return dateUpload; }
+    public void setDateUpload(LocalDate dateUpload) { this.dateUpload = dateUpload; }
 }

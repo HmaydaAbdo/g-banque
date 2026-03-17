@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import staport.finance.gBanque.leasing.contratLeasing.enums.TypeContratLeasing;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 public class ContratLeasingRequestDTO {
@@ -29,7 +29,7 @@ public class ContratLeasingRequestDTO {
     private BigDecimal montantAchatTTC;
 
     @NotNull(message = "La date de début est obligatoire")
-    private OffsetDateTime dateDebut;
+    private LocalDate dateDebut ;
 
     @NotNull(message = "La période en mois est obligatoire")
     @Min(value = 1, message = "La période en mois doit être d'au moins 1")
@@ -58,8 +58,8 @@ public class ContratLeasingRequestDTO {
     public void setImmobilisation(String immobilisation) { this.immobilisation = immobilisation; }
     public BigDecimal getMontantAchatTTC() { return montantAchatTTC; }
     public void setMontantAchatTTC(BigDecimal montantAchatTTC) { this.montantAchatTTC = montantAchatTTC; }
-    public OffsetDateTime getDateDebut() { return dateDebut; }
-    public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
+    public LocalDate getDateDebut() { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
     public Integer getPeriodeEnMois() { return periodeEnMois; }
     public void setPeriodeEnMois(Integer periodeEnMois) { this.periodeEnMois = periodeEnMois; }
     public TypeContratLeasing getTypeContrat() { return typeContrat; }

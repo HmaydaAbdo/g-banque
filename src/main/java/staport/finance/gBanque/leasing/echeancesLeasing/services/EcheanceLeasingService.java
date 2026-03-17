@@ -25,12 +25,11 @@
     import staport.finance.gBanque.leasing.echeancesLeasing.specification.EcheanceLeasingSpecification;
     import staport.finance.gBanque.transactions.enums.TransactionSource;
 
-    import java.math.BigDecimal;
+    import java.time.LocalDate;
+import java.math.BigDecimal;
     import java.math.RoundingMode;
-    import java.time.OffsetDateTime;
-    import java.time.ZoneId;
-    import java.time.ZoneOffset;
-    import java.util.ArrayList;
+                import java.util.ArrayList;
+    import java.util.Comparator;
     import java.util.List;
 
 
@@ -142,54 +141,21 @@
 
             List<EcheanceLeasing> echeances = new ArrayList<>();
 
-            //  LOG 1 : Date originale stockée en base
-            OffsetDateTime dateOriginal = contrat.getDateDebut();
-            log.info(" [ÉTAPE 1] Date ORIGINALE stockée en base : {}", dateOriginal);
-            log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h, Zone={}",
-                    dateOriginal.getYear(),
-                    dateOriginal.getMonthValue(),
-                    dateOriginal.getDayOfMonth(),
-                    dateOriginal.getHour(),
-                    dateOriginal.getOffset());
-
-            //  Convertir en timezone du Maroc d'abord
-            ZoneId moroccoZone = ZoneId.of("Africa/Casablanca");
-
-            //  LOG 2 : Conversion en heure locale du Maroc
-            var zonedDateTime = contrat.getDateDebut().atZoneSameInstant(moroccoZone);
-            log.info(" [ÉTAPE 2] Après conversion en heure Maroc : {}", zonedDateTime);
-            log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h",
-                    zonedDateTime.getYear(),
-                    zonedDateTime.getMonthValue(),
-                    zonedDateTime.getDayOfMonth(),
-                    zonedDateTime.getHour());
-
-            //  LOG 3 : Extraction de la date locale
-            var localDate = zonedDateTime.toLocalDate();
-            log.info(" [ÉTAPE 3] Date locale extraite : {}", localDate);
-
-            //  LOG 4 : Date de référence (1 mois avant)
-            var localDateReference = localDate.minusMonths(1);
-            log.info(" [ÉTAPE 4] Date de référence (1 mois avant) : {}", localDateReference);
-
-            //  LOG 5 : Date normalisée finale
-            OffsetDateTime dateReference = localDateReference
-                    .atTime(12, 0)
-                    .atOffset(ZoneOffset.UTC);
+            // Date de début du contrat (déjà en LocalDate — aucune conversion timezone nécessaire)
+            LocalDate dateReference = contrat.getDateDebut().minusMonths(1);
+            log.info(" Date de référence (1 mois avant la date début) : {}", dateReference);
 
             log.info(" [ÉTAPE 5] Date de référence NORMALISÉE (12h UTC) : {}", dateReference);
-            log.info("   └─ Détails : Année={}, Mois={}, Jour={}, Heure={}h, Zone={}",
+            log.info("   └─ Détails : Année={}, Mois={}, Jour={}",
                     dateReference.getYear(),
                     dateReference.getMonthValue(),
-                    dateReference.getDayOfMonth(),
-                    dateReference.getHour(),
-                    dateReference.getOffset());
+                    dateReference.getDayOfMonth());
 
             int numeroEcheanceGlobal = 0;
 
             // Trier les phases par numeroPhase
             List<ContratLeasingPhase> sortedPhases = contrat.getPhases().stream()
-                    .sorted((p1, p2) -> Integer.compare(p1.getNumeroPhase(), p2.getNumeroPhase()))
+                    .sorted(Comparator.comparingInt(ContratLeasingPhase::getNumeroPhase))
                     .toList();
 
             log.info(" Génération des échéances - {} phase(s) à traiter", sortedPhases.size());
@@ -205,14 +171,14 @@
                     numeroEcheanceGlobal++;
 
                     // Calculer chaque date à partir de la date de référence
-                    OffsetDateTime dateEcheanceCourante = dateReference.plusMonths(numeroEcheanceGlobal);
+                    LocalDate dateEcheanceCourante = dateReference.plusMonths(numeroEcheanceGlobal);
 
                     //  LOG 6 : Échéances générées (les 3 premières et les 2 dernières de chaque phase)
                     if (i < 3 || i >= phase.getDureeMois() - 2) {
                         log.info("   ✓ Phase {} - Échéance {} : {} (ref + {} mois)",
                                 phase.getNumeroPhase(),
                                 numeroEcheanceGlobal,
-                                dateEcheanceCourante.toLocalDate(),
+                                dateEcheanceCourante,
                                 numeroEcheanceGlobal);
                     } else if (i == 3) {
                         log.info("   ... ({} échéances intermédiaires) ...", phase.getDureeMois() - 5);
@@ -236,11 +202,11 @@
             numeroEcheanceGlobal++;
 
             // Calculer la date de la valeur résiduelle à partir de la date de référence
-            OffsetDateTime dateValeurResiduelle = dateReference.plusMonths(numeroEcheanceGlobal);
+            LocalDate dateValeurResiduelle = dateReference.plusMonths(numeroEcheanceGlobal);
 
             log.info("  Échéance {} (Valeur résiduelle) : {} (ref + {} mois)",
                     numeroEcheanceGlobal,
-                    dateValeurResiduelle.toLocalDate(),
+                    dateValeurResiduelle,
                     numeroEcheanceGlobal);
 
             StatutEcheanceLeasing statut = StatutEcheanceLeasing.PREVU;
@@ -264,7 +230,6 @@
         /**
          * Génère les commissions pour toutes les échéances d'un contrat.
          * Les commissions sont créées uniquement si la banque est configurée dans le YAML.
-         *
          * Prend en compte les règles conditionnelles basées sur l'organisme de leasing.
          *
          * @param contrat Le contrat de leasing

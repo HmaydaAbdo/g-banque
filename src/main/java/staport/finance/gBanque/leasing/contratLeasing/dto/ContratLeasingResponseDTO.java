@@ -2,6 +2,7 @@ package staport.finance.gBanque.leasing.contratLeasing.dto;
 
 import staport.finance.gBanque.leasing.contratLeasing.enums.TypeContratLeasing;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -15,9 +16,9 @@ public class ContratLeasingResponseDTO {
     private String nomOrganismeLeasing;
     private String immobilisation;
     private BigDecimal montantAchatTTC;
-    private OffsetDateTime dateDebut;
+    private LocalDate dateDebut ;
     private Integer periodeEnMois;
-    private OffsetDateTime dateFin;
+    private LocalDate dateFin ;
     private TypeContratLeasing typeContrat;
     private BigDecimal valeurResiduelle;
     private List<ContratLeasingPhaseResponseDTO> phases;
@@ -43,14 +44,14 @@ public class ContratLeasingResponseDTO {
     public void setImmobilisation(String immobilisation) { this.immobilisation = immobilisation; }
     public BigDecimal getMontantAchatTTC() { return montantAchatTTC; }
     public void setMontantAchatTTC(BigDecimal montantAchatTTC) { this.montantAchatTTC = montantAchatTTC; }
-    public OffsetDateTime getDateDebut() { return dateDebut; }
-    public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
+    public LocalDate getDateDebut() { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
     public Integer getPeriodeEnMois() { return periodeEnMois; }
     public void setPeriodeEnMois(Integer periodeEnMois) { this.periodeEnMois = periodeEnMois; }
-    public OffsetDateTime getDateFin() {
+    public LocalDate getDateFin() {
         return dateFin;
     }
-    public void setDateFin(OffsetDateTime dateFin) {
+    public void setDateFin(LocalDate dateFin) {
         this.dateFin = dateFin;
     }
     public TypeContratLeasing getTypeContrat() { return typeContrat; }

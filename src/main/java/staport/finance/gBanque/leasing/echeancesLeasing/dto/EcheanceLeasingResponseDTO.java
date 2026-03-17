@@ -3,6 +3,7 @@ package staport.finance.gBanque.leasing.echeancesLeasing.dto;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 /**
@@ -15,9 +16,9 @@ public class EcheanceLeasingResponseDTO {
     private Long contratLeasingId; // ID du contrat parent pour référence
     private String numeroContrat;
     private Integer numeroEcheance;
-    private OffsetDateTime dateEcheance;
-    private OffsetDateTime dateOperation ;
-    private OffsetDateTime dateValeur;
+    private LocalDate dateEcheance ;
+    private LocalDate dateOperation ;
+    private LocalDate dateValeur ;
     private BigDecimal montantTTC;
     private BigDecimal montantHT;  // Nouveau champ
     private BigDecimal montantTVA; // Nouveau champ
@@ -52,11 +53,11 @@ public class EcheanceLeasingResponseDTO {
         this.numeroEcheance = numeroEcheance;
     }
 
-    public OffsetDateTime getDateEcheance() {
+    public LocalDate getDateEcheance() {
         return dateEcheance;
     }
 
-    public void setDateEcheance(OffsetDateTime dateEcheance) {
+    public void setDateEcheance(LocalDate dateEcheance) {
         this.dateEcheance = dateEcheance;
     }
 
@@ -92,19 +93,19 @@ public class EcheanceLeasingResponseDTO {
         this.statutPaiement = statutPaiement;
     }
 
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
 
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
 
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
 
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
 

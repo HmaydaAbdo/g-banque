@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
@@ -25,11 +26,11 @@ public class OrganismeLeasing {
 
     @NotNull
     @Column(name = "date_debut", nullable = false)
-    private OffsetDateTime dateDebut;
+    private LocalDate dateDebut ;
 
     @NotNull
     @Column(name = "date_fin", nullable = false)
-    private OffsetDateTime dateFin;
+    private LocalDate dateFin ;
 
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
@@ -41,7 +42,7 @@ public class OrganismeLeasing {
     public OrganismeLeasing() {}
 
 
-    public OrganismeLeasing(String nom, BigDecimal plafond, OffsetDateTime dateDebut, OffsetDateTime dateFin) {
+    public OrganismeLeasing(String nom, BigDecimal plafond, LocalDate dateDebut, LocalDate dateFin) {
         this.nom = nom;
         this.plafond = plafond;
         this.dateDebut = dateDebut;
@@ -58,11 +59,11 @@ public class OrganismeLeasing {
     public BigDecimal getPlafond() { return plafond; }
     public void setPlafond(BigDecimal plafond) { this.plafond = plafond; }
 
-    public OffsetDateTime getDateDebut() { return dateDebut; }
-    public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
+    public LocalDate getDateDebut() { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
 
-    public OffsetDateTime getDateFin() { return dateFin; }
-    public void setDateFin(OffsetDateTime dateFin) { this.dateFin = dateFin; }
+    public LocalDate getDateFin() { return dateFin; }
+    public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
 
 
     public OffsetDateTime getDateCreation() { return dateCreation; }

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class OrganismeLeasingRequestDTO {
 
@@ -15,10 +15,10 @@ public class OrganismeLeasingRequestDTO {
     private BigDecimal plafond;
 
     @NotNull(message = "La date de début est obligatoire")
-    private OffsetDateTime dateDebut;
+    private LocalDate dateDebut ;
 
     @NotNull(message = "La date de fin est obligatoire")
-    private OffsetDateTime dateFin;
+    private LocalDate dateFin ;
 
 
     @AssertTrue(message = "La date de fin doit être postérieure à la date de début")
@@ -33,11 +33,11 @@ public class OrganismeLeasingRequestDTO {
     public BigDecimal getPlafond() { return plafond; }
     public void setPlafond(BigDecimal plafond) { this.plafond = plafond; }
 
-    public OffsetDateTime getDateDebut() { return dateDebut; }
-    public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
+    public LocalDate getDateDebut() { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
 
-    public OffsetDateTime getDateFin() { return dateFin; }
-    public void setDateFin(OffsetDateTime dateFin) { this.dateFin = dateFin; }
+    public LocalDate getDateFin() { return dateFin; }
+    public void setDateFin(LocalDate dateFin) { this.dateFin = dateFin; }
 
     @Override
     public String toString() {

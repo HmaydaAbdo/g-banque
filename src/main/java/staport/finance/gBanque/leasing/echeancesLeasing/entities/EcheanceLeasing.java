@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
@@ -33,10 +34,10 @@ public class EcheanceLeasing {
 
     @NotNull(message = "La date d'échéance est obligatoire")
     @Column(name = "date_echeance", nullable = false)
-    private OffsetDateTime dateEcheance; // Date à laquelle l'échéance doit être payée
+    private LocalDate dateEcheance ; // Date à laquelle l'échéance doit être payée
 
-    private OffsetDateTime dateOperation ;
-    private OffsetDateTime dateValeur;
+    private LocalDate dateOperation ;
+    private LocalDate dateValeur ;
 
     @NotNull(message = "Le montant TTC de l'échéance est obligatoire")
     @DecimalMin(value = "0.01", message = "Le montant TTC de l'échéance doit être supérieur à zéro")
@@ -62,7 +63,7 @@ public class EcheanceLeasing {
     // --- Constructeurs ---
     public EcheanceLeasing() {}
 
-    public EcheanceLeasing(ContratLeasing contratLeasing, Integer numeroEcheance, OffsetDateTime dateEcheance, BigDecimal montantTTC,
+    public EcheanceLeasing(ContratLeasing contratLeasing, Integer numeroEcheance, LocalDate dateEcheance, BigDecimal montantTTC,
                            StatutEcheanceLeasing statutPaiement) {
         this.contratLeasing = contratLeasing;
         this.numeroEcheance = numeroEcheance;
@@ -80,24 +81,24 @@ public class EcheanceLeasing {
     public void setContratLeasing(ContratLeasing contratLeasing) { this.contratLeasing = contratLeasing; }
     public Integer getNumeroEcheance() { return numeroEcheance; }
     public void setNumeroEcheance(Integer numeroEcheance) { this.numeroEcheance = numeroEcheance; }
-    public OffsetDateTime getDateEcheance() { return dateEcheance; }
-    public void setDateEcheance(OffsetDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
+    public LocalDate getDateEcheance() { return dateEcheance; }
+    public void setDateEcheance(LocalDate dateEcheance) { this.dateEcheance = dateEcheance; }
     public BigDecimal getMontantTTC() {
         return montantTTC;
     }
     public void setMontantTTC(BigDecimal montantTTC) {
         this.montantTTC = montantTTC;
     }
-    public OffsetDateTime getDateOperation() {
+    public LocalDate getDateOperation() {
         return dateOperation;
     }
-    public void setDateOperation(OffsetDateTime dateOperation) {
+    public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
     }
-    public OffsetDateTime getDateValeur() {
+    public LocalDate getDateValeur() {
         return dateValeur;
     }
-    public void setDateValeur(OffsetDateTime dateValeur) {
+    public void setDateValeur(LocalDate dateValeur) {
         this.dateValeur = dateValeur;
     }
     public StatutEcheanceLeasing getStatutPaiement() { return statutPaiement; }

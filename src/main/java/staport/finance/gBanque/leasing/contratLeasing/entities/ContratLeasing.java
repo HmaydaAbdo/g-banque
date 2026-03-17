@@ -9,6 +9,7 @@ import staport.finance.gBanque.leasing.contratLeasing.enums.TypeContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLeasing;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,7 @@ public class ContratLeasing {
 
     @NotNull(message = "La date de début est obligatoire")
     @Column(name = "date_debut", nullable = false)
-    private OffsetDateTime dateDebut;
+    private LocalDate dateDebut ;
 
     @NotNull(message = "La période en mois est obligatoire")
     @Column(name = "periode_mois", nullable = false)
@@ -82,7 +83,7 @@ public class ContratLeasing {
     private String nomFichierPdf;
 
     @Column(name = "date_upload_pdf")
-    private OffsetDateTime dateUploadPdf;
+    private LocalDate dateUploadPdf;
 
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
@@ -102,8 +103,8 @@ public class ContratLeasing {
     public void setMontantAchatTTC(BigDecimal montantAchatTTC) { this.montantAchatTTC = montantAchatTTC; }
     public String getImmobilisation() { return immobilisation; }
     public void setImmobilisation(String immobilisation) { this.immobilisation = immobilisation; }
-    public OffsetDateTime getDateDebut() { return dateDebut; }
-    public void setDateDebut(OffsetDateTime dateDebut) { this.dateDebut = dateDebut; }
+    public LocalDate getDateDebut() { return dateDebut; }
+    public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }
     public Integer getPeriodeEnMois() { return periodeEnMois; }
     public void setPeriodeEnMois(Integer periodeEnMois) { this.periodeEnMois = periodeEnMois; }
     public BigDecimal getValeurResiduelle() { return valeurResiduelle; }
@@ -145,15 +146,15 @@ public class ContratLeasing {
     public void setFichierPdfContenu(byte[] fichierPdfContenu) {
         this.fichierPdfContenu = fichierPdfContenu;
         if (fichierPdfContenu != null) {
-            this.dateUploadPdf = OffsetDateTime.now();
+            this.dateUploadPdf = LocalDate.now();
         }
     }
 
     public String getNomFichierPdf() { return nomFichierPdf; }
     public void setNomFichierPdf(String nomFichierPdf) { this.nomFichierPdf = nomFichierPdf; }
 
-    public OffsetDateTime getDateUploadPdf() { return dateUploadPdf; }
-    public void setDateUploadPdf(OffsetDateTime dateUploadPdf) { this.dateUploadPdf = dateUploadPdf; }
+    public LocalDate getDateUploadPdf() { return dateUploadPdf; }
+    public void setDateUploadPdf(LocalDate dateUploadPdf) { this.dateUploadPdf = dateUploadPdf; }
 
     /**
      * Vérifie si un fichier PDF est attaché à ce contrat
