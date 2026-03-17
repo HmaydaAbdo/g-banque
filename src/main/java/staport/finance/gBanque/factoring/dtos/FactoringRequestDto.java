@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class FactoringRequestDto {
 
@@ -13,7 +13,7 @@ public class FactoringRequestDto {
     private Long marcheId;
 
     @NotNull(message = "Date of emission cannot be null")
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
 
     @NotNull(message = "Montant cannot be null")
     @DecimalMin(value = "0.01", message = "Montant must be a positive value")
@@ -34,11 +34,11 @@ public class FactoringRequestDto {
         this.marcheId = marcheId;
     }
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 
