@@ -7,7 +7,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.dtos.VirementSearchDt
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ public final class VirementSpec {
         };
     }
 
-    public static Specification<Virement> hasDateEmission(OffsetDateTime dateEmission) {
+    public static Specification<Virement> hasDateEmission(LocalDate dateEmission) {
         return (root, query, criteriaBuilder) -> {
             if (dateEmission == null ) {
                 return criteriaBuilder.conjunction();
@@ -52,7 +52,7 @@ public final class VirementSpec {
     }
 
 
-    public static Specification<Virement> hasEmissionDate(OffsetDateTime dateEmission) {
+    public static Specification<Virement> hasEmissionDate(LocalDate dateEmission) {
         return (root, query, criteriaBuilder) -> {
             if (dateEmission == null ) {
                 return criteriaBuilder.conjunction();
@@ -245,7 +245,7 @@ public final class VirementSpec {
     public static Specification<Virement> encoursDecaissement(Long banqueId) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDate now = LocalDate.now();
 
             // 1. Le statut du virement doit être actif.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
@@ -257,8 +257,7 @@ public final class VirementSpec {
 
 
             // 3. La date d'émission du virement doit être égale ou antérieure à la fin du mois.
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
@@ -268,7 +267,7 @@ public final class VirementSpec {
     public static Specification<Virement> encoursEncaissement(String banqueName) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            OffsetDateTime now = OffsetDateTime.now();
+            LocalDate now = LocalDate.now();
 
             // 1. Le statut du virement doit être actif.
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
@@ -280,8 +279,7 @@ public final class VirementSpec {
 
 
             // 3. La date d'émission du virement doit être égale ou antérieure à la fin du mois.
-            OffsetDateTime endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth())
-                    .withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

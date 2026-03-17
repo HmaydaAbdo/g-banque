@@ -3,12 +3,12 @@ package staport.finance.gBanque.moyensDePaiements.virements.dtos;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class VirementSearchDto {
 
     private String numero;
-    private OffsetDateTime dateEmission;
+    private LocalDate dateEmission ;
     private BigDecimal montant;
     private String beneficiaire;
     private String banqueBeneficiaire;
@@ -76,11 +76,11 @@ public class VirementSearchDto {
     public String getEmetteur() {return emetteur;}
     public void setEmetteur(String emetteur) {this.emetteur = emetteur;}
 
-    public OffsetDateTime getDateEmission() {
+    public LocalDate getDateEmission() {
         return dateEmission;
     }
 
-    public void setDateEmission(OffsetDateTime dateEmission) {
+    public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
 

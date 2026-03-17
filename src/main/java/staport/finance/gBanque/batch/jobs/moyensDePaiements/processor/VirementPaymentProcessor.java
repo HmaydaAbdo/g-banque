@@ -58,7 +58,7 @@
             Virement v = new Virement();
             v.setNumero(numero);
             v.setType(type);
-            v.setDateEmission(item.getDateCreation().atStartOfDay(systemZone).toOffsetDateTime());
+            v.setDateEmission(item.getDateCreation());
             v.setBeneficiaire(item.getBeneficiaire());
             v.setMontant(item.getMontant());
             v.setBanqueEmettrice(banque);

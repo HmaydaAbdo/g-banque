@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 @Repository
 public interface VirementRepository extends JpaRepository <Virement, Long> , JpaSpecificationExecutor<Virement> {
@@ -16,5 +16,5 @@ public interface VirementRepository extends JpaRepository <Virement, Long> , Jpa
 
     @Modifying
     @Query("UPDATE Virement v SET v.active = false WHERE v.dateEmission < :cutoffDate AND v.active = true")
-    int deactivateByDateEmissionBefore(@Param("cutoffDate") OffsetDateTime cutoffDate);
+    int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
 }

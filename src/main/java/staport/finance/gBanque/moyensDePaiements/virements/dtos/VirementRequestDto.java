@@ -4,7 +4,7 @@ import jakarta.validation.constraints.*;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 public class VirementRequestDto {
 
@@ -12,7 +12,7 @@ public class VirementRequestDto {
     private Long banqueBeneficiaireId;
 
     @NotNull(message = "La date de réception est obligatoire")
-    private OffsetDateTime dateReception;
+    private LocalDate dateReception ;
 
     @NotBlank(message = "Le bénéficiaire est obligatoire")
     private final String beneficiaire = "STAPORT";
@@ -39,11 +39,11 @@ public class VirementRequestDto {
         this.banqueBeneficiaireId = banqueBeneficiaireId;
     }
 
-    public OffsetDateTime getDateReception() {
+    public LocalDate getDateReception() {
         return dateReception;
     }
 
-    public void setDateReception(OffsetDateTime dateReception) {
+    public void setDateReception(LocalDate dateReception) {
         this.dateReception = dateReception;
     }
 
