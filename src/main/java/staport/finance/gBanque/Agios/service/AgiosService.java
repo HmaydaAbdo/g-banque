@@ -22,7 +22,9 @@ import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 public class AgiosService {
@@ -32,6 +34,7 @@ public class AgiosService {
     private final BanqueRepository banqueRepository;
     private final AgiosMapper agiosMapper;
     private final RapprochementRepository rapprochementRepository;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public AgiosService(AgiosRepository agiosRepository, BanqueRepository banqueRepository, AgiosMapper agiosMapper, RapprochementRepository rapprochementRepository) {
         this.agiosRepository = agiosRepository;
@@ -183,7 +186,7 @@ public class AgiosService {
                 .orElse(YearMonth.now()); // fallback si pas encore de rapprochement EN_COURS
 
         Specification<Agios> spec = Specification
-                .where(AgiosSpec.outstandingAgiosByPeriod(periode))
+                .where(AgiosSpec.outstandingUntil(endOfMonth))
                 .and(AgiosSpec.hasBanque(searchDto.getBanqueId()))
                 .and(AgiosSpec.hasLibelle(searchDto.getLibelle()))
                 .and(AgiosSpec.hasMontant(searchDto.getMontant()));

@@ -43,14 +43,6 @@ public final class PrefinancementSpecification {
         };
     }
 
-    /**
-     * Creates a Specification to filter by a specific Marche numero.
-     * This method performs a join to the Marche entity and applies a 'like' predicate.
-     * The search is case-insensitive.
-     *
-     * @param marcheNumero The numero of the Marche to filter by.
-     * @return A Specification for the Marche numero.
-     */
     public static Specification<Prefinancement> byMarcheNumero(String marcheNumero) {
         return (root, query, cb) -> {
             if (marcheNumero == null || marcheNumero.trim().isEmpty()) {
@@ -63,14 +55,6 @@ public final class PrefinancementSpecification {
         };
     }
 
-    /**
-     * Creates a Specification to filter by a specific Marche name.
-     * This method performs a join to the Marche entity and applies a 'like' predicate.
-     * The search is case-insensitive.
-     *
-     * @param marcheName The name of the Marche to filter by.
-     * @return A Specification for the Marche name.
-     */
     public static Specification<Prefinancement> byMarcheName(String marcheName) {
         return (root, query, cb) -> {
             if (marcheName == null || marcheName.trim().isEmpty()) {
@@ -98,12 +82,7 @@ public final class PrefinancementSpecification {
             return cb.equal(banqueJoin.get("id"), banqueId);
         };
     }
-    /**
-     * Creates a Specification to filter by a specific Type.
-     *
-     * @param type The Type enum value to filter by.
-     * @return A Specification for the Type.
-     */
+
     public static Specification<Prefinancement> byType(Type type) {
         return (root, query, cb) -> {
             if (type == null) {
@@ -122,12 +101,6 @@ public final class PrefinancementSpecification {
         };
     }
 
-    /**
-     * Creates a Specification to filter by a specific Status.
-     *
-     * @param status The Status enum value to filter by.
-     * @return A Specification for the Status.
-     */
     public static Specification<Prefinancement> byStatus(Status status) {
         return (root, query, cb) -> {
             if (status == null) {
@@ -137,13 +110,6 @@ public final class PrefinancementSpecification {
         };
     }
 
-    /**
-     * Combines all individual specifications from the search DTO into a single,
-     * comprehensive Specification.
-     *
-     * @param searchDTO The DTO containing the search criteria.
-     * @return A combined Specification.
-     */
     public static Specification<Prefinancement> bySearchCriteria(PrefinancementSearchDTO searchDTO) {
         if (searchDTO == null) {
             return Specification.where(null);
@@ -155,62 +121,31 @@ public final class PrefinancementSpecification {
                 .and(byStatus(searchDTO.getStatus()));
     }
 
-    /**
-     * Creates a Specification to filter for outstanding pre-financing records for the current month.
-     * Outstanding is defined as status = PREVU and dateEmission is on or before the end of the current month.
-     *
-     * @return A Specification for outstanding pre-financing records.
-     */
-    public static Specification<Prefinancement> outstandingRemboursementForCurrentMonth() {
+    public static Specification<Prefinancement> outstandingRemboursementUntil(LocalDate until) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-            // Condition 1: Filter by type
-            // The type must be 'REMBOURSEMENT'
             predicates.add(builder.equal(root.get("type"), Type.REMBOURSEMENT));
-
-            // Condition 2: Filter by status
-            // The status must be 'PREVU'
             predicates.add(builder.equal(root.get("status"), Status.PREVU));
-
-            // Condition 3: Filter by date
-            // The dateEmission must be less than or equal to the end of the current month
-            LocalDate now = LocalDate.now();
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-
-            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
-            // Combine all three conditions with a logical AND
+            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), until));
             return builder.and(predicates.toArray(new Predicate[0]));
         };
     }
-
-    /**
-     * Creates a Specification to filter for outstanding pre-financing records for the current month.
-     * Outstanding is defined as status = PREVU and dateEmission is on or before the end of the current month.
-     *
-     * @return A Specification for outstanding pre-financing records.
-     */
-    public static Specification<Prefinancement> outstandingDeblocageForCurrentMonth() {
+    public static Specification<Prefinancement> outstandingDeblocageUntil(LocalDate until) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-            // Condition 1: Filter by type
-            // The type must be 'DEBLOCAGE'
             predicates.add(builder.equal(root.get("type"), Type.DEBLOCAGE));
-
-            // Condition 2: Filter by status
-            // The status must be 'PREVU'
             predicates.add(builder.equal(root.get("status"), Status.PREVU));
-
-            // Condition 3: Filter by date
-            // The dateEmission must be less than or equal to the end of the current month
-            LocalDate now = LocalDate.now();
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-
-            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
-            // Combine all three conditions with a logical AND
+            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), until));
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+    public static Specification<Prefinancement> outstandingBetween(LocalDate from, LocalDate until, Type type) {
+        return (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(builder.equal(root.get("type"), type));
+            predicates.add(builder.equal(root.get("status"), Status.PREVU));
+            predicates.add(builder.greaterThanOrEqualTo(root.get("dateEmission"), from));
+            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), until));
             return builder.and(predicates.toArray(new Predicate[0]));
         };
     }

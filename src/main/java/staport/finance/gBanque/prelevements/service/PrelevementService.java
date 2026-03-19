@@ -20,6 +20,8 @@ import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.prelevements.spec.PrelevementSpec;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 public class PrelevementService {
@@ -28,6 +30,8 @@ public class PrelevementService {
     private final PrelevementRepository prelevementRepository;
     private final BanqueRepository banqueRepository;
     private final PrelevementMapper prelevementMapper;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
 
     public PrelevementService(PrelevementRepository prelevementRepository, BanqueRepository banqueRepository, PrelevementMapper prelevementMapper) {
         this.prelevementRepository = prelevementRepository;
@@ -174,7 +178,7 @@ public class PrelevementService {
         log.info("Récupération des prélèvements en cours - Critères: {}", searchDto);
 
         // Construction de la spécification pour filtrer les enregistrements
-        Specification<Prelevement> spec = Specification.where(PrelevementSpec.outstandingPrelevement())
+        Specification<Prelevement> spec = Specification.where(PrelevementSpec.outstandingUntil(endOfMonth))
                 .and(PrelevementSpec.hasBanque(searchDto.getBanqueId()))
                 .and(PrelevementSpec.hasLibelle(searchDto.getLibelle()))
                 .and(PrelevementSpec.hasMontant(searchDto.getMontant()));

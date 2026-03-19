@@ -120,27 +120,26 @@ public class EcheanceCMTSpecification {
         };
     }
 
-    /**
-     * Crée une Specification pour filtrer les échéances non payées jusqu'à
-     * une période donnée (fin du jour ou fin du mois).
-     * @return Une Specification pour les échéances d'encours.
-     */
-    public static Specification<EcheanceCMT> outstandingUntil() {
+    public static Specification<EcheanceCMT> outstandingUntil(LocalDate until) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-            // Filtre les échéances dont le statut est "PREVU" (non payé)
             predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), StatutEcheanceCMT.PREVU));
-
-            // Calcule la date butoir à la fin du dernier jour du mois
-            LocalDate dateButoir = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-            // Ajoute la condition de date
-            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), dateButoir));
-
-            // Combine tous les prédicats avec un opérateur AND
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), until));
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+    // Nouveau — pour le recap (plage from → until)
+    public static Specification<EcheanceCMT> outstandingBetween(LocalDate from, LocalDate until) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), StatutEcheanceCMT.PREVU));
+            predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateEcheance"), from));
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), until));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+
 
 }

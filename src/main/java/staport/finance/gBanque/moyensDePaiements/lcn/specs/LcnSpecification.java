@@ -129,48 +129,42 @@ public final class LcnSpecification {
         };
     }
 
-    public static Specification<Lcn> encoursDecaissement(Long banqueId) {
+    public static Specification<Lcn> encoursDecaissement(Long banqueId, LocalDate until) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            LocalDate now = LocalDate.now();
-
-            // 1. Le statut du LCN doit être actif.
+            if (banqueId == null) return criteriaBuilder.disjunction();
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
-
-            // 2. Le LCN doit appartenir à la banque spécifiée par son ID.
-            if (banqueId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
-            } else {
-                return criteriaBuilder.disjunction();
-            }
-
-            // 3. La date d'échéance du LCN doit être égale ou antérieure à la fin du mois.
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), endOfMonth));
-
+            predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), until));
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
-    public static Specification<Lcn> encoursEncaissement(Long banqueId) {
+
+    // Remplace encoursEncaissement — until en paramètre (le filtre date manquait dans l'original!)
+    public static Specification<Lcn> encoursEncaissement(Long banqueId, LocalDate until) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-            // 1. Le statut du LCN doit être actif.
+            if (banqueId == null) return criteriaBuilder.disjunction();
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
-
-            // 2. Le LCN doit appartenir à la banque spécifiée par son ID.
-            if (banqueId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
-            } else {
-                return criteriaBuilder.disjunction();
-            }
-
-
-
+            predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), until));
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 
+    // Nouveau — pour le recap
+    public static Specification<Lcn> outstandingBetween(Long banqueId, LocalDate from, LocalDate until, Type type) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (banqueId == null) return criteriaBuilder.disjunction();
+            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("type"), type));
+            predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateEcheance"), from));
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), until));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 }

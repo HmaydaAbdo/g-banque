@@ -18,6 +18,8 @@ import staport.finance.gBanque.moyensDePaiements.virements.repositories.Virement
 import staport.finance.gBanque.moyensDePaiements.virements.specs.VirementSpec;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
 
 @Service
@@ -27,6 +29,7 @@ public class VirementService {
     private final VirementRepository virementRepository;
     private final BanqueRepository banqueRepository;
     private final VirementMapper virementMapper;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
 
     public VirementService(VirementRepository virementRepository, BanqueRepository banqueRepository, VirementMapper virementMapper) {
@@ -159,7 +162,7 @@ public class VirementService {
     public EncoursVirementResponseDto getEncoursDecaissementForVirements(EncoursVirementsSearchDto searchDto, Long banqueId, Pageable pageable) {
         log.info("Récupération des encours de décaissement pour la banque ID={} avec les filtres={}", banqueId, searchDto);
 
-        Specification<Virement> spec = VirementSpec.encoursDecaissement(banqueId)
+        Specification<Virement> spec = VirementSpec.encoursDecaissement(banqueId,endOfMonth)
                 .and(VirementSpec.hasDateEmission(searchDto.getDateEmission()))
                 .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(VirementSpec.hasMontant(searchDto.getMontant()));
@@ -184,7 +187,7 @@ public class VirementService {
                     return new NoSuchElementException("Bank with id " + banqueId + " not found.");
                 });
 
-        Specification<Virement> spec = VirementSpec.encoursEncaissement(banqueBeneficiaire.getNom())
+        Specification<Virement> spec = VirementSpec.encoursEncaissement(banqueBeneficiaire.getNom(),endOfMonth)
                 .and(VirementSpec.hasDateEmission(searchDto.getDateEmission()))
                 .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(VirementSpec.hasMontant(searchDto.getMontant()))

@@ -57,27 +57,18 @@ public class AgiosSpec {
                 .and(hasStatus(dto.getStatus()));
     }
 
-    /**
-     * Creates a Specification to filter for agios that are "outstanding."
-     * Outstanding is defined as having a status of PREVU and an emission date that is in the past or present.
-     *
-     * @return A Specification for outstanding agios.
-     */
-    public static Specification<Agios> outstandingAgiosByPeriod(YearMonth period) {
-        return (root, query, cb) -> {
+    public static Specification<Agios> outstandingUntil(LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
+    }
 
-
-            LocalDate endOfPeriod = period.atEndOfMonth().with(TemporalAdjusters.lastDayOfMonth());
-
-
-            Specification<Agios> hasStatusPrevu = hasStatus(Status.PREVU);
-
-            Specification<Agios> hasDateBeforeEndOfPeriod = (r, q, crit) ->
-                    crit.lessThanOrEqualTo(r.get("dateEmission"), endOfPeriod);
-
-            return Specification.where(hasStatusPrevu)
-                    .and(hasDateBeforeEndOfPeriod)
-                    .toPredicate(root, query, cb);
-        };
+    public static Specification<Agios> outstandingBetween(LocalDate from, LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.greaterThanOrEqualTo(root.get("dateEmission"), from),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
     }
 }

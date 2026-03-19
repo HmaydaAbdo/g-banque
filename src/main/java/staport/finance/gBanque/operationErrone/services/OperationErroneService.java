@@ -17,6 +17,8 @@ import staport.finance.gBanque.operationErrone.specs.OperationErroneSpec;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 public class OperationErroneService {
@@ -25,6 +27,8 @@ public class OperationErroneService {
     private final OperationErroneRepository operationErroneRepository;
     private final BanqueRepository banqueRepository;
     private final OperationErroneMapper operationErroneMapper;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
 
     public OperationErroneService(OperationErroneRepository operationErroneRepository,
                                   BanqueRepository banqueRepository,
@@ -129,7 +133,7 @@ public class OperationErroneService {
     public EncoursOperationErroneDto getOutstandingOperationErrone(OperationErroneSearchDto searchDto, Pageable pageable) {
         log.info("Récupération des opérations erronées en cours - Critères: {}", searchDto);
 
-        Specification<OperationErrone> spec = Specification.where(OperationErroneSpec.outstandingOperations())
+        Specification<OperationErrone> spec = Specification.where(OperationErroneSpec.outstandingUntil(endOfMonth))
                 .and(OperationErroneSpec.hasBanque(searchDto.getBanqueId()))
                 .and(OperationErroneSpec.hasLibelle(searchDto.getLibelle()))
                 .and(OperationErroneSpec.hasMontant(searchDto.getMontant()))

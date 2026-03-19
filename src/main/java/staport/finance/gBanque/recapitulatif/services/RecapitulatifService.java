@@ -12,9 +12,6 @@ import staport.finance.gBanque.Agios.spec.AgiosSpec;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.Bank.services.BanqueService;
-import staport.finance.gBanque.rapprochement.entities.Rapprochement;
-import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
-import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
 import staport.finance.gBanque.impayees.specs.ImpayeeSpecifications;
@@ -78,7 +75,8 @@ import staport.finance.gBanque.moyensDePaiements.virements.repositories.Virement
 import staport.finance.gBanque.moyensDePaiements.virements.specs.VirementSpec;
 
 import java.math.BigDecimal;
-import java.time.YearMonth;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -121,14 +119,14 @@ public class RecapitulatifService {
     private final OperationErroneRepository operationErroneRepository;
     private final VirementInternationalRepository virementInternationalRepository;
     private final ImpayeeRepository impayeeRepository;
-    private final RapprochementRepository rapprochementRepository;
 
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
 
     public RecapitulatifService(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
-            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, BanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, RapprochementRepository rapprochementRepository) {
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, BanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.decaissementMapper = mapper;
@@ -152,19 +150,9 @@ public class RecapitulatifService {
         this.operationErroneRepository = operationErroneRepository;
         this.virementInternationalRepository = virementInternationalRepository;
         this.impayeeRepository = impayeeRepository;
-        this.rapprochementRepository = rapprochementRepository;
     }
 
-    /**
-     * Retourne la période du rapprochement EN_COURS pour la banque donnée,
-     * ou le mois courant si aucun rapprochement EN_COURS n'existe.
-     */
-    private YearMonth getPeriodeForBanque(Long banqueId) {
-        return rapprochementRepository
-                .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
-                .map(Rapprochement::getDateRapprochement)
-                .orElse(YearMonth.now());
-    }
+
 
 
     public AgregatedRecapDto getRecapitulatifEncaissementForCurrentMonthForGivenBanque(Pageable pageable, DecaissementSearchDto searchDto) {
@@ -179,29 +167,29 @@ public class RecapitulatifService {
         // Step 1: Create specifications for each entity type, filtering by bank and current month.
 
         //Moyens de paiement
-        Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom());
-        Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId());
-        Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banqueId);
-        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banqueId);
+        Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom(),endOfMonth);
+        Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId(),endOfMonth);
+        Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banqueId,endOfMonth);
+        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banqueId,endOfMonth);
 
         // préfinancement (Déblocage only)
-        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingDeblocageForCurrentMonth()
+        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingDeblocageUntil(endOfMonth)
                 .and(PrefinancementSpecification.byBanqueId(banqueId));
 
         // Droit Constaté ( Déblocage only )
-        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingDeblocageForCurrentMonth()
+        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingDeblocageUntil(endOfMonth)
                 .and(DroitConstateSpec.byBanqueId(banqueId));
 
         // Factoring ( Déblocage only )
-        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingDeblocageForCurrentMonth()
+        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingDeblocageUntil(endOfMonth)
                 .and(FactoringSpec.byBanqueId(banqueId));
 
         //décomptes
-        Specification<Decompte> decompteSpecification = DecompteSpec.outstandingDecomptesForCurrentMonth()
+        Specification<Decompte> decompteSpecification = DecompteSpec.outstandingUntil(endOfMonth)
                 .and(DecompteSpec.byBanqueId(banqueId));
 
         // Restitutions
-        Specification<Restitution> restitutionSpecification = RestitutionSpec.outstandingRestitution()
+        Specification<Restitution> restitutionSpecification = RestitutionSpec.outstandingUntil(endOfMonth)
                 .and(RestitutionSpec.hasBanque(banqueId));
 
 
@@ -292,32 +280,32 @@ public class RecapitulatifService {
     }
     public List<RecaputilatifItem> getEncaissementByBanque(Banque banque) {
 
-        List<RecaputilatifItem> encaissements=new ArrayList<RecaputilatifItem>();
+        List<RecaputilatifItem> encaissements= new ArrayList<>();
 
         //Moyens de paiement
-        Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom());
-        Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId());
-        Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banque.getId());
-        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banque.getId());
+        Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom(),endOfMonth);
+        Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId(),endOfMonth);
+        Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banque.getId(),endOfMonth);
+        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banque.getId(),endOfMonth);
 
         // préfinancement (Déblocage only)
-        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingDeblocageForCurrentMonth()
+        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingDeblocageUntil(endOfMonth)
                 .and(PrefinancementSpecification.byBanqueId(banque.getId()));
 
         // Droit Constaté ( Déblocage only )
-        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingDeblocageForCurrentMonth()
+        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingDeblocageUntil(endOfMonth)
                 .and(DroitConstateSpec.byBanqueId(banque.getId()));
 
         // Factoring ( Déblocage only )
-        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingDeblocageForCurrentMonth()
+        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingDeblocageUntil(endOfMonth)
                 .and(FactoringSpec.byBanqueId(banque.getId()));
 
         //décomptes
-        Specification<Decompte> decompteSpecification = DecompteSpec.outstandingDecomptesForCurrentMonth()
+        Specification<Decompte> decompteSpecification = DecompteSpec.outstandingUntil(endOfMonth)
                 .and(DecompteSpec.byBanqueId(banque.getId()));
 
         // Restitutions
-        Specification<Restitution> restitutionSpecification = RestitutionSpec.outstandingRestitution()
+        Specification<Restitution> restitutionSpecification = RestitutionSpec.outstandingUntil(endOfMonth)
                 .and(RestitutionSpec.hasBanque(banque.getId()));
 
 
@@ -359,58 +347,58 @@ public class RecapitulatifService {
         // Step 1: Create specifications for each entity type, filtering by bank and current month.
 
         //leasing
-        Specification<EcheanceLeasing> leasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil())
+        Specification<EcheanceLeasing> leasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil(endOfMonth))
                 .and(EcheanceLeasingSpecification.byContratBanqueId(banqueId));
         //CMT
-        Specification<EcheanceCMT> cmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil())
+        Specification<EcheanceCMT> cmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil(endOfMonth))
                 .and(EcheanceCMTSpecification.byCreditBanqueId(banqueId));
 
         //moyens de paiement
-        Specification<Cheque> chequeSpec = ChequeSpec.encoursDecaissements(banqueId);
-        Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banqueId);
-        Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banqueId);
-        Specification<MiseADisposition> madSpec = MiseADispositionSpec.encoursDecaissementForMiseAdispo(banqueId);
-        Specification<VirementInternational> virementInternationalSpec= VirementInternationalSpec.encoursDecaissement(banqueId);
+        Specification<Cheque> chequeSpec = ChequeSpec.encoursDecaissements(banqueId,endOfMonth);
+        Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banqueId,endOfMonth);
+        Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banqueId,endOfMonth);
+        Specification<MiseADisposition> madSpec = MiseADispositionSpec.encoursDecaissement(banqueId,endOfMonth);
+        Specification<VirementInternational> virementInternationalSpec= VirementInternationalSpec.encoursDecaissement(banqueId,endOfMonth);
 
         //operation erronées
-        Specification<OperationErrone> operationErroneSpec = OperationErroneSpec.outstandingOperations()
+        Specification<OperationErrone> operationErroneSpec = OperationErroneSpec.outstandingUntil(endOfMonth)
                 .and(OperationErroneSpec.hasBanque(banqueId));
 
         // préfinancement (Remboursement only)
-        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingRemboursementForCurrentMonth()
+        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingRemboursementUntil(endOfMonth)
                 .and(PrefinancementSpecification.byBanqueId(banqueId));
 
         //Droit constatés ( Remboursement only )
-        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingRemboursementForCurrentMonth()
+        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingRemboursementUntil(endOfMonth)
                 .and(DroitConstateSpec.byBanqueId(banqueId));
 
         //Factoring ( Remboursement only )
-        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingRemboursementForCurrentMonth()
+        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingRemboursementUntil(endOfMonth)
                 .and(FactoringSpec.byBanqueId(banqueId));
 
         //Commissions
-        Specification<Commission> commissionSpecification= CommissionSpecifications.outstandingCommissions()
+        Specification<Commission> commissionSpecification= CommissionSpecifications.outstandingUntil(endOfMonth)
                 .and(CommissionSpecifications.hasBanque(banqueId));
 
         //Agios
-        Specification<Agios> agiosSpecification= AgiosSpec.outstandingAgiosByPeriod(getPeriodeForBanque(banqueId))
+        Specification<Agios> agiosSpecification= AgiosSpec.outstandingUntil(endOfMonth)
                 .and(AgiosSpec.hasBanque(banqueId));
 
 
         //prelevements
-        Specification<Prelevement> prelevementSpecification= PrelevementSpec.outstandingPrelevement()
+        Specification<Prelevement> prelevementSpecification= PrelevementSpec.outstandingUntil(endOfMonth)
                 .and(PrelevementSpec.hasBanque(banqueId));
 
         // frais bancaire
-        Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingFraisBancaires()
+        Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingUntil(endOfMonth)
                 .and(FraisBancaireSpec.hasBanque(banqueId));
 
         //impots et taxes
-        Specification<ImpotEtTaxe> impotEtTaxeSpecification= ImpotEtTaxeSpecifications.outstandingImpotEtTaxes()
+        Specification<ImpotEtTaxe> impotEtTaxeSpecification= ImpotEtTaxeSpecifications.outstandingUntil(endOfMonth)
                 .and(ImpotEtTaxeSpecifications.hasBanque(banqueId));
 
         //impayee
-        Specification<Impayee> impayeeSpec=ImpayeeSpecifications.outstandingImpayees()
+        Specification<Impayee> impayeeSpec=ImpayeeSpecifications.outstandingUntil(endOfMonth)
                 .and(ImpayeeSpecifications.hasBanque(banqueId));
 
         // Step 2: Fetch all relevant data for the current month from all repositories.
@@ -513,59 +501,59 @@ public class RecapitulatifService {
     }
     public List<RecaputilatifItem> getDecaissementByBanque(Banque banque) {
 
-        List<RecaputilatifItem> decaissementList=new ArrayList<RecaputilatifItem>();
+        List<RecaputilatifItem> decaissementList= new ArrayList<>();
 
         //leasing
-        Specification<EcheanceLeasing> leasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil())
+        Specification<EcheanceLeasing> leasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil(endOfMonth))
                 .and(EcheanceLeasingSpecification.byContratBanqueId(banque.getId()));
         //CMT
-        Specification<EcheanceCMT> cmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil())
+        Specification<EcheanceCMT> cmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil(endOfMonth))
                 .and(EcheanceCMTSpecification.byCreditBanqueId(banque.getId()));
 
         //moyens de paiement
-        Specification<Cheque> chequeSpec = ChequeSpec.encoursDecaissements(banque.getId());
-        Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banque.getId());
-        Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banque.getId());
-        Specification<MiseADisposition> madSpec = MiseADispositionSpec.encoursDecaissementForMiseAdispo(banque.getId());
-        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursDecaissement(banque.getId());
+        Specification<Cheque> chequeSpec = ChequeSpec.encoursDecaissements(banque.getId(),endOfMonth);
+        Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banque.getId(),endOfMonth);
+        Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banque.getId(),endOfMonth);
+        Specification<MiseADisposition> madSpec = MiseADispositionSpec.encoursDecaissement(banque.getId(),endOfMonth);
+        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursDecaissement(banque.getId(),endOfMonth);
 
         //operation erronées
-        Specification<OperationErrone> operationErroneSpec = OperationErroneSpec.outstandingOperations()
+        Specification<OperationErrone> operationErroneSpec = OperationErroneSpec.outstandingUntil(endOfMonth)
                 .and(OperationErroneSpec.hasBanque(banque.getId()));
 
         // préfinancement (Remboursement only)
-        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingRemboursementForCurrentMonth()
+        Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingRemboursementUntil(endOfMonth)
                 .and(PrefinancementSpecification.byBanqueId(banque.getId()));
 
         //Droit constatés ( Remboursement only )
-        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingRemboursementForCurrentMonth()
+        Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingRemboursementUntil(endOfMonth)
                 .and(DroitConstateSpec.byBanqueId(banque.getId()));
 
         //Factoring ( Remboursement only )
-        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingRemboursementForCurrentMonth()
+        Specification<Factoring> factoringSpecification = FactoringSpec.outstandingRemboursementUntil(endOfMonth)
                 .and(FactoringSpec.byBanqueId(banque.getId()));
 
         //Commissions
-        Specification<Commission> commissionSpecification= CommissionSpecifications.outstandingCommissions()
+        Specification<Commission> commissionSpecification= CommissionSpecifications.outstandingUntil(endOfMonth)
                 .and(CommissionSpecifications.hasBanque(banque.getId()));
         //Agios
-        Specification<Agios> agiosSpecification= AgiosSpec.outstandingAgiosByPeriod(getPeriodeForBanque(banque.getId()))
+        Specification<Agios> agiosSpecification= AgiosSpec.outstandingUntil(endOfMonth)
                 .and(AgiosSpec.hasBanque(banque.getId()));
 
         //prelevement
-        Specification<Prelevement> prelevementSpecification= PrelevementSpec.outstandingPrelevement()
+        Specification<Prelevement> prelevementSpecification= PrelevementSpec.outstandingUntil(endOfMonth)
                 .and(PrelevementSpec.hasBanque(banque.getId()));
 
 
         // frais bancaire
-        Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingFraisBancaires()
+        Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingUntil(endOfMonth)
                 .and(FraisBancaireSpec.hasBanque(banque.getId()));
 
         //impot et taxes
-        Specification<ImpotEtTaxe> impotEtTaxeSpecification=ImpotEtTaxeSpecifications.outstandingImpotEtTaxes()
+        Specification<ImpotEtTaxe> impotEtTaxeSpecification=ImpotEtTaxeSpecifications.outstandingUntil(endOfMonth)
                 .and(ImpotEtTaxeSpecifications.hasBanque(banque.getId()));
 
-        Specification<Impayee> impayeeSpecification=ImpayeeSpecifications.outstandingImpayees()
+        Specification<Impayee> impayeeSpecification=ImpayeeSpecifications.outstandingUntil(endOfMonth)
                 .and(ImpayeeSpecifications.hasBanque(banque.getId()));
 
         // Step 2: Fetch all relevant data for the current month from all repositories.

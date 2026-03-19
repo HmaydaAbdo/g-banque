@@ -17,6 +17,8 @@ import staport.finance.gBanque.moyensDePaiements.cheques.specs.ChequeSpec;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
 
 @Service
@@ -25,6 +27,7 @@ public class ChequeService {
     private static final Logger log = LoggerFactory.getLogger(ChequeService.class);
     private final ChequeRepository chequeRepository;
     private final BanqueRepository banqueRepository;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public ChequeService(ChequeRepository chequeRepository, BanqueRepository banqueRepository) {
         this.chequeRepository = chequeRepository;
@@ -209,7 +212,7 @@ public class ChequeService {
         log.info("Récupération des encours de décaissement pour les chèques de la banque ID={} avec les filtres={}", banqueId, searchDto);
 
         // Build the specification for active cheques for the specified bank in the current month
-        Specification<Cheque> spec = ChequeSpec.encoursDecaissements(banqueId)
+        Specification<Cheque> spec = ChequeSpec.encoursDecaissements(banqueId,endOfMonth)
                 .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(ChequeSpec.hasNumero(searchDto.getNumero()))
                 .and(ChequeSpec.hasMontant(searchDto.getMontant()));
@@ -230,7 +233,7 @@ public class ChequeService {
         log.info("Récupération des encours d'encaissement pour les chèques de la banque ID={} avec les filtres={}", banqueId, searchDto);
 
         // Build the specification for active cheques for the specified bank in the current month
-        Specification<Cheque> spec = ChequeSpec.encoursEncaissements(banqueId)
+        Specification<Cheque> spec = ChequeSpec.encoursEncaissements(banqueId,endOfMonth)
                 .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
                 .and(ChequeSpec.hasMontant(searchDto.getMontant()))

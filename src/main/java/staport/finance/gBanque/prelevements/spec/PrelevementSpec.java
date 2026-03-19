@@ -54,24 +54,18 @@ public class PrelevementSpec {
                 .and(hasLibelle(dto.getLibelle()))
                 .and(hasStatus(dto.getStatus()));
     }
+    public static Specification<Prelevement> outstandingUntil(LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
+    }
 
-    public static Specification<Prelevement> outstandingPrelevement() {
-        return (root, query, cb) -> {
-            // Condition 1 : statut = PREVU
-            Specification<Prelevement> hasStatusPrev = hasStatus(Status.PREVU);
-
-            // Fin du mois courant (dernier jour à 23h59m59s999999999)
-            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-            // Condition 2 : dateEmission <= fin du mois courant
-            Specification<Prelevement> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
-                    cbDate.lessThanOrEqualTo(rootDate.get("dateEmission"), endOfMonth);
-
-            // Combinaison des deux conditions avec un AND logique
-            return Specification
-                    .where(hasStatusPrev)
-                    .and(hasDateBeforeEndOfMonth)
-                    .toPredicate(root, query, cb);
-        };
+    public static Specification<Prelevement> outstandingBetween(LocalDate from, LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.greaterThanOrEqualTo(root.get("dateEmission"), from),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
     }
 }

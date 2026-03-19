@@ -20,6 +20,8 @@ import staport.finance.gBanque.restitution.repository.RestitutionRepository;
 import staport.finance.gBanque.restitution.specs.RestitutionSpec;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 public class RestitutionService {
@@ -28,6 +30,7 @@ public class RestitutionService {
     private final RestitutionRepository restitutionRepository;
     private final BanqueRepository banqueRepository;
     private final RestitutionMapper restitutionMapper;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public RestitutionService(RestitutionRepository restitutionRepository, BanqueRepository banqueRepository, RestitutionMapper restitutionMapper) {
         this.restitutionRepository = restitutionRepository;
@@ -131,7 +134,7 @@ public class RestitutionService {
         log.info("Récupération des encours de restitutions avec les critères: {}", searchDto);
 
         // Construction de la spécification pour filtrer les enregistrements
-        Specification<Restitution> spec = Specification.where(RestitutionSpec.outstandingRestitution())
+        Specification<Restitution> spec = Specification.where(RestitutionSpec.outstandingUntil(endOfMonth))
                 .and(RestitutionSpec.hasBanque(searchDto.getBanqueId()))
                 .and(RestitutionSpec.hasLibelle(searchDto.getLibelle()))
                 .and(RestitutionSpec.hasMontant(searchDto.getMontant()))

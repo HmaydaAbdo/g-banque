@@ -57,30 +57,20 @@ public class FraisBancaireSpec {
                 .and(hasStatus(dto.getStatus()));
     }
 
-    /**
-     * Creates a Specification to filter for fraisBancaires that are "outstanding."
-     * Outstanding is defined as having a status of PREVU and an emission date that is in the past or present.
-     *
-     * @return A Specification for outstanding frais bancaires.
-     */
-    public static Specification<FraisBancaire> outstandingFraisBancaires() {
-        return (root, query, cb) -> {
-            // Condition 1 : statut = PREVU
-            Specification<FraisBancaire> hasStatusPrev = hasStatus(Status.PREVU);
 
-            // Fin du mois courant : dernier jour à 23h59m59s999999999
-            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+    public static Specification<FraisBancaire> outstandingUntil(LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
+    }
 
-            // Condition 2 : dateEmission <= fin du mois courant
-            Specification<FraisBancaire> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
-                    cbDate.lessThanOrEqualTo(rootDate.get("dateEmission"), endOfMonth);
-
-            // Combinaison des deux conditions avec un AND logique
-            return Specification
-                    .where(hasStatusPrev)
-                    .and(hasDateBeforeEndOfMonth)
-                    .toPredicate(root, query, cb);
-        };
+    public static Specification<FraisBancaire> outstandingBetween(LocalDate from, LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.greaterThanOrEqualTo(root.get("dateEmission"), from),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
     }
 
 

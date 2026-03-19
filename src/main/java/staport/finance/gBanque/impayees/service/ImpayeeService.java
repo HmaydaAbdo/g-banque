@@ -17,6 +17,8 @@ import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
 import staport.finance.gBanque.impayees.specs.ImpayeeSpecifications;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 public class ImpayeeService {
@@ -25,6 +27,7 @@ public class ImpayeeService {
     private final ImpayeeRepository impayeeRepository;
     private final BanqueRepository banqueRepository;
     private final ImpayeeMapper impayeeMapper;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public ImpayeeService(ImpayeeRepository impayeeRepository, BanqueRepository banqueRepository, ImpayeeMapper impayeeMapper) {
         this.impayeeRepository = impayeeRepository;
@@ -129,7 +132,7 @@ public class ImpayeeService {
     public EncoursImpayeeDto getOutstandingImpayees(ImpayeeSearchDto searchDto, Pageable pageable) {
         log.info("Récupération des encours impayées - Critères: {}", searchDto);
 
-        Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingImpayees())
+        Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingUntil(endOfMonth))
                 .and(ImpayeeSpecifications.hasBanque(searchDto.getBanqueEncaissementId()))
                 .and(ImpayeeSpecifications.hasLibelle(searchDto.getLibelle()))
                 .and(ImpayeeSpecifications.hasMotif(searchDto.getMotif()))

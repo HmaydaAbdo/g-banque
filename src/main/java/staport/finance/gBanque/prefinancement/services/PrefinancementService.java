@@ -24,6 +24,8 @@ import staport.finance.gBanque.prefinancement.repository.PrefinancementRepositor
 import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Optional;
 
 
@@ -37,6 +39,7 @@ public class PrefinancementService {
     private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
     private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public PrefinancementService(
             PrefinancementRepository prefinancementRepository,
@@ -221,7 +224,7 @@ public class PrefinancementService {
         log.debug("Pagination - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
-                .and(PrefinancementSpecification.outstandingRemboursementForCurrentMonth())
+                .and(PrefinancementSpecification.outstandingRemboursementUntil(endOfMonth))
                 .and(PrefinancementSpecification.byMarcheName(searchDto.getMarcheName()))
                 .and(PrefinancementSpecification.byMarcheNumero(searchDto.getMarcheNumero()))
                 .and(PrefinancementSpecification.hasMontant(searchDto.getMontant()));
@@ -257,7 +260,7 @@ public class PrefinancementService {
         log.debug("Pagination - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<Prefinancement> spec = PrefinancementSpecification.byBanqueId(banqueId)
-                .and(PrefinancementSpecification.outstandingDeblocageForCurrentMonth())
+                .and(PrefinancementSpecification.outstandingDeblocageUntil(endOfMonth))
                 .and(PrefinancementSpecification.byMarcheName(searchDto.getMarcheName()))
                 .and(PrefinancementSpecification.byMarcheNumero(searchDto.getMarcheNumero()))
                 .and(PrefinancementSpecification.hasMontant(searchDto.getMontant()));

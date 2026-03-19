@@ -133,21 +133,21 @@ public class EcheanceLeasingSpecification {
             return criteriaBuilder.equal(contratLeasingJoin.get("organismeLeasing").get("id"), organismeLeasingId);
         };
     }
-    /**
-     * Spécification pour les échéances non payées jusqu'à une période donnée.
-     * @return Une Specification pour les échéances d'encours.
-     */
-    public static Specification<EcheanceLeasing> outstandingUntil( ) {
-        return (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
 
-            // récupérer les échéances prévues
-            predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), StatutEcheanceLeasing.PREVU));
-
-            LocalDate dateButoir = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), dateButoir));
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
+    public static Specification<EcheanceLeasing> outstandingUntil(LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.lessThanOrEqualTo(root.get("dateEcheance"), until),
+                cb.equal(root.get("statutPaiement"), StatutEcheanceLeasing.PREVU)
+        );
     }
+
+    //  plage from → until
+    public static Specification<EcheanceLeasing> outstandingBetween(LocalDate from, LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.greaterThanOrEqualTo(root.get("dateEcheance"), from),
+                cb.lessThanOrEqualTo(root.get("dateEcheance"), until),
+                cb.equal(root.get("statutPaiement"), StatutEcheanceLeasing.PREVU)
+        );
+    }
+
 }

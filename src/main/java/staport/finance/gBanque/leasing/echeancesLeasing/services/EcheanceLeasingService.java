@@ -28,7 +28,8 @@
     import java.time.LocalDate;
 import java.math.BigDecimal;
     import java.math.RoundingMode;
-                import java.util.ArrayList;
+    import java.time.temporal.TemporalAdjusters;
+    import java.util.ArrayList;
     import java.util.Comparator;
     import java.util.List;
 
@@ -400,6 +401,8 @@ import java.math.BigDecimal;
 
         @Transactional(readOnly = true)
         public EncoursLeasingResponseDTO getEncoursLeasingForBanque(EncoursLeasingRequestDTO requestDTO, Pageable pageable) {
+            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
             log.info("Récupération des encours de leasing pour la banque ID : {}", requestDTO.getBanqueId());
             log.debug("Paramètres de requête : {}, Page : {}, Taille : {}", requestDTO, pageable.getPageNumber(), pageable.getPageSize());
 
@@ -412,7 +415,7 @@ import java.math.BigDecimal;
             log.debug("Banque trouvée : {}", banque.getNom());
 
             Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratBanqueId(requestDTO.getBanqueId())
-                    .and(EcheanceLeasingSpecification.outstandingUntil());
+                    .and(EcheanceLeasingSpecification.outstandingUntil(endOfMonth));
 
             if (requestDTO.getOrganismeLeasingId() != null) {
                 log.debug("Filtre par organisme de leasing ID : {}", requestDTO.getOrganismeLeasingId());

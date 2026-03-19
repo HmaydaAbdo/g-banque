@@ -19,6 +19,8 @@ import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundExcept
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 
@@ -29,6 +31,7 @@ public class CommissionService {
     private final CommisionRepository commissionRepository;
     private final BanqueRepository banqueRepository;
     private final CommissionMapper commissionMapper;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public CommissionService(CommisionRepository commissionRepository, BanqueRepository banqueRepository, CommissionMapper commissionMapper) {
         this.commissionRepository = commissionRepository;
@@ -130,7 +133,7 @@ public class CommissionService {
     @Transactional(readOnly = true)
     public EncoursCommissionDto getOutstandingCommissions(CommissionSearchDto searchDto, Pageable pageable) {
         // Build the specification to filter the records
-        Specification<Commission> spec = Specification.where(CommissionSpecifications.outstandingCommissions())
+        Specification<Commission> spec = Specification.where(CommissionSpecifications.outstandingUntil(endOfMonth))
                 .and(CommissionSpecifications.hasBanque(searchDto.getBanqueId()))
                 .and(CommissionSpecifications.hasLibelle(searchDto.getLibelle()))
                 .and(CommissionSpecifications.hasOperation(searchDto.getOperation()))

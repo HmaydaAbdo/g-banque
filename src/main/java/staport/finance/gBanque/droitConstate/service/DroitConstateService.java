@@ -24,6 +24,8 @@ import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Optional;
 
 @Service
@@ -37,6 +39,8 @@ public class DroitConstateService {
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
     private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
     private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
 
     public DroitConstateService(DroitConstateRepository droitConstateRepository, DroitConstateMapper droitConstateMapper, MarcheRepository marcheRepository, NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, LigneFonctionnelleRepository ligneFonctionnelleRepository) {
         this.droitConstateRepository = droitConstateRepository;
@@ -204,7 +208,7 @@ public class DroitConstateService {
 
         // Build the specification to filter the records
         Specification<DroitConstate> spec = DroitConstateSpec.byBanqueId(banqueId)
-                .and(DroitConstateSpec.outstandingRemboursementForCurrentMonth())
+                .and(DroitConstateSpec.outstandingRemboursementUntil(endOfMonth))
                 .and(DroitConstateSpec.byMarcheName(searchDto.getMarcheName()))
                 .and(DroitConstateSpec.byMarcheNumero(searchDto.getMarcheNumero()))
                 .and(DroitConstateSpec.hasMontant(searchDto.getMontant()));
@@ -240,7 +244,7 @@ public class DroitConstateService {
 
         // Build the specification to filter the records
         Specification<DroitConstate> spec = DroitConstateSpec.byBanqueId(banqueId)
-                .and(DroitConstateSpec.outstandingDeblocageForCurrentMonth())
+                .and(DroitConstateSpec.outstandingDeblocageUntil(endOfMonth))
                 .and(DroitConstateSpec.byMarcheName(searchDto.getMarcheName()))
                 .and(DroitConstateSpec.byMarcheNumero(searchDto.getMarcheNumero()))
                 .and(DroitConstateSpec.hasMontant(searchDto.getMontant()));

@@ -17,6 +17,8 @@ import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpec;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 public class FraisBancaireService {
@@ -25,6 +27,7 @@ public class FraisBancaireService {
     private final FraisBancaireRepository fraisBancaireRepository;
     private final BanqueRepository banqueRepository;
     private final FraisBancaireMapper fraisBancaireMapper;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public FraisBancaireService(FraisBancaireRepository fraisBancaireRepository,
                                 BanqueRepository banqueRepository,
@@ -125,7 +128,7 @@ public class FraisBancaireService {
     public EncoursFraisBancaireDto getOutstandingFraisBancaire(FraisBancaireSearchDto searchDto, Pageable pageable) {
         log.info("Récupération des frais bancaires en cours - Critères: {}", searchDto);
 
-        Specification<FraisBancaire> spec = Specification.where(FraisBancaireSpec.outstandingFraisBancaires())
+        Specification<FraisBancaire> spec = Specification.where(FraisBancaireSpec.outstandingUntil(endOfMonth))
                 .and(FraisBancaireSpec.hasBanque(searchDto.getBanqueId()))
                 .and(FraisBancaireSpec.hasLibelle(searchDto.getLibelle()))
                 .and(FraisBancaireSpec.hasMontant(searchDto.getMontant()));

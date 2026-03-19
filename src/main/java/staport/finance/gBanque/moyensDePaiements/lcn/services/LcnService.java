@@ -20,6 +20,8 @@ import staport.finance.gBanque.moyensDePaiements.lcn.specs.LcnSpecification;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
 
 @Service
@@ -29,6 +31,7 @@ public class LcnService {
     private final LcnRepository lcnRepository;
     private final BanqueRepository banqueRepository;
     private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public LcnService(LcnRepository lcnRepository, BanqueRepository banqueRepository, LigneFonctionnelleRepository ligneFonctionnelleRepository) {
         this.lcnRepository = lcnRepository;
@@ -294,7 +297,7 @@ public class LcnService {
         log.info("Récupération des encours de décaissement pour les LCN de la banque ID={} avec les filtres={}", banqueId, searchDto);
 
         // Build the specification for active LCN for the specified bank in the current month
-        Specification<Lcn> spec = LcnSpecification.encoursDecaissement(banqueId)
+        Specification<Lcn> spec = LcnSpecification.encoursDecaissement(banqueId,endOfMonth)
                 .and(LcnSpecification.hasNumero(searchDto.getNumero()))
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(LcnSpecification.hasMontant(searchDto.getMontant()));
@@ -315,7 +318,7 @@ public class LcnService {
         log.info("Récupération des encours d'encaissement pour les LCN de la banque ID={} avec les filtres={}", banqueId, searchDto);
 
         // Build the specification for active LCN for the specified bank in the current month
-        Specification<Lcn> spec = LcnSpecification.encoursEncaissement(banqueId)
+        Specification<Lcn> spec = LcnSpecification.encoursEncaissement(banqueId,endOfMonth)
                 .and(LcnSpecification.hasEmetteur(searchDto.getEmetteur()))
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(LcnSpecification.hasMontant(searchDto.getMontant()))

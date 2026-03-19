@@ -17,6 +17,8 @@ import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.M
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.specs.MiseADispositionSpec;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
 
 @Service
@@ -25,6 +27,8 @@ public class MiseADispositionService {
     private static final Logger log = LoggerFactory.getLogger(MiseADispositionService.class);
     private final MiseADispositionRepository miseADispositionRepository;
     private final BanqueRepository banqueRepository;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
 
     public MiseADispositionService(MiseADispositionRepository miseADispositionRepository, BanqueRepository banqueRepository) {
         this.miseADispositionRepository = miseADispositionRepository;
@@ -192,7 +196,7 @@ public class MiseADispositionService {
         log.info("Récupération des encours de décaissement pour les mises à disposition de la banque ID={} avec les filtres={}", banqueId, searchDto);
 
         // Build the specification for active mise à disposition for the specified bank in the current month
-        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursDecaissementForMiseAdispo(banqueId)
+        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursDecaissement(banqueId,endOfMonth)
                 .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
                 .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
@@ -214,7 +218,7 @@ public class MiseADispositionService {
         log.info("Récupération des encours d'encaissement pour les mises à disposition de la banque ID={} avec les filtres={}", banqueId, searchDto);
 
         // Build the specification for active mise à disposition for the specified bank in the current month
-        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursEncaissementForMiseAdispo(banqueId)
+        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursEncaissement(banqueId,endOfMonth)
                 .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
                 .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))

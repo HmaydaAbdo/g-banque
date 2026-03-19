@@ -120,58 +120,41 @@ public final class ChequeSpec {
         };
     }
 
-
-    public static Specification<Cheque> encoursDecaissements(Long banqueId) {
+    public static Specification<Cheque> encoursDecaissements(Long banqueId, LocalDate until) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            LocalDate now = LocalDate.now();
-
-            // 1. Check if the cheque is active.
+            if (banqueId == null) return criteriaBuilder.disjunction();
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
-
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
-
-            // 2. Check if the cheque belongs to the specified bank ID.
-            if (banqueId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
-            } else {
-                // If banqueId is null, return a predicate that will always be false
-                return criteriaBuilder.disjunction();
-            }
-
-            // 3. Check if the emission date is on or before the last day of the current month.
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-
-            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
+            predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), until));
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 
-    public static Specification<Cheque> encoursEncaissements(Long banqueId) {
+    public static Specification<Cheque> encoursEncaissements(Long banqueId, LocalDate until) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            LocalDate now = LocalDate.now();
-
-            // 1. Check if the cheque is active.
+            if (banqueId == null) return criteriaBuilder.disjunction();
             predicates.add(criteriaBuilder.isTrue(root.get("active")));
-
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
-
-            // 2. Check if the cheque belongs to the specified bank ID.
-            if (banqueId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
-            } else {
-                // If banqueId is null, return a predicate that will always be false
-                return criteriaBuilder.disjunction();
-            }
-
-            // 3. Check if the emission date is on or before the last day of the current month.
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-
-            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
+            predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), until));
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+    public static Specification<Cheque> outstandingBetween(Long banqueId, LocalDate from, LocalDate until, Type type) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (banqueId == null) return criteriaBuilder.disjunction();
+            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("type"), type));
+            predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateEmission"), from));
+            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), until));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
 }

@@ -17,6 +17,8 @@ import staport.finance.gBanque.moyensDePaiements.virementInternational.specs.Vir
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
 
 @Service
@@ -26,6 +28,7 @@ public class VirementInternationalService {
     private final VirementInternationalRepository virementInternationalRepository;
     private final BanqueRepository banqueRepository;
     private final VirementInternationalMapper virementInternationalMapper;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public VirementInternationalService(
             VirementInternationalRepository virementInternationalRepository,
@@ -218,7 +221,7 @@ public class VirementInternationalService {
                     return new ResourceNotFoundException("Banque with id " + banqueId + " not found.");
                 });
 
-        Specification<VirementInternational> spec = VirementInternationalSpec.encoursDecaissement(banqueId);
+        Specification<VirementInternational> spec = VirementInternationalSpec.encoursDecaissement(banqueId,endOfMonth);
 
         // Ajout des filtres supplémentaires si présents
         if (searchDto.getDateEmission() != null) {
@@ -272,7 +275,7 @@ public class VirementInternationalService {
                     return new ResourceNotFoundException("Banque with id " + banqueId + " not found.");
                 });
 
-        Specification<VirementInternational> spec = VirementInternationalSpec.encoursEncaissement(banqueId);
+        Specification<VirementInternational> spec = VirementInternationalSpec.encoursEncaissement(banqueId,endOfMonth);
 
         // Ajout des filtres supplémentaires si présents
         if (searchDto.getDateEmission() != null) {

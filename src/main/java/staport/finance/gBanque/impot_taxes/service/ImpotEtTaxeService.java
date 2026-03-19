@@ -17,6 +17,8 @@ import staport.finance.gBanque.impot_taxes.specs.ImpotEtTaxeSpecifications;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 public class ImpotEtTaxeService {
@@ -25,6 +27,7 @@ public class ImpotEtTaxeService {
     private final ImpotEtTaxeRepository impotEtTaxeRepository;
     private final BanqueRepository banqueRepository;
     private final ImpotEtTaxeMapper impotEtTaxeMapper;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public ImpotEtTaxeService(ImpotEtTaxeRepository impotEtTaxeRepository,
                               BanqueRepository banqueRepository,
@@ -124,7 +127,7 @@ public class ImpotEtTaxeService {
     public EncoursImpotEtTaxeDto getOutstandingImpotEtTaxes(ImpotEtTaxeSearchDto searchDto, Pageable pageable) {
         log.info("Récupération des encours impôts/taxes - Critères: {}", searchDto);
 
-        Specification<ImpotEtTaxe> spec = Specification.where(ImpotEtTaxeSpecifications.outstandingImpotEtTaxes())
+        Specification<ImpotEtTaxe> spec = Specification.where(ImpotEtTaxeSpecifications.outstandingUntil(endOfMonth))
                 .and(ImpotEtTaxeSpecifications.hasBanque(searchDto.getBanqueId()))
                 .and(ImpotEtTaxeSpecifications.hasLibelle(searchDto.getLibelle()))
                 .and(ImpotEtTaxeSpecifications.hasMotif(searchDto.getMotif()))

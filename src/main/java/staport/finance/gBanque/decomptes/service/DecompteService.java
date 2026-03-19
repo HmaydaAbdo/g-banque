@@ -20,6 +20,8 @@ import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 public class DecompteService {
@@ -29,6 +31,7 @@ public class DecompteService {
     private final DecompteMapper decompteMapper;
     private final MarcheRepository marcheRepository;
     private final BanqueRepository banqueRepository;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
 
     public DecompteService(DecompteRepository decompteRepository, DecompteMapper decompteMapper, MarcheRepository marcheRepository, BanqueRepository banqueRepository) {
@@ -270,7 +273,7 @@ public class DecompteService {
 
         // Build the specification to filter the records
         Specification<Decompte> spec = DecompteSpec.byBanqueId(banqueId)
-                .and(DecompteSpec.outstandingDecomptesForCurrentMonth())
+                .and(DecompteSpec.outstandingUntil(endOfMonth))
                 .and(DecompteSpec.byMarcheName(searchDto.getMarcheName()))
                 .and(DecompteSpec.byMarcheNumero(searchDto.getMarcheNumero()))
                 .and(DecompteSpec.hasMontant(searchDto.getMontant()));

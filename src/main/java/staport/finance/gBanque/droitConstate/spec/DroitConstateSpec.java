@@ -159,62 +159,34 @@ public class DroitConstateSpec {
                 .and(byStatus(searchDTO.getStatus()));
     }
 
-    /**
-     * Creates a Specification to filter for outstanding remboursement Droit constate records for the current month.
-     * Outstanding is defined as status = PREVU and dateEmission is on or before the end of the current month.
-     *
-     * @return A Specification for outstanding droit constate records.
-     */
-    public static Specification<DroitConstate> outstandingRemboursementForCurrentMonth() {
+    public static Specification<DroitConstate> outstandingRemboursementUntil(LocalDate until) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-            // Condition 1: Filter by type
-            // The type must be 'REMBOURSEMENT'
             predicates.add(builder.equal(root.get("type"), Type.REMBOURSEMENT));
-
-            // Condition 2: Filter by status
-            // The status must be 'PREVU'
             predicates.add(builder.equal(root.get("status"), Status.PREVU));
-
-            // Condition 3: Filter by date
-            // The dateEmission must be less than or equal to the end of the current month
-            LocalDate now = LocalDate.now();
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-
-            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
-            // Combine all three conditions with a logical AND
+            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), until));
             return builder.and(predicates.toArray(new Predicate[0]));
         };
     }
 
-    /**
-     * Creates a Specification to filter for outstanding deblocage droit constate records for the current month.
-     * Outstanding is defined as status = PREVU and dateEmission is on or before the end of the current month.
-     *
-     * @return A Specification for outstanding pre-financing records.
-     */
-    public static Specification<DroitConstate> outstandingDeblocageForCurrentMonth() {
+    public static Specification<DroitConstate> outstandingDeblocageUntil(LocalDate until) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-            // Condition 1: Filter by type
-            // The type must be 'DEBLOCAGE'
             predicates.add(builder.equal(root.get("type"), Type.DEBLOCAGE));
-
-            // Condition 2: Filter by status
-            // The status must be 'PREVU'
             predicates.add(builder.equal(root.get("status"), Status.PREVU));
+            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), until));
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 
-            // Condition 3: Filter by date
-            // The dateEmission must be less than or equal to the end of the current month
-            LocalDate now = LocalDate.now();
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
 
-            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
-            // Combine all three conditions with a logical AND
+    public static Specification<DroitConstate> outstandingBetween(LocalDate from, LocalDate until, Type type) {
+        return (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(builder.equal(root.get("type"), type));
+            predicates.add(builder.equal(root.get("status"), Status.PREVU));
+            predicates.add(builder.greaterThanOrEqualTo(root.get("dateEmission"), from));
+            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), until));
             return builder.and(predicates.toArray(new Predicate[0]));
         };
     }

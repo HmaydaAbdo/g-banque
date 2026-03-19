@@ -64,30 +64,18 @@ public class ImpotEtTaxeSpecifications {
                 .and(hasStatus(dto.getStatus()));
     }
 
-    /**
-     * Creates a Specification to filter for impots et taxes that are "outstanding."
-     * Outstanding is defined as having a status of PREVU and an emission date that is in the past or present.
-     *
-     * @return A Specification for outstanding impots et taxes.
-     */
-    public static Specification<ImpotEtTaxe> outstandingImpotEtTaxes() {
-        return (root, query, cb) -> {
-            // Condition 1 : statut = PREVU
-            Specification<ImpotEtTaxe> hasStatusPrev = hasStatus(Status.PREVU);
+    public static Specification<ImpotEtTaxe> outstandingUntil(LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
+    }
 
-            // Calcul de la fin du mois courant (dernier jour à 23h59m59s999999999)
-            LocalDate endOfMonth = LocalDate.now()
-                    .with(TemporalAdjusters.lastDayOfMonth());
-
-            // Condition 2 : dateEmission <= fin du mois courant
-            Specification<ImpotEtTaxe> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
-                    cbDate.lessThanOrEqualTo(rootDate.get("dateEmission"), endOfMonth);
-
-            // Combinaison des deux conditions avec AND logique
-            return Specification
-                    .where(hasStatusPrev)
-                    .and(hasDateBeforeEndOfMonth)
-                    .toPredicate(root, query, cb);
-        };
+    public static Specification<ImpotEtTaxe> outstandingBetween(LocalDate from, LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.greaterThanOrEqualTo(root.get("dateEmission"), from),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
     }
 }

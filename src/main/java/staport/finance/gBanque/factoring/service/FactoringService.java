@@ -23,6 +23,8 @@ import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Optional;
 
 @Service
@@ -36,6 +38,7 @@ public class FactoringService {
     private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
     private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public FactoringService(FactoringRepository factoringRepository, MarcheRepository marcheRepository, FactoringMapper factoringMapper, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, LigneFonctionnelleRepository ligneFonctionnelleRepository, NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository) {
         this.factoringRepository = factoringRepository;
@@ -192,7 +195,7 @@ public class FactoringService {
 
         // Build the specification to filter the records
         Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
-                .and(FactoringSpec.outstandingRemboursementForCurrentMonth())
+                .and(FactoringSpec.outstandingRemboursementUntil(endOfMonth))
                 .and(FactoringSpec.byMarcheName(searchDto.getMarcheName()))
                 .and(FactoringSpec.byMarcheNumero(searchDto.getMarcheNumero()))
                 .and(FactoringSpec.hasMontant(searchDto.getMontant()));
@@ -228,7 +231,7 @@ public class FactoringService {
 
         // Build the specification to filter the records
         Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
-                .and(FactoringSpec.outstandingDeblocageForCurrentMonth())
+                .and(FactoringSpec.outstandingDeblocageUntil(endOfMonth))
                 .and(FactoringSpec.byMarcheName(searchDto.getMarcheName()))
                 .and(FactoringSpec.byMarcheNumero(searchDto.getMarcheNumero()))
                 .and(FactoringSpec.hasMontant(searchDto.getMontant()));

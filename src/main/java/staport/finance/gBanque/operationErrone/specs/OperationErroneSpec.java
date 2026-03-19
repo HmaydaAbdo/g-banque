@@ -65,29 +65,18 @@ public class OperationErroneSpec {
                 .and(hasMotif(dto.getMotif()));
     }
 
-    /**
-     * Creates a Specification to filter for operations erronées that are "outstanding."
-     * Outstanding is defined as having a status of PREVU and an emission date that is in the past or present.
-     *
-     * @return A Specification for outstanding operations erronées.
-     */
-    public static Specification<OperationErrone> outstandingOperations() {
-        return (root, query, cb) -> {
-            // Condition 1 : statut = PREVU
-            Specification<OperationErrone> hasStatusPrev = hasStatus(Status.PREVU);
+    public static Specification<OperationErrone> outstandingUntil(LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
+    }
 
-            // Calcul de la fin du mois courant
-            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
-
-            // Condition 2 : dateEmission <= fin du mois courant
-            Specification<OperationErrone> hasDateBeforeEndOfMonth = (rootDate, queryDate, cbDate) ->
-                    cbDate.lessThanOrEqualTo(rootDate.get("dateEmission"), endOfMonth);
-
-            // Combinaison des deux conditions
-            return Specification
-                    .where(hasStatusPrev)
-                    .and(hasDateBeforeEndOfMonth)
-                    .toPredicate(root, query, cb);
-        };
+    public static Specification<OperationErrone> outstandingBetween(LocalDate from, LocalDate until) {
+        return (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), Status.PREVU),
+                cb.greaterThanOrEqualTo(root.get("dateEmission"), from),
+                cb.lessThanOrEqualTo(root.get("dateEmission"), until)
+        );
     }
 }

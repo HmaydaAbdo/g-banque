@@ -8,7 +8,6 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,9 +49,6 @@ public final class MiseADispositionSpec {
         };
     }
 
-
-
-
     public static Specification<MiseADisposition> hasBeneficiaire(String beneficiaire) {
         return (root, query, criteriaBuilder) -> {
             if (beneficiaire == null || beneficiaire.trim().isEmpty()) {
@@ -77,12 +73,6 @@ public final class MiseADispositionSpec {
         };
     }
 
-
-    /**
-     * Specification to filter MiseADisposition by the beneficiary's CIN (case-insensitive).
-     * @param cinBeneficiaire The beneficiary's CIN to match.
-     * @return A Specification for the CIN.
-     */
     public static Specification<MiseADisposition> hasCinBeneficiaire(String cinBeneficiaire) {
         return (root, query, criteriaBuilder) -> {
             if (cinBeneficiaire == null || cinBeneficiaire.trim().isEmpty()) {
@@ -95,11 +85,6 @@ public final class MiseADispositionSpec {
         };
     }
 
-    /**
-     * Specification to filter MiseADisposition by the associated bank's name (case-insensitive).
-     * @param banqueName The bank's name to match.
-     * @return A Specification for the bank name.
-     */
     public static Specification<MiseADisposition> hasBanqueName(String banqueName) {
         return (root, query, criteriaBuilder) -> {
             if (banqueName == null || banqueName.trim().isEmpty()) {
@@ -112,11 +97,6 @@ public final class MiseADispositionSpec {
         };
     }
 
-    /**
-     * Specification to filter MiseADisposition by its active status.
-     * @param active The active status (true or false).
-     * @return A Specification for the active status.
-     */
     public static Specification<MiseADisposition> isActive(Boolean active) {
         return (root, query, criteriaBuilder) -> {
             if (active == null) {
@@ -135,11 +115,6 @@ public final class MiseADispositionSpec {
         };
     }
 
-    /**
-     * Combines multiple specifications from a MiseADispositionSearchDto into a single Specification.
-     * @param searchDto The DTO containing search criteria.
-     * @return A combined Specification for the MiseADisposition entity.
-     */
     public static Specification<MiseADisposition> bySearchDto(MiseADispositionSearchDto searchDto) {
         Specification<MiseADisposition> spec = Specification.where(null);
 
@@ -171,60 +146,41 @@ public final class MiseADispositionSpec {
     }
 
 
-
-
-    /**
-     * Spécification pour filtrer les mises à disposition actives d'une banque spécifique avec une date d'émission
-     * qui est égale ou antérieure à la fin du mois en cours.
-     *
-     * @param banqueId L'ID de la banque pour laquelle les mises à disposition sont recherchés.
-     * @return Une Specification qui combine les critères de filtrage.
-     */
-    public static Specification<MiseADisposition> encoursDecaissementForMiseAdispo(Long banqueId) {
-        return (root, query, criteriaBuilder) -> {
+    public static Specification<MiseADisposition> encoursDecaissement(Long banqueId, LocalDate until) {
+        return (root, query, cb) -> {
+            if (banqueId == null) return cb.disjunction();
             List<Predicate> predicates = new ArrayList<>();
-            LocalDate now = LocalDate.now();
-
-            // 1. Le statut de la mise à disposition doit être actif.
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
-            predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
-
-            // 2. La mise à disposition doit appartenir à la banque spécifiée par son ID.
-            if (banqueId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
-            } else {
-                return criteriaBuilder.disjunction();
-            }
-
-            // 3. La date d'émission doit être égale ou antérieure à la fin du mois.
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            predicates.add(cb.isTrue(root.get("active")));
+            predicates.add(cb.equal(root.get("type"), Type.DECAISSEMENT));
+            predicates.add(cb.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(cb.lessThanOrEqualTo(root.get("dateEmission"), until));
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
-    public static Specification<MiseADisposition> encoursEncaissementForMiseAdispo(Long banqueId) {
-        return (root, query, criteriaBuilder) -> {
+    public static Specification<MiseADisposition> encoursEncaissement(Long banqueId, LocalDate until) {
+        return (root, query, cb) -> {
+            if (banqueId == null) return cb.disjunction();
             List<Predicate> predicates = new ArrayList<>();
-            LocalDate now = LocalDate.now();
+            predicates.add(cb.isTrue(root.get("active")));
+            predicates.add(cb.equal(root.get("type"), Type.ENCAISSEMENT));
+            predicates.add(cb.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(cb.lessThanOrEqualTo(root.get("dateEmission"), until));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 
-            // 1. Le statut de la mise à disposition doit être actif.
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
-            predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
 
-            // 2. La mise à disposition doit appartenir à la banque spécifiée par son ID.
-            if (banqueId != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
-            } else {
-                return criteriaBuilder.disjunction();
-            }
-
-            // 3. La date d'émission doit être égale ou antérieure à la fin du mois.
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+    public static Specification<MiseADisposition> outstandingBetween(Long banqueId, LocalDate from, LocalDate until, Type type) {
+        return (root, query, cb) -> {
+            if (banqueId == null) return cb.disjunction();
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isTrue(root.get("active")));
+            predicates.add(cb.equal(root.get("type"), type));
+            predicates.add(cb.equal(root.get("banque").get("id"), banqueId));
+            predicates.add(cb.greaterThanOrEqualTo(root.get("dateEmission"), from));
+            predicates.add(cb.lessThanOrEqualTo(root.get("dateEmission"), until));
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 }

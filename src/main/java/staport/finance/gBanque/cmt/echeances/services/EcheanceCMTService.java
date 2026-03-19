@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,8 +42,7 @@ public class EcheanceCMTService {
     private final CreditMoyenTermeRepository creditMoyenTermeRepository;
     private final BanqueRepository banqueRepository;
     private final EcheanceCMTMapper echeanceCmtMapper;
-
-
+    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
     private static final int SCALE = 2;
 
     public EcheanceCMTService(EcheanceCMTRepository echeanceCmtRepository,
@@ -239,7 +239,7 @@ public class EcheanceCMTService {
         log.debug("Banque trouvée: {} - ID: {}", banque.getNom(), banque.getId());
 
         Specification<EcheanceCMT> spec = EcheanceCMTSpecification.byCreditBanqueId(requestDTO.getBanqueId())
-                .and(EcheanceCMTSpecification.outstandingUntil())
+                .and(EcheanceCMTSpecification.outstandingUntil(endOfMonth))
                 .and(EcheanceCMTSpecification.byCreditDesignationLike(requestDTO.getDesignation()))
                 .and(EcheanceCMTSpecification.byMontant(requestDTO.getMontant()));
 

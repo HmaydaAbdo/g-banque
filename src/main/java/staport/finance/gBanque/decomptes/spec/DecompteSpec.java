@@ -130,30 +130,24 @@ public class DecompteSpec {
         return spec;
     }
 
-    /**
-     * Creates a Specification to filter for outstanding décomptes records for the current month.
-     * Outstanding is defined as status = PREVU and dateEmission is on or before the end of the current month.
-     *
-     * @return A Specification for outstanding décomptes records.
-     */
-    public static Specification<Decompte> outstandingDecomptesForCurrentMonth() {
+
+    public static Specification<Decompte> outstandingUntil(LocalDate until) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-            // Condition 1: Filter by status
-            // The status must be 'PREVU'
             predicates.add(builder.equal(root.get("status"), Status.PREVU));
-
-            // Condition 3: Filter by date
-            // The dateEmission must be less than or equal to the end of the current month
-            LocalDate now = LocalDate.now();
-            LocalDate endOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-
-            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), endOfMonth));
-
-            // Combine all three conditions with a logical AND
+            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), until));
             return builder.and(predicates.toArray(new Predicate[0]));
         };
     }
 
+
+    public static Specification<Decompte> outstandingBetween(LocalDate from, LocalDate until) {
+        return (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(builder.equal(root.get("status"), Status.PREVU));
+            predicates.add(builder.greaterThanOrEqualTo(root.get("dateEmission"), from));
+            predicates.add(builder.lessThanOrEqualTo(root.get("dateEmission"), until));
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 }
