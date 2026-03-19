@@ -8,6 +8,7 @@ public enum Motif {
     PENALITE_DE_RETARD("Pénalité de retard"),
     DGI("Direction Générale des Impôts"),
     ADII("Administration des Douanes et Impôts Indirects"),
+    IS("Impôts sur les sociétés"),
     COMMUNAL("COMMUNAL");
 
     private  final String motif;
