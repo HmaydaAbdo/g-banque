@@ -5,7 +5,8 @@ export enum Motif {
   PENALITE_DE_RETARD = 'PENALITE_DE_RETARD',
   DGI = 'DGI',
   COMMUNAL = 'COMMUNAL',
-  ADII = 'ADII'
+  ADII = 'ADII',
+  IS = 'IS',
 }
 
 export const MotifLabels: Record<Motif, string> = {
@@ -15,5 +16,6 @@ export const MotifLabels: Record<Motif, string> = {
   [Motif.PENALITE_DE_RETARD]: 'Pénalité de retard',
   [Motif.DGI]: 'Direction Générale des Impôts',
   [Motif.COMMUNAL]: 'Communal',
+  [Motif.IS]: 'Impôts sur les sociétés',
   [Motif.ADII]: 'Administration des Douanes et Impôts Indirects'
 };
