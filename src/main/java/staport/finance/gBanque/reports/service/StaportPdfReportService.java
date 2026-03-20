@@ -24,7 +24,10 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import staport.finance.gBanque.recapitulatif.dtos.CategorieAmountDto;
+import staport.finance.gBanque.recapitulatif.dtos.RecapGeneralDetailleAllBanquesDto;
+import staport.finance.gBanque.recapitulatif.dtos.RecapGeneralDetailleDto;
+import staport.finance.gBanque.recapitulatif.dtos.ResumeSectionDto;
 
 @Service
 public class StaportPdfReportService {
@@ -684,5 +687,177 @@ public class StaportPdfReportService {
         valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         valueCell.setBackgroundColor(Color.decode("#f0f0f0"));
         table.addCell(valueCell);
+    }
+
+
+    // ****************************** Récapitulatif général
+
+    public byte[] generateRecapGeneralDetailleReport(RecapGeneralDetailleDto dto) throws DocumentException {
+        String today = dto.getDateRecap().format(DATETIME_FORMATTER);
+        String reportTitle = "Récapitulation Générale Détaillée — " + dto.getBanqueNom() + " — " + today;
+
+        return generateReport(reportTitle, (document, writer) -> {
+            try {
+                Paragraph title = new Paragraph(reportTitle, TITLE_FONT_BLACK);
+                title.setAlignment(Element.ALIGN_CENTER);
+                title.setSpacingAfter(15);
+                document.add(Chunk.NEWLINE);
+                document.add(title);
+
+                addRecapResumeSectionTable(document, dto.getResume());
+                document.add(Chunk.NEWLINE);
+
+                document.add(new Paragraph("DÉCAISSEMENTS PRÉVUS — J+1 à fin de mois", TITLE_FONT));
+                document.add(new LineSeparator(1f, 100f, STAPORT_BLUE, Element.ALIGN_CENTER, -2));
+                document.add(Chunk.NEWLINE);
+                addRecapCategoriesTable(document, dto.getDecaissements().getCategories(), dto.getDecaissements().getTotal());
+                document.add(Chunk.NEWLINE);
+
+                document.add(new Paragraph("ENCAISSEMENTS PRÉVUS — J+1 à fin de mois", TITLE_FONT));
+                document.add(new LineSeparator(1f, 100f, STAPORT_BLUE, Element.ALIGN_CENTER, -2));
+                document.add(Chunk.NEWLINE);
+                addRecapCategoriesTable(document, dto.getEncaissements().getCategories(), dto.getEncaissements().getTotal());
+                document.add(Chunk.NEWLINE);
+
+                // Solde prévisionnel fin de mois
+                PdfPTable soldeTable = new PdfPTable(2);
+                soldeTable.setWidthPercentage(50);
+                soldeTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                soldeTable.setWidths(new float[]{4f, 3f});
+                addTotalCell(soldeTable, "SOLDE PRÉVISIONNEL FIN DE MOIS :", formatCurrency(dto.getSoldePrevisionnelFinMois()));
+                document.add(soldeTable);
+
+            } catch (DocumentException e) {
+                throw new RuntimeException("Erreur génération PDF recap détaillé.", e);
+            }
+        });
+    }
+
+// ─── PUBLIC : toutes les banques ─────────────────────────────────────────────
+
+    public byte[] generateRecapGeneralDetailleAllBanquesReport(RecapGeneralDetailleAllBanquesDto dto) throws DocumentException {
+        String today = dto.getDateRecap().format(DATETIME_FORMATTER);
+        String reportTitle = "Récapitulation Générale Détaillée — Toutes Banques — " + today;
+
+        return generateReport(reportTitle, (document, writer) -> {
+            try {
+                Paragraph mainTitle = new Paragraph(reportTitle, TITLE_FONT_BLACK);
+                mainTitle.setAlignment(Element.ALIGN_CENTER);
+                mainTitle.setSpacingAfter(15);
+                document.add(Chunk.NEWLINE);
+                document.add(mainTitle);
+
+                for (RecapGeneralDetailleDto banqueDto : dto.getBanques()) {
+                    // Titre par banque
+                    Paragraph banqueTitre = new Paragraph(banqueDto.getBanqueNom(), SUBTITLE_FONT);
+                    banqueTitre.setSpacingAfter(8);
+                    document.add(banqueTitre);
+                    document.add(new LineSeparator(1f, 100f, STAPORT_BLUE, Element.ALIGN_CENTER, -2));
+                    document.add(Chunk.NEWLINE);
+
+                    addRecapResumeSectionTable(document, banqueDto.getResume());
+                    document.add(Chunk.NEWLINE);
+
+                    document.add(new Paragraph("DÉCAISSEMENTS — J+1 à fin de mois", BOLD_FONT));
+                    addRecapCategoriesTable(document, banqueDto.getDecaissements().getCategories(), banqueDto.getDecaissements().getTotal());
+                    document.add(Chunk.NEWLINE);
+
+                    document.add(new Paragraph("ENCAISSEMENTS — J+1 à fin de mois", BOLD_FONT));
+                    addRecapCategoriesTable(document, banqueDto.getEncaissements().getCategories(), banqueDto.getEncaissements().getTotal());
+                    document.add(Chunk.NEWLINE);
+
+                    PdfPTable soldeTable = new PdfPTable(2);
+                    soldeTable.setWidthPercentage(50);
+                    soldeTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    soldeTable.setWidths(new float[]{4f, 3f});
+                    addTotalCell(soldeTable, "SOLDE PRÉVISIONNEL FIN DE MOIS :", formatCurrency(banqueDto.getSoldePrevisionnelFinMois()));
+                    document.add(soldeTable);
+
+                    document.newPage();
+                }
+
+            } catch (DocumentException e) {
+                throw new RuntimeException("Erreur génération PDF recap détaillé multi-banques.", e);
+            }
+        });
+    }
+
+// ─── PRIVATE : section résumé Jour J ─────────────────────────────────────────
+
+    private void addRecapResumeSectionTable(Document document, ResumeSectionDto resume) throws DocumentException {
+        document.add(new Paragraph("RÉSUMÉ — JOUR J", TITLE_FONT));
+        document.add(new LineSeparator(1f, 100f, STAPORT_BLUE, Element.ALIGN_CENTER, -2));
+        document.add(Chunk.NEWLINE);
+
+        PdfPTable table = new PdfPTable(4);
+        table.setWidthPercentage(100);
+        table.setWidths(new float[]{3f, 2f, 3f, 2f});
+        table.setSpacingAfter(8);
+
+        addSummaryDataCell(table, "Solde Actuel :",        BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, formatCurrency(resume.getSoldeActuel()),  DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, "Plafond Ligne FC :",    BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, formatCurrency(resume.getPlafondLigne()), DATA_FONT, Element.ALIGN_RIGHT);
+
+        addSummaryDataCell(table, "Disponibilité :",       BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, formatCurrency(resume.getDisponibilite()), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, "Solde Projeté J :",     BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, formatCurrency(resume.getSoldeProjete()),  DATA_FONT, Element.ALIGN_RIGHT);
+
+        addSummaryDataCell(table, "Encours+ (J) :",        BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, formatCurrency(resume.getEncoursPlus()),  DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, "Encours- (J) :",        BOLD_FONT, Element.ALIGN_LEFT);
+        addSummaryDataCell(table, formatCurrency(resume.getEncoursMoins()), DATA_FONT, Element.ALIGN_RIGHT);
+
+        document.add(table);
+    }
+
+// ─── PRIVATE : tableau catégories (décaissements ou encaissements) ────────────
+
+    private void addRecapCategoriesTable(Document document, List<CategorieAmountDto> categories, BigDecimal total) throws DocumentException {
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(60);
+        table.setHorizontalAlignment(Element.ALIGN_LEFT);
+        table.setWidths(new float[]{4f, 2f});
+        table.setSpacingBefore(3);
+        table.setSpacingAfter(3);
+        table.setHeaderRows(1);
+
+        // Header
+        PdfPCell hCategorie = new PdfPCell(new Phrase("Catégorie", TRANSACTION_HEADER_FONT));
+        hCategorie.setBackgroundColor(STAPORT_BLUE);
+        hCategorie.setPadding(4);
+        hCategorie.setHorizontalAlignment(Element.ALIGN_CENTER);
+        table.addCell(hCategorie);
+
+        PdfPCell hMontant = new PdfPCell(new Phrase("Montant", TRANSACTION_HEADER_FONT));
+        hMontant.setBackgroundColor(STAPORT_BLUE);
+        hMontant.setPadding(4);
+        hMontant.setHorizontalAlignment(Element.ALIGN_CENTER);
+        table.addCell(hMontant);
+
+        // Lignes
+        for (CategorieAmountDto cat : categories) {
+            table.addCell(createCell(cat.getCategorie(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
+            PdfPCell montantCell = createCell(formatCurrency(cat.getMontant()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+            montantCell.setNoWrap(true);
+            table.addCell(montantCell);
+        }
+
+        // Ligne total
+        PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL", BOLD_FONT));
+        totalLabel.setBackgroundColor(Color.decode("#f0f0f0"));
+        totalLabel.setPadding(4);
+        totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(totalLabel);
+
+        PdfPCell totalValue = new PdfPCell(new Phrase(formatCurrency(total), BOLD_FONT));
+        totalValue.setBackgroundColor(Color.decode("#f0f0f0"));
+        totalValue.setPadding(4);
+        totalValue.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        totalValue.setNoWrap(true);
+        table.addCell(totalValue);
+
+        document.add(table);
     }
 }
