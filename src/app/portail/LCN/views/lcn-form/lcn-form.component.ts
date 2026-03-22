@@ -118,16 +118,24 @@ export class LcnFormComponent implements OnInit {
           return of(null);
         }
       }),
-      // 2. Si c'est le mode édition, charger explicitement les détails de la Banque
+      // 2. Charger la banque selon le contexte (édition ou création depuis les encours)
       switchMap(lcnResponse => {
         if (lcnResponse && lcnResponse.banqueId) {
-          // Charger la banque correspondant à l'ID pour l'ajouter aux options de la dropdown
+          // Mode édition : charger la banque liée à l'entité
           return this.banqueService.getBanqueById(lcnResponse.banqueId).pipe(
             switchMap(banque => {
-              // Ajouter la banque aux options 'this.banques' pour qu'elle soit sélectionnable
-              // et affichée dans le p-dropdown (nécessaire avec le lazy loading)
               this.banques = [banque];
               return of(lcnResponse);
+            })
+          );
+        }
+        // Mode création : pré-sélectionner la banque si banqueId est passé en queryParam
+        const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
+        if (banqueIdParam) {
+          return this.banqueService.getBanqueById(+banqueIdParam).pipe(
+            switchMap(banque => {
+              this.banques = [banque];
+              return of(null);
             })
           );
         }
@@ -137,6 +145,10 @@ export class LcnFormComponent implements OnInit {
       next: (lcnResponse) => {
         // 3. Initialiser le formulaire une fois toutes les données chargées
         this.initForm(lcnResponse || undefined);
+        // 4. En mode création, pré-sélectionner la banque chargée depuis le queryParam
+        if (!this.isEditMode && this.banques.length > 0) {
+          this.lcnForm.patchValue({ banqueId: this.banques[0].id });
+        }
         this.loading = false;
 
       },

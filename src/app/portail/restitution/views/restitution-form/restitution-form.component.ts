@@ -76,6 +76,15 @@ export class RestitutionFormComponent implements OnInit {
         this.isEditMode = true;
         this.restitutionId = Number(id);
         this.loadRestitution(this.restitutionId);
+      } else {
+        // Mode création : pré-sélectionner la banque si banqueId est passé en queryParam
+        const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
+        if (banqueIdParam) {
+          this.banqueService.getBanqueById(+banqueIdParam).subscribe(banque => {
+            this.banquesOptions = [banque];
+            this.restitutionForm.patchValue({ banqueId: banque.id });
+          });
+        }
       }
     });
   }

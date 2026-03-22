@@ -27,7 +27,7 @@
           <label for="montant">Recherche par Montant</label>
         </span>
       <button pButton pRipple label="Ajouter Mise à disposition" class=" h-fit " size="small" icon="pi pi-plus"
-              severity="primary" routerLink="/portail/Mise-a-disposition/new"></button>
+              severity="primary" routerLink="/portail/Mise-a-disposition/new" [queryParams]="{banqueId: banqueIdFromRoute}"></button>
 
     </form>
 

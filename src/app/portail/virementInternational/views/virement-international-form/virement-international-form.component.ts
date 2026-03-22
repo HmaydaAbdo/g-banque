@@ -112,16 +112,24 @@ export class VirementInternationalFormComponent implements OnInit {
           return of(null);
         }
       }),
-      // 2. Si un virement est chargé (mode édition), pré-charger la Banque
+      // 2. Charger la banque selon le contexte (édition ou création depuis les encours)
       switchMap(virementResponse => {
         if (virementResponse && virementResponse.banqueId) {
-          // Appeler le service pour obtenir l'objet complet de la banque
-          // Ceci est crucial pour que le p-dropdown affiche le nom de la banque
+          // Mode édition : charger la banque liée à l'entité
           return this.banqueService.getBanqueById(virementResponse.banqueId).pipe(
             switchMap(banque => {
-              // Ajouter la banque aux options 'this.banques'
               this.banques = [banque];
               return of(virementResponse);
+            })
+          );
+        }
+        // Mode création : pré-sélectionner la banque si banqueId est passé en queryParam
+        const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
+        if (banqueIdParam) {
+          return this.banqueService.getBanqueById(+banqueIdParam).pipe(
+            switchMap(banque => {
+              this.banques = [banque];
+              return of(null);
             })
           );
         }
@@ -131,6 +139,10 @@ export class VirementInternationalFormComponent implements OnInit {
       next: (virementResponse) => {
         // 3. Initialiser le formulaire avec le virement et la banque pré-chargée
         this.initForm(virementResponse || undefined);
+        // 4. En mode création, pré-sélectionner la banque chargée depuis le queryParam
+        if (!this.isEditMode && this.banques.length > 0) {
+          this.virementForm.patchValue({ banqueId: this.banques[0].id });
+        }
         this.loading = false;
       },
       error: (err) => {
