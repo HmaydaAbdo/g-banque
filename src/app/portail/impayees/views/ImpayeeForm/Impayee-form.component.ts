@@ -75,6 +75,14 @@ export class ImpayeeFormComponent implements OnInit {
         this.isEditMode = true;
         this.impayeeId = Number(id);
         this.loadImpayee(this.impayeeId);
+      } else {
+        const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
+        if (banqueIdParam) {
+          this.banqueService.getBanqueById(+banqueIdParam).subscribe(banque => {
+            this.banquesOptions = [banque];
+            this.impayeeForm.patchValue({ banqueEncaissementId: banque.id });
+          });
+        }
       }
     });
   }

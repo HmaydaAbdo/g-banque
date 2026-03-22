@@ -76,6 +76,14 @@ export class ImpotEtTaxeFormComponent implements OnInit {
         this.isEditMode = true;
         this.impotEtTaxeId = Number(id);
         this.loadImpotEtTaxe(this.impotEtTaxeId);
+      } else {
+        const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
+        if (banqueIdParam) {
+          this.banqueService.getBanqueById(+banqueIdParam).subscribe(banque => {
+            this.banquesOptions = [banque];
+            this.impotEtTaxeForm.patchValue({ banqueId: banque.id });
+          });
+        }
       }
     });
   }

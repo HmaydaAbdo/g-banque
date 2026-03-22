@@ -82,6 +82,14 @@ export class PrelevementFormComponent implements OnInit {
         this.isEditMode = true;
         this.prelevementId = Number(id);
         this.loadPrelevement(this.prelevementId);
+      } else {
+        const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
+        if (banqueIdParam) {
+          this.banqueService.getBanqueById(+banqueIdParam).subscribe(banque => {
+            this.banquesOptions = [banque];
+            this.prelevementForm.patchValue({ banqueId: banque.id });
+          });
+        }
       }
     });
   }

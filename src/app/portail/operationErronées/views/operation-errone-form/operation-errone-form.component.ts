@@ -76,6 +76,14 @@ export class OperationErroneFormComponent implements OnInit {
         this.isEditMode = true;
         this.operationId = Number(id);
         this.loadOperation(this.operationId);
+      } else {
+        const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
+        if (banqueIdParam) {
+          this.banqueService.getBanqueById(+banqueIdParam).subscribe(banque => {
+            this.banquesOptions = [banque];
+            this.operationForm.patchValue({ banqueId: banque.id });
+          });
+        }
       }
     });
   }
