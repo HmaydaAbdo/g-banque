@@ -81,6 +81,15 @@ export class CommissionFormComponent implements OnInit {
         this.isEditMode = true;
         this.commissionId = Number(id);
         this.loadCommission(this.commissionId);
+      } else {
+        // Mode création : pré-sélectionner la banque si banqueId est passé en queryParam
+        const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
+        if (banqueIdParam) {
+          this.banqueService.getBanqueById(+banqueIdParam).subscribe(banque => {
+            this.banquesOptions = [banque];
+            this.commissionForm.patchValue({ banqueId: banque.id });
+          });
+        }
       }
     });
   }

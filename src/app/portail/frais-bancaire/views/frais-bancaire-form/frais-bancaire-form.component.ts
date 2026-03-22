@@ -71,6 +71,15 @@ export class FraisBancaireFormComponent implements OnInit {
         this.isEditMode = true;
         this.fraisId = Number(id);
         this.loadFraisBancaire(this.fraisId);
+      } else {
+        // Mode création : pré-sélectionner la banque si banqueId est passé en queryParam
+        const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
+        if (banqueIdParam) {
+          this.banqueService.getBanqueById(+banqueIdParam).subscribe(banque => {
+            this.banquesOptions = [banque];
+            this.fraisForm.patchValue({ banqueId: banque.id });
+          });
+        }
       }
     });
   }
