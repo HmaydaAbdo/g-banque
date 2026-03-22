@@ -1,25 +1,27 @@
-.card {
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+// ── Carte banque ──────────────────────────────────────────────────────────────
+.bank-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 
-  // Hover Effect
   &:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-  }
-
-  // Entry Animation
-  &.p-2.m-3.shadow-2.hover\:shadow-8.border-round-xl {
-    animation: fadeIn 0.5s ease-in-out;
+    transform: translateY(-5px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.13) !important;
   }
 }
 
-@keyframes fadeIn {
+
+
+// ── Animation d'entrée des cartes ─────────────────────────────────────────────
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.bank-card {
+  animation: fadeInUp 0.4s ease both;
 }

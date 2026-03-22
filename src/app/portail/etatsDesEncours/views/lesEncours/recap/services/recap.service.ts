@@ -128,4 +128,20 @@ export class RecapService {
     const url = `${this.baseUrl}/global/pdf`;
     return this.http.get(url, { responseType: 'blob' });
   }
+
+  /**
+   * Télécharge le PDF du Récap Général Détaillé pour une banque.
+   */
+  downloadRecapGeneralDetaillePdf(banqueId: number): Observable<Blob> {
+    const url = `${environment.apiUrl}recap-general-detaille/banque/${banqueId}/pdf`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  /**
+   * Télécharge le PDF du Récap Général Détaillé pour toutes les banques.
+   */
+  downloadRecapGeneralDetailleAllBanquesPdf(): Observable<Blob> {
+    const url = `${environment.apiUrl}recap-general-detaille/all/pdf`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
 }

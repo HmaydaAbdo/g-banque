@@ -39,6 +39,8 @@ export class AcceuilComponent  implements OnInit{
   isLoading: boolean = false;
 
   globalRecapLoading: boolean = false;
+  recapDetailleAllLoading: boolean = false;
+  recapDetailleBanqueLoadingMap: Map<number, boolean> = new Map();
 
   constructor(
     private banqueService: BanqueService,
@@ -165,6 +167,77 @@ export class AcceuilComponent  implements OnInit{
         error: () => {
           // L'erreur est gérée dans catchError, donc on ne fait rien ici.
         }
+      });
+  }
+  downloadRecapGeneralDetailleAll(): void {
+    this.recapDetailleAllLoading = true;
+
+    this.recapService.downloadRecapGeneralDetailleAllBanquesPdf()
+      .pipe(
+        catchError(error => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur Téléchargement',
+            detail: error.error?.message || 'Erreur lors du téléchargement du Récap Général Détaillé.'
+          });
+          return throwError(() => new Error('Download failed'));
+        }),
+        finalize(() => { this.recapDetailleAllLoading = false; })
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const date = this.datePipe.transform(new Date(), 'dd/MM/yyyy');
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Récap_Général_Détaillé_${date}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Le Récap Général Détaillé (toutes banques) est en cours de téléchargement.'
+          });
+        },
+        error: () => {}
+      });
+  }
+
+  downloadRecapGeneralDetaillePourBanque(banqueId: number): void {
+    this.recapDetailleBanqueLoadingMap.set(banqueId, true);
+
+    this.recapService.downloadRecapGeneralDetaillePdf(banqueId)
+      .pipe(
+        catchError(error => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur Téléchargement',
+            detail: error.error?.message || `Erreur lors du téléchargement du Récap Général Détaillé (banque ${banqueId}).`
+          });
+          return throwError(() => new Error('Download failed'));
+        }),
+        finalize(() => { this.recapDetailleBanqueLoadingMap.set(banqueId, false); })
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const date = this.datePipe.transform(new Date(), 'dd/MM/yyyy');
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Récap_Général_Détaillé_Banque${banqueId}_${date}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Le Récap Général Détaillé (banque) est en cours de téléchargement.'
+          });
+        },
+        error: () => {}
       });
   }
 }
