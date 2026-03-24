@@ -50,6 +50,7 @@ import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.
 import staport.finance.gBanque.moyensDePaiements.virementInternational.repositories.VirementInternationalRepository;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.specs.VirementInternationalSpec;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
 import staport.finance.gBanque.moyensDePaiements.virements.specs.VirementSpec;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Transactional(readOnly = true)
@@ -358,28 +360,35 @@ public class RecapGeneralDetailleService {
                 EcheanceCMT::getMontant)));
 
         // Moyens de paiement — DECAISSEMENT
-        categories.add(categorie("Chèque", sum(
-                chequeRepository.findAll(ChequeSpec.outstandingBetween(banqueId, from, until,
-                        staport.finance.gBanque.moyensDePaiements.virements.enums.Type.DECAISSEMENT)),
-                Cheque::getMontant)));
 
-        categories.add(categorie("LCN", sum(
-                lcnRepository.findAll(LcnSpecification.outstandingBetween(banqueId, from, until,
-                        staport.finance.gBanque.moyensDePaiements.virements.enums.Type.DECAISSEMENT)),
-                Lcn::getMontant)));
+        BigDecimal totalReglementFrns = Stream.of(
+                sum(virementRepository.findAll(
+                        VirementSpec.outstandingBetweenDecaissement(banque.getId(), from, until)
+                ), Virement::getMontant),
 
-        categories.add(categorie("Virement", sum(
-                virementRepository.findAll(VirementSpec.outstandingBetweenDecaissement(banqueId, from, until)),
-                Virement::getMontant)));
+                sum(chequeRepository.findAll(
+                        ChequeSpec.outstandingBetween(banqueId, from, until,
+                                Type.DECAISSEMENT)
+                ), Cheque::getMontant),
 
-        categories.add(categorie("Mise à Disposition", sum(
-                miseADispositionRepository.findAll(MiseADispositionSpec.outstandingBetween(banqueId, from, until,
-                        staport.finance.gBanque.moyensDePaiements.virements.enums.Type.DECAISSEMENT)),
-                MiseADisposition::getMontant)));
+                sum(lcnRepository.findAll(
+                        LcnSpecification.outstandingBetween(banqueId, from, until,
+                                Type.DECAISSEMENT)
+                ), Lcn::getMontant),
+
+                sum(miseADispositionRepository.findAll(
+                        MiseADispositionSpec.outstandingBetween(banqueId, from, until,
+                                Type.DECAISSEMENT)
+                ), MiseADisposition::getMontant)
+
+        ).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        categories.add(categorie("REGLEMENT FRNS", totalReglementFrns));
+
 
         categories.add(categorie("Virement International", sum(
                 virementInternationalRepository.findAll(VirementInternationalSpec.outstandingBetween(banqueId, from, until,
-                        staport.finance.gBanque.moyensDePaiements.virements.enums.Type.DECAISSEMENT)),
+                        Type.DECAISSEMENT)),
                 VirementInternational::getMontant)));
 
         // Prefinancement / Factoring / DroitConstate — REMBOURSEMENT
@@ -463,29 +472,36 @@ public class RecapGeneralDetailleService {
         List<CategorieAmountDto> categories = new ArrayList<>();
 
         // Moyens de paiement — ENCAISSEMENT
-        categories.add(categorie("Virement", sum(
-                virementRepository.findAll(VirementSpec.outstandingBetweenEncaissement(banque.getNom(), from, until)),
-                Virement::getMontant)));
+        BigDecimal totalEncaissementFrns = Stream.of(
+                sum(virementRepository.findAll(
+                        VirementSpec.outstandingBetweenEncaissement(banque.getNom(), from, until)
+                ), Virement::getMontant),
 
-        categories.add(categorie("Chèque", sum(
-                chequeRepository.findAll(ChequeSpec.outstandingBetween(banqueId, from, until,
-                        staport.finance.gBanque.moyensDePaiements.virements.enums.Type.ENCAISSEMENT)),
-                Cheque::getMontant)));
+                sum(chequeRepository.findAll(
+                        ChequeSpec.outstandingBetween(banqueId, from, until,
+                                staport.finance.gBanque.moyensDePaiements.virements.enums.Type.ENCAISSEMENT)
+                ), Cheque::getMontant),
 
-        categories.add(categorie("LCN", sum(
-                lcnRepository.findAll(LcnSpecification.outstandingBetween(banqueId, from, until,
-                        staport.finance.gBanque.moyensDePaiements.virements.enums.Type.ENCAISSEMENT)),
-                Lcn::getMontant)));
+                sum(lcnRepository.findAll(
+                        LcnSpecification.outstandingBetween(banqueId, from, until,
+                                staport.finance.gBanque.moyensDePaiements.virements.enums.Type.ENCAISSEMENT)
+                ), Lcn::getMontant),
+
+                sum(miseADispositionRepository.findAll(
+                        MiseADispositionSpec.outstandingBetween(banqueId, from, until,
+                                staport.finance.gBanque.moyensDePaiements.virements.enums.Type.ENCAISSEMENT)
+                ), MiseADisposition::getMontant)
+
+        ).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        categories.add(categorie("REGLEMENT FRNS", totalEncaissementFrns));
 
         categories.add(categorie("Virement International", sum(
                 virementInternationalRepository.findAll(VirementInternationalSpec.outstandingBetween(banqueId, from, until,
                         staport.finance.gBanque.moyensDePaiements.virements.enums.Type.ENCAISSEMENT)),
                 VirementInternational::getMontant)));
 
-        categories.add(categorie("Mise à Disposition", sum(
-                miseADispositionRepository.findAll(MiseADispositionSpec.outstandingBetween(banqueId, from, until,
-                        staport.finance.gBanque.moyensDePaiements.virements.enums.Type.ENCAISSEMENT)),
-                MiseADisposition::getMontant)));
+
 
         // Prefinancement / Factoring / DroitConstate — DEBLOCAGE
         categories.add(categorie("Préfinancement", sum(

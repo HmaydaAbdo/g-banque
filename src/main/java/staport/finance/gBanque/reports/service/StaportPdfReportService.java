@@ -52,7 +52,7 @@ public class StaportPdfReportService {
             throws DocumentException {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document document = new Document(PageSize.A4, 20, 20, 120, 80);
+        Document document = new Document(PageSize.A4, 20, 20, 80, 50);
 
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
@@ -75,7 +75,7 @@ public class StaportPdfReportService {
             throws DocumentException {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document document = new Document(pageSize, 20, 20, 120, 80);
+        Document document = new Document(pageSize, 20, 20, 80, 50);
 
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
