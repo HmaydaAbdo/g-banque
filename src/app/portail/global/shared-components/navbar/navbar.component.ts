@@ -12,7 +12,6 @@ import { Role } from "../../../../auth/enum/Role";
 import { BadgeModule } from 'primeng/badge';
 import { ToastModule } from 'primeng/toast';
 import { NotificationService } from "../../../notification/service/NotificationService";
-import { WebSocketService } from "../../../notification/service/WebSocketService";
 import { NotificationListComponent } from "../../../notification/views/notification-list/notification-list.component";
 import { DialogModule } from "primeng/dialog";
 
@@ -61,7 +60,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     public notificationService: NotificationService,
-    public webSocketService: WebSocketService
   ) { }
 
   allMenuItems: MenuItem[] = [
@@ -83,7 +81,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
       if (isAuthenticated && username) {
         // --- LOGGED IN: Initialize Services and Subscriptions ---
-        this.webSocketService.connect(username);
         this.notificationService.initializeNotifications();
 
         // 1. Subscribe to unread notification count
@@ -93,33 +90,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.unreadCount = count;
           });
 
-        // 2. Subscribe to new public notifications for toast alerts
-        this.webSocketService.publicNotifications$
-          .pipe(takeUntil(this.destroy$))
-          .subscribe(notification => {
-            this.messageService.add({
-              severity: 'info',
-              summary: 'Nouvelle notification ',
-              detail: notification.title,
-              life: 5000
-            });
-          });
 
-        // 3. Subscribe to new private notifications for toast alerts
-        this.webSocketService.privateNotifications$
-          .pipe(takeUntil(this.destroy$))
-          .subscribe(notification => {
-            this.messageService.add({
-              severity: 'warn',
-              summary: 'Nouvelle notification privée',
-              detail: notification.title,
-              life: 5000
-            });
-          });
+
 
       } else {
-        // --- LOGGED OUT: Clean up ---
-        this.webSocketService.disconnect();
         this.notificationService.resetNotifications();
         this.unreadCount = 0;
       }

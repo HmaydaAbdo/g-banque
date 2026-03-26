@@ -3,7 +3,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject, takeUntil, tap } from 'rxjs';
 import { environment } from "../../../../environments/environment";
 import { NotificationModel } from "../dtos/Notification";
-import { WebSocketService } from "./WebSocketService";
 import { PageResponse } from "../../global/types/PageResponse"; // Assuming this type is defined
 
 
@@ -30,21 +29,8 @@ export class NotificationService implements OnDestroy {
 
   constructor(
     private http: HttpClient,
-    private webSocketService: WebSocketService
   ) {
-    // 1. WebSocket Subscription: Updates local state and increments the total count
-    this.webSocketService.publicNotifications$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(newNotification => {
-        console.log('NotificationService: New public notification received via WebSocket', newNotification);
 
-        const currentNotifications = this.unreadNotificationsSubject.getValue();
-        this.unreadNotificationsSubject.next([newNotification, ...currentNotifications]);
-
-        // Synchronized increment
-        this.totalUnreadElements++;
-        this.unreadCountSubject.next(this.totalUnreadElements);
-      });
   }
 
   /**

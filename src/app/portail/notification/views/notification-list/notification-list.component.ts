@@ -5,7 +5,6 @@ import { Subject, takeUntil } from 'rxjs';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
-import { WebSocketService } from "../../service/WebSocketService";
 import { NotificationService } from "../../service/NotificationService";
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -29,7 +28,6 @@ import { ConfirmationService } from 'primeng/api';
 })
 export class NotificationListComponent implements OnInit, OnDestroy {
   @Input() notificationService!: NotificationService;
-  @Input() webSocketService!: WebSocketService;
   @Output() notificationMarkedAsRead = new EventEmitter<void>();
 
   notifications: NotificationModel[] = [];

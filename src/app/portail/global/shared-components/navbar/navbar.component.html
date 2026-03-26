@@ -57,7 +57,6 @@
   <ng-template pTemplate="content">
     <app-notification-list
       [notificationService]="notificationService"
-      [webSocketService]="webSocketService"
       (notificationMarkedAsRead)="notificationDialogVisible = false"
     ></app-notification-list>
   </ng-template>
