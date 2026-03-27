@@ -144,16 +144,34 @@ public final class LcnSpecification {
     // Remplace encoursEncaissement — until en paramètre (le filtre date manquait dans l'original!)
     public static Specification<Lcn> encoursEncaissement(Long banqueId, LocalDate until) {
         return (root, query, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
             if (banqueId == null) return criteriaBuilder.disjunction();
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
-            predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
-            predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
-            predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), until));
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+
+            // 1. Filtres de base communs
+            List<Predicate> basePredicates = new ArrayList<>();
+            basePredicates.add(criteriaBuilder.isTrue(root.get("active")));
+            basePredicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
+            basePredicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
+
+            // 2. Logique conditionnelle selon la Nature
+            // Condition A : Nature ENCAISSEMENT -> Se base sur dateEcheance
+            Predicate isEncaissementStandard = criteriaBuilder.and(
+                    criteriaBuilder.equal(root.get("natureLcn"), NatureLcn.ENCAISSEMENT),
+                    criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), until)
+            );
+
+            // Condition B : Nature ESCOMPTE -> Se base sur dateEmission
+            Predicate isEscompte = criteriaBuilder.and(
+                    criteriaBuilder.equal(root.get("natureLcn"), NatureLcn.ESCOMPTE),
+                    criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), until)
+            );
+
+            // On combine les filtres de base avec (Condition A OU Condition B)
+            return criteriaBuilder.and(
+                    criteriaBuilder.and(basePredicates.toArray(new Predicate[0])),
+                    criteriaBuilder.or(isEncaissementStandard, isEscompte)
+            );
         };
     }
-
     // Nouveau — pour le recap
     public static Specification<Lcn> outstandingBetween(Long banqueId, LocalDate from, LocalDate until, Type type) {
         return (root, query, criteriaBuilder) -> {
