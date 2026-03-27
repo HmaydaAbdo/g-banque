@@ -260,9 +260,9 @@ export class EncoursOperationErroneComponent implements OnInit {
 
       const request: OperationErroneValidationRequest = {
         idOperationErrone: this.selectedOperation.id,
-        dateOperation: formValue.dateOperation.toISOString(),
-        dateEmission: formValue.dateEmission.toISOString(),
-        dateValeur: formValue.dateValeur.toISOString(),
+        dateOperation: this.datePipe.transform(formValue.dateOperation,'yyyy-MM-dd') as string,
+        dateEmission:this.datePipe.transform(formValue.dateEmission,'yyyy-MM-dd') as string,
+        dateValeur: this.datePipe.transform(formValue.dateValeur,'yyyy-MM-dd') as string,
         observation: formValue.observation,
         libelle: formValue.libelle,
         tva: formValue.tvaDeductible

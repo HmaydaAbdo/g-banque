@@ -1,9 +1,9 @@
 export interface PrefinancementTransactionRequest {
   prefinancementId: number;
   banqueId: number;
-  dateValeur: Date;
-  dateOperation: Date;
-  dateEmission:Date
+  dateValeur: string;
+  dateOperation: string;
+  dateEmission:string
   libelle:string
   observation:string
   tva: number;

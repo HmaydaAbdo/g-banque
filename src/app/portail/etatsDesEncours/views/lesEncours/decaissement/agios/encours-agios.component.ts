@@ -271,9 +271,9 @@ export class EncoursAgiosComponent implements OnInit,OnDestroy {
 
     const request: AgiosValidationRequest = {
       idAgio: this.selectedAgio.id,
-      dateOperation: this.rapprochementForm.value.dateOperation,
-      dateEmission:this.rapprochementForm.value.dateEmission,
-      dateValeur: this.rapprochementForm.value.dateValeur,
+      dateOperation: this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
+      dateEmission:this.datePipe.transform(this.rapprochementForm.value.dateEmission,'yyyy-MM-dd') as string,
+      dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
       observation: this.rapprochementForm.value.observation,
       libelle:this.rapprochementForm.value.libelle,
       tva:this.rapprochementForm.value.tvaDeductible

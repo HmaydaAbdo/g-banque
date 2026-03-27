@@ -215,17 +215,16 @@ export class VirementEncoursComponent implements OnInit {
 
 
     if (this.rapprochementForm.valid && this.selectedVirement) {
-      const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
 
       const virementTransactionRequest: VirementTransactionRequestDto = {
         id: this.selectedVirement.id,
-        dateEmission: donneesComplementaires.dateEmission,
-        dateValeur: donneesComplementaires.dateValeur,
-        dateOperation: donneesComplementaires.dateOperation,
-        observation: donneesComplementaires.observation,
-        tvaDeductible: donneesComplementaires.tvaDeductible,
+        dateEmission:this.datePipe.transform( this.rapprochementForm.value.dateEmission,'yyyy-MM-dd') as string,
+        dateValeur:this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string ,
+        dateOperation:this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string ,
+        observation: this.rapprochementForm.value.observation,
+        tvaDeductible: this.rapprochementForm.value.tvaDeductible,
         transactionSource: TransactionSource.Virement,
-        libelle:donneesComplementaires.libelle,
+        libelle:this.rapprochementForm.value.libelle,
       };
 
       this.isSubmitting = true;

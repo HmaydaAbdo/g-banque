@@ -219,9 +219,9 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
 
       const virementInternationalTransactionRequest: VirementInternationalTransactionRequestDto = {
         id: this.selectedVirement.id,
-        dateEmission: formValue.dateEmission,
-        dateValeur: formValue.dateValeur,
-        dateOperation: formValue.dateOperation,
+        dateEmission: this.datePipe.transform(formValue.dateEmission,'yyyy-MM-dd') as string ,
+        dateValeur: this.datePipe.transform(formValue.dateValeur,'yyyy-MM-dd') as string,
+        dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd' ) as string,
         observation: formValue.observation,
         tva: formValue.tva,
         transactionSource: TransactionSource.VIREMENT_INTERNATIONAL,

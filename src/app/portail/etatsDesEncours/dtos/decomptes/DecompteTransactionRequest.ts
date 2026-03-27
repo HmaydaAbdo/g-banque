@@ -2,9 +2,9 @@ export interface DecompteTransactionRequest {
 
   decompteId: number;
   banqueId: number;
-  dateEmission: Date;
-  dateValeur: Date;
-  dateOperation: Date;
+  dateEmission: string;
+  dateValeur: string;
+  dateOperation: string;
   tva: number;
   libelle: string;
   observation: string;

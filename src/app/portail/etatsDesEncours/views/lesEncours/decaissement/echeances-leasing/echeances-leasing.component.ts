@@ -311,27 +311,18 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       // Utilisation de getRawValue() pour récupérer aussi les champs désactivés (dateEmission, tvaDeductible)
       const formValue = this.rapprochementForm.getRawValue();
 
-      const donneesComplementaires: DonneesComplementairesRapprochementDTO = {
-        dateEmission: formValue.dateEmission,
-        dateValeur: formValue.dateValeur,
-        dateOperation: formValue.dateOperation,
-        observation: formValue.observation,
-        libelle: formValue.libelle,
-        tvaDeductible: formValue.tvaDeductible,
-        tvaCollectee: 0 // Non géré dans ce formulaire
-      };
 
       // Create the LeasingTransactionRequest object
       const leasingTransactionRequest: LeasingTransactionRequest = {
         contratLeasingId: this.selectedEcheance.contratLeasingId,
         echeanceId: this.selectedEcheance.id,
         transactionSource: TransactionSource.LEASING,
-        dateEmission: donneesComplementaires.dateEmission,
-        dateValeur: donneesComplementaires.dateValeur,
-        dateOperation: donneesComplementaires.dateOperation,
-        observation: donneesComplementaires.observation,
-        tvaDeductible: donneesComplementaires.tvaDeductible,
-        libelle: donneesComplementaires.libelle
+        dateEmission:this.datePipe.transform(formValue.dateEmission,'yyyy-MM-dd') as string ,
+        dateValeur: this.datePipe.transform(formValue.dateValeur,'yyyy-MM-dd') as string,
+        dateOperation:this.datePipe.transform(formValue.dateOperation,'yyyy-MM-dd') as string,
+        observation:  formValue.observation,
+        tvaDeductible:  formValue.tvaDeductible,
+        libelle: formValue.libelle
       };
 
       this.isSubmitting = true;

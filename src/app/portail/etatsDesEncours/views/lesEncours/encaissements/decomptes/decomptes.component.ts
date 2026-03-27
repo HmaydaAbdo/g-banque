@@ -8,7 +8,6 @@ import {DecompteResponseDto} from "../../../../../decomptes/dtos/DecompteRespons
 import {DecompteService} from "../../../../../decomptes/service/DecompteService";
 import {DecompteTransactionRequest} from "../../../../dtos/decomptes/DecompteTransactionRequest";
 import {EncoursDecompteDto} from "../../../../../decomptes/dtos/EncoursDecompteDto";
-import {Decimal} from "decimal.js";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
 import {DatePipe, NgIf, CommonModule, DecimalPipe} from "@angular/common";
@@ -240,11 +239,11 @@ export class DecomptesComponent implements OnInit, OnDestroy {
 
     // Construct the request DTO using the selected dc and form data
     const decompteTransactionRequest:DecompteTransactionRequest= {
-      dateEmission:this.rapprochementForm.value.dateEmission,
+      dateEmission: this.datePipe.transform(this.rapprochementForm.value.dateEmission,  'yyyy-MM-dd') as string,
+      dateOperation: this.datePipe.transform(this.rapprochementForm.value.dateOperation,  'yyyy-MM-dd') as string,
+      dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur,  'yyyy-MM-dd') as string,
       decompteId: this.selectedDecompte.id,
       banqueId: this.selectedDecompte.banqueEncaissementId,
-      dateOperation: this.rapprochementForm.value.dateOperation,
-      dateValeur: this.rapprochementForm.value.dateValeur,
       tva: this.rapprochementForm.value.tva,
       libelle:this.rapprochementForm.value.libelle,
       observation:this.rapprochementForm.value.observation

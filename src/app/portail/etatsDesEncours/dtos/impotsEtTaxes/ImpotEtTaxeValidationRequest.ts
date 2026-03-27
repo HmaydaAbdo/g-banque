@@ -2,9 +2,9 @@
 export interface ImpotEtTaxeValidationRequest {
   idImpotEtTaxe: number;
   tva: number;
-  dateEmission: Date;
-  dateValeur: Date;
-  dateOperation: Date;
+  dateEmission: string;
+  dateValeur: string;
+  dateOperation: string;
   observation: string;
   libelle: string;
 }

@@ -221,9 +221,9 @@ export class VirementEncaissementEncoursComponent implements OnInit {
 
       const virementTransactionRequest: VirementTransactionRequestDto = {
         id: this.selectedVirement.id,
-        dateEmission: donneesComplementaires.dateEmission,
-        dateValeur: donneesComplementaires.dateValeur,
-        dateOperation: donneesComplementaires.dateOperation,
+        dateEmission: this.datePipe.transform(donneesComplementaires.dateEmission,'yyyy-MM-dd') as string,
+        dateValeur: this.datePipe.transform(donneesComplementaires.dateValeur,'yyyy-MM-dd') as string,
+        dateOperation: this.datePipe.transform(donneesComplementaires.dateOperation,'yyyy-MM-dd') as string,
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
         transactionSource: TransactionSource.Virement,

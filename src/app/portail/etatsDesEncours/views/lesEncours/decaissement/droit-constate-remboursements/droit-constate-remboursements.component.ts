@@ -245,9 +245,9 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
       const dcTransactionRequest: DroitConstateTransactionRequest = {
         droitConstateId: this.selectedDroitConstate.id,
         banqueId: this.selectedDroitConstate.banqueId,
-        dateEmission: this.rapprochementForm.value.dateEmission,
-        dateOperation: this.rapprochementForm.value.dateOperation,
-        dateValeur: this.rapprochementForm.value.dateValeur,
+        dateEmission: this.datePipe.transform(this.rapprochementForm.value.dateEmission,'yyyy-MM-dd') as string,
+        dateOperation:this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
+        dateValeur:this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         tva: this.rapprochementForm.value.tva,
         libelle: this.rapprochementForm.value.libelle,
         observation: this.rapprochementForm.value.observation
