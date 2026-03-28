@@ -1,11 +1,10 @@
 package staport.finance.gBanque.impayees.entities;
 
-
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -18,15 +17,19 @@ public class Impayee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, precision = 19, scale = 4)
-    private BigDecimal montant;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 
     @Column(nullable = false)
     private LocalDate dateEmission ;
+
+    @Column(nullable = false, precision = 19, scale = 4)
+    private BigDecimal montant;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type",nullable = false)
+    private Type type;
 
     @Column
     private LocalDate dateValeur ;
@@ -79,14 +82,6 @@ public class Impayee {
         this.id = id;
     }
 
-    public BigDecimal getMontant() {
-        return montant;
-    }
-
-    public void setMontant(BigDecimal montant) {
-        this.montant = montant;
-    }
-
     public Banque getBanque() {
         return banque;
     }
@@ -101,6 +96,22 @@ public class Impayee {
 
     public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
+    }
+
+    public BigDecimal getMontant() {
+        return montant;
+    }
+
+    public void setMontant(BigDecimal montant) {
+        this.montant = montant;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
     }
 
     public LocalDate getDateValeur() {
@@ -192,15 +203,18 @@ public class Impayee {
     public String toString() {
         return "Impayee{" +
                 "id=" + id +
-                ", montant=" + montant +
                 ", banque=" + banque +
                 ", dateEmission=" + dateEmission +
+                ", montant=" + montant +
+                ", type=" + type +
                 ", dateValeur=" + dateValeur +
                 ", dateOperation=" + dateOperation +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
                 ", motif=" + motif +
                 ", status=" + status +
+                ", dateCreation=" + dateCreation +
+                ", dateModification=" + dateModification +
                 '}';
     }
 }

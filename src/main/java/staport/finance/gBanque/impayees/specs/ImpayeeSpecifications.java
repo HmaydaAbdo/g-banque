@@ -3,7 +3,10 @@ package staport.finance.gBanque.impayees.specs;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.impayees.dtos.ImpayeeSearchDto;
 import staport.finance.gBanque.impayees.entities.Impayee;
+import staport.finance.gBanque.impot_taxes.enums.Motif;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,7 +33,7 @@ public class ImpayeeSpecifications {
         };
     }
 
-    public static Specification<Impayee> hasMotif(Enum<?> motif) {
+    public static Specification<Impayee> hasMotif(TransactionSource motif) {
         return (root, query, cb) -> {
             if (motif == null) {
                 return null;
@@ -39,7 +42,7 @@ public class ImpayeeSpecifications {
         };
     }
 
-    public static Specification<Impayee> hasStatus(Enum<?> status) {
+    public static Specification<Impayee> hasStatus(Status status) {
         return (root, query, cb) -> {
             if (status == null) {
                 return null;
@@ -57,25 +60,37 @@ public class ImpayeeSpecifications {
         };
     }
 
+    public static Specification<Impayee> hasType(Type type) {
+        return (root, query, cb) -> {
+            if (type == null) {
+                return null;
+            }
+            return cb.equal(root.get("type"), type);
+        };
+    }
+
     public static Specification<Impayee> buildSpecification(ImpayeeSearchDto dto) {
         return Specification
                 .where(hasBanque(dto.getBanqueId()))
                 .and(hasLibelle(dto.getLibelle()))
                 .and(hasMotif(dto.getMotif()))
+                .and(hasType(dto.getType()))
                 .and(hasStatus(dto.getStatus()));
     }
 
-    public static Specification<Impayee> outstandingUntil(LocalDate until) {
+    public static Specification<Impayee> outstandingUntil(LocalDate until,Type type) {
         return (root, query, cb) -> cb.and(
                 cb.equal(root.get("status"), Status.PREVU),
+                cb.equal(root.get("type"), type) ,
                 cb.lessThanOrEqualTo(root.get("dateEmission"), until)
         );
     }
 
-    public static Specification<Impayee> outstandingBetween(LocalDate from, LocalDate until) {
+    public static Specification<Impayee> outstandingBetween(LocalDate from, LocalDate until,Type type) {
         return (root, query, cb) -> cb.and(
                 cb.equal(root.get("status"), Status.PREVU),
                 cb.greaterThanOrEqualTo(root.get("dateEmission"), from),
+                cb.equal(root.get("type"), type) ,
                 cb.lessThanOrEqualTo(root.get("dateEmission"), until)
         );
     }

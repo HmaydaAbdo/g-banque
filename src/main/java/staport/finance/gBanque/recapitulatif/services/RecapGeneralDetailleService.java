@@ -265,7 +265,7 @@ public class RecapGeneralDetailleService {
 
         encoursMoins = encoursMoins.add(sum(
                 impayeeRepository.findAll(
-                        ImpayeeSpecifications.outstandingUntil(today)
+                        ImpayeeSpecifications.outstandingUntil(today,Type.DECAISSEMENT)
                                 .and(ImpayeeSpecifications.hasBanque(banqueId))),
                 Impayee::getMontant));
 
@@ -327,6 +327,12 @@ public class RecapGeneralDetailleService {
                         RestitutionSpec.outstandingUntil(today)
                                 .and(RestitutionSpec.hasBanque(banqueId))),
                 Restitution::getMontant));
+
+        encoursPlus = encoursPlus.add(sum(
+                impayeeRepository.findAll(
+                        ImpayeeSpecifications.outstandingUntil(today,Type.ENCAISSEMENT)
+                                .and(ImpayeeSpecifications.hasBanque(banqueId))),
+                Impayee::getMontant));
 
         // ── Assemblage ────────────────────────────────────────────────────────────
         BigDecimal soldeProjete = disponibilite.add(encoursPlus).subtract(encoursMoins);
@@ -446,7 +452,7 @@ public class RecapGeneralDetailleService {
 
         categories.add(categorie("Impayée", sum(
                 impayeeRepository.findAll(
-                        ImpayeeSpecifications.outstandingBetween(from, until)
+                        ImpayeeSpecifications.outstandingBetween(from, until,Type.DECAISSEMENT)
                                 .and(ImpayeeSpecifications.hasBanque(banqueId))),
                 Impayee::getMontant)));
 
@@ -537,6 +543,12 @@ public class RecapGeneralDetailleService {
                         RestitutionSpec.outstandingBetween(from, until)
                                 .and(RestitutionSpec.hasBanque(banqueId))),
                 Restitution::getMontant)));
+
+        categories.add(categorie("Impayée", sum(
+                impayeeRepository.findAll(
+                        ImpayeeSpecifications.outstandingBetween(from, until,Type.ENCAISSEMENT)
+                                .and(ImpayeeSpecifications.hasBanque(banqueId))),
+                Impayee::getMontant)));
 
         // Total
         BigDecimal total = categories.stream()

@@ -39,13 +39,13 @@ public class ImpayeeService {
     public ImpayeeResponseDto createImpayee(ImpayeeRequestDto requestDto) {
         log.info("Début de création d'une impayée avec les données: {}", requestDto);
 
-        Banque banqueEncaissement = banqueRepository.findById(requestDto.getBanqueId())
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
                 .orElseThrow(() -> {
-                    log.error("Banque d'encaissement introuvable avec l'id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque d'encaissement introuvable");
+                    log.error("Banque  introuvable avec l'id={}", requestDto.getBanqueId());
+                    return new IllegalArgumentException("Banque  introuvable");
                 });
 
-        Impayee impayee = impayeeMapper.toEntity(requestDto, banqueEncaissement);
+        Impayee impayee = impayeeMapper.toEntity(requestDto, banque);
         impayeeRepository.save(impayee);
 
         log.info("Impayée créée avec succès: id={}", impayee.getId());
@@ -76,7 +76,7 @@ public class ImpayeeService {
                 .orElseThrow(() -> new IllegalArgumentException("Impayée introuvable"));
 
         Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> new IllegalArgumentException("Banque d'encaissement introuvable"));
+                .orElseThrow(() -> new IllegalArgumentException("Banque  introuvable"));
 
         impayee.setLibelle(requestDto.getLibelle());
         impayee.setMontant(requestDto.getMontant());
@@ -132,7 +132,7 @@ public class ImpayeeService {
     public EncoursImpayeeDto getOutstandingImpayees(ImpayeeSearchDto searchDto, Pageable pageable) {
         log.info("Récupération des encours impayées - Critères: {}", searchDto);
 
-        Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingUntil(endOfMonth))
+        Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingUntil(endOfMonth,searchDto.getType()))
                 .and(ImpayeeSpecifications.hasBanque(searchDto.getBanqueId()))
                 .and(ImpayeeSpecifications.hasLibelle(searchDto.getLibelle()))
                 .and(ImpayeeSpecifications.hasMotif(searchDto.getMotif()))

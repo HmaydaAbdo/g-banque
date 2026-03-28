@@ -33,6 +33,7 @@ public class ImpayeeMapper {
 
         Impayee impayee = new Impayee();
         impayee.setLibelle(dto.getLibelle());
+        impayee.setType(dto.getType());
         impayee.setObservation(dto.getObservation());
         impayee.setMontant(dto.getMontant());
         impayee.setBanque(banque);
@@ -64,6 +65,7 @@ public class ImpayeeMapper {
         dto.setMontant(entity.getMontant());
         dto.setDateEmission(entity.getDateEmission());
         dto.setStatus(entity.getStatus());
+        dto.setType(entity.getType());
 
         if (entity.getBanque() != null) {
             dto.setBanqueId(entity.getBanque().getId());
