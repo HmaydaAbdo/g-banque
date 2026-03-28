@@ -16,7 +16,8 @@ public class ImpayeeSpecifications {
             if (banqueId == null) {
                 return null;
             }
-            return cb.equal(root.get("banqueEncaissement").get("id"), banqueId);
+            // Updated field name here
+            return cb.equal(root.get("banque").get("id"), banqueId);
         };
     }
 
@@ -58,7 +59,7 @@ public class ImpayeeSpecifications {
 
     public static Specification<Impayee> buildSpecification(ImpayeeSearchDto dto) {
         return Specification
-                .where(hasBanque(dto.getBanqueEncaissementId()))
+                .where(hasBanque(dto.getBanqueId()))
                 .and(hasLibelle(dto.getLibelle()))
                 .and(hasMotif(dto.getMotif()))
                 .and(hasStatus(dto.getStatus()));

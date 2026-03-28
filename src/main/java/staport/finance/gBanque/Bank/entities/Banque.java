@@ -11,6 +11,7 @@ import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
+import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
@@ -133,6 +134,8 @@ public class Banque {
     @OneToMany(mappedBy = "banqueEncaissement", cascade = {CascadeType.ALL}, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Decompte> decomptes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "banque", cascade = {CascadeType.ALL}, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<Impayee> impayees = new ArrayList<>();
 
     // --- Constructors ---
     public Banque() {}
@@ -323,6 +326,21 @@ public class Banque {
         this.agios.remove(agios);
     }
 
+    public void addImpayee(Impayee i) {
+        impayees.add(i);
+        i.setBanque(this);
+    }
+    public void removeImpayee(Impayee i) {
+        impayees.remove(i);
+        i.setBanque(null);
+    }
+
+    public List<Impayee> getImpayees() {
+        return impayees;
+    }
+    public void setImpayees(List<Impayee> impayees) {
+        this.impayees = impayees;
+    }
 
     public List<Prelevement> getPrelevements() {
         return prelevements;

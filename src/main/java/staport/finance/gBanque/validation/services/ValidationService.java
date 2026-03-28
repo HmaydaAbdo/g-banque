@@ -1207,10 +1207,10 @@ public class ValidationService {
         // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
         Transaction transactionEntity = impayeeTransactionMapper.toEntity(requestDto, impayee);
 
-        Banque banque = banqueRepository.findById(impayee.getBanqueEncaissement().getId())
+        Banque banque = banqueRepository.findById(impayee.getBanque().getId())
                 .orElseThrow(() -> {
-                    log.error("Banque d'encaissement introuvable avec l'ID: {}", impayee.getBanqueEncaissement().getId());
-                    return new ResourceNotFoundException("Banque d'encaissement introuvable avec l'ID: " + impayee.getBanqueEncaissement().getId());
+                    log.error("Banque d'encaissement introuvable avec l'ID: {}", impayee.getBanque().getId());
+                    return new ResourceNotFoundException("Banque d'encaissement introuvable avec l'ID: " + impayee.getBanque().getId());
                 });
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);

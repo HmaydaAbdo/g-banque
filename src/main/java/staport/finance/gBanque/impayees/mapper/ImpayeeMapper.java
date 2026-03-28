@@ -16,31 +16,31 @@ public class ImpayeeMapper {
     /**
      * Convertit un DTO de requête en entité Impayee
      */
-    public Impayee toEntity(ImpayeeRequestDto dto, Banque banqueEncaissement) {
+    public Impayee toEntity(ImpayeeRequestDto dto, Banque banque) {
 
         if (dto == null) {
             log.warn("Tentative de conversion d'un ImpayeeRequestDto null en entité");
             return null;
         }
 
-        if (banqueEncaissement == null) {
+        if (banque == null) {
             log.error("Tentative de création d'une impayée avec une banque d'encaissement null '");
             throw new IllegalArgumentException("La banque d'encaissement ne peut pas être null lors de la création d'une impayée");
         }
 
         log.debug("Conversion du DTO vers entité Impayee - Libellé: '{}', Banque d'encaissement: '{}', Montant: {}",
-                dto.getLibelle(), banqueEncaissement.getNom(), dto.getMontant());
+                dto.getLibelle(), banque.getNom(), dto.getMontant());
 
         Impayee impayee = new Impayee();
         impayee.setLibelle(dto.getLibelle());
         impayee.setObservation(dto.getObservation());
         impayee.setMontant(dto.getMontant());
-        impayee.setBanqueEncaissement(banqueEncaissement);
+        impayee.setBanque(banque);
         impayee.setMotif(dto.getMotif());
         impayee.setDateEmission(dto.getDateEmission());
 
         // Note: Le statut est généralement géré par défaut dans l'entité ou la DB (ex: PREVU)
-        log.debug("Entité Impayee créée avec succès pour la banque d'encaissement ID: {}", banqueEncaissement.getId());
+        log.debug("Entité Impayee créée avec succès pour la banque d'encaissement ID: {}", banque.getId());
 
         return impayee;
     }
@@ -65,11 +65,11 @@ public class ImpayeeMapper {
         dto.setDateEmission(entity.getDateEmission());
         dto.setStatus(entity.getStatus());
 
-        if (entity.getBanqueEncaissement() != null) {
-            dto.setBanqueEncaissementId(entity.getBanqueEncaissement().getId());
-            dto.setBanqueEncaissementNom(entity.getBanqueEncaissement().getNom());
+        if (entity.getBanque() != null) {
+            dto.setBanqueId(entity.getBanque().getId());
+            dto.setBanqueNom(entity.getBanque().getNom());
             log.trace("Banque d'encaissement associée à l'impayée: ID={}, Nom='{}'",
-                    entity.getBanqueEncaissement().getId(), entity.getBanqueEncaissement().getNom());
+                    entity.getBanque().getId(), entity.getBanque().getNom());
         } else {
             log.warn("L'impayée ID: {} n'a pas de banque d'encaissement associée", entity.getId());
         }

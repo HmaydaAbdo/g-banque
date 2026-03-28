@@ -54,7 +54,7 @@ public class ImpayeeTransactionMapper {
         transaction.setDebit(impayee.getMontant());
         transaction.setCredit(BigDecimal.ZERO);
 
-        transaction.setBanqueDePrelevement(impayee.getBanqueEncaissement());
+        transaction.setBanqueDePrelevement(impayee.getBanque());
 
         BigDecimal ttc = impayee.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
@@ -64,7 +64,7 @@ public class ImpayeeTransactionMapper {
         // Mapping traces
         try {
             Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueEncaissementId", impayee.getBanqueEncaissement().getId());
+            tracesMap.put("banqueEncaissementId", impayee.getBanque().getId());
             tracesMap.put("motif", impayee.getMotif().name());
             String jsonTraces = objectMapper.writeValueAsString(tracesMap);
             transaction.setTraces(jsonTraces);

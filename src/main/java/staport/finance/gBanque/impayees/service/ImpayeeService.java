@@ -39,9 +39,9 @@ public class ImpayeeService {
     public ImpayeeResponseDto createImpayee(ImpayeeRequestDto requestDto) {
         log.info("Début de création d'une impayée avec les données: {}", requestDto);
 
-        Banque banqueEncaissement = banqueRepository.findById(requestDto.getBanqueEncaissementId())
+        Banque banqueEncaissement = banqueRepository.findById(requestDto.getBanqueId())
                 .orElseThrow(() -> {
-                    log.error("Banque d'encaissement introuvable avec l'id={}", requestDto.getBanqueEncaissementId());
+                    log.error("Banque d'encaissement introuvable avec l'id={}", requestDto.getBanqueId());
                     return new IllegalArgumentException("Banque d'encaissement introuvable");
                 });
 
@@ -75,12 +75,12 @@ public class ImpayeeService {
         Impayee impayee = impayeeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Impayée introuvable"));
 
-        Banque banqueEncaissement = banqueRepository.findById(requestDto.getBanqueEncaissementId())
+        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
                 .orElseThrow(() -> new IllegalArgumentException("Banque d'encaissement introuvable"));
 
         impayee.setLibelle(requestDto.getLibelle());
         impayee.setMontant(requestDto.getMontant());
-        impayee.setBanqueEncaissement(banqueEncaissement);
+        impayee.setBanque(banque);
         impayee.setMotif(requestDto.getMotif());
         impayee.setDateEmission(requestDto.getDateEmission());
         impayee.setObservation(requestDto.getObservation());
@@ -133,7 +133,7 @@ public class ImpayeeService {
         log.info("Récupération des encours impayées - Critères: {}", searchDto);
 
         Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingUntil(endOfMonth))
-                .and(ImpayeeSpecifications.hasBanque(searchDto.getBanqueEncaissementId()))
+                .and(ImpayeeSpecifications.hasBanque(searchDto.getBanqueId()))
                 .and(ImpayeeSpecifications.hasLibelle(searchDto.getLibelle()))
                 .and(ImpayeeSpecifications.hasMotif(searchDto.getMotif()))
                 .and(ImpayeeSpecifications.hasMontant(searchDto.getMontant()));

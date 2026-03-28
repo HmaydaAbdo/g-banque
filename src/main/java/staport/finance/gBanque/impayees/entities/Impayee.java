@@ -22,8 +22,8 @@ public class Impayee {
     private BigDecimal montant;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "banque_encaissement_id", nullable = false)
-    private Banque banqueEncaissement;
+    @JoinColumn(name = "banque_id", nullable = false)
+    private Banque banque;
 
     @Column(nullable = false)
     private LocalDate dateEmission ;
@@ -87,12 +87,12 @@ public class Impayee {
         this.montant = montant;
     }
 
-    public Banque getBanqueEncaissement() {
-        return banqueEncaissement;
+    public Banque getBanque() {
+        return banque;
     }
 
-    public void setBanqueEncaissement(Banque banqueEncaissement) {
-        this.banqueEncaissement = banqueEncaissement;
+    public void setBanque(Banque banque) {
+        this.banque = banque;
     }
 
     public LocalDate getDateEmission() {
@@ -172,7 +172,7 @@ public class Impayee {
         if (!(o instanceof Impayee that)) return false;
         return Objects.equals(id, that.id) &&
                 Objects.equals(montant, that.montant) &&
-                Objects.equals(banqueEncaissement, that.banqueEncaissement) &&
+                Objects.equals(banque, that.banque) &&
                 Objects.equals(dateEmission, that.dateEmission) &&
                 Objects.equals(dateValeur, that.dateValeur) &&
                 Objects.equals(dateOperation, that.dateOperation) &&
@@ -184,7 +184,7 @@ public class Impayee {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, montant, banqueEncaissement, dateEmission, dateValeur,
+        return Objects.hash(id, montant, banque, dateEmission, dateValeur,
                 dateOperation, libelle, observation, motif, status);
     }
 
@@ -193,7 +193,7 @@ public class Impayee {
         return "Impayee{" +
                 "id=" + id +
                 ", montant=" + montant +
-                ", banqueEncaissement=" + banqueEncaissement +
+                ", banque=" + banque +
                 ", dateEmission=" + dateEmission +
                 ", dateValeur=" + dateValeur +
                 ", dateOperation=" + dateOperation +
