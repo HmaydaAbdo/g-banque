@@ -4,6 +4,7 @@ package staport.finance.gBanque.impayees.dtos;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
@@ -11,24 +12,28 @@ import java.time.LocalDate;
 
 public class ImpayeeRequestDto {
 
+    @NotNull(message = "La banque  est obligatoire")
+    private Long banqueId;
+
+    @NotNull(message = "La date d'émission est obligatoire")
+    private LocalDate dateEmission ;
+
+    @NotNull(message = "Le montant est obligatoire")
+    @Positive(message = "Le montant doit être positif")
+    private BigDecimal montant;
+
+    @NotNull(message = "Le type est obligatoire")
+    private Type type;
+
+    @NotNull(message = "Le motif (source de transaction) est obligatoire")
+    private TransactionSource motif;
+
     @NotBlank(message = "Le libellé est obligatoire")
     private String libelle;
 
     @NotBlank(message = "L'observation est obligatoire")
     private String observation;
 
-    @NotNull(message = "Le montant est obligatoire")
-    @Positive(message = "Le montant doit être positif")
-    private BigDecimal montant;
-
-    @NotNull(message = "La banque  est obligatoire")
-    private Long banqueId;
-
-    @NotNull(message = "Le motif (source de transaction) est obligatoire")
-    private TransactionSource motif;
-
-    @NotNull(message = "La date d'émission est obligatoire")
-    private LocalDate dateEmission ;
 
 
     // Getters & Setters
@@ -80,16 +85,24 @@ public class ImpayeeRequestDto {
         this.dateEmission = dateEmission;
     }
 
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
 
     @Override
     public String toString() {
         return "ImpayeeRequestDto{" +
-                "libelle='" + libelle + '\'' +
-                ", observation='" + observation + '\'' +
-                ", montant=" + montant +
-                ", banqueId=" + banqueId +
-                ", motif=" + motif +
+                "banqueId=" + banqueId +
                 ", dateEmission=" + dateEmission +
+                ", montant=" + montant +
+                ", type=" + type +
+                ", motif=" + motif +
+                ", libelle='" + libelle + '\'' +
+                ", observation='" + observation + '\'' +
                 '}';
     }
 }

@@ -1,6 +1,7 @@
 package staport.finance.gBanque.impayees.dtos;
 
 
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -11,6 +12,7 @@ public class ImpayeeSearchDto {
     private Long banqueId;
     private String libelle;
     private TransactionSource motif;
+    private Type type;
     private BigDecimal montant;
     private Status status;
 
@@ -45,6 +47,13 @@ public class ImpayeeSearchDto {
         this.motif = motif;
     }
 
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
 
     public Status getStatus() {
         return status;
@@ -68,6 +77,7 @@ public class ImpayeeSearchDto {
                 "banqueId=" + banqueId +
                 ", libelle='" + libelle + '\'' +
                 ", motif=" + motif +
+                ", type=" + type +
                 ", montant=" + montant +
                 ", status=" + status +
                 '}';

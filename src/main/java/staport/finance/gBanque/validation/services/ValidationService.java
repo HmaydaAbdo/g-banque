@@ -1219,8 +1219,12 @@ public class ValidationService {
         log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
 
         // Step 5: Update the bank's current balance
-        // Les impayées sont des DECAISSEMENTS (débit) donc on déduit au solde
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(impayee.getMontant()));
+        if( impayee.getType()== staport.finance.gBanque.moyensDePaiements.virements.enums.Type.DECAISSEMENT){
+            banque.setSoldeActuel(banque.getSoldeActuel().subtract(impayee.getMontant()));
+        }else{
+            banque.setSoldeActuel(banque.getSoldeActuel().add(impayee.getMontant()));
+        }
+
         this.banqueRepository.save(banque);
         log.info("Solde de la banque {} mis à jour: {}", banque.getNom(), banque.getSoldeActuel());
 

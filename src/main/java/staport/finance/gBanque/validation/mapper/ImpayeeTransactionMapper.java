@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.impayees.entities.Impayee;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
 import staport.finance.gBanque.validation.utils.TVAUtils;
@@ -49,28 +50,22 @@ public class ImpayeeTransactionMapper {
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setLibelle(requestDto.getLibelle());
         transaction.setTransactionSource(TransactionSource.IMPAYEE);
-
-        // Les impayées sont des DECAISSEMENTS donc on met le montant en debit
-        transaction.setDebit(impayee.getMontant());
-        transaction.setCredit(BigDecimal.ZERO);
-
         transaction.setBanqueDePrelevement(impayee.getBanque());
-
         BigDecimal ttc = impayee.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
-        transaction.setTvaDeductible(montantTva);
 
-        // Mapping traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueEncaissementId", impayee.getBanque().getId());
-            tracesMap.put("motif", impayee.getMotif().name());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
+
+        if(impayee.getType()== Type.DECAISSEMENT){
+            transaction.setDebit(impayee.getMontant());
+            transaction.setCredit(BigDecimal.ZERO);
+            transaction.setTvaDeductible(montantTva);
+        }else {
+            transaction.setDebit(BigDecimal.ZERO);
+            transaction.setCredit(impayee.getMontant());
+            transaction.setTvaCollectee(montantTva);
         }
+
 
         return transaction;
     }

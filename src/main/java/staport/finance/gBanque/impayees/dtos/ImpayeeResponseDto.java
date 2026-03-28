@@ -1,5 +1,6 @@
 package staport.finance.gBanque.impayees.dtos;
 
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -15,6 +16,7 @@ public class ImpayeeResponseDto {
     private BigDecimal montant;
     private Long banqueId;
     private String banqueNom;
+    private Type type ;
     private TransactionSource motif;
     private LocalDate dateEmission ;
     private LocalDate dateValeur ;
@@ -129,6 +131,14 @@ public class ImpayeeResponseDto {
         this.dateModification = dateModification;
     }
 
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
     @Override
     public String toString() {
         return "ImpayeeResponseDto{" +
@@ -138,6 +148,7 @@ public class ImpayeeResponseDto {
                 ", montant=" + montant +
                 ", banqueId=" + banqueId +
                 ", banqueNom='" + banqueNom + '\'' +
+                ", type=" + type +
                 ", motif=" + motif +
                 ", dateEmission=" + dateEmission +
                 ", dateValeur=" + dateValeur +

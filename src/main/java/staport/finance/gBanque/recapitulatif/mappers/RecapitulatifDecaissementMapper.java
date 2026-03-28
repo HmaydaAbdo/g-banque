@@ -365,7 +365,7 @@ public class RecapitulatifDecaissementMapper {
         RecaputilatifItem dto = new RecaputilatifItem();
         dto.setId(impayee.getId());
         dto.setDateEmission(impayee.getDateEmission());
-        dto.setCredit(impayee.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
+        dto.setDebit(impayee.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations(impayee.getObservation());
         dto.setLibelle(impayee.getLibelle());
         dto.setSource(TransactionSource.IMPAYEE);
