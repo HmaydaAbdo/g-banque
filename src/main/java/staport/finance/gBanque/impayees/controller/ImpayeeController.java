@@ -53,10 +53,10 @@ public class ImpayeeController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/encours/{banqueEncaissementId}")
-    public ResponseEntity<EncoursImpayeeDto> getOutstandingImpayees(@PathVariable Long banqueEncaissementId, @ModelAttribute ImpayeeSearchDto searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Requête REST: Récupération encours pour banqueEncaissementId={}", banqueEncaissementId);
-        searchDto.setBanqueEncaissementId(banqueEncaissementId);
+    @GetMapping("/encours/{banqueId}")
+    public ResponseEntity<EncoursImpayeeDto> getOutstandingImpayees(@PathVariable Long banqueId, @ModelAttribute ImpayeeSearchDto searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+        log.info("Requête REST: Récupération encours pour banqueId={}", banqueId);
+        searchDto.setBanqueId(banqueId);
         return ResponseEntity.ok(impayeeService.getOutstandingImpayees(searchDto, pageable));
     }
 

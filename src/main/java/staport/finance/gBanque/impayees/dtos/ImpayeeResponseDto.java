@@ -13,8 +13,8 @@ public class ImpayeeResponseDto {
     private String libelle;
     private String observation;
     private BigDecimal montant;
-    private Long banqueEncaissementId;
-    private String banqueEncaissementNom;
+    private Long banqueId;
+    private String banqueNom;
     private TransactionSource motif;
     private LocalDate dateEmission ;
     private LocalDate dateValeur ;
@@ -56,20 +56,21 @@ public class ImpayeeResponseDto {
         this.montant = montant;
     }
 
-    public Long getBanqueEncaissementId() {
-        return banqueEncaissementId;
+
+    public Long getBanqueId() {
+        return banqueId;
     }
 
-    public void setBanqueEncaissementId(Long banqueEncaissementId) {
-        this.banqueEncaissementId = banqueEncaissementId;
+    public void setBanqueId(Long banqueId) {
+        this.banqueId = banqueId;
     }
 
-    public String getBanqueEncaissementNom() {
-        return banqueEncaissementNom;
+    public String getBanqueNom() {
+        return banqueNom;
     }
 
-    public void setBanqueEncaissementNom(String banqueEncaissementNom) {
-        this.banqueEncaissementNom = banqueEncaissementNom;
+    public void setBanqueNom(String banqueNom) {
+        this.banqueNom = banqueNom;
     }
 
     public TransactionSource getMotif() {
@@ -135,8 +136,8 @@ public class ImpayeeResponseDto {
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
                 ", montant=" + montant +
-                ", banqueEncaissementId=" + banqueEncaissementId +
-                ", banqueEncaissementNom='" + banqueEncaissementNom + '\'' +
+                ", banqueId=" + banqueId +
+                ", banqueNom='" + banqueNom + '\'' +
                 ", motif=" + motif +
                 ", dateEmission=" + dateEmission +
                 ", dateValeur=" + dateValeur +

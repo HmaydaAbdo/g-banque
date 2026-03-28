@@ -21,8 +21,8 @@ public class ImpayeeRequestDto {
     @Positive(message = "Le montant doit être positif")
     private BigDecimal montant;
 
-    @NotNull(message = "La banque d'encaissement est obligatoire")
-    private Long banqueEncaissementId;
+    @NotNull(message = "La banque  est obligatoire")
+    private Long banqueId;
 
     @NotNull(message = "Le motif (source de transaction) est obligatoire")
     private TransactionSource motif;
@@ -56,12 +56,12 @@ public class ImpayeeRequestDto {
         this.montant = montant;
     }
 
-    public Long getBanqueEncaissementId() {
-        return banqueEncaissementId;
+    public Long getBanqueId() {
+        return banqueId;
     }
 
-    public void setBanqueEncaissementId(Long banqueEncaissementId) {
-        this.banqueEncaissementId = banqueEncaissementId;
+    public void setBanqueId(Long banqueId) {
+        this.banqueId = banqueId;
     }
 
     public TransactionSource getMotif() {
@@ -87,7 +87,7 @@ public class ImpayeeRequestDto {
                 "libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
                 ", montant=" + montant +
-                ", banqueEncaissementId=" + banqueEncaissementId +
+                ", banqueId=" + banqueId +
                 ", motif=" + motif +
                 ", dateEmission=" + dateEmission +
                 '}';

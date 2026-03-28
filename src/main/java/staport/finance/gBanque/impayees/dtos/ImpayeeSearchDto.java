@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 public class ImpayeeSearchDto {
 
-    private Long banqueEncaissementId;
+    private Long banqueId;
     private String libelle;
     private TransactionSource motif;
     private BigDecimal montant;
@@ -19,12 +19,14 @@ public class ImpayeeSearchDto {
     }
 
     // Getters & Setters
-    public Long getBanqueEncaissementId() {
-        return banqueEncaissementId;
+
+
+    public Long getBanqueId() {
+        return banqueId;
     }
 
-    public void setBanqueEncaissementId(Long banqueEncaissementId) {
-        this.banqueEncaissementId = banqueEncaissementId;
+    public void setBanqueId(Long banqueId) {
+        this.banqueId = banqueId;
     }
 
     public String getLibelle() {
@@ -63,7 +65,7 @@ public class ImpayeeSearchDto {
     @Override
     public String toString() {
         return "ImpayeeSearchDto{" +
-                "banqueEncaissementId=" + banqueEncaissementId +
+                "banqueId=" + banqueId +
                 ", libelle='" + libelle + '\'' +
                 ", motif=" + motif +
                 ", montant=" + montant +
