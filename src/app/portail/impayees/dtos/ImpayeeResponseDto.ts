@@ -6,13 +6,13 @@ export interface ImpayeeResponseDto {
   libelle: string;
   observation: string;
   montant: number;
-  banqueEncaissementId: number;
-  banqueEncaissementNom: string;
+  banqueId: number;
+  banqueNom: string;
   motif: TransactionSource;
   dateEmission: Date;
   dateValeur?: Date;
   dateOperation?: Date;
   status: Status;
   dateCreation: Date;
-  dateModification: Date; 
+  dateModification: Date;
 }

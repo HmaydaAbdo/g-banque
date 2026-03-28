@@ -54,7 +54,7 @@ export class ImpayeeService {
 
   // --- Get outstanding impayees ---
   getOutstandingImpayees(
-    banqueEncaissementId: number,
+    banqueId: number,
     searchDto: ImpayeeSearchDto,
     page: number = 0,
     size: number = 10,
@@ -81,7 +81,7 @@ export class ImpayeeService {
       params = params.set('status', searchDto.status);
     }
 
-    return this.http.get<EncoursImpayeeDto>(`${this.apiUrl}/encours/${banqueEncaissementId}`, { params });
+    return this.http.get<EncoursImpayeeDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
   }
 
   // --- Toggle Status ---

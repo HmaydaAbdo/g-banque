@@ -80,7 +80,7 @@ export class ImpayeeFormComponent implements OnInit {
         if (banqueIdParam) {
           this.banqueService.getBanqueById(+banqueIdParam).subscribe(banque => {
             this.banquesOptions = [banque];
-            this.impayeeForm.patchValue({ banqueEncaissementId: banque.id });
+            this.impayeeForm.patchValue({ banqueId: banque.id });
           });
         }
       }
@@ -89,7 +89,7 @@ export class ImpayeeFormComponent implements OnInit {
 
   initForm(): void {
     this.impayeeForm = this.fb.group({
-      banqueEncaissementId: [null, Validators.required],
+      banqueId: [null, Validators.required],
       motif: [null, Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       dateEmission: [null, Validators.required],
@@ -132,7 +132,7 @@ export class ImpayeeFormComponent implements OnInit {
     this.impayeeService.getImpayeeById(id).subscribe({
       next: (impayee: ImpayeeResponseDto) => {
         this.impayeeForm.patchValue({
-          banqueEncaissementId: impayee.banqueEncaissementId,
+          banqueId: impayee.banqueId,
           motif: impayee.motif,
           observation: impayee.observation,
           libelle: impayee.libelle,
@@ -141,8 +141,8 @@ export class ImpayeeFormComponent implements OnInit {
         });
 
         // Ajout de la banque dans options si manquante
-        if (impayee.banqueEncaissementId && !this.banquesOptions.find(b => b.id === impayee.banqueEncaissementId)) {
-          this.banqueService.getBanqueById(impayee.banqueEncaissementId).subscribe(banque => {
+        if (impayee.banqueId && !this.banquesOptions.find(b => b.id === impayee.banqueId)) {
+          this.banqueService.getBanqueById(impayee.banqueId).subscribe(banque => {
             this.banquesOptions = [...this.banquesOptions, banque];
           });
         }
@@ -181,7 +181,7 @@ export class ImpayeeFormComponent implements OnInit {
     this.loading = true;
     const formValue = this.impayeeForm.value;
     const request: ImpayeeRequestDto = {
-      banqueEncaissementId: formValue.banqueEncaissementId,
+      banqueId: formValue.banqueId,
       motif: formValue.motif,
       libelle: formValue.libelle,
       observation: formValue.observation,

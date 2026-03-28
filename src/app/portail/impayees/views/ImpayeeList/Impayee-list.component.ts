@@ -63,7 +63,7 @@ export class ImpayeeListComponent implements OnInit {
 
   // Filters
   searchCriteria: ImpayeeSearchDto = {};
-  selectedBanqueEncaissement?: BanqueResponse;
+  selectedBanque?: BanqueResponse;
   selectedMotif?: TransactionSource;
   selectedStatus?: Status;
   libelleFilter: string | null = null;
@@ -103,7 +103,7 @@ export class ImpayeeListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.searchCriteria.banqueEncaissementId = this.selectedBanqueEncaissement?.id;
+    this.searchCriteria.banqueId = this.selectedBanque?.id;
     this.searchCriteria.motif = this.selectedMotif;
     this.searchCriteria.status = this.selectedStatus;
     this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
@@ -162,7 +162,7 @@ export class ImpayeeListComponent implements OnInit {
   }
 
   clearFilters() {
-    this.selectedBanqueEncaissement = undefined;
+    this.selectedBanque = undefined;
     this.selectedMotif = undefined;
     this.selectedStatus = undefined;
     this.libelleFilter = null;

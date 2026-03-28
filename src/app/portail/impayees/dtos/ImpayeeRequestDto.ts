@@ -4,7 +4,7 @@ export interface ImpayeeRequestDto {
   libelle: string;
   observation: string;
   montant: number;
-  banqueEncaissementId: number;
+  banqueId: number;
   motif: TransactionSource;
   dateEmission: Date;
 }

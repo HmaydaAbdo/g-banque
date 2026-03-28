@@ -32,11 +32,11 @@
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <p-dropdown
-            name="banqueEncaissement"
+            name="banque"
             [options]="banques"
-            [(ngModel)]="selectedBanqueEncaissement"
+            [(ngModel)]="selectedBanque"
             optionLabel="nom"
-            placeholder="Banque décaissement"
+            placeholder="Banque"
             [virtualScroll]="true"
             [virtualScrollItemSize]="40"
             [lazy]="true"
@@ -115,7 +115,7 @@
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="banqueEncaissementNom">Banque décaissement <p-sortIcon field="banqueEncaissementNom"></p-sortIcon></th>
+          <th pSortableColumn="banqueNom">Banque<p-sortIcon field="banqueNom"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="motif">Motif <p-sortIcon field="motif"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
@@ -129,7 +129,7 @@
       <ng-template pTemplate="body" let-impayee>
         <tr>
           <td >{{ impayee.id }}</td>
-          <td>{{ impayee.banqueEncaissementNom }}</td>
+          <td>{{ impayee.banqueNom }}</td>
           <td>{{ impayee.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ getMotifLabel(impayee.motif )}}</td>
           <td>{{ impayee.montant | number:'1.2-2' }} MAD</td>
