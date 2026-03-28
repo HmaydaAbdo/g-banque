@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule ,Location} from '@angular/common';
+import {CommonModule, DatePipe, Location} from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { ImpayeeRequestDto } from '../../dtos/ImpayeeRequestDto';
@@ -21,6 +21,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import {TransactionSource, TransactionSourceLabels} from "../../../transactions/dtos/TransactionSource";
 import { ImpayeeService } from '../../service/ImpayeeService';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import {Type} from "../../../Virements/Type";
 
 @Component({
   selector: 'app-impayee-form',
@@ -41,7 +42,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
     InputTextareaModule,
   ],
   templateUrl: './impayee-form.component.html',
-  providers: [MessageService, ConfirmationService],
+  providers: [MessageService, ConfirmationService,DatePipe],
 })
 export class ImpayeeFormComponent implements OnInit {
   impayeeForm!: FormGroup;
@@ -51,12 +52,15 @@ export class ImpayeeFormComponent implements OnInit {
 
   banquesOptions: BanqueResponse[] = [];
   motifOptions: { label: string; value: TransactionSource | null }[] = [];
+  typeOptions: { label: string; value: Type | null }[] = [];
+
 
   items: MenuItem[] | undefined;
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
+    private datePipe: DatePipe,
     private location:Location,
     private impayeeService: ImpayeeService,
     private banqueService: BanqueService,
@@ -68,7 +72,7 @@ export class ImpayeeFormComponent implements OnInit {
     this.initForm();
     this.setupBreadcrumbs();
     this.loadMotifOptions();
-
+    this.loadTypeOptions()
     this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
       if (id) {
@@ -91,6 +95,7 @@ export class ImpayeeFormComponent implements OnInit {
     this.impayeeForm = this.fb.group({
       banqueId: [null, Validators.required],
       motif: [null, Validators.required],
+      type: [null, Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       dateEmission: [null, Validators.required],
       observation: [null, Validators.required],
@@ -120,6 +125,13 @@ export class ImpayeeFormComponent implements OnInit {
     }));
   }
 
+  loadTypeOptions(): void {
+    this.typeOptions = Object.values(Type).map(type => ({
+      label: type,
+      value: type
+    }));
+  }
+
   setupBreadcrumbs(): void {
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
@@ -134,6 +146,7 @@ export class ImpayeeFormComponent implements OnInit {
         this.impayeeForm.patchValue({
           banqueId: impayee.banqueId,
           motif: impayee.motif,
+          type: impayee.type,
           observation: impayee.observation,
           libelle: impayee.libelle,
           montant: impayee.montant,
@@ -183,10 +196,11 @@ export class ImpayeeFormComponent implements OnInit {
     const request: ImpayeeRequestDto = {
       banqueId: formValue.banqueId,
       motif: formValue.motif,
+      type: formValue.type,
       libelle: formValue.libelle,
       observation: formValue.observation,
       montant: formValue.montant,
-      dateEmission: formValue.dateEmission,
+      dateEmission: this.datePipe.transform(formValue.dateEmission,'yyyy-MM-dd') as string
     };
 
     if (this.isEditMode && this.impayeeId) {

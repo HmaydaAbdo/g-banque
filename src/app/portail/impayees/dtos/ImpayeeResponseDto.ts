@@ -1,5 +1,6 @@
 import {TransactionSource} from "../../transactions/dtos/TransactionSource";
 import { Status } from "../../prefinancements/enums/Status";
+import {Type} from "../../Virements/Type";
 
 export interface ImpayeeResponseDto {
   id: number;
@@ -13,6 +14,7 @@ export interface ImpayeeResponseDto {
   dateValeur?: Date;
   dateOperation?: Date;
   status: Status;
+  type:Type;
   dateCreation: Date;
   dateModification: Date;
 }

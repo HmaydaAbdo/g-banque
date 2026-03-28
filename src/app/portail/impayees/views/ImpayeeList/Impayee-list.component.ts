@@ -24,6 +24,7 @@ import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { AuthService } from "../../../../auth/services/auth.service";
 import { PageResponse } from "../../../global/types/PageResponse";
+import {Type} from "../../../Virements/Type";
 
 
 @Component({
@@ -65,6 +66,7 @@ export class ImpayeeListComponent implements OnInit {
   searchCriteria: ImpayeeSearchDto = {};
   selectedBanque?: BanqueResponse;
   selectedMotif?: TransactionSource;
+  selectedType?: Type;
   selectedStatus?: Status;
   libelleFilter: string | null = null;
 
@@ -74,6 +76,7 @@ export class ImpayeeListComponent implements OnInit {
   banquesLoading = false;
   motifOptions: { label: string; value: TransactionSource | null }[] = [];
   statusOptions: { label: string; value: Status | null }[] = [];
+  typeOptions: { label: string; value: Type | null }[] = [];
 
   // Breadcrumb items
   items: MenuItem[] = [];
@@ -93,6 +96,7 @@ export class ImpayeeListComponent implements OnInit {
     ];
     this.loadMotifOptions();
     this.loadStatusOptions();
+    this.loadTypeOptions()
   }
 
   loadImpayees(event: TableLazyLoadEvent) {
@@ -105,6 +109,7 @@ export class ImpayeeListComponent implements OnInit {
 
     this.searchCriteria.banqueId = this.selectedBanque?.id;
     this.searchCriteria.motif = this.selectedMotif;
+    this.searchCriteria.type = this.selectedType;
     this.searchCriteria.status = this.selectedStatus;
     this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
 
@@ -148,6 +153,13 @@ export class ImpayeeListComponent implements OnInit {
     }));
   }
 
+  loadTypeOptions(): void {
+    this.typeOptions = Object.values(Type).map(type => ({
+      label: type,
+      value: type
+    }));
+  }
+
   loadStatusOptions() {
     this.statusOptions = Object.values(Status).map(s => ({
       label: s,
@@ -164,6 +176,7 @@ export class ImpayeeListComponent implements OnInit {
   clearFilters() {
     this.selectedBanque = undefined;
     this.selectedMotif = undefined;
+    this.selectedType = undefined;
     this.selectedStatus = undefined;
     this.libelleFilter = null;
     this.applyFilters();
@@ -219,6 +232,10 @@ export class ImpayeeListComponent implements OnInit {
 
   getStatusSeverity(status: Status): 'success' | 'danger' {
     return status === Status.PAYE ? 'success' : 'danger';
+  }
+
+  getTypeSeverity(type: Type): 'success' | 'danger' {
+    return type === Type.ENCAISSEMENT ? 'success' : 'danger';
   }
 
   protected readonly Status = Status;

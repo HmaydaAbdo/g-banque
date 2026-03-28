@@ -105,12 +105,15 @@ import {
 import {ImpayeeListComponent} from "../../impayees/views/ImpayeeList/Impayee-list.component";
 import {ImpayeeFormComponent} from "../../impayees/views/ImpayeeForm/Impayee-form.component";
 import {
-  EncoursImpayeeComponent
-} from "../../etatsDesEncours/views/lesEncours/decaissement/impayee/EncoursImpayee.component";
+  DecaissementEncoursImpayeeComponent
+} from "../../etatsDesEncours/views/lesEncours/decaissement/impayee/decaissement-encours-impayee.component";
 import {
   AgiosCalculDashboardComponent
 } from "../../agios-calcul/views/agios-calcul-dashboard/agios-calcul-dashboard.component";
 import {AgiosCalculDetailComponent} from "../../agios-calcul/views/agios-calcul-detail/agios-calcul-detail.component";
+import {
+  EncaissementEncoursImpayeeComponent
+} from "../../etatsDesEncours/views/lesEncours/encaissements/impayee/encaissement-encours-impayee.component";
 
 export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
@@ -241,7 +244,8 @@ export const PORTAIL_ROUTES: Routes = [
       { path: "fraisBancaire", component: EncoursFraisBancaireComponent },
       { path: "impots-taxes", component: EncoursImpotsEtTaxesComponent },
       { path: "restitutions", component: EncoursRestitutionComponent },
-      { path: "impayees", component: EncoursImpayeeComponent },
+      { path: "impayees-decaissement", component: DecaissementEncoursImpayeeComponent },
+      { path: "impayees-encaissement", component: EncaissementEncoursImpayeeComponent },
       { path: "operations-errones", component: EncoursOperationErroneComponent },
     ]
   },

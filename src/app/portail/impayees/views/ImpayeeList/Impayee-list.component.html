@@ -83,6 +83,23 @@
 
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
+          <p-dropdown
+            name="type"
+            [options]="typeOptions"
+            [(ngModel)]="selectedType"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="type"
+            (onChange)="applyFilters()"
+            [showClear]="true"
+            appendTo="body"
+            [style]="{'min-width': '180px'}"
+          ></p-dropdown>
+        </div>
+
+
+        <div class="p-input-icon-left">
+          <i class="pi pi-search"></i>
           <input pInputText type="text" name="libelleFilter" placeholder="Rechercher libellé"
                  [(ngModel)]="libelleFilter" (input)="applyFilters()"
                  [style]="{'min-width': '200px'}" />
@@ -121,6 +138,7 @@
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
           <th pSortableColumn="libelle">Libellé <p-sortIcon field="libelle"></p-sortIcon></th>
           <th pSortableColumn="obseravtion">obseravtion <p-sortIcon field="obseravtion"></p-sortIcon></th>
+          <th pSortableColumn="type">Type <p-sortIcon field="type"></p-sortIcon></th>
           <th pSortableColumn="status">Statut <p-sortIcon field="status"></p-sortIcon></th>
           <th style="width: 8rem;">Actions</th>
         </tr>
@@ -135,6 +153,8 @@
           <td>{{ impayee.montant | number:'1.2-2' }} MAD</td>
           <td >{{ impayee.libelle }}</td>
           <td >{{ impayee.observation }}</td>
+          <td> <p-tag [value]="impayee.type" [severity]="getTypeSeverity(impayee.type)"></p-tag></td>
+
           <td> <p-tag [value]="impayee.status" [severity]="getStatusSeverity(impayee.status)"></p-tag></td>
           <td class="flex flex-row align-items-center gap-2">
             <button pButton pRipple icon="pi pi-pencil"

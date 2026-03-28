@@ -25,7 +25,7 @@
     <form [formGroup]="impayeeForm" (ngSubmit)="onSubmit()">
       <div class="p-fluid grid formgrid">
 
-        <div class="field col-12 md:col-3">
+        <div class="field col-12 md:col-4">
           <label class="font-bold">Banque</label>
           <p-dropdown
             formControlName="banqueId"
@@ -41,8 +41,19 @@
             [ngClass]="{'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched}"
           ></p-dropdown>
         </div>
-
-        <div class="field col-12 md:col-3">
+        <div class="field col-12 md:col-4">
+          <label class="font-bold">Type</label>
+          <p-dropdown
+            formControlName="type"
+            [options]="typeOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner le type"
+            [showClear]="true"
+            [ngClass]="{'ng-invalid ng-dirty': f['type'].invalid && f['type'].touched}"
+          ></p-dropdown>
+        </div>
+        <div class="field col-12 md:col-4">
           <label class="font-bold">Motif</label>
           <p-dropdown
             formControlName="motif"
@@ -54,8 +65,7 @@
             [ngClass]="{'ng-invalid ng-dirty': f['motif'].invalid && f['motif'].touched}"
           ></p-dropdown>
         </div>
-
-        <div class="field col-12 md:col-3">
+        <div class="field col-12 md:col-4">
           <label class="font-bold">Montant </label>
           <p-inputNumber
             formControlName="montant"
@@ -65,8 +75,7 @@
             [ngClass]="{'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched}"
           ></p-inputNumber>
         </div>
-
-        <div class="field col-12 md:col-3">
+        <div class="field col-12 md:col-4">
           <label class="font-bold">Date d'émission</label>
           <p-calendar
             formControlName="dateEmission"
@@ -77,7 +86,6 @@
             [ngClass]="{'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched}"
           ></p-calendar>
         </div>
-
         <div class="field col-12 md:col-6">
           <label class="font-bold">Libellé</label>
           <textarea
@@ -88,7 +96,6 @@
             [ngClass]="{'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched}">
           </textarea>
         </div>
-
         <div class="field col-12 md:col-6">
           <label class="font-bold">Observation</label>
           <textarea

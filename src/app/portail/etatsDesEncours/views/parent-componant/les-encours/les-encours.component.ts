@@ -8,13 +8,12 @@ import { Ripple } from "primeng/ripple";
 import { BreadcrumbModule } from "primeng/breadcrumb";
 import { filter } from 'rxjs/operators';
 import { Button } from "primeng/button";
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { RapprochementService } from "../../../../rapprochement/service/rapprochement-service.service";
 import { CalendarModule } from "primeng/calendar";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
 import { DialogModule } from "primeng/dialog";
 import { ToastModule } from "primeng/toast";
-import { RecapService } from "../../lesEncours/recap/services/recap.service";
 
 @Component({
   selector: 'app-les-encours',
@@ -44,7 +43,6 @@ export class LesEncoursComponent implements OnInit {
   breadcrumbItems: MenuItem[] = [];
   banqueId!: number;
 
-  dateClotureControl!: FormControl;
   displayClotureDialog: boolean = false;
   clotureLoading: boolean = false;
   clotureForm!: FormGroup;
@@ -76,7 +74,9 @@ export class LesEncoursComponent implements OnInit {
     'fraisBancaire': { label: 'Décaissements / Frais Bancaires', icon: 'pi pi-credit-card' },
     'impots-taxes': { label: 'Décaissements / Impôts et Taxes', icon: 'pi pi-file' },
     'operations-errones': { label: 'Décaissements / Opérations Erronées', icon: 'pi pi-exclamation-triangle' },
-    'impayees': { label: 'Décaissements / Impayés', icon: 'pi pi-exclamation-circle' },
+    'impayees-decaissement': { label: 'Décaissements / Impayés', icon: 'pi pi-exclamation-circle' },
+
+
 
     // Encaissements (Entrées)
     'lcn-encaissements': { label: 'Encaissements / LCN', icon: 'pi pi-file-edit' },
@@ -89,14 +89,13 @@ export class LesEncoursComponent implements OnInit {
     'dc-deblocage': { label: 'Encaissements / Droits Constatés / Déblocage', icon: 'pi pi-unlock' },
     'decomptes': { label: 'Encaissements / Décomptes', icon: 'pi pi-calculator' },
     'restitutions': { label: 'Encaissements / Restitutions', icon: 'pi pi-refresh' },
+    'impayees-encaissement': { label: 'Encaissements / Impayés', icon: 'pi pi-exclamation-circle' },
 
   };
 
   constructor(
     private route: ActivatedRoute,
     private rapprochementService: RapprochementService,
-    private recapService: RecapService,
-    private datePipe: DatePipe,
     private messageService: MessageService,
     private fb: FormBuilder,
     private confirmationService: ConfirmationService,
@@ -166,6 +165,7 @@ export class LesEncoursComponent implements OnInit {
           { label: 'Factoring', icon: 'pi pi-unlock', routerLink: ['/portail/etats-des-encours', this.banqueId, 'factoring-deblocage'] },
           { label: 'Décomptes', icon: 'pi pi-calculator', routerLink: ['/portail/etats-des-encours', this.banqueId, 'decomptes'] },
           { label: 'Restitutions', icon: 'pi pi-refresh', routerLink: ['/portail/etats-des-encours', this.banqueId, 'restitutions'] },
+          { label: 'Impayées', icon: 'pi pi-ban', routerLink: ['/portail/etats-des-encours', this.banqueId, 'impayees-encaissement'] },
 
         ]
       },
@@ -189,7 +189,7 @@ export class LesEncoursComponent implements OnInit {
           { label: 'Frais Bancaires', icon: 'pi pi-credit-card', routerLink: ['/portail/etats-des-encours', this.banqueId, 'fraisBancaire'] },
           { label: 'Impôts et Taxes', icon: 'pi pi-file', routerLink: ['/portail/etats-des-encours', this.banqueId, 'impots-taxes'] },
           { label: 'Opérations Erronées', icon: 'pi pi-exclamation-triangle', routerLink: ['/portail/etats-des-encours', this.banqueId, 'operations-errones'] },
-          {label: 'Impayés', icon: 'pi pi-exclamation-circle', routerLink: ['/portail/etats-des-encours', this.banqueId, 'impayees']},
+          {label: 'Impayés', icon: 'pi pi-ban', routerLink: ['/portail/etats-des-encours', this.banqueId, 'impayees-decaissement']},
 
         ]
       }

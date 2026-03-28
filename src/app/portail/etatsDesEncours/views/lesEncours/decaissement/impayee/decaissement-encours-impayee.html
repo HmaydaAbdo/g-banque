@@ -61,7 +61,7 @@
       (onLazyLoad)="loadImpayees($event)"
       [columns]="[
         { field: 'libelle', header: 'Libellé', sortable: true },
-        { field: 'banqueEncaissementNom', header: 'Banque d\'encaissement', sortable: true },
+        { field: 'banqueNom', header: 'Banque', sortable: true },
         { field: 'montant', header: 'Montant', sortable: true },
         { field: 'motif', header: 'Motif', sortable: true },
         { field: 'dateEmission', header: 'Date d\'émission', sortable: true },
@@ -89,7 +89,7 @@
       <ng-template pTemplate="body" let-impayee>
         <tr>
           <td>{{ impayee.libelle }}</td>
-          <td>{{ impayee.banqueEncaissementNom }}</td>
+          <td>{{ impayee.banqueNom }}</td>
           <td>{{ impayee.montant | number:'1.2-2' }} MAD</td>
           <td>{{ impayee.motif }}</td>
           <td>{{ impayee.dateEmission | date:'dd/MM/yyyy' }}</td>

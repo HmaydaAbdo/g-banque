@@ -1,33 +1,34 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
-import { CommonModule, DatePipe, DecimalPipe, NgFor } from "@angular/common";
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
-import { Table, TableLazyLoadEvent, TableModule } from "primeng/table";
-import { DropdownModule } from "primeng/dropdown";
-import { ButtonModule } from "primeng/button";
-import { RippleModule } from "primeng/ripple";
-import { BreadcrumbModule } from "primeng/breadcrumb";
-import { ToastModule } from "primeng/toast";
-import { TooltipModule } from "primeng/tooltip";
-import { InputTextModule } from "primeng/inputtext";
-import { CardModule } from "primeng/card";
-import { DialogModule } from "primeng/dialog";
-import { CalendarModule } from "primeng/calendar";
-import { InputTextareaModule } from "primeng/inputtextarea";
-import { ConfirmationService, MenuItem, MessageService, SelectItem } from "primeng/api";
-import { ActivatedRoute } from "@angular/router";
-import { debounceTime, distinctUntilChanged, Subscription } from "rxjs";
+import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
+import {CommonModule, DatePipe, DecimalPipe, NgFor} from "@angular/common";
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
+import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
+import {DropdownModule} from "primeng/dropdown";
+import {ButtonModule} from "primeng/button";
+import {RippleModule} from "primeng/ripple";
+import {BreadcrumbModule} from "primeng/breadcrumb";
+import {ToastModule} from "primeng/toast";
+import {TooltipModule} from "primeng/tooltip";
+import {InputTextModule} from "primeng/inputtext";
+import {CardModule} from "primeng/card";
+import {DialogModule} from "primeng/dialog";
+import {CalendarModule} from "primeng/calendar";
+import {InputTextareaModule} from "primeng/inputtextarea";
+import {ConfirmationService, MenuItem, MessageService, SelectItem} from "primeng/api";
+import {ActivatedRoute} from "@angular/router";
+import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 
-import { ValidationService } from "../../../../services/validation/validation.service";
-import { ImpayeeResponseDto } from "../../../../../impayees/dtos/ImpayeeResponseDto";
-import { ImpayeeSearchDto } from "../../../../../impayees/dtos/ImpayeeSearchDto";
-import { EncoursImpayeeDto } from "../../../../../impayees/dtos/EncoursImpayeeDto";
-import { ConfirmDialogModule } from "primeng/confirmdialog";
-import { BankStateService } from "../../../../../comptes-bancaire/services/bank-state.service";
+import {ValidationService} from "../../../../services/validation/validation.service";
+import {ImpayeeResponseDto} from "../../../../../impayees/dtos/ImpayeeResponseDto";
+import {ImpayeeSearchDto} from "../../../../../impayees/dtos/ImpayeeSearchDto";
+import {EncoursImpayeeDto} from "../../../../../impayees/dtos/EncoursImpayeeDto";
+import {ConfirmDialogModule} from "primeng/confirmdialog";
+import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import {ImpayeeService} from "../../../../../impayees/service/ImpayeeService";
 import {ImpayeeValidationRequest} from "../../../../dtos/impayee/Impayeevalidationrequest";
+import {Type} from "../../../../../Virements/Type";
 
 @Component({
-  selector: 'app-encours-impayee',
+  selector: 'app-encaissement-encours-impaye',
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
@@ -35,10 +36,10 @@ import {ImpayeeValidationRequest} from "../../../../dtos/impayee/Impayeevalidati
     InputTextModule, CardModule, DialogModule, ReactiveFormsModule, CalendarModule,
     InputTextareaModule, ConfirmDialogModule
   ],
-  templateUrl: './encours-impayee.component.html',
+  templateUrl: './encaissement-encours-impayee.html',
   providers: [MessageService, ConfirmationService, DecimalPipe]
 })
-export class EncoursImpayeeComponent implements OnInit, OnDestroy {
+export class EncaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
   @ViewChild('dt') table!: Table;
 
   impayees: ImpayeeResponseDto[] = [];
@@ -146,6 +147,7 @@ export class EncoursImpayeeComponent implements OnInit, OnDestroy {
     const sort = `${sortField},${sortOrder}`;
 
     const searchCriteria: ImpayeeSearchDto = this.searchForm.getRawValue();
+    searchCriteria.type=Type.ENCAISSEMENT
 
     this.impayeeService.getOutstandingImpayees(this.banqueId, searchCriteria, page, size, sort)
       .subscribe({
@@ -206,7 +208,7 @@ export class EncoursImpayeeComponent implements OnInit, OnDestroy {
         <br>
         <strong>Montant:</strong> ${this.decimalPipe.transform(selectedImpayee.montant, '1.2-2', 'fr-FR')} MAD
         <br>
-        <strong>Banque d'encaissement:</strong> ${selectedImpayee.banqueEncaissementNom}
+        <strong>Banque :</strong> ${selectedImpayee.banqueNom}
         <br>
         <strong>Motif:</strong> ${selectedImpayee.motif}
         <br><br>

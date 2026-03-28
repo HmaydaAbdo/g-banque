@@ -73,6 +73,10 @@ export class ImpayeeService {
       params = params.set('motif', searchDto.motif);
     }
 
+    if (searchDto.type) {
+      params = params.set('type', searchDto.type);
+    }
+
     if (searchDto.montant) {
       params = params.set('montant', searchDto.montant.toString());
     }
