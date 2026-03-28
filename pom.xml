@@ -74,10 +74,7 @@
 			<artifactId>spring-boot-starter-batch</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-websocket</artifactId>
-		</dependency>
+
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -96,16 +93,7 @@
 			<artifactId>spring-boot-starter-aop</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.mapstruct</groupId>
-			<artifactId>mapstruct</artifactId>
-			<version>1.6.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mapstruct</groupId>
-			<artifactId>mapstruct-processor</artifactId>
-			<version>1.6.1</version> <scope>provided</scope>
-		</dependency>
+
 
 		<dependency>
 			<groupId>org.springdoc</groupId>
@@ -160,13 +148,7 @@
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
-					<annotationProcessorPaths>
-						<path>
-							<groupId>org.mapstruct</groupId>
-							<artifactId>mapstruct-processor</artifactId>
-							<version>1.6.1</version>
-						</path>
-					</annotationProcessorPaths>
+
 				</configuration>
 			</plugin>
 			<plugin>

@@ -1,7 +1,6 @@
 package staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.mappers;
 
 
-import org.mapstruct.MappingTarget;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleRequest;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleResponse;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
@@ -72,7 +71,7 @@ public class NatureLigneFonctionnelleMapper {
      * @param request The NatureLigneFonctionnelleRequest DTO with updated data.
      * @param entity The existing NatureLigneFonctionnelle entity to be updated.
      */
-    public void updateEntityFromDto(NatureLigneFonctionnelleRequest request, @MappingTarget NatureLigneFonctionnelle entity) {
+    public void updateEntityFromDto(NatureLigneFonctionnelleRequest request,  NatureLigneFonctionnelle entity) {
         // Ensure neither request nor entity is null before attempting to update
         if (request == null || entity == null) {
             return;
