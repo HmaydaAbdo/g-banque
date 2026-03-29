@@ -1,87 +1,103 @@
 package staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleRequest;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleResponse;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleSearchCriteria;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.exceptions.NatureLFExceptionHandler;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
+
 import java.util.List;
 
+/**
+ * REST controller for the NatureLigneFonctionnelle module.
+ * Injects {@link INatureLigneFonctionnelleService} (DIP — never the concrete class).
+ * Exception handling is delegated to {@link NatureLFExceptionHandler}.
+ */
 @RestController
 @RequestMapping("/natures-lignes-fonctionnelles")
 public class NatureLigneFonctionnelleController {
 
-    private final NatureLigneFonctionnelleService service;
+    private static final Logger logger = LoggerFactory.getLogger(NatureLigneFonctionnelleController.class);
 
-    @Autowired
-    public NatureLigneFonctionnelleController(NatureLigneFonctionnelleService service) {
+    private final INatureLigneFonctionnelleService service;
+
+    public NatureLigneFonctionnelleController(INatureLigneFonctionnelleService service) {
         this.service = service;
     }
 
+    // ── Create ───────────────────────────────────────────────────────────────
+
     @PostMapping
-    public ResponseEntity<NatureLigneFonctionnelleResponse> createNatureLigneFonctionnelle(@Valid @RequestBody NatureLigneFonctionnelleRequest request) {
+    public ResponseEntity<NatureLigneFonctionnelleResponse> createNatureLigneFonctionnelle(
+            @Valid @RequestBody NatureLigneFonctionnelleRequest request) {
+
+        logger.info("POST /natures-lignes-fonctionnelles — label: {}", request.label());
         NatureLigneFonctionnelleResponse created = service.createNatureLigneFonctionnelle(request);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    // ── Read ─────────────────────────────────────────────────────────────────
+
     @GetMapping("/{id}")
-    public ResponseEntity<NatureLigneFonctionnelleResponse> getNatureLigneFonctionnelleById(@PathVariable Long id) {
-        NatureLigneFonctionnelleResponse response = service.getNatureLigneFonctionnelleById(id);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<NatureLigneFonctionnelleResponse> getNatureLigneFonctionnelleById(
+            @PathVariable Long id) {
+
+        logger.debug("GET /natures-lignes-fonctionnelles/{}", id);
+        return ResponseEntity.ok(service.getNatureLigneFonctionnelleById(id));
     }
 
     /**
-     * Retrieves all functional line natures with pagination, sorting, and search criteria.
-     * GET /natures-lignes-fonctionnelles?page=0&size=10&sort=label,asc&label=FACILITE
-     * @param page The page number (0-indexed).
-     * @param size The number of items per page.
-     * @param sort The sorting criteria (e.g., "id,asc" or "label,desc").
-     * @param searchCriteria Search criteria for label and description.
-     * @return A Page of NatureLigneFonctionnelleResponse DTOs.
+     * Paginated search.
+     * GET /natures-lignes-fonctionnelles?page=0&size=10&sort=label&sort=asc&label=FC
      */
     @GetMapping
     public ResponseEntity<Page<NatureLigneFonctionnelleResponse>> getAllNatureLigneFonctionnelles(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort,
-            @ModelAttribute NatureLigneFonctionnelleSearchCriteria searchCriteria) { // Use @ModelAttribute for search criteria
+            @ModelAttribute NatureLigneFonctionnelleSearchCriteria searchCriteria,
+            Pageable pageable) {
 
-        Sort.Direction direction = Sort.Direction.fromString(sort[1]);
-        Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        // Spring automatically resolves 'pageable' from query params:
+        // page, size, and sort (supports multiple sort params too)
 
-        Page<NatureLigneFonctionnelleResponse> responses = service.getAllNatureLigneFonctionnelles(searchCriteria, pageable);
-        return ResponseEntity.ok(responses);
+        logger.debug("GET /natures-lignes-fonctionnelles — criteria: {}, pageable: {}",
+                searchCriteria, pageable);
+
+        return ResponseEntity.ok(service.getAllNatureLigneFonctionnelles(searchCriteria, pageable));
     }
 
     /**
-     * Retrieves all functional line natures as a simple list (non-paginated).
-     * Useful for dropdowns or selection lists where full pagination is not required.
+     * Non-paginated list — for dropdowns / select inputs.
      * GET /natures-lignes-fonctionnelles/list
-     * @return A List of NatureLigneFonctionnelleResponse DTOs.
      */
     @GetMapping("/list")
     public ResponseEntity<List<NatureLigneFonctionnelleResponse>> getAllNatureLigneFonctionnellesList() {
-        List<NatureLigneFonctionnelleResponse> responses = service.getAllNatureLigneFonctionnellesList();
-        return ResponseEntity.ok(responses);
+        logger.debug("GET /natures-lignes-fonctionnelles/list");
+        return ResponseEntity.ok(service.getAllNatureLigneFonctionnellesList());
     }
 
+    // ── Update ───────────────────────────────────────────────────────────────
+
     @PutMapping("/{id}")
-    public ResponseEntity<NatureLigneFonctionnelleResponse> updateNatureLigneFonctionnelle(@PathVariable Long id, @Valid @RequestBody NatureLigneFonctionnelleRequest request) {
-        NatureLigneFonctionnelleResponse updated = service.updateNatureLigneFonctionnelle(id, request);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<NatureLigneFonctionnelleResponse> updateNatureLigneFonctionnelle(
+            @PathVariable Long id,
+            @Valid @RequestBody NatureLigneFonctionnelleRequest request) {
+
+        logger.info("PUT /natures-lignes-fonctionnelles/{}", id);
+        return ResponseEntity.ok(service.updateNatureLigneFonctionnelle(id, request));
     }
+
+    // ── Delete ───────────────────────────────────────────────────────────────
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNatureLigneFonctionnelle(@PathVariable Long id) {
+        logger.info("DELETE /natures-lignes-fonctionnelles/{}", id);
         service.deleteNatureLigneFonctionnelle(id);
         return ResponseEntity.noContent().build();
     }
