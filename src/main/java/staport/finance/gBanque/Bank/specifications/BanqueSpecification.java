@@ -14,21 +14,13 @@ public class BanqueSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             // Search by Nom (case-insensitive LIKE)
-            if (criteria.getNom() != null && !criteria.getNom().isEmpty()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("nom")), "%" + criteria.getNom().toLowerCase() + "%"));
+            if (criteria.nom() != null && !criteria.nom().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("nom")), "%" + criteria.nom().toLowerCase() + "%"));
             }
 
             // Search by NumeroDeCompte (case-insensitive LIKE)
-            if (criteria.getNumeroDeCompte() != null && !criteria.getNumeroDeCompte().isEmpty()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("numeroDeCompte")), "%" + criteria.getNumeroDeCompte().toLowerCase() + "%"));
-            }
-
-            // Search by Solde Actuel range
-            if (criteria.getMinSolde() != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("soldeActuel"), criteria.getMinSolde()));
-            }
-            if (criteria.getMaxSolde() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("soldeActuel"), criteria.getMaxSolde()));
+            if (criteria.numeroDeCompte() != null && !criteria.numeroDeCompte().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("numeroDeCompte")), "%" + criteria.numeroDeCompte().toLowerCase() + "%"));
             }
 
             // If no criteria are provided, return a "true" predicate

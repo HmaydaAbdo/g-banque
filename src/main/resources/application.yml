@@ -6,7 +6,6 @@
   spring:
     main:
       lazy-initialization: true
-
     application:
       name: gBanque
     datasource:
@@ -59,6 +58,7 @@
           batch-job:
             enabled: true
             recipients: hmayda@staport-sa.ma
+
   functional:
     line:
       expiration:
@@ -127,6 +127,17 @@
           organisme-name: "BMCI LEASING"
           commission-if-match: 16.5
           commission-if-not-match: 55
+  logging:
+    level:
+      root: INFO
+      staport.finance.gBanque: DEBUG
+      org.springframework.web: INFO
+      org.springframework.security: DEBUG
+      org.hibernate.SQL: DEBUG
+      org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+    pattern:
+      console: "%d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
 
 
 
