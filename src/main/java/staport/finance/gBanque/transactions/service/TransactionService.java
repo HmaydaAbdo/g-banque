@@ -24,7 +24,7 @@ import java.util.Objects;
 import static staport.finance.gBanque.transactions.spec.TransactionSpecifications.*;
 
 @Service
-public class TransactionService {
+public class TransactionService implements ITransactionService{
 
     private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
     private final TransactionRepository transactionRepository;
@@ -170,5 +170,25 @@ public class TransactionService {
         transaction.setDateValeur(updateRequestDto.getDateValeur());
 
         return TransactionMapper.toDto(transactionRepository.save(transaction));
+    }
+
+
+    /**
+     * Compute live balance of a banque.
+     */
+    @Override
+    public BigDecimal computeBalance(Long banqueId) {
+        return transactionRepository
+                .computeBalance(banqueId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Banque not found with id: " + banqueId));
+    }
+
+    /**
+     * Count pending (unconfirmed) transactions.
+     */
+    @Override
+    public long countPendingTransactions(Long banqueId) {
+        return transactionRepository.countPendingByBanque(banqueId);
     }
 }
