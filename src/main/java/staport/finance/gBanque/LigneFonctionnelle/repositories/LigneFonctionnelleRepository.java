@@ -59,4 +59,10 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
 
     List<LigneFonctionnelle> findByActifFalse();
 
+    /**
+     * Deletion guard — returns true if the banque has at least one active ligne fonctionnelle.
+     * Replaces the former lazy-collection traversal on the Banque entity.
+     */
+    boolean existsByBanqueIdAndActifTrue(Long banqueId);
+
 }
