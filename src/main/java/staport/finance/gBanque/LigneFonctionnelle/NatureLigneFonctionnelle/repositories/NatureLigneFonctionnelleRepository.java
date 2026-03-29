@@ -13,4 +13,8 @@ public interface NatureLigneFonctionnelleRepository extends JpaRepository<Nature
     Optional<NatureLigneFonctionnelle> findByLabel(String label);
 
     Optional<NatureLigneFonctionnelle> findByCode(String code);
+
+    boolean existsByLabel(String label);
+
+    boolean existsByCode(String code);
 }
