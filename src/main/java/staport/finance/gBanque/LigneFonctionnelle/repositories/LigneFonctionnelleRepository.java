@@ -2,6 +2,8 @@ package staport.finance.gBanque.LigneFonctionnelle.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
 import java.util.Optional;
@@ -65,4 +67,12 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
      */
     boolean existsByBanqueIdAndActifTrue(Long banqueId);
 
+    @Query("""
+    SELECT lf.banque.id, lf.plafond
+    FROM LigneFonctionnelle lf
+    WHERE lf.banque.id IN :ids
+    AND lf.natureLigneFonctionnelle.code = :code
+    AND lf.actif = true
+""")
+    List<Object[]> findActivePlafondsByBankIds(@Param("ids") List<Long> ids, @Param("code") String code);
 }

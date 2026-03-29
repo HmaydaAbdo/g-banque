@@ -17,9 +17,8 @@ import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static staport.finance.gBanque.transactions.spec.TransactionSpecifications.*;
 
@@ -190,5 +189,22 @@ public class TransactionService implements ITransactionService{
     @Override
     public long countPendingTransactions(Long banqueId) {
         return transactionRepository.countPendingByBanque(banqueId);
+    }
+
+    @Override
+    public Map<Long, BigDecimal> computeBalancesForBanks(List<Long> bankIds) {
+        if (bankIds == null || bankIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // Fetches List<Object[]> where [0] is BankId and [1] is Calculated Balance
+        List<Object[]> results = transactionRepository.findBalancesByBankIds(bankIds);
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (BigDecimal) row[1],
+                        (existing, replacement) -> existing
+                ));
     }
 }

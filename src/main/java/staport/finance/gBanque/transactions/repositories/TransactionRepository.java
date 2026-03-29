@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import staport.finance.gBanque.transactions.entities.Transaction;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
@@ -41,4 +42,15 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
             AND    t.isConfirmed            = false
             """)
     long countPendingByBanque(@Param("banqueId") Long banqueId);
+
+    @Query("""
+    SELECT b.id,
+           (b.soldeDepart + SUM(CASE WHEN t.isConfirmed = false THEN COALESCE(t.credit, 0) ELSE 0 END)
+                          - SUM(CASE WHEN t.isConfirmed = false THEN COALESCE(t.debit, 0) ELSE 0 END))
+    FROM Transaction t
+    JOIN t.banqueDePrelevement b
+    WHERE b.id IN :ids
+    GROUP BY b.id, b.soldeDepart
+""")
+    List<Object[]> findBalancesByBankIds(@Param("ids") List<Long> ids);
 }

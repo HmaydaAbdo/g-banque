@@ -27,7 +27,10 @@ import staport.finance.gBanque.transactions.service.ITransactionService;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService.FC_CODE;
 
 
 @Service
@@ -104,11 +107,24 @@ public class BanqueServiceImpl implements IBanqueService {
 
     @Override
     public List<BankAcceuilResponse> getAccueilBankInfo() {
+        // Query 1: Fetch Banks
         List<Banque> banques = banqueRepository.findAll();
-        Long fcNatureId = natureLigneFonctionnelleService.findFaciliteDeCaisseNatureId();
+        List<Long> ids = banques.stream().map(Banque::getId).toList();
 
+        // Query 2: Batch fetch unconfirmed balances
+        Map<Long, BigDecimal> balanceMap = transactionService.computeBalancesForBanks(ids);
+
+        // Query 3: Batch fetch active FC ceilings
+        Map<Long, BigDecimal> plafondMap = ligneFonctionnelleService.getActivePlafondsForBanks(ids, FC_CODE);
+
+        // Assembly: Logic stays in Java, DB stays fast
         return banques.stream()
-                .map(banque -> mapToAccueilResponse(banque, fcNatureId))
+                .map(b -> {
+                    BigDecimal balance = balanceMap.getOrDefault(b.getId(), b.getSoldeDepart());
+                    BigDecimal plafond = plafondMap.getOrDefault(b.getId(), BigDecimal.ZERO);
+
+                    return banqueMapper.toAcceuilDto(b, balance, plafond);
+                })
                 .collect(Collectors.toList());
     }
 

@@ -1080,4 +1080,21 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                 .orElse(BigDecimal.ZERO);
     }
 
+    @Override
+    public Map<Long, BigDecimal> getActivePlafondsForBanks(List<Long> bankIds, String fcCode) {
+        if (bankIds == null || bankIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // Fetching List<Object[]> where [0] is BankId and [1] is Plafond
+        List<Object[]> results = ligneFonctionnelleRepository.findActivePlafondsByBankIds(bankIds, fcCode);
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (BigDecimal) row[1],
+                        (existing, replacement) -> existing // Guard against unexpected duplicates
+                ));
+    }
+
 }
