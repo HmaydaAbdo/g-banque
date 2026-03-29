@@ -8,6 +8,7 @@ import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.entities.Banque;
+import java.math.BigDecimal;
 import java.util.Base64;
 
 
@@ -47,84 +48,50 @@ public class BanqueMapper {
         return banque;
     }
 
-
-    public BanqueResponse toDto(Banque banque) {
+    public BanqueResponse toDto(Banque banque, BigDecimal computedSolde) {
         if (banque == null) {
             logger.warn("Attempted to convert null Banque Entity to DTO");
             return null;
         }
 
-        logger.debug("Converting Banque Entity to DTO - ID: {}, Name: {}",
-                banque.getId(), banque.getNom());
+        // Convert logo once
+        String logoBase64 = bytesToBase64(banque.getLogoData());
 
-        BanqueResponse response = new BanqueResponse();
-        response.setId(banque.getId());
-        response.setNom(banque.getNom());
-        response.setNumeroDeCompte(banque.getNumeroDeCompte());
-        response.setDevise(banque.getDevise());
-        response.setAddress(banque.getAddress());
-        response.setAgence(banque.getAgence());
-        response.setSoldeActuel(banque.getSoldeActuel());
-        response.setSoldeDepart(banque.getSoldeDepart());
-        response.setDateCreation(banque.getDateCreation());
-        response.setDateModification(banque.getDateModification());
-
-        // Convert logo byte[] to Base64 String
-        response.setLogoBase64(bytesToBase64(banque.getLogoData()));
-
-        logger.debug("Successfully converted Banque Entity to DTO - ID: {}, Has logo: {}",
-                banque.getId(), banque.getLogoData() != null);
-        return response;
+        // Atomic creation: The object is born fully populated and immutable
+        return new BanqueResponse(
+                banque.getId(),
+                logoBase64,
+                banque.getNom(),
+                banque.getNumeroDeCompte(),
+                banque.getDevise(),
+                banque.getAddress(),
+                banque.getAgence(),
+                computedSolde,
+                banque.getSoldeDepart(),
+                banque.getDateCreation(),
+                banque.getDateModification()
+        );
     }
 
-    public void updateBanqueFromDto(BanqueRequest request, Banque banque) {
-        if (request == null) {
-            logger.warn("Attempted to update Banque Entity with null BanqueRequest");
-            return;
-        }
-
+    public BankAcceuilResponse toAcceuilDto(Banque banque, BigDecimal computedBalance, BigDecimal plafondFC) {
         if (banque == null) {
-            logger.warn("Attempted to update null Banque Entity");
-            return;
-        }
-
-        logger.debug("Updating Banque Entity ID: {} with data from request - New name: {}",
-                banque.getId(), request.getNom());
-
-        banque.setNom(request.getNom());
-        banque.setDevise(request.getDevise());
-        banque.setAddress(request.getAddress());
-        banque.setAgence(request.getAgence());
-
-        logger.debug("Successfully updated Banque Entity ID: {}", banque.getId());
-    }
-
-
-    public BankAcceuilResponse toAcceuilDto(Banque banque) {
-        if (banque == null) {
-            logger.warn("Attempted to convert null Banque Entity to AcceuilDTO");
+            logger.warn("Attempted to convert null Banque Entity to BankAcceuilResponse");
             return null;
         }
 
-        logger.debug("Converting Banque Entity to AcceuilDTO - ID: {}, Name: {}, Solde: {}",
-                banque.getId(), banque.getNom(), banque.getSoldeActuel());
+        // Convert logo once to avoid multiple processing
+        String logoBase64 = bytesToBase64(banque.getLogoData());
 
-        BankAcceuilResponse response = new BankAcceuilResponse();
-        response.setBankId(banque.getId());
-        response.setName(banque.getNom());
-        response.setSoldeActuelle(banque.getSoldeActuel());
-        response.setSoldeDepart(banque.getSoldeDepart());
-        response.setDevise(banque.getDevise());
-        // Convert logo byte[] to Base64 String
-        response.setLogoBase64(bytesToBase64(banque.getLogoData()));
-
-        // plafondFC is deliberately not set here, as it's computed/fetched in the service layer.
-        response.setPlafondFC(null);
-
-        logger.debug("Successfully converted Banque Entity to AcceuilDTO - ID: {}, Has logo: {}",
-                banque.getId(), banque.getLogoData() != null);
-        return response;
+        // Records use the Canonical Constructor (all fields at once)
+        return new BankAcceuilResponse(
+                banque.getId(),
+                logoBase64,
+                banque.getNom(),
+                computedBalance,
+                banque.getSoldeDepart(),
+                plafondFC,
+                banque.getDevise()
+        );
     }
-
 
 }
