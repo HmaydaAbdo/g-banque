@@ -12,6 +12,7 @@ import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.moyensDePaiements.lcn.specs.LcnSpecification;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Type;
+import staport.finance.gBanque.transactions.service.ITransactionService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,9 +26,12 @@ public class EncoursCalculatorService {
 
     private static final Logger logger = LoggerFactory.getLogger(EncoursCalculatorService.class);
     private final LcnRepository lcnRepository;
+    private final ITransactionService transactionService;
 
-    public EncoursCalculatorService(LcnRepository lcnRepository) {
+    public EncoursCalculatorService(LcnRepository lcnRepository,
+                                    ITransactionService transactionService) {
         this.lcnRepository = lcnRepository;
+        this.transactionService = transactionService;
     }
 
     /**
@@ -116,7 +120,7 @@ public class EncoursCalculatorService {
             return null;
         }
 
-        BigDecimal soldeBanque = banque.getSoldeActuel();
+        BigDecimal soldeBanque = transactionService.computeBalance(banque.getId());
         logger.debug("Encours Facilité de Caisse = Solde de la banque '{}': {}",
                 banque.getNom(), soldeBanque);
 
