@@ -1,15 +1,13 @@
 package staport.finance.gBanque.recapitulatif.services;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Agios.spec.AgiosSpec;
-import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
-import staport.finance.gBanque.Bank.services.BanqueService;
+import staport.finance.gBanque.Bank.dtos.BanqueResponse;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
 import staport.finance.gBanque.cmt.echeances.specification.EcheanceCMTSpecification;
@@ -81,9 +79,7 @@ import java.util.stream.Stream;
 @Transactional(readOnly = true)
 public class RecapGeneralDetailleService {
 
-    private static final Logger log = LoggerFactory.getLogger(RecapGeneralDetailleService.class);
-    private final BanqueRepository banqueRepository;
-    private final BanqueService banqueService;
+    private final IBanqueService banqueService;
 
     private final EcheanceLeasingRepository echeanceLeasingRepository;
     private final EcheanceCMTRepository echeanceCMTRepository;
@@ -106,8 +102,7 @@ public class RecapGeneralDetailleService {
     private final ImpayeeRepository impayeeRepository;
 
 
-    public RecapGeneralDetailleService(BanqueRepository banqueRepository, BanqueService banqueService, EcheanceLeasingRepository echeanceLeasingRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
-        this.banqueRepository = banqueRepository;
+    public RecapGeneralDetailleService(IBanqueService banqueService, EcheanceLeasingRepository echeanceLeasingRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
         this.banqueService = banqueService;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
@@ -135,8 +130,7 @@ public class RecapGeneralDetailleService {
         LocalDate tomorrow   = today.plusDays(1);
         LocalDate endOfMonth = today.with(TemporalAdjusters.lastDayOfMonth());
 
-        Banque banque = banqueRepository.findById(banqueId)
-                .orElseThrow(() -> new IllegalArgumentException("Banque introuvable : " + banqueId));
+        BanqueResponse banque = this.banqueService.getBanqueById(banqueId);
 
         ResumeSectionDto resume = buildResume(banque, today);
         DecaissementSectionDto decaissements = buildDecaissements(banque, tomorrow, endOfMonth);
@@ -147,8 +141,8 @@ public class RecapGeneralDetailleService {
                 .add(encaissements.getTotal());
 
         RecapGeneralDetailleDto dto = new RecapGeneralDetailleDto();
-        dto.setBanqueId(banque.getId());
-        dto.setBanqueNom(banque.getNom());
+        dto.setBanqueId(banque.id());
+        dto.setBanqueNom(banque.nom());
         dto.setDateRecap(today);
         dto.setResume(resume);
         dto.setDecaissements(decaissements);
@@ -162,9 +156,9 @@ public class RecapGeneralDetailleService {
     public RecapGeneralDetailleAllBanquesDto getRecapAllBanques() {
         LocalDate today = LocalDate.now();
 
-        List<RecapGeneralDetailleDto> banques = banqueRepository.findAll()
+        List<RecapGeneralDetailleDto> banques = this.banqueService.getAllBanqueIds()
                 .stream()
-                .map(b -> getRecapForBanque(b.getId()))
+                .map(this::getRecapForBanque)
                 .collect(Collectors.toList());
 
         RecapGeneralDetailleAllBanquesDto result = new RecapGeneralDetailleAllBanquesDto();
@@ -173,11 +167,11 @@ public class RecapGeneralDetailleService {
         return result;
     }
 
-    private ResumeSectionDto buildResume(Banque banque, LocalDate today) {
-        Long banqueId = banque.getId();
+    private ResumeSectionDto buildResume(BanqueResponse banque, LocalDate today) {
+        Long banqueId = banque.id();
 
-        BigDecimal soldeActuel   = banque.getSoldeActuel();
-        BigDecimal plafondLigne  = banqueService.getPlafoncFC(banqueId);
+        BigDecimal soldeActuel   = banque.soldeActuel();
+        BigDecimal plafondLigne  = banqueService.getPlafondFC(banqueId);
         BigDecimal disponibilite = soldeActuel.add(plafondLigne);
 
         // ── Encours- : décaissements PREVU jusqu'à aujourd'hui ───────────────────
@@ -279,7 +273,7 @@ public class RecapGeneralDetailleService {
         BigDecimal encoursPlus = BigDecimal.ZERO;
 
         encoursPlus = encoursPlus.add(sum(
-                virementRepository.findAll(VirementSpec.encoursEncaissement(banque.getNom(), today)),
+                virementRepository.findAll(VirementSpec.encoursEncaissement(banque.nom(), today)),
                 Virement::getMontant));
 
         encoursPlus = encoursPlus.add(sum(
@@ -347,8 +341,8 @@ public class RecapGeneralDetailleService {
         return dto;
     }
 
-    private DecaissementSectionDto buildDecaissements(Banque banque, LocalDate from, LocalDate until) {
-        Long banqueId = banque.getId();
+    private DecaissementSectionDto buildDecaissements(BanqueResponse banque, LocalDate from, LocalDate until) {
+        Long banqueId = banque.id();
         List<CategorieAmountDto> categories = new ArrayList<>();
 
         // Leasing
@@ -369,7 +363,7 @@ public class RecapGeneralDetailleService {
 
         BigDecimal totalReglementFrns = Stream.of(
                 sum(virementRepository.findAll(
-                        VirementSpec.outstandingBetweenDecaissement(banque.getId(), from, until)
+                        VirementSpec.outstandingBetweenDecaissement(banque.id(), from, until)
                 ), Virement::getMontant),
 
                 sum(chequeRepository.findAll(
@@ -473,14 +467,14 @@ public class RecapGeneralDetailleService {
         dto.setTotal(total);
         return dto;
     }
-    private EncaissementSectionDto buildEncaissements(Banque banque, LocalDate from, LocalDate until) {
-        Long banqueId = banque.getId();
+    private EncaissementSectionDto buildEncaissements(BanqueResponse banque, LocalDate from, LocalDate until) {
+        Long banqueId = banque.id();
         List<CategorieAmountDto> categories = new ArrayList<>();
 
         // Moyens de paiement — ENCAISSEMENT
         BigDecimal totalEncaissementFrns = Stream.of(
                 sum(virementRepository.findAll(
-                        VirementSpec.outstandingBetweenEncaissement(banque.getNom(), from, until)
+                        VirementSpec.outstandingBetweenEncaissement(banque.nom(), from, until)
                 ), Virement::getMontant),
 
                 sum(chequeRepository.findAll(

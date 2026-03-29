@@ -9,9 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Agios.spec.AgiosSpec;
-import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
-import staport.finance.gBanque.Bank.services.BanqueService;
+import staport.finance.gBanque.Bank.dtos.BanqueResponse;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
 import staport.finance.gBanque.impayees.specs.ImpayeeSpecifications;
@@ -98,8 +97,7 @@ public class RecapitulatifService {
 
     private final RecapitulatifDecaissementMapper decaissementMapper;
     private final RecapitulatifEncaissementMapper encaissementMapper;
-    private final BanqueRepository banqueRepository;
-    private final BanqueService banqueService;
+    private final IBanqueService banqueService;
 
     private final EcheanceLeasingRepository echeanceLeasingRepository;
     private final EcheanceCMTRepository echeanceCMTRepository;
@@ -127,12 +125,11 @@ public class RecapitulatifService {
     public RecapitulatifService(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
-            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, BanqueRepository banqueRepository, BanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
+            RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, IBanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.decaissementMapper = mapper;
         this.encaissementMapper = encaissementMapper;
-        this.banqueRepository = banqueRepository;
         this.banqueService = banqueService;
         this.chequeRepository = chequeRepository;
         this.lcnRepository = lcnRepository;
@@ -160,7 +157,7 @@ public class RecapitulatifService {
 
         // Retrieve parameters from the DTO
         Long banqueId = searchDto.getBanqueId();
-        Banque banque = banqueRepository.findById(banqueId).orElseThrow(() -> new IllegalArgumentException("Banque with id " + banqueId + " not found."));
+        BanqueResponse banque = this.banqueService.getBanqueById(banqueId);
         List<TransactionSource> transactionSources = searchDto.getTransactionSources();
         String libelleFilter = searchDto.getLibelle();
         String observationFilter = searchDto.getObservation();
@@ -168,8 +165,8 @@ public class RecapitulatifService {
         // Step 1: Create specifications for each entity type, filtering by bank and current month.
 
         //Moyens de paiement
-        Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom(),endOfMonth);
-        Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId(),endOfMonth);
+        Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.nom(),endOfMonth);
+        Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.id(),endOfMonth);
         Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banqueId,endOfMonth);
         Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banqueId,endOfMonth);
 
@@ -285,38 +282,38 @@ public class RecapitulatifService {
 
         return aggregatedDto;
     }
-    public List<RecaputilatifItem> getEncaissementByBanque(Banque banque) {
+    public List<RecaputilatifItem> getEncaissementByBanque(BanqueResponse banque) {
 
         List<RecaputilatifItem> encaissements= new ArrayList<>();
 
         //Moyens de paiement
-        Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.getNom(),endOfMonth);
-        Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.getId(),endOfMonth);
-        Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banque.getId(),endOfMonth);
-        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banque.getId(),endOfMonth);
+        Specification<Virement> virementSpec = VirementSpec.encoursEncaissement(banque.nom(),endOfMonth);
+        Specification<Cheque> chequeSpec = ChequeSpec.encoursEncaissements(banque.id(),endOfMonth);
+        Specification<Lcn> lcnSpec = LcnSpecification.encoursEncaissement(banque.id(),endOfMonth);
+        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursEncaissement(banque.id(),endOfMonth);
 
         // préfinancement (Déblocage only)
         Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingDeblocageUntil(endOfMonth)
-                .and(PrefinancementSpecification.byBanqueId(banque.getId()));
+                .and(PrefinancementSpecification.byBanqueId(banque.id()));
 
         // Droit Constaté ( Déblocage only )
         Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingDeblocageUntil(endOfMonth)
-                .and(DroitConstateSpec.byBanqueId(banque.getId()));
+                .and(DroitConstateSpec.byBanqueId(banque.id()));
 
         // Factoring ( Déblocage only )
         Specification<Factoring> factoringSpecification = FactoringSpec.outstandingDeblocageUntil(endOfMonth)
-                .and(FactoringSpec.byBanqueId(banque.getId()));
+                .and(FactoringSpec.byBanqueId(banque.id()));
 
         //décomptes
         Specification<Decompte> decompteSpecification = DecompteSpec.outstandingUntil(endOfMonth)
-                .and(DecompteSpec.byBanqueId(banque.getId()));
+                .and(DecompteSpec.byBanqueId(banque.id()));
 
         // Restitutions
         Specification<Restitution> restitutionSpecification = RestitutionSpec.outstandingUntil(endOfMonth)
-                .and(RestitutionSpec.hasBanque(banque.getId()));
+                .and(RestitutionSpec.hasBanque(banque.id()));
 
         Specification<Impayee> impayeeSpecification = ImpayeeSpecifications.outstandingUntil(endOfMonth,Type.ENCAISSEMENT)
-                .and(ImpayeeSpecifications.hasBanque(banque.getId()));
+                .and(ImpayeeSpecifications.hasBanque(banque.id()));
 
 
 
@@ -512,63 +509,63 @@ public class RecapitulatifService {
 
         return aggregatedDto;
     }
-    public List<RecaputilatifItem> getDecaissementByBanque(Banque banque) {
+    public List<RecaputilatifItem> getDecaissementByBanque(BanqueResponse banque) {
 
         List<RecaputilatifItem> decaissementList= new ArrayList<>();
 
         //leasing
         Specification<EcheanceLeasing> leasingSpec = Specification.where(EcheanceLeasingSpecification.outstandingUntil(endOfMonth))
-                .and(EcheanceLeasingSpecification.byContratBanqueId(banque.getId()));
+                .and(EcheanceLeasingSpecification.byContratBanqueId(banque.id()));
         //CMT
         Specification<EcheanceCMT> cmtSpec = Specification.where(EcheanceCMTSpecification.outstandingUntil(endOfMonth))
-                .and(EcheanceCMTSpecification.byCreditBanqueId(banque.getId()));
+                .and(EcheanceCMTSpecification.byCreditBanqueId(banque.id()));
 
         //moyens de paiement
-        Specification<Cheque> chequeSpec = ChequeSpec.encoursDecaissements(banque.getId(),endOfMonth);
-        Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banque.getId(),endOfMonth);
-        Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banque.getId(),endOfMonth);
-        Specification<MiseADisposition> madSpec = MiseADispositionSpec.encoursDecaissement(banque.getId(),endOfMonth);
-        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursDecaissement(banque.getId(),endOfMonth);
+        Specification<Cheque> chequeSpec = ChequeSpec.encoursDecaissements(banque.id(),endOfMonth);
+        Specification<Lcn> lcnSpec = LcnSpecification.encoursDecaissement(banque.id(),endOfMonth);
+        Specification<Virement> virementSpec = VirementSpec.encoursDecaissement(banque.id(),endOfMonth);
+        Specification<MiseADisposition> madSpec = MiseADispositionSpec.encoursDecaissement(banque.id(),endOfMonth);
+        Specification<VirementInternational> virementInternationalSpec=VirementInternationalSpec.encoursDecaissement(banque.id(),endOfMonth);
 
         //operation erronées
         Specification<OperationErrone> operationErroneSpec = OperationErroneSpec.outstandingUntil(endOfMonth)
-                .and(OperationErroneSpec.hasBanque(banque.getId()));
+                .and(OperationErroneSpec.hasBanque(banque.id()));
 
         // préfinancement (Remboursement only)
         Specification<Prefinancement> prefinancementSpecification = PrefinancementSpecification.outstandingRemboursementUntil(endOfMonth)
-                .and(PrefinancementSpecification.byBanqueId(banque.getId()));
+                .and(PrefinancementSpecification.byBanqueId(banque.id()));
 
         //Droit constatés ( Remboursement only )
         Specification<DroitConstate> droitConstateSpecification = DroitConstateSpec.outstandingRemboursementUntil(endOfMonth)
-                .and(DroitConstateSpec.byBanqueId(banque.getId()));
+                .and(DroitConstateSpec.byBanqueId(banque.id()));
 
         //Factoring ( Remboursement only )
         Specification<Factoring> factoringSpecification = FactoringSpec.outstandingRemboursementUntil(endOfMonth)
-                .and(FactoringSpec.byBanqueId(banque.getId()));
+                .and(FactoringSpec.byBanqueId(banque.id()));
 
         //Commissions
         Specification<Commission> commissionSpecification= CommissionSpecifications.outstandingUntil(endOfMonth)
-                .and(CommissionSpecifications.hasBanque(banque.getId()));
+                .and(CommissionSpecifications.hasBanque(banque.id()));
         //Agios
         Specification<Agios> agiosSpecification= AgiosSpec.outstandingUntil(endOfMonth)
-                .and(AgiosSpec.hasBanque(banque.getId()));
+                .and(AgiosSpec.hasBanque(banque.id()));
 
         //prelevement
         Specification<Prelevement> prelevementSpecification= PrelevementSpec.outstandingUntil(endOfMonth)
-                .and(PrelevementSpec.hasBanque(banque.getId()));
+                .and(PrelevementSpec.hasBanque(banque.id()));
 
 
         // frais bancaire
         Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingUntil(endOfMonth)
-                .and(FraisBancaireSpec.hasBanque(banque.getId()));
+                .and(FraisBancaireSpec.hasBanque(banque.id()));
 
         //impot et taxes
         Specification<ImpotEtTaxe> impotEtTaxeSpecification=ImpotEtTaxeSpecifications.outstandingUntil(endOfMonth)
-                .and(ImpotEtTaxeSpecifications.hasBanque(banque.getId()));
+                .and(ImpotEtTaxeSpecifications.hasBanque(banque.id()));
 
         //Impayée
         Specification<Impayee> impayeeSpecification=ImpayeeSpecifications.outstandingUntil(endOfMonth,Type.DECAISSEMENT)
-                .and(ImpayeeSpecifications.hasBanque(banque.getId()));
+                .and(ImpayeeSpecifications.hasBanque(banque.id()));
 
         // Step 2: Fetch all relevant data for the current month from all repositories.
         List<EcheanceLeasing> outstandingLeasingPayments = echeanceLeasingRepository.findAll(leasingSpec);
@@ -615,10 +612,9 @@ public class RecapitulatifService {
 
     public RecaputilatifGlobal getRecapitulatifGlobal(Long banqueId) {
         // Récupérer la banque
-        Banque banque = banqueRepository.findById(banqueId)
-                .orElseThrow(() -> new IllegalArgumentException("Banque avec l'ID " + banqueId + " introuvable."));
+        BanqueResponse banque = this.banqueService.getBanqueById(banqueId);
 
-        BigDecimal plafondFc=banqueService.getPlafoncFC(banqueId);
+        BigDecimal plafondFc=banqueService.getPlafondFC(banqueId);
         // Récupérer les décaissements (débits)
         List<RecaputilatifItem> decaissements = getDecaissementByBanque(banque);
 
@@ -630,9 +626,9 @@ public class RecapitulatifService {
         // Créer et retourner le DTO global
         // Le constructeur calculera automatiquement les totaux et le solde fin de mois
         return new RecaputilatifGlobal(
-                banque.getId(),
-                banque.getNom(),
-                banque.getSoldeActuel(),
+                banque.id(),
+                banque.nom(),
+                banque.soldeActuel(),
                 plafondFc.negate(),
                 encaissements,
                 decaissements
@@ -640,7 +636,7 @@ public class RecapitulatifService {
     }
     public List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux() {
         // 1. Récupérer la liste de tous les IDs de banque disponibles.
-        List<Long> allBankIds = banqueRepository.findAll().stream().map(Banque::getId).toList();
+        List<Long> allBankIds = this.banqueService.getAllBanqueIds();
 
         // 2. Pour chaque ID, appeler la méthode existante getRecapitulatifGlobal.
         return allBankIds.stream()

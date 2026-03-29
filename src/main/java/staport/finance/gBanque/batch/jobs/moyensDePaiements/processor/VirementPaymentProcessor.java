@@ -62,7 +62,7 @@
             v.setBeneficiaire(item.getBeneficiaire());
             v.setMontant(item.getMontant());
             v.setBanqueEmettrice(banque);
-            Optional<Banque> banqueBeneficaire=this.banqueRepository.findByNom(item.getBanqueBeneficiaire());
+            Optional<Banque> banqueBeneficaire=this.banqueRepository.findByNomIgnoreCase(item.getBanqueBeneficiaire());
             banqueBeneficaire.ifPresent(v::setBanqueBeneficiare);;
             v.setNomBanqueBeneficiaireLibre(item.getBanqueBeneficiaire());
             v.setRibBeneficiaire(item.getRibBeneficiaire());
