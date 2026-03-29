@@ -3,7 +3,6 @@ package staport.finance.gBanque.notification.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.notification.dtos.NotificationResponse;
@@ -21,14 +20,12 @@ import java.util.stream.Collectors;
 @Service
 public class NotificationService {
 
-    private final SimpMessagingTemplate messagingTemplate;
     private final NotificationRepository notificationRepository;
     private final UserNotificationStatusRepository userNotificationStatusRepository;
 
-    public NotificationService(SimpMessagingTemplate messagingTemplate,
+    public NotificationService(
                                NotificationRepository notificationRepository,
                                UserNotificationStatusRepository userNotificationStatusRepository) {
-        this.messagingTemplate = messagingTemplate;
         this.notificationRepository = notificationRepository;
         this.userNotificationStatusRepository = userNotificationStatusRepository;
     }
@@ -42,20 +39,7 @@ public class NotificationService {
         // 1. Create and persist the master Notification entity
         Notification notificationToPersist = new Notification(title, content, type);
         notificationRepository.save(notificationToPersist);
-        // NOTE: NO STATUS RECORDS ARE CREATED HERE.
 
-        // 2. Prepare and send WebSocket broadcast
-        NotificationResponse response = new NotificationResponse(
-                notificationToPersist.getId(),
-                notificationToPersist.getTitle(),
-                notificationToPersist.getContent(),
-                notificationToPersist.getType(),
-                notificationToPersist.getTimestamp(),
-                false // New notifications are always broadcast as UNREAD
-        );
-
-        messagingTemplate.convertAndSend("/topic/public-notifications", response);
-        System.out.println("Sent and persisted public notification (Status records deferred): " + notificationToPersist);
     }
 
     /**
