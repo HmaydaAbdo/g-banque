@@ -65,16 +65,23 @@ export class BanqueEditComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.initializeForm();
-    this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },
-      { icon: 'pi pi-wallet', route: '/portail/comptes-bancaires', label:"Comptes bancaires" } ]
+    this.initializeForm(); // Create the structure first
+
+    this.items = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
+      { icon: 'pi pi-wallet', route: '/portail/comptes-bancaires', label: "Comptes bancaires" }
+    ];
+
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {
         this.isEditMode = true;
+        // Disable the field immediately when we detect edit mode
+        this.banqueForm.get('numeroDeCompte')?.disable();
         this.loadBanque(Number(id));
       } else {
         this.isEditMode = false;
+        this.banqueForm.get('numeroDeCompte')?.enable();
       }
     });
   }
@@ -82,18 +89,12 @@ export class BanqueEditComponent implements OnInit {
   initializeForm(): void {
     this.banqueForm = this.fb.group({
       nom: ['', Validators.required],
-      numeroDeCompte: ['', [Validators.required, Validators.pattern(/^\d+$/),Validators.maxLength(24),Validators.minLength(24)]],
+      // Pattern and length validators remain for creation mode
+      numeroDeCompte: ['', [Validators.required, Validators.pattern(/^\d+$/), Validators.maxLength(24), Validators.minLength(24)]],
       devise: [Devise.MAD, Validators.required],
       address: ['', Validators.required],
       agence: ['', Validators.required],
     });
-
-    // Disable numeroDeCompte only if we are in edit mode right from the start
-    // If the form is initialized in edit mode, then disable.
-
-    if (this.isEditMode && !this.authService.hasRole(Role.ADMIN)) {
-      this.banqueForm.get('numeroDeCompte')?.disable();
-    }
   }
 
   loadBanque(id: number): void {

@@ -185,7 +185,7 @@ export class ComptesBancairesComponent implements OnInit {
         this.banqueService.deleteBanque(banque.id!)
           .subscribe({
             next: () => {
-              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'BanqueOfDebit et ses lignes fonctionnelles supprimées avec succès.', life: 3000 });
+              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Banque supprimée avec succès.', life: 3000 });
               if (this.dt) {
                 this.loadBanques(this.dt.createLazyLoadMetadata());
               } else {

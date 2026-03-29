@@ -29,7 +29,7 @@
       </div>
       <div class="col-12 md:col-6 field">
         <label for="numeroDeCompte">Numéro de Compte <span class="p-text-danger">*</span></label>
-        <input type="text" pInputText id="numeroDeCompte" formControlName="numeroDeCompte" />
+        <input type="text"  pInputText id="numeroDeCompte" formControlName="numeroDeCompte" />
         <small class="p-error" *ngIf="f['numeroDeCompte'].invalid && f['numeroDeCompte'].touched">
           <span *ngIf="f['numeroDeCompte'].errors?.['required']">Le numéro de compte est obligatoire.</span>
           <span *ngIf="f['numeroDeCompte'].errors?.['pattern']">Le numéro de compte ne doit contenir que des chiffres.</span>

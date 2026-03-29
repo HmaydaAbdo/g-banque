@@ -52,7 +52,6 @@ export class SidebarComponent implements OnInit {
 
   sidebarItems: SidebarItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
-    { label: 'Tableau de bord', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
     { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires' },
     {
       label: 'Les Lignes Fonctionnelles',

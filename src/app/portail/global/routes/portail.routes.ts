@@ -1,17 +1,11 @@
 import { Routes } from '@angular/router';
 import { AcceuilComponent } from "../../accueil/views/acceuil/acceuil.component";
-import { ComptesBancairesComponent } from "../../comptes-bancaire/views/comptes-bancaires/comptes-bancaires.component";
 import { LignesFonctionnellesComponent } from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-encours/lignes-fonctionnelles.component";
-import { TableauDeBordComponent } from "../../tableau-de-bord/views/tableau-de-bord/tableau-de-bord.component";
-import { BanqueEditComponent } from "../../comptes-bancaire/views/banque-edit/banque-edit.component";
 import { LigneFonctionnelleEditComponent } from "../../lignes-fonctionnelles/views/ligne-fonctionnelle-edit/ligne-fonctionnelle-edit.component";
 import { adminGuard } from "../../../auth/guards/admin.guard";
 import { NatureLigneFonctionnelleListComponent } from "../../lignes-fonctionnelles/views/nature-ligne-fonctionnelle-list/nature-ligne-fonctionnelle-list.component";
 import { NatureLigneFonctionnelleEditComponent } from "../../lignes-fonctionnelles/views/nature-ligne-fonctionnelle-edit/nature-ligne-fonctionnelle-edit.component";
 import { LogsComponent } from "../../settings/logs/views/logs/logs.component";
-import { EvolTauxPlafondComponent } from "../../tableau-de-bord/views/evol-taux-plafond/evol-taux-plafond.component";
-import { SoldeParBanqueComponent } from "../../tableau-de-bord/views/solde-par-banque/solde-par-banque.component";
-import { TresorerieGlobaleComponent } from "../../tableau-de-bord/views/tresorerie-globale/tresorerie-globale.component";
 import { LesEncoursComponent } from "../../etatsDesEncours/views/parent-componant/les-encours/les-encours.component";
 import { EcheancesLeasingComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/echeances-leasing/echeances-leasing.component";
 import { EcheancesCmtComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/echeances-cmt/echeances-cmt.component";
@@ -46,7 +40,6 @@ import { DecompteFormComponent } from "../../decomptes/views/decomptes-form/deco
 import { DecomptesComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/decomptes/decomptes.component";
 import { ValidatedDcComponent } from "../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component";
 import { ValidatedPrefiComponent } from "../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component";
-import { HistoryOflinesComponent } from "../../comptes-bancaire/views/history/history-oflines/history-oflines.component";
 import { CommissionListComponent } from "../../commission/views/CommissionListComponent/commission-list.component";
 import { EncoursCommissionsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/commission/encours-commissions.component";
 import { CommissionFormComponent } from "../../commission/views/commission-form/commission-form.component";
@@ -119,17 +112,14 @@ export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
   { path: 'accueil', component: AcceuilComponent },
 
-  { path: 'tableau-de-bord', component: TableauDeBordComponent, canActivate: [adminGuard] },
-  { path: 'evolution-taux-plafond', component: EvolTauxPlafondComponent, canActivate: [adminGuard] },
-  { path: 'solde-par-banque', component: SoldeParBanqueComponent, canActivate: [adminGuard] },
-  { path: 'tresorerie-globale', component: TresorerieGlobaleComponent, canActivate: [adminGuard] },
   { path: "rapprochement/details/:id", component: DetailsRapprochementComponent },
   { path: "rapprochement/historique", component: HistoriqueDesRapprochementComponent },
 
-  { path: 'comptes-bancaires', component: ComptesBancairesComponent },
-  { path: "comptes-bancaires/new", component: BanqueEditComponent },
-  { path: "comptes-bancaires/edit/:id", component: BanqueEditComponent },
-  { path: "comptes-bancaires/history/:id", component: HistoryOflinesComponent },
+  {
+    path: 'comptes-bancaires',
+    loadChildren: () => import('../../comptes-bancaire/comptes-bancaire-routing.module')
+      .then(m => m.COMPTES_BANCAIRES_ROUTES)
+  },
 
   { path: 'lignes-fonctionnelles-encours', component: LignesFonctionnellesComponent },
   { path: 'lignes-fonctionnelles-encours/new', component: LigneFonctionnelleEditComponent },

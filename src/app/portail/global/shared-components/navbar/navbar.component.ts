@@ -64,7 +64,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   allMenuItems: MenuItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
-    { label: 'Tableau de bord ', icon: 'pi pi-chart-bar', routerLink: '/portail/tableau-de-bord', roles: [Role.ADMIN, Role.SUPER_ADMIN] },
     {label:"Historique des Rapprochements ",routerLink:"/portail/rapprochement/historique",icon:"pi pi-history"},
     { label: 'Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires' },
     { label: 'Lignes Ponctuelles', icon: 'pi pi-receipt', routerLink: '/portail/lignes-fonctionnelles-encours' },
