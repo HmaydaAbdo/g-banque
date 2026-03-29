@@ -10,7 +10,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import staport.finance.gBanque.Bank.enums.Devise;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 @EntityListeners(AuditingEntityListener.class)
@@ -71,11 +71,11 @@ public class Banque {
 
     @CreatedDate
     @Column(name = "date_creation", nullable = false, updatable = false)
-    private OffsetDateTime dateCreation;
+    private LocalDate dateCreation;
 
     @LastModifiedDate
     @Column(name = "date_modification", nullable = false)
-    private OffsetDateTime dateModification;
+    private LocalDate dateModification;
 
     // --- Constructors ---
     public Banque() {}
@@ -121,8 +121,8 @@ public class Banque {
         this.soldeActuel = soldeActuel;
     }
 
-    public OffsetDateTime getDateCreation() { return dateCreation; }
-    public OffsetDateTime getDateModification() { return dateModification; }
+    public LocalDate getDateCreation() { return dateCreation; }
+    public LocalDate getDateModification() { return dateModification; }
 
 
     // --- equals / hashCode ---

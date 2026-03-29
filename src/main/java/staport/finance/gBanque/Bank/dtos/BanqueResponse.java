@@ -2,7 +2,7 @@ package staport.finance.gBanque.Bank.dtos;
 
 import staport.finance.gBanque.Bank.enums.Devise;
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 /**
  * Immutable detailed response for Bank management.
@@ -18,6 +18,6 @@ public record BanqueResponse(
         String agence,
         BigDecimal soldeActuel,
         BigDecimal soldeDepart,
-        OffsetDateTime dateCreation,
-        OffsetDateTime dateModification
+        LocalDate dateCreation,
+        LocalDate dateModification
 ) {}
