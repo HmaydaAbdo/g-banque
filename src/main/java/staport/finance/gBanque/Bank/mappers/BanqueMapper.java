@@ -38,13 +38,13 @@ public class BanqueMapper {
         logger.debug("Converting BanqueRequest to Entity - request: {}", request);
 
         Banque banque = new Banque();
-        banque.setNom(request.getNom());
-        banque.setNumeroDeCompte(request.getNumeroDeCompte());
-        banque.setDevise(request.getDevise());
-        banque.setAddress(request.getAddress());
-        banque.setAgence(request.getAgence());
+        banque.setNom(request.nom());
+        banque.setNumeroDeCompte(request.numeroDeCompte());
+        banque.setDevise(request.devise());
+        banque.setAddress(request.address());
+        banque.setAgence(request.agence());
 
-        logger.debug("Successfully converted BanqueRequest to Entity for: {}", request.getNom());
+        logger.debug("Successfully converted BanqueRequest to Entity for: {}", request.nom());
         return banque;
     }
 
