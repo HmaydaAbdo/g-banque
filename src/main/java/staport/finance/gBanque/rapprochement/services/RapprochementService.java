@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.rapprochement.dtos.RapprochementRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
 import staport.finance.gBanque.rapprochement.dtos.ReportDto;
@@ -30,9 +29,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import static staport.finance.gBanque.transactions.spec.TransactionSpecifications.hasBanqueId;
-import static staport.finance.gBanque.transactions.spec.TransactionSpecifications.isConfirmed;
 
 @Service
 public class RapprochementService {
