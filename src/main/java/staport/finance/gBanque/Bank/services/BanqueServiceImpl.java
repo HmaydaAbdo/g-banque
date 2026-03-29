@@ -97,13 +97,30 @@ public class BanqueServiceImpl implements IBanqueService {
 
     @Override
     public Page<BanqueResponse> getAllBanques(BanqueSearchCriteria criteria, Pageable pageable) {
+        // 1. Execute the search and pagination (1 Query with Join/Where/Limit)
         Specification<Banque> spec = BanqueSpecification.searchByCriteria(criteria);
-        return banqueRepository.findAll(spec, pageable)
-                .map(banque -> {
-                    BigDecimal balance = computeLiveBalance(banque.getId());
-                    return banqueMapper.toDto(banque, balance);
-                });
+        Page<Banque> banquePage = banqueRepository.findAll(spec, pageable);
+
+        if (banquePage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 2. Extract IDs from the CURRENT page (e.g., the 10 banks currently visible)
+        List<Long> ids = banquePage.getContent().stream()
+                .map(Banque::getId)
+                .toList();
+
+        // 3. Batch fetch balances for these specific IDs (1 Query)
+        Map<Long, BigDecimal> balanceMap = transactionService.computeBalancesForBanks(ids);
+
+        // 4. Map to DTOs using the pre-calculated Map
+        return banquePage.map(banque -> {
+            BigDecimal balance = balanceMap.get(banque.getId());
+            return banqueMapper.toDto(banque, balance);
+        });
     }
+
+
 
     @Override
     public List<BankAcceuilResponse> getAccueilBankInfo() {

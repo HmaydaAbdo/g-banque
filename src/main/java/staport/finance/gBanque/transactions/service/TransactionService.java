@@ -178,9 +178,7 @@ public class TransactionService implements ITransactionService{
     @Override
     public BigDecimal computeBalance(Long banqueId) {
         return transactionRepository
-                .computeBalance(banqueId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Banque not found with id: " + banqueId));
+                .computeBalance(banqueId);
     }
 
     /**
