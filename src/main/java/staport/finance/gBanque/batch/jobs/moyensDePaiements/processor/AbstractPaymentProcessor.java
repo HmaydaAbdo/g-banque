@@ -33,7 +33,7 @@ public abstract class AbstractPaymentProcessor implements ItemProcessor<FunPayme
         validateCommonFields(item);
         log.debug("Common validation passed for item: {}", item.getNumero());
 
-        Optional<Banque> optionalBanque = banqueRepository.findByNom(item.getBanque());
+        Optional<Banque> optionalBanque = banqueRepository.findByNomIgnoreCase(item.getBanque());
         Banque banque = optionalBanque.orElseThrow(() -> new ResourceNotFoundException(
                 String.format("Bank with name '%s' not found for item with numero '%s'", item.getBanque(), item.getNumero())
         ));
