@@ -3,8 +3,8 @@ import {Type} from "../../Virements/Type";
 
 export  interface ChequeRequestDto {
   numero:string
-  dateEmission:Date
-  dateEcheance:Date
+  dateEmission: string
+  dateEcheance: string
   beneficiaire:string
   banqueId:number
   emetteur:string

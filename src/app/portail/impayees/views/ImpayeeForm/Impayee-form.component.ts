@@ -22,6 +22,7 @@ import {TransactionSource, TransactionSourceLabels} from "../../../transactions/
 import { ImpayeeService } from '../../service/ImpayeeService';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import {Type} from "../../../Virements/Type";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-impayee-form',
@@ -150,7 +151,7 @@ export class ImpayeeFormComponent implements OnInit {
           observation: impayee.observation,
           libelle: impayee.libelle,
           montant: impayee.montant,
-          dateEmission: new Date(impayee.dateEmission),
+          dateEmission: parseLocalDate(impayee.dateEmission),
         });
 
         // Ajout de la banque dans options si manquante
@@ -200,7 +201,7 @@ export class ImpayeeFormComponent implements OnInit {
       libelle: formValue.libelle,
       observation: formValue.observation,
       montant: formValue.montant,
-      dateEmission: this.datePipe.transform(formValue.dateEmission,'yyyy-MM-dd') as string
+      dateEmission: toLocalDateString(formValue.dateEmission)!
     };
 
     if (this.isEditMode && this.impayeeId) {

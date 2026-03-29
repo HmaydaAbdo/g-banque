@@ -9,6 +9,7 @@ import { VirementInternationalResponseDto } from '../dtos/VirementInternationalR
 import { VirementInternationalSearchDto } from '../dtos/VirementInternationalSearchDto';
 import { EncoursVirementInternationalResponseDto } from '../dtos/EncoursVirementInternationalResponseDto';
 import { EncoursVirementsInternationalSearchDto } from '../dtos/EncoursVirementsInternationalSearchDto';
+import {toLocalDateString} from "../../global/types/date.utils";
 
 @Injectable({
   providedIn: 'root'
@@ -135,7 +136,7 @@ export class VirementInternationalService {
     Object.entries(searchDto || {}).forEach(([key, value]) => {
       if (value !== null && value !== undefined && value !== '') {
         if (value instanceof Date) {
-          params = params.set(key, value.toISOString());
+          params = params.set(key, toLocalDateString(value)!);
         } else {
           params = params.set(key, value.toString());
         }

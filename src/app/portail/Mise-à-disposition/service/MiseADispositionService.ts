@@ -1,4 +1,5 @@
 import {Injectable} from '@angular/core';
+import { toLocalDateString } from '../../global/types/date.utils';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from '../../../../environments/environment';
@@ -155,7 +156,7 @@ export class MiseADispositionService {
     }
 
     if(searchDto.dateEmission){
-      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
+      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
     }
 
     if (searchDto.beneficiaire) {

@@ -22,6 +22,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TransactionSource } from '../../../transactions/dtos/TransactionSource';
 import { Status } from '../../../prefinancements/enums/Status';
 import {InputTextareaModule} from "primeng/inputtextarea";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-commission-form',
@@ -143,7 +144,7 @@ export class CommissionFormComponent implements OnInit {
           observation: commission.observation,
           libelle: commission.libelle,
           montant: commission.montant,
-          dateEmission: new Date(commission.dateEmission),
+          dateEmission: parseLocalDate(commission.dateEmission),
         });
 
         // Ajout de la banque dans options si manquante
@@ -192,7 +193,7 @@ export class CommissionFormComponent implements OnInit {
       libelle: formValue.libelle,
       observation:formValue.observation,
       montant: formValue.montant,
-      dateEmission: formValue.dateEmission,
+      dateEmission: toLocalDateString(formValue.dateEmission)!,
     };
 
     if (this.isEditMode && this.commissionId) {

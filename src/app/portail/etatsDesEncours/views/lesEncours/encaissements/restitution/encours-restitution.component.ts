@@ -25,6 +25,7 @@ import { EncoursRestitution } from "../../../../../restitution/dtos/EncoursResti
 import { RestitutionValidationRequest } from "../../../../dtos/restitution/RestitutionValidationRequest";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-encours-restitution',
@@ -171,7 +172,7 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
     this.selectedRestitution = restitution;
     this.rapprochementForm.reset();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(restitution.dateEmission),
+      dateEmission: parseLocalDate(restitution.dateEmission)!,
       observation: restitution.observation,
       libelle: restitution.libelle,
     });

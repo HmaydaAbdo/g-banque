@@ -1,4 +1,4 @@
 
 export interface TransactionUpdateRequestDto {
-  dateValeur:Date
+  dateValeur:string
 }

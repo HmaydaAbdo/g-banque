@@ -10,7 +10,7 @@ export interface ImpotEtTaxeResponseDto {
   banqueNom: string;
   motif: Motif;
   status: Status;
-  dateEmission: Date;
-  dateValeur?: Date;
-  dateOperation?: Date;
+  dateEmission: string;
+  dateValeur?: string;
+  dateOperation?: string;
 }

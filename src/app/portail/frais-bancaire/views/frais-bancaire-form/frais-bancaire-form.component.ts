@@ -20,6 +20,7 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { FraisBancaireService } from "../../service/FraisBancaireService";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-frais-bancaire-form',
@@ -125,7 +126,7 @@ export class FraisBancaireFormComponent implements OnInit {
           observation: frais.observation,
           libelle: frais.libelle,
           montant: frais.montant,
-          dateEmission: new Date(frais.dateEmission),
+          dateEmission: parseLocalDate(frais.dateEmission),
         });
 
         // Ajouter la banque si manquante
@@ -184,7 +185,7 @@ export class FraisBancaireFormComponent implements OnInit {
       libelle: formValue.libelle,
       observation: formValue.observation,
       montant: formValue.montant,
-      dateEmission: formValue.dateEmission,
+      dateEmission: toLocalDateString(formValue.dateEmission)!,
     };
 
     if (this.isEditMode && this.fraisId) {

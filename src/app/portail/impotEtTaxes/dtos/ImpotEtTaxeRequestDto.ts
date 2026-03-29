@@ -7,5 +7,5 @@ export interface ImpotEtTaxeRequestDto {
   montant: Decimal;
   banqueId: number;
   motif: Motif;
-  dateEmission: Date;
+  dateEmission: string;
 }

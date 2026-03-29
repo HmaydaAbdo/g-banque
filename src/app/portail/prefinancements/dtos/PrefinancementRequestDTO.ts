@@ -6,7 +6,7 @@ import {Type} from "../enums/Type";
  */
 export interface PrefinancementRequestDTO {
   marcheId: number;
-  dateEmission: Date;
+  dateEmission: string;
   montant: number;
   type: Type;
 }

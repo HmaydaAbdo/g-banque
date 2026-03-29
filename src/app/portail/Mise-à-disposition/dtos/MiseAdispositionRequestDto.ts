@@ -3,7 +3,7 @@ import {Type} from "../../Virements/Type";
 export interface MiseAdispositionRequestDto {
   banqueId:number
   beneficiaire:string
-  dateEmission:Date
+  dateEmission:string
   emetteur:string
   montant:number
   type:Type

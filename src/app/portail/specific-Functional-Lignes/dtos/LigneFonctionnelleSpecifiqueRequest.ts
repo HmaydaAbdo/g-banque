@@ -3,8 +3,8 @@ export interface LigneFonctionnelleSpecifiqueRequest {
   natureLigneFonctionnelleId: number;
   plafond: number;
   taux: number;
-  dateDepart: Date;
-  dateFin: Date;
+  dateDepart: string;
+  dateFin: string;
   actif?: boolean;
   marcheId: number;
 }

@@ -22,6 +22,7 @@ import { MarcheService } from "../../../Marches/service/marche-service.service";
 import { NatureLigneFonctionnelleService } from "../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service";
 import { Role } from "../../../../auth/enum/Role";
 import { AuthService } from "../../../../auth/services/auth.service";
+import { parseLocalDate, toLocalDateString } from "../../../global/types/date.utils";
 
 @Component({
   selector: 'app-spefic-ligne-edit',
@@ -166,8 +167,8 @@ export class SpeficLigneEditComponent implements OnInit {
           marcheId: ligne.marcheId,
           plafond: ligne.plafond,
           taux: ligne.taux,
-          dateDepart: ligne.dateDepart ? new Date(ligne.dateDepart) : null,
-          dateFin: ligne.dateFin ? new Date(ligne.dateFin) : null,
+          dateDepart: parseLocalDate(ligne.dateDepart),
+          dateFin: parseLocalDate(ligne.dateFin),
         });
       });
     });
@@ -209,9 +210,14 @@ export class SpeficLigneEditComponent implements OnInit {
 
   executeSave(): void {
     const val = this.ligneFonctionnelleSpecifiqueForm.value;
+    const request = {
+      ...val,
+      dateDepart: toLocalDateString(val.dateDepart)!,
+      dateFin: toLocalDateString(val.dateFin)!
+    };
     const req$ = this.isEditMode && this.ligneFonctionnelleSpecifiqueId
-      ? this.specificLigneService.updateLigneFonctionnelleSpecifique(this.ligneFonctionnelleSpecifiqueId, val)
-      : this.specificLigneService.createLigneFonctionnelleSpecifique(val);
+      ? this.specificLigneService.updateLigneFonctionnelleSpecifique(this.ligneFonctionnelleSpecifiqueId, request)
+      : this.specificLigneService.createLigneFonctionnelleSpecifique(request);
 
     req$.subscribe({
       next: () => {

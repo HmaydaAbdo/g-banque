@@ -23,6 +23,7 @@ import { BanqueService } from '../../../comptes-bancaire/services/BanqueService'
 import { Type } from '../../enums/Type';
 import { PrefinancementRequestDTO } from '../../dtos/PrefinancementRequestDTO';
 import { PrefinancementResponseDTO } from '../../dtos/PrefinancementResponseDTO';
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-prefinancement-form',
@@ -193,7 +194,7 @@ export class PrefinancementFormComponent implements OnInit {
 
           this.prefinancementForm.patchValue({
             marcheId: prefinancement.marcheId,
-            dateEmission: new Date(prefinancement.dateEmission),
+            dateEmission: parseLocalDate(prefinancement.dateEmission),
             montant: prefinancement.montant,
             type: prefinancement.type,
           });
@@ -233,7 +234,11 @@ export class PrefinancementFormComponent implements OnInit {
 
   executeSave(): void {
     this.loading = true;
-    const request: PrefinancementRequestDTO = this.prefinancementForm.value;
+    const formValue = this.prefinancementForm.value;
+    const request: PrefinancementRequestDTO = {
+      ...formValue,
+      dateEmission: toLocalDateString(formValue.dateEmission)!
+    };
 
     const operation$ = (this.isEditMode && this.prefinancementId)
       ? this.prefinancementService.updatePrefinancement(this.prefinancementId, request)

@@ -22,6 +22,7 @@ import {LcnService} from "../../service/LcnService";
 import {LcnResponseDTO} from "../../dtos/LcnResponseDTO";
 import {NatureLcn} from "../../dtos/NatureLcn";
 import {RadioButtonModule} from "primeng/radiobutton";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-lcn-form',
@@ -92,8 +93,8 @@ export class LcnFormComponent implements OnInit {
     this.lcnForm = this.fb.group({
       numero: [lcn ? lcn.numero : null, Validators.required],
       banqueId: [lcn ? lcn.banqueId : null, Validators.required],
-      dateEmission: [lcn ? new Date(lcn.dateEmission) : null, Validators.required],
-      dateEcheance: [lcn ? new Date(lcn.dateEcheance) : null,Validators.required],
+      dateEmission: [lcn ? parseLocalDate(lcn.dateEmission) : null, Validators.required],
+      dateEcheance: [lcn ? parseLocalDate(lcn.dateEcheance) : null,Validators.required],
       montant: [lcn ? lcn.montant : null, [Validators.required, Validators.min(0.01)]],
       emetteur: [lcn ? lcn.emetteur : '', Validators.required],
       beneficiaire: [{ value: this.beneficiaireFixe, disabled: true }, Validators.required],
@@ -186,7 +187,8 @@ export class LcnFormComponent implements OnInit {
     this.loading = true;
 
     // Construire le DTO de requête en utilisant getRawValue() pour inclure les champs désactivés (beneficiaire, type)
-    const requestDto = this.lcnForm.getRawValue();
+    const raw = this.lcnForm.getRawValue();
+    const requestDto = { ...raw, dateEmission: toLocalDateString(raw.dateEmission)!, dateEcheance: toLocalDateString(raw.dateEcheance)! };
 
 
     let operation$: Observable<LcnResponseDTO>;

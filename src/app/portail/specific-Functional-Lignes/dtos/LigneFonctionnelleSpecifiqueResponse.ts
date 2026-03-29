@@ -9,10 +9,10 @@ export interface LigneFonctionnelleSpecifiqueResponse {
   encours: number | null;
   solde: number | null;
   taux: number;
-  dateDepart: Date;
-  dateFin: Date;
-  dateCreation: Date;
-  dateModification: Date;
+  dateDepart: string;
+  dateFin: string;
+  dateCreation: string;
+  dateModification: string;
   actif: boolean;
   expired: boolean;
   marcheId: number;

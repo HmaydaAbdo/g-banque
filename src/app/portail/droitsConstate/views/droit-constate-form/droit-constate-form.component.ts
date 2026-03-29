@@ -23,6 +23,7 @@ import { DroitConstateService } from "../../service/DroitConstateService";
 import { MarcheService } from '../../../Marches/service/marche-service.service';
 import { Type } from "../../../prefinancements/enums/Type";
 import { DroitConstateRequestDto } from '../../dtos/DroitConstateRequestDto';
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-droit-constate-form',
@@ -158,7 +159,7 @@ export class DroitConstateFormComponent implements OnInit {
           }
           this.droitConstateForm.patchValue({
             marcheId: dto.marcheId,
-            dateEmission: new Date(dto.dateEmission),
+            dateEmission: parseLocalDate(dto.dateEmission),
             montant: dto.montant,
             type: dto.type,
           });
@@ -202,7 +203,11 @@ export class DroitConstateFormComponent implements OnInit {
 
   executeSave(): void {
     this.loading = true;
-    const request: DroitConstateRequestDto = this.droitConstateForm.value;
+    const formValue = this.droitConstateForm.value;
+    const request: DroitConstateRequestDto = {
+      ...formValue,
+      dateEmission: toLocalDateString(formValue.dateEmission)!
+    };
 
     const op$ = (this.isEditMode && this.droitConstateId)
       ? this.droitConstateService.updateDroitConstate(this.droitConstateId, request)

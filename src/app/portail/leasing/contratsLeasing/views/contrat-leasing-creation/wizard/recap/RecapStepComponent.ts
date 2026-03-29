@@ -21,6 +21,7 @@ import { OrganismeLeasingService } from "../../../../../organismesLeasing/servic
 import { Decimal } from 'decimal.js';
 import { ContratLeasingRequestDTO } from "../../../../dtos/contrat-leasing";
 import { TypeContratLeasing } from '../../../../dtos/type-contrat-leasing';
+import { parseLocalDate } from '../../../../../../global/types/date.utils';
 
 interface RecapContractDisplayData extends ContratLeasingRequestDTO {
   nomBanqueDePrelevement?: string;
@@ -143,7 +144,7 @@ export class RecapStepComponent implements OnInit, OnDestroy {
               nomOrganismeLeasing: nomOrganisme,
               totalMensualitesCalculated: totalMensualitesCalculated,
               expectedTotalAmountService: expectedTotalAmountFromService, // Use the value from the service
-              dateDebut: contract.dateDebut ? new Date(contract.dateDebut) : null
+              dateDebut: contract.dateDebut
             };
             console.log('RecapStepComponent: Final recap data prepared:', recapData);
             return recapData;
@@ -194,7 +195,7 @@ export class RecapStepComponent implements OnInit, OnDestroy {
 
   formatDate(date: Date | string | null | undefined): string {
     if (!date) return 'N/A';
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const dateObj = typeof date === 'string' ? parseLocalDate(date) : date;
     return this.datePipe.transform(dateObj, 'dd/MM/yyyy') || 'N/A';
   }
 

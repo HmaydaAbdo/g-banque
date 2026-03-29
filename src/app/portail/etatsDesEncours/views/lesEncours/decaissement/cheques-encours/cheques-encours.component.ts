@@ -28,6 +28,7 @@ import {DropdownModule} from "primeng/dropdown";
 import {InputNumberModule} from "primeng/inputnumber";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-cheques-encours',
@@ -143,7 +144,7 @@ export class ChequesEncoursComponent implements OnInit {
     this.initRapprochementForm();
 
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(cheque.dateEmission) ,
+      dateEmission: parseLocalDate(cheque.dateEmission)! ,
       observation: cheque.observation,
       libelle: cheque.libelle
     });

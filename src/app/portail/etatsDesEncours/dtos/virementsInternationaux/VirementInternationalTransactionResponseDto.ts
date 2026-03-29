@@ -5,9 +5,9 @@ export interface VirementInternationalTransactionResponseDto {
   banqueName: string;
   libelle: string;
   observation: string;
-  dateEmission: Date
-  dateValeur: Date
-  dateOperations: Date
+  dateEmission: string
+  dateValeur: string
+  dateOperations: string
   tvaDeductible: number;
   tvaCollectee: number;
   debit: number;

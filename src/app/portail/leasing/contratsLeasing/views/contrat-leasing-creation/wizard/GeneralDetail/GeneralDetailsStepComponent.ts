@@ -14,6 +14,7 @@ import { MessagesModule } from 'primeng/messages';
 
 import { LeasingContractWizardService } from "../../../../services/LeasingContractWizardService";
 import { Decimal } from 'decimal.js';
+import { toLocalDateString } from '../../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-general-details-step',
@@ -73,8 +74,8 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         const prevValeurResiduelle = prev.valeurResiduelle;
         const currValeurResiduelle = curr.valeurResiduelle;
 
-        const prevDateDebutISO = prev.dateDebut ? new Date(prev.dateDebut).toISOString() : null;
-        const currDateDebutISO = curr.dateDebut ? new Date(curr.dateDebut).toISOString() : null;
+        const prevDateDebutISO = prev.dateDebut ? toLocalDateString(prev.dateDebut) : null;
+        const currDateDebutISO = curr.dateDebut ? toLocalDateString(curr.dateDebut) : null;
 
         return prev.numeroContrat === curr.numeroContrat &&
           prev.immobilisation === curr.immobilisation &&
@@ -108,10 +109,10 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         patchObject.montantAchatTTC = contractMontantAchatTTCNum;
       }
 
-      const currentFormDate = currentFormValue.dateDebut ? new Date(currentFormValue.dateDebut).toISOString() : null;
-      const contractDate = contract.dateDebut ? new Date(contract.dateDebut).toISOString() : null;
+      const currentFormDate = currentFormValue.dateDebut ? toLocalDateString(currentFormValue.dateDebut)! : null;
+      const contractDate = contract.dateDebut ? toLocalDateString(contract.dateDebut) : null;
       if (currentFormDate !== contractDate) {
-        patchObject.dateDebut = contract.dateDebut ? new Date(contract.dateDebut) : null;
+        patchObject.dateDebut = contract.dateDebut;
       }
 
       if (currentFormValue.periodeEnMois !== contract.periodeEnMois) {
@@ -164,8 +165,8 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
         const prevValeurResiduelle = prev.valeurResiduelle !== null && prev.valeurResiduelle !== undefined ? new Decimal(prev.valeurResiduelle).toString() : null;
         const currValeurResiduelle = curr.valeurResiduelle !== null && curr.valeurResiduelle !== undefined ? new Decimal(curr.valeurResiduelle).toString() : null;
 
-        const prevDateDebutISO = prev.dateDebut ? new Date(prev.dateDebut).toISOString() : null;
-        const currDateDebutISO = curr.dateDebut ? new Date(curr.dateDebut).toISOString() : null;
+        const prevDateDebutISO = prev.dateDebut ? toLocalDateString(prev.dateDebut) : null;
+        const currDateDebutISO = curr.dateDebut ? toLocalDateString(curr.dateDebut) : null;
 
         return prev.numeroContrat === curr.numeroContrat &&
           prev.immobilisation === curr.immobilisation &&

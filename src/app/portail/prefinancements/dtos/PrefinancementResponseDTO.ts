@@ -12,12 +12,12 @@ export interface PrefinancementResponseDTO {
   marcheNumero: string;
   banqueId: number;
   banqueName: string;
-  dateEmission: Date;
+  dateEmission: string;
   montant: number;
   observation: string;
   type: Type;
-  dateOperation: Date;
-  dateValeur: Date;
+  dateOperation: string;
+  dateValeur: string;
   status: Status;
   libelle:string
 }

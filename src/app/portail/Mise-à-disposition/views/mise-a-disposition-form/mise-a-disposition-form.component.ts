@@ -19,6 +19,7 @@ import {NgClass, NgIf} from "@angular/common";
 import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {Ripple} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-mise-a-disposition-form',
@@ -83,7 +84,7 @@ export class MiseADispositionFormComponent implements OnInit {
 
     this.miseAdispoForm = this.fb.group({
       banqueId: [miseAdispo ? miseAdispo.banqueId : null, Validators.required],
-      dateEmission: [miseAdispo ? new Date(miseAdispo.dateEmission) : null, Validators.required],
+      dateEmission: [miseAdispo ? parseLocalDate(miseAdispo.dateEmission) : null, Validators.required],
       montant: [miseAdispo ? miseAdispo.montant : null, [Validators.required, Validators.min(0.01)]],
       emetteur: [miseAdispo ? miseAdispo.emetteur : '', Validators.required],
       beneficiaire: [{ value: this.beneficiaireFixe, disabled: true }, Validators.required],
@@ -180,7 +181,8 @@ export class MiseADispositionFormComponent implements OnInit {
     this.loading = true;
 
     // Construire le DTO de requête en utilisant getRawValue() pour inclure les champs désactivés (beneficiaire, type)
-    const requestDto = this.miseAdispoForm.getRawValue();
+    const raw = this.miseAdispoForm.getRawValue();
+    const requestDto = { ...raw, dateEmission: toLocalDateString(raw.dateEmission)! };
 
 
     let operation$: Observable<MiseADispositionResponseDto>;

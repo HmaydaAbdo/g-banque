@@ -8,8 +8,8 @@ export interface FraisBancaireResponseDto {
   montant: Decimal;
   banqueId: number;
   banqueNom: string;
-  dateEmission: Date;
-  dateValeur?: Date;
-  dateOperation?: Date;
+  dateEmission: string;
+  dateValeur?: string;
+  dateOperation?: string;
   status: Status;
 }

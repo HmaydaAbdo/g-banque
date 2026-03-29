@@ -55,6 +55,7 @@ import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fon
 import { SousLigneResponseDto } from "../../dtos/SousLigneResponseDto";
 import { SousLigneRequestDto } from "../../dtos/SousLigneRequestDto";
 import { MarcheService } from "../../../Marches/service/marche-service.service";
+import { parseLocalDate, toLocalDateString } from "../../../global/types/date.utils";
 
 // ========== CONSTANTS ==========
 const CAUTION_ADMINISTRATIVE_ID = 16;
@@ -430,8 +431,8 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
       natureLigneFonctionnelleId: ligne.natureLigneFonctionnelleId,
       plafond: ligne.plafond,
       taux: ligne.taux,
-      dateDepart: ligne.dateDepart ? new Date(ligne.dateDepart) : null,
-      dateFin: ligne.dateFin ? new Date(ligne.dateFin) : null
+      dateDepart: parseLocalDate(ligne.dateDepart),
+      dateFin: parseLocalDate(ligne.dateFin)
     }, { emitEvent: false });
 
     if (ligne.estLigneMere && ligne.sousLignes?.length) {
@@ -618,8 +619,8 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
       marcheId: formValue.marcheId || null, // ✅ Peut être null
       plafond: formValue.plafond,
       taux: formValue.taux,
-      dateDepart: formValue.dateDepart,
-      dateFin: formValue.dateFin,
+      dateDepart: toLocalDateString(formValue.dateDepart)!,
+      dateFin: toLocalDateString(formValue.dateFin)!,
       sousLignes: this.isEditMode ? [] : sousLignes
     };
   }

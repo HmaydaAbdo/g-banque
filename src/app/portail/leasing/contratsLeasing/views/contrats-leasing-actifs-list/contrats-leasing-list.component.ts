@@ -34,6 +34,7 @@ import { BreadcrumbModule } from "primeng/breadcrumb";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { InputNumberModule } from "primeng/inputnumber";
+import { parseLocalDate } from '../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-contrat-leasing-list',
@@ -310,7 +311,7 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
           numeroContrat: contrat.numeroContrat,
           immobilisation: contrat.immobilisation,
           montantAchatTTC: contrat.montantAchatTTC,
-          dateDebut: contrat.dateDebut,
+          dateDebut: parseLocalDate(contrat.dateDebut),
           periodeEnMois: contrat.periodeEnMois,
           organismeLeasingId: contrat.organismeLeasingId,
           banqueDePrelevementId: contrat.banqueDePrelevementId,

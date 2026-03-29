@@ -26,6 +26,7 @@ import { EncoursOperationsErroneDto } from "../../../../../operationErronées/dt
 import { OperationErroneResponseDto } from "../../../../../operationErronées/dtos/OperationErroneResponseDto";
 import {OperationErroneValidationRequest} from "../../../../dtos/operation-erronés/OperationErroneValidationRequest";
 import {TagModule} from "primeng/tag";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-encours-operation-errone',
@@ -189,7 +190,7 @@ export class EncoursOperationErroneComponent implements OnInit {
     this.selectedOperation = operation;
     this.rapprochementForm.reset();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(operation.dateEmission),
+      dateEmission: parseLocalDate(operation.dateEmission)!,
       observation: operation.observation,
       libelle: operation.libelle,
     });

@@ -6,7 +6,7 @@
     marcheId?: number | null;
     plafond: number;
     taux: number;
-    dateDepart: Date;
-    dateFin: Date;
+    dateDepart: string;
+    dateFin: string;
     sousLignes:SousLigneRequestDto[]
   }

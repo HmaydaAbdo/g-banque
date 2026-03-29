@@ -33,6 +33,7 @@ import {DropdownModule} from "primeng/dropdown";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 
 @Component({
@@ -149,7 +150,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
     this.selectedMiseADisposition = miseADisposition;
     this.initRapprochementForm();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(miseADisposition.dateEmission),
+      dateEmission: parseLocalDate(miseADisposition.dateEmission)!,
       libelle:miseADisposition.libelle,
       observation:miseADisposition.observation,
     })

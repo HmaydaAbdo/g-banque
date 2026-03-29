@@ -19,6 +19,7 @@ import {MarcheService} from "../../service/marche-service.service";
 import {DropdownModule} from "primeng/dropdown";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {InputSwitchModule} from "primeng/inputswitch";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 
 @Component({
@@ -109,8 +110,8 @@ export class MarchesFormComponent implements OnInit {
           nom: data.nom,
           montant: new Decimal(data.montant),
           maitreDouvrage: data.maitreDouvrage,
-          dateDebutDesTravaux: data.dateDebutDesTravaux ? new Date(data.dateDebutDesTravaux) : null,
-          dateDAchievementDesTravaux: data.dateDAchievementDesTravaux ? new Date(data.dateDAchievementDesTravaux) : null,
+          dateDebutDesTravaux: data.dateDebutDesTravaux ? parseLocalDate(data.dateDebutDesTravaux) : null,
+          dateDAchievementDesTravaux: data.dateDAchievementDesTravaux ? parseLocalDate(data.dateDAchievementDesTravaux) : null,
           banqueId: data.banqueId,
           isNanti: data.nanti
         });
@@ -180,8 +181,8 @@ export class MarchesFormComponent implements OnInit {
       nom: formValue.nom,
       montant: formValue.montant,
       maitreDouvrage: formValue.maitreDouvrage,
-      dateDebutDesTravaux: formValue.dateDebutDesTravaux || null,
-      dateDAchievementDesTravaux: formValue.dateDAchievementDesTravaux || null,
+      dateDebutDesTravaux: toLocalDateString(formValue.dateDebutDesTravaux) ?? undefined,
+      dateDAchievementDesTravaux: toLocalDateString(formValue.dateDAchievementDesTravaux) ?? undefined,
       banqueId: formValue.banqueId,
       isNanti: formValue.isNanti
     };

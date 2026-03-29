@@ -96,22 +96,22 @@ export interface LigneFonctionnelleResponse {
    * Date de début de validité
    * Format: ISO 8601 string from backend, parsed to Date
    */
-  dateDepart: string | Date;
+  dateDepart: string;
 
   /**
    * Date de fin de validité
    */
-  dateFin: string | Date;
+  dateFin: string;
 
   /**
    * Date de création de l'enregistrement
    */
-  dateCreation: string | Date;
+  dateCreation: string;
 
   /**
    * Date de dernière modification
    */
-  dateModification: string | Date;
+  dateModification: string;
 
   // ========== ÉTAT ==========
 

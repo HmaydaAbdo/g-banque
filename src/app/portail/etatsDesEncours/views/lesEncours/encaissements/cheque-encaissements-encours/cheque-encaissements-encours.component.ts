@@ -26,6 +26,7 @@ import {Ripple} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
 import {TooltipModule} from "primeng/tooltip";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-cheque-encaissements-encours',
@@ -144,7 +145,7 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
     this.initRapprochementForm();
 
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(cheque.dateEmission) ,
+      dateEmission: parseLocalDate(cheque.dateEmission)! ,
       observation: cheque.observation,
       libelle: cheque.libelle
     });

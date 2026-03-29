@@ -16,6 +16,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {Ripple} from "primeng/ripple";
 import {StyleClassModule} from "primeng/styleclass"; // Import ActivatedRoute and Router
+import { toLocalDateString, parseLocalDate } from '../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-organisme-leasing-form',
@@ -120,8 +121,8 @@ export class OrganismeLeasingFormComponent implements OnInit {
     this.organismeLeasingForm.patchValue({
       nom: data.nom,
       plafond: data.plafond,
-      dateDebut: data.dateDebut ? new Date(data.dateDebut) : null,
-      dateFin: data.dateFin ? new Date(data.dateFin) : null,
+      dateDebut: data.dateDebut ? parseLocalDate(data.dateDebut) : null,
+      dateFin: data.dateFin ? parseLocalDate(data.dateFin) : null,
     });
     this.organismeLeasingForm.updateValueAndValidity();
   }
@@ -141,8 +142,8 @@ export class OrganismeLeasingFormComponent implements OnInit {
     const request: OrganismeLeasingRequest = {
       nom: formValue.nom,
       plafond: formValue.plafond,
-      dateDebut: formValue.dateDebut ? (formValue.dateDebut as Date).toISOString() : '',
-      dateFin: formValue.dateFin ? (formValue.dateFin as Date).toISOString() : '',
+      dateDebut: formValue.dateDebut ? toLocalDateString(formValue.dateDebut)! : '',
+      dateFin: formValue.dateFin ? toLocalDateString(formValue.dateFin)! : '',
     };
 
     if (this.isEditMode && this.organismeId !== null) {

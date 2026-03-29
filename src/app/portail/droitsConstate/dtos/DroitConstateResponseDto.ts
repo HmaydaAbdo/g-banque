@@ -9,7 +9,7 @@ export interface DroitConstateResponseDto {
   marcheNumero: string;
   banqueId: number;
   banqueName: string;
-  dateEmission: Date;
+  dateEmission: string;
   montant: number;
   observation: string;
   type: Type;

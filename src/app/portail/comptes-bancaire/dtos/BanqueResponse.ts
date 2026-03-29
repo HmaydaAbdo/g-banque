@@ -11,6 +11,6 @@ export interface BanqueResponse {
   agence: string;
   soldeActuel: number;
   soldeDepart:number
-  dateCreation: Date;
-  dateModification: Date;
+  dateCreation: string;
+  dateModification: string;
 }

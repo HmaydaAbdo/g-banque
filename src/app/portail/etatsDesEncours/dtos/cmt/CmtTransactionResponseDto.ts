@@ -9,9 +9,9 @@ export interface CmtTransactionResponseDto {
   observation: string;
   creditoMoyenTermeId: number;
   echeanceId: number;
-  dateEmission: Date;
-  dateValeur: Date;
-  dateOperations: Date;
+  dateEmission: string;
+  dateValeur: string;
+  dateOperations: string;
   tvaDeductible: Decimal;
   tvaCollectee: Decimal;
   debit: Decimal;

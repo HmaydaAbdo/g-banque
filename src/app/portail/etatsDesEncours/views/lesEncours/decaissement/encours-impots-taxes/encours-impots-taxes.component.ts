@@ -26,6 +26,7 @@ import {ImpotEtTaxeService} from "../../../../../impotEtTaxes/service/ImpotEtTax
 import {ValidationService} from "../../../../services/validation/validation.service";
 import {ImpotEtTaxeValidationRequest} from "../../../../dtos/impotsEtTaxes/ImpotEtTaxeValidationRequest";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-encours-impots-taxes',
@@ -199,7 +200,7 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
     this.selectedImpotEtTaxe = impotEtTaxe;
     this.rapprochementForm.reset();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(impotEtTaxe.dateEmission),
+      dateEmission: parseLocalDate(impotEtTaxe.dateEmission)!,
       observation: impotEtTaxe.observation,
       libelle: impotEtTaxe.libelle,
     });

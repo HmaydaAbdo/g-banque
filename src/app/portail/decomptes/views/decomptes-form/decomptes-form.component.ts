@@ -20,6 +20,7 @@ import { DecompteService } from '../../service/DecompteService';
 import { MarcheService } from '../../../Marches/service/marche-service.service';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { DecompteRequestDto } from '../../dtos/DecompteRequestDto';
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-decompte-form',
@@ -170,7 +171,7 @@ export class DecompteFormComponent implements OnInit {
     this.decompteService.getDecompteById(id).subscribe(data => {
       this.decompteForm.patchValue({
         marcheId: data.marcheId,
-        dateEmission: new Date(data.dateEmission),
+        dateEmission: parseLocalDate(data.dateEmission),
         montant: data.montant,
         libelle: data.libelle,
         banqueEncaissementId: data.banqueEncaissementId
@@ -190,7 +191,8 @@ export class DecompteFormComponent implements OnInit {
 
         const request: DecompteRequestDto = {
           ...formRawValue,
-          banqueEncaissementId: formRawValue.banqueEncaissementId
+          banqueEncaissementId: formRawValue.banqueEncaissementId,
+          dateEmission: toLocalDateString(formRawValue.dateEmission)!
         };
 
         const action$ = this.isEditMode && this.decompteId

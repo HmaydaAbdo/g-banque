@@ -7,9 +7,9 @@ import {TransactionSource} from "./TransactionSource";
  */
 export interface TransactionResponseDto {
   id: number;
-  dateEmission: Date;
-  dateValeur: Date;
-  dateOperations: Date;
+  dateEmission: string;
+  dateValeur: string;
+  dateOperations: string;
   observation: string;
   tvaDeductible: number ;
   tvaCollectee: number;

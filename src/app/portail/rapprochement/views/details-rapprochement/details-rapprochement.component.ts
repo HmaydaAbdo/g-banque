@@ -23,6 +23,7 @@ import {DialogModule} from "primeng/dialog";
 import {TransactionUpdateRequestDto} from "../../../transactions/dtos/TransactionUpdateRequestDto";
 import {TransactionService} from "../../../transactions/service/TransactionService";
 import {Ripple} from "primeng/ripple";
+import { parseLocalDate, toLocalDateString } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-details-rapprochement',
@@ -220,7 +221,7 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
 
   openEditDateDialog(transaction: TransactionResponseDto): void {
     this.selectedTransaction = transaction;
-    this.newDateValeur = transaction.dateValeur;
+    this.newDateValeur = parseLocalDate(transaction.dateValeur);
     this.displayDateValuerDialog = true;
   }
 
@@ -240,7 +241,7 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const updateDto: TransactionUpdateRequestDto = { dateValeur: this.newDateValeur };
+    const updateDto: TransactionUpdateRequestDto = { dateValeur: toLocalDateString(this.newDateValeur)! };
 
     this.transactionService.updateTransactionById(this.selectedTransaction.id, updateDto)
       .subscribe({

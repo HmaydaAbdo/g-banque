@@ -4,9 +4,9 @@ import {Type} from "../../../enums/Type";
 
 export interface SuiviePrefiLigneResponseDto {
   id: number;
-  dateEmission: Date;
-  dateOperation: Date;
-  dateValeur: Date;
+  dateEmission: string;
+  dateOperation: string;
+  dateValeur: string;
   libelle: string;
   debit: Decimal;
   credit: Decimal;

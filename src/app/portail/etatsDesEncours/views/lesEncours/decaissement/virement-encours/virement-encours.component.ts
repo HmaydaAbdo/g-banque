@@ -29,6 +29,7 @@ import {InputNumberModule} from "primeng/inputnumber";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 
 @Component({
@@ -145,7 +146,7 @@ export class VirementEncoursComponent implements OnInit {
     this.initRapprochementForm();
 
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(virement.dateEmission),
+      dateEmission: parseLocalDate(virement.dateEmission)!,
       libelle:virement.libelle,
       observation:virement.observation
     })

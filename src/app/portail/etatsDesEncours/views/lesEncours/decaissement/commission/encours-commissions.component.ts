@@ -27,6 +27,7 @@ import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 import {AuthService} from "../../../../../../auth/services/auth.service";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-encours-commissions',
@@ -206,7 +207,7 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
     this.selectedCommission = commission;
     this.rapprochementForm.reset();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(commission.dateEmission),
+      dateEmission: parseLocalDate(commission.dateEmission)!,
       observation: commission.observation,
       libelle: commission.libelle,
     })

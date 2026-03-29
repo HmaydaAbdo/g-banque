@@ -3,7 +3,7 @@ import {Decimal} from "decimal.js";
 
 export interface DroitConstateRequestDto {
   marcheId: number;
-  dateEmission: Date;
+  dateEmission: string;
   montant: number;
   type: Type;
 }

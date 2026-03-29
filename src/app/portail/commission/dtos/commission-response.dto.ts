@@ -10,8 +10,8 @@ export interface CommissionResponseDto {
   banqueNom: string;
   operation: TransactionSource;
   status: Status;
-  dateEmission: Date;
-  dateValeur?: Date;
-  dateOperation?: Date;
+  dateEmission: string;
+  dateValeur?: string;
+  dateOperation?: string;
 
 }

@@ -26,6 +26,7 @@ import {BankStateService} from "../../../../../comptes-bancaire/services/bank-st
 import {ImpayeeService} from "../../../../../impayees/service/ImpayeeService";
 import {ImpayeeValidationRequest} from "../../../../dtos/impayee/Impayeevalidationrequest";
 import {Type} from "../../../../../Virements/Type";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-encaissement-encours-impaye',
@@ -173,7 +174,7 @@ export class EncaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
     this.selectedImpayee = impayee;
     this.rapprochementForm.reset();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(impayee.dateEmission),
+      dateEmission: parseLocalDate(impayee.dateEmission)!,
       observation: impayee.observation,
       libelle: impayee.libelle,
     });

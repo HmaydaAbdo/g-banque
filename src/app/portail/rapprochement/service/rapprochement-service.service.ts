@@ -7,6 +7,7 @@ import {RapprochementResponse} from "../dtos/RapprochementResponse";
 import {RapprochementSearchDto} from "../dtos/RapprochementSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
 import {TransactionSearchDto} from "../../transactions/dtos/TransactionSearchDto";
+import {toLocalDateString} from "../../global/types/date.utils";
 
 @Injectable({
   providedIn: 'root'
@@ -112,14 +113,14 @@ export class RapprochementService {
     if (searchDto.dateOperationDebut) {
       params = params.set(
         'dateOperationDebut',
-        new Date(searchDto.dateOperationDebut).toISOString()
+        toLocalDateString(new Date(searchDto.dateOperationDebut))!
       );
     }
 
     if (searchDto.dateOperationFin) {
       params = params.set(
         'dateOperationFin',
-        new Date(searchDto.dateOperationFin).toISOString()
+        toLocalDateString(new Date(searchDto.dateOperationFin))!
       );
     }
     return params;

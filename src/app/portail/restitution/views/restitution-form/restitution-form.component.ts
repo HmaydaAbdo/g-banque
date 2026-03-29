@@ -22,6 +22,7 @@ import { RestitutionService } from '../../service/restitution.service';
 import { RestitutionResponseDto } from '../../dtos/RestitutionResponseDto';
 import { RestitutionRequestDto } from '../../dtos/RestitutionRequestDto';
 import {InputTextareaModule} from "primeng/inputtextarea";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-restitution-form',
@@ -134,7 +135,7 @@ export class RestitutionFormComponent implements OnInit {
           observation: restitution.observation,
           libelle: restitution.libelle,
           montant: restitution.montant,
-          dateEmission: new Date(restitution.dateEmission),
+          dateEmission: parseLocalDate(restitution.dateEmission),
         });
 
         // Charger la banque si elle n'est pas dans la liste
@@ -194,7 +195,7 @@ export class RestitutionFormComponent implements OnInit {
       libelle: formValue.libelle,
       observation: formValue.observation,
       montant: formValue.montant,
-      dateEmission: formValue.dateEmission.toISOString(),
+      dateEmission: toLocalDateString(formValue.dateEmission)!,
     };
 
     if (this.isEditMode && this.restitutionId) {

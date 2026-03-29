@@ -21,6 +21,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import {Motif, MotifLabels} from "../../dtos/Motif";
 import {ImpotEtTaxeService} from "../../service/ImpotEtTaxeService";
 import {InputTextareaModule} from "primeng/inputtextarea";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-impot-et-taxe-form',
@@ -138,7 +139,7 @@ export class ImpotEtTaxeFormComponent implements OnInit {
           observation: impotEtTaxe.observation,
           libelle: impotEtTaxe.libelle,
           montant: impotEtTaxe.montant,
-          dateEmission: new Date(impotEtTaxe.dateEmission),
+          dateEmission: parseLocalDate(impotEtTaxe.dateEmission),
         });
 
         // Ajout de la banque dans options si manquante
@@ -187,7 +188,7 @@ export class ImpotEtTaxeFormComponent implements OnInit {
       libelle: formValue.libelle,
       observation: formValue.observation,
       montant: formValue.montant,
-      dateEmission: formValue.dateEmission,
+      dateEmission: toLocalDateString(formValue.dateEmission)!,
     };
 
     if (this.isEditMode && this.impotEtTaxeId) {

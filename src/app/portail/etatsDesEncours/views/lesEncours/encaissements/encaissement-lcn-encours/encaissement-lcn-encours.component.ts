@@ -28,6 +28,7 @@ import {LcnTransactionRequest} from "../../../../dtos/lcn/LcnTransactionRequest"
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {EncoursLcnResponse} from "../../../../../LCN/dtos/EncoursLcnResponse";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-encaissement-lcn-encours',
@@ -148,7 +149,7 @@ export class EncaissementLcnEncoursComponent implements OnInit {
     this.selectedLcn = lcn;
     this.initRapprochementForm();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(lcn.dateEcheance),
+      dateEmission: parseLocalDate(lcn.dateEcheance)!,
       libelle:lcn.libelle,
       observation:lcn.observation,
     })

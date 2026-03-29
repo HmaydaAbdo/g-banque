@@ -25,6 +25,7 @@ import {FraisBancaireValidationRequest} from "../../../../dtos/frais-bancaire/fr
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-encours-fraisBancaire',
@@ -197,7 +198,7 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
     this.selectedFraisBancaire = fraisBancaire;
     this.rapprochementForm.reset();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(fraisBancaire.dateEmission),
+      dateEmission: parseLocalDate(fraisBancaire.dateEmission)!,
       observation: fraisBancaire.observation,
       libelle: fraisBancaire.libelle,
     })

@@ -28,6 +28,7 @@ import {InputNumberModule} from "primeng/inputnumber";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 
 @Component({
@@ -145,7 +146,7 @@ export class LcnEncoursComponent implements OnInit {
     this.selectedLcn = lcn;
     this.initRapprochementForm();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(lcn.dateEcheance),
+      dateEmission: parseLocalDate(lcn.dateEcheance)!,
       libelle:lcn.libelle,
       observation:lcn.observation,
     })

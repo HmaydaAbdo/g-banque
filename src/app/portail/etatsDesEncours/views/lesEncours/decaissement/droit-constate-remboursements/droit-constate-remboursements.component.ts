@@ -26,6 +26,7 @@ import {ActivatedRoute, RouterLink} from '@angular/router';
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 
 @Component({
@@ -169,7 +170,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
     this.selectedDroitConstate = dc;
     this.initRapprochementForm();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(dc.dateEmission),
+      dateEmission: parseLocalDate(dc.dateEmission)!,
       libelle: dc.libelle,
       observation : dc.observation
     })

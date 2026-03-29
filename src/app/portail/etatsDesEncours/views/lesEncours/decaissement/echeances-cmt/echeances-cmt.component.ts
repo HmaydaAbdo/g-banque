@@ -30,6 +30,7 @@ import {CmtTransactionRequest} from "../../../../dtos/cmt/CmtTransactionRequest"
 import {EcheanceCMTResponseDto} from "../../../../../cmt/dtos/EcheanceCMTResponseDto";
 import { InputTextModule } from 'primeng/inputtext';
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 
 @Component({
@@ -201,7 +202,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
     this.rapprochementForm.patchValue({
       // Pre-fill dateEmission with dateEcheance (convert string to Date object)
-      dateEmission: new Date(echeance.dateEcheance),
+      dateEmission: parseLocalDate(echeance.dateEcheance)!,
 
       // Pre-fill modifiable text fields
       observation: echeance.observation,

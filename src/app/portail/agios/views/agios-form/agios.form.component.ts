@@ -20,6 +20,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { AgiosService } from "../../service/agios.service";
 import { AgiosResponseDto } from "../../dtos/AgiosResponseDto";
 import { AgiosRequestDto } from "../../dtos/AgiosRequestDto";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-agios-form',
@@ -128,7 +129,7 @@ export class AgiosFormComponent implements OnInit {
           observation: agios.observation,
           libelle: agios.libelle,
           montant: agios.montant,
-          dateEmission: new Date(agios.dateEmission),
+          dateEmission: parseLocalDate(agios.dateEmission),
         });
 
         // Ajout de la banque dans options si manquante
@@ -187,7 +188,7 @@ export class AgiosFormComponent implements OnInit {
       libelle: formValue.libelle,
       observation: formValue.observation,
       montant: formValue.montant,
-      dateEmission: formValue.dateEmission,
+      dateEmission: toLocalDateString(formValue.dateEmission)!,
     };
 
     if (this.isEditMode && this.agiosId) {

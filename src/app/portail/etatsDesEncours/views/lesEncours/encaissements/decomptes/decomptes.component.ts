@@ -25,6 +25,7 @@ import _default from "chart.js/dist/plugins/plugin.tooltip";
 import numbers = _default.defaults.animations.numbers;
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 
 @Component({
@@ -164,7 +165,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
     this.selectedDecompte = decompte;
     this.initRapprochementForm();
     this.rapprochementForm.patchValue({
-      dateEmission:new Date(decompte.dateEmission),
+      dateEmission:parseLocalDate(decompte.dateEmission)!,
       libelle:decompte.libelle,
       observation:decompte.observation
     })

@@ -7,6 +7,7 @@ import { PageResponse } from "../../global/types/PageResponse";
 import { TransactionResponseDto } from "../dtos/TransactionResponseDto";
 import { AgreratedTransactionResponseDto } from "../dtos/AgreratedTransactionResponseDto";
 import {TransactionUpdateRequestDto} from "../dtos/TransactionUpdateRequestDto";
+import {toLocalDateString} from "../../global/types/date.utils";
 
 @Injectable({
   providedIn: 'root'
@@ -99,14 +100,14 @@ export class TransactionService {
     if (searchDto.dateOperationDebut) {
       params = params.set(
         'dateOperationDebut',
-        new Date(searchDto.dateOperationDebut).toISOString()
+        toLocalDateString(new Date(searchDto.dateOperationDebut))!
       );
     }
 
     if (searchDto.dateOperationFin) {
       params = params.set(
         'dateOperationFin',
-        new Date(searchDto.dateOperationFin).toISOString()
+        toLocalDateString(new Date(searchDto.dateOperationFin))!
       );
     }
     return params;

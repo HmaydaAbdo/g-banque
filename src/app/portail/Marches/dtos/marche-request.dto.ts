@@ -5,8 +5,8 @@ export interface MarcheRequestDTO {
   nom: string;
   montant: Decimal;
   maitreDouvrage: string;
-  dateDebutDesTravaux?: Date;
-  dateDAchievementDesTravaux?: Date;
+  dateDebutDesTravaux?: string;
+  dateDAchievementDesTravaux?: string;
   banqueId: number;
   isNanti: boolean;
 }

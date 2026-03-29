@@ -4,9 +4,9 @@ import {Type} from "../../../../prefinancements/enums/Type";
 
 export interface SuivieDcLigneResponseDto {
   id: number;
-  dateEmission: Date;
-  dateOperation: Date;
-  dateValeur: Date;
+  dateEmission: string;
+  dateOperation: string;
+  dateValeur: string;
   libelle: string;
   debit: Decimal;
   credit: Decimal;

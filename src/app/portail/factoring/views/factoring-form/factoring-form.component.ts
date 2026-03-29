@@ -23,6 +23,7 @@ import { Type } from "../../../prefinancements/enums/Type";
 import { FactoringRequestDto } from '../../dtos/FactoringRequestDto';
 import { FactoringResponseDto } from '../../dtos/FactoringResponseDto';
 import { MarcheResponseDTO } from '../../../Marches/dtos/marche-response.dto';
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-factoring-form',
@@ -156,7 +157,7 @@ export class FactoringFormComponent implements OnInit {
           }
           this.factoringForm.patchValue({
             marcheId: factoring.marcheId,
-            dateEmission: new Date(factoring.dateEmission),
+            dateEmission: parseLocalDate(factoring.dateEmission),
             montant: factoring.montant,
             type: factoring.type,
           });
@@ -193,7 +194,11 @@ export class FactoringFormComponent implements OnInit {
 
   executeSave(): void {
     this.loading = true;
-    const request: FactoringRequestDto = this.factoringForm.value;
+    const formValue = this.factoringForm.value;
+    const request: FactoringRequestDto = {
+      ...formValue,
+      dateEmission: toLocalDateString(formValue.dateEmission)!
+    };
 
     const op$ = (this.isEditMode && this.factoringId)
       ? this.factoringService.updateFactoring(this.factoringId, request)

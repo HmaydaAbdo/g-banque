@@ -7,9 +7,9 @@ export interface VirementInternationalResponseDto {
   beneficiaire: string;
   emetteur: string;
   montant: number;
-  dateEmission: Date;
-  dateOperation: Date;
-  dateValeur: Date;
+  dateEmission: string;
+  dateOperation: string;
+  dateValeur: string;
   libelle: string;
   observation: string;
   active: boolean;

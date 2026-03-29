@@ -23,6 +23,7 @@ import { Type } from '../../../Virements/Type';
 import { VirementInternationalService } from '../../service/virement-international.service';
 import { VirementInternationalResponseDto } from '../../dtos/VirementInternationalResponseDto';
 import { VirementInternationalRequestDto } from '../../dtos/VirementInternationalRequestDto';
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-virement-international-form',
@@ -87,7 +88,7 @@ export class VirementInternationalFormComponent implements OnInit {
   private initForm(virement?: VirementInternationalResponseDto): void {
     this.virementForm = this.fb.group({
       banqueId: [virement ? virement.banqueId : null, Validators.required],
-      dateEmission: [virement ? new Date(virement.dateEmission) : null, Validators.required],
+      dateEmission: [virement ? parseLocalDate(virement.dateEmission) : null, Validators.required],
       montant: [virement ? virement.montant : null, [Validators.required, Validators.min(0.01)]],
       type: [virement ? virement.type : null, Validators.required],
       beneficiaire: [virement ? virement.beneficiaire : '', Validators.required],
@@ -187,7 +188,8 @@ export class VirementInternationalFormComponent implements OnInit {
     this.loading = true;
 
     // Construire le DTO de requête
-    const requestDto: VirementInternationalRequestDto = this.virementForm.getRawValue();
+    const raw = this.virementForm.getRawValue();
+    const requestDto: VirementInternationalRequestDto = { ...raw, dateEmission: toLocalDateString(raw.dateEmission)! };
 
     let operation$: Observable<VirementInternationalResponseDto>;
     let successMessage: string;

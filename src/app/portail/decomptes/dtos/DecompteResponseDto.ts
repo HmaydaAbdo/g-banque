@@ -13,7 +13,7 @@ export interface DecompteResponseDto {
   banqueEncaissementId: number;
   banqueEncaissementName: string;
 
-  dateEmission: Date;
+  dateEmission: string;
   montant: number;
   observation: string;
   dateOperation: string;

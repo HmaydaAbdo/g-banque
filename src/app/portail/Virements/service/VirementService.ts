@@ -8,6 +8,7 @@ import {VirementResponseDto} from "../dtos/VirementResponseDto";
 import {EncoursVirementResponseDto} from "../dtos/EncoursVirementResponseDto";
 import {EncoursVirementsSearchDto} from "../dtos/EncoursVirementsSearchDto";
 import {VirementRequestDto} from "../dtos/VirementRequestDto";
+import {toLocalDateString} from "../../global/types/date.utils";
 
 @Injectable({
   providedIn: 'root'
@@ -54,7 +55,7 @@ export class VirementService {
         let stringValue: string;
 
         if (key === 'dateEmission' && value instanceof Date) {
-          stringValue = value.toISOString();
+          stringValue = toLocalDateString(value)!;
         } else if (key === 'montant' && typeof value === 'number') {
           stringValue = value.toString();
         } else {
@@ -90,7 +91,7 @@ export class VirementService {
 
         if (key === 'dateEmission' && value instanceof Date) {
           // CORRECTION: Formatte la Date en YYYY-MM-DD
-          stringValue = value.toISOString();
+          stringValue = toLocalDateString(value)!;
         } else if (key === 'montant' && typeof value === 'number') {
           stringValue = value.toString();
         } else {
@@ -124,7 +125,7 @@ export class VirementService {
       .set('sort', sort);
 
     if (searchDto.dateEmission) {
-      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
+      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
     }
     if (searchDto.beneficiaire) {
       params = params.set('beneficiaire', searchDto.beneficiaire);
@@ -151,7 +152,7 @@ export class VirementService {
       .set('sort', sort);
 
     if (searchDto.dateEmission) {
-      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
+      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
     }
     if (searchDto.emetteur){
       params = params.set('emetteur', searchDto.emetteur);

@@ -25,9 +25,9 @@ export interface ContratLeasingResponseDTO {
   nomOrganismeLeasing: string;
   immobilisation: string;
   montantAchatTTC: number;
-  dateDebut: Date;
+  dateDebut: string;
   periodeEnMois: number;
-  dateFin: Date;
+  dateFin: string;
   typeContrat: TypeContratLeasing;
   valeurResiduelle: number;
   phases?: ContratLeasingPhaseResponseDTO[];

@@ -4,8 +4,8 @@ import {NatureLcn} from "./NatureLcn";
 export  interface LcnRequestDto {
 
   numero:string
-  dateEmission:Date
-  dateEcheance:Date
+  dateEmission:string
+  dateEcheance:string
   beneficiaire:string
   banqueId:number
   emetteur:string

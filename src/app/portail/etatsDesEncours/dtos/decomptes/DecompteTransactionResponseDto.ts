@@ -8,9 +8,9 @@ export interface DecompteTransactionResponseDto {
   marcheNumero: string;
   libelle: string;
   observation: string;
-  dateEmission: Date;
-  dateValeur: Date;
-  dateOperations: Date;
+  dateEmission: string;
+  dateValeur: string;
+  dateOperations: string;
   debit: Decimal;
   credit: Decimal;
   transactionSource: TransactionSource

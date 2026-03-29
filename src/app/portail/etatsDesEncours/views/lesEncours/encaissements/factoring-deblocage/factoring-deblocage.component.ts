@@ -23,6 +23,7 @@ import {EncoursFactoringSearchDto} from "../../../../../factoring/dtos/EncoursFa
 import {EncoursFactoringDto} from "../../../../../factoring/dtos/EncoursFactoringDto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-factoring-deblocage',
@@ -156,7 +157,7 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
     this.selectedFactoring = factoring;
     this.initRapprochementForm();
     this.rapprochementForm.patchValue({
-      dateEmission:new Date(factoring.dateEmission),
+      dateEmission:parseLocalDate(factoring.dateEmission)!,
       libelle:factoring.libelle,
       observation:factoring.observation
     })

@@ -24,6 +24,7 @@ import {PrelevementService} from "../../service/prelevement.service";
 import {PrelevementResponseDto} from "../../dtos/PrelevementResponseDto";
 import {PrelevementRequestDto} from "../../dtos/PrelevementRequestDto";
 import {InputTextareaModule} from "primeng/inputtextarea";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 
 @Component({
@@ -135,7 +136,7 @@ export class PrelevementFormComponent implements OnInit {
           observation: prelevement.observation,
           libelle: prelevement.libelle,
           montant: prelevement.montant,
-          dateEmission: new Date(prelevement.dateEmission),
+          dateEmission: parseLocalDate(prelevement.dateEmission),
         });
 
 
@@ -183,7 +184,7 @@ export class PrelevementFormComponent implements OnInit {
       libelle: formValue.libelle,
       observation: formValue.observation,
       montant: formValue.montant,
-      dateEmission: formValue.dateEmission,
+      dateEmission: toLocalDateString(formValue.dateEmission)!,
     };
 
     if (this.isEditMode && this.prelevementId) {

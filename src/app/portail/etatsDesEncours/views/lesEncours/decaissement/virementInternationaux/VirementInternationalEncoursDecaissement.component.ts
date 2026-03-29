@@ -35,6 +35,7 @@ import {
 import {
   EncoursVirementInternationalResponseDto
 } from "../../../../../virementInternational/dtos/EncoursVirementInternationalResponseDto";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-virement-international-encours-decaissement',
@@ -148,7 +149,7 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
     this.initRapprochementForm();
 
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(virement.dateEmission),
+      dateEmission: parseLocalDate(virement.dateEmission)!,
       libelle: virement.libelle,
       observation: virement.observation
     });

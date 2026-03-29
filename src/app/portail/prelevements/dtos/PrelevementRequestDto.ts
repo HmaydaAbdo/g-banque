@@ -5,5 +5,5 @@ export interface PrelevementRequestDto {
   observation: string;
   montant: Decimal;
   banqueId: number;
-  dateEmission: Date;
+  dateEmission: string;
 }

@@ -5,15 +5,15 @@ export interface EcheanceLeasingResponse {
   contratLeasingId: number;
   numeroContrat: string;
   numeroEcheance: number;
-  dateEcheance: Date;
-  dateValeur:Date
-  dateOperation:Date
+  dateEcheance: string;
+  dateValeur:string
+  dateOperation:string
   montantTTC: number;
   montantHT: number;
   montantTVA: number;
   statutPaiement: StatutEcheanceLeasing;
   observation: string;
   libelle:string
-  dateCreation: Date;
-  dateModification: Date;
+  dateCreation: string;
+  dateModification: string;
 }

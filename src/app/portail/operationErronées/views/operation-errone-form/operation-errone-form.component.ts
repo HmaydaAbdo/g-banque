@@ -23,6 +23,7 @@ import { PageResponse } from "../../../global/types/PageResponse";
 import { OperationErroneResponseDto } from "../../dtos/OperationErroneResponseDto";
 import { OperationErroneRequestDto } from "../../dtos/OperationErroneRequestDto";
 import { TransactionSource } from "../../../transactions/dtos/TransactionSource";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-operation-errone-form',
@@ -144,7 +145,7 @@ export class OperationErroneFormComponent implements OnInit {
           observation: operation.observation,
           libelle: operation.libelle,
           montant: operation.montant,
-          dateEmission: new Date(operation.dateEmission),
+          dateEmission: parseLocalDate(operation.dateEmission),
           motif: operation.motif,
         });
 
@@ -204,7 +205,7 @@ export class OperationErroneFormComponent implements OnInit {
       libelle: formValue.libelle,
       observation: formValue.observation,
       montant: formValue.montant,
-      dateEmission: formValue.dateEmission.toISOString(),
+      dateEmission: toLocalDateString(formValue.dateEmission)!,
       motif: formValue.motif,
     };
 

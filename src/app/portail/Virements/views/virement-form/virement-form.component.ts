@@ -22,6 +22,7 @@ import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {VirementRequestDto} from "../../dtos/VirementRequestDto";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {Ripple} from "primeng/ripple";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 
 
@@ -88,7 +89,7 @@ export class VirementFormComponent implements OnInit {
 
     this.virementForm = this.fb.group({
       banqueBeneficiaireId: [virement ? virement.banqueBeneficiaireId : null, Validators.required],
-      dateReception: [virement ? new Date(virement.dateEmission) : null, Validators.required],
+      dateReception: [virement ? parseLocalDate(virement.dateEmission) : null, Validators.required],
       montant: [virement ? virement.montant : null, [Validators.required, Validators.min(0.01)]],
       type:[{value: this.virementType, disabled: true},Validators.required],
       beneficiaire:[{value: "STAPORT", disabled: true},Validators.required],
@@ -183,7 +184,8 @@ export class VirementFormComponent implements OnInit {
     this.loading = true;
 
     // Construire le DTO de requête
-    const requestDto: VirementRequestDto = this.virementForm.getRawValue();
+    const raw = this.virementForm.getRawValue();
+    const requestDto: VirementRequestDto = { ...raw, dateReception: toLocalDateString(raw.dateReception)! };
 
     let operation$: Observable<VirementResponseDto>;
     let successMessage: string;

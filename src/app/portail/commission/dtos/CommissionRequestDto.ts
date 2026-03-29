@@ -7,5 +7,5 @@ export interface CommissionRequestDto {
   montant: Decimal;
   banqueId: number;
   operation: TransactionSource;
-  dateEmission: Date;
+  dateEmission: string;
 }

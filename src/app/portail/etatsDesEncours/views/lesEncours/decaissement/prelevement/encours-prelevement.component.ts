@@ -25,6 +25,7 @@ import { EncoursPrelevement } from "../../../../../prelevements/dtos/EncoursPrel
 import { PrelevementValidationRequestDto } from "../../../../dtos/prelevement/prelevement-validation-request.dto";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 
 @Component({
@@ -178,7 +179,7 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
     this.selectedPrelevement = prelevement;
     this.rapprochementForm.reset();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(prelevement.dateEmission),
+      dateEmission: parseLocalDate(prelevement.dateEmission)!,
       observation: prelevement.observation,
       libelle: prelevement.libelle,
     });

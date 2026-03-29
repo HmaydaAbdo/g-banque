@@ -1,4 +1,5 @@
 import {Injectable} from '@angular/core';
+import { toLocalDateString } from '../../global/types/date.utils';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from '../../../../environments/environment';
@@ -82,14 +83,14 @@ export class LcnService {
 
     // Append search criteria if they are present
     if (searchDto.dateEmission) {
-      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
+      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
     }
 
     if(searchDto.numero){
       params = params.set('numero', searchDto.numero)
     }
     if (searchDto.dateEcheance) {
-      params = params.set('dateEcheance', searchDto.dateEcheance.toISOString());
+      params = params.set('dateEcheance', toLocalDateString(searchDto.dateEcheance)!);
     }
     if (searchDto.emetteur) {
       params = params.set('emetteur', searchDto.emetteur);
@@ -167,10 +168,10 @@ export class LcnService {
       params = params.set('numero', searchDto.numero);
     }
     if (searchDto.dateEcheance) {
-      params = params.set('dateEcheance', searchDto.dateEcheance.toISOString());
+      params = params.set('dateEcheance', toLocalDateString(searchDto.dateEcheance)!);
     }
     if (searchDto.dateEmission) {
-      params = params.set('dateEmission', searchDto.dateEmission.toISOString());
+      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
     }
 
     if (searchDto.montant) {

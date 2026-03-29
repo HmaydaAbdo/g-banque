@@ -3,5 +3,5 @@ export interface RestitutionRequestDto {
   observation: string;
   montant: number;
   banqueId: number;
-  dateEmission: Date;
+  dateEmission: string;
 }

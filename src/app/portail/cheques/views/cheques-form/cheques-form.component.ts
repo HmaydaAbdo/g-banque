@@ -23,6 +23,7 @@ import { BanqueDto } from '../../../cmt/dtos/BanqueDto';
 import { ChequeResponseDto } from '../../dtos/ChequeResponseDto';
 import {Type} from "../../../Virements/Type";
 import {ChequeService} from "../../services/ChequeService";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-cheques-form',
@@ -87,8 +88,8 @@ export class ChequesFormComponent implements OnInit {
     this.chequeForm = this.fb.group({
       numero: [cheque ? cheque.numero : null, Validators.required],
       banqueId: [cheque ? cheque.banqueId : null, Validators.required],
-      dateEmission: [cheque ? new Date(cheque.dateEmission) : null, Validators.required],
-      dateEcheance: [cheque ? new Date(cheque.dateEcheance) : null], // Optionnel
+      dateEmission: [cheque ? parseLocalDate(cheque.dateEmission) : null, Validators.required],
+      dateEcheance: [cheque ? parseLocalDate(cheque.dateEcheance) : null], // Optionnel
       montant: [cheque ? cheque.montant : null, [Validators.required, Validators.min(0.01)]],
       emetteur: [cheque ? cheque.emetteur : '', Validators.required],
       beneficiaire: [{ value: this.beneficiaireFixe, disabled: true }, Validators.required],
@@ -179,7 +180,8 @@ export class ChequesFormComponent implements OnInit {
     this.loading = true;
 
     // Construire le DTO de requête en utilisant getRawValue() pour inclure les champs désactivés (beneficiaire, type)
-    const requestDto = this.chequeForm.getRawValue();
+    const raw = this.chequeForm.getRawValue();
+    const requestDto = { ...raw, dateEmission: toLocalDateString(raw.dateEmission)!, dateEcheance: toLocalDateString(raw.dateEcheance) };
 
 
     let operation$: Observable<ChequeResponseDto>;

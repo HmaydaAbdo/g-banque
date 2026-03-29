@@ -26,6 +26,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 
 @Component({
@@ -169,7 +170,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
     this.selectedPrefinancement = prefinancement;
     this.initRapprochementForm();
     this.rapprochementForm.patchValue({
-      dateEmission:new Date(prefinancement.dateEmission),
+      dateEmission:parseLocalDate(prefinancement.dateEmission)!,
       observation:prefinancement.observation,
       libelle:prefinancement.libelle
     })

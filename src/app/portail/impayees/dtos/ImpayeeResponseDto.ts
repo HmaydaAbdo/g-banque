@@ -10,11 +10,11 @@ export interface ImpayeeResponseDto {
   banqueId: number;
   banqueNom: string;
   motif: TransactionSource;
-  dateEmission: Date;
-  dateValeur?: Date;
-  dateOperation?: Date;
+  dateEmission: string;
+  dateValeur?: string;
+  dateOperation?: string;
   status: Status;
   type:Type;
-  dateCreation: Date;
-  dateModification: Date;
+  dateCreation: string;
+  dateModification: string;
 }

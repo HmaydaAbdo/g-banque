@@ -29,6 +29,7 @@ import {Ripple} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
 import {TooltipModule} from "primeng/tooltip";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-mise-a-dispo-encaissement-encours',
@@ -146,7 +147,7 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
     this.selectedMiseADisposition = miseADisposition;
     this.initRapprochementForm();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(miseADisposition.dateEmission),
+      dateEmission: parseLocalDate(miseADisposition.dateEmission)!,
       libelle:miseADisposition.libelle,
       observation:miseADisposition.observation,
     })

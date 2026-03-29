@@ -33,6 +33,7 @@ import { DonneesComplementairesRapprochementDTO } from "../../../../dtos/Donnees
 import {LeasingTransactionRequest} from "../../../../dtos/leasing/LeasingTransactionRequest";
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 
 @Component({
@@ -231,7 +232,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
     // Pré-remplissage des champs et gestion de la désactivation
     this.rapprochementForm.patchValue({
       // Pré-remplissage avec la date d'échéance et désactivation
-      dateEmission: new Date(echeance.dateEcheance),
+      dateEmission: parseLocalDate(echeance.dateEcheance)!,
 
       // Pré-remplissage de l'observation et du libellé
       observation: echeance.observation,

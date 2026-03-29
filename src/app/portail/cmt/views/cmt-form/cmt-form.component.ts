@@ -23,6 +23,7 @@ import { PageResponse } from '../../../global/types/PageResponse';
 import {CreditMoyenTermeResponseDto} from "../../dtos/CreditMoyenTermeResponseDto";
 import {CreditMoyenTermeRequestDto} from "../../dtos/CreditMoyenTermeRequestDto";
 import {BreadcrumbModule} from "primeng/breadcrumb";
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 
 @Component({
@@ -127,7 +128,7 @@ export class CmtFormComponent implements OnInit {
           duree: credit.duree,
           echeance: credit.echeance,
           taux: credit.taux,
-          dateDebut: credit.dateDebut ? new Date(credit.dateDebut) : null,
+          dateDebut: credit.dateDebut ? parseLocalDate(credit.dateDebut) : null,
         });
         this.loading = false;
       },
@@ -167,7 +168,11 @@ export class CmtFormComponent implements OnInit {
 
   executeSaveCredit(): void {
     this.loading = true;
-    const cmtRequest: CreditMoyenTermeRequestDto = this.cmtForm.value;
+    const formValue = this.cmtForm.value;
+    const cmtRequest: CreditMoyenTermeRequestDto = {
+      ...formValue,
+      dateDebut: toLocalDateString(formValue.dateDebut)!
+    };
 
     if (this.isEditMode && this.creditId) {
       this.cmtService.updateCredit(this.creditId, cmtRequest)

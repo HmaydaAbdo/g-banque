@@ -8,9 +8,9 @@ export interface LeasingTransactionResponse {
   observation: string;
   contratLeasingId: number;
   echeanceId: number;
-  dateEmission: Date;
-  dateValeur: Date;
-  dateOperations: Date;
+  dateEmission: string;
+  dateValeur: string;
+  dateOperations: string;
   tvaDeductible: Decimal;
   tvaCollectee: Decimal;
   debit: Decimal;

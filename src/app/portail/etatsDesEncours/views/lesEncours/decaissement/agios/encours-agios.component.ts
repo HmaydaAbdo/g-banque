@@ -25,6 +25,7 @@ import {AgiosValidationRequest} from "../../../../dtos/agios/agios-validation-re
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
+import { parseLocalDate } from '../../../../../global/types/date.utils';
 
 @Component({
   selector: 'app-encours-agios',
@@ -198,7 +199,7 @@ export class EncoursAgiosComponent implements OnInit,OnDestroy {
     this.selectedAgio = agios;
     this.rapprochementForm.reset();
     this.rapprochementForm.patchValue({
-      dateEmission: new Date(agios.dateEmission),
+      dateEmission: parseLocalDate(agios.dateEmission)!,
       observation: agios.observation,
       libelle: agios.libelle,
     })
