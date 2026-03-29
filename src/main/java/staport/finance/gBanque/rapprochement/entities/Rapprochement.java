@@ -114,14 +114,14 @@ public class Rapprochement {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Rapprochement that = (Rapprochement) o;
-        return Objects.equals(id, that.id) && Objects.equals(banque, that.banque) && Objects.equals(dateRapprochement, that.dateRapprochement) && Objects.equals(soldeDebut, that.soldeDebut) && Objects.equals(soldeFin, that.soldeFin) && Objects.equals(totalDebit, that.totalDebit) && Objects.equals(totalCredit, that.totalCredit) && Objects.equals(tvaDeductible, that.tvaDeductible) && Objects.equals(tvaCollectee, that.tvaCollectee) && Objects.equals(transactions, that.transactions) && Objects.equals(createdAt, that.createdAt) && Objects.equals(updatedAt, that.updatedAt);
+        if (this == o) return true;
+        if (!(o instanceof Rapprochement that)) return false;
+        return id != null && id.equals(that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, banque, dateRapprochement, soldeDebut, soldeFin, totalDebit, totalCredit, tvaDeductible, tvaCollectee, transactions, createdAt, updatedAt);
+        return getClass().hashCode();
     }
 
     @Override

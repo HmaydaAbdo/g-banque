@@ -7,6 +7,7 @@ import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
+import staport.finance.gBanque.Bank.entities.Banque;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -70,4 +71,7 @@ public interface IBanqueService {
     BigDecimal getPlafondFC(Long banqueId);
 
     List<Long> getAllBanqueIds();
+
+    void setSoldeDepart(Long banqueID,BigDecimal newSoldeDepart);
+    Banque findOrThrow(Long id);
 }

@@ -5,8 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.dtos.BanqueResponse;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
@@ -35,19 +35,18 @@ public class RapprochementService {
 
     private final RapprochementRepository rapprochementRepository;
     private final TransactionRepository transactionRepository;
-    private final BanqueRepository banqueRepository;
+    private final IBanqueService banqueService;
     private final RapprochementMapper rapprochementMapper;
     private final StaportPdfReportService pdfReportService;
 
     public RapprochementService(
             RapprochementRepository rapprochementRepository,
-            TransactionRepository transactionRepository,
-            BanqueRepository banqueRepository,
+            TransactionRepository transactionRepository, IBanqueService banqueService,
             RapprochementMapper rapprochementMapper, StaportPdfReportService pdfReportService
     ) {
         this.rapprochementRepository = rapprochementRepository;
         this.transactionRepository = transactionRepository;
-        this.banqueRepository = banqueRepository;
+        this.banqueService = banqueService;
         this.rapprochementMapper = rapprochementMapper;
         this.pdfReportService = pdfReportService;
     }
@@ -81,13 +80,13 @@ public class RapprochementService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Aucun rapprochement EN_COURS trouvé pour la banque id: " + banqueId));
 
-        Banque banque = banqueRepository.findById(banqueId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Banque introuvable avec l'id: " + banqueId));
+        BanqueResponse banque = banqueService.getBanqueById(banqueId);
+
 
         // 2. Récupérer toutes les transactions non confirmées de ce rapprochement
         Specification<Transaction> spec = TransactionSpecifications.hasRapprochementId(rapprochement.getId())
                 .and(TransactionSpecifications.isConfirmed(false));
+
         List<Transaction> transactions = transactionRepository.findAll(spec);
 
         // 3. Calculer les agrégats
@@ -109,7 +108,7 @@ public class RapprochementService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal soldeFin = banque.getSoldeActuel();
+        BigDecimal soldeFin = banque.soldeActuel();
 
         // 4. Mettre à jour et clôturer le rapprochement courant
         rapprochement.setStatut(StatutRapprochement.CLOTURE);
@@ -124,15 +123,14 @@ public class RapprochementService {
         transactionRepository.saveAll(transactions);
 
         // 6. Réinitialiser le solde de départ de la banque
-        banque.setSoldeDepart(banque.getSoldeActuel());
-        banqueRepository.save(banque);
+        banqueService.setSoldeDepart(banqueId,banque.soldeActuel());
 
         // 7. Sauvegarder le rapprochement clôturé
         Rapprochement rapprochementCloture = rapprochementRepository.save(rapprochement);
 
         // 8. Créer automatiquement le rapprochement du mois suivant
         Rapprochement prochainRapprochement = new Rapprochement();
-        prochainRapprochement.setBanque(banque);
+        prochainRapprochement.setBanque(banqueService.findOrThrow(banqueId));
         prochainRapprochement.setDateRapprochement(rapprochement.getDateRapprochement().plusMonths(1));
         prochainRapprochement.setSoldeDebut(soldeFin);
         prochainRapprochement.setStatut(StatutRapprochement.EN_COURS);

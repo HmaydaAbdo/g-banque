@@ -7,8 +7,6 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
-import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
@@ -53,7 +51,6 @@ import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
 
-import java.math.BigDecimal;
 
 /**
  * Service simple pour annuler une transaction en inversant ses effets
@@ -64,7 +61,6 @@ public class ReverseTransactionService {
     private static final Logger log = LoggerFactory.getLogger(ReverseTransactionService.class);
 
     private final TransactionRepository transactionRepository;
-    private final BanqueRepository banqueRepository;
 
     // Repositories pour les entités sources
     private final EcheanceLeasingRepository echeanceLeasingRepository;
@@ -89,7 +85,6 @@ public class ReverseTransactionService {
 
     public ReverseTransactionService(
             TransactionRepository transactionRepository,
-            BanqueRepository banqueRepository,
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
             ChequeRepository chequeRepository,
@@ -105,7 +100,6 @@ public class ReverseTransactionService {
             FraisBancaireRepository fraisBancaireRepository,
             FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
         this.transactionRepository = transactionRepository;
-        this.banqueRepository = banqueRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.chequeRepository = chequeRepository;
@@ -142,10 +136,8 @@ public class ReverseTransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Transaction introuvable avec l'ID: " + transactionId));
 
-        // 2. Inverser le solde de la banque selon le cas
-        inverseSoldeBanque(transaction);
 
-        // 3. Remettre l'entité source à son état initial
+        // 2. Remettre l'entité source à son état initial
         resetEntiteSource(transaction);
 
         if (transaction.getRapprochement() != null) {
@@ -153,41 +145,13 @@ public class ReverseTransactionService {
             transactionRepository.save(transaction);
         }
 
-        // 4. Supprimer la transaction
+        // 3. Supprimer la transaction
         transactionRepository.delete(transaction);
 
         log.info("Transaction {} annulée et supprimée avec succès", transactionId);
     }
 
-    /**
-     * Inverse le solde de la banque
-     * - Si la transaction était un DEBIT, on AJOUTE le montant (recrédite)
-     * - Si la transaction était un CREDIT, on SOUSTRAIT le montant (redébite)
-     */
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    private void inverseSoldeBanque(Transaction transaction) {
-        Banque banque = transaction.getBanqueDePrelevement();
-        BigDecimal debit = transaction.getDebit();
-        BigDecimal credit = transaction.getCredit();
 
-        log.debug("Inversion solde banque {} - Débit original: {}, Crédit original: {}",
-                banque.getNom(), debit, credit);
-
-        // Si c'était un débit, on recrédite
-        if (debit != null && debit.compareTo(BigDecimal.ZERO) > 0) {
-            banque.setSoldeActuel(banque.getSoldeActuel().add(debit));
-            log.debug("Recrédit de {} à la banque", debit);
-        }
-
-        // Si c'était un crédit, on redébite
-        if (credit != null && credit.compareTo(BigDecimal.ZERO) > 0) {
-            banque.setSoldeActuel(banque.getSoldeActuel().subtract(credit));
-            log.debug("Redébit de {} à la banque", credit);
-        }
-
-        banqueRepository.save(banque);
-        log.debug("Nouveau solde banque: {}", banque.getSoldeActuel());
-    }
 
     /**
      * Remet l'entité source à son état initial selon le type de transaction

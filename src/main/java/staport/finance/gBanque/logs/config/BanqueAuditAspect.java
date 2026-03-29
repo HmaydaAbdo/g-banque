@@ -76,8 +76,7 @@ public class BanqueAuditAspect {
                 Banque originalBanque = optionalOriginalBanque.get();
                 // DÉTACHER L'ENTITÉ ORIGINALE POUR ASSURER UNE COMPARAISON CORRECTE
                 entityManager.detach(originalBanque); // <-- AJOUT IMPORTANT
-                logger.debug("Audit Aspect: Original Banque state (ID: {}, Nom: {}, Solde: {}) has been detached.",
-                        originalBanque.getId(), originalBanque.getNom(), originalBanque.getSoldeActuel());
+
 
                 List<LogEntryDetail> changedFields = new ArrayList<>();
 
@@ -92,8 +91,7 @@ public class BanqueAuditAspect {
 
                 if (optionalFinalUpdatedBanque.isPresent()) {
                     Banque finalUpdatedBanque = optionalFinalUpdatedBanque.get();
-                    logger.debug("Audit Aspect: Final Banque state (ID: {}, Nom: {}, Solde: {})",
-                            finalUpdatedBanque.getId(), finalUpdatedBanque.getNom(), finalUpdatedBanque.getSoldeActuel());
+
 
                     compareAndLogFields(originalBanque, finalUpdatedBanque, changedFields);
                     logger.info("Audit Aspect: Number of changed fields detected: {}", changedFields.size());
@@ -135,7 +133,6 @@ public class BanqueAuditAspect {
         compareField(oldBanque.getDevise(), newBanque.getDevise(), "devise", oldBanque, changedFields);
         compareField(oldBanque.getAddress(), newBanque.getAddress(), "address", oldBanque, changedFields);
         compareField(oldBanque.getAgence(), newBanque.getAgence(), "agence", oldBanque, changedFields);
-        compareField(oldBanque.getSoldeActuel(), newBanque.getSoldeActuel(), "soldeActuel", oldBanque, changedFields);
         logger.debug("Audit Aspect: Field comparison completed for Banque ID: {}", oldBanque.getId());
     }
 

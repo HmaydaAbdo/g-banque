@@ -59,15 +59,6 @@ public class Banque {
     @Column(name = "solde_depart", nullable = false)
     private BigDecimal soldeDepart = BigDecimal.ZERO;
 
-    /**
-     * @deprecated soldeActuel is still persisted for backward compatibility with out-of-scope modules
-     * (ValidationService, ReverseTransactionService, RecapGeneralDetailleService, etc.).
-     * New code must use {@code BanqueService.computeLiveBalance()} instead.
-     * Migration to computed balance is tracked in a dedicated future session.
-     */
-    @Deprecated
-    @Column(name = "solde_actuel")
-    private BigDecimal soldeActuel = BigDecimal.ZERO;
 
     @CreatedDate
     @Column(name = "date_creation", nullable = false, updatable = false)
@@ -109,17 +100,7 @@ public class Banque {
         this.soldeDepart = soldeDepart;
     }
 
-    /** @deprecated Use {@code BanqueService.computeLiveBalance()} for accurate balance. */
-    @Deprecated
-    public BigDecimal getSoldeActuel() {
-        return soldeActuel;
-    }
 
-    /** @deprecated Use {@code BanqueService.computeLiveBalance()} for accurate balance. */
-    @Deprecated
-    public void setSoldeActuel(BigDecimal soldeActuel) {
-        this.soldeActuel = soldeActuel;
-    }
 
     public LocalDate getDateCreation() { return dateCreation; }
     public LocalDate getDateModification() { return dateModification; }

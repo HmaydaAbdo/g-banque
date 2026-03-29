@@ -221,6 +221,16 @@ public class BanqueServiceImpl implements IBanqueService {
         return banqueRepository.findAllIds();
     }
 
+    @Transactional
+    @Override
+    public void setSoldeDepart(Long banqueId,BigDecimal newSoldeDepart) {
+        Banque banque = findOrThrow(banqueId);
+        banque.setSoldeDepart(newSoldeDepart);
+        banqueRepository.save(banque);
+    }
+
+
+
     // ── Private Senior Helpers ────────────────────────────────────────────────
 
     private BankAcceuilResponse mapToAccueilResponse(Banque banque, Long fcNatureId) {
@@ -235,7 +245,8 @@ public class BanqueServiceImpl implements IBanqueService {
         return transactionService.computeBalance(banqueId);
     }
 
-    private Banque findOrThrow(Long id) {
+    @Override
+    public Banque findOrThrow(Long id) {
         return banqueRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée ID: " + id));
     }

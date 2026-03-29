@@ -71,7 +71,6 @@ import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTra
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
-import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
 import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionRequest;
 import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionResponseDto;
@@ -217,7 +216,7 @@ public class ValidationService {
         this.rapprochementRepository = rapprochementRepository;
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public LeasingTransactionResponseDto processLeasingTransaction(LeasingTransactionRequestDto requestDto) throws Exception {
 
         // Étape 1: Récupérer les entités liées avant le mappage
@@ -240,10 +239,6 @@ public class ValidationService {
 
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Étape 4: Mettre à jour le solde de la banque.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(echeanceLeasing.getMontantTTC()));
-        this.banqueRepository.save(banque);
-
 
         // Étape 5: Marquer l'échéance comme payée.
         echeanceLeasing.setStatutPaiement(StatutEcheanceLeasing.PAYE);
@@ -258,7 +253,7 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public CmtTransactionResponseDto processCmtTransaction(CmtTransactionRequestDto requestDto) throws Exception {
 
 
@@ -281,10 +276,6 @@ public class ValidationService {
         Banque banque = creditMoyenTerme.getBanque();
 
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
-        // Étape 4: Mettre à jour le solde de la banque.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(echeanceCMT.getMontant()));
-        this.banqueRepository.save(banque);
-
 
         // Étape 5 : Marquer l'échéance comme payée et enregistrer les dates rélatives au rapprochement .
         echeanceCMT.setStatutPaiement(StatutEcheanceCMT.PAYE);
@@ -299,7 +290,7 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
             // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
             // If the Chèque does not exist, throw a ResourceNotFoundException.
@@ -322,10 +313,7 @@ public class ValidationService {
 
             this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-            // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-            // Then save the updated bank entity.
-            banque.setSoldeActuel(banque.getSoldeActuel().subtract(cheque.getMontant()));
-            this.banqueRepository.save(banque);
+
     
             // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
             cheque.setActive(false);
@@ -340,7 +328,7 @@ public class ValidationService {
             return chequeTransactionMapper.toResponseDto(savedTransaction);
         }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public ChequeTransactionResponseDto processChequeEncaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
         // If the Chèque does not exist, throw a ResourceNotFoundException.
@@ -364,9 +352,6 @@ public class ValidationService {
 
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        banque.setSoldeActuel(banque.getSoldeActuel().add(cheque.getMontant()));
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
         cheque.setActive(false);
@@ -381,7 +366,7 @@ public class ValidationService {
         return chequeTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public LcnTransactionResponse processDecaissementLcnTransaction(LcnTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
         // If the Lcn does not exist, throw a ResourceNotFoundException.
@@ -404,10 +389,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(lcn.getMontant()));
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
         lcn.setActive(false);
@@ -422,7 +403,7 @@ public class ValidationService {
         return lcnTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public LcnTransactionResponse processEncaissementLcnTransaction(LcnTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
         // If the Lcn does not exist, throw a ResourceNotFoundException.
@@ -444,12 +425,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().add(lcn.getMontant()));
-        this.banqueRepository.save(banque);
-
-
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
         lcn.setActive(false);
         lcn.setDateOperation(savedTransaction.getDateOperations());
@@ -463,7 +438,7 @@ public class ValidationService {
         return lcnTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public VirementTransactionResponseDto processVirementDecaissementTransaction(VirementTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch virement entity from the database using it's number from the request.
         // If the virement does not exist, throw a ResourceNotFoundException.
@@ -485,10 +460,7 @@ public class ValidationService {
         // Step 4: Save the Transaction entity to the database.
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(virement.getMontant()));
-        this.banqueRepository.save(banque);
+
 
         // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
         virement.setActive(false);
@@ -503,7 +475,7 @@ public class ValidationService {
         return virementTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public VirementTransactionResponseDto processVirementEncaissementTransaction(VirementTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch virement entity from the database using it's number from the request.
         // If the virement does not exist, throw a ResourceNotFoundException.
@@ -526,11 +498,7 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
 
-        banque.setSoldeActuel(banque.getSoldeActuel().add(virement.getMontant()));
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
         virement.setActive(false);
@@ -546,7 +514,7 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public MiseAdispositionTransactionResponseDto processMiseAdispositionDecaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch the MiseAdispo entity from the database.
         // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
@@ -569,10 +537,7 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(miseADisposition.getMontant()));
-        this.banqueRepository.save(banque);
+
 
         // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
         miseADisposition.setActive(false);
@@ -587,7 +552,7 @@ public class ValidationService {
         return miseAdispositionTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public MiseAdispositionTransactionResponseDto processMiseAdispositionEncaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch the MiseAdispo entity from the database.
         // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
@@ -610,10 +575,7 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().add(miseADisposition.getMontant()));
-        this.banqueRepository.save(banque);
+
 
         // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
         miseADisposition.setActive(false);
@@ -629,7 +591,7 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public PrefinancementTransactionResponse processPrefinancementTransaction(PrefinancementTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch prefi  from the database using it's id from the request.
         Prefinancement prefinancement=this.prefinancementRepository.findById(requestDto.getPrefinancementId())
@@ -650,13 +612,7 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        if(prefinancement.getType()== Type.REMBOURSEMENT){
-            banque.setSoldeActuel(banque.getSoldeActuel().subtract(prefinancement.getMontant()));
-        }else{
-            banque.setSoldeActuel(banque.getSoldeActuel().add(prefinancement.getMontant()));
-        }
+
 
         this.banqueRepository.save(banque);
 
@@ -673,7 +629,7 @@ public class ValidationService {
         return prefinancementTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public DroitConstateTransactionResponse processDroitConstateTransaction(DroitConstateTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch dc  from the database using it's id from the request.
         DroitConstate droitConstate=this.droitConstateRepository.findById(requestDto.getDroitConstateId())
@@ -694,14 +650,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        if(droitConstate.getType()== Type.REMBOURSEMENT){
-            banque.setSoldeActuel(banque.getSoldeActuel().subtract(droitConstate.getMontant()));
-        }else{
-            banque.setSoldeActuel(banque.getSoldeActuel().add(droitConstate.getMontant()));
-        }
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the prefi as * (paid) and save the updated prefi entity.
         droitConstate.setStatus(Status.PAYE);
@@ -717,7 +665,7 @@ public class ValidationService {
         return droitConstateTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public FactoringTransactionResponse processFactoringTransaction(FactoringTransactionRequest requestDto) throws Exception{
         // Step 1: Fetch factoring  from the database using it's id from the request.
         Factoring factoring=this.factoringRepository.findById(requestDto.getFactoringId())
@@ -738,14 +686,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        if(factoring.getType()== Type.REMBOURSEMENT){
-            banque.setSoldeActuel(banque.getSoldeActuel().subtract(factoring.getMontant()));
-        }else{
-            banque.setSoldeActuel(banque.getSoldeActuel().add(factoring.getMontant()));
-        }
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the factoring as paid and save the updated factoring entity.
         factoring.setStatus(Status.PAYE);
@@ -762,7 +702,7 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public DecompteTransactionResponseDto processDecompteToTransaction(DecompteTransactionRequestDto requestDto) throws Exception{
         // Step 1: Fetch decompte  from the database using it's id from the request.
         Decompte decompte=this.decompteRepository.findById(requestDto.getDecompteId())
@@ -783,11 +723,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().add(decompte.getMontant()));
-
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the decompte as * (paid) and save the updated decompte entity.
         decompte.setStatus(Status.PAYE);
@@ -802,7 +737,7 @@ public class ValidationService {
         return decompteTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public CommissionTransactionResponse processCommissionToTransaction(CommissionValidationDto requestDto) throws Exception{
         // Step 1: Fetch commission from the database using it's id from the request.
         Commission commission=this.commisionRepository.findById(requestDto.getIdCommission())
@@ -823,11 +758,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(commission.getMontant()));
-
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the commission as * (paid) and save the updated commission entity.
         commission.setStatus(Status.PAYE);
@@ -842,7 +772,7 @@ public class ValidationService {
         return commisionTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public AgiosTransactionResponse processAgiosToTransaction(AgiosValidationRequest requestDto) throws Exception{
         // Step 1: Fetch agios from the database using it's id from the request.
         Agios agios=this.agiosRepository.findById(requestDto.getIdAgio())
@@ -863,11 +793,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(agios.getMontant()));
-
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the agios as * (paid) and save the updated agios entity.
         agios.setStatus(Status.PAYE);
@@ -883,7 +808,7 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public PrelevementTransactionResponse processPrelevementToTransaction(PrelevementValidationRequest requestDto) throws Exception{
         // Step 1: Fetch prelevement from the database using it's id from the request.
         Prelevement prelevement=this.prelevementRepository.findById(requestDto.getIdPrelevement())
@@ -904,9 +829,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(prelevement.getMontant()));
 
         this.banqueRepository.save(banque);
 
@@ -924,7 +846,7 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public FraisBancaireTransactionResponse processFraisBancaireToTransaction(FraisBanciareValidationRequest requestDto) throws Exception{
         // Step 1: Fetch frais bancaire from the database using it's id from the request.
         FraisBancaire fraisBancaire=this.fraisBancaireRepository.findById(requestDto.getIdFraisBancaire())
@@ -944,11 +866,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(fraisBancaire.getMontant()));
-
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the frais bancaire as * (paid) and save the updated agios entity.
         fraisBancaire.setStatus(Status.PAYE);
@@ -964,7 +881,7 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public ImpotEtTaxeTransactionResponse processImpotEtTaxeToTransaction(ImpotEtTaxeValidationRequest requestDto) throws Exception {
         // Step 1: Fetch impot et taxe from the database using its id from the request.
         ImpotEtTaxe impotEtTaxe = this.impotEtTaxeRepository.findById(requestDto.getIdImpotEtTaxe())
@@ -986,10 +903,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(impotEtTaxe.getMontant()));
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the impot et taxe as paid and save the updated entity.
         impotEtTaxe.setStatus(Status.PAYE);
@@ -1004,7 +917,7 @@ public class ValidationService {
         return impotEtTaxeTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public RestitutionTransactionResponse processRestitutionToTransaction(RestitutionValidationRequest requestDto) throws Exception {
         log.info("Début du traitement de la restitution ID: {}", requestDto.getIdRestitution());
 
@@ -1036,11 +949,6 @@ public class ValidationService {
 
         log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
 
-        // Step 5: Mettre à jour le solde de la banque
-        // Les restitutions sont des ENCAISSEMENTS (crédit) donc on AJOUTE au solde
-        banque.setSoldeActuel(banque.getSoldeActuel().add(restitution.getMontant()));
-        this.banqueRepository.save(banque);
-        log.info("Solde de la banque {} mis à jour: {}", banque.getNom(), banque.getSoldeActuel());
 
         // Step 6: Marquer la restitution comme payée et mettre à jour les dates
         restitution.setStatus(Status.PAYE);
@@ -1058,7 +966,7 @@ public class ValidationService {
         return response;
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public OperationErroneTransactionResponse processOperationErroneToTransaction(OperationErroneValidationRequest requestDto) throws Exception {
         // Step 1: Fetch operation erroné from the database using its id from the request.
         OperationErrone operationErrone = this.operationErroneRepository.findById(requestDto.getIdOperationErrone())
@@ -1080,10 +988,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(operationErrone.getMontant()));
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the operation erroné as paid and save the updated entity.
         operationErrone.setStatus(Status.PAYE);
@@ -1100,7 +1004,7 @@ public class ValidationService {
 
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public VirementInternationalTransactionResponseDto processVirementInternationalDecaissementTransaction(
             VirementInternationalTransactionRequestDto requestDto) throws Exception {
 
@@ -1124,10 +1028,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance by subtracting the transaction debit amount.
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().subtract(virementInternational.getMontant()));
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
         virementInternational.setActive(false);
@@ -1142,7 +1042,7 @@ public class ValidationService {
         return virementInternationalTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public VirementInternationalTransactionResponseDto processVirementInternationalEncaissementTransaction(
             VirementInternationalTransactionRequestDto requestDto) throws Exception {
 
@@ -1167,10 +1067,6 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
         this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
-        // Step 5: Update the bank's current balance by adding the transaction credit amount.
-        // Then save the updated bank entity.
-        banque.setSoldeActuel(banque.getSoldeActuel().add(virementInternational.getMontant()));
-        this.banqueRepository.save(banque);
 
         // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
         virementInternational.setActive(false);
@@ -1186,7 +1082,7 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public ImpayeeTransactionResponse processImpayeeToTransaction(ImpayeeValidationRequest requestDto) throws Exception {
         log.info("Début du traitement de l'impayée ID: {}", requestDto.getIdImpayee());
 
@@ -1218,15 +1114,6 @@ public class ValidationService {
 
         log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
 
-        // Step 5: Update the bank's current balance
-        if( impayee.getType()== staport.finance.gBanque.moyensDePaiements.virements.enums.Type.DECAISSEMENT){
-            banque.setSoldeActuel(banque.getSoldeActuel().subtract(impayee.getMontant()));
-        }else{
-            banque.setSoldeActuel(banque.getSoldeActuel().add(impayee.getMontant()));
-        }
-
-        this.banqueRepository.save(banque);
-        log.info("Solde de la banque {} mis à jour: {}", banque.getNom(), banque.getSoldeActuel());
 
         // Step 6: Mark the impayee as paid and save the updated entity.
         impayee.setStatus(Status.PAYE);
