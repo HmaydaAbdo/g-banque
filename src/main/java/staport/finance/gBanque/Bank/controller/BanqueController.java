@@ -15,6 +15,7 @@ import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
+import staport.finance.gBanque.Bank.exceptions.BanqueExceptionHandler;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 
 import java.util.List;
