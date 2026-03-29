@@ -58,7 +58,7 @@ import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 
 
 @Service
-public class LigneFonctionnelleService {
+public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
     private static final Logger logger = LoggerFactory.getLogger(LigneFonctionnelleService.class);
     // Constante de Règle Métier : Seule cette nature peut être une Ligne Mère
@@ -1070,6 +1070,14 @@ public class LigneFonctionnelleService {
         });
 
         logger.debug("Aucun conflit avec les lignes spécifiques - validation réussie");
+    }
+
+    @Override
+    public BigDecimal getPlafondFCInternal(Long banqueId, Long fcNatureId) {
+        return ligneFonctionnelleRepository
+                .findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banqueId, fcNatureId)
+                .map(LigneFonctionnelle::getPlafond)
+                .orElse(BigDecimal.ZERO);
     }
 
 }

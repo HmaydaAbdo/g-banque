@@ -17,48 +17,41 @@ import staport.finance.gBanque.Bank.exceptions.BanqueDeletionException;
 import staport.finance.gBanque.Bank.mappers.BanqueMapper;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.Bank.specifications.BanqueSpecification;
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
+import staport.finance.gBanque.LigneFonctionnelle.services.ILigneFonctionnelleService;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.FileStorageException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.transactions.service.ITransactionService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Senior Implementation of BanqueService.
- *
- * Architecture: Unidirectional JPA relationships, Immutable DTOs (Records),
- * and Atomic mapping (Data calculated before DTO construction).
- */
+
 @Service
 @Transactional(readOnly = true)
 public class BanqueServiceImpl implements IBanqueService {
 
     private static final Logger logger = LoggerFactory.getLogger(BanqueServiceImpl.class);
-    private static final String FC_CODE = "FC";
 
     private final BanqueRepository banqueRepository;
     private final BanqueMapper banqueMapper;
-    private final NatureLigneFonctionnelleRepository natureLFRepository;
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
-    private final TransactionRepository transactionRepository;
+
+    private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
+    private final ITransactionService transactionService;
+    private final ILigneFonctionnelleService ligneFonctionnelleService;
+
 
     public BanqueServiceImpl(BanqueRepository banqueRepository,
-                             BanqueMapper banqueMapper,
-                             NatureLigneFonctionnelleRepository natureLFRepository,
-                             LigneFonctionnelleRepository ligneFonctionnelleRepository,
-                             TransactionRepository transactionRepository) {
+                             BanqueMapper banqueMapper, INatureLigneFonctionnelleService natureLigneFonctionnelleService,
+                             ITransactionService transactionService, ILigneFonctionnelleService ligneFonctionnelleService) {
         this.banqueRepository = banqueRepository;
         this.banqueMapper = banqueMapper;
-        this.natureLFRepository = natureLFRepository;
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
-        this.transactionRepository = transactionRepository;
+        this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
+        this.ligneFonctionnelleService = ligneFonctionnelleService;
+        this.transactionService = transactionService;
     }
 
     // ── Create ───────────────────────────────────────────────────────────────
@@ -86,7 +79,7 @@ public class BanqueServiceImpl implements IBanqueService {
         Banque saved = banqueRepository.save(banque);
 
         // At creation, balance is usually soldeDepart as there are no transactions yet
-        BigDecimal balance = computeLiveBalance(saved.getId(), saved.getSoldeDepart());
+        BigDecimal balance = computeLiveBalance(saved.getId());
         return banqueMapper.toDto(saved, balance);
     }
 
@@ -95,7 +88,7 @@ public class BanqueServiceImpl implements IBanqueService {
     @Override
     public BanqueResponse getBanqueById(Long id) {
         Banque banque = findOrThrow(id);
-        BigDecimal balance = computeLiveBalance(id, banque.getSoldeDepart());
+        BigDecimal balance = computeLiveBalance(id);
         return banqueMapper.toDto(banque, balance);
     }
 
@@ -104,7 +97,7 @@ public class BanqueServiceImpl implements IBanqueService {
         Specification<Banque> spec = BanqueSpecification.searchByCriteria(criteria);
         return banqueRepository.findAll(spec, pageable)
                 .map(banque -> {
-                    BigDecimal balance = computeLiveBalance(banque.getId(), banque.getSoldeDepart());
+                    BigDecimal balance = computeLiveBalance(banque.getId());
                     return banqueMapper.toDto(banque, balance);
                 });
     }
@@ -112,7 +105,7 @@ public class BanqueServiceImpl implements IBanqueService {
     @Override
     public List<BankAcceuilResponse> getAccueilBankInfo() {
         List<Banque> banques = banqueRepository.findAll();
-        Long fcNatureId = findFaciliteDeCaisseNatureId();
+        Long fcNatureId = natureLigneFonctionnelleService.findFaciliteDeCaisseNatureId();
 
         return banques.stream()
                 .map(banque -> mapToAccueilResponse(banque, fcNatureId))
@@ -122,14 +115,14 @@ public class BanqueServiceImpl implements IBanqueService {
     @Override
     public BankAcceuilResponse getAccueilBankInfoById(Long banqueId) {
         Banque banque = findOrThrow(banqueId);
-        Long fcNatureId = findFaciliteDeCaisseNatureId();
+        Long fcNatureId = natureLigneFonctionnelleService.findFaciliteDeCaisseNatureId();
         return mapToAccueilResponse(banque, fcNatureId);
     }
 
     @Override
     public BigDecimal getPlafondFC(Long banqueId) {
-        Long fcNatureId = findFaciliteDeCaisseNatureId();
-        return getPlafondFCInternal(banqueId, fcNatureId);
+        Long fcNatureId = natureLigneFonctionnelleService.findFaciliteDeCaisseNatureId();
+        return this.ligneFonctionnelleService.getPlafondFCInternal(banqueId, fcNatureId);
     }
 
     // ── Update ───────────────────────────────────────────────────────────────
@@ -143,7 +136,7 @@ public class BanqueServiceImpl implements IBanqueService {
         Banque banque = findOrThrow(id);
 
         // 2. Manual Mapping / Business Logic
-        // This gives you the power to add logic (e.g., "Don't allow account number changes")
+
         banque.setNom(request.nom());
         banque.setDevise(request.devise());
         banque.setAddress(request.address());
@@ -163,7 +156,7 @@ public class BanqueServiceImpl implements IBanqueService {
         Banque updated = banqueRepository.save(banque);
 
         // 5. Atomic Response construction
-        BigDecimal balance = computeLiveBalance(id, updated.getSoldeDepart());
+        BigDecimal balance = computeLiveBalance(id);
 
         logger.info("Banque ID: {} successfully updated.", id);
         return banqueMapper.toDto(updated, balance);
@@ -176,15 +169,12 @@ public class BanqueServiceImpl implements IBanqueService {
     public void deleteBanque(Long id) {
         Banque banque = findOrThrow(id);
 
-        if (ligneFonctionnelleRepository.existsByBanqueIdAndActifTrue(id)) {
-            throw new BanqueDeletionException("La banque possède des lignes fonctionnelles actives.");
-        }
 
-        if (transactionRepository.countPendingByBanque(id) > 0) {
+        if (transactionService.countPendingTransactions(id) > 0) {
             throw new BanqueDeletionException("Transactions en attente détectées.");
         }
 
-        BigDecimal balance = computeLiveBalance(id, banque.getSoldeDepart());
+        BigDecimal balance = computeLiveBalance(id);
         if (balance.compareTo(BigDecimal.ZERO) != 0) {
             throw new BanqueDeletionException("Le solde doit être nul avant suppression.");
         }
@@ -201,26 +191,15 @@ public class BanqueServiceImpl implements IBanqueService {
     // ── Private Senior Helpers ────────────────────────────────────────────────
 
     private BankAcceuilResponse mapToAccueilResponse(Banque banque, Long fcNatureId) {
-        BigDecimal balance = computeLiveBalance(banque.getId(), banque.getSoldeDepart());
-        BigDecimal plafond = getPlafondFCInternal(banque.getId(), fcNatureId);
+        Long banqueId=banque.getId();
+        BigDecimal balance = computeLiveBalance(banqueId);
+        BigDecimal plafond =this.ligneFonctionnelleService.getPlafondFCInternal(banqueId, fcNatureId);
         return banqueMapper.toAcceuilDto(banque, balance, plafond);
     }
 
-    private BigDecimal getPlafondFCInternal(Long banqueId, Long fcNatureId) {
-        return ligneFonctionnelleRepository
-                .findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banqueId, fcNatureId)
-                .map(LigneFonctionnelle::getPlafond)
-                .orElse(BigDecimal.ZERO);
-    }
 
-    private Long findFaciliteDeCaisseNatureId() {
-        return natureLFRepository.findByCode(FC_CODE)
-                .orElseThrow(() -> new ResourceNotFoundException("Code système FC introuvable."))
-                .getId();
-    }
-
-    private BigDecimal computeLiveBalance(Long banqueId, BigDecimal soldeDepart) {
-        return transactionRepository.computeBalance(banqueId).orElse(soldeDepart);
+    private BigDecimal computeLiveBalance(Long banqueId) {
+        return transactionService.computeBalance(banqueId);
     }
 
     private Banque findOrThrow(Long id) {
