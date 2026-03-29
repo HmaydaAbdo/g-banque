@@ -1,11 +1,11 @@
-package staport.finance.gBanque.LigneFonctionnelle.repositories;
+package staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import java.util.Optional;
 import java.util.List;
 

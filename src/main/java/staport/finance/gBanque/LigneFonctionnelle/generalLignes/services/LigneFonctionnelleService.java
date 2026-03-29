@@ -1,10 +1,11 @@
-package staport.finance.gBanque.LigneFonctionnelle.services;
+package staport.finance.gBanque.LigneFonctionnelle.generalLignes.services;
 
 import staport.finance.gBanque.LigneFonctionnelle.dtos.*;
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.mappers.LigneFonctionnelleMapper;
-import staport.finance.gBanque.LigneFonctionnelle.repositories.LigneFonctionnelleRepository;
-import staport.finance.gBanque.LigneFonctionnelle.specifications.LigneFonctionnelleSpecification;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.*;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.mappers.LigneFonctionnelleMapper;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.specifications.LigneFonctionnelleSpecification;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;

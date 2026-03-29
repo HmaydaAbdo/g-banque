@@ -2,7 +2,7 @@ package staport.finance.gBanque.moyensDePaiements.lcn.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.moyensDePaiements.lcn.dtos.NatureLcn;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 

@@ -1,9 +1,10 @@
-package staport.finance.gBanque.LigneFonctionnelle.controller;
+package staport.finance.gBanque.LigneFonctionnelle.generalLignes.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import staport.finance.gBanque.LigneFonctionnelle.dtos.*;
-import staport.finance.gBanque.LigneFonctionnelle.services.LigneFonctionnelleService;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.*;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

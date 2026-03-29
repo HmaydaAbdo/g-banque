@@ -1,16 +1,16 @@
-package staport.finance.gBanque.LigneFonctionnelle.mappers;
+package staport.finance.gBanque.LigneFonctionnelle.generalLignes.mappers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleRequest;
-import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleResponse;
-import staport.finance.gBanque.LigneFonctionnelle.dtos.SousLigneRequestDto;
-import staport.finance.gBanque.LigneFonctionnelle.dtos.SousLigneResponseDto;
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.services.EncoursCalculatorService;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleRequest;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleResponse;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.SousLigneRequestDto;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.SousLigneResponseDto;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.EncoursCalculatorService;
 import staport.finance.gBanque.marches.entities.Marche;
 
 import java.math.BigDecimal;

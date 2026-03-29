@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.batch.jobs.functionaLines.generalFunctionalLines.dtos.ProcessedFunctionalLine;
 import staport.finance.gBanque.exception.customExceptions.ProcessingException;
 import staport.finance.gBanque.notification.entities.NotificationType;

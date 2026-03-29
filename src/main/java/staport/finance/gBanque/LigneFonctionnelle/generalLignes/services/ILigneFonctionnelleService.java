@@ -1,4 +1,4 @@
-package staport.finance.gBanque.LigneFonctionnelle.services;
+package staport.finance.gBanque.LigneFonctionnelle.generalLignes.services;
 
 import java.math.BigDecimal;
 import java.util.List;

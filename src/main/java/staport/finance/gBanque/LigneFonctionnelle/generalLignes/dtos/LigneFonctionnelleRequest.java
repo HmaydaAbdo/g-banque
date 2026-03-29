@@ -1,4 +1,4 @@
-package staport.finance.gBanque.LigneFonctionnelle.dtos;
+package staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;

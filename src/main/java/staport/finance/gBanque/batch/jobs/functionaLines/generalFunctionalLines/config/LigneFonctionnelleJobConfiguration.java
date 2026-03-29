@@ -16,7 +16,7 @@ import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilde
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.batch.jobs.functionaLines.generalFunctionalLines.dtos.ProcessedFunctionalLine;
 import staport.finance.gBanque.batch.jobs.functionaLines.generalFunctionalLines.listeners.FunctionalLineJobListener;
 import staport.finance.gBanque.batch.jobs.functionaLines.generalFunctionalLines.processors.FunctionalLineProcessor;

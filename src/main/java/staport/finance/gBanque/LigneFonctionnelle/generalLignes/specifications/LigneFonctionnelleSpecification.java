@@ -1,11 +1,11 @@
-    package staport.finance.gBanque.LigneFonctionnelle.specifications;
+    package staport.finance.gBanque.LigneFonctionnelle.generalLignes.specifications;
 
     import jakarta.persistence.criteria.CriteriaBuilder;
     import jakarta.persistence.criteria.CriteriaQuery;
     import jakarta.persistence.criteria.Predicate;
     import jakarta.persistence.criteria.Root;
-    import staport.finance.gBanque.LigneFonctionnelle.dtos.LigneFonctionnelleSearchCriteria;
-    import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+    import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleSearchCriteria;
+    import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
     import org.springframework.data.jpa.domain.Specification;
 
     import java.time.LocalDate;

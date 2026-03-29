@@ -18,7 +18,7 @@ import staport.finance.gBanque.Bank.mappers.BanqueMapper;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.Bank.specifications.BanqueSpecification;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
-import staport.finance.gBanque.LigneFonctionnelle.services.ILigneFonctionnelleService;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.ILigneFonctionnelleService;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.FileStorageException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;

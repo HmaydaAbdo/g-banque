@@ -1,4 +1,4 @@
-package staport.finance.gBanque.LigneFonctionnelle.services;
+package staport.finance.gBanque.LigneFonctionnelle.generalLignes.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

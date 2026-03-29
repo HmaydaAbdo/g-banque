@@ -1,4 +1,4 @@
-    package staport.finance.gBanque.LigneFonctionnelle.entities;
+    package staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities;
 
     import jakarta.persistence.*;
     import staport.finance.gBanque.Bank.entities.Banque;

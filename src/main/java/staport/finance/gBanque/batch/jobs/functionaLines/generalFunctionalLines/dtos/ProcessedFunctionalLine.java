@@ -1,6 +1,6 @@
 package staport.finance.gBanque.batch.jobs.functionaLines.generalFunctionalLines.dtos;
 
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.notification.entities.NotificationType;
 
 import java.util.Objects;
