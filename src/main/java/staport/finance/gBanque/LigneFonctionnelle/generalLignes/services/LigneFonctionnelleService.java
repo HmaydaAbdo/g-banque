@@ -1,6 +1,5 @@
 package staport.finance.gBanque.LigneFonctionnelle.generalLignes.services;
 
-import staport.finance.gBanque.LigneFonctionnelle.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.mappers.LigneFonctionnelleMapper;
