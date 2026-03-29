@@ -1,20 +1,29 @@
 package staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities;
 import jakarta.persistence.*;
-import staport.finance.gBanque.LigneFonctionnelle.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.Index;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import java.time.LocalDate;
 import java.util.Objects;
 
+@EntityListeners(AuditingEntityListener.class)
 @Entity
-@Table(name = "nature_ligne_fonctionnelle")
+@Table(
+    name = "nature_ligne_fonctionnelle",
+    indexes = {
+        @Index(name = "idx_nlf_code",  columnList = "code"),
+        @Index(name = "idx_nlf_label", columnList = "label")
+    }
+)
 public class NatureLigneFonctionnelle {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, length = 20, updatable = false)
+    private String code;        // Immutable system identifier
 
     @Column(nullable = false, unique = true)
     private String label;
@@ -22,25 +31,22 @@ public class NatureLigneFonctionnelle {
     @Column(nullable = false)
     private String description;
 
-    @OneToMany(mappedBy = "natureLigneFonctionnelle", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
-    private List<LigneFonctionnelle> lignesFonctionnelles = new ArrayList<>();
-
-    @OneToMany(mappedBy = "natureLigneFonctionnelle", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
-    private List<LigneFonctionnelleSpecifique> lignesFonctionnellesSpecifique = new ArrayList<>();
-
+    @CreatedDate
     @Column(name = "date_creation", nullable = false, updatable = false)
-    private OffsetDateTime dateCreation;
+    private LocalDate dateCreation;
 
+    @LastModifiedDate
     @Column(name = "date_modification", nullable = false)
-    private OffsetDateTime dateModification;
+    private LocalDate dateModification;
 
     // --- Constructors ---
     public NatureLigneFonctionnelle() {
         // Default constructor required by JPA
     }
 
-    public NatureLigneFonctionnelle(Long id, String label, String description, OffsetDateTime dateCreation, OffsetDateTime dateModification) {
+    public NatureLigneFonctionnelle(Long id, String code, String label, String description, LocalDate dateCreation, LocalDate dateModification) {
         this.id = id;
+        this.code = code;
         this.label = label;
         this.description = description;
         this.dateCreation = dateCreation;
@@ -54,6 +60,14 @@ public class NatureLigneFonctionnelle {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;   // Used only by the mapper at creation time. Column is updatable = false in JPA.
     }
 
     public String getLabel() {
@@ -72,73 +86,23 @@ public class NatureLigneFonctionnelle {
         this.description = description;
     }
 
-    public OffsetDateTime getDateCreation() {
+    public LocalDate getDateCreation() {
         return dateCreation;
     }
 
-    public void setDateCreation(OffsetDateTime dateCreation) {
+    public void setDateCreation(LocalDate dateCreation) {
         this.dateCreation = dateCreation;
     }
 
-    public OffsetDateTime getDateModification() {
+    public LocalDate getDateModification() {
         return dateModification;
     }
 
-    public void setDateModification(OffsetDateTime dateModification) {
+    public void setDateModification(LocalDate dateModification) {
         this.dateModification = dateModification;
     }
 
 
-    public List<LigneFonctionnelle> getLignesFonctionnelles() {
-        return lignesFonctionnelles;
-    }
-
-    public void setLignesFonctionnelles(List<LigneFonctionnelle> lignesFonctionnelles) {
-        this.lignesFonctionnelles = lignesFonctionnelles;
-    }
-
-    public void addLigneFonctionnelle(LigneFonctionnelle ligne) {
-        this.lignesFonctionnelles.add(ligne);
-        ligne.setNatureLigneFonctionnelle(this);
-    }
-
-    public void removeLigneFonctionnelle(LigneFonctionnelle ligne) {
-        this.lignesFonctionnelles.remove(ligne);
-        ligne.setNatureLigneFonctionnelle(null);
-    }
-
-    //
-
-    public List<LigneFonctionnelleSpecifique> getLignesFonctionnellesSpecifique() {
-        return lignesFonctionnellesSpecifique;
-    }
-
-    public void setLignesFonctionnellesSpecifique(List<LigneFonctionnelleSpecifique> lignesFonctionnellesSpecifique) {
-        this.lignesFonctionnellesSpecifique = lignesFonctionnellesSpecifique;
-    }
-
-    public void addLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique ligne) {
-        this.lignesFonctionnellesSpecifique.add(ligne);
-        ligne.setNatureLigneFonctionnelle(this);
-    }
-
-    public void removeLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique ligne) {
-        this.lignesFonctionnellesSpecifique.remove(ligne);
-        ligne.setNatureLigneFonctionnelle(null);
-    }
-
-    // --- JPA Lifecycle Callbacks ---
-    @PrePersist
-    protected void onCreate() {
-        OffsetDateTime now = OffsetDateTime.now();
-        this.dateCreation = now;
-        this.dateModification = now;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.dateModification = OffsetDateTime.now();
-    }
 
     // --- equals() and hashCode() ---
     @Override
@@ -146,12 +110,12 @@ public class NatureLigneFonctionnelle {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NatureLigneFonctionnelle that = (NatureLigneFonctionnelle) o;
-        return Objects.equals(id, that.id);
+        return Objects.equals(code, that.code);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(code);
     }
 
     // --- toString() ---
@@ -159,6 +123,7 @@ public class NatureLigneFonctionnelle {
     public String toString() {
         return "NatureLigneFonctionnelle{" +
                 "id=" + id +
+                ", code='" + code + '\'' +
                 ", label='" + label + '\'' +
                 ", description='" + description + '\'' +
                 '}';
