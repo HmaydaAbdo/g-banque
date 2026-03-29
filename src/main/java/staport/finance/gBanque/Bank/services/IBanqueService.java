@@ -68,4 +68,6 @@ public interface IBanqueService {
      * or {@link BigDecimal#ZERO} if none exists.
      */
     BigDecimal getPlafondFC(Long banqueId);
+
+    List<Long> getAllBanqueIds();
 }

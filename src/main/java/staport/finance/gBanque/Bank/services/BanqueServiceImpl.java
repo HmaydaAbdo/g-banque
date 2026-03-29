@@ -192,6 +192,12 @@ public class BanqueServiceImpl implements IBanqueService {
         banqueRepository.delete(banque);
     }
 
+    @Override
+    public List<Long> getAllBanqueIds() {
+        logger.debug("Fetching all banque IDs");
+        return banqueRepository.findAllIds();
+    }
+
     // ── Private Senior Helpers ────────────────────────────────────────────────
 
     private BankAcceuilResponse mapToAccueilResponse(Banque banque, Long fcNatureId) {
