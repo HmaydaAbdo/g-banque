@@ -1,4 +1,4 @@
-package staport.finance.gBanque.LigneFonctionnelle.dtos;
+package staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos;
 
 public class LigneFonctionnelleSearchCriteria {
     private Long banqueId;
