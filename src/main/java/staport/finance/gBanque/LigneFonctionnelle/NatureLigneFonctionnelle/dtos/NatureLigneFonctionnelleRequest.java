@@ -1,42 +1,18 @@
 package staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos;
 
-
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
+public record NatureLigneFonctionnelleRequest(
 
-public class NatureLigneFonctionnelleRequest {
+        @NotBlank(message = "Le code de la nature de ligne fonctionnelle est obligatoire.")
+        @Size(max = 20, message = "Le code ne doit pas dépasser 20 caractères.")
+        String code,
 
-    @NotBlank(message = "Le label de la nature de ligne fonctionnelle est obligatoire.")
-    private String label;
+        @NotBlank(message = "Le label de la nature de ligne fonctionnelle est obligatoire.")
+        String label,
 
-    @NotBlank(message = "La description de la nature de ligne fonctionnelle est obligatoire.")
-    private String description;
+        @NotBlank(message = "La description de la nature de ligne fonctionnelle est obligatoire.")
+        String description
 
-    // --- Constructors ---
-    public NatureLigneFonctionnelleRequest() {
-    }
-
-    public NatureLigneFonctionnelleRequest(String label, String description) {
-        this.label = label;
-        this.description = description;
-    }
-
-    // --- Getters and Setters ---
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-}
-
-
+) {}
