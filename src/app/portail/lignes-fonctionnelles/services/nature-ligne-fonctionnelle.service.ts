@@ -3,16 +3,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { NatureLigneFonctionnelleResponse } from '../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleResponse'; // Notez le chemin complet
-import { NatureLigneFonctionnelleRequest } from '../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleRequest'; // Notez le chemin complet
-import { NatureLigneFonctionnelleSearchCriteria } from '../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleSearchCriteria'; // Notez le chemin complet
-import { PageResponse } from '../../global/types/PageResponse'; // Assurez-vous d'avoir cette interface
+import { NatureLigneFonctionnelleResponse } from '../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleResponse';
+import { NatureLigneFonctionnelleRequest } from '../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleRequest';
+import { NatureLigneFonctionnelleSearchCriteria } from '../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleSearchCriteria';
+import { PageResponse } from '../../global/types/PageResponse';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NatureLigneFonctionnelleService {
-  private apiUrl = `${environment.apiUrl}natures-lignes-fonctionnelles`; // URL de base pour l'API NatureLigneFonctionnelle
+  private apiUrl = `${environment.apiUrl}natures-lignes-fonctionnelles`;
 
   constructor(private http: HttpClient) {}
 
@@ -53,6 +53,9 @@ export class NatureLigneFonctionnelleService {
     params = params.append('size', size.toString());
     params = params.append('sort', sort);
 
+    if (criteria.code) {
+      params = params.append('code', criteria.code);
+    }
     if (criteria.label) {
       params = params.append('label', criteria.label);
     }

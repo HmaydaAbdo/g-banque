@@ -3,8 +3,6 @@ import { AcceuilComponent } from "../../accueil/views/acceuil/acceuil.component"
 import { LignesFonctionnellesComponent } from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-encours/lignes-fonctionnelles.component";
 import { LigneFonctionnelleEditComponent } from "../../lignes-fonctionnelles/views/ligne-fonctionnelle-edit/ligne-fonctionnelle-edit.component";
 import { adminGuard } from "../../../auth/guards/admin.guard";
-import { NatureLigneFonctionnelleListComponent } from "../../lignes-fonctionnelles/views/nature-ligne-fonctionnelle-list/nature-ligne-fonctionnelle-list.component";
-import { NatureLigneFonctionnelleEditComponent } from "../../lignes-fonctionnelles/views/nature-ligne-fonctionnelle-edit/nature-ligne-fonctionnelle-edit.component";
 import { LogsComponent } from "../../settings/logs/views/logs/logs.component";
 import { LesEncoursComponent } from "../../etatsDesEncours/views/parent-componant/les-encours/les-encours.component";
 import { EcheancesLeasingComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/echeances-leasing/echeances-leasing.component";
@@ -121,6 +119,13 @@ export const PORTAIL_ROUTES: Routes = [
       .then(m => m.COMPTES_BANCAIRES_ROUTES)
   },
 
+  {
+    path: 'natures-fonctionnelles',
+    loadChildren: () => import('../../lignes-fonctionnelles/natures-routing.module')
+      .then(m => m.NATURES_ROUTES)
+  },
+
+
   { path: 'lignes-fonctionnelles-encours', component: LignesFonctionnellesComponent },
   { path: 'lignes-fonctionnelles-encours/new', component: LigneFonctionnelleEditComponent },
   { path: 'lignes-fonctionnelles-encours/edit/:id', component: LigneFonctionnelleEditComponent },
@@ -136,9 +141,7 @@ export const PORTAIL_ROUTES: Routes = [
   { path: "dc-encours/:lineId", component: ValidatedDcComponent },
   { path: "lcn-encours/:lineId", component: LcnEscompteByLineComponent },
 
-  { path: 'natures-fonctionnelles', component: NatureLigneFonctionnelleListComponent },
-  { path: 'natures-fonctionnelles/new', component: NatureLigneFonctionnelleEditComponent },
-  { path: 'natures-fonctionnelles/edit/:id', component: NatureLigneFonctionnelleEditComponent },
+
 
   { path: 'leasing', loadChildren: () => import('../../leasing/route/leasing-routing.module').then(m => m.LEASING_FEATURE_ROUTES) },
   { path: "cmt", loadChildren: () => import('../../cmt/route/cmt-routing').then(m => m.cmtRoutes) },

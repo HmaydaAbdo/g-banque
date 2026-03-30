@@ -52,6 +52,7 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
     private confirmationService: ConfirmationService
   ) {
     this.natureLigneForm = this.fb.group({
+      code: ['', [Validators.required, Validators.maxLength(20)]],
       label: ['', [Validators.required]],
       description: ['', Validators.required],
     });
@@ -82,6 +83,8 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
     this.natureService.getNatureLigneFonctionnelleById(id).subscribe({
       next: (nature: NatureLigneFonctionnelleResponse) => {
         this.natureLigneForm.patchValue(nature);
+        // Le code est immuable — désactivé en mode modification
+        this.natureLigneForm.get('code')?.disable();
         this.loading = false;
       },
       error: (error) => {
@@ -120,7 +123,8 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
 
   executeSaveNatureLigne(): void {
     this.loading = true;
-    const natureRequest: NatureLigneFonctionnelleRequest = this.natureLigneForm.value;
+    // getRawValue() inclut les champs disabled (ex: code en mode modification)
+    const natureRequest: NatureLigneFonctionnelleRequest = this.natureLigneForm.getRawValue();
 
     if (this.isEditMode && this.natureLigneId) {
       this.natureService.updateNatureLigneFonctionnelle(this.natureLigneId, natureRequest)

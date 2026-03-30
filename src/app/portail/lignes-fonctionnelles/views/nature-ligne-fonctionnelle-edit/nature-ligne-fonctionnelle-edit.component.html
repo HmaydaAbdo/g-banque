@@ -26,6 +26,21 @@
       <form [formGroup]="natureLigneForm" (ngSubmit)="onSubmit()" class="p-fluid">
         <div class="formgrid grid">
           <div class="field col-12">
+            <label for="code" class="block text-900 font-medium mb-2">
+              Code <span class="p-text-danger">*</span>
+              <span *ngIf="isEditMode" class="text-500 font-normal text-sm ml-2">(immuable)</span>
+            </label>
+            <input id="code" type="text" pInputText formControlName="code"
+                   placeholder="Ex: FC01"
+                   [ngClass]="{'ng-invalid ng-dirty': f['code'].invalid && f['code'].touched}"
+            />
+            <small class="p-error" *ngIf="f['code'].invalid && f['code'].touched">
+              <span *ngIf="f['code'].errors?.['required']">Le code est obligatoire.</span>
+              <span *ngIf="f['code'].errors?.['maxlength']">Le code ne doit pas dépasser 20 caractères.</span>
+            </small>
+          </div>
+
+          <div class="field col-12">
             <label for="label" class="block text-900 font-medium mb-2">Libellé <span class="p-text-danger">*</span></label>
             <input id="label" type="text" pInputText formControlName="label"
                    [ngClass]="{'ng-invalid ng-dirty': f['label'].invalid && f['label'].touched}"

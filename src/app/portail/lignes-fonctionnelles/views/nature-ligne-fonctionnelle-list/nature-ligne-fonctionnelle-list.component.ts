@@ -75,6 +75,7 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
+      code: [null],
       label: [null],
       description: [null]
     });
@@ -140,6 +141,7 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
 
   clearSearch(): void {
     this.searchForm.reset({
+      code: null,
       label: null,
       description: null
     });
