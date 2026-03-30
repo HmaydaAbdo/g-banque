@@ -18,7 +18,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import {DropdownModule} from "primeng/dropdown";
 import {Role} from "../../../../auth/enum/Role";
 import {AuthService} from "../../../../auth/services/auth.service";
-import {BreadcrumbModule} from "primeng/breadcrumb"; // Add tooltip module for consistency
+import {BreadcrumbModule} from "primeng/breadcrumb";
+import { PorteeNature, PORTEE_NATURE_LABELS } from '../../dtos/nature-ligne-fonctionnelle/PorteeNature';
 
 @Component({
   selector: 'app-nature-ligne-fonctionnelle-list',
@@ -53,6 +54,18 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
   searchForm!: FormGroup;
   items: MenuItem[] | undefined;
 
+  /** Options du dropdown Portée pour le filtre de recherche */
+  porteeFilterOptions = [
+    { label: 'Toutes les portées', value: null },
+    ...Object.values(PorteeNature).map(value => ({
+      label: PORTEE_NATURE_LABELS[value],
+      value
+    }))
+  ];
+
+  /** Expose les labels de portée au template */
+  porteeLabel = PORTEE_NATURE_LABELS;
+
   constructor(
     private natureService: NatureLigneFonctionnelleService,
     private router: Router,
@@ -77,7 +90,8 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
     this.searchForm = this.fb.group({
       code: [null],
       label: [null],
-      description: [null]
+      description: [null],
+      portee: [null]
     });
   }
 
@@ -143,7 +157,8 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
     this.searchForm.reset({
       code: null,
       label: null,
-      description: null
+      description: null,
+      portee: null
     });
     // The valueChanges subscription will automatically trigger a reload via onSearch()
   }
@@ -188,5 +203,10 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
 
   isAdmin(): boolean {
     return this.authService.hasRole(Role.ADMIN);
+  }
+
+  getPorteeLabel(portee: any): string {
+    // Use a type cast or fallback to an empty string/label if not found
+    return this.porteeLabel[portee as PorteeNature] || 'N/A';
   }
 }

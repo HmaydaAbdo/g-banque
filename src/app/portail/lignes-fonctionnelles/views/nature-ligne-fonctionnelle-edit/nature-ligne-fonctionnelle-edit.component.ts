@@ -11,11 +11,13 @@ import { ToastModule } from 'primeng/toast';
 import {MenuItem, MessageService} from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { DropdownModule } from 'primeng/dropdown';
 
 // Application-specific imports
 import { NatureLigneFonctionnelleService } from '../../services/nature-ligne-fonctionnelle.service';
 import { NatureLigneFonctionnelleRequest } from '../../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleRequest';
 import { NatureLigneFonctionnelleResponse } from '../../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleResponse';
+import { PorteeNature, PORTEE_NATURE_LABELS } from '../../dtos/nature-ligne-fonctionnelle/PorteeNature';
 import {BreadcrumbModule} from "primeng/breadcrumb";
 
 @Component({
@@ -31,6 +33,7 @@ import {BreadcrumbModule} from "primeng/breadcrumb";
     RippleModule,
     ToastModule,
     ConfirmDialogModule,
+    DropdownModule,
     BreadcrumbModule,
     RouterLinkActive
   ],
@@ -42,6 +45,12 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
   natureLigneId: number | null = null;
   loading: boolean = false;
   items: MenuItem[] | undefined;
+
+  /** Options du dropdown Portée */
+  porteeOptions = Object.values(PorteeNature).map(value => ({
+    label: PORTEE_NATURE_LABELS[value],
+    value
+  }));
 
   constructor(
     private fb: FormBuilder,
@@ -55,6 +64,7 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
       code: ['', [Validators.required, Validators.maxLength(20)]],
       label: ['', [Validators.required]],
       description: ['', Validators.required],
+      portee: [null, Validators.required],
     });
   }
 

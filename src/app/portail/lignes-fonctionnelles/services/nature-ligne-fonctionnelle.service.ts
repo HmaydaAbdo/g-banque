@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 import { NatureLigneFonctionnelleResponse } from '../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleResponse';
 import { NatureLigneFonctionnelleRequest } from '../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleRequest';
 import { NatureLigneFonctionnelleSearchCriteria } from '../dtos/nature-ligne-fonctionnelle/NatureLigneFonctionnelleSearchCriteria';
+import { PorteeNature } from '../dtos/nature-ligne-fonctionnelle/PorteeNature';
 import { PageResponse } from '../../global/types/PageResponse';
 
 @Injectable({
@@ -62,6 +63,9 @@ export class NatureLigneFonctionnelleService {
     if (criteria.description) {
       params = params.append('description', criteria.description);
     }
+    if (criteria.portee) {
+      params = params.append('portee', criteria.portee);
+    }
 
     return this.http.get<PageResponse<NatureLigneFonctionnelleResponse>>(this.apiUrl, { params });
   }
@@ -69,10 +73,18 @@ export class NatureLigneFonctionnelleService {
   /**
    * Récupère toutes les NatureLigneFonctionnelle sous forme de liste simple (non paginée).
    * Utile pour les listes déroulantes.
+   * @param portee Filtre optionnel par portée compatible :
+   *   - GENERALE   → retourne GENERALE + GENERALE_ET_SPECIFIQUE
+   *   - SPECIFIQUE → retourne SPECIFIQUE + GENERALE_ET_SPECIFIQUE
+   *   - null/undefined → toutes les natures
    * @returns Un Observable d'une liste de NatureLigneFonctionnelleResponse.
    */
-  getAllNatureLigneFonctionnellesList(): Observable<NatureLigneFonctionnelleResponse[]> {
-    return this.http.get<NatureLigneFonctionnelleResponse[]>(`${this.apiUrl}/list`);
+  getAllNatureLigneFonctionnellesList(portee?: PorteeNature): Observable<NatureLigneFonctionnelleResponse[]> {
+    let params = new HttpParams();
+    if (portee) {
+      params = params.append('portee', portee);
+    }
+    return this.http.get<NatureLigneFonctionnelleResponse[]>(`${this.apiUrl}/list`, { params });
   }
 
   /**

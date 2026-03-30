@@ -60,6 +60,23 @@
               <span *ngIf="f['description'].errors?.['required']">La description est obligatoire.</span>
             </small>
           </div>
+
+          <div class="field col-12">
+            <label for="portee" class="block text-900 font-medium mb-2">Portée <span class="p-text-danger">*</span></label>
+            <p-dropdown
+              id="portee"
+              formControlName="portee"
+              [options]="porteeOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionner une portée"
+              [style]="{'width': '100%'}"
+              [ngClass]="{'ng-invalid ng-dirty': f['portee'].invalid && f['portee'].touched}"
+            ></p-dropdown>
+            <small class="p-error" *ngIf="f['portee'].invalid && f['portee'].touched">
+              <span *ngIf="f['portee'].errors?.['required']">La portée est obligatoire.</span>
+            </small>
+          </div>
         </div>
 
         <div class="flex justify-content-end mt-4 gap-2">

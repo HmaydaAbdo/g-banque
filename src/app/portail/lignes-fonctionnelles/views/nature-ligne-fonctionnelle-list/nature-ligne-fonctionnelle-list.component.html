@@ -37,6 +37,19 @@
             <label for="searchDescription" class="block text-900 text-center font-medium mb-2">Description</label>
             <input id="searchDescription" type="text" pInputText formControlName="description" class="w-full" placeholder="Rechercher par description">
           </div>
+          <div>
+            <label for="searchPortee" class="block text-900 text-center font-medium mb-2">Portée</label>
+            <p-dropdown
+              id="searchPortee"
+              formControlName="portee"
+              [options]="porteeFilterOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Toutes les portées"
+              [showClear]="true"
+              [style]="{'min-width': '200px'}"
+            ></p-dropdown>
+          </div>
         </div>
 
         <div class="flex-shrink-0">
@@ -62,6 +75,7 @@
           <th pSortableColumn="code">Code <p-sortIcon field="code"></p-sortIcon></th>
           <th pSortableColumn="label">Libellé <p-sortIcon field="label"></p-sortIcon></th>
           <th pSortableColumn="description">Description <p-sortIcon field="description"></p-sortIcon></th>
+          <th pSortableColumn="portee">Portée <p-sortIcon field="portee"></p-sortIcon></th>
           <th>Actions</th>
         </tr>
       </ng-template>
@@ -71,6 +85,7 @@
           <td>{{ nature.code }}</td>
           <td>{{ nature.label }}</td>
           <td>{{ nature.description }}</td>
+          <td>{{ getPorteeLabel(nature.portee)}}</td>
           <td class="flex flex-row gap-2">
             @if (isAdmin()){
               <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" (click)="editNature(nature.id!)"></button>
@@ -81,12 +96,12 @@
       </ng-template>
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="6" class="text-center">Aucune nature de ligne fonctionnelle trouvée.</td>
+          <td colspan="7" class="text-center">Aucune nature de ligne fonctionnelle trouvée.</td>
         </tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="6" class="text-center">Chargement des natures de ligne fonctionnelle. Veuillez patienter...</td>
+          <td colspan="7" class="text-center">Chargement des natures de ligne fonctionnelle. Veuillez patienter...</td>
         </tr>
       </ng-template>
     </p-table>
