@@ -81,7 +81,6 @@ public class BanqueServiceImpl implements IBanqueService {
 
         Banque saved = banqueRepository.save(banque);
 
-        // At creation, balance is usually soldeDepart as there are no transactions yet
         BigDecimal balance = computeLiveBalance(saved.getId());
         return banqueMapper.toDto(saved, balance);
     }
@@ -105,7 +104,7 @@ public class BanqueServiceImpl implements IBanqueService {
             return Page.empty(pageable);
         }
 
-        // 2. Extract IDs from the CURRENT page (e.g., the 10 banks currently visible)
+        // 2. Extract IDs from the CURRENT page
         List<Long> ids = banquePage.getContent().stream()
                 .map(Banque::getId)
                 .toList();
@@ -128,17 +127,17 @@ public class BanqueServiceImpl implements IBanqueService {
         List<Banque> banques = banqueRepository.findAll();
         List<Long> ids = banques.stream().map(Banque::getId).toList();
 
-        // Query 2: Batch fetch unconfirmed balances
+        // Query 2: Batch fetch  balances
         Map<Long, BigDecimal> balanceMap = transactionService.computeBalancesForBanks(ids);
 
-        // Query 3: Batch fetch active FC ceilings
+        // Query 3: Batch fetch active FC
         Map<Long, BigDecimal> plafondMap = ligneFonctionnelleService.getActivePlafondsForBanks(ids, FC_CODE);
 
         // Assembly: Logic stays in Java, DB stays fast
         return banques.stream()
                 .map(b -> {
-                    BigDecimal balance = balanceMap.getOrDefault(b.getId(), b.getSoldeDepart());
-                    BigDecimal plafond = plafondMap.getOrDefault(b.getId(), BigDecimal.ZERO);
+                    BigDecimal balance = balanceMap.get(b.getId());
+                    BigDecimal plafond = plafondMap.get(b.getId());
 
                     return banqueMapper.toAcceuilDto(b, balance, plafond);
                 })
@@ -221,8 +220,8 @@ public class BanqueServiceImpl implements IBanqueService {
         return banqueRepository.findAllIds();
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void setSoldeDepart(Long banqueId,BigDecimal newSoldeDepart) {
         Banque banque = findOrThrow(banqueId);
         banque.setSoldeDepart(newSoldeDepart);

@@ -25,6 +25,13 @@ public class NatureLigneFonctionnelleSpecification {
                 ));
             }
 
+            if (criteria.code() != null && !criteria.code().isBlank()) {
+                predicates.add(cb.like(
+                        cb.lower(root.get("code")),
+                        "%" + criteria.code().toLowerCase() + "%"
+                ));
+            }
+
             // Filter by description (case-insensitive, contains)
             if (criteria.description() != null && !criteria.description().isBlank()) {
                 predicates.add(cb.like(
