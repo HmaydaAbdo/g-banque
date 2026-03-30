@@ -52,6 +52,7 @@ import { BanqueService } from "../../../comptes-bancaire/services/BanqueService"
 import { LigneFonctionnelleRequest } from "../../dtos/LigneFonctionnelleRequest";
 import { LigneFonctionnelleResponse } from '../../dtos/LigneFonctionnelleResponse';
 import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fonctionnelle.service";
+import { PorteeNature } from "../../dtos/nature-ligne-fonctionnelle/PorteeNature";
 import { SousLigneResponseDto } from "../../dtos/SousLigneResponseDto";
 import { SousLigneRequestDto } from "../../dtos/SousLigneRequestDto";
 import { MarcheService } from "../../../Marches/service/marche-service.service";
@@ -208,7 +209,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
   }
 
   private loadNatureLignes() {
-    return this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().pipe(
+    return this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList(PorteeNature.GENERALE).pipe(
       map(natures => natures.map(nature => ({
         label: nature.label,
         value: nature.id!

@@ -20,6 +20,7 @@ import { TooltipModule } from "primeng/tooltip";
 import { SpecificFunctionalLigneService } from "../../service/SpecificFunctionalLigneService";
 import { MarcheService } from "../../../Marches/service/marche-service.service";
 import { NatureLigneFonctionnelleService } from "../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service";
+import { PorteeNature } from "../../../lignes-fonctionnelles/dtos/nature-ligne-fonctionnelle/PorteeNature";
 import { Role } from "../../../../auth/enum/Role";
 import { AuthService } from "../../../../auth/services/auth.service";
 import { parseLocalDate, toLocalDateString } from "../../../global/types/date.utils";
@@ -175,10 +176,8 @@ export class SpeficLigneEditComponent implements OnInit {
   }
 
   loadNatureLigneOptions(): void {
-    this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().subscribe(natures => {
-      this.natureLigneOptions = natures
-        .filter(n => ['Préfinancement', 'Droit constaté', 'Factoring'].includes(n.label))
-        .map(n => ({ label: n.label, value: n.id }));
+    this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList(PorteeNature.SPECIFIQUE).subscribe(natures => {
+      this.natureLigneOptions = natures.map(n => ({ label: n.label, value: n.id }));
     });
   }
 
