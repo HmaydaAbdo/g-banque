@@ -4,6 +4,7 @@ import jakarta.persistence.Index;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -12,8 +13,9 @@ import java.util.Objects;
 @Table(
     name = "nature_ligne_fonctionnelle",
     indexes = {
-        @Index(name = "idx_nlf_code",  columnList = "code"),
-        @Index(name = "idx_nlf_label", columnList = "label")
+        @Index(name = "idx_nlf_code",   columnList = "code"),
+        @Index(name = "idx_nlf_label",  columnList = "label"),
+        @Index(name = "idx_nlf_portee", columnList = "portee")
     }
 )
 public class NatureLigneFonctionnelle {
@@ -30,6 +32,10 @@ public class NatureLigneFonctionnelle {
 
     @Column(nullable = false)
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private PorteeNature portee;
 
     @CreatedDate
     @Column(name = "date_creation", nullable = false, updatable = false)
@@ -84,6 +90,14 @@ public class NatureLigneFonctionnelle {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public PorteeNature getPortee() {
+        return portee;
+    }
+
+    public void setPortee(PorteeNature portee) {
+        this.portee = portee;
     }
 
     public LocalDate getDateCreation() {

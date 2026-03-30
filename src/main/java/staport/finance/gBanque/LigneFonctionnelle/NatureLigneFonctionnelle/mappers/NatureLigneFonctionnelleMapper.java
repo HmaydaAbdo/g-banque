@@ -16,6 +16,7 @@ public class NatureLigneFonctionnelleMapper {
         entity.setCode(request.code());
         entity.setLabel(request.label());
         entity.setDescription(request.description());
+        entity.setPortee(request.portee());
         return entity;
     }
 
@@ -28,6 +29,7 @@ public class NatureLigneFonctionnelleMapper {
                 entity.getCode(),
                 entity.getLabel(),
                 entity.getDescription(),
+                entity.getPortee(),
                 entity.getDateCreation(),
                 entity.getDateModification()
         );

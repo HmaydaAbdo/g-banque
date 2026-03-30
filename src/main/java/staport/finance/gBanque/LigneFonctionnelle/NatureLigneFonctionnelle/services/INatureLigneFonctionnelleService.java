@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleRequest;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleResponse;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleSearchCriteria;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 
 import java.util.List;
 
@@ -33,8 +34,13 @@ public interface INatureLigneFonctionnelleService {
     Page<NatureLigneFonctionnelleResponse> getAllNatureLigneFonctionnelles(
             NatureLigneFonctionnelleSearchCriteria criteria, Pageable pageable);
 
-    /** Non-paginated list — intended for dropdowns / select inputs. */
-    List<NatureLigneFonctionnelleResponse> getAllNatureLigneFonctionnellesList();
+    /**
+     * Non-paginated list — pour les dropdowns.
+     * Si {@code portee} est null, toutes les natures sont retournées.
+     * Si {@code portee} est fourni, seules les natures compatibles sont retournées :
+     * ex. portee=GENERALE → natures GENERALE + GENERALE_ET_SPECIFIQUE.
+     */
+    List<NatureLigneFonctionnelleResponse> getAllNatureLigneFonctionnellesList(PorteeNature portee);
 
     /**
      * Updates label and description. {@code code} is immutable and is ignored.

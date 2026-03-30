@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
@@ -104,6 +105,9 @@ public class LigneFonctionnelleSpecifiqueService {
                 });
 
         log.debug("NatureLigneFonctionnelle trouvée: {}", nature.getLabel());
+
+        // Validation portée : une ligne spécifique n'accepte que SPECIFIQUE ou GENERALE_ET_SPECIFIQUE
+        validatePorteeForLigneSpecifique(nature);
 
         // Récupération du Marché
         log.debug("Recherche du Marché avec ID: {}", request.getMarcheId());
@@ -246,6 +250,9 @@ public class LigneFonctionnelleSpecifiqueService {
                 : existingEntity.getMarche();
 
         log.debug("Relations cibles - Nature: {}, Marché: {}", targetNature.getLabel(), targetMarche.getNom());
+
+        // Validation portée sur la nature cible (update)
+        validatePorteeForLigneSpecifique(targetNature);
 
         // Vérification des doublons actifs
         boolean requestedActif = request.getActif() != null ? request.getActif() : existingEntity.isActif();
@@ -525,6 +532,19 @@ public class LigneFonctionnelleSpecifiqueService {
      * Cette règle garantit qu'un marché ne peut avoir qu'UNE ligne active par nature,
      * qu'elle soit générale ou spécifique.
      */
+    /**
+     * Règle Métier — Portée : vérifie qu'une nature est autorisée pour les lignes spécifiques.
+     * Portées valides : SPECIFIQUE ou GENERALE_ET_SPECIFIQUE.
+     */
+    private void validatePorteeForLigneSpecifique(NatureLigneFonctionnelle nature) {
+        if (nature.getPortee() == PorteeNature.GENERALE) {
+            log.warn("Portée invalide pour ligne spécifique — nature '{}' a portée GENERALE", nature.getLabel());
+            throw new IllegalArgumentException(
+                    "La nature '" + nature.getLabel() + "' est réservée aux lignes générales et ne peut pas être utilisée dans une ligne spécifique."
+            );
+        }
+    }
+
     private void checkNoConflictWithGeneralLine(Marche marche, NatureLigneFonctionnelle nature) {
         Optional<LigneFonctionnelle> existingGeneralLine =
                 ligneFonctionnelleRepository.findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(

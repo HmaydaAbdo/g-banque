@@ -11,6 +11,7 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleResponse;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleSearchCriteria;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.mappers.NatureLigneFonctionnelleMapper;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.specifications.NatureLigneFonctionnelleSpecification;
@@ -82,10 +83,20 @@ public class NatureLigneFonctionnelleService implements INatureLigneFonctionnell
     }
 
     @Override
-    public List<NatureLigneFonctionnelleResponse> getAllNatureLigneFonctionnellesList() {
-        return repository.findAll().stream()
-                .map(mapper::toDto)
-                .toList();
+    public List<NatureLigneFonctionnelleResponse> getAllNatureLigneFonctionnellesList(PorteeNature portee) {
+        // Si portee est null → toutes les natures (comportement dashboard/admin)
+        // Si portee est fourni → on filtre par compatibilité via l'index idx_nlf_portee :
+        //   GENERALE   → [GENERALE, GENERALE_ET_SPECIFIQUE]
+        //   SPECIFIQUE → [SPECIFIQUE, GENERALE_ET_SPECIFIQUE]
+        if (portee == null) {
+            return mapper.toDtoList(repository.findAll());
+        }
+        List<PorteeNature> porteesFiltrees = switch (portee) {
+            case GENERALE   -> List.of(PorteeNature.GENERALE,   PorteeNature.GENERALE_ET_SPECIFIQUE);
+            case SPECIFIQUE -> List.of(PorteeNature.SPECIFIQUE, PorteeNature.GENERALE_ET_SPECIFIQUE);
+            case GENERALE_ET_SPECIFIQUE -> List.of(PorteeNature.values()); // cas improbable depuis l'UI
+        };
+        return mapper.toDtoList(repository.findByPorteeIn(porteesFiltrees));
     }
 
     // ── Update ───────────────────────────────────────────────────────────────
@@ -108,9 +119,10 @@ public class NatureLigneFonctionnelleService implements INatureLigneFonctionnell
             throw new DuplicateEntryException("Le nouveau label est déjà utilisé par une autre nature.");
         }
 
-        // Explicit updates
+        // Explicit updates (code est immuable, portee est modifiable)
         existing.setLabel(request.label());
         existing.setDescription(request.description());
+        existing.setPortee(request.portee());
 
         return mapper.toDto(existing);
     }

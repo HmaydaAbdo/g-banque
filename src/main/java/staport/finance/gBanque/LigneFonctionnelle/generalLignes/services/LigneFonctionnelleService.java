@@ -8,6 +8,7 @@ import staport.finance.gBanque.LigneFonctionnelle.generalLignes.specifications.L
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
@@ -123,6 +124,9 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                 });
 
         logger.debug("Found nature: {} (ID: {})", natureLigneFonctionnelle.getLabel(), natureLigneFonctionnelle.getId());
+
+        // Validation portée : une ligne générale n'accepte que GENERALE ou GENERALE_ET_SPECIFIQUE
+        validatePorteeForLigneGenerale(natureLigneFonctionnelle);
 
         //  4 : Récupération et validation du Marché (optionnel)
         Marche marche = validateAndGetMarche(request.getMarcheId(), request.getBanqueId());
@@ -339,6 +343,9 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                     logger.error("Target nature not found with ID: {}", request.getNatureLigneFonctionnelleId());
                     return new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId());
                 });
+
+        // Validation portée : une ligne générale n'accepte que GENERALE ou GENERALE_ET_SPECIFIQUE
+        validatePorteeForLigneGenerale(targetNature);
 
         // ✅ 5. NOUVEAU : Récupération et validation du marché cible (optionnel)
         Marche targetMarche = validateAndGetMarche(request.getMarcheId(), request.getBanqueId());
@@ -623,6 +630,19 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
      * Règle Métier 1: Valide si la NatureLigneFonctionnelle est autorisée à être une Ligne Mère.
      * Seule la 'Caution Administrative' peut contenir des sous-lignes.
      */
+    /**
+     * Règle Métier — Portée : vérifie qu'une nature est autorisée pour les lignes générales.
+     * Portées valides : GENERALE ou GENERALE_ET_SPECIFIQUE.
+     */
+    private void validatePorteeForLigneGenerale(NatureLigneFonctionnelle nature) {
+        if (nature.getPortee() == PorteeNature.SPECIFIQUE) {
+            logger.warn("Portée invalide pour ligne générale — nature '{}' a portée SPECIFIQUE", nature.getLabel());
+            throw new IllegalArgumentException(
+                    "La nature '" + nature.getLabel() + "' est réservée aux lignes spécifiques et ne peut pas être utilisée dans une ligne générale."
+            );
+        }
+    }
+
     private void validateNatureForMere(NatureLigneFonctionnelle nature) {
         if (!CAUTION_ADMINISTRATIVE_LABEL.equals(nature.getLabel())) {
             logger.warn("Validation de nature échouée: La nature '{}' ne peut pas être une ligne mère.", nature.getLabel());

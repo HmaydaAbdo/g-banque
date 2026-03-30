@@ -1,7 +1,9 @@
 package staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 
 public record NatureLigneFonctionnelleRequest(
 
@@ -13,6 +15,9 @@ public record NatureLigneFonctionnelleRequest(
         String label,
 
         @NotBlank(message = "La description de la nature de ligne fonctionnelle est obligatoire.")
-        String description
+        String description,
+
+        @NotNull(message = "La portée de la nature de ligne fonctionnelle est obligatoire.")
+        PorteeNature portee
 
 ) {}

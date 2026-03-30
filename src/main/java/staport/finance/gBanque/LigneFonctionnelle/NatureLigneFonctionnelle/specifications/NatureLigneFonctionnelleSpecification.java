@@ -6,6 +6,7 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import java.util.ArrayList;
 import java.util.List;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 
 public class NatureLigneFonctionnelleSpecification {
 
@@ -38,6 +39,11 @@ public class NatureLigneFonctionnelleSpecification {
                         cb.lower(root.get("description")),
                         "%" + criteria.description().toLowerCase() + "%"
                 ));
+            }
+
+            // Filter by portee (égalité exacte — enum indexé, pas de LIKE)
+            if (criteria.portee() != null) {
+                predicates.add(cb.equal(root.get("portee"), criteria.portee()));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

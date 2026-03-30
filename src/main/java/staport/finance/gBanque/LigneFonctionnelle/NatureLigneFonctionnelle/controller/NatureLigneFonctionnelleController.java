@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleRequest;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleResponse;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleSearchCriteria;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.exceptions.NatureLFExceptionHandler;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
 
@@ -75,11 +76,18 @@ public class NatureLigneFonctionnelleController {
     /**
      * Non-paginated list — for dropdowns / select inputs.
      * GET /natures-lignes-fonctionnelles/list
+     * GET /natures-lignes-fonctionnelles/list?portee=GENERALE
+     * GET /natures-lignes-fonctionnelles/list?portee=SPECIFIQUE
+     *
+     * Si portee est absent → toutes les natures.
+     * Si portee = GENERALE   → natures GENERALE + GENERALE_ET_SPECIFIQUE.
+     * Si portee = SPECIFIQUE → natures SPECIFIQUE + GENERALE_ET_SPECIFIQUE.
      */
     @GetMapping("/list")
-    public ResponseEntity<List<NatureLigneFonctionnelleResponse>> getAllNatureLigneFonctionnellesList() {
-        logger.debug("GET /natures-lignes-fonctionnelles/list");
-        return ResponseEntity.ok(service.getAllNatureLigneFonctionnellesList());
+    public ResponseEntity<List<NatureLigneFonctionnelleResponse>> getAllNatureLigneFonctionnellesList(
+            @RequestParam(required = false) PorteeNature portee) {
+        logger.debug("GET /natures-lignes-fonctionnelles/list — portee: {}", portee);
+        return ResponseEntity.ok(service.getAllNatureLigneFonctionnellesList(portee));
     }
 
     // ── Update ───────────────────────────────────────────────────────────────
