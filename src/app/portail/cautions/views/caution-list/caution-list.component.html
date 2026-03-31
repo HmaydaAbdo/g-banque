@@ -177,38 +177,35 @@
 
       <ng-template pTemplate="header">
         <tr style="background:#f8f9fc">
-          <th pSortableColumn="numeroCaution" style="min-width:145px">
+          <th pSortableColumn="numeroCaution" >
             N° Caution <p-sortIcon field="numeroCaution"></p-sortIcon>
           </th>
-          <th style="min-width:130px">Banque</th>
-          <th style="min-width:130px">Nature</th>
-          <th style="min-width:110px">Marché</th>
-          <th style="min-width:130px">Organisme</th>
-          <th pSortableColumn="montant" class="text-right" style="min-width:130px">
+          <th >Banque</th>
+          <th >Nature</th>
+          <th >Marché</th>
+          <th >Organisme</th>
+          <th pSortableColumn="montant" class="text-right" >
             Montant <p-sortIcon field="montant"></p-sortIcon>
           </th>
-          <th pSortableColumn="dateDePrise" style="min-width:130px">
+          <th pSortableColumn="dateDePrise" >
             Date de prise <p-sortIcon field="dateDePrise"></p-sortIcon>
           </th>
-          <th class="text-center" style="width:90px">Statut</th>
-          <th class="text-center" style="width:130px">Actions</th>
+          <th class="text-center">Taux</th>
+          <th class="text-center">Statut</th>
+          <th class="text-center" >Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-caution>
         <tr>
-          <td class="font-semibold text-800">{{ caution.numeroCaution }}</td>
+          <td class="text-600 text-sm">{{ caution.numeroCaution }}</td>
           <td class="text-600 text-sm">{{ caution.banqueNom }}</td>
           <td class="text-600 text-sm">{{ caution.natureLabel }}</td>
           <td class="text-600 text-sm">{{ caution.marcheNumero ?? '—' }}</td>
-          <td class="text-700">{{ caution.organisme }}</td>
-          <td class="text-right">
-            <span class="font-bold text-900" style="font-size:0.92rem">
-              {{ caution.montant | number:'1.2-2' }}
-            </span>
-            <span class="text-400 text-xs ml-1">MAD</span>
-          </td>
-          <td class="text-700 text-sm">{{ caution.dateDePrise | date:'dd/MM/yyyy' }}</td>
+          <td class="text-600 text-sm">{{ caution.organisme }}</td>
+          <td class="text-right">{{ caution.montant | number:'1.2-2' }}</td>
+          <td class="text-600 text-sm">{{ caution.dateDePrise | date:'dd/MM/yyyy' }}</td>
+          <td class="text-right">{{ caution.taux | number:'1.2-2' }} %</td>
           <td class="text-center">
             <p-tag
               [value]="caution.actif ? 'Active' : 'Inactive'"
