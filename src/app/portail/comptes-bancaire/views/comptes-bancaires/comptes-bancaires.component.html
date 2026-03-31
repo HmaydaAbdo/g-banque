@@ -1,50 +1,71 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
+<div class="flex flex-column w-screen h-screen overflow-y-scroll gap-3 p-3 pb-6"
+     style="background:#f4f6fb;box-sizing:border-box">
 
-<div class="card  flex flex-column gap-2 p-2  w-screen h-screen overflow-y-scroll ">
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
 
-
-  <div class=" portail-section flex justify-content-between bg-transparent">
-    <div class="flex justify-content-center align-items-center">
-      <p-breadcrumb [model]="items">
+    <div class="flex flex-column gap-1">
+      <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+        Comptes bancaires
+      </h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
         <ng-template pTemplate="item" let-item>
           <ng-container *ngIf="item.route; else elseBlock">
-            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
-               #rla="routerLinkActive">
-              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
             </a>
-
           </ng-container>
           <ng-template #elseBlock>
-            <a [href]="item.url">
-              <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-            </a>
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
           </ng-template>
         </ng-template>
       </p-breadcrumb>
     </div>
 
-    <button pButton pRipple label="Ajouter Banque" class=" hidden md:block  h-fit  mt-2" size="small" icon="pi pi-plus"
-            severity="primary" routerLink="/portail/comptes-bancaires/new"></button>
-    <button pButton pRipple pTooltip="Ajouter une Banque" class=" md:hidden h-fit mt-2 " size="small" icon="pi pi-plus"
-            severity="primary" routerLink="/portail/comptes-bancaires/new"></button>
+    <div class="flex align-items-center gap-2 flex-shrink-0">
+      <button pButton pRipple
+              label="Ajouter une banque"
+              icon="pi pi-plus"
+              size="small"
+              routerLink="/portail/comptes-bancaires/new">
+      </button>
+    </div>
   </div>
 
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-3"
+       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+    <div class="flex flex-wrap gap-2 align-items-center" [formGroup]="searchForm">
 
-  <div class="flex justify-content-between bg-transparent">
-    <form [formGroup]="searchForm">
-        <span class="p-input-icon-left">
-          <i class="pi pi-search"></i>
-          <input pInputText type="text" formControlName="nom" placeholder="Rechercher par nom..."/>
-        </span>
-    </form>
-    <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()"
-            pTooltip="Effacer la recherche"></button>
+      <span class="text-500 text-xs font-medium mr-1" style="white-space:nowrap">
+        <i class="pi pi-sliders-h mr-1"></i>Filtres
+      </span>
+
+      <span class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="nom"
+               placeholder="Rechercher par nom…"
+               [style]="{'width':'220px'}"/>
+      </span>
+
+      <button pButton pRipple icon="pi pi-times"
+              class="p-button-text p-button-secondary p-button-sm"
+              (click)="clearSearch()"
+              pTooltip="Réinitialiser" tooltipPosition="bottom">
+      </button>
+    </div>
   </div>
 
-  <div class="pb-8">
+  <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border"
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+
     <p-table
       #dt
       [value]="banques"
@@ -52,82 +73,108 @@
       [rows]="rows"
       [totalRecords]="totalRecords"
       [loading]="loading"
-      [rowsPerPageOptions]="[3,5, 10, 25, 50]"
+      [rowsPerPageOptions]="[10, 25, 50]"
       [lazy]="true"
-      responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}–{last} sur {totalRecords}"
       (onLazyLoad)="loadBanques($event)"
-      [columns]="[
-           {field: 'id', header: 'id', sortable: true},
-          {field: 'logoBase64', header: 'Logo', sortable: false},
-          {field: 'nom', header: 'Nom', sortable: true},
-          {field: 'numeroDeCompte', header: 'Numéro de Compte', sortable: true},
-          {field: 'devise', header: 'Devise', sortable: true},
-          {field: 'address', header: 'Adresse', sortable: true},
-          {field: 'agence', header: 'Agence', sortable: true},
-          {field: 'soldeActuel', header: 'Solde Actuel', sortable: true},
-        ]"
-      styleClass="p-datatable-gridlines text-xs"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm"
+      rowHover>
 
-    >
-      <ng-template pTemplate="header" let-columns>
-        <tr class="white-space-nowrap">
-          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
-            {{ col.header }}
-            @if (col.sortable) {
-              <p-sortIcon [field]="col.field"></p-sortIcon>
-            }
+      <ng-template pTemplate="header">
+        <tr style="background:#f8f9fc">
+          <th style="width:60px">Logo</th>
+          <th pSortableColumn="nom" >
+            Nom <p-sortIcon field="nom"></p-sortIcon>
           </th>
-          <th style="width: 8rem;">Actions</th>
+          <th pSortableColumn="numeroDeCompte">
+            N° de compte <p-sortIcon field="numeroDeCompte"></p-sortIcon>
+          </th>
+          <th pSortableColumn="devise" class="text-center white-space-nowrap">
+            Devise <p-sortIcon field="devise"></p-sortIcon>
+          </th>
+          <th >Adresse</th>
+          <th >Agence</th>
+          <th pSortableColumn="soldeActuel" class="text-right" >
+            Solde actuel <p-sortIcon field="soldeActuel"></p-sortIcon>
+          </th>
+          <th class="text-center">Actions</th>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="body" let-banque>
         <tr>
-          <td>{{ banque.id }}</td>
-          <td>
+          <td class="text-center">
             <p-image *ngIf="banque.logoBase64"
                      [src]="'data:image/png;base64,' + banque.logoBase64"
                      [alt]="banque.nom + ' logo'"
-                     width="50"
+                     width="40"
                      [preview]="true"/>
-            <span *ngIf="!banque.logoBase64">Pas de Logo</span>
+            <i *ngIf="!banque.logoBase64" class="pi pi-building text-300 text-xl"></i>
           </td>
-          <td>{{ banque.nom }}</td>
-          <td>{{ banque.numeroDeCompte }}</td>
+          <td class="font-semibold text-800">{{ banque.nom }}</td>
+          <td class="text-600 text-sm" style="font-family:monospace">{{ banque.numeroDeCompte }}</td>
+          <td class="text-center">
+            <p-tag [value]="banque.devise"
+                   [severity]="getSeverity(banque.devise)"
+                   styleClass="text-xs">
+            </p-tag>
+          </td>
+          <td class="text-600 text-sm">{{ banque.address }}</td>
+          <td class="text-600 text-sm">{{ banque.agence }}</td>
+          <td class="text-right">
+            <span class="font-bold"
+                  [ngClass]="banque.soldeActuel >= 0 ? 'text-green-600' : 'text-red-600'"
+                  style="font-size:0.92rem">
+              {{ banque.soldeActuel | number }}
+            </span>
+          </td>
           <td>
-            <p-tag [value]="banque.devise" [severity]="getSeverity(banque.devise)"></p-tag>
+            <div class="flex align-items-center justify-content-center gap-1">
+              <button pButton pRipple icon="pi pi-eye"
+                      class="p-button-rounded p-button-text p-button-info p-button-sm"
+                      [routerLink]="['/portail/comptes-bancaires/history', banque.id]"
+                      pTooltip="Historique" tooltipPosition="top">
+              </button>
+              <button pButton pRipple icon="pi pi-pencil"
+                      class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                      [routerLink]="['/portail/comptes-bancaires/edit', banque.id]"
+                      pTooltip="Modifier" tooltipPosition="top">
+              </button>
+              @if (isAdmin()) {
+                <button pButton pRipple icon="pi pi-trash"
+                        class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                        pTooltip="Supprimer" tooltipPosition="top"
+                        (click)="deleteBanque(banque)">
+                </button>
+              }
+            </div>
           </td>
-          <td>{{ banque.address }}</td>
-          <td>{{ banque.agence }}</td>
-          <td   [ngClass]="{ 'text-green-600': banque.soldeActuel >= 0,'text-red-600': banque.soldeActuel < 0}">
-            {{ banque.soldeActuel | number}}
-          </td>
-          <td class="flex flex-row gap-1">
-            <button pButton pRipple icon="pi pi-eye" size="small" class="p-button-outlined p-button-rounded p-button-info "
-                    [routerLink]="['/portail/comptes-bancaires/history', banque.id]"
-                    pTooltip="Voir l'historique"></button>
-            <button pButton pRipple icon="pi pi-pencil" size="small" class="p-button-rounded p-button-outlined p-button-secondary "
-                    pTooltip="Modifier"   [routerLink]="['/portail/comptes-bancaires/edit', banque.id]"></button>
-            @if (isAdmin()) {
-              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
-                      pTooltip="Supprimer" (click)="deleteBanque(banque)"></button>
-            }
+        </tr>
+      </ng-template>
 
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="8">
+            <div class="flex flex-column align-items-center gap-2 py-5">
+              <i class="pi pi-building text-300" style="font-size:2rem"></i>
+              <div class="text-600 font-medium">Aucune banque trouvée</div>
+              <div class="text-400 text-sm">Modifiez les filtres ou ajoutez une nouvelle banque.</div>
+            </div>
           </td>
         </tr>
       </ng-template>
-      <ng-template pTemplate="emptyMessage">
-        <tr>
-          <td [attr.colspan]="9">Aucune banque trouvée.</td>
-        </tr>
-      </ng-template>
+
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="9">Chargement des banques. Veuillez patienter...</td>
+          <td [attr.colspan]="8" class="text-center p-4 text-500 text-sm">
+            <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+          </td>
         </tr>
       </ng-template>
+
     </p-table>
   </div>
 
 </div>
-
-

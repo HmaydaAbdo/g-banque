@@ -78,35 +78,20 @@ import { RestitutionFormComponent } from "../../restitution/views/restitution-fo
 import { EncoursRestitutionComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/restitution/encours-restitution.component";
 import { OperationErroneListComponent } from "../../operationErronées/views/operation-errone-list/operation-errone-list.component";
 import { OperationErroneFormComponent } from "../../operationErronées/views/operation-errone-form/operation-errone-form.component";
-import {
-  EncoursOperationErroneComponent
-} from "../../etatsDesEncours/views/lesEncours/decaissement/operation-errone/operation-errone.component";
-import {
-  VirementInternationalListComponent
-} from "../../virementInternational/views/virement-international-list/virement-international-list.component";
-import {
-  VirementInternationalFormComponent
-} from "../../virementInternational/views/virement-international-form/virement-international-form.component";
-import {
-  VirementInternationalEncoursDecaissementComponent
-} from "../../etatsDesEncours/views/lesEncours/decaissement/virementInternationaux/VirementInternationalEncoursDecaissement.component";
-import {
-  VirementInternationalEncoursEncaissementComponent
-} from "../../etatsDesEncours/views/lesEncours/encaissements/virementInternationaux/VirementInternationalEncoursEncaissementComponent";
+import {EncoursOperationErroneComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/operation-errone/operation-errone.component";
+import {VirementInternationalListComponent} from "../../virementInternational/views/virement-international-list/virement-international-list.component";
+import {VirementInternationalFormComponent} from "../../virementInternational/views/virement-international-form/virement-international-form.component";
+import {VirementInternationalEncoursDecaissementComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/virementInternationaux/VirementInternationalEncoursDecaissement.component";
+import {VirementInternationalEncoursEncaissementComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/virementInternationaux/VirementInternationalEncoursEncaissementComponent";
 import {ImpayeeListComponent} from "../../impayees/views/ImpayeeList/Impayee-list.component";
 import {ImpayeeFormComponent} from "../../impayees/views/ImpayeeForm/Impayee-form.component";
-import {
-  DecaissementEncoursImpayeeComponent
-} from "../../etatsDesEncours/views/lesEncours/decaissement/impayee/decaissement-encours-impayee.component";
-import {
-  AgiosCalculDashboardComponent
-} from "../../agios-calcul/views/agios-calcul-dashboard/agios-calcul-dashboard.component";
+import {DecaissementEncoursImpayeeComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/impayee/decaissement-encours-impayee.component";
+import {AgiosCalculDashboardComponent} from "../../agios-calcul/views/agios-calcul-dashboard/agios-calcul-dashboard.component";
 import {AgiosCalculDetailComponent} from "../../agios-calcul/views/agios-calcul-detail/agios-calcul-detail.component";
-import {
-  EncaissementEncoursImpayeeComponent
-} from "../../etatsDesEncours/views/lesEncours/encaissements/impayee/encaissement-encours-impayee.component";
+import {EncaissementEncoursImpayeeComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/impayee/encaissement-encours-impayee.component";
 
 export const PORTAIL_ROUTES: Routes = [
+
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
   { path: 'accueil', component: AcceuilComponent },
 
@@ -280,4 +265,11 @@ export const PORTAIL_ROUTES: Routes = [
 
   { path: "historique-des-transactions", component: TransactionHistoryComponent },
   { path: 'logs', component: LogsComponent, canActivate: [adminGuard] },
+
+  // ── Module Caution ───────────────────────────────────────────────────────
+  {
+    path: 'cautions',
+    loadChildren: () =>
+      import('../../cautions/route/caution-routing').then(m => m.CAUTION_ROUTES),
+  },
 ];

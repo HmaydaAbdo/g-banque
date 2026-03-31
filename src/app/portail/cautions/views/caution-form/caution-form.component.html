@@ -1,0 +1,239 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-column w-screen h-screen overflow-y-scroll gap-3 p-3 pb-6"
+     style="background:#f4f6fb;box-sizing:border-box">
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="flex flex-column gap-1">
+    <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+      {{ isEditMode ? 'Modifier la caution' : 'Nouvelle caution' }}
+    </h2>
+    <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none p-0"
+                  [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+      <ng-template pTemplate="item" let-item>
+        <ng-container *ngIf="item.route; else elseBlock">
+          <a [routerLink]="item.route" class="p-menuitem-link">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+            <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+          </a>
+        </ng-container>
+        <ng-template #elseBlock>
+          <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+        </ng-template>
+      </ng-template>
+    </p-breadcrumb>
+  </div>
+
+  <!-- ═══ FORM CARD ════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-4"
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+
+    <form [formGroup]="form">
+      <div class="grid p-fluid">
+
+        <!-- Banque -->
+        <div class="col-12 md:col-6 lg:col-4">
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            Banque <span class="text-red-500">*</span>
+          </label>
+          <p-dropdown
+            formControlName="banqueId"
+            [options]="banques"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            placeholder="Choisir une banque"
+            appendTo="body">
+          </p-dropdown>
+          <small class="p-error"
+                 *ngIf="f['banqueId'].touched && f['banqueId'].errors?.['required']">
+            Obligatoire.
+          </small>
+        </div>
+
+        <!-- Nature -->
+        <div class="col-12 md:col-6 lg:col-4">
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            Nature <span class="text-red-500">*</span>
+          </label>
+          <p-dropdown
+            formControlName="natureId"
+            [options]="natures"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            placeholder="Choisir une nature"
+            appendTo="body">
+          </p-dropdown>
+          <small class="p-error"
+                 *ngIf="f['natureId'].touched && f['natureId'].errors?.['required']">
+            Obligatoire.
+          </small>
+        </div>
+
+        <!-- Marché (virtual scroll + lazy) -->
+        <div class="col-12 md:col-6 lg:col-4">
+          <label class="font-semibold block mb-2 text-700 text-sm">Marché</label>
+          <p-dropdown
+            formControlName="marcheId"
+            [options]="marchesOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="N° Marché"
+            [virtualScroll]="true"
+            [virtualScrollItemSize]="38"
+            [lazy]="true"
+            (onLazyLoad)="loadMarchesLazy($event)"
+            [filter]="true"
+            (onFilter)="onFilterMarches($event)"
+            [loading]="marchesLoading"
+            [showClear]="true"
+            appendTo="body">
+            <ng-template pTemplate="item" let-marche>
+              <div class="flex align-items-center gap-2" style="height:38px">
+                <ng-container *ngIf="marche?.label; else loadingTmpl">
+                  <i class="pi pi-file text-400 text-xs"></i>
+                  <span class="text-sm">{{ marche.label }}</span>
+                </ng-container>
+                <ng-template #loadingTmpl>
+                  <i class="pi pi-spin pi-spinner text-400 text-xs"></i>
+                  <span class="text-400 text-xs italic">Chargement…</span>
+                </ng-template>
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </div>
+
+        <!-- N° Caution -->
+        <div class="col-12 md:col-6 lg:col-4">
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            N° Caution <span class="text-red-500">*</span>
+          </label>
+          <input pInputText formControlName="numeroCaution"
+                 placeholder="Ex: CAU-2024-001" />
+          <small class="p-error"
+                 *ngIf="f['numeroCaution'].touched && f['numeroCaution'].errors?.['required']">
+            Obligatoire.
+          </small>
+          <small class="p-error"
+                 *ngIf="f['numeroCaution'].touched && f['numeroCaution'].errors?.['maxlength']">
+            100 caractères maximum.
+          </small>
+        </div>
+
+        <!-- Date de prise -->
+        <div class="col-12 md:col-6 lg:col-4">
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            Date de prise <span class="text-red-500">*</span>
+          </label>
+          <p-calendar
+            formControlName="dateDePrise"
+            dateFormat="dd/mm/yy"
+            [maxDate]="today"
+            [showIcon]="true"
+            appendTo="body">
+          </p-calendar>
+          <small class="p-error"
+                 *ngIf="f['dateDePrise'].touched && f['dateDePrise'].errors?.['required']">
+            Obligatoire.
+          </small>
+        </div>
+
+        <!-- Organisme -->
+        <div class="col-12 md:col-6 lg:col-4">
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            Organisme <span class="text-red-500">*</span>
+          </label>
+          <input pInputText formControlName="organisme" placeholder="Bénéficiaire" />
+          <small class="p-error"
+                 *ngIf="f['organisme'].touched && f['organisme'].errors?.['required']">
+            Obligatoire.
+          </small>
+        </div>
+
+        <!-- Montant -->
+        <div class="col-12 md:col-6 lg:col-4">
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            Montant <span class="text-red-500">*</span>
+          </label>
+          <p-inputNumber
+            formControlName="montant"
+            mode="decimal"
+            [minFractionDigits]="2"
+            placeholder="0.00">
+          </p-inputNumber>
+          <small class="p-error"
+                 *ngIf="f['montant'].touched && f['montant'].errors?.['required']">
+            Obligatoire.
+          </small>
+          <small class="p-error"
+                 *ngIf="f['montant'].touched && f['montant'].errors?.['min']">
+            Le montant doit être supérieur à 0.
+          </small>
+        </div>
+
+        <!-- Taux -->
+        <div class="col-12 md:col-6 lg:col-4">
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            Taux (%) <span class="text-red-500">*</span>
+          </label>
+          <p-inputNumber
+            formControlName="taux"
+            mode="decimal"
+            [minFractionDigits]="4"
+            suffix=" %"
+            placeholder="0.0000">
+          </p-inputNumber>
+          <small class="p-error"
+                 *ngIf="f['taux'].touched && f['taux'].errors?.['required']">
+            Obligatoire.
+          </small>
+          <small class="p-error"
+                 *ngIf="f['taux'].touched && f['taux'].errors?.['min']">
+            Le taux doit être ≥ 0.
+          </small>
+          <small class="p-error"
+                 *ngIf="f['taux'].touched && f['taux'].errors?.['max']">
+            Le taux doit être ≤ 100.
+          </small>
+        </div>
+
+        <!-- Désignation -->
+        <div class="col-12">
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            Désignation <span class="text-red-500">*</span>
+          </label>
+          <textarea pInputTextarea formControlName="designation" rows="3"
+                    placeholder="Description de la caution…"></textarea>
+          <small class="p-error"
+                 *ngIf="f['designation'].touched && f['designation'].errors?.['required']">
+            Obligatoire.
+          </small>
+        </div>
+
+      </div><!-- /grid -->
+
+      <!-- Actions -->
+      <div class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 surface-border">
+        <button pButton pRipple type="button"
+                label="Annuler"
+                icon="pi pi-times"
+                class="p-button-text p-button-secondary"
+                (click)="onCancel()"
+                [disabled]="loading">
+        </button>
+        <button pButton pRipple type="button"
+                [label]="isEditMode ? 'Mettre à jour' : 'Enregistrer'"
+                icon="pi pi-check"
+                [loading]="loading"
+                (click)="onSubmit()">
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

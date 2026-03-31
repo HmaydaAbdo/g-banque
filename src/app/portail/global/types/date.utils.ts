@@ -9,15 +9,12 @@
 
 /**
  * Convertit un objet Date en chaîne `yyyy-MM-dd` en utilisant l'heure LOCALE.
- *
- * ❌ Ancienne approche : `date.toISOString().substring(0, 10)` → UTC → bug J-1
- * ✅ Cette approche : getFullYear/getMonth/getDate → heure locale → correct
+
  *
  * @param date La date à formater (peut être null/undefined)
  * @returns La chaîne au format `yyyy-MM-dd`, ou `null` si la date est absente
  */
-export function toLocalDateString(date: Date | null | undefined): string | null {
-  if (!date) return null;
+export function toLocalDateString(date: Date  ): string  {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');

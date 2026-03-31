@@ -1,63 +1,89 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="w-screen h-screen overflow-y-scroll p-1 gap-2">
+<div class="flex flex-column  h-screen overflow-y-scroll gap-3 p-3 pb-6"
+     style="background:#f4f6fb;box-sizing:border-box">
 
-    <div class="flex justify-content-between align-items-center mb-2">
-      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
-            <ng-template pTemplate="item" let-item>
-              <ng-container *ngIf="item.route; else elseBlock">
-                <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-                  <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-                  <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
-                </a>
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
 
-              </ng-container>
-              <ng-template #elseBlock>
-                <a [href]="item.url">
-                  <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-                </a>
-              </ng-template>
-            </ng-template>
-          </p-breadcrumb>
-      <button pButton pRipple label="Ajouter une Nature" icon="pi pi-plus" class="p-button-primary h-fit" (click)="addNewNature()"></button>
+    <div class="flex flex-column gap-1">
+      <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+        Natures de ligne fonctionnelle
+      </h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+          </ng-template>
+        </ng-template>
+      </p-breadcrumb>
     </div>
-    <form [formGroup]="searchForm" class="w-full">
-      <div class="flex flex-column md:flex-row md:align-items-end md:justify-content-between">
-        <div class="flex flex-column md:flex-row  gap-3 mb-3 md:mb-0">
-          <div>
-            <label for="searchCode" class="block text-900 text-center font-medium mb-2">Code</label>
-            <input id="searchCode" type="text" pInputText formControlName="code" class="w-full" placeholder="Rechercher par code">
-          </div>
-          <div >
-            <label for="searchLabel" class="block text-900 text-center font-medium mb-2">Libellé</label>
-            <input id="searchLabel" type="text" pInputText formControlName="label" class="w-full" placeholder="Rechercher par libellé">
-          </div>
-          <div >
-            <label for="searchDescription" class="block text-900 text-center font-medium mb-2">Description</label>
-            <input id="searchDescription" type="text" pInputText formControlName="description" class="w-full" placeholder="Rechercher par description">
-          </div>
-          <div>
-            <label for="searchPortee" class="block text-900 text-center font-medium mb-2">Portée</label>
-            <p-dropdown
-              id="searchPortee"
-              formControlName="portee"
-              [options]="porteeFilterOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Toutes les portées"
-              [showClear]="true"
-              [style]="{'min-width': '200px'}"
-            ></p-dropdown>
-          </div>
-        </div>
 
-        <div class="flex-shrink-0">
-          <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()" pTooltip="Effacer la recherche"></button>
-        </div>
-      </div>
-    </form>
-    <div class="mb-8 pt-2" >
+    <div class="flex align-items-center gap-2 flex-shrink-0">
+      <button pButton pRipple
+              label="Ajouter une nature"
+              icon="pi pi-plus"
+              size="small"
+              (click)="addNewNature()">
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-3"
+       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+    <div class="flex flex-wrap gap-2 align-items-center" [formGroup]="searchForm">
+
+      <span class="text-500 text-xs font-medium mr-1" style="white-space:nowrap">
+        <i class="pi pi-sliders-h mr-1"></i>Filtres
+      </span>
+
+      <input pInputText type="text"
+             formControlName="code"
+             placeholder="Code"
+             [style]="{'width':'130px'}"/>
+
+      <input pInputText type="text"
+             formControlName="label"
+             placeholder="Libellé"
+             [style]="{'width':'160px'}"/>
+
+      <input pInputText type="text"
+             formControlName="description"
+             placeholder="Description"
+             [style]="{'width':'190px'}"/>
+
+      <p-dropdown
+        formControlName="portee"
+        [options]="porteeFilterOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Portée"
+        [showClear]="true"
+        appendTo="body"
+        [style]="{'min-width':'170px'}">
+      </p-dropdown>
+
+      <button pButton pRipple icon="pi pi-times"
+              class="p-button-text p-button-secondary p-button-sm"
+              (click)="clearSearch()"
+              pTooltip="Réinitialiser" tooltipPosition="bottom">
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border"
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+
     <p-table #dt
              [value]="natures"
              [lazy]="true"
@@ -65,45 +91,86 @@
              [paginator]="true"
              [rows]="10"
              [totalRecords]="totalRecords"
-             [loading]="loading" [rowsPerPageOptions]="[3,5,10, 25, 50]"
-             styleClass="p-datatable-gridlines text-xs"
-             [showCurrentPageReport]="true">
+             [loading]="loading"
+             [rowsPerPageOptions]="[10, 25, 50]"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}–{last} sur {totalRecords}"
+             styleClass="p-datatable-sm"
+             responsiveLayout="scroll"
+             rowHover>
 
       <ng-template pTemplate="header">
-        <tr>
-          <th pSortableColumn="id">Id <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="code">Code <p-sortIcon field="code"></p-sortIcon></th>
-          <th pSortableColumn="label">Libellé <p-sortIcon field="label"></p-sortIcon></th>
-          <th pSortableColumn="description">Description <p-sortIcon field="description"></p-sortIcon></th>
-          <th pSortableColumn="portee">Portée <p-sortIcon field="portee"></p-sortIcon></th>
-          <th>Actions</th>
+        <tr style="background:#f8f9fc">
+          <th pSortableColumn="code" style="min-width:100px">
+            Code <p-sortIcon field="code"></p-sortIcon>
+          </th>
+          <th pSortableColumn="label" style="min-width:160px">
+            Libellé <p-sortIcon field="label"></p-sortIcon>
+          </th>
+          <th style="min-width:200px">Description</th>
+          <th pSortableColumn="portee" style="min-width:130px">
+            Portée <p-sortIcon field="portee"></p-sortIcon>
+          </th>
+          <th class="text-center" style="width:100px">Actions</th>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="body" let-nature>
         <tr>
-          <td>{{ nature.id }}</td>
-          <td>{{ nature.code }}</td>
-          <td>{{ nature.label }}</td>
-          <td>{{ nature.description }}</td>
-          <td>{{ getPorteeLabel(nature.portee)}}</td>
-          <td class="flex flex-row gap-2">
-            @if (isAdmin()){
-              <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2" pTooltip="Modifier" tooltipPosition="top" (click)="editNature(nature.id!)"></button>
-              <button pButton pRipple icon="pi pi-trash"  class="p-button-rounded p-button-outlined p-button-danger" pTooltip="Supprimer" tooltipPosition="top" (click)="deleteNature(nature.id!)"></button>
-            }
+          <td>
+            <span class="font-bold text-800"
+                  style="background:#e0e7ff;color:#3730a3;border-radius:4px;padding:2px 8px;font-size:0.8rem">
+              {{ nature.code }}
+            </span>
+          </td>
+          <td class="font-semibold text-800">{{ nature.label }}</td>
+          <td class="text-600 text-sm">{{ nature.description }}</td>
+          <td>
+            <p-tag [value]="getPorteeLabel(nature.portee)"
+                   severity="info"
+                   styleClass="text-xs">
+            </p-tag>
+          </td>
+          <td>
+            <div class="flex align-items-center justify-content-center gap-1">
+              @if (isAdmin()) {
+                <button pButton pRipple icon="pi pi-pencil"
+                        class="p-button-rounded p-button-text p-button-info p-button-sm"
+                        pTooltip="Modifier" tooltipPosition="top"
+                        (click)="editNature(nature.id!)">
+                </button>
+                <button pButton pRipple icon="pi pi-trash"
+                        class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                        pTooltip="Supprimer" tooltipPosition="top"
+                        (click)="deleteNature(nature.id!)">
+                </button>
+              }
+            </div>
           </td>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7" class="text-center">Aucune nature de ligne fonctionnelle trouvée.</td>
+          <td [attr.colspan]="5">
+            <div class="flex flex-column align-items-center gap-2 py-5">
+              <i class="pi pi-list text-300" style="font-size:2rem"></i>
+              <div class="text-600 font-medium">Aucune nature trouvée</div>
+              <div class="text-400 text-sm">Modifiez les filtres ou ajoutez une nouvelle nature.</div>
+            </div>
+          </td>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="7" class="text-center">Chargement des natures de ligne fonctionnelle. Veuillez patienter...</td>
+          <td [attr.colspan]="5" class="text-center p-4 text-500 text-sm">
+            <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+          </td>
         </tr>
       </ng-template>
+
     </p-table>
   </div>
+
 </div>

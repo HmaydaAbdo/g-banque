@@ -20,6 +20,7 @@ import {Role} from "../../../../auth/enum/Role";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import { PorteeNature, PORTEE_NATURE_LABELS } from '../../dtos/nature-ligne-fonctionnelle/PorteeNature';
+import {TagModule} from "primeng/tag";
 
 @Component({
   selector: 'app-nature-ligne-fonctionnelle-list',
@@ -40,7 +41,8 @@ import { PorteeNature, PORTEE_NATURE_LABELS } from '../../dtos/nature-ligne-fonc
     DropdownModule,
     BreadcrumbModule,
     RouterLink,
-    RouterLinkActive
+    RouterLinkActive,
+    TagModule
   ],
   providers: [MessageService, ConfirmationService]
 })

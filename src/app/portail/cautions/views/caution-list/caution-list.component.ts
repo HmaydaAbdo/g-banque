@@ -1,0 +1,344 @@
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
+import { ToastModule } from 'primeng/toast';
+import { ToolbarModule } from 'primeng/toolbar';
+import { TooltipModule } from 'primeng/tooltip';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { CalendarModule } from 'primeng/calendar';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService, MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
+import { Ripple } from 'primeng/ripple';
+
+import { BehaviorSubject, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+
+import { CautionService } from '../../service/caution.service';
+import { CautionStore } from '../../store/caution.store';
+import { CautionResponseDto } from '../../dtos/CautionResponseDto';
+import { CautionSearchDto } from '../../dtos/CautionSearchDto';
+import { AuthService } from '../../../../auth/services/auth.service';
+import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
+import { MarcheService } from '../../../Marches/service/marche-service.service';
+import { NatureLigneFonctionnelleService } from '../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service';
+import { toLocalDateString } from '../../../global/types/date.utils';
+
+const MARCHE_PAGE_SIZE = 15;
+
+@Component({
+  selector: 'app-caution-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule, ReactiveFormsModule, RouterLink, TableModule, ButtonModule, DropdownModule,
+    InputTextModule, TagModule, ToastModule, ToolbarModule, TooltipModule,
+    BreadcrumbModule, ConfirmDialogModule, CalendarModule, InputNumberModule,
+    DecimalPipe, DatePipe, Ripple,
+  ],
+  providers: [MessageService, ConfirmationService],
+  templateUrl: './caution-list.component.html',
+})
+export class CautionListComponent implements OnInit {
+  @ViewChild('dt') table!: Table;
+
+  private readonly fb                  = inject(FormBuilder);
+  private readonly destroyRef          = inject(DestroyRef);
+  private readonly cdr                 = inject(ChangeDetectorRef);
+  private readonly cautionService      = inject(CautionService);
+  readonly store                       = inject(CautionStore);
+  private readonly authService         = inject(AuthService);
+  private readonly banqueService       = inject(BanqueService);
+  private readonly marcheService       = inject(MarcheService);
+  private readonly natureService       = inject(NatureLigneFonctionnelleService);
+  private readonly messageService      = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+
+  readonly cautions$      = this.store.cautions$;
+  readonly totalElements$ = this.store.totalElements$;
+  readonly loading$       = this.store.loading$;
+
+  readonly isAdmin = this.authService.isAdmin();
+
+  // ── Reactive filter form ──────────────────────────────────────────────────
+  filterForm: FormGroup = this.fb.group({
+    numeroCaution: [null],
+    organisme:     [null],
+    montant:       [null],
+    dateDePrise:   [null],
+    actif:         [null],
+    banque:        [null],
+    nature:        [null],
+    marcheId:      [null],
+  });
+
+  // ── Static options ────────────────────────────────────────────────────────
+  banques:      any[] = [];
+  natures:      any[] = [];
+  actifOptions        = [
+    { label: 'Active',   value: true  },
+    { label: 'Inactive', value: false },
+  ];
+
+  // ── Marché lazy / virtual-scroll options ──────────────────────────────────
+  marchesOptions: any[]     = [];
+  marchesLoading            = false;
+  /** Pages already fetched — prevents duplicate HTTP calls */
+  private loadedMarchePages = new Set<number>();
+  private readonly marcheFilter$ = new BehaviorSubject<string>('');
+
+  marchesScrollerOptions: ScrollerOptions = { delay: 250, showLoader: true, lazy: true };
+
+  breadcrumbItems: MenuItem[] = [];
+
+  // ─────────────────────────────────────────────────────────────────────────
+  ngOnInit(): void {
+    this.breadcrumbItems = [
+      { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
+      { label: 'Cautions' },
+    ];
+
+    this.loadStaticOptions();
+    this.setupMarcheStream();
+
+    // Auto-refresh table when filter form changes
+    this.filterForm.valueChanges.pipe(
+      debounceTime(400),
+      distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(() => this.applyFilters());
+  }
+
+  // ── Static options ────────────────────────────────────────────────────────
+
+  private loadStaticOptions(): void {
+    this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.banques = res.content;
+          this.cdr.markForCheck();
+        },
+        error: () => this.messageService.add({
+          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les banques.',
+        }),
+      });
+
+    this.natureService.getAllNatureLigneFonctionnellesList()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.natures = res;
+          this.cdr.markForCheck();
+        },
+        error: () => this.messageService.add({
+          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les natures.',
+        }),
+      });
+  }
+
+  // ── Marché stream (filter + initial load) ─────────────────────────────────
+
+  private setupMarcheStream(): void {
+
+    this.marcheFilter$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(filter => {
+        // Reset page tracking when filter changes so all pages reload
+        this.loadedMarchePages.clear();
+        return this.loadMarchesData(0, filter);
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(res => {
+      this.initializeMarchesOptions(res);
+      this.cdr.markForCheck();
+    });
+  }
+
+  private loadMarchesData(page: number, filter = '') {
+    const criteria = filter ? { numero: filter } : {};
+    return this.marcheService.getAllMarches(criteria, page, MARCHE_PAGE_SIZE, 'numero,asc').pipe(
+      catchError(() => {
+        this.messageService.add({
+          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les marchés.',
+        });
+        return of({ content: [], page: { totalElements: 0 } });
+      }),
+    );
+  }
+
+  private initializeMarchesOptions(response: any): void {
+    const total = response.page.totalElements;
+    const data  = response.content.map((m: any) => ({ label: m.numero, value: m.id }));
+
+    this.marchesOptions = Array.from({ length: total }, () => ({}));
+    this.marchesOptions.splice(0, data.length, ...data);
+  }
+
+  // ── Marché lazy load (virtual scroll) ────────────────────────────────────
+
+  onLazyLoadMarches(event: any): void {
+    const first = event?.first ?? 0;
+    const page  = Math.floor(first / MARCHE_PAGE_SIZE);
+
+
+    if (this.loadedMarchePages.has(page)) return;
+    this.loadedMarchePages.add(page);
+
+    this.marchesLoading = true;
+
+    this.loadMarchesData(page, this.marcheFilter$.value)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          const newItems = res.content.map((m: any) => ({ label: m.numero, value: m.id }));
+          // Splice into a new array reference so Angular's OnPush detects the change
+          const updated = [...this.marchesOptions];
+          updated.splice(first, newItems.length, ...newItems);
+          this.marchesOptions = updated;
+          this.marchesLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.loadedMarchePages.delete(page);
+          this.marchesLoading = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  onFilterMarches(event: any): void {
+    this.marcheFilter$.next(event.filter?.trim() ?? '');
+  }
+
+  // ── Table lazy load ───────────────────────────────────────────────────────
+
+  loadCautions(event: TableLazyLoadEvent): void {
+    this.store.setLoading(true);
+
+    const page    = event.first ? Math.floor(event.first / (event.rows ?? 10)) : 0;
+    const formVal = this.filterForm.value;
+
+    const criteres: CautionSearchDto = {
+      numeroCaution: formVal.numeroCaution  || undefined,
+      organisme:     formVal.organisme      || undefined,
+      montant:       formVal.montant        || undefined,
+      dateDePrise:   formVal.dateDePrise    ? toLocalDateString(formVal.dateDePrise) : undefined,
+      banqueId:      formVal.banque?.id,
+      natureId:      formVal.nature?.id,
+      marcheId:      formVal.marcheId       || undefined,
+      actif:         formVal.actif !== null ? formVal.actif : undefined,
+      page,
+      size:  event.rows ?? 10,
+      sort: `${event.sortField ?? 'dateDePrise'},${event.sortOrder === 1 ? 'asc' : 'desc'}`,
+    };
+
+    this.cautionService.rechercher(criteres)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.store.set(res.content);
+          this.store.setTotal(res.page.totalElements);
+          this.store.setLoading(false);
+        },
+        error: () => {
+          this.store.setLoading(false);
+          this.messageService.add({
+            severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les cautions.',
+          });
+        },
+      });
+  }
+
+  // ── Filters ───────────────────────────────────────────────────────────────
+
+  applyFilters(): void { this.table?.reset(); }
+
+  clearFilters(): void {
+    this.filterForm.reset();
+    this.applyFilters();
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+
+  getActifSeverity(actif: boolean): 'success' | 'danger' {
+    return actif ? 'success' : 'danger';
+  }
+
+  toggleActif(caution: CautionResponseDto): void {
+    this.confirmationService.confirm({
+      message: `Désactiver la caution <strong>${caution.numeroCaution}</strong> ? Cette opération est irréversible depuis l'interface.`,
+      header: 'Confirmer la désactivation',
+      icon: 'pi pi-power-off',
+      acceptLabel: 'Désactiver',
+      rejectLabel: 'Annuler',
+      acceptButtonStyleClass: 'p-button-warning',
+      accept: () => {
+        this.cautionService.toggleActif(caution.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: updated => {
+              this.store.update(updated);
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Désactivée',
+                detail: `Caution ${caution.numeroCaution} désactivée avec succès.`,
+              });
+              this.cdr.markForCheck();
+            },
+            error: err => this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: err.error?.message ?? 'Impossible de modifier le statut.',
+            }),
+          });
+      },
+    });
+  }
+
+  supprimer(caution: CautionResponseDto): void {
+    this.confirmationService.confirm({
+      message: `Supprimer définitivement la caution <strong>${caution.numeroCaution}</strong> ? Cette action est irréversible.`,
+      header: 'Confirmer la suppression',
+      icon: 'pi pi-trash',
+      acceptLabel: 'Supprimer',
+      rejectLabel: 'Annuler',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.cautionService.supprimer(caution.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => {
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Supprimée',
+                detail: `Caution ${caution.numeroCaution} supprimée avec succès.`,
+              });
+              this.applyFilters();
+            },
+            error: err => this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: err.error?.message ?? 'Impossible de supprimer la caution.',
+            }),
+          });
+      },
+    });
+  }
+}

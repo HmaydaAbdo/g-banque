@@ -1,89 +1,115 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="w-screen h-screen overflow-y-scroll pt-2 pb-6 px-5">
-  <div class="flex justify-content-center align-items-center mb-2">
-    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+<div class="flex flex-column w-screen h-screen overflow-y-scroll gap-3 p-3 pb-6"
+     style="background:#f4f6fb;box-sizing:border-box">
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="flex flex-column gap-1">
+    <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+      {{ isEditMode ? 'Modifier la nature' : 'Nouvelle nature' }}
+    </h2>
+    <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                  [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
       <ng-template pTemplate="item" let-item>
         <ng-container *ngIf="item.route; else elseBlock">
-          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+          <a [routerLink]="item.route" class="p-menuitem-link">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+            <span class="text-400 text-xs ml-1">{{ item.label }}</span>
           </a>
-
         </ng-container>
         <ng-template #elseBlock>
-          <a [href]="item.url">
-            <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-          </a>
+          <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
         </ng-template>
       </ng-template>
     </p-breadcrumb>
   </div>
-  <h2 class="text-center">{{ isEditMode ? 'Modifier une Nature de Ligne Fonctionnelle' : 'Ajouter une Nature de Ligne Fonctionnelle' }}</h2>
-  <div class="flex justify-content-center">
-    <div class="card p-4 lg:p-6 shadow-2" style="width: 100%; max-width: 600px;">
-      <form [formGroup]="natureLigneForm" (ngSubmit)="onSubmit()" class="p-fluid">
-        <div class="formgrid grid">
-          <div class="field col-12">
-            <label for="code" class="block text-900 font-medium mb-2">
-              Code <span class="p-text-danger">*</span>
-              <span *ngIf="isEditMode" class="text-500 font-normal text-sm ml-2">(immuable)</span>
-            </label>
-            <input id="code" type="text" pInputText formControlName="code"
-                   placeholder="Ex: FC01"
-                   [ngClass]="{'ng-invalid ng-dirty': f['code'].invalid && f['code'].touched}"
-            />
-            <small class="p-error" *ngIf="f['code'].invalid && f['code'].touched">
-              <span *ngIf="f['code'].errors?.['required']">Le code est obligatoire.</span>
-              <span *ngIf="f['code'].errors?.['maxlength']">Le code ne doit pas dépasser 20 caractères.</span>
-            </small>
-          </div>
 
-          <div class="field col-12">
-            <label for="label" class="block text-900 font-medium mb-2">Libellé <span class="p-text-danger">*</span></label>
-            <input id="label" type="text" pInputText formControlName="label"
-                   [ngClass]="{'ng-invalid ng-dirty': f['label'].invalid && f['label'].touched}"
-            />
-            <small class="p-error" *ngIf="f['label'].invalid && f['label'].touched">
-              <span *ngIf="f['label'].errors?.['required']">Le libellé est obligatoire.</span>
-              <span *ngIf="f['label'].errors?.['pattern']">Le libellé ne doit contenir que des lettres et des espaces.</span>
-            </small>
-          </div>
+  <!-- ═══ FORM CARD ════════════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-4"
+       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
 
-          <div class="field col-12">
-            <label for="description" class="block text-900 font-medium mb-2">Description <span class="p-text-danger">*</span></label>
-            <input id="description" type="text" pInputText formControlName="description"
-                   [ngClass]="{'ng-invalid ng-dirty': f['description'].invalid && f['description'].touched}"
-            />
-            <small class="p-error" *ngIf="f['description'].invalid && f['description'].touched">
-              <span *ngIf="f['description'].errors?.['required']">La description est obligatoire.</span>
-            </small>
-          </div>
+    <form [formGroup]="natureLigneForm" (ngSubmit)="onSubmit()" class="p-fluid">
+      <div class="formgrid grid">
 
-          <div class="field col-12">
-            <label for="portee" class="block text-900 font-medium mb-2">Portée <span class="p-text-danger">*</span></label>
-            <p-dropdown
-              id="portee"
-              formControlName="portee"
-              [options]="porteeOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Sélectionner une portée"
-              [style]="{'width': '100%'}"
-              [ngClass]="{'ng-invalid ng-dirty': f['portee'].invalid && f['portee'].touched}"
-            ></p-dropdown>
-            <small class="p-error" *ngIf="f['portee'].invalid && f['portee'].touched">
-              <span *ngIf="f['portee'].errors?.['required']">La portée est obligatoire.</span>
-            </small>
-          </div>
+        <!-- Code -->
+        <div class="field col-12">
+          <label for="code" class="font-semibold block mb-2 text-700 text-sm">
+            Code <span class="text-red-500">*</span>
+            <span *ngIf="isEditMode" class="text-400 font-normal text-xs ml-2">(immuable)</span>
+          </label>
+          <input id="code" type="text" pInputText formControlName="code"
+                 placeholder="Ex : FC01"
+                 [ngClass]="{'ng-invalid ng-dirty': f['code'].invalid && f['code'].touched}"/>
+          <small class="p-error" *ngIf="f['code'].invalid && f['code'].touched">
+            <span *ngIf="f['code'].errors?.['required']">Obligatoire.</span>
+            <span *ngIf="f['code'].errors?.['maxlength']">20 caractères maximum.</span>
+          </small>
         </div>
 
-        <div class="flex justify-content-end mt-4 gap-2">
-          <button pButton pRipple label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="onCancel()" type="button"></button>
-          <button pButton pRipple label="{{ isEditMode ? 'Modifier' : 'Créer' }}" icon="pi pi-check" class="p-button-text" type="submit" [disabled]="loading"></button>
+        <!-- Libellé -->
+        <div class="field col-12">
+          <label for="label" class="font-semibold block mb-2 text-700 text-sm">
+            Libellé <span class="text-red-500">*</span>
+          </label>
+          <input id="label" type="text" pInputText formControlName="label"
+                 [ngClass]="{'ng-invalid ng-dirty': f['label'].invalid && f['label'].touched}"/>
+          <small class="p-error" *ngIf="f['label'].invalid && f['label'].touched">
+            <span *ngIf="f['label'].errors?.['required']">Obligatoire.</span>
+            <span *ngIf="f['label'].errors?.['pattern']">Lettres et espaces uniquement.</span>
+          </small>
         </div>
-      </form>
-    </div>
+
+        <!-- Description -->
+        <div class="field col-12">
+          <label for="description" class="font-semibold block mb-2 text-700 text-sm">
+            Description <span class="text-red-500">*</span>
+          </label>
+          <input id="description" type="text" pInputText formControlName="description"
+                 [ngClass]="{'ng-invalid ng-dirty': f['description'].invalid && f['description'].touched}"/>
+          <small class="p-error" *ngIf="f['description'].invalid && f['description'].touched">
+            <span *ngIf="f['description'].errors?.['required']">Obligatoire.</span>
+          </small>
+        </div>
+
+        <!-- Portée -->
+        <div class="field col-12">
+          <label for="portee" class="font-semibold block mb-2 text-700 text-sm">
+            Portée <span class="text-red-500">*</span>
+          </label>
+          <p-dropdown
+            id="portee"
+            formControlName="portee"
+            [options]="porteeOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner une portée"
+            appendTo="body"
+            [ngClass]="{'ng-invalid ng-dirty': f['portee'].invalid && f['portee'].touched}">
+          </p-dropdown>
+          <small class="p-error" *ngIf="f['portee'].invalid && f['portee'].touched">
+            <span *ngIf="f['portee'].errors?.['required']">Obligatoire.</span>
+          </small>
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 surface-border">
+        <button pButton pRipple type="button"
+                label="Annuler"
+                icon="pi pi-times"
+                class="p-button-text p-button-secondary"
+                (click)="onCancel()">
+        </button>
+        <button pButton pRipple type="submit"
+                [label]="isEditMode ? 'Modifier' : 'Créer'"
+                icon="pi pi-check"
+                [disabled]="loading">
+        </button>
+      </div>
+
+    </form>
   </div>
+
 </div>
