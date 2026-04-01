@@ -64,9 +64,6 @@ public class NatureLigneFonctionnelleController {
             @ModelAttribute NatureLigneFonctionnelleSearchCriteria searchCriteria,
             Pageable pageable) {
 
-        // Spring automatically resolves 'pageable' from query params:
-        // page, size, and sort (supports multiple sort params too)
-
         logger.debug("GET /natures-lignes-fonctionnelles — criteria: {}, pageable: {}",
                 searchCriteria, pageable);
 
@@ -78,9 +75,9 @@ public class NatureLigneFonctionnelleController {
      * GET /natures-lignes-fonctionnelles/list
      * GET /natures-lignes-fonctionnelles/list?portee=GENERALE
      * GET /natures-lignes-fonctionnelles/list?portee=SPECIFIQUE
-     *
+
      * Si portee est absent → toutes les natures.
-     * Si portee = GENERALE   → natures GENERALE + GENERALE_ET_SPECIFIQUE.
+     * Si portee = GENERALE → natures GENERALE + GENERALE_ET_SPECIFIQUE.
      * Si portee = SPECIFIQUE → natures SPECIFIQUE + GENERALE_ET_SPECIFIQUE.
      */
     @GetMapping("/list")

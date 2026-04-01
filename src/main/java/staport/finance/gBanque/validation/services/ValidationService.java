@@ -701,7 +701,6 @@ public class ValidationService {
         return factoringTransactionMapper.toResponseDto(savedTransaction);
     }
 
-
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public DecompteTransactionResponseDto processDecompteToTransaction(DecompteTransactionRequestDto requestDto)  {
         // Step 1: Fetch decompte  from the database using it's id from the request.
@@ -1002,8 +1001,6 @@ public class ValidationService {
         return operationErroneTransactionMapper.toResponseDto(savedTransaction);
     }
 
-
-
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public VirementInternationalTransactionResponseDto processVirementInternationalDecaissementTransaction(
             VirementInternationalTransactionRequestDto requestDto)  {
@@ -1080,7 +1077,6 @@ public class ValidationService {
         // using the mapper and return it as the response.
         return virementInternationalTransactionMapper.toResponseDto(savedTransaction);
     }
-
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public ImpayeeTransactionResponse processImpayeeToTransaction(ImpayeeValidationRequest requestDto)  {

@@ -9,7 +9,9 @@ public enum Motif {
     DGI("Direction Générale des Impôts"),
     ADII("Administration des Douanes et Impôts Indirects"),
     IS("Impôts sur les sociétés"),
-    COMMUNAL("COMMUNAL");
+    COMMUNAL("COMMUNAL"),
+    TVA_COMMISSION_CAUTION("TVA sur commission sur caution");
+
 
     private  final String motif;
 

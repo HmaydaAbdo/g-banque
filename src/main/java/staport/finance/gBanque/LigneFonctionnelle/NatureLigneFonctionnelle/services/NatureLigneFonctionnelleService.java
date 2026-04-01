@@ -84,10 +84,7 @@ public class NatureLigneFonctionnelleService implements INatureLigneFonctionnell
 
     @Override
     public List<NatureLigneFonctionnelleResponse> getAllNatureLigneFonctionnellesList(PorteeNature portee) {
-        // Si portee est null → toutes les natures (comportement dashboard/admin)
-        // Si portee est fourni → on filtre par compatibilité via l'index idx_nlf_portee :
-        //   GENERALE   → [GENERALE, GENERALE_ET_SPECIFIQUE]
-        //   SPECIFIQUE → [SPECIFIQUE, GENERALE_ET_SPECIFIQUE]
+
         if (portee == null) {
             return mapper.toDtoList(repository.findAll());
         }

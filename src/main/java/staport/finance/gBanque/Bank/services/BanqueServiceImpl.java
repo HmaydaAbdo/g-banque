@@ -228,7 +228,11 @@ public class BanqueServiceImpl implements IBanqueService {
         banqueRepository.save(banque);
     }
 
-
+    @Override
+    public Banque findOrThrow(Long id) {
+        return banqueRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée ID: " + id));
+    }
 
     // ── Private Senior Helpers ────────────────────────────────────────────────
 
@@ -244,9 +248,4 @@ public class BanqueServiceImpl implements IBanqueService {
         return transactionService.computeBalance(banqueId);
     }
 
-    @Override
-    public Banque findOrThrow(Long id) {
-        return banqueRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée ID: " + id));
-    }
 }
