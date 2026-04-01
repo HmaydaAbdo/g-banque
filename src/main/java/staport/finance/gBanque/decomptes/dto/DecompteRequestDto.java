@@ -12,7 +12,7 @@ public class DecompteRequestDto {
     @NotNull(message = "Marche ID cannot be null")
     private Long marcheId;
 
-    // ← OPTIONNEL : si null, on utilise la banque du marché (marché nanti)
+    @NotNull(message = "banqueEncaissementId  cannot be null")
     private Long banqueEncaissementId;
 
     @NotNull(message = "Date of emission cannot be null")
