@@ -7,6 +7,7 @@ export enum Motif {
   COMMUNAL = 'COMMUNAL',
   ADII = 'ADII',
   IS = 'IS',
+  TVA_COMMISSION_CAUTION = 'TVA_COMMISSION_CAUTION',
 }
 
 export const MotifLabels: Record<Motif, string> = {
@@ -17,5 +18,6 @@ export const MotifLabels: Record<Motif, string> = {
   [Motif.DGI]: 'Direction Générale des Impôts',
   [Motif.COMMUNAL]: 'Communal',
   [Motif.IS]: 'Impôts sur les sociétés',
-  [Motif.ADII]: 'Administration des Douanes et Impôts Indirects'
+  [Motif.ADII]: 'Administration des Douanes et Impôts Indirects',
+  [Motif.TVA_COMMISSION_CAUTION]: 'TVA sur commission sur caution',
 };

@@ -78,7 +78,8 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
     { label: '0%', value: 0 },
     { label: '10%', value: 10 },
     { label: '14%', value: 14 },
-    { label: '20%', value: 20 }
+    { label: '20%', value: 20 },
+    { label: '100%', value: 100 }
   ];
 
   isSubmitting: boolean = false;
