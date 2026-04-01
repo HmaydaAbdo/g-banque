@@ -80,14 +80,11 @@
           >
             <ng-template pTemplate="selectedItem" let-selectedOption>
               <div class="flex align-items-center gap-2" *ngIf="selectedOption">
-                <i [class]="isMarcheNanti ? 'pi pi-lock text-primary' : 'pi pi-unlock'"></i>
                 <div>{{ selectedOption.label }}</div>
               </div>
             </ng-template>
           </p-dropdown>
-          <small class="text-primary font-italic" *ngIf="isMarcheNanti">
-            Marché nanti : la banque est verrouillée sur celle du marché.
-          </small>
+
         </div>
 
         <div class="field col-12 md:col-6">

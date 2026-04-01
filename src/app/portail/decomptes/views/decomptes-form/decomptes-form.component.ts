@@ -41,7 +41,6 @@ export class DecompteFormComponent implements OnInit {
   loading = false;
 
   // Logique Marché & Banque
-  isMarcheNanti = false;
   marchesOptions: any[] = [];
   banquesOptions: any[] = [];
 
@@ -88,49 +87,14 @@ export class DecompteFormComponent implements OnInit {
   initForm(): void {
     this.decompteForm = this.fb.group({
       marcheId: [null, Validators.required],
-      banqueEncaissementId: [null],
-      dateEmission: [new Date(), Validators.required],
+      banqueEncaissementId: [null,Validators.required],
+      dateEmission: [null, Validators.required],
       libelle: ['', Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01)]],
     });
 
-    // Écouteur sur le changement de marché
-    this.decompteForm.get('marcheId')?.valueChanges.subscribe(id => {
-       this.onMarcheSelected(id);
-    });
   }
 
-  onMarcheSelected(marcheId: number): void {
-    const banqueCtrl = this.decompteForm.get('banqueEncaissementId');
-    // SI LE MARCHÉ EST DÉSELECTIONNÉ (null ou undefined)
-    if (!marcheId) {
-      this.isMarcheNanti = false;
-      banqueCtrl?.enable(); // On réactive au cas où c'était bloqué
-      banqueCtrl?.setValue(null); // ON VIDE LA BANQUE
-      banqueCtrl?.setValidators(Validators.required);
-      banqueCtrl?.updateValueAndValidity();
-      return;
-    }else{
-      this.marcheService.getMarcheById(marcheId).subscribe(marche => {
-        this.isMarcheNanti = marche.nanti;
-        if (this.isMarcheNanti) {
-          // Mode Nanti: On fixe la banque et on désactive
-          banqueCtrl?.setValue(marche.banqueId);
-          banqueCtrl?.disable();
-          banqueCtrl?.clearValidators();
-        } else {
-          // Mode Non Nanti: On active et on rend obligatoire
-          banqueCtrl?.enable();
-          banqueCtrl?.setValidators(Validators.required);
-          // Si la valeur actuelle était celle d'un marché nanti précédent, on reset
-          if (banqueCtrl?.value === marche.banqueId) banqueCtrl.setValue(null);
-        }
-        banqueCtrl?.updateValueAndValidity();
-      });
-    }
-
-
-  }
 
   loadBanques(): void {
     this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc').subscribe(res => {
@@ -187,7 +151,7 @@ export class DecompteFormComponent implements OnInit {
       message: 'Voulez-vous enregistrer ce décompte ?',
       accept: () => {
         this.loading = true;
-        const formRawValue = this.decompteForm.getRawValue(); // Capture les champs disabled
+        const formRawValue = this.decompteForm.getRawValue();
 
         const request: DecompteRequestDto = {
           ...formRawValue,
