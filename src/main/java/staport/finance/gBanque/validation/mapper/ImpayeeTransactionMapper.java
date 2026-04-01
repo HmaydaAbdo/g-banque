@@ -1,7 +1,6 @@
 package staport.finance.gBanque.validation.mapper;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.impayees.entities.Impayee;
@@ -13,16 +12,13 @@ import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
+
 
 @Component
 public class ImpayeeTransactionMapper {
 
-    private final ObjectMapper objectMapper;
 
-    public ImpayeeTransactionMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public ImpayeeTransactionMapper() {
     }
 
     /**
@@ -32,9 +28,8 @@ public class ImpayeeTransactionMapper {
      * @param requestDto  The DTO containing the request data.
      * @param impayee     The fetched impayee entity.
      * @return The Transaction entity, ready for persistence.
-     * @throws Exception if an error occurs during JSON serialization.
      */
-    public Transaction toEntity(ImpayeeValidationRequest requestDto, Impayee impayee) throws Exception {
+    public Transaction toEntity(ImpayeeValidationRequest requestDto, Impayee impayee)  {
 
         if (requestDto == null || impayee == null) {
             return null;
@@ -70,14 +65,8 @@ public class ImpayeeTransactionMapper {
         return transaction;
     }
 
-    /**
-     * Maps a Transaction entity to an ImpayeeTransactionResponse.
-     *
-     * @param transaction The Transaction entity.
-     * @return The ImpayeeTransactionResponse.
-     * @throws Exception if an error occurs during JSON deserialization.
-     */
-    public ImpayeeTransactionResponse toResponseDto(Transaction transaction) throws Exception {
+
+    public ImpayeeTransactionResponse toResponseDto(Transaction transaction)  {
         if (transaction == null) {
             return null;
         }

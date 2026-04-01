@@ -1,9 +1,7 @@
 package staport.finance.gBanque.validation.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
 import staport.finance.gBanque.validation.utils.TVAUtils;
@@ -17,14 +15,8 @@ import java.math.BigDecimal;
 @Component
 public class VirementTransactionMapper {
 
-    private final ObjectMapper objectMapper;
-    private final BanqueRepository banqueRepository;
-
-    public VirementTransactionMapper(ObjectMapper objectMapper, BanqueRepository banqueRepository) {
-        this.objectMapper = objectMapper;
-        this.banqueRepository = banqueRepository;
+    public VirementTransactionMapper() {
     }
-
 
     /**
      * Maps VirementTransactionRequestDto and its associated entities to a Transaction entity.
@@ -33,9 +25,8 @@ public class VirementTransactionMapper {
      * @param requestDto The DTO containing the request data.
      * @param virement  The fetched virement entity.
      * @return The Transaction entity, ready for persistence.
-     * @throws Exception if an error occurs during JSON serialization.
      */
-    public Transaction toEntity(VirementTransactionRequestDto requestDto, Virement virement ) throws Exception {
+    public Transaction toEntity(VirementTransactionRequestDto requestDto, Virement virement )   {
 
 
         if (requestDto == null || virement == null ) {
@@ -82,9 +73,8 @@ public class VirementTransactionMapper {
      *
      * @param transaction The Transaction entity.
      * @return The VirementTransactionResponseDto.
-     * @throws Exception if an error occurs during JSON deserialization.
      */
-    public VirementTransactionResponseDto toResponseDto(Transaction transaction) throws Exception {
+    public VirementTransactionResponseDto toResponseDto(Transaction transaction)   {
         if (transaction == null) {
             return null;
         }

@@ -1,7 +1,6 @@
 package staport.finance.gBanque.validation.mapper;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
@@ -16,13 +15,10 @@ import java.math.BigDecimal;
 @Component
 public class OperationErroneTransactionMapper {
 
-    private final ObjectMapper objectMapper;
-
-    public OperationErroneTransactionMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public OperationErroneTransactionMapper() {
     }
 
-    public Transaction toEntity(OperationErroneValidationRequest requestDto, OperationErrone operationErrone) throws Exception {
+    public Transaction toEntity(OperationErroneValidationRequest requestDto, OperationErrone operationErrone) {
         if (requestDto == null || operationErrone == null) {
             return null;
         }
@@ -53,7 +49,7 @@ public class OperationErroneTransactionMapper {
         return transaction;
     }
 
-    public OperationErroneTransactionResponse toResponseDto(Transaction transaction) throws Exception {
+    public OperationErroneTransactionResponse toResponseDto(Transaction transaction){
         if (transaction == null) {
             return null;
         }

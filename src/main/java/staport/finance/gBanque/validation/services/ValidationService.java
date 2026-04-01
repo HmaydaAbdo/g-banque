@@ -217,7 +217,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public LeasingTransactionResponseDto processLeasingTransaction(LeasingTransactionRequestDto requestDto) throws Exception {
+    public LeasingTransactionResponseDto processLeasingTransaction(LeasingTransactionRequestDto requestDto)   {
 
         // Étape 1: Récupérer les entités liées avant le mappage
         ContratLeasing contratLeasing = contratLeasingRepository.findById(requestDto.getContratLeasingId())
@@ -227,7 +227,7 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Echeance de leasing introuvable avec l'ID: " + requestDto.getEcheanceId() + " et contrat id " + requestDto.getContratLeasingId()));
 
         if( echeanceLeasing.getStatutPaiement() == StatutEcheanceLeasing.PAYE){
-            throw new Exception("l echéance est deja payee");
+            throw new RuntimeException("l echéance est deja payee");
         }
         // Étape 2: Utiliser le mapper pour convertir le DTO et les entités en une nouvelle entité Transaction.
         Transaction transactionEntity = leasingTransactionMapper.toEntity(requestDto, contratLeasing, echeanceLeasing);
@@ -254,7 +254,7 @@ public class ValidationService {
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public CmtTransactionResponseDto processCmtTransaction(CmtTransactionRequestDto requestDto) throws Exception {
+    public CmtTransactionResponseDto processCmtTransaction(CmtTransactionRequestDto requestDto)   {
 
 
         // Étape 1: Récupérer les entités liées avant le mappage
@@ -265,7 +265,7 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Echeance cmt introuvable avec l'ID: " + requestDto.getEcheanceId() + " et credit id " + requestDto.getCmtId()));
 
         if( echeanceCMT.getStatutPaiement() == StatutEcheanceCMT.PAYE){
-            throw new Exception("l echéance est deja payee");
+            throw new RuntimeException("l echéance est deja payee");
         }
 
         // Étape 2: Utiliser le mapper pour convertir le DTO et les entités en une nouvelle entité Transaction.
@@ -291,7 +291,7 @@ public class ValidationService {
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
+    public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto)  {
             // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
             // If the Chèque does not exist, throw a ResourceNotFoundException.
             Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
@@ -301,7 +301,7 @@ public class ValidationService {
             // Step 2: Check if the chèque is active.
             // If the Chèque is already used/paid (active = false), throw an exception.
             if (!cheque.isActive()) {
-                throw new Exception("The cheque is not active, it has already been paid");
+                throw new RuntimeException("The cheque is not active, it has already been paid");
             }
     
             // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
@@ -329,7 +329,7 @@ public class ValidationService {
         }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public ChequeTransactionResponseDto processChequeEncaissementTransaction(ChequeTransactionRequest requestDto) throws Exception{
+    public ChequeTransactionResponseDto processChequeEncaissementTransaction(ChequeTransactionRequest requestDto)  {
         // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
         // If the Chèque does not exist, throw a ResourceNotFoundException.
         Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
@@ -339,7 +339,7 @@ public class ValidationService {
         // Step 2: Check if the chèque is active.
         // If the Chèque is already used/paid (active = false), throw an exception.
         if (!cheque.isActive()) {
-            throw new Exception("The cheque is not active, it has already been paid");
+            throw new RuntimeException("The cheque is not active, it has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
@@ -367,7 +367,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public LcnTransactionResponse processDecaissementLcnTransaction(LcnTransactionRequest requestDto) throws Exception{
+    public LcnTransactionResponse processDecaissementLcnTransaction(LcnTransactionRequest requestDto)  {
         // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
         // If the Lcn does not exist, throw a ResourceNotFoundException.
         Lcn lcn = lcnRepository.findById(requestDto.getId())
@@ -377,7 +377,7 @@ public class ValidationService {
         // Step 2: Check if the Lcn is active.
         // If the Lcn is already used/paid (active = false), throw an exception.
         if (!lcn.isActive()) {
-            throw new Exception("The lcn is not active, it has already been paid");
+            throw new RuntimeException("The lcn is not active, it has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched lcn entity into a Transaction entity.
@@ -404,7 +404,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public LcnTransactionResponse processEncaissementLcnTransaction(LcnTransactionRequest requestDto) throws Exception{
+    public LcnTransactionResponse processEncaissementLcnTransaction(LcnTransactionRequest requestDto)  {
         // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
         // If the Lcn does not exist, throw a ResourceNotFoundException.
         Lcn lcn = lcnRepository.findById(requestDto.getId())
@@ -414,7 +414,7 @@ public class ValidationService {
         // Step 2: Check if the Lcn is active.
         // If the Lcn is already used/paid (active = false), throw an exception.
         if (!lcn.isActive()) {
-            throw new Exception("The lcn is not active, it has already been paid");
+            throw new RuntimeException("The lcn is not active, it has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched lcn entity into a Transaction entity.
@@ -439,7 +439,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public VirementTransactionResponseDto processVirementDecaissementTransaction(VirementTransactionRequestDto requestDto) throws Exception{
+    public VirementTransactionResponseDto processVirementDecaissementTransaction(VirementTransactionRequestDto requestDto) {
         // Step 1: Fetch virement entity from the database using it's number from the request.
         // If the virement does not exist, throw a ResourceNotFoundException.
         Virement virement = virementRepository.findById(requestDto.getId())
@@ -449,7 +449,7 @@ public class ValidationService {
         // Step 2: Check if the virement is active.
         // If the virement is already used/paid (active = false), throw an exception.
         if (!virement.isActive()) {
-            throw new Exception("The virement is not active, it has already been paid");
+            throw new RuntimeException("The virement is not active, it has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
@@ -476,7 +476,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public VirementTransactionResponseDto processVirementEncaissementTransaction(VirementTransactionRequestDto requestDto) throws Exception{
+    public VirementTransactionResponseDto processVirementEncaissementTransaction(VirementTransactionRequestDto requestDto) {
         // Step 1: Fetch virement entity from the database using it's number from the request.
         // If the virement does not exist, throw a ResourceNotFoundException.
         Virement virement = virementRepository.findById(requestDto.getId())
@@ -486,7 +486,7 @@ public class ValidationService {
         // Step 2: Check if the virement is active.
         // If the virement is already used/paid (active = false), throw an exception.
         if (!virement.isActive()) {
-            throw new Exception("The virement is not active, it has already been paid");
+            throw new RuntimeException("The virement is not active, it has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
@@ -515,7 +515,7 @@ public class ValidationService {
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public MiseAdispositionTransactionResponseDto processMiseAdispositionDecaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
+    public MiseAdispositionTransactionResponseDto processMiseAdispositionDecaissementTransaction(MiseAdispositionTransactionRequestDto requestDto)  {
         // Step 1: Fetch the MiseAdispo entity from the database.
         // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
         MiseADisposition miseADisposition = miseADispositionRepository.findById(requestDto.getId())
@@ -525,7 +525,7 @@ public class ValidationService {
         // Step 2: Check if the MiseAdispo is active.
         // If the MiseAdispo is already used/paid (active = false), throw an exception.
         if (!miseADisposition.isActive()) {
-            throw new Exception("The miseADisposition is not active, it has already been paid");
+            throw new RuntimeException("The miseADisposition is not active, it has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched miseADisposition entity into a Transaction entity.
@@ -553,7 +553,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public MiseAdispositionTransactionResponseDto processMiseAdispositionEncaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) throws Exception{
+    public MiseAdispositionTransactionResponseDto processMiseAdispositionEncaissementTransaction(MiseAdispositionTransactionRequestDto requestDto)  {
         // Step 1: Fetch the MiseAdispo entity from the database.
         // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
         MiseADisposition miseADisposition = miseADispositionRepository.findById(requestDto.getId())
@@ -563,7 +563,7 @@ public class ValidationService {
         // Step 2: Check if the MiseAdispo is active.
         // If the MiseAdispo is already used/paid (active = false), throw an exception.
         if (!miseADisposition.isActive()) {
-            throw new Exception("The miseADisposition is not active, it has already been paid");
+            throw new RuntimeException("The miseADisposition is not active, it has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched miseADisposition entity into a Transaction entity.
@@ -592,7 +592,7 @@ public class ValidationService {
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public PrefinancementTransactionResponse processPrefinancementTransaction(PrefinancementTransactionRequest requestDto) throws Exception{
+    public PrefinancementTransactionResponse processPrefinancementTransaction(PrefinancementTransactionRequest requestDto)  {
         // Step 1: Fetch prefi  from the database using it's id from the request.
         Prefinancement prefinancement=this.prefinancementRepository.findById(requestDto.getPrefinancementId())
                 .orElseThrow(()->new ResourceNotFoundException("Prefinancement with id "+requestDto.getPrefinancementId()+" not found"));
@@ -600,7 +600,7 @@ public class ValidationService {
         // Step 2: Check if the prefi is not already paid.
         // If it's already paid , throw an exception.
         if (prefinancement.getStatus()== Status.PAYE) {
-            throw new Exception(" préfinancement is already paid");
+            throw new RuntimeException(" préfinancement is already paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched prefi entity into a Transaction entity.
@@ -630,7 +630,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public DroitConstateTransactionResponse processDroitConstateTransaction(DroitConstateTransactionRequest requestDto) throws Exception{
+    public DroitConstateTransactionResponse processDroitConstateTransaction(DroitConstateTransactionRequest requestDto) {
         // Step 1: Fetch dc  from the database using it's id from the request.
         DroitConstate droitConstate=this.droitConstateRepository.findById(requestDto.getDroitConstateId())
                 .orElseThrow(()->new ResourceNotFoundException("Droit constate with id "+requestDto.getDroitConstateId()+" not found"));
@@ -638,7 +638,7 @@ public class ValidationService {
         // Step 2: Check if the dc is not already paid.
         // If it's already paid , throw an exception.
         if (droitConstate.getStatus()== Status.PAYE) {
-            throw new Exception(" droit constate is already paid");
+            throw new RuntimeException(" droit constate is already paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
@@ -666,7 +666,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public FactoringTransactionResponse processFactoringTransaction(FactoringTransactionRequest requestDto) throws Exception{
+    public FactoringTransactionResponse processFactoringTransaction(FactoringTransactionRequest requestDto)  {
         // Step 1: Fetch factoring  from the database using it's id from the request.
         Factoring factoring=this.factoringRepository.findById(requestDto.getFactoringId())
                 .orElseThrow(()->new ResourceNotFoundException("Factoring with id "+requestDto.getFactoringId()+" not found"));
@@ -674,7 +674,7 @@ public class ValidationService {
         // Step 2: Check if the factoring is not already paid.
         // If it's already paid , throw an exception.
         if (factoring.getStatus()== Status.PAYE) {
-            throw new Exception(" factoring is already paid");
+            throw new RuntimeException(" factoring is already paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
@@ -703,7 +703,7 @@ public class ValidationService {
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public DecompteTransactionResponseDto processDecompteToTransaction(DecompteTransactionRequestDto requestDto) throws Exception{
+    public DecompteTransactionResponseDto processDecompteToTransaction(DecompteTransactionRequestDto requestDto)  {
         // Step 1: Fetch decompte  from the database using it's id from the request.
         Decompte decompte=this.decompteRepository.findById(requestDto.getDecompteId())
                 .orElseThrow(()->new ResourceNotFoundException("Décompte with id "+requestDto.getDecompteId()+" not found"));
@@ -711,7 +711,7 @@ public class ValidationService {
         // Step 2: Check if the decompte is not already paid.
         // If it's already paid , throw an exception.
         if (decompte.getStatus()== Status.PAYE) {
-            throw new Exception(" décompte is already paid");
+            throw new RuntimeException(" décompte is already paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
@@ -738,7 +738,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public CommissionTransactionResponse processCommissionToTransaction(CommissionValidationDto requestDto) throws Exception{
+    public CommissionTransactionResponse processCommissionToTransaction(CommissionValidationDto requestDto)  {
         // Step 1: Fetch commission from the database using it's id from the request.
         Commission commission=this.commisionRepository.findById(requestDto.getIdCommission())
                 .orElseThrow(()->new ResourceNotFoundException("Commission with id "+requestDto.getIdCommission()+" not found"));
@@ -746,7 +746,7 @@ public class ValidationService {
         // Step 2: Check if the commission is not already paid.
         // If it's already paid , throw an exception.
         if (commission.getStatus()== Status.PAYE) {
-            throw new Exception(" commission is already paid");
+            throw new RuntimeException(" commission is already paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
@@ -773,7 +773,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public AgiosTransactionResponse processAgiosToTransaction(AgiosValidationRequest requestDto) throws Exception{
+    public AgiosTransactionResponse processAgiosToTransaction(AgiosValidationRequest requestDto)  {
         // Step 1: Fetch agios from the database using it's id from the request.
         Agios agios=this.agiosRepository.findById(requestDto.getIdAgio())
                 .orElseThrow(()->new ResourceNotFoundException("Agios with id "+requestDto.getIdAgio()+" not found"));
@@ -781,7 +781,7 @@ public class ValidationService {
         // Step 2: Check if the agios is not already paid.
         // If it's already paid , throw an exception.
         if (agios.getStatus()== Status.PAYE) {
-            throw new Exception(" agios is already paid");
+            throw new RuntimeException(" agios is already paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
@@ -809,7 +809,7 @@ public class ValidationService {
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public PrelevementTransactionResponse processPrelevementToTransaction(PrelevementValidationRequest requestDto) throws Exception{
+    public PrelevementTransactionResponse processPrelevementToTransaction(PrelevementValidationRequest requestDto)  {
         // Step 1: Fetch prelevement from the database using it's id from the request.
         Prelevement prelevement=this.prelevementRepository.findById(requestDto.getIdPrelevement())
                 .orElseThrow(()->new ResourceNotFoundException("Prelevement with id "+requestDto.getIdPrelevement()+" not found"));
@@ -817,7 +817,7 @@ public class ValidationService {
         // Step 2: Check if the prelevement is not already paid.
         // If it's already paid , throw an exception.
         if (prelevement.getStatus()== Status.PAYE) {
-            throw new Exception(" prelevement is already paid");
+            throw new RuntimeException(" prelevement is already paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
@@ -847,7 +847,7 @@ public class ValidationService {
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public FraisBancaireTransactionResponse processFraisBancaireToTransaction(FraisBanciareValidationRequest requestDto) throws Exception{
+    public FraisBancaireTransactionResponse processFraisBancaireToTransaction(FraisBanciareValidationRequest requestDto)  {
         // Step 1: Fetch frais bancaire from the database using it's id from the request.
         FraisBancaire fraisBancaire=this.fraisBancaireRepository.findById(requestDto.getIdFraisBancaire())
                 .orElseThrow(()->new ResourceNotFoundException("Interet with id "+requestDto.getIdFraisBancaire()+" not found"));
@@ -855,7 +855,7 @@ public class ValidationService {
         // Step 2: Check if the frais bancaire is not already paid.
         // If it's already paid , throw an exception.
         if (fraisBancaire.getStatus()== Status.PAYE) {
-            throw new Exception(" frais bancaire is already paid");
+            throw new RuntimeException(" frais bancaire is already paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
@@ -882,7 +882,7 @@ public class ValidationService {
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public ImpotEtTaxeTransactionResponse processImpotEtTaxeToTransaction(ImpotEtTaxeValidationRequest requestDto) throws Exception {
+    public ImpotEtTaxeTransactionResponse processImpotEtTaxeToTransaction(ImpotEtTaxeValidationRequest requestDto)   {
         // Step 1: Fetch impot et taxe from the database using its id from the request.
         ImpotEtTaxe impotEtTaxe = this.impotEtTaxeRepository.findById(requestDto.getIdImpotEtTaxe())
                 .orElseThrow(() -> new ResourceNotFoundException("Impôt/Taxe with id " + requestDto.getIdImpotEtTaxe() + " not found"));
@@ -890,7 +890,7 @@ public class ValidationService {
         // Step 2: Check if the impot et taxe is not already paid.
         // If it's already paid, throw an exception.
         if (impotEtTaxe.getStatus() == Status.PAYE) {
-            throw new Exception("L'impôt/taxe est déjà payé(e)");
+            throw new RuntimeException("L'impôt/taxe est déjà payé(e)");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
@@ -918,7 +918,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public RestitutionTransactionResponse processRestitutionToTransaction(RestitutionValidationRequest requestDto) throws Exception {
+    public RestitutionTransactionResponse processRestitutionToTransaction(RestitutionValidationRequest requestDto)  {
         log.info("Début du traitement de la restitution ID: {}", requestDto.getIdRestitution());
 
         // Step 1: Récupérer la restitution depuis la base de données
@@ -931,7 +931,7 @@ public class ValidationService {
         // Step 2: Vérifier que la restitution n'est pas déjà payée
         if (restitution.getStatus() == Status.PAYE) {
             log.error("La restitution ID {} est déjà payée", requestDto.getIdRestitution());
-            throw new Exception("La restitution est déjà payée");
+            throw new RuntimeException("La restitution est déjà payée");
         }
 
         // Step 3: Mapper le DTO et l'entité restitution vers une Transaction
@@ -967,7 +967,7 @@ public class ValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public OperationErroneTransactionResponse processOperationErroneToTransaction(OperationErroneValidationRequest requestDto) throws Exception {
+    public OperationErroneTransactionResponse processOperationErroneToTransaction(OperationErroneValidationRequest requestDto)  {
         // Step 1: Fetch operation erroné from the database using its id from the request.
         OperationErrone operationErrone = this.operationErroneRepository.findById(requestDto.getIdOperationErrone())
                 .orElseThrow(() -> new ResourceNotFoundException("operation erronée with id " + requestDto.getIdOperationErrone() + " not found"));
@@ -975,7 +975,7 @@ public class ValidationService {
         // Step 2: Check if the operation erroné is not already paid.
         // If it's already paid, throw an exception.
         if (operationErrone.getStatus() == Status.PAYE) {
-            throw new Exception("L' operation erroné est déjà payé");
+            throw new RuntimeException("L' operation erroné est déjà payé");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
@@ -1006,7 +1006,7 @@ public class ValidationService {
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public VirementInternationalTransactionResponseDto processVirementInternationalDecaissementTransaction(
-            VirementInternationalTransactionRequestDto requestDto) throws Exception {
+            VirementInternationalTransactionRequestDto requestDto)  {
 
         // Step 1: Fetch virement international entity from the database using its id from the request.
         // If the virement international does not exist, throw a ResourceNotFoundException.
@@ -1017,7 +1017,7 @@ public class ValidationService {
         // Step 2: Check if the virement international is active.
         // If the virement international is already used/paid (active = false), throw an exception.
         if (!virementInternational.isActive()) {
-            throw new Exception("The virement international is not active, it has already been paid");
+            throw new RuntimeException("The virement international is not active, it has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
@@ -1044,7 +1044,7 @@ public class ValidationService {
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public VirementInternationalTransactionResponseDto processVirementInternationalEncaissementTransaction(
-            VirementInternationalTransactionRequestDto requestDto) throws Exception {
+            VirementInternationalTransactionRequestDto requestDto) {
 
         // Step 1: Fetch virement international entity from the database using its id from the request.
         // If the virement international does not exist, throw a ResourceNotFoundException.
@@ -1055,7 +1055,7 @@ public class ValidationService {
         // Step 2: Check if the virement international is active.
         // If the virement international is already used/paid (active = false), throw an exception.
         if (!virementInternational.isActive()) {
-            throw new Exception("The virement international is not active, it has already been paid");
+            throw new RuntimeException("The virement international is not active, it has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
@@ -1083,7 +1083,7 @@ public class ValidationService {
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public ImpayeeTransactionResponse processImpayeeToTransaction(ImpayeeValidationRequest requestDto) throws Exception {
+    public ImpayeeTransactionResponse processImpayeeToTransaction(ImpayeeValidationRequest requestDto)  {
         log.info("Début du traitement de l'impayée ID: {}", requestDto.getIdImpayee());
 
         // Step 1: Fetch impayee from the database using its id from the request.
@@ -1097,7 +1097,7 @@ public class ValidationService {
         // If it's already paid, throw an exception.
         if (impayee.getStatus() == Status.PAYE) {
             log.error("L'impayée ID {} est déjà payée", requestDto.getIdImpayee());
-            throw new Exception("L'impayée est déjà payée");
+            throw new RuntimeException("L'impayée est déjà payée");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.

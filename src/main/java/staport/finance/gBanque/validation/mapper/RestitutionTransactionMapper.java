@@ -1,6 +1,5 @@
 package staport.finance.gBanque.validation.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.restitution.entities.Restitution;
@@ -9,24 +8,19 @@ import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidatio
 import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
+
 
 @Component
 public class RestitutionTransactionMapper {
 
-    private final ObjectMapper objectMapper;
-
-    public RestitutionTransactionMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public RestitutionTransactionMapper() {
     }
 
     /**
      * Convertit le DTO de validation et l'entité Restitution en Transaction
      */
-    public Transaction toEntity(RestitutionValidationRequest requestDto, Restitution restitution) throws Exception {
+    public Transaction toEntity(RestitutionValidationRequest requestDto, Restitution restitution)  {
 
         if (requestDto == null || restitution == null) {
             return null;
@@ -59,16 +53,6 @@ public class RestitutionTransactionMapper {
         // Stocker la TVA dans la transaction (TVA collectée pour les encaissements)
         transaction.setTvaCollectee(tva);
 
-        // Mapping des traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueId", restitution.getBanque().getId());
-            tracesMap.put("restitutionId", restitution.getId());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
-        }
 
         return transaction;
     }
@@ -76,7 +60,7 @@ public class RestitutionTransactionMapper {
     /**
      * Convertit une Transaction en DTO de réponse
      */
-    public RestitutionTransactionResponse toResponseDto(Transaction transaction) throws Exception {
+    public RestitutionTransactionResponse toResponseDto(Transaction transaction)  {
         if (transaction == null) {
             return null;
         }

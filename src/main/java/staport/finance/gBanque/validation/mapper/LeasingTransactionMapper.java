@@ -1,6 +1,5 @@
 package staport.finance.gBanque.validation.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
@@ -10,18 +9,12 @@ import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.Bank.entities.Banque;
-
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class LeasingTransactionMapper {
 
-    private final ObjectMapper objectMapper;
-
-    public LeasingTransactionMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public LeasingTransactionMapper() {
     }
 
     /**
@@ -32,9 +25,8 @@ public class LeasingTransactionMapper {
      * @param contratLeasing  The fetched ContratLeasing entity.
      * @param echeanceLeasing The fetched EcheanceLeasing entity.
      * @return The Transaction entity, ready for persistence.
-     * @throws Exception if an error occurs during JSON serialization.
      */
-    public Transaction toEntity(LeasingTransactionRequestDto requestDto, ContratLeasing contratLeasing, EcheanceLeasing echeanceLeasing) throws Exception {
+    public Transaction toEntity(LeasingTransactionRequestDto requestDto, ContratLeasing contratLeasing, EcheanceLeasing echeanceLeasing)   {
         if (requestDto == null || contratLeasing == null || echeanceLeasing == null) {
             return null;
         }
@@ -61,17 +53,7 @@ public class LeasingTransactionMapper {
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTvaDeductible());
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
-        // Mapping traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueId", contratLeasing.getBanqueDePrelevement().getId());
-            tracesMap.put("contratLeasingId", contratLeasing.getId());
-            tracesMap.put("echeanceId", echeanceLeasing.getId());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
-        }
+
 
         return transaction;
     }
@@ -81,9 +63,8 @@ public class LeasingTransactionMapper {
      *
      * @param transaction The Transaction entity.
      * @return The LeasingTransactionResponseDto.
-     * @throws Exception if an error occurs during JSON deserialization.
      */
-    public LeasingTransactionResponseDto toResponseDto(Transaction transaction) throws Exception {
+    public LeasingTransactionResponseDto toResponseDto(Transaction transaction)   {
         if (transaction == null) {
             return null;
         }
@@ -108,14 +89,6 @@ public class LeasingTransactionMapper {
         responseDto.setCredit(transaction.getCredit());
         responseDto.setTransactionSource(transaction.getTransactionSource());
 
-        // Retrieving IDs from traces
-        try {
-            Map tracesMap = objectMapper.readValue(transaction.getTraces(), Map.class);
-            responseDto.setContratLeasingId(Long.valueOf(tracesMap.get("contratLeasingId").toString()));
-            responseDto.setEcheanceId(Long.valueOf(tracesMap.get("echeanceId").toString()));
-        } catch (Exception e) {
-            throw new Exception("Erreur lors de la désérialisation des traces", e);
-        }
 
         return responseDto;
     }

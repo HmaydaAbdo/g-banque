@@ -1,6 +1,5 @@
 package staport.finance.gBanque.validation.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
@@ -9,23 +8,16 @@ import staport.finance.gBanque.validation.dtos.prelevements.PrelevementValidatio
 import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
+
 
 @Component
 public class PrelevementTransactionMapper {
 
-    private final ObjectMapper objectMapper;
-
-    public PrelevementTransactionMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public PrelevementTransactionMapper() {
     }
 
-
-
-    public Transaction toEntity(PrelevementValidationRequest requestDto, Prelevement prelevement ) throws Exception {
+    public Transaction toEntity(PrelevementValidationRequest requestDto, Prelevement prelevement )   {
 
 
         if (requestDto == null || prelevement == null ) {
@@ -55,21 +47,13 @@ public class PrelevementTransactionMapper {
         // Stocker la TVA dans la transaction
         transaction.setTvaDeductible(tva);
 
-        // Mapping traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueId", prelevement.getBanque().getId());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
-        }
+
 
         return transaction;
     }
 
 
-    public PrelevementTransactionResponse toResponseDto(Transaction transaction) throws Exception {
+    public PrelevementTransactionResponse toResponseDto(Transaction transaction)   {
         if (transaction == null) {
             return null;
         }

@@ -1,9 +1,9 @@
 package staport.finance.gBanque.validation.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
@@ -13,20 +13,15 @@ import staport.finance.gBanque.prefinancement.repository.PrefinancementRepositor
 import staport.finance.gBanque.validation.utils.TVAUtils;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class PrefinancementTransactionMapper {
 
-    private final ObjectMapper objectMapper;
     private final PrefinancementRepository prefinancementRepository;
     private final BanqueRepository  banqueRepository;
 
-    public PrefinancementTransactionMapper(ObjectMapper objectMapper, PrefinancementRepository prefinancementRepository, BanqueRepository banqueRepository) {
-        this.objectMapper = objectMapper;
+    public PrefinancementTransactionMapper( PrefinancementRepository prefinancementRepository, BanqueRepository banqueRepository) {
         this.prefinancementRepository = prefinancementRepository;
         this.banqueRepository = banqueRepository;
     }
@@ -36,9 +31,8 @@ public class PrefinancementTransactionMapper {
      *
      * @param requestDto The DTO containing the request data.
      * @return The Transaction entity, ready for persistence.
-     * @throws Exception if an error occurs during JSON serialization.
      */
-    public Transaction toEntity(PrefinancementTransactionRequest requestDto  ) throws Exception {
+    public Transaction toEntity(PrefinancementTransactionRequest requestDto  )   {
 
 
         if (requestDto == null  ) {
@@ -48,15 +42,15 @@ public class PrefinancementTransactionMapper {
         Transaction transaction = new Transaction();
 
         Prefinancement prefinancement=this.prefinancementRepository.findById(requestDto.getPrefinancementId())
-                .orElseThrow(()->new Exception("Prefinancement with id "+requestDto.getPrefinancementId()+" not found"));
+                .orElseThrow(()->new ResourceNotFoundException("Prefinancement with id "+requestDto.getPrefinancementId()+" not found"));
 
         Marche marche=prefinancement.getMarche();
 
         if(marche==null){
-            throw new Exception("Marche null for prefinancement with id "+requestDto.getPrefinancementId());
+            throw new IllegalStateException("Marche null for prefinancement with id "+requestDto.getPrefinancementId());
         }
 
-        Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new Exception("Banque with id "+requestDto.getBanqueId()+" not found"));
+        Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         transaction.setReferent(prefinancement.getId());
         transaction.setLibelle(requestDto.getLibelle());
@@ -88,22 +82,10 @@ public class PrefinancementTransactionMapper {
 
 
 
-        // Mapping traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueId", requestDto.getBanqueId());
-            tracesMap.put("prefiId", requestDto.getPrefinancementId());
-            tracesMap.put("marcheNumero", marche.getNumero());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
-        }
-
         return transaction;
     }
 
-    public PrefinancementTransactionResponse toResponseDto(Transaction transaction) throws Exception {
+    public PrefinancementTransactionResponse toResponseDto(Transaction transaction)   {
 
         if (transaction == null) {
             return null;
@@ -120,15 +102,6 @@ public class PrefinancementTransactionMapper {
         responseDto.setDateOperations(transaction.getDateOperations());
         responseDto.setDebit(transaction.getDebit());
         responseDto.setCredit(transaction.getCredit());
-
-
-        try {
-            Map tracesMap = objectMapper.readValue(transaction.getTraces(), Map.class);
-            responseDto.setMarcheNumero(String.valueOf(tracesMap.get("marcheNumero").toString()));
-        } catch (Exception e) {
-            throw new Exception("Erreur lors de la désérialisation des traces", e);
-        }
-
 
         return responseDto;
 

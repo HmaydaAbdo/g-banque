@@ -1,6 +1,5 @@
 package staport.finance.gBanque.validation.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
@@ -11,16 +10,11 @@ import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
+
 
 @Component
 public class ImpotEtTaxeTransactionMapper {
-
-    private final ObjectMapper objectMapper;
-
-    public ImpotEtTaxeTransactionMapper(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public ImpotEtTaxeTransactionMapper() {
     }
 
     /**
@@ -30,9 +24,8 @@ public class ImpotEtTaxeTransactionMapper {
      * @param requestDto      The DTO containing the request data.
      * @param impotEtTaxe     The fetched impot et taxe entity.
      * @return The Transaction entity, ready for persistence.
-     * @throws Exception if an error occurs during JSON serialization.
      */
-    public Transaction toEntity(ImpotEtTaxeValidationRequest requestDto, ImpotEtTaxe impotEtTaxe) throws Exception {
+    public Transaction toEntity(ImpotEtTaxeValidationRequest requestDto, ImpotEtTaxe impotEtTaxe)  {
 
         if (requestDto == null || impotEtTaxe == null) {
             return null;
@@ -57,16 +50,7 @@ public class ImpotEtTaxeTransactionMapper {
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaDeductible(montantTva);
 
-        // Mapping traces
-        try {
-            Map<String, Object> tracesMap = new HashMap<>();
-            tracesMap.put("banqueId", impotEtTaxe.getBanque().getId());
-            tracesMap.put("motif", impotEtTaxe.getMotif().name());
-            String jsonTraces = objectMapper.writeValueAsString(tracesMap);
-            transaction.setTraces(jsonTraces);
-        } catch (Exception e) {
-            throw new Exception("Erreur lors du mappage des traces", e);
-        }
+
 
         return transaction;
     }
@@ -76,9 +60,8 @@ public class ImpotEtTaxeTransactionMapper {
      *
      * @param transaction The Transaction entity.
      * @return The ImpotEtTaxeTransactionResponse.
-     * @throws Exception if an error occurs during JSON deserialization.
      */
-    public ImpotEtTaxeTransactionResponse toResponseDto(Transaction transaction) throws Exception {
+    public ImpotEtTaxeTransactionResponse toResponseDto(Transaction transaction)  {
         if (transaction == null) {
             return null;
         }
