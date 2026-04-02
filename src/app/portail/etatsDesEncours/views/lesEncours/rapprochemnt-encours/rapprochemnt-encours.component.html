@@ -291,7 +291,17 @@
           <td>
             <span class="text-700">{{ transaction.transactionSource }}</span>
           </td>
-          <td class="text-center">
+          <td class="flex flex-row gap-1 text-center">
+            <p-button
+              [outlined]="true"
+              [rounded]="true"
+              severity="primary"
+              pTooltip="Modifier"
+              tooltipPosition="left"
+              size="small"
+              icon="pi pi-pencil"
+              (onClick)="openEditDialog(transaction)">
+            </p-button>
             <p-button
               [outlined]="true"
               [rounded]="true"
@@ -332,5 +342,78 @@
 
     </p-table>
   </div>
+
+  <p-dialog
+    header="Modifier une transaction"
+    [(visible)]="displayEditDialog"
+    [modal]="true"
+    [closable]="true">
+
+    <form [formGroup]="editDateForm">
+      <!-- Date d'opération -->
+      <div class=" flex flex-column  mb-3">
+        <label class="font-semibold text-sm">Date d'opération</label>
+        <p-calendar
+          formControlName="dateOperation"
+          dateFormat="dd/mm/yy"
+          appendTo="body"
+          [showIcon]="true"
+          [readonlyInput]="true"
+          [showOnFocus]="false"
+          [inputStyle]="{'cursor':'pointer'}">
+        </p-calendar>
+        <small *ngIf="editDateForm.get('dateOperation')?.invalid && editDateForm.get('dateOperation')?.touched" class="text-red-500">
+          La date d'opération est obligatoire
+        </small>
+      </div>
+
+      <!-- Date de valeur -->
+      <div class=" flex flex-column  mb-3">
+        <label class="font-semibold text-sm">Date de valeur</label>
+        <p-calendar
+          formControlName="dateValeur"
+          dateFormat="dd/mm/yy"
+          appendTo="body"
+          [showOnFocus]="false"
+          [showIcon]="true"
+          [readonlyInput]="true"
+          [inputStyle]="{'cursor':'pointer'}">
+        </p-calendar>
+        <small *ngIf="editDateForm.get('dateValeur')?.invalid && editDateForm.get('dateValeur')?.touched" class="text-red-500">
+          La date de valeur est obligatoire
+        </small>
+      </div>
+
+      <!-- TVA Déductible -->
+      <div class=" flex flex-column  mb-3">
+        <label class="font-semibold text-sm">TVA Déductible</label>
+        <input type="number"
+               pInputText
+               formControlName="tvaDeductible"
+               class="w-full"/>
+        <small *ngIf="editDateForm.get('tvaDeductible')?.invalid && editDateForm.get('tvaDeductible')?.touched" class="text-red-500">
+          Ce champ est obligatoire
+        </small>
+      </div>
+
+      <!-- TVA Collectée -->
+      <div class=" flex flex-column  mb-3">
+        <label class="font-semibold text-sm">TVA Collectée</label>
+        <input type="number"
+               pInputText
+               formControlName="tvaCollecte"
+               class="w-full"/>
+        <small *ngIf="editDateForm.get('tvaCollecte')?.invalid && editDateForm.get('tvaCollecte')?.touched" class="text-red-500">
+          Ce champ est obligatoire
+        </small>
+      </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Annuler" severity="secondary" (click)="closeEditDialog()"></p-button>
+      <p-button label="Enregistrer" severity="success" (click)="updateTransaction()" [disabled]="editDateForm.invalid"></p-button>
+    </ng-template>
+  </p-dialog>
+
 
 </div>

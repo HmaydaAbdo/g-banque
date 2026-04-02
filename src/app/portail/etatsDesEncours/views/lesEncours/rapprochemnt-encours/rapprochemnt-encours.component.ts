@@ -8,7 +8,7 @@ import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
-import {FormsModule, ReactiveFormsModule, FormBuilder, FormGroup} from '@angular/forms';
+import {FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators} from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
 import {ConfirmationService, MessageService} from 'primeng/api';
 import { ActivatedRoute } from '@angular/router';
@@ -23,6 +23,8 @@ import {DialogModule} from "primeng/dialog";
 import {CalendarModule} from "primeng/calendar";
 import {ValidationService} from "../../../services/validation/validation.service";
 import {BankStateService} from "../../../../comptes-bancaire/services/bank-state.service";
+import {parseLocalDate, toLocalDateString} from "../../../../global/types/date.utils";
+import {TransactionUpdateRequestDto} from "../../../../transactions/dtos/TransactionUpdateRequestDto";
 
 
 @Component({
@@ -64,6 +66,8 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
   transactionSourceOptions: any[] = [];
 
+  displayEditDialog: boolean = false;
+  editDateForm!: FormGroup;
 
   private subscriptions: Subscription[] = [];
 
@@ -87,10 +91,12 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
         const id = params.get('banqueId');
         if (id) {
           this.banqueIdFromRoute = +id;
-          this.initSearchForm();
         }
       })
     );
+
+    this.initSearchForm();
+    this.initEditDialogForm()
   }
 
   ngOnDestroy(): void {
@@ -124,6 +130,16 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(formValueChangesSub);
   }
+  initEditDialogForm(): void {
+    this.editDateForm = this.fb.group({
+      id: [null],
+      dateValeur: [null, Validators.required],
+      dateOperation: [null, Validators.required],
+      tvaDeductible: [null, Validators.required],
+      tvaCollecte: [null, Validators.required]
+    });
+  }
+
 
 
   loadTransactions(event: TableLazyLoadEvent): void {
@@ -182,6 +198,60 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  openEditDialog(transaction: TransactionResponseDto): void {
+    this.editDateForm.patchValue({
+      id: transaction.id,
+      dateValeur: parseLocalDate(transaction.dateValeur),
+      dateOperation: parseLocalDate(transaction.dateOperations),
+      tvaDeductible: transaction.tvaDeductible,
+      tvaCollecte: transaction.tvaCollectee
+    });
+    this.displayEditDialog = true;
+  }
+
+  updateTransaction(): void {
+    if (!this.editDateForm.valid) return;
+
+    const formValue = this.editDateForm.value;
+    const updateDto: TransactionUpdateRequestDto = {
+      dateValeur: toLocalDateString(formValue.dateValeur)!,
+      dateOperation: toLocalDateString(formValue.dateOperation)!,
+      tvaDeductible: formValue.tvaDeductible,
+      tvaCollecte: formValue.tvaCollecte
+    };
+
+    // Ici, utilise l'id stocké dans le formulaire ou passé en paramètre
+    const transactionId = formValue.id; // si tu l’ajoutes au FormGroup
+    this.transactionService.updateTransactionById(transactionId, updateDto)
+      .subscribe({
+        next: (updatedTransaction) => {
+          const index = this.transactions.findIndex(t => t.id === updatedTransaction.id);
+          if (index !== -1) {
+            this.transactions[index] = updatedTransaction;
+          }
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Transaction mise à jour avec succès.'
+          });
+          this.closeEditDialog();
+        },
+        error: (err) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail: `Impossible de mettre à jour la transaction : ${err.error?.message || 'Erreur inconnue'}`
+          });
+        }
+      });
+  }
+  closeEditDialog(): void {
+    this.displayEditDialog = false;
+    this.editDateForm.reset()
+  }
+
+
 
 
 }

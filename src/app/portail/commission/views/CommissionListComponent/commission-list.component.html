@@ -1,127 +1,164 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
+<div class="flex flex-column w-screen h-screen overflow-y-scroll gap-3 p-3 pb-6"
+     style="background:#f4f6fb;box-sizing:border-box">
 
-<div class="card flex flex-column gap-2 p-2  w-screen h-screen overflow-y-scroll">
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
+  <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
 
-  <div class="portail-section flex justify-content-between ">
-    <div class="flex justify-content-center align-items-center">
-      <p-breadcrumb [model]="items">
+    <div class="flex flex-column gap-1">
+      <h2 class="text-900 font-bold m-0" style="font-size:1.15rem;letter-spacing:-0.01em">
+        Commissions
+      </h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
         <ng-template pTemplate="item" let-item>
           <ng-container *ngIf="item.route; else elseBlock">
-            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
-               #rla="routerLinkActive">
-              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
             </a>
           </ng-container>
           <ng-template #elseBlock>
-            <a [href]="item.url">
-              <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-            </a>
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
           </ng-template>
         </ng-template>
       </p-breadcrumb>
     </div>
 
-    <button pButton pRipple label="Ajouter commision" class="hidden md:block h-fit mt-2" size="small" icon="pi pi-plus"
-            severity="primary" routerLink="/portail/commissions/new"></button>
-    <button pButton pRipple pTooltip="Ajouter commision" class="md:hidden h-fit mt-2" size="small" icon="pi pi-plus"
-            severity="primary" routerLink="/portail/commissions/new"></button>
+    <div class="flex align-items-center gap-2 flex-shrink-0">
+      <button pButton pRipple
+              label="Ajouter commission"
+              icon="pi pi-plus"
+              severity="primary"
+              size="small"
+              class="hidden md:flex"
+              routerLink="/portail/commissions/new">
+      </button>
+      <button pButton pRipple
+              icon="pi pi-plus"
+              severity="primary"
+              size="small"
+              class="md:hidden"
+              pTooltip="Ajouter commission"
+              tooltipPosition="bottom"
+              routerLink="/portail/commissions/new">
+      </button>
+    </div>
+
   </div>
 
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-3"
+       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+    <form [formGroup]="filterForm">
+      <div class="flex flex-wrap gap-2 align-items-center">
 
-  <p-toolbar  styleClass="bg-white">
-    <ng-template pTemplate="left">
-      <div class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
-        <div class="p-input-icon-left">
-          <i class="pi pi-search"></i>
-          <p-dropdown
-            name="banque"
-            [options]="banques"
-            [(ngModel)]="selectedBanque"
-            optionLabel="nom"
-            placeholder="Sélectionner une banque"
-            [virtualScroll]="true"
-            [virtualScrollItemSize]="40"
-            [lazy]="true"
-            [loading]="banquesLoading"
-            (onLazyLoad)="loadBanquesLazy($event)"
-            (onChange)="applyFilters()"
-            appendTo="body"
-            [showClear]="true"
-            [style]="{'min-width': '200px'}"
-          ></p-dropdown>
-        </div>
+        <span class="text-500 text-xs font-medium mr-1" style="white-space:nowrap">
+          <i class="pi pi-sliders-h mr-1"></i>Filtres
+        </span>
 
-        <div class="p-input-icon-left">
-          <i class="pi pi-search"></i>
-          <p-dropdown
-            name="operation"
-            [options]="operationOptions"
-            [(ngModel)]="selectedOperation"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Tous les motifs"
-            (onChange)="applyFilters()"
-            [showClear]="true"
-            appendTo="body"
-            [style]="{'min-width': '180px'}"
-          ></p-dropdown>
-        </div>
+        <p-dropdown
+          formControlName="banque"
+          [options]="banques"
+          optionLabel="nom"
+          placeholder="Toutes les banques"
+          [virtualScroll]="true"
+          [virtualScrollItemSize]="40"
+          [lazy]="true"
+          [loading]="banquesLoading"
+          (onLazyLoad)="loadBanquesLazy($event)"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          appendTo="body"
+          [style]="{'min-width':'200px'}">
+        </p-dropdown>
 
-        <div class="p-input-icon-left">
-          <i class="pi pi-search"></i>
-          <p-dropdown
-            name="status"
-            [options]="statusOptions"
-            [(ngModel)]="selectedStatus"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Tous les statuts"
-            (onChange)="applyFilters()"
-            [showClear]="true"
-            appendTo="body"
-            [style]="{'min-width': '180px'}"
-          ></p-dropdown>
-        </div>
+        <p-dropdown
+          formControlName="operation"
+          [options]="operationOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Tous les motifs"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          appendTo="body"
+          [style]="{'min-width':'170px'}">
+        </p-dropdown>
 
-        <div class="p-input-icon-left">
-          <i class="pi pi-search"></i>
-          <input pInputText type="text" name="libelleFilter" placeholder="Rechercher par libellé"
-                 [(ngModel)]="libelleFilter" (input)="applyFilters()"
-                 [style]="{'min-width': '200px'}" />
-        </div>
+        <p-dropdown
+          formControlName="status"
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Tous les statuts"
+          (onChange)="applyFilters()"
+          [showClear]="true"
+          appendTo="body"
+          [style]="{'min-width':'150px'}">
+        </p-dropdown>
+
+        <span class="p-input-icon-left">
+          <i class="pi pi-tag"></i>
+          <input
+            pInputText
+            type="text"
+            formControlName="libelle"
+            placeholder="Libellé"
+            (input)="applyFilters()"
+            [style]="{'width':'160px'}"/>
+        </span>
+
+        <span class="p-input-icon-left">
+          <i class="pi pi-wallet"></i>
+          <input
+            pInputText
+            type="number"
+            formControlName="montant"
+            placeholder="Montant"
+            (input)="applyFilters()"
+            [style]="{'width':'130px'}"/>
+        </span>
+
+        <button pButton pRipple
+                icon="pi pi-times"
+                class="p-button-text p-button-secondary p-button-sm"
+                (click)="clearFilters()"
+                pTooltip="Réinitialiser"
+                tooltipPosition="bottom">
+        </button>
+
       </div>
-    </ng-template>
+    </form>
+  </div>
 
-    <ng-template pTemplate="right">
-      <button
-        pButton
-        pRipple
-        icon="pi pi-filter-slash"
-        class="p-button-outlined p-button-secondary"
-        (click)="clearFilters()"
-        pTooltip="Effacer les filtres"
-        label="Effacer"
-      ></button>
-    </ng-template>
-  </p-toolbar>
-
+  <!-- Table -->
   <div class="pb-8">
-    <p-table #dt [value]="commissions" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
-             [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
-             responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadCommissions($event)"
-             [columns]="[
-                {field: 'libelle', header: 'Libellé', sortable: true},
-                {field: 'banqueNom', header: 'Banque', sortable: true},
-                {field: 'montant', header: 'Montant', sortable: true},
-                {field: 'operation', header: 'Motif', sortable: true},
-                {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
-                {field: 'status', header: 'Statut', sortable: true}
-             ]"
-             styleClass="p-datatable-gridlines text-xs"
-             [showCurrentPageReport]="true"
-             currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
+    <p-table
+      #dt
+      [value]="commissions"
+      [paginator]="true"
+      [rows]="10"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [lazy]="true"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="flex"
+      (onLazyLoad)="loadCommissions($event)"
+      [columns]="[
+        {field: 'libelle',       header: 'Libellé',          sortable: true},
+        {field: 'banqueNom',     header: 'Banque',            sortable: true},
+        {field: 'montant',       header: 'Montant',           sortable: true},
+        {field: 'operation',     header: 'Motif',             sortable: true},
+        {field: 'dateEmission',  header: 'Date d\'émission',  sortable: true},
+        {field: 'status',        header: 'Statut',            sortable: true}
+      ]"
+      styleClass="p-datatable-gridlines text-xs"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"
+    >
       <ng-template pTemplate="header" let-columns>
         <tr class="white-space-nowrap">
           <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
@@ -147,24 +184,28 @@
               [severity]="getStatusSeverity(commission.status)"
             ></p-tag>
           </td>
-          <td class=" flex flex-row align-items-center gap-2">
-
-            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2"
-                    [routerLink]="['/portail/commissions/edit', commission.id]"></button>
-
+          <td class="flex flex-row align-items-center gap-2">
+            <button
+              pButton pRipple
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-outlined p-button-secondary mr-2"
+              [routerLink]="['/portail/commissions/edit', commission.id]"
+            ></button>
 
             @if (isAdmin()) {
               <p-inputSwitch
                 [ngModel]="commission.status === Status.PAYE"
+                [ngModelOptions]="{standalone: true}"
                 (click)="toggleCommissionStatus(commission)"
                 [pTooltip]="commission.status === 'PAYE' ? 'Marquer comme prévu' : 'Marquer comme payé'"
               ></p-inputSwitch>
-              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
-                      (click)="deleteCommission(commission)"></button>
+              <button
+                pButton pRipple
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-outlined p-button-danger"
+                (click)="deleteCommission(commission)"
+              ></button>
             }
-
-
-
           </td>
         </tr>
       </ng-template>
@@ -182,4 +223,5 @@
       </ng-template>
     </p-table>
   </div>
+
 </div>

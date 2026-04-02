@@ -357,7 +357,7 @@
               <button pButton pRipple icon="pi pi-pencil"
                       class="p-button-rounded p-button-outlined p-button-secondary"
                       pTooltip="mettre à jour la date valeur "
-                      (click)="openEditDateDialog(transaction)"></button>
+                      (click)="openEditDialog(transaction)"></button>
             </td>
           </tr>
         </ng-template>
@@ -395,47 +395,73 @@
 
 
 <p-dialog
-  header="Modifier la date de valeur"
-  [(visible)]="displayDateValuerDialog"
+  header="Modifier une transaction"
+  [(visible)]="displayEditDialog"
   [modal]="true"
-  [style]="{width:'400px'}"
   [closable]="true">
 
-  <div *ngIf="selectedTransaction">
-    <div class="mb-3">
-      <label class="font-semibold text-sm">Ancienne Date</label>
-      <div class="text-900">
-        {{ selectedTransaction.dateValeur | date:'dd/MM/yyyy' }}
-      </div>
-    </div>
-
-    <div class="mb-3">
-      <label class="font-semibold text-sm">Nouvelle Date</label>
+  <form [formGroup]="editDateForm">
+    <!-- Date d'opération -->
+    <div class=" flex flex-column  mb-3">
+      <label class="font-semibold text-sm">Date d'opération</label>
       <p-calendar
-        #calendar
-        [(ngModel)]="newDateValeur"
+        formControlName="dateOperation"
         dateFormat="dd/mm/yy"
         appendTo="body"
         [showIcon]="true"
         [readonlyInput]="true"
-        [inputStyle]="{'cursor':'pointer'}"
-        (onFocus)="calendar.hideOverlay()"
-      >
+        [showOnFocus]="false"
+        [inputStyle]="{'cursor':'pointer'}">
       </p-calendar>
+      <small *ngIf="editDateForm.get('dateOperation')?.invalid && editDateForm.get('dateOperation')?.touched" class="text-red-500">
+        La date d'opération est obligatoire
+      </small>
     </div>
-  </div>
+
+    <!-- Date de valeur -->
+    <div class=" flex flex-column  mb-3">
+      <label class="font-semibold text-sm">Date de valeur</label>
+      <p-calendar
+        formControlName="dateValeur"
+        dateFormat="dd/mm/yy"
+        appendTo="body"
+        [showOnFocus]="false"
+        [showIcon]="true"
+        [readonlyInput]="true"
+        [inputStyle]="{'cursor':'pointer'}">
+      </p-calendar>
+      <small *ngIf="editDateForm.get('dateValeur')?.invalid && editDateForm.get('dateValeur')?.touched" class="text-red-500">
+        La date de valeur est obligatoire
+      </small>
+    </div>
+
+    <!-- TVA Déductible -->
+    <div class=" flex flex-column  mb-3">
+      <label class="font-semibold text-sm">TVA Déductible</label>
+      <input type="number"
+             pInputText
+             formControlName="tvaDeductible"
+             class="w-full"/>
+      <small *ngIf="editDateForm.get('tvaDeductible')?.invalid && editDateForm.get('tvaDeductible')?.touched" class="text-red-500">
+        Ce champ est obligatoire
+      </small>
+    </div>
+
+    <!-- TVA Collectée -->
+    <div class=" flex flex-column  mb-3">
+      <label class="font-semibold text-sm">TVA Collectée</label>
+      <input type="number"
+             pInputText
+             formControlName="tvaCollecte"
+             class="w-full"/>
+      <small *ngIf="editDateForm.get('tvaCollecte')?.invalid && editDateForm.get('tvaCollecte')?.touched" class="text-red-500">
+        Ce champ est obligatoire
+      </small>
+    </div>
+  </form>
 
   <ng-template pTemplate="footer">
-    <p-button
-      label="Annuler"
-      severity="secondary"
-      (click)="closeDateValeurDialog()">
-    </p-button>
-
-    <p-button
-      label="Enregistrer"
-      icon="pi pi-check"
-      (click)="updateDateValeur()">
-    </p-button>
+    <p-button label="Annuler" severity="secondary" (click)="closeEditDialog()"></p-button>
+    <p-button label="Enregistrer" severity="success" (click)="updateTransaction()" [disabled]="editDateForm.invalid"></p-button>
   </ng-template>
 </p-dialog>

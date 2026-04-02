@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -67,9 +67,8 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   transactionSourceOptions: any[] = [];
 
-  displayDateValuerDialog: boolean = false;
-  selectedTransaction: TransactionResponseDto | null = null;
-  newDateValeur: Date | null = null;
+  displayEditDialog: boolean = false;
+  editDateForm!: FormGroup;
 
   private subscriptions: Subscription[] = [];
 
@@ -88,7 +87,7 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
       const id = params.get('id');
       if (id) {
         this.rapprochementId = +id;
-        this.initSearchForm();
+
       } else {
         this.messageService.add({
           severity: 'error',
@@ -98,6 +97,8 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
         });
       }
     });
+    this.initSearchForm();
+    this.initEditDialogForm()
   }
 
   ngOnDestroy(): void {
@@ -129,6 +130,15 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
 
     // Charger les données initiales
     this.loadRapprochementDetails();
+  }
+  initEditDialogForm(): void {
+    this.editDateForm = this.fb.group({
+      id: [null],
+      dateValeur: [null, Validators.required],
+      dateOperation: [null, Validators.required],
+      tvaDeductible: [null, Validators.required],
+      tvaCollecte: [null, Validators.required]
+    });
   }
 
   /**
@@ -219,58 +229,58 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
   }
 
 
-  openEditDateDialog(transaction: TransactionResponseDto): void {
-    this.selectedTransaction = transaction;
-    this.newDateValeur = parseLocalDate(transaction.dateValeur);
-    this.displayDateValuerDialog = true;
+  openEditDialog(transaction: TransactionResponseDto): void {
+    this.editDateForm.patchValue({
+      id: transaction.id,
+      dateValeur: parseLocalDate(transaction.dateValeur),
+      dateOperation: parseLocalDate(transaction.dateOperations),
+      tvaDeductible: transaction.tvaDeductible,
+      tvaCollecte: transaction.tvaCollectee
+    });
+    this.displayEditDialog = true;
   }
 
-  closeDateValeurDialog(): void {
-    this.displayDateValuerDialog = false;
-    this.selectedTransaction = null;
-    this.newDateValeur = null;
+  closeEditDialog(): void {
+    this.displayEditDialog = false;
+    this.editDateForm.reset()
   }
 
-  updateDateValeur(): void {
-    if (!this.selectedTransaction || !this.newDateValeur) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Attention',
-        detail: 'Veuillez sélectionner une date valide.'
-      });
-      return;
-    }
+  updateTransaction(): void {
+    if (!this.editDateForm.valid) return;
 
-    const updateDto: TransactionUpdateRequestDto = { dateValeur: toLocalDateString(this.newDateValeur)! };
+    const formValue = this.editDateForm.value;
+    const updateDto: TransactionUpdateRequestDto = {
+      dateValeur: toLocalDateString(formValue.dateValeur)!,
+      dateOperation: toLocalDateString(formValue.dateOperation)!,
+      tvaDeductible: formValue.tvaDeductible,
+      tvaCollecte: formValue.tvaCollecte
+    };
 
-    this.transactionService.updateTransactionById(this.selectedTransaction.id, updateDto)
+    // Ici, utilise l'id stocké dans le formulaire ou passé en paramètre
+    const transactionId = formValue.id; // si tu l’ajoutes au FormGroup
+    this.transactionService.updateTransactionById(transactionId, updateDto)
       .subscribe({
         next: (updatedTransaction) => {
-          // Met à jour la transaction localement pour voir le changement immédiatement
           const index = this.transactions.findIndex(t => t.id === updatedTransaction.id);
           if (index !== -1) {
             this.transactions[index] = updatedTransaction;
           }
-
           this.messageService.add({
             severity: 'success',
             summary: 'Succès',
-            detail: 'Date de valeur mise à jour avec succès.'
+            detail: 'Transaction mise à jour avec succès.'
           });
-
-          this.closeDateValeurDialog();
+          this.closeEditDialog();
         },
         error: (err) => {
-          console.error('Erreur lors de la mise à jour de la date de valeur', err);
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: `Impossible de mettre à jour la date : ${err.error?.message || 'Erreur inconnue'}`
+            detail: `Impossible de mettre à jour la transaction : ${err.error?.message || 'Erreur inconnue'}`
           });
         }
       });
   }
-
 
 
 
@@ -287,12 +297,5 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Détermine la couleur de la balise TVA Due.
-   */
-  getTvaTagSeverity(tvaDue: number): 'success' | 'danger' | 'info' {
-    if (tvaDue > 0) return 'success';
-    if (tvaDue < 0) return 'danger';
-    return 'info';
-  }
+
 }

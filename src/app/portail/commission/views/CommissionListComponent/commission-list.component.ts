@@ -2,7 +2,7 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {ConfirmationService, MenuItem, MessageService, PrimeTemplate} from 'primeng/api';
 import {CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {DropdownModule} from 'primeng/dropdown';
 import {ButtonModule} from 'primeng/button';
 import {RippleModule} from 'primeng/ripple';
@@ -16,23 +16,22 @@ import {CommissionService} from '../../service/commission.service';
 import {BanqueService} from '../../../comptes-bancaire/services/BanqueService';
 import {CommissionResponseDto} from '../../dtos/commission-response.dto';
 import {BanqueResponse} from '../../../comptes-bancaire/dtos/BanqueResponse';
-import {CommissionSearchDto} from "../../dtos/CommissionSearchDto";
-import {TransactionSource} from "../../../transactions/dtos/TransactionSource";
-import {Status} from "../../../prefinancements/enums/Status";
-import {PageResponse} from "../../../global/types/PageResponse";
-import {InputTextModule} from "primeng/inputtext";
-import {AuthService} from "../../../../auth/services/auth.service";
-import {TagModule} from "primeng/tag";
-import {ToolbarModule} from "primeng/toolbar";
-import { InputSwitchModule} from "primeng/inputswitch";
-
+import {CommissionSearchDto} from '../../dtos/CommissionSearchDto';
+import {TransactionSource} from '../../../transactions/dtos/TransactionSource';
+import {Status} from '../../../prefinancements/enums/Status';
+import {PageResponse} from '../../../global/types/PageResponse';
+import {InputTextModule} from 'primeng/inputtext';
+import {AuthService} from '../../../../auth/services/auth.service';
+import {TagModule} from 'primeng/tag';
+import {ToolbarModule} from 'primeng/toolbar';
+import {InputSwitchModule} from 'primeng/inputswitch';
 
 @Component({
   selector: 'app-commission-list',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     TableModule,
     DropdownModule,
     ButtonModule,
@@ -51,10 +50,10 @@ import { InputSwitchModule} from "primeng/inputswitch";
     InputTextModule,
     TagModule,
     ToolbarModule,
-    InputSwitchModule
+    InputSwitchModule,
+    FormsModule
   ],
   templateUrl: './commission-list.component.html',
-
   providers: [MessageService, ConfirmationService]
 })
 export class CommissionListComponent implements OnInit {
@@ -64,12 +63,7 @@ export class CommissionListComponent implements OnInit {
   totalRecords = 0;
   loading = true;
 
-  // Filters
-  searchCriteria: CommissionSearchDto = {};
-  selectedBanque?: BanqueResponse;
-  selectedOperation?: TransactionSource;
-  selectedStatus?: Status;
-  libelleFilter: string | null = null;
+  filterForm!: FormGroup;
 
   // Dropdown data sources
   banques: BanqueResponse[] = [];
@@ -78,10 +72,10 @@ export class CommissionListComponent implements OnInit {
   operationOptions: { label: string; value: TransactionSource | null }[] = [];
   statusOptions: { label: string; value: Status | null }[] = [];
 
-  // Breadcrumb items
   items: MenuItem[] = [];
 
   constructor(
+    private fb: FormBuilder,
     private commissionService: CommissionService,
     private banqueService: BanqueService,
     private messageService: MessageService,
@@ -91,25 +85,33 @@ export class CommissionListComponent implements OnInit {
 
   ngOnInit(): void {
     this.items = [
-      { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
-      { icon: 'pi pi-list', route: '/portail/commissions', label: 'Commissions' },
+      {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
+      {icon: 'pi pi-list', route: '/portail/commissions', label: 'Commissions'},
     ];
+
+    this.filterForm = this.fb.group({
+      banque: [null],
+      operation: [null],
+      status: [null],
+      libelle: [null],
+      montant: [null]
+    });
+
     this.loadOperationOptions();
     this.loadStatusOptions();
   }
 
-  loadCommissions(event: TableLazyLoadEvent) {
+  get searchCriteria(): CommissionSearchDto {
+    return  this.filterForm.value as CommissionSearchDto;
+  }
+
+  loadCommissions(event: TableLazyLoadEvent): void {
     this.loading = true;
     const page = event.first ? event.first / (event.rows ?? 10) : 0;
     const size = event.rows ?? 10;
     const sortField = event.sortField ?? 'dateEmission';
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
-
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.operation = this.selectedOperation;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
 
     this.commissionService.searchCommissions(this.searchCriteria, page, size, sort)
       .subscribe({
@@ -129,7 +131,7 @@ export class CommissionListComponent implements OnInit {
       });
   }
 
-  loadBanquesLazy(event: any) {
+  loadBanquesLazy(event: any): void {
     this.banquesLoading = true;
     const page = Math.floor((event.first ?? 0) / (event.rows ?? 10));
     const size = event.rows ?? 10;
@@ -144,95 +146,75 @@ export class CommissionListComponent implements OnInit {
       });
   }
 
-  loadOperationOptions() {
+  loadOperationOptions(): void {
     this.operationOptions = Object.values(TransactionSource).map(op => ({
       label: op,
       value: op
     }));
   }
 
-  loadStatusOptions() {
+  loadStatusOptions(): void {
     this.statusOptions = Object.values(Status).map(s => ({
       label: s,
       value: s
     }));
   }
 
-  applyFilters() {
+  applyFilters(): void {
     if (this.table) {
       setTimeout(() => this.table.reset(), 0);
     }
   }
 
-  clearFilters() {
-    this.selectedBanque = undefined;
-    this.selectedOperation = undefined;
-    this.selectedStatus = undefined;
-    this.libelleFilter = null;
+  clearFilters(): void {
+    this.filterForm.reset();
     this.applyFilters();
   }
 
-  deleteCommission(commission: CommissionResponseDto) {
+  deleteCommission(commission: CommissionResponseDto): void {
     this.confirmationService.confirm({
       message: `Êtes-vous sûr de vouloir supprimer la commission "${commission.libelle}" ?`,
       accept: () => {
         this.commissionService.deleteCommission(commission.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Commission supprimée.' });
+            this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Commission supprimée.'});
             this.loadCommissions(this.table.createLazyLoadMetadata());
           },
           error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer la commission.' });
+            this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer la commission.'});
           }
         });
       }
     });
   }
 
-
-  /**
-   * Toggle le statut d'une commission (PAYE <-> NON_PAYE)
-   */
-  toggleCommissionStatus( commission: CommissionResponseDto) {
+  toggleCommissionStatus(commission: CommissionResponseDto): void {
     const message = commission.status === Status.PAYE
       ? 'Voulez-vous marquer cette commission comme prévu ?'
       : 'Voulez-vous marquer cette commission comme payée ?';
 
     this.confirmationService.confirm({
-      message: message,
+      message,
       header: 'Confirmation',
       icon: 'pi pi-info-circle',
       accept: () => {
         this.commissionService.toggleCommissionStatus(commission.id).subscribe({
           next: () => {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Succès',
-              detail: `Statut modifié.`
-            });
+            this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Statut modifié.'});
             this.loadCommissions(this.table.createLazyLoadMetadata());
           },
           error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de modifier le statut de la commission.'
-            });
-            // Recharger pour restaurer l'état en cas d'erreur
+            this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Impossible de modifier le statut de la commission.'});
             this.loadCommissions(this.table.createLazyLoadMetadata());
           }
         });
       },
       reject: () => {
-        // Recharger pour annuler le changement visuel du switch
         this.loadCommissions(this.table.createLazyLoadMetadata());
       }
     });
   }
 
-  /**
-   * Retourne la couleur du tag en fonction du statut
-   */
   getStatusSeverity(status: Status): 'success' | 'danger' | 'warning' | 'info' {
     return status === Status.PAYE ? 'success' : 'danger';
   }
