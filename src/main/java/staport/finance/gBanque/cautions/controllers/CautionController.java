@@ -10,12 +10,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.cautions.commissions.service.IGenerationCommissionCautionService;
+import staport.finance.gBanque.cautions.commissions.service.ResultatGenerationCommissionDto;
 import staport.finance.gBanque.cautions.dtos.CautionCreateDto;
 import staport.finance.gBanque.cautions.dtos.CautionResponseDto;
 import staport.finance.gBanque.cautions.dtos.CautionSearchCriteria;
 import staport.finance.gBanque.cautions.dtos.CautionUpdateDto;
 import staport.finance.gBanque.cautions.exceptions.CautionExceptionHandler;
 import staport.finance.gBanque.cautions.services.ICautionService;
+
+import java.time.YearMonth;
 
 /**
  * Contrôleur REST pour le module Caution.
@@ -41,10 +45,11 @@ import staport.finance.gBanque.cautions.services.ICautionService;
 public class CautionController {
 
     private static final Logger logger = LoggerFactory.getLogger(CautionController.class);
-
+    private final IGenerationCommissionCautionService generationService;
     private final ICautionService cautionService;
 
-    public CautionController(ICautionService cautionService) {
+    public CautionController(IGenerationCommissionCautionService generationService, ICautionService cautionService) {
+        this.generationService = generationService;
         this.cautionService = cautionService;
     }
 
@@ -114,5 +119,18 @@ public class CautionController {
         logger.info("DELETE /cautions/{}", id);
         cautionService.supprimer(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/generer-commissions")
+    public ResponseEntity<ResultatGenerationCommissionDto> genererCommissions(
+            @RequestParam int annee,
+            @RequestParam int mois) {
+
+        logger.info("POST /cautions/generer-commissions — {}-{}", annee, mois);
+
+        ResultatGenerationCommissionDto result =
+                generationService.generer(YearMonth.of(annee, mois));
+
+        return ResponseEntity.ok(result);
     }
 }

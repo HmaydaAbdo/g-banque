@@ -1,19 +1,22 @@
 package staport.finance.gBanque.transactions.dtos;
 
 import jakarta.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class TransactionUpdateRequestDto {
+public record TransactionUpdateRequestDto (
 
     @NotNull(message = "date de valeur est obligatoire")
-    private LocalDate dateValeur;
+    LocalDate dateValeur,
 
-    public LocalDate getDateValeur() {
-        return dateValeur;
-    }
+    @NotNull(message = "date d'opération est obligatoire")
+    LocalDate dateOperation,
 
-    public void setDateValeur(LocalDate dateValeur) {
-        this.dateValeur = dateValeur;
-    }
+    @NotNull(message = "date de valeur est obligatoire")
+    BigDecimal tvaDeductible,
 
-}
+    @NotNull(message = "date est obligatoire")
+    BigDecimal tvaCollecte
+
+
+){}

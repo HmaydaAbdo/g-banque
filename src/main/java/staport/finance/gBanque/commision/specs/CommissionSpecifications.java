@@ -62,7 +62,8 @@ public class CommissionSpecifications {
                 .where(hasBanque(dto.getBanqueId()))
                 .and(hasLibelle(dto.getLibelle()))
                 .and(hasOperation(dto.getOperation()))
-                .and(hasStatus(dto.getStatus()));
+                .and(hasStatus(dto.getStatus()))
+                .and(hasMontant(dto.getMontant()));
     }
 
     public static Specification<Commission> outstandingUntil(LocalDate until) {

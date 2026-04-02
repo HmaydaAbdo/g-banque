@@ -160,13 +160,17 @@ public class TransactionService implements ITransactionService{
                 });
     }
 
+    @Override
     @Transactional
     public TransactionResponseDto updateTransactionById(Long id, TransactionUpdateRequestDto updateRequestDto){
 
         Transaction transaction=transactionRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException("Transaction with id "+id+" not found"));
 
-        transaction.setDateValeur(updateRequestDto.getDateValeur());
+        transaction.setDateValeur(updateRequestDto.dateValeur());
+        transaction.setDateOperations(updateRequestDto.dateOperation());
+        transaction.setTvaCollectee(updateRequestDto.tvaCollecte());
+        transaction.setTvaDeductible(updateRequestDto.tvaDeductible());
 
         return TransactionMapper.toDto(transactionRepository.save(transaction));
     }

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import staport.finance.gBanque.cautions.entities.Caution;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -40,6 +41,17 @@ public interface CautionRepository extends JpaRepository<Caution, Long>,
      */
     @EntityGraph(value = "Caution.avecAssociations")
     Page<Caution> findAll(Specification<Caution> spec, Pageable pageable);
+
+    /**
+     * Charge toutes les cautions actives avec leurs associations (banque + nature + marche)
+     * en une seule requête JOIN — utilisé exclusivement par la génération de commissions.
+     *
+     * <p>L'EntityGraph garantit zéro requête N+1 lors du parcours des cautions
+     * dans le service de génération.
+     */
+    @EntityGraph(value = "Caution.avecAssociations")
+    @Query("SELECT c FROM Caution c WHERE c.actif = true")
+    List<Caution> findActivesAvecBanqueEtNature();
 
     /**
      * Vérifie l'unicité du numéro de caution — utilisé avant création et modification.
