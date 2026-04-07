@@ -22,12 +22,12 @@ public record CautionCreateDto(
     /* Optionnel — la caution peut exister sans marché associé. */
     Long marcheId,
 
-    @NotNull(message = "La date de prise est obligatoire")
-    @PastOrPresent(message = "La date de prise ne peut pas être dans le futur")
+//    @NotNull(message = "La date de prise est obligatoire")
+//    @PastOrPresent(message = "La date de prise ne peut pas être dans le futur")
     LocalDate dateDePrise,
 
-    @NotBlank(message = "Le numéro de caution est obligatoire")
-    @Size(max = 100, message = "Le numéro de caution ne peut pas dépasser 100 caractères")
+//    @NotBlank(message = "Le numéro de caution est obligatoire")
+//    @Size(max = 100, message = "Le numéro de caution ne peut pas dépasser 100 caractères")
     String numeroCaution,
 
     @NotBlank(message = "La désignation est obligatoire")

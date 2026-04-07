@@ -67,10 +67,9 @@ public class Caution {
     @JoinColumn(name = "marche_id")
     private Marche marche;
 
-    @Column(nullable = false, updatable = false)
     private LocalDate dateDePrise;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true)
     private String numeroCaution;
 
     @Column(nullable = false, columnDefinition = "TEXT")
