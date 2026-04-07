@@ -60,6 +60,11 @@ public class TransactionService implements ITransactionService{
             log.debug("Filtre appliqué: confirmé = {}", searchDto.getConfirmed());
         }
 
+        if (searchDto.getMontant() != null) {
+            specs.add(hasMontant(searchDto.getMontant()));
+            log.debug("Filtre appliqué: montant = {}", searchDto.getMontant());
+        }
+
         Specification<Transaction> combinedSpec = withFilters(specs);
         Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, pageable);
 
