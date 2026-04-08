@@ -1,6 +1,7 @@
 package staport.finance.gBanque.transactions.mapper;
 
 
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
 
@@ -31,10 +32,13 @@ public class TransactionMapper {
             dto.setTransactionSource(transaction.getTransactionSource());
             dto.setDebit(transaction.getDebit() != null ? transaction.getDebit() : BigDecimal.ZERO);
             dto.setCredit(transaction.getCredit() !=null ? transaction.getCredit() : BigDecimal.ZERO);
-            dto.setTraces(transaction.getTraces());
             dto.setCreatedAt(transaction.getCreatedAt());
             dto.setUpdatedAt(transaction.getUpdatedAt());
-            dto.setConfirmed(transaction.isConfirmed());
+            dto.setStatutRapprochement(
+                    transaction.getRapprochement() != null
+                            ? transaction.getRapprochement().getStatut()
+                            : StatutRapprochement.EN_COURS
+            );
             dto.setReferent(transaction.getReferent());
             // Gérer la relation Banque
             if (transaction.getBanqueDePrelevement() != null) {
