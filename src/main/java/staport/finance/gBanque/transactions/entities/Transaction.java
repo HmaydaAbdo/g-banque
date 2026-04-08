@@ -46,11 +46,10 @@ public class Transaction {
     private Banque banqueDePrelevement;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "rapprochement_id", nullable = true)
+    @JoinColumn(name = "rapprochement_id", nullable = false)
     private Rapprochement rapprochement;
 
-    @Column(columnDefinition = "TEXT")
-    private String traces;
+
 
     // New fields for tracking creation and update timestamps
     @CreationTimestamp
@@ -62,8 +61,6 @@ public class Transaction {
     private OffsetDateTime updatedAt;
 
     private Long referent;
-
-    private boolean isConfirmed=false;
 
     // Getters and setters
 
@@ -155,13 +152,6 @@ public class Transaction {
         this.transactionSource = transactionSource;
     }
 
-    public String getTraces() {
-        return traces;
-    }
-
-    public void setTraces(String traces) {
-        this.traces = traces;
-    }
 
     public Banque getBanqueDePrelevement() {
         return banqueDePrelevement;
@@ -188,21 +178,6 @@ public class Transaction {
         return updatedAt;
     }
 
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public boolean isConfirmed() {
-        return isConfirmed;
-    }
-
-    public void setConfirmed(boolean confirmed) {
-        isConfirmed = confirmed;
-    }
 
     public Long getReferent() {
         return referent;
@@ -215,12 +190,12 @@ public class Transaction {
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Transaction that)) return false;
-        return isConfirmed == that.isConfirmed && Objects.equals(id, that.id) && Objects.equals(dateEmission, that.dateEmission) && Objects.equals(dateValeur, that.dateValeur) && Objects.equals(dateOperations, that.dateOperations) && Objects.equals(debit, that.debit) && Objects.equals(credit, that.credit) && Objects.equals(libelle, that.libelle) && Objects.equals(observation, that.observation) && Objects.equals(tvaDeductible, that.tvaDeductible) && Objects.equals(tvaCollectee, that.tvaCollectee) && transactionSource == that.transactionSource && Objects.equals(banqueDePrelevement, that.banqueDePrelevement) && Objects.equals(rapprochement, that.rapprochement) && Objects.equals(traces, that.traces) && Objects.equals(createdAt, that.createdAt) && Objects.equals(updatedAt, that.updatedAt) && Objects.equals(referent, that.referent);
+        return Objects.equals(id, that.id) && Objects.equals(dateEmission, that.dateEmission) && Objects.equals(dateValeur, that.dateValeur) && Objects.equals(dateOperations, that.dateOperations) && Objects.equals(debit, that.debit) && Objects.equals(credit, that.credit) && Objects.equals(libelle, that.libelle) && Objects.equals(observation, that.observation) && Objects.equals(tvaDeductible, that.tvaDeductible) && Objects.equals(tvaCollectee, that.tvaCollectee) && transactionSource == that.transactionSource && Objects.equals(banqueDePrelevement, that.banqueDePrelevement) && Objects.equals(rapprochement, that.rapprochement)  && Objects.equals(createdAt, that.createdAt) && Objects.equals(updatedAt, that.updatedAt) && Objects.equals(referent, that.referent);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, dateEmission, dateValeur, dateOperations, debit, credit, libelle, observation, tvaDeductible, tvaCollectee, transactionSource, banqueDePrelevement, rapprochement, traces, createdAt, updatedAt, referent, isConfirmed);
+        return Objects.hash(id, dateEmission, dateValeur, dateOperations, debit, credit, libelle, observation, tvaDeductible, tvaCollectee, transactionSource, banqueDePrelevement, rapprochement, createdAt, updatedAt, referent);
     }
 
     @Override
@@ -239,11 +214,9 @@ public class Transaction {
                 ", transactionSource=" + transactionSource +
                 ", banqueDePrelevement=" + banqueDePrelevement +
                 ", rapprochement=" + rapprochement +
-                ", traces='" + traces + '\'' +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 ", referent=" + referent +
-                ", isConfirmed=" + isConfirmed +
                 '}';
     }
 }
