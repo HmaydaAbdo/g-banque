@@ -1,5 +1,6 @@
 package staport.finance.gBanque.transactions.dtos;
 
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ public class TransactionSearchDto {
     private Long banqueId;
     private List<TransactionSource> transactionSources;
     private String observation;
-    private Boolean isConfirmed;
+    private StatutRapprochement statutRapprochement;
     private BigDecimal montant;
     private LocalDate dateOperationDebut;
     private LocalDate dateOperationFin;
@@ -37,12 +38,12 @@ public class TransactionSearchDto {
         this.banqueId = banqueId;
     }
 
-    public Boolean getConfirmed() {
-        return isConfirmed;
+    public StatutRapprochement getStatutRapprochement() {
+        return statutRapprochement;
     }
 
-    public void setConfirmed(Boolean confirmed) {
-        isConfirmed = confirmed;
+    public void setStatutRapprochement(StatutRapprochement statutRapprochement) {
+        this.statutRapprochement = statutRapprochement;
     }
 
     public List<TransactionSource> getTransactionSources() {
@@ -92,7 +93,7 @@ public class TransactionSearchDto {
                 ", banqueId=" + banqueId +
                 ", transactionSources=" + transactionSources +
                 ", observation='" + observation + '\'' +
-                ", isConfirmed=" + isConfirmed +
+                ", statutRapprochement=" + statutRapprochement +
                 ", montant=" + montant +
                 ", dateOperationDebut=" + dateOperationDebut +
                 ", dateOperationFin=" + dateOperationFin +
