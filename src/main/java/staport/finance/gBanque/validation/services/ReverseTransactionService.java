@@ -140,10 +140,6 @@ public class ReverseTransactionService {
         // 2. Remettre l'entité source à son état initial
         resetEntiteSource(transaction);
 
-        if (transaction.getRapprochement() != null) {
-            transaction.setRapprochement(null);
-            transactionRepository.save(transaction);
-        }
 
         // 3. Supprimer la transaction
         transactionRepository.delete(transaction);
