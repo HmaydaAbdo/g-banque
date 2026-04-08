@@ -50,6 +50,8 @@ import staport.finance.gBanque.validation.dtos.droitConstate.DroitConstateTransa
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
+import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
@@ -1129,11 +1131,13 @@ public class ValidationService {
     }
 
     private void attachToRapprochementEnCours(Transaction savedTransaction, Long banqueId) {
-        rapprochementRepository
+        Rapprochement rapprochement = rapprochementRepository
                 .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
-                .ifPresent(r -> {
-                    savedTransaction.setRapprochement(r);
-                    transactionRepository.save(savedTransaction);
-                });
+                .orElseThrow(() -> new ValidationException(
+                        "Aucun rapprochement EN_COURS trouvé pour la banque id: " + banqueId +
+                        ". Veuillez créer un rapprochement avant de valider des opérations."));
+
+        savedTransaction.setRapprochement(rapprochement);
+        transactionRepository.save(savedTransaction);
     }
 }
