@@ -4,6 +4,8 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.rapprochement.entities.Rapprochement;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -45,8 +47,11 @@ public class TransactionSpecifications {
 
 
 
-    public static Specification<Transaction> isConfirmed(boolean confirmed) {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("isConfirmed"), confirmed);
+    public static Specification<Transaction> hasRapprochementStatut(StatutRapprochement statut) {
+        return (root, query, criteriaBuilder) -> {
+            Join<Transaction, Rapprochement> rapprochementJoin = root.join("rapprochement");
+            return criteriaBuilder.equal(rapprochementJoin.get("statut"), statut);
+        };
     }
 
     public static Specification<Transaction> hasMontant(BigDecimal montant) {
