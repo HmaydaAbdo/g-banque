@@ -1,5 +1,6 @@
 package staport.finance.gBanque.transactions.dtos;
 
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,7 +24,7 @@ public class TransactionResponseDto {
     private String banqueDePrelevementNom;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
-    private boolean isConfirmed;
+    private StatutRapprochement statutRapprochement;
     private long referent;
 
     // Constructors, Getters, and Setters
@@ -177,12 +178,12 @@ public class TransactionResponseDto {
         this.updatedAt = updatedAt;
     }
 
-    public boolean isConfirmed() {
-        return isConfirmed;
+    public StatutRapprochement getStatutRapprochement() {
+        return statutRapprochement;
     }
 
-    public void setConfirmed(boolean confirmed) {
-        isConfirmed = confirmed;
+    public void setStatutRapprochement(StatutRapprochement statutRapprochement) {
+        this.statutRapprochement = statutRapprochement;
     }
 
     public long getReferent() {
@@ -212,7 +213,7 @@ public class TransactionResponseDto {
                 ", banqueDePrelevementNom='" + banqueDePrelevementNom + '\'' +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
-                ", isConfirmed=" + isConfirmed +
+                ", statutRapprochement=" + statutRapprochement +
                 ", referent=" + referent +
                 '}';
     }
