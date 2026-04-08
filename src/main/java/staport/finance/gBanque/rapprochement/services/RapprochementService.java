@@ -5,7 +5,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
@@ -80,12 +79,8 @@ public class RapprochementService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Aucun rapprochement EN_COURS trouvé pour la banque id: " + banqueId));
 
-        BanqueResponse banque = banqueService.getBanqueById(banqueId);
-
-
-        // 2. Récupérer toutes les transactions non confirmées de ce rapprochement
-        Specification<Transaction> spec = TransactionSpecifications.hasRapprochementId(rapprochement.getId())
-                .and(TransactionSpecifications.isConfirmed(false));
+        // 2. Récupérer toutes les transactions de ce rapprochement
+        Specification<Transaction> spec = TransactionSpecifications.hasRapprochementId(rapprochement.getId());
 
         List<Transaction> transactions = transactionRepository.findAll(spec);
 
@@ -108,7 +103,9 @@ public class RapprochementService {
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal soldeFin = banque.soldeActuel();
+        BigDecimal soldeFin = rapprochement.getSoldeDebut()
+                .add(totalCredit)
+                .subtract(totalDebit);
 
         // 4. Mettre à jour et clôturer le rapprochement courant
         rapprochement.setStatut(StatutRapprochement.CLOTURE);
@@ -118,12 +115,8 @@ public class RapprochementService {
         rapprochement.setTvaDeductible(totalTvaDeductible);
         rapprochement.setTvaCollectee(totalTvaCollectee);
 
-        // 5. Confirmer toutes les transactions
-        transactions.forEach(t -> t.setConfirmed(true));
-        transactionRepository.saveAll(transactions);
-
-        // 6. Réinitialiser le solde de départ de la banque
-        banqueService.setSoldeDepart(banqueId,banque.soldeActuel());
+        // 5. Réinitialiser le solde de départ de la banque
+        banqueService.setSoldeDepart(banqueId, soldeFin);
 
         // 7. Sauvegarder le rapprochement clôturé
         Rapprochement rapprochementCloture = rapprochementRepository.save(rapprochement);
