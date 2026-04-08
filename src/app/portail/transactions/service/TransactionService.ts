@@ -80,9 +80,9 @@ export class TransactionService {
       params = params.set('banqueId', searchDto.banqueId.toString());
     }
 
-    // Gestion du flag de confirmation (isConfirmed côté front -> confirmed côté backend API)
-    if (searchDto.isConfirmed !== undefined && searchDto.isConfirmed !== null) {
-      params = params.set('confirmed', searchDto.isConfirmed.toString());
+    // Gestion du statut du rapprochement
+    if (searchDto.statutRapprochement) {
+      params = params.set('statutRapprochement', searchDto.statutRapprochement);
     }
 
     // Gestion propre du tableau Enum pour le backend Spring

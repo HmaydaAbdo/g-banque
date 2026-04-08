@@ -5,7 +5,7 @@ export interface TransactionSearchDto {
   observation?: string;
   banqueId?: number;
   transactionSources?: TransactionSource[];
-  isConfirmed?: boolean;
+  statutRapprochement?: 'EN_COURS' | 'CLOTURE';
   montant?: number;
   dateOperationDebut?: Date;
   dateOperationFin?: Date;

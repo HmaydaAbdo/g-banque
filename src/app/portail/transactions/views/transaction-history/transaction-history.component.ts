@@ -49,9 +49,9 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
   sourcesOptions: string[] = [];
   banquesOptions: { label: string, value: number | null }[] = [];
   statutOptions = [
-    { label: 'Tous les transactions', value: null },
-    { label: 'Rapproché', value: true },
-    { label: 'Rapprochement encours ', value: false }
+    { label: 'Toutes les transactions', value: null },
+    { label: 'Rapproché', value: 'CLOTURE' },
+    { label: 'Rapprochement en cours', value: 'EN_COURS' }
   ];
 
   items: MenuItem[] | undefined;
@@ -84,7 +84,8 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
       libelle: [''],
       banqueId: [null],
       transactionSources: [null],
-      isConfirmed: [null]
+      montant:[null],
+      statutRapprochement: [null]
     });
 
     const sub = this.searchForm.valueChanges

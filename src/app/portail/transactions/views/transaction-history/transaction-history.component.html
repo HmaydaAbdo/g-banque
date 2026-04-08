@@ -28,6 +28,16 @@
                  placeholder="Libellé..." class="p-inputtext-sm" style="width: 180px" />
         </span>
 
+        <span class="p-float-label">
+            <input
+              id="montant"
+              type="number"
+              pInputText
+              formControlName="montant"
+            />
+            <label for="montant">Montant</label>
+          </span>
+
         <p-dropdown [options]="banquesOptions" formControlName="banqueId"
                     placeholder="Banque" [showClear]="true" [filter]="true"
                     filterBy="label" appendTo="body" class="p-inputtext-sm"
@@ -43,7 +53,7 @@
                        [style]="{'min-width': '200px'}">
         </p-multiSelect>
 
-        <p-dropdown [options]="statutOptions" formControlName="isConfirmed"
+        <p-dropdown [options]="statutOptions" formControlName="statutRapprochement"
                     placeholder="Statut" [showClear]="true"
                     appendTo="body" class="p-inputtext-sm"
                     [style]="{'min-width': '140px'}">
@@ -117,8 +127,8 @@
 
           <td class="text-center">
             <p-tag
-              [value]="transaction.confirmed  ? 'Rapproché' : 'En cours'"
-              [severity]="transaction.confirmed  ? 'success' : 'warning'">
+              [value]="transaction.statutRapprochement === 'CLOTURE' ? 'Rapproché' : 'En cours'"
+              [severity]="transaction.statutRapprochement === 'CLOTURE' ? 'success' : 'warning'">
             </p-tag>
           </td>
 
