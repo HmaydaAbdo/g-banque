@@ -16,6 +16,8 @@ import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
 
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
+
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,9 +57,9 @@ public class TransactionService implements ITransactionService{
             log.debug("Filtre appliqué: sources = {}", searchDto.getTransactionSources());
         }
 
-        if (searchDto.getConfirmed() != null) {
-            specs.add(isConfirmed(searchDto.getConfirmed()));
-            log.debug("Filtre appliqué: confirmé = {}", searchDto.getConfirmed());
+        if (searchDto.getStatutRapprochement() != null) {
+            specs.add(hasRapprochementStatut(searchDto.getStatutRapprochement()));
+            log.debug("Filtre appliqué: statut rapprochement = {}", searchDto.getStatutRapprochement());
         }
 
         if (searchDto.getMontant() != null) {
@@ -79,7 +81,7 @@ public class TransactionService implements ITransactionService{
         log.info("Calcul des agrégations et récupération des transactions pour la banque ID: {}", banqueId);
 
         List<Specification<Transaction>> specs = new ArrayList<>();
-        specs.add(isConfirmed(false));
+        specs.add(hasRapprochementStatut(StatutRapprochement.EN_COURS));
         specs.add(hasBanqueId(banqueId));
 
         if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
