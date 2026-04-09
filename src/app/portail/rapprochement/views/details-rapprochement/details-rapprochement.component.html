@@ -155,60 +155,92 @@
       </div>
 
     <!-- Section Filtres de Recherche -->
-    <div [formGroup]="searchForm" class=" border-round-xl   ">
-      <div class="grid">
-        <div class="col-12 md:col-3 lg:col-2">
-          <span class="p-input-icon-left w-full">
-            <i class="pi pi-search"></i>
-            <input pInputText type="text" formControlName="libelle"
-                   placeholder="Libellé..."
-                   class="w-full" />
-          </span>
-        </div>
+    <form [formGroup]="searchForm">
+      <p-toolbar class="bg-white border-round-xl shadow-2 mb-3">
 
-        <div class="col-12 md:col-3 lg:col-2">
-          <span class="p-input-icon-left w-full">
-            <i class="pi pi-search"></i>
-            <input pInputText type="text" formControlName="observation"
-                   placeholder="Observation..."
-                   class="w-full" />
-          </span>
-        </div>
+        <!-- LEFT FILTERS -->
+        <ng-template pTemplate="left">
+          <div class="flex flex-wrap md:flex-nowrap gap-3 align-items-center">
 
-        <div class="col-12 md:col-3 lg:col-2">
-          <span class="p-input-icon-left w-full">
-            <i class="pi pi-money-bill"></i>
-            <input pInputText type="number" formControlName="montant"
-                   placeholder="Montant..."
-                   class="w-full" />
-          </span>
-        </div>
+            <!-- Libelle -->
+            <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            formControlName="libelle"
+            placeholder="Libellé..."
+            class="w-12rem"
+          />
+        </span>
 
-        <div class="col-12 md:col-3 lg:col-2">
-          <p-multiSelect
-            formControlName="transactionSources"
-            [options]="transactionSourceOptions"
-            optionLabel="label"
-            placeholder="Source"
-            [showClear]="true"
-            appendTo="body"
-            [style]="{'width':'100%'}">
-          </p-multiSelect>
-        </div>
+            <!-- Observation -->
+            <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input
+            pInputText
+            formControlName="observation"
+            placeholder="Observation..."
+            class="w-12rem"
+          />
+        </span>
 
+            <!-- Montant -->
+            <span class="p-input-icon-left">
+          <i class="pi pi-money-bill"></i>
+          <input
+            pInputText
+            type="number"
+            formControlName="montant"
+            placeholder="Montant..."
+            class="w-10rem"
+          />
+        </span>
 
+            <!-- Source -->
+            <p-multiSelect
+              formControlName="transactionSources"
+              [options]="transactionSourceOptions"
+              optionLabel="label"
+              placeholder="Source"
+              appendTo="body"
+              class="w-12rem"
+            ></p-multiSelect>
 
-        <div class="col-12 md:col-3 lg:col-2">
-          <p-button
-            icon="pi pi-refresh"
-            severity="secondary"
-            [outlined]="true"
-            (onClick)="clearSearch()">
-          </p-button>
-        </div>
-      </div>
-    </div>
+            <!-- Date min -->
+            <p-calendar
+              formControlName="dateOperationDebut"
+              placeholder="Date min"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              class="w-10rem"
+              [showClear]="true"
+            ></p-calendar>
 
+            <!-- Date max -->
+            <p-calendar
+              formControlName="dateOperationFin"
+              placeholder="Date max"
+              dateFormat="dd/mm/yy"
+              appendTo="body"
+              class="w-10rem"
+              [showClear]="true"
+            ></p-calendar>
+
+          </div>
+        </ng-template>
+
+        <!-- RIGHT ACTION -->
+        <ng-template pTemplate="right">
+          <button
+            pButton
+            icon="pi pi-filter-slash"
+            class="p-button-rounded p-button-outlined p-button-secondary"
+            (click)="clearSearch()"
+          ></button>
+        </ng-template>
+
+      </p-toolbar>
+    </form>
     <!-- Section Tableau des Transactions -->
     <div class="pb-8">
       <p-table #dt
@@ -240,19 +272,19 @@
             </th>
             <th pSortableColumn="dateEmission">
               <div class="flex align-items-center gap-2">
-                Date d'émission
+                D.émission
                 <p-sortIcon field="dateEmission"></p-sortIcon>
               </div>
             </th>
             <th pSortableColumn="dateOperations">
               <div class="flex align-items-center gap-2">
-                Date d'opération
+                D.opération
                 <p-sortIcon field="dateOperations"></p-sortIcon>
               </div>
             </th>
             <th pSortableColumn="dateValeur">
               <div class="flex align-items-center gap-2">
-                Date de valeur
+                D.valeur
                 <p-sortIcon field="dateValeur"></p-sortIcon>
               </div>
             </th>

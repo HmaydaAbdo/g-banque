@@ -24,6 +24,7 @@ import {TransactionUpdateRequestDto} from "../../../transactions/dtos/Transactio
 import {TransactionService} from "../../../transactions/service/TransactionService";
 import {Ripple} from "primeng/ripple";
 import { parseLocalDate, toLocalDateString } from '../../../global/types/date.utils';
+import {ToolbarModule} from "primeng/toolbar";
 
 @Component({
   selector: 'app-details-rapprochement',
@@ -43,7 +44,8 @@ import { parseLocalDate, toLocalDateString } from '../../../global/types/date.ut
     MultiSelectModule,
     DialogModule,
     FormsModule,
-    Ripple
+    Ripple,
+    ToolbarModule
   ],
   templateUrl: './details-rapprochement.component.html',
   styleUrls: ['./details-rapprochement.component.scss'],
