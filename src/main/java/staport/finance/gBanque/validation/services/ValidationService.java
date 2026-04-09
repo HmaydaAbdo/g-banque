@@ -234,12 +234,10 @@ public class ValidationService {
         // Étape 2: Utiliser le mapper pour convertir le DTO et les entités en une nouvelle entité Transaction.
         Transaction transactionEntity = leasingTransactionMapper.toEntity(requestDto, contratLeasing, echeanceLeasing);
 
-        // Étape 3: Sauvegarder la nouvelle transaction.
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
-
+        // Étape 3: Attacher au rapprochement EN_COURS puis sauvegarder.
         Banque banque = contratLeasing.getBanqueDePrelevement();
-
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
 
 
         // Étape 5: Marquer l'échéance comme payée.
@@ -273,11 +271,10 @@ public class ValidationService {
         // Étape 2: Utiliser le mapper pour convertir le DTO et les entités en une nouvelle entité Transaction.
         Transaction transactionEntity = cmtTransactionMapper.toEntity(requestDto, creditMoyenTerme, echeanceCMT);
 
-        // Étape 3: Sauvegarder la nouvelle transaction.
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        // Étape 3: Attacher au rapprochement EN_COURS puis sauvegarder.
         Banque banque = creditMoyenTerme.getBanque();
-
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
+        Transaction savedTransaction = transactionRepository.save(transactionEntity);
 
         // Étape 5 : Marquer l'échéance comme payée et enregistrer les dates rélatives au rapprochement .
         echeanceCMT.setStatutPaiement(StatutEcheanceCMT.PAYE);
@@ -309,11 +306,10 @@ public class ValidationService {
             // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
             Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque);
     
-            // Step 4: Save the Transaction entity to the database.
-            Transaction savedTransaction = transactionRepository.save(transactionEntity);
+            // Step 4: Attacher au rapprochement EN_COURS puis sauvegarder.
             Banque banque = cheque.getBanque();
-
-            this.attachToRapprochementEnCours(savedTransaction,banque.getId());
+            this.attachToRapprochementEnCours(transactionEntity, banque.getId());
+            Transaction savedTransaction = transactionRepository.save(transactionEntity);
 
 
     
@@ -350,9 +346,8 @@ public class ValidationService {
         Banque banque = cheque.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
@@ -388,8 +383,8 @@ public class ValidationService {
         Banque banque = lcn.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
@@ -424,8 +419,8 @@ public class ValidationService {
         Banque banque = lcn.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
         lcn.setActive(false);
@@ -460,8 +455,8 @@ public class ValidationService {
         Banque banque = virement.getBanqueEmettrice();
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
@@ -497,8 +492,8 @@ public class ValidationService {
         Banque banque = virement.getBanqueBeneficiare();
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
 
@@ -536,8 +531,8 @@ public class ValidationService {
         Banque banque = miseADisposition.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
 
@@ -574,8 +569,8 @@ public class ValidationService {
         Banque banque = miseADisposition.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
 
@@ -611,8 +606,8 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
 
@@ -649,8 +644,8 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the prefi as * (paid) and save the updated prefi entity.
@@ -685,8 +680,8 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the factoring as paid and save the updated factoring entity.
@@ -721,8 +716,8 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the decompte as * (paid) and save the updated decompte entity.
@@ -756,8 +751,8 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(commission.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+commission.getBanque().getId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the commission as * (paid) and save the updated commission entity.
@@ -791,8 +786,8 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(agios.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+agios.getBanque().getId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the agios as * (paid) and save the updated agios entity.
@@ -827,8 +822,8 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(prelevement.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+prelevement.getBanque().getId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         this.banqueRepository.save(banque);
@@ -864,8 +859,8 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(fraisBancaire.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+fraisBancaire.getBanque().getId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the frais bancaire as * (paid) and save the updated agios entity.
@@ -901,8 +896,8 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Banque with id " + impotEtTaxe.getBanque().getId() + " not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the impot et taxe as paid and save the updated entity.
@@ -945,8 +940,8 @@ public class ValidationService {
                 });
 
         // Step 4: Sauvegarder la transaction
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
 
@@ -986,8 +981,8 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Banque with id " + operationErrone.getBanque().getId() + " not found"));
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the operation erroné as paid and save the updated entity.
@@ -1024,8 +1019,8 @@ public class ValidationService {
         Banque banque = virementInternational.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
@@ -1063,8 +1058,8 @@ public class ValidationService {
         Banque banque = virementInternational.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
 
         // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
@@ -1107,8 +1102,8 @@ public class ValidationService {
                     return new ResourceNotFoundException("Banque d'encaissement introuvable avec l'ID: " + impayee.getBanque().getId());
                 });
         // Step 4: Save the Transaction entity to the database.
+        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
-        this.attachToRapprochementEnCours(savedTransaction,banque.getId());
 
         log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
 
@@ -1130,14 +1125,13 @@ public class ValidationService {
         return response;
     }
 
-    private void attachToRapprochementEnCours(Transaction savedTransaction, Long banqueId) {
+    private void attachToRapprochementEnCours(Transaction transaction, Long banqueId) {
         Rapprochement rapprochement = rapprochementRepository
                 .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
                 .orElseThrow(() -> new ValidationException(
                         "Aucun rapprochement EN_COURS trouvé pour la banque id: " + banqueId +
                         ". Veuillez créer un rapprochement avant de valider des opérations."));
 
-        savedTransaction.setRapprochement(rapprochement);
-        transactionRepository.save(savedTransaction);
+        transaction.setRapprochement(rapprochement);
     }
 }

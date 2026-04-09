@@ -24,17 +24,17 @@ public class Transaction {
     private LocalDate dateOperations;
 
     @Column(precision = 19, scale = 2)
-    private BigDecimal debit;
+    private BigDecimal debit=BigDecimal.ZERO;
 
     @Column(precision = 19, scale = 2)
-    private BigDecimal credit;
+    private BigDecimal credit=BigDecimal.ZERO;
 
     @Column(columnDefinition = "LONGTEXT")
     private String libelle;
     private String observation;
 
-    private BigDecimal tvaDeductible;
-    private BigDecimal tvaCollectee;
+    private BigDecimal tvaDeductible=BigDecimal.ZERO;
+    private BigDecimal tvaCollectee=BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 100)
