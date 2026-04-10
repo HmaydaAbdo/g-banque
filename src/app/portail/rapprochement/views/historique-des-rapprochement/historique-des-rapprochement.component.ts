@@ -23,6 +23,7 @@ import {throwError} from "rxjs";
 import {ToolbarModule} from "primeng/toolbar";
 import {DialogModule} from "primeng/dialog";
 import {SelectButtonModule} from "primeng/selectbutton";
+import {StatutRapprochement} from "../../enums/StatutRapprochement";
 
 
 
@@ -63,6 +64,11 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
   rows: number | undefined = 10;
   sortField: string | string[] = 'dateRapprochement';
   sortOrder: number = -1;
+  statusOptions = [
+    { label: 'Tous les statuts', value: null },
+    { label: 'En cours', value: StatutRapprochement.EN_COURS },
+    { label: 'Clôturé', value: StatutRapprochement.CLOTURE }
+  ];
   searchForm!: FormGroup;
 
   banques: { id: number; nom: string }[] = [];
@@ -117,7 +123,8 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       banqueId: [null],
-      dateRapprochement: ['']
+      dateRapprochement: [''],
+      statutRapprochement: [null]
     });
   }
 
@@ -189,7 +196,8 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
   clearSearch(): void {
     this.searchForm.reset({
       banqueId: null,
-      dateRapprochement: ''
+      dateRapprochement: '',
+      statutRapprochement: null
     });
     this.first = 0;
     if (this.dt) {

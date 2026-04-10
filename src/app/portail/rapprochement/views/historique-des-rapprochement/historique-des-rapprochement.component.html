@@ -55,6 +55,20 @@
                  placeholder="Date (MM/YYYY)"
                  [style]="{'min-width': '180px'}"/>
         </div>
+        <div class="p-input-icon-left">
+          <i class="pi pi-tag"></i>
+          <p-dropdown
+            formControlName="statutRapprochement"
+            [options]="statusOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Statut"
+            [showClear]="true"
+            appendTo="body"
+            [style]="{'min-width': '180px'}"
+          >
+          </p-dropdown>
+        </div>
       </form>
     </ng-template>
 

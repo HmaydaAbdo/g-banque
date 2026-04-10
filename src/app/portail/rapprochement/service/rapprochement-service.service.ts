@@ -60,6 +60,10 @@ export class RapprochementService {
       params = params.set('dateRapprochement', searchDto.dateRapprochement); // Doit être au format 'MM/YYYY'
     }
 
+    if (searchDto.statutRapprochement) {
+      params = params.set('statutRapprochement', searchDto.statutRapprochement); 
+    }
+
     return this.http.get<PageResponse<RapprochementResponse>>(
       this.baseUrl,
       { params: params }
