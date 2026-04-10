@@ -58,8 +58,7 @@ public class RapprochementService {
     public Page<RapprochementResponseDto> searchRapprochements(RapprochementSearchDto searchDto, Pageable pageable) {
 
         // 1. Créer la Specification à partir du DTO de recherche
-        Specification<Rapprochement> spec = RapprochementSpecifications.bySearchDto(searchDto)
-                .and(RapprochementSpecifications.hasStatut(StatutRapprochement.CLOTURE));
+        Specification<Rapprochement> spec = RapprochementSpecifications.bySearchDto(searchDto);
 
         // 2. Exécuter la recherche paginée avec les spécifications
         Page<Rapprochement> rapprochementPage = rapprochementRepository.findAll(spec, pageable);

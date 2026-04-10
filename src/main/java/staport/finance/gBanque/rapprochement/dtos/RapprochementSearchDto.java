@@ -4,6 +4,8 @@ import java.time.YearMonth;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
+
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -13,6 +15,7 @@ public class RapprochementSearchDto {
 
     private Long banqueId;
     private YearMonth dateRapprochement;
+    private StatutRapprochement statutRapprochement;
 
     public RapprochementSearchDto() {}
 
@@ -34,5 +37,13 @@ public class RapprochementSearchDto {
                 .appendValue(ChronoField.YEAR, 4)
                 .toFormatter();
         this.dateRapprochement = YearMonth.parse(dateRapprochement.trim(), formatter);
+    }
+
+    public StatutRapprochement getStatutRapprochement() {
+        return statutRapprochement;
+    }
+
+    public void setStatutRapprochement(StatutRapprochement statutRapprochement) {
+        this.statutRapprochement = statutRapprochement;
     }
 }

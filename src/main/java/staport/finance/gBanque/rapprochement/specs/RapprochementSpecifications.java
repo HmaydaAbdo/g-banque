@@ -55,6 +55,10 @@ public class RapprochementSpecifications {
             if (searchDto.getDateRapprochement() != null) {
                 spec = spec.and(hasDateRapprochement(searchDto.getDateRapprochement()));
             }
+
+            if(searchDto.getStatutRapprochement()!=null){
+                spec=spec.and(hasStatut(searchDto.getStatutRapprochement()));
+            }
         }
 
         return spec;
