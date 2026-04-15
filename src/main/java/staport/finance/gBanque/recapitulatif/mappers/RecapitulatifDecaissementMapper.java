@@ -128,7 +128,7 @@ public class RecapitulatifDecaissementMapper {
         dto.setDebit(lcn.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations("LCN N° " + lcn.getNumero());
         dto.setLibelle( lcn.getBeneficiaire());
-        dto.setSource(TransactionSource.LCN);
+        dto.setSource(TransactionSource.LCN_DECAISSEMENT);
         return dto;
     }
 

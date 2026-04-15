@@ -169,7 +169,7 @@ public class ReverseTransactionService {
             case CHEQUE:
                 resetCheque(referentId);
                 break;
-            case LCN:
+            case LCN_DECAISSEMENT,LCN_ENCAISSEMENT,LCN_ESCOMPTE:
                 resetLcn(referentId);
                 break;
             case Virement:

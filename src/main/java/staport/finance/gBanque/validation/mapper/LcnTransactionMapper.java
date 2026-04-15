@@ -2,6 +2,7 @@ package staport.finance.gBanque.validation.mapper;
 
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.moyensDePaiements.lcn.dtos.NatureLcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
@@ -42,7 +43,6 @@ public class LcnTransactionMapper {
         transaction.setDateEmission(requestDto.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setTransactionSource(TransactionSource.LCN);
 
         transaction.setBanqueDePrelevement(lcn.getBanque());
 
@@ -54,10 +54,19 @@ public class LcnTransactionMapper {
             transaction.setTvaDeductible(montantTva);
             transaction.setDebit(lcn.getMontant());
             transaction.setCredit(BigDecimal.ZERO);
+            transaction.setTransactionSource(TransactionSource.LCN_DECAISSEMENT);
+
         }else {
             transaction.setTvaCollectee(montantTva);
             transaction.setDebit(BigDecimal.ZERO);
             transaction.setCredit(lcn.getMontant());
+            if(lcn.getNatureLcn()== NatureLcn.ENCAISSEMENT){
+                transaction.setTransactionSource(TransactionSource.LCN_ENCAISSEMENT);
+            }else{
+                transaction.setTransactionSource(TransactionSource.LCN_ESCOMPTE);
+
+            }
+
         }
 
         return transaction;

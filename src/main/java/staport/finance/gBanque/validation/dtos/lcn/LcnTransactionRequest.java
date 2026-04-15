@@ -11,7 +11,6 @@ public class LcnTransactionRequest {
     @NotNull(message = "Le id LCN est obligatoire")
     private Long id;
 
-    @NotNull(message = "La source de transaction est obligatoire")
     private final TransactionSource transactionSource = TransactionSource.LCN;
 
     @NotNull(message = "La date d’émission est obligatoire")

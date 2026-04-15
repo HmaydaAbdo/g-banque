@@ -6,6 +6,7 @@ import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.factoring.entities.Factoring;
+import staport.finance.gBanque.moyensDePaiements.lcn.dtos.NatureLcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
@@ -154,7 +155,11 @@ public class RecapitulatifEncaissementMapper {
         dto.setCredit(lcn.getMontant().setScale(SCALE, RoundingMode.HALF_UP));
         dto.setObservations( lcn.getEmetteur());
         dto.setLibelle( lcn.getBeneficiaire() );
-        dto.setSource(TransactionSource.LCN);
+        TransactionSource source =
+                (lcn.getNatureLcn() == NatureLcn.ENCAISSEMENT)
+                        ? TransactionSource.LCN_ENCAISSEMENT
+                        : TransactionSource.LCN_ESCOMPTE;
+        dto.setSource(source);
         return dto;
     }
 

@@ -20,7 +20,7 @@ public class MiseAdispositionTransactionResponseDto {
     private BigDecimal tvaCollectee;
     private BigDecimal debit;
     private BigDecimal credit;
-    private final TransactionSource transactionSource = TransactionSource.LCN;
+    private  TransactionSource transactionSource ;
 
     public MiseAdispositionTransactionResponseDto() {
     }
