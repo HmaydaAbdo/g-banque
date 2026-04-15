@@ -26,6 +26,7 @@ import staport.finance.gBanque.transactions.spec.TransactionSpecifications;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -201,6 +202,7 @@ public class RapprochementService {
         // 3. Mapper les entités de Transactions vers des DTOs de Transaction
         List<TransactionResponseDto> allTransactionDtos = allTransactions.stream()
                 .map(TransactionMapper::toDto)
+                .sorted(Comparator.comparing(TransactionResponseDto::getDateOperations))
                 .toList();
 
         // 4. Injecter la liste complète des transactions

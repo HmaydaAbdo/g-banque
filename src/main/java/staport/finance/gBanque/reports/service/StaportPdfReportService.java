@@ -35,13 +35,13 @@ public class StaportPdfReportService {
 
     // Constantes de style pour les rapports
     private static final Color STAPORT_BLUE = Color.decode("#1a5490");
-    private static final Font TITLE_FONT_BLACK = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, Color.BLACK);
-    private static final Font TITLE_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, STAPORT_BLUE);
-    private static final Font SUBTITLE_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
-    private static final Font BOLD_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
-    private static final Font DATA_FONT = FontFactory.getFont(FontFactory.HELVETICA, 10);
-    private static final Font TRANSACTION_HEADER_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
-    private static final Font TRANSACTION_DATA_FONT = FontFactory.getFont(FontFactory.HELVETICA, 8);
+    private static final Font TITLE_FONT_BLACK = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+    private static final Font TITLE_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, STAPORT_BLUE);
+    private static final Font SUBTITLE_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+    private static final Font BOLD_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+    private static final Font DATA_FONT = FontFactory.getFont(FontFactory.HELVETICA, 12);
+    private static final Font TRANSACTION_HEADER_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 6, Color.WHITE);
+    private static final Font TRANSACTION_DATA_FONT = FontFactory.getFont(FontFactory.HELVETICA, 6);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -195,26 +195,26 @@ public class StaportPdfReportService {
                                            List<TransactionResponseDto> transactions,
                                            boolean isFinance) throws DocumentException {
 
-        PdfPTable table = new PdfPTable(isFinance ? 9 : 6);
+        PdfPTable table = new PdfPTable(isFinance ? 10 : 7);
         table.setWidthPercentage(100);
         table.setSpacingBefore(3);
         table.setSpacingAfter(3);
         table.setHeaderRows(1);
 
         if (isFinance) {
-            table.setWidths(new float[]{2.5f, 2.5f, 2.5f, 3f, 3f, 3f, 3f, 3f, 2.5f});
+            table.setWidths(new float[]{2.5f, 2.5f, 2.5f, 3f, 3f, 3f, 3f, 3f, 3f,4f});
         } else {
-            table.setWidths(new float[]{2.5f, 2.5f, 4f, 3f, 3f, 3f});
+            table.setWidths(new float[]{2.5f, 2.5f, 3f, 3f, 3f, 3f,4f});
         }
 
         String[] headersFinance = {
                 "Date d'émission", "Date d'opération", "Date de valeur",
                 "Libellé", "Débit", "Crédit",
-                "TVA Déductible", "TVA Collectée", "Observation"
+                "TVA Déductible", "TVA Collectée", "Observation","Source"
         };
         String[] headersCompta = {
                 "Date d'opération", "Date de valeur",
-                "Libellé", "Débit", "Crédit", "Observation"
+                "Libellé", "Débit", "Crédit", "Observation","Source"
         };
 
         for (String header : isFinance ? headersFinance : headersCompta) {
@@ -248,7 +248,8 @@ public class StaportPdfReportService {
             dateValCell.setNoWrap(true);
             table.addCell(dateValCell);
 
-            table.addCell(createCell(tx.getLibelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
+            PdfPCell libelleCell=createCell(tx.getLibelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT);
+            table.addCell(libelleCell);
 
             PdfPCell debitCell = createCell(formatCurrency(tx.getDebit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
             debitCell.setNoWrap(true);
@@ -269,6 +270,13 @@ public class StaportPdfReportService {
             }
 
             table.addCell(createCell(tx.getObservation(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
+            PdfPCell sourceCell= createCell(
+                    tx.getTransactionSource() != null ? tx.getTransactionSource().name() : "-",
+                    TRANSACTION_DATA_FONT,
+                    Element.ALIGN_CENTER
+            );
+            sourceCell.setNoWrap(true);
+            table.addCell(sourceCell);
         }
 
         document.add(table);
