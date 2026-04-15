@@ -224,7 +224,6 @@ export class LcnEncoursComponent implements OnInit {
         dateOperation:this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
         tvaDeductible: this.rapprochementForm.value.tvaDeductible,
-        transactionSource: TransactionSource.LCN,
         libelle:this.rapprochementForm.value.libelle
       };
 

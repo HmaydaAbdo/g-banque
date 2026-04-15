@@ -2,7 +2,7 @@ import {TransactionSource} from "../../../transactions/dtos/TransactionSource";
 
 export interface LcnTransactionRequest {
   id: number;
-  transactionSource: TransactionSource;
+  transactionSource?: TransactionSource;
   dateEmission: string;
   dateValeur: string;
   dateOperation: string;

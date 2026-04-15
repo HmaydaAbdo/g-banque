@@ -231,7 +231,6 @@ export class EncaissementLcnEncoursComponent implements OnInit {
         dateOperation: this.datePipe.transform(donneesComplementaires.dateOperation,'yyyy-MM-dd') as string,
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
-        transactionSource: TransactionSource.LCN,
         libelle:donneesComplementaires.libelle
       };
 
