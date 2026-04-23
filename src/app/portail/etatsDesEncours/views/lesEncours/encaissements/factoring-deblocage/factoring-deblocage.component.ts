@@ -233,7 +233,7 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
       banqueId: this.selectedFactoring.banqueId,
       dateEmission: this.datePipe.transform(this.rapprochementForm.value.dateEmission,'yyyy-MM-dd') as string,
       dateOperation: this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
-      dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur) as string,
+      dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
       tva: this.rapprochementForm.value.tva,
       libelle:this.rapprochementForm.value.libelle,
       observation:this.rapprochementForm.value.observation
