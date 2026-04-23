@@ -27,17 +27,6 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
 
 
     /**
-     * Counts the number of functional lines associated with a specific NatureLigneFonctionnelle ID.
-     * Used typically for integrity checks before deleting a NatureLigneFonctionnelle.
-     *
-     * @param natureLigneFonctionnelleId The ID of the nature of the functional line.
-     * @return The count of functional lines.
-     */
-    long countByNatureLigneFonctionnelleId(Long natureLigneFonctionnelleId);
-
-
-
-    /**
      * Finds all functional lines for a specific bank and nature, ordered by their start date ascending.
      * Used for historical data retrieval.
      *
@@ -59,13 +48,9 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
             Long natureLigneFonctionnelleId
     );
 
-    List<LigneFonctionnelle> findByActifFalse();
 
-    /**
-     * Deletion guard — returns true if the banque has at least one active ligne fonctionnelle.
-     * Replaces the former lazy-collection traversal on the Banque entity.
-     */
-    boolean existsByBanqueIdAndActifTrue(Long banqueId);
+
+
 
     @Query("""
     SELECT lf.banque.id, lf.plafond

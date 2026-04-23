@@ -305,6 +305,8 @@ public class DroitConstateService {
                         dcNature.getId()
                 );
 
+
+
         if (ligneGeneraleMarcheSpecifique.isPresent()) {
             log.info(" Ligne fonctionnelle générale 'Droit constaté' active trouvée pour le marché spécifique '{}' (ID: {})",
                     marche.getNom(), ligneGeneraleMarcheSpecifique.get().getId());
@@ -315,7 +317,7 @@ public class DroitConstateService {
 
         // Option B : Ligne générale de la banque (sans marché spécifique)
         Optional<LigneFonctionnelle> ligneGeneraleBanque =
-                ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndMarcheIsNullAndActifTrue(
+                ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(
                         marche.getBanque().getId(),
                         dcNature.getId()
                 );
