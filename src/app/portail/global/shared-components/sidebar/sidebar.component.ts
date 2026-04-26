@@ -146,7 +146,15 @@ export class SidebarComponent implements OnInit {
         { label: 'Calcul des Agios', icon: 'pi pi-calculator', routerLink: '/portail/agios-calcul' },
       ]
     },
-    { label: "Les Cautions", icon: "pi pi-list", routerLink: '/portail/cautions' },
+    {
+      label: 'Les Cautions',
+      icon: 'pi pi-shield',
+      items: [
+        { label: 'Liste des cautions',       icon: 'pi pi-list',        routerLink: '/portail/cautions'              },
+        { label: 'Commissions sur cautions', icon: 'pi pi-percentage',  routerLink: '/portail/cautions/commissions'  },
+        { label: 'TVA sur cautions',         icon: 'pi pi-receipt',     routerLink: '/portail/cautions/tva'          },
+      ],
+    },
     { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions' },
     { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements' },
     { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire' },

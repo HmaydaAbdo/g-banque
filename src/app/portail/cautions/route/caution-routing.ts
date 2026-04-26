@@ -4,8 +4,12 @@ import { adminGuard } from '../../../auth/guards/admin.guard';
 /**
  * Routes du module Caution.
  *
- * - Liste : accessible à tous les utilisateurs authentifiés.
- * - new/edit : protégés par adminGuard — seul l'admin peut créer ou modifier.
+ * Structure :
+ *   /portail/cautions                → liste des cautions
+ *   /portail/cautions/new            → création (admin)
+ *   /portail/cautions/edit/:id       → modification (admin)
+ *   /portail/cautions/commissions    → liste des commissions sur cautions
+ *   /portail/cautions/tva            → liste des TVA sur cautions
  */
 export const CAUTION_ROUTES: Routes = [
   {
@@ -27,5 +31,17 @@ export const CAUTION_ROUTES: Routes = [
     loadComponent: () =>
       import('../views/caution-form/caution-form.component')
         .then(m => m.CautionFormComponent),
+  },
+  {
+    path: 'commissions',
+    loadComponent: () =>
+      import('../views/commission-caution-list/commission-caution-list.component')
+        .then(m => m.CommissionCautionListComponent),
+  },
+  {
+    path: 'tva',
+    loadComponent: () =>
+      import('../views/tva-caution-list/tva-caution-list.component')
+        .then(m => m.TvaCautionListComponent),
   },
 ];
