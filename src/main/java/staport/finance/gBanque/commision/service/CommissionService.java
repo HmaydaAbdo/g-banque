@@ -16,9 +16,12 @@ import staport.finance.gBanque.commision.mapper.CommissionMapper;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
@@ -28,15 +31,23 @@ import java.util.List;
 public class CommissionService {
 
     private static final Logger log = LogManager.getLogger(CommissionService.class);
-    private final CommisionRepository commissionRepository;
-    private final BanqueRepository banqueRepository;
-    private final CommissionMapper commissionMapper;
+    /** Taux TVA légal applicable aux commissions sur cautions bancaires (10%). */
+    private static final BigDecimal TAUX_TVA_COMMISSION_CAUTION = new BigDecimal("0.10");
+
+    private final CommisionRepository    commissionRepository;
+    private final BanqueRepository       banqueRepository;
+    private final CommissionMapper       commissionMapper;
+    private final ImpotEtTaxeRepository  impotEtTaxeRepository;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-    public CommissionService(CommisionRepository commissionRepository, BanqueRepository banqueRepository, CommissionMapper commissionMapper) {
+    public CommissionService(CommisionRepository commissionRepository,
+                             BanqueRepository banqueRepository,
+                             CommissionMapper commissionMapper,
+                             ImpotEtTaxeRepository impotEtTaxeRepository) {
         this.commissionRepository = commissionRepository;
-        this.banqueRepository = banqueRepository;
-        this.commissionMapper = commissionMapper;
+        this.banqueRepository     = banqueRepository;
+        this.commissionMapper     = commissionMapper;
+        this.impotEtTaxeRepository = impotEtTaxeRepository;
     }
 
     // --- Create ---
@@ -107,6 +118,20 @@ public class CommissionService {
 
         commissionRepository.save(commission);
         log.info("Commission updated successfully id={}", commission.getId());
+
+        // Cascade TVA : uniquement pour les commissions sur cautions
+        if (TransactionSource.CAUTION.equals(commission.getOperation())) {
+            impotEtTaxeRepository.findByCommission_Id(id).ifPresent(tva -> {
+                BigDecimal nouveauMontantTva = requestDto.getMontant()
+                        .multiply(TAUX_TVA_COMMISSION_CAUTION)
+                        .setScale(2, RoundingMode.HALF_UP);
+                log.info("Mise à jour TVA liée — commission id={}, ancien montant TVA={}, nouveau montant TVA={}",
+                        id, tva.getMontant(), nouveauMontantTva);
+                tva.setMontant(nouveauMontantTva);
+                impotEtTaxeRepository.save(tva);
+            });
+        }
+
         return commissionMapper.toResponseDto(commission);
     }
 

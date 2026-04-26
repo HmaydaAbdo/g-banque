@@ -20,10 +20,14 @@ import staport.finance.gBanque.cautions.exceptions.CautionBusinessException;
 import staport.finance.gBanque.cautions.mappers.CautionMapper;
 import staport.finance.gBanque.cautions.repository.CautionRepository;
 import staport.finance.gBanque.cautions.specifications.CautionSpecification;
+import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.impot_taxes.enums.Motif;
+import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
+import staport.finance.gBanque.prefinancement.enums.Status;
 
 /**
  * Implémentation du service Caution.
@@ -49,23 +53,29 @@ public class CautionServiceImpl implements ICautionService {
 
     private static final Logger logger = LoggerFactory.getLogger(CautionServiceImpl.class);
 
-    private final CautionRepository    cautionRepository;
-    private final CautionMapper        cautionMapper;
-    private final BanqueRepository     banqueRepository;
+    private final CautionRepository                  cautionRepository;
+    private final CautionMapper                      cautionMapper;
+    private final BanqueRepository                   banqueRepository;
     private final NatureLigneFonctionnelleRepository natureRepository;
-    private final MarcheRepository     marcheRepository;
+    private final MarcheRepository                   marcheRepository;
+    private final CommisionRepository                commissionRepository;
+    private final ImpotEtTaxeRepository              impotEtTaxeRepository;
 
     public CautionServiceImpl(
             CautionRepository cautionRepository,
             CautionMapper cautionMapper,
             BanqueRepository banqueRepository,
             NatureLigneFonctionnelleRepository natureRepository,
-            MarcheRepository marcheRepository) {
-        this.cautionRepository = cautionRepository;
-        this.cautionMapper     = cautionMapper;
-        this.banqueRepository  = banqueRepository;
-        this.natureRepository  = natureRepository;
-        this.marcheRepository  = marcheRepository;
+            MarcheRepository marcheRepository,
+            CommisionRepository commissionRepository,
+            ImpotEtTaxeRepository impotEtTaxeRepository) {
+        this.cautionRepository    = cautionRepository;
+        this.cautionMapper        = cautionMapper;
+        this.banqueRepository     = banqueRepository;
+        this.natureRepository     = natureRepository;
+        this.marcheRepository     = marcheRepository;
+        this.commissionRepository = commissionRepository;
+        this.impotEtTaxeRepository = impotEtTaxeRepository;
     }
 
     // ── Création ──────────────────────────────────────────────────────────────
@@ -175,6 +185,26 @@ public class CautionServiceImpl implements ICautionService {
         logger.info("Toggle actif caution — id: {}", id);
 
         Caution caution = trouverOuLeverException(id);
+
+        // Garde désactivation : vérifier les encours uniquement quand on passe actif → inactif
+        if (Boolean.TRUE.equals(caution.getActif())) {
+
+            if (commissionRepository.existsByCaution_IdAndStatus(id, Status.PREVU)) {
+                throw new CautionBusinessException(
+                    "Impossible de désactiver la caution id: " + id +
+                    " — elle possède une commission en cours (statut PREVU)."
+                );
+            }
+
+            if (impotEtTaxeRepository.existsByCaution_IdAndMotifAndStatus(
+                    id, Motif.TVA_COMMISSION_CAUTION, Status.PREVU)) {
+                throw new CautionBusinessException(
+                    "Impossible de désactiver la caution id: " + id +
+                    " — elle possède une TVA sur commission non réglée (statut PREVU)."
+                );
+            }
+        }
+
         boolean nouvelEtat = !Boolean.TRUE.equals(caution.getActif());
         caution.setActif(nouvelEtat);
 

@@ -11,7 +11,12 @@ import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.cautions.repository.CautionRepository;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
+import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
+import staport.finance.gBanque.impot_taxes.enums.Motif;
+import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,17 +47,23 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
     private static final Logger logger =
             LoggerFactory.getLogger(GenerationCommissionCautionServiceImpl.class);
 
-    private final CautionRepository          cautionRepository;
-    private final CommisionRepository        commissionRepository;
-    private final CommissionCautionStrategieFactory strategieFactory;
+    /** Taux TVA légal applicable aux commissions sur cautions bancaires (10%). */
+    private static final BigDecimal TAUX_TVA_COMMISSION_CAUTION = new BigDecimal("0.10");
+
+    private final CautionRepository                  cautionRepository;
+    private final CommisionRepository                commissionRepository;
+    private final ImpotEtTaxeRepository              impotEtTaxeRepository;
+    private final CommissionCautionStrategieFactory  strategieFactory;
 
     public GenerationCommissionCautionServiceImpl(
             CautionRepository cautionRepository,
             CommisionRepository commissionRepository,
+            ImpotEtTaxeRepository impotEtTaxeRepository,
             CommissionCautionStrategieFactory strategieFactory) {
-        this.cautionRepository   = cautionRepository;
+        this.cautionRepository    = cautionRepository;
         this.commissionRepository = commissionRepository;
-        this.strategieFactory    = strategieFactory;
+        this.impotEtTaxeRepository = impotEtTaxeRepository;
+        this.strategieFactory     = strategieFactory;
     }
 
     // ── Génération ────────────────────────────────────────────────────────────
@@ -81,17 +92,41 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
                 continue;
             }
 
-            // 3. Calcul de la commission (délégué à la stratégie)
+            // 3. Calcul de la commission (délégué à la stratégie) + liaison caution
             Commission commission = strategieOpt.get().calculer(caution, moisReference);
+            commission.setCaution(caution);
             aCreer.add(commission);
         }
 
-        // 4. Persistance en lot (un seul INSERT batch)
-        commissionRepository.saveAll(aCreer);
+        // 4. Persistance des commissions en lot — les IDs sont générés après ce saveAll
+        List<Commission> commissionsCreees = commissionRepository.saveAll(aCreer);
 
-        logger.info("Génération terminée — {} commission(s) créée(s), {} ignorée(s) — mois cible : {}",
-                aCreer.size(), ignorees, moisReference.plusMonths(1));
+        // 5. Génération des TVA (ImpotEtTaxe motif=TVA_COMMISSION_CAUTION) pour chaque commission
+        List<ImpotEtTaxe> tvasACreer = new ArrayList<>();
+        for (Commission commission : commissionsCreees) {
+            BigDecimal montantTva = commission.getMontant()
+                    .multiply(TAUX_TVA_COMMISSION_CAUTION)
+                    .setScale(2, RoundingMode.HALF_UP);
 
-        return new ResultatGenerationCommissionDto(aCreer.size(), ignorees, moisReference);
+            ImpotEtTaxe tva = new ImpotEtTaxe();
+            tva.setBanque(commission.getBanque());
+            tva.setMontant(montantTva);
+            tva.setMotif(Motif.TVA_COMMISSION_CAUTION);
+            tva.setDateEmission(commission.getDateEmission());
+            tva.setLibelle("TVA " + commission.getLibelle());
+            tva.setObservation("TVA/commission/caution");
+            tva.setCommission(commission);
+            tva.setCaution(commission.getCaution());
+
+            tvasACreer.add(tva);
+            logger.debug("TVA préparée — commission id: {}, montant TVA: {}", commission.getId(), montantTva);
+        }
+
+        impotEtTaxeRepository.saveAll(tvasACreer);
+
+        logger.info("Génération terminée — {} commission(s) + {} TVA créée(s), {} ignorée(s) — mois cible : {}",
+                commissionsCreees.size(), tvasACreer.size(), ignorees, moisReference.plusMonths(1));
+
+        return new ResultatGenerationCommissionDto(commissionsCreees.size(), ignorees, moisReference);
     }
 }

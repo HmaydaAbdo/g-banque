@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.time.LocalDate;
@@ -17,17 +18,8 @@ public interface CommisionRepository extends JpaRepository<Commission, Long>, Jp
     List<Commission> findByLibelleLike(String libellePattern);
 
     /**
-     * Vérifie l'existence d'une commission par son triptyque d'unicité —
-     * utilisé pour garantir l'idempotence de la génération mensuelle des commissions cautions.
-     *
-     * @param operation    type de l'opération (ex: {@code CAUTION})
-     * @param dateEmission date d'émission de la commission
-     * @param libelle      libellé de la commission (nature + numéro caution)
-     * @return {@code true} si une commission identique existe déjà
+     * Vérifie si une caution possède au moins une commission non réglée (status = PREVU).
+     * Utilisé pour bloquer la désactivation d'une caution tant qu'une commission est en cours.
      */
-    boolean existsByOperationAndDateEmissionAndLibelle(
-            TransactionSource operation,
-            LocalDate dateEmission,
-            String libelle
-    );
+    boolean existsByCaution_IdAndStatus(Long cautionId, Status status);
 }
