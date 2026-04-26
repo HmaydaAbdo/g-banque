@@ -183,9 +183,9 @@
           <p-inputNumber
             formControlName="taux"
             mode="decimal"
-            [minFractionDigits]="4"
+            [minFractionDigits]="6"
             suffix=" %"
-            placeholder="0.0000">
+            placeholder="0.000000">
           </p-inputNumber>
           <small class="p-error"
                  *ngIf="f['taux'].touched && f['taux'].errors?.['required']">

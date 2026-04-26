@@ -10,7 +10,7 @@ export interface CautionRequestDto {
   banqueId:      number;
   natureId:      number;
   marcheId?:     number | null;
-  dateDePrise:   string;      // yyyy-MM-dd
+  dateDePrise:   string;
   numeroCaution: string;
   designation:   string;
   organisme:     string;
