@@ -45,9 +45,9 @@ public record CautionUpdateDto(
     BigDecimal montant,
 
     @NotNull(message = "Le taux est obligatoire")
-    @DecimalMin(value = "0.0000", inclusive = true, message = "Le taux ne peut pas être négatif")
-    @DecimalMax(value = "100.0000", message = "Le taux ne peut pas dépasser 100%")
-    @Digits(integer = 3, fraction = 4, message = "Format taux invalide (max 3 entiers, 4 décimales)")
+    @DecimalMin(value = "0.000000", inclusive = true, message = "Le taux ne peut pas être négatif")
+    @DecimalMax(value = "100.000000", message = "Le taux ne peut pas dépasser 100%")
+    @Digits(integer = 3, fraction = 6, message = "Format taux invalide (max 3 entiers, 6 décimales)")
     BigDecimal taux
 
 ) {}

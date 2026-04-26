@@ -83,7 +83,7 @@ public class Caution {
     private BigDecimal montant;
 
     /** Taux de commission — précision 19 chiffres, 4 décimales (ex: 1.2500%). */
-    @Column(nullable = false, precision = 19, scale = 4)
+    @Column(nullable = false, precision = 19, scale = 6)
     private BigDecimal taux;
 
     /**
