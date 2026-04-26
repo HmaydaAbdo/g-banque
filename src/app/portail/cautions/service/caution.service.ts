@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { CautionResponseDto }  from '../dtos/CautionResponseDto';
 import { CautionRequestDto }   from '../dtos/CautionRequestDto';
@@ -8,11 +8,13 @@ import { CautionSearchDto }    from '../dtos/CautionSearchDto';
 import { PageResponse }        from '../../global/types/PageResponse';
 
 /**
- * Service HTTP pour le module Caution.
+ * Service HTTP + état réactif pour le module Caution.
  *
- * HttpClient uniquement ici — jamais dans les composants (SRP).
- * Chaque méthode retourne un Observable brut ; la logique de store et
- * de gestion d'état est déléguée aux composants via CautionStore.
+ * Principe : BehaviorSubject privé → mutation interne uniquement.
+ *            Observable public    → les composants lisent en lecture seule.
+ *
+ * Pas de store séparé — tout est centralisé ici pour garder
+ * la cohérence sans couche supplémentaire.
  */
 @Injectable({ providedIn: 'root' })
 export class CautionService {
@@ -21,7 +23,63 @@ export class CautionService {
 
   constructor(private http: HttpClient) {}
 
-  // ── Recherche paginée ─────────────────────────────────────────────────────
+  // ── État réactif ──────────────────────────────────────────────────────────
+
+  private readonly _cautions        = new BehaviorSubject<CautionResponseDto[]>([]);
+  private readonly _totalElements   = new BehaviorSubject<number>(0);
+  private readonly _loading         = new BehaviorSubject<boolean>(false);
+  private readonly _selected        = new BehaviorSubject<CautionResponseDto | null>(null);
+
+  readonly cautions$      = this._cautions.asObservable();
+  readonly totalElements$ = this._totalElements.asObservable();
+  readonly loading$       = this._loading.asObservable();
+  readonly selected$      = this._selected.asObservable();
+
+  // ── Mutations d'état ──────────────────────────────────────────────────────
+
+  /** Remplace la liste complète (résultat d'une recherche paginée). */
+  set(data: CautionResponseDto[]): void {
+    this._cautions.next(data);
+  }
+
+  /** Met à jour le total d'éléments (pour le paginator). */
+  setTotal(total: number): void {
+    this._totalElements.next(total);
+  }
+
+  /** Active / désactive l'indicateur de chargement. */
+  setLoading(loading: boolean): void {
+    this._loading.next(loading);
+  }
+
+  /** Sélectionne la caution courante (pour édition ou détail). */
+  selectCaution(caution: CautionResponseDto | null): void {
+    this._selected.next(caution);
+  }
+
+  /**
+   * Mise à jour locale immutable d'une caution après toggle ou modification.
+   * Évite un rechargement complet de la liste.
+   */
+  updateInList(updated: CautionResponseDto): void {
+    this._cautions.next(
+      this._cautions.getValue().map(c => c.id === updated.id ? updated : c)
+    );
+  }
+
+  /** Suppression locale d'une caution après hard-delete confirmé. */
+  removeFromList(id: number): void {
+    this._cautions.next(this._cautions.getValue().filter(c => c.id !== id));
+  }
+
+  /** Réinitialise l'état complet. */
+  clear(): void {
+    this._cautions.next([]);
+    this._totalElements.next(0);
+    this._selected.next(null);
+  }
+
+  // ── Requêtes HTTP ─────────────────────────────────────────────────────────
 
   /**
    * Recherche paginée avec filtres dynamiques.
@@ -32,13 +90,9 @@ export class CautionService {
     return this.http.get<PageResponse<CautionResponseDto>>(this.apiUrl, { params });
   }
 
-  // ── Lecture ───────────────────────────────────────────────────────────────
-
   getById(id: number): Observable<CautionResponseDto> {
     return this.http.get<CautionResponseDto>(`${this.apiUrl}/${id}`);
   }
-
-  // ── Écriture ──────────────────────────────────────────────────────────────
 
   creer(request: CautionRequestDto): Observable<CautionResponseDto> {
     return this.http.post<CautionResponseDto>(this.apiUrl, request);
@@ -49,8 +103,8 @@ export class CautionService {
   }
 
   /**
-   * Bascule l'état actif/inactif d'une caution (admin uniquement côté backend).
-   * Si actif = false, ce bouton ne doit pas apparaître côté frontend.
+   * Bascule l'état actif/inactif d'une caution.
+   * Le backend refuse si des commissions ou TVA sont en cours (statut PREVU).
    */
   toggleActif(id: number): Observable<CautionResponseDto> {
     return this.http.patch<CautionResponseDto>(`${this.apiUrl}/${id}/toggle-actif`, {});
@@ -69,18 +123,18 @@ export class CautionService {
   private buildParams(criteres: CautionSearchDto): HttpParams {
     let params = new HttpParams();
 
-    if (criteres.numeroCaution)             params = params.set('numeroCaution', criteres.numeroCaution);
-    if (criteres.organisme)                 params = params.set('organisme',     criteres.organisme);
-    if (criteres.banqueId  != null)         params = params.set('banqueId',      criteres.banqueId.toString());
-    if (criteres.natureId  != null)         params = params.set('natureId',      criteres.natureId.toString());
-    if (criteres.marcheId  != null)         params = params.set('marcheId',      criteres.marcheId.toString());
-    if (criteres.dateDePrise)               params = params.set('dateDePrise',   criteres.dateDePrise);
-    if (criteres.montant   != null)         params = params.set('montant',       criteres.montant.toString());
-    if (criteres.actif     != null)         params = params.set('actif',         criteres.actif.toString());
+    if (criteres.numeroCaution)     params = params.set('numeroCaution', criteres.numeroCaution);
+    if (criteres.organisme)         params = params.set('organisme',     criteres.organisme);
+    if (criteres.banqueId  != null) params = params.set('banqueId',      criteres.banqueId.toString());
+    if (criteres.natureId  != null) params = params.set('natureId',      criteres.natureId.toString());
+    if (criteres.marcheId  != null) params = params.set('marcheId',      criteres.marcheId.toString());
+    if (criteres.dateDePrise)       params = params.set('dateDePrise',   criteres.dateDePrise);
+    if (criteres.montant   != null) params = params.set('montant',       criteres.montant.toString());
+    if (criteres.actif     != null) params = params.set('actif',         criteres.actif.toString());
 
-    params = params.set('page', (criteres.page  ?? 0).toString());
-    params = params.set('size', (criteres.size  ?? 10).toString());
-    params = params.set('sort', criteres.sort   ?? 'dateDePrise,desc');
+    params = params.set('page', (criteres.page ?? 0).toString());
+    params = params.set('size', (criteres.size ?? 10).toString());
+    params = params.set('sort', criteres.sort  ?? 'dateDePrise,desc');
 
     return params;
   }

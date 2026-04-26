@@ -30,7 +30,6 @@ import { BehaviorSubject, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 import { CautionService } from '../../service/caution.service';
-import { CautionStore } from '../../store/caution.store';
 import { CautionResponseDto } from '../../dtos/CautionResponseDto';
 import { CautionSearchDto } from '../../dtos/CautionSearchDto';
 import { AuthService } from '../../../../auth/services/auth.service';
@@ -60,8 +59,7 @@ export class CautionListComponent implements OnInit {
   private readonly fb                  = inject(FormBuilder);
   private readonly destroyRef          = inject(DestroyRef);
   private readonly cdr                 = inject(ChangeDetectorRef);
-  private readonly cautionService      = inject(CautionService);
-  readonly store                       = inject(CautionStore);
+  readonly cautionService              = inject(CautionService);
   private readonly authService         = inject(AuthService);
   private readonly banqueService       = inject(BanqueService);
   private readonly marcheService       = inject(MarcheService);
@@ -69,9 +67,9 @@ export class CautionListComponent implements OnInit {
   private readonly messageService      = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
 
-  readonly cautions$      = this.store.cautions$;
-  readonly totalElements$ = this.store.totalElements$;
-  readonly loading$       = this.store.loading$;
+  readonly cautions$      = this.cautionService.cautions$;
+  readonly totalElements$ = this.cautionService.totalElements$;
+  readonly loading$       = this.cautionService.loading$;
 
   readonly isAdmin = this.authService.isAdmin();
 
@@ -230,7 +228,7 @@ export class CautionListComponent implements OnInit {
   // ── Table lazy load ───────────────────────────────────────────────────────
 
   loadCautions(event: TableLazyLoadEvent): void {
-    this.store.setLoading(true);
+    this.cautionService.setLoading(true);
 
     const page    = event.first ? Math.floor(event.first / (event.rows ?? 10)) : 0;
     const formVal = this.filterForm.value;
@@ -253,12 +251,12 @@ export class CautionListComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          this.store.set(res.content);
-          this.store.setTotal(res.page.totalElements);
-          this.store.setLoading(false);
+          this.cautionService.set(res.content);
+          this.cautionService.setTotal(res.page.totalElements);
+          this.cautionService.setLoading(false);
         },
         error: () => {
-          this.store.setLoading(false);
+          this.cautionService.setLoading(false);
           this.messageService.add({
             severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les cautions.',
           });
@@ -294,7 +292,7 @@ export class CautionListComponent implements OnInit {
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: updated => {
-              this.store.update(updated);
+              this.cautionService.updateInList(updated);
               this.messageService.add({
                 severity: 'success',
                 summary: 'Désactivée',
