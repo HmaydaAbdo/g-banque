@@ -12,15 +12,16 @@ import java.time.YearMonth;
 /**
  * Scheduler de génération mensuelle des commissions sur cautions.
  *
- * <p>S'exécute automatiquement le dernier jour de chaque mois à 23h00
- * (heure de Casablanca) pour générer les commissions du mois suivant.
+ * <p>S'exécute automatiquement le 1er jour de chaque mois à 03h00
+ * (heure de Casablanca). Le mois de référence transmis au service est
+ * le mois courant au moment de l'exécution.
  *
- * <p>Exemple : exécution le 31/03/2026 à 23h00 → génère les commissions
- * avec {@code dateEmission = 30/04/2026}.
- *
- * <p>Le cron est configurable via la propriété
- * {@code commission.caution.generation.cron} dans {@code application.properties}.
- * Valeur par défaut : {@code 0 0 23 L * *} (dernier jour du mois à 23h00).
+ * <p>Exemple : exécution le 01/04/2026 à 03h00 → moisReference = 2026-04.
+ * Chaque stratégie banque détermine ensuite son propre mois cible :
+ * <ul>
+ *   <li>BMCI / CDM : M+1 ou M selon configuration</li>
+ *   <li>AWB : mois de référence lui-même (M)</li>
+ * </ul>
  */
 @Component
 public class CommissionCautionGenerationScheduler {
@@ -34,19 +35,16 @@ public class CommissionCautionGenerationScheduler {
     }
 
     /**
-     * Génère les commissions + TVA sur cautions pour le mois suivant.
-     *
-     * <p>Cron : dernier jour du mois à 23h00 — après la clôture des opérations
-     * de la journée, avant le changement de mois.
+     * Génère les commissions + TVA sur cautions — exécution le 1er de chaque mois.
      *
      * <p>Expression cron (6 champs Spring) :
      * <pre>
-     *   0    0    23   L    *    *
+     *   0    0    3    1    *    *
      *   sec  min  h    dom  mois dow
      * </pre>
-     * {@code L} = dernier jour du mois (supporté depuis Spring Framework 5.3).
+     * Déclenchement : 1er jour du mois à 03h00 (Africa/Casablanca).
      */
-    @Scheduled(cron = "0 0 23 L * *", zone = "Africa/Casablanca")
+    @Scheduled(cron = "0 0 3 1 * *", zone = "Africa/Casablanca")
     public void genererCommissionsMensuelles() {
         YearMonth moisReference = YearMonth.now();
         log.info("=== Déclenchement génération commissions cautions — mois référence : {} ===", moisReference);
@@ -54,10 +52,10 @@ public class CommissionCautionGenerationScheduler {
         try {
             ResultatGenerationCommissionDto resultat = generationService.generer(moisReference);
 
-            log.info("=== Génération terminée — {} commission(s) + TVA créée(s), {} ignorée(s) — mois cible : {} ===",
+            log.info("=== Génération terminée — {} commission(s) + TVA créée(s), {} ignorée(s) — mois référence : {} ===",
                     resultat.generees(),
                     resultat.ignorees(),
-                    moisReference.plusMonths(1));
+                    moisReference);
 
         } catch (Exception e) {
             log.error("Erreur lors de la génération automatique des commissions cautions — mois référence : {} : {}",
