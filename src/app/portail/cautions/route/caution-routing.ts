@@ -39,6 +39,13 @@ export const CAUTION_ROUTES: Routes = [
         .then(m => m.CommissionCautionListComponent),
   },
   {
+    path: 'commissions/edit/:id',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('../views/commission-caution-form/commission-caution-form.component')
+        .then(m => m.CommissionCautionFormComponent),
+  },
+  {
     path: 'tva',
     loadComponent: () =>
       import('../views/tva-caution-list/tva-caution-list.component')

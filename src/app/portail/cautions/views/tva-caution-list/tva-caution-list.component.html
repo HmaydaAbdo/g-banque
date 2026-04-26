@@ -1,0 +1,128 @@
+<p-toast />
+<p-confirmDialog />
+
+<div class="flex flex-column gap-3 p-3 h-screen overflow-y-scroll">
+
+  <!-- Breadcrumb -->
+  <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none surface-ground border-round-xl px-3 py-2" />
+
+  <!-- Toolbar filtres -->
+  <p-toolbar styleClass="surface-card border-round-xl shadow-1 px-3 py-2">
+    <ng-template pTemplate="start">
+      <form [formGroup]="filterForm" class="flex flex-wrap align-items-center gap-2">
+
+        <!-- Banque -->
+        <p-dropdown
+          formControlName="banqueId"
+          [options]="banques"
+          placeholder="Banque"
+          [showClear]="true"
+          styleClass="w-12rem" />
+
+        <!-- Libellé -->
+        <input
+          pInputText
+          formControlName="libelle"
+          placeholder="Libellé / N° caution"
+          class="w-14rem" />
+
+        <!-- Statut -->
+        <p-dropdown
+          formControlName="status"
+          [options]="statusOptions"
+          placeholder="Statut"
+          [showClear]="true"
+          styleClass="w-10rem" />
+
+        <!-- Reset -->
+        <p-button
+          icon="pi pi-filter-slash"
+          severity="secondary"
+          [outlined]="true"
+          pTooltip="Réinitialiser les filtres"
+          (onClick)="clearFilters()" />
+
+      </form>
+    </ng-template>
+  </p-toolbar>
+
+  <!-- Table -->
+  <div class="surface-card border-round-xl shadow-1 pb-8">
+    <p-table
+      #dt
+      [value]="tvas"
+      [lazy]="true"
+      (onLazyLoad)="loadTvas($event)"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [sortField]="'dateEmission'"
+      [sortOrder]="-1"
+      styleClass="p-datatable-gridlines p-datatable-sm"
+      responsiveLayout="scroll">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="libelle"      style="min-width:16rem">Libellé          <p-sortIcon field="libelle"      /></th>
+          <th pSortableColumn="banqueNom"    style="min-width:10rem">Banque           <p-sortIcon field="banqueNom"    /></th>
+          <th pSortableColumn="montant"      style="min-width:9rem" class="text-right">Montant (MAD) <p-sortIcon field="montant" /></th>
+          <th pSortableColumn="dateEmission" style="min-width:10rem">Date émission    <p-sortIcon field="dateEmission" /></th>
+          <th                                style="min-width:8rem">Statut</th>
+          <th                                style="min-width:7rem" class="text-center">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-tva>
+        <tr>
+          <td>{{ tva.libelle }}</td>
+          <td>{{ tva.banqueNom }}</td>
+          <td class="text-right font-medium">{{ tva.montant | number:'1.2-2' }}</td>
+          <td>{{ tva.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <p-tag
+              [value]="getStatusLabel(tva.status)"
+              [severity]="getStatusSeverity(tva.status)" />
+          </td>
+          <td class="text-center">
+            <div class="flex justify-content-center gap-1">
+
+              <!-- Toggle statut -->
+              <p-button
+                *ngIf="isAdmin"
+                [icon]="tva.status === Status.PREVU ? 'pi pi-check-circle' : 'pi pi-replay'"
+                [severity]="tva.status === Status.PREVU ? 'success' : 'warning'"
+                [outlined]="true"
+                size="small"
+                [pTooltip]="tva.status === Status.PREVU ? 'Marquer payée' : 'Repasser en prévu'"
+                (onClick)="toggleStatut(tva)" />
+
+              <!-- Supprimer -->
+              <p-button
+                *ngIf="isAdmin"
+                icon="pi pi-trash"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+                pTooltip="Supprimer"
+                (onClick)="supprimer(tva)" />
+
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center py-5 text-color-secondary">
+            <i class="pi pi-inbox text-4xl mb-3 block"></i>
+            Aucune TVA sur caution trouvée.
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+
+</div>
