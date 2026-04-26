@@ -2,6 +2,7 @@ package staport.finance.gBanque.commision.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
@@ -39,6 +40,15 @@ public class Commission {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private Status status=Status.PREVU;
+
+    /**
+     * Caution à l'origine de cette commission — nullable.
+     * Renseigné uniquement pour les commissions générées automatiquement depuis une caution.
+     * Les commissions saisies manuellement laissent ce champ null.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "caution_id")
+    private Caution caution;
 
     public Commission() {}
 
@@ -119,6 +129,14 @@ public class Commission {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public Caution getCaution() {
+        return caution;
+    }
+
+    public void setCaution(Caution caution) {
+        this.caution = caution;
     }
 
     @Override

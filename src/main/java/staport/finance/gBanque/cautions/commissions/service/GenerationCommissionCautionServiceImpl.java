@@ -11,7 +11,6 @@ import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.cautions.repository.CautionRepository;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
-import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -35,12 +34,6 @@ import java.util.Optional;
  *       lors du parcours de la liste.</li>
  * </ul>
  *
- * <p>Idempotence :
- * <ul>
- *   <li>Avant persistance, vérification de l'existence par le triptyque
- *       {@code (CAUTION, dateEmission, libelle)} — la génération peut être relancée
- *       sans créer de doublons.</li>
- * </ul>
  */
 @Service
 @Transactional(readOnly = true)
@@ -90,22 +83,10 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
 
             // 3. Calcul de la commission (délégué à la stratégie)
             Commission commission = strategieOpt.get().calculer(caution, moisReference);
-
-            // 4. Vérification d'idempotence — on n'insère pas deux fois la même commission
-            if (commissionRepository.existsByOperationAndDateEmissionAndLibelle(
-                    TransactionSource.CAUTION,
-                    commission.getDateEmission(),
-                    commission.getLibelle())) {
-                logger.warn("Commission déjà présente — caution {} / mois cible {} — ignorée",
-                        caution.getNumeroCaution(), moisReference.plusMonths(1));
-                ignorees++;
-                continue;
-            }
-
             aCreer.add(commission);
         }
 
-        // 5. Persistance en lot (un seul INSERT batch)
+        // 4. Persistance en lot (un seul INSERT batch)
         commissionRepository.saveAll(aCreer);
 
         logger.info("Génération terminée — {} commission(s) créée(s), {} ignorée(s) — mois cible : {}",

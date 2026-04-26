@@ -2,6 +2,8 @@ package staport.finance.gBanque.impot_taxes.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.cautions.entities.Caution;
+import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.impot_taxes.enums.Motif;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
@@ -46,6 +48,24 @@ public class ImpotEtTaxe {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private Status status=Status.PREVU;
+
+    /**
+     * Commission à l'origine de cet impôt/taxe — nullable.
+     * Renseigné uniquement pour les TVA générées automatiquement depuis une commission caution.
+     * Permet de retrouver et mettre à jour la TVA si le montant de la commission change.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "commission_id")
+    private Commission commission;
+
+    /**
+     * Caution à l'origine de cet impôt/taxe — nullable.
+     * Renseigné uniquement pour les TVA générées depuis une caution.
+     * Utilisé pour bloquer la désactivation d'une caution si sa TVA est en cours (PREVU).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "caution_id")
+    private Caution caution;
 
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
@@ -165,6 +185,22 @@ public class ImpotEtTaxe {
 
     public void setDateModification(OffsetDateTime dateModification) {
         this.dateModification = dateModification;
+    }
+
+    public Commission getCommission() {
+        return commission;
+    }
+
+    public void setCommission(Commission commission) {
+        this.commission = commission;
+    }
+
+    public Caution getCaution() {
+        return caution;
+    }
+
+    public void setCaution(Caution caution) {
+        this.caution = caution;
     }
 
     @Override
