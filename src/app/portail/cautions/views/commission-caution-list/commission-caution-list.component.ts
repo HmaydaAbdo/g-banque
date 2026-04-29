@@ -22,7 +22,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
-import { Ripple } from 'primeng/ripple';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 import { CommissionService } from '../../../commission/service/commission.service';
@@ -68,17 +67,12 @@ export class CommissionCautionListComponent implements OnInit {
   // ── Options dropdowns ─────────────────────────────────────────────────────
   banques: any[] = [];
 
-  readonly statusOptions = [
-    { label: 'Tous',   value: null          },
-    { label: 'Prévu',  value: Status.PREVU  },
-    { label: 'Payé',   value: Status.PAYE   },
-  ];
+
 
   // ── Reactive filter form ──────────────────────────────────────────────────
   filterForm: FormGroup = this.fb.group({
     banqueId: [null],
     libelle:  [null],
-    status:   [null],
   });
 
   breadcrumbItems: MenuItem[] = [];
@@ -126,14 +120,14 @@ export class CommissionCautionListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort      = `${sortField},${sortOrder}`;
 
-    const { banqueId, libelle, status } = this.filterForm.value;
+    const { banqueId, libelle } = this.filterForm.value;
 
     // operation CAUTION est toujours fixé — ces commissions ne concernent que les cautions
     const searchDto: CommissionSearchDto = {
       operation: TransactionSource.CAUTION,
+      status:Status.PREVU,
       ...(banqueId && { banqueId }),
       ...(libelle  && { libelle  }),
-      ...(status   && { status   }),
     };
 
     this.commissionService.searchCommissions(searchDto, page, size, sort)

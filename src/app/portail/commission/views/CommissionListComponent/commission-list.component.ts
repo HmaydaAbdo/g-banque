@@ -90,7 +90,7 @@ export class CommissionListComponent implements OnInit {
     ];
 
     this.filterForm = this.fb.group({
-      banque: [null],
+      banqueId: [null],
       operation: [null],
       status: [null],
       libelle: [null],

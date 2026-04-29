@@ -7,29 +7,29 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { DropdownModule } from 'primeng/dropdown';
-import { InputTextModule } from 'primeng/inputtext';
-import { TagModule } from 'primeng/tag';
-import { ToastModule } from 'primeng/toast';
-import { ToolbarModule } from 'primeng/toolbar';
-import { TooltipModule } from 'primeng/tooltip';
-import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
+import {ButtonModule} from 'primeng/button';
+import {DropdownModule} from 'primeng/dropdown';
+import {InputTextModule} from 'primeng/inputtext';
+import {TagModule} from 'primeng/tag';
+import {ToastModule} from 'primeng/toast';
+import {ToolbarModule} from 'primeng/toolbar';
+import {TooltipModule} from 'primeng/tooltip';
+import {BreadcrumbModule} from 'primeng/breadcrumb';
+import {ConfirmDialogModule} from 'primeng/confirmdialog';
+import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
+import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
 
-import { ImpotEtTaxeService } from '../../../impotEtTaxes/service/ImpotEtTaxeService';
-import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
-import { AuthService } from '../../../../auth/services/auth.service';
-import { ImpotEtTaxeResponseDto } from '../../../impotEtTaxes/dtos/ImpotEtTaxeResponseDto';
-import { ImpotEtTaxeSearchDto } from '../../../impotEtTaxes/dtos/ImpotEtTaxeSearchDto';
-import { Motif } from '../../../impotEtTaxes/dtos/Motif';
-import { Status } from '../../../prefinancements/enums/Status';
+import {ImpotEtTaxeService} from '../../../impotEtTaxes/service/ImpotEtTaxeService';
+import {BanqueService} from '../../../comptes-bancaire/services/BanqueService';
+import {AuthService} from '../../../../auth/services/auth.service';
+import {ImpotEtTaxeResponseDto} from '../../../impotEtTaxes/dtos/ImpotEtTaxeResponseDto';
+import {ImpotEtTaxeSearchDto} from '../../../impotEtTaxes/dtos/ImpotEtTaxeSearchDto';
+import {Motif} from '../../../impotEtTaxes/dtos/Motif';
+import {Status} from '../../../prefinancements/enums/Status';
 
 @Component({
   selector: 'app-tva-caution-list',
@@ -65,17 +65,12 @@ export class TvaCautionListComponent implements OnInit {
   // ── Options dropdowns ─────────────────────────────────────────────────────
   banques: any[] = [];
 
-  readonly statusOptions = [
-    { label: 'Tous',   value: null          },
-    { label: 'Prévu',  value: Status.PREVU  },
-    { label: 'Payé',   value: Status.PAYE   },
-  ];
+
 
   // ── Reactive filter form ──────────────────────────────────────────────────
   filterForm: FormGroup = this.fb.group({
     banqueId: [null],
     libelle:  [null],
-    status:   [null],
   });
 
   breadcrumbItems: MenuItem[] = [];
@@ -123,14 +118,14 @@ export class TvaCautionListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort      = `${sortField},${sortOrder}`;
 
-    const { banqueId, libelle, status } = this.filterForm.value;
+    const { banqueId, libelle } = this.filterForm.value;
 
     // motif TVA_COMMISSION_CAUTION est toujours fixé — filtre opaque pour l'utilisateur
     const searchDto: ImpotEtTaxeSearchDto = {
       motif: Motif.TVA_COMMISSION_CAUTION,
+      status:Status.PREVU,
       ...(banqueId && { banqueId }),
       ...(libelle  && { libelle  }),
-      ...(status   && { status   }),
     };
 
     this.tvaService.searchImpotEtTaxes(searchDto, page, size, sort)
