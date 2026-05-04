@@ -13,7 +13,6 @@ import java.time.YearMonth;
  * implémentation de cette interface annotée {@code @Component}, sans modifier
  * le code existant (Open/Closed Principle).
  *
- * <p>La {@link CommissionCautionStrategieFactory} résout automatiquement
  * l'implémentation correcte à partir du nom de la banque portée par la caution.
  *
  * <p>Contrat :

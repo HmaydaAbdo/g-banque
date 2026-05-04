@@ -3,7 +3,6 @@ package staport.finance.gBanque.commision.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -40,14 +39,13 @@ public class CommissionController {
         return ResponseEntity.ok(responseDto);
     }
 
-    // --- Search with pagination ---
+    // --- Search with pagination + aggregate total ---
     @PostMapping("/search")
-    public ResponseEntity<Page<CommissionResponseDto>> searchCommissions(
+    public ResponseEntity<EncoursCommissionDto> searchCommissions(
             @RequestBody CommissionSearchDto searchDto,
             Pageable pageable) {
         log.info("REST request to search commissions with criteria: {}", searchDto);
-        Page<CommissionResponseDto> page = commissionService.searchCommissions(searchDto, pageable);
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(commissionService.searchCommissions(searchDto, pageable));
     }
 
     // --- Update ---
@@ -94,7 +92,19 @@ public class CommissionController {
         return ResponseEntity.noContent().build();
     }
 
-
+    // --- Fusion ---
+    /**
+     * Fusionne plusieurs commissions sur cautions en une seule.
+     * Contraintes : même banque, même dateEmission, status=PREVU, operation=CAUTION.
+     */
+    @PostMapping("/fusionner")
+    public ResponseEntity<CommissionFusionResponse> fusionner(
+            @Validated @RequestBody CommissionFusionRequest request) {
+        log.info("REST request to fusionner {} commissions, libellé='{}', genererTva={}",
+                request.getIds().size(), request.getLibelle(), request.isGenererTva());
+        CommissionFusionResponse response = commissionService.fusionner(request);
+        return ResponseEntity.ok(response);
+    }
 
 }
 

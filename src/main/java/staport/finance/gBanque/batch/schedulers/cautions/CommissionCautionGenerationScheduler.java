@@ -35,16 +35,21 @@ public class CommissionCautionGenerationScheduler {
     }
 
     /**
-     * Génère les commissions + TVA sur cautions — exécution le 1er de chaque mois.
+     * Génère les commissions + TVA sur cautions — exécution à la fin de chaque mois.
      *
-     * <p>Expression cron (6 champs Spring) :
+     * <p>Expression cron (6 champs Spring / Quartz) :
      * <pre>
-     *   0    0    3    1    *    *
+     *   0    0    20   L    *    ?
      *   sec  min  h    dom  mois dow
      * </pre>
-     * Déclenchement : 1er jour du mois à 03h00 (Africa/Casablanca).
+     * Déclenchement : dernier jour du mois à 20h00 (Africa/Casablanca).
+     *
+     * <ul>
+     *   <li>L = dernier jour du mois (28, 29, 30 ou 31 selon le mois)</li>
+     *   <li>? = valeur requise pour "day-of-week" quand "day-of-month" est spécifié</li>
+     * </ul>
      */
-    @Scheduled(cron = "0 0 3 1 * *", zone = "Africa/Casablanca")
+    @Scheduled(cron = "0 0 20 L * ?", zone = "Africa/Casablanca")
     public void genererCommissionsMensuelles() {
         YearMonth moisReference = YearMonth.now();
         log.info("=== Déclenchement génération commissions cautions — mois référence : {} ===", moisReference);

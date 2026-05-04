@@ -48,7 +48,7 @@ public class BmciCommissionCautionStrategie implements CommissionCautionStrategi
     public Commission calculer(Caution caution, YearMonth moisReference) {
         YearMonth moisCommission = moisReference.plusMonths(1);
         int nombreJours          = moisCommission.lengthOfMonth();
-        LocalDate dateEmission   = moisCommission.atEndOfMonth();
+        LocalDate dateEmission   = moisReference.atEndOfMonth();
 
         // Montant = (montant × taux × jours) / 36000
         BigDecimal montantCommission = caution.getMontant()

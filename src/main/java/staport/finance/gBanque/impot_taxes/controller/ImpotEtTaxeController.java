@@ -2,7 +2,6 @@ package staport.finance.gBanque.impot_taxes.controller;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +34,7 @@ public class ImpotEtTaxeController {
     }
 
     @PostMapping("/search")
-    public ResponseEntity<Page<ImpotEtTaxeResponseDto>> searchImpotEtTaxes(@RequestBody ImpotEtTaxeSearchDto searchDto, Pageable pageable) {
+    public ResponseEntity<EncoursImpotEtTaxeDto> searchImpotEtTaxes(@RequestBody ImpotEtTaxeSearchDto searchDto, Pageable pageable) {
         log.info("Requête REST: Recherche impôts/taxes - Critères: {}", searchDto);
         return ResponseEntity.ok(impotEtTaxeService.searchImpotEtTaxes(searchDto, pageable));
     }
@@ -66,5 +65,18 @@ public class ImpotEtTaxeController {
         ImpotEtTaxeResponseDto response = impotEtTaxeService.toggleStatus(id);
         log.info("Statut de l'ID {} mis à jour vers {}", id, response.getStatus());
         return ResponseEntity.ok(response);
+    }
+
+    // --- Fusion ---
+    /**
+     * Fusionne plusieurs TVA en une seule.
+     * Contraintes : même banque, même dateEmission, même motif, status=PREVU.
+     */
+    @PostMapping("/fusionner")
+    public ResponseEntity<ImpotEtTaxeResponseDto> fusionner(
+            @Validated @RequestBody ImpotEtTaxeFusionRequest request) {
+        log.info("Requête REST: Fusion de {} TVA, libellé='{}'",
+                request.getIds().size(), request.getLibelle());
+        return ResponseEntity.ok(impotEtTaxeService.fusionner(request));
     }
 }

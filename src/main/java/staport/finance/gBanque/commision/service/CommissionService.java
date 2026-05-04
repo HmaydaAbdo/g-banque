@@ -1,6 +1,18 @@
 package staport.finance.gBanque.commision.service;
 
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import staport.finance.gBanque.commision.dtos.CommissionFusionRequest;
+import staport.finance.gBanque.commision.dtos.CommissionFusionResponse;
+import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
+import staport.finance.gBanque.impot_taxes.enums.Motif;
+import staport.finance.gBanque.impot_taxes.mapper.ImpotEtTaxeMapper;
+import staport.finance.gBanque.impot_taxes.dtos.ImpotEtTaxeResponseDto;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
@@ -34,20 +46,28 @@ public class CommissionService {
     /** Taux TVA légal applicable aux commissions sur cautions bancaires (10%). */
     private static final BigDecimal TAUX_TVA_COMMISSION_CAUTION = new BigDecimal("0.10");
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    private static final BigDecimal TAUX_TVA = new BigDecimal("0.10");
+
     private final CommisionRepository    commissionRepository;
     private final BanqueRepository       banqueRepository;
     private final CommissionMapper       commissionMapper;
     private final ImpotEtTaxeRepository  impotEtTaxeRepository;
+    private final ImpotEtTaxeMapper      impotEtTaxeMapper;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public CommissionService(CommisionRepository commissionRepository,
                              BanqueRepository banqueRepository,
                              CommissionMapper commissionMapper,
-                             ImpotEtTaxeRepository impotEtTaxeRepository) {
-        this.commissionRepository = commissionRepository;
-        this.banqueRepository     = banqueRepository;
-        this.commissionMapper     = commissionMapper;
+                             ImpotEtTaxeRepository impotEtTaxeRepository,
+                             ImpotEtTaxeMapper impotEtTaxeMapper) {
+        this.commissionRepository  = commissionRepository;
+        this.banqueRepository      = banqueRepository;
+        this.commissionMapper      = commissionMapper;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
+        this.impotEtTaxeMapper     = impotEtTaxeMapper;
     }
 
     // --- Create ---
@@ -82,15 +102,23 @@ public class CommissionService {
         return commissionMapper.toResponseDto(commission);
     }
 
-    // --- Search with pagination ---
+    // --- Search with pagination + aggregate total ---
     @Transactional(readOnly = true)
-    public Page<CommissionResponseDto> searchCommissions(CommissionSearchDto searchDto, Pageable pageable) {
+    public EncoursCommissionDto searchCommissions(CommissionSearchDto searchDto, Pageable pageable) {
         log.info("Searching commissions with criteria: {}", searchDto);
-        return commissionRepository.findAll(
-                        CommissionSpecifications.buildSpecification(searchDto),
-                        pageable
-                )
+
+        Specification<Commission> spec = CommissionSpecifications.buildSpecification(searchDto);
+
+        Page<CommissionResponseDto> page = commissionRepository
+                .findAll(spec, pageable)
                 .map(commissionMapper::toResponseDto);
+
+        BigDecimal total = sumMontant(spec);
+
+        EncoursCommissionDto result = new EncoursCommissionDto();
+        result.setPage(page);
+        result.setTotalDesEncours(total);
+        return result;
     }
 
     // --- Update ---
@@ -135,18 +163,30 @@ public class CommissionService {
         return commissionMapper.toResponseDto(commission);
     }
 
+
     // --- Delete ---
     @Transactional
     public void deleteCommission(Long id) {
         log.info("Deleting commission with id={}", id);
-        if (!commissionRepository.existsById(id)) {
-            log.error("Commission not found with id={}", id);
-            throw new IllegalArgumentException("Commission not found");
+
+        Commission commission = commissionRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Commission not found with id={}", id);
+                    return new IllegalArgumentException("Commission not found");
+                });
+
+        // Cascade TVA : uniquement pour les commissions sur cautions
+        if (TransactionSource.CAUTION.equals(commission.getOperation())) {
+            impotEtTaxeRepository.findByCommission_Id(id).ifPresent(tva -> {
+                log.info("Suppression TVA liée — commission id={}, montant TVA={}",
+                        id, tva.getMontant());
+                impotEtTaxeRepository.delete(tva);
+            });
         }
-        commissionRepository.deleteById(id);
+
+        commissionRepository.delete(commission);
         log.info("Commission deleted successfully id={}", id);
     }
-
     /**
      * Retrieves a paginated list of outstanding commissions and calculates their total amount.
      * Outstanding commissions are those with a 'PREVU' status and an emission date in the past.
@@ -164,18 +204,12 @@ public class CommissionService {
                 .and(CommissionSpecifications.hasOperation(searchDto.getOperation()))
                 .and(CommissionSpecifications.hasMontant(searchDto.getMontant()));
 
-        // Fetch the paginated list of commissions
-        Page<Commission> commissionPage = commissionRepository.findAll(spec, pageable);
+        Page<CommissionResponseDto> pageDto = commissionRepository
+                .findAll(spec, pageable)
+                .map(commissionMapper::toResponseDto);
 
-        // Fetch the total sum of the montant for the same criteria
-        BigDecimal totalDesEncours = commissionRepository.findAll(spec).stream()
-                .map(Commission::getMontant)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalDesEncours = sumMontant(spec);
 
-        // Map the page of entities to a page of DTOs
-        Page<CommissionResponseDto> pageDto = commissionPage.map(commissionMapper::toResponseDto);
-
-        // Create and return the final DTO
         EncoursCommissionDto result = new EncoursCommissionDto();
         result.setPage(pageDto);
         result.setTotalDesEncours(totalDesEncours);
@@ -221,6 +255,137 @@ public class CommissionService {
         log.info("Suppression terminée : {} commission(s) supprimée(s) pour le contrat N° : {}",
                 nombreCommissions, numeroContrat);
 
+    }
+
+    // ── Fusion ────────────────────────────────────────────────────────────────
+    /**
+     * Fusionne plusieurs commissions sur cautions en une seule.
+     *
+     * <p>Contraintes validées :
+     * <ul>
+     *   <li>Minimum 2 IDs</li>
+     *   <li>Toutes {@code operation = CAUTION}, {@code status = PREVU}</li>
+     *   <li>Même banque et même {@code dateEmission} pour toutes</li>
+     * </ul>
+     *
+     * <p>Opérations atomiques (tout ou rien) :
+     * <ol>
+     *   <li>Suppression des TVA liées aux commissions sources (si {@code genererTva = true})</li>
+     *   <li>Suppression des commissions sources</li>
+     *   <li>Création de la commission fusionnée</li>
+     *   <li>Création de la TVA fusionnée (10 %) si {@code genererTva = true}</li>
+     * </ol>
+     */
+    @Transactional
+    public CommissionFusionResponse fusionner(CommissionFusionRequest request) {
+        List<Long> ids = request.getIds();
+        log.info("Fusion demandée — {} commission(s), libellé='{}', genererTva={}",
+                ids.size(), request.getLibelle(), request.isGenererTva());
+
+        // ── 1. Chargement ────────────────────────────────────────────────────
+        List<Commission> sources = commissionRepository.findAllById(ids);
+
+        if (sources.size() != ids.size()) {
+            List<Long> trouvees = sources.stream().map(Commission::getId).toList();
+            List<Long> manquantes = ids.stream().filter(id -> !trouvees.contains(id)).toList();
+            throw new IllegalArgumentException("Commission(s) introuvable(s) : " + manquantes);
+        }
+
+        // ── 2. Validations métier ────────────────────────────────────────────
+        for (Commission c : sources) {
+            if (!TransactionSource.CAUTION.equals(c.getOperation())) {
+                throw new IllegalArgumentException(
+                        "La commission id=" + c.getId() + " n'est pas de type CAUTION.");
+            }
+            if (!Status.PREVU.equals(c.getStatus())) {
+                throw new IllegalArgumentException(
+                        "La commission id=" + c.getId() + " est déjà réglée (PAYE) — fusion impossible.");
+            }
+        }
+
+        // Même banque
+        long nbBanques = sources.stream().map(c -> c.getBanque().getId()).distinct().count();
+        if (nbBanques > 1) {
+            throw new IllegalArgumentException(
+                    "Toutes les commissions doivent appartenir à la même banque.");
+        }
+
+        // Même dateEmission
+        long nbDates = sources.stream().map(Commission::getDateEmission).distinct().count();
+        if (nbDates > 1) {
+            throw new IllegalArgumentException(
+                    "Toutes les commissions doivent avoir la même date d'émission.");
+        }
+
+        Banque banque        = sources.get(0).getBanque();
+        LocalDate dateEmission = sources.get(0).getDateEmission();
+
+        // ── 3. Calcul du montant fusionné ────────────────────────────────────
+        BigDecimal montantFusionne = sources.stream()
+                .map(Commission::getMontant)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // ── 4. Suppression TVA sources (avant suppression commissions) ────────
+        if (request.isGenererTva()) {
+            impotEtTaxeRepository.deleteByCommissionIdIn(ids);
+            log.info("TVA sources supprimées pour les commissions {}", ids);
+        }
+
+        // ── 5. Suppression commissions sources ───────────────────────────────
+        commissionRepository.deleteAllById(ids);
+        log.info("Commissions sources supprimées : {}", ids);
+
+        // ── 6. Création commission fusionnée ─────────────────────────────────
+        Commission fusionnee = new Commission();
+        fusionnee.setLibelle(request.getLibelle());
+        fusionnee.setMontant(montantFusionne);
+        fusionnee.setBanque(banque);
+        fusionnee.setOperation(TransactionSource.CAUTION);
+        fusionnee.setDateEmission(dateEmission);
+        fusionnee.setStatus(Status.PREVU);
+        fusionnee = commissionRepository.save(fusionnee);
+        log.info("Commission fusionnée créée — id={}, montant={}", fusionnee.getId(), montantFusionne);
+
+        // ── 7. TVA fusionnée (optionnel) ─────────────────────────────────────
+        ImpotEtTaxeResponseDto tvaDto = null;
+        if (request.isGenererTva()) {
+            BigDecimal montantTva = montantFusionne
+                    .multiply(TAUX_TVA)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            ImpotEtTaxe tva = new ImpotEtTaxe();
+            tva.setLibelle("TVA — " + request.getLibelle());
+            tva.setMontant(montantTva);
+            tva.setBanque(banque);
+            tva.setMotif(Motif.TVA_COMMISSION_CAUTION);
+            tva.setDateEmission(dateEmission);
+            tva.setStatus(Status.PREVU);
+            tva.setCommission(fusionnee);
+            tva = impotEtTaxeRepository.save(tva);
+
+            tvaDto = impotEtTaxeMapper.toResponseDto(tva);
+            log.info("TVA fusionnée créée — id={}, montant={}", tva.getId(), montantTva);
+        }
+
+        return new CommissionFusionResponse(commissionMapper.toResponseDto(fusionnee), tvaDto);
+    }
+
+    // ── Aggregate helper ──────────────────────────────────────────────────────
+    /**
+     * Émet un seul {@code SELECT SUM(c.montant) FROM Commission c WHERE ...}
+     * sans charger les entités en mémoire.
+     */
+    private BigDecimal sumMontant(Specification<Commission> spec) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<BigDecimal> cq = cb.createQuery(BigDecimal.class);
+        Root<Commission> root = cq.from(Commission.class);
+        cq.select(cb.sum(root.get("montant")));
+        Predicate predicate = spec.toPredicate(root, cq, cb);
+        if (predicate != null) {
+            cq.where(predicate);
+        }
+        BigDecimal result = entityManager.createQuery(cq).getSingleResult();
+        return result != null ? result : BigDecimal.ZERO;
     }
 
     @Transactional

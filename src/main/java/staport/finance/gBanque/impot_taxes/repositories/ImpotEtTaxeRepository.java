@@ -3,12 +3,16 @@ package staport.finance.gBanque.impot_taxes.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.enums.Motif;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +33,12 @@ public interface ImpotEtTaxeRepository extends JpaRepository<ImpotEtTaxe, Long>,
      * Utilisé pour bloquer la désactivation d'une caution tant que sa TVA est en cours.
      */
     boolean existsByCaution_IdAndMotifAndStatus(Long cautionId, Motif motif, Status status);
+
+    /**
+     * Supprime en une seule requête toutes les TVA liées aux commissions dont les IDs
+     * sont fournis. Utilisé lors de la fusion de commissions pour purger les TVA sources.
+     */
+    @Modifying
+    @Query("DELETE FROM ImpotEtTaxe i WHERE i.commission.id IN :commissionIds")
+    void deleteByCommissionIdIn(@Param("commissionIds") Collection<Long> commissionIds);
 }

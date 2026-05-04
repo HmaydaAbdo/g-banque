@@ -8,157 +8,127 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.FileStorageException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import java.util.stream.Collectors;
 
-@ControllerAdvice
+/**
+ * Gestionnaire d'exceptions global — retourne toujours un {@link ErrorResponse} unifié.
+ *
+ * <p>Tous les handlers produisent le même shape JSON :
+ * <pre>
+ * {
+ *   "status"    : 400,
+ *   "error"     : "Bad Request",
+ *   "message"   : "...",
+ *   "traces"    : null,        ← null en production
+ *   "timestamp" : "2025-09-17T10:30:00Z"
+ * }
+ * </pre>
+ */
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    // ── 400 — Règle métier / argument invalide ────────────────────────────────
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Règle métier violée : {}", ex.getMessage());
+        return build(HttpStatus.BAD_REQUEST, "Bad Request",
+                ex.getMessage() != null ? ex.getMessage() : "Argument invalide.");
+    }
 
-    /**
-     * Handles Spring Security's BadCredentialsException (e.g., incorrect username/password during authentication).
-     * Returns 401 Unauthorized.
-     */
-    @ExceptionHandler(BadCredentialsException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleSpringSecurityBadCredentialsException(BadCredentialsException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Unauthorized");
-        errorResponse.put("message", ex.getMessage() != null ? ex.getMessage() : "Invalid username or password.");
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(ValidationException ex) {
+        log.warn("Erreur de validation : {}", ex.getMessage());
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage());
     }
 
     /**
-     * Handles AuthorizationException (e.g., authenticated user lacks permissions).
-     * Returns 403 Forbidden.
-     */
-    @ExceptionHandler(AuthorizationDeniedException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleAuthorizationException(AuthorizationDeniedException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Forbidden");
-        errorResponse.put("message", ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
-    }
-
-    /**
-     * Handles validation errors from @Valid annotation.
-     * Returns 400 Bad Request with field-specific error details.
+     * Erreurs de validation des DTOs annotés {@code @Valid} / {@code @Validated}.
+     * Les messages de chaque champ invalide sont concaténés en un seul message lisible.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Bad Request");
-        errorResponse.put("message", "Validation failed for one or more fields.");
-
-        Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-                .collect(Collectors.toMap(
-                        FieldError::getField,
-                        fieldError -> fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "Invalid value"
-                ));
-
-        errorResponse.put("fieldErrors", fieldErrors);
-
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining(" | "));
+        log.warn("Validation DTO échouée : {}", message);
+        return build(HttpStatus.BAD_REQUEST, "Bad Request",
+                message.isBlank() ? "Validation failed." : message);
     }
 
-    /**
-     * Handles custom ResourceNotFoundException.
-     * Returns 404 Not Found.
-     */
+    // ── 401 — Authentification ────────────────────────────────────────────────
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
+        log.warn("Echec d'authentification : {}", ex.getMessage());
+        return build(HttpStatus.UNAUTHORIZED, "Unauthorized",
+                "Identifiant ou mot de passe incorrect.");
+    }
+
+    // ── 403 — Autorisation ────────────────────────────────────────────────────
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+        log.warn("Accès refusé : {}", ex.getMessage());
+        return build(HttpStatus.FORBIDDEN, "Forbidden",
+                "Vous n'avez pas les droits nécessaires pour effectuer cette action.");
+    }
+
+    // ── 404 — Ressource introuvable ───────────────────────────────────────────
+
     @ExceptionHandler(ResourceNotFoundException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Not Found");
-        errorResponse.put("message", ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+        log.warn("Ressource introuvable : {}", ex.getMessage());
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage());
     }
 
-    /**
-     * Handles custom DuplicateEntryException.
-     * Returns 409 Conflict.
-     */
+    // ── 409 — Doublon ─────────────────────────────────────────────────────────
+
     @ExceptionHandler(DuplicateEntryException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleDuplicateEntryException(DuplicateEntryException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Conflict");
-        errorResponse.put("message", ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    public ResponseEntity<ErrorResponse> handleDuplicateEntry(DuplicateEntryException ex) {
+        log.warn("Entrée dupliquée : {}", ex.getMessage());
+        return build(HttpStatus.CONFLICT, "Conflict", ex.getMessage());
     }
 
-    /**
-     * Handles custom FileStorageException.
-     * Returns 500 Internal Server Error.
-     */
+    // ── 500 — Erreurs techniques ──────────────────────────────────────────────
+
     @ExceptionHandler(FileStorageException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleFileStorageException(FileStorageException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "File Processing Error");
-        errorResponse.put("message", ex.getMessage());
-        errorResponse.put("detail", ex.getCause() != null ? ex.getCause().getMessage() : null);
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-
-
-    /**
-     * Handles IllegalArgumentException, typically thrown for invalid method arguments or business rule violations.
-     * Returns 400 Bad Request.
-     */
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Bad Request");
-        errorResponse.put("message", ex.getMessage() != null ? ex.getMessage() : "Invalid argument provided.");
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ErrorResponse> handleFileStorage(FileStorageException ex) {
+        log.error("Erreur stockage fichier : {}", ex.getMessage(), ex);
+        return buildWithTraces(HttpStatus.INTERNAL_SERVER_ERROR, "File Processing Error",
+                ex.getMessage(), ex);
     }
 
     /**
-     * Handles custom ValidationException.
-     * Returns 400 Bad Request.
-     */
-    @ExceptionHandler(ValidationException.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Bad Request");
-        errorResponse.put("message", ex.getMessage());
-        errorResponse.put("detail", ex.getMessage());
-        errorResponse.put("exception Type", ex.getClass().getName());
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Catches any other unhandled exceptions.
-     * Returns 500 Internal Server Error.
+     * Filet de sécurité — toute exception non gérée explicitement.
+     * Le message interne n'est pas exposé au client pour éviter les fuites d'informations.
      */
     @ExceptionHandler(Exception.class)
-    @ResponseBody
-    public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", "Internal Server Error");
-        errorResponse.put("message", "An unexpected error occurred. Please try again later.");
-        errorResponse.put("detail", ex.getMessage());
-        errorResponse.put("exception Type", ex.getClass().getName());
-        this.log.error("An unhandled exception occurred: ", ex);
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
+        log.error("Exception non gérée : {}", ex.getMessage(), ex);
+        return buildWithTraces(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "Une erreur inattendue s'est produite. Veuillez réessayer plus tard.", ex);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String error, String message) {
+        return ResponseEntity.status(status)
+                .body(ErrorResponse.of(status.value(), error, message));
+    }
+
+    private ResponseEntity<ErrorResponse> buildWithTraces(HttpStatus status, String error,
+                                                           String message, Exception ex) {
+        return ResponseEntity.status(status)
+                .body(ErrorResponse.of(status.value(), error, message, ex));
     }
 }

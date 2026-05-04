@@ -53,7 +53,7 @@ public class CdmCommissionCautionStrategie implements CommissionCautionStrategie
     public Commission calculer(Caution caution, YearMonth moisReference) {
         // CDM : commission pour le mois de référence, émise le 1er du mois
         int nombreJours        = moisReference.lengthOfMonth();
-        LocalDate dateEmission = moisReference.atDay(1);
+        LocalDate dateEmission = moisReference.atEndOfMonth();
 
         // Montant = (montant × taux × jours) / 36000
         BigDecimal montantCommission = caution.getMontant()

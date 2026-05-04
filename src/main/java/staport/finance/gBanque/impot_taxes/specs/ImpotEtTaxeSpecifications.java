@@ -61,6 +61,7 @@ public class ImpotEtTaxeSpecifications {
                 .where(hasBanque(dto.getBanqueId()))
                 .and(hasLibelle(dto.getLibelle()))
                 .and(hasMotif(dto.getMotif()))
+                .and(hasMontant(dto.getMontant()))
                 .and(hasStatus(dto.getStatus()));
     }
 
