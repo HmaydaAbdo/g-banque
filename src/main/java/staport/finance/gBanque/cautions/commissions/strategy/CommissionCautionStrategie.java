@@ -50,4 +50,18 @@ public interface CommissionCautionStrategie {
      * @return entité {@link Commission} non persistée
      */
     Commission calculer(Caution caution, YearMonth moisReference);
+
+    /**
+     * Indique si une TVA doit être générée séparément pour les commissions de cette banque.
+     *
+     * <p>Retourne {@code true} par défaut — toutes les banques génèrent une TVA à 10 %
+     * en complément de la commission.
+     *
+     * <p>Retourner {@code false} pour les banques dont le montant de commission
+     * <em>inclut déjà</em> la TVA (ex. CDM) : aucune entrée {@code ImpotEtTaxe}
+     * ne sera créée lors de la génération mensuelle.
+     */
+    default boolean genererTva() {
+        return true;
+    }
 }

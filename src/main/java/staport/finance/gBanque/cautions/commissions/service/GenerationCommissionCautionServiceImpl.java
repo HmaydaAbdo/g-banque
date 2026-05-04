@@ -101,9 +101,22 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
         // 4. Persistance des commissions en lot — les IDs sont générés après ce saveAll
         List<Commission> commissionsCreees = commissionRepository.saveAll(aCreer);
 
-        // 5. Génération des TVA (ImpotEtTaxe motif=TVA_COMMISSION_CAUTION) pour chaque commission
+        // 5. Génération des TVA — uniquement pour les banques dont la stratégie l'autorise.
+        //    CDM (et toute banque future avec genererTva()=false) est exclue :
+        //    son montant de commission inclut déjà la TVA.
         List<ImpotEtTaxe> tvasACreer = new ArrayList<>();
         for (Commission commission : commissionsCreees) {
+            String nomBanque = commission.getBanque().getNom();
+            boolean doitGenererTva = strategieFactory.trouver(nomBanque)
+                    .map(CommissionCautionStrategie::genererTva)
+                    .orElse(true); // par sécurité : générer si stratégie inconnue
+
+            if (!doitGenererTva) {
+                logger.debug("TVA non générée pour la commission id={} (banque={} : montant TTC inclus)",
+                        commission.getId(), nomBanque);
+                continue;
+            }
+
             BigDecimal montantTva = commission.getMontant()
                     .multiply(TAUX_TVA_COMMISSION_CAUTION)
                     .setScale(2, RoundingMode.HALF_UP);
@@ -119,7 +132,7 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
             tva.setCaution(commission.getCaution());
 
             tvasACreer.add(tva);
-            logger.debug("TVA préparée — commission id: {}, montant TVA: {}", commission.getId(), montantTva);
+            logger.debug("TVA préparée — commission id={}, montant TVA={}", commission.getId(), montantTva);
         }
 
         impotEtTaxeRepository.saveAll(tvasACreer);
