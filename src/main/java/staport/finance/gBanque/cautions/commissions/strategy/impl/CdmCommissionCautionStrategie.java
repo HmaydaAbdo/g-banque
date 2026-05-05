@@ -36,7 +36,9 @@ import java.time.YearMonth;
 public class CdmCommissionCautionStrategie implements CommissionCautionStrategie {
 
     private static final String NOM_BANQUE = "CDM";
-    private static final BigDecimal MIN_COMMISSION = new BigDecimal("70");
+
+    /** Minimum applicable sur le montant HT avant ajout de la TVA. */
+    private static final BigDecimal MIN_COMMISSION_HT = new BigDecimal("70");
 
     /**
      * Diviseur = 360 × 100 — base conventionnelle bancaire (360 jours),
@@ -44,9 +46,24 @@ public class CdmCommissionCautionStrategie implements CommissionCautionStrategie
      */
     private static final BigDecimal DIVISEUR = new BigDecimal("36000");
 
+    /**
+     * Facteur TTC : 1 + taux TVA (10 %).
+     * Le montant de la commission CDM est stocké TTC — aucune TVA séparée n'est générée.
+     */
+    private static final BigDecimal FACTEUR_TTC = new BigDecimal("1.10");
+
     @Override
     public String nomBanque() {
         return NOM_BANQUE;
+    }
+
+    /**
+     * CDM : le montant de la commission inclut déjà la TVA.
+     * Aucune entrée ImpotEtTaxe ne doit être générée séparément.
+     */
+    @Override
+    public boolean genererTva() {
+        return false;
     }
 
     @Override
@@ -55,16 +72,21 @@ public class CdmCommissionCautionStrategie implements CommissionCautionStrategie
         int nombreJours        = moisReference.lengthOfMonth();
         LocalDate dateEmission = moisReference.atEndOfMonth();
 
-        // Montant = (montant × taux × jours) / 36000
-        BigDecimal montantCommission = caution.getMontant()
+        // Montant HT = (montant × taux × jours) / 36000
+        BigDecimal montantHt = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
                 .divide(DIVISEUR, 2, RoundingMode.HALF_UP);
 
-        // Appliquer le minimum CDM (70 MAD)
-        if (montantCommission.compareTo(MIN_COMMISSION) < 0) {
-            montantCommission = MIN_COMMISSION;
+        // Appliquer le minimum CDM (70 MAD) sur le HT
+        if (montantHt.compareTo(MIN_COMMISSION_HT) < 0) {
+            montantHt = MIN_COMMISSION_HT;
         }
+
+        // Montant TTC = HT × 1.10 — la TVA est incluse dans la commission CDM
+        BigDecimal montantCommission = montantHt
+                .multiply(FACTEUR_TTC)
+                .setScale(2, RoundingMode.HALF_UP);
 
         // Libellé : "caution nature.code N° numeroCaution"
         String libelle = "caution " + caution.getNature().getCode() + " N° " + caution.getNumeroCaution();

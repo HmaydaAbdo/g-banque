@@ -6,7 +6,6 @@ import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -32,7 +31,9 @@ import java.time.YearMonth;
 public class AwbCommissionCautionStrategie implements CommissionCautionStrategie {
 
     private static final String NOM_BANQUE = "AWB";
-    private static final BigDecimal MIN_COMMISSION = new BigDecimal("20");
+
+    /** Minimum applicable sur le montant HT avant ajout de la TVA. */
+    private static final BigDecimal MIN_COMMISSION_HT = new BigDecimal("20");
 
     /**
      * Diviseur = 360 × 100 — le facteur 360 est la base conventionnelle bancaire,
@@ -40,9 +41,24 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
      */
     private static final BigDecimal DIVISEUR = new BigDecimal("36000");
 
+    /**
+     * Facteur TTC : 1 + taux TVA (10 %).
+     * Le montant de la commission AWB est stocké TTC — aucune TVA séparée n'est générée.
+     */
+    private static final BigDecimal FACTEUR_TTC = new BigDecimal("1.10");
+
     @Override
     public String nomBanque() {
         return NOM_BANQUE;
+    }
+
+    /**
+     * AWB : le montant de la commission inclut déjà la TVA (TTC).
+     * Aucune entrée ImpotEtTaxe ne doit être générée séparément.
+     */
+    @Override
+    public boolean genererTva() {
+        return false;
     }
 
     @Override
@@ -51,16 +67,21 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
         int nombreJours        = moisReference.lengthOfMonth();
         LocalDate dateEmission = moisReference.atEndOfMonth();
 
-        // Montant = (montant × taux × jours) / 36000
-        BigDecimal montantCommission = caution.getMontant()
+        // Montant HT = (montant × taux × jours) / 36000
+        BigDecimal montantHt = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
                 .divide(DIVISEUR, 2, RoundingMode.HALF_UP);
 
-        // Appliquer le minimum AWB (20 MAD)
-        if (montantCommission.compareTo(MIN_COMMISSION) < 0) {
-            montantCommission = MIN_COMMISSION;
+        // Appliquer le minimum AWB (20 MAD) sur le HT
+        if (montantHt.compareTo(MIN_COMMISSION_HT) < 0) {
+            montantHt = MIN_COMMISSION_HT;
         }
+
+        // Montant TTC = HT × 1.10 — la TVA est incluse dans la commission AWB
+        BigDecimal montantCommission = montantHt
+                .multiply(FACTEUR_TTC)
+                .setScale(2, RoundingMode.HALF_UP);
 
         // Libellé : "caution nature.code N° numeroCaution"
         String libelle = "caution " + caution.getNature().getCode() + " N° " + caution.getNumeroCaution();
