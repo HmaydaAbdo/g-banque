@@ -8,10 +8,12 @@ import {
   ViewChild,
 } from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
-import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
-import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
+import {CommonModule, CurrencyPipe, DatePipe, DecimalPipe} from '@angular/common';
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {ButtonModule} from 'primeng/button';
+import {CheckboxModule} from 'primeng/checkbox';
+import {DialogModule} from 'primeng/dialog';
 import {DropdownModule} from 'primeng/dropdown';
 import {InputTextModule} from 'primeng/inputtext';
 import {TagModule} from 'primeng/tag';
@@ -28,17 +30,20 @@ import {BanqueService} from '../../../comptes-bancaire/services/BanqueService';
 import {AuthService} from '../../../../auth/services/auth.service';
 import {ImpotEtTaxeResponseDto} from '../../../impotEtTaxes/dtos/ImpotEtTaxeResponseDto';
 import {ImpotEtTaxeSearchDto} from '../../../impotEtTaxes/dtos/ImpotEtTaxeSearchDto';
+import {ImpotEtTaxeFusionRequest} from '../../../impotEtTaxes/dtos/ImpotEtTaxeFusionRequest';
 import {Motif} from '../../../impotEtTaxes/dtos/Motif';
 import {Status} from '../../../prefinancements/enums/Status';
+import {extractErrorMessage} from "../../../global/types/error.utils";
 
 @Component({
   selector: 'app-tva-caution-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, ReactiveFormsModule, TableModule, ButtonModule, DropdownModule,
-    InputTextModule, TagModule, ToastModule, ToolbarModule, TooltipModule,
-    BreadcrumbModule, ConfirmDialogModule, DatePipe, DecimalPipe,
+    CommonModule, ReactiveFormsModule, TableModule, ButtonModule, CheckboxModule,
+    DialogModule, DropdownModule, InputTextModule, TagModule, ToastModule,
+    ToolbarModule, TooltipModule, BreadcrumbModule, ConfirmDialogModule,
+    DatePipe, DecimalPipe,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './tva-caution-list.component.html',
@@ -56,24 +61,52 @@ export class TvaCautionListComponent implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
 
   // ── État local ────────────────────────────────────────────────────────────
-  tvas: ImpotEtTaxeResponseDto[] = [];
-  totalRecords = 0;
-  loading      = false;
+  tvas:         ImpotEtTaxeResponseDto[] = [];
+  totalRecords  = 0;
+  totalMontant  = 0;
+  loading       = false;
 
   readonly isAdmin = this.authService.isAdmin();
 
+  /**
+   * Sélection persistante cross-pages.
+   * Clé = id de la TVA, valeur = objet DTO.
+   */
+  private readonly selectionMap = new Map<number, ImpotEtTaxeResponseDto>();
+
+  /**
+   * Sélection visible dans la page courante — synchronisée depuis selectionMap
+   * après chaque chargement de page.
+   */
+  currentPageSelection: ImpotEtTaxeResponseDto[] = [];
+
   // ── Options dropdowns ─────────────────────────────────────────────────────
   banques: any[] = [];
-
-
 
   // ── Reactive filter form ──────────────────────────────────────────────────
   filterForm: FormGroup = this.fb.group({
     banqueId: [null],
     libelle:  [null],
+    montant:  [null as number | null],
+  });
+
+  // ── Fusion dialog ─────────────────────────────────────────────────────────
+  showFusionDialog = false;
+  fusionLoading    = false;
+  fusionForm: FormGroup = this.fb.group({
+    libelle: ['', Validators.required],
   });
 
   breadcrumbItems: MenuItem[] = [];
+
+  // ── Computed helpers ──────────────────────────────────────────────────────
+  get selectionCount(): number { return this.selectionMap.size; }
+  get canFusionner(): boolean  { return this.selectionMap.size >= 2; }
+  get fusionMontantTotal(): number {
+    let sum = 0;
+    this.selectionMap.forEach(t => sum += t.montant ?? 0);
+    return sum;
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -118,23 +151,25 @@ export class TvaCautionListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort      = `${sortField},${sortOrder}`;
 
-    const { banqueId, libelle } = this.filterForm.value;
+    const { banqueId, libelle, montant } = this.filterForm.value;
 
-    // motif TVA_COMMISSION_CAUTION est toujours fixé — filtre opaque pour l'utilisateur
     const searchDto: ImpotEtTaxeSearchDto = {
       motif: Motif.TVA_COMMISSION_CAUTION,
-      status:Status.PREVU,
+      status: Status.PREVU,
       ...(banqueId && { banqueId }),
       ...(libelle  && { libelle  }),
+      ...(montant  && { montant  }),
     };
 
     this.tvaService.searchImpotEtTaxes(searchDto, page, size, sort)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          this.tvas         = res.content;
-          this.totalRecords = res.page.totalElements;
+          this.tvas         = res.page.content;
+          this.totalRecords = res.page.page.totalElements;
+          this.totalMontant = res.totalDesEncours;
           this.loading      = false;
+          this.syncSelectionToCurrentPage();
           this.cdr.markForCheck();
         },
         error: () => {
@@ -147,12 +182,85 @@ export class TvaCautionListComponent implements OnInit {
       });
   }
 
+  /**
+   * Appelé par (selectionChange) du p-table.
+   * Synchronise le selectionMap pour la page courante uniquement.
+   */
+  onSelectionChange(newPageSelection: ImpotEtTaxeResponseDto[]): void {
+    this.tvas.forEach(t => this.selectionMap.delete(t.id));
+    newPageSelection.forEach(t => this.selectionMap.set(t.id, t));
+    this.currentPageSelection = newPageSelection;
+    this.cdr.markForCheck();
+  }
+
+  private syncSelectionToCurrentPage(): void {
+    this.currentPageSelection = this.tvas.filter(t => this.selectionMap.has(t.id));
+  }
+
   // ── Filtres ───────────────────────────────────────────────────────────────
-  applyFilters(): void { this.table?.reset(); }
+  applyFilters(): void {
+    this.table?.reset();
+  }
 
   clearFilters(): void {
     this.filterForm.reset();
-    this.applyFilters();
+    this.table?.reset();
+  }
+
+  // ── Gestion de la sélection ───────────────────────────────────────────────
+  clearSelection(): void {
+    this.selectionMap.clear();
+    this.currentPageSelection = [];
+    this.cdr.markForCheck();
+  }
+
+  // ── Fusion ────────────────────────────────────────────────────────────────
+  openFusionDialog(): void {
+    this.fusionForm.reset({ libelle: '' });
+    this.showFusionDialog = true;
+    this.cdr.markForCheck();
+  }
+
+  confirmerFusion(): void {
+    if (this.fusionForm.invalid || !this.canFusionner) return;
+
+    this.fusionLoading = true;
+    this.cdr.markForCheck();
+
+    const request: ImpotEtTaxeFusionRequest = {
+      ids:     Array.from(this.selectionMap.keys()),
+      libelle: this.fusionForm.value.libelle.trim(),
+    };
+
+    this.tvaService.fusionner(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.fusionLoading    = false;
+          this.showFusionDialog = false;
+          this.selectionMap.clear();
+          this.currentPageSelection = [];
+          this.cdr.markForCheck();
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Fusion réussie',
+            detail: `TVA "${res.libelle}" créée (${res.montant.toFixed(2)} MAD).`,
+            life: 6000,
+          });
+
+          this.table?.reset();
+        },
+        error: err => {
+          this.fusionLoading = false;
+          this.cdr.markForCheck();
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur de fusion',
+            detail: extractErrorMessage(err, 'La fusion a échoué.'),
+          });
+        },
+      });
   }
 
   // ── Toggle statut ─────────────────────────────────────────────────────────
@@ -172,7 +280,6 @@ export class TvaCautionListComponent implements OnInit {
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: () => {
-              // Mise à jour locale de la ligne — pas de rechargement complet
               tva.status = versPaye ? Status.PAYE : Status.PREVU;
               this.tvas  = [...this.tvas];
               this.cdr.markForCheck();
@@ -182,7 +289,7 @@ export class TvaCautionListComponent implements OnInit {
             },
             error: err => this.messageService.add({
               severity: 'error', summary: 'Erreur',
-              detail: err.error?.message ?? 'Impossible de modifier le statut.',
+              detail: extractErrorMessage(err, 'Impossible de modifier le statut.'),
             }),
           });
       },
@@ -203,8 +310,11 @@ export class TvaCautionListComponent implements OnInit {
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: () => {
-              this.tvas         = this.tvas.filter(t => t.id !== tva.id);
-              this.totalRecords = this.totalRecords - 1;
+              this.totalMontant -= tva.montant ?? 0;
+              this.tvas          = this.tvas.filter(t => t.id !== tva.id);
+              this.totalRecords -= 1;
+              this.selectionMap.delete(tva.id);
+              this.currentPageSelection = this.currentPageSelection.filter(t => t.id !== tva.id);
               this.cdr.markForCheck();
               this.messageService.add({
                 severity: 'success', summary: 'Supprimée', detail: 'TVA supprimée avec succès.',
@@ -212,7 +322,7 @@ export class TvaCautionListComponent implements OnInit {
             },
             error: err => this.messageService.add({
               severity: 'error', summary: 'Erreur',
-              detail: err.error?.message ?? 'Impossible de supprimer la TVA.',
+              detail: extractErrorMessage(err, 'Impossible de supprimer la TVA.'),
             }),
           });
       },

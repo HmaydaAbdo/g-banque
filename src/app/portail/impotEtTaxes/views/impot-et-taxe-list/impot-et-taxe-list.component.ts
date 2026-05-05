@@ -17,7 +17,6 @@ import { ImpotEtTaxeResponseDto } from '../../dtos/ImpotEtTaxeResponseDto';
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
 import { ImpotEtTaxeSearchDto } from "../../dtos/ImpotEtTaxeSearchDto";
 import { Status } from "../../../prefinancements/enums/Status";
-import { PageResponse } from "../../../global/types/PageResponse";
 import { InputTextModule } from "primeng/inputtext";
 import { AuthService } from "../../../../auth/services/auth.service";
 import {Motif, MotifLabels} from "../../dtos/Motif";
@@ -111,9 +110,9 @@ export class ImpotEtTaxeListComponent implements OnInit {
 
     this.impotEtTaxeService.searchImpotEtTaxes(this.searchCriteria, page, size, sort)
       .subscribe({
-        next: (res: PageResponse<ImpotEtTaxeResponseDto>) => {
-          this.impotEtTaxes = res.content;
-          this.totalRecords = res.page.totalElements;
+        next: res => {
+          this.impotEtTaxes = res.page.content;
+          this.totalRecords = res.page.page.totalElements;
           this.loading = false;
         },
         error: () => {

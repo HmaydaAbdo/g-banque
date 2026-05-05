@@ -8,11 +8,13 @@ import {
   ViewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule, DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
+import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
@@ -29,17 +31,20 @@ import { BanqueService } from '../../../comptes-bancaire/services/BanqueService'
 import { AuthService } from '../../../../auth/services/auth.service';
 import { CommissionResponseDto } from '../../../commission/dtos/commission-response.dto';
 import { CommissionSearchDto } from '../../../commission/dtos/CommissionSearchDto';
+import { CommissionFusionRequest } from '../../../commission/dtos/CommissionFusionRequest';
 import { TransactionSource } from '../../../transactions/dtos/TransactionSource';
 import { Status } from '../../../prefinancements/enums/Status';
+import {extractErrorMessage} from "../../../global/types/error.utils";
 
 @Component({
   selector: 'app-commission-caution-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, ReactiveFormsModule, TableModule, ButtonModule, DropdownModule,
-    InputTextModule, TagModule, ToastModule, ToolbarModule, TooltipModule,
-    BreadcrumbModule, ConfirmDialogModule, DatePipe, DecimalPipe,
+    CommonModule, ReactiveFormsModule, TableModule, ButtonModule, CheckboxModule,
+    DialogModule, DropdownModule, InputTextModule, TagModule, ToastModule,
+    ToolbarModule, TooltipModule, BreadcrumbModule, ConfirmDialogModule,
+    DatePipe, DecimalPipe,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './commission-caution-list.component.html',
@@ -58,24 +63,53 @@ export class CommissionCautionListComponent implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
 
   // ── État local ────────────────────────────────────────────────────────────
-  commissions: CommissionResponseDto[] = [];
-  totalRecords = 0;
-  loading      = false;
+  commissions:  CommissionResponseDto[] = [];
+  totalRecords  = 0;
+  totalMontant  = 0;
+  loading       = false;
 
   readonly isAdmin = this.authService.isAdmin();
 
+  /**
+   * Sélection persistante cross-pages.
+   * Clé = id de la commission, valeur = objet DTO (pour récupérer les montants).
+   */
+  private readonly selectionMap = new Map<number, CommissionResponseDto>();
+
+  /**
+   * Sélection visible dans la page courante — synchronisée depuis selectionMap
+   * après chaque chargement de page. C'est ce que p-table "voit".
+   */
+  currentPageSelection: CommissionResponseDto[] = [];
+
   // ── Options dropdowns ─────────────────────────────────────────────────────
   banques: any[] = [];
-
-
 
   // ── Reactive filter form ──────────────────────────────────────────────────
   filterForm: FormGroup = this.fb.group({
     banqueId: [null],
     libelle:  [null],
+    montant:  [null as number | null],
+  });
+
+  // ── Fusion dialog ─────────────────────────────────────────────────────────
+  showFusionDialog = false;
+  fusionLoading    = false;
+  fusionForm: FormGroup = this.fb.group({
+    libelle:    ['', Validators.required],
+    genererTva: [true],
   });
 
   breadcrumbItems: MenuItem[] = [];
+
+  // ── Computed helpers ──────────────────────────────────────────────────────
+  get selectionCount(): number        { return this.selectionMap.size; }
+  get canFusionner(): boolean         { return this.selectionMap.size >= 2; }
+  get fusionMontantTotal(): number {
+    let sum = 0;
+    this.selectionMap.forEach(c => sum += c.montant ?? 0);
+    return sum;
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -120,23 +154,26 @@ export class CommissionCautionListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort      = `${sortField},${sortOrder}`;
 
-    const { banqueId, libelle } = this.filterForm.value;
+    const { banqueId, libelle, montant } = this.filterForm.value;
 
-    // operation CAUTION est toujours fixé — ces commissions ne concernent que les cautions
     const searchDto: CommissionSearchDto = {
       operation: TransactionSource.CAUTION,
-      status:Status.PREVU,
+      status: Status.PREVU,
       ...(banqueId && { banqueId }),
       ...(libelle  && { libelle  }),
+      ...(montant  && { montant  }),
     };
 
     this.commissionService.searchCommissions(searchDto, page, size, sort)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          this.commissions  = res.content;
-          this.totalRecords = res.page.totalElements;
+          this.commissions  = res.page.content;
+          this.totalRecords = res.page.page.totalElements;
+          this.totalMontant = res.totalDesEncours;
           this.loading      = false;
+          // Re-synchronise les coches pour la page qui vient de charger
+          this.syncSelectionToCurrentPage();
           this.cdr.markForCheck();
         },
         error: () => {
@@ -149,12 +186,98 @@ export class CommissionCautionListComponent implements OnInit {
       });
   }
 
+  /**
+   * Appelé par (selectionChange) du p-table.
+   * Met à jour le selectionMap en tenant compte uniquement des lignes de la page courante :
+   * - supprime du map celles de la page qui ont été décochées
+   * - ajoute au map celles de la page qui viennent d'être cochées
+   * Les sélections des autres pages ne sont pas touchées.
+   */
+  onSelectionChange(newPageSelection: CommissionResponseDto[]): void {
+    // Retirer toutes les lignes de la page courante du map
+    this.commissions.forEach(c => this.selectionMap.delete(c.id));
+    // Ré-ajouter uniquement celles qui sont cochées
+    newPageSelection.forEach(c => this.selectionMap.set(c.id, c));
+    this.currentPageSelection = newPageSelection;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Recrée currentPageSelection à partir du selectionMap pour les lignes
+   * actuellement visibles — appelé après chaque chargement de page.
+   */
+  private syncSelectionToCurrentPage(): void {
+    this.currentPageSelection = this.commissions.filter(c => this.selectionMap.has(c.id));
+  }
+
   // ── Filtres ───────────────────────────────────────────────────────────────
-  applyFilters(): void { this.table?.reset(); }
+  applyFilters(): void {
+    this.table?.reset();
+  }
 
   clearFilters(): void {
     this.filterForm.reset();
-    this.applyFilters();
+    this.table?.reset();
+  }
+
+  // ── Gestion de la sélection ───────────────────────────────────────────────
+  clearSelection(): void {
+    this.selectionMap.clear();
+    this.currentPageSelection = [];
+    this.cdr.markForCheck();
+  }
+
+  // ── Fusion ────────────────────────────────────────────────────────────────
+  openFusionDialog(): void {
+    this.fusionForm.reset({ libelle: '', genererTva: true });
+    this.showFusionDialog = true;
+    this.cdr.markForCheck();
+  }
+
+  confirmerFusion(): void {
+    if (this.fusionForm.invalid || !this.canFusionner) return;
+
+    this.fusionLoading = true;
+    this.cdr.markForCheck();
+
+    const request: CommissionFusionRequest = {
+      ids:        Array.from(this.selectionMap.keys()),
+      libelle:    this.fusionForm.value.libelle.trim(),
+      genererTva: this.fusionForm.value.genererTva ?? false,
+    };
+
+    this.commissionService.fusionner(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.fusionLoading    = false;
+          this.showFusionDialog = false;
+          this.selectionMap.clear();
+          this.currentPageSelection = [];
+          this.cdr.markForCheck();
+
+          const tvaMsg = res.tva
+            ? ` et une TVA de ${res.tva.montant.toFixed(2)} MAD générée.`
+            : '.';
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Fusion réussie',
+            detail: `Commission "${res.commission.libelle}" créée (${res.commission.montant.toFixed(2)} MAD)${tvaMsg}`,
+            life: 6000,
+          });
+
+          this.table?.reset();
+        },
+        error: err => {
+          this.fusionLoading = false;
+          this.cdr.markForCheck();
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur de fusion',
+            detail: extractErrorMessage(err, 'La fusion a échoué.'),
+          });
+        },
+      });
   }
 
   // ── Toggle statut ─────────────────────────────────────────────────────────
@@ -174,7 +297,6 @@ export class CommissionCautionListComponent implements OnInit {
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: () => {
-              // Mise à jour locale — pas de rechargement complet
               commission.status = versPaye ? Status.PAYE : Status.PREVU;
               this.commissions  = [...this.commissions];
               this.cdr.markForCheck();
@@ -184,7 +306,7 @@ export class CommissionCautionListComponent implements OnInit {
             },
             error: err => this.messageService.add({
               severity: 'error', summary: 'Erreur',
-              detail: err.error?.message ?? 'Impossible de modifier le statut.',
+              detail: extractErrorMessage(err, 'Impossible de modifier le statut.'),
             }),
           });
       },
@@ -210,16 +332,19 @@ export class CommissionCautionListComponent implements OnInit {
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: () => {
-              this.commissions  = this.commissions.filter(c => c.id !== commission.id);
-              this.totalRecords = this.totalRecords - 1;
+              this.totalMontant -= commission.montant ?? 0;
+              this.commissions   = this.commissions.filter(c => c.id !== commission.id);
+              this.totalRecords -= 1;
+              this.selectionMap.delete(commission.id);
+              this.currentPageSelection = this.currentPageSelection.filter(c => c.id !== commission.id);
               this.cdr.markForCheck();
               this.messageService.add({
-                severity: 'success', summary: 'Supprimée', detail: `Commission supprimée avec succès.`,
+                severity: 'success', summary: 'Supprimée', detail: 'Commission supprimée avec succès.',
               });
             },
             error: err => this.messageService.add({
               severity: 'error', summary: 'Erreur',
-              detail: err.error?.message ?? 'Impossible de supprimer la commission.',
+              detail: extractErrorMessage(err, 'Impossible de supprimer la commission.'),
             }),
           });
       },

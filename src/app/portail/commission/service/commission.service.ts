@@ -5,8 +5,9 @@ import {environment} from '../../../../environments/environment';
 import {CommissionRequestDto} from "../dtos/CommissionRequestDto";
 import {CommissionResponseDto} from "../dtos/commission-response.dto";
 import {CommissionSearchDto} from "../dtos/CommissionSearchDto";
-import {PageResponse} from "../../global/types/PageResponse";
 import {EncoursCommissionDto} from "../dtos/EncoursCommissionDto";
+import {CommissionFusionRequest} from "../dtos/CommissionFusionRequest";
+import {CommissionFusionResponse} from "../dtos/CommissionFusionResponse";
 
 
 @Injectable({
@@ -29,19 +30,19 @@ export class CommissionService {
     return this.http.get<CommissionResponseDto>(`${this.apiUrl}/${id}`);
   }
 
-  // --- Search with pagination ---
+  // --- Search with pagination + aggregate total ---
   searchCommissions(
     searchDto: CommissionSearchDto,
     page: number = 0,
     size: number = 10,
     sort: string = 'id,asc'
-  ): Observable<PageResponse<CommissionResponseDto>> {
-    let params = new HttpParams()
+  ): Observable<EncoursCommissionDto> {
+    const params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', sort);
 
-    return this.http.post<PageResponse<CommissionResponseDto>>(`${this.apiUrl}/search`, searchDto, {params});
+    return this.http.post<EncoursCommissionDto>(`${this.apiUrl}/search`, searchDto, { params });
   }
 
   // --- Update ---
@@ -86,5 +87,10 @@ export class CommissionService {
 
   toggleCommissionStatus(id: number): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${id}/toggle-status`, {});
+  }
+
+  // --- Fusion ---
+  fusionner(request: CommissionFusionRequest): Observable<CommissionFusionResponse> {
+    return this.http.post<CommissionFusionResponse>(`${this.apiUrl}/fusionner`, request);
   }
 }

@@ -5,8 +5,8 @@ import { environment } from '../../../../environments/environment';
 import { ImpotEtTaxeRequestDto } from "../dtos/ImpotEtTaxeRequestDto";
 import { ImpotEtTaxeResponseDto } from "../dtos/ImpotEtTaxeResponseDto";
 import { ImpotEtTaxeSearchDto } from "../dtos/ImpotEtTaxeSearchDto";
-import { PageResponse } from "../../global/types/PageResponse";
 import { EncoursImpotEtTaxeDto } from "../dtos/EncoursImpotEtTaxeDto";
+import { ImpotEtTaxeFusionRequest } from "../dtos/ImpotEtTaxeFusionRequest";
 
 @Injectable({
   providedIn: 'root'
@@ -27,19 +27,19 @@ export class ImpotEtTaxeService {
     return this.http.get<ImpotEtTaxeResponseDto>(`${this.apiUrl}/${id}`);
   }
 
-  // --- Search with pagination ---
+  // --- Search with pagination + aggregate total ---
   searchImpotEtTaxes(
     searchDto: ImpotEtTaxeSearchDto,
     page: number = 0,
     size: number = 10,
     sort: string = 'id,asc'
-  ): Observable<PageResponse<ImpotEtTaxeResponseDto>> {
-    let params = new HttpParams()
+  ): Observable<EncoursImpotEtTaxeDto> {
+    const params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', sort);
 
-    return this.http.post<PageResponse<ImpotEtTaxeResponseDto>>(`${this.apiUrl}/search`, searchDto, { params });
+    return this.http.post<EncoursImpotEtTaxeDto>(`${this.apiUrl}/search`, searchDto, { params });
   }
 
   // --- Update ---
@@ -82,5 +82,10 @@ export class ImpotEtTaxeService {
 
   toggleStatus(id: number): Observable<ImpotEtTaxeResponseDto> {
     return this.http.patch<ImpotEtTaxeResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
+  }
+
+  // --- Fusion ---
+  fusionner(request: ImpotEtTaxeFusionRequest): Observable<ImpotEtTaxeResponseDto> {
+    return this.http.post<ImpotEtTaxeResponseDto>(`${this.apiUrl}/fusionner`, request);
   }
 }

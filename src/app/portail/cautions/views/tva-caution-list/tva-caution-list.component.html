@@ -1,6 +1,63 @@
 <p-toast />
 <p-confirmDialog />
 
+<!-- ── Dialogue de fusion TVA ────────────────────────────────────────────── -->
+<p-dialog
+  header="Fusionner les TVA sélectionnées"
+  [(visible)]="showFusionDialog"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false">
+
+  <!-- Récapitulatif de la sélection -->
+  <div class="surface-ground border-round p-3 mb-4">
+    <div class="flex align-items-center gap-2 mb-2">
+      <i class="pi pi-list text-primary"></i>
+      <span class="font-semibold">{{ selectionCount }} TVA sélectionnée(s)</span>
+    </div>
+    <div class="flex align-items-center gap-2">
+      <i class="pi pi-calculator text-primary"></i>
+      <span>Total : <strong>{{ fusionMontantTotal | number:'1.2-2' }} MAD</strong></span>
+    </div>
+  </div>
+
+  <form [formGroup]="fusionForm" class="flex flex-column gap-3">
+
+    <!-- Libellé -->
+    <div class="flex flex-column gap-1">
+      <label for="fusionTvaLibelle" class="font-medium text-sm">
+        Libellé de la TVA fusionnée <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="fusionTvaLibelle"
+        pInputText
+        formControlName="libelle"
+        placeholder="Ex. : TVA commissions caution STAPORT — Septembre 2025"
+        class="w-full" />
+      <small *ngIf="fusionForm.get('libelle')?.invalid && fusionForm.get('libelle')?.touched"
+             class="text-red-500">Le libellé est obligatoire.</small>
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="showFusionDialog = false" />
+    <p-button
+      label="Fusionner"
+      icon="pi pi-check"
+      severity="warning"
+      [loading]="fusionLoading"
+      [disabled]="fusionForm.invalid"
+      (onClick)="confirmerFusion()" />
+  </ng-template>
+</p-dialog>
+
 <div class="flex flex-column gap-3 p-3 h-screen overflow-y-scroll">
 
   <!-- Breadcrumb -->
@@ -26,6 +83,17 @@
           placeholder="Libellé / N° caution"
           class="w-14rem" />
 
+        <span class="p-input-icon-left">
+          <i class="pi pi-wallet"></i>
+          <input
+            pInputText
+            type="number"
+            formControlName="montant"
+            placeholder="Montant"
+            class="w-14rem"
+            (input)="applyFilters()" />
+        </span>
+
         <!-- Reset -->
         <p-button
           icon="pi pi-filter-slash"
@@ -36,18 +104,76 @@
 
       </form>
     </ng-template>
+
+    <ng-template pTemplate="end">
+      <!-- Bandeau sélection — visible dès qu'au moins 1 ligne est cochée -->
+      <div *ngIf="isAdmin && selectionCount > 0"
+           class="flex align-items-center gap-2">
+
+        <!-- Résumé -->
+        <div class="surface-ground border-round px-3 py-2 flex align-items-center gap-2">
+          <i class="pi pi-check-square text-warning"></i>
+          <span class="font-medium text-sm">
+            {{ selectionCount }} sélectionnée(s)
+          </span>
+          <span class="text-color-secondary">·</span>
+          <span class="font-bold text-sm text-warning">
+            {{ fusionMontantTotal | number:'1.2-2' }} MAD
+          </span>
+        </div>
+
+        <!-- Vider la sélection -->
+        <p-button
+          icon="pi pi-times"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          pTooltip="Vider la sélection"
+          (onClick)="clearSelection()" />
+
+        <!-- Fusionner -->
+        <p-button
+          *ngIf="canFusionner"
+          label="Fusionner"
+          icon="pi pi-code"
+          severity="warning"
+          size="small"
+          pTooltip="Fusionner les {{ selectionCount }} TVA sélectionnées"
+          (onClick)="openFusionDialog()" />
+
+      </div>
+    </ng-template>
   </p-toolbar>
+
+  <!-- Carte total agrégat -->
+  <div class="surface-card border-round-xl shadow-1 px-4 py-3 flex align-items-center gap-3">
+    <i class="pi pi-calculator text-2xl text-primary"></i>
+    <div class="flex flex-column">
+      <span class="text-xs text-color-secondary font-medium uppercase">Total TVA filtrée</span>
+      <span class="text-xl font-bold text-primary">
+        {{ totalMontant | number:'1.2-2' }} MAD
+      </span>
+    </div>
+    <p-tag
+      [value]="totalRecords + ' enregistrement(s)'"
+      severity="info"
+      styleClass="ml-auto" />
+  </div>
 
   <!-- Table -->
   <div class="surface-card border-round-xl shadow-1 pb-8">
     <p-table
       #dt
       [value]="tvas"
+      [selection]="currentPageSelection"
+      (selectionChange)="onSelectionChange($event)"
       [lazy]="true"
       (onLazyLoad)="loadTvas($event)"
       [totalRecords]="totalRecords"
       [loading]="loading"
       [paginator]="true"
+      currentPageReportTemplate="{first} à {last} sur {totalRecords}"
+      [showCurrentPageReport]="true"
       [rows]="10"
       [rowsPerPageOptions]="[10, 25, 50]"
       [sortField]="'dateEmission'"
@@ -57,6 +183,9 @@
 
       <ng-template pTemplate="header">
         <tr>
+          <th style="width:3rem">
+            <p-tableHeaderCheckbox *ngIf="isAdmin" />
+          </th>
           <th pSortableColumn="libelle"      style="min-width:16rem">Libellé          <p-sortIcon field="libelle"      /></th>
           <th pSortableColumn="banqueNom"    style="min-width:10rem">Banque           <p-sortIcon field="banqueNom"    /></th>
           <th pSortableColumn="montant"      style="min-width:9rem" class="text-right">Montant (MAD) <p-sortIcon field="montant" /></th>
@@ -67,7 +196,10 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-tva>
-        <tr>
+        <tr [pSelectableRow]="tva">
+          <td>
+            <p-tableCheckbox *ngIf="isAdmin" [value]="tva" />
+          </td>
           <td>{{ tva.libelle }}</td>
           <td>{{ tva.banqueNom }}</td>
           <td class="text-right font-medium">{{ tva.montant | number:'1.2-2' }}</td>
@@ -107,7 +239,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="6" class="text-center py-5 text-color-secondary">
+          <td colspan="7" class="text-center py-5 text-color-secondary">
             <i class="pi pi-inbox text-4xl mb-3 block"></i>
             Aucune TVA sur caution trouvée.
           </td>

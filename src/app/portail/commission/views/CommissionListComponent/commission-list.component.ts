@@ -19,7 +19,6 @@ import {BanqueResponse} from '../../../comptes-bancaire/dtos/BanqueResponse';
 import {CommissionSearchDto} from '../../dtos/CommissionSearchDto';
 import {TransactionSource} from '../../../transactions/dtos/TransactionSource';
 import {Status} from '../../../prefinancements/enums/Status';
-import {PageResponse} from '../../../global/types/PageResponse';
 import {InputTextModule} from 'primeng/inputtext';
 import {AuthService} from '../../../../auth/services/auth.service';
 import {TagModule} from 'primeng/tag';
@@ -115,9 +114,9 @@ export class CommissionListComponent implements OnInit {
 
     this.commissionService.searchCommissions(this.searchCriteria, page, size, sort)
       .subscribe({
-        next: (res: PageResponse<CommissionResponseDto>) => {
-          this.commissions = res.content;
-          this.totalRecords = res.page.totalElements;
+        next: res => {
+          this.commissions = res.page.content;
+          this.totalRecords = res.page.page.totalElements;
           this.loading = false;
         },
         error: () => {
