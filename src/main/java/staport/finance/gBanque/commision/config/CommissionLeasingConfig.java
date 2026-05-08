@@ -65,6 +65,23 @@ public class CommissionLeasingConfig {
      * @param nomOrganisme Nom de l'organisme de leasing
      * @return Le montant de la commission, ou null si aucune commission n'est configurée
      */
+    /** Normalise un nom de banque : trim + suppression des espaces multiples + lowercase. */
+    private String normalize(String name) {
+        if (name == null) return null;
+        return name.trim().replaceAll("\\s+", " ").toLowerCase();
+    }
+
+    /** Cherche une clé dans une Map de façon insensible à la casse et aux espaces. */
+    private <V> V findIgnoreCase(Map<String, V> map, String key) {
+        if (key == null) return null;
+        String normalizedKey = normalize(key);
+        return map.entrySet().stream()
+                .filter(e -> normalize(e.getKey()).equals(normalizedKey))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
+    }
+
     public BigDecimal getCommission(String nomBanque, String nomOrganisme) {
         if (nomBanque == null) {
             log.warn("Tentative de récupération de commission avec nomBanque null");
@@ -73,8 +90,8 @@ public class CommissionLeasingConfig {
 
         log.debug("Recherche de commission pour Banque: {}, Organisme: {}", nomBanque, nomOrganisme);
 
-        // Vérifier si une règle spécifique existe pour cette banque
-        OrganismeRule rule = organismeRules.get(nomBanque);
+        // Vérifier si une règle spécifique existe pour cette banque (insensible à la casse)
+        OrganismeRule rule = findIgnoreCase(organismeRules, nomBanque);
         if (rule != null) {
             log.debug("Règle conditionnelle trouvée pour la banque: {}", nomBanque);
 
@@ -91,8 +108,8 @@ public class CommissionLeasingConfig {
             return rule.getCommissionIfNotMatch();
         }
 
-        // Pas de règle spécifique, utiliser la commission par défaut
-        BigDecimal commission = defaultCommissions.get(nomBanque);
+        // Pas de règle spécifique, utiliser la commission par défaut (insensible à la casse)
+        BigDecimal commission = findIgnoreCase(defaultCommissions, nomBanque);
         if (commission != null) {
             log.debug("Commission par défaut trouvée pour {}: {}", nomBanque, commission);
         } else {
@@ -103,14 +120,14 @@ public class CommissionLeasingConfig {
     }
 
     /**
-     * Vérifie si une commission est configurée pour une banque donnée
+     * Vérifie si une commission est configurée pour une banque donnée (insensible à la casse)
      *
      * @param nomBanque Nom de la banque
      * @return true si une commission existe (règle ou défaut), false sinon
      */
     public boolean hasCommission(String nomBanque) {
-        boolean hasDefault = defaultCommissions.containsKey(nomBanque);
-        boolean hasRule = organismeRules.containsKey(nomBanque);
+        boolean hasDefault = findIgnoreCase(defaultCommissions, nomBanque) != null;
+        boolean hasRule    = findIgnoreCase(organismeRules, nomBanque) != null;
 
         log.debug("Vérification commission pour {}: hasDefault={}, hasRule={}",
                 nomBanque, hasDefault, hasRule);
