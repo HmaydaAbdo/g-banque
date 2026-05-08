@@ -119,7 +119,7 @@
       # Commissions par défaut pour les banques sans règles spéciales
       default-commissions:
         CIH: 11
-        SGMB: 11
+        SAHAM BANK: 11
 
       # Règles conditionnelles basées sur l'organisme de leasing
       organisme-rules:
