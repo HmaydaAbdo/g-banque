@@ -142,6 +142,21 @@
           </small>
         </div>
 
+        <!-- Date de main levée -->
+        <div class="col-12 md:col-6 lg:col-4">
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            Date de main levée
+          </label>
+          <p-calendar
+            formControlName="dateDeMainLevee"
+            dateFormat="dd/mm/yy"
+            [showIcon]="true"
+            [showClear]="true"
+            appendTo="body"
+            placeholder="Non renseignée">
+          </p-calendar>
+        </div>
+
         <!-- Organisme -->
         <div class="col-12 md:col-6 lg:col-4">
           <label class="font-semibold block mb-2 text-700 text-sm">

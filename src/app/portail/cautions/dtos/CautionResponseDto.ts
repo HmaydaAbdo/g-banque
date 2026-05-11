@@ -16,7 +16,8 @@ export interface CautionResponseDto {
   marcheNom:    string | null;
 
   // Données caution
-  dateDePrise:   string;   // yyyy-MM-dd
+  dateDePrise:      string;        // yyyy-MM-dd
+  dateDeMainLevee:  string | null; // yyyy-MM-dd — null si caution encore active
   numeroCaution: string;
   designation:   string;
   organisme:     string;

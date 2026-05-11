@@ -100,7 +100,8 @@ export class CautionFormComponent implements OnInit {
       banqueId:      [null, Validators.required],
       natureId:      [null, Validators.required],
       marcheId:      [null],
-      dateDePrise:   [null, ],
+      dateDePrise:      [null],
+      dateDeMainLevee:  [null],
       numeroCaution: [null],
       designation:   [null, Validators.required],
       organisme:     [null, Validators.required],
@@ -163,7 +164,8 @@ export class CautionFormComponent implements OnInit {
         next: c => {
           this.form.patchValue({
             ...c,
-            dateDePrise: parseLocalDate(c.dateDePrise),
+            dateDePrise:     parseLocalDate(c.dateDePrise),
+            dateDeMainLevee: c.dateDeMainLevee ? parseLocalDate(c.dateDeMainLevee) : null,
           });
 
           if (c.marcheId) {
@@ -286,7 +288,8 @@ export class CautionFormComponent implements OnInit {
         const v = this.form.value;
         const dto: CautionRequestDto = {
           ...v,
-          dateDePrise: toLocalDateString(v.dateDePrise)!,
+          dateDePrise:     toLocalDateString(v.dateDePrise)!,
+          dateDeMainLevee: v.dateDeMainLevee ? toLocalDateString(v.dateDeMainLevee) : null,
         };
 
         const req$ = this.isEditMode

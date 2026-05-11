@@ -10,7 +10,8 @@ export interface CautionRequestDto {
   banqueId:      number;
   natureId:      number;
   marcheId?:     number | null;
-  dateDePrise:   string;
+  dateDePrise:      string;
+  dateDeMainLevee?: string | null;  // optionnel — null si caution encore active
   numeroCaution: string;
   designation:   string;
   organisme:     string;
