@@ -127,9 +127,18 @@ public class CautionController {
             @RequestParam int mois) {
 
         logger.info("POST /cautions/generer-commissions — {}-{}", annee, mois);
+        YearMonth moisReference = YearMonth.of(annee, mois);
 
-        ResultatGenerationCommissionDto result =
-                generationService.generer(YearMonth.of(annee, mois));
+        // Déclenchement manuel : on génère les deux lots (début + fin de mois)
+        ResultatGenerationCommissionDto finDeMois   = generationService.generer(moisReference, false);
+        ResultatGenerationCommissionDto debutDeMois = generationService.generer(moisReference, true);
+
+        // Fusionner les deux résultats
+        ResultatGenerationCommissionDto result = new ResultatGenerationCommissionDto(
+                finDeMois.generees() + debutDeMois.generees(),
+                finDeMois.ignorees() + debutDeMois.ignorees(),
+                moisReference
+        );
 
         return ResponseEntity.ok(result);
     }
