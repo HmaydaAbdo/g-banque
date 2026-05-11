@@ -39,20 +39,7 @@
              class="text-red-500">Le libellé est obligatoire.</small>
     </div>
 
-    <!-- Générer TVA -->
-    <div class="flex align-items-center gap-2">
-      <p-checkbox
-        formControlName="genererTva"
-        [binary]="true"
-        inputId="genererTva" />
-      <label for="genererTva" class="cursor-pointer">
-        Générer la TVA (10 %) pour la commission fusionnée
-      </label>
-    </div>
-    <small *ngIf="fusionForm.value.genererTva" class="text-color-secondary">
-      TVA qui sera créée : <strong>{{ fusionMontantTotal * 0.10 | number:'1.2-2' }} MAD</strong>
-      (les TVA existantes des commissions sources seront supprimées)
-    </small>
+    <!-- Les TVA liées aux commissions sources sont supprimées automatiquement lors de la fusion. Aucune TVA n'est créée. -->
 
   </form>
 

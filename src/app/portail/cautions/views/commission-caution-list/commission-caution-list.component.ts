@@ -96,8 +96,7 @@ export class CommissionCautionListComponent implements OnInit {
   showFusionDialog = false;
   fusionLoading    = false;
   fusionForm: FormGroup = this.fb.group({
-    libelle:    ['', Validators.required],
-    genererTva: [true],
+    libelle: ['', Validators.required],
   });
 
   breadcrumbItems: MenuItem[] = [];
@@ -229,7 +228,7 @@ export class CommissionCautionListComponent implements OnInit {
 
   // ── Fusion ────────────────────────────────────────────────────────────────
   openFusionDialog(): void {
-    this.fusionForm.reset({ libelle: '', genererTva: true });
+    this.fusionForm.reset({ libelle: '' });
     this.showFusionDialog = true;
     this.cdr.markForCheck();
   }
@@ -241,9 +240,8 @@ export class CommissionCautionListComponent implements OnInit {
     this.cdr.markForCheck();
 
     const request: CommissionFusionRequest = {
-      ids:        Array.from(this.selectionMap.keys()),
-      libelle:    this.fusionForm.value.libelle.trim(),
-      genererTva: this.fusionForm.value.genererTva ?? false,
+      ids:     Array.from(this.selectionMap.keys()),
+      libelle: this.fusionForm.value.libelle.trim(),
     };
 
     this.commissionService.fusionner(request)
@@ -256,13 +254,10 @@ export class CommissionCautionListComponent implements OnInit {
           this.currentPageSelection = [];
           this.cdr.markForCheck();
 
-          const tvaMsg = res.tva
-            ? ` et une TVA de ${res.tva.montant.toFixed(2)} MAD générée.`
-            : '.';
           this.messageService.add({
             severity: 'success',
             summary: 'Fusion réussie',
-            detail: `Commission "${res.commission.libelle}" créée (${res.commission.montant.toFixed(2)} MAD)${tvaMsg}`,
+            detail: `Commission "${res.commission.libelle}" créée (${res.commission.montant.toFixed(2)} MAD).`,
             life: 6000,
           });
 
