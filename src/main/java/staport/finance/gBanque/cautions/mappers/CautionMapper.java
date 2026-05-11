@@ -48,6 +48,7 @@ public class CautionMapper {
 
         Caution caution = new Caution();
         caution.setDateDePrise(dto.dateDePrise());
+        caution.setDateDeMainLevee(dto.dateDeMainLevee());
         caution.setNumeroCaution(dto.numeroCaution());
         caution.setDesignation(dto.designation());
         caution.setOrganisme(dto.organisme());
@@ -94,6 +95,7 @@ public class CautionMapper {
 
             // Données caution
             caution.getDateDePrise(),
+            caution.getDateDeMainLevee(),
             caution.getNumeroCaution(),
             caution.getDesignation(),
             caution.getOrganisme(),
@@ -126,6 +128,7 @@ public class CautionMapper {
 
         caution.setNumeroCaution(dto.numeroCaution());
         caution.setDateDePrise(dto.dateDePrise());
+        caution.setDateDeMainLevee(dto.dateDeMainLevee());
         caution.setDesignation(dto.designation());
         caution.setOrganisme(dto.organisme());
         caution.setMontant(dto.montant());

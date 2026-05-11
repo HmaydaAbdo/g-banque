@@ -31,6 +31,7 @@ public record CautionResponseDto(
 
     // ── Données caution ──────────────────────────────────────────────────────
     LocalDate dateDePrise,
+    LocalDate dateDeMainLevee,
     String    numeroCaution,
     String    designation,
     String    organisme,

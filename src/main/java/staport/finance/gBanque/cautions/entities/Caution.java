@@ -69,6 +69,9 @@ public class Caution {
 
     private LocalDate dateDePrise;
 
+    /** Date de main levée — null tant que la caution est encore active. */
+    private LocalDate dateDeMainLevee;
+
     @Column(unique = true)
     private String numeroCaution;
 
@@ -121,6 +124,9 @@ public class Caution {
 
     public LocalDate getDateDePrise() { return dateDePrise; }
     public void setDateDePrise(LocalDate dateDePrise) { this.dateDePrise = dateDePrise; }
+
+    public LocalDate getDateDeMainLevee() { return dateDeMainLevee; }
+    public void setDateDeMainLevee(LocalDate dateDeMainLevee) { this.dateDeMainLevee = dateDeMainLevee; }
 
     public String getNumeroCaution() { return numeroCaution; }
     public void setNumeroCaution(String numeroCaution) { this.numeroCaution = numeroCaution; }

@@ -29,6 +29,9 @@ public record CautionUpdateDto(
     @PastOrPresent(message = "La date de prise ne peut pas être dans le futur")
     LocalDate dateDePrise,
 
+    /* Optionnel — null si la caution est encore active. */
+    LocalDate dateDeMainLevee,
+
     @NotBlank(message = "Le numéro de caution est obligatoire")
     @Size(max = 100, message = "Le numéro de caution ne peut pas dépasser 100 caractères")
     String numeroCaution,
