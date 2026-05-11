@@ -279,14 +279,13 @@ public class CommissionService {
     @Transactional
     public CommissionFusionResponse fusionner(CommissionFusionRequest request) {
         List<Long> ids = request.getIds();
-        log.info("Fusion demandée — {} commission(s), libellé='{}', genererTva={}",
-                ids.size(), request.getLibelle(), request.isGenererTva());
+        log.info("Fusion demandée — {} commission(s), libellé='{}'", ids.size(), request.getLibelle());
 
         // ── 1. Chargement ────────────────────────────────────────────────────
         List<Commission> sources = commissionRepository.findAllById(ids);
 
         if (sources.size() != ids.size()) {
-            List<Long> trouvees = sources.stream().map(Commission::getId).toList();
+            List<Long> trouvees  = sources.stream().map(Commission::getId).toList();
             List<Long> manquantes = ids.stream().filter(id -> !trouvees.contains(id)).toList();
             throw new IllegalArgumentException("Commission(s) introuvable(s) : " + manquantes);
         }
@@ -317,7 +316,7 @@ public class CommissionService {
                     "Toutes les commissions doivent avoir la même date d'émission.");
         }
 
-        Banque banque        = sources.get(0).getBanque();
+        Banque banque          = sources.get(0).getBanque();
         LocalDate dateEmission = sources.get(0).getDateEmission();
 
         // ── 3. Calcul du montant fusionné ────────────────────────────────────
@@ -325,17 +324,15 @@ public class CommissionService {
                 .map(Commission::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // ── 4. Suppression TVA sources (avant suppression commissions) ────────
-        if (request.isGenererTva()) {
-            impotEtTaxeRepository.deleteByCommissionIdIn(ids);
-            log.info("TVA sources supprimées pour les commissions {}", ids);
-        }
+        // ── 4. Suppression des TVA liées aux sources (toujours) ──────────────
+        impotEtTaxeRepository.deleteByCommissionIdIn(ids);
+        log.info("TVA sources supprimées pour les commissions {}", ids);
 
-        // ── 5. Suppression commissions sources ───────────────────────────────
+        // ── 5. Suppression des commissions sources ───────────────────────────
         commissionRepository.deleteAllById(ids);
         log.info("Commissions sources supprimées : {}", ids);
 
-        // ── 6. Création commission fusionnée ─────────────────────────────────
+        // ── 6. Création de la commission fusionnée ────────────────────────────
         Commission fusionnee = new Commission();
         fusionnee.setLibelle(request.getLibelle());
         fusionnee.setMontant(montantFusionne);
@@ -346,28 +343,8 @@ public class CommissionService {
         fusionnee = commissionRepository.save(fusionnee);
         log.info("Commission fusionnée créée — id={}, montant={}", fusionnee.getId(), montantFusionne);
 
-        // ── 7. TVA fusionnée (optionnel) ─────────────────────────────────────
-        ImpotEtTaxeResponseDto tvaDto = null;
-        if (request.isGenererTva()) {
-            BigDecimal montantTva = montantFusionne
-                    .multiply(TAUX_TVA)
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            ImpotEtTaxe tva = new ImpotEtTaxe();
-            tva.setLibelle("TVA — " + request.getLibelle());
-            tva.setMontant(montantTva);
-            tva.setBanque(banque);
-            tva.setMotif(Motif.TVA_COMMISSION_CAUTION);
-            tva.setDateEmission(dateEmission);
-            tva.setStatus(Status.PREVU);
-            tva.setCommission(fusionnee);
-            tva = impotEtTaxeRepository.save(tva);
-
-            tvaDto = impotEtTaxeMapper.toResponseDto(tva);
-            log.info("TVA fusionnée créée — id={}, montant={}", tva.getId(), montantTva);
-        }
-
-        return new CommissionFusionResponse(commissionMapper.toResponseDto(fusionnee), tvaDto);
+        // Aucune TVA créée après fusion
+        return new CommissionFusionResponse(commissionMapper.toResponseDto(fusionnee));
     }
 
     // ── Aggregate helper ──────────────────────────────────────────────────────

@@ -27,13 +27,6 @@ public class CommissionFusionRequest {
     @NotBlank(message = "Le libellé de la commission fusionnée est obligatoire")
     private String libelle;
 
-    /**
-     * Si {@code true}, une TVA (10 %) est automatiquement créée pour la commission fusionnée
-     * et les anciennes TVA liées aux commissions sources sont supprimées.
-     * Si {@code false}, aucune TVA n'est créée ni supprimée.
-     */
-    private boolean genererTva;
-
     public CommissionFusionRequest() {}
 
     public List<Long> getIds() { return ids; }
@@ -41,7 +34,4 @@ public class CommissionFusionRequest {
 
     public String getLibelle() { return libelle; }
     public void setLibelle(String libelle) { this.libelle = libelle; }
-
-    public boolean isGenererTva() { return genererTva; }
-    public void setGenererTva(boolean genererTva) { this.genererTva = genererTva; }
 }

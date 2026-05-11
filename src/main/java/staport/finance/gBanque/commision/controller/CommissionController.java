@@ -100,8 +100,8 @@ public class CommissionController {
     @PostMapping("/fusionner")
     public ResponseEntity<CommissionFusionResponse> fusionner(
             @Validated @RequestBody CommissionFusionRequest request) {
-        log.info("REST request to fusionner {} commissions, libellé='{}', genererTva={}",
-                request.getIds().size(), request.getLibelle(), request.isGenererTva());
+        log.info("REST request to fusionner {} commissions, libellé='{}'",
+                request.getIds().size(), request.getLibelle());
         CommissionFusionResponse response = commissionService.fusionner(request);
         return ResponseEntity.ok(response);
     }
