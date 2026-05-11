@@ -104,8 +104,17 @@ export class CommissionCautionListComponent implements OnInit {
   // ── Computed helpers ──────────────────────────────────────────────────────
   private static readonly FACTEUR_TTC = 1.10;
 
-  get selectionCount(): number        { return this.selectionMap.size; }
-  get canFusionner(): boolean         { return this.selectionMap.size >= 2; }
+  get selectionCount(): number { return this.selectionMap.size; }
+
+  /** Vrai si toutes les commissions sélectionnées appartiennent à la BMCI. */
+  get selectionIsBmci(): boolean {
+    if (this.selectionMap.size === 0) return false;
+    return Array.from(this.selectionMap.values())
+      .every(c => c.banqueNom?.toUpperCase().includes('BMCI'));
+  }
+
+  /** Fusion autorisée : ≥ 2 commissions ET banque ≠ BMCI. */
+  get canFusionner(): boolean { return this.selectionMap.size >= 2 && !this.selectionIsBmci; }
   get fusionMontantTotal(): number {
     let sum = 0;
     this.selectionMap.forEach(c => sum += c.montant ?? 0);

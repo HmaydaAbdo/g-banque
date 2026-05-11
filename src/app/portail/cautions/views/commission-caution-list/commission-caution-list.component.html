@@ -157,12 +157,15 @@
           pTooltip="Vider la sélection"
           (onClick)="clearSelection()" />
 
+        <!-- Fusion désactivée si BMCI (TVA séparée) -->
         <p-button
-          *ngIf="canFusionner"
+          *ngIf="selectionCount >= 2"
           label="Fusionner"
           icon="pi pi-code"
           severity="warning"
           size="small"
+          [disabled]="selectionIsBmci"
+          [pTooltip]="selectionIsBmci ? 'Fusion non autorisée pour la BMCI (TVA séparée)' : ''"
           (onClick)="openFusionDialog()" />
       </ng-container>
     }
