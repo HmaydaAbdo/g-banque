@@ -309,6 +309,13 @@ public class CommissionService {
                     "Toutes les commissions doivent appartenir à la même banque.");
         }
 
+        // Fusion interdite pour BMCI (TVA séparée — la fusion briserait la cohérence comptable)
+        String nomBanque = sources.get(0).getBanque().getNom();
+        if (nomBanque != null && nomBanque.toUpperCase().contains("BMCI")) {
+            throw new IllegalArgumentException(
+                    "La fusion n'est pas autorisée pour les commissions BMCI (TVA séparée).");
+        }
+
         // Même dateEmission
         long nbDates = sources.stream().map(Commission::getDateEmission).distinct().count();
         if (nbDates > 1) {
@@ -319,10 +326,14 @@ public class CommissionService {
         Banque banque          = sources.get(0).getBanque();
         LocalDate dateEmission = sources.get(0).getDateEmission();
 
-        // ── 3. Calcul du montant fusionné ────────────────────────────────────
-        BigDecimal montantFusionne = sources.stream()
+        // ── 3. Calcul du montant fusionné (TTC = somme HT × 1,10) ────────────
+        BigDecimal montantHt = sources.stream()
                 .map(Commission::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal montantFusionne = montantHt
+                .multiply(BigDecimal.ONE.add(TAUX_TVA_COMMISSION_CAUTION))
+                .setScale(2, RoundingMode.HALF_UP);
 
         // ── 4. Suppression des TVA liées aux sources (toujours) ──────────────
         impotEtTaxeRepository.deleteByCommissionIdIn(ids);
