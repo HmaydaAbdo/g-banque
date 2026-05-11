@@ -18,7 +18,11 @@
     </div>
     <div class="flex align-items-center gap-2">
       <i class="pi pi-calculator text-primary"></i>
-      <span>Total : <strong>{{ fusionMontantTotal | number:'1.2-2' }} MAD</strong></span>
+      <span>
+        Total HT : <strong>{{ fusionMontantTotal | number:'1.2-2' }} MAD</strong>
+        &nbsp;·&nbsp;
+        TTC : <strong>{{ fusionMontantTotalTTC | number:'1.2-2' }} MAD</strong>
+      </span>
     </div>
   </div>
 
@@ -65,67 +69,86 @@
   <!-- Breadcrumb -->
   <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none surface-ground border-round-xl px-3 py-2" />
 
-  <!-- Toolbar filtres -->
-  <p-toolbar styleClass="surface-card border-round-xl shadow-1 px-3 py-2">
-    <ng-template pTemplate="start">
-      <form [formGroup]="filterForm" class="flex flex-wrap align-items-center gap-2">
+  <!-- Ligne 1 : Filtres seuls -->
+  <div class="surface-card border-round-xl shadow-1 px-3 py-2">
+    <form [formGroup]="filterForm" class="flex flex-wrap align-items-center gap-2">
 
-        <!-- Banque -->
-        <p-dropdown
-          formControlName="banqueId"
-          [options]="banques"
-          placeholder="Banque"
-          [showClear]="true"
-          styleClass="w-12rem">
-        </p-dropdown>
+      <p-dropdown
+        formControlName="banqueId"
+        [options]="banques"
+        placeholder="Banque"
+        [showClear]="true"
+        styleClass="w-12rem" />
 
-        <!-- Libellé / N° caution -->
+      <input
+        pInputText
+        formControlName="libelle"
+        placeholder="Libellé / N° caution"
+        class="w-14rem" />
+
+      <span class="p-input-icon-left">
+        <i class="pi pi-wallet"></i>
         <input
           pInputText
-          formControlName="libelle"
-          placeholder="Libellé / N° caution"
-          class="w-14rem" />
+          type="number"
+          formControlName="montant"
+          placeholder="Montant"
+          (input)="applyFilters()"
+          [style]="{'width':'130px'}" />
+      </span>
 
-        <span class="p-input-icon-left">
-          <i class="pi pi-wallet"></i>
-          <input
-            pInputText
-            type="number"
-            formControlName="montant"
-            placeholder="Montant"
-            (input)="applyFilters()"
-            [style]="{'width':'130px'}"/>
+      <p-button
+        icon="pi pi-filter-slash"
+        severity="secondary"
+        [outlined]="true"
+        pTooltip="Réinitialiser les filtres"
+        (onClick)="clearFilters()" />
+
+    </form>
+  </div>
+
+  <!-- Ligne 2 : Agrégats + sélection/fusion -->
+  <div class="surface-card border-round-xl shadow-1 px-4 py-3 flex justify-content-between align-items-center  gap-3">
+
+    <!-- Section Total filtré -->
+    <div class="flex flex-column gap-1">
+      <i class="pi pi-calculator text-2xl text-primary"></i>
+
+      <span class="text-xs text-color-secondary font-medium uppercase">Total commissions filtrées</span>
+      <div class="flex align-items-baseline gap-3">
+        <span class="text-xl font-bold text-primary">
+          {{ totalMontant | number:'1.2-2' }}
+          <span class="text-xs font-normal text-color-secondary">MAD HT</span>
         </span>
+        <span class="text-base font-semibold text-color-secondary">
+          {{ totalMontantTTC | number:'1.2-2' }}
+          <span class="text-xs font-normal">MAD TTC</span>
+        </span>
+      </div>
+    </div>
 
-        <!-- Reset -->
-        <p-button
-          icon="pi pi-filter-slash"
-          severity="secondary"
-          [outlined]="true"
-          pTooltip="Réinitialiser les filtres"
-          (onClick)="clearFilters()" />
+    <!-- Séparateur + sélection (droite) — visible dès qu'au moins 1 ligne cochée -->
+    @if (isAdmin && selectionCount>0){
+      <ng-container >
 
-      </form>
-    </ng-template>
+        <div class="border-left-1 surface-border mx-2 h-2rem"></div>
 
-    <ng-template pTemplate="end">
-      <!-- Bandeau sélection — visible dès qu'au moins 1 ligne est cochée -->
-      <div *ngIf="isAdmin && selectionCount > 0"
-           class="flex align-items-center gap-2">
-
-        <!-- Résumé -->
-        <div class="surface-ground border-round px-3 py-2 flex align-items-center gap-2">
-          <i class="pi pi-check-square text-warning"></i>
-          <span class="font-medium text-sm">
-            {{ selectionCount }} sélectionnée(s)
+        <i class="pi pi-check-square text-warning text-xl"></i>
+        <div class="flex flex-column gap-1">
+          <span class="text-xs text-color-secondary font-medium uppercase">Sélection</span>
+          <div class="flex align-items-baseline gap-3">
+          <span class="text-xl font-bold text-warning">
+            {{ fusionMontantTotal | number:'1.2-2' }}
+            <span class="text-xs font-normal text-color-secondary">MAD HT</span>
           </span>
-          <span class="text-color-secondary">·</span>
-          <span class="font-bold text-sm text-warning">
-            {{ fusionMontantTotal | number:'1.2-2' }} MAD
+            <span class="text-base font-semibold text-color-secondary">
+            {{ fusionMontantTotalTTC | number:'1.2-2' }}
+              <span class="text-xs font-normal">MAD TTC</span>
           </span>
+          </div>
         </div>
+        <p-tag [value]="selectionCount + ' sélectionnée(s)'" severity="warning" />
 
-        <!-- Vider la sélection -->
         <p-button
           icon="pi pi-times"
           severity="secondary"
@@ -134,33 +157,18 @@
           pTooltip="Vider la sélection"
           (onClick)="clearSelection()" />
 
-        <!-- Fusionner -->
         <p-button
           *ngIf="canFusionner"
           label="Fusionner"
           icon="pi pi-code"
           severity="warning"
           size="small"
-          pTooltip="Fusionner les {{ selectionCount }} commissions sélectionnées"
           (onClick)="openFusionDialog()" />
+      </ng-container>
+    }
 
-      </div>
-    </ng-template>
-  </p-toolbar>
 
-  <!-- Carte total agrégat -->
-  <div class="surface-card border-round-xl shadow-1 px-4 py-3 flex align-items-center gap-3">
-    <i class="pi pi-calculator text-2xl text-primary"></i>
-    <div class="flex flex-column">
-      <span class="text-xs text-color-secondary font-medium uppercase">Total commissions filtrées</span>
-      <span class="text-xl font-bold text-primary">
-        {{ totalMontant | number:'1.2-2' }} MAD
-      </span>
-    </div>
-    <p-tag
-      [value]="totalRecords + ' enregistrement(s)'"
-      severity="info"
-      styleClass="ml-auto" />
+
   </div>
 
   <!-- Table -->
