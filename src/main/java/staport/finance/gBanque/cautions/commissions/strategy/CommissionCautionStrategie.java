@@ -62,7 +62,7 @@ public interface CommissionCautionStrategie {
      * ne sera créée lors de la génération mensuelle.
      */
     default boolean genererTva() {
-        return true;
+        return false;
     }
 
     /**

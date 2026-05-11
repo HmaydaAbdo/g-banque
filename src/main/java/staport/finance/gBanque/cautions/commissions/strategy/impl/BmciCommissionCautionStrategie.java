@@ -44,6 +44,12 @@ public class BmciCommissionCautionStrategie implements CommissionCautionStrategi
         return NOM_BANQUE;
     }
 
+    /** BMCI : TVA générée séparément (10 % du montant HT). */
+    @Override
+    public boolean genererTva() {
+        return true;
+    }
+
     @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
         YearMonth moisCommission = moisReference.plusMonths(1);

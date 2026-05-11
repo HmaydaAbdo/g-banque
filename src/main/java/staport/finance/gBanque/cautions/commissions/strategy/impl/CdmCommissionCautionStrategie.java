@@ -22,22 +22,21 @@ import java.time.YearMonth;
  *   <li>Date d'émission = <strong>premier jour</strong> du mois de référence</li>
  *   <li>Libellé = {@code "caution " + nature.code + " N° " + numeroCaution}</li>
  *   <li>Motif = {@code "CAUTION"} (stocké dans {@code observation})</li>
- *   <li>Montant = {@code (montant × taux × nombreJours) / 36000}
+ *   <li>Montant HT = {@code (montant × taux × nombreJours) / 36000}
  *       où {@code taux} est en pourcentage (ex : 1.25 pour 1,25 %)
  *       et {@code nombreJours} = nombre de jours calendaires du mois de référence</li>
  *   <li>Arrondi : HALF_UP, 2 décimales</li>
  *   <li>Minimum : 70,00 MAD</li>
+ *   <li>TVA non générée séparément (default genererTva = false)</li>
+ *   <li>Exécution en début de mois (1er jour)</li>
  * </ul>
- *
- * <p>Différence clé vs BMCI : CDM émet la commission au <em>début</em> du mois
- * (1er jour) alors que BMCI émet à la fin du mois suivant.
  */
 @Component
 public class CdmCommissionCautionStrategie implements CommissionCautionStrategie {
 
     private static final String NOM_BANQUE = "CDM";
 
-    /** Minimum applicable sur le montant HT avant ajout de la TVA. */
+    /** Minimum applicable sur le montant HT. */
     private static final BigDecimal MIN_COMMISSION_HT = new BigDecimal("70");
 
     /**
@@ -46,24 +45,9 @@ public class CdmCommissionCautionStrategie implements CommissionCautionStrategie
      */
     private static final BigDecimal DIVISEUR = new BigDecimal("36000");
 
-    /**
-     * Facteur TTC : 1 + taux TVA (10 %).
-     * Le montant de la commission CDM est stocké TTC — aucune TVA séparée n'est générée.
-     */
-    private static final BigDecimal FACTEUR_TTC = new BigDecimal("1.10");
-
     @Override
     public String nomBanque() {
         return NOM_BANQUE;
-    }
-
-    /**
-     * CDM : le montant de la commission inclut déjà la TVA.
-     * Aucune entrée ImpotEtTaxe ne doit être générée séparément.
-     */
-    @Override
-    public boolean genererTva() {
-        return false;
     }
 
     /**
@@ -81,20 +65,17 @@ public class CdmCommissionCautionStrategie implements CommissionCautionStrategie
         LocalDate dateEmission = moisReference.atDay(1);
 
         // Montant HT = (montant × taux × jours) / 36000
-        BigDecimal montantHt = caution.getMontant()
+        BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
                 .divide(DIVISEUR, 2, RoundingMode.HALF_UP);
 
-        // Appliquer le minimum CDM (70 MAD) sur le HT
-        if (montantHt.compareTo(MIN_COMMISSION_HT) < 0) {
-            montantHt = MIN_COMMISSION_HT;
+        // Appliquer le minimum CDM (70 MAD)
+        if (montantCommission.compareTo(MIN_COMMISSION_HT) < 0) {
+            montantCommission = MIN_COMMISSION_HT;
         }
 
-        // Montant TTC = HT × 1.10 — la TVA est incluse dans la commission CDM
-        BigDecimal montantCommission = montantHt
-                .multiply(FACTEUR_TTC)
-                .setScale(2, RoundingMode.HALF_UP);
+        montantCommission = montantCommission.setScale(2, RoundingMode.HALF_UP);
 
         // Libellé : "caution nature.code N° numeroCaution"
         String libelle = "caution " + caution.getNature().getCode() + " N° " + caution.getNumeroCaution();
