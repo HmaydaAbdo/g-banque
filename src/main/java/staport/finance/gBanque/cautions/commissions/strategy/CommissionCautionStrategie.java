@@ -78,4 +78,17 @@ public interface CommissionCautionStrategie {
     default boolean executerEnDebutMois() {
         return false;
     }
+
+    /**
+     * Indique si cette stratégie applique le prorata temporis sur le premier mois.
+     *
+     * <p>Retourne {@code false} par défaut — la commission porte sur le mois complet.
+     *
+     * <p>Retourner {@code true} pour les banques qui facturent uniquement les jours
+     * écoulés entre la {@code dateDePrise} et la fin du mois lors du premier mois
+     * d'existence de la caution. Les mois suivants restent calculés sur le mois complet.
+     */
+    default boolean appliquerProrata() {
+        return false;
+    }
 }

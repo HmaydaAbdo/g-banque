@@ -10,6 +10,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
+
 
 /**
  * Stratégie de calcul des commissions sur cautions pour la banque AWB.
@@ -48,12 +50,32 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
     }
 
     @Override
+    public boolean appliquerProrata() {
+        return true;
+    }
+
+    @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
         // AWB : commission pour le mois de référence (pas de décalage)
-        int nombreJours        = moisReference.lengthOfMonth();
         LocalDate dateEmission = moisReference.atEndOfMonth();
 
+        // Prorata : si c'est le mois de création de la caution, on ne facture
+        // que les jours réels entre dateDePrise (inclus) et fin de mois (inclus).
+        // Les mois suivants → mois complet.
+        long nombreJours;
+        if (caution.getDateDePrise() != null
+                && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
+            // borne exclusive → plusDays(1) pour inclure le dernier jour du mois
+            nombreJours = ChronoUnit.DAYS.between(
+                    caution.getDateDePrise(),
+                    moisReference.atEndOfMonth().plusDays(1)
+            );
+        } else {
+            nombreJours = moisReference.lengthOfMonth();
+        }
+
         // Montant HT = (montant × taux × jours) / 36000
+        // nombreJours = jours réels du mois (prorata 1er mois) ou lengthOfMonth()
         BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
