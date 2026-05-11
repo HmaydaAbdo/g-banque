@@ -70,8 +70,9 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public ResultatGenerationCommissionDto generer(YearMonth moisReference) {
-        logger.info("Début génération commissions cautions — mois référence : {}", moisReference);
+    public ResultatGenerationCommissionDto generer(YearMonth moisReference, boolean debutMois) {
+        logger.info("Début génération commissions cautions — mois référence : {}, débutMois : {}",
+                moisReference, debutMois);
 
         // 1. Chargement en une seule requête (EntityGraph banque + nature + marche)
         List<Caution> cautions = cautionRepository.findActivesAvecBanqueEtNature();
@@ -92,8 +93,17 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
                 continue;
             }
 
-            // 3. Calcul de la commission (délégué à la stratégie) + liaison caution
-            Commission commission = strategieOpt.get().calculer(caution, moisReference);
+            // 3. Filtrer selon le moment d'exécution (début ou fin de mois)
+            CommissionCautionStrategie strategie = strategieOpt.get();
+            if (strategie.executerEnDebutMois() != debutMois) {
+                logger.debug("Stratégie {} ignorée — moment d'exécution incompatible (attendu debutMois={})",
+                        nomBanque, debutMois);
+                ignorees++;
+                continue;
+            }
+
+            // 4. Calcul de la commission (délégué à la stratégie) + liaison caution
+            Commission commission = strategie.calculer(caution, moisReference);
             commission.setCaution(caution);
             aCreer.add(commission);
         }

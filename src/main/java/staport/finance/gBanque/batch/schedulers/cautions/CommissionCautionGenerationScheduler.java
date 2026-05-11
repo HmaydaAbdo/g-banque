@@ -12,16 +12,19 @@ import java.time.YearMonth;
 /**
  * Scheduler de génération mensuelle des commissions sur cautions.
  *
- * <p>S'exécute automatiquement le 1er jour de chaque mois à 03h00
- * (heure de Casablanca). Le mois de référence transmis au service est
- * le mois courant au moment de l'exécution.
- *
- * <p>Exemple : exécution le 01/04/2026 à 03h00 → moisReference = 2026-04.
- * Chaque stratégie banque détermine ensuite son propre mois cible :
+ * <p>Deux déclenchements distincts selon la banque :
  * <ul>
- *   <li>BMCI / CDM : M+1 ou M selon configuration</li>
- *   <li>AWB : mois de référence lui-même (M)</li>
+ *   <li><b>Fin de mois (dernier jour à 20h00)</b> — AWB, BMCI : stratégies dont
+ *       {@code executerEnDebutMois() = false}</li>
+ *   <li><b>Début de mois (1er jour à 03h00)</b> — CDM : stratégies dont
+ *       {@code executerEnDebutMois() = true}</li>
  * </ul>
+ *
+ * <p>Exemple fin de mois : exécution le 30/04/2026 à 20h00 → moisReference = 2026-04
+ * → AWB émet le 30/04, BMCI émet le 30/04 pour le mois M+1.
+ *
+ * <p>Exemple début de mois : exécution le 01/04/2026 à 03h00 → moisReference = 2026-04
+ * → CDM émet le 01/04.
  */
 @Component
 public class CommissionCautionGenerationScheduler {
@@ -35,38 +38,56 @@ public class CommissionCautionGenerationScheduler {
     }
 
     /**
-     * Génère les commissions + TVA sur cautions — exécution à la fin de chaque mois.
+     * Génère les commissions de fin de mois — AWB et BMCI.
      *
-     * <p>Expression cron (6 champs Spring / Quartz) :
+     * <p>Déclenchement : dernier jour du mois à 20h00 (Africa/Casablanca).
      * <pre>
      *   0    0    20   L    *    ?
      *   sec  min  h    dom  mois dow
      * </pre>
-     * Déclenchement : dernier jour du mois à 20h00 (Africa/Casablanca).
-     *
-     * <ul>
-     *   <li>L = dernier jour du mois (28, 29, 30 ou 31 selon le mois)</li>
-     *   <li>? = valeur requise pour "day-of-week" quand "day-of-month" est spécifié</li>
-     * </ul>
      */
     @Scheduled(cron = "0 0 20 L * ?", zone = "Africa/Casablanca")
-    public void genererCommissionsMensuelles() {
+    public void genererCommissionsFinDeMois() {
         YearMonth moisReference = YearMonth.now();
-        log.info("=== Déclenchement génération commissions cautions — mois référence : {} ===", moisReference);
+        log.info("=== [FIN DE MOIS] Déclenchement génération commissions cautions (AWB, BMCI) — mois référence : {} ===",
+                moisReference);
 
         try {
-            ResultatGenerationCommissionDto resultat = generationService.generer(moisReference);
+            ResultatGenerationCommissionDto resultat = generationService.generer(moisReference, false);
 
-            log.info("=== Génération terminée — {} commission(s) + TVA créée(s), {} ignorée(s) — mois référence : {} ===",
-                    resultat.generees(),
-                    resultat.ignorees(),
-                    moisReference);
+            log.info("=== [FIN DE MOIS] Génération terminée — {} commission(s) + TVA créée(s), {} ignorée(s) ===",
+                    resultat.generees(), resultat.ignorees());
 
         } catch (Exception e) {
-            log.error("Erreur lors de la génération automatique des commissions cautions — mois référence : {} : {}",
+            log.error("[FIN DE MOIS] Erreur lors de la génération automatique des commissions cautions — mois référence : {} : {}",
                     moisReference, e.getMessage(), e);
-            // L'exception est capturée pour ne pas interrompre le scheduler —
-            // la prochaine exécution aura lieu le mois suivant normalement.
+        }
+    }
+
+    /**
+     * Génère les commissions de début de mois — CDM.
+     *
+     * <p>Déclenchement : 1er jour du mois à 03h00 (Africa/Casablanca).
+     * <pre>
+     *   0    0    3    1    *    ?
+     *   sec  min  h    dom  mois dow
+     * </pre>
+     */
+    @Scheduled(cron = "0 0 3 1 * ?", zone = "Africa/Casablanca")
+    public void genererCommissionsDebutDeMois() {
+        YearMonth moisReference = YearMonth.now();
+        log.info("=== [DÉBUT DE MOIS] Déclenchement génération commissions cautions (CDM) — mois référence : {} ===",
+                moisReference);
+
+        try {
+            ResultatGenerationCommissionDto resultat = generationService.generer(moisReference, true);
+
+            log.info("=== [DÉBUT DE MOIS] Génération terminée — {} commission(s) créée(s), {} ignorée(s) ===",
+                    resultat.generees(), resultat.ignorees());
+
+        } catch (Exception e) {
+            log.error("[DÉBUT DE MOIS] Erreur lors de la génération automatique des commissions cautions — mois référence : {} : {}",
+                    moisReference, e.getMessage(), e);
         }
     }
 }

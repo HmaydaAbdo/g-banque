@@ -25,5 +25,12 @@ public interface IGenerationCommissionCautionService {
      * @param moisReference mois X de référence (mois en cours) — les commissions ciblent X+1
      * @return résumé de l'exécution : nombre de commissions créées et ignorées
      */
-    ResultatGenerationCommissionDto generer(YearMonth moisReference);
+    /**
+     * Génère les commissions pour toutes les cautions actives selon le moment d'exécution.
+     *
+     * @param moisReference mois de référence
+     * @param debutMois     {@code true} → stratégies début de mois (CDM),
+     *                      {@code false} → stratégies fin de mois (AWB, BMCI)
+     */
+    ResultatGenerationCommissionDto generer(YearMonth moisReference, boolean debutMois);
 }

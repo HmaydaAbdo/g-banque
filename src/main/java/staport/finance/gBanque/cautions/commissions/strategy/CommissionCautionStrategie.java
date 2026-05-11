@@ -64,4 +64,18 @@ public interface CommissionCautionStrategie {
     default boolean genererTva() {
         return true;
     }
+
+    /**
+     * Indique si cette stratégie doit s'exécuter en début de mois (1er jour)
+     * plutôt qu'en fin de mois (dernier jour).
+     *
+     * <p>Retourne {@code false} par défaut — la plupart des banques (AWB, BMCI)
+     * génèrent leurs commissions en fin de mois.
+     *
+     * <p>Retourner {@code true} pour les banques dont la commission est émise
+     * au 1er jour du mois (ex. CDM).
+     */
+    default boolean executerEnDebutMois() {
+        return false;
+    }
 }

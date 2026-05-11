@@ -66,6 +66,14 @@ public class CdmCommissionCautionStrategie implements CommissionCautionStrategie
         return false;
     }
 
+    /**
+     * CDM : commission émise le 1er jour du mois → exécution en début de mois.
+     */
+    @Override
+    public boolean executerEnDebutMois() {
+        return true;
+    }
+
     @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
         // CDM : commission pour le mois de référence, émise le 1er du mois
