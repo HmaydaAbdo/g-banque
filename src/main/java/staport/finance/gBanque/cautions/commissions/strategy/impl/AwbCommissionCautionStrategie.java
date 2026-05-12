@@ -55,17 +55,20 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
 
         // Prorata entrée : 1er mois de la caution → de dateDePrise à fin de mois
         long nombreJours;
+        String suffixeLibelle;
         if (caution.getDateDePrise() != null
                 && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
             nombreJours = ChronoUnit.DAYS.between(
                     caution.getDateDePrise(),
                     moisReference.atEndOfMonth().plusDays(1) // borne exclusive
             );
+            suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
         } else {
-            nombreJours = moisReference.lengthOfMonth();
+            nombreJours    = moisReference.lengthOfMonth();
+            suffixeLibelle = " — Mois entier : " + nombreJours + " j";
         }
 
-        return buildCommission(caution, nombreJours, dateEmission);
+        return buildCommission(caution, nombreJours, dateEmission, suffixeLibelle);
     }
 
     @Override
@@ -78,14 +81,20 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
                 moisMainLevee.atDay(1),
                 dateDeMainLevee.plusDays(1) // borne exclusive
         );
+        String suffixeLibelle = " — Prorata sortie : " + nombreJours + " j";
 
-        return buildCommission(caution, nombreJours, dateEmission);
+        return buildCommission(caution, nombreJours, dateEmission, suffixeLibelle);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /** Formule commune : (montant × taux × jours) / 36000, minimum 20 MAD. */
-    private Commission buildCommission(Caution caution, long nombreJours, LocalDate dateEmission) {
+    /**
+     * Formule commune : (montant × taux × jours) / 36000, minimum 20 MAD.
+     * Le suffixe précise le mode de calcul dans le libellé
+     * (ex. " — Prorata entrée : 17 j", " — Mois entier : 31 j").
+     */
+    private Commission buildCommission(Caution caution, long nombreJours,
+                                       LocalDate dateEmission, String suffixeLibelle) {
         BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
@@ -95,7 +104,8 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
             montantCommission = MIN_COMMISSION_HT;
         }
 
-        String libelle = "caution " + caution.getNature().getCode() + " N° " + caution.getNumeroCaution();
+        String libelle = "caution " + caution.getNature().getCode()
+                + " N° " + caution.getNumeroCaution() + suffixeLibelle;
 
         Commission commission = new Commission();
         commission.setBanque(caution.getBanque());

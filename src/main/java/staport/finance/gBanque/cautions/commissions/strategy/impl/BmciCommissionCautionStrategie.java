@@ -67,8 +67,10 @@ public class BmciCommissionCautionStrategie implements CommissionCautionStrategi
             montantCommission = MIN_COMMISSION;
         }
 
-        // Libellé : "nature.code numeroCaution"
-        String libelle = "caution " + caution.getNature().getCode() + " N° " + caution.getNumeroCaution();
+        // Libellé : "caution nature.code N° numeroCaution — Mois entier : X j"
+        String libelle = "caution " + caution.getNature().getCode()
+                + " N° " + caution.getNumeroCaution()
+                + " — Mois entier : " + nombreJours + " j";
 
         Commission commission = new Commission();
         commission.setBanque(caution.getBanque());
