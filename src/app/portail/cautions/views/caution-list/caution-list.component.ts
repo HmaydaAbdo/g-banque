@@ -9,10 +9,11 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
@@ -32,11 +33,12 @@ import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/
 import { CautionService } from '../../service/caution.service';
 import { CautionResponseDto } from '../../dtos/CautionResponseDto';
 import { CautionSearchDto } from '../../dtos/CautionSearchDto';
+import { CloturerCautionRequest } from '../../dtos/CloturerCautionRequest';
+import { toLocalDateString } from '../../../global/types/date.utils';
 import { AuthService } from '../../../../auth/services/auth.service';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { MarcheService } from '../../../Marches/service/marche-service.service';
 import { NatureLigneFonctionnelleService } from '../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service';
-import { toLocalDateString } from '../../../global/types/date.utils';
 
 const MARCHE_PAGE_SIZE = 15;
 
@@ -45,8 +47,8 @@ const MARCHE_PAGE_SIZE = 15;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, ReactiveFormsModule, RouterLink, TableModule, ButtonModule, DropdownModule,
-    InputTextModule, TagModule, ToastModule, ToolbarModule, TooltipModule,
+    CommonModule, ReactiveFormsModule, RouterLink, TableModule, ButtonModule, DialogModule,
+    DropdownModule, InputTextModule, TagModule, ToastModule, ToolbarModule, TooltipModule,
     BreadcrumbModule, ConfirmDialogModule, CalendarModule, InputNumberModule,
     DecimalPipe, DatePipe, Ripple,
   ],
@@ -72,6 +74,7 @@ export class CautionListComponent implements OnInit {
   readonly loading$       = this.cautionService.loading$;
 
   readonly isAdmin = this.authService.isAdmin();
+  readonly today   = new Date();
 
   // ── Reactive filter form ──────────────────────────────────────────────────
   filterForm: FormGroup = this.fb.group({
@@ -103,6 +106,14 @@ export class CautionListComponent implements OnInit {
   marchesScrollerOptions: ScrollerOptions = { delay: 250, showLoader: true, lazy: true };
 
   breadcrumbItems: MenuItem[] = [];
+
+  // ── Clôture dialog ────────────────────────────────────────────────────────
+  showCloturerDialog  = false;
+  cloturerLoading     = false;
+  cloturerTarget: CautionResponseDto | null = null;
+  cloturerForm: FormGroup = this.fb.group({
+    dateDeMainLevee: [null, Validators.required],
+  });
 
   // ─────────────────────────────────────────────────────────────────────────
   ngOnInit(): void {
@@ -279,35 +290,48 @@ export class CautionListComponent implements OnInit {
     return actif ? 'success' : 'danger';
   }
 
-  toggleActif(caution: CautionResponseDto): void {
-    this.confirmationService.confirm({
-      message: `Désactiver la caution <strong>${caution.numeroCaution}</strong> ? Cette opération est irréversible depuis l'interface.`,
-      header: 'Confirmer la désactivation',
-      icon: 'pi pi-power-off',
-      acceptLabel: 'Désactiver',
-      rejectLabel: 'Annuler',
-      acceptButtonStyleClass: 'p-button-warning',
-      accept: () => {
-        this.cautionService.toggleActif(caution.id)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe({
-            next: updated => {
-              this.cautionService.updateInList(updated);
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Désactivée',
-                detail: `Caution ${caution.numeroCaution} désactivée avec succès.`,
-              });
-              this.cdr.markForCheck();
-            },
-            error: err => this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: err.error?.message ?? 'Impossible de modifier le statut.',
-            }),
+  ouvrirCloturerDialog(caution: CautionResponseDto): void {
+    this.cloturerTarget = caution;
+    this.cloturerForm.reset();
+    this.showCloturerDialog = true;
+    this.cdr.markForCheck();
+  }
+
+  confirmerCloture(): void {
+    if (this.cloturerForm.invalid || !this.cloturerTarget) return;
+
+    this.cloturerLoading = true;
+    this.cdr.markForCheck();
+
+    const request: CloturerCautionRequest = {
+      dateDeMainLevee: toLocalDateString(this.cloturerForm.value.dateDeMainLevee)!,
+    };
+
+    this.cautionService.cloturer(this.cloturerTarget.id, request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.cautionService.updateInList(res.caution);
+          this.cloturerLoading    = false;
+          this.showCloturerDialog = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Caution clôturée',
+            detail: `Commission générée : ${res.commission.montant.toFixed(2)} MAD`,
+            life: 6000,
           });
-      },
-    });
+          this.cdr.markForCheck();
+        },
+        error: err => {
+          this.cloturerLoading = false;
+          this.cdr.markForCheck();
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur de clôture',
+            detail: err.error?.message ?? 'Impossible de clôturer la caution.',
+          });
+        },
+      });
   }
 
   supprimer(caution: CautionResponseDto): void {

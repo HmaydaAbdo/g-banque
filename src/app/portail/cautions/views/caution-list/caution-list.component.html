@@ -1,6 +1,69 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
+<!-- ── Dialog Clôture ──────────────────────────────────────────────────── -->
+<p-dialog
+  header="Clôturer la caution"
+  [(visible)]="showCloturerDialog"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false">
+
+  <div class="surface-ground border-round p-3 mb-4" *ngIf="cloturerTarget">
+    <div class="flex align-items-center gap-2 mb-1">
+      <i class="pi pi-shield text-primary"></i>
+      <span class="font-semibold">{{ cloturerTarget.numeroCaution }}</span>
+    </div>
+    <div class="flex align-items-center gap-2 text-color-secondary text-sm">
+      <i class="pi pi-building"></i>
+      <span>{{ cloturerTarget.banqueNom }} · {{ cloturerTarget.organisme }}</span>
+    </div>
+    <div class="flex align-items-center gap-2 text-color-secondary text-sm mt-1">
+      <i class="pi pi-wallet"></i>
+      <span>{{ cloturerTarget.montant | number:'1.2-2' }} MAD</span>
+    </div>
+  </div>
+
+  <form [formGroup]="cloturerForm" class="flex flex-column gap-3">
+    <div class="flex flex-column gap-1">
+      <label class="font-medium text-sm">
+        Date de main levée <span class="text-red-500">*</span>
+      </label>
+      <p-calendar
+        formControlName="dateDeMainLevee"
+        dateFormat="dd/mm/yy"
+        [maxDate]="today"
+        [showIcon]="true"
+        appendTo="body"
+        placeholder="jj/mm/aaaa">
+      </p-calendar>
+      <small *ngIf="cloturerForm.get('dateDeMainLevee')?.invalid && cloturerForm.get('dateDeMainLevee')?.touched"
+             class="text-red-500">La date de main levée est obligatoire.</small>
+    </div>
+    <div class="flex align-items-center gap-2 p-3 border-round surface-100 text-sm text-color-secondary">
+      <i class="pi pi-info-circle text-primary"></i>
+      <span>Une commission de clôture sera générée automatiquement selon la stratégie de la banque.</span>
+    </div>
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="showCloturerDialog = false" />
+    <p-button
+      label="Confirmer la clôture"
+      icon="pi pi-lock"
+      severity="warning"
+      [loading]="cloturerLoading"
+      [disabled]="cloturerForm.invalid"
+      (onClick)="confirmerCloture()" />
+  </ng-template>
+</p-dialog>
+
 <div class="flex flex-column w-screen h-screen overflow-y-scroll gap-3 p-3 pb-6"
      style="background:#f4f6fb;box-sizing:border-box">
 
@@ -221,10 +284,10 @@
                       pTooltip="Modifier" tooltipPosition="top">
               </button>
               <button *ngIf="isAdmin && caution.actif"
-                      pButton pRipple icon="pi pi-power-off"
+                      pButton pRipple icon="pi pi-lock"
                       class="p-button-rounded p-button-text p-button-warning p-button-sm"
-                      (click)="toggleActif(caution)"
-                      pTooltip="Désactiver" tooltipPosition="top">
+                      (click)="ouvrirCloturerDialog(caution)"
+                      pTooltip="Clôturer" tooltipPosition="top">
               </button>
               <button *ngIf="isAdmin && caution.actif"
                       pButton pRipple icon="pi pi-trash"

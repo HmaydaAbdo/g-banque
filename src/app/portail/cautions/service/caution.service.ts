@@ -2,10 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { CautionResponseDto }  from '../dtos/CautionResponseDto';
-import { CautionRequestDto }   from '../dtos/CautionRequestDto';
-import { CautionSearchDto }    from '../dtos/CautionSearchDto';
-import { PageResponse }        from '../../global/types/PageResponse';
+import { CautionResponseDto }      from '../dtos/CautionResponseDto';
+import { CautionRequestDto }       from '../dtos/CautionRequestDto';
+import { CautionSearchDto }        from '../dtos/CautionSearchDto';
+import { CloturerCautionRequest }  from '../dtos/CloturerCautionRequest';
+import { CloturerCautionResponse } from '../dtos/CloturerCautionResponse';
+import { PageResponse }            from '../../global/types/PageResponse';
 
 /**
  * Service HTTP + état réactif pour le module Caution.
@@ -103,11 +105,12 @@ export class CautionService {
   }
 
   /**
-   * Bascule l'état actif/inactif d'une caution.
-   * Le backend refuse si des commissions ou TVA sont en cours (statut PREVU).
+   * Clôture une caution active (main levée).
+   * Génère la commission de clôture selon la stratégie de la banque,
+   * puis marque la caution inactive avec sa date de main levée.
    */
-  toggleActif(id: number): Observable<CautionResponseDto> {
-    return this.http.patch<CautionResponseDto>(`${this.apiUrl}/${id}/toggle-actif`, {});
+  cloturer(id: number, request: CloturerCautionRequest): Observable<CloturerCautionResponse> {
+    return this.http.post<CloturerCautionResponse>(`${this.apiUrl}/${id}/cloturer`, request);
   }
 
   /**
