@@ -194,43 +194,6 @@ public class CautionServiceImpl implements ICautionService {
         return page.map(cautionMapper::toDto);
     }
 
-    // ── Toggle Actif ──────────────────────────────────────────────────────────
-
-    @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public CautionResponseDto toggleActif(Long id) {
-        logger.info("Toggle actif caution — id: {}", id);
-
-        Caution caution = trouverOuLeverException(id);
-
-        // Garde désactivation : vérifier les encours uniquement quand on passe actif → inactif
-        if (Boolean.TRUE.equals(caution.getActif())) {
-
-            if (commissionRepository.existsByCaution_IdAndStatus(id, Status.PREVU)) {
-                throw new CautionBusinessException(
-                    "Impossible de désactiver la caution id: " + id +
-                    " — elle possède une commission en cours (statut PREVU)."
-                );
-            }
-
-            if (impotEtTaxeRepository.existsByCaution_IdAndMotifAndStatus(
-                    id, Motif.TVA_COMMISSION_CAUTION, Status.PREVU)) {
-                throw new CautionBusinessException(
-                    "Impossible de désactiver la caution id: " + id +
-                    " — elle possède une TVA sur commission non réglée (statut PREVU)."
-                );
-            }
-        }
-
-        boolean nouvelEtat = !Boolean.TRUE.equals(caution.getActif());
-        caution.setActif(nouvelEtat);
-
-        cautionRepository.save(caution);
-        logger.info("Caution id: {} → actif: {}", id, nouvelEtat);
-
-        return toDto(id);
-    }
-
     // ── Suppression (hard delete) ─────────────────────────────────────────────
 
     @Override

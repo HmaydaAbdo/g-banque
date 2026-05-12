@@ -106,14 +106,6 @@ public class CautionController {
         return ResponseEntity.ok(cautionService.modifier(id, dto));
     }
 
-    // ── Toggle Actif (activation / désactivation manuelle) ───────────────────
-
-    @PatchMapping("/{id}/toggle-actif")
-    public ResponseEntity<CautionResponseDto> toggleActif(@PathVariable Long id) {
-        logger.info("PATCH /cautions/{}/toggle-actif", id);
-        return ResponseEntity.ok(cautionService.toggleActif(id));
-    }
-
     // ── Suppression (soft-delete) ─────────────────────────────────────────────
 
     @DeleteMapping("/{id}")

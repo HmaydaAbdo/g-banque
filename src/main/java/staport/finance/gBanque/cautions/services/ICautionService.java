@@ -59,20 +59,6 @@ public interface ICautionService {
     Page<CautionResponseDto> rechercher(CautionSearchCriteria criteres, Pageable pageable);
 
     /**
-     * Bascule l'état {@code actif} d'une caution (activation / désactivation manuelle).
-     *
-     * <p>Règles métier appliquées :
-     * <ul>
-     *   <li>Une caution déjà inactive ne peut pas être désactivée à nouveau</li>
-     *   <li>Une caution déjà active ne peut pas être activée à nouveau</li>
-     * </ul>
-     *
-     * @param id identifiant de la caution
-     * @return DTO de réponse avec le nouvel état
-     */
-    CautionResponseDto toggleActif(Long id);
-
-    /**
      * Suppression physique (hard delete) de la caution.
      *
      * <p>Règle métier : la suppression est interdite lorsque la caution est inactive
