@@ -230,11 +230,6 @@ public class CautionServiceImpl implements ICautionService {
             throw new CautionBusinessException("La caution id: " + id + " est déjà clôturée.");
         }
 
-        if (caution.getDateDePrise() != null
-                && request.dateDeMainLevee().isBefore(caution.getDateDePrise())) {
-            throw new CautionBusinessException(
-                    "La date de main levée ne peut pas être antérieure à la date de prise.");
-        }
 
         // 3. Résolution de la stratégie
         String nomBanque = caution.getBanque().getNom();
