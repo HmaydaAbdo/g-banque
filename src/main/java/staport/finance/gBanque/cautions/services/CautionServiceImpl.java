@@ -11,23 +11,32 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.cautions.commissions.factory.CommissionCautionStrategieFactory;
+import staport.finance.gBanque.cautions.commissions.strategy.CommissionCautionStrategie;
 import staport.finance.gBanque.cautions.dtos.CautionCreateDto;
 import staport.finance.gBanque.cautions.dtos.CautionResponseDto;
 import staport.finance.gBanque.cautions.dtos.CautionSearchCriteria;
 import staport.finance.gBanque.cautions.dtos.CautionUpdateDto;
+import staport.finance.gBanque.cautions.dtos.CloturerCautionRequest;
+import staport.finance.gBanque.cautions.dtos.CloturerCautionResponse;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.cautions.exceptions.CautionBusinessException;
 import staport.finance.gBanque.cautions.mappers.CautionMapper;
 import staport.finance.gBanque.cautions.repository.CautionRepository;
 import staport.finance.gBanque.cautions.specifications.CautionSpecification;
+import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.mapper.CommissionMapper;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.enums.Motif;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Implémentation du service Caution.
@@ -59,7 +68,11 @@ public class CautionServiceImpl implements ICautionService {
     private final NatureLigneFonctionnelleRepository natureRepository;
     private final MarcheRepository                   marcheRepository;
     private final CommisionRepository                commissionRepository;
+    private final CommissionMapper                   commissionMapper;
     private final ImpotEtTaxeRepository              impotEtTaxeRepository;
+    private final CommissionCautionStrategieFactory  strategieFactory;
+
+    private static final BigDecimal TAUX_TVA = new BigDecimal("0.10");
 
     public CautionServiceImpl(
             CautionRepository cautionRepository,
@@ -68,14 +81,18 @@ public class CautionServiceImpl implements ICautionService {
             NatureLigneFonctionnelleRepository natureRepository,
             MarcheRepository marcheRepository,
             CommisionRepository commissionRepository,
-            ImpotEtTaxeRepository impotEtTaxeRepository) {
+            CommissionMapper commissionMapper,
+            ImpotEtTaxeRepository impotEtTaxeRepository,
+            CommissionCautionStrategieFactory strategieFactory) {
         this.cautionRepository    = cautionRepository;
         this.cautionMapper        = cautionMapper;
         this.banqueRepository     = banqueRepository;
         this.natureRepository     = natureRepository;
         this.marcheRepository     = marcheRepository;
         this.commissionRepository = commissionRepository;
+        this.commissionMapper     = commissionMapper;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
+        this.strategieFactory     = strategieFactory;
     }
 
     // ── Création ──────────────────────────────────────────────────────────────
@@ -232,6 +249,71 @@ public class CautionServiceImpl implements ICautionService {
 
         cautionRepository.delete(caution);
         logger.info("Caution id: {} supprimée définitivement", id);
+    }
+
+    // ── Clôture (main levée) ──────────────────────────────────────────────────
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public CloturerCautionResponse cloturer(Long id, CloturerCautionRequest request) {
+        logger.info("Clôture caution — id: {}, dateDeMainLevee: {}", id, request.dateDeMainLevee());
+
+        // 1. Chargement avec associations (banque + nature nécessaires pour la stratégie)
+        Caution caution = cautionRepository.findByIdAvecAssociations(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Caution introuvable — id: " + id));
+
+        // 2. Validations métier
+        if (Boolean.FALSE.equals(caution.getActif())) {
+            throw new CautionBusinessException("La caution id: " + id + " est déjà clôturée.");
+        }
+
+        if (caution.getDateDePrise() != null
+                && request.dateDeMainLevee().isBefore(caution.getDateDePrise())) {
+            throw new CautionBusinessException(
+                    "La date de main levée ne peut pas être antérieure à la date de prise.");
+        }
+
+        // 3. Résolution de la stratégie
+        String nomBanque = caution.getBanque().getNom();
+        CommissionCautionStrategie strategie = strategieFactory.trouver(nomBanque)
+                .orElseThrow(() -> new CautionBusinessException(
+                        "Aucune stratégie de commission enregistrée pour la banque '" + nomBanque + "'."));
+
+        // 4. Calcul et persistance de la commission de clôture
+        Commission commission = strategie.calculerMainLevee(caution, request.dateDeMainLevee());
+        commission.setCaution(caution);
+        commission = commissionRepository.save(commission);
+        logger.info("Commission de clôture générée — id: {}, montant: {}", commission.getId(), commission.getMontant());
+
+        // 5. TVA si la stratégie l'exige (ex. BMCI)
+        if (strategie.genererTva()) {
+            BigDecimal montantTva = commission.getMontant()
+                    .multiply(TAUX_TVA)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            ImpotEtTaxe tva = new ImpotEtTaxe();
+            tva.setBanque(caution.getBanque());
+            tva.setMontant(montantTva);
+            tva.setMotif(Motif.TVA_COMMISSION_CAUTION);
+            tva.setDateEmission(commission.getDateEmission());
+            tva.setLibelle("TVA " + commission.getLibelle());
+            tva.setObservation("TVA/commission/caution/cloture");
+            tva.setCommission(commission);
+            tva.setCaution(caution);
+            impotEtTaxeRepository.save(tva);
+            logger.info("TVA de clôture générée — montant: {}", montantTva);
+        }
+
+        // 6. Clôture de la caution
+        caution.setDateDeMainLevee(request.dateDeMainLevee());
+        caution.setActif(false);
+        cautionRepository.save(caution);
+        logger.info("Caution id: {} clôturée avec succès", id);
+
+        return new CloturerCautionResponse(
+                cautionMapper.toDto(caution),
+                commissionMapper.toResponseDto(commission)
+        );
     }
 
     // ── Helpers internes ──────────────────────────────────────────────────────

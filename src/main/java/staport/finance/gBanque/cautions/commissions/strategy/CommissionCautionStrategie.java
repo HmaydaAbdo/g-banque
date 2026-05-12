@@ -38,15 +38,8 @@ public interface CommissionCautionStrategie {
     /**
      * Calcule et construit la commission mensuelle pour une caution active.
      *
-     * <p>La commission générée cible le mois {@code moisReference + 1} :
-     * <ul>
-     *   <li>date d'émission = dernier jour du mois cible</li>
-     *   <li>libellé = nature.label + " " + numeroCaution</li>
-     *   <li>motif (observation) = "CAUTION"</li>
-     * </ul>
-     *
      * @param caution       caution active avec {@code banque} et {@code nature} chargées
-     * @param moisReference mois X de référence — la commission porte sur le mois X+1
+     * @param moisReference mois X de référence
      * @return entité {@link Commission} non persistée
      */
     Commission calculer(Caution caution, YearMonth moisReference);
@@ -54,11 +47,11 @@ public interface CommissionCautionStrategie {
     /**
      * Indique si une TVA doit être générée séparément pour les commissions de cette banque.
      *
-     * <p>Retourne {@code true} par défaut — toutes les banques génèrent une TVA à 10 %
+     * <p>Retourne {@code true} pour  les banques génèrent une TVA à 10 %
      * en complément de la commission.
      *
      * <p>Retourner {@code false} pour les banques dont le montant de commission
-     * <em>inclut déjà</em> la TVA (ex. CDM) : aucune entrée {@code ImpotEtTaxe}
+     * <em>inclut déjà</em> la TVA
      * ne sera créée lors de la génération mensuelle.
      */
     default boolean genererTva() {
@@ -69,7 +62,7 @@ public interface CommissionCautionStrategie {
      * Indique si cette stratégie doit s'exécuter en début de mois (1er jour)
      * plutôt qu'en fin de mois (dernier jour).
      *
-     * <p>Retourne {@code false} par défaut — la plupart des banques (AWB, BMCI)
+     * <p>Retourne {@code false}  pour les banques
      * génèrent leurs commissions en fin de mois.
      *
      * <p>Retourner {@code true} pour les banques dont la commission est émise
@@ -80,15 +73,20 @@ public interface CommissionCautionStrategie {
     }
 
     /**
-     * Indique si cette stratégie applique le prorata temporis sur le premier mois.
+     * Calcule la commission de clôture (main levée) pour le mois partiel final.
      *
-     * <p>Retourne {@code false} par défaut — la commission porte sur le mois complet.
+     * <p>Comportement par défaut : mois complet — délègue à {@link #calculer} avec
+     * le {@link java.time.YearMonth} de {@code dateDeMainLevee}.
+     * Les banques sans prorata (CDM, BMCI) n'ont pas besoin d'override.
      *
-     * <p>Retourner {@code true} pour les banques qui facturent uniquement les jours
-     * écoulés entre la {@code dateDePrise} et la fin du mois lors du premier mois
-     * d'existence de la caution. Les mois suivants restent calculés sur le mois complet.
+     * <p>Les banques avec prorata (AWB) overrident cette méthode pour facturer
+     * uniquement les jours entre le 1er du mois et {@code dateDeMainLevee} inclus.
+     *
+     * @param caution          caution en cours de clôture, avec banque et nature chargées
+     * @param dateDeMainLevee  date effective de la main levée
+     * @return entité {@link Commission} non persistée
      */
-    default boolean appliquerProrata() {
-        return false;
+    default Commission calculerMainLevee(Caution caution, java.time.LocalDate dateDeMainLevee) {
+        return calculer(caution, java.time.YearMonth.from(dateDeMainLevee));
     }
 }

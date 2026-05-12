@@ -50,45 +50,51 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
     }
 
     @Override
-    public boolean appliquerProrata() {
-        return true;
-    }
-
-    @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
-        // AWB : commission pour le mois de référence (pas de décalage)
         LocalDate dateEmission = moisReference.atEndOfMonth();
 
-        // Prorata : si c'est le mois de création de la caution, on ne facture
-        // que les jours réels entre dateDePrise (inclus) et fin de mois (inclus).
-        // Les mois suivants → mois complet.
+        // Prorata entrée : 1er mois de la caution → de dateDePrise à fin de mois
         long nombreJours;
         if (caution.getDateDePrise() != null
                 && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
-            // borne exclusive → plusDays(1) pour inclure le dernier jour du mois
             nombreJours = ChronoUnit.DAYS.between(
                     caution.getDateDePrise(),
-                    moisReference.atEndOfMonth().plusDays(1)
+                    moisReference.atEndOfMonth().plusDays(1) // borne exclusive
             );
         } else {
             nombreJours = moisReference.lengthOfMonth();
         }
 
-        // Montant HT = (montant × taux × jours) / 36000
-        // nombreJours = jours réels du mois (prorata 1er mois) ou lengthOfMonth()
+        return buildCommission(caution, nombreJours, dateEmission);
+    }
+
+    @Override
+    public Commission calculerMainLevee(Caution caution, LocalDate dateDeMainLevee) {
+        YearMonth moisMainLevee = YearMonth.from(dateDeMainLevee);
+        LocalDate dateEmission  = dateDeMainLevee; // date effective de la main levée
+
+        // Prorata sortie : du 1er du mois jusqu'à dateDeMainLevee (inclus)
+        long nombreJours = ChronoUnit.DAYS.between(
+                moisMainLevee.atDay(1),
+                dateDeMainLevee.plusDays(1) // borne exclusive
+        );
+
+        return buildCommission(caution, nombreJours, dateEmission);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /** Formule commune : (montant × taux × jours) / 36000, minimum 20 MAD. */
+    private Commission buildCommission(Caution caution, long nombreJours, LocalDate dateEmission) {
         BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
                 .divide(DIVISEUR, 2, RoundingMode.HALF_UP);
 
-        // Appliquer le minimum AWB (20 MAD)
         if (montantCommission.compareTo(MIN_COMMISSION_HT) < 0) {
             montantCommission = MIN_COMMISSION_HT;
         }
 
-        montantCommission = montantCommission.setScale(2, RoundingMode.HALF_UP);
-
-        // Libellé : "caution nature.code N° numeroCaution"
         String libelle = "caution " + caution.getNature().getCode() + " N° " + caution.getNumeroCaution();
 
         Commission commission = new Commission();

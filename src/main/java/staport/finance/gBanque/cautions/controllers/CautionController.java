@@ -16,6 +16,8 @@ import staport.finance.gBanque.cautions.dtos.CautionCreateDto;
 import staport.finance.gBanque.cautions.dtos.CautionResponseDto;
 import staport.finance.gBanque.cautions.dtos.CautionSearchCriteria;
 import staport.finance.gBanque.cautions.dtos.CautionUpdateDto;
+import staport.finance.gBanque.cautions.dtos.CloturerCautionRequest;
+import staport.finance.gBanque.cautions.dtos.CloturerCautionResponse;
 import staport.finance.gBanque.cautions.exceptions.CautionExceptionHandler;
 import staport.finance.gBanque.cautions.services.ICautionService;
 
@@ -119,6 +121,17 @@ public class CautionController {
         logger.info("DELETE /cautions/{}", id);
         cautionService.supprimer(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── Clôture (main levée) ──────────────────────────────────────────────────
+
+    @PostMapping("/{id}/cloturer")
+    public ResponseEntity<CloturerCautionResponse> cloturer(
+            @PathVariable Long id,
+            @Valid @RequestBody CloturerCautionRequest request) {
+
+        logger.info("POST /cautions/{}/cloturer — dateDeMainLevee: {}", id, request.dateDeMainLevee());
+        return ResponseEntity.ok(cautionService.cloturer(id, request));
     }
 
     @PostMapping("/generer-commissions")

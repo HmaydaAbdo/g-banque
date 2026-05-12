@@ -6,6 +6,8 @@ import staport.finance.gBanque.cautions.dtos.CautionCreateDto;
 import staport.finance.gBanque.cautions.dtos.CautionResponseDto;
 import staport.finance.gBanque.cautions.dtos.CautionSearchCriteria;
 import staport.finance.gBanque.cautions.dtos.CautionUpdateDto;
+import staport.finance.gBanque.cautions.dtos.CloturerCautionRequest;
+import staport.finance.gBanque.cautions.dtos.CloturerCautionResponse;
 import staport.finance.gBanque.cautions.entities.Caution;
 
 /**
@@ -80,6 +82,25 @@ public interface ICautionService {
      * @param id identifiant de la caution
      */
     void supprimer(Long id);
+
+    /**
+     * Clôture une caution active : génère la commission de clôture selon la stratégie
+     * de la banque (avec prorata temporis pour AWB, mois complet pour les autres),
+     * génère la TVA si la stratégie l'exige, puis marque la caution inactive avec
+     * sa date de main levée.
+     *
+     * <p>Contraintes :
+     * <ul>
+     *   <li>La caution doit être active ({@code actif = true})</li>
+     *   <li>{@code dateDeMainLevee} ≥ {@code dateDePrise}</li>
+     *   <li>Une stratégie doit exister pour la banque de la caution</li>
+     * </ul>
+     *
+     * @param id      identifiant de la caution
+     * @param request contient la date de main levée obligatoire
+     * @return caution clôturée + commission générée
+     */
+    CloturerCautionResponse cloturer(Long id, CloturerCautionRequest request);
 
     /**
      * Méthode interne — récupère l'entité brute ou lève une exception.
