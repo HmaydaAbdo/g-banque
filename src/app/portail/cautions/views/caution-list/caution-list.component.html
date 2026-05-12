@@ -11,17 +11,26 @@
   [resizable]="false">
 
   <div class="surface-ground border-round p-3 mb-4" *ngIf="cloturerTarget">
-    <div class="flex align-items-center gap-2 mb-1">
-      <i class="pi pi-shield text-primary"></i>
-      <span class="font-semibold">{{ cloturerTarget.numeroCaution }}</span>
-    </div>
-    <div class="flex align-items-center gap-2 text-color-secondary text-sm">
-      <i class="pi pi-building"></i>
-      <span>{{ cloturerTarget.banqueNom }} · {{ cloturerTarget.organisme }}</span>
-    </div>
-    <div class="flex align-items-center gap-2 text-color-secondary text-sm mt-1">
-      <i class="pi pi-wallet"></i>
-      <span>{{ cloturerTarget.montant | number:'1.2-2' }} MAD</span>
+    <div class="grid" style="row-gap:0.5rem">
+
+      <div class="col-5 text-xs text-color-secondary font-medium uppercase">N° Caution</div>
+      <div class="col-7 text-sm font-semibold">{{ cloturerTarget.numeroCaution }}</div>
+
+      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Banque</div>
+      <div class="col-7 text-sm">{{ cloturerTarget.banqueNom }}</div>
+
+      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Organisme</div>
+      <div class="col-7 text-sm">{{ cloturerTarget.organisme }}</div>
+
+      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Montant</div>
+      <div class="col-7 text-sm font-semibold text-primary">{{ cloturerTarget.montant | number:'1.2-2' }} MAD</div>
+
+      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Taux</div>
+      <div class="col-7 text-sm">{{ cloturerTarget.taux | number:'1.6-6' }} %</div>
+
+      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Date de prise</div>
+      <div class="col-7 text-sm">{{ cloturerTarget.dateDePrise | date:'dd/MM/yyyy' }}</div>
+
     </div>
   </div>
 
@@ -33,8 +42,8 @@
       <p-calendar
         formControlName="dateDeMainLevee"
         dateFormat="dd/mm/yy"
-        [maxDate]="today"
         [showIcon]="true"
+        [showOnFocus]="false"
         appendTo="body"
         placeholder="jj/mm/aaaa">
       </p-calendar>
