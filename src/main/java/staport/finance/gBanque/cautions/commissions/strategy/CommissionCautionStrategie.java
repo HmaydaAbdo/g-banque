@@ -35,6 +35,8 @@ public interface CommissionCautionStrategie {
      */
     String nomBanque();
 
+
+
     /**
      * Calcule et construit la commission mensuelle pour une caution active.
      *

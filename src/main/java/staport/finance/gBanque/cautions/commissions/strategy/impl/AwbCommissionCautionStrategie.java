@@ -74,7 +74,7 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
     @Override
     public Commission calculerMainLevee(Caution caution, LocalDate dateDeMainLevee) {
         YearMonth moisMainLevee = YearMonth.from(dateDeMainLevee);
-        LocalDate dateEmission  = dateDeMainLevee; // date effective de la main levée
+        LocalDate dateEmission  = moisMainLevee.atEndOfMonth();
 
         // Prorata sortie : du 1er du mois jusqu'à dateDeMainLevee (inclus)
         long nombreJours = ChronoUnit.DAYS.between(

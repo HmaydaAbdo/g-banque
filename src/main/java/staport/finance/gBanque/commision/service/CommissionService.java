@@ -316,12 +316,7 @@ public class CommissionService {
                     "La fusion n'est pas autorisée pour les commissions BMCI (TVA séparée).");
         }
 
-        // Même dateEmission
-        long nbDates = sources.stream().map(Commission::getDateEmission).distinct().count();
-        if (nbDates > 1) {
-            throw new IllegalArgumentException(
-                    "Toutes les commissions doivent avoir la même date d'émission.");
-        }
+
 
         Banque banque          = sources.get(0).getBanque();
         LocalDate dateEmission = sources.get(0).getDateEmission();
