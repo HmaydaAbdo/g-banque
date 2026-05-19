@@ -59,6 +59,9 @@ public class Caution {
     @JoinColumn(name = "nature_id", nullable = false)
     private NatureLigneFonctionnelle nature;
 
+    @Column(unique = true,nullable = false)
+    private String numeroCaution;
+
     /**
      * Marché associé à la caution — optionnel.
      * Une caution peut exister sans être rattachée à un marché.
@@ -67,13 +70,13 @@ public class Caution {
     @JoinColumn(name = "marche_id")
     private Marche marche;
 
+    @Column(nullable = false)
     private LocalDate dateDePrise;
 
     /** Date de main levée — null tant que la caution est encore active. */
     private LocalDate dateDeMainLevee;
 
-    @Column(unique = true)
-    private String numeroCaution;
+
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String designation;

@@ -112,6 +112,14 @@ public class CautionServiceImpl implements ICautionService {
         // 2. Résolution des associations
         Banque banque = trouverBanqueOuLeverException(dto.banqueId());
         NatureLigneFonctionnelle nature = trouverNatureOuLeverException(dto.natureId());
+
+        // Règle métier : le marché est obligatoire sauf pour la nature CAUT_PROV
+        if (!"CAUT_PROV".equals(nature.getCode()) && dto.marcheId() == null) {
+            throw new CautionBusinessException(
+                "Le marché est obligatoire pour la nature '" + nature.getCode() + "'."
+            );
+        }
+
         Marche marche = dto.marcheId() != null ? trouverMarcheOuLeverException(dto.marcheId()) : null;
 
         // 3. Mapping + injection des associations
@@ -155,6 +163,14 @@ public class CautionServiceImpl implements ICautionService {
         // Résolution de toutes les associations (banque, nature, marche sont tous modifiables)
         Banque banque = trouverBanqueOuLeverException(dto.banqueId());
         NatureLigneFonctionnelle nature = trouverNatureOuLeverException(dto.natureId());
+
+        // Règle métier : le marché est obligatoire sauf pour la nature CAUT_PROV
+        if (!"CAUT_PROV".equals(nature.getCode()) && dto.marcheId() == null) {
+            throw new CautionBusinessException(
+                "Le marché est obligatoire pour la nature '" + nature.getCode() + "'."
+            );
+        }
+
         Marche marche = dto.marcheId() != null ? trouverMarcheOuLeverException(dto.marcheId()) : null;
 
         // Application de tous les champs modifiables
