@@ -75,9 +75,8 @@
           <th pSortableColumn="solde">Solde <p-sortIcon field="solde"></p-sortIcon></th>
 
           <th pSortableColumn="taux">Taux <p-sortIcon field="taux"></p-sortIcon></th>
-          <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
-
           <th pSortableColumn="dateDepart">Date Départ <p-sortIcon field="dateDepart"></p-sortIcon></th>
+          <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
           <th >Statut</th>
           <th >Action</th>
 
@@ -99,7 +98,6 @@
           <td>
             {{ (ligne.solde !== null && ligne.solde !== undefined) ? (ligne.solde | number:'1.2-2') : '***' }}
           </td>
-
           <td>{{ ligne.taux | number:'1.2-2' }}%</td>
           <td>{{ ligne.dateDepart | date:'dd/MM/yyyy' }}</td>
           <td>{{ ligne.dateFin | date:'dd/MM/yyyy' }}</td>

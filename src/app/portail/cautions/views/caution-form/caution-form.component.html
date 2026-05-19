@@ -76,7 +76,9 @@
 
         <!-- Marché (virtual scroll + lazy) -->
         <div class="col-12 md:col-6 lg:col-4">
-          <label class="font-semibold block mb-2 text-700 text-sm">Marché</label>
+          <label class="font-semibold block mb-2 text-700 text-sm">
+            Marché <span class="text-red-500" *ngIf="marcheRequired">*</span>
+          </label>
           <p-dropdown
             formControlName="marcheId"
             [options]="marchesOptions"
@@ -105,6 +107,10 @@
               </div>
             </ng-template>
           </p-dropdown>
+          <small class="p-error"
+                 *ngIf="f['marcheId'].touched && f['marcheId'].errors?.['required']">
+            Obligatoire.
+          </small>
         </div>
 
         <!-- N° Caution -->

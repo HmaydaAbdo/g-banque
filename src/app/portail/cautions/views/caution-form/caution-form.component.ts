@@ -67,6 +67,7 @@ export class CautionFormComponent implements OnInit {
   cautionId: number | null = null;
   loading = false;
   readonly today = new Date();
+  marcheRequired = false;
 
   // ── Listes statiques (courtes, chargées en une seule fois) ────────────────
   banques: any[] = [];
@@ -91,6 +92,7 @@ export class CautionFormComponent implements OnInit {
     this.loadStaticOptions();
     this.setupMarcheStream();
     this.setupRouteListener();
+    this.setupNatureListener();
   }
 
   // ── Formulaire ────────────────────────────────────────────────────────────
@@ -100,9 +102,9 @@ export class CautionFormComponent implements OnInit {
       banqueId:      [null, Validators.required],
       natureId:      [null, Validators.required],
       marcheId:      [null],
-      dateDePrise:      [null],
+      dateDePrise:      [null, Validators.required],
       dateDeMainLevee:  [null],
-      numeroCaution: [null],
+      numeroCaution: [null, [Validators.required, Validators.maxLength(100)]],
       designation:   [null, Validators.required],
       organisme:     [null, Validators.required],
       montant:       [null, [Validators.required, Validators.min(0.01)]],
@@ -129,7 +131,7 @@ export class CautionFormComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          this.natures = res.map(n => ({ label: n.label, value: n.id }));
+          this.natures = res.map(n => ({ label: n.label, value: n.id, code: n.code }));
           this.cdr.markForCheck();
         },
         error: () => this.messageService.add({
@@ -175,6 +177,9 @@ export class CautionFormComponent implements OnInit {
             // Le stream (setupMarcheStream) initialise le tableau sparse via debounce.
             // loadMarchesLazy prend le relais pour les pages suivantes au scroll.
           }
+
+          // Appliquer la règle marché obligatoire selon le code nature chargé
+          this.updateMarcheValidator(c.natureCode);
 
           this.loading = false;
           this.cdr.markForCheck();
@@ -269,6 +274,32 @@ export class CautionFormComponent implements OnInit {
 
   onFilterMarches(event: any): void {
     this.marcheFilter$.next(event.filter?.trim() ?? '');
+  }
+
+  // ── Règle marché obligatoire selon la nature ─────────────────────────────
+
+  private setupNatureListener(): void {
+    this.form.get('natureId')!.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(natureId => {
+      const selected = this.natures.find(n => n.value === natureId);
+      if (selected) {
+        this.updateMarcheValidator(selected.code);
+      }
+    });
+  }
+
+  updateMarcheValidator(natureCode: string): void {
+    const marcheControl = this.form.get('marcheId')!;
+    if (natureCode === 'CAUT_PROV') {
+      this.marcheRequired = false;
+      marcheControl.clearValidators();
+    } else {
+      this.marcheRequired = true;
+      marcheControl.setValidators(Validators.required);
+    }
+    marcheControl.updateValueAndValidity();
+    this.cdr.markForCheck();
   }
 
   // ── Soumission ────────────────────────────────────────────────────────────
