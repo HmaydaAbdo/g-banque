@@ -64,13 +64,38 @@ public interface CommissionCautionStrategie {
      * Indique si cette stratégie doit s'exécuter en début de mois (1er jour)
      * plutôt qu'en fin de mois (dernier jour).
      *
-     * <p>Retourne {@code false}  pour les banques
-     * génèrent leurs commissions en fin de mois.
-     *
-     * <p>Retourner {@code true} pour les banques dont la commission est émise
-     * au 1er jour du mois (ex. CDM).
+     * <p>Retourne {@code false} pour les banques qui génèrent leurs commissions
+     * en fin de mois. Retourner {@code true} pour les banques dont la commission
+     * est émise au 1er jour du mois (ex. CDM).
      */
     default boolean executerEnDebutMois() {
+        return false;
+    }
+
+    /**
+     * Indique si cette banque applique un prorata temporis à l'entrée (premier mois).
+     *
+     * <p>Lorsque {@code true}, la commission du premier mois est calculée uniquement
+     * sur les jours allant de la {@code dateDePrise} jusqu'à la fin de ce mois,
+     * plutôt que sur le mois entier.
+     *
+     * <p>Banques concernées : AWB, CDM, BMCI ({@code true}).
+     */
+    default boolean supporteProrataEntree() {
+        return false;
+    }
+
+    /**
+     * Indique si cette banque applique un prorata temporis à la sortie (clôture).
+     *
+     * <p>Lorsque {@code true}, la commission de clôture est calculée uniquement
+     * sur les jours allant du 1er du mois de la main levée jusqu'à la
+     * {@code dateDeMainLevee} incluse, plutôt que sur le mois entier.
+     *
+     * <p>Banques concernées : AWB uniquement ({@code true}).
+     * CDM et BMCI facturent le mois entier à la clôture.
+     */
+    default boolean supporteProrataSortie() {
         return false;
     }
 
@@ -79,10 +104,10 @@ public interface CommissionCautionStrategie {
      *
      * <p>Comportement par défaut : mois complet — délègue à {@link #calculer} avec
      * le {@link java.time.YearMonth} de {@code dateDeMainLevee}.
-     * Les banques sans prorata (CDM, BMCI) n'ont pas besoin d'override.
+     * CDM et BMCI ({@code supporteProrataSortie = false}) n'ont pas besoin d'override.
      *
-     * <p>Les banques avec prorata (AWB) overrident cette méthode pour facturer
-     * uniquement les jours entre le 1er du mois et {@code dateDeMainLevee} inclus.
+     * <p>AWB ({@code supporteProrataSortie = true}) override cette méthode pour
+     * facturer uniquement les jours entre le 1er du mois et {@code dateDeMainLevee} inclus.
      *
      * @param caution          caution en cours de clôture, avec banque et nature chargées
      * @param dateDeMainLevee  date effective de la main levée

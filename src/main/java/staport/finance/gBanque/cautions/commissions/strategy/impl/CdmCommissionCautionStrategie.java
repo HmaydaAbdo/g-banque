@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Stratégie de calcul des commissions sur cautions pour la banque CDM
@@ -58,11 +59,30 @@ public class CdmCommissionCautionStrategie implements CommissionCautionStrategie
         return true;
     }
 
+    /** CDM applique le prorata sur le premier mois de la caution. */
+    @Override
+    public boolean supporteProrataEntree() {
+        return true;
+    }
+
     @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
-        // CDM : commission pour le mois de référence, émise le 1er du mois
-        int nombreJours        = moisReference.lengthOfMonth();
         LocalDate dateEmission = moisReference.atDay(1);
+
+        // Prorata entrée : 1er mois de la caution → de dateDePrise à fin de mois
+        long nombreJours;
+        String suffixeLibelle;
+        if (caution.getDateDePrise() != null
+                && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
+            nombreJours = ChronoUnit.DAYS.between(
+                    caution.getDateDePrise(),
+                    moisReference.atEndOfMonth().plusDays(1) // borne exclusive
+            );
+            suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
+        } else {
+            nombreJours    = moisReference.lengthOfMonth();
+            suffixeLibelle = " — Mois entier : " + nombreJours + " j";
+        }
 
         // Montant HT = (montant × taux × jours) / 36000
         BigDecimal montantCommission = caution.getMontant()
@@ -77,10 +97,8 @@ public class CdmCommissionCautionStrategie implements CommissionCautionStrategie
 
         montantCommission = montantCommission.setScale(2, RoundingMode.HALF_UP);
 
-        // Libellé : "caution nature.code N° numeroCaution — Mois entier : X j"
         String libelle = "caution " + caution.getNature().getCode()
-                + " N° " + caution.getNumeroCaution()
-                + " — Mois entier : " + nombreJours + " j";
+                + " N° " + caution.getNumeroCaution() + suffixeLibelle;
 
         Commission commission = new Commission();
         commission.setBanque(caution.getBanque());

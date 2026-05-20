@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Stratégie de calcul des commissions sur cautions pour la banque BMCI.
@@ -50,11 +51,32 @@ public class BmciCommissionCautionStrategie implements CommissionCautionStrategi
         return true;
     }
 
+    /** BMCI applique le prorata sur le premier mois de la caution. */
+    @Override
+    public boolean supporteProrataEntree() {
+        return true;
+    }
+
     @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
-        YearMonth moisCommission = moisReference.plusMonths(1);
-        int nombreJours          = moisCommission.lengthOfMonth();
-        LocalDate dateEmission   = moisReference.atEndOfMonth();
+        LocalDate dateEmission = moisReference.atEndOfMonth();
+
+        // Prorata entrée : 1er mois de la caution → jours de moisReference
+        // Mois suivants  : nombre de jours de moisReference+1 (décalage BMCI)
+        long nombreJours;
+        String suffixeLibelle;
+        if (caution.getDateDePrise() != null
+                && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
+            nombreJours = ChronoUnit.DAYS.between(
+                    caution.getDateDePrise(),
+                    moisReference.atEndOfMonth().plusDays(1) // borne exclusive
+            );
+            suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
+        } else {
+            YearMonth moisCommission = moisReference.plusMonths(1);
+            nombreJours    = moisCommission.lengthOfMonth();
+            suffixeLibelle = " — Mois entier : " + nombreJours + " j";
+        }
 
         // Montant = (montant × taux × jours) / 36000
         BigDecimal montantCommission = caution.getMontant()
@@ -67,10 +89,8 @@ public class BmciCommissionCautionStrategie implements CommissionCautionStrategi
             montantCommission = MIN_COMMISSION;
         }
 
-        // Libellé : "caution nature.code N° numeroCaution — Mois entier : X j"
         String libelle = "caution " + caution.getNature().getCode()
-                + " N° " + caution.getNumeroCaution()
-                + " — Mois entier : " + nombreJours + " j";
+                + " N° " + caution.getNumeroCaution() + suffixeLibelle;
 
         Commission commission = new Commission();
         commission.setBanque(caution.getBanque());

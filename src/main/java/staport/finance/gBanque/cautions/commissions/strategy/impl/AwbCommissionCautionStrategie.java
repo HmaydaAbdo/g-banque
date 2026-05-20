@@ -49,6 +49,18 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
         return NOM_BANQUE;
     }
 
+    /** AWB applique le prorata sur le premier mois de la caution. */
+    @Override
+    public boolean supporteProrataEntree() {
+        return true;
+    }
+
+    /** AWB applique le prorata sur le dernier mois (clôture). */
+    @Override
+    public boolean supporteProrataSortie() {
+        return true;
+    }
+
     @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
         LocalDate dateEmission = moisReference.atEndOfMonth();
