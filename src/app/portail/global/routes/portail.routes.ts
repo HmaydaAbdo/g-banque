@@ -47,8 +47,6 @@ import { HistoriqueDesRapprochementComponent } from "../../rapprochement/views/h
 import { DetailsRapprochementComponent } from "../../rapprochement/views/details-rapprochement/details-rapprochement.component";
 import { FunctionalLinesByMarcheComponent } from "../../Marches/views/specific-lines-by-marche/functionalLines-by-marche.component";
 import { LcnEscompteByLineComponent } from "../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component";
-import { ImpotEtTaxeListComponent } from "../../impotEtTaxes/views/impot-et-taxe-list/impot-et-taxe-list.component";
-import { ImpotEtTaxeFormComponent } from "../../impotEtTaxes/views/impot-et-taxe-form/impot-et-taxe-form.component";
 import { EncoursImpotsEtTaxesComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/encours-impots-taxes/encours-impots-taxes.component";
 import { RestitutionListComponent } from "../../restitution/views/restitution-list/restitution-list.component";
 import { RestitutionFormComponent } from "../../restitution/views/restitution-form/restitution-form.component";
@@ -216,9 +214,10 @@ export const PORTAIL_ROUTES: Routes = [
     loadChildren: () => import('../../commission/commission.routes').then(m => m.COMMISSION_ROUTES)
   },
 
-  { path: 'impots-taxes', component: ImpotEtTaxeListComponent },
-  { path: "impots-taxes/new", component: ImpotEtTaxeFormComponent },
-  { path: "impots-taxes/edit/:id", component: ImpotEtTaxeFormComponent },
+  {
+    path: 'impots-taxes',
+    loadChildren: () => import('../../impotEtTaxes/impot-et-taxe.routes').then(m => m.IMPOT_ET_TAXE_ROUTES)
+  },
 
   { path: 'restitutions', component: RestitutionListComponent },
   { path: "restitutions/new", component: RestitutionFormComponent },
