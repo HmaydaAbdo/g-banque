@@ -1,4 +1,5 @@
 import {Decimal} from "decimal.js";
+import {StatutMoyenPaiement} from "../../global/enums/StatutMoyenPaiement";
 
 export interface LcnSearchDTO {
   numero?: string;
@@ -7,6 +8,6 @@ export interface LcnSearchDTO {
   emetteur?:string
   beneficiaire?: string;
   nomBanque?: string;
-  active?: boolean;
+  statut?: StatutMoyenPaiement;
   montant?:Decimal
 }

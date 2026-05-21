@@ -1,5 +1,6 @@
 import {Type} from "../../Virements/Type";
 import {NatureLcn} from "./NatureLcn";
+import {StatutMoyenPaiement} from "../../global/enums/StatutMoyenPaiement";
 
 export interface LcnResponseDTO {
   numero: string;
@@ -13,7 +14,7 @@ export interface LcnResponseDTO {
   libelle:string
   observation:string
   montant: number;
-  active: boolean;
+  statut: StatutMoyenPaiement;
   banqueName: string;
   banqueId:number
   emetteur:string
