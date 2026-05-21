@@ -29,6 +29,13 @@ public abstract class AbstractPaymentProcessor implements ItemProcessor<FunPayme
 
     @Override
     public final Object process(FunPaymentDto item) throws Exception {
+        // Ignore statut 2 (remis) et 4 (validé) — non pertinents pour G-Banque
+        int statut = item.getStatut();
+        if (statut == 2 || statut == 4) {
+            log.debug("Skipping item {} with statut={} (remis/validé — ignoré)", item.getNumero(), statut);
+            return null;
+        }
+
         log.debug("Starting common validation for item with numero: {}", item.getNumero());
         validateCommonFields(item);
         log.debug("Common validation passed for item: {}", item.getNumero());
@@ -44,6 +51,9 @@ public abstract class AbstractPaymentProcessor implements ItemProcessor<FunPayme
 
     /**
      * Validates fields common to all payment types.
+     * Le montant n'est pas validé pour les opérations ANNULE (statut=3)
+     * car FunPaiement peut envoyer des montants nuls pour les annulations.
+     *
      * @param item The payment DTO to validate.
      * @throws InvalidChequeDataException if any common field is invalid.
      */
@@ -54,10 +64,8 @@ public abstract class AbstractPaymentProcessor implements ItemProcessor<FunPayme
         if (item.getDateCreation() == null) {
             throw new InvalidChequeDataException("Date d'émission (date_creation) is null for payment numero " + item.getNumero());
         }
-//        if (item.getBeneficiaire() == null || item.getBeneficiaire().trim().isEmpty()) {
-//            throw new InvalidChequeDataException("Beneficiaire is null or empty for payment numero " + item.getNumero());
-//        }
-        if (item.getMontant() == null || item.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
+        // Montant non requis pour les annulations (statut=3)
+        if (item.getStatut() != 3 && (item.getMontant() == null || item.getMontant().compareTo(BigDecimal.ZERO) <= 0)) {
             throw new InvalidChequeDataException("Montant is null or non-positive for payment numero " + item.getNumero());
         }
         if (item.getBanque() == null || item.getBanque().trim().isEmpty()) {
