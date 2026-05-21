@@ -28,8 +28,6 @@ import { DroitConstateDeblocageComponent } from "../../etatsDesEncours/views/les
 import { DecomptesComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/decomptes/decomptes.component";
 import { ValidatedPrefiComponent } from "../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component";
 import { EncoursCommissionsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/commission/encours-commissions.component";
-import { FraisBancaireListComponent } from "../../frais-bancaire/views/frais-bancaire-list/frais-bancaire-list.component";
-import { FraisBancaireFormComponent } from "../../frais-bancaire/views/frais-bancaire-form/frais-bancaire-form.component";
 import { EncoursAgiosComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/agios/encours-agios.component";
 import { EncoursFraisBancaireComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/frais-bancaire/encours-fraisBancaire.component";
 import { FactoringRemboursementsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/factoring-remboursement/factoring-remboursements.component";
@@ -228,9 +226,10 @@ export const PORTAIL_ROUTES: Routes = [
     loadChildren: () => import('../../prelevements/prelevements.routes').then(m => m.PRELEVEMENTS_ROUTES)
   },
 
-  { path: 'frais-bancaire', component: FraisBancaireListComponent },
-  { path: "frais-bancaire/new", component: FraisBancaireFormComponent },
-  { path: "frais-bancaire/edit/:id", component: FraisBancaireFormComponent },
+  {
+    path: 'frais-bancaire',
+    loadChildren: () => import('../../frais-bancaire/frais-bancaire.routes').then(m => m.FRAIS_BANCAIRE_ROUTES)
+  },
 
 
   { path: "historique-des-transactions", component: TransactionHistoryComponent },
