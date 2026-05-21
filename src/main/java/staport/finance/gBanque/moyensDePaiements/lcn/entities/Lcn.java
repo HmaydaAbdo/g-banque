@@ -5,6 +5,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.moyensDePaiements.lcn.dtos.NatureLcn;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,8 +41,9 @@ public class Lcn {
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 
-    @Column(name = "active", nullable = false)
-    private boolean active;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut", nullable = false)
+    private StatutMoyenPaiement statut;
 
     private String libelle;
     private String observation;
@@ -89,11 +91,11 @@ public class Lcn {
     public void setMontant(BigDecimal montant) { this.montant = montant; }
     public Banque getBanque() { return banque; }
     public void setBanque(Banque banque) { this.banque = banque; }
-    public boolean isActive() {
-        return active;
+    public StatutMoyenPaiement getStatut() {
+        return statut;
     }
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setStatut(StatutMoyenPaiement statut) {
+        this.statut = statut;
     }
     public LocalDate getDateOperation() {
         return dateOperation;
@@ -154,12 +156,12 @@ public class Lcn {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Lcn lcn = (Lcn) o;
-        return active == lcn.active && Objects.equals(id, lcn.id) && Objects.equals(numero, lcn.numero) && Objects.equals(dateEmission, lcn.dateEmission) && Objects.equals(beneficiaire, lcn.beneficiaire) && Objects.equals(dateEcheance, lcn.dateEcheance) && Objects.equals(dateOperation, lcn.dateOperation) && Objects.equals(dateValeur, lcn.dateValeur) && Objects.equals(montant, lcn.montant) && Objects.equals(banque, lcn.banque) && Objects.equals(libelle, lcn.libelle) && Objects.equals(observation, lcn.observation) && type == lcn.type && natureLcn == lcn.natureLcn && Objects.equals(emetteur, lcn.emetteur);
+        return Objects.equals(id, lcn.id) && Objects.equals(numero, lcn.numero) && Objects.equals(dateEmission, lcn.dateEmission) && Objects.equals(beneficiaire, lcn.beneficiaire) && Objects.equals(dateEcheance, lcn.dateEcheance) && Objects.equals(dateOperation, lcn.dateOperation) && Objects.equals(dateValeur, lcn.dateValeur) && Objects.equals(montant, lcn.montant) && Objects.equals(banque, lcn.banque) && Objects.equals(libelle, lcn.libelle) && Objects.equals(observation, lcn.observation) && type == lcn.type && natureLcn == lcn.natureLcn && Objects.equals(emetteur, lcn.emetteur);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, numero, dateEmission, beneficiaire, dateEcheance, dateOperation, dateValeur, montant, banque, active, libelle, observation, type, natureLcn, emetteur);
+        return Objects.hash(id, numero, dateEmission, beneficiaire, dateEcheance, dateOperation, dateValeur, montant, banque, libelle, observation, type, natureLcn, emetteur);
     }
 
     @Override
@@ -175,7 +177,7 @@ public class Lcn {
                 ", montant=" + montant +
                 ", banque=" + banque +
                 ", ligneFonctionnelle=" + (ligneFonctionnelle != null ? ligneFonctionnelle.getId() : null) +
-                ", active=" + active +
+                ", statut=" + statut +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
                 ", type=" + type +

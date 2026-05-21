@@ -3,6 +3,7 @@ package staport.finance.gBanque.moyensDePaiements.cheques.entities;
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 import java.math.BigDecimal;
 
@@ -42,8 +43,9 @@ public class Cheque {
     @JoinColumn(name = "banque_id", nullable = false) // Defines the foreign key column in the CHEQUES table
     private Banque banque;
 
-    @Column(name = "active", nullable = false)
-    private boolean active;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut", nullable = false)
+    private StatutMoyenPaiement statut;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
@@ -120,12 +122,12 @@ public class Cheque {
         this.banque = banque;
     }
 
-    public boolean isActive() {
-        return active;
+    public StatutMoyenPaiement getStatut() {
+        return statut;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setStatut(StatutMoyenPaiement statut) {
+        this.statut = statut;
     }
 
     public LocalDate getDateOperation() {
@@ -180,12 +182,12 @@ public class Cheque {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Cheque cheque = (Cheque) o;
-        return active == cheque.active && Objects.equals(id, cheque.id) && Objects.equals(numero, cheque.numero) && Objects.equals(dateEmission, cheque.dateEmission) && Objects.equals(beneficiaire, cheque.beneficiaire) && Objects.equals(dateEcheance, cheque.dateEcheance) && Objects.equals(dateOperation, cheque.dateOperation) && Objects.equals(dateValeur, cheque.dateValeur) && Objects.equals(montant, cheque.montant) && Objects.equals(banque, cheque.banque) && type == cheque.type && Objects.equals(libelle, cheque.libelle) && Objects.equals(observation, cheque.observation) && Objects.equals(emetteur, cheque.emetteur);
+        return Objects.equals(id, cheque.id) && Objects.equals(numero, cheque.numero) && Objects.equals(dateEmission, cheque.dateEmission) && Objects.equals(beneficiaire, cheque.beneficiaire) && Objects.equals(dateEcheance, cheque.dateEcheance) && Objects.equals(dateOperation, cheque.dateOperation) && Objects.equals(dateValeur, cheque.dateValeur) && Objects.equals(montant, cheque.montant) && Objects.equals(banque, cheque.banque) && type == cheque.type && Objects.equals(libelle, cheque.libelle) && Objects.equals(observation, cheque.observation) && Objects.equals(emetteur, cheque.emetteur);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, numero, dateEmission, beneficiaire, dateEcheance, dateOperation, dateValeur, montant, banque, active, type, libelle, observation, emetteur);
+        return Objects.hash(id, numero, dateEmission, beneficiaire, dateEcheance, dateOperation, dateValeur, montant, banque, type, libelle, observation, emetteur);
     }
 
     @Override
@@ -200,7 +202,7 @@ public class Cheque {
                 ", dateValeur=" + dateValeur +
                 ", montant=" + montant +
                 ", banque=" + banque +
-                ", active=" + active +
+                ", statut=" + statut +
                 ", type=" + type +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +

@@ -3,6 +3,7 @@ package staport.finance.gBanque.moyensDePaiements.virements.entities;
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,8 +46,9 @@ public class Virement {
     @Column(name = "rib_beneficiaire")
     private String ribBeneficiaire;
 
-    @Column(name = "active", nullable = false)
-    private boolean active;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut", nullable = false)
+    private StatutMoyenPaiement statut;
 
     @Enumerated(EnumType.STRING)
     private Type type;
@@ -111,11 +113,11 @@ public class Virement {
         this.nomBanqueBeneficiaireLibre = nomBanqueBeneficiaireLibre;
     }
 
-    public boolean isActive() {
-        return active;
+    public StatutMoyenPaiement getStatut() {
+        return statut;
     }
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setStatut(StatutMoyenPaiement statut) {
+        this.statut = statut;
     }
 
     public Type getType() {return type;}
@@ -154,12 +156,12 @@ public class Virement {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Virement virement = (Virement) o;
-        return active == virement.active && Objects.equals(id, virement.id) && Objects.equals(numero, virement.numero) && Objects.equals(dateEmission, virement.dateEmission) && Objects.equals(dateOperation, virement.dateOperation) && Objects.equals(dateValeur, virement.dateValeur) && Objects.equals(beneficiaire, virement.beneficiaire) && Objects.equals(montant, virement.montant) && Objects.equals(banqueEmettrice, virement.banqueEmettrice) && Objects.equals(emetteur, virement.emetteur) && Objects.equals(banqueBeneficiare, virement.banqueBeneficiare) && Objects.equals(nomBanqueBeneficiaireLibre, virement.nomBanqueBeneficiaireLibre) && Objects.equals(ribBeneficiaire, virement.ribBeneficiaire) && type == virement.type && Objects.equals(observation, virement.observation) && Objects.equals(libelle, virement.libelle);
+        return Objects.equals(id, virement.id) && Objects.equals(numero, virement.numero) && Objects.equals(dateEmission, virement.dateEmission) && Objects.equals(dateOperation, virement.dateOperation) && Objects.equals(dateValeur, virement.dateValeur) && Objects.equals(beneficiaire, virement.beneficiaire) && Objects.equals(montant, virement.montant) && Objects.equals(banqueEmettrice, virement.banqueEmettrice) && Objects.equals(emetteur, virement.emetteur) && Objects.equals(banqueBeneficiare, virement.banqueBeneficiare) && Objects.equals(nomBanqueBeneficiaireLibre, virement.nomBanqueBeneficiaireLibre) && Objects.equals(ribBeneficiaire, virement.ribBeneficiaire) && type == virement.type && Objects.equals(observation, virement.observation) && Objects.equals(libelle, virement.libelle);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, numero, dateEmission, dateOperation, dateValeur, beneficiaire, montant, banqueEmettrice, emetteur, banqueBeneficiare, nomBanqueBeneficiaireLibre, ribBeneficiaire, active, type, observation, libelle);
+        return Objects.hash(id, numero, dateEmission, dateOperation, dateValeur, beneficiaire, montant, banqueEmettrice, emetteur, banqueBeneficiare, nomBanqueBeneficiaireLibre, ribBeneficiaire, type, observation, libelle);
     }
 
     @Override
@@ -177,7 +179,7 @@ public class Virement {
                 ", banqueBeneficiare=" + banqueBeneficiare +
                 ", nomBanqueBeneficiaireLibre='" + nomBanqueBeneficiaireLibre + '\'' +
                 ", ribBeneficiaire='" + ribBeneficiaire + '\'' +
-                ", active=" + active +
+                ", statut=" + statut +
                 ", type=" + type +
                 ", observation='" + observation + '\'' +
                 ", libelle='" + libelle + '\'' +

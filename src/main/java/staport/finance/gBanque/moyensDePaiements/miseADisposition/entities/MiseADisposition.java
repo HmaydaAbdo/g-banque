@@ -3,6 +3,7 @@ package staport.finance.gBanque.moyensDePaiements.miseADisposition.entities;
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -39,8 +40,9 @@ public class MiseADisposition {
     @Column(name = "cin_beneficiaire")
     private String cinBeneficiaire;
 
-    @Column(name = "active", nullable = false)
-    private boolean active;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut", nullable = false)
+    private StatutMoyenPaiement statut;
 
     private String observation;
 
@@ -97,12 +99,12 @@ public class MiseADisposition {
         this.libelle = libelle;
     }
 
-    public boolean isActive() {
-        return active;
+    public StatutMoyenPaiement getStatut() {
+        return statut;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setStatut(StatutMoyenPaiement statut) {
+        this.statut = statut;
     }
 
     public Long getId() {
@@ -129,12 +131,12 @@ public class MiseADisposition {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         MiseADisposition that = (MiseADisposition) o;
-        return active == that.active && Objects.equals(id, that.id) && Objects.equals(numero, that.numero) && Objects.equals(dateEmission, that.dateEmission) && Objects.equals(dateOperation, that.dateOperation) && Objects.equals(dateValeur, that.dateValeur) && Objects.equals(beneficiaire, that.beneficiaire) && Objects.equals(montant, that.montant) && Objects.equals(banque, that.banque) && Objects.equals(cinBeneficiaire, that.cinBeneficiaire) && Objects.equals(observation, that.observation) && Objects.equals(libelle, that.libelle) && type == that.type && Objects.equals(emetteur, that.emetteur);
+        return Objects.equals(id, that.id) && Objects.equals(numero, that.numero) && Objects.equals(dateEmission, that.dateEmission) && Objects.equals(dateOperation, that.dateOperation) && Objects.equals(dateValeur, that.dateValeur) && Objects.equals(beneficiaire, that.beneficiaire) && Objects.equals(montant, that.montant) && Objects.equals(banque, that.banque) && Objects.equals(cinBeneficiaire, that.cinBeneficiaire) && Objects.equals(observation, that.observation) && Objects.equals(libelle, that.libelle) && type == that.type && Objects.equals(emetteur, that.emetteur);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, numero, dateEmission, dateOperation, dateValeur, beneficiaire, montant, banque, cinBeneficiaire, active, observation, libelle, type, emetteur);
+        return Objects.hash(id, numero, dateEmission, dateOperation, dateValeur, beneficiaire, montant, banque, cinBeneficiaire, observation, libelle, type, emetteur);
     }
 
     @Override
@@ -149,7 +151,7 @@ public class MiseADisposition {
                 ", montant=" + montant +
                 ", banque=" + banque +
                 ", cinBeneficiaire='" + cinBeneficiaire + '\'' +
-                ", active=" + active +
+                ", statut=" + statut +
                 ", observation='" + observation + '\'' +
                 ", libelle='" + libelle + '\'' +
                 ", type=" + type +
