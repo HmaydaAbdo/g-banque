@@ -65,8 +65,6 @@ import { EncoursImpotsEtTaxesComponent } from "../../etatsDesEncours/views/lesEn
 import { RestitutionListComponent } from "../../restitution/views/restitution-list/restitution-list.component";
 import { RestitutionFormComponent } from "../../restitution/views/restitution-form/restitution-form.component";
 import { EncoursRestitutionComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/restitution/encours-restitution.component";
-import { OperationErroneListComponent } from "../../operationErronées/views/operation-errone-list/operation-errone-list.component";
-import { OperationErroneFormComponent } from "../../operationErronées/views/operation-errone-form/operation-errone-form.component";
 import {EncoursOperationErroneComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/operation-errone/operation-errone.component";
 import {VirementInternationalEncoursDecaissementComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/virementInternationaux/VirementInternationalEncoursDecaissement.component";
 import {VirementInternationalEncoursEncaissementComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/virementInternationaux/VirementInternationalEncoursEncaissementComponent";
@@ -138,9 +136,10 @@ export const PORTAIL_ROUTES: Routes = [
     loadChildren: () => import('../../virementInternational/virement-international.routes').then(m => m.VIREMENT_INTERNATIONAL_ROUTES)
   },
 
-  { path: 'operations/errones', component: OperationErroneListComponent },
-  { path: 'operations/errones/new', component: OperationErroneFormComponent },
-  { path: 'operations/errones/edit/:id', component: OperationErroneFormComponent },
+  {
+    path: 'operations/errones',
+    loadChildren: () => import('../../operationErronées/operation-errone.routes').then(m => m.OPERATION_ERRONE_ROUTES)
+  },
 
   {
     path: 'Mise-a-disposition',
