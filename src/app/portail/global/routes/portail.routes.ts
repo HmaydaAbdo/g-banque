@@ -50,8 +50,6 @@ import { EncoursRestitutionComponent } from "../../etatsDesEncours/views/lesEnco
 import {EncoursOperationErroneComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/operation-errone/operation-errone.component";
 import {VirementInternationalEncoursDecaissementComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/virementInternationaux/VirementInternationalEncoursDecaissement.component";
 import {VirementInternationalEncoursEncaissementComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/virementInternationaux/VirementInternationalEncoursEncaissementComponent";
-import {ImpayeeListComponent} from "../../impayees/views/ImpayeeList/Impayee-list.component";
-import {ImpayeeFormComponent} from "../../impayees/views/ImpayeeForm/Impayee-form.component";
 import {DecaissementEncoursImpayeeComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/impayee/decaissement-encours-impayee.component";
 import {EncaissementEncoursImpayeeComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/impayee/encaissement-encours-impayee.component";
 
@@ -225,11 +223,7 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'impayees',
-    children: [
-      { path: '', component: ImpayeeListComponent },
-      { path: 'new', component: ImpayeeFormComponent },
-      { path: 'edit/:id', component: ImpayeeFormComponent }
-    ]
+    loadChildren: () => import('../../impayees/impayees.routes').then(m => m.IMPAYEES_ROUTES)
   },
   { path: 'prelevements', component: PrelevementListComponent },
   { path: "prelevements/new", component: PrelevementFormComponent },
