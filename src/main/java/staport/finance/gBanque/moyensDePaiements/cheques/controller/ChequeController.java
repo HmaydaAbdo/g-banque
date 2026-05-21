@@ -86,7 +86,7 @@ public class ChequeController {
     public ResponseEntity<ChequeResponseDto> toggleChequeStatus(@PathVariable long id) {
         log.info("Demande de basculement du statut du chèque ID: {}", id);
         ChequeResponseDto updatedCheque = chequeService.toggleChequeStatus(id);
-        log.info("Statut du chèque ID: {} basculé avec succès vers: {}", id, updatedCheque.isActive());
+        log.info("Statut du chèque ID: {} basculé avec succès vers: {}", id, updatedCheque.getStatut());
         return ResponseEntity.ok(updatedCheque);
 
     }

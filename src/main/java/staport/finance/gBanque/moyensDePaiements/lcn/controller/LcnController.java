@@ -82,7 +82,7 @@ public class LcnController {
 
         log.info("Demande de basculement du statut du LCN ID: {}", id);
         LcnResponseDTO updatedLcn = lcnService.toggleLcnStatus(id);
-        log.info("Statut du LCN ID: {} basculé avec succès vers: {}", id, updatedLcn.isActive());
+        log.info("Statut du LCN ID: {} basculé avec succès vers: {}", id, updatedLcn.getStatut());
         return ResponseEntity.ok(updatedLcn);
     }
 

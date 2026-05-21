@@ -77,7 +77,7 @@ public class MiseADispositionController {
     public ResponseEntity<MiseADispositionResponseDto> toggleMiseADispositionStatus(@PathVariable Long id) {
         log.info("Demande de basculement du statut de la mise à disposition ID: {}", id);
         MiseADispositionResponseDto updatedMiseADisposition = miseADispositionService.toggleMiseADispositionStatus(id);
-        log.info("Statut de la mise à disposition ID: {} basculé avec succès vers: {}", id, updatedMiseADisposition.isActive());
+        log.info("Statut de la mise à disposition ID: {} basculé avec succès vers: {}", id, updatedMiseADisposition.getStatut());
         return ResponseEntity.ok(updatedMiseADisposition);
 
     }
