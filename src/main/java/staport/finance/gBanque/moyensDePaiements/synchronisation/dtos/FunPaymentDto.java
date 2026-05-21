@@ -5,6 +5,7 @@ package staport.finance.gBanque.moyensDePaiements.synchronisation.dtos;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.deserializer.ZeroDateToNullLocalDateDeserializer;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -48,6 +49,12 @@ public class FunPaymentDto {
 
     @JsonProperty("CodeErreur")
     private int codeErreur;
+
+    /**
+     * Statut reçu de FunPaiement : 1=ENCOURS, 2=REMIS(ignoré), 3=ANNULE, 4=VALIDE(ignoré).
+     */
+    @JsonProperty("statut")
+    private int statut;
 
     public FunPaymentDto() {}
 
@@ -108,6 +115,17 @@ public class FunPaymentDto {
         return dateCreation;
     }
 
+    public int getStatut() { return statut; }
+    public void setStatut(int statut) { this.statut = statut; }
+
+    /**
+     * Convertit le code entier en StatutMoyenPaiement.
+     * Retourne ENCOURS par défaut pour tout code inconnu ou non géré (2, 4, etc.).
+     */
+    public StatutMoyenPaiement getStatutMoyenPaiement() {
+        return statut == 3 ? StatutMoyenPaiement.ANNULE : StatutMoyenPaiement.ENCOURS;
+    }
+
     public void setDateCreation(LocalDate dateCreation) {
         this.dateCreation = dateCreation;
     }
@@ -127,6 +145,7 @@ public class FunPaymentDto {
                 ", cinBeneficiaire='" + cinBeneficiaire + '\'' +
                 ", type=" + type +
                 ", codeErreur=" + codeErreur +
+                ", statut=" + statut +
                 '}';
     }
 }
