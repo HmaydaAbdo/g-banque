@@ -35,8 +35,6 @@ import { EncoursFraisBancaireComponent } from "../../etatsDesEncours/views/lesEn
 import { FactoringRemboursementsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/factoring-remboursement/factoring-remboursements.component";
 import { FactoringDeblocageComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/factoring-deblocage/factoring-deblocage.component";
 import { VirementEncaissementEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/virement-encours/virement-encours.component";
-import { PrelevementListComponent } from "../../prelevements/views/prelevement-list/prelevement-list.component";
-import { PrelevementFormComponent } from "../../prelevements/views/prelevement-form/prelevement-form.component";
 import { EncoursPrelevementComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/prelevement/encours-prelevement.component";
 import { ChequeEncaissementsEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/cheque-encaissements-encours/cheque-encaissements-encours.component";
 import { EncaissementLcnEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/encaissement-lcn-encours/encaissement-lcn-encours.component";
@@ -225,9 +223,10 @@ export const PORTAIL_ROUTES: Routes = [
     path: 'impayees',
     loadChildren: () => import('../../impayees/impayees.routes').then(m => m.IMPAYEES_ROUTES)
   },
-  { path: 'prelevements', component: PrelevementListComponent },
-  { path: "prelevements/new", component: PrelevementFormComponent },
-  { path: "prelevements/edit/:id", component: PrelevementFormComponent },
+  {
+    path: 'prelevements',
+    loadChildren: () => import('../../prelevements/prelevements.routes').then(m => m.PRELEVEMENTS_ROUTES)
+  },
 
   { path: 'frais-bancaire', component: FraisBancaireListComponent },
   { path: "frais-bancaire/new", component: FraisBancaireFormComponent },
