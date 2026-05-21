@@ -10,6 +10,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.dtos.VirementRequestD
 import staport.finance.gBanque.moyensDePaiements.virements.dtos.VirementResponseDto;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 @Component
 public class VirementMapper {
@@ -44,7 +45,7 @@ public class VirementMapper {
         response.setBanqueEmettriceNom(virement.getBanqueEmettrice() != null ? virement.getBanqueEmettrice().getNom() : null);
         response.setBanqueBeneficiaire(virement.getBanqueBeneficiare() != null ? virement.getBanqueBeneficiare().getNom() : virement.getNomBanqueBeneficiaireLibre());
         response.setRibBeneficiaire(virement.getRibBeneficiaire() != null ? virement.getRibBeneficiaire() : null);
-        response.setActive(virement.isActive());
+        response.setStatut(virement.getStatut());
         response.setDateOperation(virement.getDateOperation() != null ? virement.getDateOperation() : null);
         response.setDateValeur(virement.getDateValeur() != null ? virement.getDateValeur() : null);
         response.setType(virement.getType());
@@ -87,7 +88,7 @@ public class VirementMapper {
         virement.setMontant(dto.getMontant());
         virement.setEmetteur(dto.getEmetteur());
         virement.setType(dto.getType());
-
+        virement.setStatut(StatutMoyenPaiement.ENCOURS);
         log.debug("Entité virement créée avec succès - Type: {}, Émetteur: {}, Montant: {}",
                 dto.getType(), dto.getEmetteur(), dto.getMontant());
 

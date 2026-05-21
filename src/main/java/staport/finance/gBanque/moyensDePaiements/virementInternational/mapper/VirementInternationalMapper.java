@@ -10,6 +10,7 @@ import staport.finance.gBanque.moyensDePaiements.virementInternational.dtos.Vire
 import staport.finance.gBanque.moyensDePaiements.virementInternational.dtos.VirementInternationalResponseDto;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 @Component
 public class VirementInternationalMapper {
@@ -47,7 +48,7 @@ public class VirementInternationalMapper {
         response.setDateValeur(virement.getDateValeur());
         response.setLibelle(virement.getLibelle());
         response.setObservation(virement.getObservation());
-        response.setActive(virement.isActive());
+        response.setStatut(virement.getStatut());
         response.setType(virement.getType());
 
         log.debug("Conversion réussie du virement international ID: {} (Type: {}, Montant: {})",
@@ -108,7 +109,7 @@ public class VirementInternationalMapper {
 
         virement.setLibelle(libelle);
         virement.setObservation(observation);
-        virement.setActive(true);
+        virement.setStatut(StatutMoyenPaiement.ENCOURS);
 
         log.debug("Entité virement international créée avec succès - Type: {}, Libellé: {}, Montant: {}",
                 dto.getType(), libelle, dto.getMontant());

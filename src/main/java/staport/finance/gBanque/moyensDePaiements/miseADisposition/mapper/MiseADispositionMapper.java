@@ -6,6 +6,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.dtos.MiseADispositionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.dtos.MiseAdispositionRequestDto;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class MiseADispositionMapper {
 
@@ -33,7 +34,7 @@ public class MiseADispositionMapper {
         dto.setBeneficiaire(miseADisposition.getBeneficiaire());
         dto.setMontant(miseADisposition.getMontant());
         dto.setCinBeneficiaire(miseADisposition.getCinBeneficiaire());
-        dto.setActive(miseADisposition.isActive());
+        dto.setStatut(miseADisposition.getStatut());
         dto.setType(miseADisposition.getType());
         dto.setEmetteur(miseADisposition.getEmetteur() != null ? miseADisposition.getEmetteur() : null);
 
@@ -73,7 +74,7 @@ public class MiseADispositionMapper {
         miseADisposition.setBeneficiaire(dto.getBeneficiaire());
         miseADisposition.setMontant(dto.getMontant());
         miseADisposition.setBanque(banque);
-        miseADisposition.setActive(true);
+        miseADisposition.setStatut(StatutMoyenPaiement.ENCOURS);
         miseADisposition.setType(dto.getType());
         miseADisposition.setEmetteur(dto.getEmetteur());
 

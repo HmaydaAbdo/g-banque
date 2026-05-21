@@ -7,6 +7,7 @@ import staport.finance.gBanque.moyensDePaiements.lcn.dtos.LcnRequestDto;
 import staport.finance.gBanque.moyensDePaiements.lcn.dtos.LcnResponseDTO;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class LcnMapper {
 
@@ -28,7 +29,7 @@ public class LcnMapper {
         dto.setBeneficiaire(lcn.getBeneficiaire());
         dto.setDateEcheance(lcn.getDateEcheance());
         dto.setMontant(lcn.getMontant());
-        dto.setActive(lcn.isActive());
+        dto.setStatut(lcn.getStatut());
 
         // We only expose the bank's name, not the whole Banque object.
         if (lcn.getBanque() != null) {
@@ -69,7 +70,7 @@ public class LcnMapper {
         lcn.setBeneficiaire(dto.getBeneficiaire());
         lcn.setMontant(dto.getMontant());
         lcn.setBanque(banque);
-        lcn.setActive(true);
+        lcn.setStatut(StatutMoyenPaiement.ENCOURS);
         lcn.setNumero(dto.getNumero());
         lcn.setType(dto.getType());
         lcn.setEmetteur(dto.getEmetteur());

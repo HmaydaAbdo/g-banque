@@ -7,6 +7,7 @@ import staport.finance.gBanque.moyensDePaiements.cheques.dtos.ChequeRequestDto;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.cheques.dtos.ChequeResponseDto;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class ChequeMapper {
 
@@ -27,7 +28,7 @@ public class ChequeMapper {
         dto.setDateEcheance(cheque.getDateEcheance() != null ? cheque.getDateEcheance() : null);
         dto.setBeneficiaire(cheque.getBeneficiaire());
         dto.setMontant(cheque.getMontant());
-        dto.setActive(cheque.isActive());
+        dto.setStatut(cheque.getStatut() );
         dto.setType(cheque.getType());
         dto.setEmetteur(cheque.getEmetteur() != null ? cheque.getEmetteur() : null);
 
@@ -75,7 +76,7 @@ public class ChequeMapper {
         cheque.setBeneficiaire(dto.getBeneficiaire());
         cheque.setMontant(dto.getMontant());
         cheque.setBanque(banque);
-        cheque.setActive(true);
+        cheque.setStatut(StatutMoyenPaiement.ENCOURS);
         cheque.setType(dto.getType());
         cheque.setEmetteur(dto.getEmetteur());
 
