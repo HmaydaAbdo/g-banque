@@ -27,9 +27,7 @@ import { DroitConstateRemboursementsComponent } from "../../etatsDesEncours/view
 import { DroitConstateDeblocageComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/droit-constate-deblocage/droit-constate-deblocage.component";
 import { DecomptesComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/decomptes/decomptes.component";
 import { ValidatedPrefiComponent } from "../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component";
-import { CommissionListComponent } from "../../commission/views/CommissionListComponent/commission-list.component";
 import { EncoursCommissionsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/commission/encours-commissions.component";
-import { CommissionFormComponent } from "../../commission/views/commission-form/commission-form.component";
 import { AgiosListComponent } from "../../agios/views/agios-list/agios-list.component";
 import { AgiosFormComponent } from "../../agios/views/agios-form/agios.form.component";
 import { FraisBancaireListComponent } from "../../frais-bancaire/views/frais-bancaire-list/frais-bancaire-list.component";
@@ -213,9 +211,10 @@ export const PORTAIL_ROUTES: Routes = [
     ]
   },
 
-  { path: 'commissions', component: CommissionListComponent },
-  { path: "commissions/new", component: CommissionFormComponent },
-  { path: "commissions/edit/:id", component: CommissionFormComponent },
+  {
+    path: 'commissions',
+    loadChildren: () => import('../../commission/commission.routes').then(m => m.COMMISSION_ROUTES)
+  },
 
   { path: 'impots-taxes', component: ImpotEtTaxeListComponent },
   { path: "impots-taxes/new", component: ImpotEtTaxeFormComponent },
