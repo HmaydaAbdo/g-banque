@@ -111,7 +111,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
 
         this.items = [
           { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
-          { icon: 'pi pi-calculator', route: '/portail/agios-calcul', label: 'Calcul des Agios' },
+          { icon: 'pi pi-calculator', route: '/portail/agios/calcul', label: 'Calcul des Agios' },
           { label: `T${this.trimestre}/${this.annee}` }
         ];
 
@@ -263,7 +263,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   }
 
   retour(): void {
-    this.router.navigate(['/portail/agios-calcul']);
+    this.router.navigate(['/portail/agios/calcul']);
   }
 
   // ═══════════════════════════════════════════════════════════════

@@ -109,7 +109,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
-      { icon: 'pi pi-calculator', route: '/portail/agios-calcul', label: 'Calcul des Agios' },
+      { icon: 'pi pi-calculator', route: '/portail/agios/calcul', label: 'Calcul des Agios' },
     ];
   }
 
@@ -304,7 +304,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
 
   voirDetail(trim: AgiosTrimestrielResponseDto): void {
     this.router.navigate([
-      '/portail/agios-calcul/detail',
+      '/portail/agios/calcul/detail',
       trim.banqueId, trim.typeAgios, trim.trimestre, trim.annee
     ]);
   }

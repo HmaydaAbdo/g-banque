@@ -28,8 +28,6 @@ import { DroitConstateDeblocageComponent } from "../../etatsDesEncours/views/les
 import { DecomptesComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/decomptes/decomptes.component";
 import { ValidatedPrefiComponent } from "../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component";
 import { EncoursCommissionsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/commission/encours-commissions.component";
-import { AgiosListComponent } from "../../agios/views/agios-list/agios-list.component";
-import { AgiosFormComponent } from "../../agios/views/agios-form/agios.form.component";
 import { FraisBancaireListComponent } from "../../frais-bancaire/views/frais-bancaire-list/frais-bancaire-list.component";
 import { FraisBancaireFormComponent } from "../../frais-bancaire/views/frais-bancaire-form/frais-bancaire-form.component";
 import { EncoursAgiosComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/agios/encours-agios.component";
@@ -55,8 +53,6 @@ import {VirementInternationalEncoursEncaissementComponent} from "../../etatsDesE
 import {ImpayeeListComponent} from "../../impayees/views/ImpayeeList/Impayee-list.component";
 import {ImpayeeFormComponent} from "../../impayees/views/ImpayeeForm/Impayee-form.component";
 import {DecaissementEncoursImpayeeComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/impayee/decaissement-encours-impayee.component";
-import {AgiosCalculDashboardComponent} from "../../agios-calcul/views/agios-calcul-dashboard/agios-calcul-dashboard.component";
-import {AgiosCalculDetailComponent} from "../../agios-calcul/views/agios-calcul-detail/agios-calcul-detail.component";
 import {EncaissementEncoursImpayeeComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/impayee/encaissement-encours-impayee.component";
 
 export const PORTAIL_ROUTES: Routes = [
@@ -222,11 +218,10 @@ export const PORTAIL_ROUTES: Routes = [
     loadChildren: () => import('../../restitution/restitution.routes').then(m => m.RESTITUTION_ROUTES)
   },
 
-  { path: 'agios', component: AgiosListComponent },
-  { path: "agios/new", component: AgiosFormComponent },
-  { path: "agios/edit/:id", component: AgiosFormComponent },
-  { path: 'agios-calcul', component: AgiosCalculDashboardComponent },
-  { path: 'agios-calcul/detail/:banqueId/:type/:trim/:annee', component: AgiosCalculDetailComponent },
+  {
+    path: 'agios',
+    loadChildren: () => import('../../agios/agios.routes').then(m => m.AGIOS_ROUTES)
+  },
 
   {
     path: 'impayees',

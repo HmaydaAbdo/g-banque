@@ -143,7 +143,7 @@ export class SidebarComponent implements OnInit {
       icon: 'pi pi-money-bill',
       items: [
         { label: 'Liste des Agios', icon: 'pi pi-list', routerLink: '/portail/agios' },
-        { label: 'Calcul des Agios', icon: 'pi pi-calculator', routerLink: '/portail/agios-calcul' },
+        { label: 'Calcul des Agios', icon: 'pi pi-calculator', routerLink: '/portail/agios/calcul' },
       ]
     },
     {
