@@ -67,9 +67,9 @@ public class ChequeService {
             throw new IllegalArgumentException("Modification interdite: le cheque with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
-        if (existingCheque.getStatut() == StatutMoyenPaiement.REGLE ){
-            log.warn("Tentative de modification d'un chèque inactif (déjà réglé), ID={}", id);
-            throw new IllegalArgumentException("Modification interdite: le cheque with id " + id + " est déja réglé .");
+        if (existingCheque.getStatut() == StatutMoyenPaiement.REGLE) {
+            log.warn("Tentative de modification d'un chèque déjà réglé, ID={}", id);
+            throw new IllegalArgumentException("Modification interdite: le cheque with id " + id + " est déjà réglé.");
         }
 
         if (dto.getNumero() != null) {
@@ -134,9 +134,9 @@ public class ChequeService {
         });
 
 
-        if ( cheque.getStatut()==StatutMoyenPaiement.REGLE ){
-            log.warn("Tentative de suppression d'un chèque inactif (déjà réglé), ID={}", id);
-            throw new IllegalArgumentException("Suppression interdite: le cheque with id " + id + " est déja réglé.");
+        if (cheque.getStatut() == StatutMoyenPaiement.REGLE) {
+            log.warn("Tentative de suppression d'un chèque déjà réglé, ID={}", id);
+            throw new IllegalArgumentException("Suppression interdite: le cheque with id " + id + " est déjà réglé.");
         }
 
         chequeRepository.deleteById(id);
@@ -168,12 +168,12 @@ public class ChequeService {
         log.info("Recherche des chèques d'encaissement avec les filtres={} et pagination={}", searchDto, pageable);
 
         // Combine specifications based on non-null search criteria from the DTO
-        Specification<Cheque> spec = Specification.where((ChequeSpec.hasType(Type.ENCAISSEMENT))
-                        .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
-                        .and(ChequeSpec.hasStatut(searchDto.getStatut()))
-                        .and(ChequeSpec.hasMontant(searchDto.getMontant()))
-                        .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()))
-                        .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur())))
+        Specification<Cheque> spec = Specification.where(ChequeSpec.hasType(Type.ENCAISSEMENT))
+                .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
+                .and(ChequeSpec.hasStatut(searchDto.getStatut()))
+                .and(ChequeSpec.hasMontant(searchDto.getMontant()))
+                .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()))
+                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
                 .and(ChequeSpec.hasNumero(searchDto.getNumero()));
 
         // Execute the search with the combined specification and pagination
@@ -195,6 +195,10 @@ public class ChequeService {
                     return new NoSuchElementException("Cheque with id " + id + " not found.");
                 });
 
+        if (cheque.getStatut() == StatutMoyenPaiement.ANNULE) {
+            log.warn("Tentative de basculement du statut d'un chèque annulé, ID={}", id);
+            throw new IllegalStateException("Impossible de basculer le statut d'un chèque annulé (ID=" + id + ").");
+        }
         // Toggle the 'active' status
         cheque.setStatut(cheque.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         log.debug("Nouveau statut pour le chèque ID={}: actif={}", id, cheque.getStatut() == StatutMoyenPaiement.ENCOURS);

@@ -116,10 +116,10 @@ public class LcnService {
                     "Modification interdite: le lcn with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
-        if (existingLcn.getStatut() == StatutMoyenPaiement.REGLE ){
-            log.warn("Tentative de modification d'un LCN inactif (déjà réglé), ID={}", id);
+        if (existingLcn.getStatut() == StatutMoyenPaiement.REGLE) {
+            log.warn("Tentative de modification d'un LCN déjà réglé, ID={}", id);
             throw new IllegalArgumentException(
-                    "Modification interdite: le lcn with id " + id + " est déja réglé.");
+                    "Modification interdite: le lcn with id " + id + " est déjà réglé.");
         }
 
         if (dto.getDateEmission() != null) {
@@ -217,9 +217,9 @@ public class LcnService {
             return new ResourceNotFoundException("lcn with id " + id + " not found.");
         });
 
-        if (lcn.getStatut() == StatutMoyenPaiement.REGLE ){
-            log.warn("Tentative de suppression d'un LCN inactif (déjà réglé), ID={}", id);
-            throw new IllegalArgumentException("Suppression interdite: le lcn with id " + id + " est déja réglé.");
+        if (lcn.getStatut() == StatutMoyenPaiement.REGLE) {
+            log.warn("Tentative de suppression d'un LCN déjà réglé, ID={}", id);
+            throw new IllegalArgumentException("Suppression interdite: le lcn with id " + id + " est déjà réglé.");
         }
 
         lcnRepository.deleteById(id);
@@ -280,6 +280,10 @@ public class LcnService {
                     return new NoSuchElementException("Lcn with id " + id + " not found.");
                 });
 
+        if (lcn.getStatut() == StatutMoyenPaiement.ANNULE) {
+            log.warn("Tentative de basculement du statut d'un LCN annulé, ID={}", id);
+            throw new IllegalStateException("Impossible de basculer le statut d'un LCN annulé (ID=" + id + ").");
+        }
         // Toggle the 'active' status
         lcn.setStatut(lcn.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         log.debug("Nouveau statut pour le LCN ID={}: actif={}", id, lcn.getStatut() == StatutMoyenPaiement.ENCOURS);

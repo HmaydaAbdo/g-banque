@@ -69,8 +69,8 @@ public class MiseADispositionService {
         }
 
         if (existingMiseAdisposition.getStatut() == StatutMoyenPaiement.REGLE) {
-            log.warn("Tentative de modification d'une mise à disposition inactive (déjà réglée), ID={}", id);
-            throw new IllegalArgumentException("Modification interdite: la MiseADisposition with id " + id + " est déja réglé.");
+            log.warn("Tentative de modification d'une mise à disposition déjà réglée, ID={}", id);
+            throw new IllegalArgumentException("Modification interdite: la MiseADisposition with id " + id + " est déjà réglée.");
         }
 
         if (dto.getDateEmission() != null) {
@@ -127,8 +127,8 @@ public class MiseADispositionService {
 
 
         if (miseADisposition.getStatut() == StatutMoyenPaiement.REGLE) {
-            log.warn("Tentative de suppression d'une mise à disposition inactive (déjà réglée), ID={}", id);
-            throw new IllegalArgumentException("Suppression interdite: la mise à dispo  with id " + id + " est déja réglé.");
+            log.warn("Tentative de suppression d'une mise à disposition déjà réglée, ID={}", id);
+            throw new IllegalArgumentException("Suppression interdite: la mise à dispo with id " + id + " est déjà réglée.");
         }
 
         miseADispositionRepository.deleteById(id);
@@ -179,6 +179,10 @@ public class MiseADispositionService {
                     return new NoSuchElementException("MiseADisposition with id " + id + " not found.");
                 });
 
+        if (miseADisposition.getStatut() == StatutMoyenPaiement.ANNULE) {
+            log.warn("Tentative de basculement du statut d'une mise à disposition annulée, ID={}", id);
+            throw new IllegalStateException("Impossible de basculer le statut d'une mise à disposition annulée (ID=" + id + ").");
+        }
         // Toggle the 'active' status.
         miseADisposition.setStatut(miseADisposition.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         log.debug("Nouveau statut pour la mise à disposition ID={}: actif={}", id, miseADisposition.getStatut() == StatutMoyenPaiement.ENCOURS);

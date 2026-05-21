@@ -69,8 +69,8 @@ public class VirementService {
         }
 
         if (existingVirement.getStatut() == StatutMoyenPaiement.REGLE) {
-            log.warn("Tentative de modification d'un virement inactif (déjà réglé), ID={}", id);
-            throw new IllegalArgumentException("Modification interdite: le virement with id " + id + " est déja réglé.");
+            log.warn("Tentative de modification d'un virement déjà réglé, ID={}", id);
+            throw new IllegalArgumentException("Modification interdite: le virement with id " + id + " est déjà réglé.");
         }
 
         if (dto.getMontant() != null) {
@@ -150,6 +150,10 @@ public class VirementService {
                     return new NoSuchElementException("Virement with id " + id + " not found.");
                 });
 
+        if (virement.getStatut() == StatutMoyenPaiement.ANNULE) {
+            log.warn("Tentative de basculement du statut d'un virement annulé, ID={}", id);
+            throw new IllegalStateException("Impossible de basculer le statut d'un virement annulé (ID=" + id + ").");
+        }
         virement.setStatut(virement.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         log.debug("Nouveau statut pour le virement ID={}: actif={}", id, virement.getStatut() == StatutMoyenPaiement.ENCOURS);
 
@@ -216,8 +220,8 @@ public class VirementService {
 
 
         if (virement.getStatut() == StatutMoyenPaiement.REGLE) {
-            log.warn("Tentative de suppression d'un virement inactif (déjà réglé), ID={}", id);
-            throw new IllegalArgumentException("Suppression interdite: le virement with id " + id + " est déja réglé.");
+            log.warn("Tentative de suppression d'un virement déjà réglé, ID={}", id);
+            throw new IllegalArgumentException("Suppression interdite: le virement with id " + id + " est déjà réglé.");
         }
 
         virementRepository.delete(virement);

@@ -78,7 +78,7 @@ public class VirementInternationalService {
                 });
 
         if (existingVirement.getStatut() == StatutMoyenPaiement.REGLE) {
-            log.warn("Tentative de modification d'un virement international inactif (déjà réglé), ID={}", id);
+            log.warn("Tentative de modification d'un virement international déjà réglé, ID={}", id);
             throw new IllegalArgumentException("Modification interdite: le virement international with id " + id + " est déjà réglé.");
         }
 
@@ -190,6 +190,10 @@ public class VirementInternationalService {
                     return new NoSuchElementException("VirementInternational with id " + id + " not found.");
                 });
 
+        if (virement.getStatut() == StatutMoyenPaiement.ANNULE) {
+            log.warn("Tentative de basculement du statut d'un virement international annulé, ID={}", id);
+            throw new IllegalStateException("Impossible de basculer le statut d'un virement international annulé (ID=" + id + ").");
+        }
         virement.setStatut(virement.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
         log.debug("Nouveau statut pour le virement international ID={}: actif={}", id, virement.getStatut() == StatutMoyenPaiement.ENCOURS);
 
@@ -324,7 +328,7 @@ public class VirementInternationalService {
                 });
 
         if (virement.getStatut() == StatutMoyenPaiement.REGLE) {
-            log.warn("Tentative de suppression d'un virement international inactif (déjà réglé), ID={}", id);
+            log.warn("Tentative de suppression d'un virement international déjà réglé, ID={}", id);
             throw new IllegalArgumentException("Suppression interdite: le virement international with id " + id + " est déjà réglé.");
         }
 
