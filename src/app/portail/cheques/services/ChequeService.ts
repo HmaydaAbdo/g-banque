@@ -61,8 +61,8 @@ export class ChequeService {
     if (searchDto.nomBanque) {
       params = params.set('nomBanque', searchDto.nomBanque);
     }
-    if (searchDto.active !== undefined && searchDto.active !== null) {
-      params = params.set('active', searchDto.active.toString());
+    if (searchDto.statut !== undefined && searchDto.statut !== null) {
+      params = params.set('statut', searchDto.statut);
     }
 
     return this.http.get<PageResponse<ChequeResponseDto>>(this.apiUrl+"/decaissements", {params});
@@ -101,8 +101,8 @@ export class ChequeService {
     if (searchDto.nomBanque) {
       params = params.set('nomBanque', searchDto.nomBanque);
     }
-    if (searchDto.active !== undefined && searchDto.active !== null) {
-      params = params.set('active', searchDto.active.toString());
+    if (searchDto.statut !== undefined && searchDto.statut !== null) {
+      params = params.set('statut', searchDto.statut);
     }
 
     return this.http.get<PageResponse<ChequeResponseDto>>(this.apiUrl+"/encaissements", {params});

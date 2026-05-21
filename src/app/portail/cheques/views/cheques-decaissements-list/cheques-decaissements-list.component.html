@@ -1,28 +1,28 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class=" flex flex-column gap-1  px-2  h-screen w-screen overflow-y-scroll">
+<div class="flex flex-column gap-1 px-2 h-screen w-screen overflow-y-scroll">
 
-  <div class="flex justify-content-start align-items-center bg-transparent ">
-      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
-        <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
-            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-              <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
-              <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
-            </a>
-
-          </ng-container>
-          <ng-template #elseBlock>
-            <a [href]="item.url">
-              <span class="text-color text-sm  font-bold text-center">{{ item.label }}</span>
-            </a>
-          </ng-template>
+  <div class="flex justify-content-start align-items-center bg-transparent">
+    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+      <ng-template pTemplate="item" let-item>
+        <ng-container *ngIf="item.route; else elseBlock">
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+            <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
+          </a>
+        </ng-container>
+        <ng-template #elseBlock>
+          <a [href]="item.url">
+            <span class="text-color text-sm font-bold text-center">{{ item.label }}</span>
+          </a>
         </ng-template>
-      </p-breadcrumb>
+      </ng-template>
+    </p-breadcrumb>
   </div>
 
-  <form [formGroup]="searchForm" class="flex flex-row justify-content-around flex-wrap ">
+  <form [formGroup]="searchForm" class="flex flex-row justify-content-around flex-wrap">
+
     <div class="flex flex-column gap-2">
       <label for="numero">N° Chèque</label>
       <span class="p-input-icon-left">
@@ -52,10 +52,10 @@
     </div>
 
     <div class="flex flex-column gap-2">
-      <label for="status">Statut</label>
-      <p-dropdown id="status"
+      <label for="statut">Statut</label>
+      <p-dropdown id="statut"
                   [options]="statusOptions"
-                  formControlName="active"
+                  formControlName="statut"
                   optionLabel="label"
                   optionValue="value"
                   placeholder="Sélectionner un statut"
@@ -66,6 +66,7 @@
     <div class="flex align-items-end">
       <p-button label="Effacer" icon="pi pi-times" severity="secondary" (onClick)="clearSearch()"></p-button>
     </div>
+
   </form>
 
   <div class="pb-8">
@@ -75,7 +76,7 @@
              [rows]="10"
              [totalRecords]="totalRecords"
              [loading]="loading"
-             [rowsPerPageOptions]="[3,5,10, 25, 50]"
+             [rowsPerPageOptions]="[3,5,10,25,50]"
              [lazy]="true"
              (onLazyLoad)="loadCheques($event)"
              responsiveLayout="scroll"
@@ -85,57 +86,63 @@
              dataKey="numero"
              currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} chèques"
              [showCurrentPageReport]="true"
-             styleClass="p-datatable-gridlines text-xs"
-    >
+             styleClass="p-datatable-gridlines text-xs">
+
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="numero">N° Chèque <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
-          <th pSortableColumn="dateEcheance">Date d'Échéance  <p-sortIcon field="dateEcheance"></p-sortIcon></th>
+          <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
           <th pSortableColumn="nomBanque">Banque <p-sortIcon field="nomBanque"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th style="width: 8rem;">Statut</th>
+          <th style="width:8rem;">Statut</th>
           @if (isAdmin) {
-            <th style="width: 8rem;">Action</th>
+            <th style="width:8rem;">Action</th>
           }
-
         </tr>
       </ng-template>
+
       <ng-template pTemplate="body" let-cheque>
         <tr>
           <td>{{ cheque.id }}</td>
           <td>{{ cheque.numero }}</td>
           <td>{{ cheque.dateEmission | date:'dd/MM/yyyy' }}</td>
-          <td>{{ cheque.dateEcheance ? ( cheque.dateEcheance  | date:'dd/MM/yyyy' ) : 'N/A' }}</td>
+          <td>{{ cheque.dateEcheance ? (cheque.dateEcheance | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ cheque.beneficiaire }}</td>
           <td>{{ cheque.nomBanque }}</td>
           <td>{{ cheque.montant | number:'1.2-2' }}</td>
-
           <td>
-            <p-tag [value]="cheque.active ? 'Encours' : 'Archivé'" [severity]="cheque.active ? 'success' : 'danger'"></p-tag>
+            <p-tag [value]="getStatutLabel(cheque.statut)"
+                   [severity]="getStatutSeverity(cheque.statut)">
+            </p-tag>
           </td>
-
           <td class="flex flex-row gap-2">
-            <p-inputSwitch [ngModel]="cheque.active" class="p-2" (onChange)="confirmToggleStatus(cheque)"></p-inputSwitch>
-            @if (isAdmin){
-              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteCheque(cheque)"></button>
+            <p-inputSwitch
+              [ngModel]="cheque.statut === StatutMoyenPaiement.ENCOURS"
+              [disabled]="cheque.statut === StatutMoyenPaiement.ANNULE"
+              class="p-2"
+              (onChange)="confirmToggleStatus(cheque)">
+            </p-inputSwitch>
+            @if (isAdmin) {
+              <button pButton pRipple icon="pi pi-trash"
+                      class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="cheque.statut === StatutMoyenPaiement.REGLE"
+                      (click)="deleteCheque(cheque)">
+              </button>
             }
           </td>
-
         </tr>
       </ng-template>
+
       <ng-template pTemplate="emptyMessage">
-        <tr>
-          <td colspan="7">Aucun chèque actif trouvé.</td>
-        </tr>
+        <tr><td colspan="9">Aucun chèque trouvé.</td></tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
-        <tr>
-          <td colspan="7">Chargement des chèques. Veuillez patienter...</td>
-        </tr>
+        <tr><td colspan="9">Chargement des chèques. Veuillez patienter...</td></tr>
       </ng-template>
+
     </p-table>
   </div>
 </div>

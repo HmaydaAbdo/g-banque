@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class=" flex flex-column gap-4 py-2 px-2 md:px-4 h-screen w-screen overflow-y-scroll">
+<div class="flex flex-column gap-4 py-2 px-2 md:px-4 h-screen w-screen overflow-y-scroll">
 
   <div class="portail-section flex justify-content-between bg-transparent">
     <div class="flex justify-content-center align-items-center">
@@ -15,88 +15,78 @@
           </ng-container>
           <ng-template #elseBlock>
             <a [href]="item.url">
-              <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+              <span class="text-color text-sm text-center">{{ item.label }}</span>
             </a>
           </ng-template>
         </ng-template>
       </p-breadcrumb>
     </div>
-
-    <button pButton pRipple label="Ajouter Cheque" class=" h-fit mt-2" size="small" icon="pi pi-plus" severity="primary" routerLink="/portail/Cheques/new"></button>
-
+    <button pButton pRipple label="Ajouter Chèque" class="h-fit mt-2" size="small" icon="pi pi-plus"
+            severity="primary" routerLink="/portail/Cheques/new">
+    </button>
   </div>
+
   <form [formGroup]="searchForm" class="flex flex-wrap gap-3 align-items-end">
 
-    <div class="flex flex-column gap-2 flex-1" style="min-width: 150px;">
-      <label for="numero">numero</label>
+    <div class="flex flex-column gap-2 flex-1" style="min-width:150px;">
+      <label for="numero">Numéro</label>
       <span class="p-input-icon-left w-full">
-      <i class="pi pi-search"></i>
-      <input id="numero" pInputText type="text" formControlName="numero"
-             placeholder="Rechercher par numero..." class="w-full" />
-    </span>
+        <i class="pi pi-search"></i>
+        <input id="numero" pInputText type="text" formControlName="numero"
+               placeholder="Rechercher par numéro..." class="w-full" />
+      </span>
     </div>
 
-    <div class="flex flex-column gap-2 flex-1" style="min-width: 150px;">
+    <div class="flex flex-column gap-2 flex-1" style="min-width:150px;">
       <label for="dateEmission">Date d'émission</label>
-      <p-calendar id="dateEmission"
-                  formControlName="dateEmission"
-                  dateFormat="dd/mm/yy"
-                  placeholder="JJ/MM/AAAA"
-                  [styleClass]="'w-full'"
-                  [inputStyleClass]="'w-full'">
+      <p-calendar id="dateEmission" formControlName="dateEmission"
+                  dateFormat="dd/mm/yy" placeholder="JJ/MM/AAAA"
+                  [styleClass]="'w-full'" [inputStyleClass]="'w-full'">
       </p-calendar>
     </div>
 
-    <div class="flex flex-column gap-2 flex-1" style="min-width: 120px;">
+    <div class="flex flex-column gap-2 flex-1" style="min-width:120px;">
       <label for="montant">Montant</label>
       <span class="p-input-icon-left w-full">
-      <i class="pi pi-search"></i>
-      <input id="montant" pInputText type="number" formControlName="montant"
-             placeholder="Montant" class="w-full" />
-    </span>
+        <i class="pi pi-search"></i>
+        <input id="montant" pInputText type="number" formControlName="montant"
+               placeholder="Montant" class="w-full" />
+      </span>
     </div>
 
-    <div class="flex flex-column gap-2 flex-1" style="min-width: 150px;">
-      <label for="emetteur">émetteur</label>
+    <div class="flex flex-column gap-2 flex-1" style="min-width:150px;">
+      <label for="emetteur">Émetteur</label>
       <span class="p-input-icon-left w-full">
-      <i class="pi pi-search"></i>
-      <input id="emetteur" pInputText type="text" formControlName="emetteur"
-             placeholder="Rechercher par émetteur..." class="w-full" />
-    </span>
+        <i class="pi pi-search"></i>
+        <input id="emetteur" pInputText type="text" formControlName="emetteur"
+               placeholder="Rechercher par émetteur..." class="w-full" />
+      </span>
     </div>
 
-    <div class="flex flex-column gap-2 flex-1" style="min-width: 180px;">
+    <div class="flex flex-column gap-2 flex-1" style="min-width:180px;">
       <label for="nomBanque">Banque d'encaissement</label>
-      <p-dropdown id="nomBanque"
-                  [options]="banqueOptions"
-                  formControlName="nomBanque"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Toutes les banques"
-                  [showClear]="true"
-                  [styleClass]="'w-full'">
+      <p-dropdown id="nomBanque" [options]="banqueOptions" formControlName="nomBanque"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Toutes les banques" [showClear]="true" [styleClass]="'w-full'">
       </p-dropdown>
     </div>
 
-    <div class="flex flex-column gap-2 flex-1" style="min-width: 150px;">
-      <label for="status">Statut</label>
-      <p-dropdown id="status"
-                  [options]="statusOptions"
-                  formControlName="active"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Tous les cheque"
-                  [showClear]="true"
-                  [styleClass]="'w-full'">
+    <div class="flex flex-column gap-2 flex-1" style="min-width:150px;">
+      <label for="statut">Statut</label>
+      <p-dropdown id="statut" [options]="statusOptions" formControlName="statut"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Tous les chèques" [showClear]="true" [styleClass]="'w-full'">
       </p-dropdown>
     </div>
 
     <div class="flex-shrink-0">
       <p-button label="Effacer" icon="pi pi-times" severity="secondary"
-                (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+                (onClick)="clearSearch()" [style]="{'white-space':'nowrap'}">
       </p-button>
     </div>
+
   </form>
+
   <div class="pb-8">
     <p-table #dt
              [value]="cheques"
@@ -104,7 +94,7 @@
              [rows]="10"
              [totalRecords]="totalRecords"
              [loading]="loading"
-             [rowsPerPageOptions]="[3,5,10, 25, 50]"
+             [rowsPerPageOptions]="[3,5,10,25,50]"
              [lazy]="true"
              (onLazyLoad)="loadCheques($event)"
              responsiveLayout="scroll"
@@ -114,53 +104,68 @@
              dataKey="numero"
              currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} chèques"
              [showCurrentPageReport]="true"
-             styleClass="p-datatable-gridlines text-xs "
-    >
+             styleClass="p-datatable-gridlines text-xs">
+
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-          <th pSortableColumn="numero">numero <p-sortIcon field="numero"></p-sortIcon></th>
+          <th pSortableColumn="numero">Numéro <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
-          <th pSortableColumn="dateEcheance">Date d'Échéance  <p-sortIcon field="dateEcheance"></p-sortIcon></th>
+          <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
-          <th pSortableColumn="emetteur">Emetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
+          <th pSortableColumn="emetteur">Émetteur <p-sortIcon field="emetteur"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
-          <th pSortableColumn="nomBanque">Banque d'encaissement<p-sortIcon field="nomBanque"></p-sortIcon></th>
-          <th >Statut</th>
-          <th >Action</th>
+          <th pSortableColumn="nomBanque">Banque d'encaissement <p-sortIcon field="nomBanque"></p-sortIcon></th>
+          <th>Statut</th>
+          <th>Action</th>
         </tr>
       </ng-template>
+
       <ng-template pTemplate="body" let-cheque>
         <tr>
-          <td>{{cheque.id}}</td>
-          <td>{{cheque.numero}}</td>
+          <td>{{ cheque.id }}</td>
+          <td>{{ cheque.numero }}</td>
           <td>{{ cheque.dateEmission | date:'dd/MM/yyyy' }}</td>
-          <td>{{ cheque.dateEcheance ? ( cheque.dateEcheance  | date:'dd/MM/yyyy' ) : 'N/A' }}</td>
+          <td>{{ cheque.dateEcheance ? (cheque.dateEcheance | date:'dd/MM/yyyy') : 'N/A' }}</td>
           <td>{{ cheque.montant | number:'1.2-2' }}</td>
           <td>{{ cheque.emetteur }}</td>
           <td>{{ cheque.beneficiaire }}</td>
           <td>{{ cheque.nomBanque }}</td>
-          <td><p-tag [value]="cheque.active ? 'Encours' : 'Archivé'" [severity]="cheque.active ? 'success' : 'danger'"></p-tag></td>
+          <td>
+            <p-tag [value]="getStatutLabel(cheque.statut)"
+                   [severity]="getStatutSeverity(cheque.statut)">
+            </p-tag>
+          </td>
           <td class="flex flex-row gap-1">
-            <p-inputSwitch [ngModel]="cheque.active" class="p-2" (onChange)="confirmToggleStatus(cheque)"></p-inputSwitch>
-            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-primary mr-2" [routerLink]="['/portail/Cheques/edit', cheque.id]"></button>
-            @if (isAdmin){
-              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteCheque(cheque)"></button>
+            <p-inputSwitch
+              [ngModel]="cheque.statut === StatutMoyenPaiement.ENCOURS"
+              [disabled]="cheque.statut === StatutMoyenPaiement.ANNULE"
+              class="p-2"
+              (onChange)="confirmToggleStatus(cheque)">
+            </p-inputSwitch>
+            <button pButton pRipple icon="pi pi-pencil"
+                    class="p-button-rounded p-button-outlined p-button-primary mr-2"
+                    [disabled]="cheque.statut === StatutMoyenPaiement.REGLE"
+                    [routerLink]="['/portail/Cheques/edit', cheque.id]">
+            </button>
+            @if (isAdmin) {
+              <button pButton pRipple icon="pi pi-trash"
+                      class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="cheque.statut === StatutMoyenPaiement.REGLE"
+                      (click)="deleteCheque(cheque)">
+              </button>
             }
           </td>
-
         </tr>
       </ng-template>
+
       <ng-template pTemplate="emptyMessage">
-        <tr>
-          <td colspan="7">Aucun chèque actif trouvé.</td>
-        </tr>
+        <tr><td colspan="10">Aucun chèque trouvé.</td></tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
-        <tr>
-          <td colspan="7">Chargement des chèques. Veuillez patienter...</td>
-        </tr>
+        <tr><td colspan="10">Chargement des chèques. Veuillez patienter...</td></tr>
       </ng-template>
+
     </p-table>
   </div>
 </div>

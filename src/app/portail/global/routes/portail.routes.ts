@@ -13,7 +13,6 @@ import { VirementEncoursComponent } from "../../etatsDesEncours/views/lesEncours
 import { MiseADispositionEncoursComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/mise-a-disposition-encours/mise-a-disposition-encours.component";
 import { RapprochemntEncoursComponent } from "../../etatsDesEncours/views/lesEncours/rapprochemnt-encours/rapprochemnt-encours.component";
 import { LcnDecaissementsListComponent } from "../../LCN/views/lcn-decaissements-list/lcn-decaissements-list.component";
-import { ChequesDecaissementsListComponent } from "../../cheques/views/cheques-decaissements-list/cheques-decaissements-list.component";
 import { VirementDecaissementListComponent } from "../../Virements/views/virement-decaissement-list/virement-decaissement-list.component";
 import { MiseADispositionDecaissementListComponent } from "../../Mise-à-disposition/views/mise-a-disposition-decaissement-list/mise-a-disposition-decaissement-list.component";
 import { RecapDecaissementComponent } from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
@@ -58,8 +57,6 @@ import { PrelevementFormComponent } from "../../prelevements/views/prelevement-f
 import { EncoursPrelevementComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/prelevement/encours-prelevement.component";
 import { VirementFormComponent } from "../../Virements/views/virement-form/virement-form.component";
 import { VirementEncaissementListComponent } from "../../Virements/views/virement-encaissement-list/virement-encaissement-list.component";
-import { ChequesEncaissementsListComponent } from "../../cheques/views/cheques-encaissements-list/cheques-encaissements-list.component";
-import { ChequesFormComponent } from "../../cheques/views/cheques-form/cheques-form.component";
 import { ChequeEncaissementsEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/cheque-encaissements-encours/cheque-encaissements-encours.component";
 import { LcnFormComponent } from "../../LCN/views/lcn-form/lcn-form.component";
 import { LcnEncaissementsListComponent } from "../../LCN/views/lcn-encaissements-list/lcn-encaissements-list.component";
@@ -136,10 +133,10 @@ export const PORTAIL_ROUTES: Routes = [
   { path: "LCN/new", component: LcnFormComponent },
   { path: "LCN/edit/:id", component: LcnFormComponent },
 
-  { path: "Cheques/decaissements", component: ChequesDecaissementsListComponent },
-  { path: "Cheques/encaissements", component: ChequesEncaissementsListComponent },
-  { path: 'Cheques/new', component: ChequesFormComponent },
-  { path: 'Cheques/edit/:id', component: ChequesFormComponent },
+  {
+    path: 'Cheques',
+    loadChildren: () => import('../../cheques/cheques.routes').then(m => m.CHEQUES_ROUTES)
+  },
 
   { path: "Virements/decaissement", component: VirementDecaissementListComponent },
   { path: "Virements/encaissement", component: VirementEncaissementListComponent },
