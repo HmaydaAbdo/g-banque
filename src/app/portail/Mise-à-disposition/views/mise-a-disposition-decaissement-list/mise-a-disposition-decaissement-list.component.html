@@ -3,22 +3,27 @@
 
 <div class="flex flex-column gap-4 py-2 px-2 md:px-4 h-screen w-screen overflow-y-scroll">
 
-  <div class="flex justify-content-start align-items-center bg-transparent ">
-    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
-      <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
-          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
-            <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
-          </a>
-        </ng-container>
-        <ng-template #elseBlock>
-          <a [href]="item.url">
-            <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-          </a>
+  <div class="portail-section flex justify-content-between bg-transparent">
+    <div class="flex justify-content-center align-items-center">
+      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
+        <ng-template pTemplate="item" let-item>
+          <ng-container *ngIf="item.route; else elseBlock">
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+              <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
+            </a>
+          </ng-container>
+          <ng-template #elseBlock>
+            <a [href]="item.url">
+              <span class="text-color text-sm text-center">{{ item.label }}</span>
+            </a>
+          </ng-template>
         </ng-template>
-      </ng-template>
-    </p-breadcrumb>
+      </p-breadcrumb>
+    </div>
+    <button pButton pRipple label="Ajouter" class="h-fit mt-2" size="small" icon="pi pi-plus"
+            severity="primary" routerLink="/portail/Mise-a-disposition/new">
+    </button>
   </div>
 
   <form [formGroup]="searchForm" class="flex flex-wrap gap-3 align-items-end">
@@ -26,53 +31,45 @@
     <div class="flex flex-column gap-2 flex-1" style="min-width: 160px;">
       <label for="numero">N° Mise à disposition</label>
       <span class="p-input-icon-left w-full">
-      <i class="pi pi-search"></i>
-      <input id="numero" pInputText type="text" formControlName="numero"
-             placeholder="Rechercher par N°..." class="w-full" />
-    </span>
+        <i class="pi pi-search"></i>
+        <input id="numero" pInputText type="text" formControlName="numero"
+               placeholder="Rechercher par N°..." class="w-full" />
+      </span>
     </div>
 
     <div class="flex flex-column gap-2 flex-1" style="min-width: 160px;">
       <label for="beneficiaire">Bénéficiaire</label>
       <span class="p-input-icon-left w-full">
-      <i class="pi pi-search"></i>
-      <input id="beneficiaire" pInputText type="text" formControlName="beneficiaire"
-             placeholder="Rechercher par bénéficiaire..." class="w-full" />
-    </span>
+        <i class="pi pi-search"></i>
+        <input id="beneficiaire" pInputText type="text" formControlName="beneficiaire"
+               placeholder="Rechercher par bénéficiaire..." class="w-full" />
+      </span>
     </div>
 
     <div class="flex flex-column gap-2 flex-1" style="min-width: 150px;">
       <label for="cinBeneficiaire">CIN Bénéficiaire</label>
       <span class="p-input-icon-left w-full">
-      <i class="pi pi-search"></i>
-      <input id="cinBeneficiaire" pInputText type="text" formControlName="cinBeneficiaire"
-             placeholder="Rechercher par CIN..." class="w-full" />
-    </span>
+        <i class="pi pi-search"></i>
+        <input id="cinBeneficiaire" pInputText type="text" formControlName="cinBeneficiaire"
+               placeholder="Rechercher par CIN..." class="w-full" />
+      </span>
     </div>
 
     <div class="flex flex-column gap-2 flex-1" style="min-width: 170px;">
       <label for="banqueName">Banque</label>
-      <p-dropdown id="banqueName"
-                  [options]="banqueOptions"
-                  formControlName="banqueName"
-                  optionLabel="label"
-                  optionValue="value"
+      <p-dropdown id="banqueName" [options]="banqueOptions" formControlName="banqueName"
+                  optionLabel="label" optionValue="value"
                   placeholder="Sélectionner une banque"
-                  [showClear]="true"
-                  [styleClass]="'w-full'">
+                  [showClear]="true" [styleClass]="'w-full'">
       </p-dropdown>
     </div>
 
     <div class="flex flex-column gap-2 flex-1" style="min-width: 150px;">
-      <label for="status">Statut</label>
-      <p-dropdown id="status"
-                  [options]="statusOptions"
-                  formControlName="active"
-                  optionLabel="label"
-                  optionValue="value"
-                  placeholder="Sélectionner un statut"
-                  [showClear]="true"
-                  [styleClass]="'w-full'">
+      <label for="statut">Statut</label>
+      <p-dropdown id="statut" [options]="statusOptions" formControlName="statut"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Toutes les mises à disposition"
+                  [showClear]="true" [styleClass]="'w-full'">
       </p-dropdown>
     </div>
 
@@ -83,6 +80,7 @@
     </div>
 
   </form>
+
   <div class="pb-8">
     <p-table #dt
              [value]="misesADisposition"
@@ -90,7 +88,7 @@
              [rows]="10"
              [totalRecords]="totalRecords"
              [loading]="loading"
-             [rowsPerPageOptions]="[3,5,10, 25, 50]"
+             [rowsPerPageOptions]="[3,5,10,25,50]"
              [lazy]="true"
              (onLazyLoad)="loadMisesADisposition($event)"
              responsiveLayout="scroll"
@@ -100,11 +98,11 @@
              dataKey="numero"
              currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} mises à disposition"
              [showCurrentPageReport]="true"
-             styleClass="p-datatable-gridlines text-sm"
-    >
+             styleClass="p-datatable-gridlines text-sm">
+
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="id">ID<p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="numero">N° Mise à disposition <p-sortIcon field="numero"></p-sortIcon></th>
           <th pSortableColumn="dateEmission">Date d'Émission <p-sortIcon field="dateEmission"></p-sortIcon></th>
           <th pSortableColumn="beneficiaire">Bénéficiaire <p-sortIcon field="beneficiaire"></p-sortIcon></th>
@@ -112,40 +110,53 @@
           <th pSortableColumn="montant">Montant <p-sortIcon field="montant"></p-sortIcon></th>
           <th pSortableColumn="banqueName">Banque <p-sortIcon field="banqueName"></p-sortIcon></th>
           <th style="width: 8rem;">Statut</th>
-          @if (isAdmin) {
-            <th style="width: 8rem;">Action</th>
-          }
+          <th style="width: 10rem;">Action</th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-miseADisposition>
+
+      <ng-template pTemplate="body" let-mad>
         <tr>
-          <td>{{miseADisposition.id }}</td>
-          <td>{{ miseADisposition.numero }}</td>
-          <td>{{ miseADisposition.dateEmission | date:'dd/MM/yyyy' }}</td>
-          <td>{{ miseADisposition.beneficiaire }}</td>
-          <td>{{ miseADisposition.cinBeneficiaire }}</td>
-          <td>{{ miseADisposition.montant | number:'1.2-2' }}</td>
-          <td>{{ miseADisposition.banqueName }}</td>
+          <td>{{ mad.id }}</td>
+          <td>{{ mad.numero }}</td>
+          <td>{{ mad.dateEmission | date:'dd/MM/yyyy' }}</td>
+          <td>{{ mad.beneficiaire }}</td>
+          <td>{{ mad.cinBeneficiaire }}</td>
+          <td>{{ mad.montant | number:'1.2-2' }}</td>
+          <td>{{ mad.banqueName }}</td>
           <td>
-            <p-tag [value]="miseADisposition.active ? 'Encours' : 'Archivé'" [severity]="miseADisposition.active ? 'success' : 'danger'"></p-tag>
+            <p-tag [value]="getStatutLabel(mad.statut)"
+                   [severity]="getStatutSeverity(mad.statut)">
+            </p-tag>
           </td>
-
-          <td>
-            <p-inputSwitch [ngModel]="miseADisposition.active" (onChange)="confirmToggleStatus(miseADisposition)"></p-inputSwitch>
+          <td class="flex flex-row align-items-center gap-2">
+            <p-inputSwitch
+              [ngModel]="mad.statut === StatutMoyenPaiement.ENCOURS"
+              [disabled]="mad.statut === StatutMoyenPaiement.ANNULE"
+              (onChange)="confirmToggleStatus(mad)">
+            </p-inputSwitch>
+            <button pButton pRipple icon="pi pi-pencil"
+                    class="p-button-rounded p-button-outlined p-button-secondary"
+                    [disabled]="mad.statut === StatutMoyenPaiement.REGLE"
+                    [routerLink]="['/portail/Mise-a-disposition/edit', mad.id]">
+            </button>
+            @if (isAdmin) {
+              <button pButton pRipple icon="pi pi-trash"
+                      class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="mad.statut === StatutMoyenPaiement.REGLE"
+                      (click)="deleteMiseADisposition(mad)">
+              </button>
+            }
           </td>
-
         </tr>
       </ng-template>
+
       <ng-template pTemplate="emptyMessage">
-        <tr>
-          <td colspan="8">Aucune mise à disposition trouvée.</td>
-        </tr>
+        <tr><td colspan="9">Aucune mise à disposition trouvée.</td></tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
-        <tr>
-          <td colspan="8">Chargement des mises à disposition. Veuillez patienter...</td>
-        </tr>
+        <tr><td colspan="9">Chargement des mises à disposition. Veuillez patienter...</td></tr>
       </ng-template>
+
     </p-table>
   </div>
 </div>

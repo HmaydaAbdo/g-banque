@@ -18,7 +18,7 @@ import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {DropdownModule} from 'primeng/dropdown';
 import {InputSwitchModule} from "primeng/inputswitch";
 import {BreadcrumbModule} from "primeng/breadcrumb";
-import {RouterLinkActive} from "@angular/router";
+import {RouterLink, RouterLinkActive} from "@angular/router";
 
 // Project-specific imports
 import {PageResponse} from "../../../global/types/PageResponse";
@@ -29,6 +29,7 @@ import {Role} from "../../../../auth/enum/Role";
 import {MiseADispositionResponseDto} from "../../dtos/MiseADispositionResponseDto";
 import {MiseADispositionService} from "../../service/MiseADispositionService";
 import {MiseADispositionSearchDto} from "../../dtos/MiseADispositionSearchDto";
+import {StatutMoyenPaiement} from "../../../global/enums/StatutMoyenPaiement";
 
 
 @Component({
@@ -51,13 +52,17 @@ import {MiseADispositionSearchDto} from "../../dtos/MiseADispositionSearchDto";
     InputSwitchModule,
     FormsModule,
     BreadcrumbModule,
-    RouterLinkActive
+    RouterLinkActive,
+    RouterLink
   ],
   templateUrl: './mise-a-disposition-decaissement-list.component.html',
   styleUrl: './mise-a-disposition-decaissement-list.component.scss',
   providers: [MessageService, ConfirmationService]
 })
 export class MiseADispositionDecaissementListComponent implements OnInit, OnDestroy {
+
+  protected readonly StatutMoyenPaiement = StatutMoyenPaiement;
+
   misesADisposition: MiseADispositionResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
@@ -68,8 +73,9 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
   banqueOptions: SelectItem[] = [];
   statusOptions: SelectItem[] = [
     {label: 'Toutes les mises à disposition', value: null},
-    {label: 'Les mises à disposition encours', value: true},
-    {label: 'Les mises à disposition archivées', value: false}
+    {label: 'En cours', value: StatutMoyenPaiement.ENCOURS},
+    {label: 'Réglées', value: StatutMoyenPaiement.REGLE},
+    {label: 'Annulées', value: StatutMoyenPaiement.ANNULE}
   ];
 
   @ViewChild('dt') dt: Table | undefined;
@@ -94,49 +100,39 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
   ) {}
 
   ngOnInit(): void {
-
     this.items = [
-      {icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil"},
-      {icon: 'pi pi-list', route: '/portail/Mise-a-disposition/decaissement', label: "Les mises à disposition ( décaissements)"},
+      {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
+      {icon: 'pi pi-list', route: '/portail/Mise-a-disposition/decaissement', label: 'Les mises à disposition (décaissements)'},
     ];
-
     this.isAdmin = this.authService.hasRole(Role.ADMIN);
     this.initSearchForm();
     this.loadBanques();
-    }
+  }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  /**
-   * Initializes the search form with all filter controls.
-   */
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       numero: [''],
       beneficiaire: [''],
       cinBeneficiaire: [''],
       banqueName: [null],
-      active: [null]
+      statut: [null]
     });
-
-    const searchSubscription = this.searchForm.valueChanges.subscribe(() => this.onSearch());
-    this.subscriptions.push(searchSubscription);
+    const sub = this.searchForm.valueChanges.subscribe(() => this.onSearch());
+    this.subscriptions.push(sub);
   }
 
-  /**
-   * Loads mises à disposition based on lazy load event and form filters.
-   * @param event The PrimeNG lazy load event.
-   */
-  loadMisesADisposition(event: TableLazyLoadEvent) {
+  loadMisesADisposition(event: TableLazyLoadEvent): void {
     this.loading = true;
     this.lastLazyLoadEvent = event;
 
     const currentPage = event.first! / event.rows!;
     const pageSize = event.rows!;
 
-    let sort: string = 'dateEmission,desc';
+    let sort = 'dateEmission,desc';
     if (event.sortField && event.sortOrder) {
       sort = `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
     }
@@ -146,28 +142,18 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
       beneficiaire: this.searchForm.get('beneficiaire')?.value,
       cinBeneficiaire: this.searchForm.get('cinBeneficiaire')?.value,
       banqueName: this.searchForm.get('banqueName')?.value,
-      active: this.searchForm.get('active')?.value
+      statut: this.searchForm.get('statut')?.value
     };
 
-    this.miseADispositionService.getDecaissementsForMiseADisposition(
-      searchCriteria,
-      currentPage,
-      pageSize,
-      sort
-    ).subscribe({
+    this.miseADispositionService.getDecaissementsForMiseADisposition(searchCriteria, currentPage, pageSize, sort).subscribe({
       next: (page: PageResponse<MiseADispositionResponseDto>) => {
         this.misesADisposition = page.content;
         this.totalRecords = page.page.totalElements;
         this.loading = false;
       },
-      error: (error) => {
+      error: () => {
         this.loading = false;
-        console.error('Erreur lors du chargement des mises à disposition:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des mises à disposition.'
-        });
+        this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des mises à disposition.'});
       }
     });
   }
@@ -179,34 +165,18 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
     }
   }
 
-
   loadBanques(): void {
-    this.banqueService.getAllBanques({}, 0, 1000)
-      .subscribe({
-        next: (response: PageResponse<BanqueResponse>) => {
-          this.banqueOptions = response.content.map(banque => ({
-            label: banque.nom,
-            value: banque.nom
-          }));
-          this.banqueOptions.unshift({label: 'Toutes les banques', value: null});
-        },
-        error: (error) => {
-          console.error('Error loading bank options:', error);
-          this.messageService.add({severity: 'error', summary: 'Error', detail: 'Failed to load banks.'});
-        }
-      });
+    this.banqueService.getAllBanques({}, 0, 1000).subscribe({
+      next: (response: PageResponse<BanqueResponse>) => {
+        this.banqueOptions = response.content.map(b => ({label: b.nom, value: b.nom}));
+        this.banqueOptions.unshift({label: 'Toutes les banques', value: null});
+      },
+      error: () => this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.'})
+    });
   }
 
-
   clearSearch(): void {
-    this.searchForm.reset({
-      numero: '',
-      beneficiaire: '',
-      cinBeneficiaire: '',
-      banqueName: null,
-      active: null
-    });
-
+    this.searchForm.reset({numero: '', beneficiaire: '', cinBeneficiaire: '', banqueName: null, statut: null});
     if (this.dt) {
       this.dt.clear();
       this.dt.first = 0;
@@ -214,43 +184,79 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
     }
   }
 
+  getStatutSeverity(statut: StatutMoyenPaiement): 'success' | 'warning' | 'danger' | 'info' {
+    switch (statut) {
+      case StatutMoyenPaiement.ENCOURS: return 'success';
+      case StatutMoyenPaiement.REGLE:   return 'warning';
+      case StatutMoyenPaiement.ANNULE:  return 'danger';
+      default: return 'info';
+    }
+  }
 
-  confirmToggleStatus(miseADisposition: MiseADispositionResponseDto): void {
-    const confirmationMessage = `Êtes-vous sûr de vouloir ${miseADisposition.active ? 'désactiver' : 'activer'} la mise à disposition N° ${miseADisposition.numero}?`;
+  getStatutLabel(statut: StatutMoyenPaiement): string {
+    switch (statut) {
+      case StatutMoyenPaiement.ENCOURS: return 'En cours';
+      case StatutMoyenPaiement.REGLE:   return 'Réglée';
+      case StatutMoyenPaiement.ANNULE:  return 'Annulée';
+      default: return statut;
+    }
+  }
+
+  confirmToggleStatus(mad: MiseADispositionResponseDto): void {
+    const toRegle = mad.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
-      message: confirmationMessage,
-      header: `Confirmation de ${miseADisposition.active ? 'désactivation' : 'activation'}`,
+      message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} la mise à disposition N° ${mad.numero} ?`,
+      header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Oui',
       rejectLabel: 'Non',
-      acceptButtonStyleClass: miseADisposition.active ? 'p-button-danger' : 'p-button-success',
+      acceptButtonStyleClass: toRegle ? 'p-button-warning' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
-      accept: () => {
-        this.toggleMiseADispositionStatus(miseADisposition.id);
+      accept: () => this.toggleMiseADispositionStatus(mad.id)
+    });
+  }
+
+  toggleMiseADispositionStatus(id: number): void {
+    this.miseADispositionService.toggleMiseADispositionStatus(id).subscribe({
+      next: (updated) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: `Mise à disposition N° ${updated.numero} — statut : ${this.getStatutLabel(updated.statut)}`
+        });
+        if (this.dt) this.loadMisesADisposition(this.dt.createLazyLoadMetadata());
+      },
+      error: (err) => {
+        const detail = err.error?.detail || 'Échec de la mise à jour de la mise à disposition.';
+        this.messageService.add({severity: 'error', summary: 'Erreur', detail});
       }
     });
   }
 
-
-  toggleMiseADispositionStatus(id: number): void {
-    this.miseADispositionService.toggleMiseADispositionStatus(id).subscribe({
-      next: (updatedMiseADisposition) => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Succès',
-          detail: `Mise à disposition N° ${updatedMiseADisposition.numero} ${updatedMiseADisposition.active ? 'activée' : 'désactivée'} avec succès.`
-        });
-        // Reload data from the server to reflect the change
-        if (this.dt) {
-          this.loadMisesADisposition(this.dt.createLazyLoadMetadata());
-        }
-      },
-      error: (error) => {
-        console.error('Erreur lors de la mise à jour de la mise à disposition:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: `Échec de la mise à jour de la mise à disposition.`
+  deleteMiseADisposition(mad: MiseADispositionResponseDto): void {
+    this.confirmationService.confirm({
+      message: `<div class="text-center">
+        <i class="pi pi-exclamation-triangle" style="margin-right:5px;"></i>
+        <p>Êtes-vous sûr de vouloir supprimer la mise à disposition <strong>${mad.id}</strong> ?</p>
+        <p style="color:#ef4444;font-weight:bold;">Cette action est irréversible.</p>
+      </div>`,
+      header: 'Confirmation de Suppression',
+      icon: 'none',
+      acceptLabel: 'Confirmer',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.miseADispositionService.deleteMiseAdisposition(mad.id).subscribe({
+          next: () => {
+            this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Mise à disposition supprimée avec succès.', life: 3000});
+            this.loadMisesADisposition(this.lastLazyLoadEvent);
+            this.loading = false;
+          },
+          error: (err) => {
+            const detail = err.error?.detail || 'Échec de la suppression.';
+            this.messageService.add({severity: 'error', summary: 'Erreur', detail, life: 3000});
+            this.loading = false;
+          }
         });
       }
     });

@@ -62,8 +62,8 @@ export class MiseADispositionService {
     if (searchDto.banqueName) {
       params = params.set('banqueName', searchDto.banqueName);
     }
-    if (searchDto.active !== undefined && searchDto.active !== null) {
-      params = params.set('active', searchDto.active.toString());
+    if (searchDto.statut !== undefined && searchDto.statut !== null) {
+      params = params.set('statut', searchDto.statut);
     }
 
     return this.http.get<PageResponse<MiseADispositionResponseDto>>(this.apiUrl+"/decaissements", {params});
@@ -96,8 +96,8 @@ export class MiseADispositionService {
     if (searchDto.banqueName) {
       params = params.set('banqueName', searchDto.banqueName);
     }
-    if (searchDto.active !== undefined && searchDto.active !== null) {
-      params = params.set('active', searchDto.active.toString());
+    if (searchDto.statut !== undefined && searchDto.statut !== null) {
+      params = params.set('statut', searchDto.statut);
     }
 
     return this.http.get<PageResponse<MiseADispositionResponseDto>>(this.apiUrl+"/encaissements", {params});

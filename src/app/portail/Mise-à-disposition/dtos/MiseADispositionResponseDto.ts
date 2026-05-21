@@ -1,4 +1,5 @@
 import {Type} from "../../Virements/Type";
+import {StatutMoyenPaiement} from "../../global/enums/StatutMoyenPaiement";
 
 /**
  * Interface representing the data for a single MiseADisposition resource
@@ -19,5 +20,5 @@ export interface MiseADispositionResponseDto {
   montant: number;
   banqueName: string;
   cinBeneficiaire: string;
-  active: boolean;
+  statut: StatutMoyenPaiement;
 }

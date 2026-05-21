@@ -12,7 +12,6 @@ import { LcnEncoursComponent } from "../../etatsDesEncours/views/lesEncours/deca
 import { VirementEncoursComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/virement-encours/virement-encours.component";
 import { MiseADispositionEncoursComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/mise-a-disposition-encours/mise-a-disposition-encours.component";
 import { RapprochemntEncoursComponent } from "../../etatsDesEncours/views/lesEncours/rapprochemnt-encours/rapprochemnt-encours.component";
-import { MiseADispositionDecaissementListComponent } from "../../Mise-à-disposition/views/mise-a-disposition-decaissement-list/mise-a-disposition-decaissement-list.component";
 import { RecapDecaissementComponent } from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
 import { LignesFonctionnellesArchivesComponent } from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component";
 import { TransactionHistoryComponent } from "../../transactions/views/transaction-history/transaction-history.component";
@@ -55,7 +54,6 @@ import { PrelevementFormComponent } from "../../prelevements/views/prelevement-f
 import { EncoursPrelevementComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/prelevement/encours-prelevement.component";
 import { ChequeEncaissementsEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/cheque-encaissements-encours/cheque-encaissements-encours.component";
 import { EncaissementLcnEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/encaissement-lcn-encours/encaissement-lcn-encours.component";
-import { MiseADispositionFormComponent } from "../../Mise-à-disposition/views/mise-a-disposition-form/mise-a-disposition-form.component";
 import { MiseADispoEncaissementEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/mise-a-dispo-encaissement-encours/mise-a-dispo-encaissement-encours.component";
 import { HistoriqueDesRapprochementComponent } from "../../rapprochement/views/historique-des-rapprochement/historique-des-rapprochement.component";
 import { DetailsRapprochementComponent } from "../../rapprochement/views/details-rapprochement/details-rapprochement.component";
@@ -145,9 +143,10 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'operations/errones/new', component: OperationErroneFormComponent },
   { path: 'operations/errones/edit/:id', component: OperationErroneFormComponent },
 
-  { path: "Mise-a-disposition/decaissement", component: MiseADispositionDecaissementListComponent },
-  { path: "Mise-a-disposition/new", component: MiseADispositionFormComponent },
-  { path: 'Mise-a-disposition/edit/:id', component: MiseADispositionFormComponent },
+  {
+    path: 'Mise-a-disposition',
+    loadChildren: () => import('../../Mise-à-disposition/mise-a-disposition.routes').then(m => m.MISE_A_DISPOSITION_ROUTES)
+  },
 
   { path: "marches", component: MarchesListComponent },
   { path: "marches/new", component: MarchesFormComponent },

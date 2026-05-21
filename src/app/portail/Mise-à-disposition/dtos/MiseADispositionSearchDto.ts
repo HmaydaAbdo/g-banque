@@ -1,4 +1,5 @@
 import {Decimal} from "decimal.js";
+import {StatutMoyenPaiement} from "../../global/enums/StatutMoyenPaiement";
 
 /**
  * Interface for the search criteria used to filter MiseADisposition entities.
@@ -12,5 +13,5 @@ export interface MiseADispositionSearchDto {
   montant?: Decimal;
   emetteur?:string
   dateEmission?: Date;
-  active?: boolean;
+  statut?: StatutMoyenPaiement;
 }
