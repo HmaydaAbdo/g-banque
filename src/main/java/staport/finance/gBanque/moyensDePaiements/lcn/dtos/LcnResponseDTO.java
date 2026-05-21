@@ -4,6 +4,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class LcnResponseDTO {
 
@@ -17,7 +18,7 @@ public class LcnResponseDTO {
     private String libelle;
     private String observation;
     private BigDecimal montant;
-    private boolean active;
+    private StatutMoyenPaiement statut;
     private String banqueName;
     private Long banqueId;
     private Type type;
@@ -40,8 +41,8 @@ public class LcnResponseDTO {
     public void setDateEcheance(LocalDate dateEcheance) { this.dateEcheance = dateEcheance; }
     public BigDecimal getMontant() { return montant; }
     public void setMontant(BigDecimal montant) { this.montant = montant; }
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
+    public StatutMoyenPaiement getStatut() { return statut; }
+    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
     public String getBanqueName() {
         return banqueName;
     }

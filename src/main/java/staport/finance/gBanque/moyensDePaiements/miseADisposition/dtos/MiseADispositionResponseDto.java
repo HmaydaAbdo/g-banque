@@ -4,6 +4,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class MiseADispositionResponseDto {
 
@@ -21,7 +22,7 @@ public class MiseADispositionResponseDto {
     private BigDecimal montant;
     private String banqueName;
     private String cinBeneficiaire;
-    private boolean active;
+    private StatutMoyenPaiement statut;
 
 
     // Getters and Setters
@@ -66,12 +67,12 @@ public class MiseADispositionResponseDto {
         this.cinBeneficiaire = cinBeneficiaire;
     }
 
-    public boolean isActive() {
-        return active;
+    public StatutMoyenPaiement getStatut() {
+        return statut;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setStatut(StatutMoyenPaiement statut) {
+        this.statut = statut;
     }
 
     public String getBanqueName() {

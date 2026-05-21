@@ -4,6 +4,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class ChequeResponseDto {
 
@@ -15,7 +16,7 @@ public class ChequeResponseDto {
     private LocalDate dateValeur ;
     private String beneficiaire;
     private BigDecimal montant;
-    private boolean active;
+    private StatutMoyenPaiement statut;
     private Type type;
     private String emetteur;
     private String nomBanque;
@@ -69,12 +70,12 @@ public class ChequeResponseDto {
         this.montant = montant;
     }
 
-    public boolean isActive() {
-        return active;
+    public StatutMoyenPaiement getStatut() {
+        return statut;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setStatut(StatutMoyenPaiement statut) {
+        this.statut = statut;
     }
 
     public String getNomBanque() {

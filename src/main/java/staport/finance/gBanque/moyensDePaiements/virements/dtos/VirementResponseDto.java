@@ -4,6 +4,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 
 
@@ -24,7 +25,7 @@ public class VirementResponseDto {
     private Long banqueBeneficiaireId;
     private String emetteur;
     private String ribBeneficiaire;
-    private boolean active;
+    private StatutMoyenPaiement statut;
     private Type type;
 
 
@@ -47,12 +48,12 @@ public class VirementResponseDto {
         this.numero = numero;
     }
 
-    public boolean isActive() {
-        return active;
+    public StatutMoyenPaiement getStatut() {
+        return statut;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setStatut(StatutMoyenPaiement statut) {
+        this.statut = statut;
     }
 
     public Type getType() {return type;}

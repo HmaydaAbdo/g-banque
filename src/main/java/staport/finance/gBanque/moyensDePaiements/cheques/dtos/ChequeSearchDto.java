@@ -3,6 +3,7 @@ package staport.finance.gBanque.moyensDePaiements.cheques.dtos;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class ChequeSearchDto {
 
@@ -13,7 +14,7 @@ public class ChequeSearchDto {
     private String numero;
     private String beneficiaire;
     private String nomBanque;
-    private Boolean active;
+    private StatutMoyenPaiement statut;
 
 
     // Default constructor
@@ -45,13 +46,9 @@ public class ChequeSearchDto {
         this.nomBanque = nomBanque;
     }
 
-    public Boolean getActive() {
-        return active;
-    }
+    public StatutMoyenPaiement getStatut() { return statut; }
 
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
+    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
 
     public LocalDate getDateEmission() {
         return dateEmission;
@@ -86,7 +83,7 @@ public class ChequeSearchDto {
                 ", numero='" + numero + '\'' +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", nomBanque='" + nomBanque + '\'' +
-                ", active=" + active +
+                ", statut=" + statut +
                 '}';
     }
 }

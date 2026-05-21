@@ -1,6 +1,7 @@
 package staport.finance.gBanque.moyensDePaiements.miseADisposition.dtos;
 
 import java.math.BigDecimal;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class MiseADispositionSearchDto {
 
@@ -9,7 +10,7 @@ public class MiseADispositionSearchDto {
     private String cinBeneficiaire;
     private String banqueName;
     private String emetteur;
-    private Boolean active;
+    private StatutMoyenPaiement statut;
 
     // Getters and Setters
     public String getNumero() {
@@ -52,13 +53,9 @@ public class MiseADispositionSearchDto {
         this.banqueName = banqueName;
     }
 
-    public Boolean getActive() {
-        return active;
-    }
+    public StatutMoyenPaiement getStatut() { return statut; }
 
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
+    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
 
     @Override
     public String toString() {
@@ -68,7 +65,7 @@ public class MiseADispositionSearchDto {
                 ", cinBeneficiaire='" + cinBeneficiaire + '\'' +
                 ", banqueName='" + banqueName + '\'' +
                 ", emetteur='" + emetteur + '\'' +
-                ", active=" + active +
+                ", statut=" + statut +
                 '}';
     }
 }

@@ -4,6 +4,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class VirementInternationalResponseDto {
 
@@ -18,7 +19,7 @@ public class VirementInternationalResponseDto {
     private LocalDate dateValeur ;
     private String libelle;
     private String observation;
-    private boolean active;
+    private StatutMoyenPaiement statut;
     private Type type;
 
     public VirementInternationalResponseDto() {
@@ -112,13 +113,9 @@ public class VirementInternationalResponseDto {
         this.observation = observation;
     }
 
-    public boolean isActive() {
-        return active;
-    }
+    public StatutMoyenPaiement getStatut() { return statut; }
 
-    public void setActive(boolean active) {
-        this.active = active;
-    }
+    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
 
     public Type getType() {
         return type;
@@ -142,7 +139,7 @@ public class VirementInternationalResponseDto {
                 ", dateValeur=" + dateValeur +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
-                ", active=" + active +
+                ", statut=" + statut +
                 ", type=" + type +
                 '}';
     }

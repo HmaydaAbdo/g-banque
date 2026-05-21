@@ -3,6 +3,7 @@ package staport.finance.gBanque.moyensDePaiements.lcn.dtos;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public class LcnSearchDTO {
 
@@ -13,7 +14,7 @@ public class LcnSearchDTO {
     private String numero;
     private String beneficiaire;
     private String nomBanque;
-    private Boolean active;
+    private StatutMoyenPaiement statut;
 
     public LcnSearchDTO() {
     }
@@ -58,13 +59,9 @@ public class LcnSearchDTO {
         this.numero = numero;
     }
 
-    public Boolean getActive() {
-        return active;
-    }
+    public StatutMoyenPaiement getStatut() { return statut; }
 
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
+    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
 
     public String getNomBanque() {
         return nomBanque;
@@ -92,7 +89,7 @@ public class LcnSearchDTO {
                 ", numero='" + numero + '\'' +
                 ", beneficiaire='" + beneficiaire + '\'' +
                 ", nomBanque='" + nomBanque + '\'' +
-                ", active=" + active +
+                ", statut=" + statut +
                 '}';
     }
 }
