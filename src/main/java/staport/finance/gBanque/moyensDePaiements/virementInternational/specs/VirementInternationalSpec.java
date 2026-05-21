@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public final class VirementInternationalSpec {
 
@@ -152,16 +153,20 @@ public final class VirementInternationalSpec {
     }
 
     /**
-     * Specification to filter VirementInternational by active status.
-     * @param active The active status (true or false).
-     * @return A Specification for the active status.
+     * Specification to filter VirementInternational by  status.
+     * @return A Specification for the  status.
      */
-    public static Specification<VirementInternational> isActive(Boolean active) {
+    public static Specification<VirementInternational> notAnnule() {
+        return (root, query, cb) ->
+            cb.notEqual(root.get("statut"), StatutMoyenPaiement.ANNULE);
+    }
+
+    public static Specification<VirementInternational> hasStatut(StatutMoyenPaiement statut) {
         return (root, query, criteriaBuilder) -> {
-            if (active == null) {
+            if (statut == null) {
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.equal(root.get("active"), active);
+            return criteriaBuilder.equal(root.get("statut"), statut);
         };
     }
 
@@ -223,8 +228,8 @@ public final class VirementInternationalSpec {
             spec = spec.and(hasObservation(searchDto.getObservation()));
         }
 
-        if (searchDto.getActive() != null) {
-            spec = spec.and(isActive(searchDto.getActive()));
+        if (searchDto.getStatut() != null) {
+            spec = spec.and(hasStatut(searchDto.getStatut()));
         }
 
         if (searchDto.getType() != null) {
@@ -237,7 +242,7 @@ public final class VirementInternationalSpec {
     public static Specification<VirementInternational> encoursDecaissement(Long banqueId, LocalDate until) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), until));
@@ -248,7 +253,7 @@ public final class VirementInternationalSpec {
     public static Specification<VirementInternational> encoursEncaissement(Long banqueId, LocalDate until) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), until));
@@ -259,7 +264,7 @@ public final class VirementInternationalSpec {
     public static Specification<VirementInternational> outstandingBetween(Long banqueId, LocalDate from, LocalDate until, Type type) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
             predicates.add(criteriaBuilder.equal(root.get("type"), type));
             predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateEmission"), from));

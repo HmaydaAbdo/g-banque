@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public final class LcnSpecification {
 
@@ -81,13 +82,18 @@ public final class LcnSpecification {
         };
     }
 
-    public static Specification<Lcn> isActive(Boolean active) {
+    public static Specification<Lcn> hasStatut(StatutMoyenPaiement statut) {
         return (root, query, criteriaBuilder) -> {
-            if (active == null) {
+            if (statut == null) {
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.equal(root.get("active"), active);
+            return criteriaBuilder.equal(root.get("statut"), statut);
         };
+    }
+
+    public static Specification<Lcn> notAnnule() {
+        return (root, query, criteriaBuilder) ->
+            criteriaBuilder.notEqual(root.get("statut"), StatutMoyenPaiement.ANNULE);
     }
 
     public static Specification<Lcn> hasMontant(BigDecimal montant) {
@@ -133,7 +139,7 @@ public final class LcnSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (banqueId == null) return criteriaBuilder.disjunction();
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
             predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEcheance"), until));
@@ -148,7 +154,7 @@ public final class LcnSpecification {
 
             // 1. Filtres de base communs
             List<Predicate> basePredicates = new ArrayList<>();
-            basePredicates.add(criteriaBuilder.isTrue(root.get("active")));
+            basePredicates.add(criteriaBuilder.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             basePredicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
             basePredicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
 
@@ -177,7 +183,7 @@ public final class LcnSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (banqueId == null) return criteriaBuilder.disjunction();
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(criteriaBuilder.equal(root.get("type"), type));
             predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
             predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateEcheance"), from));

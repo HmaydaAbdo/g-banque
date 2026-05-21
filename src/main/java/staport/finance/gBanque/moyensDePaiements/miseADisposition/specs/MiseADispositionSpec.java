@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public final class MiseADispositionSpec {
 
@@ -97,13 +98,18 @@ public final class MiseADispositionSpec {
         };
     }
 
-    public static Specification<MiseADisposition> isActive(Boolean active) {
+    public static Specification<MiseADisposition> hasStatut(StatutMoyenPaiement statut) {
         return (root, query, criteriaBuilder) -> {
-            if (active == null) {
+            if (statut == null) {
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.equal(root.get("active"), active);
+            return criteriaBuilder.equal(root.get("statut"), statut);
         };
+    }
+
+    public static Specification<MiseADisposition> notAnnule() {
+        return (root, query, criteriaBuilder) ->
+            criteriaBuilder.notEqual(root.get("statut"), StatutMoyenPaiement.ANNULE);
     }
 
     public static Specification<MiseADisposition> hasMontant(BigDecimal montant) {
@@ -138,8 +144,8 @@ public final class MiseADispositionSpec {
             spec = spec.and(hasEmetteur(searchDto.getEmetteur()));
         }
 
-        if (searchDto.getActive() != null) {
-            spec = spec.and(isActive(searchDto.getActive()));
+        if (searchDto.getStatut() != null) {
+            spec = spec.and(hasStatut(searchDto.getStatut()));
         }
 
         return spec;
@@ -150,7 +156,7 @@ public final class MiseADispositionSpec {
         return (root, query, cb) -> {
             if (banqueId == null) return cb.disjunction();
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.isTrue(root.get("active")));
+            predicates.add(cb.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(cb.equal(root.get("type"), Type.DECAISSEMENT));
             predicates.add(cb.equal(root.get("banque").get("id"), banqueId));
             predicates.add(cb.lessThanOrEqualTo(root.get("dateEmission"), until));
@@ -162,7 +168,7 @@ public final class MiseADispositionSpec {
         return (root, query, cb) -> {
             if (banqueId == null) return cb.disjunction();
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.isTrue(root.get("active")));
+            predicates.add(cb.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(cb.equal(root.get("type"), Type.ENCAISSEMENT));
             predicates.add(cb.equal(root.get("banque").get("id"), banqueId));
             predicates.add(cb.lessThanOrEqualTo(root.get("dateEmission"), until));
@@ -175,7 +181,7 @@ public final class MiseADispositionSpec {
         return (root, query, cb) -> {
             if (banqueId == null) return cb.disjunction();
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.isTrue(root.get("active")));
+            predicates.add(cb.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(cb.equal(root.get("type"), type));
             predicates.add(cb.equal(root.get("banque").get("id"), banqueId));
             predicates.add(cb.greaterThanOrEqualTo(root.get("dateEmission"), from));

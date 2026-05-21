@@ -7,9 +7,9 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 public final class ChequeSpec {
 
@@ -78,17 +78,22 @@ public final class ChequeSpec {
     }
 
     /**
-     * Specification to filter Cheques by their active status.
-     * @param active The active status (true or false).
-     * @return A Specification for the active status.
+     * Specification to filter Cheques by their  status.
+     * @param statut The active status .
+     * @return A Specification for the  status.
      */
-    public static Specification<Cheque> isActive(Boolean active) {
+    public static Specification<Cheque> hasStatut(StatutMoyenPaiement statut) {
         return (root, query, criteriaBuilder) -> {
-            if (active == null) {
+            if (statut == null) {
                 return criteriaBuilder.conjunction();
             }
-            return criteriaBuilder.equal(root.get("active"), active);
+            return criteriaBuilder.equal(root.get("statut"), statut);
         };
+    }
+
+    public static Specification<Cheque> notAnnule() {
+        return (root, query, criteriaBuilder) ->
+            criteriaBuilder.notEqual(root.get("statut"), StatutMoyenPaiement.ANNULE);
     }
 
     public static Specification<Cheque> hasType(Type type) {
@@ -124,7 +129,7 @@ public final class ChequeSpec {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (banqueId == null) return criteriaBuilder.disjunction();
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.DECAISSEMENT));
             predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), until));
@@ -136,7 +141,7 @@ public final class ChequeSpec {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (banqueId == null) return criteriaBuilder.disjunction();
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(criteriaBuilder.equal(root.get("type"), Type.ENCAISSEMENT));
             predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
             predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("dateEmission"), until));
@@ -148,7 +153,7 @@ public final class ChequeSpec {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (banqueId == null) return criteriaBuilder.disjunction();
-            predicates.add(criteriaBuilder.isTrue(root.get("active")));
+            predicates.add(criteriaBuilder.equal(root.get("statut"), StatutMoyenPaiement.ENCOURS));
             predicates.add(criteriaBuilder.equal(root.get("type"), type));
             predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), banqueId));
             predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateEmission"), from));
