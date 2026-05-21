@@ -25,8 +25,6 @@ import { PrefinancementRemboursementsComponent } from "../../etatsDesEncours/vie
 import { PrefinancementDeblocageComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/prefinancement-deblocage/prefinancement-deblocage.component";
 import { DroitConstateRemboursementsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/droit-constate-remboursements/droit-constate-remboursements.component";
 import { DroitConstateDeblocageComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/droit-constate-deblocage/droit-constate-deblocage.component";
-import { DecomptesListComponent } from "../../decomptes/views/decomptes-list/decomptes-list.component";
-import { DecompteFormComponent } from "../../decomptes/views/decomptes-form/decomptes-form.component";
 import { DecomptesComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/decomptes/decomptes.component";
 import { ValidatedPrefiComponent } from "../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component";
 import { CommissionListComponent } from "../../commission/views/CommissionListComponent/commission-list.component";
@@ -160,9 +158,10 @@ export const PORTAIL_ROUTES: Routes = [
     loadChildren: () => import('../../factoring/factoring.routes').then(m => m.FACTORING_ROUTES)
   },
 
-  { path: "decomptes", component: DecomptesListComponent },
-  { path: "decomptes/new", component: DecompteFormComponent },
-  { path: "decomptes/edit/:id", component: DecompteFormComponent },
+  {
+    path: 'decomptes',
+    loadChildren: () => import('../../decomptes/decomptes.routes').then(m => m.DECOMPTES_ROUTES)
+  },
 
   {
     path: 'etats-des-encours/:banqueId', component: LesEncoursComponent,
