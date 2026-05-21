@@ -31,8 +31,6 @@ import { EncoursPrelevementComponent } from "../../etatsDesEncours/views/lesEnco
 import { ChequeEncaissementsEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/cheque-encaissements-encours/cheque-encaissements-encours.component";
 import { EncaissementLcnEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/encaissement-lcn-encours/encaissement-lcn-encours.component";
 import { MiseADispoEncaissementEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/mise-a-dispo-encaissement-encours/mise-a-dispo-encaissement-encours.component";
-import { HistoriqueDesRapprochementComponent } from "../../rapprochement/views/historique-des-rapprochement/historique-des-rapprochement.component";
-import { DetailsRapprochementComponent } from "../../rapprochement/views/details-rapprochement/details-rapprochement.component";
 import { LcnEscompteByLineComponent } from "../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component";
 import { EncoursImpotsEtTaxesComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/encours-impots-taxes/encours-impots-taxes.component";
 import { EncoursRestitutionComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/restitution/encours-restitution.component";
@@ -47,8 +45,10 @@ export const PORTAIL_ROUTES: Routes = [
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
   { path: 'accueil', component: AcceuilComponent },
 
-  { path: "rapprochement/details/:id", component: DetailsRapprochementComponent },
-  { path: "rapprochement/historique", component: HistoriqueDesRapprochementComponent },
+  {
+    path: 'rapprochement',
+    loadChildren: () => import('../../rapprochement/rapprochement.routes').then(m => m.RAPPROCHEMENT_ROUTES)
+  },
 
   {
     path: 'comptes-bancaires',
