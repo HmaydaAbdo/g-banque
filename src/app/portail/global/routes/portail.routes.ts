@@ -38,11 +38,8 @@ import { FraisBancaireListComponent } from "../../frais-bancaire/views/frais-ban
 import { FraisBancaireFormComponent } from "../../frais-bancaire/views/frais-bancaire-form/frais-bancaire-form.component";
 import { EncoursAgiosComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/agios/encours-agios.component";
 import { EncoursFraisBancaireComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/frais-bancaire/encours-fraisBancaire.component";
-import { FactoringFormComponent } from "../../factoring/views/factoring-form/factoring-form.component";
-import { FactoringListComponent } from "../../factoring/views/factoring-list/factoring-list.component";
 import { FactoringRemboursementsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/factoring-remboursement/factoring-remboursements.component";
 import { FactoringDeblocageComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/factoring-deblocage/factoring-deblocage.component";
-import { ValidatedFactoringComponent } from "../../factoring/LignesFactoring/SuivieDesLignes/views/validated-factoring.component";
 import { VirementEncaissementEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/virement-encours/virement-encours.component";
 import { PrelevementListComponent } from "../../prelevements/views/prelevement-list/prelevement-list.component";
 import { PrelevementFormComponent } from "../../prelevements/views/prelevement-form/prelevement-form.component";
@@ -101,7 +98,7 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'lignes-fonctionnelles-specifiques-encours/edit/:id', component: SpeficLigneEditComponent },
   { path: 'lignes-fonctionnelles-specifiques-archived', component: SpeficLigneArchiveesComponent },
   { path: 'lignes-fonctionnelles-specifiques/marche/:id', component: FunctionalLinesByMarcheComponent },
-  { path: "factoring-encours/:lineId", component: ValidatedFactoringComponent },
+  { path: "factoring-encours/:lineId", loadComponent: () => import('../../factoring/LignesFactoring/SuivieDesLignes/views/validated-factoring.component').then(m => m.ValidatedFactoringComponent) },
   { path: "prefi-encours/:lineId", component: ValidatedPrefiComponent },
   { path: "dc-encours/:lineId", loadComponent: () => import('../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component').then(m => m.ValidatedDcComponent) },
   { path: "lcn-encours/:lineId", component: LcnEscompteByLineComponent },
@@ -158,9 +155,10 @@ export const PORTAIL_ROUTES: Routes = [
     loadChildren: () => import('../../droitsConstate/droits-constate.routes').then(m => m.DROITS_CONSTATE_ROUTES)
   },
 
-  { path: "factoring", component: FactoringListComponent },
-  { path: "factoring/new", component: FactoringFormComponent },
-  { path: "factoring/edit/:id", component: FactoringFormComponent },
+  {
+    path: 'factoring',
+    loadChildren: () => import('../../factoring/factoring.routes').then(m => m.FACTORING_ROUTES)
+  },
 
   { path: "decomptes", component: DecomptesListComponent },
   { path: "decomptes/new", component: DecompteFormComponent },
