@@ -35,9 +35,12 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'lignes-fonctionnelles-specifiques-encours',
-    loadChildren: () => import('../../specific-Functional-Lignes/lignes-specifiques.routes').then(m => m.LIGNES_SPECIFIQUES_ROUTES)
+    loadChildren: () => import('../../specific-Functional-Lignes/lignes-specifiques.routes').then(m => m.LIGNES_SPECIFIQUES_ENCOURS_ROUTES)
   },
-  { path: 'lignes-fonctionnelles-specifiques-archived', loadComponent: () => import('../../specific-Functional-Lignes/views/spefic-ligne-archivees/spefic-ligne-archivees.component').then(m => m.SpeficLigneArchiveesComponent) },
+  {
+    path: 'lignes-fonctionnelles-specifiques-archived',
+    loadChildren: () => import('../../specific-Functional-Lignes/lignes-specifiques.routes').then(m => m.LIGNES_SPECIFIQUES_ARCHIVED_ROUTES)
+  },
   { path: 'lignes-fonctionnelles-specifiques/marche/:id', loadComponent: () => import('../../Marches/views/specific-lines-by-marche/functionalLines-by-marche.component').then(m => m.FunctionalLinesByMarcheComponent) },
   { path: "factoring-encours/:lineId", loadComponent: () => import('../../factoring/LignesFactoring/SuivieDesLignes/views/validated-factoring.component').then(m => m.ValidatedFactoringComponent) },
   { path: "prefi-encours/:lineId", loadComponent: () => import('../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component').then(m => m.ValidatedPrefiComponent) },
