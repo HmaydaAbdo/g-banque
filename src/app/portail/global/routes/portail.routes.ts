@@ -15,8 +15,6 @@ import { RapprochemntEncoursComponent } from "../../etatsDesEncours/views/lesEnc
 import { RecapDecaissementComponent } from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
 import { LignesFonctionnellesArchivesComponent } from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component";
 import { TransactionHistoryComponent } from "../../transactions/views/transaction-history/transaction-history.component";
-import { MarchesListComponent } from "../../Marches/views/marches-list/marches-list.component";
-import { MarchesFormComponent } from "../../Marches/views/marches-form/marches-form.component";
 import { SpeficLigneEncoursComponent } from "../../specific-Functional-Lignes/views/spefic-ligne-encours/spefic-ligne-encours.component";
 import { SpeficLigneEditComponent } from "../../specific-Functional-Lignes/views/spefic-ligne-edit/spefic-ligne-edit.component";
 import { SpeficLigneArchiveesComponent } from "../../specific-Functional-Lignes/views/spefic-ligne-archivees/spefic-ligne-archivees.component";
@@ -146,9 +144,10 @@ export const PORTAIL_ROUTES: Routes = [
     loadChildren: () => import('../../Mise-à-disposition/mise-a-disposition.routes').then(m => m.MISE_A_DISPOSITION_ROUTES)
   },
 
-  { path: "marches", component: MarchesListComponent },
-  { path: "marches/new", component: MarchesFormComponent },
-  { path: "marches/edit/:id", component: MarchesFormComponent },
+  {
+    path: 'marches',
+    loadChildren: () => import('../../Marches/marches.routes').then(m => m.MARCHES_ROUTES)
+  },
 
   { path: 'préfinancements', component: PrefinancementsListComponent },
   { path: 'préfinancements/new', component: PrefinancementFormComponent },
