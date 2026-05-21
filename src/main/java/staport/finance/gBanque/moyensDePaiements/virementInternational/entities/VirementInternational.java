@@ -7,6 +7,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 @Entity
 @Table(name = "VIREMENTS_INTERNATIONAUX")
@@ -44,8 +45,9 @@ public class VirementInternational {
     @Column(name = "observation")
     private String observation;
 
-    @Column(name = "active", nullable = false)
-    private boolean active;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut", nullable = false)
+    private StatutMoyenPaiement statut;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type",nullable = false)
@@ -136,13 +138,9 @@ public class VirementInternational {
         this.observation = observation;
     }
 
-    public boolean isActive() {
-        return active;
-    }
+    public StatutMoyenPaiement getStatut() { return statut; }
 
-    public void setActive(boolean active) {
-        this.active = active;
-    }
+    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
 
     public Type getType() {
         return type;
@@ -156,8 +154,7 @@ public class VirementInternational {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         VirementInternational that = (VirementInternational) o;
-        return active == that.active &&
-                Objects.equals(id, that.id) &&
+        return Objects.equals(id, that.id) &&
                 Objects.equals(banque, that.banque) &&
                 Objects.equals(beneficiaire, that.beneficiaire) &&
                 Objects.equals(emetteur, that.emetteur) &&
@@ -173,7 +170,7 @@ public class VirementInternational {
     @Override
     public int hashCode() {
         return Objects.hash(id, banque, beneficiaire, emetteur, montant, dateEmission,
-                dateOperation, dateValeur, libelle, observation, active, type);
+                dateOperation, dateValeur, libelle, observation, type);
     }
 
     @Override
@@ -189,7 +186,7 @@ public class VirementInternational {
                 ", dateValeur=" + dateValeur +
                 ", libelle='" + libelle + '\'' +
                 ", observation='" + observation + '\'' +
-                ", active=" + active +
+                ", statut=" + statut +
                 ", type=" + type +
                 '}';
     }
