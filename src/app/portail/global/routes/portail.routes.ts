@@ -12,9 +12,6 @@ import { MiseADispositionEncoursComponent } from "../../etatsDesEncours/views/le
 import { RapprochemntEncoursComponent } from "../../etatsDesEncours/views/lesEncours/rapprochemnt-encours/rapprochemnt-encours.component";
 import { RecapDecaissementComponent } from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
 import { TransactionHistoryComponent } from "../../transactions/views/transaction-history/transaction-history.component";
-import { SpeficLigneEncoursComponent } from "../../specific-Functional-Lignes/views/spefic-ligne-encours/spefic-ligne-encours.component";
-import { SpeficLigneEditComponent } from "../../specific-Functional-Lignes/views/spefic-ligne-edit/spefic-ligne-edit.component";
-import { SpeficLigneArchiveesComponent } from "../../specific-Functional-Lignes/views/spefic-ligne-archivees/spefic-ligne-archivees.component";
 import { PrefinancementsListComponent } from "../../prefinancements/views/prefinancements-list/prefinancements-list.component";
 import { PrefinancementFormComponent } from "../../prefinancements/views/prefinancement-form/prefinancement-form.component";
 import { RecapEncaissementsComponent } from "../../etatsDesEncours/views/lesEncours/recap/views/recap-encaissements/recap-encaissements.component";
@@ -36,7 +33,6 @@ import { EncaissementLcnEncoursComponent } from "../../etatsDesEncours/views/les
 import { MiseADispoEncaissementEncoursComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/mise-a-dispo-encaissement-encours/mise-a-dispo-encaissement-encours.component";
 import { HistoriqueDesRapprochementComponent } from "../../rapprochement/views/historique-des-rapprochement/historique-des-rapprochement.component";
 import { DetailsRapprochementComponent } from "../../rapprochement/views/details-rapprochement/details-rapprochement.component";
-import { FunctionalLinesByMarcheComponent } from "../../Marches/views/specific-lines-by-marche/functionalLines-by-marche.component";
 import { LcnEscompteByLineComponent } from "../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component";
 import { EncoursImpotsEtTaxesComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/encours-impots-taxes/encours-impots-taxes.component";
 import { EncoursRestitutionComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/restitution/encours-restitution.component";
@@ -73,11 +69,12 @@ export const PORTAIL_ROUTES: Routes = [
   },
   { path: 'lignes-fonctionnelles-archived', loadComponent: () => import('../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component').then(m => m.LignesFonctionnellesArchivesComponent) },
 
-  { path: 'lignes-fonctionnelles-specifiques-encours', component: SpeficLigneEncoursComponent },
-  { path: 'lignes-fonctionnelles-specifiques-encours/new', component: SpeficLigneEditComponent },
-  { path: 'lignes-fonctionnelles-specifiques-encours/edit/:id', component: SpeficLigneEditComponent },
-  { path: 'lignes-fonctionnelles-specifiques-archived', component: SpeficLigneArchiveesComponent },
-  { path: 'lignes-fonctionnelles-specifiques/marche/:id', component: FunctionalLinesByMarcheComponent },
+  {
+    path: 'lignes-fonctionnelles-specifiques-encours',
+    loadChildren: () => import('../../specific-Functional-Lignes/lignes-specifiques.routes').then(m => m.LIGNES_SPECIFIQUES_ROUTES)
+  },
+  { path: 'lignes-fonctionnelles-specifiques-archived', loadComponent: () => import('../../specific-Functional-Lignes/views/spefic-ligne-archivees/spefic-ligne-archivees.component').then(m => m.SpeficLigneArchiveesComponent) },
+  { path: 'lignes-fonctionnelles-specifiques/marche/:id', loadComponent: () => import('../../Marches/views/specific-lines-by-marche/functionalLines-by-marche.component').then(m => m.FunctionalLinesByMarcheComponent) },
   { path: "factoring-encours/:lineId", loadComponent: () => import('../../factoring/LignesFactoring/SuivieDesLignes/views/validated-factoring.component').then(m => m.ValidatedFactoringComponent) },
   { path: "prefi-encours/:lineId", component: ValidatedPrefiComponent },
   { path: "dc-encours/:lineId", loadComponent: () => import('../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component').then(m => m.ValidatedDcComponent) },
