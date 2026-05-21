@@ -19,6 +19,8 @@ import {DropdownModule} from 'primeng/dropdown';
 import {InputSwitchModule} from "primeng/inputswitch";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {RouterLinkActive} from "@angular/router";
+import {CalendarModule} from "primeng/calendar";
+import {InputNumberModule} from "primeng/inputnumber";
 
 // Project-specific imports
 import {VirementService} from "../../service/VirementService";
@@ -29,9 +31,7 @@ import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {Role} from "../../../../auth/enum/Role";
-import {Type} from "../../Type";
-import {CalendarModule} from "primeng/calendar";
-import {InputNumberModule} from "primeng/inputnumber";
+import {StatutMoyenPaiement} from "../../../global/enums/StatutMoyenPaiement";
 
 
 @Component({
@@ -63,6 +63,9 @@ import {InputNumberModule} from "primeng/inputnumber";
   providers: [MessageService, ConfirmationService]
 })
 export class VirementDecaissementListComponent implements OnInit, OnDestroy {
+
+  protected readonly StatutMoyenPaiement = StatutMoyenPaiement;
+
   virements: VirementResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
@@ -73,15 +76,10 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
   banqueOptions: SelectItem[] = [];
   statusOptions: SelectItem[] = [
     {label: 'Tous les virements', value: null},
-    {label: 'Les virements en cours', value: true},
-    {label: 'Les virements archivés', value: false}
+    {label: 'En cours', value: StatutMoyenPaiement.ENCOURS},
+    {label: 'Réglés', value: StatutMoyenPaiement.REGLE},
+    {label: 'Annulés', value: StatutMoyenPaiement.ANNULE}
   ];
-  typeOptions: SelectItem[] = [
-    { label: 'Tous les types', value: null },
-    { label: 'Encaissement', value: Type.ENCAISSEMENT },
-    { label: 'Décaissement', value: Type.DECAISSEMENT }
-  ];
-
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -106,8 +104,8 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.items = [
-      { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
-      { icon: 'pi pi-list', route: '/portail/Virements/decaissement', label: "Les Virements ( décaissement )" },
+      {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
+      {icon: 'pi pi-list', route: '/portail/Virements/decaissement', label: 'Les Virements (décaissement)'},
     ];
     this.isAdmin = this.authService.hasRole(Role.ADMIN);
     this.initSearchForm();
@@ -119,67 +117,46 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  /**
-   * Initializes the search form with all filter controls.
-   */
   initSearchForm(): void {
     this.searchForm = this.fb.group({
       beneficiaire: [''],
       nomBanqueEmettrice: [null],
-      active: [null],
+      statut: [null],
       dateEmission: [null],
       montant: [null],
       banqueBeneficiaire: [null],
     });
-
-    const searchSubscription = this.searchForm.valueChanges.subscribe(() => this.onSearch());
-    this.subscriptions.push(searchSubscription);
+    const sub = this.searchForm.valueChanges.subscribe(() => this.onSearch());
+    this.subscriptions.push(sub);
   }
 
-  /**
-   * Loads virements based on lazy load event and form filters.
-   * @param event The PrimeNG lazy load event.
-   */
-  loadVirements(event: TableLazyLoadEvent) {
+  loadVirements(event: TableLazyLoadEvent): void {
     this.loading = true;
     this.lastLazyLoadEvent = event;
 
     const currentPage = event.first! / event.rows!;
     const pageSize = event.rows!;
 
-    let sort: string = 'dateEmission,desc';
+    let sort = 'dateEmission,desc';
     if (event.sortField && event.sortOrder) {
       sort = `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
     }
 
     const searchCriteria: VirementSearchDto = this.searchForm.getRawValue();
 
-    this.virementService.getDecaissementVirements(
-      searchCriteria,
-      currentPage,
-      pageSize,
-      sort
-    ).subscribe({
+    this.virementService.getDecaissementVirements(searchCriteria, currentPage, pageSize, sort).subscribe({
       next: (page: PageResponse<VirementResponseDto>) => {
         this.virements = page.content;
         this.totalRecords = page.page.totalElements;
         this.loading = false;
       },
-      error: (error) => {
+      error: () => {
         this.loading = false;
-        console.error('Erreur lors du chargement des virements:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des virements.'
-        });
+        this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des virements.'});
       }
     });
   }
 
-  /**
-   * Triggers a new search from the first page.
-   */
   onSearch(): void {
     if (this.dt) {
       this.dt.first = 0;
@@ -187,29 +164,16 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Loads the list of banks for the dropdown filter.
-   */
   loadBanques(): void {
-    this.banqueService.getAllBanques({}, 0, 1000)
-      .subscribe({
-        next: (response: PageResponse<BanqueResponse>) => {
-          this.banqueOptions = response.content.map(banque => ({
-            label: banque.nom,
-            value: banque.nom
-          }));
-          this.banqueOptions.unshift({label: 'Toutes les banques émettrices', value: null});
-        },
-        error: (error) => {
-          console.error('Error loading bank options:', error);
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load banks.' });
-        }
-      });
+    this.banqueService.getAllBanques({}, 0, 1000).subscribe({
+      next: (response: PageResponse<BanqueResponse>) => {
+        this.banqueOptions = response.content.map(b => ({label: b.nom, value: b.nom}));
+        this.banqueOptions.unshift({label: 'Toutes les banques émettrices', value: null});
+      },
+      error: () => this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.'})
+    });
   }
 
-  /**
-   * Clears all search filters and reloads the table.
-   */
   clearSearch(): void {
     this.searchForm.reset();
     if (this.dt) {
@@ -219,84 +183,81 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Confirms and toggles the status of a virement.
-   * @param virement The virement to toggle.
-   */
+  getStatutSeverity(statut: StatutMoyenPaiement): 'success' | 'warning' | 'danger' | 'info' {
+    switch (statut) {
+      case StatutMoyenPaiement.ENCOURS: return 'success';
+      case StatutMoyenPaiement.REGLE:   return 'warning';
+      case StatutMoyenPaiement.ANNULE:  return 'danger';
+      default: return 'info';
+    }
+  }
+
+  getStatutLabel(statut: StatutMoyenPaiement): string {
+    switch (statut) {
+      case StatutMoyenPaiement.ENCOURS: return 'En cours';
+      case StatutMoyenPaiement.REGLE:   return 'Réglé';
+      case StatutMoyenPaiement.ANNULE:  return 'Annulé';
+      default: return statut;
+    }
+  }
+
   confirmToggleStatus(virement: VirementResponseDto): void {
-    const confirmationMessage = `Êtes-vous sûr de vouloir ${virement.active ? 'désactiver' : 'activer'} le virement  ${virement.id}?`;
+    const toRegle = virement.statut === StatutMoyenPaiement.ENCOURS;
     this.confirmationService.confirm({
-      message: confirmationMessage,
-      header: `Confirmation de ${virement.active ? 'désactivation' : 'activation'}`,
+      message: `Êtes-vous sûr de vouloir ${toRegle ? 'régler' : 'remettre en cours'} le virement ID ${virement.id} ?`,
+      header: 'Confirmation',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Oui',
       rejectLabel: 'Non',
-      acceptButtonStyleClass: virement.active ? 'p-button-danger' : 'p-button-success',
+      acceptButtonStyleClass: toRegle ? 'p-button-warning' : 'p-button-success',
       rejectButtonStyleClass: 'p-button-text',
-      accept: () => {
-        this.toggleVirementStatus(virement.id);
-      }
+      accept: () => this.toggleVirementStatus(virement.id)
     });
   }
 
-
   toggleVirementStatus(id: number): void {
     this.virementService.toggleVirementStatus(id).subscribe({
-      next: (updatedVirement) => {
+      next: (updated) => {
         this.messageService.add({
           severity: 'success',
           summary: 'Succès',
-          detail: `Virement  ${updatedVirement.id} ${updatedVirement.active ? 'activé' : 'désactivé'} avec succès.`
+          detail: `Virement ID ${updated.id} — statut : ${this.getStatutLabel(updated.statut)}`
         });
-        // Reload data from the server to reflect the change
-        if (this.dt) {
-          this.loadVirements(this.dt.createLazyLoadMetadata());
-        }
+        if (this.dt) this.loadVirements(this.dt.createLazyLoadMetadata());
       },
-      error: (error) => {
-        console.error('Erreur lors de la mise à jour du virement:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: `Échec de la mise à jour du virement.`
-        });
+      error: (err) => {
+        const detail = err.error?.detail || 'Échec de la mise à jour du virement.';
+        this.messageService.add({severity: 'error', summary: 'Erreur', detail});
       }
     });
   }
 
   deleteVirement(virement: VirementResponseDto): void {
-    const confirmationMessageHtml = `
-    <div class="text-center">
-        <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
-        <p>Êtes-vous sûr de vouloir supprimer ce virement "<strong>${virement.id}</strong>" ?</p>
-        <p style="color: #ef4444; font-weight: bold;">Cette action est irréversible.</p>
-    </div>
-    `;
-
     this.confirmationService.confirm({
-      message: confirmationMessageHtml,
+      message: `<div class="text-center">
+        <i class="pi pi-exclamation-triangle" style="margin-right:5px;"></i>
+        <p>Êtes-vous sûr de vouloir supprimer le virement <strong>${virement.id}</strong> ?</p>
+        <p style="color:#ef4444;font-weight:bold;">Cette action est irréversible.</p>
+      </div>`,
       header: 'Confirmation de Suppression',
       icon: 'none',
       acceptLabel: 'Confirmer',
       rejectLabel: 'Annuler',
       accept: () => {
         this.loading = true;
-        this.virementService.deleteVirement(virement.id!)
-          .subscribe({
-            next: () => {
-              this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le virement a été supprimé avec succès.', life: 3000 });
-              this.loadVirements(this.lastLazyLoadEvent)
-              this.loading = false;
-            },
-            error: (error) => {
-              console.error('Erreur lors de la suppression du virement:', error);
-              const errorMessage = error.error.detail || 'Échec de la suppression du virement.';
-              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
-              this.loading = false;
-            }
-          });
+        this.virementService.deleteVirement(virement.id).subscribe({
+          next: () => {
+            this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Virement supprimé avec succès.', life: 3000});
+            this.loadVirements(this.lastLazyLoadEvent);
+            this.loading = false;
+          },
+          error: (err) => {
+            const detail = err.error?.detail || 'Échec de la suppression du virement.';
+            this.messageService.add({severity: 'error', summary: 'Erreur', detail, life: 3000});
+            this.loading = false;
+          }
+        });
       }
     });
   }
-
 }

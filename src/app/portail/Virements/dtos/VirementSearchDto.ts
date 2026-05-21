@@ -1,4 +1,5 @@
 import {Type} from "../Type";
+import {StatutMoyenPaiement} from "../../global/enums/StatutMoyenPaiement";
 
 export interface VirementSearchDto {
   numero?: string;
@@ -8,7 +9,7 @@ export interface VirementSearchDto {
   banqueBeneficiaire?: string;
   nomBanqueEmettrice?: string;
   ribBeneficiaire?: string;
-  active?: boolean | null;
+  statut?: StatutMoyenPaiement | null;
   type?:Type
   emetteur?:string
 }
