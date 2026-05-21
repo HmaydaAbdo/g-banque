@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 @Service
 public class MiseADispositionService {
@@ -67,7 +68,7 @@ public class MiseADispositionService {
             throw new IllegalArgumentException("Modification interdite: la MiseADisposition with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
-        if (!existingMiseAdisposition.isActive()) {
+        if (existingMiseAdisposition.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de modification d'une mise à disposition inactive (déjà réglée), ID={}", id);
             throw new IllegalArgumentException("Modification interdite: la MiseADisposition with id " + id + " est déja réglé.");
         }
@@ -125,7 +126,7 @@ public class MiseADispositionService {
 
 
 
-        if (!miseADisposition.isActive()) {
+        if (miseADisposition.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de suppression d'une mise à disposition inactive (déjà réglée), ID={}", id);
             throw new IllegalArgumentException("Suppression interdite: la mise à dispo  with id " + id + " est déja réglé.");
         }
@@ -179,8 +180,8 @@ public class MiseADispositionService {
                 });
 
         // Toggle the 'active' status.
-        miseADisposition.setActive(!miseADisposition.isActive());
-        log.debug("Nouveau statut pour la mise à disposition ID={}: actif={}", id, miseADisposition.isActive());
+        miseADisposition.setStatut(miseADisposition.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
+        log.debug("Nouveau statut pour la mise à disposition ID={}: actif={}", id, miseADisposition.getStatut() == StatutMoyenPaiement.ENCOURS);
 
         // Save the updated entity.
         miseADisposition = miseADispositionRepository.save(miseADisposition);

@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 @Service
 public class ChequeService {
@@ -66,9 +67,9 @@ public class ChequeService {
             throw new IllegalArgumentException("Modification interdite: le cheque with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
-        if (!existingCheque.isActive()) {
+        if (existingCheque.getStatut() == StatutMoyenPaiement.REGLE ){
             log.warn("Tentative de modification d'un chèque inactif (déjà réglé), ID={}", id);
-            throw new IllegalArgumentException("Modification interdite: le cheque with id " + id + " est déja réglé.");
+            throw new IllegalArgumentException("Modification interdite: le cheque with id " + id + " est déja réglé .");
         }
 
         if (dto.getNumero() != null) {
@@ -133,7 +134,7 @@ public class ChequeService {
         });
 
 
-        if (!cheque.isActive()) {
+        if ( cheque.getStatut()==StatutMoyenPaiement.REGLE ){
             log.warn("Tentative de suppression d'un chèque inactif (déjà réglé), ID={}", id);
             throw new IllegalArgumentException("Suppression interdite: le cheque with id " + id + " est déja réglé.");
         }
@@ -150,7 +151,7 @@ public class ChequeService {
         Specification<Cheque> spec = Specification.where(ChequeSpec.hasNumero(searchDto.getNumero()))
                 .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
-                .and(ChequeSpec.isActive(searchDto.getActive()))
+                .and(ChequeSpec.hasStatut(searchDto.getStatut()))
                 .and(ChequeSpec.hasType(Type.DECAISSEMENT));
 
         // Execute the search with the combined specification and pagination
@@ -169,7 +170,7 @@ public class ChequeService {
         // Combine specifications based on non-null search criteria from the DTO
         Specification<Cheque> spec = Specification.where((ChequeSpec.hasType(Type.ENCAISSEMENT))
                         .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
-                        .and(ChequeSpec.isActive(searchDto.getActive()))
+                        .and(ChequeSpec.hasStatut(searchDto.getStatut()))
                         .and(ChequeSpec.hasMontant(searchDto.getMontant()))
                         .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()))
                         .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur())))
@@ -195,8 +196,8 @@ public class ChequeService {
                 });
 
         // Toggle the 'active' status
-        cheque.setActive(!cheque.isActive());
-        log.debug("Nouveau statut pour le chèque ID={}: actif={}", id, cheque.isActive());
+        cheque.setStatut(cheque.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
+        log.debug("Nouveau statut pour le chèque ID={}: actif={}", id, cheque.getStatut() == StatutMoyenPaiement.ENCOURS);
 
         // Save the updated cheque
         cheque = chequeRepository.save(cheque);

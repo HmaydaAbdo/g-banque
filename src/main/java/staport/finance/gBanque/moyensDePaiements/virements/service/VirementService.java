@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 @Service
 public class VirementService {
@@ -43,7 +44,7 @@ public class VirementService {
         log.info("Création d'un nouveau virement d'encaissement: {}", dto);
 
         Virement virement = this.virementMapper.toEntity(dto);
-        virement.setActive(true);
+        virement.setStatut(StatutMoyenPaiement.ENCOURS);
 
         log.debug("Enregistrement de l'entité virement: {}", virement);
         virement = virementRepository.save(virement);
@@ -67,7 +68,7 @@ public class VirementService {
             throw new IllegalArgumentException("Modification interdite: le virement with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
-        if (!existingVirement.isActive()) {
+        if (existingVirement.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de modification d'un virement inactif (déjà réglé), ID={}", id);
             throw new IllegalArgumentException("Modification interdite: le virement with id " + id + " est déja réglé.");
         }
@@ -149,8 +150,8 @@ public class VirementService {
                     return new NoSuchElementException("Virement with id " + id + " not found.");
                 });
 
-        virement.setActive(!virement.isActive());
-        log.debug("Nouveau statut pour le virement ID={}: actif={}", id, virement.isActive());
+        virement.setStatut(virement.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
+        log.debug("Nouveau statut pour le virement ID={}: actif={}", id, virement.getStatut() == StatutMoyenPaiement.ENCOURS);
 
         virement = virementRepository.save(virement);
 
@@ -214,7 +215,7 @@ public class VirementService {
                 });
 
 
-        if (!virement.isActive()) {
+        if (virement.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de suppression d'un virement inactif (déjà réglé), ID={}", id);
             throw new IllegalArgumentException("Suppression interdite: le virement with id " + id + " est déja réglé.");
         }

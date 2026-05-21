@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 @Service
 public class LcnService {
@@ -115,7 +116,7 @@ public class LcnService {
                     "Modification interdite: le lcn with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
-        if (!existingLcn.isActive()) {
+        if (existingLcn.getStatut() == StatutMoyenPaiement.REGLE ){
             log.warn("Tentative de modification d'un LCN inactif (déjà réglé), ID={}", id);
             throw new IllegalArgumentException(
                     "Modification interdite: le lcn with id " + id + " est déja réglé.");
@@ -216,7 +217,7 @@ public class LcnService {
             return new ResourceNotFoundException("lcn with id " + id + " not found.");
         });
 
-        if (!lcn.isActive()) {
+        if (lcn.getStatut() == StatutMoyenPaiement.REGLE ){
             log.warn("Tentative de suppression d'un LCN inactif (déjà réglé), ID={}", id);
             throw new IllegalArgumentException("Suppression interdite: le lcn with id " + id + " est déja réglé.");
         }
@@ -233,7 +234,7 @@ public class LcnService {
         Specification<Lcn> spec = Specification.where(LcnSpecification.hasNumero(searchDto.getNumero()))
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
-                .and(LcnSpecification.isActive(searchDto.getActive()))
+                .and(LcnSpecification.hasStatut(searchDto.getStatut()))
                 .and(LcnSpecification.hasType(Type.DECAISSEMENT));
 
         // Execute the search with the combined specification and pagination
@@ -257,7 +258,7 @@ public class LcnService {
                 .and(LcnSpecification.hasMontant(searchDto.getMontant()))
                 .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
-                .and(LcnSpecification.isActive(searchDto.getActive()))
+                .and(LcnSpecification.hasStatut(searchDto.getStatut()))
                 .and(LcnSpecification.hasNumero(searchDto.getNumero()));
 
         // Execute the search with the combined specification and pagination
@@ -280,8 +281,8 @@ public class LcnService {
                 });
 
         // Toggle the 'active' status
-        lcn.setActive(!lcn.isActive());
-        log.debug("Nouveau statut pour le LCN ID={}: actif={}", id, lcn.isActive());
+        lcn.setStatut(lcn.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
+        log.debug("Nouveau statut pour le LCN ID={}: actif={}", id, lcn.getStatut() == StatutMoyenPaiement.ENCOURS);
 
         // Save the updated lcn
         lcn = lcnRepository.save(lcn);

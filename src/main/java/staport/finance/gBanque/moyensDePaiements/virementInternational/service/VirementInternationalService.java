@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.NoSuchElementException;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 @Service
 public class VirementInternationalService {
@@ -76,7 +77,7 @@ public class VirementInternationalService {
                     return new NoSuchElementException("VirementInternational with id " + id + " not found.");
                 });
 
-        if (!existingVirement.isActive()) {
+        if (existingVirement.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de modification d'un virement international inactif (déjà réglé), ID={}", id);
             throw new IllegalArgumentException("Modification interdite: le virement international with id " + id + " est déjà réglé.");
         }
@@ -189,8 +190,8 @@ public class VirementInternationalService {
                     return new NoSuchElementException("VirementInternational with id " + id + " not found.");
                 });
 
-        virement.setActive(!virement.isActive());
-        log.debug("Nouveau statut pour le virement international ID={}: actif={}", id, virement.isActive());
+        virement.setStatut(virement.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
+        log.debug("Nouveau statut pour le virement international ID={}: actif={}", id, virement.getStatut() == StatutMoyenPaiement.ENCOURS);
 
         virement = virementInternationalRepository.save(virement);
 
@@ -322,7 +323,7 @@ public class VirementInternationalService {
                     return new NoSuchElementException("VirementInternational with id " + id + " not found.");
                 });
 
-        if (!virement.isActive()) {
+        if (virement.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de suppression d'un virement international inactif (déjà réglé), ID={}", id);
             throw new IllegalArgumentException("Suppression interdite: le virement international with id " + id + " est déjà réglé.");
         }
