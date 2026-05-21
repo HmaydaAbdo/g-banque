@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
 import { AcceuilComponent } from "../../accueil/views/acceuil/acceuil.component";
-import { LignesFonctionnellesComponent } from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-encours/lignes-fonctionnelles.component";
-import { LigneFonctionnelleEditComponent } from "../../lignes-fonctionnelles/views/ligne-fonctionnelle-edit/ligne-fonctionnelle-edit.component";
 import { adminGuard } from "../../../auth/guards/admin.guard";
 import { LogsComponent } from "../../settings/logs/views/logs/logs.component";
 import { LesEncoursComponent } from "../../etatsDesEncours/views/parent-componant/les-encours/les-encours.component";
@@ -13,7 +11,6 @@ import { VirementEncoursComponent } from "../../etatsDesEncours/views/lesEncours
 import { MiseADispositionEncoursComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/mise-a-disposition-encours/mise-a-disposition-encours.component";
 import { RapprochemntEncoursComponent } from "../../etatsDesEncours/views/lesEncours/rapprochemnt-encours/rapprochemnt-encours.component";
 import { RecapDecaissementComponent } from "../../etatsDesEncours/views/lesEncours/recap/views/recap-decaissement/recap-decaissement.component";
-import { LignesFonctionnellesArchivesComponent } from "../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component";
 import { TransactionHistoryComponent } from "../../transactions/views/transaction-history/transaction-history.component";
 import { SpeficLigneEncoursComponent } from "../../specific-Functional-Lignes/views/spefic-ligne-encours/spefic-ligne-encours.component";
 import { SpeficLigneEditComponent } from "../../specific-Functional-Lignes/views/spefic-ligne-edit/spefic-ligne-edit.component";
@@ -70,10 +67,11 @@ export const PORTAIL_ROUTES: Routes = [
   },
 
 
-  { path: 'lignes-fonctionnelles-encours', component: LignesFonctionnellesComponent },
-  { path: 'lignes-fonctionnelles-encours/new', component: LigneFonctionnelleEditComponent },
-  { path: 'lignes-fonctionnelles-encours/edit/:id', component: LigneFonctionnelleEditComponent },
-  { path: 'lignes-fonctionnelles-archived', component: LignesFonctionnellesArchivesComponent },
+  {
+    path: 'lignes-fonctionnelles-encours',
+    loadChildren: () => import('../../lignes-fonctionnelles/lignes-fonctionnelles.routes').then(m => m.LIGNES_FONCTIONNELLES_ROUTES)
+  },
+  { path: 'lignes-fonctionnelles-archived', loadComponent: () => import('../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component').then(m => m.LignesFonctionnellesArchivesComponent) },
 
   { path: 'lignes-fonctionnelles-specifiques-encours', component: SpeficLigneEncoursComponent },
   { path: 'lignes-fonctionnelles-specifiques-encours/new', component: SpeficLigneEditComponent },
