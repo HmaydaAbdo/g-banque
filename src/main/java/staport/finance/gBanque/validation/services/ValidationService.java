@@ -27,6 +27,7 @@ import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.repositories.VirementInternationalRepository;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
@@ -297,9 +298,9 @@ public class ValidationService {
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Cheque with id " + requestDto.getIdCheque() + " not found"));
     
-            // Step 2: Check if the chèque is active.
-            // If the Chèque is already used/paid (active = false), throw an exception.
-            if (!cheque.isActive()) {
+            // Step 2: Check if the chèque is paid.
+            // If the Chèque is already paid, throw an exception.
+            if (cheque.getStatut() != StatutMoyenPaiement.ENCOURS) {
                 throw new RuntimeException("The cheque is not active, it has already been paid");
             }
     
@@ -313,8 +314,8 @@ public class ValidationService {
 
 
     
-            // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
-            cheque.setActive(false);
+            // Step 6: Mark the Chèque as  (paid) and save the updated Chèque entity.
+            cheque.setStatut(StatutMoyenPaiement.REGLE);
             cheque.setDateOperation(savedTransaction.getDateOperations());
             cheque.setDateValeur(savedTransaction.getDateValeur());
             cheque.setLibelle(savedTransaction.getLibelle());
@@ -334,10 +335,10 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Cheque with id " + requestDto.getIdCheque() + " not found"));
 
-        // Step 2: Check if the chèque is active.
-        // If the Chèque is already used/paid (active = false), throw an exception.
-        if (!cheque.isActive()) {
-            throw new RuntimeException("The cheque is not active, it has already been paid");
+        // Step 2: Check if the chèque is paid.
+        // If the Chèque is already paid , throw an exception.
+        if (cheque.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            throw new RuntimeException("The cheque has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
@@ -351,7 +352,7 @@ public class ValidationService {
 
 
         // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
-        cheque.setActive(false);
+        cheque.setStatut(StatutMoyenPaiement.REGLE);
         cheque.setDateOperation(savedTransaction.getDateOperations());
         cheque.setDateValeur(savedTransaction.getDateValeur());
         cheque.setLibelle(savedTransaction.getLibelle());
@@ -371,10 +372,10 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Lcn with id " + requestDto.getId() + " not found"));
 
-        // Step 2: Check if the Lcn is active.
-        // If the Lcn is already used/paid (active = false), throw an exception.
-        if (!lcn.isActive()) {
-            throw new RuntimeException("The lcn is not active, it has already been paid");
+        // Step 2: Check if the Lcn is paid.
+        // If the Lcn is already paid , throw an exception.
+        if (lcn.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            throw new RuntimeException("The lcn  has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched lcn entity into a Transaction entity.
@@ -388,7 +389,7 @@ public class ValidationService {
 
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
-        lcn.setActive(false);
+        lcn.setStatut(StatutMoyenPaiement.REGLE);
         lcn.setDateOperation(savedTransaction.getDateOperations());
         lcn.setDateValeur(savedTransaction.getDateValeur());
         lcn.setLibelle(savedTransaction.getLibelle());
@@ -408,10 +409,10 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Lcn with id " + requestDto.getId() + " not found"));
 
-        // Step 2: Check if the Lcn is active.
-        // If the Lcn is already used/paid (active = false), throw an exception.
-        if (!lcn.isActive()) {
-            throw new RuntimeException("The lcn is not active, it has already been paid");
+        // Step 2: Check if the Lcn is paid.
+        // If the Lcn is already paid , throw an exception.
+        if (lcn.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            throw new RuntimeException("The lcn  has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched lcn entity into a Transaction entity.
@@ -423,7 +424,7 @@ public class ValidationService {
         Transaction savedTransaction = transactionRepository.save(transactionEntity);
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
-        lcn.setActive(false);
+        lcn.setStatut(StatutMoyenPaiement.REGLE);
         lcn.setDateOperation(savedTransaction.getDateOperations());
         lcn.setDateValeur(savedTransaction.getDateValeur());
         lcn.setLibelle(savedTransaction.getLibelle());
@@ -443,10 +444,10 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "virement with id " + requestDto.getId() + " not found"));
 
-        // Step 2: Check if the virement is active.
-        // If the virement is already used/paid (active = false), throw an exception.
-        if (!virement.isActive()) {
-            throw new RuntimeException("The virement is not active, it has already been paid");
+        // Step 2: Check if the virement is paid.
+        // If the virement is already paid  throw an exception.
+        if (virement.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            throw new RuntimeException("The virement has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
@@ -460,7 +461,7 @@ public class ValidationService {
 
 
         // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
-        virement.setActive(false);
+        virement.setStatut(StatutMoyenPaiement.REGLE);
         virement.setDateOperation(savedTransaction.getDateOperations());
         virement.setDateValeur(savedTransaction.getDateValeur());
         virement.setLibelle(savedTransaction.getLibelle());
@@ -482,8 +483,8 @@ public class ValidationService {
 
         // Step 2: Check if the virement is active.
         // If the virement is already used/paid (active = false), throw an exception.
-        if (!virement.isActive()) {
-            throw new RuntimeException("The virement is not active, it has already been paid");
+        if (virement.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            throw new RuntimeException("The virement  has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
@@ -498,7 +499,7 @@ public class ValidationService {
 
 
         // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
-        virement.setActive(false);
+        virement.setStatut(StatutMoyenPaiement.REGLE);
         virement.setDateOperation(savedTransaction.getDateOperations());
         virement.setDateValeur(savedTransaction.getDateValeur());
         virement.setLibelle(savedTransaction.getLibelle());
@@ -519,10 +520,10 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Mise à disposition  with id " + requestDto.getId() + " not found"));
 
-        // Step 2: Check if the MiseAdispo is active.
-        // If the MiseAdispo is already used/paid (active = false), throw an exception.
-        if (!miseADisposition.isActive()) {
-            throw new RuntimeException("The miseADisposition is not active, it has already been paid");
+        // Step 2: Check if the MiseAdispo is paid.
+        // If the MiseAdispo is already paid  throw an exception.
+        if (miseADisposition.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            throw new RuntimeException("The miseADisposition  has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched miseADisposition entity into a Transaction entity.
@@ -537,7 +538,7 @@ public class ValidationService {
 
 
         // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
-        miseADisposition.setActive(false);
+        miseADisposition.setStatut(StatutMoyenPaiement.REGLE);
         miseADisposition.setDateOperation(savedTransaction.getDateOperations());
         miseADisposition.setDateValeur(savedTransaction.getDateValeur());
         miseADisposition.setLibelle(savedTransaction.getLibelle());
@@ -557,10 +558,10 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Mise à disposition  with id " + requestDto.getId() + " not found"));
 
-        // Step 2: Check if the MiseAdispo is active.
-        // If the MiseAdispo is already used/paid (active = false), throw an exception.
-        if (!miseADisposition.isActive()) {
-            throw new RuntimeException("The miseADisposition is not active, it has already been paid");
+        // Step 2: Check if the MiseAdispo is paid.
+        // If the MiseAdispo is already paid , throw an exception.
+        if (miseADisposition.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            throw new RuntimeException("The miseADisposition  has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched miseADisposition entity into a Transaction entity.
@@ -575,7 +576,7 @@ public class ValidationService {
 
 
         // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
-        miseADisposition.setActive(false);
+        miseADisposition.setStatut(StatutMoyenPaiement.REGLE);
         miseADisposition.setDateOperation(savedTransaction.getDateOperations());
         miseADisposition.setDateValeur(savedTransaction.getDateValeur());
         miseADisposition.setLibelle(savedTransaction.getLibelle());
@@ -1008,10 +1009,10 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Virement international with id " + requestDto.getId() + " not found"));
 
-        // Step 2: Check if the virement international is active.
-        // If the virement international is already used/paid (active = false), throw an exception.
-        if (!virementInternational.isActive()) {
-            throw new RuntimeException("The virement international is not active, it has already been paid");
+        // Step 2: Check if the virement international is paid.
+        // If the virement international is already paid, throw an exception.
+        if (virementInternational.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            throw new RuntimeException("The virement international  has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
@@ -1024,7 +1025,7 @@ public class ValidationService {
 
 
         // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
-        virementInternational.setActive(false);
+        virementInternational.setStatut(StatutMoyenPaiement.REGLE);
         virementInternational.setDateOperation(savedTransaction.getDateOperations());
         virementInternational.setDateValeur(savedTransaction.getDateValeur());
         virementInternational.setLibelle(savedTransaction.getLibelle());
@@ -1046,10 +1047,10 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Virement international with id " + requestDto.getId() + " not found"));
 
-        // Step 2: Check if the virement international is active.
-        // If the virement international is already used/paid (active = false), throw an exception.
-        if (!virementInternational.isActive()) {
-            throw new RuntimeException("The virement international is not active, it has already been paid");
+        // Step 2: Check if the virement international is paid.
+        // If the virement international is already paid , throw an exception.
+        if (virementInternational.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            throw new RuntimeException("The virement international  has already been paid");
         }
 
         // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
@@ -1063,7 +1064,7 @@ public class ValidationService {
 
 
         // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
-        virementInternational.setActive(false);
+        virementInternational.setStatut(StatutMoyenPaiement.REGLE);
         virementInternational.setDateOperation(savedTransaction.getDateOperations());
         virementInternational.setDateValeur(savedTransaction.getDateValeur());
         virementInternational.setLibelle(savedTransaction.getLibelle());

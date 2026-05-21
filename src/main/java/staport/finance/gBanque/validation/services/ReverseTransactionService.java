@@ -34,6 +34,7 @@ import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.repositories.VirementInternationalRepository;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
@@ -250,7 +251,7 @@ public class ReverseTransactionService {
         Cheque cheque = chequeRepository.findById(chequeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cheque introuvable: " + chequeId));
 
-        cheque.setActive(true);
+        cheque.setStatut(StatutMoyenPaiement.ENCOURS);
         cheque.setDateOperation(null);
         cheque.setDateValeur(null);
         chequeRepository.save(cheque);
@@ -261,7 +262,7 @@ public class ReverseTransactionService {
         Lcn lcn = lcnRepository.findById(lcnId)
                 .orElseThrow(() -> new ResourceNotFoundException("LCN introuvable: " + lcnId));
 
-        lcn.setActive(true);
+        lcn.setStatut(StatutMoyenPaiement.ENCOURS);
         lcn.setDateOperation(null);
         lcn.setDateValeur(null);
         lcnRepository.save(lcn);
@@ -272,7 +273,7 @@ public class ReverseTransactionService {
         Virement virement = virementRepository.findById(virementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Virement introuvable: " + virementId));
 
-        virement.setActive(true);
+        virement.setStatut(StatutMoyenPaiement.ENCOURS);
         virement.setDateOperation(null);
         virement.setDateValeur(null);
         virementRepository.save(virement);
@@ -283,7 +284,7 @@ public class ReverseTransactionService {
         MiseADisposition miseADispo = miseADispositionRepository.findById(miseADispoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mise à disposition introuvable: " + miseADispoId));
 
-        miseADispo.setActive(true);
+        miseADispo.setStatut(StatutMoyenPaiement.ENCOURS);
         miseADispo.setDateOperation(null);
         miseADispo.setDateValeur(null);
         miseADispositionRepository.save(miseADispo);
@@ -427,7 +428,7 @@ public class ReverseTransactionService {
         VirementInternational virementInternational = virementInternationalRepository.findById(virementInternationalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Virement international introuvable: " + virementInternationalId));
 
-        virementInternational.setActive(true);
+        virementInternational.setStatut(StatutMoyenPaiement.ENCOURS);
         virementInternational.setDateOperation(null);
         virementInternational.setDateValeur(null);
         virementInternationalRepository.save(virementInternational);
