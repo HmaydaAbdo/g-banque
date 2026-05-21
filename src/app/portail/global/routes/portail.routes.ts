@@ -23,14 +23,11 @@ import { PrefinancementFormComponent } from "../../prefinancements/views/prefina
 import { RecapEncaissementsComponent } from "../../etatsDesEncours/views/lesEncours/recap/views/recap-encaissements/recap-encaissements.component";
 import { PrefinancementRemboursementsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/prefinancement-remboursements/prefinancement-remboursements.component";
 import { PrefinancementDeblocageComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/prefinancement-deblocage/prefinancement-deblocage.component";
-import { DroitConstateListComponent } from "../../droitsConstate/views/droit-constate-list/droit-constate-list.component";
-import { DroitConstateFormComponent } from "../../droitsConstate/views/droit-constate-form/droit-constate-form.component";
 import { DroitConstateRemboursementsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/droit-constate-remboursements/droit-constate-remboursements.component";
 import { DroitConstateDeblocageComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/droit-constate-deblocage/droit-constate-deblocage.component";
 import { DecomptesListComponent } from "../../decomptes/views/decomptes-list/decomptes-list.component";
 import { DecompteFormComponent } from "../../decomptes/views/decomptes-form/decomptes-form.component";
 import { DecomptesComponent } from "../../etatsDesEncours/views/lesEncours/encaissements/decomptes/decomptes.component";
-import { ValidatedDcComponent } from "../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component";
 import { ValidatedPrefiComponent } from "../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component";
 import { CommissionListComponent } from "../../commission/views/CommissionListComponent/commission-list.component";
 import { EncoursCommissionsComponent } from "../../etatsDesEncours/views/lesEncours/decaissement/commission/encours-commissions.component";
@@ -106,7 +103,7 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'lignes-fonctionnelles-specifiques/marche/:id', component: FunctionalLinesByMarcheComponent },
   { path: "factoring-encours/:lineId", component: ValidatedFactoringComponent },
   { path: "prefi-encours/:lineId", component: ValidatedPrefiComponent },
-  { path: "dc-encours/:lineId", component: ValidatedDcComponent },
+  { path: "dc-encours/:lineId", loadComponent: () => import('../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component').then(m => m.ValidatedDcComponent) },
   { path: "lcn-encours/:lineId", component: LcnEscompteByLineComponent },
 
 
@@ -156,9 +153,10 @@ export const PORTAIL_ROUTES: Routes = [
   { path: 'préfinancements/new', component: PrefinancementFormComponent },
   { path: 'préfinancements/edit/:id', component: PrefinancementFormComponent },
 
-  { path: "droits-constate", component: DroitConstateListComponent },
-  { path: "droits-constate/new", component: DroitConstateFormComponent },
-  { path: "droits-constate/edit/:id", component: DroitConstateFormComponent },
+  {
+    path: 'droits-constate',
+    loadChildren: () => import('../../droitsConstate/droits-constate.routes').then(m => m.DROITS_CONSTATE_ROUTES)
+  },
 
   { path: "factoring", component: FactoringListComponent },
   { path: "factoring/new", component: FactoringFormComponent },
