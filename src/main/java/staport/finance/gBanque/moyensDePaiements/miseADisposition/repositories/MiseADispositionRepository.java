@@ -17,11 +17,11 @@ public interface MiseADispositionRepository extends JpaRepository<MiseADispositi
     Optional<MiseADisposition> findByNumero(String numero);
 
     /**
-     * Désactive toutes les mises à disposition dont la date d'émission est strictement antérieure à la date donnée.
+     * Règle toutes les mises à disposition dont la date d'émission est strictement antérieure à la date donnée.
      * @param cutoffDate La date limite (exclusive)
-     * @return Le nombre de mises à disposition désactivées
+     * @return Le nombre de mises à disposition réglées
      */
     @Modifying
-    @Query("UPDATE MiseADisposition m SET m.active = false WHERE m.dateEmission < :cutoffDate AND m.active = true")
+    @Query("UPDATE MiseADisposition m SET m.statut = 'REGLE' WHERE m.dateEmission < :cutoffDate AND m.statut = 'ENCOURS'")
     int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
 }

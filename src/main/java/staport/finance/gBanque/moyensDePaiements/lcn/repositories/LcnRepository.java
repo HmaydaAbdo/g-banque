@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 @Repository
-public interface LcnRepository extends JpaRepository<Lcn, Long> , JpaSpecificationExecutor<Lcn> {
+public interface LcnRepository extends JpaRepository<Lcn, Long>, JpaSpecificationExecutor<Lcn> {
 
     /**
      * Finds an Lcn by its unique numero.
@@ -22,11 +22,11 @@ public interface LcnRepository extends JpaRepository<Lcn, Long> , JpaSpecificati
     Optional<Lcn> findByNumero(String numero);
 
     /**
-     * Désactive tous les LCN dont la date d'échéance est strictement antérieure à la date donnée.
+     * Règle tous les LCN dont la date d'échéance est strictement antérieure à la date donnée.
      * @param cutoffDate La date limite (exclusive)
-     * @return Le nombre de LCN désactivés
+     * @return Le nombre de LCN réglés
      */
     @Modifying
-    @Query("UPDATE Lcn l SET l.active = false WHERE l.dateEcheance < :cutoffDate AND l.active = true")
+    @Query("UPDATE Lcn l SET l.statut = 'REGLE' WHERE l.dateEcheance < :cutoffDate AND l.statut = 'ENCOURS'")
     int deactivateByDateEcheanceBefore(@Param("cutoffDate") LocalDate cutoffDate);
 }

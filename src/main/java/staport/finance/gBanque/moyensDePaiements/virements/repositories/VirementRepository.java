@@ -9,12 +9,16 @@ import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Repository
-public interface VirementRepository extends JpaRepository <Virement, Long> , JpaSpecificationExecutor<Virement> {
+public interface VirementRepository extends JpaRepository<Virement, Long>, JpaSpecificationExecutor<Virement> {
+
     boolean existsByNumero(String numero);
 
+    Optional<Virement> findByNumero(String numero);
+
     @Modifying
-    @Query("UPDATE Virement v SET v.active = false WHERE v.dateEmission < :cutoffDate AND v.active = true")
+    @Query("UPDATE Virement v SET v.statut = 'REGLE' WHERE v.dateEmission < :cutoffDate AND v.statut = 'ENCOURS'")
     int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
 }

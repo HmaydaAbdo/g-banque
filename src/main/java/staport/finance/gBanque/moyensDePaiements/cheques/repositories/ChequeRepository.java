@@ -14,7 +14,6 @@ import java.util.Optional;
 @Repository
 public interface ChequeRepository extends JpaRepository<Cheque, Long>, JpaSpecificationExecutor<Cheque> {
 
-
     /**
      * Finds a Cheque by its unique numero.
      * @param numero The unique identifier of the cheque.
@@ -23,11 +22,11 @@ public interface ChequeRepository extends JpaRepository<Cheque, Long>, JpaSpecif
     Optional<Cheque> findByNumero(String numero);
 
     /**
-     * Désactive tous les chèques dont la date d'émission est strictement antérieure à la date donnée.
+     * Règle tous les chèques dont la date d'émission est strictement antérieure à la date donnée.
      * @param cutoffDate La date limite (exclusive)
-     * @return Le nombre de chèques désactivés
+     * @return Le nombre de chèques réglés
      */
     @Modifying
-    @Query("UPDATE Cheque c SET c.active = false WHERE c.dateEmission < :cutoffDate AND c.active = true")
+    @Query("UPDATE Cheque c SET c.statut = 'REGLE' WHERE c.dateEmission < :cutoffDate AND c.statut = 'ENCOURS'")
     int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
 }
