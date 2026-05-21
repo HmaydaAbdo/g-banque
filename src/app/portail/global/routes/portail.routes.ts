@@ -26,9 +26,12 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'lignes-fonctionnelles-encours',
-    loadChildren: () => import('../../lignes-fonctionnelles/lignes-fonctionnelles.routes').then(m => m.LIGNES_FONCTIONNELLES_ROUTES)
+    loadChildren: () => import('../../lignes-fonctionnelles/lignes-fonctionnelles.routes').then(m => m.LIGNES_FONCTIONNELLES_ENCOURS_ROUTES)
   },
-  { path: 'lignes-fonctionnelles-archived', loadComponent: () => import('../../lignes-fonctionnelles/views/lignes-fonctionnelles-archives/lignes-fonctionnelles-archives.component').then(m => m.LignesFonctionnellesArchivesComponent) },
+  {
+    path: 'lignes-fonctionnelles-archived',
+    loadChildren: () => import('../../lignes-fonctionnelles/lignes-fonctionnelles.routes').then(m => m.LIGNES_FONCTIONNELLES_ARCHIVED_ROUTES)
+  },
 
   {
     path: 'lignes-fonctionnelles-specifiques-encours',
