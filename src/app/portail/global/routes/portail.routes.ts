@@ -111,8 +111,11 @@ export const PORTAIL_ROUTES: Routes = [
 
 
 
-  { path: 'leasing', loadChildren: () => import('../../leasing/route/leasing-routing.module').then(m => m.LEASING_FEATURE_ROUTES) },
-  { path: "cmt", loadChildren: () => import('../../cmt/route/cmt-routing').then(m => m.cmtRoutes) },
+  { path: 'leasing',
+    loadChildren: () => import('../../leasing/route/leasing-routing.module').then(m => m.LEASING_FEATURE_ROUTES) },
+
+  { path: "cmt",
+    loadChildren: () => import('../../cmt/route/cmt-routing').then(m => m.cmtRoutes) },
 
   {
     path: 'LCN',
