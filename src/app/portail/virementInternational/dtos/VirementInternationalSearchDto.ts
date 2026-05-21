@@ -1,4 +1,5 @@
 import { Type } from '../../Virements/Type';
+import { StatutMoyenPaiement } from '../../global/enums/StatutMoyenPaiement';
 
 export interface VirementInternationalSearchDto {
   banqueId?: number;
@@ -10,6 +11,6 @@ export interface VirementInternationalSearchDto {
   dateValeur?: string;
   libelle?: string;
   observation?: string;
-  active?: boolean;
+  statut?: StatutMoyenPaiement;
   type?: Type;
 }

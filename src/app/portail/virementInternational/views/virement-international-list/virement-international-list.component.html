@@ -116,7 +116,7 @@
           <label for="status" class="text-sm">Statut</label>
           <p-dropdown id="status"
                       [options]="statusOptions"
-                      formControlName="active"
+                      formControlName="statut"
                       optionLabel="label"
                       optionValue="value"
                       placeholder="Statut..."
@@ -183,8 +183,8 @@
             </p-tag>
           </td>
           <td>
-            <p-tag [value]="virement.active ? 'Encours' : 'Archivé'"
-                   [severity]="virement.active ? 'success' : 'danger'">
+            <p-tag [value]="getStatutLabel(virement.statut)"
+                   [severity]="getStatutSeverity(virement.statut)">
             </p-tag>
           </td>
           <td class="flex flex-row align-items-center justify-content-center gap-2">
@@ -194,10 +194,12 @@
               icon="pi pi-pencil"
               class="p-button-rounded p-button-outlined p-button-primary"
               [routerLink]="['/portail/virements-internationaux/edit',virement.id]"
+              [disabled]="virement.statut === StatutMoyenPaiement.REGLE"
               pTooltip="Modifier"
               tooltipPosition="top">
             </button>
-            <p-inputSwitch [ngModel]="virement.active"
+            <p-inputSwitch [ngModel]="virement.statut === StatutMoyenPaiement.ENCOURS"
+                           [disabled]="virement.statut === StatutMoyenPaiement.ANNULE"
                            (onChange)="confirmToggleStatus(virement)">
             </p-inputSwitch>
             @if (isAdmin) {
@@ -205,6 +207,7 @@
                       pRipple
                       icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="virement.statut === StatutMoyenPaiement.REGLE"
                       (click)="deleteVirement(virement)"
                       pTooltip="Supprimer"
                       tooltipPosition="top">

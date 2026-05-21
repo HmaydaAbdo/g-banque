@@ -68,8 +68,6 @@ import { EncoursRestitutionComponent } from "../../etatsDesEncours/views/lesEnco
 import { OperationErroneListComponent } from "../../operationErronées/views/operation-errone-list/operation-errone-list.component";
 import { OperationErroneFormComponent } from "../../operationErronées/views/operation-errone-form/operation-errone-form.component";
 import {EncoursOperationErroneComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/operation-errone/operation-errone.component";
-import {VirementInternationalListComponent} from "../../virementInternational/views/virement-international-list/virement-international-list.component";
-import {VirementInternationalFormComponent} from "../../virementInternational/views/virement-international-form/virement-international-form.component";
 import {VirementInternationalEncoursDecaissementComponent} from "../../etatsDesEncours/views/lesEncours/decaissement/virementInternationaux/VirementInternationalEncoursDecaissement.component";
 import {VirementInternationalEncoursEncaissementComponent} from "../../etatsDesEncours/views/lesEncours/encaissements/virementInternationaux/VirementInternationalEncoursEncaissementComponent";
 import {ImpayeeListComponent} from "../../impayees/views/ImpayeeList/Impayee-list.component";
@@ -135,9 +133,10 @@ export const PORTAIL_ROUTES: Routes = [
     loadChildren: () => import('../../Virements/virements.routes').then(m => m.VIREMENTS_ROUTES)
   },
 
-  {path: 'virements-internationaux', component: VirementInternationalListComponent},
-  {path: 'virements-internationaux/new', component: VirementInternationalFormComponent},
-  {path: 'virements-internationaux/edit/:id', component: VirementInternationalFormComponent},
+  {
+    path: 'virements-internationaux',
+    loadChildren: () => import('../../virementInternational/virement-international.routes').then(m => m.VIREMENT_INTERNATIONAL_ROUTES)
+  },
 
   { path: 'operations/errones', component: OperationErroneListComponent },
   { path: 'operations/errones/new', component: OperationErroneFormComponent },
