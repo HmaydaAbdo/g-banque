@@ -4,6 +4,7 @@ public enum TransactionSource {
     LEASING,
     CMT,
     CHEQUE,
+    LCN,
     LCN_DECAISSEMENT,
     LCN_ENCAISSEMENT,
     LCN_ESCOMPTE,
