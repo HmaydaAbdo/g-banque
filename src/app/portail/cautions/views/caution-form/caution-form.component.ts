@@ -164,6 +164,16 @@ export class CautionFormComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: c => {
+          if (!c.actif) {
+            this.messageService.add({
+              severity: 'warn',
+              summary:  'Accès refusé',
+              detail:   'Cette caution est archivée et ne peut pas être modifiée.',
+            });
+            setTimeout(() => this.location.back(), 1500);
+            return;
+          }
+
           this.form.patchValue({
             ...c,
             dateDePrise:     parseLocalDate(c.dateDePrise),

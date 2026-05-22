@@ -262,6 +262,9 @@
           <th pSortableColumn="dateDePrise" >
             Date de prise <p-sortIcon field="dateDePrise"></p-sortIcon>
           </th>
+          <th pSortableColumn="dateDeMainLevee" >
+            Date main levée <p-sortIcon field="dateDeMainLevee"></p-sortIcon>
+          </th>
           <th class="text-center">Taux</th>
           <th class="text-center">Statut</th>
           <th class="text-center" >Actions</th>
@@ -277,6 +280,14 @@
           <td class="text-600 text-sm">{{ caution.organisme }}</td>
           <td class="text-right">{{ caution.montant | number:'1.2-2' }}</td>
           <td class="text-600 text-sm">{{ caution.dateDePrise | date:'dd/MM/yyyy' }}</td>
+          <td class="text-600 text-sm">
+            <ng-container *ngIf="caution.dateDeMainLevee; else pasDeDate">
+              {{ caution.dateDeMainLevee | date:'dd/MM/yyyy' }}
+            </ng-container>
+            <ng-template #pasDeDate>
+              <span class="text-400">—</span>
+            </ng-template>
+          </td>
           <td class="text-right">{{ caution.taux | number:'1.2-2' }} %</td>
           <td class="text-center">
             <p-tag
@@ -287,7 +298,8 @@
           </td>
           <td>
             <div class="flex align-items-center justify-content-center gap-1">
-              <button pButton pRipple icon="pi pi-pencil"
+              <button *ngIf="caution.actif"
+                      pButton pRipple icon="pi pi-pencil"
                       class="p-button-rounded p-button-text p-button-info p-button-sm"
                       [routerLink]="['/portail/cautions/edit', caution.id]"
                       pTooltip="Modifier" tooltipPosition="top">
@@ -311,7 +323,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td [attr.colspan]="9">
+          <td [attr.colspan]="10">
             <div class="flex flex-column align-items-center gap-2 py-5">
               <i class="pi pi-shield text-300" style="font-size:2rem"></i>
               <div class="text-600 font-medium">Aucune caution trouvée</div>
@@ -323,7 +335,7 @@
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="9" class="text-center p-4 text-500 text-sm">
+          <td [attr.colspan]="10" class="text-center p-4 text-500 text-sm">
             <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
           </td>
         </tr>
