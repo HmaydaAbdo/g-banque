@@ -11,7 +11,7 @@ public record BankAcceuilResponse(
         String     logoBase64,
         String     name,
         BigDecimal soldeActuelle,
-        BigDecimal soldeDepart,
+        BigDecimal soldeDebut,
         BigDecimal plafondFC,
         Devise     devise,
         long       lcnsEchusCount,

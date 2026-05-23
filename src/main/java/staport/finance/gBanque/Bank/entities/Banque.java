@@ -9,7 +9,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import staport.finance.gBanque.Bank.enums.Devise;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -56,10 +55,6 @@ public class Banque {
     @Column(nullable = false)
     private String agence;
 
-    @Column(name = "solde_depart", nullable = false)
-    private BigDecimal soldeDepart = BigDecimal.ZERO;
-
-
     @CreatedDate
     @Column(name = "date_creation", nullable = false, updatable = false)
     private LocalDate dateCreation;
@@ -92,15 +87,6 @@ public class Banque {
 
     public String getAgence() { return agence; }
     public void setAgence(String agence) { this.agence = agence; }
-
-    public BigDecimal getSoldeDepart() {
-        return soldeDepart;
-    }
-    public void setSoldeDepart(BigDecimal soldeDepart) {
-        this.soldeDepart = soldeDepart;
-    }
-
-
 
     public LocalDate getDateCreation() { return dateCreation; }
     public LocalDate getDateModification() { return dateModification; }

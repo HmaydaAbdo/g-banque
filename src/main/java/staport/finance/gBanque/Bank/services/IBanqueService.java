@@ -72,6 +72,5 @@ public interface IBanqueService {
 
     List<Long> getAllBanqueIds();
 
-    void setSoldeDepart(Long banqueID,BigDecimal newSoldeDepart);
     Banque findOrThrow(Long id);
 }

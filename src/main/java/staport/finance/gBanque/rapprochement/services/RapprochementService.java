@@ -115,9 +115,6 @@ public class RapprochementService {
         rapprochement.setTvaDeductible(totalTvaDeductible);
         rapprochement.setTvaCollectee(totalTvaCollectee);
 
-        // 5. Réinitialiser le solde de départ de la banque
-        banqueService.setSoldeDepart(banqueId, soldeFin);
-
         // 7. Sauvegarder le rapprochement clôturé
         Rapprochement rapprochementCloture = rapprochementRepository.save(rapprochement);
 

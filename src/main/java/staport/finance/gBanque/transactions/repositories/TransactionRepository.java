@@ -19,14 +19,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
      * COALESCE guards against NULL when no pending transactions exist yet.
      */
     @Query("""
-    SELECT b.soldeDepart
-           + COALESCE(SUM(CASE WHEN r.statut = 'EN_COURS' THEN t.credit ELSE 0 END), 0)
-           - COALESCE(SUM(CASE WHEN r.statut = 'EN_COURS' THEN t.debit ELSE 0 END), 0)
-    FROM Banque b
-    LEFT JOIN Transaction t ON t.banqueDePrelevement.id = b.id
-    LEFT JOIN t.rapprochement r
-    WHERE b.id = :banqueId
-    GROUP BY b.id, b.soldeDepart
+    SELECT COALESCE(r.soldeDebut, 0)
+           + COALESCE(SUM(t.credit), 0)
+           - COALESCE(SUM(t.debit), 0)
+    FROM rapprochement r
+    LEFT JOIN r.transactions t
+    WHERE r.banque.id = :banqueId AND r.statut = 'EN_COURS'
 """)
     BigDecimal computeBalance(@Param("banqueId") Long banqueId);
 
@@ -44,14 +42,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     long countPendingByBanque(@Param("banqueId") Long banqueId);
 
     @Query("""
-    SELECT b.id,
-           (b.soldeDepart + SUM(CASE WHEN r.statut = 'EN_COURS' THEN COALESCE(t.credit, 0) ELSE 0 END)
-                          - SUM(CASE WHEN r.statut = 'EN_COURS' THEN COALESCE(t.debit, 0) ELSE 0 END))
-    FROM Banque b
-    LEFT JOIN Transaction t ON t.banqueDePrelevement.id = b.id
-    LEFT JOIN t.rapprochement r
-    WHERE b.id IN :ids
-    GROUP BY b.id, b.soldeDepart
+    SELECT r.banque.id,
+           COALESCE(r.soldeDebut, 0)
+           + COALESCE(SUM(t.credit), 0)
+           - COALESCE(SUM(t.debit), 0)
+    FROM rapprochement r
+    LEFT JOIN r.transactions t
+    WHERE r.banque.id IN :ids AND r.statut = 'EN_COURS'
+    GROUP BY r.banque.id, r.soldeDebut
 """)
     List<Object[]> findBalancesByBankIds(@Param("ids") List<Long> ids);
 }

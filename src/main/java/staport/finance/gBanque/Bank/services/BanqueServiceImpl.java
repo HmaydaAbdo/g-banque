@@ -15,6 +15,9 @@ import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
 import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.rapprochement.entities.Rapprochement;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
+import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.Bank.exceptions.BanqueDeletionException;
 import staport.finance.gBanque.Bank.mappers.BanqueMapper;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
@@ -29,6 +32,7 @@ import staport.finance.gBanque.transactions.service.ITransactionService;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +55,7 @@ public class BanqueServiceImpl implements IBanqueService {
     private final ILigneFonctionnelleService ligneFonctionnelleService;
     private final LcnRepository lcnRepository;
     private final VirementRepository virementRepository;
+    private final RapprochementRepository rapprochementRepository;
 
 
     public BanqueServiceImpl(BanqueRepository banqueRepository,
@@ -59,7 +64,8 @@ public class BanqueServiceImpl implements IBanqueService {
                              ITransactionService transactionService,
                              ILigneFonctionnelleService ligneFonctionnelleService,
                              LcnRepository lcnRepository,
-                             VirementRepository virementRepository) {
+                             VirementRepository virementRepository,
+                             RapprochementRepository rapprochementRepository) {
         this.banqueRepository = banqueRepository;
         this.banqueMapper = banqueMapper;
         this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
@@ -67,6 +73,7 @@ public class BanqueServiceImpl implements IBanqueService {
         this.transactionService = transactionService;
         this.lcnRepository = lcnRepository;
         this.virementRepository = virementRepository;
+        this.rapprochementRepository = rapprochementRepository;
     }
 
     // ── Create ───────────────────────────────────────────────────────────────
@@ -92,6 +99,14 @@ public class BanqueServiceImpl implements IBanqueService {
         }
 
         Banque saved = banqueRepository.save(banque);
+
+        // Créer le premier rapprochement EN_COURS avec soldeDebut = 0
+        Rapprochement initial = new Rapprochement();
+        initial.setBanque(saved);
+        initial.setDateRapprochement(java.time.YearMonth.now());
+        initial.setSoldeDebut(BigDecimal.ZERO);
+        initial.setStatut(StatutRapprochement.EN_COURS);
+        rapprochementRepository.save(initial);
 
         BigDecimal balance = computeLiveBalance(saved.getId());
         return banqueMapper.toDto(saved, balance);
@@ -145,7 +160,16 @@ public class BanqueServiceImpl implements IBanqueService {
         // Query 3: Batch fetch active FC
         Map<Long, BigDecimal> plafondMap = ligneFonctionnelleService.getActivePlafondsForBanks(ids, FC_CODE);
 
-        // Query 4 & 5: Échus LCN + Virements groupés par banque (1 requête chacune)
+        // Query 4: soldeDebut des rapprochements EN_COURS (1 requête batch)
+        Map<Long, BigDecimal> soldeDebutMap = rapprochementRepository
+                .findAllByStatut(StatutRapprochement.EN_COURS)
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> r.getBanque().getId(),
+                        r -> r.getSoldeDebut() != null ? r.getSoldeDebut() : BigDecimal.ZERO
+                ));
+
+        // Query 5 & 6: Échus LCN + Virements groupés par banque
         LocalDate today = LocalDate.now();
         Map<Long, Long> lcnCountMap      = new HashMap<>();
         Map<Long, Long> virementCountMap = new HashMap<>();
@@ -156,13 +180,14 @@ public class BanqueServiceImpl implements IBanqueService {
         virementRepository.countEchusGroupedByBanque(today)
                 .forEach(row -> virementCountMap.put((Long) row[0], (Long) row[1]));
 
-        // Assembly: Logic stays in Java, DB stays fast
+        // Assembly
         return banques.stream()
                 .map(b -> {
                     Long bid = b.getId();
                     return banqueMapper.toAcceuilDto(b,
                             balanceMap.get(bid),
                             plafondMap.get(bid),
+                            soldeDebutMap.getOrDefault(bid, BigDecimal.ZERO),
                             lcnCountMap.getOrDefault(bid, 0L),
                             virementCountMap.getOrDefault(bid, 0L));
                 })
@@ -246,14 +271,6 @@ public class BanqueServiceImpl implements IBanqueService {
     }
 
     @Override
-    @Transactional
-    public void setSoldeDepart(Long banqueId,BigDecimal newSoldeDepart) {
-        Banque banque = findOrThrow(banqueId);
-        banque.setSoldeDepart(newSoldeDepart);
-        banqueRepository.save(banque);
-    }
-
-    @Override
     public Banque findOrThrow(Long id) {
         return banqueRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée ID: " + id));
@@ -266,6 +283,11 @@ public class BanqueServiceImpl implements IBanqueService {
         BigDecimal balance  = computeLiveBalance(banqueId);
         BigDecimal plafond  = this.ligneFonctionnelleService.getPlafondFCInternal(banqueId, fcNatureId);
 
+        BigDecimal soldeDebut = rapprochementRepository
+                .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
+                .map(r -> r.getSoldeDebut() != null ? r.getSoldeDebut() : BigDecimal.ZERO)
+                .orElse(BigDecimal.ZERO);
+
         LocalDate today = LocalDate.now();
         long lcnsCount     = lcnRepository.countEchusGroupedByBanque(today).stream()
                 .filter(row -> banqueId.equals(row[0]))
@@ -276,7 +298,7 @@ public class BanqueServiceImpl implements IBanqueService {
                 .mapToLong(row -> (Long) row[1])
                 .findFirst().orElse(0L);
 
-        return banqueMapper.toAcceuilDto(banque, balance, plafond, lcnsCount, virementsCount);
+        return banqueMapper.toAcceuilDto(banque, balance, plafond, soldeDebut, lcnsCount, virementsCount);
     }
 
 

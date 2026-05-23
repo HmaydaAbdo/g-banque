@@ -17,7 +17,6 @@ public record BanqueResponse(
         String address,
         String agence,
         BigDecimal soldeActuel,
-        BigDecimal soldeDepart,
         LocalDate dateCreation,
         LocalDate dateModification
 ) {}

@@ -67,7 +67,6 @@ public class BanqueMapper {
                 banque.getAddress(),
                 banque.getAgence(),
                 computedSolde,
-                banque.getSoldeDepart(),
                 banque.getDateCreation(),
                 banque.getDateModification()
         );
@@ -76,6 +75,7 @@ public class BanqueMapper {
     public BankAcceuilResponse toAcceuilDto(Banque banque,
                                               BigDecimal computedBalance,
                                               BigDecimal plafondFC,
+                                              BigDecimal soldeDebut,
                                               long lcnsEchusCount,
                                               long virementsEchusCount) {
         if (banque == null) {
@@ -90,7 +90,7 @@ public class BanqueMapper {
                 logoBase64,
                 banque.getNom(),
                 computedBalance,
-                banque.getSoldeDepart(),
+                soldeDebut,
                 plafondFC,
                 banque.getDevise(),
                 lcnsEchusCount,
