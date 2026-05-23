@@ -5,7 +5,7 @@ export interface RecapitulatifCompte {
   name:     string;
   logoBase64: string;
   soldeActuelle: number;
-  soldeDepart:   number;
+  soldeDebut:    number;
   plafondFC?:    number;
   devise:        Devise;
   lcnsEchusCount:      number;

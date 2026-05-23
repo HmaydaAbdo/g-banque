@@ -73,7 +73,7 @@ export class BankDetailsComponent implements OnInit, OnDestroy {
    */
   getVariation(): number {
     if (!this.bankInfo) return 0;
-    return this.bankInfo.soldeActuelle - this.bankInfo.soldeDepart;
+    return this.bankInfo.soldeActuelle - this.bankInfo.soldeDebut;
   }
 
 

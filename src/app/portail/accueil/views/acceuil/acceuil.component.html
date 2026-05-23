@@ -116,39 +116,43 @@
               </div>
 
               <!-- ── Échus LCN + Virements ──────────────────────────────── -->
-              @if (account.lcnsEchusCount > 0 || account.virementsEchusCount > 0) {
-                <div class="pt-2" style="border-top:0.5px solid var(--red-100)">
-                  <div class="grid" style="gap:6px">
+              <div class="pt-2" style="border-top:0.5px solid var(--surface-border)">
+                <div class="grid" style="gap:6px">
 
-                    @if (account.lcnsEchusCount > 0) {
-                      <div class="col"
-                           style="background:#FCEBEB;border-radius:6px;padding:7px 8px;text-align:center">
-                        <div style="font-size:10px;color:#791F1F;font-weight:600;letter-spacing:0.05em;margin-bottom:2px">
-                          LCN
-                        </div>
-                        <div style="font-size:20px;font-weight:600;color:#A32D2D;line-height:1">
-                          {{ account.lcnsEchusCount }}
-                        </div>
-                        <div style="font-size:9px;color:#A32D2D;margin-top:2px">échus</div>
-                      </div>
-                    }
-
-                    @if (account.virementsEchusCount > 0) {
-                      <div class="col"
-                           style="background:#FCEBEB;border-radius:6px;padding:7px 8px;text-align:center">
-                        <div style="font-size:10px;color:#791F1F;font-weight:600;letter-spacing:0.05em;margin-bottom:2px">
-                          VIREMENTS
-                        </div>
-                        <div style="font-size:20px;font-weight:600;color:#A32D2D;line-height:1">
-                          {{ account.virementsEchusCount }}
-                        </div>
-                        <div style="font-size:9px;color:#A32D2D;margin-top:2px">échus</div>
-                      </div>
-                    }
-
+                  <div class="col" style="border-radius:6px;padding:7px 8px;text-align:center"
+                       [style.background]="account.lcnsEchusCount > 0 ? '#FCEBEB' : 'var(--surface-100)'">
+                    <div style="font-size:10px;font-weight:600;letter-spacing:0.05em;margin-bottom:2px"
+                         [style.color]="account.lcnsEchusCount > 0 ? '#791F1F' : 'var(--text-color-secondary)'">
+                      LCN
+                    </div>
+                    <div style="font-size:20px;font-weight:600;line-height:1"
+                         [style.color]="account.lcnsEchusCount > 0 ? '#A32D2D' : 'var(--text-color-secondary)'">
+                      {{ account.lcnsEchusCount }}
+                    </div>
+                    <div style="font-size:9px;margin-top:2px"
+                         [style.color]="account.lcnsEchusCount > 0 ? '#A32D2D' : 'var(--text-color-secondary)'">
+                      échus
+                    </div>
                   </div>
+
+                  <div class="col" style="border-radius:6px;padding:7px 8px;text-align:center"
+                       [style.background]="account.virementsEchusCount > 0 ? '#FCEBEB' : 'var(--surface-100)'">
+                    <div style="font-size:10px;font-weight:600;letter-spacing:0.05em;margin-bottom:2px"
+                         [style.color]="account.virementsEchusCount > 0 ? '#791F1F' : 'var(--text-color-secondary)'">
+                      VIREMENTS
+                    </div>
+                    <div style="font-size:20px;font-weight:600;line-height:1"
+                         [style.color]="account.virementsEchusCount > 0 ? '#A32D2D' : 'var(--text-color-secondary)'">
+                      {{ account.virementsEchusCount }}
+                    </div>
+                    <div style="font-size:9px;margin-top:2px"
+                         [style.color]="account.virementsEchusCount > 0 ? '#A32D2D' : 'var(--text-color-secondary)'">
+                      échus
+                    </div>
+                  </div>
+
                 </div>
-              }
+              </div>
             </div>
 
 

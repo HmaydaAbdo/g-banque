@@ -10,7 +10,6 @@ export interface BanqueResponse {
   address: string;
   agence: string;
   soldeActuel: number;
-  soldeDepart:number
   dateCreation: string;
   dateModification: string;
 }
