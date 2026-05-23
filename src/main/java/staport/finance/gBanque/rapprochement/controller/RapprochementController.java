@@ -26,10 +26,16 @@ public class RapprochementController {
 
 
 
-    // --- 1. POST pour clôturer (201 Created) ---
+    // --- 1. POST clôture provisoire — EN_COURS → CLOTURE_PROVISOIRE ---
     @PostMapping("/cloturer")
-    public ResponseEntity<RapprochementResponseDto> cloturerRapprochement(@RequestBody RapprochementRequestDto requestDto) {
-        return ResponseEntity.ok(rapprochementService.cloturerRapprochement(requestDto.getBanqueId()));
+    public ResponseEntity<RapprochementResponseDto> cloturerProvisoire(@RequestBody RapprochementRequestDto requestDto) {
+        return ResponseEntity.ok(rapprochementService.cloturerProvisoire(requestDto.getBanqueId()));
+    }
+
+    // --- 2. POST clôture définitive — CLOTURE_PROVISOIRE → CLOTURE_DEFINITIVE ---
+    @PostMapping("/{id}/cloturer-definitivement")
+    public ResponseEntity<RapprochementResponseDto> cloturerDefinitivement(@PathVariable Long id) {
+        return ResponseEntity.ok(rapprochementService.cloturerDefinitivement(id));
     }
 
     // --- 2. GET by ID (Récupération avec transactions paginées) ---

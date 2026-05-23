@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementAggregates;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
@@ -31,7 +32,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class RapprochementService {
@@ -145,25 +145,40 @@ public class RapprochementService {
         return dto;
     }
 
-    // ── Clôture ───────────────────────────────────────────────────────────────
+    // ── Clôture provisoire ────────────────────────────────────────────────────
 
+    /**
+     * Passes the EN_COURS rapprochement to CLOTURE_PROVISOIRE and opens the next month.
+     *
+     * Guard clauses (fail fast):
+     *   1. EN_COURS must exist for this bank          → 404 otherwise
+     *   2. No CLOTURE_PROVISOIRE may exist already    → 400 (business rule: max 1 per bank)
+     */
     @Transactional
-    public RapprochementResponseDto cloturerRapprochement(Long banqueId) {
+    public RapprochementResponseDto cloturerProvisoire(Long banqueId) {
 
+        // Guard 1 — EN_COURS must exist
         Rapprochement rapprochement = rapprochementRepository
                 .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Aucun rapprochement EN_COURS trouvé pour la banque id: " + banqueId));
 
-        // Compute aggregates via a single SQL call — no List<Transaction> loaded in memory
+        // Guard 2 — at most one CLOTURE_PROVISOIRE per bank at any time
+        rapprochementRepository
+                .findByBanqueIdAndStatut(banqueId, StatutRapprochement.CLOTURE_PROVISOIRE)
+                .ifPresent(existing -> { throw new ValidationException(
+                        "Un rapprochement en clôture provisoire existe déjà pour la banque id: " + banqueId
+                        + " (période: " + existing.getDateRapprochement() + ")"); });
+
+        // Compute aggregates — single SQL round-trip, no List<Transaction> in memory
         RapprochementAggregates agg = fetchAggregates(rapprochement.getId());
         BigDecimal soldeFin = agg.soldeFin(rapprochement.getSoldeDebut());
 
-        // Close current rapprochement — only the statut changes on the entity
-        rapprochement.setStatut(StatutRapprochement.CLOTURE_DEFINITIVE);
-        Rapprochement rapprochementCloture = rapprochementRepository.save(rapprochement);
+        // Transition: EN_COURS → CLOTURE_PROVISOIRE
+        rapprochement.setStatut(StatutRapprochement.CLOTURE_PROVISOIRE);
+        Rapprochement rapprochementProv = rapprochementRepository.save(rapprochement);
 
-        // Open the next month's rapprochement, seeded with the computed closing balance
+        // Open next month seeded with the computed closing balance
         Rapprochement next = new Rapprochement();
         next.setBanque(banqueService.findOrThrow(banqueId));
         next.setDateRapprochement(rapprochement.getDateRapprochement().plusMonths(1));
@@ -171,7 +186,38 @@ public class RapprochementService {
         next.setStatut(StatutRapprochement.EN_COURS);
         rapprochementRepository.save(next);
 
-        return rapprochementMapper.toResponseDto(rapprochementCloture, agg);
+        return rapprochementMapper.toResponseDto(rapprochementProv, agg);
+    }
+
+    // ── Clôture définitive ────────────────────────────────────────────────────
+
+    /**
+     * Locks a CLOTURE_PROVISOIRE rapprochement permanently (CLOTURE_DEFINITIVE).
+     * No new rapprochement is created — the EN_COURS for the following month already exists.
+     *
+     * Guard clauses (fail fast):
+     *   1. Rapprochement must exist by ID             → 404 otherwise
+     *   2. Its statut must be CLOTURE_PROVISOIRE       → 400 otherwise
+     */
+    @Transactional
+    public RapprochementResponseDto cloturerDefinitivement(Long rapprochementId) {
+
+        // Guard 1 — must exist
+        Rapprochement rapprochement = findOrThrow(rapprochementId);
+
+        // Guard 2 — must be in provisional state
+        if (rapprochement.getStatut() != StatutRapprochement.CLOTURE_PROVISOIRE) {
+            throw new ValidationException(
+                    "Seul un rapprochement en CLOTURE_PROVISOIRE peut être clôturé définitivement. "
+                    + "Statut actuel: " + rapprochement.getStatut());
+        }
+
+        // Transition: CLOTURE_PROVISOIRE → CLOTURE_DEFINITIVE
+        rapprochement.setStatut(StatutRapprochement.CLOTURE_DEFINITIVE);
+        Rapprochement locked = rapprochementRepository.save(rapprochement);
+
+        RapprochementAggregates agg = fetchAggregates(locked.getId());
+        return rapprochementMapper.toResponseDto(locked, agg);
     }
 
     // ── PDF generation ───────────────────────────────────────────────────────
