@@ -114,7 +114,43 @@
                   }
                 </div>
               </div>
+
+              <!-- ── Échus LCN + Virements ──────────────────────────────── -->
+              @if (account.lcnsEchusCount > 0 || account.virementsEchusCount > 0) {
+                <div class="pt-2" style="border-top:0.5px solid var(--red-100)">
+                  <div class="grid" style="gap:6px">
+
+                    @if (account.lcnsEchusCount > 0) {
+                      <div class="col"
+                           style="background:#FCEBEB;border-radius:6px;padding:7px 8px;text-align:center">
+                        <div style="font-size:10px;color:#791F1F;font-weight:600;letter-spacing:0.05em;margin-bottom:2px">
+                          LCN
+                        </div>
+                        <div style="font-size:20px;font-weight:600;color:#A32D2D;line-height:1">
+                          {{ account.lcnsEchusCount }}
+                        </div>
+                        <div style="font-size:9px;color:#A32D2D;margin-top:2px">échus</div>
+                      </div>
+                    }
+
+                    @if (account.virementsEchusCount > 0) {
+                      <div class="col"
+                           style="background:#FCEBEB;border-radius:6px;padding:7px 8px;text-align:center">
+                        <div style="font-size:10px;color:#791F1F;font-weight:600;letter-spacing:0.05em;margin-bottom:2px">
+                          VIREMENTS
+                        </div>
+                        <div style="font-size:20px;font-weight:600;color:#A32D2D;line-height:1">
+                          {{ account.virementsEchusCount }}
+                        </div>
+                        <div style="font-size:9px;color:#A32D2D;margin-top:2px">échus</div>
+                      </div>
+                    }
+
+                  </div>
+                </div>
+              }
             </div>
+
 
             <!-- Bouton récap -->
             <div class="px-4 pb-3 pt-2" (click)="$event.stopPropagation()">
