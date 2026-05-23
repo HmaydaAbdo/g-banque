@@ -17,6 +17,7 @@ import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
@@ -48,6 +49,7 @@ import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.restitution.repository.RestitutionRepository;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
@@ -137,6 +139,12 @@ public class ReverseTransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Transaction introuvable avec l'ID: " + transactionId));
 
+        // Guard — rapprochement définitivement clôturé : aucune modification autorisée
+        if (transaction.getRapprochement().getStatut() == StatutRapprochement.CLOTURE_DEFINITIVE) {
+            throw new ValidationException(
+                    "Impossible d'annuler la transaction " + transactionId
+                    + " : le rapprochement est définitivement clôturé.");
+        }
 
         // 2. Remettre l'entité source à son état initial
         resetEntiteSource(transaction);

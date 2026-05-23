@@ -8,6 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
@@ -171,8 +172,15 @@ public class TransactionService implements ITransactionService{
     @Transactional
     public TransactionResponseDto updateTransactionById(Long id, TransactionUpdateRequestDto updateRequestDto){
 
-        Transaction transaction=transactionRepository.findById(id)
-                .orElseThrow(()->new ResourceNotFoundException("Transaction with id "+id+" not found"));
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction with id " + id + " not found"));
+
+        // Guard — rapprochement définitivement clôturé : aucune modification autorisée
+        if (transaction.getRapprochement().getStatut() == StatutRapprochement.CLOTURE_DEFINITIVE) {
+            throw new ValidationException(
+                    "Impossible de modifier la transaction " + id
+                    + " : le rapprochement est définitivement clôturé.");
+        }
 
         transaction.setDateValeur(updateRequestDto.dateValeur());
         transaction.setDateOperations(updateRequestDto.dateOperation());
