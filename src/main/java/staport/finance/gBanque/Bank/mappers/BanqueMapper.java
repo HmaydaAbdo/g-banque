@@ -73,16 +73,18 @@ public class BanqueMapper {
         );
     }
 
-    public BankAcceuilResponse toAcceuilDto(Banque banque, BigDecimal computedBalance, BigDecimal plafondFC) {
+    public BankAcceuilResponse toAcceuilDto(Banque banque,
+                                              BigDecimal computedBalance,
+                                              BigDecimal plafondFC,
+                                              long lcnsEchusCount,
+                                              long virementsEchusCount) {
         if (banque == null) {
             logger.warn("Attempted to convert null Banque Entity to BankAcceuilResponse");
             return null;
         }
 
-        // Convert logo once to avoid multiple processing
         String logoBase64 = bytesToBase64(banque.getLogoData());
 
-        // Records use the Canonical Constructor (all fields at once)
         return new BankAcceuilResponse(
                 banque.getId(),
                 logoBase64,
@@ -90,7 +92,9 @@ public class BanqueMapper {
                 computedBalance,
                 banque.getSoldeDepart(),
                 plafondFC,
-                banque.getDevise()
+                banque.getDevise(),
+                lcnsEchusCount,
+                virementsEchusCount
         );
     }
 

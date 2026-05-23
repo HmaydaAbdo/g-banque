@@ -12,6 +12,8 @@ import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
+import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
+import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.exceptions.BanqueDeletionException;
 import staport.finance.gBanque.Bank.mappers.BanqueMapper;
@@ -26,6 +28,8 @@ import staport.finance.gBanque.transactions.service.ITransactionService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,16 +49,24 @@ public class BanqueServiceImpl implements IBanqueService {
     private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
     private final ITransactionService transactionService;
     private final ILigneFonctionnelleService ligneFonctionnelleService;
+    private final LcnRepository lcnRepository;
+    private final VirementRepository virementRepository;
 
 
     public BanqueServiceImpl(BanqueRepository banqueRepository,
-                             BanqueMapper banqueMapper, INatureLigneFonctionnelleService natureLigneFonctionnelleService,
-                             ITransactionService transactionService, ILigneFonctionnelleService ligneFonctionnelleService) {
+                             BanqueMapper banqueMapper,
+                             INatureLigneFonctionnelleService natureLigneFonctionnelleService,
+                             ITransactionService transactionService,
+                             ILigneFonctionnelleService ligneFonctionnelleService,
+                             LcnRepository lcnRepository,
+                             VirementRepository virementRepository) {
         this.banqueRepository = banqueRepository;
         this.banqueMapper = banqueMapper;
         this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
         this.ligneFonctionnelleService = ligneFonctionnelleService;
         this.transactionService = transactionService;
+        this.lcnRepository = lcnRepository;
+        this.virementRepository = virementRepository;
     }
 
     // ── Create ───────────────────────────────────────────────────────────────
@@ -133,13 +145,26 @@ public class BanqueServiceImpl implements IBanqueService {
         // Query 3: Batch fetch active FC
         Map<Long, BigDecimal> plafondMap = ligneFonctionnelleService.getActivePlafondsForBanks(ids, FC_CODE);
 
+        // Query 4 & 5: Échus LCN + Virements groupés par banque (1 requête chacune)
+        LocalDate today = LocalDate.now();
+        Map<Long, Long> lcnCountMap      = new HashMap<>();
+        Map<Long, Long> virementCountMap = new HashMap<>();
+
+        lcnRepository.countEchusGroupedByBanque(today)
+                .forEach(row -> lcnCountMap.put((Long) row[0], (Long) row[1]));
+
+        virementRepository.countEchusGroupedByBanque(today)
+                .forEach(row -> virementCountMap.put((Long) row[0], (Long) row[1]));
+
         // Assembly: Logic stays in Java, DB stays fast
         return banques.stream()
                 .map(b -> {
-                    BigDecimal balance = balanceMap.get(b.getId());
-                    BigDecimal plafond = plafondMap.get(b.getId());
-
-                    return banqueMapper.toAcceuilDto(b, balance, plafond);
+                    Long bid = b.getId();
+                    return banqueMapper.toAcceuilDto(b,
+                            balanceMap.get(bid),
+                            plafondMap.get(bid),
+                            lcnCountMap.getOrDefault(bid, 0L),
+                            virementCountMap.getOrDefault(bid, 0L));
                 })
                 .collect(Collectors.toList());
     }
@@ -237,10 +262,21 @@ public class BanqueServiceImpl implements IBanqueService {
     // ── Private Senior Helpers ────────────────────────────────────────────────
 
     private BankAcceuilResponse mapToAccueilResponse(Banque banque, Long fcNatureId) {
-        Long banqueId=banque.getId();
-        BigDecimal balance = computeLiveBalance(banqueId);
-        BigDecimal plafond =this.ligneFonctionnelleService.getPlafondFCInternal(banqueId, fcNatureId);
-        return banqueMapper.toAcceuilDto(banque, balance, plafond);
+        Long       banqueId = banque.getId();
+        BigDecimal balance  = computeLiveBalance(banqueId);
+        BigDecimal plafond  = this.ligneFonctionnelleService.getPlafondFCInternal(banqueId, fcNatureId);
+
+        LocalDate today = LocalDate.now();
+        long lcnsCount     = lcnRepository.countEchusGroupedByBanque(today).stream()
+                .filter(row -> banqueId.equals(row[0]))
+                .mapToLong(row -> (Long) row[1])
+                .findFirst().orElse(0L);
+        long virementsCount = virementRepository.countEchusGroupedByBanque(today).stream()
+                .filter(row -> banqueId.equals(row[0]))
+                .mapToLong(row -> (Long) row[1])
+                .findFirst().orElse(0L);
+
+        return banqueMapper.toAcceuilDto(banque, balance, plafond, lcnsCount, virementsCount);
     }
 
 

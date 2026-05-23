@@ -9,24 +9,28 @@ import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface LcnRepository extends JpaRepository<Lcn, Long>, JpaSpecificationExecutor<Lcn> {
 
-    /**
-     * Finds an Lcn by its unique numero.
-     * @param numero The unique identifier of the Lcn.
-     * @return An Optional containing the found Lcn, or an empty Optional if none is found.
-     */
     Optional<Lcn> findByNumero(String numero);
 
-    /**
-     * Règle tous les LCN dont la date d'échéance est strictement antérieure à la date donnée.
-     * @param cutoffDate La date limite (exclusive)
-     * @return Le nombre de LCN réglés
-     */
     @Modifying
     @Query("UPDATE Lcn l SET l.statut = 'REGLE' WHERE l.dateEcheance < :cutoffDate AND l.statut = 'ENCOURS'")
     int deactivateByDateEcheanceBefore(@Param("cutoffDate") LocalDate cutoffDate);
+
+    /**
+     * Retourne (banqueId, count) des LCN échus (ENCOURS et dateEcheance < today),
+     * groupés par banque.
+     */
+    @Query("""
+        SELECT l.banque.id, COUNT(l)
+        FROM Lcn l
+        WHERE l.statut = 'ENCOURS'
+          AND l.dateEcheance < :today
+        GROUP BY l.banque.id
+    """)
+    List<Object[]> countEchusGroupedByBanque(@Param("today") LocalDate today);
 }

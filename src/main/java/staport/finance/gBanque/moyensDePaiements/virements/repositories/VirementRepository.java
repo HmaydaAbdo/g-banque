@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -21,4 +22,18 @@ public interface VirementRepository extends JpaRepository<Virement, Long>, JpaSp
     @Modifying
     @Query("UPDATE Virement v SET v.statut = 'REGLE' WHERE v.dateEmission < :cutoffDate AND v.statut = 'ENCOURS'")
     int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
+
+    /**
+     * Retourne (banqueId, count) des virements échus (ENCOURS et dateEmission < today),
+     * groupés par banque émettrice.
+     */
+    @Query("""
+        SELECT v.banqueEmettrice.id, COUNT(v)
+        FROM Virement v
+        WHERE v.statut = 'ENCOURS'
+          AND v.dateEmission < :today
+          AND v.banqueEmettrice IS NOT NULL
+        GROUP BY v.banqueEmettrice.id
+    """)
+    List<Object[]> countEchusGroupedByBanque(@Param("today") LocalDate today);
 }
