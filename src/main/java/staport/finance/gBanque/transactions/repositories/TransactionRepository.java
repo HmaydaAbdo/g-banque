@@ -52,4 +52,38 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     GROUP BY r.banque.id, r.soldeDebut
 """)
     List<Object[]> findBalancesByBankIds(@Param("ids") List<Long> ids);
+
+    /**
+     * Computes all aggregates for a single rapprochement in one SQL round-trip.
+     * Returns a List with exactly one Object[] row (COALESCE guarantees a row even with no transactions):
+     * [totalDebit, totalCredit, tvaDeductible, tvaCollectee].
+     * NOTE: Optional<Object[]> is intentionally avoided — Spring Data JPA wraps multi-column
+     * aggregate results in Object[][] when using Optional, causing a ClassCastException at runtime.
+     */
+    @Query("""
+    SELECT COALESCE(SUM(t.debit),          0),
+           COALESCE(SUM(t.credit),         0),
+           COALESCE(SUM(t.tvaDeductible),  0),
+           COALESCE(SUM(t.tvaCollectee),   0)
+    FROM Transaction t
+    WHERE t.rapprochement.id = :rapprochementId
+""")
+    List<Object[]> computeAggregatesForRapprochement(@Param("rapprochementId") Long rapprochementId);
+
+    /**
+     * Batch version for paginated list views — avoids N+1.
+     * Returns one row per rapprochement: [rapprochementId, totalDebit, totalCredit, tvaDeductible, tvaCollectee].
+     * Rapprochements with no transactions are absent from the result; callers should default to EMPTY.
+     */
+    @Query("""
+    SELECT t.rapprochement.id,
+           COALESCE(SUM(t.debit),          0),
+           COALESCE(SUM(t.credit),         0),
+           COALESCE(SUM(t.tvaDeductible),  0),
+           COALESCE(SUM(t.tvaCollectee),   0)
+    FROM Transaction t
+    WHERE t.rapprochement.id IN :ids
+    GROUP BY t.rapprochement.id
+""")
+    List<Object[]> computeAggregatesByRapprochementIds(@Param("ids") List<Long> ids);
 }

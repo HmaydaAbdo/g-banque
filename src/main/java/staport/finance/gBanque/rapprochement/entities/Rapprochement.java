@@ -29,11 +29,6 @@ public class Rapprochement {
     private YearMonth dateRapprochement;
 
     private BigDecimal soldeDebut;
-    private BigDecimal soldeFin;
-    private BigDecimal totalDebit;
-    private BigDecimal totalCredit;
-    private BigDecimal tvaDeductible;
-    private BigDecimal tvaCollectee;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -68,21 +63,6 @@ public class Rapprochement {
 
     public BigDecimal getSoldeDebut() { return soldeDebut; }
     public void setSoldeDebut(BigDecimal soldeDebut) { this.soldeDebut = soldeDebut; }
-
-    public BigDecimal getSoldeFin() { return soldeFin; }
-    public void setSoldeFin(BigDecimal soldeFin) { this.soldeFin = soldeFin; }
-
-    public BigDecimal getTotalDebit() { return totalDebit; }
-    public void setTotalDebit(BigDecimal totalDebit) { this.totalDebit = totalDebit; }
-
-    public BigDecimal getTotalCredit() { return totalCredit; }
-    public void setTotalCredit(BigDecimal totalCredit) { this.totalCredit = totalCredit; }
-
-    public BigDecimal getTvaDeductible() { return tvaDeductible; }
-    public void setTvaDeductible(BigDecimal tvaDeductible) { this.tvaDeductible = tvaDeductible; }
-
-    public BigDecimal getTvaCollectee() { return tvaCollectee; }
-    public void setTvaCollectee(BigDecimal tvaCollectee) { this.tvaCollectee = tvaCollectee; }
 
     public StatutRapprochement getStatut() {
         return statut;
@@ -131,9 +111,7 @@ public class Rapprochement {
                 ", banqueId=" + (banque != null ? banque.getId() : "null") +
                 ", dateRapprochement=" + dateRapprochement +
                 ", soldeDebut=" + soldeDebut +
-                ", soldeFin=" + soldeFin +
-                ", totalDebit=" + totalDebit +
-                ", totalCredit=" + totalCredit +
+                ", statut=" + statut +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';
