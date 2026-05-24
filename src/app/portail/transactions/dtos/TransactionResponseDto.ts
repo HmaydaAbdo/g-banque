@@ -20,7 +20,7 @@ export interface TransactionResponseDto {
   traces: string;
   banqueDePrelevementId: number;
   banqueDePrelevementNom: string;
-  statutRapprochement: 'EN_COURS' | 'CLOTURE';
+  statutRapprochement: 'EN_COURS' | 'CLOTURE_PROVISOIRE' | 'CLOTURE_DEFINITIVE';
   referent: number;
   createdAt: Date;
   updatedAt: Date;

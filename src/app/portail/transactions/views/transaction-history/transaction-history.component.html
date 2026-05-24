@@ -127,8 +127,8 @@
 
           <td class="text-center">
             <p-tag
-              [value]="transaction.statutRapprochement === 'CLOTURE' ? 'Rapproché' : 'En cours'"
-              [severity]="transaction.statutRapprochement === 'CLOTURE' ? 'success' : 'warning'">
+              [value]="getStatutLabel(transaction.statutRapprochement)"
+              [severity]="getStatutSeverity(transaction.statutRapprochement)">
             </p-tag>
           </td>
 

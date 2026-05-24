@@ -50,9 +50,28 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
   banquesOptions: { label: string, value: number | null }[] = [];
   statutOptions = [
     { label: 'Toutes les transactions', value: null },
-    { label: 'Rapproché', value: 'CLOTURE' },
-    { label: 'Rapprochement en cours', value: 'EN_COURS' }
+    { label: 'Rapprochement en cours', value: 'EN_COURS' },
+    { label: 'Clôture provisoire', value: 'CLOTURE_PROVISOIRE' },
+    { label: 'Clôturé définitivement', value: 'CLOTURE_DEFINITIVE' }
   ];
+
+  getStatutLabel(statut: string): string {
+    switch (statut) {
+      case 'EN_COURS':           return 'En cours';
+      case 'CLOTURE_PROVISOIRE': return 'Clôture provisoire';
+      case 'CLOTURE_DEFINITIVE': return 'Clôturé définitivement';
+      default:                   return statut;
+    }
+  }
+
+  getStatutSeverity(statut: string): 'success' | 'info' | 'warning' | 'danger' {
+    switch (statut) {
+      case 'EN_COURS':           return 'warning';
+      case 'CLOTURE_PROVISOIRE': return 'info';
+      case 'CLOTURE_DEFINITIVE': return 'success';
+      default:                   return 'warning';
+    }
+  }
 
   items: MenuItem[] | undefined;
   private subscriptions: Subscription[] = [];

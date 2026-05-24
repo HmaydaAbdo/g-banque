@@ -67,7 +67,8 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
   statusOptions = [
     { label: 'Tous les statuts', value: null },
     { label: 'En cours', value: StatutRapprochement.EN_COURS },
-    { label: 'Clôturé', value: StatutRapprochement.CLOTURE }
+    { label: 'Clôture provisoire', value: StatutRapprochement.CLOTURE_PROVISOIRE },
+    { label: 'Clôturé définitivement', value: StatutRapprochement.CLOTURE_DEFINITIVE }
   ];
   searchForm!: FormGroup;
 
