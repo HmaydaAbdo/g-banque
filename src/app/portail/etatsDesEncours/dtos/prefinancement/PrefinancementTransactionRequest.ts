@@ -7,4 +7,5 @@ export interface PrefinancementTransactionRequest {
   libelle:string
   observation:string
   tva: number;
+  rapprochementId: number;
 }

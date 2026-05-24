@@ -8,4 +8,5 @@ export interface FraisBancaireValidationRequest {
   dateOperation: string;
   observation: string;
   libelle: string;
+  rapprochementId: number;
 }

@@ -7,4 +7,5 @@ export interface FactoringTransactionRequest {
   libelle: string;
   observation: string;
   tva: number;
+  rapprochementId: number;
 }

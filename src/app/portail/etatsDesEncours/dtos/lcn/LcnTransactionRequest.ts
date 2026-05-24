@@ -9,4 +9,5 @@ export interface LcnTransactionRequest {
   observation: string;
   tvaDeductible: number;
   libelle: string;
+  rapprochementId: number;
 }

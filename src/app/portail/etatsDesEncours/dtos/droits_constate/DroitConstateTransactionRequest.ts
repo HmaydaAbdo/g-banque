@@ -7,4 +7,5 @@ export interface DroitConstateTransactionRequest {
   tva: number;
   libelle: string;
   observation: string;
+  rapprochementId: number;
 }

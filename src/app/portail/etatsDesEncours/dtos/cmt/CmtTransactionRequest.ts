@@ -11,4 +11,5 @@ export interface CmtTransactionRequest {
   observation: string;
   libelle:string;
   tvaDeductible: number;
+  rapprochementId: number;
 }

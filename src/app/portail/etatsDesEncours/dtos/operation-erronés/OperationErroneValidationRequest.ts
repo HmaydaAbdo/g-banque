@@ -6,4 +6,5 @@ export interface OperationErroneValidationRequest {
   dateOperation: string;
   observation: string;
   libelle: string;
+  rapprochementId: number;
 }

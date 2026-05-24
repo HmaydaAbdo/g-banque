@@ -6,4 +6,5 @@ export interface RestitutionValidationRequest {
   dateOperation: string;
   observation: string;
   libelle: string;
+  rapprochementId: number;
 }

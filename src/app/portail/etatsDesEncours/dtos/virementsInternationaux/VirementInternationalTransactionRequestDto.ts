@@ -9,4 +9,5 @@ export interface VirementInternationalTransactionRequestDto {
   observation: string;
   libelle: string;
   tva: number;
+  rapprochementId: number;
 }

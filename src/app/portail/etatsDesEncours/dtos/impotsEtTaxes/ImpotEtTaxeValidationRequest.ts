@@ -7,4 +7,5 @@ export interface ImpotEtTaxeValidationRequest {
   dateOperation: string;
   observation: string;
   libelle: string;
+  rapprochementId: number;
 }

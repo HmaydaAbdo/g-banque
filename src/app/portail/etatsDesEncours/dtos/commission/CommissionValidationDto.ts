@@ -8,4 +8,5 @@ export interface CommissionValidationDto {
   dateValeur: string;
   dateOperation: string;
   tva:Decimal;
+  rapprochementId: number;
 }

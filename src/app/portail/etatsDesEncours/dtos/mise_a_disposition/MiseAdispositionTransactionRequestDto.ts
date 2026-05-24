@@ -9,4 +9,5 @@ export interface MiseAdispositionTransactionRequestDto {
   observation: string;
   tvaDeductible: number;
   libelle: string;
+  rapprochementId: number;
 }

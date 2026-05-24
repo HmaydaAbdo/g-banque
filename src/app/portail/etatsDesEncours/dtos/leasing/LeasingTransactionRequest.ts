@@ -13,4 +13,5 @@ export interface LeasingTransactionRequest {
   observation: string;       // Commentaire
   libelle:string;
   tvaDeductible: number;      // Montant de TVA déductible
+  rapprochementId: number;
 }

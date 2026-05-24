@@ -8,4 +8,5 @@ export interface DonneesComplementairesRapprochementDTO {
   tvaCollectee: number;       // Montant de TVA collectée
   tvaDeductible: number;      // Montant de TVA déductible
   libelle:string;
+  rapprochementId: number;
 }

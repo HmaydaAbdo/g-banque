@@ -9,4 +9,5 @@ export interface ChequeTransactionRequest {
   observation: string;
   tvaDeductible: number;
   libelle: string;
+  rapprochementId: number;
 }

@@ -6,4 +6,5 @@ export interface AgiosValidationRequest {
   dateOperation: string;
   observation: string;
   libelle: string;
+  rapprochementId: number;
 }

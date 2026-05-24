@@ -6,4 +6,5 @@ export interface ImpayeeValidationRequest {
   dateOperation: string;
   observation: string;
   libelle: string;
+  rapprochementId: number;
 }

@@ -8,5 +8,6 @@ export interface DecompteTransactionRequest {
   tva: number;
   libelle: string;
   observation: string;
+  rapprochementId: number;
 
 }
