@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { rapprochementActifGuard } from './guards/rapprochement-actif.guard';
 
 export const ETATS_DES_ENCOURS_ROUTES: Routes = [
   {
@@ -7,6 +8,7 @@ export const ETATS_DES_ENCOURS_ROUTES: Routes = [
   },
   {
     path: '',
+    canActivate: [rapprochementActifGuard],
     loadComponent: () => import('./views/parent-componant/les-encours/les-encours.component').then(m => m.LesEncoursComponent),
     children: [
       { path: '', redirectTo: 'rapprochement', pathMatch: 'full' },

@@ -238,6 +238,7 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedRestitution) {
 
+      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
       const request: RestitutionValidationRequest = {
         idRestitution: this.selectedRestitution.id,
         dateOperation: this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
@@ -245,7 +246,8 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
         dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
-        tva: this.rapprochementForm.value.tvaCollectee
+        tva: this.rapprochementForm.value.tvaCollectee,
+        rapprochementId: +rapprochementId!
       };
 
       this.isSubmitting = true;

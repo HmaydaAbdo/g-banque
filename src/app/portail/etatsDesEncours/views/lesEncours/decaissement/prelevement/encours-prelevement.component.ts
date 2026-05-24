@@ -249,6 +249,7 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
 
     if (this.rapprochementForm.valid && this.selectedPrelevement) {
 
+      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
       const request: PrelevementValidationRequestDto = {
         idPrelevement: this.selectedPrelevement.id,
         dateOperation: this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
@@ -256,7 +257,8 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
         dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
-        tva: this.rapprochementForm.value.tvaDeductible
+        tva: this.rapprochementForm.value.tvaDeductible,
+        rapprochementId: +rapprochementId!
       };
 
       this.isSubmitting = true;

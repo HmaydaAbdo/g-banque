@@ -217,6 +217,7 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedVirement) {
       const formValue = this.rapprochementForm.getRawValue();
+      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
 
       const virementInternationalTransactionRequest: VirementInternationalTransactionRequestDto = {
         id: this.selectedVirement.id,
@@ -227,6 +228,7 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
         tva: formValue.tva,
         transactionSource: TransactionSource.VIREMENT_INTERNATIONAL,
         libelle: formValue.libelle,
+        rapprochementId: +rapprochementId!
       };
 
       this.isSubmitting = true;

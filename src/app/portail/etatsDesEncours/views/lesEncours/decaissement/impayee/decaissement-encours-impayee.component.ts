@@ -244,6 +244,7 @@ export class DecaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedImpayee) {
 
+      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
       const request: ImpayeeValidationRequest = {
         idImpayee: this.selectedImpayee.id,
         dateOperation:this.datePipe.transform( this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
@@ -251,7 +252,8 @@ export class DecaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
         dateValeur:this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
-        tva: this.rapprochementForm.value.tvaCollectee
+        tva: this.rapprochementForm.value.tvaCollectee,
+        rapprochementId: +rapprochementId!
       };
 
       this.isSubmitting = true;

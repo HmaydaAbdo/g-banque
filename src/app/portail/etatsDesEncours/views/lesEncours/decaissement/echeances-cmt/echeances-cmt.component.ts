@@ -283,6 +283,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       const formValue = this.rapprochementForm.getRawValue();
 
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = formValue as DonneesComplementairesRapprochementDTO;
+      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
 
       const cmtTransactionRequest: CmtTransactionRequest = {
         cmtId: this.selectedEcheance.credit.id,
@@ -294,6 +295,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
         libelle:donneesComplementaires.libelle,
+        rapprochementId: +rapprochementId!
       };
 
       this.isSubmitting = true;

@@ -313,6 +313,8 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       const formValue = this.rapprochementForm.getRawValue();
 
 
+      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+
       // Create the LeasingTransactionRequest object
       const leasingTransactionRequest: LeasingTransactionRequest = {
         contratLeasingId: this.selectedEcheance.contratLeasingId,
@@ -323,7 +325,8 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
         dateOperation:this.datePipe.transform(formValue.dateOperation,'yyyy-MM-dd') as string,
         observation:  formValue.observation,
         tvaDeductible:  formValue.tvaDeductible,
-        libelle: formValue.libelle
+        libelle: formValue.libelle,
+        rapprochementId: +rapprochementId!
       };
 
       this.isSubmitting = true;

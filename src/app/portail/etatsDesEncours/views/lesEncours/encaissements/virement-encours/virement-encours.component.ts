@@ -219,6 +219,7 @@ export class VirementEncaissementEncoursComponent implements OnInit {
 
     if (this.rapprochementForm.valid && this.selectedVirement) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
+      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
 
       const virementTransactionRequest: VirementTransactionRequestDto = {
         id: this.selectedVirement.id,
@@ -229,6 +230,7 @@ export class VirementEncaissementEncoursComponent implements OnInit {
         tvaDeductible: donneesComplementaires.tvaDeductible,
         transactionSource: TransactionSource.Virement,
         libelle:donneesComplementaires.libelle,
+        rapprochementId: +rapprochementId!
       };
 
       this.isSubmitting = true;

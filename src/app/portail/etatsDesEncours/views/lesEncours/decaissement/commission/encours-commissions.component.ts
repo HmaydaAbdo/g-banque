@@ -275,6 +275,7 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedCommission) {
 
+      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
       const request: CommissionValidationDto = {
         idCommission: this.selectedCommission.id,
         dateOperation:this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
@@ -282,7 +283,8 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
         dateValeur:this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
-        tva: this.rapprochementForm.value.tvaDeductible
+        tva: this.rapprochementForm.value.tvaDeductible,
+        rapprochementId: +rapprochementId!
       };
 
       this.isSubmitting = true;

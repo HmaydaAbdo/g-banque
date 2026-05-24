@@ -267,6 +267,7 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
     if (this.rapprochementForm.valid && this.selectedFraisBancaire) {
 
 
+      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
       const request: FraisBancaireValidationRequest = {
         idFraisBancaire: this.selectedFraisBancaire.id,
         dateOperation:this.datePipe.transform(this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
@@ -274,7 +275,8 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
         dateValeur: this.datePipe.transform(this.rapprochementForm.value.dateValeur,'yyyy-MM-dd') as string,
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
-        tva: this.rapprochementForm.value.tvaDeductible
+        tva: this.rapprochementForm.value.tvaDeductible,
+        rapprochementId: +rapprochementId!
       };
 
       this.isSubmitting = true;
