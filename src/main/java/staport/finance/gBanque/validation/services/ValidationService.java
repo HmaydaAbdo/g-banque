@@ -36,6 +36,7 @@ import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
+import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.restitution.repository.RestitutionRepository;
 import staport.finance.gBanque.validation.dtos.agios.AgiosTransactionResponse;
@@ -171,9 +172,10 @@ public class ValidationService {
     private final ImpayeeTransactionMapper impayeeTransactionMapper;
 
     private final RapprochementRepository rapprochementRepository;
+    private final SoldeCascadeService soldeCascadeService;
 
 
-    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository) {
+    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
         this.leasingTransactionMapper = mapper;
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
@@ -217,6 +219,7 @@ public class ValidationService {
         this.impayeeRepository = impayeeRepository;
         this.impayeeTransactionMapper = impayeeTransactionMapper;
         this.rapprochementRepository = rapprochementRepository;
+        this.soldeCascadeService = soldeCascadeService;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -235,10 +238,9 @@ public class ValidationService {
         // Étape 2: Utiliser le mapper pour convertir le DTO et les entités en une nouvelle entité Transaction.
         Transaction transactionEntity = leasingTransactionMapper.toEntity(requestDto, contratLeasing, echeanceLeasing);
 
-        // Étape 3: Attacher au rapprochement EN_COURS puis sauvegarder.
+        // Étape 3: Attacher au rapprochement  puis sauvegarder.
         Banque banque = contratLeasing.getBanqueDePrelevement();
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Étape 5: Marquer l'échéance comme payée.
@@ -272,10 +274,9 @@ public class ValidationService {
         // Étape 2: Utiliser le mapper pour convertir le DTO et les entités en une nouvelle entité Transaction.
         Transaction transactionEntity = cmtTransactionMapper.toEntity(requestDto, creditMoyenTerme, echeanceCMT);
 
-        // Étape 3: Attacher au rapprochement EN_COURS puis sauvegarder.
+        // Étape 3: Attacher au rapprochement  puis sauvegarder.
         Banque banque = creditMoyenTerme.getBanque();
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
         // Étape 5 : Marquer l'échéance comme payée et enregistrer les dates rélatives au rapprochement .
         echeanceCMT.setStatutPaiement(StatutEcheanceCMT.PAYE);
@@ -307,10 +308,9 @@ public class ValidationService {
             // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
             Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque);
     
-            // Step 4: Attacher au rapprochement EN_COURS puis sauvegarder.
+            // Step 4: Attacher au rapprochement  puis sauvegarder.
             Banque banque = cheque.getBanque();
-            this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-            Transaction savedTransaction = transactionRepository.save(transactionEntity);
+            Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
     
@@ -347,8 +347,7 @@ public class ValidationService {
         Banque banque = cheque.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
@@ -384,8 +383,7 @@ public class ValidationService {
         Banque banque = lcn.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
@@ -420,8 +418,7 @@ public class ValidationService {
         Banque banque = lcn.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
         // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
         lcn.setStatut(StatutMoyenPaiement.REGLE);
@@ -456,8 +453,7 @@ public class ValidationService {
         Banque banque = virement.getBanqueEmettrice();
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
@@ -493,8 +489,7 @@ public class ValidationService {
         Banque banque = virement.getBanqueBeneficiare();
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
 
@@ -532,8 +527,7 @@ public class ValidationService {
         Banque banque = miseADisposition.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
 
@@ -570,8 +564,7 @@ public class ValidationService {
         Banque banque = miseADisposition.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
 
@@ -607,8 +600,7 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
 
@@ -645,8 +637,7 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the prefi as * (paid) and save the updated prefi entity.
@@ -681,8 +672,7 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the factoring as paid and save the updated factoring entity.
@@ -717,8 +707,7 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the decompte as * (paid) and save the updated decompte entity.
@@ -752,8 +741,7 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(commission.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+commission.getBanque().getId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the commission as * (paid) and save the updated commission entity.
@@ -787,8 +775,7 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(agios.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+agios.getBanque().getId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the agios as * (paid) and save the updated agios entity.
@@ -823,8 +810,7 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(prelevement.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+prelevement.getBanque().getId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         this.banqueRepository.save(banque);
@@ -860,8 +846,7 @@ public class ValidationService {
         Banque banque = banqueRepository.findById(fraisBancaire.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+fraisBancaire.getBanque().getId()+" not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the frais bancaire as * (paid) and save the updated agios entity.
@@ -897,8 +882,7 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Banque with id " + impotEtTaxe.getBanque().getId() + " not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the impot et taxe as paid and save the updated entity.
@@ -941,8 +925,7 @@ public class ValidationService {
                 });
 
         // Step 4: Sauvegarder la transaction
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
         log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
 
@@ -982,8 +965,7 @@ public class ValidationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Banque with id " + operationErrone.getBanque().getId() + " not found"));
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the operation erroné as paid and save the updated entity.
@@ -1020,8 +1002,7 @@ public class ValidationService {
         Banque banque = virementInternational.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
@@ -1059,8 +1040,7 @@ public class ValidationService {
         Banque banque = virementInternational.getBanque();
 
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
 
         // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
@@ -1103,8 +1083,7 @@ public class ValidationService {
                     return new ResourceNotFoundException("Banque d'encaissement introuvable avec l'ID: " + impayee.getBanque().getId());
                 });
         // Step 4: Save the Transaction entity to the database.
-        this.attachToRapprochementEnCours(transactionEntity, banque.getId());
-        Transaction savedTransaction = transactionRepository.save(transactionEntity);
+        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
 
         log.info("Transaction créée avec l'ID: {}", savedTransaction.getId());
 
@@ -1126,13 +1105,38 @@ public class ValidationService {
         return response;
     }
 
-    private void attachToRapprochementEnCours(Transaction transaction, Long banqueId) {
-        Rapprochement rapprochement = rapprochementRepository
-                .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
+    /**
+     * Resolves and attaches the target rapprochement to a transaction.
+     * rapprochementId is mandatory — must reference an EN_COURS or CLOTURE_PROVISOIRE rapprochement.
+     */
+    private Rapprochement attachToRapprochement(Transaction transaction, Long rapprochementId) {
+        if (rapprochementId == null) {
+            throw new ValidationException(
+                    "rapprochementId est obligatoire. Veuillez sélectionner le rapprochement cible avant de valider.");
+        }
+        Rapprochement rapprochement = rapprochementRepository.findById(rapprochementId)
                 .orElseThrow(() -> new ValidationException(
-                        "Aucun rapprochement EN_COURS trouvé pour la banque id: " + banqueId +
-                        ". Veuillez créer un rapprochement avant de valider des opérations."));
-
+                        "Rapprochement introuvable avec l'ID: " + rapprochementId));
+        if (rapprochement.getStatut() != StatutRapprochement.EN_COURS
+                && rapprochement.getStatut() != StatutRapprochement.CLOTURE_PROVISOIRE) {
+            throw new ValidationException(
+                    "Impossible de valider vers un rapprochement " + rapprochement.getStatut()
+                    + ". Seuls EN_COURS et CLOTURE_PROVISOIRE sont acceptés.");
+        }
         transaction.setRapprochement(rapprochement);
+        return rapprochement;
+    }
+
+    /**
+     * Attaches, saves, and triggers cascade if the target rapprochement is CLOTURE_PROVISOIRE.
+     * Use this in place of the old attachToRapprochementEnCours + transactionRepository.save pattern.
+     */
+    private Transaction saveTransactionWithCascade(Transaction transaction, Long banqueId, Long rapprochementId) {
+        Rapprochement target = attachToRapprochement(transaction, rapprochementId);
+        Transaction saved = transactionRepository.save(transaction);
+        if (target.getStatut() == StatutRapprochement.CLOTURE_PROVISOIRE) {
+            soldeCascadeService.recalculerCascade(banqueId);
+        }
+        return saved;
     }
 }

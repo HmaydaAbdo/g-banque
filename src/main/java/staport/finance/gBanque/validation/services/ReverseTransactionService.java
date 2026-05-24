@@ -50,6 +50,7 @@ import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.restitution.repository.RestitutionRepository;
 import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
+import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
@@ -85,6 +86,7 @@ public class ReverseTransactionService {
     private final OperationErroneRepository operationErroneRepository;
     private final VirementInternationalRepository virementInternationalRepository;
     private final ImpayeeRepository impayeeRepository;
+    private final SoldeCascadeService soldeCascadeService;
 
     public ReverseTransactionService(
             TransactionRepository transactionRepository,
@@ -101,7 +103,7 @@ public class ReverseTransactionService {
             AgiosRepository agiosRepository,
             PrelevementRepository prelevementRepository,
             FraisBancaireRepository fraisBancaireRepository,
-            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
+            FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, SoldeCascadeService soldeCascadeService) {
         this.transactionRepository = transactionRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
@@ -122,6 +124,7 @@ public class ReverseTransactionService {
         this.operationErroneRepository = operationErroneRepository;
         this.virementInternationalRepository = virementInternationalRepository;
         this.impayeeRepository = impayeeRepository;
+        this.soldeCascadeService = soldeCascadeService;
     }
 
     /**
@@ -146,12 +149,20 @@ public class ReverseTransactionService {
                     + " : le rapprochement est définitivement clôturé.");
         }
 
-        // 2. Remettre l'entité source à son état initial
+        // 2. Capture rapprochement info BEFORE deletion (for cascade)
+        StatutRapprochement statutRapprochement = transaction.getRapprochement().getStatut();
+        Long banqueId = transaction.getBanqueDePrelevement().getId();
+
+        // 3. Remettre l'entité source à son état initial
         resetEntiteSource(transaction);
 
-
-        // 3. Supprimer la transaction
+        // 4. Supprimer la transaction
         transactionRepository.delete(transaction);
+
+        // 5. Si le rapprochement était CLOTURE_PROVISOIRE → recalculer la cascade des soldes
+        if (statutRapprochement == StatutRapprochement.CLOTURE_PROVISOIRE) {
+            soldeCascadeService.recalculerCascade(banqueId);
+        }
 
         log.info("Transaction {} annulée et supprimée avec succès", transactionId);
     }
