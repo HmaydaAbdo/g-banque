@@ -14,6 +14,9 @@ import { CalendarModule } from "primeng/calendar";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
 import { DialogModule } from "primeng/dialog";
 import { ToastModule } from "primeng/toast";
+import { TagModule } from "primeng/tag";
+import { TooltipModule } from "primeng/tooltip";
+import { RapprochementActifsDto } from "../../../../rapprochement/dtos/RapprochementActifsDto";
 
 @Component({
   selector: 'app-les-encours',
@@ -31,7 +34,9 @@ import { ToastModule } from "primeng/toast";
     FormsModule,
     ToastModule,
     ReactiveFormsModule,
-    BankDetailsComponent
+    BankDetailsComponent,
+    TagModule,
+    TooltipModule
   ],
   providers: [ConfirmationService, MessageService, DatePipe],
   templateUrl: './les-encours.component.html',
@@ -42,6 +47,10 @@ export class LesEncoursComponent implements OnInit {
   items: MenuItem[] = [];
   breadcrumbItems: MenuItem[] = [];
   banqueId!: number;
+
+  rapprochementId: number | null = null;
+  actifs: RapprochementActifsDto | null = null;
+  isProvisoire = false;
 
   displayClotureDialog: boolean = false;
   clotureLoading: boolean = false;
@@ -113,6 +122,14 @@ export class LesEncoursComponent implements OnInit {
       this.banqueId = Number(params.get('banqueId'));
       this.updateMenuItems();
       this.updateBreadcrumb();
+    });
+
+    this.route.queryParamMap.subscribe(qp => {
+      const rid = qp.get('rapprochementId');
+      this.rapprochementId = rid ? +rid : null;
+      if (this.banqueId) {
+        this.loadActifs();
+      }
     });
 
     this.router.events
@@ -210,14 +227,18 @@ export class LesEncoursComponent implements OnInit {
   }
 
   showClotureDialog(): void {
+    const msg = this.isProvisoire
+      ? 'Vous êtes sur le point de clôturer <strong>définitivement</strong> ce mois. Cette action est irréversible.'
+      : 'Vous êtes sur le point de passer ce mois en <strong>clôture provisoire</strong>. Vous pourrez encore ajuster les opérations.';
+
     this.confirmationService.confirm({
-      message: "Attention : La clôture est irréversible. Confirmez-vous l'action ?",
-      header: 'Avertissement',
-      icon: 'pi pi-exclamation-triangle',
+      message: msg,
+      header: this.isProvisoire ? 'Clôture définitive' : 'Clôture provisoire',
+      icon: this.isProvisoire ? 'pi pi-lock' : 'pi pi-lock-open',
       acceptLabel: 'Confirmer',
       rejectLabel: 'Annuler',
       accept: () => {
-        this.clotureForm.reset({ dateCloture: new Date() });
+        this.clotureForm.reset();
         this.displayClotureDialog = true;
       }
     });
@@ -230,19 +251,49 @@ export class LesEncoursComponent implements OnInit {
 
   confirmCloture(): void {
     if (!this.banqueId) return;
-
     this.clotureLoading = true;
-    this.rapprochementService.cloturerRapprochement({
-      banqueId: this.banqueId,
-    }).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Clôture réussie' });
-        window.location.reload();
+
+    if (this.isProvisoire && this.rapprochementId) {
+      // Clôture définitive
+      this.rapprochementService.cloturerDefinitivement(this.rapprochementId).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Clôture définitive effectuée.' });
+          this.router.navigate(['/portail/etats-des-encours', this.banqueId, 'select']);
+        },
+        error: (err) => {
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message });
+          this.clotureLoading = false;
+        }
+      });
+    } else {
+      // Clôture provisoire
+      this.rapprochementService.cloturerRapprochement({ banqueId: this.banqueId }).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Clôture provisoire effectuée.' });
+          window.location.reload();
+        },
+        error: (err) => {
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message });
+          this.clotureLoading = false;
+        }
+      });
+    }
+  }
+
+  private loadActifs(): void {
+    this.rapprochementService.getActifs(this.banqueId).subscribe({
+      next: (data) => {
+        this.actifs = data;
+        this.isProvisoire = !!data.provisoireId && this.rapprochementId === data.provisoireId;
       },
-      error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message });
-        this.clotureLoading = false;
-      }
+      error: () => { /* silent */ }
     });
+  }
+
+  formatPeriode(periode: string | null | undefined): string {
+    if (!periode) return '';
+    const [year, month] = periode.split('-');
+    const months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    return `${months[+month - 1]} ${year}`;
   }
 }

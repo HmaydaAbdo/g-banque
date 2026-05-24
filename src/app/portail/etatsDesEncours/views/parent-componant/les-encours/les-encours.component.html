@@ -70,33 +70,63 @@
         </ng-template>
       </p-breadcrumb>
 
-      <p-button label="Clôturer "
-                pTooltip="Clôturer le rapprochement"
-                tooltipPosition="left"
-                styleClass="p-button-primary p-button-sm"
-                (onClick)="showClotureDialog()"></p-button>
+      <p-button
+        [label]="isProvisoire ? 'Clôture définitive' : 'Clôture provisoire'"
+        [icon]="isProvisoire ? 'pi pi-lock' : 'pi pi-lock-open'"
+        [pTooltip]="isProvisoire ? 'Clôturer définitivement ce mois' : 'Passer en clôture provisoire'"
+        tooltipPosition="left"
+        [styleClass]="isProvisoire ? 'p-button-danger p-button-sm' : 'p-button-primary p-button-sm'"
+        (onClick)="showClotureDialog()">
+      </p-button>
     </div>
 
     <app-bank-details [banqueId]="banqueId"></app-bank-details>
+
+    <!-- Context Banner — shows the active period and statut -->
+    <div *ngIf="actifs" class="border-round-lg px-3 py-2 flex align-items-center gap-3 text-xs"
+         [ngClass]="isProvisoire ? 'bg-orange-50 border-1 border-orange-300' : 'bg-blue-50 border-1 border-blue-200'">
+      <i [class]="isProvisoire ? 'pi pi-clock text-orange-500' : 'pi pi-sync text-blue-500'"></i>
+      <div class="flex flex-column gap-1">
+        <span class="font-semibold" [ngClass]="isProvisoire ? 'text-orange-700' : 'text-blue-700'">
+          {{ isProvisoire ? 'Mode ajustement — Clôture provisoire' : 'Rapprochement en cours' }}
+        </span>
+        <span [ngClass]="isProvisoire ? 'text-orange-600' : 'text-blue-600'">
+          Période : {{ formatPeriode(isProvisoire ? actifs.provisoirePeriode : actifs.enCoursPeriode) }}
+          &nbsp;|&nbsp;
+          Solde début : {{ (isProvisoire ? actifs.provisoireSoldeDebut : actifs.enCoursSoldeDebut) | number:'1.2-2':'fr-FR' }} MAD
+        </span>
+      </div>
+      <div class="ml-auto">
+        <p-tag
+          [value]="isProvisoire ? 'Provisoire' : 'En cours'"
+          [severity]="isProvisoire ? 'warning' : 'info'"
+          styleClass="text-xs">
+        </p-tag>
+      </div>
+    </div>
+
     <div class="pb-8"><router-outlet></router-outlet></div>
 
   </div>
 </div>
 
-<!-- Dialog Clôture — plus besoin de sélection de date, le backend trouve le rapprochement EN_COURS automatiquement -->
-<p-dialog [(visible)]="displayClotureDialog" header="Clôturer le Rapprochement" [modal]="true"
+<!-- Dialog Clôture -->
+<p-dialog [(visible)]="displayClotureDialog" [header]="isProvisoire ? 'Clôture définitive' : 'Clôture provisoire'" [modal]="true"
           [style]="{width: '38rem'}" [draggable]="false" [resizable]="false">
 
   <div class="flex flex-column align-items-center gap-3 py-3">
     <div class="flex align-items-center justify-content-center border-round-xl"
          style="width:4rem;height:4rem;background:linear-gradient(135deg,#fff3cd,#ffe69c)">
-      <i class="pi pi-lock text-2xl" style="color:#856404"></i>
+      <i [class]="(isProvisoire ? 'pi pi-lock' : 'pi pi-lock-open') + ' text-2xl'" style="color:#856404"></i>
     </div>
     <div class="text-center">
-      <p class="text-900 font-semibold text-lg m-0">Confirmer la clôture</p>
-      <p class="text-500 text-sm mt-2 mb-0">
-        Le système identifiera automatiquement le rapprochement en cours et le clôturera.<br>
-        Cette action est <strong>irréversible</strong>.
+      <p class="text-900 font-semibold text-lg m-0">{{ isProvisoire ? 'Confirmer la clôture définitive' : 'Confirmer la clôture provisoire' }}</p>
+      <p class="text-500 text-sm mt-2 mb-0" *ngIf="!isProvisoire">
+        Le système clôturera provisoirement le rapprochement en cours.<br>
+        Vous pourrez encore ajuster les opérations avant la clôture définitive.
+      </p>
+      <p class="text-500 text-sm mt-2 mb-0" *ngIf="isProvisoire">
+        Cette action est <strong>irréversible</strong>. Le rapprochement sera définitivement clôturé.
       </p>
     </div>
   </div>
@@ -104,9 +134,9 @@
   <ng-template pTemplate="footer">
     <p-button label="Annuler" icon="pi pi-times" (click)="displayClotureDialog = false"
               styleClass="p-button-text p-button-secondary"></p-button>
-    <p-button label="Clôturer" icon="pi pi-check" (click)="confirmCloture()"
+    <p-button [label]="isProvisoire ? 'Clôturer définitivement' : 'Clôturer provisoirement'" icon="pi pi-check" (click)="confirmCloture()"
               [disabled]="clotureLoading"
               [loading]="clotureLoading"
-              styleClass="p-button-warning"></p-button>
+              [styleClass]="isProvisoire ? 'p-button-danger' : 'p-button-warning'"></p-button>
   </ng-template>
 </p-dialog>
