@@ -2,6 +2,10 @@ import { Routes } from '@angular/router';
 
 export const ETATS_DES_ENCOURS_ROUTES: Routes = [
   {
+    path: 'select',
+    loadComponent: () => import('./views/select-rapprochement/select-rapprochement.component').then(m => m.SelectRapprochementComponent)
+  },
+  {
     path: '',
     loadComponent: () => import('./views/parent-componant/les-encours/les-encours.component').then(m => m.LesEncoursComponent),
     children: [

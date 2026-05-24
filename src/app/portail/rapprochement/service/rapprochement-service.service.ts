@@ -8,6 +8,7 @@ import {RapprochementSearchDto} from "../dtos/RapprochementSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
 import {TransactionSearchDto} from "../../transactions/dtos/TransactionSearchDto";
 import {toLocalDateString} from "../../global/types/date.utils";
+import {RapprochementActifsDto} from "../dtos/RapprochementActifsDto";
 
 @Injectable({
   providedIn: 'root'
@@ -84,6 +85,19 @@ export class RapprochementService {
   annulerTransaction(transactionId: number): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/annuler/${transactionId}`
+    );
+  }
+
+  getActifs(banqueId: number): Observable<RapprochementActifsDto> {
+    return this.http.get<RapprochementActifsDto>(
+      `${this.baseUrl}/banque/${banqueId}/actifs`
+    );
+  }
+
+  cloturerDefinitivement(rapprochementId: number): Observable<RapprochementResponse> {
+    return this.http.post<RapprochementResponse>(
+      `${this.baseUrl}/${rapprochementId}/cloturer-definitivement`,
+      {}
     );
   }
 
