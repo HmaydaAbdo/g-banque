@@ -28,6 +28,9 @@ public class FraisBanciareValidationRequest {
     @NotBlank(message = "libelle est obligatoire")
     private String libelle;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     public FraisBanciareValidationRequest() {
     }
 
@@ -86,5 +89,8 @@ public class FraisBanciareValidationRequest {
     public void setTva(Double tva) {
         this.tva = tva;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 
 }

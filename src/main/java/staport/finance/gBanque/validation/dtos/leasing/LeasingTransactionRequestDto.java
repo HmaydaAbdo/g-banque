@@ -1,5 +1,6 @@
 package staport.finance.gBanque.validation.dtos.leasing;
 
+import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.time.LocalDate;
@@ -16,6 +17,8 @@ public class LeasingTransactionRequestDto {
     private String observation;
     private Double tvaDeductible;
     private String libelle;
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
 
     // Constructeur par défaut
     public LeasingTransactionRequestDto() {
@@ -113,6 +116,10 @@ public class LeasingTransactionRequestDto {
     public void setTransactionSource(TransactionSource transactionSource) {
         this.transactionSource = transactionSource;
     }
+
+    /** Rapprochement cible (obligatoire). */
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 
     // Méthodes utilitaires (facultatif mais recommandé)
     @Override

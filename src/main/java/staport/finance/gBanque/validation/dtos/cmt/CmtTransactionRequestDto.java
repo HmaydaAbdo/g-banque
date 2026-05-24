@@ -1,5 +1,6 @@
 package staport.finance.gBanque.validation.dtos.cmt;
 
+import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.time.LocalDate;
@@ -15,6 +16,8 @@ public class CmtTransactionRequestDto {
     private String observation;
     private String libelle;
     private Double tvaDeductible;
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
 
     // Constructeur par défaut
     public CmtTransactionRequestDto() {
@@ -114,6 +117,9 @@ public class CmtTransactionRequestDto {
     public void setTvaDeductible(Double tvaDeductible) {
         this.tvaDeductible = tvaDeductible;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 
     // Méthodes utilitaires (facultatif mais recommandé)
     @Override

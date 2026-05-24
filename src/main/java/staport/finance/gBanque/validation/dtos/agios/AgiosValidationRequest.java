@@ -28,6 +28,9 @@ public class AgiosValidationRequest {
     @NotBlank(message = "libelle est obligatoire")
     private String libelle;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     public AgiosValidationRequest() {
     }
 
@@ -88,4 +91,7 @@ public class AgiosValidationRequest {
     public void setTva(Double tva) {
         this.tva = tva;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 }

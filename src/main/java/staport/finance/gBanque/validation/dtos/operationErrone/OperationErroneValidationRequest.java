@@ -27,6 +27,9 @@ public class OperationErroneValidationRequest {
     @NotBlank(message = "libelle est obligatoire")
     private String libelle;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     public OperationErroneValidationRequest() {
     }
 
@@ -86,4 +89,7 @@ public class OperationErroneValidationRequest {
     public void setLibelle(String libelle) {
         this.libelle = libelle;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 }

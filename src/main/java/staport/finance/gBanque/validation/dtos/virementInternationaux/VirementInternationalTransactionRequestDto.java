@@ -34,6 +34,9 @@ public class VirementInternationalTransactionRequestDto {
     @NotNull(message = "La TVA déductible est obligatoire")
     private Double tva;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     // Default constructor
     public VirementInternationalTransactionRequestDto() {
     }
@@ -98,6 +101,9 @@ public class VirementInternationalTransactionRequestDto {
     public void setLibelle(String libelle) {
         this.libelle = libelle;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 
     // equals & hashCode
     @Override

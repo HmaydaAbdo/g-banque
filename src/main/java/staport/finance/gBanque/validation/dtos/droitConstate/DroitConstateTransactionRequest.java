@@ -30,6 +30,9 @@ public class DroitConstateTransactionRequest {
     @NotNull (message = "TVA est obligatoire")
     private double tva;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     public Long getDroitConstateId() {
         return droitConstateId;
     }
@@ -94,4 +97,7 @@ public class DroitConstateTransactionRequest {
     public void setObservation(String observation) {
         this.observation = observation;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 }

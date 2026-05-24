@@ -28,6 +28,9 @@ public class PrelevementValidationRequest {
     @NotBlank(message = "libelle est obligatoire")
     private String libelle;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     public PrelevementValidationRequest() {
     }
 
@@ -86,6 +89,9 @@ public class PrelevementValidationRequest {
     public void setTva(Double tva) {
         this.tva = tva;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 
     @Override
     public String toString() {

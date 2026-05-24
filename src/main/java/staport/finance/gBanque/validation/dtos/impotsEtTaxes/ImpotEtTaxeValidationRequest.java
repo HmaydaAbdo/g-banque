@@ -27,6 +27,9 @@ public class ImpotEtTaxeValidationRequest {
     @NotBlank(message = "Le libellé est obligatoire")
     private String libelle;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     public ImpotEtTaxeValidationRequest() {
     }
 
@@ -85,6 +88,9 @@ public class ImpotEtTaxeValidationRequest {
     public void setLibelle(String libelle) {
         this.libelle = libelle;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 
     @Override
     public String toString() {

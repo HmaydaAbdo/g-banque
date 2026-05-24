@@ -31,6 +31,9 @@ public class LcnTransactionRequest {
     @NotNull(message = "libelle  est obligatoire")
     private String libelle;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     // Default constructor
     public LcnTransactionRequest() {
     }
@@ -95,6 +98,9 @@ public class LcnTransactionRequest {
     public void setLibelle(String libelle) {
         this.libelle = libelle;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 
     // toString
     @Override

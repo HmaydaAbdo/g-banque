@@ -30,6 +30,9 @@ public class PrefinancementTransactionRequest {
     @NotNull(message = "L'observation est obligatoire")
     private String observation;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     public Long getPrefinancementId() {
         return prefinancementId;
     }
@@ -93,4 +96,7 @@ public class PrefinancementTransactionRequest {
     public void setDateEmission(LocalDate dateEmission) {
         this.dateEmission = dateEmission;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 }

@@ -30,6 +30,9 @@ public class FactoringTransactionRequest {
     @NotNull (message = "TVA est obligatoire")
     private double tva;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     public FactoringTransactionRequest() {
     }
 
@@ -96,4 +99,7 @@ public class FactoringTransactionRequest {
     public void setTva(double tva) {
         this.tva = tva;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 }

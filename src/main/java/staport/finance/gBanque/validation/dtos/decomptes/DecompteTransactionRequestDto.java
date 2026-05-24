@@ -25,6 +25,9 @@ public class DecompteTransactionRequestDto {
     @NotNull(message = "TVA est obligatoire")
     private double tva;
 
+    @NotNull(message = "rapprochementId est obligatoire")
+    private Long rapprochementId;
+
     @NotEmpty(message = "L'observation est obligatoire")
     private String observation;
 
@@ -93,4 +96,7 @@ public class DecompteTransactionRequestDto {
     public void setLibelle(String libelle) {
         this.libelle = libelle;
     }
+
+    public Long getRapprochementId() { return rapprochementId; }
+    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
 }
