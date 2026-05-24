@@ -86,4 +86,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     GROUP BY t.rapprochement.id
 """)
     List<Object[]> computeAggregatesByRapprochementIds(@Param("ids") List<Long> ids);
+
+    /** Count of transactions attached to a specific rapprochement. */
+    long countByRapprochementId(Long rapprochementId);
 }

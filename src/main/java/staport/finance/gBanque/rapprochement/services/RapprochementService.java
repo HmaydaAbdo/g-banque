@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
+import staport.finance.gBanque.rapprochement.dtos.RapprochementActifsDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementAggregates;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -231,6 +233,67 @@ public class RapprochementService {
             throw new RuntimeException(
                     "Erreur lors de la génération du rapport PDF pour le rapprochement ID: " + rapprochementId, e);
         }
+    }
+
+    // ── Actifs (EN_COURS + CLOTURE_PROVISOIRE snapshot) ─────────────────────
+
+    /**
+     * Returns a lightweight snapshot of the two non-definitive rapprochements
+     * that can coexist for a given bank.  Used by the frontend selection page
+     * so the user can pick which period to work in.
+     *
+     * @param banqueId the bank whose active rapprochements must be described
+     * @return DTO with mandatory EN_COURS data and optional provisoire data
+     * @throws ResourceNotFoundException if no EN_COURS rapprochement exists
+     */
+    @Transactional(readOnly = true)
+    public RapprochementActifsDto getActifs(Long banqueId) {
+
+        Rapprochement enCours = rapprochementRepository
+                .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Aucun rapprochement EN_COURS trouvé pour la banque id: " + banqueId));
+
+        RapprochementAggregates enCoursAgg  = fetchAggregates(enCours.getId());
+        long enCoursCount = transactionRepository.countByRapprochementId(enCours.getId());
+
+        Optional<Rapprochement> provisoireOpt =
+                rapprochementRepository.findByBanqueIdAndStatut(banqueId, StatutRapprochement.CLOTURE_PROVISOIRE);
+
+        if (provisoireOpt.isEmpty()) {
+            // Only EN_COURS
+            return new RapprochementActifsDto(
+                    enCours.getId(),
+                    enCours.getDateRapprochement().toString(),
+                    enCours.getSoldeDebut(),
+                    enCoursAgg.soldeFin(enCours.getSoldeDebut()),
+                    enCoursAgg.totalDebit(),
+                    enCoursAgg.totalCredit(),
+                    enCoursCount,
+                    null, null, null, null, null, null, 0L
+            );
+        }
+
+        Rapprochement provisoire = provisoireOpt.get();
+        RapprochementAggregates provisoireAgg = fetchAggregates(provisoire.getId());
+        long provisoireCount = transactionRepository.countByRapprochementId(provisoire.getId());
+
+        return new RapprochementActifsDto(
+                enCours.getId(),
+                enCours.getDateRapprochement().toString(),
+                enCours.getSoldeDebut(),
+                enCoursAgg.soldeFin(enCours.getSoldeDebut()),
+                enCoursAgg.totalDebit(),
+                enCoursAgg.totalCredit(),
+                enCoursCount,
+                provisoire.getId(),
+                provisoire.getDateRapprochement().toString(),
+                provisoire.getSoldeDebut(),
+                provisoireAgg.soldeFin(provisoire.getSoldeDebut()),
+                provisoireAgg.totalDebit(),
+                provisoireAgg.totalCredit(),
+                provisoireCount
+        );
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────

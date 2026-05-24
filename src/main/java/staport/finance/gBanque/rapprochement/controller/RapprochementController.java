@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.rapprochement.dtos.RapprochementActifsDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
@@ -25,6 +26,12 @@ public class RapprochementController {
     }
 
 
+
+    // --- 0. GET actifs — snapshot EN_COURS + CLOTURE_PROVISOIRE pour une banque ---
+    @GetMapping("/banque/{banqueId}/actifs")
+    public ResponseEntity<RapprochementActifsDto> getActifs(@PathVariable Long banqueId) {
+        return ResponseEntity.ok(rapprochementService.getActifs(banqueId));
+    }
 
     // --- 1. POST clôture provisoire — EN_COURS → CLOTURE_PROVISOIRE ---
     @PostMapping("/cloturer")
