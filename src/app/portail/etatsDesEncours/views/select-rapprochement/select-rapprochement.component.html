@@ -1,0 +1,153 @@
+<div class="select-rap-page">
+
+  <!-- Header -->
+  <div class="select-rap-header">
+    <app-bank-details [banqueId]="banqueId"></app-bank-details>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="select-rap-loading">
+    <p-progressSpinner strokeWidth="3" styleClass="w-2rem h-2rem"></p-progressSpinner>
+    <span>Chargement…</span>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="!loading && error" class="select-rap-error">
+    <i class="pi pi-exclamation-circle"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Cards container -->
+  <div *ngIf="!loading && !error && actifs" class="select-rap-body">
+
+    <div class="select-rap-title">
+      <span class="select-rap-title__label">Période de travail</span>
+      <span class="select-rap-title__sub" *ngIf="actifs!.provisoireId">2 périodes actives</span>
+      <span class="select-rap-title__sub" *ngIf="!actifs!.provisoireId">1 période active</span>
+    </div>
+
+    <div class="select-rap-cards">
+
+      <!-- ─── Card CLOTURE_PROVISOIRE ─── -->
+      <div *ngIf="actifs!.provisoireId"
+           class="rap-card rap-card--provisoire"
+           (click)="selectRapprochement(actifs!.provisoireId!)">
+
+        <div class="rap-card__accent"></div>
+
+        <div class="rap-card__inner">
+          <div class="rap-card__top">
+            <div class="rap-card__meta">
+              <span class="rap-card__badge rap-card__badge--warning">Clôture provisoire</span>
+              <h3 class="rap-card__period">{{ formatPeriode(actifs!.provisoirePeriode) }}</h3>
+            </div>
+            <div class="rap-card__icon rap-card__icon--warning">
+              <i class="pi pi-calendar" aria-hidden="true"></i>
+            </div>
+          </div>
+
+          <p class="rap-card__hint">Ajustements encore possibles avant validation définitive.</p>
+
+          <div class="rap-card__divider"></div>
+
+          <div class="rap-card__metrics">
+            <div class="rap-card__metric">
+              <span class="rap-card__metric-label">Solde début</span>
+              <span class="rap-card__metric-value">{{ actifs!.provisoireSoldeDebut | number:'1.2-2':'fr-FR' }} <em>MAD</em></span>
+            </div>
+            <div class="rap-card__metric rap-card__metric--right">
+              <span class="rap-card__metric-label">Solde fin</span>
+              <span class="rap-card__metric-value"
+                    [class.rap-card__metric-value--pos]="getVariation(actifs!.provisoireSoldeFin, actifs!.provisoireSoldeDebut) >= 0"
+                    [class.rap-card__metric-value--neg]="getVariation(actifs!.provisoireSoldeFin, actifs!.provisoireSoldeDebut) < 0">
+                {{ actifs!.provisoireSoldeFin | number:'1.2-2':'fr-FR' }} <em>MAD</em>
+              </span>
+            </div>
+          </div>
+
+          <div class="rap-card__stats">
+            <div class="rap-card__stat">
+              <span class="rap-card__stat-val rap-card__stat-val--debit">−&nbsp;{{ actifs!.provisoireDebit | number:'1.0-0':'fr-FR' }}</span>
+              <span class="rap-card__stat-lbl">Débits</span>
+            </div>
+            <div class="rap-card__stat-sep"></div>
+            <div class="rap-card__stat">
+              <span class="rap-card__stat-val rap-card__stat-val--credit">+&nbsp;{{ actifs!.provisoireCredit | number:'1.0-0':'fr-FR' }}</span>
+              <span class="rap-card__stat-lbl">Crédits</span>
+            </div>
+            <div class="rap-card__stat-sep"></div>
+            <div class="rap-card__stat">
+              <span class="rap-card__stat-val">{{ actifs!.provisoireNbTransactions }}</span>
+              <span class="rap-card__stat-lbl">Opérations</span>
+            </div>
+          </div>
+
+          <button class="rap-card__cta rap-card__cta--warning">
+            Ajuster ce mois&ensp;<i class="pi pi-pencil" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ─── Card EN_COURS ─── -->
+      <div class="rap-card rap-card--encours"
+           (click)="selectRapprochement(actifs!.enCoursId)">
+
+        <div class="rap-card__accent"></div>
+
+        <div class="rap-card__inner">
+          <div class="rap-card__top">
+            <div class="rap-card__meta">
+              <span class="rap-card__badge rap-card__badge--info">En cours</span>
+              <h3 class="rap-card__period">{{ formatPeriode(actifs!.enCoursPeriode) }}</h3>
+            </div>
+            <div class="rap-card__icon rap-card__icon--info">
+              <i class="pi pi-sync" aria-hidden="true"></i>
+            </div>
+          </div>
+
+          <p class="rap-card__hint">Période courante — validez les nouvelles opérations.</p>
+
+          <div class="rap-card__divider"></div>
+
+          <div class="rap-card__metrics">
+            <div class="rap-card__metric">
+              <span class="rap-card__metric-label">Solde début</span>
+              <span class="rap-card__metric-value">{{ actifs!.enCoursSoldeDebut | number:'1.2-2':'fr-FR' }} <em>MAD</em></span>
+            </div>
+            <div class="rap-card__metric rap-card__metric--right">
+              <span class="rap-card__metric-label">Solde fin</span>
+              <span class="rap-card__metric-value"
+                    [class.rap-card__metric-value--pos]="getVariation(actifs!.enCoursSoldeFin, actifs!.enCoursSoldeDebut) >= 0"
+                    [class.rap-card__metric-value--neg]="getVariation(actifs!.enCoursSoldeFin, actifs!.enCoursSoldeDebut) < 0">
+                {{ actifs!.enCoursSoldeFin | number:'1.2-2':'fr-FR' }} <em>MAD</em>
+              </span>
+            </div>
+          </div>
+
+          <div class="rap-card__stats">
+            <div class="rap-card__stat">
+              <span class="rap-card__stat-val rap-card__stat-val--debit">−&nbsp;{{ actifs!.enCoursDebit | number:'1.0-0':'fr-FR' }}</span>
+              <span class="rap-card__stat-lbl">Débits</span>
+            </div>
+            <div class="rap-card__stat-sep"></div>
+            <div class="rap-card__stat">
+              <span class="rap-card__stat-val rap-card__stat-val--credit">+&nbsp;{{ actifs!.enCoursCredit | number:'1.0-0':'fr-FR' }}</span>
+              <span class="rap-card__stat-lbl">Crédits</span>
+            </div>
+            <div class="rap-card__stat-sep"></div>
+            <div class="rap-card__stat">
+              <span class="rap-card__stat-val">{{ actifs!.enCoursNbTransactions }}</span>
+              <span class="rap-card__stat-lbl">Opérations</span>
+            </div>
+          </div>
+
+          <button class="rap-card__cta rap-card__cta--info">
+            Travailler sur ce mois&ensp;<i class="pi pi-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
