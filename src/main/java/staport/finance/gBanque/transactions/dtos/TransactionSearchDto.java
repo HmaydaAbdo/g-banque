@@ -14,6 +14,7 @@ public class TransactionSearchDto {
 
     private String libelle;
     private Long banqueId;
+    private Long rapprochementId;
     private List<TransactionSource> transactionSources;
     private String observation;
     private StatutRapprochement statutRapprochement;
@@ -21,6 +22,14 @@ public class TransactionSearchDto {
     private LocalDate dateOperationDebut;
     private LocalDate dateOperationFin;
     // Getters and Setters
+
+    public Long getRapprochementId() {
+        return rapprochementId;
+    }
+
+    public void setRapprochementId(Long rapprochementId) {
+        this.rapprochementId = rapprochementId;
+    }
 
     public String getLibelle() {
         return libelle;

@@ -82,8 +82,14 @@ public class TransactionService implements ITransactionService{
         log.info("Calcul des agrégations et récupération des transactions pour la banque ID: {}", banqueId);
 
         List<Specification<Transaction>> specs = new ArrayList<>();
-        specs.add(hasRapprochementStatut(StatutRapprochement.EN_COURS));
         specs.add(hasBanqueId(banqueId));
+
+        // Filtrer par rapprochement spécifique si fourni, sinon EN_COURS (compatibilité)
+        if (searchDto.getRapprochementId() != null) {
+            specs.add(hasRapprochementId(searchDto.getRapprochementId()));
+        } else {
+            specs.add(hasRapprochementStatut(StatutRapprochement.EN_COURS));
+        }
 
         if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
             specs.add(libelleContains(searchDto.getLibelle()));
@@ -93,10 +99,9 @@ public class TransactionService implements ITransactionService{
             specs.add(observationContains(searchDto.getObservation()));
         }
 
-        if(searchDto.getMontant()!=null){
+        if (searchDto.getMontant() != null) {
             specs.add(hasMontant(searchDto.getMontant()));
-            log.debug("Filtre appliqué: montant égal  '{}'", searchDto.getMontant());
-
+            log.debug("Filtre appliqué: montant égal '{}'", searchDto.getMontant());
         }
 
         if (searchDto.getDateOperationDebut() != null || searchDto.getDateOperationFin() != null) {
@@ -112,27 +117,36 @@ public class TransactionService implements ITransactionService{
 
         Specification<Transaction> combinedSpec = withFilters(specs);
 
-        // 1. Calcul des totaux sur l'ensemble filtré
-        List<Transaction> allFilteredTransactions = transactionRepository.findAll(combinedSpec);
-        log.debug("Agrégation sur {} transactions correspondantes", allFilteredTransactions.size());
+        // 1. Agrégats via JPQL (SUM en base, pas de List<Transaction> en mémoire)
+        BigDecimal totalDebit;
+        BigDecimal totalCredit;
+        BigDecimal totalTvaDeductible;
+        BigDecimal totalTvaCollectee;
 
-        BigDecimal totalDebit = allFilteredTransactions.stream()
-                .map(t -> t.getDebit() != null ? t.getDebit() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalCredit = allFilteredTransactions.stream()
-                .map(t -> t.getCredit() != null ? t.getCredit() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalTvaDeductible = allFilteredTransactions.stream()
-                .map(Transaction::getTvaDeductible)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalTvaCollectee = allFilteredTransactions.stream()
-                .map(Transaction::getTvaCollectee)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (searchDto.getRapprochementId() != null) {
+            // Cas nominal : agrégats pour un rapprochement précis via JPQL optimisé
+            List<Object[]> agg = transactionRepository.computeAggregatesForRapprochement(searchDto.getRapprochementId());
+            Object[] row = agg.isEmpty() ? null : agg.get(0);
+            totalDebit         = row != null && row[0] != null ? (BigDecimal) row[0] : BigDecimal.ZERO;
+            totalCredit        = row != null && row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO;
+            totalTvaDeductible = row != null && row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO;
+            totalTvaCollectee  = row != null && row[3] != null ? (BigDecimal) row[3] : BigDecimal.ZERO;
+        } else {
+            // Fallback : comportement d'origine (agrégats en mémoire sur EN_COURS)
+            List<Transaction> allFilteredTransactions = transactionRepository.findAll(combinedSpec);
+            totalDebit = allFilteredTransactions.stream()
+                    .map(t -> t.getDebit() != null ? t.getDebit() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            totalCredit = allFilteredTransactions.stream()
+                    .map(t -> t.getCredit() != null ? t.getCredit() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            totalTvaDeductible = allFilteredTransactions.stream()
+                    .map(Transaction::getTvaDeductible).filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            totalTvaCollectee = allFilteredTransactions.stream()
+                    .map(Transaction::getTvaCollectee).filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
 
         BigDecimal tvaDue = totalTvaCollectee.subtract(totalTvaDeductible);
 
