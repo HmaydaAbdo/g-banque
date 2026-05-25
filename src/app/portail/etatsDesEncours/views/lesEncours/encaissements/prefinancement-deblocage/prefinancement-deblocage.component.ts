@@ -235,7 +235,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
     if (this.rapprochementForm.valid && this.selectedPrefinancement) {
 
 
-    const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+    const rapprochementId = this.bankStateService.getRapprochementId();
     const prefinancementTransactionRequest: PrefinancementTransactionRequest = {
       prefinancementId: this.selectedPrefinancement.id,
       banqueId: this.selectedPrefinancement.banqueId,
@@ -245,7 +245,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
       tva: this.rapprochementForm.value.tvaCollecte,
       libelle:this.rapprochementForm.value.libelle,
       observation:this.rapprochementForm.value.observation,
-      rapprochementId: +rapprochementId!
+      rapprochementId: rapprochementId ?? 0
     };
 
     this.isSubmitting = true;

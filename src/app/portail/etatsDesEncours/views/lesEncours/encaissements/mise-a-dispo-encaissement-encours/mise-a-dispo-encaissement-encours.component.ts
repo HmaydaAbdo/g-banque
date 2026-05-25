@@ -216,7 +216,7 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
 
     if (this.rapprochementForm.valid && this.selectedMiseADisposition) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
-      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+      const rapprochementId = this.bankStateService.getRapprochementId();
 
       const miseADispositionTransactionRequest: MiseAdispositionTransactionRequestDto = {
         id: this.selectedMiseADisposition.id,
@@ -227,7 +227,7 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
         tvaDeductible: donneesComplementaires.tvaDeductible,
         transactionSource: TransactionSource.MiseADisposition,
         libelle: donneesComplementaires.libelle,
-        rapprochementId: +rapprochementId!
+        rapprochementId: rapprochementId ?? 0
       };
 
       this.isSubmitting = true;

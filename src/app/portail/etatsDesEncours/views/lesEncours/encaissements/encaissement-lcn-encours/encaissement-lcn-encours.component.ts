@@ -223,7 +223,7 @@ export class EncaissementLcnEncoursComponent implements OnInit {
 
     if (this.rapprochementForm.valid && this.selectedLcn) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
-      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+      const rapprochementId = this.bankStateService.getRapprochementId();
 
       const lcnTransactionRequest: LcnTransactionRequest = {
         id: this.selectedLcn.id,
@@ -233,7 +233,7 @@ export class EncaissementLcnEncoursComponent implements OnInit {
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
         libelle:donneesComplementaires.libelle,
-        rapprochementId: +rapprochementId!
+        rapprochementId: rapprochementId ?? 0
       };
 
       this.isSubmitting = true;

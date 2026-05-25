@@ -215,7 +215,7 @@ export class ChequesEncoursComponent implements OnInit {
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedCheque) {
       const donneesComplementaires: DonneesComplementairesRapprochementDTO = this.rapprochementForm.value;
-      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+      const rapprochementId = this.bankStateService.getRapprochementId();
 
       const chequeTransactionRequest: ChequeTransactionRequest = {
         idCheque: this.selectedCheque.id,
@@ -226,7 +226,7 @@ export class ChequesEncoursComponent implements OnInit {
         tvaDeductible: donneesComplementaires.tvaDeductible,
         transactionSource: TransactionSource.CHEQUE,
         libelle:donneesComplementaires.libelle,
-        rapprochementId: +rapprochementId!
+        rapprochementId: rapprochementId ?? 0
       };
 
       this.isSubmitting = true;

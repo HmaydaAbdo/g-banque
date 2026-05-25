@@ -238,7 +238,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
     if (this.rapprochementForm.valid && this.selectedDecompte) {
 
 
-    const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+    const rapprochementId = this.bankStateService.getRapprochementId();
     // Construct the request DTO using the selected dc and form data
     const decompteTransactionRequest:DecompteTransactionRequest= {
       dateEmission: this.datePipe.transform(this.rapprochementForm.value.dateEmission,  'yyyy-MM-dd') as string,
@@ -249,7 +249,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
       tva: this.rapprochementForm.value.tva,
       libelle:this.rapprochementForm.value.libelle,
       observation:this.rapprochementForm.value.observation,
-      rapprochementId: +rapprochementId!
+      rapprochementId: rapprochementId ?? 0
     };
 
     this.isSubmitting = true;

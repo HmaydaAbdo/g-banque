@@ -244,7 +244,7 @@ export class EncaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
   submitRapprochement(): void {
     if (this.rapprochementForm.valid && this.selectedImpayee) {
 
-      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+      const rapprochementId = this.bankStateService.getRapprochementId();
       const request: ImpayeeValidationRequest = {
         idImpayee: this.selectedImpayee.id,
         dateOperation:this.datePipe.transform( this.rapprochementForm.value.dateOperation,'yyyy-MM-dd') as string,
@@ -253,7 +253,7 @@ export class EncaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
         tva: this.rapprochementForm.value.tvaCollectee,
-        rapprochementId: +rapprochementId!
+        rapprochementId: rapprochementId ?? 0
       };
 
       this.isSubmitting = true;

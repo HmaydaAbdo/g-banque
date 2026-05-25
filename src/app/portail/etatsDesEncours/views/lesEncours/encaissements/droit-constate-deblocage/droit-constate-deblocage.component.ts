@@ -237,7 +237,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
 
     if (this.rapprochementForm.valid && this.selectedDroitConstate) {
 
-    const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+    const rapprochementId = this.bankStateService.getRapprochementId();
     const droitConstateTransactionRequest: DroitConstateTransactionRequest = {
       droitConstateId: this.selectedDroitConstate.id,
       banqueId: this.selectedDroitConstate.banqueId,
@@ -247,7 +247,7 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
       tva: this.rapprochementForm.value.tva,
       libelle:this.rapprochementForm.value.libelle,
       observation:this.rapprochementForm.value.observation,
-      rapprochementId: +rapprochementId!
+      rapprochementId: rapprochementId ?? 0
     };
 
     this.isSubmitting = true;

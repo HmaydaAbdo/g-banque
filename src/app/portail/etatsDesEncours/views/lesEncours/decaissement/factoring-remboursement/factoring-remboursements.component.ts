@@ -231,7 +231,7 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
     if (this.rapprochementForm.valid && this.selectedFactoring) {
 
       this.isSubmitting = true;
-      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+      const rapprochementId = this.bankStateService.getRapprochementId();
       const factoringTransactionRequest: FactoringTransactionRequest = {
         factoringId: this.selectedFactoring.id,
         banqueId: this.selectedFactoring.banqueId,
@@ -241,7 +241,7 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
         tva: this.rapprochementForm.value.tva,
         libelle: this.rapprochementForm.value.libelle,
         observation: this.rapprochementForm.value.observation,
-        rapprochementId: +rapprochementId!
+        rapprochementId: rapprochementId ?? 0
       };
 
       this.rapprochementService.factoringToRapprochement(factoringTransactionRequest)

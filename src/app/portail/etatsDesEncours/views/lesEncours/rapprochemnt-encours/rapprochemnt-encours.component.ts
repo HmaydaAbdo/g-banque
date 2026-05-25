@@ -114,9 +114,9 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   }
 
   loadActifs(): void {
-    const rid = this.route.snapshot.queryParamMap.get('rapprochementId');
-    if (!rid) return;
-    this.selectedRapprochementId = +rid;
+    const rapprochementId = this.bankStateService.getRapprochementId();
+    if (!rapprochementId) return;
+    this.selectedRapprochementId = rapprochementId;
 
     this.rapprochementService.getActifs(this.banqueIdFromRoute).subscribe({
       next: (actifs) => {

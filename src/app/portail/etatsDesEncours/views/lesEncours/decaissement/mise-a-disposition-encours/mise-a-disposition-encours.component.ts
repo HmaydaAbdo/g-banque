@@ -218,7 +218,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
   submitRapprochement(): void {
 
     if (this.rapprochementForm.valid && this.selectedMiseADisposition) {
-      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+      const rapprochementId = this.bankStateService.getRapprochementId();
 
       const miseADispositionTransactionRequest: MiseAdispositionTransactionRequestDto = {
         id: this.selectedMiseADisposition.id,
@@ -229,7 +229,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
         tvaDeductible: this.rapprochementForm.value.tvaDeductible,
         transactionSource: TransactionSource.MiseADisposition,
         libelle: this.rapprochementForm.value.libelle,
-        rapprochementId: +rapprochementId!
+        rapprochementId: rapprochementId ?? 0
       };
 
       this.isSubmitting = true;

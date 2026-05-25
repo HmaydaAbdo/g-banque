@@ -10,6 +10,17 @@ export class BankStateService {
   // BehaviorSubject qui stocke l'état actuel des infos bancaires
   private bankInfoSubject = new BehaviorSubject<RecapitulatifCompte | null>(null);
 
+  // ID du rapprochement actuellement sélectionné
+  private currentRapprochementId: number | null = null;
+
+  setRapprochementId(id: number | null): void {
+    this.currentRapprochementId = id;
+  }
+
+  getRapprochementId(): number | null {
+    return this.currentRapprochementId;
+  }
+
   // Observable public pour que les composants puissent s'abonner
   public bankInfo$: Observable<RecapitulatifCompte | null> = this.bankInfoSubject.asObservable();
 

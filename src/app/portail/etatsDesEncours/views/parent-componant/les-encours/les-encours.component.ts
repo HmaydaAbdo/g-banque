@@ -17,6 +17,7 @@ import { TagModule } from "primeng/tag";
 import { TooltipModule } from "primeng/tooltip";
 import { RapprochementActifsDto } from "../../../../rapprochement/dtos/RapprochementActifsDto";
 import { RapprochementContextHeaderComponent } from "../../shared-componanat/rapprochement-context-header/rapprochement-context-header.component";
+import { BankStateService } from "../../../../comptes-bancaire/services/bank-state.service";
 
 @Component({
   selector: 'app-les-encours',
@@ -108,7 +109,8 @@ export class LesEncoursComponent implements OnInit {
     private messageService: MessageService,
     private fb: FormBuilder,
     private confirmationService: ConfirmationService,
-    private router: Router
+    private router: Router,
+    private bankStateService: BankStateService
   ) {}
 
   ngOnInit() {
@@ -127,6 +129,7 @@ export class LesEncoursComponent implements OnInit {
     this.route.queryParamMap.subscribe(qp => {
       const rid = qp.get('rapprochementId');
       this.rapprochementId = rid ? +rid : null;
+      this.bankStateService.setRapprochementId(this.rapprochementId);
       if (this.banqueId) {
         this.loadActifs();
       }

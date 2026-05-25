@@ -259,7 +259,7 @@ export class EncoursOperationErroneComponent implements OnInit {
     if (this.rapprochementForm.valid && this.selectedOperation) {
       const formValue = this.rapprochementForm.value;
 
-      const rapprochementId = this.route.snapshot.queryParamMap.get('rapprochementId');
+      const rapprochementId = this.bankStateService.getRapprochementId();
       const request: OperationErroneValidationRequest = {
         idOperationErrone: this.selectedOperation.id,
         dateOperation: this.datePipe.transform(formValue.dateOperation,'yyyy-MM-dd') as string,
@@ -268,7 +268,7 @@ export class EncoursOperationErroneComponent implements OnInit {
         observation: formValue.observation,
         libelle: formValue.libelle,
         tva: formValue.tvaDeductible,
-        rapprochementId: +rapprochementId!
+        rapprochementId: rapprochementId ?? 0
       };
 
       this.isSubmitting = true;
