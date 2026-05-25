@@ -129,7 +129,11 @@ export class LesEncoursComponent implements OnInit {
     this.route.queryParamMap.subscribe(qp => {
       const rid = qp.get('rapprochementId');
       this.rapprochementId = rid ? +rid : null;
-      this.bankStateService.setRapprochementId(this.rapprochementId);
+      // N'écraser le service que si on a une vraie valeur —
+      // évite d'effacer l'id quand la sidebar navigue sans queryParam
+      if (rid) {
+        this.bankStateService.setRapprochementId(+rid);
+      }
       if (this.banqueId) {
         this.loadActifs();
       }
