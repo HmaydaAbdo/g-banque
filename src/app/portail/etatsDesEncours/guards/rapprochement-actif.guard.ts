@@ -4,7 +4,7 @@ import { CanActivateFn, Router, ActivatedRouteSnapshot } from '@angular/router';
 export const rapprochementActifGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   const router = inject(Router);
 
-  const rapprochementId = route.queryParamMap.get('rapprochementId');
+  const rapprochementId = route.paramMap.get('rapprochementId');
 
   if (rapprochementId) {
     return true;

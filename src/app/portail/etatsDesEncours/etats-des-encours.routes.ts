@@ -7,7 +7,7 @@ export const ETATS_DES_ENCOURS_ROUTES: Routes = [
     loadComponent: () => import('./views/select-rapprochement/select-rapprochement.component').then(m => m.SelectRapprochementComponent)
   },
   {
-    path: '',
+    path: ':rapprochementId',
     canActivate: [rapprochementActifGuard],
     loadComponent: () => import('./views/parent-componant/les-encours/les-encours.component').then(m => m.LesEncoursComponent),
     children: [

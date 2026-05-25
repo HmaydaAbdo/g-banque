@@ -55,10 +55,7 @@ export class SelectRapprochementComponent implements OnInit {
   }
 
   selectRapprochement(rapprochementId: number): void {
-    this.router.navigate(
-      ['/portail/etats-des-encours', this.banqueId],
-      { queryParams: { rapprochementId } }
-    );
+    this.router.navigate(['/portail/etats-des-encours', this.banqueId, rapprochementId]);
   }
 
   formatPeriode(periode: string | null): string {

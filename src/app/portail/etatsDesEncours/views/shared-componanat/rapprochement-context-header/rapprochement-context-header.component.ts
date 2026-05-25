@@ -44,17 +44,18 @@ export class RapprochementContextHeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // banqueId depuis les params de la route parente
+    // banqueId et rapprochementId sont tous les deux des path params (paramsInheritanceStrategy: 'always')
     this.subs.push(
       this.route.paramMap.subscribe(params => {
-        const id = params.get('banqueId');
-        if (id) {
-          this.banqueId = +id;
+        const bid = params.get('banqueId');
+        const rid = params.get('rapprochementId');
+
+        if (bid) {
+          this.banqueId = +bid;
           this.subs.push(
             this.bankStateService.bankInfo$.subscribe(info => {
               if (info && info.bankId === this.banqueId) {
                 this.bankInfo = info;
-                // Après le premier chargement, chaque nouvelle émission = validation effectuée
                 if (this.bankInfoInitialized && this.rapprochementId) {
                   this.loadAggregates();
                 }
@@ -64,15 +65,12 @@ export class RapprochementContextHeaderComponent implements OnInit, OnDestroy {
           );
           this.bankStateService.loadBankInfo(this.banqueId).subscribe();
         }
-      })
-    );
 
-    // rapprochementId depuis les queryParams
-    this.subs.push(
-      this.route.queryParamMap.subscribe(qp => {
-        const rid = qp.get('rapprochementId');
-        this.rapprochementId = rid ? +rid : null;
-        if (this.banqueId) {
+        if (rid) {
+          this.rapprochementId = +rid;
+        }
+
+        if (this.banqueId && this.rapprochementId) {
           this.loadData();
         }
       })

@@ -65,7 +65,6 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   banqueIdFromRoute!: number;
   currentMonthYear: string | null = null;
 
-  // Rapprochement courant (lu depuis queryParams)
   selectedRapprochementId: number | null = null;
   rapprochementStatut: 'EN_COURS' | 'CLOTURE_PROVISOIRE' | null = null;
 
