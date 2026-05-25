@@ -22,7 +22,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     SELECT COALESCE(r.soldeDebut, 0)
            + COALESCE(SUM(t.credit), 0)
            - COALESCE(SUM(t.debit), 0)
-    FROM Rapprochement r
+    FROM rapprochement r
     LEFT JOIN r.transactions t
     WHERE r.banque.id = :banqueId AND r.statut = 'EN_COURS'
     GROUP BY r.id, r.soldeDebut
@@ -47,7 +47,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
            COALESCE(r.soldeDebut, 0)
            + COALESCE(SUM(t.credit), 0)
            - COALESCE(SUM(t.debit), 0)
-    FROM Rapprochement r
+    FROM rapprochement r
     LEFT JOIN r.transactions t
     WHERE r.banque.id IN :ids AND r.statut = 'EN_COURS'
     GROUP BY r.id, r.banque.id, r.soldeDebut
