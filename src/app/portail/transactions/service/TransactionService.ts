@@ -80,6 +80,10 @@ export class TransactionService {
       params = params.set('banqueId', searchDto.banqueId.toString());
     }
 
+    if (searchDto.rapprochementId) {
+      params = params.set('rapprochementId', searchDto.rapprochementId.toString());
+    }
+
     // Gestion du statut du rapprochement
     if (searchDto.statutRapprochement) {
       params = params.set('statutRapprochement', searchDto.statutRapprochement);

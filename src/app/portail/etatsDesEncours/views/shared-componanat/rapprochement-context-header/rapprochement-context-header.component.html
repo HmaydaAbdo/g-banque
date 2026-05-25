@@ -1,0 +1,159 @@
+<div *ngIf="!loading && actifs" class="surface-card border-round-xl shadow-2 px-4 py-3">
+
+  <!-- Ligne 1 : Bank header + soldes -->
+  <div class="flex align-items-center justify-content-between flex-wrap gap-3">
+
+    <!-- Logo + Nom + Statut + Période -->
+    <div class="flex align-items-center gap-2 flex-shrink-0">
+      <ng-container *ngIf="bankInfo; else logoFallback">
+        <img [src]="'data:image/png;base64,' + bankInfo.logoBase64"
+             alt="Logo banque" class="border-round"
+             style="width:48px;height:48px;object-fit:contain;" />
+      </ng-container>
+      <ng-template #logoFallback>
+        <div class="flex align-items-center justify-content-center border-round"
+             style="width:48px;height:48px;background:var(--surface-200);">
+          <i class="pi pi-building text-xl text-400"></i>
+        </div>
+      </ng-template>
+      <div>
+        <div class="font-bold text-base text-900">{{ bankInfo?.name }}</div>
+        <div class="flex align-items-center gap-2 mt-1">
+          <span class="text-xs text-500">{{ getPeriode() }}</span>
+          <p-tag
+            [value]="isProvisoire ? 'Clôture provisoire' : 'En cours'"
+            [severity]="isProvisoire ? 'warning' : 'info'"
+            styleClass="text-xs">
+          </p-tag>
+        </div>
+      </div>
+    </div>
+
+    <!-- Solde Début -->
+    <div class="kpi-item flex-shrink-0">
+      <div class="kpi-icon" style="background:#E3F2FD;">
+        <i class="pi pi-flag" style="color:#2196F3;font-size:14px;"></i>
+      </div>
+      <div>
+        <div class="text-xs text-500">Solde Début</div>
+        <div class="font-bold text-sm text-900 white-space-nowrap">
+          {{ getSoldeDebut() | number:'1.2-2' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Solde Fin / Actuel -->
+    <div class="kpi-item flex-shrink-0">
+      <div class="kpi-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+        <i class="pi pi-wallet text-white" style="font-size:14px;"></i>
+      </div>
+      <div>
+        <div class="text-xs text-500">{{ isProvisoire ? 'Solde Fin' : 'Solde Actuel' }}</div>
+        <div class="font-bold text-sm text-900 white-space-nowrap">
+          {{ getSoldeFin() | number:'1.2-2' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Variation -->
+    <div class="kpi-item flex-shrink-0">
+      <div class="kpi-icon"
+           [style.background]="getVariation() >= 0 ? '#4CAF50' : '#F44336'">
+        <i [class]="getVariation() >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"
+           class="text-white" style="font-size:14px;"></i>
+      </div>
+      <div>
+        <div class="text-xs font-semibold"
+             [style.color]="getVariation() >= 0 ? '#2E7D32' : '#C62828'">Variation</div>
+        <div class="font-bold text-sm white-space-nowrap"
+             [style.color]="getVariation() >= 0 ? '#1B5E20' : '#B71C1C'">
+          {{ getVariation() >= 0 ? '+' : '' }}{{ getVariation() | number:'1.2-2' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Facilité de Caisse -->
+    <div class="kpi-item flex-shrink-0">
+      <div class="kpi-icon"
+           [style.background]="bankInfo?.plafondFC
+             ? 'linear-gradient(135deg,#f093fb,#f5576c)'
+             : '#FFE0B2'">
+        <i class="pi pi-shield" style="font-size:14px;"
+           [style.color]="bankInfo?.plafondFC ? 'white' : '#F57C00'"></i>
+      </div>
+      <div>
+        <div class="text-xs text-500">Facilité de Caisse</div>
+        <div class="font-bold text-sm white-space-nowrap"
+             [ngClass]="bankInfo?.plafondFC ? 'text-900' : 'text-400'">
+          @if (bankInfo?.plafondFC) { {{ bankInfo!.plafondFC | number:'1.2-2' }} }
+          @else { Aucune }
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Séparateur -->
+  <div class="border-top-1 surface-border my-2"></div>
+
+  <!-- Ligne 2 : Agrégats transactions -->
+  <div class="flex align-items-center gap-1 flex-wrap">
+
+    <div class="stat-chip">
+      <span class="stat-dot bg-red-400"></span>
+      <span class="text-xs text-500">Débit</span>
+      <span class="font-bold text-xs text-red-500 white-space-nowrap">
+        {{ (agregats?.totalDebit ?? 0) | number:'1.2-2' }}
+      </span>
+    </div>
+    <div class="stat-divider"></div>
+
+    <div class="stat-chip">
+      <span class="stat-dot bg-green-400"></span>
+      <span class="text-xs text-500">Crédit</span>
+      <span class="font-bold text-xs text-green-500 white-space-nowrap">
+        {{ (agregats?.totalCredit ?? 0) | number:'1.2-2' }}
+      </span>
+    </div>
+    <div class="stat-divider"></div>
+
+    <div class="stat-chip">
+      <span class="stat-dot bg-red-200"></span>
+      <span class="text-xs text-500">TVA Déd.</span>
+      <span class="font-bold text-xs text-red-400 white-space-nowrap">
+        {{ (agregats?.totalTvaDeductible ?? 0) | number:'1.2-2' }}
+      </span>
+    </div>
+    <div class="stat-divider"></div>
+
+    <div class="stat-chip">
+      <span class="stat-dot bg-green-200"></span>
+      <span class="text-xs text-500">TVA Col.</span>
+      <span class="font-bold text-xs text-green-400 white-space-nowrap">
+        {{ (agregats?.totalTvaCollectee ?? 0) | number:'1.2-2' }}
+      </span>
+    </div>
+    <div class="stat-divider"></div>
+
+    <div class="stat-chip">
+      <span class="stat-dot"
+            [ngClass]="(agregats?.tvaDue ?? 0) >= 0 ? 'bg-red-500' : 'bg-green-500'"></span>
+      <span class="text-xs text-500">TVA Due</span>
+      <span class="font-bold text-xs white-space-nowrap"
+            [ngClass]="(agregats?.tvaDue ?? 0) >= 0 ? 'text-red-500' : 'text-green-500'">
+        {{ (agregats?.tvaDue ?? 0) | number:'1.2-2' }}
+      </span>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Skeleton pendant le chargement -->
+<div *ngIf="loading" class="surface-card border-round-xl shadow-2 px-4 py-3 flex align-items-center gap-3">
+  <div style="width:48px;height:48px;border-radius:8px;background:var(--surface-200);"></div>
+  <div class="flex flex-column gap-2" style="flex:1;">
+    <div style="height:12px;width:140px;border-radius:4px;background:var(--surface-200);"></div>
+    <div style="height:10px;width:100px;border-radius:4px;background:var(--surface-200);"></div>
+  </div>
+</div>

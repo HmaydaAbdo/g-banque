@@ -9,14 +9,13 @@ import { DividerModule } from 'primeng/divider';
 import { TooltipModule } from 'primeng/tooltip';
 import { RapprochementService } from '../../../rapprochement/service/rapprochement-service.service';
 import { RapprochementActifsDto } from '../../../rapprochement/dtos/RapprochementActifsDto';
-import { BankDetailsComponent } from '../shared-componanat/bank-details/bank-details.component';
 
 @Component({
   selector: 'app-select-rapprochement',
   standalone: true,
   imports: [
     CommonModule, DecimalPipe, ProgressSpinnerModule, CardModule,
-    ButtonModule, TagModule, DividerModule, TooltipModule, BankDetailsComponent
+    ButtonModule, TagModule, DividerModule, TooltipModule
   ],
   providers: [DecimalPipe],
   templateUrl: './select-rapprochement.component.html',

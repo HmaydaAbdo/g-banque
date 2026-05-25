@@ -25,6 +25,8 @@ import {ValidationService} from "../../../services/validation/validation.service
 import {BankStateService} from "../../../../comptes-bancaire/services/bank-state.service";
 import {parseLocalDate, toLocalDateString} from "../../../../global/types/date.utils";
 import {TransactionUpdateRequestDto} from "../../../../transactions/dtos/TransactionUpdateRequestDto";
+import {TagModule} from "primeng/tag";
+import {RapprochementService} from "../../../../rapprochement/service/rapprochement-service.service";
 
 
 @Component({
@@ -46,7 +48,8 @@ import {TransactionUpdateRequestDto} from "../../../../transactions/dtos/Transac
     BreadcrumbModule,
     MultiSelectModule,
     DialogModule,
-    CalendarModule
+    CalendarModule,
+    TagModule,
   ],
   templateUrl: './rapprochemnt-encours.component.html',
   styleUrls: ['./rapprochemnt-encours.component.scss'],
@@ -62,6 +65,11 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   banqueIdFromRoute!: number;
   currentMonthYear: string | null = null;
 
+  // Rapprochement courant (lu depuis queryParams)
+  selectedRapprochementId: number | null = null;
+  rapprochementStatut: 'EN_COURS' | 'CLOTURE_PROVISOIRE' | null = null;
+
+
   searchForm!: FormGroup;
 
   transactionSourceOptions: any[] = [];
@@ -73,6 +81,7 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
   constructor(
     private transactionService: TransactionService,
+    private rapprochementService: RapprochementService,
     private fb: FormBuilder,
     private validationService: ValidationService,
     private messageService: MessageService,
@@ -85,22 +94,43 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.populateTransactionSourceOptions();
 
-
     this.subscriptions.push(
       this.route.parent!.paramMap.subscribe(params => {
         const id = params.get('banqueId');
         if (id) {
           this.banqueIdFromRoute = +id;
+          // S'abonner aux infos banque (déjà chargées par le parent LesEncoursComponent)
+          this.loadActifs();
         }
       })
     );
 
     this.initSearchForm();
-    this.initEditDialogForm()
+    this.initEditDialogForm();
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  loadActifs(): void {
+    const rid = this.route.snapshot.queryParamMap.get('rapprochementId');
+    if (!rid) return;
+    this.selectedRapprochementId = +rid;
+
+    this.rapprochementService.getActifs(this.banqueIdFromRoute).subscribe({
+      next: (actifs) => {
+        if (this.selectedRapprochementId === actifs.enCoursId) {
+          this.rapprochementStatut = 'EN_COURS';
+        } else if (this.selectedRapprochementId === actifs.provisoireId) {
+          this.rapprochementStatut = 'CLOTURE_PROVISOIRE';
+        }
+        this.onSearch();
+      },
+      error: () => {
+        this.onSearch();
+      }
+    });
   }
 
   // Populates the options for the multi-select from the TransactionSource enum.
@@ -143,8 +173,7 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
 
   loadTransactions(event: TableLazyLoadEvent): void {
-    if (!this.banqueIdFromRoute) {
-      console.error("L'ID de la banque n'a pas été trouvé dans la route.");
+    if (!this.banqueIdFromRoute || !this.selectedRapprochementId) {
       return;
     }
 
@@ -155,7 +184,10 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = event.sortField ? `${event.sortField},${sortOrder}` : 'createdAt,desc';
 
-    const searchDto: TransactionSearchDto = this.searchForm.value as TransactionSearchDto;
+    const searchDto: TransactionSearchDto = {
+      ...(this.searchForm.value as TransactionSearchDto),
+      rapprochementId: this.selectedRapprochementId
+    };
 
     this.transactionService.getTransactionsByBanque(this.banqueIdFromRoute, searchDto, page, size, sort)
       .subscribe({

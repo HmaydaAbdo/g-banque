@@ -23,3 +23,42 @@
   color: #2196F3 !important;
   font-weight: 600;
 }
+
+/* ── Inline Bank Header ─────────────────────────────────── */
+.bank-details-container {
+  padding: 1rem 0;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  overflow-x: auto;
+}
+
+.bank-details-container .flex.align-items-center.gap-2,
+.bank-details-container .flex.align-items-center.gap-3 {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.bank-details-container .flex.align-items-center.gap-2:hover,
+.bank-details-container .flex.align-items-center.gap-3:hover {
+  background: rgba(248, 249, 250, 0.5);
+  transform: translateY(-2px);
+}
+
+.bank-details-container .border-round-lg {
+  transition: all 0.3s ease;
+}
+
+.bank-details-container .flex.align-items-center.gap-2:hover .border-round-lg,
+.bank-details-container .flex.align-items-center.gap-3:hover .border-round-lg {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bank-details-container img.border-round {
+  transition: transform 0.3s ease;
+}
+
+.bank-details-container img.border-round:hover {
+  transform: scale(1.05);
+}

@@ -25,6 +25,7 @@ import {TransactionService} from "../../../transactions/service/TransactionServi
 import {Ripple} from "primeng/ripple";
 import { parseLocalDate, toLocalDateString } from '../../../global/types/date.utils';
 import {ToolbarModule} from "primeng/toolbar";
+import {TooltipModule} from "primeng/tooltip";
 
 @Component({
   selector: 'app-details-rapprochement',
@@ -45,7 +46,8 @@ import {ToolbarModule} from "primeng/toolbar";
     DialogModule,
     FormsModule,
     Ripple,
-    ToolbarModule
+    ToolbarModule,
+    TooltipModule
   ],
   templateUrl: './details-rapprochement.component.html',
   styleUrls: ['./details-rapprochement.component.scss'],

@@ -80,30 +80,7 @@
       </p-button>
     </div>
 
-    <app-bank-details [banqueId]="banqueId"></app-bank-details>
-
-    <!-- Context Banner — shows the active period and statut -->
-    <div *ngIf="actifs" class="border-round-lg px-3 py-2 flex align-items-center gap-3 text-xs"
-         [ngClass]="isProvisoire ? 'bg-orange-50 border-1 border-orange-300' : 'bg-blue-50 border-1 border-blue-200'">
-      <i [class]="isProvisoire ? 'pi pi-clock text-orange-500' : 'pi pi-sync text-blue-500'"></i>
-      <div class="flex flex-column gap-1">
-        <span class="font-semibold" [ngClass]="isProvisoire ? 'text-orange-700' : 'text-blue-700'">
-          {{ isProvisoire ? 'Mode ajustement — Clôture provisoire' : 'Rapprochement en cours' }}
-        </span>
-        <span [ngClass]="isProvisoire ? 'text-orange-600' : 'text-blue-600'">
-          Période : {{ formatPeriode(isProvisoire ? actifs.provisoirePeriode : actifs.enCoursPeriode) }}
-          &nbsp;|&nbsp;
-          Solde début : {{ (isProvisoire ? actifs.provisoireSoldeDebut : actifs.enCoursSoldeDebut) | number:'1.2-2':'fr-FR' }} MAD
-        </span>
-      </div>
-      <div class="ml-auto">
-        <p-tag
-          [value]="isProvisoire ? 'Provisoire' : 'En cours'"
-          [severity]="isProvisoire ? 'warning' : 'info'"
-          styleClass="text-xs">
-        </p-tag>
-      </div>
-    </div>
+    <app-rapprochement-context-header></app-rapprochement-context-header>
 
     <div class="pb-8"><router-outlet></router-outlet></div>
 

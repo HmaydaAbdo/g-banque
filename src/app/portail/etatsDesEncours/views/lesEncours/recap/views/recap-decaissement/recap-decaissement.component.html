@@ -2,38 +2,6 @@
 
 <div class="flex flex-column gap-3 w-full">
 
-  <!-- Section Stats -->
-  <div class="flex flex-row   justify-content-around ">
-    <div class="w-fit h-fit">
-      <div class="flex align-items-center gap-2 p-2 border-round-lg stat-card">
-        <div class="flex align-items-center justify-content-center border-round-lg stat-icon"
-             style="width: 40px; height: 40px; background: #4CAF50;">
-          <i class="pi pi-arrow-up text-white"></i>
-        </div>
-        <div>
-          <div class="text-xs text-600 mb-1">Total Crédit</div>
-          <div class="font-bold text-base text-900">
-            {{ totalCredit | number: '1.2-2' }} MAD
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="w-fit h-fit">
-      <div class="flex align-items-center   gap-2 p-2 border-round-lg stat-card">
-        <div class="flex align-items-center justify-content-center border-round-lg stat-icon"
-             style="width: 40px; height: 40px; background: #FF9800;">
-          <i class="pi pi-arrow-down text-white"></i>
-        </div>
-        <div>
-          <div class="text-xs text-600 mb-1">Total Débit</div>
-          <div class="font-bold text-base text-900">
-            {{ totalDebit | number: '1.2-2' }} MAD
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Section Recherche -->
   <div [formGroup]="searchForm" class="surface-card border-round-xl shadow-2 p-2">
     <div class="grid">

@@ -3,7 +3,6 @@ import { ActivatedRoute, Router, RouterOutlet, NavigationEnd } from "@angular/ro
 import { PanelMenuModule } from "primeng/panelmenu";
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { CommonModule, DatePipe } from '@angular/common';
-import { BankDetailsComponent } from "../../shared-componanat/bank-details/bank-details.component";
 import { Ripple } from "primeng/ripple";
 import { BreadcrumbModule } from "primeng/breadcrumb";
 import { filter } from 'rxjs/operators';
@@ -17,6 +16,7 @@ import { ToastModule } from "primeng/toast";
 import { TagModule } from "primeng/tag";
 import { TooltipModule } from "primeng/tooltip";
 import { RapprochementActifsDto } from "../../../../rapprochement/dtos/RapprochementActifsDto";
+import { RapprochementContextHeaderComponent } from "../../shared-componanat/rapprochement-context-header/rapprochement-context-header.component";
 
 @Component({
   selector: 'app-les-encours',
@@ -34,9 +34,9 @@ import { RapprochementActifsDto } from "../../../../rapprochement/dtos/Rapproche
     FormsModule,
     ToastModule,
     ReactiveFormsModule,
-    BankDetailsComponent,
     TagModule,
-    TooltipModule
+    TooltipModule,
+    RapprochementContextHeaderComponent
   ],
   providers: [ConfirmationService, MessageService, DatePipe],
   templateUrl: './les-encours.component.html',
@@ -290,10 +290,4 @@ export class LesEncoursComponent implements OnInit {
     });
   }
 
-  formatPeriode(periode: string | null | undefined): string {
-    if (!periode) return '';
-    const [year, month] = periode.split('-');
-    const months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
-    return `${months[+month - 1]} ${year}`;
-  }
 }
