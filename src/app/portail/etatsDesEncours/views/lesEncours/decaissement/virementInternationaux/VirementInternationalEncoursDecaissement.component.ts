@@ -228,7 +228,7 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
         tva: formValue.tva,
         transactionSource: TransactionSource.VIREMENT_INTERNATIONAL,
         libelle: formValue.libelle,
-        rapprochementId: rapprochementId ?? 0
+        rapprochementId: rapprochementId!
       };
 
       this.isSubmitting = true;

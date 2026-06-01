@@ -117,8 +117,11 @@ export class LesEncoursComponent implements OnInit {
       this.banqueId = Number(params.get('banqueId'));
       const rid = params.get('rapprochementId');
       if (rid) {
-        this.rapprochementId = +rid;
-        this.bankStateService.setRapprochementId(+rid);
+        const parsed = +rid;
+        if (!isNaN(parsed)) {
+          this.rapprochementId = parsed;
+          this.bankStateService.setRapprochementId(parsed);
+        }
       }
       this.updateMenuItems();
       this.updateBreadcrumb();
@@ -166,8 +169,8 @@ export class LesEncoursComponent implements OnInit {
         label: 'Encaissements',
         icon: 'pi pi-arrow-circle-down',
         items: [
-          { label: "Virements", icon: "pi pi-download", routerLink: ["/portail/etats-des-encours", this.banqueId, "virements-encaissements"] },
-          { label: "Virements Internationaux", icon: "pi pi-globe", routerLink: ["/portail/etats-des-encours", this.banqueId, "virements-internationaux-encaissements"] },
+          { label: "Virements", icon: "pi pi-download", routerLink: ["/portail/etats-des-encours", this.banqueId, this.rapprochementId, "virements-encaissements"] },
+          { label: "Virements Internationaux", icon: "pi pi-globe", routerLink: ["/portail/etats-des-encours", this.banqueId, this.rapprochementId, "virements-internationaux-encaissements"] },
           { label: 'Chèques', icon: 'pi pi-money-bill', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'cheques-encaissements'] },
           { label: 'LCN', icon: 'pi pi-file-edit', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'lcn-encaissements'] },
           { label: 'Préfinancement', icon: 'pi pi-unlock', routerLink: ['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'prefinancement-deblocage'] },
@@ -206,7 +209,6 @@ export class LesEncoursComponent implements OnInit {
     ];
   }
 
-  // ... (Reste des méthodes toggleMenuItem, showClotureDialog, etc. sont identiques)
 
   toggleMenuItem(item: MenuItem): void {
     if (item.items) {

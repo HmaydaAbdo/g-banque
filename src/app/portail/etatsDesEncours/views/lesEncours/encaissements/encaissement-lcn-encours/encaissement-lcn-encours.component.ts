@@ -233,7 +233,7 @@ export class EncaissementLcnEncoursComponent implements OnInit {
         observation: donneesComplementaires.observation,
         tvaDeductible: donneesComplementaires.tvaDeductible,
         libelle:donneesComplementaires.libelle,
-        rapprochementId: rapprochementId ?? 0
+        rapprochementId: rapprochementId!
       };
 
       this.isSubmitting = true;

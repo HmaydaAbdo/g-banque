@@ -241,7 +241,7 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
         tva: this.rapprochementForm.value.tva,
         libelle: this.rapprochementForm.value.libelle,
         observation: this.rapprochementForm.value.observation,
-        rapprochementId: rapprochementId ?? 0
+        rapprochementId: rapprochementId!
       };
 
       this.rapprochementService.factoringToRapprochement(factoringTransactionRequest)

@@ -6,7 +6,7 @@ export const rapprochementActifGuard: CanActivateFn = (route: ActivatedRouteSnap
 
   const rapprochementId = route.paramMap.get('rapprochementId');
 
-  if (rapprochementId) {
+  if (rapprochementId && !isNaN(+rapprochementId)) {
     return true;
   }
 

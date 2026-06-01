@@ -227,7 +227,7 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
         tvaDeductible: donneesComplementaires.tvaDeductible,
         transactionSource: TransactionSource.MiseADisposition,
         libelle: donneesComplementaires.libelle,
-        rapprochementId: rapprochementId ?? 0
+        rapprochementId: rapprochementId!
       };
 
       this.isSubmitting = true;

@@ -229,7 +229,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
         tvaDeductible: this.rapprochementForm.value.tvaDeductible,
         transactionSource: TransactionSource.MiseADisposition,
         libelle: this.rapprochementForm.value.libelle,
-        rapprochementId: rapprochementId ?? 0
+        rapprochementId: rapprochementId!
       };
 
       this.isSubmitting = true;

@@ -326,7 +326,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
         observation:  formValue.observation,
         tvaDeductible:  formValue.tvaDeductible,
         libelle: formValue.libelle,
-        rapprochementId: rapprochementId ?? 0
+        rapprochementId: rapprochementId!
       };
 
       this.isSubmitting = true;

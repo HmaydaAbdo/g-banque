@@ -276,7 +276,7 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
         observation: this.rapprochementForm.value.observation,
         libelle: this.rapprochementForm.value.libelle,
         tva: this.rapprochementForm.value.tvaDeductible,
-        rapprochementId: rapprochementId ?? 0
+        rapprochementId: rapprochementId!
       };
 
       this.isSubmitting = true;

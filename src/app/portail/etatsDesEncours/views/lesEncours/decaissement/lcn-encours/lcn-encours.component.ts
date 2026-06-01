@@ -226,7 +226,7 @@ export class LcnEncoursComponent implements OnInit {
         observation: this.rapprochementForm.value.observation,
         tvaDeductible: this.rapprochementForm.value.tvaDeductible,
         libelle:this.rapprochementForm.value.libelle,
-        rapprochementId: rapprochementId ?? 0
+        rapprochementId: rapprochementId!
       };
 
       this.isSubmitting = true;

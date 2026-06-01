@@ -268,7 +268,7 @@ export class EncoursOperationErroneComponent implements OnInit {
         observation: formValue.observation,
         libelle: formValue.libelle,
         tva: formValue.tvaDeductible,
-        rapprochementId: rapprochementId ?? 0
+        rapprochementId: rapprochementId!
       };
 
       this.isSubmitting = true;
