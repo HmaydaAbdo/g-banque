@@ -299,15 +299,10 @@ export class CautionFormComponent implements OnInit {
     });
   }
 
-  updateMarcheValidator(natureCode: string): void {
+  updateMarcheValidator(_natureCode: string): void {
     const marcheControl = this.form.get('marcheId')!;
-    if (natureCode === 'CAUT_PROV') {
-      this.marcheRequired = false;
-      marcheControl.clearValidators();
-    } else {
-      this.marcheRequired = true;
-      marcheControl.setValidators(Validators.required);
-    }
+    this.marcheRequired = false;
+    marcheControl.clearValidators();
     marcheControl.updateValueAndValidity();
     this.cdr.markForCheck();
   }
