@@ -25,15 +25,30 @@ public interface VirementRepository extends JpaRepository<Virement, Long>, JpaSp
 
     /**
      * Retourne (banqueId, count) des virements échus (ENCOURS et dateEmission < today),
-     * groupés par banque émettrice.
+     * groupés par la banque concernée selon le type :
+     *  - DECAISSEMENT → banqueEmettrice (notre banque émet)
+     *  - ENCAISSEMENT → banqueBeneficiare (notre banque reçoit)
      */
     @Query("""
-        SELECT v.banqueEmettrice.id, COUNT(v)
+        SELECT
+            CASE v.type
+                WHEN 'DECAISSEMENT' THEN v.banqueEmettrice.id
+                WHEN 'ENCAISSEMENT' THEN v.banqueBeneficiare.id
+            END,
+            COUNT(v)
         FROM Virement v
         WHERE v.statut = 'ENCOURS'
           AND v.dateEmission < :today
-          AND v.banqueEmettrice IS NOT NULL
-        GROUP BY v.banqueEmettrice.id
+          AND (
+              (v.type = 'DECAISSEMENT' AND v.banqueEmettrice IS NOT NULL)
+              OR
+              (v.type = 'ENCAISSEMENT' AND v.banqueBeneficiare IS NOT NULL)
+          )
+        GROUP BY
+            CASE v.type
+                WHEN 'DECAISSEMENT' THEN v.banqueEmettrice.id
+                WHEN 'ENCAISSEMENT' THEN v.banqueBeneficiare.id
+            END
     """)
     List<Object[]> countEchusGroupedByBanque(@Param("today") LocalDate today);
 }
