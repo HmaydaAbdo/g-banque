@@ -34,7 +34,7 @@ import { CautionService } from '../../service/caution.service';
 import { CautionResponseDto } from '../../dtos/CautionResponseDto';
 import { CautionSearchDto } from '../../dtos/CautionSearchDto';
 import { CloturerCautionRequest } from '../../dtos/CloturerCautionRequest';
-import { toLocalDateString } from '../../../global/types/date.utils';
+import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 import { AuthService } from '../../../../auth/services/auth.service';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { MarcheService } from '../../../Marches/service/marche-service.service';
@@ -292,7 +292,10 @@ export class CautionListComponent implements OnInit {
 
   ouvrirCloturerDialog(caution: CautionResponseDto): void {
     this.cloturerTarget = caution;
-    this.cloturerForm.reset();
+    // Pré-remplir la date de main levée si elle existe déjà sur la caution
+    this.cloturerForm.reset({
+      dateDeMainLevee: caution.dateDeMainLevee ? parseLocalDate(caution.dateDeMainLevee) : null,
+    });
     this.showCloturerDialog = true;
     this.cdr.markForCheck();
   }
