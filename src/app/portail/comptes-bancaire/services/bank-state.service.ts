@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import {RecapitulatifCompte} from "../../accueil/dtos/RecapitulatifCompte";
 import {BanqueService} from "./BanqueService";
 
@@ -10,8 +10,17 @@ export class BankStateService {
   // BehaviorSubject qui stocke l'état actuel des infos bancaires
   private bankInfoSubject = new BehaviorSubject<RecapitulatifCompte | null>(null);
 
+  // Signal émis après chaque validation réussie — permet au header de se rafraîchir
+  private readonly _validationDone$ = new Subject<void>();
+  readonly validationDone$ = this._validationDone$.asObservable();
+
   // ID du rapprochement actuellement sélectionné
   private currentRapprochementId: number | null = null;
+
+  /** Notifie tous les abonnés qu'une transaction vient d'être validée. */
+  notifyValidation(): void {
+    this._validationDone$.next();
+  }
 
   setRapprochementId(id: number | null): void {
     this.currentRapprochementId = id;

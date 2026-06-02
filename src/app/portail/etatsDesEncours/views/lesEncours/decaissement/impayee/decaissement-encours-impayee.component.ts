@@ -269,6 +269,7 @@ export class DecaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
           this.isSubmitting = false;
           this.table.reset();
           this.bankStateService.refreshBankInfo(this.banqueId as number);
+          this.bankStateService.notifyValidation();
         },
         error: () => {
           this.messageService.add({

@@ -262,6 +262,7 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
           this.loadEncoursDeblocages();
           this.displayModal = false;
           this.bankStateService.refreshBankInfo(this.banqueId);
+          this.bankStateService.notifyValidation();
 
         },
         error: (error) => {

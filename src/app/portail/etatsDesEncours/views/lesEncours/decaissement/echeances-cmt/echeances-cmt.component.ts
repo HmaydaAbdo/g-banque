@@ -313,6 +313,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
             this.onSearch();
             this.isSubmitting = false;
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
 
           },
           error: (error) => {

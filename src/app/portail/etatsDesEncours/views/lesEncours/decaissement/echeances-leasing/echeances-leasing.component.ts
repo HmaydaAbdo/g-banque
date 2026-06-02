@@ -343,6 +343,7 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
             this.isSubmitting = false;
             this.onSearch()
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
           },
           error: (error) => {
             this.messageService.add({

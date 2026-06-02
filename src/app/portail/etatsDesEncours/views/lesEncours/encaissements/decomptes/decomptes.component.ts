@@ -266,6 +266,7 @@ export class DecomptesComponent implements OnInit, OnDestroy {
           this.loadEncoursDecomptes();
           this.displayModal = false;
           this.bankStateService.refreshBankInfo(this.banqueId);
+          this.bankStateService.notifyValidation();
 
         },
         error: (error) => {

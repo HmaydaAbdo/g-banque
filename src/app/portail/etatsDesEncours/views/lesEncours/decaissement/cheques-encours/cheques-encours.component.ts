@@ -244,6 +244,7 @@ export class ChequesEncoursComponent implements OnInit {
             this.loadOutstandingCheques();
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
 
           },
           error: (error) => {

@@ -245,6 +245,7 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
             this.loadOutstandingVirements();
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
           },
           error: (error) => {
             console.error('Erreur lors de la validation du virement international:', error);

@@ -243,6 +243,7 @@ export class VirementEncoursComponent implements OnInit {
             this.loadOutstandingVirements();
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
 
           },
           error: (error) => {

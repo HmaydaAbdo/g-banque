@@ -269,6 +269,7 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
             this.isSubmitting = false;
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueId);
+            this.bankStateService.notifyValidation();
 
           },
           error: (error) => {

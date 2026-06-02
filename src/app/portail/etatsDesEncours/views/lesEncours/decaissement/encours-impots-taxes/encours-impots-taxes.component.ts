@@ -289,6 +289,7 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
           this.displayModal = false;
           this.table.reset();
           this.bankStateService.refreshBankInfo(this.banqueId as number);
+          this.bankStateService.notifyValidation();
         },
         error: () => {
           this.messageService.add({

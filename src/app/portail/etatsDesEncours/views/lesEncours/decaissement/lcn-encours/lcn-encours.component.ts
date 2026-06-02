@@ -244,6 +244,7 @@ export class LcnEncoursComponent implements OnInit {
             this.loadOutstandingLcns();
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
 
           },
           error: (error) => {

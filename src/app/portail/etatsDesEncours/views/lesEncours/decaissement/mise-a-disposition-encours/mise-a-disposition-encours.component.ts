@@ -246,6 +246,7 @@ export class MiseADispositionEncoursComponent implements OnInit {
             this.loadOutstandingMisesADisposition();
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
 
           },
           error: (error) => {

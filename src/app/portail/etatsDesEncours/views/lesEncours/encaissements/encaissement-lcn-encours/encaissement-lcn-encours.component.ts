@@ -251,6 +251,7 @@ export class EncaissementLcnEncoursComponent implements OnInit {
             this.loadOutstandingLcns();
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
           },
           error: (error) => {
             console.error('Erreur lors du validation du LCN:', error);

@@ -255,6 +255,7 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
           this.dt?.reset();
           this.displayModal = false;
           this.bankStateService.refreshBankInfo(this.banqueId);
+          this.bankStateService.notifyValidation();
         },
         error: (error) => {
           console.error('Erreur lors du validation du factoring:', error);

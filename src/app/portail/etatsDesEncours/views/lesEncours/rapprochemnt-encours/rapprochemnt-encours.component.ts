@@ -223,6 +223,7 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
         this.messageService.add({severity: 'success',summary: 'Transaction supprimé avec success'});
         this.loadTransactions(this.dt.createLazyLoadMetadata());
         this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+        this.bankStateService.notifyValidation();
       },
       error: (error) => {
         this.messageService.add({severity: 'error',summary: 'Erreur lors de la suppression de la transaction .',})

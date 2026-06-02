@@ -247,6 +247,7 @@ export class VirementEncaissementEncoursComponent implements OnInit {
             this.loadOutstandingVirements();
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
           },
           error: (error) => {
             console.error('Erreur lors du validation du virement:', error);

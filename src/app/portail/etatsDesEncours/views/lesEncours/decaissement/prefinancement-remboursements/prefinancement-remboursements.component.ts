@@ -270,6 +270,7 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
             this.dt?.reset();
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueId);
+            this.bankStateService.notifyValidation();
 
           },
           error: (error) => {

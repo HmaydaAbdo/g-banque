@@ -244,6 +244,7 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
             this.loadOutstandingMisesADisposition();
             this.displayModal = false;
             this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+            this.bankStateService.notifyValidation();
           },
           error: (error) => {
             console.error('Erreur lors du validation de la mise à disposition:', error);

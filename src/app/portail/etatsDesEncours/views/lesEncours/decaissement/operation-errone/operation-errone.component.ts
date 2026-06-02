@@ -284,6 +284,7 @@ export class EncoursOperationErroneComponent implements OnInit {
           this.displayModal = false;
           this.table.reset();
           this.bankStateService.refreshBankInfo(this.banqueId as number);
+          this.bankStateService.notifyValidation();
         },
         error: (err) => {
           this.messageService.add({

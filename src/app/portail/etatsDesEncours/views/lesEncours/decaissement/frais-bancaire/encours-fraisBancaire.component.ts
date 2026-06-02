@@ -291,6 +291,7 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
           this.displayModal = false;
           this.table.reset(); // recharge ton tableau existant
           this.bankStateService.refreshBankInfo(this.banqueId as number);
+          this.bankStateService.notifyValidation();
 
         },
         error: () => {

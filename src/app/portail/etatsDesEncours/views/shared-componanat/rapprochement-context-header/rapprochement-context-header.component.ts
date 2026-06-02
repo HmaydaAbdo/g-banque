@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, debounceTime } from 'rxjs';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
@@ -74,6 +74,13 @@ export class RapprochementContextHeaderComponent implements OnInit, OnDestroy {
           this.loadData();
         }
       })
+    );
+
+    // Rafraîchir le header après chaque validation réussie dans un composant enfant
+    this.subs.push(
+      this.bankStateService.validationDone$
+        .pipe(debounceTime(300))
+        .subscribe(() => this.loadData())
     );
   }
 
