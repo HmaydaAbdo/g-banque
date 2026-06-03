@@ -126,25 +126,55 @@ public class CautionController {
         return ResponseEntity.ok(cautionService.cloturer(id, request));
     }
 
+    /**
+     * Génère manuellement les commissions cautions pour un mois donné.
+     *
+     * <p>Paramètre optionnel {@code debutMois} :
+     * <ul>
+     *   <li>Absent (null) → génère les <b>deux</b> lots (fin de mois + début de mois) — comportement par défaut</li>
+     *   <li>{@code false}  → génère uniquement les commissions de <b>fin de mois</b> (AWB, BMCI, SAHAM)</li>
+     *   <li>{@code true}   → génère uniquement les commissions de <b>début de mois</b> (CDM)</li>
+     * </ul>
+     *
+     * <p>Exemples :
+     * <pre>
+     *   POST /cautions/generer-commissions?annee=2026&amp;mois=6             → les deux lots
+     *   POST /cautions/generer-commissions?annee=2026&amp;mois=6&amp;debutMois=false → fin de mois uniquement (AWB, BMCI, SAHAM)
+     *   POST /cautions/generer-commissions?annee=2026&amp;mois=6&amp;debutMois=true  → début de mois uniquement (CDM)
+     * </pre>
+     */
     @PostMapping("/generer-commissions")
     public ResponseEntity<ResultatGenerationCommissionDto> genererCommissions(
             @RequestParam int annee,
-            @RequestParam int mois) {
+            @RequestParam int mois,
+            @RequestParam(required = false) Boolean debutMois) {
 
-        logger.info("POST /cautions/generer-commissions — {}-{}", annee, mois);
+        logger.info("POST /cautions/generer-commissions — {}-{}, debutMois={}",
+                annee, mois, debutMois == null ? "both" : debutMois);
+
         YearMonth moisReference = YearMonth.of(annee, mois);
 
-        // Déclenchement manuel : on génère les deux lots (début + fin de mois)
+        if (debutMois != null) {
+            // Lot ciblé : uniquement fin de mois OU début de mois
+            ResultatGenerationCommissionDto result = generationService.generer(moisReference, debutMois);
+            logger.info("Génération ciblée ({}) terminée — {} créée(s), {} ignorée(s)",
+                    debutMois ? "début de mois" : "fin de mois",
+                    result.generees(), result.ignorees());
+            return ResponseEntity.ok(result);
+        }
+
+        // Les deux lots : comportement historique
         ResultatGenerationCommissionDto finDeMois   = generationService.generer(moisReference, false);
         ResultatGenerationCommissionDto debutDeMois = generationService.generer(moisReference, true);
 
-        // Fusionner les deux résultats
         ResultatGenerationCommissionDto result = new ResultatGenerationCommissionDto(
                 finDeMois.generees() + debutDeMois.generees(),
                 finDeMois.ignorees() + debutDeMois.ignorees(),
                 moisReference
         );
 
+        logger.info("Génération complète terminée — {} créée(s), {} ignorée(s)",
+                result.generees(), result.ignorees());
         return ResponseEntity.ok(result);
     }
 }

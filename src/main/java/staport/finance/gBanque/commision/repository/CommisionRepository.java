@@ -22,4 +22,11 @@ public interface CommisionRepository extends JpaRepository<Commission, Long>, Jp
      * Utilisé pour bloquer la désactivation d'une caution tant qu'une commission est en cours.
      */
     boolean existsByCaution_IdAndStatus(Long cautionId, Status status);
+
+    /**
+     * Garde d'idempotence : vérifie si une commission auto-générée existe déjà
+     * pour cette caution à cette date d'émission.
+     * Empêche les doublons si le batch ou l'API est appelé plusieurs fois pour le même mois.
+     */
+    boolean existsByCaution_IdAndDateEmission(Long cautionId, LocalDate dateEmission);
 }

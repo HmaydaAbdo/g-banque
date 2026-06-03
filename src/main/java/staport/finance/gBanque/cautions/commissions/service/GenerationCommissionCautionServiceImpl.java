@@ -104,6 +104,16 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
 
             // 4. Calcul de la commission (délégué à la stratégie) + liaison caution
             Commission commission = strategie.calculer(caution, moisReference);
+
+            // 4b. Garde idempotence : une seule commission par caution par date d'émission
+            if (commissionRepository.existsByCaution_IdAndDateEmission(
+                    caution.getId(), commission.getDateEmission())) {
+                logger.warn("Commission déjà existante pour la caution {} (banque={}) à la date {} — ignorée",
+                        caution.getNumeroCaution(), nomBanque, commission.getDateEmission());
+                ignorees++;
+                continue;
+            }
+
             commission.setCaution(caution);
             aCreer.add(commission);
         }

@@ -55,7 +55,7 @@ public class ImpotEtTaxe {
      * Permet de retrouver et mettre à jour la TVA si le montant de la commission change.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "commission_id")
+    @JoinColumn(name = "commission_id", unique = true)
     private Commission commission;
 
     /**
