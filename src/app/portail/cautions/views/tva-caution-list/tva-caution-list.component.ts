@@ -10,7 +10,7 @@ import {
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {CommonModule, CurrencyPipe, DatePipe, DecimalPipe} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
+import {Table, TableLazyLoadEvent, TableModule, TableSelectAllChangeEvent} from 'primeng/table';
 import {ButtonModule} from 'primeng/button';
 import {CheckboxModule} from 'primeng/checkbox';
 import {DialogModule} from 'primeng/dialog';
@@ -61,10 +61,11 @@ export class TvaCautionListComponent implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
 
   // ── État local ────────────────────────────────────────────────────────────
-  tvas:         ImpotEtTaxeResponseDto[] = [];
-  totalRecords  = 0;
-  totalMontant  = 0;
-  loading       = false;
+  tvas:            ImpotEtTaxeResponseDto[] = [];
+  totalRecords     = 0;
+  totalMontant     = 0;
+  loading          = false;
+  selectAllLoading = false;
 
   readonly isAdmin = this.authService.isAdmin();
 
@@ -102,7 +103,14 @@ export class TvaCautionListComponent implements OnInit {
   // ── Computed helpers ──────────────────────────────────────────────────────
   get selectionCount(): number { return this.selectionMap.size; }
   get canFusionner(): boolean  { return this.selectionMap.size >= 2; }
+
+  /** Vrai quand TOUTES les TVA filtrées sont sélectionnées. */
+  get isAllSelected(): boolean {
+    return this.selectionMap.size === this.totalRecords && this.totalRecords > 0;
+  }
+
   get fusionMontantTotal(): number {
+    if (this.isAllSelected) return this.totalMontant;
     let sum = 0;
     this.selectionMap.forEach(t => sum += t.montant ?? 0);
     return sum;
@@ -208,6 +216,58 @@ export class TvaCautionListComponent implements OnInit {
   }
 
   // ── Gestion de la sélection ───────────────────────────────────────────────
+
+  /**
+   * Déclenché par (selectAllChange) du p-table.
+   * Un clic sur la case du header sélectionne TOUTES les pages (pas juste la courante).
+   */
+  onSelectAllChange(event: TableSelectAllChangeEvent): void {
+    if (event.checked) {
+      this.selectAllTvas();
+    } else {
+      this.clearSelection();
+    }
+  }
+
+  /**
+   * Charge TOUTES les TVA filtrées en une requête et les injecte dans selectionMap.
+   */
+  selectAllTvas(): void {
+    if (this.selectAllLoading || this.totalRecords === 0) return;
+
+    this.selectAllLoading = true;
+    this.cdr.markForCheck();
+
+    const { banqueId, libelle, montant } = this.filterForm.value;
+
+    const searchDto: ImpotEtTaxeSearchDto = {
+      motif: Motif.TVA_COMMISSION_CAUTION,
+      status: Status.PREVU,
+      ...(banqueId && { banqueId }),
+      ...(libelle  && { libelle  }),
+      ...(montant  && { montant  }),
+    };
+
+    this.tvaService.searchImpotEtTaxes(searchDto, 0, this.totalRecords, 'dateEmission,desc')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          res.page.content.forEach(t => this.selectionMap.set(t.id, t));
+          this.syncSelectionToCurrentPage();
+          this.selectAllLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.selectAllLoading = false;
+          this.cdr.markForCheck();
+          this.messageService.add({
+            severity: 'error', summary: 'Erreur',
+            detail: 'Impossible de sélectionner toutes les TVA.',
+          });
+        },
+      });
+  }
+
   clearSelection(): void {
     this.selectionMap.clear();
     this.currentPageSelection = [];

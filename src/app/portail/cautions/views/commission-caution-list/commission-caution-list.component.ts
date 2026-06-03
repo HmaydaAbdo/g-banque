@@ -11,7 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
+import { Table, TableLazyLoadEvent, TableModule, TableSelectAllChangeEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
@@ -66,7 +66,8 @@ export class CommissionCautionListComponent implements OnInit {
   commissions:  CommissionResponseDto[] = [];
   totalRecords  = 0;
   totalMontant  = 0;
-  loading       = false;
+  loading          = false;
+  selectAllLoading = false;
 
   readonly isAdmin = this.authService.isAdmin();
 
@@ -106,6 +107,11 @@ export class CommissionCautionListComponent implements OnInit {
 
   get selectionCount(): number { return this.selectionMap.size; }
 
+  /** Vrai quand TOUTES les commissions filtrées sont sélectionnées. */
+  get isAllSelected(): boolean {
+    return this.selectionMap.size === this.totalRecords && this.totalRecords > 0;
+  }
+
   /** Vrai si toutes les commissions sélectionnées appartiennent à la BMCI. */
   get selectionIsBmci(): boolean {
     if (this.selectionMap.size === 0) return false;
@@ -116,6 +122,8 @@ export class CommissionCautionListComponent implements OnInit {
   /** Fusion autorisée : ≥ 2 commissions ET banque ≠ BMCI. */
   get canFusionner(): boolean { return this.selectionMap.size >= 2 && !this.selectionIsBmci; }
   get fusionMontantTotal(): number {
+    // Si toutes les commissions filtrées sont sélectionnées, utiliser le total backend (déjà exact)
+    if (this.isAllSelected) return this.totalMontant;
     let sum = 0;
     this.selectionMap.forEach(c => sum += c.montant ?? 0);
     return sum;
@@ -228,19 +236,75 @@ export class CommissionCautionListComponent implements OnInit {
 
   // ── Filtres ───────────────────────────────────────────────────────────────
   applyFilters(): void {
+    this.selectionMap.clear();
+    this.currentPageSelection = [];
     this.table?.reset();
   }
 
   clearFilters(): void {
     this.filterForm.reset();
+    this.selectionMap.clear();
+    this.currentPageSelection = [];
     this.table?.reset();
   }
 
   // ── Gestion de la sélection ───────────────────────────────────────────────
+
+  /**
+   * Déclenché par (selectAllChange) du p-table.
+   * Un clic sur la case du header sélectionne TOUTES les pages (pas juste la courante).
+   */
+  onSelectAllChange(event: TableSelectAllChangeEvent): void {
+    if (event.checked) {
+      this.selectAllCommissions();
+    } else {
+      this.clearSelection();
+    }
+  }
+
   clearSelection(): void {
     this.selectionMap.clear();
     this.currentPageSelection = [];
     this.cdr.markForCheck();
+  }
+
+  /**
+   * Charge TOUTES les commissions filtrées en une requête et les injecte dans selectionMap.
+   * Déclenché par le bandeau "Sélectionner toutes les N commissions" (pattern Gmail).
+   */
+  selectAllCommissions(): void {
+    if (this.selectAllLoading || this.totalRecords === 0) return;
+
+    this.selectAllLoading = true;
+    this.cdr.markForCheck();
+
+    const { banqueId, libelle, montant } = this.filterForm.value;
+    const searchDto: CommissionSearchDto = {
+      operation: TransactionSource.CAUTION,
+      status:    Status.PREVU,
+      ...(banqueId && { banqueId }),
+      ...(libelle  && { libelle  }),
+      ...(montant  && { montant  }),
+    };
+
+    this.commissionService.searchCommissions(searchDto, 0, this.totalRecords, 'dateEmission,desc')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          res.page.content.forEach(c => this.selectionMap.set(c.id, c));
+          this.syncSelectionToCurrentPage();
+          this.selectAllLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.selectAllLoading = false;
+          this.cdr.markForCheck();
+          this.messageService.add({
+            severity: 'error', summary: 'Erreur',
+            detail: 'Impossible de sélectionner toutes les commissions.',
+          });
+        },
+      });
   }
 
   // ── Fusion ────────────────────────────────────────────────────────────────
@@ -290,39 +354,6 @@ export class CommissionCautionListComponent implements OnInit {
           });
         },
       });
-  }
-
-  // ── Toggle statut ─────────────────────────────────────────────────────────
-  toggleStatut(commission: CommissionResponseDto): void {
-    const versPaye = commission.status === Status.PREVU;
-    this.confirmationService.confirm({
-      message: versPaye
-        ? `Marquer la commission <strong>${commission.libelle}</strong> comme payée ?`
-        : `Repasser la commission <strong>${commission.libelle}</strong> en prévu ?`,
-      header: 'Confirmer',
-      icon: 'pi pi-info-circle',
-      acceptLabel: versPaye ? 'Marquer payée' : 'Repasser en prévu',
-      rejectLabel: 'Annuler',
-      acceptButtonStyleClass: versPaye ? 'p-button-success' : 'p-button-warning',
-      accept: () => {
-        this.commissionService.toggleCommissionStatus(commission.id)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe({
-            next: () => {
-              commission.status = versPaye ? Status.PAYE : Status.PREVU;
-              this.commissions  = [...this.commissions];
-              this.cdr.markForCheck();
-              this.messageService.add({
-                severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.',
-              });
-            },
-            error: err => this.messageService.add({
-              severity: 'error', summary: 'Erreur',
-              detail: extractErrorMessage(err, 'Impossible de modifier le statut.'),
-            }),
-          });
-      },
-    });
   }
 
   // ── Édition ───────────────────────────────────────────────────────────────

@@ -167,6 +167,8 @@
       [value]="tvas"
       [selection]="currentPageSelection"
       (selectionChange)="onSelectionChange($event)"
+      [selectAll]="isAllSelected"
+      (selectAllChange)="onSelectAllChange($event)"
       [lazy]="true"
       (onLazyLoad)="loadTvas($event)"
       [totalRecords]="totalRecords"

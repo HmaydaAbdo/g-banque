@@ -181,6 +181,8 @@
       [value]="commissions"
       [selection]="currentPageSelection"
       (selectionChange)="onSelectionChange($event)"
+      [selectAll]="isAllSelected"
+      (selectAllChange)="onSelectAllChange($event)"
       [lazy]="true"
       (onLazyLoad)="loadCommissions($event)"
       [totalRecords]="totalRecords"
@@ -225,16 +227,6 @@
           </td>
           <td class="text-center">
             <div class="flex justify-content-center gap-1">
-
-              <!-- Toggle statut -->
-              <p-button
-                *ngIf="isAdmin"
-                [icon]="commission.status === Status.PREVU ? 'pi pi-check-circle' : 'pi pi-replay'"
-                [severity]="commission.status === Status.PREVU ? 'success' : 'warning'"
-                [outlined]="true"
-                size="small"
-                [pTooltip]="commission.status === Status.PREVU ? 'Marquer payée' : 'Repasser en prévu'"
-                (onClick)="toggleStatut(commission)" />
 
               <!-- Éditer -->
               <p-button
