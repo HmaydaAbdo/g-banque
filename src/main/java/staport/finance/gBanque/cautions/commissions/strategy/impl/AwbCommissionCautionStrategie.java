@@ -92,12 +92,26 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
         YearMonth moisMainLevee = YearMonth.from(dateDeMainLevee);
         LocalDate dateEmission  = moisMainLevee.atEndOfMonth();
 
-        // Prorata sortie : du 1er du mois jusqu'à dateDeMainLevee (inclus)
-        long nombreJours = ChronoUnit.DAYS.between(
-                moisMainLevee.atDay(1),
-                dateDeMainLevee.plusDays(1) // borne exclusive
-        );
-        String suffixeLibelle = " — Prorata sortie : " + nombreJours + " j";
+        long nombreJours;
+        String suffixeLibelle;
+
+        // Cas particulier : dateDePrise et dateDeMainLevee dans le même mois
+        // → facturer uniquement les jours entre les deux dates (inclusif des deux bornes)
+        if (caution.getDateDePrise() != null
+                && YearMonth.from(caution.getDateDePrise()).equals(moisMainLevee)) {
+            nombreJours   = ChronoUnit.DAYS.between(
+                    caution.getDateDePrise(),
+                    dateDeMainLevee.plusDays(1) // borne exclusive
+            );
+            suffixeLibelle = " — Même mois (prise→clôture) : " + nombreJours + " j";
+        } else {
+            // Prorata sortie normal : du 1er du mois jusqu'à dateDeMainLevee (inclus)
+            nombreJours   = ChronoUnit.DAYS.between(
+                    moisMainLevee.atDay(1),
+                    dateDeMainLevee.plusDays(1) // borne exclusive
+            );
+            suffixeLibelle = " — Prorata sortie : " + nombreJours + " j";
+        }
 
         return buildCommission(caution, nombreJours, dateEmission, suffixeLibelle);
     }
