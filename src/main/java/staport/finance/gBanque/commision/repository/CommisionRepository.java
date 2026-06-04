@@ -25,8 +25,21 @@ public interface CommisionRepository extends JpaRepository<Commission, Long>, Jp
 
     /**
      * Garde d'idempotence : vérifie si une commission auto-générée existe déjà
-     * pour cette caution à cette date d'émission.
+     * pour cette caution à cette date d'émission exacte.
      * Empêche les doublons si le batch ou l'API est appelé plusieurs fois pour le même mois.
      */
     boolean existsByCaution_IdAndDateEmission(Long cautionId, LocalDate dateEmission);
+
+    /**
+     * Vérifie si une commission existe pour cette caution dans une plage de dates.
+     * Utilisé par le batch pour détecter qu'un prorata d'entrée a déjà été créé
+     * lors de la création de la caution, afin d'éviter une double facturation du
+     * mois d'entrée pour les banques à facturation mois courant (AWB, CDM).
+     *
+     * <p>Exemple : caution AWB créée le 19/05 → prorata dateEmission=19/05.
+     * Batch fin mai cherche une commission entre 01/05 et 31/05 → la trouve → skip.
+     */
+    boolean existsByCaution_IdAndDateEmissionBetween(Long cautionId,
+                                                      LocalDate debutPeriode,
+                                                      LocalDate finPeriode);
 }

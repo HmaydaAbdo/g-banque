@@ -67,30 +67,39 @@ public class CdmCommissionCautionStrategie implements CommissionCautionStrategie
 
     @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
-        LocalDate dateEmission = moisReference.atDay(1);
+        // Mois entier — le prorata d'entrée est géré à la création via calculerProrataEntree()
+        long nombreJours      = moisReference.lengthOfMonth();
+        String suffixeLibelle = " — Mois entier : " + nombreJours + " j";
+        return buildCommission(caution, nombreJours, moisReference.atDay(1), suffixeLibelle);
+    }
 
-        // Prorata entrée : 1er mois de la caution → de dateDePrise à fin de mois
-        long nombreJours;
-        String suffixeLibelle;
-        if (caution.getDateDePrise() != null
-                && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
-            nombreJours = ChronoUnit.DAYS.between(
-                    caution.getDateDePrise(),
-                    moisReference.atEndOfMonth().plusDays(1) // borne exclusive
-            );
-            suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
-        } else {
-            nombreJours    = moisReference.lengthOfMonth();
-            suffixeLibelle = " — Mois entier : " + nombreJours + " j";
-        }
+    /**
+     * Prorata d'entrée CDM — calculé à la création de la caution.
+     * <p>Jours : de {@code dateDePrise} jusqu'à la fin du mois d'entrée (incluse).
+     * {@code dateEmission = dateDePrise} — CDM exécute le batch le 1er du mois suivant
+     * avec dateEmission = 1er du nouveau mois, pas de conflit.
+     */
+    @Override
+    public Commission calculerProrataEntree(Caution caution) {
+        LocalDate dateDePrise = caution.getDateDePrise();
+        YearMonth moisEntree  = YearMonth.from(dateDePrise);
+        long nombreJours = ChronoUnit.DAYS.between(
+                dateDePrise,
+                moisEntree.atEndOfMonth().plusDays(1) // borne exclusive
+        );
+        String suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
+        return buildCommission(caution, nombreJours, dateDePrise, suffixeLibelle);
+    }
 
-        // Montant HT = (montant × taux × jours) / 36000
+    // ── Helper ────────────────────────────────────────────────────────────────
+
+    private Commission buildCommission(Caution caution, long nombreJours,
+                                       LocalDate dateEmission, String suffixeLibelle) {
         BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
                 .divide(DIVISEUR, 2, RoundingMode.HALF_UP);
 
-        // Appliquer le minimum CDM (70 MAD)
         if (montantCommission.compareTo(MIN_COMMISSION_HT) < 0) {
             montantCommission = MIN_COMMISSION_HT;
         }

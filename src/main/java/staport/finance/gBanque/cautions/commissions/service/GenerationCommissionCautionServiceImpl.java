@@ -102,10 +102,28 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
                 continue;
             }
 
-            // 4. Calcul de la commission (délégué à la stratégie) + liaison caution
+            // 4a. Garde prorata : pour les banques mois courant (AWB, CDM — facturerMoisSuivant=false),
+            //     si un prorata d'entrée a été généré à la création dans le mois de référence
+            //     (dateEmission=dateDePrise ∈ moisReference), on skip pour éviter de facturer
+            //     deux fois le même mois.
+            //     Pour les banques M+1 (BMCI, SAHAM BANK) cette garde n'est pas appliquée :
+            //     prorata dateEmission=dateDePrise ≠ dateEmission batch=31/M → pas de conflit.
+            if (!strategie.facturerMoisSuivant()
+                    && commissionRepository.existsByCaution_IdAndDateEmissionBetween(
+                            caution.getId(),
+                            moisReference.atDay(1),
+                            moisReference.atEndOfMonth())) {
+                logger.debug("Prorata d'entrée déjà présent pour la caution {} (banque={}) "
+                        + "dans le mois {} — mois courant skippé",
+                        caution.getNumeroCaution(), nomBanque, moisReference);
+                ignorees++;
+                continue;
+            }
+
+            // 4b. Calcul de la commission (délégué à la stratégie) + liaison caution
             Commission commission = strategie.calculer(caution, moisReference);
 
-            // 4b. Garde idempotence : une seule commission par caution par date d'émission
+            // 4c. Garde idempotence exacte : une seule commission par caution par date d'émission
             if (commissionRepository.existsByCaution_IdAndDateEmission(
                     caution.getId(), commission.getDateEmission())) {
                 logger.warn("Commission déjà existante pour la caution {} (banque={}) à la date {} — ignorée",

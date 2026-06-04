@@ -43,9 +43,18 @@ public class SahamBankCommissionCautionStrategie implements CommissionCautionStr
         return NOM_BANQUE;
     }
 
-    /** SAHAM BANK applique le prorata sur le premier mois de la caution. */
+    /** SAHAM BANK applique le prorata sur le premier mois de la caution (à la création). */
     @Override
     public boolean supporteProrataEntree() {
+        return true;
+    }
+
+    /**
+     * SAHAM BANK facture le mois suivant (M+1) :
+     * la commission batch émise fin M couvre les jours du mois M+1.
+     */
+    @Override
+    public boolean facturerMoisSuivant() {
         return true;
     }
 
@@ -55,25 +64,35 @@ public class SahamBankCommissionCautionStrategie implements CommissionCautionStr
 
     @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
-        LocalDate dateEmission = moisReference.atEndOfMonth();
+        // Toujours M+1 — le prorata d'entrée est géré à la création via calculerProrataEntree()
+        YearMonth moisCommission = moisReference.plusMonths(1);
+        long nombreJours         = moisCommission.lengthOfMonth();
+        String suffixeLibelle    = " — Mois entier : " + nombreJours + " j";
 
-        // Prorata entrée : 1er mois → jours réels de moisReference
-        // Mois suivants  : jours de moisReference+1 (décalage M+1)
-        long nombreJours;
-        String suffixeLibelle;
-        if (caution.getDateDePrise() != null
-                && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
-            nombreJours = ChronoUnit.DAYS.between(
-                    caution.getDateDePrise(),
-                    moisReference.atEndOfMonth().plusDays(1) // borne exclusive
-            );
-            suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
-        } else {
-            YearMonth moisCommission = moisReference.plusMonths(1);
-            nombreJours    = moisCommission.lengthOfMonth();
-            suffixeLibelle = " — Mois entier : " + nombreJours + " j";
-        }
+        return buildCommission(caution, nombreJours, moisReference.atEndOfMonth(), suffixeLibelle);
+    }
 
+    /**
+     * Prorata d'entrée SAHAM BANK — calculé à la création de la caution.
+     * <p>Jours : de {@code dateDePrise} jusqu'à la fin du mois d'entrée (incluse).
+     * {@code dateEmission = dateDePrise} — différent du 31/M du batch, pas de conflit.
+     */
+    @Override
+    public Commission calculerProrataEntree(Caution caution) {
+        LocalDate dateDePrise = caution.getDateDePrise();
+        YearMonth moisEntree  = YearMonth.from(dateDePrise);
+        long nombreJours = ChronoUnit.DAYS.between(
+                dateDePrise,
+                moisEntree.atEndOfMonth().plusDays(1) // borne exclusive
+        );
+        String suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
+        return buildCommission(caution, nombreJours, dateDePrise, suffixeLibelle);
+    }
+
+    // ── Helper ────────────────────────────────────────────────────────────────
+
+    private Commission buildCommission(Caution caution, long nombreJours,
+                                       LocalDate dateEmission, String suffixeLibelle) {
         BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))

@@ -125,7 +125,38 @@ public class CautionServiceImpl implements ICautionService {
         Caution sauvegardee = cautionRepository.save(caution);
         logger.info("Caution créée — id: {}, numeroCaution: {}", sauvegardee.getId(), sauvegardee.getNumeroCaution());
 
-        // 5. Rechargement avec associations pour la réponse (garantit la cohérence du DTO)
+        // 5. Prorata d'entrée — généré immédiatement à la création si la stratégie le supporte.
+        //    dateEmission = dateDePrise (≠ fin de mois du batch) pour éviter tout conflit d'idempotence.
+        strategieFactory.trouver(banque.getNom()).ifPresent(strategie -> {
+            if (strategie.supporteProrataEntree()) {
+                Commission prorata = strategie.calculerProrataEntree(sauvegardee);
+                prorata.setCaution(sauvegardee);
+                Commission prorataPersisteé = commissionRepository.save(prorata);
+                logger.info("Prorata d'entrée créé — caution id: {}, dateEmission: {}, montant: {}",
+                        sauvegardee.getId(), prorataPersisteé.getDateEmission(), prorataPersisteé.getMontant());
+
+                // TVA sur prorata — uniquement pour les banques dont la stratégie l'exige (ex. BMCI)
+                if (strategie.genererTva()) {
+                    BigDecimal montantTva = prorataPersisteé.getMontant()
+                            .multiply(TAUX_TVA)
+                            .setScale(2, java.math.RoundingMode.HALF_UP);
+
+                    ImpotEtTaxe tva = new ImpotEtTaxe();
+                    tva.setBanque(sauvegardee.getBanque());
+                    tva.setMontant(montantTva);
+                    tva.setMotif(Motif.TVA_COMMISSION_CAUTION);
+                    tva.setDateEmission(prorataPersisteé.getDateEmission());
+                    tva.setLibelle("TVA " + prorataPersisteé.getLibelle());
+                    tva.setObservation("TVA/prorata/caution/creation");
+                    tva.setCommission(prorataPersisteé);
+                    tva.setCaution(sauvegardee);
+                    impotEtTaxeRepository.save(tva);
+                    logger.info("TVA prorata créée — montant: {}", montantTva);
+                }
+            }
+        });
+
+        // 6. Rechargement avec associations pour la réponse (garantit la cohérence du DTO)
         return toDto(sauvegardee.getId());
     }
 

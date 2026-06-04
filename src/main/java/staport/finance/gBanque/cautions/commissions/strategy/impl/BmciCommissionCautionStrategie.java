@@ -51,40 +51,57 @@ public class BmciCommissionCautionStrategie implements CommissionCautionStrategi
         return true;
     }
 
-    /** BMCI applique le prorata sur le premier mois de la caution. */
+    /** BMCI applique le prorata sur le premier mois de la caution (à la création). */
     @Override
     public boolean supporteProrataEntree() {
         return true;
     }
 
+    /**
+     * BMCI facture le mois suivant (M+1) :
+     * la commission batch émise fin M couvre les jours du mois M+1.
+     */
+    @Override
+    public boolean facturerMoisSuivant() {
+        return true;
+    }
+
     @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
-        LocalDate dateEmission = moisReference.atEndOfMonth();
+        // Toujours M+1 — le prorata d'entrée est géré à la création via calculerProrataEntree()
+        YearMonth moisCommission = moisReference.plusMonths(1);
+        long nombreJours         = moisCommission.lengthOfMonth();
+        String suffixeLibelle    = " — Mois entier : " + nombreJours + " j";
 
-        // Prorata entrée : 1er mois de la caution → jours de moisReference
-        // Mois suivants  : nombre de jours de moisReference+1 (décalage BMCI)
-        long nombreJours;
-        String suffixeLibelle;
-        if (caution.getDateDePrise() != null
-                && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
-            nombreJours = ChronoUnit.DAYS.between(
-                    caution.getDateDePrise(),
-                    moisReference.atEndOfMonth().plusDays(1) // borne exclusive
-            );
-            suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
-        } else {
-            YearMonth moisCommission = moisReference.plusMonths(1);
-            nombreJours    = moisCommission.lengthOfMonth();
-            suffixeLibelle = " — Mois entier : " + nombreJours + " j";
-        }
+        return buildCommission(caution, nombreJours, moisReference.atEndOfMonth(), suffixeLibelle);
+    }
 
-        // Montant = (montant × taux × jours) / 36000
+    /**
+     * Prorata d'entrée BMCI — calculé à la création de la caution.
+     * <p>Jours : de {@code dateDePrise} jusqu'à la fin du mois d'entrée (incluse).
+     * {@code dateEmission = dateDePrise} — différent du 31/M du batch, pas de conflit.
+     */
+    @Override
+    public Commission calculerProrataEntree(Caution caution) {
+        LocalDate dateDePrise = caution.getDateDePrise();
+        YearMonth moisEntree  = YearMonth.from(dateDePrise);
+        long nombreJours = ChronoUnit.DAYS.between(
+                dateDePrise,
+                moisEntree.atEndOfMonth().plusDays(1) // borne exclusive
+        );
+        String suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
+        return buildCommission(caution, nombreJours, dateDePrise, suffixeLibelle);
+    }
+
+    // ── Helper ────────────────────────────────────────────────────────────────
+
+    private Commission buildCommission(Caution caution, long nombreJours,
+                                       LocalDate dateEmission, String suffixeLibelle) {
         BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
                 .divide(DIVISEUR, 2, RoundingMode.HALF_UP);
 
-        // appliquer le minimum
         if (montantCommission.compareTo(MIN_COMMISSION) < 0) {
             montantCommission = MIN_COMMISSION;
         }

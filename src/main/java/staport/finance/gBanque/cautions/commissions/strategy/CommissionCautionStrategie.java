@@ -40,11 +40,57 @@ public interface CommissionCautionStrategie {
     /**
      * Calcule et construit la commission mensuelle pour une caution active.
      *
+     * <p>Cette méthode ne tient <em>plus</em> compte du premier mois d'entrée :
+     * le prorata d'entrée est désormais généré une seule fois à la création de la caution
+     * via {@link #calculerProrataEntree(Caution)}.
+     *
      * @param caution       caution active avec {@code banque} et {@code nature} chargées
      * @param moisReference mois X de référence
      * @return entité {@link Commission} non persistée
      */
     Commission calculer(Caution caution, YearMonth moisReference);
+
+    /**
+     * Calcule le prorata d'entrée à la <strong>création</strong> de la caution.
+     *
+     * <p>Appelé une seule fois par {@code CautionServiceImpl.creer()} pour les banques
+     * dont {@link #supporteProrataEntree()} retourne {@code true}.
+     *
+     * <p>Comportement par défaut :
+     * <ul>
+     *   <li>{@code dateEmission = caution.getDateDePrise()}</li>
+     *   <li>{@code nombreJours = DAYS.between(dateDePrise, finDuMoisEntrée + 1)}</li>
+     *   <li>Même formule et minimum que {@link #calculer}</li>
+     * </ul>
+     *
+     * <p>Les stratégies peuvent surcharger cette méthode si leur logique de prorata
+     * diffère (ex. BMCI : minimum différent).
+     *
+     * @param caution caution nouvellement créée, avec {@code banque} et {@code nature} chargées
+     * @return entité {@link Commission} non persistée représentant le prorata d'entrée
+     */
+    default Commission calculerProrataEntree(Caution caution) {
+        // Implémentation par défaut — surchargée par chaque stratégie si besoin
+        return calculer(caution, java.time.YearMonth.from(caution.getDateDePrise()));
+    }
+
+    /**
+     * Indique si cette banque facture le mois <strong>suivant</strong> (M+1) plutôt que
+     * le mois courant.
+     *
+     * <p>Retourne {@code true} pour BMCI et SAHAM BANK — leur commission mensuelle couvre
+     * le mois M+1 en utilisant le nombre de jours de ce mois, bien que la {@code dateEmission}
+     * reste le dernier jour du mois de référence M.
+     *
+     * <p>Cette information est utilisée par le batch pour décider si la garde
+     * "prorata déjà créé ce mois" doit être appliquée : pour les banques M+1, le prorata
+     * (dateEmission = dateDePrise, ex. 19/05) et la commission batch (dateEmission = 31/05)
+     * ont des dates différentes — aucun conflit possible. Pour les banques mois courant
+     * (AWB, CDM), les deux pourraient couvrir le même mois → la garde s'applique.
+     */
+    default boolean facturerMoisSuivant() {
+        return false;
+    }
 
     /**
      * Indique si une TVA doit être générée séparément pour les commissions de cette banque.
