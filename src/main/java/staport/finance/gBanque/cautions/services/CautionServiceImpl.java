@@ -270,7 +270,31 @@ public class CautionServiceImpl implements ICautionService {
                 .orElseThrow(() -> new CautionBusinessException(
                         "Aucune stratégie de commission enregistrée pour la banque '" + nomBanque + "'."));
 
-        // 4. Calcul et persistance de la commission de clôture
+        // 4. Suppression du prorata d'entrée si même mois que la clôture ET encore PREVU.
+        //    Cas : caution ouverte et clôturée dans le même mois → le prorata d'entrée
+        //    (généré à la création, dateEmission=dateDePrise) couvrirait les mêmes jours
+        //    que la commission de clôture. On le supprime pour éviter la double facturation.
+        //    Si le prorata est déjà PAYE, il reste intact (il a déjà été réglé).
+        if (strategie.supporteProrataEntree()
+                && caution.getDateDePrise() != null
+                && YearMonth.from(caution.getDateDePrise())
+                            .equals(YearMonth.from(request.dateDeMainLevee()))) {
+
+            commissionRepository.findByCaution_IdAndDateEmissionAndStatus(
+                    caution.getId(), caution.getDateDePrise(), Status.PREVU)
+                .ifPresent(prorata -> {
+                    // Supprimer la TVA liée au prorata si elle existe (cas BMCI qui génère une TVA
+                    // sur le prorata d'entrée — la TVA doit disparaître avec la commission)
+                    impotEtTaxeRepository.findByCommission_Id(prorata.getId())
+                            .ifPresent(impotEtTaxeRepository::delete);
+                    commissionRepository.delete(prorata);
+                    logger.info("Prorata d'entrée PREVU supprimé (même mois clôture) — "
+                            + "caution id: {}, banque: {}, dateEmission prorata: {}",
+                            caution.getId(), nomBanque, caution.getDateDePrise());
+                });
+        }
+
+        // 5. Calcul et persistance de la commission de clôture
         Commission commission = strategie.calculerMainLevee(caution, request.dateDeMainLevee());
         commission.setCaution(caution);
         commission = commissionRepository.save(commission);

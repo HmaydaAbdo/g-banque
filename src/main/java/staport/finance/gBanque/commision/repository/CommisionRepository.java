@@ -42,4 +42,12 @@ public interface CommisionRepository extends JpaRepository<Commission, Long>, Jp
     boolean existsByCaution_IdAndDateEmissionBetween(Long cautionId,
                                                       LocalDate debutPeriode,
                                                       LocalDate finPeriode);
+
+    /**
+     * Récupère le prorata d'entrée PREVU d'une caution à une date d'émission exacte.
+     * Utilisé à la clôture pour supprimer le prorata non encore validé si la caution
+     * est clôturée dans le même mois que sa date de prise.
+     */
+    java.util.Optional<Commission> findByCaution_IdAndDateEmissionAndStatus(
+            Long cautionId, LocalDate dateEmission, Status status);
 }

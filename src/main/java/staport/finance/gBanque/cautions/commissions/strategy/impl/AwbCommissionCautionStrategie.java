@@ -28,6 +28,9 @@ import java.time.temporal.ChronoUnit;
  *   <li>Arrondi : HALF_UP, 2 décimales</li>
  *   <li>Minimum : 20,00 MAD</li>
  *   <li>TVA non générée séparément (default genererTva = false)</li>
+ *   <li>Prorata d'entrée géré par le <strong>batch</strong> (pas à la création) —
+ *       {@code supporteProrataEntree() = false}</li>
+ *   <li>Prorata de sortie actif — {@code supporteProrataSortie() = true}</li>
  * </ul>
  */
 @Component
@@ -49,11 +52,12 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
         return NOM_BANQUE;
     }
 
-    /** AWB applique le prorata sur le premier mois de la caution. */
-    @Override
-    public boolean supporteProrataEntree() {
-        return true;
-    }
+    /**
+     * AWB gère le prorata d'entrée dans le batch (pas à la création de la caution).
+     * Pas de gap possible car AWB facture le mois courant (pas M+1) :
+     * le batch de fin de mois calcule directement le prorata pour le 1er mois.
+     */
+    // supporteProrataEntree() → false par défaut — prorata géré dans calculer()
 
     /** AWB applique le prorata sur le dernier mois (clôture). */
     @Override
@@ -63,28 +67,23 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
 
     @Override
     public Commission calculer(Caution caution, YearMonth moisReference) {
-        // Mois entier — le prorata d'entrée est géré à la création via calculerProrataEntree()
-        long nombreJours   = moisReference.lengthOfMonth();
-        String suffixeLibelle = " — Mois entier : " + nombreJours + " j";
-        return buildCommission(caution, nombreJours, moisReference.atEndOfMonth(), suffixeLibelle);
-    }
+        long nombreJours;
+        String suffixeLibelle;
 
-    /**
-     * Prorata d'entrée AWB — calculé à la création de la caution.
-     * <p>Jours : de {@code dateDePrise} jusqu'à la fin du mois d'entrée (incluse).
-     * {@code dateEmission = dateDePrise} pour ne pas entrer en conflit avec la commission
-     * batch du même mois (dateEmission = dernier jour du mois).
-     */
-    @Override
-    public Commission calculerProrataEntree(Caution caution) {
-        LocalDate dateDePrise  = caution.getDateDePrise();
-        YearMonth moisEntree   = YearMonth.from(dateDePrise);
-        long nombreJours = ChronoUnit.DAYS.between(
-                dateDePrise,
-                moisEntree.atEndOfMonth().plusDays(1) // borne exclusive
-        );
-        String suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
-        return buildCommission(caution, nombreJours, dateDePrise, suffixeLibelle);
+        // Prorata entrée : 1er mois de la caution → de dateDePrise à fin de mois
+        if (caution.getDateDePrise() != null
+                && YearMonth.from(caution.getDateDePrise()).equals(moisReference)) {
+            nombreJours = ChronoUnit.DAYS.between(
+                    caution.getDateDePrise(),
+                    moisReference.atEndOfMonth().plusDays(1) // borne exclusive
+            );
+            suffixeLibelle = " — Prorata entrée : " + nombreJours + " j";
+        } else {
+            nombreJours    = moisReference.lengthOfMonth();
+            suffixeLibelle = " — Mois entier : " + nombreJours + " j";
+        }
+
+        return buildCommission(caution, nombreJours, moisReference.atEndOfMonth(), suffixeLibelle);
     }
 
     @Override

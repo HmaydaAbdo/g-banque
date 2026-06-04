@@ -125,7 +125,9 @@ public interface CommissionCautionStrategie {
      * sur les jours allant de la {@code dateDePrise} jusqu'à la fin de ce mois,
      * plutôt que sur le mois entier.
      *
-     * <p>Banques concernées : AWB, CDM, BMCI ({@code true}).
+     * <p>Banques concernées : BMCI, CDM, SAHAM BANK ({@code true}).
+     * AWB gère le prorata d'entrée dans le batch (pas à la création) :
+     * {@code supporteProrataEntree()} reste {@code false} pour AWB.
      */
     default boolean supporteProrataEntree() {
         return false;
