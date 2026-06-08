@@ -1,95 +1,168 @@
+:host {
+  display   : block;
+  background: var(--color-page-bg);
+  height    : 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: var(--font-primary);
+}
 
-.loginPage {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+// ── Canvas + orbs ────────────────────────────────────────
+.login-canvas {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 0; opacity: 0.35;
+}
+.orb {
+  position: fixed; border-radius: 50%;
+  filter: blur(120px); pointer-events: none; z-index: 0;
+}
+.orb-1 { width: 550px; height: 550px; background: rgba(79,70,229,0.15); top: -180px; right: -100px; }
+.orb-2 { width: 450px; height: 450px; background: rgba(99,102,241,0.10); bottom: -150px; left: -80px; }
+
+// ── Page ─────────────────────────────────────────────────
+.login-page {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem 1rem;
+}
+
+// ── Back link ────────────────────────────────────────────
+.login-back {
+  position: fixed; top: 1.5rem; left: 2rem;
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: var(--text-sm); letter-spacing: var(--tracking-wide); text-transform: uppercase;
+  color: var(--color-text-muted); text-decoration: none;
+  transition: color 0.2s; z-index: 10;
+  &:hover { color: var(--color-primary); }
+}
+
+// ── Card ─────────────────────────────────────────────────
+.login-card {
+  width: 100%; max-width: 420px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 3rem 2.5rem;
   position: relative;
-}
+  box-shadow: var(--shadow-xl);
+  animation: fadeInUp 0.7s ease both;
 
-.background-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('/assets/login-background.jpg'); /* Adjust path to your image */
-  background-size: cover;
-  background-position: center center;
-  filter: brightness(0.4); /* Darkened more as per new mockup */
-  z-index: 0;
-}
-
-.loginCard {
-  background-color: transparent; /* No background color, rely on border and shadow */
-  padding: 2rem 2rem; // Convert to rem (40px -> 2.5rem, 30px -> 2rem)
-  border-radius: 0.75rem; // Convert to rem (12px -> 0.75rem)
-  // New box-shadow and border from the mockup
-  box-shadow: 0 0 2rem rgba(14, 90, 237, 0.8); /* Stronger shadow, blueish tint */
-  border: 0.3125rem solid rgb(5, 10, 39); // Convert 5px to rem (5px -> 0.3125rem)
-  color: white;
-  text-align: center;
-  z-index: 1;
-  max-width: 30rem; // Convert 400px to rem (400px -> 25rem)
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem; // Convert 20px to rem (20px -> 1.25rem)
-}
-
-.app-title {
-  font-size: 2.8rem;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0.125rem 0.125rem 0.25rem rgba(0, 0, 0, 0.5);
-}
-
-.app-desc {
-  color: #fff;
-}
-
-.form-group {
-  margin-bottom: 0.9375rem; // Convert 15px to rem (15px -> 0.9375rem)
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem; // Convert 8px to rem (8px -> 0.5rem) - This adds gap between input and validation error
-
-  label {
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+  &::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 60%; height: 1px;
+    background: var(--color-primary);
+    opacity: 0.5;
   }
+}
 
+// ── Brand ─────────────────────────────────────────────────
+.login-brand {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.75rem; margin-bottom: 1.5rem;
+}
+.login-brand-mark {
+  width: 40px; height: 40px; border-radius: var(--radius-md);
+  background: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: var(--weight-bold); color: #fff;
+}
+.login-brand-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem; font-weight: 500;
+  color: var(--color-text-primary); letter-spacing: 0.03em;
+}
 
+.login-divider {
+  width: 100%; height: 1px; margin-bottom: 1.75rem;
+  background: var(--color-border);
+}
 
-  // Validation message styling
-  .validation-message {
-    color: var(--red-500, #ef4444);
-    font-size: 0.85rem;
-    margin-top: 0.5rem; // Add top margin to create gap
-    display: block; // Ensure it appears on a new line
-    text-align: left;
+.login-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem; font-weight: 500;
+  color: var(--color-text-primary);
+  text-align: center; margin-bottom: 0.5rem;
+}
+.login-sub {
+  font-size: var(--text-sm); color: var(--color-text-muted);
+  text-align: center; margin-bottom: 2rem;
+}
+
+// ── Form ─────────────────────────────────────────────────
+.login-form { display: flex; flex-direction: column; gap: 1.25rem; }
+.form-field  { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.field-label {
+  font-size: var(--text-xs); letter-spacing: var(--tracking-wider); text-transform: uppercase;
+  color: var(--color-text-secondary); font-weight: var(--weight-semibold);
+}
+
+.field-input-wrap { position: relative; display: flex; align-items: center; }
+
+.field-icon {
+  position: absolute; left: 0.9rem;
+  color: var(--color-text-muted); font-size: 0.9rem; pointer-events: none;
+}
+.field-icon-right {
+  position: absolute; right: 0.9rem;
+  color: var(--color-text-muted); font-size: 0.9rem; cursor: pointer;
+  transition: color 0.2s;
+  &:hover { color: var(--color-primary); }
+}
+.field-input {
+  width: 100%; padding: 0.8rem 2.5rem;
+  background: var(--color-surface-2) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--color-text-primary) !important;
+  font-size: var(--text-base);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+
+  &::placeholder { color: var(--color-text-muted); }
+  &:focus {
+    border-color: var(--color-border-focus) !important;
+    box-shadow: 0 0 0 3px var(--color-primary-light) !important;
   }
-
-
 }
 
-
-.full-width-input,
-.full-width-password,
-.full-width-button {
-  width: 100% !important; // Use !important to override PrimeNG's default widths if necessary
-  box-sizing: border-box; // Include padding and border in the element's total width
-}
-.error-message {
-  color: #ffcc00;
-  background-color: rgba(255, 0, 0, 0.3);
-  padding: 0.625rem; // Convert 10px to rem
-  border-radius: 0.3125rem; // Convert 5px to rem
-  margin-top: 0.9375rem; // Convert 15px to rem
-  font-weight: 500;
+.field-error {
+  font-size: var(--text-xs); color: var(--color-danger);
 }
 
+.login-error {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1rem; border-radius: var(--radius-md);
+  background: var(--color-danger-light);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger-text); font-size: var(--text-sm);
+}
 
+// ── Button ────────────────────────────────────────────────
+.btn-login {
+  width: 100%; padding: 0.95rem;
+  border-radius: var(--radius-md); border: none; cursor: pointer;
+  background: var(--color-primary);
+  color: #fff; font-size: var(--text-base); font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide); text-transform: uppercase;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: var(--shadow-md); margin-top: 0.5rem;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+.btn-arrow { transition: transform 0.2s; }
+.btn-login:hover .btn-arrow { transform: translateX(3px); }
+
+// ── Animation ─────────────────────────────────────────────
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: none; }
+}

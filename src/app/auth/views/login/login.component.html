@@ -1,58 +1,88 @@
 
-<div class="loginPage">
-  <div class="background-image"></div>
+<canvas #canvas class="login-canvas"></canvas>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
 
-  <div class="loginCard">
-    <div class="app-title">G-Banque</div>
-    <div class="app-desc">La performance financière à portée de main</div>
+<div class="login-page">
 
-    <form [formGroup]="loginForm" (ngSubmit)="login()">
+  <!-- Nav retour -->
+  <a routerLink="/" class="login-back">
+    <i class="pi pi-arrow-left"></i>
+    Accueil
+  </a>
 
-      <div class="form-group">
-        <p-inputGroup>
-          <input pInputText placeholder="Nom d'utilisateur" formControlName="username" class="full-width-input" />
-          <p-inputGroupAddon>
-            <i class="pi pi-user"></i>
-          </p-inputGroupAddon>
-        </p-inputGroup>
-        <small
-          id="username-help"
-          *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
-          class="p-error validation-message"
-        >
+  <div class="login-card">
+
+    <!-- Logo -->
+    <div class="login-brand">
+      <div class="login-brand-mark">G</div>
+      <span class="login-brand-name">G-Banque</span>
+    </div>
+
+    <div class="login-divider"></div>
+
+    <h1 class="login-title">Connexion</h1>
+    <p class="login-sub">Accédez à votre espace de gestion bancaire</p>
+
+    <form [formGroup]="loginForm" (ngSubmit)="login()" class="login-form">
+
+      <!-- Username -->
+      <div class="form-field">
+        <label class="field-label">Nom d'utilisateur</label>
+        <div class="field-input-wrap">
+          <i class="pi pi-user field-icon"></i>
+          <input
+            pInputText
+            type="text"
+            placeholder="Entrez votre identifiant"
+            formControlName="username"
+            class="field-input"
+          />
+        </div>
+        <small *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" class="field-error">
           Nom d'utilisateur est requis.
         </small>
       </div>
 
-      <div class="form-group">
-        <p-inputGroup>
-          <input pInputText placeholder="Mot de passe" [type]="passwordInputType" formControlName="password" class="full-width-input" />
-          <p-inputGroupAddon>
-            <i [class]="passwordVisible ? 'pi pi-eye-slash' : 'pi pi-eye'" (click)="togglePasswordVisibility()"></i>
-          </p-inputGroupAddon>
-        </p-inputGroup>
-        <small
-          *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-          class="p-error validation-message"
-        >
+      <!-- Password -->
+      <div class="form-field">
+        <label class="field-label">Mot de passe</label>
+        <div class="field-input-wrap">
+          <i class="pi pi-lock field-icon"></i>
+          <input
+            pInputText
+            [type]="passwordInputType"
+            placeholder="Entrez votre mot de passe"
+            formControlName="password"
+            class="field-input"
+          />
+          <i
+            [class]="'pi ' + (passwordVisible ? 'pi-eye-slash' : 'pi-eye') + ' field-icon-right'"
+            (click)="togglePasswordVisibility()"
+          ></i>
+        </div>
+        <small *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="field-error">
           Mot de passe est requis.
         </small>
       </div>
 
-      <p-button
-        label="Connection"
-        icon="pi pi-arrow-right"
-        iconPos="right"
-        type="submit"
-        [loading]="isLoading"
-        [disabled]="loginForm.invalid || isLoading"
-        class="full-width-button"
-      ></p-button>
-
-      <div *ngIf="errorMessage" class="error-message">
+      <!-- Error -->
+      <div *ngIf="errorMessage" class="login-error">
+        <i class="pi pi-exclamation-circle"></i>
         {{ errorMessage }}
       </div>
 
+      <!-- Submit -->
+      <button
+        type="submit"
+        class="btn-login"
+        [disabled]="loginForm.invalid || isLoading"
+      >
+        <span *ngIf="!isLoading">Se connecter <span class="btn-arrow">→</span></span>
+        <span *ngIf="isLoading"><i class="pi pi-spin pi-spinner"></i> Connexion...</span>
+      </button>
+
     </form>
+
   </div>
 </div>

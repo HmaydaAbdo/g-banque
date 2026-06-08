@@ -247,7 +247,9 @@ export class LesEncoursComponent implements OnInit {
       this.rapprochementService.cloturerDefinitivement(this.rapprochementId).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Clôture définitive effectuée.' });
-          this.router.navigate(['/portail/etats-des-encours', this.banqueId, this.rapprochementId, 'select']);
+          this.clotureLoading = false;
+          this.displayClotureDialog = false;
+          this.router.navigate(['/portail/etats-des-encours', this.banqueId, 'select']);
         },
         error: (err) => {
           this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message });

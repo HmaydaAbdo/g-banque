@@ -99,6 +99,15 @@
 
   // Brand — Indigo
   --color-primary        : #4f46e5;
+
+  // ── Landing / Login — Dark luxury palette ──────────────
+  --color-landing-bg     : #060912;
+  --color-landing-surface: rgba(255,255,255,0.04);
+  --color-gold           : #c9a84c;
+  --color-gold-light     : #e8cc7a;
+  --color-gold-dim       : rgba(201,168,76,0.15);
+  --color-gold-border    : rgba(201,168,76,0.18);
+  --color-gold-glow      : rgba(201,168,76,0.30);
   --color-primary-hover  : #4338ca;
   --color-primary-active : #3730a3;
   --color-primary-light  : #ede9fe;
