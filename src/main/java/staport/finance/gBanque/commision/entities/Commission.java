@@ -10,13 +10,7 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
-@Table(
-    name = "commission",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uk_commission_caution_date_emission",
-        columnNames = { "caution_id", "date_emission" }
-    )
-)
+@Table(name = "commission")
 public class Commission {
 
     @Id
