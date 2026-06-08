@@ -1,15 +1,18 @@
-<div class="w-screen flex justify-content-between p-1 border-bottom-3 surface-border text-xs">
+<div class="w-screen flex justify-content-between p-1 border-bottom-1"
+     style="background:var(--color-surface);border-color:var(--color-border)">
 
+  <!-- Logo -->
   <div class="flex align-items-center">
-    <img src="assets/staportLogo.png" alt="Your Logo" class="block mx-auto" style="height: 2rem; width: 6.52rem;" />
+    <img src="assets/staportLogo.png" alt="G-Banque" class="block mx-auto" style="height:2rem;width:6.52rem;" />
   </div>
 
+  <!-- Navigation principale (desktop) -->
   <div>
     <nav class="hidden lg:flex align-items-center">
       <ul class="list-none flex justify-content-between p-0 m-0">
         <li *ngFor="let item of filteredMenuItems">
           <a pRipple [routerLink]="item.routerLink" routerLinkActive="active-nav-link"
-             class="flex align-items-center nav-link hover:bg-blue-50 border-round-xl p-3">
+             class="flex align-items-center nav-link border-round-xl p-3">
             <span [class]="item.icon"></span>
             <span class="ml-2 nav-label">{{ item.label }}</span>
           </a>
@@ -18,34 +21,42 @@
     </nav>
   </div>
 
-  <div class="flex gap-3 align-items-center">
+  <!-- Actions -->
+  <div class="flex gap-2 align-items-center">
 
-    <div class="relative inline-flex align-items-center justify-content-center
-              w-3rem h-3rem border border-round surface-border
-              text-blue-500 hover:bg-blue-50 cursor-pointer" (click)="openSidebar.emit()">
-      <i class="pi pi-bars text-2xl"  pTooltip="Ouvrir le menu de navigation principale" tooltipPosition="bottom"></i>
-    </div>
+    <!-- Menu hamburger -->
+    <button class="nav-action-btn" (click)="openSidebar.emit()"
+            pTooltip="Menu de navigation" tooltipPosition="bottom">
+      <i class="pi pi-bars text-xl"></i>
+    </button>
 
-    <!-- Notification Bell Icon with Badge -->
-    <div class="relative inline-flex align-items-center justify-content-center
-              w-3rem h-3rem border border-round surface-border
-              text-blue-500 hover:bg-blue-50 cursor-pointer p-overlay-badge" (click)="showNotificationDialog()">
-      <i class="pi pi-bell text-xl" pTooltip="Notifications" tooltipPosition="bottom"></i>
-      <!-- Display unreadCount, hide if 0 -->
+    <!-- Notifications -->
+    <button class="nav-action-btn p-overlay-badge" (click)="showNotificationDialog()"
+            pTooltip="Notifications" tooltipPosition="bottom">
+      <i class="pi pi-bell text-lg"></i>
       <p-badge *ngIf="unreadCount > 0" [value]="unreadCount" severity="danger" styleClass="mt-2 p-0"></p-badge>
-    </div>
+    </button>
 
-    <div class="relative inline-flex align-items-center justify-content-center
-              w-3rem h-3rem border border-round border-red-300
-              text-red-500 hover:bg-red-50 cursor-pointer" (click)="confirmLogout($event)">
-      <i class="pi pi-power-off text-2xl" [class.p-button-loading]="loading"  pTooltip="Se déconnecter de votre compte" tooltipPosition="bottom"></i>
-    </div>
+    <!-- Toggle dark / light mode -->
+    <button class="nav-action-btn"
+            [class.nav-action-btn--active]="themeService.isDark"
+            (click)="themeService.toggle()"
+            [pTooltip]="themeService.isDark ? 'Passer en mode clair' : 'Passer en mode sombre'"
+            tooltipPosition="bottom">
+      <i [class]="themeService.isDark ? 'pi pi-sun text-lg' : 'pi pi-moon text-lg'"></i>
+    </button>
+
+    <!-- Déconnexion -->
+    <button class="nav-action-btn nav-action-btn--danger" (click)="confirmLogout($event)"
+            pTooltip="Se déconnecter" tooltipPosition="bottom">
+      <i class="pi pi-power-off text-lg" [class.p-button-loading]="loading"></i>
+    </button>
 
   </div>
 
 </div>
 
-<!-- Dialog for Notifications -->
+<!-- Dialog Notifications -->
 <p-dialog
   header="Notifications"
   [(visible)]="notificationDialogVisible"
@@ -57,8 +68,8 @@
   <ng-template pTemplate="content">
     <app-notification-list
       [notificationService]="notificationService"
-      (notificationMarkedAsRead)="notificationDialogVisible = false"
-    ></app-notification-list>
+      (notificationMarkedAsRead)="notificationDialogVisible = false">
+    </app-notification-list>
   </ng-template>
 </p-dialog>
 

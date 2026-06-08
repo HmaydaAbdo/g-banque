@@ -5,42 +5,48 @@
 <!-- Layout Principal -->
 <div class="flex h-screen w-full">
 
-  <!-- Sidebar -->
-  <div class="col-fixed w-14rem h-full text-xs sidebar-gradient white-space-nowrap overflow-y-auto border-right-1 surface-border">
-    <ul class="list-none p-2">
+  <!-- Sidebar navigation encours -->
+  <div class="sidebar-nav flex flex-column h-full">
+    <ul class="sidebar-nav__scroll list-none p-2 m-0">
       @for (item of items; track item.url) {
         <!-- Items sans sous-menu -->
         <li *ngIf="item.routerLink && !item.items" class="mb-1">
           <a pRipple
              [routerLink]="item.routerLink"
-routerLinkActive="active-sidebar-link"
-             class="flex align-items-center cursor-pointer p-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:bg-blue-100">
-            <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
-            <span>{{ item.label }}</span>
+             routerLinkActive="active-sidebar-link"
+             [pTooltip]="item.label"
+             tooltipPosition="right"
+             class="flex align-items-center cursor-pointer p-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:surface-hover">
+            <i *ngIf="item.icon" [class]="item.icon" class="nav-icon"></i>
+            <span class="nav-label">{{ item.label }}</span>
           </a>
         </li>
 
         <!-- Items avec sous-menu -->
         <li *ngIf="item.items" class="mb-1">
           <div pRipple (click)="toggleMenuItem(item)"
-               class="flex align-items-center justify-content-between p-2 cursor-pointer border-round-lg hover:bg-blue-100 transition-all transition-duration-150 p-ripple">
-            <div class="flex align-items-center">
-              <i *ngIf="item.icon" [class]="item.icon + ' mr-2'"></i>
-              <span>{{ item.label }}</span>
+               class="flex align-items-center justify-content-between p-2 cursor-pointer border-round-lg hover:surface-hover transition-all transition-duration-150 p-ripple"
+               [pTooltip]="item.label"
+               tooltipPosition="right">
+            <div class="flex align-items-center min-w-0">
+              <i *ngIf="item.icon" [class]="item.icon" class="nav-icon"></i>
+              <span class="nav-label">{{ item.label }}</span>
             </div>
-            <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="text-xs"></i>
+            <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="nav-chevron text-xs flex-shrink-0"></i>
           </div>
 
           <!-- Sous-menu -->
-          <ul class="list-none pl-0 pb-8 mt-1" [ngClass]="{'hidden': !item.expanded}">
+          <ul class="nav-submenu list-none pl-0 mt-1" [ngClass]="{'hidden': !item.expanded}">
             <ng-container *ngFor="let subItem of item.items">
               <li *ngIf="subItem.routerLink && !subItem.items" class="mb-1">
                 <a pRipple
                    [routerLink]="subItem.routerLink"
-            routerLinkActive="active-sidebar-link"
-                   class="flex align-items-center cursor-pointer m-0 px-3 py-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:bg-blue-50">
-                  <i *ngIf="subItem.icon" [class]="subItem.icon + ' mr-2'"></i>
-                  <span class="font-medium">{{ subItem.label }}</span>
+                   routerLinkActive="active-sidebar-link"
+                   [pTooltip]="subItem.label"
+                   tooltipPosition="right"
+                   class="flex align-items-center cursor-pointer m-0 px-2 py-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:surface-hover">
+                  <i *ngIf="subItem.icon" [class]="subItem.icon" class="nav-icon nav-icon--sub"></i>
+                  <span class="nav-label font-medium">{{ subItem.label }}</span>
                 </a>
               </li>
             </ng-container>
@@ -51,7 +57,7 @@ routerLinkActive="active-sidebar-link"
   </div>
 
   <!-- Zone de Contenu Principale -->
-  <div class="flex flex-column px-2 gap-2 bg-white text-xs overflow-y-auto w-full">
+  <div class="flex flex-column px-2 gap-2 overflow-y-auto flex-1" style="background:var(--color-surface)">
 
     <!-- Header avec Breadcrumb et Action -->
     <div class="flex align-items-center justify-content-between">
@@ -93,8 +99,8 @@ routerLinkActive="active-sidebar-link"
 
   <div class="flex flex-column align-items-center gap-3 py-3">
     <div class="flex align-items-center justify-content-center border-round-xl"
-         style="width:4rem;height:4rem;background:linear-gradient(135deg,#fff3cd,#ffe69c)">
-      <i [class]="(isProvisoire ? 'pi pi-lock' : 'pi pi-lock-open') + ' text-2xl'" style="color:#856404"></i>
+         class="cloture-dialog-icon">
+      <i [class]="(isProvisoire ? 'pi pi-lock' : 'pi pi-lock-open') + ' text-2xl'" class="cloture-dialog-icon__i"></i>
     </div>
     <div class="text-center">
       <p class="text-900 font-semibold text-lg m-0">{{ isProvisoire ? 'Confirmer la clôture définitive' : 'Confirmer la clôture provisoire' }}</p>

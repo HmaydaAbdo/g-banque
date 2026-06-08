@@ -7,7 +7,9 @@
 
 
 
-    <form [formGroup]="searchForm" class="flex flex-row justify-content-between flex-wrap align-items-center">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-row justify-content-between flex-wrap align-items-center">
       <span class="text-lg font-medium ">Total = <strong> {{ totalEncours  | number:'1.2-2'}} MAD </strong></span>
 
       <span class="p-float-label">
@@ -41,6 +43,7 @@
               severity="primary" routerLink="/portail/decomptes/new" [queryParams]="{banqueId: banqueId}"></button>
 
     </form>
+</div>
 
 
   </div>
@@ -89,7 +92,7 @@
           <td>{{ d.dateEmission | date: 'dd/MM/yyyy' }}</td>
           <td>{{ d.marcheNumero }}</td>
           <td>{{ d.banqueName }}</td>
-          <td>{{ d.montant | number:'1.2-2' }} MAD</td>
+          <td><span class="amount-badge credit-badge">{{ d.montant | number:'1.2-2' }}</span></td>
           <td class="flex flex-row gap-2">
 
             <button type="button" pButton pRipple icon="pi pi-check"

@@ -1,6 +1,6 @@
 <p-sidebar #sidebarRef [(visible)]="sidebarVisible" styleClass="w-20rem">
   <ng-template pTemplate="headless">
-    <div class="flex flex-column  text-xs h-full">
+    <div class="flex flex-column text-xs sidebar-shell">
       <div class="flex justify-content-between">
         <span class="inline-flex align-items-center pt-2 pl-4">
           <img src="assets/staportLogo.png" alt="Your Logo" class="block mx-auto" style="height: 3rem; width: 8.86rem;" />
@@ -12,7 +12,7 @@
 
       <hr class="mt-3 mx-3 border-top-1 border-3 surface-border" />
 
-      <div class="overflow-y-auto">
+      <div class="sidebar-scroll">
         <ul class="list-none p-3 m-0">
           <ng-container class="white-space-nowrap" *ngFor="let item of filteredSidebarItems">
 

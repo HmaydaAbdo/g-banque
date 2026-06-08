@@ -4,34 +4,27 @@
 <div class="flex flex-column gap-3 w-full">
 
   <!-- Section Recherche -->
-  <div [formGroup]="searchForm" class="surface-card border-round-xl shadow-2 p-1">
-    <div class="grid">
-      <div class="col-12 md:col-3 lg:col-2">
-        <span class="p-input-icon-left w-full">
+  <div class="pg-filters" [formGroup]="searchForm">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+<span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
           <input pInputText type="text" formControlName="libelle"
                  placeholder=" libellé..."
                  class="w-full" />
         </span>
-      </div>
-      <div class="col-12 md:col-6 lg:col-2">
-        <span class="p-input-icon-left w-full">
+<span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
           <input pInputText type="text" formControlName="observation"
                  placeholder="observation..."
                  class="w-full" />
         </span>
-      </div>
-      <div class="col-12 md:col-6 lg:col-2">
-        <span class="p-input-icon-left w-full">
+<span class="p-input-icon-left w-full">
           <i class="pi pi-money-bill"></i>
           <input pInputText type="number" formControlName="montant"
                  placeholder="montant..."
                  class="w-full" />
         </span>
-      </div>
-      <div class="col-12 md:col-6 lg:col-2">
-        <p-multiSelect
+<p-multiSelect
           formControlName="transactionSources"
           [options]="transactionSourceOptions"
           optionLabel="label"
@@ -40,9 +33,7 @@
           appendTo="body"
           [style]="{'width':'100%'}">
         </p-multiSelect>
-      </div>
-      <div class="col-12 md:col-6 lg:col-2">
-        <span class="p-input-icon-left w-full">
+<span class="p-input-icon-left w-full">
           <i class="pi pi-calendar"></i>
           <p-calendar
             formControlName="dateOperationDebut"
@@ -54,9 +45,7 @@
             >
           </p-calendar>
         </span>
-      </div>
-      <div class="col-12 md:col-6 lg:col-2">
-        <span class="p-input-icon-left w-full">
+<span class="p-input-icon-left w-full">
           <i class="pi pi-calendar"></i>
           <p-calendar
             formControlName="dateOperationFin"
@@ -68,13 +57,10 @@
             [style]="{'width':'100%'}">
           </p-calendar>
         </span>
-      </div>
-
-    </div>
-  </div>
+</div>
 
   <!-- Section Tableau -->
-  <div class="surface-card border-round-xl shadow-2 p-1">
+  <div class="pg-table">
     <p-table
       #dt
       [value]="transactions"
@@ -89,71 +75,51 @@
       dataKey="id"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} transactions"
       [showCurrentPageReport]="true"
-      styleClass="p-datatable-sm text-xs"
+      styleClass="p-datatable-sm p-datatable-gridlines"
       [tableStyle]="{'min-width': '50rem'}"
     >
 
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="dateEmission" class="white-space-nowrap">
-            <div class="flex align-items-center gap-2">
-              D.émission
+            D.émission
               <p-sortIcon field="dateEmission"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="dateOperations" class="white-space-nowrap">
-            <div class="flex align-items-center gap-2">
-              D.opération
+            D.opération
               <p-sortIcon field="dateOperations"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="dateValeur" class="white-space-nowrap">
-            <div class="flex align-items-center gap-2">
-              D.valeur
+            D.valeur
               <p-sortIcon field="dateValeur"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="libelle">
-            <div class="flex align-items-center gap-2">
-              Libellé
+            Libellé
               <p-sortIcon field="libelle"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="debit" class="text-right">
-            <div class="flex align-items-center justify-content-end gap-2">
-              Débit
+            Débit
               <p-sortIcon field="debit"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="credit" class="text-right">
-            <div class="flex align-items-center justify-content-end gap-2">
-              Crédit
+            Crédit
               <p-sortIcon field="credit"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="tvaDeductible" class="text-right white-space-nowrap">
-            <div class="flex align-items-center justify-content-end gap-2">
-              TVA Déductible
+            TVA Déductible
               <p-sortIcon field="tvaDeductible"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="tvaCollectee" class="text-right white-space-nowrap">
-            <div class="flex align-items-center justify-content-end gap-2">
-              TVA Collectée
+            TVA Collectée
               <p-sortIcon field="tvaCollectee"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="observation">
-            <div class="flex align-items-center gap-2">
-              Observation
+            Observation
               <p-sortIcon field="observation"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="transactionSource">
-            <div class="flex align-items-center gap-2">
-              Source
+            Source
               <p-sortIcon field="transactionSource"></p-sortIcon>
-            </div>
           </th>
           <th class="text-center">Actions</th>
         </tr>
@@ -174,36 +140,37 @@
             <span class="font-medium text-900">{{ transaction.libelle }}</span>
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="transaction.debit !== 0" class="font-bold text-orange-600">
+            <span *ngIf="transaction.debit !== 0" class="amount-badge debit-badge">
               {{ transaction.debit | number:'1.2-2' }}
             </span>
-            <span *ngIf="transaction.debit === 0" class="text-500">-</span>
+            <span *ngIf="transaction.debit === 0" class="text-500">—</span>
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="transaction.credit !== 0" class="font-bold text-green-600">
+            <span *ngIf="transaction.credit !== 0" class="amount-badge credit-badge">
               {{ transaction.credit | number:'1.2-2' }}
             </span>
-            <span *ngIf="transaction.credit === 0" class="text-500">-</span>
+            <span *ngIf="transaction.credit === 0" class="text-500">—</span>
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="transaction.tvaDeductible !== null" class="text-900">
+            <span *ngIf="transaction.tvaDeductible !== null" class="amount-badge credit-badge">
               {{ transaction.tvaDeductible | number:'1.2-2' }}
             </span>
-            <span *ngIf="transaction.tvaDeductible === null" class="text-500">-</span>
+            <span *ngIf="transaction.tvaDeductible === null" class="text-500">—</span>
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="transaction.tvaCollectee !== null" class="text-900">
+            <span *ngIf="transaction.tvaCollectee !== null" class="amount-badge debit-badge">
               {{ transaction.tvaCollectee | number:'1.2-2' }}
             </span>
-            <span *ngIf="transaction.tvaCollectee === null" class="text-500">-</span>
+            <span *ngIf="transaction.tvaCollectee === null" class="text-500">—</span>
           </td>
           <td>
             <span class="text-700">{{ transaction.observation }}</span>
           </td>
           <td>
-            <span class="text-700">{{ transaction.transactionSource }}</span>
+            <app-source-badge [source]="transaction.transactionSource"></app-source-badge>
           </td>
-          <td class="flex flex-row gap-1 text-center">
+          <td>
+            <div class="flex flex-row gap-1 justify-content-center align-items-center">
             <p-button
               [outlined]="true"
               [rounded]="true"
@@ -224,6 +191,7 @@
               icon="pi pi-trash"
               (onClick)="rollbackTransaction(transaction.id)">
             </p-button>
+            </div>
           </td>
         </tr>
       </ng-template>
@@ -241,14 +209,18 @@
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
-        <tr>
-          <td colspan="10" class="text-center p-4">
-            <div class="flex flex-column align-items-center gap-3">
-              <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
-              <div class="text-700 font-semibold">Chargement des transactions...</div>
-              <div class="text-500 text-sm">Veuillez patienter</div>
-            </div>
-          </td>
+        <tr *ngFor="let i of [1,2,3,4,5,6]">
+          <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="7rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="5rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+          <td><p-skeleton width="5rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+          <td><p-skeleton width="4rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+          <td><p-skeleton width="4rem" height="1rem" styleClass="ml-auto"></p-skeleton></td>
+          <td><p-skeleton width="6rem" height="1rem"></p-skeleton></td>
+          <td><p-skeleton width="5rem" height="1.5rem" borderRadius="1rem"></p-skeleton></td>
+          <td><p-skeleton width="4rem" height="1.75rem" borderRadius="var(--radius-md)"></p-skeleton></td>
         </tr>
       </ng-template>
 

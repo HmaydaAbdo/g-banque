@@ -1,15 +1,15 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column gap-2 p-2    h-screen overflow-y-scroll">
+<div class="card flex flex-column gap-2 p-2 w-full">
 
 
   <div class="p-card shadow-2  p-2 flex flex-column  gap-4 ">
 
 
-    <form [formGroup]="searchForm" (ngSubmit)="applyFilters()" class="flex flex-row  justify-content-between align-items-center ">
-
-      <span class="text-lg font-medium ">Total = <strong>  {{ totalEncours | number:'1.2-2' }} MAD </strong></span>
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" (ngSubmit)="applyFilters()" class="flex flex-row  justify-content-between align-items-center ">
 
       <!-- Filtre 1: Libellé (Input) -->
       <div class=" w-full sm:w-auto">
@@ -25,7 +25,15 @@
               icon="pi pi-plus" severity="primary" routerLink="/portail/frais-bancaire/new" [queryParams]="{banqueId: banqueId}"></button>
 
     </form>
+</div>
 
+  </div>
+
+  <!-- Total band -->
+  <div class="total-band total-band--debit">
+    <i class="pi pi-arrow-down-left"></i>
+    <span class="total-band__label">Total décaissements</span>
+    <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
   </div>
 
   <div class="pb-8">
@@ -58,7 +66,7 @@
         <tr>
           <td>{{ fraisBancaire.libelle }}</td>
           <td>{{ fraisBancaire.banqueNom }}</td>
-          <td>{{ fraisBancaire.montant | number:'1.2-2' }} </td>
+          <td><span class="amount-badge debit-badge">{{ fraisBancaire.montant | number:'1.2-2' }}</span> </td>
           <td>{{ fraisBancaire.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>{{ fraisBancaire.status }}</td>
           <td class="flex flex-row gap-2">

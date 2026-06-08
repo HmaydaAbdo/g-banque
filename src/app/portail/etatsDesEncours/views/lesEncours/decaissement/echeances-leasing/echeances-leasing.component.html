@@ -8,7 +8,9 @@
 
 
 
-    <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center  gap-2">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center  gap-2">
       <span class="text-lg font-medium white-space-nowrap">Total = <strong>{{ encoursResponse?.totalEncours | number: '1.2-2' }} MAD</strong> </span>
 
       <span class="p-float-label">
@@ -25,6 +27,7 @@
           <label for="montant">Montant</label>
         </span>
     </form>
+</div>
 
   </div>
 
@@ -64,7 +67,7 @@
           <td>{{ echeance.numeroContrat }}</td>
           <td>{{ echeance.numeroEcheance }}</td>
           <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-          <td>{{ echeance.montantTTC | number: '1.2-2'}} MAD</td>
+          <td><span class="amount-badge debit-badge">{{ echeance.montantTTC | number:'1.2-2' }}</span></td>
           <td>
             <button
               type="button" pButton pRipple icon="pi pi-check"

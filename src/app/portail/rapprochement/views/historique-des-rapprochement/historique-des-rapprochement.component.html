@@ -25,7 +25,9 @@
 
   <p-toolbar styleClass="bg-white">
     <ng-template pTemplate="left">
-      <form [formGroup]="searchForm" class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
+      <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
 
         <div class="p-input-icon-left">
           <i class="pi pi-building"></i>
@@ -70,6 +72,7 @@
           </p-dropdown>
         </div>
       </form>
+</div>
     </ng-template>
 
     <ng-template pTemplate="right">
@@ -120,15 +123,15 @@
         <tr>
           <td >{{ rapprochement.dateRapprochement  | date:'MM/yyyy'}}</td>
           <td>{{ rapprochement.banqueNom }}</td>
-          <td>{{ rapprochement.soldeDebut | number:'1.2-2' }} </td>
-          <td>{{ rapprochement.soldeFin | number:'1.2-2' }} </td>
-          <td class="text-red-600">{{ rapprochement.totalDebit | number:'1.2-2' }} </td>
-          <td class="text-green-600">{{ rapprochement.totalCredit | number:'1.2-2' }} </td>
+          <td><span class="num" [class.num-credit]="rapprochement.soldeDebut >= 0" [class.num-debit]="rapprochement.soldeDebut < 0">{{ rapprochement.soldeDebut | number:'1.2-2' }}</span></td>
+          <td><span class="num" [class.num-credit]="rapprochement.soldeFin >= 0" [class.num-debit]="rapprochement.soldeFin < 0">{{ rapprochement.soldeFin | number:'1.2-2' }}</span></td>
+          <td><span class="num num-debit">{{ rapprochement.totalDebit | number:'1.2-2' }}</span></td>
+          <td><span class="num num-credit">{{ rapprochement.totalCredit | number:'1.2-2' }}</span></td>
           <td>
-            <span [ngClass]="{
-                'text-green-600 font-bold': rapprochement.tvaDue > 0,
-                'text-red-600 font-bold': rapprochement.tvaDue < 0,
-                'text-600': rapprochement.tvaDue === 0
+            <span class="num font-bold" [ngClass]="{
+                'num-credit': rapprochement.tvaDue > 0,
+                'num-debit': rapprochement.tvaDue < 0,
+                'text-500': rapprochement.tvaDue === 0
               }">
               {{ rapprochement.tvaDue | number:'1.2-2' }}
             </span>

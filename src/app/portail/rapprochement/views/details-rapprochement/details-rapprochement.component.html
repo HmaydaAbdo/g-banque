@@ -53,7 +53,9 @@
             </div>
             <div>
               <div class="text-xs text-500 mb-1">Solde Début</div>
-              <div class="font-bold text-lg text-900 white-space-nowrap">
+              <div class="font-bold text-lg num white-space-nowrap"
+                   [class.num-credit]="rapprochementDetails.soldeDebut >= 0"
+                   [class.num-debit]="rapprochementDetails.soldeDebut < 0">
                 {{ rapprochementDetails.soldeDebut | number:'1.2-2' }}
               </div>
             </div>
@@ -67,7 +69,9 @@
             </div>
             <div>
               <div class="text-xs text-500 mb-1">Solde Fin</div>
-              <div class="font-bold text-lg text-900 white-space-nowrap">
+              <div class="font-bold text-lg num white-space-nowrap"
+                   [class.num-credit]="rapprochementDetails.soldeFin >= 0"
+                   [class.num-debit]="rapprochementDetails.soldeFin < 0">
                 {{ rapprochementDetails.soldeFin | number:'1.2-2' }}
               </div>
             </div>
@@ -81,7 +85,7 @@
             </div>
             <div>
               <div class="text-xs text-500 mb-1">Total Débit</div>
-              <div class="font-bold text-lg text-red-600 white-space-nowrap">
+              <div class="font-bold text-lg num num-debit white-space-nowrap">
                 {{ rapprochementDetails.totalDebit | number:'1.2-2' }}
               </div>
             </div>
@@ -95,7 +99,7 @@
             </div>
             <div>
               <div class="text-xs text-500 mb-1">Total Crédit</div>
-              <div class="font-bold text-lg text-green-600 white-space-nowrap">
+              <div class="font-bold text-lg num num-credit white-space-nowrap">
                 {{ rapprochementDetails.totalCredit | number:'1.2-2' }}
               </div>
             </div>
@@ -367,38 +371,38 @@
             </td>
 
             <td class="text-right white-space-nowrap">
-              <span *ngIf="transaction.debit !== 0" class="font-bold text-orange-600">
+              <span *ngIf="transaction.debit !== 0" class="num num-debit font-semibold">
                 {{ transaction.debit | number:'1.2-2' }}
               </span>
-              <span *ngIf="transaction.debit === 0" class="text-500">-</span>
+              <span *ngIf="transaction.debit === 0" class="text-500">—</span>
             </td>
 
             <td class="text-right white-space-nowrap">
-              <span *ngIf="transaction.credit !== 0" class="font-bold text-green-600">
+              <span *ngIf="transaction.credit !== 0" class="num num-credit font-semibold">
                 {{ transaction.credit | number:'1.2-2' }}
               </span>
-              <span *ngIf="transaction.credit === 0" class="text-500">-</span>
+              <span *ngIf="transaction.credit === 0" class="text-500">—</span>
             </td>
 
             <td class="text-right white-space-nowrap">
-              <span *ngIf="transaction.tvaDeductible !== null && transaction.tvaDeductible > 0" class="text-900">
+              <span *ngIf="transaction.tvaDeductible !== null && transaction.tvaDeductible > 0" class="num num-neutral">
                 {{ transaction.tvaDeductible | number:'1.2-2' }}
               </span>
-              <span *ngIf="transaction.tvaDeductible === null || transaction.tvaDeductible === 0" class="text-500">-</span>
+              <span *ngIf="transaction.tvaDeductible === null || transaction.tvaDeductible === 0" class="text-500">—</span>
             </td>
 
             <td class="text-right white-space-nowrap">
-              <span *ngIf="transaction.tvaCollectee !== null && transaction.tvaCollectee > 0" class="text-900">
+              <span *ngIf="transaction.tvaCollectee !== null && transaction.tvaCollectee > 0" class="num num-neutral">
                 {{ transaction.tvaCollectee | number:'1.2-2' }}
               </span>
-              <span *ngIf="transaction.tvaCollectee === null || transaction.tvaCollectee === 0" class="text-500">-</span>
+              <span *ngIf="transaction.tvaCollectee === null || transaction.tvaCollectee === 0" class="text-500">—</span>
             </td>
 
             <td>
               <span class="text-700">{{ transaction.observation }}</span>
             </td>
             <td>
-              <p-tag [value]="transaction.transactionSource" severity="info"></p-tag>
+              <app-source-badge [source]="transaction.transactionSource"></app-source-badge>
             </td>
 
             <td>

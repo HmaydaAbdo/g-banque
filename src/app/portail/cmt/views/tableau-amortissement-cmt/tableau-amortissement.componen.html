@@ -43,7 +43,9 @@
       <p>Montant Restant à Payer : <strong>{{ tableauDetails.montantRestantAPayer | number }} MAD</strong> </p>
     </div>
 
-    <form [formGroup]="searchForm" class="flex flex-row gap-2 justify-content-between w-full p-2">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-row gap-2 justify-content-between w-full p-2">
       <p-inputNumber
         id="numeroEcheance"
         formControlName="numeroEcheance"
@@ -85,6 +87,7 @@
         (onClick)="clearSearch()">
       </p-button>
     </form>
+</div>
 
     <p-table
         #dt

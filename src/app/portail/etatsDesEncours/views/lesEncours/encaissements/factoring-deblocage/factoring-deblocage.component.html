@@ -7,7 +7,9 @@
 
 
 
-    <form [formGroup]="searchForm" class="flex  flex-row justify-content-between align-items-center">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex  flex-row justify-content-between align-items-center">
       <span class="text-lg font-medium ">Total = <strong>{{ totalEncours | number:'1.2-2' }} MAD </strong></span>
 
       <span class="p-float-label">
@@ -40,6 +42,7 @@
       <button type="button" pButton pRipple label="Ajouter" class=" h-fit " size="small" icon="pi pi-plus"
               severity="primary" routerLink="/portail/factoring/new" [queryParams]="{banqueId: banqueId}"></button>
     </form>
+</div>
 
 
 
@@ -91,7 +94,7 @@
           <td>{{ f.dateEmission | date: 'dd/MM/yyyy' }}</td>
           <td>{{ f.marcheNumero }}</td>
           <td>{{ f.banqueName }}</td>
-          <td>{{ f.montant | number:'1.2-2' }} </td>
+          <td><span class="amount-badge credit-badge">{{ f.montant | number:'1.2-2' }}</span> </td>
           <td>{{ f.type }}</td>
           <td class="flex flex-row gap-2">
 

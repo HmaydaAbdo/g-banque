@@ -37,7 +37,9 @@
 
   <!-- Search form in Toolbar -->
 
-      <form [formGroup]="searchForm" class=" flex flex-row gap-1 align-items-end justify-content-around ">
+      <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class=" flex flex-row gap-1 align-items-end justify-content-around ">
 
         <!-- Date d'émission -->
         <div class="flex flex-column gap-2" >
@@ -134,6 +136,7 @@
         </div>
 
       </form>
+</div>
 
   <!-- Table -->
   <div class="pb-8">

@@ -3,11 +3,13 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="card flex flex-column gap-2 p-2 h-screen overflow-y-scroll">
+<div class="card flex flex-column gap-2 p-2 w-full">
   <div class="p-card shadow-2 p-2 flex flex-column gap-4">
 
 
-    <form [formGroup]="searchForm" (ngSubmit)="applyFilters()" class="flex flex-row justify-content-between align-items-center gap-2">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" (ngSubmit)="applyFilters()" class="flex flex-row justify-content-between align-items-center gap-2">
 
       <span class="text-lg font-medium">Total = <strong>{{ totalEncours | number:'1.2-2' }} MAD</strong></span>
 
@@ -41,6 +43,7 @@
       </button>
 
     </form>
+</div>
 
   </div>
 
@@ -87,7 +90,7 @@
           <td>{{ operation.libelle }}</td>
           <td>{{ operation.banqueNom }}</td>
           <td>{{ operation.motif }}</td>
-          <td>{{ operation.montant | number:'1.2-2' }} MAD</td>
+          <td><span class="amount-badge debit-badge">{{ operation.montant | number:'1.2-2' }}</span></td>
           <td>{{ operation.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>
             <p-tag

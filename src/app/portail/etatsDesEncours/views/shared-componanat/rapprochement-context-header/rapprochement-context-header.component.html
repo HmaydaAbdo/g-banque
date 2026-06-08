@@ -31,12 +31,12 @@
 
     <!-- Solde Début -->
     <div class="kpi-item flex-shrink-0">
-      <div class="kpi-icon" style="background:#E3F2FD;">
-        <i class="pi pi-flag" style="color:#2196F3;font-size:14px;"></i>
-      </div>
+      <i class="pi pi-flag kpi-icon" style="color:var(--color-primary)"></i>
       <div>
         <div class="text-xs text-500">Solde Début</div>
-        <div class="font-bold text-sm text-900 white-space-nowrap">
+        <div class="font-bold text-sm num white-space-nowrap"
+             [class.num-credit]="getSoldeDebut() >= 0"
+             [class.num-debit]="getSoldeDebut() < 0">
           {{ getSoldeDebut() | number:'1.2-2' }}
         </div>
       </div>
@@ -44,12 +44,12 @@
 
     <!-- Solde Fin / Actuel -->
     <div class="kpi-item flex-shrink-0">
-      <div class="kpi-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);">
-        <i class="pi pi-wallet text-white" style="font-size:14px;"></i>
-      </div>
+      <i class="pi pi-wallet kpi-icon" style="color:var(--color-primary)"></i>
       <div>
         <div class="text-xs text-500">{{ isProvisoire ? 'Solde Fin' : 'Solde Actuel' }}</div>
-        <div class="font-bold text-sm text-900 white-space-nowrap">
+        <div class="font-bold text-sm num white-space-nowrap"
+             [class.num-credit]="getSoldeFin() >= 0"
+             [class.num-debit]="getSoldeFin() < 0">
           {{ getSoldeFin() | number:'1.2-2' }}
         </div>
       </div>
@@ -57,16 +57,13 @@
 
     <!-- Variation -->
     <div class="kpi-item flex-shrink-0">
-      <div class="kpi-icon"
-           [style.background]="getVariation() >= 0 ? '#4CAF50' : '#F44336'">
-        <i [class]="getVariation() >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"
-           class="text-white" style="font-size:14px;"></i>
-      </div>
+      <i [class]="(getVariation() >= 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down') + ' kpi-icon'"
+         [style.color]="getVariation() >= 0 ? 'var(--color-success)' : 'var(--color-danger)'"></i>
       <div>
-        <div class="text-xs font-semibold"
-             [style.color]="getVariation() >= 0 ? '#2E7D32' : '#C62828'">Variation</div>
-        <div class="font-bold text-sm white-space-nowrap"
-             [style.color]="getVariation() >= 0 ? '#1B5E20' : '#B71C1C'">
+        <div class="text-xs text-500">Variation</div>
+        <div class="font-bold text-sm num white-space-nowrap"
+             [class.num-credit]="getVariation() >= 0"
+             [class.num-debit]="getVariation() < 0">
           {{ getVariation() >= 0 ? '+' : '' }}{{ getVariation() | number:'1.2-2' }}
         </div>
       </div>
@@ -74,17 +71,13 @@
 
     <!-- Facilité de Caisse -->
     <div class="kpi-item flex-shrink-0">
-      <div class="kpi-icon"
-           [style.background]="bankInfo?.plafondFC
-             ? 'linear-gradient(135deg,#f093fb,#f5576c)'
-             : '#FFE0B2'">
-        <i class="pi pi-shield" style="font-size:14px;"
-           [style.color]="bankInfo?.plafondFC ? 'white' : '#F57C00'"></i>
-      </div>
+      <i class="pi pi-shield kpi-icon"
+         [style.color]="bankInfo?.plafondFC ? 'var(--color-primary)' : 'var(--color-text-muted)'"></i>
       <div>
         <div class="text-xs text-500">Facilité de Caisse</div>
-        <div class="font-bold text-sm white-space-nowrap"
-             [ngClass]="bankInfo?.plafondFC ? 'text-900' : 'text-400'">
+        <div class="font-bold text-sm num white-space-nowrap"
+             [class.num-neutral]="bankInfo?.plafondFC"
+             [class.text-400]="!bankInfo?.plafondFC">
           @if (bankInfo?.plafondFC) { {{ bankInfo!.plafondFC | number:'1.2-2' }} }
           @else { Aucune }
         </div>
@@ -100,47 +93,34 @@
   <div class="flex align-items-center gap-1 flex-wrap">
 
     <div class="stat-chip">
-      <span class="stat-dot bg-red-400"></span>
       <span class="text-xs text-500">Débit</span>
-      <span class="font-bold text-xs text-red-500 white-space-nowrap">
-        {{ (agregats?.totalDebit ?? 0) | number:'1.2-2' }}
-      </span>
+      <span class="amount-badge debit-badge">{{ (agregats?.totalDebit ?? 0) | number:'1.2-2' }}</span>
     </div>
     <div class="stat-divider"></div>
 
     <div class="stat-chip">
-      <span class="stat-dot bg-green-400"></span>
       <span class="text-xs text-500">Crédit</span>
-      <span class="font-bold text-xs text-green-500 white-space-nowrap">
-        {{ (agregats?.totalCredit ?? 0) | number:'1.2-2' }}
-      </span>
+      <span class="amount-badge credit-badge">{{ (agregats?.totalCredit ?? 0) | number:'1.2-2' }}</span>
     </div>
     <div class="stat-divider"></div>
 
     <div class="stat-chip">
-      <span class="stat-dot bg-red-200"></span>
       <span class="text-xs text-500">TVA Déd.</span>
-      <span class="font-bold text-xs text-red-400 white-space-nowrap">
-        {{ (agregats?.totalTvaDeductible ?? 0) | number:'1.2-2' }}
-      </span>
+      <span class="amount-badge credit-badge">{{ (agregats?.totalTvaDeductible ?? 0) | number:'1.2-2' }}</span>
     </div>
     <div class="stat-divider"></div>
 
     <div class="stat-chip">
-      <span class="stat-dot bg-green-200"></span>
       <span class="text-xs text-500">TVA Col.</span>
-      <span class="font-bold text-xs text-green-400 white-space-nowrap">
-        {{ (agregats?.totalTvaCollectee ?? 0) | number:'1.2-2' }}
-      </span>
+      <span class="amount-badge debit-badge">{{ (agregats?.totalTvaCollectee ?? 0) | number:'1.2-2' }}</span>
     </div>
     <div class="stat-divider"></div>
 
     <div class="stat-chip">
-      <span class="stat-dot"
-            [ngClass]="(agregats?.tvaDue ?? 0) >= 0 ? 'bg-red-500' : 'bg-green-500'"></span>
       <span class="text-xs text-500">TVA Due</span>
-      <span class="font-bold text-xs white-space-nowrap"
-            [ngClass]="(agregats?.tvaDue ?? 0) >= 0 ? 'text-red-500' : 'text-green-500'">
+      <span class="amount-badge white-space-nowrap"
+            [class.debit-badge]="(agregats?.tvaDue ?? 0) < 0"
+            [class.credit-badge]="(agregats?.tvaDue ?? 0) > 0">
         {{ (agregats?.tvaDue ?? 0) | number:'1.2-2' }}
       </span>
     </div>

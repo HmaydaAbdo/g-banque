@@ -2,7 +2,7 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="flex flex-column gap-3 p-3 pb-6"
-     style="height:100vh;overflow-y:auto;background:#f4f6fb;box-sizing:border-box">
+     style="height:100vh;overflow-y:auto">
 
   <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
   <div class="flex align-items-start justify-content-between gap-2">
@@ -20,7 +20,7 @@
         </p-tag>
         <span *ngIf="hasDateFilter"
               class="text-xs px-2 py-1 border-round font-semibold"
-              style="background:#dbeafe;color:#1d4ed8">
+              style="background:var(--color-info-light);color:var(--color-info-text)">
           Filtré
         </span>
       </div>
@@ -72,7 +72,7 @@
       </div>
 
       <!-- Séparateur -->
-      <div class="hidden md:block" style="width:1px;height:2.5rem;background:#e2e8f0"></div>
+      <div class="hidden md:block" style="width:1px;height:2.5rem;background:var(--color-border)"></div>
 
       <!-- KPI: Agios HT -->
       <div *ngIf="aggregates" class="flex flex-column align-items-center gap-0">
@@ -95,9 +95,9 @@
       <!-- KPI: Total TTC — mis en avant -->
       <div *ngIf="aggregates"
            class="flex flex-column align-items-center gap-0 px-3 py-2 border-round-lg"
-           style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">
-        <span class="text-xs font-semibold" style="letter-spacing:0.04em;color:#1e40af">TOTAL TTC</span>
-        <span class="font-bold text-base" style="color:#1d4ed8">
+           style="background:var(--color-info-light)">
+        <span class="text-xs font-semibold" style="letter-spacing:0.04em;color:var(--color-info-text)">TOTAL TTC</span>
+        <span class="font-bold text-base" style="color:var(--color-info)">
           {{ aggregates.totalAgiosTTC | number:'1.2-2' }}
           <span class="text-xs font-normal ml-1">MAD</span>
         </span>
@@ -113,7 +113,7 @@
       </div>
 
       <!-- Séparateur -->
-      <div class="hidden md:block" style="width:1px;height:2.5rem;background:#e2e8f0"></div>
+      <div class="hidden md:block" style="width:1px;height:2.5rem;background:var(--color-border)"></div>
 
       <!-- Filtre date limite -->
       <div class="flex align-items-center gap-2">
@@ -141,7 +141,7 @@
        style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
 
     <div class="px-3 py-2 border-bottom-1 surface-border flex align-items-center justify-content-between"
-         style="background:#f8f9fc">
+        >
       <span class="font-semibold text-700 text-sm">Détail journalier</span>
       <span class="text-400 text-xs">{{ totalRecords }} jours</span>
     </div>
@@ -165,7 +165,7 @@
              rowHover>
 
       <ng-template pTemplate="header">
-        <tr style="background:#f8f9fc">
+        <tr>
           <th pSortableColumn="dateValeur" style="min-width:110px">
             Date <p-sortIcon field="dateValeur"></p-sortIcon>
           </th>
@@ -187,12 +187,12 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-jour>
-        <tr [style]="isDecouvert(jour) ? 'background:#fff5f5' : ''">
+        <tr [style]="isDecouvert(jour) ? 'background:var(--color-danger-light)' : ''">
 
           <td class="font-semibold text-800">{{ jour.dateValeur | date:'dd/MM/yyyy' }}</td>
 
           <td class="text-right font-semibold"
-              [style]="isDecouvert(jour) ? 'color:#dc2626' : 'color:#16a34a'">
+              [style]="isDecouvert(jour) ? 'color:var(--color-danger)' : 'color:var(--color-success)'">
             {{ jour.soldeJournalier | number:'1.2-2' }}
           </td>
 
@@ -217,7 +217,7 @@
           </td>
 
           <td class="text-right">
-            <span *ngIf="jour.agiosTTC > 0" class="font-bold" style="color:#dc2626">
+            <span *ngIf="jour.agiosTTC > 0" class="font-bold" style="color:var(--color-danger)">
               {{ jour.agiosTTC | number:'1.2-2' }}
             </span>
             <span *ngIf="jour.agiosTTC === 0" class="text-300">0</span>
@@ -230,14 +230,14 @@
       <!-- Footer totaux -->
       <ng-template pTemplate="footer">
         <tr *ngIf="aggregates"
-            style="background:#eef2ff;font-weight:700;border-top:2px solid #c7d2fe">
+            style="background:var(--color-info-light);font-weight:700;border-top:2px solid var(--color-info)">
           <td class="font-bold text-700 text-sm">TOTAL</td>
           <td></td>
           <td></td>
           <td></td>
           <td class="text-right text-800">{{ aggregates.totalAgiosHT | number:'1.2-2' }}</td>
           <td class="text-right text-800">{{ aggregates.totalTVA | number:'1.2-2' }}</td>
-          <td class="text-right font-bold" style="color:#1d4ed8;font-size:0.95rem">
+          <td class="text-right font-bold" style="color:var(--color-info);font-size:0.95rem">
             {{ aggregates.totalAgiosTTC | number:'1.2-2' }}
             <span class="text-xs font-normal ml-1">MAD</span>
           </td>

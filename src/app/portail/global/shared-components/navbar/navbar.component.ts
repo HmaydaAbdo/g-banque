@@ -14,6 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { NotificationService } from "../../../notification/service/NotificationService";
 import { NotificationListComponent } from "../../../notification/views/notification-list/notification-list.component";
 import { DialogModule } from "primeng/dialog";
+import { ThemeService } from "../../services/ThemeService";
 
 interface MenuItem {
   label: string;
@@ -60,6 +61,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     public notificationService: NotificationService,
+    public themeService: ThemeService,
   ) { }
 
   allMenuItems: MenuItem[] = [

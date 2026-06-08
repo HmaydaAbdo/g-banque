@@ -38,8 +38,10 @@
 
         <p class="hidden md:block"><strong> Nom :</strong> {{ bankDetails.nom }}</p>
         <p class="hidden md:block"><strong>Solde Actuel :</strong>
-          <span [ngClass]="{'text-green-600': bankDetails.soldeActuel >= 0,'text-red-600': bankDetails.soldeActuel < 0}">
-          {{ bankDetails.soldeActuel | number:'1.2-2' }}</span>
+          <span class="num font-bold"
+                [class.num-credit]="bankDetails.soldeActuel >= 0"
+                [class.num-debit]="bankDetails.soldeActuel < 0">
+            {{ bankDetails.soldeActuel | number:'1.2-2' }}</span>
         </p>
         <p><strong>Numéro de compte :</strong> {{ bankDetails.numeroDeCompte }}</p>
         <p><strong>Agence :</strong> {{ bankDetails.agence }}</p>

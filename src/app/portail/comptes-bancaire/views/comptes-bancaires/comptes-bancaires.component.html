@@ -2,7 +2,7 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="flex flex-column w-screen h-screen overflow-y-scroll gap-3 p-3 pb-6"
-     style="background:#f4f6fb;box-sizing:border-box">
+    >
 
   <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
   <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
@@ -83,7 +83,7 @@
       rowHover>
 
       <ng-template pTemplate="header">
-        <tr style="background:#f8f9fc">
+        <tr>
           <th style="width:60px">Logo</th>
           <th pSortableColumn="nom" >
             Nom <p-sortIcon field="nom"></p-sortIcon>
@@ -124,10 +124,10 @@
           <td class="text-600 text-sm">{{ banque.address }}</td>
           <td class="text-600 text-sm">{{ banque.agence }}</td>
           <td class="text-right">
-            <span class="font-bold"
-                  [ngClass]="banque.soldeActuel >= 0 ? 'text-green-600' : 'text-red-600'"
-                  style="font-size:0.92rem">
-              {{ banque.soldeActuel | number }}
+            <span class="font-bold num"
+                  [class.num-credit]="banque.soldeActuel >= 0"
+                  [class.num-debit]="banque.soldeActuel < 0">
+              {{ banque.soldeActuel | number:'1.2-2' }}
             </span>
           </td>
           <td>

@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { SourceBadgeComponent } from '../../../../global/shared-components/source-badge/source-badge.component';
 import { TransactionResponseDto } from '../../../../transactions/dtos/TransactionResponseDto';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
@@ -26,6 +27,7 @@ import {BankStateService} from "../../../../comptes-bancaire/services/bank-state
 import {parseLocalDate, toLocalDateString} from "../../../../global/types/date.utils";
 import {TransactionUpdateRequestDto} from "../../../../transactions/dtos/TransactionUpdateRequestDto";
 import {TagModule} from "primeng/tag";
+import { SkeletonModule } from 'primeng/skeleton';
 import {RapprochementService} from "../../../../rapprochement/service/rapprochement-service.service";
 
 
@@ -50,6 +52,8 @@ import {RapprochementService} from "../../../../rapprochement/service/rapprochem
     DialogModule,
     CalendarModule,
     TagModule,
+    SourceBadgeComponent,
+    SkeletonModule,
   ],
   templateUrl: './rapprochemnt-encours.component.html',
   styleUrls: ['./rapprochemnt-encours.component.scss'],

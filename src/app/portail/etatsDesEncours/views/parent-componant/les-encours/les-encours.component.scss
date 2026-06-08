@@ -1,48 +1,133 @@
+// les-encours.component.scss
 
-.sidebar-link {
-  color: #424242;
-  text-decoration: none;
+// ── Dialog clôture ───────────────────────────────────────
+.cloture-dialog-icon {
+  width          : 4rem;
+  height         : 4rem;
+  border-radius  : var(--radius-xl);
+  background     : var(--color-warning-light);
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+}
+.cloture-dialog-icon__i { color: var(--color-warning-text); }
+
+// ── Collapsible sidebar ──────────────────────────────────
+.sidebar-nav {
+  background : var(--color-surface);
+  width      : 3.25rem;
+  flex-shrink: 0;
+  overflow   : hidden;
+  white-space: nowrap;
+  transition : width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-right: 1px solid var(--color-border);
+
+  // Scrollable zone — same pattern as global sidebar
+  &__scroll {
+    flex      : 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar       { width: 4px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+  }
+
+  // Labels + chevron — hidden when collapsed
+  .nav-label,
+  .nav-chevron {
+    opacity       : 0;
+    max-width     : 0;
+    overflow      : hidden;
+    transition    : opacity 0.2s ease, max-width 0.25s ease;
+    pointer-events: none;
+    display       : inline-block;
+    vertical-align: middle;
+    color         : var(--color-text-secondary);
+  }
+
+  // Icon
+  .nav-icon {
+    min-width : 1rem;
+    text-align: center;
+    flex-shrink: 0;
+    font-size : 0.9rem;
+    color     : var(--color-text-muted);
+  }
+
+  // Sub-items hidden when collapsed
+  .nav-submenu { display: none; }
+
+  // ── Expanded on hover ────────────────────────────────
+  &:hover {
+    width: 14rem;
+
+    .nav-label {
+      opacity       : 1;
+      max-width     : 12rem;
+      margin-left   : 0.5rem;
+      pointer-events: auto;
+    }
+
+    .nav-chevron {
+      opacity       : 1;
+      max-width     : 1rem;
+      pointer-events: auto;
+    }
+
+    .nav-submenu { display: block; }
+  }
 }
 
+// ── Sidebar links ────────────────────────────────────────
+.hover\:surface-hover:hover {
+  background: var(--color-surface-3) !important;
+}
+
+.sidebar-link {
+  color          : var(--color-text-secondary) !important;
+  text-decoration: none;
+}
 .sidebar-link:hover {
-  color: #1976D2;
+  color: var(--color-primary) !important;
+  .nav-icon { color: var(--color-primary) !important; }
 }
 
 .active-sidebar-link {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
-  color: white !important;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+  background  : color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
+  color       : var(--color-primary) !important;
+  font-weight : var(--weight-semibold);
+  border-left : 3px solid var(--color-primary) !important;
+  padding-left: calc(0.5rem - 3px) !important;
 }
-
-.active-sidebar-link i {
-  color: white !important;
-}
+.active-sidebar-link i,
+.active-sidebar-link .nav-icon { color: var(--color-primary) !important; }
 
 .active-breadcrumb {
-  color: #2196F3 !important;
-  font-weight: 600;
+  color      : var(--color-primary) !important;
+  font-weight: var(--weight-semibold);
 }
 
-/* ── Inline Bank Header ─────────────────────────────────── */
+// ── Inline Bank Header ───────────────────────────────────
 .bank-details-container {
-  padding: 1rem 0;
-  gap: 1.5rem;
-  flex-wrap: wrap;
+  padding   : 1rem 0;
+  gap       : 1.5rem;
+  flex-wrap : wrap;
   overflow-x: auto;
 }
 
 .bank-details-container .flex.align-items-center.gap-2,
 .bank-details-container .flex.align-items-center.gap-3 {
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  padding: 0.5rem;
+  transition   : all 0.3s ease;
+  border-radius: var(--radius-md);
+  padding      : 0.5rem;
 }
 
 .bank-details-container .flex.align-items-center.gap-2:hover,
 .bank-details-container .flex.align-items-center.gap-3:hover {
-  background: rgba(248, 249, 250, 0.5);
-  transform: translateY(-2px);
+  background: var(--color-surface-3);
+  transform : translateY(-2px);
 }
 
 .bank-details-container .border-round-lg {
@@ -51,14 +136,13 @@
 
 .bank-details-container .flex.align-items-center.gap-2:hover .border-round-lg,
 .bank-details-container .flex.align-items-center.gap-3:hover .border-round-lg {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform : scale(1.1);
+  box-shadow: var(--shadow-md);
 }
 
 .bank-details-container img.border-round {
   transition: transform 0.3s ease;
 }
-
 .bank-details-container img.border-round:hover {
   transform: scale(1.05);
 }

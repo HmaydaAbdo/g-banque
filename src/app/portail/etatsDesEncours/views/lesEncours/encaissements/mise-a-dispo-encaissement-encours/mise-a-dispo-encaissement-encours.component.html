@@ -4,12 +4,13 @@
 <div class="card flex flex-column gap-4 p-2 md:p-4 w-full">
   <div class="p-card shadow-2 px-4 py-3 flex flex-column gap-4">
 
-    <div class="flex flex-row justify-content-between flex-wrap">
-      <span class="text-lg font-medium mr-2">Liste des mises à disposition en cours pour le <strong>  {{ this.currentMonthYear }}</strong></span>
-      <span class="text-lg font-medium mr-2">Total des encours <strong> {{ totalEncours | number:'1.2-2'}} MAD</strong></span>
+    <div class="flex flex-row justify-content-between flex-wrap align-items-center">
+      <span class="text-lg font-medium mr-2">Liste des mises à disposition en cours pour le <strong>{{ this.currentMonthYear }}</strong></span>
     </div>
 
-    <form [formGroup]="searchForm" class="flex flex-row justify-content-between ">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-row justify-content-between ">
       <span class="p-float-label">
           <input id="emetteur" type="text" pInputText formControlName="emetteur" />
           <label for="emetteur">émetteur</label>
@@ -30,8 +31,17 @@
               severity="primary" routerLink="/portail/Mise-a-disposition/new" [queryParams]="{banqueId: banqueIdFromRoute}"></button>
 
     </form>
+</div>
 
   </div>
+
+  <!-- Total band -->
+  <div class="total-band total-band--credit">
+    <i class="pi pi-arrow-up-right"></i>
+    <span class="total-band__label">Total encaissements</span>
+    <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
+  </div>
+
   <div class="pb-8">
     <p-table
       #dt
@@ -78,7 +88,7 @@
           <td>{{ miseADisposition.dateEmission | date : 'dd/MM/yyyy' }}</td>
           <td>{{ miseADisposition.emetteur }}</td>
           <td>{{ miseADisposition.beneficiaire }}</td>
-          <td>{{ miseADisposition.montant | number:'1.2-2' }} MAD</td>
+          <td><span class="amount-badge credit-badge">{{ miseADisposition.montant | number:'1.2-2' }}</span></td>
           <td>
             <p-button
               pRipple

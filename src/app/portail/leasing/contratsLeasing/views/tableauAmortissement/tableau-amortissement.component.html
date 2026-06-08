@@ -41,7 +41,9 @@
       <p > Le Reste : <strong>{{tableauAmortissement.montantRestantAPayer | number}} </strong></p>
     </div>
 
-    <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center gap-2 w-full">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center gap-2 w-full">
       <p-inputNumber formControlName="numeroEcheance" placeholder="N° Échéance" mode="decimal" [useGrouping]="false" styleClass="w-full" class="flex-1"></p-inputNumber>
 
       <p-inputNumber formControlName="month" placeholder="Mois (1-12)" mode="decimal" [useGrouping]="false" [min]="1" [max]="12" styleClass="w-full" class="flex-1"></p-inputNumber>
@@ -52,6 +54,7 @@
 
       <p-button icon="pi pi-times" severity="secondary" (onClick)="clearSearch()"></p-button>
     </form>
+</div>
     <div class="  mb-8">
       <p-table
         [value]="echeances"

@@ -2,7 +2,7 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="flex flex-column  h-screen overflow-y-scroll gap-3 p-3 pb-6"
-     style="background:#f4f6fb;box-sizing:border-box">
+    >
 
   <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
   <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
@@ -100,7 +100,7 @@
              rowHover>
 
       <ng-template pTemplate="header">
-        <tr style="background:#f8f9fc">
+        <tr>
           <th pSortableColumn="code" style="min-width:100px">
             Code <p-sortIcon field="code"></p-sortIcon>
           </th>
@@ -119,7 +119,7 @@
         <tr>
           <td>
             <span class="font-bold text-800"
-                  style="background:#e0e7ff;color:#3730a3;border-radius:4px;padding:2px 8px;font-size:0.8rem">
+                  class="status-badge status-badge--provisoire">
               {{ nature.code }}
             </span>
           </td>

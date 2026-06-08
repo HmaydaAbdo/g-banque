@@ -1,26 +1,51 @@
-
-
-
 .nav-link {
-  text-decoration: none; /* Toujours pas de soulignement par défaut sur le lien entier */
-  color: var(--text-color, #333333) !important;
-  padding: 0.75rem 1rem;
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  text-decoration : none;
+  color           : var(--color-text-primary) !important;
+  padding         : 0.75rem 1rem;
+  transition      : background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
 .active-nav-link {
-  border-bottom: none;
-  /* La couleur du texte du lien actif (y compris l'icône) */
-  color: rgba(8, 18, 47, 0.92) !important;
-  /* NE PAS mettre les propriétés text-decoration ici pour ne pas souligner l'icône */
+  border-bottom : none;
+  color         : var(--color-text-primary) !important;
 }
 
-/* NOUVELLE RÈGLE : Cible le span du label UNIQUEMENT quand le lien parent est actif */
 .active-nav-link .nav-label {
-  text-decoration: underline;
-  text-decoration-color: rgb(30, 92, 172); /* Couleur du soulignement */
-  text-underline-offset: 0.7rem;
-  text-decoration-thickness: 1rem;
-  /* Pas besoin de `color` ici si `.active-nav-link` gère déjà la couleur du texte */
+  text-decoration        : underline;
+  text-decoration-color  : var(--color-primary);
+  text-underline-offset  : 0.7rem;
+  text-decoration-thickness: 3px;
 }
 
+// Bouton actions (menu, notif, logout, theme)
+.nav-action-btn {
+  display         : inline-flex;
+  align-items     : center;
+  justify-content : center;
+  width           : 2.5rem;
+  height          : 2.5rem;
+  border-radius   : 50%;
+  border          : 0.5px solid var(--color-border);
+  color           : var(--color-text-secondary);
+  cursor          : pointer;
+  transition      : background-color 0.2s, color 0.2s, border-color 0.2s;
+  background      : transparent;
+
+  &:hover {
+    background   : var(--color-surface-3);
+    color        : var(--color-primary);
+    border-color : var(--color-border-strong);
+  }
+
+  &--danger:hover {
+    background   : var(--color-danger-light);
+    color        : var(--color-danger);
+    border-color : var(--color-danger);
+  }
+
+  &--active {
+    background   : var(--color-primary-light);
+    color        : var(--color-primary);
+    border-color : var(--color-primary);
+  }
+}

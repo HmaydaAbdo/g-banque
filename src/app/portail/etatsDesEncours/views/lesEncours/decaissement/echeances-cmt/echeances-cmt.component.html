@@ -5,7 +5,9 @@
 
   <div class="p-card shadow-2 p-2  flex flex-column flex-wrap   gap-3">
 
-    <form [formGroup]="searchForm" class="flex  flex-row justify-content-between align-items-center gap-3 ">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex  flex-row justify-content-between align-items-center gap-3 ">
       <span class="text-lg font-medium">Total = <span class="text-lg font-bold"> {{ encoursResponse?.totalEncours | number: '1.2-2' }} MAD</span></span>
 
       <input type="text" pInputText formControlName="designation" placeholder="Désignation du crédit" class="p-inputtext-sm" />
@@ -15,6 +17,7 @@
           <label for="montant">Montant</label>
         </span>
     </form>
+</div>
 
 
   </div>
@@ -61,7 +64,7 @@
           <td>{{ echeance.credit.designation }}</td>
           <td>{{ echeance.numeroEcheance }}</td>
           <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-          <td>{{ echeance.montantTtc | number: '1.2-2'}} MAD</td>
+          <td><span class="amount-badge debit-badge">{{ echeance.montantTtc | number:'1.2-2' }}</span></td>
           <td>
             <button
               type="button" pButton pRipple icon="pi pi-check"

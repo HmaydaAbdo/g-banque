@@ -2,7 +2,7 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="flex flex-column  w-screen h-screen overflow-y-scroll  gap-3 p-3 pb-6 "
-     style="  background:#f4f6fb;box-sizing:border-box">
+    >
 
   <!-- ═══ HEADER ═══════════════════════════════════════════════════ -->
   <div class="flex flex-column md:flex-row md:align-items-center justify-content-between gap-2">
@@ -116,7 +116,7 @@
              rowHover>
 
       <ng-template pTemplate="header">
-        <tr style="background:#f8f9fc">
+        <tr>
           <th pSortableColumn="banque.nom" style="min-width:155px">
             Banque <p-sortIcon field="banque.nom"></p-sortIcon>
           </th>
@@ -149,7 +149,7 @@
 
           <td class="text-center">
             <span class="inline-flex align-items-center justify-content-center border-round font-bold text-sm"
-                  style="width:1.9rem;height:1.9rem;background:#e0e7ff;color:#3730a3">
+                  style="width:1.9rem;height:1.9rem;background:var(--color-info-light);color:var(--color-info-text)">
               T{{ trim.trimestre }}
             </span>
           </td>

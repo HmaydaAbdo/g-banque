@@ -1,38 +1,61 @@
-
 .sidebar-link {
-  text-decoration: none;
-  color: black  !important;
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-  border-radius: var(--border-radius, 0.5rem) !important;
+  text-decoration : none;
+  color           : var(--color-text-primary) !important;
+  transition      : background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  border-radius   : var(--radius-md) !important;
 }
 
-
+.active-sidebar-link {
+  color: var(--color-primary) !important;
+}
 
 .active-sidebar-link .font-medium {
-  text-decoration: underline;
-  text-decoration-color: rgb(30, 92, 172);
-  text-underline-offset: 0.7rem;
-  text-decoration-thickness: 1rem; /* Épaisseur de la ligne */
-  /* Pas besoin de `color` ici, car elle est déjà héritée du `.active-sidebar-link` parent */
+  text-decoration          : underline;
+  text-decoration-color    : var(--color-primary);
+  text-underline-offset    : 0.7rem;
+  text-decoration-thickness: 3px;
 }
 
-// Les autres styles de la sidebar restent inchangés
-// Styles pour les éléments de sous-menu qui ne sont pas des liens directs
-// Assure-toi que les div qui gèrent les sous-menus ont aussi des styles appropriés
 .p-sidebar .p-sidebar-content .p-ripple.text-600 {
   &:hover {
-    background-color: var(--blue-50, #e3f2fd) !important;
-    border-radius: var(--border-radius, 0.5rem);
+    background-color : var(--color-surface-3) !important;
+    border-radius    : var(--radius-md);
   }
 }
 
-// Transition pour les sous-menus (basé sur le slideup/slidedown de Primeng)
+// ── Sidebar layout ────────────────────────────────────────
+// Force PrimeNG panel to not overflow its own height
+:host ::ng-deep .p-sidebar {
+  overflow : hidden !important;
+  display  : flex;
+  flex-direction: column;
+}
+
+// Our headless wrapper — takes 100% of the sidebar panel height
+.sidebar-shell {
+  height  : 100vh;
+  overflow: hidden;
+}
+
+// Scrollable nav area — fills remaining height after logo + divider
+.sidebar-scroll {
+  flex      : 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  // Scrollbar slim styling
+  &::-webkit-scrollbar       { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+}
+
 .slidedown {
-  transition: max-height 0.3s ease-out;
-  max-height: 500px;
+  transition : max-height 0.3s ease-out;
+  max-height : 500px;
 }
 
 .slideup {
-  transition: max-height 0.3s ease-in;
-  max-height: 0;
+  transition : max-height 0.3s ease-in;
+  max-height : 0;
 }

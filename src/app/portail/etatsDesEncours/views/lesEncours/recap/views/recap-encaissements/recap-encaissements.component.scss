@@ -1,84 +1,66 @@
+// recap-encaissements.component.scss
+// Règles p-inputtext / p-multiselect hover → supprimées (centralisées dans styles.scss)
+
 .stat-card {
   transition: all 0.3s ease;
-  cursor: pointer;
+  cursor    : pointer;
 }
-
 .stat-card:hover {
-  background: rgba(248, 249, 250, 0.5);
-  transform: scale(1.02);
+  background: var(--color-surface-3);
+  transform : scale(1.02);
 }
 
 .stat-icon {
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
-
 .stat-card:hover .stat-icon {
-  transform: scale(1.1) rotate(5deg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform : scale(1.1) rotate(5deg);
+  box-shadow: var(--shadow-md);
 }
 
-// Badges pour montants
+// ── Badges montants ─────────────────────────────────────
 .amount-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: inline-block;
+  padding      : 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-weight  : var(--weight-semibold);
+  transition   : all 0.3s ease;
+  display      : inline-block;
 }
 
 .debit-badge {
-  background: #FFF3E0;
-  color: #E65100;
+  background: var(--color-danger-light);
+  color     : var(--color-danger-text);
 }
-
 .credit-badge {
-  background: #E8F5E9;
-  color: #2E7D32;
+  background: var(--color-success-light);
+  color     : var(--color-success-text);
 }
 
-.amount-badge:hover {
-  transform: scale(1.05);
-}
+.amount-badge:hover { transform: scale(1.05); }
 
-.debit-badge:hover {
-  background: #FFE0B2;
-}
+.debit-badge:hover  { background: color-mix(in srgb, var(--color-danger-light) 70%, var(--color-danger) 30%); }
+.credit-badge:hover { background: color-mix(in srgb, var(--color-success-light) 70%, var(--color-success) 30%); }
 
-.credit-badge:hover {
-  background: #C8E6C9;
-}
-
-// Lignes du tableau
+// ── Lignes tableau ──────────────────────────────────────
 .table-row {
   transition: all 0.2s ease;
 }
-
 .table-row:hover {
-  background: #F8F9FA !important;
-  transform: scale(1.001);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: var(--color-surface-3) !important;
+  transform : scale(1.001);
+  box-shadow: var(--shadow-sm);
 }
 
-// Inputs
-.p-inputtext {
-  transition: all 0.3s ease;
-}
+// ── Spécificité dark mode ────────────────────────────────
+.text-500  { color: var(--color-text-secondary) !important; }
+.text-400  { color: var(--color-text-muted)     !important; }
+.text-900  { color: var(--color-text-primary)   !important; }
+.text-red-600, .text-red-500   { color: var(--color-danger)   !important; }
+.text-green-600, .text-green-500 { color: var(--color-success) !important; }
+.text-orange-600               { color: var(--color-warning)  !important; }
 
-.p-inputtext:hover {
-  border-color: #2196F3;
-}
-
-.p-inputtext:focus {
-  border-color: #2196F3;
-  box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25);
-}
-
-// Multiselect
-.p-multiselect {
-  transition: all 0.3s ease;
-}
-
-.p-multiselect:hover {
-  border-color: #2196F3;
-}
+// ── Forcer texte blanc dans les cellules tableau ──────────
+.p-datatable .p-datatable-tbody > tr > td { color: var(--color-text-primary) !important; }
+.p-datatable .p-datatable-thead > tr > th { color: var(--color-text-secondary) !important; }
+.text-700, .text-600 { color: var(--color-text-primary) !important; }

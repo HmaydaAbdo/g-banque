@@ -20,7 +20,9 @@
   </div>
 
   <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2">
-    <form [formGroup]="searchForm" class="flex flex-column md:flex-row gap-2">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-column md:flex-row gap-2">
 
       <p-dropdown
         formControlName="marcheId"
@@ -80,6 +82,7 @@
         styleClass="w-full md:w-12rem"
       ></p-dropdown>
     </form>
+</div>
 
     <button pButton pRipple icon="pi pi-times" class="p-button-danger"
             (click)="clearFilters()" pTooltip="Effacer"></button>

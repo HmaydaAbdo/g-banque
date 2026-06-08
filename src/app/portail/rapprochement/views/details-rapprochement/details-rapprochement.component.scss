@@ -1,0 +1,49 @@
+// ── Bandeau clôture définitive ───────────────────────────
+.definitif-banner {
+  background  : var(--status-definitif-bg);
+  border      : 1.5px solid var(--status-definitif-dot);
+
+  &__icon {
+    width      : 40px;
+    height     : 40px;
+    background : var(--status-definitif-dot);
+    color      : #fff;
+    flex-shrink: 0;
+  }
+
+  &__title { color: var(--status-definitif-text); }
+  &__sub   { color: var(--color-text-secondary);  }
+}
+
+// ── KPI icons (header stats bar) ────────────────────────
+.kpi-icon {
+  width          : 48px;
+  height         : 48px;
+  border-radius  : var(--radius-lg);
+  display        : flex;
+  align-items    : center;
+  justify-content: center;
+  flex-shrink    : 0;
+
+  &--brand   { background: var(--color-primary);      color: #fff; }
+  &--info    { background: var(--color-info-light);   }
+  &--danger  { background: var(--color-danger-light); }
+  &--success { background: var(--color-success-light);}
+}
+
+.kpi-icon__i--info    { color: var(--color-info);    }
+.kpi-icon__i--danger  { color: var(--color-danger);  }
+.kpi-icon__i--success { color: var(--color-success); }
+
+// ── Texte KPI header — spécificité dark mode ─────────────
+.text-500, .text-xs.text-500  { color: var(--color-text-secondary) !important; }
+.text-400                      { color: var(--color-text-muted)     !important; }
+.text-900, .text-lg.text-900   { color: var(--color-text-primary)   !important; }
+.text-red-600                  { color: var(--color-danger)         !important; }
+.text-green-600                { color: var(--color-success)        !important; }
+.text-orange-600               { color: var(--color-warning)        !important; }
+
+// ── Forcer texte principal dans les cellules tableau ─────
+.text-700, .text-600 { color: var(--color-text-primary) !important; }
+.p-datatable .p-datatable-tbody > tr > td { color: var(--color-text-primary)   !important; }
+.p-datatable .p-datatable-thead > tr > th { color: var(--color-text-secondary) !important; }

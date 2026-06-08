@@ -3,10 +3,9 @@
 <div class="flex flex-column gap-3 w-full">
 
   <!-- Section Recherche -->
-  <div [formGroup]="searchForm" class="surface-card border-round-xl shadow-2 p-2">
-    <div class="grid">
-      <div class="col-12 md:col-4">
-        <span class="p-input-icon-left w-full">
+  <div class="pg-filters" [formGroup]="searchForm">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+<span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
           <input pInputText
                  formControlName="libelle"
@@ -14,10 +13,7 @@
                  placeholder="Rechercher par libellé..."
                  class="w-full" />
         </span>
-      </div>
-
-      <div class="col-12 md:col-4">
-        <span class="p-input-icon-left w-full">
+<span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
           <input pInputText
                  formControlName="observation"
@@ -25,10 +21,7 @@
                  placeholder="Rechercher par observation..."
                  class="w-full" />
         </span>
-      </div>
-
-      <div class="col-12 md:col-4">
-        <p-multiSelect
+<p-multiSelect
           formControlName="transactionSources"
           [options]="transactionSourceOptions"
           optionLabel="label"
@@ -37,12 +30,10 @@
           appendTo="body"
           [style]="{'width':'100%'}">
         </p-multiSelect>
-      </div>
-    </div>
-  </div>
+</div>
 
   <!-- Section Tableau -->
-  <div class="surface-card border-round-xl shadow-2 ">
+  <div class="pg-table">
     <p-table
       #dt
       [value]="recapEncaissements"
@@ -63,54 +54,38 @@
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="id" class="white-space-nowrap">
-            <div class="flex align-items-center gap-2">
-              ID
+            ID
               <p-sortIcon field="id"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="dateEmission" class="white-space-nowrap">
-            <div class="flex align-items-center gap-2">
-              Date d'émission
+            Date d'émission
               <p-sortIcon field="dateEmission"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="dateEcheance" class="white-space-nowrap">
-            <div class="flex align-items-center gap-2">
-              Date d'échéance
+            Date d'échéance
               <p-sortIcon field="dateEcheance"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="debit" class="text-right">
-            <div class="flex align-items-center justify-content-end gap-2">
-              Débit
+            Débit
               <p-sortIcon field="debit"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="credit" class="text-right">
-            <div class="flex align-items-center justify-content-end gap-2">
-              Crédit
+            Crédit
               <p-sortIcon field="credit"></p-sortIcon>
-            </div>
           </th>
           <th pSortableColumn="Source" class="text-right">
-            <div class="flex align-items-center justify-content-end gap-2">
-              Source
+            Source
               <p-sortIcon field="Source"></p-sortIcon>
-            </div>
           </th>
 
           <th pSortableColumn="Observations" class="text-right">
-            <div class="flex align-items-center justify-content-end gap-2">
-              Observations
+            Observations
               <p-sortIcon field="Observations"></p-sortIcon>
-            </div>
           </th>
 
           <th pSortableColumn="Libellé" class="text-right">
-            <div class="flex align-items-center justify-content-end gap-2">
-              Libellé
+            Libellé
               <p-sortIcon field="Libellé"></p-sortIcon>
-            </div>
           </th>
 
 

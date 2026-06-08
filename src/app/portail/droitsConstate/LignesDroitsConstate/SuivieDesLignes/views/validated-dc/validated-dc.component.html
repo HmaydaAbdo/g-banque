@@ -22,8 +22,8 @@
       <p>Banque : <strong>{{ aggregatedData.banqueName }}</strong></p>
       <p>Marché : <strong>{{ aggregatedData.marcheName }}</strong></p>
       <p>Numéro de Marché: <strong>{{ aggregatedData.marcheNumero }}</strong></p>
-      <p>Total Déblocage: <strong class="text-green-700">{{ aggregatedData.totalCredit | number: '1.2-2' }}</strong></p>
-      <p>Total Remboursements: <strong class="text-red-700">{{ aggregatedData.totalDebit | number: '1.2-2' }}</strong></p>
+      <p>Total Déblocage: <strong class="num num-credit">{{ aggregatedData.totalCredit | number: '1.2-2' }}</strong></p>
+      <p>Total Remboursements: <strong class="num num-debit">{{ aggregatedData.totalDebit | number: '1.2-2' }}</strong></p>
       <p>Reste: <strong class="text-blue-700">{{ aggregatedData.reste | number: '1.2-2' }}</strong></p>
     </div>
   </div>
@@ -72,8 +72,8 @@
           <td class="text-center">{{ line.dateOperation ? (line.dateOperation | date: 'dd/MM/yyyy') : '-' }}</td>
           <td class="text-center">{{ line.dateValeur ? (line.dateValeur | date: 'dd/MM/yyyy') : '-' }}</td>
           <td>{{ line.libelle }}</td>
-          <td class="text-center text-red-700">{{ line.debit != null ? (line.debit | number:'1.2-2') : '-' }}</td>
-          <td class="text-center text-green-700">{{ line.credit != null ? (line.credit | number:'1.2-2') : '-' }}</td>
+          <td class="num num-debit">{{ line.debit != null ? (line.debit | number:'1.2-2') : '-' }}</td>
+          <td class="num num-credit">{{ line.credit != null ? (line.credit | number:'1.2-2') : '-' }}</td>
           <td>{{ line.observation }}</td>
           <td>{{line.status | uppercase}}</td>
           <td>{{line.type | uppercase}}</td>

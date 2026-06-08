@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { SourceBadgeComponent } from '../../../global/shared-components/source-badge/source-badge.component';
 import { ActivatedRoute } from '@angular/router';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
@@ -26,6 +27,7 @@ import {Ripple} from "primeng/ripple";
 import { parseLocalDate, toLocalDateString } from '../../../global/types/date.utils';
 import {ToolbarModule} from "primeng/toolbar";
 import {TooltipModule} from "primeng/tooltip";
+import { StatutRapprochement } from '../../enums/StatutRapprochement';
 
 @Component({
   selector: 'app-details-rapprochement',
@@ -47,13 +49,17 @@ import {TooltipModule} from "primeng/tooltip";
     FormsModule,
     Ripple,
     ToolbarModule,
-    TooltipModule
+    TooltipModule,
+    SourceBadgeComponent,
   ],
   templateUrl: './details-rapprochement.component.html',
   styleUrls: ['./details-rapprochement.component.scss'],
   providers: [MessageService, ConfirmationService, DecimalPipe, DatePipe]
 })
 export class DetailsRapprochementComponent implements OnInit, OnDestroy {
+
+  // Exposé au template pour éviter les comparaisons sur strings brutes
+  readonly StatutRapprochement = StatutRapprochement;
 
   @ViewChild('dt') dt: Table | undefined;
 

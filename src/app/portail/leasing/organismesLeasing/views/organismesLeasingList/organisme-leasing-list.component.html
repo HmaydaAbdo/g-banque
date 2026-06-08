@@ -10,12 +10,15 @@
 
   <div class="p-fluid grid ">
     <div class="field col-12 md:col-4">
-      <form [formGroup]="searchForm">
+      <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm">
         <span class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <input pInputText type="text" formControlName="nom" placeholder="Rechercher par Nom" />
         </span>
       </form>
+</div>
     </div>
 
   </div>

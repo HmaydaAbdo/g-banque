@@ -25,6 +25,8 @@
     <button pButton pRipple label="Nouveau Crédit" class=" md: h-fit" size="small" icon="pi pi-plus" severity="primary" (click)="createNewCredit()"></button>
   </div>
 
+  <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
   <form [formGroup]="searchForm" class="flex justify-content-between flex-wrap gap-3">
 
     <div>
@@ -59,6 +61,7 @@
       ></p-button>
     </div>
   </form>
+</div>
 
   <div class="pb-8">
     <p-table
