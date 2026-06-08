@@ -1,11 +1,12 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from "./auth/views/login/login.component";
-import {PortailComponent} from "./portail/global/views/portail/portail.component";
-import {authGuard} from "./auth/guards/auth.guard";
+import { PortailComponent } from "./portail/global/views/portail/portail.component";
+import { LandingComponent } from "./landing/landing.component";
+import { authGuard } from "./auth/guards/auth.guard";
 
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/connexion', pathMatch: 'full' },
+  { path: '', component: LandingComponent, pathMatch: 'full' },
   { path: 'connexion', component: LoginComponent },
   {
     path: 'portail',
