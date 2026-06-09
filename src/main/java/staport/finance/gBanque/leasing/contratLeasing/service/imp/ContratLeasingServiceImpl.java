@@ -4,7 +4,9 @@ package staport.finance.gBanque.leasing.contratLeasing.service.imp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -270,7 +272,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         Specification<ContratLeasing> statusSpec = ContratLeasingSpecification.getInactiveContrats();
         Specification<ContratLeasing> searchSpec = ContratLeasingSpecification.bySearchCriteria(searchDTO);
 
-        Page<ContratLeasingResponseDTO> result = contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable)
+        Page<ContratLeasingResponseDTO> result = contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")))
                 .map(contratLeasingMapper::toDto);
 
         log.info("Nombre de contrats inactifs trouvés : {} sur {} au total", result.getNumberOfElements(), result.getTotalElements());
@@ -287,7 +289,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         Specification<ContratLeasing> statusSpec = ContratLeasingSpecification.getPendingLienReleaseContrats();
         Specification<ContratLeasing> searchSpec = ContratLeasingSpecification.bySearchCriteria(searchDTO);
 
-        Page<ContratLeasingResponseDTO> result = contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable)
+        Page<ContratLeasingResponseDTO> result = contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")))
                 .map(contratLeasingMapper::toDto);
 
         log.info("Nombre de contrats en attente de main levée trouvés : {} sur {} au total",
@@ -309,7 +311,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         Specification<ContratLeasing> searchSpec = ContratLeasingSpecification.bySearchCriteria(searchDTO);
 
         // Combine les deux spécifications avec un "AND"
-        Page<ContratLeasingResponseDTO> result = contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable)
+        Page<ContratLeasingResponseDTO> result = contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")))
                 .map(contratLeasingMapper::toDto);
 
         log.info("Nombre de contrats actifs trouvés : {} sur {} au total", result.getNumberOfElements(), result.getTotalElements());

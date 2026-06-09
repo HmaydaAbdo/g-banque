@@ -4,7 +4,9 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
@@ -104,7 +106,7 @@ public class OrganismeLeasingServiceImpl implements OrganismeLeasingService {
                 criteria, pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<OrganismeLeasing> spec = OrganismeLeasingSpecification.withFilters(criteria);
-        Page<OrganismeLeasingResponseDTO> results = repository.findAll(spec, pageable).map(mapper::toDto);
+        Page<OrganismeLeasingResponseDTO> results = repository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"))).map(mapper::toDto);
 
         log.info("Recherche terminée. {} résultats trouvés sur {} au total",
                 results.getNumberOfElements(), results.getTotalElements());

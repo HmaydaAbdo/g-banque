@@ -3,7 +3,9 @@ package staport.finance.gBanque.restitution.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -141,7 +143,7 @@ public class RestitutionService {
                 .and(RestitutionSpec.hasStatus(searchDto.getStatus()));
 
         // Récupération de la liste paginée des restitutions
-        Page<Restitution> restitutionPage = restitutionRepository.findAll(spec, pageable);
+        Page<Restitution> restitutionPage = restitutionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         // Calcul du total des montants pour les mêmes critères
         BigDecimal totalDesEncours = restitutionRepository.findAll(spec).stream()

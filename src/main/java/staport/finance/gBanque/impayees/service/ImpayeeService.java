@@ -4,7 +4,9 @@ package staport.finance.gBanque.impayees.service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -138,7 +140,7 @@ public class ImpayeeService {
                 .and(ImpayeeSpecifications.hasMotif(searchDto.getMotif()))
                 .and(ImpayeeSpecifications.hasMontant(searchDto.getMontant()));
 
-        Page<Impayee> impayeePage = impayeeRepository.findAll(spec, pageable);
+        Page<Impayee> impayeePage = impayeeRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         BigDecimal totalDesEncours = impayeeRepository.findAll(spec).stream()
                 .map(Impayee::getMontant)

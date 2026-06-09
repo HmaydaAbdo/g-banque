@@ -3,7 +3,9 @@ package staport.finance.gBanque.transactions.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,7 +71,7 @@ public class TransactionService implements ITransactionService{
         }
 
         Specification<Transaction> combinedSpec = withFilters(specs);
-        Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, pageable);
+        Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("Historique récupéré: {} transactions trouvées (Page {}/{})",
                 transactions.getTotalElements(), transactions.getNumber(), transactions.getTotalPages());
@@ -151,7 +153,7 @@ public class TransactionService implements ITransactionService{
         BigDecimal tvaDue = totalTvaCollectee.subtract(totalTvaDeductible);
 
         // 2. Pagination
-        Page<Transaction> paginatedTransactions = transactionRepository.findAll(combinedSpec, pageable);
+        Page<Transaction> paginatedTransactions = transactionRepository.findAll(combinedSpec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         Page<TransactionResponseDto> paginatedDtos = paginatedTransactions.map(TransactionMapper::toDto);
 
         AgreratedTransactionResponseDto aggregatedResponse = new AgreratedTransactionResponseDto();

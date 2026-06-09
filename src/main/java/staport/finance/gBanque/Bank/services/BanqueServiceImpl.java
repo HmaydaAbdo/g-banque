@@ -3,7 +3,9 @@ package staport.finance.gBanque.Bank.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -125,7 +127,7 @@ public class BanqueServiceImpl implements IBanqueService {
     public Page<BanqueResponse> getAllBanques(BanqueSearchCriteria criteria, Pageable pageable) {
         // 1. Execute the search and pagination (1 Query with Join/Where/Limit)
         Specification<Banque> spec = BanqueSpecification.searchByCriteria(criteria);
-        Page<Banque> banquePage = banqueRepository.findAll(spec, pageable);
+        Page<Banque> banquePage = banqueRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         if (banquePage.isEmpty()) {
             return Page.empty(pageable);

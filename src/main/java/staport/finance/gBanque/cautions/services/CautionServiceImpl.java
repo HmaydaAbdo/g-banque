@@ -3,7 +3,9 @@ package staport.finance.gBanque.cautions.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -215,9 +217,10 @@ public class CautionServiceImpl implements ICautionService {
     public Page<CautionResponseDto> rechercher(CautionSearchCriteria criteres, Pageable pageable) {
         logger.debug("Recherche cautions — critères: {}", criteres);
 
+        Pageable stablePageable = pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
         Page<Caution> page = cautionRepository.findAll(
             CautionSpecification.parCriteres(criteres),
-            pageable
+            stablePageable
         );
 
         if (page.isEmpty()) {

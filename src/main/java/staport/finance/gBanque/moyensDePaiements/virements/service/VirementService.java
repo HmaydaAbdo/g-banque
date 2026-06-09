@@ -3,7 +3,9 @@ package staport.finance.gBanque.moyensDePaiements.virements.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,7 +123,7 @@ public class VirementService {
         Specification<Virement> spec = VirementSpec.bySearchDto(searchDto)
                 .and(VirementSpec.hasType(Type.ENCAISSEMENT));
 
-        Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
+        Page<Virement> virementPage = virementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} virement(s) d'encaissement trouvé(s)", virementPage.getTotalElements());
         return virementPage.map(this.virementMapper::toDto);
@@ -134,7 +136,7 @@ public class VirementService {
         Specification<Virement> spec = VirementSpec.bySearchDto(searchDto)
                 .and(VirementSpec.hasType(Type.DECAISSEMENT));
 
-        Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
+        Page<Virement> virementPage = virementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} virement(s) de décaissement trouvé(s)", virementPage.getTotalElements());
         return virementPage.map(this.virementMapper::toDto);
@@ -172,7 +174,7 @@ public class VirementService {
                 .and(VirementSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(VirementSpec.hasMontant(searchDto.getMontant()));
 
-        Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
+        Page<Virement> virementPage = virementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         BigDecimal totalDesEncours = virementRepository.findAll(spec).stream()
                 .map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -198,7 +200,7 @@ public class VirementService {
                 .and(VirementSpec.hasMontant(searchDto.getMontant()))
                 .and(VirementSpec.hasEmetteur(searchDto.getEmetteur()));
 
-        Page<Virement> virementPage = virementRepository.findAll(spec, pageable);
+        Page<Virement> virementPage = virementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         BigDecimal totalDesEncours = virementRepository.findAll(spec).stream()
                 .map(Virement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);

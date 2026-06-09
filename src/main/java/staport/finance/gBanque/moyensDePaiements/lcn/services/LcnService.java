@@ -3,7 +3,9 @@ package staport.finance.gBanque.moyensDePaiements.lcn.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -238,7 +240,7 @@ public class LcnService {
                 .and(LcnSpecification.hasType(Type.DECAISSEMENT));
 
         // Execute the search with the combined specification and pagination
-        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
+        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} LCN de décaissement trouvé(s)", lcnPage.getTotalElements());
 
@@ -262,7 +264,7 @@ public class LcnService {
                 .and(LcnSpecification.hasNumero(searchDto.getNumero()));
 
         // Execute the search with the combined specification and pagination
-        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
+        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} LCN d'encaissement trouvé(s)", lcnPage.getTotalElements());
 
@@ -308,7 +310,7 @@ public class LcnService {
                 .and(LcnSpecification.hasMontant(searchDto.getMontant()));
 
         // Execute the search with the specification and pagination
-        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
+        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         BigDecimal totalDesEncours = lcnRepository.findAll(spec).stream().map(Lcn::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
         Page<LcnResponseDTO> result = lcnPage.map(LcnMapper::toDto);
 
@@ -332,7 +334,7 @@ public class LcnService {
                 .and(LcnSpecification.hasNumero(searchDto.getNumero()));
 
         // Execute the search with the specification and pagination
-        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable);
+        Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         BigDecimal totalDesEncours = lcnRepository.findAll(spec).stream().map(Lcn::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
         Page<LcnResponseDTO> result = lcnPage.map(LcnMapper::toDto);
 

@@ -3,7 +3,9 @@ package staport.finance.gBanque.operationErrone.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -139,7 +141,7 @@ public class OperationErroneService {
                 .and(OperationErroneSpec.hasMontant(searchDto.getMontant()))
                 .and(OperationErroneSpec.hasMotif(searchDto.getMotif()));
 
-        Page<OperationErrone> page = operationErroneRepository.findAll(spec, pageable);
+        Page<OperationErrone> page = operationErroneRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         BigDecimal total = operationErroneRepository.findAll(spec).stream()
                 .map(OperationErrone::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

@@ -3,7 +3,9 @@ package staport.finance.gBanque.prefinancement.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -178,7 +180,7 @@ public class PrefinancementService {
         Specification<Prefinancement> spec = PrefinancementSpecification.bySearchCriteria(searchDTO);
         log.debug("Spécification de recherche créée");
 
-        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable);
+        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("Recherche terminée - {} enregistrement(s) trouvé(s) sur {} page(s)",
                 prefinancementPage.getTotalElements(), prefinancementPage.getTotalPages());
@@ -231,7 +233,7 @@ public class PrefinancementService {
 
         log.debug("Spécification de recherche créée pour les remboursements en cours");
 
-        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable);
+        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         log.debug("{} préfinancement(s) de remboursement trouvé(s) dans la page actuelle",
                 prefinancementPage.getNumberOfElements());
 
@@ -267,7 +269,7 @@ public class PrefinancementService {
 
         log.debug("Spécification de recherche créée pour les déblocages en cours");
 
-        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable);
+        Page<Prefinancement> prefinancementPage = prefinancementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         log.debug("{} préfinancement(s) de déblocage trouvé(s) dans la page actuelle",
                 prefinancementPage.getNumberOfElements());
 

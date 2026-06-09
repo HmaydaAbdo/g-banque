@@ -3,7 +3,9 @@
     import org.slf4j.Logger;
     import org.slf4j.LoggerFactory;
     import org.springframework.data.domain.Page;
+    import org.springframework.data.domain.PageRequest;
     import org.springframework.data.domain.Pageable;
+    import org.springframework.data.domain.Sort;
     import org.springframework.data.jpa.domain.Specification;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
@@ -345,7 +347,7 @@ import java.math.BigDecimal;
             Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.buildSpecification(searchDTO)
                     .and(EcheanceLeasingSpecification.byContratId(contratId));
 
-            Page<EcheanceLeasing> echeancesPage = echeanceLeasingRepository.findAll(spec, pageable);
+            Page<EcheanceLeasing> echeancesPage = echeanceLeasingRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
             Page<EcheanceLeasingResponseDTO> echeancesDtoPage = echeancesPage.map(echeanceLeasingMapper::toDto);
 
             log.debug("Nombre d'échéances dans la page : {}", echeancesPage.getNumberOfElements());
@@ -432,7 +434,7 @@ import java.math.BigDecimal;
                 spec = spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.getMontant()));
             }
 
-            Page<EcheanceLeasing> encoursEcheancesPage = echeanceLeasingRepository.findAll(spec, pageable);
+            Page<EcheanceLeasing> encoursEcheancesPage = echeanceLeasingRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
             Page<EcheanceLeasingResponseDTO> echeancesDtoPage = encoursEcheancesPage.map(echeanceLeasingMapper::toDto);
 
             log.debug("Nombre d'échéances en encours dans la page : {}", encoursEcheancesPage.getNumberOfElements());

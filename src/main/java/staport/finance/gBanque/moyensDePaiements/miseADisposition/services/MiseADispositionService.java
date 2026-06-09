@@ -3,7 +3,9 @@ package staport.finance.gBanque.moyensDePaiements.miseADisposition.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -144,7 +146,7 @@ public class MiseADispositionService {
                 .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
 
         // Execute the search with the combined specification and pagination.
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} mise(s) à disposition de décaissement trouvée(s)", miseADispositionPage.getTotalElements());
 
@@ -161,7 +163,7 @@ public class MiseADispositionService {
                 .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT));
 
         // Execute the search with the combined specification and pagination.
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} mise(s) à disposition d'encaissement trouvée(s)", miseADispositionPage.getTotalElements());
 
@@ -208,7 +210,7 @@ public class MiseADispositionService {
                 .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
 
         // Execute the search with the specification and pagination
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         BigDecimal totalDesEncours = miseADispositionRepository.findAll(spec).stream().map(MiseADisposition::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
         Page<MiseADispositionResponseDto> result = miseADispositionPage.map(MiseADispositionMapper::toDto);
 
@@ -232,7 +234,7 @@ public class MiseADispositionService {
                 .and(MiseADispositionSpec.hasDateEmission(searchDto.getDateEmission()));
 
         // Execute the search with the specification and pagination
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable);
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         BigDecimal totalDesEncours = miseADispositionRepository.findAll(spec).stream().map(MiseADisposition::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
         Page<MiseADispositionResponseDto> result = miseADispositionPage.map(MiseADispositionMapper::toDto);
 

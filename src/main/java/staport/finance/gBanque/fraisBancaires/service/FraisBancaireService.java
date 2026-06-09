@@ -3,7 +3,9 @@ package staport.finance.gBanque.fraisBancaires.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,7 +135,7 @@ public class FraisBancaireService {
                 .and(FraisBancaireSpec.hasLibelle(searchDto.getLibelle()))
                 .and(FraisBancaireSpec.hasMontant(searchDto.getMontant()));
 
-        Page<FraisBancaire> page = fraisBancaireRepository.findAll(spec, pageable);
+        Page<FraisBancaire> page = fraisBancaireRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         BigDecimal total = fraisBancaireRepository.findAll(spec).stream()
                 .map(FraisBancaire::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

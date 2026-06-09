@@ -3,7 +3,9 @@ package staport.finance.gBanque.factoring.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -156,7 +158,7 @@ public class FactoringService {
         log.debug("Pagination demandée - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<Factoring> spec = FactoringSpec.bySearchCriteria(searchDTO);
-        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
+        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("Recherche terminée - {} résultat(s) trouvé(s) sur {} élément(s) au total",
                 factoringPage.getNumberOfElements(), factoringPage.getTotalElements());
@@ -201,7 +203,7 @@ public class FactoringService {
                 .and(FactoringSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of factoring records
-        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
+        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.debug("Nombre de résultats paginés: {}", factoringPage.getNumberOfElements());
 
@@ -237,7 +239,7 @@ public class FactoringService {
                 .and(FactoringSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of factoring records
-        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
+        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.debug("Nombre de résultats paginés: {}", factoringPage.getNumberOfElements());
 

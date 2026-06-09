@@ -1,7 +1,9 @@
 package staport.finance.gBanque.rapprochement.services;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,7 +70,7 @@ public class RapprochementService {
     public Page<RapprochementResponseDto> searchRapprochements(RapprochementSearchDto searchDto, Pageable pageable) {
 
         Specification<Rapprochement> spec = RapprochementSpecifications.bySearchDto(searchDto);
-        Page<Rapprochement> page = rapprochementRepository.findAll(spec, pageable);
+        Page<Rapprochement> page = rapprochementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         if (page.isEmpty()) {
             return page.map(r -> rapprochementMapper.toResponseDto(r, RapprochementAggregates.EMPTY));

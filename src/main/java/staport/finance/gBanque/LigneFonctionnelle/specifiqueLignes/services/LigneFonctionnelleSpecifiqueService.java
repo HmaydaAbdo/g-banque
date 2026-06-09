@@ -3,7 +3,9 @@ package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -175,7 +177,7 @@ public class LigneFonctionnelleSpecifiqueService {
         log.debug("Critères de recherche: {}", criteria);
 
         Specification<LigneFonctionnelleSpecifique> spec = LigneFonctionnelleSpecifiqueSpecification.searchByCriteria(criteria);
-        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable);
+        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} lignes fonctionnelles spécifiques trouvées sur {} au total", page.getNumberOfElements(), page.getTotalElements());
 
@@ -202,7 +204,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
         // 3. Use the existing Specification to find the entities
         Specification<LigneFonctionnelleSpecifique> spec = LigneFonctionnelleSpecifiqueSpecification.searchByCriteria(criteria);
-        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable);
+        Page<LigneFonctionnelleSpecifique> page = ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} lignes fonctionnelles spécifiques trouvées pour la banque ID {} sur {} au total",
                 page.getNumberOfElements(), banqueId, page.getTotalElements());
@@ -357,7 +359,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
         // 3. Récupérer les lignes
         Page<LigneFonctionnelleSpecifique> page =
-                ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable);
+                ligneFonctionnelleSpecifiqueRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} lignes trouvées pour le marché ID: {} sur {} au total",
                 page.getNumberOfElements(), marcheId, page.getTotalElements());
@@ -402,7 +404,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
         Specification<Prefinancement> spec = Specification.where(PrefinancementSpecification.byMarcheId(marche.getId()));
 
-        Page<Prefinancement> prefiPage = prefinancementRepository.findAll(spec, pageable);
+        Page<Prefinancement> prefiPage = prefinancementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         log.debug("{} préfinancements récupérés pour la page courante", prefiPage.getNumberOfElements());
 
         Page<SuiviePrefiLigneResponseDto> pageOfDtos = prefiPage.map(prefinancementMapper::toSuiviePrefiLigneResponseDto);
@@ -454,7 +456,7 @@ public class LigneFonctionnelleSpecifiqueService {
         log.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
         Specification<DroitConstate> spec = Specification.where(DroitConstateSpec.byMarcheId(marche.getId())) ;
-        Page<DroitConstate> dcPage = droitConstateRepository.findAll(spec, pageable);
+        Page<DroitConstate> dcPage = droitConstateRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.debug("{} droits constatés récupérés pour la page courante", dcPage.getNumberOfElements());
 
@@ -505,7 +507,7 @@ public class LigneFonctionnelleSpecifiqueService {
         log.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
         Specification<Factoring> spec = Specification.where(FactoringSpec.byMarcheId(marche.getId()));
-        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable);
+        Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.debug("{} factorings récupérés pour la page courante", factoringPage.getNumberOfElements());
 

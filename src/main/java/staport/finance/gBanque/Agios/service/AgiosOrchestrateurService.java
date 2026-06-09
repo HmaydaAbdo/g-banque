@@ -4,7 +4,9 @@ package staport.finance.gBanque.Agios.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -333,7 +335,7 @@ public class AgiosOrchestrateurService {
         Specification<AgiosTrimestriel> spec = AgiosTrimestrielSpecification.buildSpec(
                 dto.getBanqueId(), dto.getType(), dto.getAnnee(),
                 dto.getTrimestre(), dto.getStatut(), dto.getSearch());
-        return agiosTrimestrielRepository.findAll(spec, pageable);
+        return agiosTrimestrielRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
     }
 
     @Transactional(readOnly = true)
@@ -342,7 +344,7 @@ public class AgiosOrchestrateurService {
         LocalDate fin   = finDuTrimestrePourNumero(dto.getTrimestre(), dto.getAnnee());
         Specification<AgiosJournalier> spec = AgiosJournalierSpecification.buildSpec(
                 dto.getBanqueId(), dto.getType(), debut, fin, dto.getDateLimite());
-        return agiosJournalierRepository.findAll(spec, pageable);
+        return agiosJournalierRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
     }
 
     @Transactional(readOnly = true)

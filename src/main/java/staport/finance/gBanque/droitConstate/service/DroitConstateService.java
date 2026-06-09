@@ -3,7 +3,9 @@ package staport.finance.gBanque.droitConstate.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -169,7 +171,7 @@ public class DroitConstateService {
         log.debug("Pagination demandée - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<DroitConstate> spec = DroitConstateSpec.bySearchCriteria(searchDTO);
-        Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec, pageable);
+        Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("Recherche terminée - {} résultat(s) trouvé(s) sur {} élément(s) au total",
                 droitConstatePage.getNumberOfElements(), droitConstatePage.getTotalElements());
@@ -214,7 +216,7 @@ public class DroitConstateService {
                 .and(DroitConstateSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of droit constate records
-        Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec, pageable);
+        Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.debug("Nombre de résultats paginés: {}", droitConstatePage.getNumberOfElements());
 
@@ -250,7 +252,7 @@ public class DroitConstateService {
                 .and(DroitConstateSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of droit constate records
-        Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec, pageable);
+        Page<DroitConstate> droitConstatePage = droitConstateRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.debug("Nombre de résultats paginés: {}", droitConstatePage.getNumberOfElements());
 

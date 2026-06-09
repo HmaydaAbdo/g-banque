@@ -3,7 +3,9 @@ package staport.finance.gBanque.prelevements.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -184,7 +186,7 @@ public class PrelevementService {
                 .and(PrelevementSpec.hasMontant(searchDto.getMontant()));
 
         // Récupération de la liste paginée de prélèvements
-        Page<Prelevement> prelevementPage = prelevementRepository.findAll(spec, pageable);
+        Page<Prelevement> prelevementPage = prelevementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         log.debug("Page de prélèvements récupérée: {} éléments sur {}",
                 prelevementPage.getNumberOfElements(), prelevementPage.getTotalElements());
 

@@ -3,7 +3,9 @@ package staport.finance.gBanque.moyensDePaiements.virementInternational.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -124,7 +126,7 @@ public class VirementInternationalService {
 
         Specification<VirementInternational> spec = VirementInternationalSpec.bySearchDto(searchDto);
 
-        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable);
+        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} virement(s) international(aux) trouvé(s)", virementPage.getTotalElements());
         return virementPage.map(this.virementInternationalMapper::toDto);
@@ -146,7 +148,7 @@ public class VirementInternationalService {
         Specification<VirementInternational> spec = VirementInternationalSpec.bySearchDto(searchDto)
                 .and(VirementInternationalSpec.hasType(Type.ENCAISSEMENT));
 
-        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable);
+        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} virement(s) international(aux) d'encaissement trouvé(s)", virementPage.getTotalElements());
         return virementPage.map(this.virementInternationalMapper::toDto);
@@ -168,7 +170,7 @@ public class VirementInternationalService {
         Specification<VirementInternational> spec = VirementInternationalSpec.bySearchDto(searchDto)
                 .and(VirementInternationalSpec.hasType(Type.DECAISSEMENT));
 
-        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable);
+        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("{} virement(s) international(aux) de décaissement trouvé(s)", virementPage.getTotalElements());
         return virementPage.map(this.virementInternationalMapper::toDto);
@@ -242,7 +244,7 @@ public class VirementInternationalService {
             spec = spec.and(VirementInternationalSpec.hasEmetteur(searchDto.getEmetteur()));
         }
 
-        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable);
+        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         // Calcul du total des encours
         BigDecimal totalDesEncours = virementInternationalRepository.findAll(spec).stream()
@@ -296,7 +298,7 @@ public class VirementInternationalService {
             spec = spec.and(VirementInternationalSpec.hasEmetteur(searchDto.getEmetteur()));
         }
 
-        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable);
+        Page<VirementInternational> virementPage = virementInternationalRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         // Calcul du total des encours
         BigDecimal totalDesEncours = virementInternationalRepository.findAll(spec).stream()

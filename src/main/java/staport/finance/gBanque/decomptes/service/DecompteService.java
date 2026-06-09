@@ -3,7 +3,9 @@ package staport.finance.gBanque.decomptes.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -154,7 +156,7 @@ public class DecompteService {
         log.debug("Pagination demandée - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<Decompte> spec = DecompteSpec.bySearchCriteria(searchDTO);
-        Page<Decompte> decomptes = decompteRepository.findAll(spec, pageable);
+        Page<Decompte> decomptes = decompteRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.info("Recherche terminée - {} résultat(s) trouvé(s) sur {} élément(s) au total", decomptes.getNumberOfElements(), decomptes.getTotalElements());
 
@@ -198,7 +200,7 @@ public class DecompteService {
                 .and(DecompteSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of decomptes  records
-        Page<Decompte> decomptePage = decompteRepository.findAll(spec, pageable);
+        Page<Decompte> decomptePage = decompteRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         log.debug("Nombre de résultats paginés: {}", decomptePage.getNumberOfElements());
 

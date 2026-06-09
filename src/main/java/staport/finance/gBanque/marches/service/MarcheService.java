@@ -13,7 +13,9 @@ import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -162,7 +164,7 @@ public class MarcheService {
                 .and(MarcheSpecification.isNanti(searchDTO.getIsNanti()));
 
 
-        Page<Marche> marchePage = marcheRepository.findAll(spec, pageable);
+        Page<Marche> marchePage = marcheRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         logger.debug("Trouvé {} marchés correspondant aux critères", marchePage.getTotalElements());
 
         return marchePage.map(marcheMapper::toResponseDTO);

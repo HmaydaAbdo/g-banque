@@ -4,7 +4,9 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +45,7 @@ public class LogServiceImpl implements LogService {
         // Construire la spécification à partir des critères
         Specification<Log> spec = LogSpecification.searchByCriteria(criteria);
 
-        Page<Log> logPage = logRepository.findAll(spec, pageable);
+        Page<Log> logPage = logRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         // Mapper les entités Log en DTOs LogResponse
         List<LogResponse> logResponses = logPage.getContent().stream()

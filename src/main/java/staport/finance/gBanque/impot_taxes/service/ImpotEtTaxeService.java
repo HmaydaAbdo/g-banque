@@ -9,7 +9,9 @@ import jakarta.persistence.criteria.Root;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,7 +82,7 @@ public class ImpotEtTaxeService {
         Specification<ImpotEtTaxe> spec = ImpotEtTaxeSpecifications.buildSpecification(searchDto);
 
         Page<ImpotEtTaxeResponseDto> page = impotEtTaxeRepository
-                .findAll(spec, pageable)
+                .findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")))
                 .map(impotEtTaxeMapper::toResponseDto);
 
         BigDecimal total = sumMontant(spec);
@@ -262,7 +264,7 @@ public class ImpotEtTaxeService {
                 .and(ImpotEtTaxeSpecifications.hasMontant(searchDto.getMontant()));
 
         Page<ImpotEtTaxeResponseDto> pageDto = impotEtTaxeRepository
-                .findAll(spec, pageable)
+                .findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")))
                 .map(impotEtTaxeMapper::toResponseDto);
 
         BigDecimal totalDesEncours = sumMontant(spec);

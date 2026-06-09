@@ -4,7 +4,9 @@ package staport.finance.gBanque.cmt.echeances.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -190,7 +192,7 @@ public class EcheanceCMTService {
         searchDto.setCreditMoyenTermeId(creditId);
         Specification<EcheanceCMT> spec = EcheanceCMTSpecification.withSearchCriteria(searchDto);
 
-        Page<EcheanceCMT> echeancesPage = echeanceCmtRepository.findAll(spec, pageable);
+        Page<EcheanceCMT> echeancesPage = echeanceCmtRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         log.debug("Échéances récupérées - {} échéances sur {} total", echeancesPage.getNumberOfElements(), echeancesPage.getTotalElements());
 
         Page<EcheanceCMTResponseDto> echeancesDtoPage = echeanceCmtMapper.toResponseDtoPage(echeancesPage);
@@ -245,7 +247,7 @@ public class EcheanceCMTService {
 
         log.debug("Application des critères de recherche pour les encours");
 
-        Page<EcheanceCMT> encoursEcheancesPage = echeanceCmtRepository.findAll(spec, pageable);
+        Page<EcheanceCMT> encoursEcheancesPage = echeanceCmtRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         Page<EcheanceCMTResponseDto> echeancesDtoPage = encoursEcheancesPage.map(echeanceCmtMapper::toResponseDto);
 
         log.debug("Échéances d'encours récupérées - {} échéances sur {} total", encoursEcheancesPage.getNumberOfElements(), encoursEcheancesPage.getTotalElements());

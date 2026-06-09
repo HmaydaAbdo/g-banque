@@ -16,7 +16,9 @@ import staport.finance.gBanque.impot_taxes.dtos.ImpotEtTaxeResponseDto;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,8 +111,12 @@ public class CommissionService {
 
         Specification<Commission> spec = CommissionSpecifications.buildSpecification(searchDto);
 
+        Pageable stablePageable = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+
         Page<CommissionResponseDto> page = commissionRepository
-                .findAll(spec, pageable)
+                .findAll(spec, stablePageable)
                 .map(commissionMapper::toResponseDto);
 
         BigDecimal total = sumMontant(spec);
@@ -204,8 +210,13 @@ public class CommissionService {
                 .and(CommissionSpecifications.hasOperation(searchDto.getOperation()))
                 .and(CommissionSpecifications.hasMontant(searchDto.getMontant()));
 
+        // Garantir un tri stable par id pour éviter les doublons inter-pages
+        Pageable stablePageable = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+
         Page<CommissionResponseDto> pageDto = commissionRepository
-                .findAll(spec, pageable)
+                .findAll(spec, stablePageable)
                 .map(commissionMapper::toResponseDto);
 
         BigDecimal totalDesEncours = sumMontant(spec);
