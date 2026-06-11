@@ -17,12 +17,6 @@ public interface LcnRepository extends JpaRepository<Lcn, Long>, JpaSpecificatio
 
     Optional<Lcn> findByNumero(String numero);
 
-    /**
-     * Recherche par numéro ET banque. Le numéro FunPaiement n'est unique que par banque
-     * (annulation puis réémission sur une autre banque = même numéro).
-     */
-    Optional<Lcn> findByNumeroAndBanqueId(String numero, Long banqueId);
-
     @Modifying
     @Query("UPDATE Lcn l SET l.statut = 'REGLE' WHERE l.dateEcheance < :cutoffDate AND l.statut = 'ENCOURS'")
     int deactivateByDateEcheanceBefore(@Param("cutoffDate") LocalDate cutoffDate);
