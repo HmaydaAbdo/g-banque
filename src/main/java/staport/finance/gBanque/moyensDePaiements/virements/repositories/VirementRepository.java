@@ -19,6 +19,12 @@ public interface VirementRepository extends JpaRepository<Virement, Long>, JpaSp
 
     Optional<Virement> findByNumero(String numero);
 
+    /**
+     * Recherche par numéro ET banque émettrice (la banque FunPaiement est mappée sur
+     * banqueEmettrice par le batch). Le numéro FunPaiement n'est unique que par banque.
+     */
+    Optional<Virement> findByNumeroAndBanqueEmettriceId(String numero, Long banqueId);
+
     @Modifying
     @Query("UPDATE Virement v SET v.statut = 'REGLE' WHERE v.dateEmission < :cutoffDate AND v.statut = 'ENCOURS'")
     int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);

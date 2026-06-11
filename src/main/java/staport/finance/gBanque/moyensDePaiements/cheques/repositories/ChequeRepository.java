@@ -22,6 +22,12 @@ public interface ChequeRepository extends JpaRepository<Cheque, Long>, JpaSpecif
     Optional<Cheque> findByNumero(String numero);
 
     /**
+     * Recherche par numéro ET banque. Le numéro FunPaiement n'est unique que par banque
+     * (annulation puis réémission sur une autre banque = même numéro).
+     */
+    Optional<Cheque> findByNumeroAndBanqueId(String numero, Long banqueId);
+
+    /**
      * Règle tous les chèques dont la date d'émission est strictement antérieure à la date donnée.
      * @param cutoffDate La date limite (exclusive)
      * @return Le nombre de chèques réglés

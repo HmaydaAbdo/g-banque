@@ -32,7 +32,8 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
         StatutMoyenPaiement statutFun = item.getStatutMoyenPaiement();
-        Optional<Lcn> existing = lcnRepository.findByNumero(item.getNumero());
+        // Matching par numéro + banque : le numéro FunPaiement n'est unique que par banque
+        Optional<Lcn> existing = lcnRepository.findByNumeroAndBanqueId(item.getNumero(), banque.getId());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {

@@ -62,7 +62,8 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
      * Retourne l'entité à sauvegarder (insert ou update), ou null si skip.
      */
     private Cheque upsertCheque(FunPaymentDto item, Banque banque, Type type, String numero, StatutMoyenPaiement statutFun) {
-        Optional<Cheque> existing = chequeRepository.findByNumero(numero);
+        // Matching par numéro + banque : le numéro FunPaiement n'est unique que par banque
+        Optional<Cheque> existing = chequeRepository.findByNumeroAndBanqueId(numero, banque.getId());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {

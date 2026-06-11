@@ -17,6 +17,12 @@ public interface MiseADispositionRepository extends JpaRepository<MiseADispositi
     Optional<MiseADisposition> findByNumero(String numero);
 
     /**
+     * Recherche par numéro ET banque. Le numéro FunPaiement n'est unique que par banque
+     * (annulation puis réémission sur une autre banque = même numéro).
+     */
+    Optional<MiseADisposition> findByNumeroAndBanqueId(String numero, Long banqueId);
+
+    /**
      * Règle toutes les mises à disposition dont la date d'émission est strictement antérieure à la date donnée.
      * @param cutoffDate La date limite (exclusive)
      * @return Le nombre de mises à disposition réglées

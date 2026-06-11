@@ -33,7 +33,8 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
         StatutMoyenPaiement statutFun = item.getStatutMoyenPaiement();
-        Optional<MiseADisposition> existing = miseADispositionRepository.findByNumero(item.getNumero());
+        // Matching par numéro + banque : le numéro FunPaiement n'est unique que par banque
+        Optional<MiseADisposition> existing = miseADispositionRepository.findByNumeroAndBanqueId(item.getNumero(), banque.getId());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {

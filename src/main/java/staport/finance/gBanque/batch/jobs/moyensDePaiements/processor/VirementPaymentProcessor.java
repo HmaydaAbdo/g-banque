@@ -62,7 +62,8 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
      * Retourne l'entité à sauvegarder, ou null si skip.
      */
     private Virement upsertVirement(FunPaymentDto item, Banque banque, Type type, String numero, StatutMoyenPaiement statutFun) {
-        Optional<Virement> existing = virementRepository.findByNumero(numero);
+        // Matching par numéro + banque émettrice : le numéro FunPaiement n'est unique que par banque
+        Optional<Virement> existing = virementRepository.findByNumeroAndBanqueEmettriceId(numero, banque.getId());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {
