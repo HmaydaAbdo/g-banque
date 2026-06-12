@@ -3,10 +3,12 @@
 
 <div class="h-screen  max-w-screen p-1 ">
   <div class="px-4 flex flex-column gap-4 mb-8">
-    <form [formGroup]="functionalLineSearchForm">
+    <div class="pg-filters">
+      <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+      <form [formGroup]="functionalLineSearchForm" class="w-full">
       <div class="flex flex-row  gap-2 flex-wrap ">
 
-        <div class="flex-grow-1">
+        <div class="flex flex-column flex-grow-1">
           <label for="filterNatureLine" class="block text-900 font-medium mb-2">Nature Ligne</label>
           <p-dropdown
             id="filterNatureLine"
@@ -20,7 +22,7 @@
           ></p-dropdown>
         </div>
 
-        <div class="flex-grow-1">
+        <div class="flex flex-column flex-grow-1">
           <label for="filterYearDepart" class="block text-900 font-medium mb-2">Année de Départ</label>
           <p-inputNumber
             id="filterYearDepart"
@@ -32,7 +34,7 @@
           ></p-inputNumber>
         </div>
 
-        <div class="flex-grow-1">
+        <div class="flex flex-column flex-grow-1">
           <label for="filterActif" class="block text-900 font-medium mb-2">Statut </label>
           <p-dropdown
             id="filterActif"
@@ -48,6 +50,7 @@
 
       </div>
     </form>
+      </div>
     <p-table #dtFunctionalLines
              [value]="bankFunctionalLines"
              [loading]="loading"

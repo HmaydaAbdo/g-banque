@@ -158,10 +158,10 @@
               [severity]="contrat.typeContrat === 'LINEAIRE' ? 'info' : (contrat.typeContrat === 'PROGRESSIF' ? 'success' : 'warning')">
             </p-tag>
           </td>
-          <td>{{ contrat.montantAchatTTC | number:'1.2-2' }} MAD</td>
+          <td><span class="num">{{ contrat.montantAchatTTC | number:'1.2-2' }} MAD</span></td>
           <td>
             <div class="flex align-items-center gap-2">
-              <span class="font-semibold">{{ getEcheancesDisplay(contrat) }}</span>
+              <span class="num font-semibold">{{ getEcheancesDisplay(contrat) }}</span>
               <p-tag
                 *ngIf="contrat.phases && contrat.phases.length > 1"
                 [value]="contrat.phases.length + ' phases'"
@@ -179,9 +179,9 @@
               </i>
             </div>
           </td>
-          <td>{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</td>
+          <td class="white-space-nowrap">{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</td>
           <td>{{ contrat.periodeEnMois }} mois</td>
-          <td>{{ contrat.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td class="white-space-nowrap">{{ contrat.dateFin | date:'dd/MM/yyyy' }}</td>
           <td>
             <p-tag
               [severity]="contrat.completed ? 'success' : 'info'"

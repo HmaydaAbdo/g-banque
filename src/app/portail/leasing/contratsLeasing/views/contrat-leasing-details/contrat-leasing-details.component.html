@@ -26,7 +26,7 @@
       </tr>
       <tr>
         <td><b>Montant Achat TTC:</b></td>
-        <td>{{ contratDetails.montantAchatTTC | number }} </td>
+        <td><span class="num">{{ contratDetails.montantAchatTTC | number:'1.2-2' }}</span></td>
       </tr>
       <tr>
         <td><b>Date Début:</b></td>
@@ -38,7 +38,7 @@
       </tr>
       <tr *ngIf="contratDetails.typeContrat === 'LINEAIRE' && contratDetails.valeurResiduelle !== undefined">
         <td><b>Valeur Résiduelle:</b></td>
-        <td><span class="font-bold text-lg text-primary">{{ contratDetails.valeurResiduelle | number}} </span></td>
+        <td><span class="num font-bold text-lg text-primary">{{ contratDetails.valeurResiduelle | number:'1.2-2'}} </span></td>
       </tr>
     </ng-template>
   </p-table>
@@ -67,7 +67,7 @@
       <tr>
         <td>{{ phase.numeroPhase }}</td>
         <td>{{ phase.dureeMois }}</td>
-        <td>{{ phase.mensualiteTTC | number }} </td>
+        <td><span class="num">{{ phase.mensualiteTTC | number:'1.2-2' }}</span></td>
       </tr>
     </ng-template>
     <ng-template pTemplate="emptyMessage">

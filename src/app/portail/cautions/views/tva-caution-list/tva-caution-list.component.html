@@ -64,8 +64,9 @@
   <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none surface-ground border-round-xl px-3 py-2" />
 
   <!-- Toolbar filtres -->
-  <p-toolbar styleClass="surface-card border-round-xl shadow-1 px-3 py-2">
+  <p-toolbar styleClass="pg-filters">
     <ng-template pTemplate="start">
+      <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
       <form [formGroup]="filterForm" class="flex flex-wrap align-items-center gap-2">
 
         <!-- Banque -->

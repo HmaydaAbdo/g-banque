@@ -59,7 +59,7 @@
       <tr>
         <td>{{ organisme.id }}</td>
         <td>{{ organisme.nom }}</td>
-        <td>{{ organisme.plafond | number:'1.2-2' }}</td>
+        <td><span class="num">{{ organisme.plafond | number:'1.2-2' }}</span></td>
         <td>{{ organisme.dateDebut | date:'dd/MM/yyyy' }}</td>
         <td>{{ organisme.dateFin | date:'dd/MM/yyyy' }}</td>
         <td class="flex flex-row  gap-2">

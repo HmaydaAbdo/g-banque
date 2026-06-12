@@ -273,6 +273,7 @@ div.flex.flex-column.gap-1.px-2 {
 
 // Filter bar
 .pg-filters {
+  flex-shrink  : 0;   // jamais compressé par le tableau dans les shells flex h-screen
   background   : var(--color-surface);
   border       : 1px solid var(--color-border);
   border-radius: var(--radius-xl);
@@ -519,6 +520,9 @@ div.flex.flex-column.gap-1.px-2 {
 .p-datatable .p-datatable-tbody > tr:nth-child(even) > td {
   background: var(--color-surface-2);
 }
+
+// Tags PrimeNG — jamais de coupure au milieu d'un mot (LINEAIRE, En Cours, etc.)
+.p-tag, .p-tag .p-tag-value { white-space: nowrap; }
 
 .p-inputtext:enabled:focus,
 .p-dropdown:not(.p-disabled).p-focus,

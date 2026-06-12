@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 
-<div class="card 4 h-screen w-screen overflow-y-scroll">
+<div class="card flex flex-column gap-2 p-2 w-screen h-screen overflow-y-scroll">
 
   <div *ngIf="loading" class="flex justify-content-center align-items-center h-full my-5">
     <p-progressSpinner></p-progressSpinner>
@@ -36,9 +36,9 @@
 
     <div class="flex flex-row justify-content-around gap-2  ">
       <p > N° Contract : <strong>{{tableauAmortissement.numeroContrat}} </strong></p>
-      <p > Endettement : <strong>{{tableauAmortissement.totalIndemniteAPayer | number}} </strong></p>
-      <p > Montant Déjà Payé : <strong>{{tableauAmortissement.montantTotalDejaPaye | number}} </strong></p>
-      <p > Le Reste : <strong>{{tableauAmortissement.montantRestantAPayer | number}} </strong></p>
+      <p > Endettement : <strong class="num">{{tableauAmortissement.totalIndemniteAPayer | number:'1.2-2'}} </strong></p>
+      <p > Montant Déjà Payé : <strong class="num">{{tableauAmortissement.montantTotalDejaPaye | number:'1.2-2'}} </strong></p>
+      <p > Le Reste : <strong class="num">{{tableauAmortissement.montantRestantAPayer | number:'1.2-2'}} </strong></p>
     </div>
 
     <div class="pg-filters">
@@ -87,9 +87,9 @@
           <tr >
             <td>{{ echeance.id }}</td>
             <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-            <td>{{ echeance.montantHT  | number }} </td>
-            <td>{{ echeance.montantTVA | number }} </td>
-            <td>{{ echeance.montantTTC | number }} </td>
+            <td><span class="num">{{ echeance.montantHT | number:'1.2-2' }}</span></td>
+            <td><span class="num">{{ echeance.montantTVA | number:'1.2-2' }}</span></td>
+            <td><span class="num">{{ echeance.montantTTC | number:'1.2-2' }}</span></td>
             <td><p-tag [value]="echeance.statutPaiement" [severity]="getStatutSeverity(echeance.statutPaiement)"></p-tag></td>
               <td class="text-center">
                 <p-inputSwitch

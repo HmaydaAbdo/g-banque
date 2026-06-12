@@ -53,7 +53,7 @@
         <tr>
           <td>{{ phaseControl.get('numeroPhase')?.value }}</td>
           <td>{{ phaseControl.get('dureeMois')?.value }}</td>
-          <td>{{ phaseControl.get('mensualiteTTC')?.value | number:'1.2-2' }} MAD</td>
+          <td><span class="num">{{ phaseControl.get('mensualiteTTC')?.value | number:'1.2-2' }} MAD</span></td>
           <td>
             <p-button icon="pi pi-pencil" severity="info" class="mr-2" (onClick)="editPhase(rowIndex)"></p-button>
             <p-button icon="pi pi-trash" severity="danger" (onClick)="deletePhase(rowIndex)"></p-button>

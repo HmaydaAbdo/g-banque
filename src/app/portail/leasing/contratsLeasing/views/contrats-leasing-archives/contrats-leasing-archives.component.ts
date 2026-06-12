@@ -396,7 +396,7 @@ export class ContratsLeasingArchivesComponent implements OnInit, OnDestroy {
    */
   private formatCurrency(amount: number | any): string {
     const numAmount = typeof amount === 'number' ? amount : Number(amount);
-    return `${numAmount.toFixed(2)} MAD`;
+    return `${numAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`;
   }
 
   onFileSelected(event: Event): void {

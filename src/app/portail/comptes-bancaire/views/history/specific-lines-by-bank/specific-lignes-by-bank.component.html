@@ -4,6 +4,8 @@
     <div class="px-4 flex flex-column gap-4 mb-8">
 
 
+      <div class="pg-filters">
+      <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
       <form [formGroup]="searchForm" class="w-full">
         <div class="flex flex-column px-4 md:flex-row md:align-items-end md:justify-content-between">
           <div class="flex flex-column md:flex-row gap-3 mb-3 md:mb-0">
@@ -67,6 +69,7 @@
           </div>
         </div>
       </form>
+      </div>
       <p-table
           #dtSpecificLines
           [value]="specificLines"
