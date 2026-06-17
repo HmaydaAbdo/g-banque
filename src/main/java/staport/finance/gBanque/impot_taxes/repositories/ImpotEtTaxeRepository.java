@@ -41,4 +41,12 @@ public interface ImpotEtTaxeRepository extends JpaRepository<ImpotEtTaxe, Long>,
     @Modifying
     @Query("DELETE FROM ImpotEtTaxe i WHERE i.commission.id IN :commissionIds")
     void deleteByCommissionIdIn(@Param("commissionIds") Collection<Long> commissionIds);
+
+    /**
+     * Vérifie si un impôt/taxe avec le même libellé a déjà été généré pour
+     * cette banque dans la fenêtre de dates donnée. Utilisé pour l'idempotence
+     * du scheduler des charges fixes.
+     */
+    boolean existsByBanqueIdAndLibelleAndDateEmissionBetween(
+            Long banqueId, String libelle, LocalDate start, LocalDate end);
 }
