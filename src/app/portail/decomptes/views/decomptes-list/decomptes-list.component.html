@@ -13,64 +13,176 @@
       </ng-template>
     </p-breadcrumb>
 
-    <button pButton pRipple label="Ajouter Décompte" icon="pi pi-plus" size="small"
-            class="h-fit" routerLink="/portail/decomptes/new"></button>
+    <div class="flex gap-2">
+      <button pButton pRipple
+              label="Exporter PDF"
+              icon="pi pi-file-pdf"
+              [loading]="exporting"
+              class="p-button-outlined p-button-danger h-fit p-button-sm"
+              (click)="exportPdf()">
+      </button>
+      <button pButton pRipple label="Ajouter Décompte" icon="pi pi-plus" size="small"
+              class="h-fit" routerLink="/portail/decomptes/new"></button>
+    </div>
   </div>
 
-  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 p-3 bg-white border-round shadow-1">
-    <div class="pg-filters">
-  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
-  <form [formGroup]="searchForm" class="flex flex-wrap gap-2">
+  <div class="bg-white border-round shadow-1">
+    <form [formGroup]="searchForm">
 
-      <p-dropdown
-        formControlName="marcheId"
-        [options]="marchesOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Sélectionner un marché"
-        [filter]="true"
-        (onFilter)="onFilterMarches($event)"
-        [virtualScroll]="true"
-        [virtualScrollItemSize]="38"
-        [lazy]="true"
-        [virtualScrollOptions]="marchesScrollerOptions"
-        [loading]="marchesLoading"
-        [showClear]="true"
-        appendTo="body"
-        styleClass="w-full md:w-18rem">
-        <ng-template let-item pTemplate="item">
-          <div class="flex align-items-center gap-2" style="height: 38px">
-            <span *ngIf="item.label">{{ item.label }}</span>
-            <i *ngIf="!item.label" class="pi pi-spin pi-spinner text-gray-400"></i>
+      <!-- Barre principale : bouton Filtres + chips actifs + Effacer -->
+      <div class="flex align-items-center gap-2 px-3 py-2 flex-wrap">
+
+        <button pButton pRipple
+                type="button"
+                [label]="activeFilterCount > 0 ? 'Filtres (' + activeFilterCount + ')' : 'Filtres'"
+                icon="pi pi-sliders-h"
+                [class]="activeFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                (click)="toggleFilterPanel()">
+        </button>
+
+        <!-- Chips des filtres actifs -->
+        <div class="flex flex-wrap gap-1 align-items-center">
+          <span *ngFor="let f of activeFilters"
+                class="flex align-items-center gap-1 border-1 border-round-3xl border-300 px-2 py-1 text-xs bg-white white-space-nowrap">
+            {{ f.label }}
+            <i class="pi pi-times text-xs cursor-pointer text-400 hover:text-900"
+               (click)="removeFilter(f.field)"></i>
+          </span>
+        </div>
+
+        <button *ngIf="activeFilterCount > 0"
+                pButton pRipple
+                type="button"
+                label="Effacer tout"
+                class="p-button-sm p-button-text p-button-danger ml-auto"
+                (click)="clearFilters()">
+        </button>
+      </div>
+
+      <!-- Panel filtres dépliable -->
+      <div *ngIf="showFilterPanel"
+           class="border-top-1 border-300 bg-gray-50 px-3 py-3">
+        <div class="grid">
+
+          <!-- Marché -->
+          <div class="col-12 md:col-4">
+            <label class="block text-xs text-500 mb-1">Numéro de marché</label>
+            <p-dropdown
+              formControlName="marcheId"
+              [options]="marchesOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Sélectionner un marché"
+              [filter]="true"
+              (onFilter)="onFilterMarches($event)"
+              [virtualScroll]="true"
+              [virtualScrollItemSize]="38"
+              [lazy]="true"
+              [virtualScrollOptions]="marchesScrollerOptions"
+              [loading]="marchesLoading"
+              [showClear]="true"
+              appendTo="body"
+              styleClass="w-full">
+              <ng-template let-item pTemplate="item">
+                <div class="flex align-items-center gap-2" style="height: 38px">
+                  <span *ngIf="item.label">{{ item.label }}</span>
+                  <i *ngIf="!item.label" class="pi pi-spin pi-spinner text-gray-400"></i>
+                </div>
+              </ng-template>
+            </p-dropdown>
           </div>
-        </ng-template>
-      </p-dropdown>
 
-      <p-dropdown
-        formControlName="banqueId"
-        [options]="banquesOptions"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Banque"
-        [showClear]="true"
-        [filter]="true"
-        appendTo="body"
-        styleClass="w-full md:w-15rem">
-      </p-dropdown>
+          <!-- Banque -->
+          <div class="col-12 md:col-4">
+            <label class="block text-xs text-500 mb-1">Banque d'encaissement</label>
+            <p-dropdown
+              formControlName="banqueId"
+              [options]="banquesOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Toutes les banques"
+              [showClear]="true"
+              [filter]="true"
+              appendTo="body"
+              styleClass="w-full">
+            </p-dropdown>
+          </div>
 
-      <p-dropdown
-        formControlName="status"
-        [options]="[{label:'Tous les statuts', value:null}, {label:'PRÉVU', value:Status.PREVU}, {label:'PAYÉ', value:Status.PAYE}]"
-        placeholder="Statut"
-        [showClear]="true"
-        appendTo="body"
-        styleClass="w-full md:w-20rem">
-      </p-dropdown>
+          <!-- Statut -->
+          <div class="col-12 md:col-4">
+            <label class="block text-xs text-500 mb-1">Statut du décompte</label>
+            <p-dropdown
+              formControlName="status"
+              [options]="[{label:'Tous les statuts', value:null}, {label:'Prévu', value:Status.PREVU}, {label:'Payé', value:Status.PAYE}]"
+              placeholder="Tous les statuts"
+              [showClear]="true"
+              appendTo="body"
+              styleClass="w-full">
+            </p-dropdown>
+          </div>
+
+          <!-- Date valeur de -->
+          <div class="col-6 md:col-3">
+            <label class="block text-xs text-500 mb-1">Date valeur — à partir du</label>
+            <p-calendar
+              formControlName="dateValeurFrom"
+              placeholder="jj/mm/aaaa"
+              dateFormat="dd/mm/yy"
+              [showClear]="true"
+              [showButtonBar]="true"
+              appendTo="body"
+              styleClass="w-full">
+            </p-calendar>
+          </div>
+
+          <!-- Date valeur à -->
+          <div class="col-6 md:col-3">
+            <label class="block text-xs text-500 mb-1">Date valeur — jusqu'au</label>
+            <p-calendar
+              formControlName="dateValeurTo"
+              placeholder="jj/mm/aaaa"
+              dateFormat="dd/mm/yy"
+              [showClear]="true"
+              [showButtonBar]="true"
+              appendTo="body"
+              styleClass="w-full">
+            </p-calendar>
+          </div>
+
+          <!-- Montant min -->
+          <div class="col-6 md:col-3">
+            <label class="block text-xs text-500 mb-1">Montant minimum (MAD)</label>
+            <p-inputNumber
+              formControlName="montantMin"
+              placeholder="0"
+              mode="decimal"
+              [minFractionDigits]="2"
+              [maxFractionDigits]="2"
+              [useGrouping]="true"
+              locale="fr-FR"
+              styleClass="w-full">
+            </p-inputNumber>
+          </div>
+
+          <!-- Montant max -->
+          <div class="col-6 md:col-3">
+            <label class="block text-xs text-500 mb-1">Montant maximum (MAD)</label>
+            <p-inputNumber
+              formControlName="montantMax"
+              placeholder="∞"
+              mode="decimal"
+              [minFractionDigits]="2"
+              [maxFractionDigits]="2"
+              [useGrouping]="true"
+              locale="fr-FR"
+              styleClass="w-full">
+            </p-inputNumber>
+          </div>
+
+        </div>
+      </div>
+
     </form>
-</div>
-
-    <button pButton pRipple icon="pi pi-filter-slash" class="p-button-danger p-button-outlined"
-            (click)="clearFilters()" pTooltip="Effacer les filtres"></button>
   </div>
 
   <div class="pb-8">
@@ -79,7 +191,8 @@
              [rowsPerPageOptions]="[10, 25, 50]" responsiveLayout="scroll" [scrollable]="true"
              styleClass="p-datatable-gridlines text-xs shadow-1 mt-2"
              [showCurrentPageReport]="true"
-             currentPageReportTemplate="{first}-{last} / {totalRecords}">
+             currentPageReportTemplate="{first}-{last} / {totalRecords}"
+             [sortField]="'dateValeur'" [sortOrder]="-1">
 
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">

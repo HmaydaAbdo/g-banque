@@ -86,20 +86,51 @@ export class DecompteService {
       .set('size', size.toString())
       .set('sort', sort);
 
-    // Append search criteria to params if they exist
-    if (searchCriteria.marcheId) {
+    if (searchCriteria.marcheId)
       params = params.set('marcheId', searchCriteria.marcheId.toString());
-    }
-    if (searchCriteria.banqueId) {
+    if (searchCriteria.banqueId)
       params = params.set('banqueId', searchCriteria.banqueId.toString());
-    }
-    if (searchCriteria.status) {
+    if (searchCriteria.status)
       params = params.set('status', searchCriteria.status);
-    }
+    if (searchCriteria.dateValeurFrom)
+      params = params.set('dateValeurFrom', this.toIsoDate(searchCriteria.dateValeurFrom));
+    if (searchCriteria.dateValeurTo)
+      params = params.set('dateValeurTo', this.toIsoDate(searchCriteria.dateValeurTo));
+    if (searchCriteria.montantMin != null)
+      params = params.set('montantMin', searchCriteria.montantMin.toString());
+    if (searchCriteria.montantMax != null)
+      params = params.set('montantMax', searchCriteria.montantMax.toString());
 
     return this.http.get<PageResponse<DecompteResponseDto>>(this.apiUrl, { params });
   }
 
+
+  /** Formate un objet Date en chaîne ISO yyyy-MM-dd pour Spring */
+  private toIsoDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  exportPdf(searchCriteria: DecompteSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchCriteria.marcheId)
+      params = params.set('marcheId', searchCriteria.marcheId.toString());
+    if (searchCriteria.banqueId)
+      params = params.set('banqueId', searchCriteria.banqueId.toString());
+    if (searchCriteria.status)
+      params = params.set('status', searchCriteria.status);
+    if (searchCriteria.dateValeurFrom)
+      params = params.set('dateValeurFrom', this.toIsoDate(searchCriteria.dateValeurFrom));
+    if (searchCriteria.dateValeurTo)
+      params = params.set('dateValeurTo', this.toIsoDate(searchCriteria.dateValeurTo));
+    if (searchCriteria.montantMin != null)
+      params = params.set('montantMin', searchCriteria.montantMin.toString());
+    if (searchCriteria.montantMax != null)
+      params = params.set('montantMax', searchCriteria.montantMax.toString());
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
 
   toggleStatus(id: number): Observable<DecompteResponseDto> {
     return this.http.patch<DecompteResponseDto>(`${this.apiUrl}/${id}/toggle`, {});

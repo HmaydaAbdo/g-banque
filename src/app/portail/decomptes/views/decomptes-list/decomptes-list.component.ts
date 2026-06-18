@@ -16,6 +16,8 @@ import { ToastModule } from "primeng/toast";
 import { TagModule } from "primeng/tag";
 import { InputSwitchModule } from "primeng/inputswitch";
 import { TooltipModule } from 'primeng/tooltip';
+import { CalendarModule } from 'primeng/calendar';
+import { InputNumberModule } from 'primeng/inputnumber';
 
 // Services & Enums
 import { DecompteService } from "../../service/DecompteService";
@@ -33,7 +35,8 @@ import {AuthService} from "../../../../auth/services/auth.service";
     CommonModule, FormsModule, ReactiveFormsModule, RouterLink,
     TableModule, ButtonModule, RippleModule, DropdownModule,
     BreadcrumbModule, ConfirmDialogModule, ToastModule,
-    TagModule, InputSwitchModule, TooltipModule, DatePipe, DecimalPipe
+    TagModule, InputSwitchModule, TooltipModule, DatePipe, DecimalPipe,
+    CalendarModule, InputNumberModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -62,6 +65,9 @@ export class DecomptesListComponent implements OnInit {
   };
 
   banquesOptions: any[] = [];
+
+  showFilterPanel = true;
+  exporting = false;
 
   constructor(
     private fb: FormBuilder,
@@ -96,9 +102,13 @@ export class DecomptesListComponent implements OnInit {
 
   initForm(): void {
     this.searchForm = this.fb.group({
-      marcheId: [null],
-      banqueId: [null],
-      status: [null]
+      marcheId:       [null],
+      banqueId:       [null],
+      status:         [null],
+      dateValeurFrom: [null],
+      dateValeurTo:   [null],
+      montantMin:     [null],
+      montantMax:     [null]
     });
   }
 
@@ -156,7 +166,7 @@ export class DecomptesListComponent implements OnInit {
     this.loading = true;
     const page = event.first ? event.first / (event.rows ?? 10) : 0;
     const size = event.rows ?? 10;
-    const sort = `${event.sortField ?? 'dateEmission'},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
+    const sort = `${event.sortField ?? 'dateValeur'},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
 
     const criteria = this.searchForm.value;
 
@@ -175,8 +185,84 @@ export class DecomptesListComponent implements OnInit {
 
   clearFilters() {
     this.currentMarcheFilter = '';
-    this.searchForm.reset({ marcheId: null, banqueId: null, status: null });
+    this.searchForm.reset({
+      marcheId: null, banqueId: null, status: null,
+      dateValeurFrom: null, dateValeurTo: null,
+      montantMin: null, montantMax: null
+    });
     this.initializeMarches();
+  }
+
+  toggleFilterPanel() {
+    this.showFilterPanel = !this.showFilterPanel;
+  }
+
+  get activeFilterCount(): number {
+    return this.activeFilters.length;
+  }
+
+  get activeFilters(): { label: string; field: string }[] {
+    const v = this.searchForm.value;
+    const filters: { label: string; field: string }[] = [];
+
+    if (v.marcheId) {
+      const opt = this.marchesOptions.find((m: any) => m.value === v.marcheId);
+      filters.push({ label: opt?.label ?? 'Marché', field: 'marcheId' });
+    }
+    if (v.banqueId) {
+      const opt = this.banquesOptions.find((b: any) => b.value === v.banqueId);
+      filters.push({ label: opt?.label ?? 'Banque', field: 'banqueId' });
+    }
+    if (v.status) {
+      filters.push({ label: v.status === 'PAYE' ? 'Payé' : 'Prévu', field: 'status' });
+    }
+    if (v.dateValeurFrom || v.dateValeurTo) {
+      const from = v.dateValeurFrom ? this.formatDateChip(v.dateValeurFrom) : '…';
+      const to   = v.dateValeurTo   ? this.formatDateChip(v.dateValeurTo)   : '…';
+      filters.push({ label: `${from} → ${to}`, field: 'dateValeur' });
+    }
+    if (v.montantMin != null || v.montantMax != null) {
+      const min = v.montantMin != null ? Number(v.montantMin).toLocaleString('fr-FR') : '0';
+      const max = v.montantMax != null ? Number(v.montantMax).toLocaleString('fr-FR') : '∞';
+      filters.push({ label: `${min} → ${max} MAD`, field: 'montant' });
+    }
+    return filters;
+  }
+
+  removeFilter(field: string) {
+    if (field === 'dateValeur') {
+      this.searchForm.patchValue({ dateValeurFrom: null, dateValeurTo: null });
+    } else if (field === 'montant') {
+      this.searchForm.patchValue({ montantMin: null, montantMax: null });
+    } else {
+      this.searchForm.patchValue({ [field]: null });
+    }
+  }
+
+  private formatDateChip(date: Date): string {
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    return `${d}/${m}/${date.getFullYear()}`;
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const criteria = this.searchForm.value;
+    this.decompteService.exportPdf(criteria).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `etat_decomptes_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Export PDF échoué.' });
+        this.exporting = false;
+      }
+    });
   }
 
   toggleStatus(decompte: DecompteResponseDto) {
