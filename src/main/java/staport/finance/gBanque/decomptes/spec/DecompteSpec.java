@@ -97,35 +97,54 @@ public class DecompteSpec {
     }
 
 
-    public static Specification<Decompte> hasMontant (BigDecimal montant) {
+    public static Specification<Decompte> hasMontant(BigDecimal montant) {
+        return (root, query, cb) -> montant == null ? cb.conjunction() : cb.equal(root.get("montant"), montant);
+    }
+
+    /**
+     * Filtre par plage de dateValeur.
+     * Les enregistrements avec dateValeur null sont exclus si au moins une borne est fournie.
+     */
+    public static Specification<Decompte> byDateValeurRange(LocalDate from, LocalDate to) {
         return (root, query, cb) -> {
-            if (montant == null) {
-                return cb.conjunction();
-            }
-            return cb.equal(root.get("montant"), montant);
+            if (from == null && to == null) return cb.conjunction();
+            if (from != null && to != null)
+                return cb.between(root.get("dateValeur"), from, to);
+            if (from != null)
+                return cb.greaterThanOrEqualTo(root.get("dateValeur"), from);
+            return cb.lessThanOrEqualTo(root.get("dateValeur"), to);
+        };
+    }
+
+    /** Filtre par plage de montant (min et/ou max). */
+    public static Specification<Decompte> byMontantRange(BigDecimal min, BigDecimal max) {
+        return (root, query, cb) -> {
+            if (min == null && max == null) return cb.conjunction();
+            if (min != null && max != null)
+                return cb.between(root.get("montant"), min, max);
+            if (min != null)
+                return cb.greaterThanOrEqualTo(root.get("montant"), min);
+            return cb.lessThanOrEqualTo(root.get("montant"), max);
         };
     }
 
     /**
-     * Combine multiple search criteria using DecompteSearchDto.
-     * Each field is tested for null before applying the filter.
+     * Combine tous les critères de recherche.
      */
     public static Specification<Decompte> bySearchCriteria(DecompteSearchDto searchDto) {
-        if (searchDto == null) {
-            return Specification.where(null); // aucun filtre
-        }
+        if (searchDto == null) return Specification.where(null);
 
         Specification<Decompte> spec = Specification.where(null);
 
-        if (searchDto.getMarcheId() != null) {
+        if (searchDto.getMarcheId() != null)
             spec = spec.and(byMarcheId(searchDto.getMarcheId()));
-        }
-        if (searchDto.getBanqueId() != null) {
+        if (searchDto.getBanqueId() != null)
             spec = spec.and(byBanqueId(searchDto.getBanqueId()));
-        }
-        if (searchDto.getStatus() != null) {
+        if (searchDto.getStatus() != null)
             spec = spec.and(byStatus(searchDto.getStatus()));
-        }
+
+        spec = spec.and(byDateValeurRange(searchDto.getDateValeurFrom(), searchDto.getDateValeurTo()));
+        spec = spec.and(byMontantRange(searchDto.getMontantMin(), searchDto.getMontantMax()));
 
         return spec;
     }

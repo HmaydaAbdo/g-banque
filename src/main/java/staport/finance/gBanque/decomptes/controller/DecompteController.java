@@ -6,9 +6,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 import staport.finance.gBanque.decomptes.dto.*;
 import staport.finance.gBanque.decomptes.service.DecompteService;
 
@@ -133,6 +137,17 @@ public class DecompteController {
         return ResponseEntity.ok(responseDTO);
     }
 
+
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(DecompteSearchDto searchDTO) {
+        log.info("GET /decomptes/export/pdf - Génération export PDF");
+        byte[] pdf = decompteService.exportToPdf(searchDTO);
+        String filename = "decomptes_" + LocalDate.now() + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
 
     @GetMapping("/encours/{banqueId}")
     public ResponseEntity<EncoursDecompteDto> getEncoursForDecomptes(

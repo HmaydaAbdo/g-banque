@@ -1,57 +1,54 @@
 package staport.finance.gBanque.decomptes.dto;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import staport.finance.gBanque.prefinancement.enums.Status;
-import staport.finance.gBanque.prefinancement.enums.Type;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class DecompteSearchDto {
 
     private Long marcheId;
     private Long banqueId;
-
     private Status status;
 
-    public DecompteSearchDto() {
-    }
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate dateValeurFrom;
 
-    public DecompteSearchDto(Long marcheId, Long banqueId, Status status) {
-        this.marcheId = marcheId;
-        this.banqueId = banqueId;
-        this.status = status;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate dateValeurTo;
 
-    }
+    private BigDecimal montantMin;
+    private BigDecimal montantMax;
 
-    public Long getMarcheId() {
-        return marcheId;
-    }
+    public DecompteSearchDto() {}
 
-    public void setMarcheId(Long marcheId) {
-        this.marcheId = marcheId;
-    }
+    public Long getMarcheId() { return marcheId; }
+    public void setMarcheId(Long marcheId) { this.marcheId = marcheId; }
 
-    public Long getBanqueId() {
-        return banqueId;
-    }
+    public Long getBanqueId() { return banqueId; }
+    public void setBanqueId(Long banqueId) { this.banqueId = banqueId; }
 
-    public void setBanqueId(Long banqueId) {
-        this.banqueId = banqueId;
-    }
+    public Status getStatus() { return status; }
+    public void setStatus(Status status) { this.status = status; }
 
+    public LocalDate getDateValeurFrom() { return dateValeurFrom; }
+    public void setDateValeurFrom(LocalDate dateValeurFrom) { this.dateValeurFrom = dateValeurFrom; }
 
+    public LocalDate getDateValeurTo() { return dateValeurTo; }
+    public void setDateValeurTo(LocalDate dateValeurTo) { this.dateValeurTo = dateValeurTo; }
 
-    public Status getStatus() {
-        return status;
-    }
+    public BigDecimal getMontantMin() { return montantMin; }
+    public void setMontantMin(BigDecimal montantMin) { this.montantMin = montantMin; }
 
-    public void setStatus(Status status) {
-        this.status = status;
-    }
+    public BigDecimal getMontantMax() { return montantMax; }
+    public void setMontantMax(BigDecimal montantMax) { this.montantMax = montantMax; }
 
     @Override
     public String toString() {
-        return "DecompteSearchDto{" +
-                "marcheId=" + marcheId +
-                ", banqueId=" + banqueId +
-                ", status=" + status +
-                '}';
+        return "DecompteSearchDto{marcheId=" + marcheId + ", banqueId=" + banqueId +
+                ", status=" + status + ", dateValeurFrom=" + dateValeurFrom +
+                ", dateValeurTo=" + dateValeurTo + ", montantMin=" + montantMin +
+                ", montantMax=" + montantMax + '}';
     }
 }

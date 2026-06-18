@@ -20,27 +20,61 @@ import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundExcept
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
+
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+import java.awt.Color;
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 @Service
 public class DecompteService {
 
     private static final Logger log = LoggerFactory.getLogger(DecompteService.class);
+
+    /** Tri par défaut : dateValeur DESC, les NULL en dernier */
+    private static final Sort DEFAULT_SORT =
+            Sort.by(Sort.Order.desc("dateValeur").nullsLast());
+
+    /**
+     * Applique le tri demandé en garantissant NULLS LAST sur dateValeur.
+     * Si aucun tri n'est fourni, utilise DEFAULT_SORT.
+     */
+    private Sort resolveSort(Sort incoming) {
+        if (!incoming.isSorted()) return DEFAULT_SORT;
+        List<Sort.Order> orders = incoming.stream()
+                .map(order -> order.getProperty().equals("dateValeur")
+                        ? (order.isAscending()
+                                ? Sort.Order.asc("dateValeur").nullsLast()
+                                : Sort.Order.desc("dateValeur").nullsLast())
+                        : order)
+                .toList();
+        return Sort.by(orders);
+    }
     private final DecompteRepository decompteRepository;
     private final DecompteMapper decompteMapper;
     private final MarcheRepository marcheRepository;
     private final BanqueRepository banqueRepository;
+    private final StaportPdfReportService staportPdfReportService;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
 
-    public DecompteService(DecompteRepository decompteRepository, DecompteMapper decompteMapper, MarcheRepository marcheRepository, BanqueRepository banqueRepository) {
+    public DecompteService(DecompteRepository decompteRepository, DecompteMapper decompteMapper,
+                           MarcheRepository marcheRepository, BanqueRepository banqueRepository,
+                           StaportPdfReportService staportPdfReportService) {
         this.decompteRepository = decompteRepository;
         this.decompteMapper = decompteMapper;
         this.marcheRepository = marcheRepository;
         this.banqueRepository = banqueRepository;
+        this.staportPdfReportService = staportPdfReportService;
     }
 
     @Transactional
@@ -156,7 +190,9 @@ public class DecompteService {
         log.debug("Pagination demandée - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<Decompte> spec = DecompteSpec.bySearchCriteria(searchDTO);
-        Page<Decompte> decomptes = decompteRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        Sort sort = resolveSort(pageable.getSort());
+        Page<Decompte> decomptes = decompteRepository.findAll(spec,
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
         log.info("Recherche terminée - {} résultat(s) trouvé(s) sur {} élément(s) au total", decomptes.getNumberOfElements(), decomptes.getTotalElements());
 
@@ -187,6 +223,185 @@ public class DecompteService {
         return decompteMapper.toDto(updatedDecompte);
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // PDF EXPORT
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public byte[] exportToPdf(DecompteSearchDto searchDTO) {
+        List<Decompte> decomptes = decompteRepository.findAll(
+                DecompteSpec.bySearchCriteria(searchDTO), DEFAULT_SORT);
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        // Précalculer le total (variable effectively-final pour la lambda)
+        BigDecimal totalMontant = decomptes.stream()
+                .filter(d -> d.getMontant() != null)
+                .map(Decompte::getMontant)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<String> filterLines = buildFilterSummary(searchDTO, fmt);
+
+        try {
+            return staportPdfReportService.generateReport(
+                    "État des Décomptes",
+                    PageSize.A4.rotate(),
+                    (doc, writer) -> {
+                        try {
+                            // ── En-tête du document (logo/footer gérés par StaportPdfPageEventHelper) ──
+                            doc.add(Chunk.NEWLINE);
+                            doc.add(Chunk.NEWLINE);
+
+                            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                            Font subFont   = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                            Font hdrFont   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                            Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                            Paragraph title = new Paragraph("État des Décomptes", titleFont);
+                            title.setAlignment(Element.ALIGN_CENTER);
+                            doc.add(title);
+
+                            String exportInfo = "Exporté le " + LocalDate.now().format(fmt)
+                                    + "  •  " + decomptes.size() + " décompte(s)";
+                            if (!filterLines.isEmpty()) {
+                                exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                            }
+                            Paragraph sub = new Paragraph(exportInfo, subFont);
+                            sub.setAlignment(Element.ALIGN_CENTER);
+                            sub.setSpacingAfter(8f);
+                            doc.add(sub);
+
+                            // ── Tableau ───────────────────────────────────────────
+                            Color medBlue   = Color.decode("#2563eb");
+                            Color lightBlue = Color.decode("#dbeafe");
+                            Color rowAlt    = Color.decode("#f8fafc");
+                            Color green     = Color.decode("#16a34a");
+                            Color orange    = Color.decode("#ea580c");
+                            Color borderGray = Color.decode("#e5e7eb");
+
+                            float[] colWidths = {4f, 13f, 16f, 12f, 9f, 9f, 9f, 9f};
+                            PdfPTable table = new PdfPTable(colWidths);
+                            table.setWidthPercentage(100f);
+                            table.setSpacingBefore(8f);
+                            table.setHeaderRows(1);
+
+                            for (String h : new String[]{
+                                "ID", "Marché", "Banque d'encaissement", "Montant (MAD)",
+                                "Date d'émission", "Date d'opération", "Date valeur", "Statut"}) {
+                                PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                                c.setBackgroundColor(medBlue);
+                                c.setPadding(5f);
+                                c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                c.setBorderColor(Color.WHITE);
+                                c.setBorderWidth(0.5f);
+                                table.addCell(c);
+                            }
+
+                            for (int i = 0; i < decomptes.size(); i++) {
+                                Decompte d = decomptes.get(i);
+                                Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
+
+                                addPdfCell(table, String.valueOf(d.getId()), cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, d.getMarche() != null ? d.getMarche().getNumero() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, d.getBanqueEncaissement() != null ? d.getBanqueEncaissement().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, formatMontantPdf(d.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, d.getDateEmission()  != null ? d.getDateEmission().format(fmt)  : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, d.getDateOperation() != null ? d.getDateOperation().format(fmt) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, d.getDateValeur()    != null ? d.getDateValeur().format(fmt)    : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+
+                                boolean paye = d.getStatus() == Status.PAYE;
+                                PdfPCell statusCell = new PdfPCell(new Phrase(
+                                        paye ? "PAYÉ" : "PRÉVU",
+                                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                                statusCell.setBackgroundColor(paye ? green : orange);
+                                statusCell.setPadding(4f);
+                                statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                statusCell.setBorderColor(borderGray);
+                                statusCell.setBorderWidth(0.5f);
+                                table.addCell(statusCell);
+                            }
+
+                            // Ligne total
+                            PdfPCell totalLabel = new PdfPCell(
+                                    new Phrase("TOTAL — " + decomptes.size() + " décompte(s)", totalFont));
+                            totalLabel.setColspan(3);
+                            totalLabel.setBackgroundColor(lightBlue);
+                            totalLabel.setPadding(5f);
+                            totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalLabel.setBorderColor(medBlue);
+                            table.addCell(totalLabel);
+
+                            PdfPCell totalVal = new PdfPCell(
+                                    new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            totalVal.setBackgroundColor(lightBlue);
+                            totalVal.setPadding(5f);
+                            totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalVal.setBorderColor(medBlue);
+                            table.addCell(totalVal);
+
+                            for (int j = 0; j < 4; j++) {
+                                PdfPCell empty = new PdfPCell(new Phrase(""));
+                                empty.setBackgroundColor(lightBlue);
+                                empty.setBorderColor(medBlue);
+                                table.addCell(empty);
+                            }
+
+                            doc.add(table);
+
+                        } catch (DocumentException e) {
+                            throw new RuntimeException("Erreur génération contenu PDF décomptes", e);
+                        }
+                    }
+            );
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des décomptes", e);
+        }
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font,
+                             Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantPdf(BigDecimal montant) {
+        if (montant == null) return "—";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf.format(montant);
+    }
+
+    private List<String> buildFilterSummary(DecompteSearchDto dto, DateTimeFormatter fmt) {
+        List<String> lines = new ArrayList<>();
+        if (dto == null) return lines;
+        if (dto.getMarcheId() != null)
+            marcheRepository.findById(dto.getMarcheId())
+                    .ifPresent(m -> lines.add("Marché : " + m.getNumero()));
+        if (dto.getBanqueId() != null)
+            banqueRepository.findById(dto.getBanqueId())
+                    .ifPresent(b -> lines.add("Banque : " + b.getNom()));
+        if (dto.getStatus() != null)
+            lines.add("Statut : " + (dto.getStatus() == Status.PAYE ? "Payé" : "Prévu"));
+        if (dto.getDateValeurFrom() != null || dto.getDateValeurTo() != null) {
+            String from = dto.getDateValeurFrom() != null ? dto.getDateValeurFrom().format(fmt) : "…";
+            String to   = dto.getDateValeurTo()   != null ? dto.getDateValeurTo().format(fmt)   : "…";
+            lines.add("Date valeur : " + from + " → " + to);
+        }
+        if (dto.getMontantMin() != null || dto.getMontantMax() != null) {
+            String min = dto.getMontantMin() != null ? formatMontantPdf(dto.getMontantMin()) : "0";
+            String max = dto.getMontantMax() != null ? formatMontantPdf(dto.getMontantMax()) : "∞";
+            lines.add("Montant : " + min + " → " + max + " MAD");
+        }
+        return lines;
+    }
+
     @Transactional(readOnly = true)
     public EncoursDecompteDto getDecomptesEncoursForBanque(EncoursDecompteSearchDto searchDto, Long banqueId, Pageable pageable) {
         log.info("Récupération des encours de décomptes pour la banque ID: {}", banqueId);
@@ -200,7 +415,9 @@ public class DecompteService {
                 .and(DecompteSpec.hasMontant(searchDto.getMontant()));
 
         // Fetch the paginated list of decomptes  records
-        Page<Decompte> decomptePage = decompteRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        Sort sort = resolveSort(pageable.getSort());
+        Page<Decompte> decomptePage = decompteRepository.findAll(spec,
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort));
 
         log.debug("Nombre de résultats paginés: {}", decomptePage.getNumberOfElements());
 
