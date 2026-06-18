@@ -86,7 +86,7 @@ public class ChargesFixesScheduler {
     // Point d'entrée : 1er de chaque mois à 07h00
     // -----------------------------------------------------------------------
 
-    @Scheduled(cron = "0 0 7 1 * *")
+    @Scheduled(cron = "0 0 7 L * *")
     @Transactional
     public void genererChargesFixesDuMois() {
         LocalDate aujourd_hui = LocalDate.now();
