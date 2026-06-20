@@ -19,3 +19,9 @@ Chaque module métier (Bank, Caution, CMT, Leasing, RBAC User/Department, etc.) 
 ## Organisation des packages (DDD)
 
 Chaque domaine métier vit dans son propre package racine (`Bank`, `Caution`, `CMT`, `Leasing`, `User`, `Department`...), avec les sous-packages techniques du pattern ci-dessus à l'intérieur (`entities`, `repositories`, `services`, `controller`, `dtos`, `mappers`, `exceptions`...). Jamais plusieurs domaines mélangés dans un seul package technique fourre-tout. L'infrastructure transversale non métier (auth/JWT/filtres de sécurité) vit dans son propre package (`auth`), distinct des domaines `User`/`Department` qu'elle consomme.
+
+## Configuration & secrets
+
+Aucune valeur de configuration ne doit être codée en dur dans `application.yml` ou dans le code Java — secret ou pas. Toujours `${NOM_VAR}` dans `application.yml` (ou `@Value("${propriete}")` côté Java, voir `EmailService`, `SecurityConfig`), **sans aucune valeur par défaut** (`${VAR}`, jamais `${VAR:défaut}`). Si une variable d'environnement attendue est absente, l'application doit refuser de démarrer plutôt que de retomber sur une valeur implicite codée en dur dans un fichier versionné.
+
+Les valeurs réelles vivent dans `.env` (jamais commit, déjà dans `.gitignore`) ; `.env.example` documente les clés attendues sans valeurs réelles et doit être tenu à jour à chaque nouvelle variable ajoutée.

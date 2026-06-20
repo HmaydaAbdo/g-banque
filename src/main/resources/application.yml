@@ -1,8 +1,8 @@
   server:
-    address: ${SERVER_ADRESSE:0.0.0.0}
-    port: ${SERVER_PORT:8080}
+    address: ${SERVER_ADRESSE}
+    port: ${SERVER_PORT}
     servlet:
-      context-path: ${CONTEXT_PATH:/gBanque/api}
+      context-path: ${CONTEXT_PATH}
   spring:
     main:
       lazy-initialization: true
@@ -10,9 +10,9 @@
       name: gBanque
     datasource:
 
-      url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${MYSQL_DATABASE:Gbanque}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
-      username: ${MYSQL_USER:root}
-      password: ${MYSQL_PASSWORD:}
+      url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+      username: ${MYSQL_USER}
+      password: ${MYSQL_PASSWORD}
       driver-class-name: com.mysql.cj.jdbc.Driver
 
       hikari:
@@ -60,7 +60,7 @@
             recipients: hmayda@staport-sa.ma
 
   jwt:
-    secret: ${JWT_SECRET:9fa372517ac1d309758d3759fc97ac700f5422772f6fc0e4593f693f44e338}
+    secret: ${JWT_SECRET}
 
   functional:
     line:
