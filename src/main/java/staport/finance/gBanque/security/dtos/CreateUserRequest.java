@@ -1,43 +1,23 @@
 package staport.finance.gBanque.security.dtos;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 /**
- * DTO for creating a new user
+ * DTO de création d'un utilisateur.
+ *
+ * <p>{@code enabled} est nullable : si omis, le service applique {@code true} par défaut.
  */
-public  class CreateUserRequest {
-    private String username;
-    private String password;
-    private boolean enabled = true;
+public record CreateUserRequest(
 
-    public String getUsername() {
-        return username;
-    }
+        @NotBlank(message = "Le nom d'utilisateur est obligatoire.")
+        @Size(min = 3, max = 50, message = "Le nom d'utilisateur doit avoir entre 3 et 50 caractères.")
+        String username,
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+        @NotBlank(message = "Le mot de passe est obligatoire.")
+        @Size(min = 8, message = "Le mot de passe doit comporter au moins 8 caractères.")
+        String password,
 
-    public String getPassword() {
-        return password;
-    }
+        Boolean enabled
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-
-    @Override
-    public String toString() {
-        return "CreateUserRequest{" +
-                "username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", enabled=" + enabled +
-                '}';
-    }
-}
+) {}

@@ -36,12 +36,18 @@ import java.util.List;
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
+    private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
+    private final JsonAccessDeniedHandler jsonAccessDeniedHandler;
 
     // IMPORTANT: For production, this secret key should be loaded securely (e.g., from environment variables)
     private final String secretKey="9fa372517ac1d309758d3759fc97ac700f5422772f6fc0e4593f693f44e338";
 
-    public SecurityConfig(UserDetailsServiceImpl userDetailsService) {
+    public SecurityConfig(UserDetailsServiceImpl userDetailsService,
+                           JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint,
+                           JsonAccessDeniedHandler jsonAccessDeniedHandler) {
         this.userDetailsService = userDetailsService;
+        this.jsonAuthenticationEntryPoint = jsonAuthenticationEntryPoint;
+        this.jsonAccessDeniedHandler = jsonAccessDeniedHandler;
     }
 
     @Bean
@@ -59,7 +65,13 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login","/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler(jsonAccessDeniedHandler)
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                        .authenticationEntryPoint(jsonAuthenticationEntryPoint)
+                )
                 .build();
     }
 
@@ -79,7 +91,7 @@ public class SecurityConfig {
 
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("authorities");
 
         grantedAuthoritiesConverter.setAuthorityPrefix("");
 

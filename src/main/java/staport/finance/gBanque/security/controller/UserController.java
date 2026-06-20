@@ -1,19 +1,31 @@
 package staport.finance.gBanque.security.controller;
 
 
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.security.dtos.CreateUserRequest;
-import staport.finance.gBanque.security.dtos.RoleRequest;
-import staport.finance.gBanque.security.entities.User;
-import staport.finance.gBanque.security.enums.RoleName;
+import staport.finance.gBanque.security.dtos.DepartmentRoleRequest;
+import staport.finance.gBanque.security.dtos.UserDepartmentRoleResponse;
+import staport.finance.gBanque.security.dtos.UserResponse;
+import staport.finance.gBanque.security.dtos.UserSearchCriteria;
+import staport.finance.gBanque.security.enums.DepartmentRoleType;
 import staport.finance.gBanque.security.services.UserService;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controller "thin" — aucune entité JPA n'est jamais retournée ; tout le mapping
+ * {@code User}/{@code UserDepartmentRole} ↔ DTO se fait dans {@code UserService}
+ * via {@code UserMapper}/{@code UserDepartmentRoleMapper}.
+ */
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -34,17 +46,28 @@ public class UserController {
     }
 
     // ========================================
-    // NEW ADMIN ENDPOINTS
+    // ADMIN ENDPOINTS
     // ========================================
 
     /**
-     * Get all users (Admin only)
-     * GET /users
+     * Recherche paginée des utilisateurs (Admin système uniquement).
+     * GET /users?page=0&size=10&sort=username,asc&username=...&enabled=...&systemAdmin=...&departmentId=...
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<Page<UserResponse>> getAllUsers(
+            @RequestParam(defaultValue = "0")        int page,
+            @RequestParam(defaultValue = "10")       int size,
+            @RequestParam(defaultValue = "id")       String[] sort,
+            @ModelAttribute UserSearchCriteria searchCriteria) {
+
+        String         sortField = sort[0];
+        Sort.Direction direction = (sort.length > 1)
+                ? Sort.Direction.fromOptionalString(sort[1]).orElse(Sort.Direction.ASC)
+                : Sort.Direction.ASC;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+        return ResponseEntity.ok(userService.searchUsers(searchCriteria, pageable));
     }
 
     /**
@@ -52,31 +75,20 @@ public class UserController {
      * GET /users/{userId}
      */
     @GetMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<User> getUserById(@PathVariable Long userId) {
-        return userService.findUserById(userId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId) {
+        return ResponseEntity.ok(userService.getUserById(userId));
     }
 
     /**
      * Create a new user (Admin only)
      * POST /users
-     * Body: {"username": "john", "password": "pass123", "enabled": true}
+     * Body: {"username": "john", "password": "pass12345", "enabled": true}
      */
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createUser(@RequestBody CreateUserRequest request) {
-        try {
-            User user = userService.createUser(
-                    request.getUsername(),
-                    request.getPassword(),
-                    request.isEnabled()
-            );
-            return ResponseEntity.status(HttpStatus.CREATED).body(user);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
     }
 
     /**
@@ -84,68 +96,64 @@ public class UserController {
      * DELETE /users/{userId}
      */
     @DeleteMapping("/{userId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
-        try {
-            userService.deleteUser(userId);
-            return ResponseEntity.ok().body(Map.of("message", "User deleted successfully"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
+        return ResponseEntity.ok().body(Map.of("message", "User deleted successfully"));
     }
 
     /**
-     * Add a role to a user (Admin only)
-     * POST /users/{userId}/roles
-     * Body: {"roleId": 1} OR {"roleName": "ADMIN"}
+     * Liste les appartenances département+rôle d'un utilisateur (Admin système uniquement)
+     * GET /users/{userId}/department-roles
      */
-    @PostMapping("/{userId}/roles")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> addRoleToUser(
-            @PathVariable Long userId,
-            @RequestBody RoleRequest request) {
-        try {
-            User user;
-            if (request.getRoleId() != null) {
-                user = userService.addRoleToUser(userId, request.getRoleId());
-            } else if (request.getRoleName() != null) {
-                RoleName roleName = RoleName.valueOf(request.getRoleName());
-                user = userService.addRoleToUser(userId, roleName);
-            } else {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Either roleId or roleName must be provided"));
-            }
-            return ResponseEntity.ok(user);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+    @GetMapping("/{userId}/department-roles")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<List<UserDepartmentRoleResponse>> getDepartmentRoles(@PathVariable Long userId) {
+        return ResponseEntity.ok(userService.getDepartmentRoles(userId));
     }
 
     /**
-     * Remove a role from a user (Admin only)
-     * DELETE /users/{userId}/roles
-     * Body: {"roleId": 1} OR {"roleName": "ADMIN"}
+     * Assigne (ou met à jour) le rôle d'un utilisateur dans un département (Admin système uniquement)
+     * POST /users/{userId}/department-roles
+     * Body: {"departmentId": 1, "roleInDept": "MEMBER"} (roleInDept omis → MEMBER par défaut)
      */
-    @DeleteMapping("/{userId}/roles")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> removeRoleFromUser(
+    @PostMapping("/{userId}/department-roles")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<UserDepartmentRoleResponse> assignDepartmentRole(
             @PathVariable Long userId,
-            @RequestBody RoleRequest request) {
-        try {
-            User user;
-            if (request.getRoleId() != null) {
-                user = userService.removeRoleFromUser(userId, request.getRoleId());
-            } else if (request.getRoleName() != null) {
-                RoleName roleName = RoleName.valueOf(request.getRoleName());
-                user = userService.removeRoleFromUser(userId, roleName);
-            } else {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Either roleId or roleName must be provided"));
-            }
-            return ResponseEntity.ok(user);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+            @Valid @RequestBody DepartmentRoleRequest request) {
+
+        UserDepartmentRoleResponse result = (request.roleInDept() == null || request.roleInDept().isBlank())
+                ? userService.assignDepartmentRole(userId, request.departmentId())
+                : userService.assignDepartmentRole(userId, request.departmentId(),
+                        DepartmentRoleType.valueOf(request.roleInDept().toUpperCase()));
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Retire un utilisateur d'un département (Admin système uniquement)
+     * DELETE /users/{userId}/department-roles/{departmentId}
+     */
+    @DeleteMapping("/{userId}/department-roles/{departmentId}")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<Map<String, String>> removeDepartmentRole(
+            @PathVariable Long userId,
+            @PathVariable Long departmentId) {
+        userService.removeDepartmentRole(userId, departmentId);
+        return ResponseEntity.ok().body(Map.of("message", "Department role removed successfully"));
+    }
+
+    /**
+     * Définit le statut administrateur système d'un utilisateur (Admin système uniquement)
+     * PATCH /users/{userId}/system-admin
+     * Body: {"isSystemAdmin": true}
+     */
+    @PatchMapping("/{userId}/system-admin")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<UserResponse> setSystemAdmin(
+            @PathVariable Long userId,
+            @RequestBody Map<String, Boolean> request) {
+        return ResponseEntity.ok(userService.setSystemAdmin(userId, Boolean.TRUE.equals(request.get("isSystemAdmin"))));
     }
 
     /**
@@ -154,16 +162,11 @@ public class UserController {
      * Body: {"enabled": true}
      */
     @PatchMapping("/{userId}/enabled")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> setUserEnabled(
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<UserResponse> setUserEnabled(
             @PathVariable Long userId,
             @RequestBody Map<String, Boolean> request) {
-        try {
-            User user = userService.setUserEnabled(userId, request.get("enabled"));
-            return ResponseEntity.ok(user);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        return ResponseEntity.ok(userService.setUserEnabled(userId, Boolean.TRUE.equals(request.get("enabled"))));
     }
 
     /**
@@ -172,16 +175,12 @@ public class UserController {
      * Body: {"password": "newPassword123"}
      */
     @PatchMapping("/{userId}/password")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updatePassword(
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public ResponseEntity<Map<String, String>> updatePassword(
             @PathVariable Long userId,
             @RequestBody Map<String, String> request) {
-        try {
-            userService.updatePassword(userId, request.get("password"));
-            return ResponseEntity.ok().body(Map.of("message", "Password updated successfully"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        userService.updatePassword(userId, request.get("password"));
+        return ResponseEntity.ok().body(Map.of("message", "Password updated successfully"));
     }
 
 }

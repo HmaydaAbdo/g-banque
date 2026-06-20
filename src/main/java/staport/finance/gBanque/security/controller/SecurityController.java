@@ -24,7 +24,7 @@ public class SecurityController {
     }
 
      @GetMapping("/profile")
-     @PreAuthorize("hasAuthority('ADMIN')")
+     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
      public ProfileResponse authentication(Authentication authentication){
         return this.authenticationService.getAuthentication(authentication);
      }

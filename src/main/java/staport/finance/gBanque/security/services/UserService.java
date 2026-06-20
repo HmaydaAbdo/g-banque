@@ -1,15 +1,28 @@
 package staport.finance.gBanque.security.services;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.security.entities.Role;
+import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.security.dtos.CreateUserRequest;
+import staport.finance.gBanque.security.dtos.UserDepartmentRoleResponse;
+import staport.finance.gBanque.security.dtos.UserResponse;
+import staport.finance.gBanque.security.dtos.UserSearchCriteria;
+import staport.finance.gBanque.security.entities.Department;
 import staport.finance.gBanque.security.entities.User;
-import staport.finance.gBanque.security.enums.RoleName;
-import staport.finance.gBanque.security.repositories.RoleRepository;
+import staport.finance.gBanque.security.entities.UserDepartmentRole;
+import staport.finance.gBanque.security.enums.DepartmentRoleType;
+import staport.finance.gBanque.security.mappers.UserDepartmentRoleMapper;
+import staport.finance.gBanque.security.mappers.UserMapper;
+import staport.finance.gBanque.security.repositories.DepartmentRepository;
+import staport.finance.gBanque.security.repositories.UserDepartmentRoleRepository;
 import staport.finance.gBanque.security.repositories.UserRepository;
+import staport.finance.gBanque.security.specifications.UserSpecification;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,38 +31,44 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DepartmentRepository departmentRepository;
+    private final UserDepartmentRoleRepository userDepartmentRoleRepository;
+    private final UserMapper userMapper;
+    private final UserDepartmentRoleMapper userDepartmentRoleMapper;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                        PasswordEncoder passwordEncoder,
+                        DepartmentRepository departmentRepository,
+                        UserDepartmentRoleRepository userDepartmentRoleRepository,
+                        UserMapper userMapper,
+                        UserDepartmentRoleMapper userDepartmentRoleMapper) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.departmentRepository = departmentRepository;
+        this.userDepartmentRoleRepository = userDepartmentRoleRepository;
+        this.userMapper = userMapper;
+        this.userDepartmentRoleMapper = userDepartmentRoleMapper;
     }
 
     // ========================================
-    // EXISTING METHODS (KEEP AS IS)
+    // EXISTING METHODS (KEEP AS IS) — usage interne cross-module, entité requise
     // ========================================
 
     /**
      * Retrieves the full User entity for the currently authenticated principal.
-     * This method is crucial for passing the User object (with ID) to the NotificationService.
-     *
-     * @return The User entity.
-     * @throws IllegalStateException if no user is authenticated or the user is not found in the database.
+     * Utilisé par {@code NotificationController} — usage interne backend, jamais
+     * sérialisé directement en JSON, donc le retour entité est légitime ici.
      */
     public User getCurrentUser() {
-        // 1. Get the Authentication object from the Security Context
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             throw new IllegalStateException("User not authenticated.");
         }
 
-        // The name in the Authentication object is the username
         String username = authentication.getName();
 
-        // 2. Fetch the full User entity from the database using the username
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("Authenticated user '" + username + "' not found in database."));
     }
@@ -59,217 +78,190 @@ public class UserService {
     }
 
     // ========================================
-    // NEW USER MANAGEMENT METHODS
+    // USER MANAGEMENT — toujours DTO en entrée/sortie côté API
     // ========================================
 
     /**
-     * Creates a new user with the given username and password.
-     * The password will be automatically encoded.
+     * Crée un utilisateur. {@code request.enabled()} nullable → {@code true} par défaut.
      *
-     * @param username the username
-     * @param password the raw password (will be encoded)
-     * @param enabled whether the user is enabled
-     * @return the created user
-     * @throws IllegalArgumentException if username already exists
+     * @throws DuplicateEntryException si le nom d'utilisateur existe déjà
      */
     @Transactional
-    public User createUser(String username, String password, boolean enabled) {
-        if (userRepository.findByUsername(username).isPresent()) {
-            throw new IllegalArgumentException("Username '" + username + "' already exists.");
+    public UserResponse createUser(CreateUserRequest request) {
+        if (userRepository.findByUsername(request.username()).isPresent()) {
+            throw new DuplicateEntryException("Le nom d'utilisateur '" + request.username() + "' existe déjà.");
         }
 
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setEnabled(enabled);
+        User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setEnabled(request.enabled() == null || request.enabled());
 
-        return userRepository.save(user);
+        return userMapper.toDto(userRepository.save(user));
     }
 
     /**
-     * Deletes a user by ID.
-     *
-     * @param userId the user ID
-     * @throws IllegalArgumentException if user not found
+     * @throws ResourceNotFoundException si l'utilisateur n'existe pas
+     */
+    public UserResponse getUserById(Long userId) {
+        return userMapper.toDto(findEntityById(userId));
+    }
+
+    /**
+     * Recherche paginée des utilisateurs — {@link UserSearchCriteria} : tous les
+     * champs optionnels (username LIKE, enabled, systemAdmin, departmentId).
+     */
+    public Page<UserResponse> searchUsers(UserSearchCriteria criteria, Pageable pageable) {
+        return userRepository.findAll(UserSpecification.searchByCriteria(criteria), pageable)
+                .map(userMapper::toDto);
+    }
+
+    /**
+     * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
     @Transactional
     public void deleteUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User with ID " + userId + " not found."));
-
-        userRepository.delete(user);
+        userRepository.delete(findEntityById(userId));
     }
 
     /**
-     * Deletes a user by username.
-     *
-     * @param username the username
-     * @throws IllegalArgumentException if user not found
+     * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
     @Transactional
     public void deleteUserByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User '" + username + "' not found."));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + username));
         userRepository.delete(user);
     }
 
     /**
-     * Adds a role to a user by role ID.
-     *
-     * @param userId the user ID
-     * @param roleId the role ID
-     * @return the updated user
-     * @throws IllegalArgumentException if user or role not found, or role already assigned
+     * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
     @Transactional
-    public User addRoleToUser(Long userId, Long roleId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User with ID " + userId + " not found."));
-
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new IllegalArgumentException("Role with ID " + roleId + " not found."));
-
-        if (user.getRoles().contains(role)) {
-            throw new IllegalArgumentException("User already has this role.");
-        }
-
-        user.getRoles().add(role);
-        return userRepository.save(user);
-    }
-
-    /**
-     * Adds a role to a user by RoleName enum.
-     *
-     * @param userId the user ID
-     * @param roleName the RoleName enum (e.g., RoleName.ADMIN)
-     * @return the updated user
-     * @throws IllegalArgumentException if user or role not found, or role already assigned
-     */
-    @Transactional
-    public User addRoleToUser(Long userId, RoleName roleName) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User with ID " + userId + " not found."));
-
-        Role role = roleRepository.findByRoleName(roleName)
-                .orElseThrow(() -> new IllegalArgumentException("Role '" + roleName + "' not found."));
-
-        if (user.getRoles().contains(role)) {
-            throw new IllegalArgumentException("User already has this role.");
-        }
-
-        user.getRoles().add(role);
-        return userRepository.save(user);
-    }
-
-    /**
-     * Removes a role from a user by role ID.
-     *
-     * @param userId the user ID
-     * @param roleId the role ID
-     * @return the updated user
-     * @throws IllegalArgumentException if user or role not found, or user doesn't have the role
-     */
-    @Transactional
-    public User removeRoleFromUser(Long userId, Long roleId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User with ID " + userId + " not found."));
-
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new IllegalArgumentException("Role with ID " + roleId + " not found."));
-
-        if (!user.getRoles().contains(role)) {
-            throw new IllegalArgumentException("User doesn't have this role.");
-        }
-
-        user.getRoles().remove(role);
-        return userRepository.save(user);
-    }
-
-    /**
-     * Removes a role from a user by RoleName enum.
-     *
-     * @param userId the user ID
-     * @param roleName the RoleName enum (e.g., RoleName.ADMIN)
-     * @return the updated user
-     * @throws IllegalArgumentException if user or role not found, or user doesn't have the role
-     */
-    @Transactional
-    public User removeRoleFromUser(Long userId, RoleName roleName) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User with ID " + userId + " not found."));
-
-        Role role = roleRepository.findByRoleName(roleName)
-                .orElseThrow(() -> new IllegalArgumentException("Role '" + roleName + "' not found."));
-
-        if (!user.getRoles().contains(role)) {
-            throw new IllegalArgumentException("User doesn't have this role.");
-        }
-
-        user.getRoles().remove(role);
-        return userRepository.save(user);
-    }
-
-    /**
-     * Enables or disables a user account.
-     *
-     * @param userId the user ID
-     * @param enabled the enabled status
-     * @return the updated user
-     * @throws IllegalArgumentException if user not found
-     */
-    @Transactional
-    public User setUserEnabled(Long userId, boolean enabled) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User with ID " + userId + " not found."));
-
+    public UserResponse setUserEnabled(Long userId, boolean enabled) {
+        User user = findEntityById(userId);
         user.setEnabled(enabled);
-        return userRepository.save(user);
+        return userMapper.toDto(userRepository.save(user));
     }
 
     /**
-     * Updates a user's password.
-     *
-     * @param userId the user ID
-     * @param newPassword the new raw password (will be encoded)
-     * @return the updated user
-     * @throws IllegalArgumentException if user not found
+     * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
     @Transactional
-    public User updatePassword(Long userId, String newPassword) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User with ID " + userId + " not found."));
-
+    public void updatePassword(Long userId, String newPassword) {
+        User user = findEntityById(userId);
         user.setPassword(passwordEncoder.encode(newPassword));
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     /**
-     * Retrieves all users.
-     *
-     * @return list of all users
-     */
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    /**
-     * Finds a user by ID.
-     *
-     * @param userId the user ID
-     * @return Optional containing the user if found
+     * Conservé pour compat interne — non utilisé par {@code UserController} (qui passe
+     * désormais par {@link #getUserById}/{@link #searchUsers}), potentiellement utile
+     * à d'autres modules backend ayant besoin de l'entité brute.
      */
     public Optional<User> findUserById(Long userId) {
         return userRepository.findById(userId);
     }
 
-    /**
-     * Finds a user by username.
-     *
-     * @param username the username
-     * @return Optional containing the user if found
-     */
     public Optional<User> findUserByUsername(String username) {
         return userRepository.findByUsername(username);
+    }
+
+    // ========================================
+    // RBAC — GESTION DÉPARTEMENT / RÔLE (modèle unique)
+    // ========================================
+
+    /**
+     * Liste les appartenances département+rôle d'un utilisateur.
+     *
+     * @throws ResourceNotFoundException si l'utilisateur n'existe pas
+     */
+    public List<UserDepartmentRoleResponse> getDepartmentRoles(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("Utilisateur introuvable avec l'ID " + userId);
+        }
+        return userDepartmentRoleRepository.findByUserId(userId).stream()
+                .map(userDepartmentRoleMapper::toDto)
+                .toList();
+    }
+
+    /**
+     * Assigne un utilisateur à un département avec le rôle par défaut {@link DepartmentRoleType#MEMBER}.
+     *
+     * <p>MEMBER est le seul défaut acceptable (principe du moindre privilège) :
+     * DIRECTOR donne accès aux actions sensibles (clôture, annulation, suppression)
+     * et doit toujours résulter d'un choix explicite de l'administrateur — jamais
+     * d'une valeur implicite. Pour assigner DIRECTOR, utiliser la surcharge à 3 arguments.
+     *
+     * @throws ResourceNotFoundException si l'utilisateur ou le département n'existe pas
+     */
+    @Transactional
+    public UserDepartmentRoleResponse assignDepartmentRole(Long userId, Long departmentId) {
+        return assignDepartmentRole(userId, departmentId, DepartmentRoleType.MEMBER);
+    }
+
+    /**
+     * Assigne un rôle (MEMBER ou DIRECTOR) à un utilisateur pour un département donné.
+     *
+     * <p>Comportement "upsert" : si l'utilisateur a déjà un rôle dans ce département,
+     * il est simplement remplacé par le nouveau plutôt que de lever une erreur de doublon —
+     * c'est le comportement attendu par l'écran d'administration (changer le rôle d'un
+     * utilisateur dans un département via un seul select, sans retirer puis réassigner).
+     *
+     * @throws ResourceNotFoundException si l'utilisateur ou le département n'existe pas
+     */
+    @Transactional
+    public UserDepartmentRoleResponse assignDepartmentRole(Long userId, Long departmentId, DepartmentRoleType roleInDept) {
+        User user = findEntityById(userId);
+        Department department = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Département introuvable avec l'ID " + departmentId));
+
+        UserDepartmentRole existing = userDepartmentRoleRepository
+                .findByUserIdAndDepartmentId(userId, departmentId)
+                .orElse(null);
+
+        UserDepartmentRole saved;
+        if (existing != null) {
+            existing.setRoleInDept(roleInDept);
+            saved = userDepartmentRoleRepository.save(existing);
+        } else {
+            saved = userDepartmentRoleRepository.save(new UserDepartmentRole(user, department, roleInDept));
+        }
+        return userDepartmentRoleMapper.toDto(saved);
+    }
+
+    /**
+     * Retire un utilisateur d'un département.
+     *
+     * @throws ResourceNotFoundException si l'utilisateur n'a pas de rôle dans ce département
+     */
+    @Transactional
+    public void removeDepartmentRole(Long userId, Long departmentId) {
+        UserDepartmentRole existing = userDepartmentRoleRepository
+                .findByUserIdAndDepartmentId(userId, departmentId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Cet utilisateur n'a aucun rôle assigné dans ce département."));
+        userDepartmentRoleRepository.delete(existing);
+    }
+
+    /**
+     * Définit le statut administrateur système d'un utilisateur.
+     * Un SYSTEM_ADMIN n'a pas besoin d'appartenir à un département : son accès
+     * est transversal (voir authorities générées dans UserDetailsServiceImpl).
+     *
+     * @throws ResourceNotFoundException si l'utilisateur n'existe pas
+     */
+    @Transactional
+    public UserResponse setSystemAdmin(Long userId, boolean isSystemAdmin) {
+        User user = findEntityById(userId);
+        user.setSystemAdmin(isSystemAdmin);
+        return userMapper.toDto(userRepository.save(user));
+    }
+
+    /**
+     * Lookup interne — entité brute, jamais exposée hors de ce service.
+     */
+    private User findEntityById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable avec l'ID " + userId));
     }
 }

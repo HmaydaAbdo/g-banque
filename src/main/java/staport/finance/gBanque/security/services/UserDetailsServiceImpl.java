@@ -1,13 +1,16 @@
 package staport.finance.gBanque.security.services;
 
 
-import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 import staport.finance.gBanque.security.entities.User;
+import staport.finance.gBanque.security.entities.UserDepartmentRole;
 import staport.finance.gBanque.security.repositories.UserRepository;
 
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -21,16 +24,38 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User appUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur introuvable : " + username));
 
         return new org.springframework.security.core.userdetails.User(
                 appUser.getUsername(),
                 appUser.getPassword(),
                 appUser.isEnabled(),
                 true, true, true,
-                appUser.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getRoleName().name()))
-                        .collect(Collectors.toList())
+                buildAuthorities(appUser)
         );
+    }
+
+    /**
+     * Construit les authorities Spring Security à partir du modèle RBAC département :
+     * <ul>
+     *   <li>{@code SYSTEM_ADMIN} si {@link User#isSystemAdmin()} — accès transversal,
+     *       l'utilisateur n'appartient lui-même à aucun département.</li>
+     *   <li>{@code DEPT_<nom du département>:<MEMBER|DIRECTOR>} pour chaque appartenance
+     *       de l'utilisateur — un utilisateur peut appartenir à plusieurs départements.</li>
+     * </ul>
+     */
+    private List<GrantedAuthority> buildAuthorities(User user) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        if (user.isSystemAdmin()) {
+            authorities.add(new SimpleGrantedAuthority("SYSTEM_ADMIN"));
+        }
+
+        for (UserDepartmentRole udr : user.getDepartmentRoles()) {
+            String authority = "DEPT_" + udr.getDepartment().getName() + ":" + udr.getRoleInDept().name();
+            authorities.add(new SimpleGrantedAuthority(authority));
+        }
+
+        return authorities;
     }
 }

@@ -23,7 +23,7 @@
         max-lifetime: 1800000
     jpa:
       hibernate:
-        ddl-auto: none
+        ddl-auto: update
       show-sql: false
 
 

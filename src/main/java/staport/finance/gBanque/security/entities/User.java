@@ -3,6 +3,7 @@ package staport.finance.gBanque.security.entities;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -18,18 +19,29 @@ public class User {
 
     private boolean enabled;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    private Collection<Role> roles = new ArrayList<>();
+    /**
+     * Administrateur système : accès transversal à tous les départements, n'appartient
+     * lui-même à aucun département. Distinct du modèle MEMBER/DIRECTOR par département.
+     */
+    @Column(name = "is_system_admin", nullable = false)
+    private boolean isSystemAdmin = false;
+
+    /**
+     * Appartenances de cet utilisateur aux différents départements, avec son rôle
+     * (MEMBER ou DIRECTOR) dans chacun. Un utilisateur peut appartenir à plusieurs
+     * départements simultanément.
+     */
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<UserDepartmentRole> departmentRoles = new ArrayList<>();
 
     // ========== CONSTRUCTORS ==========
     public User() {
     }
 
-    public User(String username, String password, boolean enabled, Collection<Role> roles) {
+    public User(String username, String password, boolean enabled) {
         this.username = username;
         this.password = password;
         this.enabled = enabled;
-        this.roles = roles;
     }
 
     // ========== GETTERS ==========
@@ -45,12 +57,16 @@ public class User {
         return password;
     }
 
-    public Collection<Role> getRoles() {
-        return roles;
-    }
-
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public boolean isSystemAdmin() {
+        return isSystemAdmin;
+    }
+
+    public List<UserDepartmentRole> getDepartmentRoles() {
+        return departmentRoles;
     }
 
     // ========== SETTERS (ADDED) ==========
@@ -70,7 +86,11 @@ public class User {
         this.enabled = enabled;
     }
 
-    public void setRoles(Collection<Role> roles) {
-        this.roles = roles;
+    public void setSystemAdmin(boolean systemAdmin) {
+        this.isSystemAdmin = systemAdmin;
+    }
+
+    public void setDepartmentRoles(List<UserDepartmentRole> departmentRoles) {
+        this.departmentRoles = departmentRoles;
     }
 }

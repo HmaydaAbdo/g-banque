@@ -32,22 +32,22 @@ public class AuthenticationService {
 
         Authentication authentication= this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username,password));
 
-        String roles=authentication.getAuthorities().stream()
+        List<String> authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(" ")) ;
+                .collect(Collectors.toList());
 
-        String accessToken = this.generateToken(Instant.now(), username, roles);
+        String accessToken = this.generateToken(Instant.now(), username, authorities);
 
-        return new LoginResponse(accessToken);
+        return new LoginResponse(accessToken, username, authorities);
     }
 
-    public String generateToken(Instant dateSystem,String username,String roles){
+    public String generateToken(Instant dateSystem, String username, List<String> authorities){
 
         JwtClaimsSet  jwtClaimsSet= JwtClaimsSet.builder()
                 .issuedAt(dateSystem)
                 .expiresAt(dateSystem.plus(4, ChronoUnit.HOURS))
                 .subject(username)
-                .claim("roles",roles)
+                .claim("authorities", authorities)
                 .build();
 
 
