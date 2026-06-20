@@ -15,3 +15,7 @@ Chaque module métier (Bank, Caution, CMT, Leasing, RBAC User/Department, etc.) 
 6. **Service** — `@Transactional` sur toute méthode mutante (create/update/delete). Lookup interne d'entité dans une méthode privée (ex. `findEntityById`), jamais exposée hors du service.
 7. **Controller** — "thin" : reçoit/retourne des DTOs uniquement, délègue tout le mapping au service. `@PreAuthorize` sur chaque endpoint ou au niveau classe selon la granularité voulue.
 8. **ExceptionHandler dédié par module** — `@RestControllerAdvice(assignableTypes = XController.class)`. Jamais d'exception métier spécifique à un module dans le `GlobalExceptionHandler` partagé — celui-ci reste un filet de sécurité pour l'imprévu uniquement.
+
+## Organisation des packages (DDD)
+
+Chaque domaine métier vit dans son propre package racine (`Bank`, `Caution`, `CMT`, `Leasing`, `User`, `Department`...), avec les sous-packages techniques du pattern ci-dessus à l'intérieur (`entities`, `repositories`, `services`, `controller`, `dtos`, `mappers`, `exceptions`...). Jamais plusieurs domaines mélangés dans un seul package technique fourre-tout. L'infrastructure transversale non métier (auth/JWT/filtres de sécurité) vit dans son propre package (`auth`), distinct des domaines `User`/`Department` qu'elle consomme.

@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.notification.entities.Notification;
 import staport.finance.gBanque.notification.entities.UserNotificationStatus;
-import staport.finance.gBanque.security.entities.User;
+import staport.finance.gBanque.user.entities.User;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,7 +1,7 @@
 package staport.finance.gBanque.notification.entities;
 
 import jakarta.persistence.*;
-import staport.finance.gBanque.security.entities.User;
+import staport.finance.gBanque.user.entities.User;
 
 @Entity
 @Table(name = "user_notification_status",

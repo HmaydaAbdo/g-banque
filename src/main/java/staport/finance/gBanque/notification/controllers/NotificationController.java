@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.notification.dtos.NotificationResponse;
 import staport.finance.gBanque.notification.dtos.NotificationTriggerRequest;
 import staport.finance.gBanque.notification.service.NotificationService;
-import staport.finance.gBanque.security.entities.User;
-import staport.finance.gBanque.security.services.UserService;
+import staport.finance.gBanque.user.entities.User;
+import staport.finance.gBanque.user.services.UserService;
 
 
 

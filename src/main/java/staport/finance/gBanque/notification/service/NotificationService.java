@@ -11,7 +11,7 @@ import staport.finance.gBanque.notification.entities.NotificationType;
 import staport.finance.gBanque.notification.entities.UserNotificationStatus;
 import staport.finance.gBanque.notification.repos.NotificationRepository;
 import staport.finance.gBanque.notification.repos.UserNotificationStatusRepository;
-import staport.finance.gBanque.security.entities.User;
+import staport.finance.gBanque.user.entities.User;
 
 import java.util.List;
 import java.util.Optional;
