@@ -25,9 +25,15 @@ import java.util.Map;
  * Controller "thin" — aucune entité JPA n'est jamais retournée ; tout le mapping
  * {@code User}/{@code UserDepartmentRole} ↔ DTO se fait dans {@code UserService}
  * via {@code UserMapper}/{@code UserDepartmentRoleMapper}.
+ *
+ * <p>Module entièrement réservé au {@code SYSTEM_ADMIN} — {@code @PreAuthorize}
+ * appliqué une seule fois au niveau classe (même convention que
+ * {@code DepartmentController}), y compris {@code /usernames} (utilisé par la
+ * page Logs, elle-même admin-only côté frontend).
  */
 @RestController
 @RequestMapping("/users")
+@PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
 public class UserController {
 
     private final UserService userService;
@@ -50,11 +56,10 @@ public class UserController {
     // ========================================
 
     /**
-     * Recherche paginée des utilisateurs (Admin système uniquement).
+     * Recherche paginée des utilisateurs.
      * GET /users?page=0&size=10&sort=username,asc&username=...&enabled=...&systemAdmin=...&departmentId=...
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<Page<UserResponse>> getAllUsers(
             @RequestParam(defaultValue = "0")        int page,
             @RequestParam(defaultValue = "10")       int size,
@@ -75,7 +80,6 @@ public class UserController {
      * GET /users/{userId}
      */
     @GetMapping("/{userId}")
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.getUserById(userId));
     }
@@ -86,7 +90,6 @@ public class UserController {
      * Body: {"username": "john", "password": "pass12345", "enabled": true}
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
     }
@@ -96,7 +99,6 @@ public class UserController {
      * DELETE /users/{userId}
      */
     @DeleteMapping("/{userId}")
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
         return ResponseEntity.ok().body(Map.of("message", "User deleted successfully"));
@@ -107,7 +109,6 @@ public class UserController {
      * GET /users/{userId}/department-roles
      */
     @GetMapping("/{userId}/department-roles")
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<List<UserDepartmentRoleResponse>> getDepartmentRoles(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.getDepartmentRoles(userId));
     }
@@ -118,7 +119,6 @@ public class UserController {
      * Body: {"departmentId": 1, "roleInDept": "MEMBER"} (roleInDept omis → MEMBER par défaut)
      */
     @PostMapping("/{userId}/department-roles")
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<UserDepartmentRoleResponse> assignDepartmentRole(
             @PathVariable Long userId,
             @Valid @RequestBody DepartmentRoleRequest request) {
@@ -135,7 +135,6 @@ public class UserController {
      * DELETE /users/{userId}/department-roles/{departmentId}
      */
     @DeleteMapping("/{userId}/department-roles/{departmentId}")
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<Map<String, String>> removeDepartmentRole(
             @PathVariable Long userId,
             @PathVariable Long departmentId) {
@@ -149,7 +148,6 @@ public class UserController {
      * Body: {"isSystemAdmin": true}
      */
     @PatchMapping("/{userId}/system-admin")
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<UserResponse> setSystemAdmin(
             @PathVariable Long userId,
             @RequestBody Map<String, Boolean> request) {
@@ -162,7 +160,6 @@ public class UserController {
      * Body: {"enabled": true}
      */
     @PatchMapping("/{userId}/enabled")
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<UserResponse> setUserEnabled(
             @PathVariable Long userId,
             @RequestBody Map<String, Boolean> request) {
@@ -175,7 +172,6 @@ public class UserController {
      * Body: {"password": "newPassword123"}
      */
     @PatchMapping("/{userId}/password")
-    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public ResponseEntity<Map<String, String>> updatePassword(
             @PathVariable Long userId,
             @RequestBody Map<String, String> request) {
