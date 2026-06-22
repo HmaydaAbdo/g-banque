@@ -53,11 +53,10 @@ SERVER_ADRESSE=0.0.0.0
 SERVER_PORT=8080
 CONTEXT_PATH=/gBanque/api
 
-# JPA
-JPA_DDL_AUTO=none
-JPA_SHOW_SQL=false
+# Sécurité
+JWT_SECRET=...
 
-# Mail (optional)
+# Mail (obligatoire sauf MAIL_PROTOCOL, défaut "smtp")
 MAIL_HOST=mail.staport.ma
 MAIL_PORT=587
 MAIL_USERNAME=gbanque@staport.ma
