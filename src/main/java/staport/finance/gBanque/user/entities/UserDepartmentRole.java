@@ -23,7 +23,10 @@ import staport.finance.gBanque.user.enums.DepartmentRoleType;
         uniqueConstraints = @UniqueConstraint(
                 name = "uq_user_dept",
                 columnNames = {"user_id", "department_id"}
-        )
+        ),
+        indexes = {
+                @Index(name = "idx_user_department_role_department_id", columnList = "department_id")
+        }
 )
 public class UserDepartmentRole {
 

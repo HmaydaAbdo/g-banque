@@ -127,16 +127,6 @@ public class UserService {
      * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
     @Transactional
-    public void deleteUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + username));
-        userRepository.delete(user);
-    }
-
-    /**
-     * @throws ResourceNotFoundException si l'utilisateur n'existe pas
-     */
-    @Transactional
     public UserResponse setUserEnabled(Long userId, boolean enabled) {
         User user = findEntityById(userId);
         user.setEnabled(enabled);
@@ -151,19 +141,6 @@ public class UserService {
         User user = findEntityById(userId);
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-    }
-
-    /**
-     * Conservé pour compat interne — non utilisé par {@code UserController} (qui passe
-     * désormais par {@link #getUserById}/{@link #searchUsers}), potentiellement utile
-     * à d'autres modules backend ayant besoin de l'entité brute.
-     */
-    public Optional<User> findUserById(Long userId) {
-        return userRepository.findById(userId);
-    }
-
-    public Optional<User> findUserByUsername(String username) {
-        return userRepository.findByUsername(username);
     }
 
     // ========================================

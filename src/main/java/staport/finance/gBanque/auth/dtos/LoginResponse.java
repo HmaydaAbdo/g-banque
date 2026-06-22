@@ -10,10 +10,6 @@ public class LoginResponse {
     public LoginResponse() {
     }
 
-    public LoginResponse(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
     public LoginResponse(String accessToken, String username, List<String> authorities) {
         this.accessToken = accessToken;
         this.username = username;

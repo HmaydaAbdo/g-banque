@@ -18,8 +18,6 @@ public interface UserDepartmentRoleRepository extends JpaRepository<UserDepartme
     @EntityGraph(attributePaths = {"department"})
     List<UserDepartmentRole> findByUserId(Long userId);
 
-    List<UserDepartmentRole> findByDepartmentId(Long departmentId);
-
     @EntityGraph(attributePaths = {"department"})
     Optional<UserDepartmentRole> findByUserIdAndDepartmentId(Long userId, Long departmentId);
 
