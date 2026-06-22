@@ -17,6 +17,7 @@ import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponse
 import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieLcnLigneResponseDto;
 import staport.finance.gBanque.factoring.dtos.AgregatedSuivieFactoringLigneResponseDto;
 import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
+import staport.finance.gBanque.common.PageableUtils;
 
 import java.util.List;
 
@@ -72,7 +73,7 @@ public class LigneFonctionnelleController {
 
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
         logger.info("Fetching paginated lignes fonctionnelles - Page: {}, Size: {}, Sort: {} {}", page, size, sort[0], sort[1]);
         logger.debug("Search criteria: {}", searchCriteria);
@@ -108,7 +109,7 @@ public class LigneFonctionnelleController {
 
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
         logger.info("Fetching paginated lignes fonctionnelles for marche ID: {} - Page: {}, Size: {}, Sort: {} {}",
                 marcheId, page, size, sort[0], sort[1]);
@@ -193,7 +194,7 @@ public class LigneFonctionnelleController {
 
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
         logger.info("Fetching paginated lignes fonctionnelles for banque ID: {} - Page: {}, Size: {}, Sort: {} {}",
                 banqueId, page, size, sort[0], sort[1]);
@@ -224,7 +225,7 @@ public class LigneFonctionnelleController {
         logger.info("Requête de suivi des préfinancements pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
         AgregatedSuiviePrefiLigneResponseDto res = ligneFonctionnelleService.getSuiviePrefiLigneResponse(id, pageable);
         logger.info("Suivi des préfinancements récupéré avec succès pour la ligne ID: {}", id);
 
@@ -244,7 +245,7 @@ public class LigneFonctionnelleController {
 
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
         AgregatedSuivieDcLigneResponseDto res = ligneFonctionnelleService.getSuivieDcLigneResponse(id, pageable);
         logger.info("Suivi des droits constatés récupéré avec succès pour la ligne ID: {}", id);
@@ -262,7 +263,7 @@ public class LigneFonctionnelleController {
 
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
         AgregatedSuivieFactoringLigneResponseDto res = ligneFonctionnelleService.getSuivieFactoringLigneResponse(id, pageable);
 
@@ -283,7 +284,7 @@ public class LigneFonctionnelleController {
 
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
-        Pageable pageable = PageRequest.of(page, size, sortOrder);
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
         AgregatedSuivieLcnLigneResponseDto res = ligneFonctionnelleService.getSuivieLcnLigneResponse(id, pageable);
 
