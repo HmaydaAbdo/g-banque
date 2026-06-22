@@ -14,6 +14,7 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { DepartmentService } from '../../services/department.service';
 import { DepartmentResponse } from '../../dtos/DepartmentResponse';
 import { DepartmentRequest } from '../../dtos/DepartmentRequest';
+import { escapeHtml } from '../../../../../shared/security/escape-html';
 
 @Component({
   selector: 'app-departements-list',
@@ -130,7 +131,7 @@ export class DepartementsListComponent implements OnInit {
   confirmDelete(departement: DepartmentResponse, event: Event): void {
     this.confirmationService.confirm({
       target: event.target as EventTarget,
-      message: `Supprimer le département "${departement.name}" ?`,
+      message: `Supprimer le département "${escapeHtml(departement.name)}" ?`,
       acceptLabel: 'Oui, supprimer',
       rejectLabel: 'Annuler',
       acceptButtonStyleClass: 'p-button-danger',

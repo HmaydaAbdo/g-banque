@@ -15,6 +15,7 @@ import { UserService } from '../../services/user.service';
 import { DepartmentService } from '../../../departements/services/department.service';
 import { UserResponse } from '../../dtos/UserResponse';
 import { DepartmentResponse } from '../../../departements/dtos/DepartmentResponse';
+import { escapeHtml } from '../../../../../shared/security/escape-html';
 
 @Component({
   selector: 'app-utilisateur-detail',
@@ -108,7 +109,7 @@ export class UtilisateurDetailComponent implements OnInit {
     if (!this.utilisateur) return;
     this.confirmationService.confirm({
       target: event.target as EventTarget,
-      message: `Retirer cet utilisateur du département "${departmentName}" ?`,
+      message: `Retirer cet utilisateur du département "${escapeHtml(departmentName)}" ?`,
       acceptLabel: 'Oui, retirer',
       rejectLabel: 'Annuler',
       acceptButtonStyleClass: 'p-button-danger',

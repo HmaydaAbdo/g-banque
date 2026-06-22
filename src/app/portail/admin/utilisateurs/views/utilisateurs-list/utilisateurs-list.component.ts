@@ -18,6 +18,7 @@ import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { UserService } from '../../services/user.service';
 import { UserResponse } from '../../dtos/UserResponse';
 import { CreateUserRequest } from '../../dtos/CreateUserRequest';
+import { escapeHtml } from '../../../../../shared/security/escape-html';
 
 @Component({
   selector: 'app-utilisateurs-list',
@@ -151,7 +152,7 @@ export class UtilisateursListComponent implements OnInit {
   confirmDelete(utilisateur: UserResponse, event: Event): void {
     this.confirmationService.confirm({
       target: event.target as EventTarget,
-      message: `Supprimer l'utilisateur "${utilisateur.username}" ?`,
+      message: `Supprimer l'utilisateur "${escapeHtml(utilisateur.username)}" ?`,
       acceptLabel: 'Oui, supprimer',
       rejectLabel: 'Annuler',
       acceptButtonStyleClass: 'p-button-danger',
