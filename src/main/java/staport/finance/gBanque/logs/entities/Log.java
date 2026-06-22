@@ -28,6 +28,16 @@ public class Log {
     @Column(name = "entity_id", nullable = false)
     private Long entityId;
 
+    /**
+     * Numéro de révision Envers correspondant à cette opération — permet de
+     * reconstruire le détail champ-par-champ à la demande via {@code AuditReader}
+     * (voir {@code EnversDiffService}). Nullable : les lignes écrites par les
+     * anciens aspects par entité (avant migration vers Envers) n'en ont pas et
+     * utilisent {@code logDetails} (stocké à l'écriture) à la place.
+     */
+    @Column(name = "revision_number")
+    private Integer revisionNumber;
+
     // One-to-Many relationship with LogEntryDetail
     // mappedBy refers to the 'log' field in LogEntryDetail
     // CascadeType.ALL means all operations (persist, merge, remove, refresh, detach) on Log
@@ -109,6 +119,14 @@ public class Log {
 
     public void setEntityId(Long entityId) {
         this.entityId = entityId;
+    }
+
+    public Integer getRevisionNumber() {
+        return revisionNumber;
+    }
+
+    public void setRevisionNumber(Integer revisionNumber) {
+        this.revisionNumber = revisionNumber;
     }
 
     public List<LogEntryDetail> getLogDetails() {
