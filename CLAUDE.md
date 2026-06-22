@@ -76,3 +76,19 @@
 - Aucune valeur de configuration codée en dur dans `application.yml` ou en Java, secret ou pas — toujours `${NOM_VAR}`, jamais `${VAR:défaut}`.
 - Si une variable d'environnement attendue est absente, l'application doit refuser de démarrer.
 - Valeurs réelles dans `.env` (jamais commit, déjà dans `.gitignore`) ; `.env.example` tenu à jour à chaque nouvelle variable.
+
+## Sécurité
+
+- `/auth/login` protégé par verrouillage de compte après échecs répétés (`LoginAttemptService`) — ne jamais retirer cette protection ni la contourner pour un endpoint d'authentification.
+- Pagination : toute taille de page reçue en paramètre doit être bornée — `PageableUtils.clampSize(size)` si `PageRequest` est construit à la main depuis un `@RequestParam` brut ; sinon `spring.data.web.pageable.max-page-size` s'applique déjà automatiquement (injection directe de `Pageable`).
+- `/actuator/**` réservé à `SYSTEM_ADMIN`, sauf `/actuator/health` (public — requis par le healthcheck Docker, ne renvoie que UP/DOWN sans authentification).
+- JWT : durée de vie volontairement courte — toute évolution vers une session plus longue doit passer par un refresh token, jamais par l'allongement du token d'accès.
+- Logs : jamais logger une entité/DTO complet pouvant porter un champ sensible (mot de passe, numéro de compte, montant) — logger des identifiants (id, username) plutôt que l'objet entier.
+- `ddl-auto: update` est un raccourci de dev — toute évolution de schéma destinée à la prod doit passer par un outil de migration versionné (Flyway/Liquibase) dès qu'il sera introduit, jamais par une modification manuelle de la base de prod.
+
+## Argent (BigDecimal)
+
+- Tout montant est un `BigDecimal` — jamais `double`/`float`.
+- Comparaison de montants : toujours `compareTo`, jamais `equals` (sensible à l'échelle : `1.0` ≠ `1.00` pour `equals`).
+- Arrondi : `RoundingMode` explicite à chaque division/pourcentage — jamais le défaut implicite.
+
