@@ -1,6 +1,7 @@
 package staport.finance.gBanque.department.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 
 import java.time.Instant;
 
@@ -13,8 +14,11 @@ import java.time.Instant;
  * <p>Le nom du département (ex. "TRESORERIE") sert de clé pour construire les authorities
  * Spring Security : {@code DEPT_<name>:MEMBER} et {@code DEPT_<name>:DIRECTOR}.
  * Il est donc recommandé d'utiliser une convention stable (majuscules, sans espace) côté admin.
+ *
+ * <p>Entité RBAC sensible — auditée via Hibernate Envers (Backend/CLAUDE.md, section "Audit").
  */
 @Entity
+@Audited
 @Table(name = "department")
 public class Department {
 

@@ -2,6 +2,7 @@ package staport.finance.gBanque.user.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.department.entities.Department;
 import staport.finance.gBanque.user.enums.DepartmentRoleType;
 
@@ -16,8 +17,11 @@ import staport.finance.gBanque.user.enums.DepartmentRoleType;
  *
  * <p>Chaque ligne se traduit en une authority Spring Security lors de la génération du JWT :
  * {@code DEPT_<department.name>:<roleInDept>} (ex. {@code DEPT_TRESORERIE:DIRECTOR}).
+ *
+ * <p>Entité RBAC sensible — auditée via Hibernate Envers (Backend/CLAUDE.md, section "Audit").
  */
 @Entity
+@Audited
 @Table(
         name = "user_department_role",
         uniqueConstraints = @UniqueConstraint(

@@ -1,11 +1,19 @@
 package staport.finance.gBanque.user.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Entité RBAC sensible — auditée via Hibernate Envers (voir Backend/CLAUDE.md,
+ * section "Audit"). {@code password} est exclu de l'audit ({@code @NotAudited}) :
+ * jamais de mot de passe (même haché) conservé dans l'historique.
+ */
 @Entity
+@Audited
 @Table(name = "users")
 public class User {
     @Id
@@ -15,6 +23,7 @@ public class User {
     @Column(unique = true)
     private String username;
 
+    @NotAudited
     private String password;
 
     private boolean enabled;
