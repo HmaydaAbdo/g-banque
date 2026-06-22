@@ -17,8 +17,8 @@
   position: fixed; border-radius: 50%;
   filter: blur(120px); pointer-events: none; z-index: 0;
 }
-.orb-1 { width: 550px; height: 550px; background: rgba(79,70,229,0.15); top: -180px; right: -100px; }
-.orb-2 { width: 450px; height: 450px; background: rgba(99,102,241,0.10); bottom: -150px; left: -80px; }
+.orb-1 { width: 550px; height: 550px; background: var(--color-primary-glow); top: -180px; right: -100px; }
+.orb-2 { width: 450px; height: 450px; background: var(--color-accent-glow); bottom: -150px; left: -80px; }
 
 // ── Page ─────────────────────────────────────────────────
 .login-page {
@@ -67,7 +67,7 @@
   width: 40px; height: 40px; border-radius: var(--radius-md);
   background: var(--color-primary);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; font-weight: var(--weight-bold); color: #fff;
+  font-size: 1.1rem; font-weight: var(--weight-bold); color: var(--color-text-inverse);
 }
 .login-brand-name {
   font-family: 'Playfair Display', serif;
@@ -146,7 +146,7 @@
   width: 100%; padding: 0.95rem;
   border-radius: var(--radius-md); border: none; cursor: pointer;
   background: var(--color-primary);
-  color: #fff; font-size: var(--text-base); font-weight: var(--weight-semibold);
+  color: var(--color-text-inverse); font-size: var(--text-base); font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-wide); text-transform: uppercase;
   transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
   box-shadow: var(--shadow-md); margin-top: 0.5rem;

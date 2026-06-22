@@ -8,7 +8,6 @@ import { PasswordModule } from 'primeng/password';
 import { ButtonModule } from 'primeng/button';
 import { InputGroupModule } from "primeng/inputgroup";
 import { InputGroupAddonModule } from "primeng/inputgroupaddon";
-import { MessageService } from 'primeng/api';
 import { Router, RouterLink } from "@angular/router";
 import { HttpErrorResponse } from "@angular/common/http";
 
@@ -38,7 +37,6 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   private router = inject(Router);
   passwordVisible: boolean = false;
   passwordInputType: string = 'password';
-  private messageService = inject(MessageService);
   private animFrameId = 0;
 
   loginForm!: FormGroup;
@@ -58,7 +56,6 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
-      this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez remplir tous les champs obligatoires.' });
       return;
     }
 
@@ -83,6 +80,9 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     const ctx = canvas.getContext('2d')!;
+    // Canvas2D ne comprend pas var(--token) — on résout la valeur du design token
+    // une seule fois ici (le canvas API a besoin d'une chaîne de couleur littérale).
+    const accentRgb = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-rgb').trim();
     let W = 0, H = 0;
     const resize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; };
     resize();
@@ -91,14 +91,14 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     for (let i = 0; i < 60; i++) particles.push({ x: Math.random() * 2000, y: Math.random() * 1000, size: Math.random() * 1.2 + 0.3, speed: Math.random() * 0.35 + 0.08, opacity: Math.random() * 0.5 + 0.1, drift: (Math.random() - 0.5) * 0.25 });
     const animate = () => {
       ctx.clearRect(0, 0, W, H);
-      ctx.strokeStyle = 'rgba(99,102,241,0.06)'; ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(${accentRgb}, 0.06)`; ctx.lineWidth = 1;
       for (let x = 0; x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
       for (let y = 0; y < H; y += 80) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
       particles.forEach(p => {
         p.y -= p.speed; p.x += p.drift;
         if (p.y < -10) { p.y = H + 10; p.x = Math.random() * W; }
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(99,102,241,${p.opacity})`; ctx.fill();
+        ctx.fillStyle = `rgba(${accentRgb}, ${p.opacity})`; ctx.fill();
       });
       this.animFrameId = requestAnimationFrame(animate);
     };

@@ -113,6 +113,11 @@
   --color-primary-light  : #ede9fe;
   --color-primary-text   : #3730a3;
 
+  // ── Login — Glow decorations (orbs + canvas particles) ──
+  --color-primary-glow : rgba(79,70,229,0.15);
+  --color-accent-glow  : rgba(99,102,241,0.10);
+  --color-accent-rgb   : 99, 102, 241;
+
   // Semantic — Success / Emerald (crédit)
   --color-success        : #059669;
   --color-success-hover  : #047857;
@@ -201,6 +206,10 @@
   --color-primary-active : #c7d2fe;
   --color-primary-light  : #1e1b4b;
   --color-primary-text   : #c7d2fe;
+
+  --color-primary-glow : rgba(129,140,248,0.15);
+  --color-accent-glow  : rgba(165,180,252,0.10);
+  --color-accent-rgb   : 165, 180, 252;
 
   // Semantic — Success / Emerald-400
   --color-success        : #34d399;
