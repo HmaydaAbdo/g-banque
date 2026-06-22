@@ -28,7 +28,6 @@ import { PageResponse } from '../../../global/types/PageResponse';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
 import { AuthService } from '../../../../auth/services/auth.service';
-import { Role } from '../../../../auth/enum/Role';
 import { StatutMoyenPaiement } from '../../../global/enums/StatutMoyenPaiement';
 
 @Component({
@@ -102,7 +101,7 @@ export class ChequesDecaissementsListComponent implements OnInit, OnDestroy {
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
       { icon: 'pi pi-list', route: '/portail/Cheques/decaissements', label: 'Les Chèques ( décaissements )' },
     ];
-    this.isAdmin = this.authService.hasRole(Role.ADMIN);
+    this.isAdmin = this.authService.isSystemAdmin();
     this.initSearchForm();
     this.loadBanques();
     this.loadCheques(this.lastLazyLoadEvent);

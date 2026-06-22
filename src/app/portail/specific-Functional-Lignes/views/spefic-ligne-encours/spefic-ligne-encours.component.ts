@@ -23,7 +23,6 @@
   import { debounceTime, distinctUntilChanged, takeUntil, switchMap, catchError, tap } from 'rxjs/operators';
 
   // Auth & Services
-  import { Role } from "../../../../auth/enum/Role";
   import { AuthService } from "../../../../auth/services/auth.service";
   import { LigneFonctionnelleSpecifiqueResponse } from "../../dtos/LigneFonctionnelleSpecifiqueResponse";
   import { LigneFonctionnelleSpecifiqueSearchCriteria } from "../../dtos/LigneFonctionnelleSpecifiqueSearchCriteria";
@@ -256,7 +255,7 @@
 
 
     isAdmin(): boolean {
-      return this.authService.hasRole(Role.ADMIN);
+      return this.authService.isSystemAdmin();
     }
 
     private reloadTableAfterAction(): void {

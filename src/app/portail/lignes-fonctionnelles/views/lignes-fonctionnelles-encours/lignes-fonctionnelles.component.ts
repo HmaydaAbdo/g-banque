@@ -32,7 +32,6 @@ import { BanqueService } from '../../../comptes-bancaire/services/BanqueService'
 import { MarcheService } from '../../../Marches/service/marche-service.service';
 import { NatureLigneFonctionnelleService } from "../../services/nature-ligne-fonctionnelle.service";
 import { AuthService } from "../../../../auth/services/auth.service";
-import { Role } from "../../../../auth/enum/Role";
 import {LineNavigationService, LineType} from "../../services/LineNavigationService";
 
 
@@ -464,7 +463,7 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
   // ========== HELPERS ==========
 
   isAdmin(): boolean {
-    return this.authService.hasRole(Role.ADMIN);
+    return this.authService.isSystemAdmin();
   }
 
   private reloadTableAfterAction(): void {

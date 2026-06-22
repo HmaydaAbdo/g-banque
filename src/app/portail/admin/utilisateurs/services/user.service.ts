@@ -55,10 +55,6 @@ export class UserService {
     return this.http.delete<void>(`${this.apiUrl}/${userId}`);
   }
 
-  getDepartmentRoles(userId: number): Observable<UserDepartmentRoleResponse[]> {
-    return this.http.get<UserDepartmentRoleResponse[]>(`${this.apiUrl}/${userId}/department-roles`);
-  }
-
   assignDepartmentRole(userId: number, request: DepartmentRoleRequest): Observable<UserDepartmentRoleResponse> {
     return this.http.post<UserDepartmentRoleResponse>(`${this.apiUrl}/${userId}/department-roles`, request);
   }

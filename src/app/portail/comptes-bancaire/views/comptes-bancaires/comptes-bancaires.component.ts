@@ -19,7 +19,6 @@ import { TooltipModule } from "primeng/tooltip";
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import {RouterLink, RouterLinkActive} from '@angular/router';
 import {PageResponse} from "../../../global/types/PageResponse";
-import {Role} from "../../../../auth/enum/Role";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {BanqueSearchCriteria} from "../../dtos/BanqueSearchCriteria";
 import {BreadcrumbModule} from "primeng/breadcrumb";
@@ -210,6 +209,6 @@ export class ComptesBancairesComponent implements OnInit {
   }
 
   isAdmin(): boolean {
-    return this.authService.hasRole(Role.ADMIN);
+    return this.authService.isSystemAdmin();
   }
 }

@@ -23,7 +23,6 @@ import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
 import {CreditMoyenTermeSearchDto} from "../../dtos/CreditMoyenTermeSearchDto";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {AuthService} from "../../../../auth/services/auth.service";
-import {Role} from "../../../../auth/enum/Role";
 
 @Component({
   selector: 'app-cmt-list-actifs',
@@ -232,6 +231,6 @@ export class CmtListComponent implements OnInit, OnDestroy {
   }
 
   isAdmin():boolean {
-   return  this.authService.hasRole(Role.ADMIN)
+   return  this.authService.isSystemAdmin()
   }
 }

@@ -11,7 +11,6 @@ import { LoginCredentials } from "../dto/LoginCredentials";
 import { jwtDecode } from 'jwt-decode';
 import { DecodedToken } from "../types/DecodedToken";
 import { DepartmentRoleType } from "../types/DepartmentRoleType";
-import { Role } from "../enum/Role";
 
 const SYSTEM_ADMIN_AUTHORITY = 'SYSTEM_ADMIN';
 
@@ -137,18 +136,5 @@ export class AuthService {
    */
   isAdmin(): boolean {
     return this.isSystemAdmin();
-  }
-
-  /**
-   * @deprecated Conservé uniquement pour compatibilité avec le code existant qui importe
-   * encore l'enum {@link Role} (ADMIN/SUPER_ADMIN → isSystemAdmin(), USER → authentifié).
-   * Nouveau code : utiliser {@link isSystemAdmin}, {@link belongsToDepartment} ou
-   * {@link hasDepartmentRole} directement — ne plus utiliser {@link Role}.
-   */
-  hasRole(role: Role): boolean {
-    if (role === Role.ADMIN || role === Role.SUPER_ADMIN) {
-      return this.isSystemAdmin();
-    }
-    return this.isAuthenticatedSubject.value;
   }
 }

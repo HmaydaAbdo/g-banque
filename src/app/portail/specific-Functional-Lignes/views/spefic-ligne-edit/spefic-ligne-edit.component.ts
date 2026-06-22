@@ -21,7 +21,6 @@ import { SpecificFunctionalLigneService } from "../../service/SpecificFunctional
 import { MarcheService } from "../../../Marches/service/marche-service.service";
 import { NatureLigneFonctionnelleService } from "../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service";
 import { PorteeNature } from "../../../lignes-fonctionnelles/dtos/nature-ligne-fonctionnelle/PorteeNature";
-import { Role } from "../../../../auth/enum/Role";
 import { AuthService } from "../../../../auth/services/auth.service";
 import { parseLocalDate, toLocalDateString } from "../../../global/types/date.utils";
 

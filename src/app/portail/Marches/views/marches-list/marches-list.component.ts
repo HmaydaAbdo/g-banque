@@ -24,7 +24,6 @@ import {PageResponse} from "../../../global/types/PageResponse";
 import {DropdownModule} from "primeng/dropdown";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {AuthService} from "../../../../auth/services/auth.service";
-import {Role} from "../../../../auth/enum/Role";
 
 
 @Component({
@@ -230,6 +229,6 @@ export class MarchesListComponent implements OnInit {
   }
 
   isAdmin():boolean{
-    return this.authService.hasRole(Role.ADMIN)
+    return this.authService.isSystemAdmin()
   }
 }

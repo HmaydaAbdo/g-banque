@@ -30,7 +30,6 @@ import {DialogModule} from "primeng/dialog";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {AuthService} from "../../../../../auth/services/auth.service";
-import {Role} from "../../../../../auth/enum/Role";
 
 
 @Component({
@@ -256,6 +255,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   }
 
   isAdmin():boolean{
-    return this.authService.hasRole(Role.ADMIN)
+    return this.authService.isSystemAdmin()
   }
 }

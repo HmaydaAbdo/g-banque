@@ -16,7 +16,6 @@ import { RippleModule } from 'primeng/ripple';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators'; // Import RxJS operators
 import { TooltipModule } from 'primeng/tooltip';
 import {DropdownModule} from "primeng/dropdown";
-import {Role} from "../../../../auth/enum/Role";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import { PorteeNature, PORTEE_NATURE_LABELS } from '../../dtos/nature-ligne-fonctionnelle/PorteeNature';
@@ -201,7 +200,7 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
   }
 
   isAdmin(): boolean {
-    return this.authService.hasRole(Role.ADMIN);
+    return this.authService.isSystemAdmin();
   }
 
   getPorteeLabel(portee: any): string {

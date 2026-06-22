@@ -22,7 +22,6 @@ import { Subscription } from 'rxjs';
 import { ChequeService } from '../../services/ChequeService';
 import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { AuthService } from '../../../../auth/services/auth.service';
-import { Role } from '../../../../auth/enum/Role';
 import { ChequeSearchDto } from '../../dtos/ChequeSearchDto';
 import { PageResponse } from '../../../global/types/PageResponse';
 import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
@@ -102,7 +101,7 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
       { icon: 'pi pi-list', route: '/portail/Cheques/encaissements', label: 'Les Chèques ( encaissements )' },
     ];
-    this.isAdmin = this.authService.hasRole(Role.ADMIN);
+    this.isAdmin = this.authService.isSystemAdmin();
     this.initSearchForm();
     this.loadBanques();
     this.loadCheques(this.lastLazyLoadEvent);

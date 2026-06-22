@@ -17,7 +17,6 @@ import {Devise} from '../../enums/Devise';
 import {BanqueService} from '../../services/BanqueService';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {AuthService} from "../../../../auth/services/auth.service";
-import {Role} from "../../../../auth/enum/Role";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 
 @Component({
@@ -110,7 +109,7 @@ export class BanqueEditComponent implements OnInit {
           agence: data.agence,
         });
         // Ensure disabling happens after patching value if it's edit mode
-        if (this.isEditMode && !this.authService.hasRole(Role.ADMIN)) {
+        if (this.isEditMode && !this.authService.isSystemAdmin()) {
           this.banqueForm.get('numeroDeCompte')?.disable();
         }
 

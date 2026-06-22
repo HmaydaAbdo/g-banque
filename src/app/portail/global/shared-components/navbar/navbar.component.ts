@@ -8,7 +8,6 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from "../../../../auth/services/auth.service";
 import { TooltipModule } from "primeng/tooltip";
-import { Role } from "../../../../auth/enum/Role";
 import { BadgeModule } from 'primeng/badge';
 import { ToastModule } from 'primeng/toast';
 import { NotificationService } from "../../../notification/service/NotificationService";
@@ -20,7 +19,6 @@ interface MenuItem {
   label: string;
   icon: string;
   routerLink: string;
-  roles?: Role[];
 }
 
 @Component({
@@ -105,15 +103,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.notificationDialogVisible = true;
   }
 
-  private hasRequiredRole(item: MenuItem): boolean {
-    if (!item.roles || item.roles.length === 0) {
-      return true;
-    }
-    return item.roles.some(role => this.authService.hasRole(role));
-  }
-
   private filterMenuItems(): void {
-    this.filteredMenuItems = this.allMenuItems.filter(item => this.hasRequiredRole(item));
+    this.filteredMenuItems = this.allMenuItems;
   }
 
   confirmLogout(event: Event) {

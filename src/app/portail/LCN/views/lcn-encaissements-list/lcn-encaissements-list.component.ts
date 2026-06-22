@@ -18,7 +18,6 @@ import {Subscription} from "rxjs";
 import {LcnService} from "../../service/LcnService";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {AuthService} from "../../../../auth/services/auth.service";
-import {Role} from "../../../../auth/enum/Role";
 import {LcnSearchDTO} from "../../dtos/LcnSearchDTO";
 import {PageResponse} from "../../../global/types/PageResponse";
 import {BanqueResponse} from "../../../comptes-bancaire/dtos/BanqueResponse";
@@ -101,7 +100,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
       {icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil'},
       {icon: 'pi pi-list', route: '/portail/LCN/encaissements', label: 'LCN (encaissements)'},
     ];
-    this.isAdmin = this.authService.hasRole(Role.ADMIN);
+    this.isAdmin = this.authService.isSystemAdmin();
     this.initSearchForm();
     this.loadBanques();
     this.loadLcns(this.lastLazyLoadEvent);
