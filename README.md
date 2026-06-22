@@ -62,6 +62,9 @@ MAIL_HOST=mail.staport.ma
 MAIL_PORT=587
 MAIL_USERNAME=gbanque@staport.ma
 MAIL_PASSWORD=your_password
+MAIL_PROTOCOL=smtp
+MAIL_FROM=gbanque@staport.ma
+MAIL_NOTIFICATION_RECIPIENTS=hmayda@staport-sa.ma
 ```
 
 ### Running with Docker (Recommended)
