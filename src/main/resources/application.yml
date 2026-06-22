@@ -8,6 +8,13 @@
       lazy-initialization: true
     application:
       name: gBanque
+    data:
+      web:
+        pageable:
+          # Borne globale appliquée par le résolveur Pageable de Spring Data — ne couvre
+          # pas les endpoints qui construisent PageRequest.of(...) à la main à partir d'un
+          # @RequestParam brut (voir staport.finance.gBanque.common.PageableUtils pour ceux-là).
+          max-page-size: 100
     datasource:
 
       url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
