@@ -66,6 +66,10 @@ public class SecurityConfig {
                 .sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login","/ws/**").permitAll()
+                        // /actuator/health reste public (healthcheck Docker, sans auth) ; le
+                        // reste (info, metrics...) ne doit être visible qu'à un SYSTEM_ADMIN.
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/actuator/**").hasAuthority("SYSTEM_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
