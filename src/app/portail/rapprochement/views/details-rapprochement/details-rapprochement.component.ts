@@ -182,12 +182,6 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Erreur lors du chargement des détails du rapprochement:', err);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: `Échec du chargement : ${err.error?.message || 'Erreur inconnue'}`,
-            life: 5000
-          });
           this.loadingTransactions = false;
         }
       });
@@ -281,13 +275,6 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
             detail: 'Transaction mise à jour avec succès.'
           });
           this.closeEditDialog();
-        },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: `Impossible de mettre à jour la transaction : ${err.error?.message || 'Erreur inconnue'}`
-          });
         }
       });
   }

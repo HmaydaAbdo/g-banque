@@ -141,12 +141,8 @@ export class AgiosFormComponent implements OnInit {
 
         this.loading = false;
       },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement de l\'agios.'
-        });
+      error: (err) => {
+        console.error('Erreur lors du chargement de l\'agios:', err);
         this.loading = false;
         this.location.back();
       },
@@ -204,12 +200,7 @@ export class AgiosFormComponent implements OnInit {
           this.location.back();
         },
         error: (error) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: error.error?.message || 'Échec de la mise à jour.',
-            life: 3000
-          });
+          console.error('Erreur lors de la mise à jour de l\'agios:', error);
           this.loading = false;
         },
       });
@@ -226,12 +217,7 @@ export class AgiosFormComponent implements OnInit {
           this.location.back();
         },
         error: (error) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: error.error?.message || 'Échec de la création.',
-            life: 3000
-          });
+          console.error('Erreur lors de la création de l\'agios:', error);
           this.loading = false;
         },
       });

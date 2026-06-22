@@ -39,9 +39,11 @@
             class="field-input"
           />
         </div>
-        <small *ngIf="loginForm.get('username')?.invalid && loginForm.get('username')?.touched" class="field-error">
-          Nom d'utilisateur est requis.
-        </small>
+        @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
+          <small class="field-error">
+            Nom d'utilisateur est requis.
+          </small>
+        }
       </div>
 
       <!-- Password -->
@@ -61,16 +63,20 @@
             (click)="togglePasswordVisibility()"
           ></i>
         </div>
-        <small *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="field-error">
-          Mot de passe est requis.
-        </small>
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <small class="field-error">
+            Mot de passe est requis.
+          </small>
+        }
       </div>
 
       <!-- Error -->
-      <div *ngIf="errorMessage" class="login-error">
-        <i class="pi pi-exclamation-circle"></i>
-        {{ errorMessage }}
-      </div>
+      @if (errorMessage) {
+        <div class="login-error">
+          <i class="pi pi-exclamation-circle"></i>
+          {{ errorMessage }}
+        </div>
+      }
 
       <!-- Submit -->
       <button
@@ -78,8 +84,11 @@
         class="btn-login"
         [disabled]="loginForm.invalid || isLoading"
       >
-        <span *ngIf="!isLoading">Se connecter <span class="btn-arrow">→</span></span>
-        <span *ngIf="isLoading"><i class="pi pi-spin pi-spinner"></i> Connexion...</span>
+        @if (!isLoading) {
+          <span>Se connecter <span class="btn-arrow">→</span></span>
+        } @else {
+          <span><i class="pi pi-spin pi-spinner"></i> Connexion...</span>
+        }
       </button>
 
     </form>

@@ -148,7 +148,6 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des LCNs.'});
       }
     });
   }
@@ -166,7 +165,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
         this.banqueOptions = response.content.map(b => ({label: b.nom, value: b.nom}));
         this.banqueOptions.unshift({label: 'Toutes les banques', value: null});
       },
-      error: () => this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.'})
+      error: () => {}
     });
   }
 
@@ -225,8 +224,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
         if (this.dt) this.loadLcns(this.dt.createLazyLoadMetadata());
       },
       error: (err) => {
-        const detail = err.error?.detail || 'Échec de la mise à jour du LCN.';
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail});
+        console.error('Erreur lors de la mise à jour du LCN:', err);
       }
     });
   }
@@ -251,8 +249,7 @@ export class LcnEncaissementsListComponent implements OnInit, OnDestroy {
             this.loading = false;
           },
           error: (err) => {
-            const detail = err.error?.detail || 'Échec de la suppression du LCN.';
-            this.messageService.add({severity: 'error', summary: 'Erreur', detail, life: 3000});
+            console.error('Erreur lors de la suppression du LCN:', err);
             this.loading = false;
           }
         });

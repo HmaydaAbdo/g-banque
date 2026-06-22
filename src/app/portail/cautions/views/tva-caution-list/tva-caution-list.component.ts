@@ -142,9 +142,6 @@ export class TvaCautionListComponent implements OnInit {
           this.banques = res.content.map((b: any) => ({ label: b.nom, value: b.id }));
           this.cdr.markForCheck();
         },
-        error: () => this.messageService.add({
-          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les banques.',
-        }),
       });
   }
 
@@ -183,9 +180,6 @@ export class TvaCautionListComponent implements OnInit {
         error: () => {
           this.loading = false;
           this.cdr.markForCheck();
-          this.messageService.add({
-            severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les TVA.',
-          });
         },
       });
   }
@@ -260,10 +254,6 @@ export class TvaCautionListComponent implements OnInit {
         error: () => {
           this.selectAllLoading = false;
           this.cdr.markForCheck();
-          this.messageService.add({
-            severity: 'error', summary: 'Erreur',
-            detail: 'Impossible de sélectionner toutes les TVA.',
-          });
         },
       });
   }
@@ -314,11 +304,6 @@ export class TvaCautionListComponent implements OnInit {
         error: err => {
           this.fusionLoading = false;
           this.cdr.markForCheck();
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur de fusion',
-            detail: extractErrorMessage(err, 'La fusion a échoué.'),
-          });
         },
       });
   }
@@ -347,10 +332,6 @@ export class TvaCautionListComponent implements OnInit {
                 severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.',
               });
             },
-            error: err => this.messageService.add({
-              severity: 'error', summary: 'Erreur',
-              detail: extractErrorMessage(err, 'Impossible de modifier le statut.'),
-            }),
           });
       },
     });
@@ -380,10 +361,6 @@ export class TvaCautionListComponent implements OnInit {
                 severity: 'success', summary: 'Supprimée', detail: 'TVA supprimée avec succès.',
               });
             },
-            error: err => this.messageService.add({
-              severity: 'error', summary: 'Erreur',
-              detail: extractErrorMessage(err, 'Impossible de supprimer la TVA.'),
-            }),
           });
       },
     });

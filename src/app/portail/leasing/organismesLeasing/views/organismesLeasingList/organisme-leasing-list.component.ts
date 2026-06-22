@@ -206,11 +206,6 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
   }
 
   private handleServiceError(err: Error): void {
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: err.message || 'Une erreur est survenue lors de l\'opération.'
-    });
     console.error('Frontend caught service error:', err);
   }
 

@@ -122,9 +122,6 @@ export class CautionFormComponent implements OnInit {
           this.banques = res.content.map(b => ({ label: b.nom, value: b.id }));
           this.cdr.markForCheck();
         },
-        error: () => this.messageService.add({
-          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les banques.',
-        }),
       });
 
     this.natureService.getAllNatureLigneFonctionnellesList()
@@ -134,9 +131,6 @@ export class CautionFormComponent implements OnInit {
           this.natures = res.map(n => ({ label: n.label, value: n.id, code: n.code }));
           this.cdr.markForCheck();
         },
-        error: () => this.messageService.add({
-          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les natures.',
-        }),
       });
   }
 
@@ -218,9 +212,6 @@ export class CautionFormComponent implements OnInit {
         const criteria = filter ? { numero: filter } : {};
         return this.marcheService.getAllMarches(criteria, 0, MARCHE_PAGE_SIZE, 'numero,asc').pipe(
           catchError(() => {
-            this.messageService.add({
-              severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les marchés.',
-            });
             return of({ content: [], page: { totalElements: 0 } });
           }),
         );
@@ -274,9 +265,6 @@ export class CautionFormComponent implements OnInit {
         error: () => {
           this.loadedMarchePages.delete(page);
           this.marchesLoading = false;
-          this.messageService.add({
-            severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les marchés.',
-          });
           this.cdr.markForCheck();
         },
       });
@@ -341,11 +329,6 @@ export class CautionFormComponent implements OnInit {
           },
           error: err => {
             this.loading = false;
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: err.error?.message ?? 'Une erreur est survenue.',
-            });
             this.cdr.markForCheck();
           },
         });

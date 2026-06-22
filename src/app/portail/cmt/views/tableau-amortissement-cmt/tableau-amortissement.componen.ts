@@ -176,7 +176,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.errorMessage = error.message;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.message, life: 3000 });
         this.loading = false;
       }
     });
@@ -239,8 +238,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error toggling  echeance status  :', error);
         this.errorMessage = 'Échec de la mise à jour du statut. ' + (error.message || 'Veuillez réessayer.');
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail: this.errorMessage});
-
       }
     });
 

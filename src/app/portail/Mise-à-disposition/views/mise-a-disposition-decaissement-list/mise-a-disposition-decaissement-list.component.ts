@@ -153,7 +153,6 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
       },
       error: () => {
         this.loading = false;
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des mises à disposition.'});
       }
     });
   }
@@ -171,7 +170,7 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
         this.banqueOptions = response.content.map(b => ({label: b.nom, value: b.nom}));
         this.banqueOptions.unshift({label: 'Toutes les banques', value: null});
       },
-      error: () => this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.'})
+      error: () => {}
     });
   }
 
@@ -227,8 +226,7 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
         if (this.dt) this.loadMisesADisposition(this.dt.createLazyLoadMetadata());
       },
       error: (err) => {
-        const detail = err.error?.detail || 'Échec de la mise à jour de la mise à disposition.';
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail});
+        console.error('Erreur lors de la mise à jour de la mise à disposition:', err);
       }
     });
   }
@@ -253,8 +251,7 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
             this.loading = false;
           },
           error: (err) => {
-            const detail = err.error?.detail || 'Échec de la suppression.';
-            this.messageService.add({severity: 'error', summary: 'Erreur', detail, life: 3000});
+            console.error('Erreur lors de la suppression de la mise à disposition:', err);
             this.loading = false;
           }
         });

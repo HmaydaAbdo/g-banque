@@ -186,11 +186,6 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les impôts et taxes en cours.'
-          });
           this.loading = false;
           console.error(err);
         }
@@ -292,11 +287,6 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
           this.bankStateService.notifyValidation();
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Une erreur est survenue.',
-          });
           this.isSubmitting = false;
         },
       });

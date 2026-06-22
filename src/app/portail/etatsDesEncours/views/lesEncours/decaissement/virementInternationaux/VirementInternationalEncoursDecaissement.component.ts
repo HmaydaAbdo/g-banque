@@ -249,11 +249,6 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
           },
           error: (error) => {
             console.error('Erreur lors de la validation du virement international:', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors de la validation.'
-            });
             this.isSubmitting = false;
           }
         });
@@ -293,11 +288,6 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
             'Erreur lors du chargement des virements internationaux en cours:',
             error
           );
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des virements internationaux en cours.',
-          });
         },
       });
   }

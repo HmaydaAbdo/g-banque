@@ -185,12 +185,6 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error loading dropdowns:', err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des données de référence',
-          life: 3000
-        });
       }
     });
   }
@@ -379,12 +373,6 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
       tap(ligne => this.patchFormWithLigne(ligne)),
       catchError(error => {
         console.error('Error loading ligne:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: error.error?.message || 'Impossible de charger la ligne',
-          life: 3000
-        });
         this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
         return EMPTY;
       }),
@@ -596,12 +584,6 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Save error:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: error.error?.message || 'Échec de l\'enregistrement',
-          life: 3000
-        });
         this.loading = false;
       }
     });

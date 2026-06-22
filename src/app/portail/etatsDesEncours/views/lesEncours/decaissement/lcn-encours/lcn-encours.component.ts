@@ -249,11 +249,6 @@ export class LcnEncoursComponent implements OnInit {
           },
           error: (error) => {
             console.error('Erreur lors du validation du LCN:', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du validation.'
-            });
             this.isSubmitting = false;
           }
         });
@@ -293,11 +288,6 @@ export class LcnEncoursComponent implements OnInit {
             'Erreur lors du chargement des LCNs en cours:',
             error
           );
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des LCNs en cours.',
-          });
         },
       });
   }

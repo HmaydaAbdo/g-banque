@@ -77,7 +77,6 @@ export class HistoryOflinesComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         console.error('Error loading bank details:', error);
         this.loadingBankDetails = false;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des détails de la banque.', life: 3000 });
       }
     });
   }

@@ -132,12 +132,6 @@ export class ValidatedDcComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors du chargement des droits constatés:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des droits constatés. ' + (error.error?.message || ''),
-          life: 3000
-        });
         this.loading = false;
       }
     });

@@ -201,8 +201,8 @@ export class DroitConstateListComponent implements OnInit {
           this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.'});
           this.loadDroitsConstates(this.table.createLazyLoadMetadata());
         },
-        error: () => {
-          this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Impossible de mettre à jour le statut.'});
+        error: (err) => {
+          console.error('Erreur lors de la mise à jour du statut:', err);
         }
       });
     }
@@ -217,12 +217,8 @@ export class DroitConstateListComponent implements OnInit {
             this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Droit constaté supprimé.'});
             this.loadDroitsConstates(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de supprimer le droit constaté.'
-            });
+          error: (err) => {
+            console.error('Erreur lors de la suppression du droit constaté:', err);
           }
         });
       }

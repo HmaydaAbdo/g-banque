@@ -248,11 +248,6 @@ export class VirementEncoursComponent implements OnInit {
           },
           error: (error) => {
             console.error('Erreur lors du validation du virement:', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du validation.'
-            });
             this.isSubmitting = false;
           }
         });
@@ -292,11 +287,6 @@ export class VirementEncoursComponent implements OnInit {
             'Erreur lors du chargement des virements en cours:',
             error
           );
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des virements en cours.',
-          });
         },
       });
   }

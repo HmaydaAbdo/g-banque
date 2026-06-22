@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from '../../../auth/guards/admin.guard';
+import { systemAdminGuard } from '../../../auth/guards/system-admin.guard';
 
 /**
  * Routes du module Caution.
@@ -20,14 +20,14 @@ export const CAUTION_ROUTES: Routes = [
   },
   {
     path: 'new',
-    canActivate: [adminGuard],
+    canActivate: [systemAdminGuard],
     loadComponent: () =>
       import('../views/caution-form/caution-form.component')
         .then(m => m.CautionFormComponent),
   },
   {
     path: 'edit/:id',
-    canActivate: [adminGuard],
+    canActivate: [systemAdminGuard],
     loadComponent: () =>
       import('../views/caution-form/caution-form.component')
         .then(m => m.CautionFormComponent),
@@ -40,7 +40,7 @@ export const CAUTION_ROUTES: Routes = [
   },
   {
     path: 'commissions/edit/:id',
-    canActivate: [adminGuard],
+    canActivate: [systemAdminGuard],
     loadComponent: () =>
       import('../views/commission-caution-form/commission-caution-form.component')
         .then(m => m.CommissionCautionFormComponent),

@@ -252,7 +252,6 @@ export class LesEncoursComponent implements OnInit {
           this.router.navigate(['/portail/etats-des-encours', this.banqueId, 'select']);
         },
         error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message });
           this.clotureLoading = false;
         }
       });
@@ -264,7 +263,6 @@ export class LesEncoursComponent implements OnInit {
           window.location.reload();
         },
         error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message });
           this.clotureLoading = false;
         }
       });

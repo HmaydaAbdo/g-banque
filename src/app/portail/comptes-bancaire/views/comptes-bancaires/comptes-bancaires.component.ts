@@ -116,12 +116,6 @@ export class ComptesBancairesComponent implements OnInit {
         },
         error: (error) => {
           console.error('Erreur lors du chargement des banques:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des banques. ' + (error.error?.message || ''),
-            life: 3000
-          });
           this.loading = false;
         }
       });
@@ -195,8 +189,6 @@ export class ComptesBancairesComponent implements OnInit {
             },
             error: (error) => {
               console.error('Erreur lors de la suppression de la banque:', error);
-              const errorMessage = error.error.detail || 'Échec de la suppression de la banque.';
-              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
               this.loading = false;
             }
           });

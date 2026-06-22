@@ -147,7 +147,6 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des chèques.' });
       }
     });
   }
@@ -165,7 +164,7 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
         this.banqueOptions = response.content.map(b => ({ label: b.nom, value: b.nom }));
         this.banqueOptions.unshift({ label: 'Toutes les banques', value: null });
       },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.' })
+      error: () => {}
     });
   }
 
@@ -221,8 +220,7 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
         if (this.dt) this.loadCheques(this.dt.createLazyLoadMetadata());
       },
       error: (err) => {
-        const detail = err.error?.detail || 'Échec de la mise à jour du chèque.';
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail });
+        console.error('Erreur lors de la mise à jour du chèque:', err);
       }
     });
   }
@@ -247,8 +245,7 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
             this.loading = false;
           },
           error: (err) => {
-            const detail = err.error?.detail || 'Échec de la suppression du chèque.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail, life: 3000 });
+            console.error('Erreur lors de la suppression du chèque:', err);
             this.loading = false;
           }
         });

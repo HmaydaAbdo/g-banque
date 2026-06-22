@@ -81,11 +81,7 @@ export class FunctionalLinesByMarcheComponent implements OnInit {
   loadMarcheInfo(): void {
     this.marcheService.getMarcheById(this.marcheId).subscribe({
       next: (marche) => this.marche = marche,
-      error: () => this.messageService.add({
-        severity: 'error',
-        summary: 'Erreur',
-        detail: 'Impossible de charger les informations du marché.'
-      })
+      error: (err) => console.error('Erreur lors du chargement du marché:', err)
     });
   }
 
@@ -109,11 +105,6 @@ export class FunctionalLinesByMarcheComponent implements OnInit {
       },
       error: () => {
         this.loadingSpecific = false;
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des lignes spécifiques.'
-        });
       }
     });
   }
@@ -144,11 +135,6 @@ export class FunctionalLinesByMarcheComponent implements OnInit {
       },
       error: () => {
         this.loadingGeneral = false;
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des lignes générales.'
-        });
       }
     });
   }

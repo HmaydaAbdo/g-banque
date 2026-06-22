@@ -147,7 +147,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Logout error:', err);
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Une erreur est survenue lors de la déconnexion.' });
       },
       complete: () => {
         this.loading = false;

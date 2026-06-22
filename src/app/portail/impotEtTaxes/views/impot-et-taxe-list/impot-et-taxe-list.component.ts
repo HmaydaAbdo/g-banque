@@ -116,11 +116,6 @@ export class ImpotEtTaxeListComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les impôts et taxes.'
-          });
           this.loading = false;
         }
       });
@@ -178,8 +173,8 @@ export class ImpotEtTaxeListComponent implements OnInit {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Impôt/taxe supprimé(e).' });
             this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer l\'impôt/taxe.' });
+          error: (err) => {
+            console.error('Erreur lors de la suppression de l\'impôt/taxe:', err);
           }
         });
       }
@@ -202,8 +197,8 @@ export class ImpotEtTaxeListComponent implements OnInit {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: `Statut modifié.` });
             this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de modification.' });
+          error: (err) => {
+            console.error('Erreur lors de la modification du statut:', err);
             this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
           }
         });

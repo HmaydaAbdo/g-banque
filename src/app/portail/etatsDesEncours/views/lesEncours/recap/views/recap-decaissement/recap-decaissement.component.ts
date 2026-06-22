@@ -146,11 +146,6 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
           error: (error) => {
             console.error('Error fetching disbursements:', error);
             this.loading = false;
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Échec du chargement des décaissements.'
-            });
           }
         })
     );

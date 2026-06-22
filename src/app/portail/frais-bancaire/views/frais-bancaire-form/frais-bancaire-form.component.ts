@@ -138,12 +138,8 @@ export class FraisBancaireFormComponent implements OnInit {
 
         this.loading = false;
       },
-      error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement du frais bancaire.'
-        });
+      error: (err) => {
+        console.error('Erreur lors du chargement du frais bancaire:', err);
         this.loading = false;
         this.location.back();
       },
@@ -201,12 +197,7 @@ export class FraisBancaireFormComponent implements OnInit {
           this.location.back();
         },
         error: (error) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: error.error?.message || 'Échec de la mise à jour.',
-            life: 3000
-          });
+          console.error('Erreur lors de la mise à jour du frais bancaire:', error);
           this.loading = false;
         },
       });
@@ -223,12 +214,7 @@ export class FraisBancaireFormComponent implements OnInit {
           this.location.back();
         },
         error: (error) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: error.error?.message || 'Échec de la création.',
-            life: 3000
-          });
+          console.error('Erreur lors de la création du frais bancaire:', error);
           this.loading = false;
         },
       });

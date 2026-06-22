@@ -128,12 +128,6 @@ export class ValidatedPrefiComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors du chargement des préfinancements:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des préfinancements. ' + (error.error?.message || ''),
-          life: 3000
-        });
         this.loading = false;
       }
     });

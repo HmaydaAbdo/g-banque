@@ -97,11 +97,6 @@ export class OperationErroneListComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les opérations erronées.'
-          });
           this.loading = false;
         }
       });
@@ -172,12 +167,8 @@ export class OperationErroneListComponent implements OnInit {
             });
             this.loadOperations(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de supprimer l\'opération erronée.'
-            });
+          error: (err) => {
+            console.error('Erreur lors de la suppression de l\'opération erronée:', err);
           }
         });
       }
@@ -203,12 +194,8 @@ export class OperationErroneListComponent implements OnInit {
             });
             this.loadOperations(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de modifier le statut.'
-            });
+          error: (err) => {
+            console.error('Erreur lors de la modification du statut:', err);
             this.loadOperations(this.table.createLazyLoadMetadata());
           }
         });

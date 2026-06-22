@@ -178,7 +178,6 @@ export class DecomptesListComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
       }
     });
   }
@@ -259,7 +258,6 @@ export class DecomptesListComponent implements OnInit {
         this.exporting = false;
       },
       error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Export PDF échoué.' });
         this.exporting = false;
       }
     });
@@ -271,7 +269,7 @@ export class DecomptesListComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
         this.table.reset();
       },
-      error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de mettre à jour.' })
+      error: () => {}
     });
   }
 

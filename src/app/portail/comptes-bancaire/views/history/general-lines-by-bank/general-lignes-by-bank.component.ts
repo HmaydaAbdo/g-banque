@@ -143,7 +143,6 @@ export class GeneralLignesByBankComponent implements OnInit {
         });
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des natures de ligne pour le filtre.', life: 3000 });
         console.error('Error loading natures for filter:', err);
       }
     });
@@ -159,7 +158,6 @@ export class GeneralLignesByBankComponent implements OnInit {
       error: (error) => {
         console.error('Error loading bank details:', error);
         this.loadingBankDetails = false;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des détails de la banque.', life: 3000 });
       }
     });
   }
@@ -202,7 +200,6 @@ export class GeneralLignesByBankComponent implements OnInit {
       error: (error) => {
         console.error('Error loading bank functional lignePrefi:', error);
         this.loading = false;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des lignes fonctionnelles de la banque.', life: 3000 });
       }
     });
   }

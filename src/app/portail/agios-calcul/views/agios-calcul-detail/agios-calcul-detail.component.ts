@@ -183,10 +183,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
             this.banqueNom = res.content[0].banqueNom;
           }
         },
-        error: () => this.messageService.add({
-          severity: 'error', summary: 'Erreur',
-          detail: 'Impossible de charger le détail journalier.'
-        })
+        error: () => {}
       });
   }
 
@@ -253,10 +250,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
             this.loadTrimestreInfo();
             this.loadAggregates();
           },
-          error: () => this.messageService.add({
-            severity: 'error', summary: 'Erreur',
-            detail: 'La clôture a échoué.'
-          })
+          error: () => {}
         });
       }
     });

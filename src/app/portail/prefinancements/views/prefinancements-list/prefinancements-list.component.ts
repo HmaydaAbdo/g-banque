@@ -185,7 +185,6 @@ export class PrefinancementsListComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les données.' });
           this.loading = false;
         }
       });
@@ -230,7 +229,7 @@ export class PrefinancementsListComponent implements OnInit {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
             this.table.reset();
           },
-          error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la mise à jour.' })
+          error: (err) => console.error('Erreur lors de la mise à jour du statut:', err)
         });
       }
     });

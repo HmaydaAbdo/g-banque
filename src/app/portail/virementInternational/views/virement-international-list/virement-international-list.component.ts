@@ -155,7 +155,6 @@ export class VirementInternationalListComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des virements internationaux.'});
       }
     });
   }
@@ -173,7 +172,7 @@ export class VirementInternationalListComponent implements OnInit, OnDestroy {
         this.banqueOptions = response.content.map(b => ({label: b.nom, value: b.id}));
         this.banqueOptions.unshift({label: 'Toutes les banques', value: null});
       },
-      error: () => this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.'})
+      error: () => {}
     });
   }
 
@@ -230,8 +229,7 @@ export class VirementInternationalListComponent implements OnInit, OnDestroy {
         if (this.dt) this.loadVirements(this.dt.createLazyLoadMetadata());
       },
       error: (err) => {
-        const detail = err.error?.detail || 'Échec de la mise à jour du virement.';
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail});
+        console.error('Erreur lors de la mise à jour du virement:', err);
       }
     });
   }
@@ -256,8 +254,7 @@ export class VirementInternationalListComponent implements OnInit, OnDestroy {
             this.loading = false;
           },
           error: (err) => {
-            const detail = err.error?.detail || 'Échec de la suppression du virement.';
-            this.messageService.add({severity: 'error', summary: 'Erreur', detail, life: 3000});
+            console.error('Erreur lors de la suppression du virement:', err);
             this.loading = false;
           }
         });

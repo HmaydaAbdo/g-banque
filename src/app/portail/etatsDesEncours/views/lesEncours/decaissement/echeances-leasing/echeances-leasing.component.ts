@@ -173,7 +173,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading organisme leasing options:', error);
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des organismes de leasing.' });
         }
       });
   }
@@ -204,7 +203,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.loading = false;
         console.error('Erreur lors du chargement des encours:', error);
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des encours.' });
       }
     });
   }
@@ -346,11 +344,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
             this.bankStateService.notifyValidation();
           },
           error: (error) => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: error.error.message
-            });
             this.isSubmitting = false;
           },
 

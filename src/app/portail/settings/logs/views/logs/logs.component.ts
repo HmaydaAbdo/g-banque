@@ -72,14 +72,12 @@ export class LogsComponent implements OnInit {
       next: (data) => this.entityNames = data,
       error: (err) => {
         console.error('Erreur lors du chargement des entités:', err);
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les entités.'});
       }
     });
     this.logsService.getUsernames().subscribe({
       next: (data) => this.usernames = data,
       error: (err) => {
         console.error('Erreur lors du chargement des utilisateurs:', err);
-        this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les utilisateurs.'});
       }
     });
   }
@@ -146,7 +144,6 @@ export class LogsComponent implements OnInit {
       error: (error) => {
         console.error('Erreur lors du chargement des logs:', error);
         this.loading = false;
-        this.messageService.add({severity:'error', summary: 'Erreur', detail: 'Échec du chargement des logs.'});
       }
     });
   }
@@ -216,7 +213,6 @@ export class LogsComponent implements OnInit {
         },
         error: (error) => {
           console.error(`Erreur lors de la suppression du log ID: ${log.id}:`, error);
-          this.messageService.add({severity:'error', summary: 'Erreur', detail: `Échec de la suppression du log ID: ${log.id}.`});
         }
       });
     }

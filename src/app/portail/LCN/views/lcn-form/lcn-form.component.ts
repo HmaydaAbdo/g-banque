@@ -154,7 +154,7 @@ export class LcnFormComponent implements OnInit {
 
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du lcn.' });
+        console.error('Erreur lors du chargement du LCN:', err);
         this.loading = false;
         this.location.back();
       }
@@ -208,7 +208,7 @@ export class LcnFormComponent implements OnInit {
         this.location.back();
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Échec de l\'opération.' });
+        console.error('Erreur lors de l\'enregistrement du LCN:', err);
         this.loading = false;
       }
     });

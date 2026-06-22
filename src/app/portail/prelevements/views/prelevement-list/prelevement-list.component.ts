@@ -112,11 +112,6 @@ export class PrelevementListComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les prélèvements.'
-          });
           this.loading = false;
         }
       });
@@ -171,13 +166,6 @@ export class PrelevementListComponent implements OnInit {
               detail: 'Prélèvement supprimé.'
             });
             this.loadPrelevements(this.table.createLazyLoadMetadata());
-          },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de supprimer le prélèvement.'
-            });
           }
         });
       }
@@ -207,11 +195,6 @@ export class PrelevementListComponent implements OnInit {
             this.loadPrelevements(this.table.createLazyLoadMetadata());
           },
           error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de modifier le statut du prélèvement.'
-            });
             this.loadPrelevements(this.table.createLazyLoadMetadata());
           }
         });

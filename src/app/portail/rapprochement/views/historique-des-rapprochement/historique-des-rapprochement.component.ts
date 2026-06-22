@@ -153,12 +153,6 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
         },
         error: (error) => {
           console.error('Erreur lors du chargement des rapprochements:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement de l\'historique des rapprochements. ' + (error.error?.message || ''),
-            life: 3000
-          });
           this.loading = false;
         }
       });
@@ -247,12 +241,6 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
       .pipe(
         catchError(error => {
           console.error('Erreur lors du téléchargement du rapport:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur de Téléchargement',
-            detail: 'Échec de la génération ou du téléchargement du rapport.',
-            life: 5000
-          });
           return throwError(() => new Error('Download failed'));
         }),
         finalize(() => {

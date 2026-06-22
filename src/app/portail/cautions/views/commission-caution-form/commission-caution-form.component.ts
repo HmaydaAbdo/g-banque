@@ -103,9 +103,6 @@ export class CommissionCautionFormComponent implements OnInit {
           this.banques = res.content.map((b: any) => ({ label: b.nom, value: b.id }));
           this.cdr.markForCheck();
         },
-        error: () => this.messageService.add({
-          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les banques.',
-        }),
       });
   }
 
@@ -140,9 +137,6 @@ export class CommissionCautionFormComponent implements OnInit {
           this.cdr.markForCheck();
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error', summary: 'Erreur', detail: 'Commission introuvable.',
-          });
           this.location.back();
         },
       });
@@ -190,10 +184,6 @@ export class CommissionCautionFormComponent implements OnInit {
             error: err => {
               this.loading = false;
               this.cdr.markForCheck();
-              this.messageService.add({
-                severity: 'error', summary: 'Erreur',
-                detail: err.error?.message ?? 'Impossible de mettre à jour la commission.',
-              });
             },
           });
       },

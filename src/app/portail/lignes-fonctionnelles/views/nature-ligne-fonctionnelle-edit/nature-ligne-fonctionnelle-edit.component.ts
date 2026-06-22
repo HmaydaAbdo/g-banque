@@ -99,8 +99,6 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors du chargement de la nature de ligne fonctionnelle:', error);
-        const errorMessage = error.error?.message || 'Impossible de charger la nature de ligne fonctionnelle.';
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
         this.loading = false;
         this.router.navigate(['/portail/natures-fonctionnelles']);
       }
@@ -146,8 +144,6 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
           },
           error: (error) => {
             console.error('Erreur lors de la mise à jour de la nature de ligne fonctionnelle:', error);
-            const errorMessage = error.error?.message || 'Échec de la mise à jour de la nature de ligne fonctionnelle.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
             this.loading = false;
           }
         });
@@ -161,8 +157,6 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
           },
           error: (error) => {
             console.error('Erreur lors de la création de la nature de ligne fonctionnelle:', error);
-            const errorMessage = error.error?.message || 'Échec de la création de la nature de ligne fonctionnelle.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
             this.loading = false;
           }
         });

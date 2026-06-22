@@ -148,7 +148,6 @@ export class SpecificLignesByBankComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         console.error('Error loading bank details:', error);
         this.loadingBankDetails = false;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des détails de la banque.', life: 3000 });
       }
     });
   }
@@ -162,7 +161,6 @@ export class SpecificLignesByBankComponent implements OnInit {
         });
       },
       error: (err: HttpErrorResponse) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des natures de ligne pour le filtre.', life: 3000 });
         console.error('Error loading natures for filter:', err);
       }
     });
@@ -188,7 +186,6 @@ export class SpecificLignesByBankComponent implements OnInit {
         this.marchesLoading = false;
       },
       error: (err: HttpErrorResponse) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des marchés pour le filtre.', life: 3000 });
         console.error('Error loading markets for filter:', err);
         this.marchesLoading = false;
       }
@@ -223,7 +220,6 @@ export class SpecificLignesByBankComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         console.error('Error loading specific functional lines:', error);
         this.loading = false;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des lignes fonctionnelles spécifiques.', life: 3000 });
       }
     });
   }

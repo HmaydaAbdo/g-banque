@@ -129,7 +129,6 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des natures de ligne.', life: 3000 });
           console.error('Erreur lors du chargement des natures:', err);
           this.loading = false;
         }
@@ -188,8 +187,6 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
           },
           error: (error) => {
             console.error('Erreur lors de la suppression de la nature de ligne fonctionnelle:', error);
-            const errorMessage = error.error?.message || 'Échec de la suppression de la nature de ligne fonctionnelle.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
           }
         });
       },

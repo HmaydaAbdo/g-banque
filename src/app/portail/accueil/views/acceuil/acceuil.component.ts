@@ -62,12 +62,6 @@ export class AcceuilComponent  implements OnInit{
       },
       error: (err) => {
         console.error('Error fetching bank accueil info:', err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des informations des banques: ' + (err.error?.message || err.message),
-          life: 5000
-        });
       }
     });
   }
@@ -95,12 +89,6 @@ export class AcceuilComponent  implements OnInit{
       error: (err) => {
         // Handle error
         console.error('Error during payment synchronization:', err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec de la synchronisation des paiements: ' + (err.error || err.message),
-          life: 5000
-        });
       }
     });
   }
@@ -114,15 +102,6 @@ export class AcceuilComponent  implements OnInit{
         // 1. Gérer l'erreur et afficher un message à l'utilisateur
         catchError(error => {
           console.error('Erreur lors du téléchargement du récapitulatif global:', error);
-          const errorMessage = error.status === 204 ?
-            "Aucune donnée trouvée pour générer le rapport global." :
-            error.error?.message || "Une erreur est survenue lors du téléchargement du rapport global.";
-
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur Téléchargement',
-            detail: errorMessage
-          });
           // Propage l'erreur pour que 'finalize' soit appelé
           return throwError(() => new Error('Global download failed'));
         }),
@@ -175,11 +154,7 @@ export class AcceuilComponent  implements OnInit{
     this.recapService.downloadRecapGeneralDetailleAllBanquesPdf()
       .pipe(
         catchError(error => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur Téléchargement',
-            detail: error.error?.message || 'Erreur lors du téléchargement du Récap Général Détaillé.'
-          });
+          console.error('Erreur lors du téléchargement du Récap Général Détaillé:', error);
           return throwError(() => new Error('Download failed'));
         }),
         finalize(() => { this.recapDetailleAllLoading = false; })
@@ -211,11 +186,7 @@ export class AcceuilComponent  implements OnInit{
     this.recapService.downloadRecapGeneralDetaillePdf(banqueId)
       .pipe(
         catchError(error => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur Téléchargement',
-            detail: error.error?.message || `Erreur lors du téléchargement du Récap Général Détaillé (banque ${banqueId}).`
-          });
+          console.error(`Erreur lors du téléchargement du Récap Général Détaillé (banque ${banqueId}):`, error);
           return throwError(() => new Error('Download failed'));
         }),
         finalize(() => { this.recapDetailleBanqueLoadingMap.set(banqueId, false); })

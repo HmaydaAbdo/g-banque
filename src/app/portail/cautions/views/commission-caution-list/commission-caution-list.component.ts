@@ -161,9 +161,6 @@ export class CommissionCautionListComponent implements OnInit {
           this.banques = res.content.map((b: any) => ({ label: b.nom, value: b.id }));
           this.cdr.markForCheck();
         },
-        error: () => this.messageService.add({
-          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les banques.',
-        }),
       });
   }
 
@@ -203,9 +200,6 @@ export class CommissionCautionListComponent implements OnInit {
         error: () => {
           this.loading = false;
           this.cdr.markForCheck();
-          this.messageService.add({
-            severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les commissions.',
-          });
         },
       });
   }
@@ -299,10 +293,6 @@ export class CommissionCautionListComponent implements OnInit {
         error: () => {
           this.selectAllLoading = false;
           this.cdr.markForCheck();
-          this.messageService.add({
-            severity: 'error', summary: 'Erreur',
-            detail: 'Impossible de sélectionner toutes les commissions.',
-          });
         },
       });
   }
@@ -347,11 +337,6 @@ export class CommissionCautionListComponent implements OnInit {
         error: err => {
           this.fusionLoading = false;
           this.cdr.markForCheck();
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur de fusion',
-            detail: extractErrorMessage(err, 'La fusion a échoué.'),
-          });
         },
       });
   }
@@ -385,10 +370,6 @@ export class CommissionCautionListComponent implements OnInit {
                 severity: 'success', summary: 'Supprimée', detail: 'Commission supprimée avec succès.',
               });
             },
-            error: err => this.messageService.add({
-              severity: 'error', summary: 'Erreur',
-              detail: extractErrorMessage(err, 'Impossible de supprimer la commission.'),
-            }),
           });
       },
     });

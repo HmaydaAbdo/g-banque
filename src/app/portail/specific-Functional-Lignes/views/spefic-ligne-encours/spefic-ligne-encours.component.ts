@@ -237,7 +237,6 @@
           },
           error: () => {
             this.loading = false;
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
           }
         });
     }

@@ -145,10 +145,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
           this.trimestres = res.content;
           this.totalRecords = res.page.totalElements;
         },
-        error: () => this.messageService.add({
-          severity: 'error', summary: 'Erreur',
-          detail: 'Impossible de charger les trimestres.'
-        })
+        error: () => {}
       });
   }
 
@@ -229,10 +226,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
               });
               this.onFilterChange(dt);
             },
-            error: () => this.messageService.add({
-              severity: 'error', summary: 'Erreur',
-              detail: 'Le recalcul a échoué.'
-            })
+            error: () => {}
           });
       }
     });
@@ -261,10 +255,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
               });
               this.onFilterChange(dt);
             },
-            error: () => this.messageService.add({
-              severity: 'error', summary: 'Erreur',
-              detail: 'Le recalcul a échoué.'
-            })
+            error: () => {}
           });
       }
     });
@@ -293,10 +284,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
             });
             this.onFilterChange(dt);
           },
-          error: () => this.messageService.add({
-            severity: 'error', summary: 'Erreur',
-            detail: 'La clôture a échoué.'
-          })
+          error: () => {}
         });
       }
     });

@@ -153,7 +153,6 @@ export class RecapStepComponent implements OnInit, OnDestroy {
       }),
       catchError(err => {
         console.error('RecapStepComponent: Error in combined data stream processing:', err);
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des données récapitulatives.' });
         return of(null);
       })
     );

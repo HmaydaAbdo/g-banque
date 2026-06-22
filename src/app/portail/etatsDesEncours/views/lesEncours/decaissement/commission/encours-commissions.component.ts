@@ -191,11 +191,6 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les commissions en cours.'
-          });
           this.loading = false;
           console.error(err);
         }
@@ -303,11 +298,6 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
 
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Une erreur est survenue.',
-          });
           this.isSubmitting = false;
         },
       });

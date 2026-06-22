@@ -152,7 +152,6 @@ export class OrganismeStepComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading organisme leasing options:', error);
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des organismes de leasing.' });
         }
       });
   }

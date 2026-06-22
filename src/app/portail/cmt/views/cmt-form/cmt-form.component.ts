@@ -110,7 +110,6 @@ export class CmtFormComponent implements OnInit {
           }));
         },
         error: (err) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.', life: 3000 });
           console.error('Error loading banks:', err);
         }
       });
@@ -134,8 +133,6 @@ export class CmtFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors du chargement du crédit:', error);
-        const errorMessage = error.error?.message || 'Impossible de charger les détails du crédit.';
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
         this.loading = false;
         this.router.navigate(['/portail/cmt/list']);
       }
@@ -184,8 +181,6 @@ export class CmtFormComponent implements OnInit {
           },
           error: (error) => {
             console.error('Erreur lors de la mise à jour du crédit:', error);
-            const errorMessage = error.error?.message || 'Échec de la mise à jour du crédit.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
             this.loading = false;
           }
         });
@@ -199,8 +194,6 @@ export class CmtFormComponent implements OnInit {
           },
           error: (error) => {
             console.error('Erreur lors de la création du crédit:', error);
-            const errorMessage = error.error?.message || 'Échec de la création du crédit.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
             this.loading = false;
           }
         });

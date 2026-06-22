@@ -93,7 +93,6 @@ export class RestitutionListComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
           this.loading = false;
         }
       });
@@ -137,7 +136,7 @@ export class RestitutionListComponent implements OnInit {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Supprimé.' });
             this.loadRestitutions(this.table.createLazyLoadMetadata());
           },
-          error: () => this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec.' })
+          error: (err) => console.error('Erreur lors de la suppression de la restitution:', err)
         });
       }
     });

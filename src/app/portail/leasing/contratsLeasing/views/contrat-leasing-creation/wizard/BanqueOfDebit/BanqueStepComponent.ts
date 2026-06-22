@@ -160,7 +160,6 @@ export class BanqueStepComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading bank options:', error);
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des banques.' });
         }
       });
   }

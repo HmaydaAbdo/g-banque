@@ -151,12 +151,6 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
       },
       error: (err) => {
         console.error('Error loading dropdowns:', err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des filtres',
-          life: 3000
-        });
       }
     });
   }
@@ -353,12 +347,6 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des lignes fonctionnelles.',
-            life: 3000
-          });
           console.error('Error fetching functional lignes:', err);
           this.loading = false;
         }

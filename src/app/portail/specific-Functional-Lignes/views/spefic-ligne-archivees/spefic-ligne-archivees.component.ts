@@ -226,7 +226,6 @@ export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.loading = false;
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
         }
       });
   }

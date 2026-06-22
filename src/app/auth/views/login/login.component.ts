@@ -10,7 +10,7 @@ import { InputGroupModule } from "primeng/inputgroup";
 import { InputGroupAddonModule } from "primeng/inputgroupaddon";
 import { MessageService } from 'primeng/api';
 import { Router, RouterLink } from "@angular/router";
-import { Role } from "../../enum/Role";
+import { HttpErrorResponse } from "@angular/common/http";
 
 
 @Component({
@@ -71,11 +71,11 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
         this.router.navigate(['/portail']);
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
+        // Toast déjà affiché par l'interceptor centralisé — ici on garde uniquement
+        // l'effet de bord local (reset loading) + le message inline sous le formulaire.
         this.isLoading = false;
-        this.errorMessage = 'Identifiants incorrects';
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Identifiants incorrects.' });
-        console.error('Login error:', error);
+        this.errorMessage = error.error?.message || 'Identifiants incorrects.';
       }
     });
   }

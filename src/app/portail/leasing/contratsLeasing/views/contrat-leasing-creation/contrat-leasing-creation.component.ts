@@ -303,7 +303,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Submission error:', error);
-            this.messageService.add({ severity: 'error', summary: 'Erreur de soumission', detail: 'Une erreur est survenue lors de la soumission du contrat: ' + (error.message || 'Erreur inconnue') });
           }
         });
       },

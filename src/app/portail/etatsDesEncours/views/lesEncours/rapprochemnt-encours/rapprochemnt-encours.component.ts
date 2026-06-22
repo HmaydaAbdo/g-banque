@@ -204,11 +204,6 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
         error: (error) => {
           this.loading = false;
           console.error('Erreur lors du chargement des dtos:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des dtos.'
-          });
         }
       });
   }
@@ -228,9 +223,6 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
         this.loadTransactions(this.dt.createLazyLoadMetadata());
         this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
         this.bankStateService.notifyValidation();
-      },
-      error: (error) => {
-        this.messageService.add({severity: 'error',summary: 'Erreur lors de la suppression de la transaction .',})
       }
     });
   }
@@ -272,13 +264,6 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
             detail: 'Transaction mise à jour avec succès.'
           });
           this.closeEditDialog();
-        },
-        error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: `Impossible de mettre à jour la transaction : ${err.error?.message || 'Erreur inconnue'}`
-          });
         }
       });
   }

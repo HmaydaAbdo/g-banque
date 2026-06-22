@@ -131,12 +131,6 @@ export class MarchesListComponent implements OnInit {
         },
         error: (error) => {
           console.error('Erreur lors du chargement des marchés:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des marchés. ' + (error.error?.message || ''),
-            life: 3000
-          });
           this.loading = false;
         }
       });
@@ -224,8 +218,6 @@ export class MarchesListComponent implements OnInit {
             },
             error: (error) => {
               console.error('Erreur lors de la suppression du marché:', error);
-              const errorMessage = error.error.detail || 'Échec de la suppression du marché.';
-              this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
               this.loading = false;
             }
           });

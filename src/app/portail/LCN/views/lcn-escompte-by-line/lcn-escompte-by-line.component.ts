@@ -144,12 +144,6 @@ export class LcnEscompteByLineComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors du chargement des LCN:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des LCN. ' + (error.error?.message || error.message || ''),
-          life: 3000
-        });
         this.loading = false;
       }
     });

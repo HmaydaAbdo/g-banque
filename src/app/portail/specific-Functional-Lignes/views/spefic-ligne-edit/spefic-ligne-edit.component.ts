@@ -224,7 +224,7 @@ export class SpeficLigneEditComponent implements OnInit {
         this.router.navigate(['/portail/lignes-fonctionnelles-specifiques-encours']);
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur technique' });
+        console.error('Erreur lors de l\'enregistrement de la ligne spécifique:', err);
       }
     });
   }

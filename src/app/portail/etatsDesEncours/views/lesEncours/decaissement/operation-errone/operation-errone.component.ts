@@ -174,11 +174,6 @@ export class EncoursOperationErroneComponent implements OnInit {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les opérations erronées en cours.'
-          });
           this.loading = false;
           console.error(err);
         }
@@ -287,11 +282,6 @@ export class EncoursOperationErroneComponent implements OnInit {
           this.bankStateService.notifyValidation();
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: err.error?.message || 'Une erreur est survenue lors de la validation.',
-          });
           this.isSubmitting = false;
         },
       });

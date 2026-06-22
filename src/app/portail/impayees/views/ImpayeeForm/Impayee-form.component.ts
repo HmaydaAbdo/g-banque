@@ -163,8 +163,8 @@ export class ImpayeeFormComponent implements OnInit {
 
         this.loading = false;
       },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement de l\'impayée.' });
+      error: (err) => {
+        console.error('Erreur lors du chargement de l\'impayée:', err);
         this.loading = false;
         this.location.back();
       },
@@ -212,7 +212,7 @@ export class ImpayeeFormComponent implements OnInit {
           this.location.back();
         },
         error: (error) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la mise à jour.', life: 3000 });
+          console.error('Erreur lors de la mise à jour de l\'impayée:', error);
           this.loading = false;
         },
       });
@@ -224,7 +224,7 @@ export class ImpayeeFormComponent implements OnInit {
           this.location.back();
         },
         error: (error) => {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: error.error?.message || 'Échec de la création.', life: 3000 });
+          console.error('Erreur lors de la création de l\'impayée:', error);
           this.loading = false;
         },
       });

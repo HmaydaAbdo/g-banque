@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from "../../../auth/guards/admin.guard";
+import { systemAdminGuard } from "../../../auth/guards/system-admin.guard";
 
 export const PORTAIL_ROUTES: Routes = [
 
@@ -147,13 +147,23 @@ export const PORTAIL_ROUTES: Routes = [
   },
 
 
-  { path: "historique-des-transactions", loadComponent: () => import('../../transactions/views/transaction-history/transaction-history.component').then(m => m.TransactionHistoryComponent) },
-  { path: 'logs', loadComponent: () => import('../../settings/logs/views/logs/logs.component').then(m => m.LogsComponent), canActivate: [adminGuard] },
+  { path: "historique-des-transactions", loadComponent: () => import('../../transactions/views/transaction-history/transaction-history.component').then(m => m.TransactionHistoryComponent), canActivate: [systemAdminGuard] },
+  { path: 'logs', loadComponent: () => import('../../settings/logs/views/logs/logs.component').then(m => m.LogsComponent), canActivate: [systemAdminGuard] },
 
   // ── Module Caution ───────────────────────────────────────────────────────
   {
     path: 'cautions',
     loadChildren: () =>
       import('../../cautions/route/caution-routing').then(m => m.CAUTION_ROUTES),
+  },
+
+  // ── Accès refusé ─────────────────────────────────────────────────────────
+  { path: 'unauthorized', loadComponent: () => import('../views/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent) },
+
+  // ── Module Administration (départements, utilisateurs) — SYSTEM_ADMIN ────
+  {
+    path: 'admin',
+    canActivate: [systemAdminGuard],
+    loadChildren: () => import('../../admin/admin.routes').then(m => m.ADMIN_ROUTES)
   },
 ];

@@ -195,7 +195,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error fetching tableau amortissement:', error);
         this.errorMessage = 'Failed to load amortization table. ' + (error.message || 'Please try again.');
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: this.errorMessage });
       }
     });
   }
@@ -250,8 +249,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
         error: (error) => {
           console.error('Error toggling  echeance status  :', error);
           this.errorMessage = 'Échec de la mise à jour du statut. ' + (error.message || 'Veuillez réessayer.');
-          this.messageService.add({severity: 'error', summary: 'Erreur', detail: this.errorMessage});
-
         }
       });
 

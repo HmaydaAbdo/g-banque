@@ -159,11 +159,6 @@ export class DecaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les impayées en cours.'
-          });
           this.loading = false;
           console.error(err);
         }
@@ -272,11 +267,6 @@ export class DecaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
           this.bankStateService.notifyValidation();
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Une erreur est survenue lors de la validation de l\'impayée.',
-          });
           this.isSubmitting = false;
         },
       });

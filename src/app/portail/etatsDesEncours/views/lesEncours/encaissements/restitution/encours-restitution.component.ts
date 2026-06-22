@@ -157,11 +157,6 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les restitutions en cours.'
-          });
           this.loading = false;
           console.error(err);
         }
@@ -266,11 +261,6 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
           this.bankStateService.notifyValidation();
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Une erreur est survenue lors de la validation de la restitution.',
-          });
           this.isSubmitting = false;
         },
       });

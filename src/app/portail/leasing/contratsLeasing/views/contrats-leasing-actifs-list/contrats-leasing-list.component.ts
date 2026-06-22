@@ -156,11 +156,6 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading organisme leasing options:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des organismes de leasing.'
-          });
         }
       });
 
@@ -174,11 +169,6 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error loading bank options:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des banques.'
-          });
         }
       });
   }
@@ -219,11 +209,6 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.loading = false;
         console.error('Erreur lors du chargement des contrats:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des contrats.'
-        });
       }
     });
   }
@@ -281,11 +266,6 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error fetching contract details:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des détails du contrat.'
-        });
         this.loading = false;
       }
     });
@@ -331,11 +311,6 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error fetching contract for edit:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement du contrat pour modification.'
-        });
         this.loading = false;
       }
     });
@@ -366,12 +341,6 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Erreur lors de la suppression:', error);
-        const errorMessage = error.error?.message || 'Échec de la suppression du contrat.';
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: errorMessage
-        });
       }
     });
   }
@@ -406,11 +375,6 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Erreur lors du chargement du PDF:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Impossible de charger le PDF.'
-        });
         this.loadingPdf = false;
       }
     });
@@ -444,11 +408,6 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Erreur lors de l\'upload:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec de l\'upload du PDF.'
-          });
           this.loadingPdf = false;
         }
       });
@@ -492,11 +451,6 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Erreur lors de la suppression:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec de la suppression du PDF.'
-          });
         }
       });
     }

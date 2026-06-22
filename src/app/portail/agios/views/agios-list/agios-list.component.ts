@@ -115,11 +115,6 @@ export class AgiosListComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les agios.'
-          });
           this.loading = false;
         }
       });
@@ -175,12 +170,8 @@ export class AgiosListComponent implements OnInit {
             });
             this.loadAgios(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de supprimer l\'agios.'
-            });
+          error: (err) => {
+            console.error('Erreur lors de la suppression de l\'agios:', err);
           }
         });
       }
@@ -209,12 +200,8 @@ export class AgiosListComponent implements OnInit {
             });
             this.loadAgios(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de modifier le statut de l\'agios.'
-            });
+          error: (err) => {
+            console.error('Erreur lors de la modification du statut:', err);
             this.loadAgios(this.table.createLazyLoadMetadata());
           }
         });

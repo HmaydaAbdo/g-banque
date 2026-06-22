@@ -126,12 +126,6 @@ export class ValidatedFactoringComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors du chargement des factoring:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des factoring. ' + (error.error?.message || ''),
-          life: 3000
-        });
         this.loading = false;
       }
     });

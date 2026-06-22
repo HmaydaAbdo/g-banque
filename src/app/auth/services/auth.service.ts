@@ -2,16 +2,18 @@
 
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap, of } from 'rxjs'; // Import 'of'
-import { delay, finalize } from 'rxjs/operators'; // Import operators
+import { Observable, BehaviorSubject, tap, of } from 'rxjs';
+import { delay, finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { LoginResponse } from "../dto/LoginResponse";
 import { LoginCredentials } from "../dto/LoginCredentials";
 import { jwtDecode } from 'jwt-decode';
 import { DecodedToken } from "../types/DecodedToken";
+import { DepartmentRoleType } from "../types/DepartmentRoleType";
 import { Role } from "../enum/Role";
 
+const SYSTEM_ADMIN_AUTHORITY = 'SYSTEM_ADMIN';
 
 @Injectable({
   providedIn: 'root'
@@ -73,17 +75,14 @@ export class AuthService {
    * Logs out the user by removing the token and navigating to the login page.
    * Returns an Observable<boolean> to indicate success/failure of the logout process.
    */
-  logout(): Observable<boolean> { // Changed return type to Observable<boolean>
-    // Simulate an asynchronous operation, even for local storage clearing
-    // This allows the NavbarComponent to show loading state and messages
-    return of(true).pipe( // 'of(true)' creates an observable that immediately emits 'true'
-      delay(500), // Simulate a 500ms delay for demonstration
+  logout(): Observable<boolean> {
+    return of(true).pipe(
+      delay(500),
       tap(() => {
         localStorage.removeItem("token");
         this.isAuthenticatedSubject.next(false);
         this.router.navigate(['/login']);
       }),
-      // Optional: add any finalization logic if needed
       finalize(() => console.log('Logout process finished'))
     );
   }
@@ -106,25 +105,50 @@ export class AuthService {
     return decodedToken ? decodedToken.sub : null;
   }
 
-  getRoles(): string[] {
+  // ========================================
+  // RBAC — modèle authorities (SYSTEM_ADMIN / DEPT_<nom>:<MEMBER|DIRECTOR>)
+  // ========================================
+
+  getAuthorities(): string[] {
     const decodedToken = this.decodeToken();
-    if (decodedToken && decodedToken.roles) {
-      return decodedToken.roles.split(' ').map(role => role.trim().toUpperCase()); // Ensure consistent casing and trim spaces
-    }
-    return [];
+    return decodedToken?.authorities ?? [];
+  }
+
+  /** Administrateur système — accès transversal, n'appartient à aucun département. */
+  isSystemAdmin(): boolean {
+    return this.getAuthorities().includes(SYSTEM_ADMIN_AUTHORITY);
+  }
+
+  /** Vrai si l'utilisateur appartient au département donné, quel que soit son rôle (MEMBER ou DIRECTOR). */
+  belongsToDepartment(department: string): boolean {
+    const prefix = `DEPT_${department}:`;
+    return this.getAuthorities().some(authority => authority.startsWith(prefix));
+  }
+
+  /** Vrai si l'utilisateur a précisément ce rôle dans ce département. */
+  hasDepartmentRole(department: string, role: DepartmentRoleType): boolean {
+    return this.getAuthorities().includes(`DEPT_${department}:${role}`);
   }
 
   /**
-   * Checks if the user has a specific role.
-   * @param role The Role enum value to check for (e.g., Role.ADMIN).
-   * @returns True if the user has the role, false otherwise.
+   * Administrateur système — alias conservé pour compatibilité avec le code existant
+   * (~30 sites d'appel hors périmètre RBAC, ex. modules Chèques/Virements/LCN/Leasing/CMT).
+   * Nouveau code : utiliser {@link isSystemAdmin} directement.
    */
-  hasRole(role: Role): boolean {
-    const roles = this.getRoles();
-    return roles.includes(role);
+  isAdmin(): boolean {
+    return this.isSystemAdmin();
   }
 
-  isAdmin(): boolean {
-    return this.hasRole(Role.ADMIN);
+  /**
+   * @deprecated Conservé uniquement pour compatibilité avec le code existant qui importe
+   * encore l'enum {@link Role} (ADMIN/SUPER_ADMIN → isSystemAdmin(), USER → authentifié).
+   * Nouveau code : utiliser {@link isSystemAdmin}, {@link belongsToDepartment} ou
+   * {@link hasDepartmentRole} directement — ne plus utiliser {@link Role}.
+   */
+  hasRole(role: Role): boolean {
+    if (role === Role.ADMIN || role === Role.SUPER_ADMIN) {
+      return this.isSystemAdmin();
+    }
+    return this.isAuthenticatedSubject.value;
   }
 }

@@ -110,7 +110,6 @@ export class OrganismeLeasingFormComponent implements OnInit {
         this.populateForm(data);
       },
       error: (err: Error) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des données de l\'organisme de leasing.' });
         console.error('Error loading organisme leasing:', err);
         this.router.navigate(['/organismes-leasing']);
       }
@@ -180,11 +179,6 @@ export class OrganismeLeasingFormComponent implements OnInit {
   }
 
   private handleServiceError(err: Error): void {
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: err.message || 'Une erreur est survenue lors de l\'opération.'
-    });
     console.error('Frontend caught service error:', err);
   }
 

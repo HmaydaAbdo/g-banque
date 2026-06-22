@@ -158,12 +158,6 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error loading dropdowns:', err);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Échec du chargement des filtres',
-          life: 3000
-        });
       }
     });
   }
@@ -370,12 +364,6 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des lignes',
-            life: 3000
-          });
           console.error('Error fetching lignes:', err);
           this.loading = false;
         }
@@ -438,12 +426,6 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               console.error('Error deactivating ligne:', error);
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Erreur',
-                detail: error.error?.message || 'Échec de la désactivation',
-                life: 3000
-              });
               this.loading = false;
             }
           });
@@ -472,12 +454,6 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               console.error('Error deleting ligne:', error);
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Erreur',
-                detail: error.error?.message || 'Échec de la suppression',
-                life: 3000
-              });
               this.loading = false;
             }
           });

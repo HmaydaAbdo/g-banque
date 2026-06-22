@@ -147,7 +147,7 @@ export class MiseADispositionFormComponent implements OnInit {
         });
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement de la mise à disposition ' });
+        console.error('Erreur lors du chargement de la mise à disposition:', err);
         this.loading = false;
         // Redirection en cas d'erreur de chargement
         this.router.navigate(['/portail/Mise-a-disposition/encaissement']);
@@ -203,7 +203,7 @@ export class MiseADispositionFormComponent implements OnInit {
         this.router.navigate(['/portail/Mise-a-disposition/encaissement'])
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Échec de l\'opération.' });
+        console.error('Erreur lors de l\'enregistrement de la mise à disposition:', err);
         this.loading = false;
       }
     });

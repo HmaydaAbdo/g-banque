@@ -121,11 +121,6 @@ export class ImpayeeListComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les impayées.'
-          });
           this.loading = false;
         }
       });
@@ -191,8 +186,8 @@ export class ImpayeeListComponent implements OnInit {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Impayée supprimée.' });
             this.loadImpayees(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer l\'impayée.' });
+          error: (err) => {
+            console.error('Erreur lors de la suppression de l\'impayée:', err);
           }
         });
       }
@@ -214,8 +209,8 @@ export class ImpayeeListComponent implements OnInit {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: `Statut modifié.` });
             this.loadImpayees(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de modification.' });
+          error: (err) => {
+            console.error('Erreur lors de la modification du statut:', err);
             this.loadImpayees(this.table.createLazyLoadMetadata());
           }
         });

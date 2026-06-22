@@ -164,8 +164,8 @@ export class FactoringFormComponent implements OnInit {
         });
         this.loading = false;
       },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Chargement échoué.' });
+      error: (err) => {
+        console.error('Erreur lors du chargement du factoring:', err);
         this.location.back();
       }
     });
@@ -210,7 +210,7 @@ export class FactoringFormComponent implements OnInit {
         this.location.back();
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur technique' });
+        console.error('Erreur lors de l\'enregistrement du factoring:', err);
         this.loading = false;
       }
     });

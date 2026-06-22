@@ -147,7 +147,7 @@ export class ChequesFormComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du chèque.' });
+        console.error('Erreur lors du chargement du chèque:', err);
         this.loading = false;
         this.location.back();
       }
@@ -201,7 +201,7 @@ export class ChequesFormComponent implements OnInit {
         this.location.back();
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Échec de l\'opération.' });
+        console.error('Erreur lors de l\'enregistrement du chèque:', err);
         this.loading = false;
       }
     });

@@ -183,11 +183,6 @@ export class EncoursAgiosComponent implements OnInit,OnDestroy {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les agios en cours.'
-          });
           this.loading = false;
           console.error(err);
         }
@@ -299,11 +294,6 @@ export class EncoursAgiosComponent implements OnInit,OnDestroy {
 
       },
       error: () => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Une erreur est survenue.',
-        });
         this.isSubmitting = false;
       },
     });

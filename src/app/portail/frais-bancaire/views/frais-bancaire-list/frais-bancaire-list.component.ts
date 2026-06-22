@@ -112,11 +112,6 @@ export class FraisBancaireListComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les frais bancaires.'
-          });
           this.loading = false;
         }
       });
@@ -172,12 +167,8 @@ export class FraisBancaireListComponent implements OnInit {
             });
             this.loadFraisBancaires(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de supprimer le frais bancaire.'
-            });
+          error: (err) => {
+            console.error('Erreur lors de la suppression du frais bancaire:', err);
           }
         });
       }
@@ -206,12 +197,8 @@ export class FraisBancaireListComponent implements OnInit {
             });
             this.loadFraisBancaires(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: 'Impossible de modifier le statut du frais bancaire.'
-            });
+          error: (err) => {
+            console.error('Erreur lors de la modification du statut:', err);
             this.loadFraisBancaires(this.table.createLazyLoadMetadata());
           }
         });

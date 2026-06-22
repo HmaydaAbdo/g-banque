@@ -202,8 +202,8 @@ export class PrefinancementFormComponent implements OnInit {
 
         this.loading = false;
       },
-      error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement.' });
+      error: (err) => {
+        console.error('Erreur lors du chargement du préfinancement:', err);
         this.location.back();
       }
     });
@@ -250,7 +250,7 @@ export class PrefinancementFormComponent implements OnInit {
         this.location.back();
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur technique' });
+        console.error('Erreur lors de l\'enregistrement du préfinancement:', err);
         this.loading = false;
       }
     });

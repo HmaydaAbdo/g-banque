@@ -120,11 +120,6 @@ export class CommissionListComponent implements OnInit {
           this.loading = false;
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les commissions.'
-          });
           this.loading = false;
         }
       });
@@ -179,8 +174,8 @@ export class CommissionListComponent implements OnInit {
             this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Commission supprimée.'});
             this.loadCommissions(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Impossible de supprimer la commission.'});
+          error: (err) => {
+            console.error('Erreur lors de la suppression de la commission:', err);
           }
         });
       }
@@ -202,8 +197,8 @@ export class CommissionListComponent implements OnInit {
             this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Statut modifié.'});
             this.loadCommissions(this.table.createLazyLoadMetadata());
           },
-          error: () => {
-            this.messageService.add({severity: 'error', summary: 'Erreur', detail: 'Impossible de modifier le statut de la commission.'});
+          error: (err) => {
+            console.error('Erreur lors de la modification du statut de la commission:', err);
             this.loadCommissions(this.table.createLazyLoadMetadata());
           }
         });

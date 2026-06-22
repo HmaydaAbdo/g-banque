@@ -119,8 +119,6 @@ export class BanqueEditComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors du chargement de la banque:', error);
-        const errorMessage = error.error?.message || 'Impossible de charger la banque.';
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
         this.loading = false;
         this.router.navigate(['/portail/comptes-bancaires']);
       }
@@ -183,8 +181,6 @@ export class BanqueEditComponent implements OnInit {
           },
           error: (error) => {
             console.error('Erreur lors de la mise à jour de la banque:', error);
-            const errorMessage = error.error?.message || 'Échec de la mise à jour de la banque.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
             this.loading = false;
           }
         });
@@ -203,8 +199,6 @@ export class BanqueEditComponent implements OnInit {
           },
           error: (error) => {
             console.error('Erreur lors de la création de la banque:', error);
-            const errorMessage = error.error?.message || 'Échec de la création de la banque.';
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage, life: 3000 });
             this.loading = false;
           }
         });

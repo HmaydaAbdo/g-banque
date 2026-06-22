@@ -123,7 +123,6 @@ export class CmtListEnAttenteDeMLComponent  implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error loading bank options:', error);
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load banks.' });
       }
     });
   }
@@ -158,7 +157,6 @@ export class CmtListEnAttenteDeMLComponent  implements OnInit, OnDestroy {
       error: (error) => {
         this.loading = false;
         console.error('Erreur lors du chargement des crédits:', error);
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des crédits.' });
       }
     });
   }
@@ -228,11 +226,6 @@ export class CmtListEnAttenteDeMLComponent  implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Erreur lors de la suppression:', error);
-        let errorMessage = 'Échec de la suppression du crédit.';
-        if (error.error && error.error.message) {
-          errorMessage = error.error.message;
-        }
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage });
       }
     });
   }
@@ -272,11 +265,6 @@ export class CmtListEnAttenteDeMLComponent  implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Erreur lors de l\'archivage:', error);
-        let errorMessage = 'Échec de l\'archivage du crédit.';
-        if (error.error && error.error.message) {
-          errorMessage = error.error.message;
-        }
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage });
       }
     });
   }

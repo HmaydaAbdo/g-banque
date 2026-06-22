@@ -5,7 +5,6 @@ import { RippleModule } from 'primeng/ripple';
 import { StyleClassModule } from 'primeng/styleclass';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Role } from "../../../../auth/enum/Role";
 import { AuthService } from "../../../../auth/services/auth.service";
 
 interface SidebarItem {
@@ -19,7 +18,8 @@ interface SidebarItem {
   expanded?: boolean;
   badge?: string;
   badgeClass?: string;
-  roles?: Role[];
+  /** Authority exacte requise pour voir l'item (ex. 'SYSTEM_ADMIN', 'DEPT_TRESORERIE:DIRECTOR'). SYSTEM_ADMIN voit toujours tout. */
+  requiredAuthority?: string;
 }
 
 @Component({
@@ -165,14 +165,23 @@ export class SidebarComponent implements OnInit {
     { label: "Historique des Rapprochements", routerLink: "/portail/rapprochement/historique", icon: "pi pi-history" },
     {
       label: "Historique des transactions",
-      roles: [Role.ADMIN, Role.SUPER_ADMIN],
+      requiredAuthority: 'SYSTEM_ADMIN',
       routerLink: "/portail/historique-des-transactions",
       icon: "pi pi-history"
     },
     {
+      label: 'Administration',
+      icon: 'pi pi-shield',
+      requiredAuthority: 'SYSTEM_ADMIN',
+      items: [
+        { label: 'Départements', icon: 'pi pi-sitemap', routerLink: '/portail/admin/departements' },
+        { label: 'Utilisateurs', icon: 'pi pi-users', routerLink: '/portail/admin/utilisateurs' },
+      ]
+    },
+    {
       label: 'Paramètres',
       icon: 'pi pi-cog',
-      roles: [Role.ADMIN, Role.SUPER_ADMIN],
+      requiredAuthority: 'SYSTEM_ADMIN',
       items: [
         { label: 'Les Journaux du portail', icon: 'pi pi-history', routerLink: '/portail/logs' },
       ]
@@ -237,13 +246,16 @@ export class SidebarComponent implements OnInit {
     this.sidebarVisibleChange.emit(this.sidebarVisible);
   }
 
-  private hasRequiredRole(item: SidebarItem): boolean {
-    // If no roles are specified for the item, it's visible to everyone
-    if (!item.roles || item.roles.length === 0) {
+  private hasRequiredAuthority(item: SidebarItem): boolean {
+    // Si aucune authority n'est spécifiée, l'item est visible par tous les authentifiés.
+    if (!item.requiredAuthority) {
       return true;
     }
-    // Check if the user has at least one of the required roles
-    return item.roles.some(role => this.authService.hasRole(role));
+    // SYSTEM_ADMIN a un accès transversal — voit toujours tout.
+    if (this.authService.isSystemAdmin()) {
+      return true;
+    }
+    return this.authService.getAuthorities().includes(item.requiredAuthority);
   }
 
   private filterSidebarItems(): void {
@@ -254,8 +266,8 @@ export class SidebarComponent implements OnInit {
           return true;
         }
 
-        // Check if the current item itself should be visible based on roles
-        if (!this.hasRequiredRole(item)) {
+        // Check if the current item itself should be visible based on authority
+        if (!this.hasRequiredAuthority(item)) {
           return false;
         }
 
@@ -268,7 +280,7 @@ export class SidebarComponent implements OnInit {
           return item.items.length > 0;
         }
 
-        // If no children, and hasRequiredRole passed, keep the item
+        // If no children, and hasRequiredAuthority passed, keep the item
         return true;
       });
     };

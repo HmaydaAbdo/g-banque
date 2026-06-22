@@ -182,11 +182,6 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les Frais Bancaire en cours.'
-          });
           this.loading = false;
           console.error(err);
         }
@@ -295,11 +290,6 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
 
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Une erreur est survenue.',
-          });
           this.isSubmitting = false;
         },
       });

@@ -143,9 +143,6 @@ export class CautionListComponent implements OnInit {
           this.banques = res.content;
           this.cdr.markForCheck();
         },
-        error: () => this.messageService.add({
-          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les banques.',
-        }),
       });
 
     this.natureService.getAllNatureLigneFonctionnellesList()
@@ -155,9 +152,6 @@ export class CautionListComponent implements OnInit {
           this.natures = res;
           this.cdr.markForCheck();
         },
-        error: () => this.messageService.add({
-          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les natures.',
-        }),
       });
   }
 
@@ -184,9 +178,6 @@ export class CautionListComponent implements OnInit {
     const criteria = filter ? { numero: filter } : {};
     return this.marcheService.getAllMarches(criteria, page, MARCHE_PAGE_SIZE, 'numero,asc').pipe(
       catchError(() => {
-        this.messageService.add({
-          severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les marchés.',
-        });
         return of({ content: [], page: { totalElements: 0 } });
       }),
     );
@@ -268,9 +259,6 @@ export class CautionListComponent implements OnInit {
         },
         error: () => {
           this.cautionService.setLoading(false);
-          this.messageService.add({
-            severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les cautions.',
-          });
         },
       });
   }
@@ -328,11 +316,6 @@ export class CautionListComponent implements OnInit {
         error: err => {
           this.cloturerLoading = false;
           this.cdr.markForCheck();
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur de clôture',
-            detail: err.error?.message ?? 'Impossible de clôturer la caution.',
-          });
         },
       });
   }
@@ -357,11 +340,6 @@ export class CautionListComponent implements OnInit {
               });
               this.applyFilters();
             },
-            error: err => this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: err.error?.message ?? 'Impossible de supprimer la caution.',
-            }),
           });
       },
     });

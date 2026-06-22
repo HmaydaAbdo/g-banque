@@ -163,11 +163,6 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Impossible de charger les prélèvements en cours.'
-          });
           this.loading = false;
           console.error(err);
         }
@@ -278,11 +273,6 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
 
         },
         error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Une erreur est survenue lors de la validation du prélèvement.',
-          });
           this.isSubmitting = false;
         },
       });

@@ -271,11 +271,6 @@ export class DecomptesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Erreur lors du validation du décompte:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: error.error?.message || 'Une erreur est survenue lors du validation.',
-          });
           this.isSubmitting = false;
         },
       });
@@ -313,11 +308,6 @@ export class DecomptesComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.loading = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Échec du chargement des encaissements des décomptes.',
-          });
         },
       });
   }

@@ -172,7 +172,6 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.loading = false;
         console.error('Erreur lors du chargement des encours CMT:', error);
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement des encours CMT.' });
       }
     });
   }
@@ -318,11 +317,6 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Erreur lors du validation CMT:', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erreur',
-              detail: error.error.message || 'Une erreur est survenue lors du validation.'
-            });
             this.isSubmitting = false;
           }
         });

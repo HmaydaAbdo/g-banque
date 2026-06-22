@@ -151,7 +151,7 @@ export class VirementFormComponent implements OnInit {
 
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec du chargement du virement.' });
+        console.error('Erreur lors du chargement du virement:', err);
         this.loading = false;
         this.location.back();
       }
@@ -204,7 +204,7 @@ export class VirementFormComponent implements OnInit {
         this.location.back();
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Échec de l\'opération.' });
+        console.error('Erreur lors de l\'enregistrement du virement:', err);
         this.loading = false;
       }
     });
