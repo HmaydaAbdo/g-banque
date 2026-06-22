@@ -1,6 +1,7 @@
 package staport.finance.gBanque.auth.services;
 
 import org.springframework.stereotype.Service;
+import staport.finance.gBanque.exception.customExceptions.TooManyAttemptsException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -28,7 +29,7 @@ public class LoginAttemptService {
     private final ConcurrentHashMap<String, Attempts> attemptsByUsername = new ConcurrentHashMap<>();
 
     /**
-     * @throws TooManyAttemptsException si le compte est actuellement verrouillé
+     * @throws  TooManyAttemptsException si le compte est actuellement verrouillé
      */
     public void checkNotLocked(String username) {
         Attempts attempts = attemptsByUsername.get(normalize(username));
