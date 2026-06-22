@@ -52,3 +52,12 @@ Angular 17.3, composants standalone, PrimeNG 17.
 - `Role` enum supprimé — n'existe plus côté backend.
 - Guards : `systemAdminGuard`, `departmentGuard(dept, minRole?)`.
 - Sidebar : `SidebarItem.requiredAuthority?: string`.
+
+## Sécurité — XSS
+
+- Ne jamais interpoler un champ texte libre (saisi utilisateur) dans un `message` HTML de `ConfirmDialog`/`Toast` — PrimeNG le rend comme du HTML, pas du texte échappé. Un literal template `` `<strong>${champ}</strong>` `` avec un champ libre est une faille XSS stockée potentielle.
+- Si une mise en forme (gras, icône...) est nécessaire dans une confirmation, structurer via un template Angular plutôt que construire la chaîne HTML à la main avec une valeur non garantie sûre.
+
+## Lazy loading
+
+- Toute nouvelle route utilise `loadComponent`/`loadChildren` — jamais d'import eager d'un composant de page dans `app.routes.ts`/`*.routes.ts`.
