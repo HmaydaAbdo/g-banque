@@ -3,6 +3,7 @@ package staport.finance.gBanque.auth.services;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
@@ -20,17 +21,34 @@ public class AuthenticationService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
+    private final LoginAttemptService loginAttemptService;
 
 
-    public AuthenticationService(AuthenticationManager authenticationManager, JwtEncoder jwtEncoder ) {
+    public AuthenticationService(AuthenticationManager authenticationManager, JwtEncoder jwtEncoder,
+                                  LoginAttemptService loginAttemptService) {
         this.authenticationManager = authenticationManager;
         this.jwtEncoder = jwtEncoder;
+        this.loginAttemptService = loginAttemptService;
 
     }
 
+    /**
+     * Protection brute-force : un compte verrouillé ({@link LoginAttemptService}) lève
+     * avant même de solliciter l'{@code AuthenticationManager} ; chaque échec incrémente
+     * le compteur, chaque succès le réinitialise.
+     */
     public LoginResponse login (String username, String password){
 
-        Authentication authentication= this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username,password));
+        loginAttemptService.checkNotLocked(username);
+
+        Authentication authentication;
+        try {
+            authentication = this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        } catch (AuthenticationException ex) {
+            loginAttemptService.recordFailure(username);
+            throw ex;
+        }
+        loginAttemptService.recordSuccess(username);
 
         List<String> authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
