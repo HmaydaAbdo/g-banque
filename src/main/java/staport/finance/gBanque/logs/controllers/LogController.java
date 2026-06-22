@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.logs.dtos.LogEntryDetailResponse;
 import staport.finance.gBanque.logs.dtos.LogResponse;
 import staport.finance.gBanque.logs.dtos.LogSearchCriteria;
 import staport.finance.gBanque.logs.services.LogService;
@@ -59,6 +60,16 @@ public class LogController {
     public ResponseEntity<Void> deleteLog(@PathVariable Long id) {
         logService.deleteLogById(id);
         return ResponseEntity.noContent().build(); // Statut 204 No Content pour une suppression réussie
+    }
+
+    /**
+     * Détail champ-par-champ d'une ligne de log — stocké à l'écriture (anciens
+     * aspects par entité) ou reconstruit à la demande via Envers (nouvel aspect
+     * générique). Exemple : GET /logs/42/details
+     */
+    @GetMapping("/{id}/details")
+    public ResponseEntity<List<LogEntryDetailResponse>> getLogDetails(@PathVariable Long id) {
+        return ResponseEntity.ok(logService.getAuditDetail(id));
     }
 
     /**

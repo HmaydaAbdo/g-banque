@@ -10,6 +10,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.audit.AuditedEntityRegistry;
+import staport.finance.gBanque.audit.EnversDiffService;
+import staport.finance.gBanque.logs.dtos.LogEntryDetailResponse;
 import staport.finance.gBanque.logs.dtos.LogResponse;
 import staport.finance.gBanque.logs.dtos.LogSearchCriteria;
 import staport.finance.gBanque.logs.entities.Log;
@@ -26,11 +29,16 @@ public class LogServiceImpl implements LogService {
 
     private final LogRepository logRepository;
     private final LogMapper logMapper;
+    private final AuditedEntityRegistry auditedEntityRegistry;
+    private final EnversDiffService enversDiffService;
 
     @Autowired
-    public LogServiceImpl(LogRepository logRepository, LogMapper logMapper) {
+    public LogServiceImpl(LogRepository logRepository, LogMapper logMapper,
+                           AuditedEntityRegistry auditedEntityRegistry, EnversDiffService enversDiffService) {
         this.logRepository = logRepository;
         this.logMapper = logMapper;
+        this.auditedEntityRegistry = auditedEntityRegistry;
+        this.enversDiffService = enversDiffService;
     }
 
     @Override
@@ -70,5 +78,22 @@ public class LogServiceImpl implements LogService {
         return logRepository.findDistinctEntityNames();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<LogEntryDetailResponse> getAuditDetail(Long logId) {
+        Log log = logRepository.findById(logId)
+                .orElseThrow(() -> new EntityNotFoundException("Log with ID " + logId + " not found."));
 
+        if (!log.getLogDetails().isEmpty()) {
+            return log.getLogDetails().stream().map(logMapper::toDetailDto).collect(Collectors.toList());
+        }
+        if (log.getRevisionNumber() == null) {
+            return List.of();
+        }
+        Class<?> entityClass = auditedEntityRegistry.resolve(log.getEntityName());
+        if (entityClass == null) {
+            return List.of();
+        }
+        return enversDiffService.diff(entityClass, log.getEntityId(), log.getRevisionNumber(), log.getOperationType());
+    }
 }
