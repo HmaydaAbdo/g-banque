@@ -20,6 +20,7 @@ import staport.finance.gBanque.cautions.dtos.CloturerCautionRequest;
 import staport.finance.gBanque.cautions.dtos.CloturerCautionResponse;
 import staport.finance.gBanque.cautions.exceptions.CautionExceptionHandler;
 import staport.finance.gBanque.cautions.services.ICautionService;
+import staport.finance.gBanque.common.PageableUtils;
 
 import java.time.YearMonth;
 
@@ -87,7 +88,7 @@ public class CautionController {
                 ? Sort.Direction.fromOptionalString(sort[1]).orElse(Sort.Direction.DESC)
                 : Sort.Direction.DESC;
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), Sort.by(direction, sortField));
 
         logger.debug("GET /cautions — page={}, size={}, sort={} {}, critères={}",
                 page, size, sortField, direction, criteres);
