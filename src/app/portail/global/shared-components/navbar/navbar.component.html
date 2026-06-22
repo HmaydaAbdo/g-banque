@@ -10,13 +10,15 @@
   <div>
     <nav class="hidden lg:flex align-items-center">
       <ul class="list-none flex justify-content-between p-0 m-0">
-        <li *ngFor="let item of filteredMenuItems">
-          <a pRipple [routerLink]="item.routerLink" routerLinkActive="active-nav-link"
-             class="flex align-items-center nav-link border-round-xl p-3">
-            <span [class]="item.icon"></span>
-            <span class="ml-2 nav-label">{{ item.label }}</span>
-          </a>
-        </li>
+        @for (item of filteredMenuItems; track item.routerLink) {
+          <li>
+            <a pRipple [routerLink]="item.routerLink" routerLinkActive="active-nav-link"
+               class="flex align-items-center nav-link border-round-xl p-3">
+              <span [class]="item.icon"></span>
+              <span class="ml-2 nav-label">{{ item.label }}</span>
+            </a>
+          </li>
+        }
       </ul>
     </nav>
   </div>
@@ -34,7 +36,9 @@
     <button class="nav-action-btn p-overlay-badge" (click)="showNotificationDialog()"
             pTooltip="Notifications" tooltipPosition="bottom">
       <i class="pi pi-bell text-lg"></i>
-      <p-badge *ngIf="unreadCount > 0" [value]="unreadCount" severity="danger" styleClass="mt-2 p-0"></p-badge>
+      @if (unreadCount > 0) {
+        <p-badge [value]="unreadCount" severity="danger" styleClass="mt-2 p-0"></p-badge>
+      }
     </button>
 
     <!-- Toggle dark / light mode -->

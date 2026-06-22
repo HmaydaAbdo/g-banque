@@ -2,7 +2,6 @@ import { Component, EventEmitter, Output, OnInit, OnDestroy, inject } from '@ang
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { NgForOf, NgIf } from "@angular/common";
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
@@ -29,8 +28,6 @@ interface MenuItem {
     RippleModule,
     RouterLink,
     RouterLinkActive,
-    NgForOf,
-    NgIf,
     ConfirmDialogModule,
     TooltipModule,
     BadgeModule,
