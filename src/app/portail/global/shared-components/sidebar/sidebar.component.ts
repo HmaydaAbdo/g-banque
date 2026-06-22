@@ -4,7 +4,7 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { StyleClassModule } from 'primeng/styleclass';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { AuthService } from "../../../../auth/services/auth.service";
 
 interface SidebarItem {
@@ -32,7 +32,7 @@ interface SidebarItem {
     StyleClassModule,
     RouterLink,
     RouterLinkActive,
-    CommonModule,
+    NgClass,
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
