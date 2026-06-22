@@ -64,12 +64,17 @@
 
 ## Audit (qui a fait quoi)
 
-- Hibernate Envers (`@Audited`) sur toute entité sensible (mouvement d'argent, RBAC).
-- `RevisionListener` custom : chaque révision Envers porte `username` (depuis `SecurityContextHolder`, fallback `"System"`/`"BATCH:<NomJob>"` pour les actions automatisées) + `timestamp`.
-- Une seule table `Log`/`LogEntryDetail` (déjà existante) reste l'unique point de requête centralisé pour tout l'historique (qui, quoi, quand, quelle opération), tous domaines confondus — alimentée par un **seul** `@Aspect` générique (pointcut par convention sur `*ServiceImpl.(create|update|delete).*`), jamais un aspect par entité.
-- Le détail champ-par-champ (avant/après) n'est jamais calculé ni stocké à l'écriture — il est lu à la demande depuis Envers (`AuditReader`) quand on consulte le détail d'une ligne de `Log`.
-- Interdit : comparaison de champs écrite à la main dans un aspect (`compareField`/`compareAndLogFields` style) — c'est le rôle d'Envers, jamais d'un aspect custom.
-- Interdit : un aspect d'audit dédié à une seule entité — toujours passer par l'aspect générique unique.
+- Hibernate Envers (`@Audited`) sur toute entité sensible (mouvement d'argent, RBAC). Champ sensible (mot de passe...) exclu via `@NotAudited` — jamais dans l'historique, même haché.
+- `AuditRevisionListener` (package `audit/`) : chaque révision Envers porte `username` + `timestamp`. `username` résolu par `CurrentUserResolver` (statique, car `RevisionListener` est instancié par Envers hors du contexte Spring) : job batch identifié (`BatchAuditContext`) > utilisateur authentifié (`SecurityContextHolder`) > `"System"`.
+- **Méthode auditée = annotation explicite `@AuditableAction(operation, entity)`** posée sur la méthode de Service — jamais une convention de nommage (`create*`/`update*`/`delete*`). Une méthode sensible qui ne commence par aucun de ces verbes (`setSystemAdmin`, `assignDepartmentRole`...) ne doit jamais dépendre d'un nom pour être tracée : sans l'annotation, elle n'est juste pas auditée, et c'est visible à la revue de code — pas un trou silencieux.
+  - Méthode "upsert" (crée ou met à jour selon le cas) → `operation = UPDATE` par défaut (convention).
+  - Si l'ID de l'entité n'est pas déductible des paramètres (cas où l'appelant ne connaît qu'une clé composite, ex. `removeDepartmentRole(userId, departmentId)`), la méthode doit renvoyer l'ID de la ligne concernée au lieu de `void` plutôt que d'introduire un mécanisme d'extraction ad-hoc.
+- Une seule table `Log`/`LogEntryDetail` (déjà existante) reste l'unique point de requête centralisé pour tout l'historique (qui, quoi, quand, quelle opération), tous domaines confondus — alimentée par un **seul** `@Aspect` générique (`GenericAuditAspect`, pointcut `@annotation(AuditableAction)`), jamais un aspect par entité.
+- `GenericAuditAspect` écrit `Log` (jamais `LogEntryDetail`) après le commit de la transaction métier d'origine (`TransactionSynchronization.afterCommit`, robuste à l'ordre des proxies AOP), avec le numéro de révision Envers correspondant (`Log.revisionNumber`).
+- Le détail champ-par-champ (avant/après) n'est jamais calculé ni stocké à l'écriture — il est lu à la demande depuis Envers (`AuditReader`, via `EnversDiffService`, comparaison générique par réflexion sur les champs scalaires) quand on consulte le détail d'une ligne de `Log` (`GET /logs/{id}/details`).
+- Interdit : comparaison de champs écrite à la main dans un aspect (`compareField`/`compareAndLogFields` style) — c'est le rôle d'Envers (lu via `EnversDiffService`), jamais d'un aspect custom.
+- Interdit : un aspect d'audit dédié à une seule entité — toujours passer par `GenericAuditAspect`.
+- **Migration en cours, module par module** — les anciens aspects par entité (`BanqueAuditAspect`, `LigneFonctionnelleAuditAspect`, `NatureLigneFonctionnelleAuditAspect`) restent en place et continuent de fonctionner pour leurs modules tant que ceux-ci n'ont pas été migrés vers `@Audited`/`@AuditableAction` (coexistence assumée pendant la transition — voir TODO.md). Tout nouveau module doit utiliser directement le mécanisme générique, jamais un nouvel aspect dédié.
 
 ## Configuration & secrets
 
