@@ -36,7 +36,7 @@ public class SecurityController {
 
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest){
-        return this.authenticationService.login(loginRequest.getUsername(), loginRequest.getPassword());
+        return this.authenticationService.login(loginRequest.username(), loginRequest.password());
     }
 
 }
