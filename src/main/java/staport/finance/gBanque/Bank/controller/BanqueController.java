@@ -17,7 +17,7 @@ import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
 import staport.finance.gBanque.Bank.exceptions.BanqueExceptionHandler;
 import staport.finance.gBanque.Bank.services.IBanqueService;
-
+import staport.finance.gBanque.common.PageableUtils;
 import java.util.List;
 
 /**
@@ -73,7 +73,7 @@ public class BanqueController {
                 ? Sort.Direction.fromOptionalString(sort[1]).orElse(Sort.Direction.ASC)
                 : Sort.Direction.ASC;
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), Sort.by(direction, sortField));
         logger.debug("GET /banques — page={}, size={}, sort={} {}", page, size, sortField, direction);
         return ResponseEntity.ok(banqueService.getAllBanques(searchCriteria, pageable));
     }
