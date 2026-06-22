@@ -7,6 +7,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.user.dtos.CreateUserRequest;
@@ -87,6 +89,7 @@ public class UserService {
      * @throws DuplicateEntryException si le nom d'utilisateur existe déjà
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = User.class)
     public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.findByUsername(request.username()).isPresent()) {
             throw new DuplicateEntryException("Le nom d'utilisateur '" + request.username() + "' existe déjà.");
@@ -119,6 +122,7 @@ public class UserService {
      * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = User.class)
     public void deleteUser(Long userId) {
         userRepository.delete(findEntityById(userId));
     }
@@ -127,6 +131,7 @@ public class UserService {
      * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = User.class)
     public UserResponse setUserEnabled(Long userId, boolean enabled) {
         User user = findEntityById(userId);
         user.setEnabled(enabled);
@@ -137,6 +142,7 @@ public class UserService {
      * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = User.class)
     public void updatePassword(Long userId, String newPassword) {
         User user = findEntityById(userId);
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -172,6 +178,7 @@ public class UserService {
      * @throws ResourceNotFoundException si l'utilisateur ou le département n'existe pas
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = UserDepartmentRole.class)
     public UserDepartmentRoleResponse assignDepartmentRole(Long userId, Long departmentId) {
         return assignDepartmentRole(userId, departmentId, DepartmentRoleType.MEMBER);
     }
@@ -187,6 +194,7 @@ public class UserService {
      * @throws ResourceNotFoundException si l'utilisateur ou le département n'existe pas
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = UserDepartmentRole.class)
     public UserDepartmentRoleResponse assignDepartmentRole(Long userId, Long departmentId, DepartmentRoleType roleInDept) {
         User user = findEntityById(userId);
         Department department = departmentService.getDepartmentEntityById(departmentId);
@@ -208,15 +216,20 @@ public class UserService {
     /**
      * Retire un utilisateur d'un département.
      *
+     * @return l'ID de la ligne {@code UserDepartmentRole} supprimée — nécessaire à
+     * {@code GenericAuditAspect} pour tracer l'audit (le PK n'est pas connu de l'appelant,
+     * qui ne fournit que {@code userId}/{@code departmentId}).
      * @throws ResourceNotFoundException si l'utilisateur n'a pas de rôle dans ce département
      */
     @Transactional
-    public void removeDepartmentRole(Long userId, Long departmentId) {
+    @AuditableAction(operation = AuditOperation.DELETE, entity = UserDepartmentRole.class)
+    public Long removeDepartmentRole(Long userId, Long departmentId) {
         UserDepartmentRole existing = userDepartmentRoleRepository
                 .findByUserIdAndDepartmentId(userId, departmentId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Cet utilisateur n'a aucun rôle assigné dans ce département."));
         userDepartmentRoleRepository.delete(existing);
+        return existing.getId();
     }
 
     /**
@@ -227,6 +240,7 @@ public class UserService {
      * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = User.class)
     public UserResponse setSystemAdmin(Long userId, boolean isSystemAdmin) {
         User user = findEntityById(userId);
         user.setSystemAdmin(isSystemAdmin);

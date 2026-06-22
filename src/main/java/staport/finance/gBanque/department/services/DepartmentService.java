@@ -3,6 +3,8 @@ package staport.finance.gBanque.department.services;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.department.dtos.DepartmentRequest;
@@ -40,6 +42,7 @@ public class DepartmentService {
     }
 
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Department.class)
     public DepartmentResponse createDepartment(DepartmentRequest request) {
         if (departmentRepository.existsByName(request.name())) {
             throw new DuplicateEntryException("Un département nommé '" + request.name() + "' existe déjà.");
@@ -59,6 +62,7 @@ public class DepartmentService {
     }
 
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Department.class)
     public DepartmentResponse updateDepartment(Long id, DepartmentRequest request) {
         Department department = findEntityById(id);
 
@@ -83,6 +87,7 @@ public class DepartmentService {
      * try/catch (sinon elle ne surviendrait qu'au commit, hors de portée du catch).
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = Department.class)
     public void deleteDepartment(Long id) {
         Department department = findEntityById(id);
 
