@@ -17,6 +17,7 @@ import staport.finance.gBanque.user.dtos.UserResponse;
 import staport.finance.gBanque.user.dtos.UserSearchCriteria;
 import staport.finance.gBanque.user.enums.DepartmentRoleType;
 import staport.finance.gBanque.user.services.UserService;
+import staport.finance.gBanque.common.PageableUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -71,7 +72,7 @@ public class UserController {
                 ? Sort.Direction.fromOptionalString(sort[1]).orElse(Sort.Direction.ASC)
                 : Sort.Direction.ASC;
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+        Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), Sort.by(direction, sortField));
         return ResponseEntity.ok(userService.searchUsers(searchCriteria, pageable));
     }
 
