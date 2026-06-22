@@ -20,6 +20,4 @@ public interface UserDepartmentRoleRepository extends JpaRepository<UserDepartme
 
     @EntityGraph(attributePaths = {"department"})
     Optional<UserDepartmentRole> findByUserIdAndDepartmentId(Long userId, Long departmentId);
-
-    boolean existsByDepartmentId(Long departmentId);
 }
