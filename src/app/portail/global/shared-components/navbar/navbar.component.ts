@@ -51,16 +51,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   loading: boolean = false;
   private destroy$ = new Subject<void>();
   private authService = inject(AuthService);
+  private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
+  notificationService = inject(NotificationService);
+  themeService = inject(ThemeService);
 
   unreadCount: number = 0;
   notificationDialogVisible: boolean = false;
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private messageService: MessageService,
-    public notificationService: NotificationService,
-    public themeService: ThemeService,
-  ) { }
 
   allMenuItems: MenuItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
@@ -125,19 +122,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   logout() {
+    // AuthService.logout() est purement local (suppression du token + navigation,
+    // pas d'appel HTTP) : il n'émet jamais false et n'erreure jamais. Pas de branche
+    // d'erreur ici — un échec HTTP réel serait géré par l'interceptor, pas ce composant.
     this.loading = true;
     this.authService.logout().pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (success) => {
-        if (success) {
-          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Vous avez été déconnecté(e) avec succès !' });
-        } else {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Échec de la déconnexion. Veuillez réessayer.' });
-        }
-      },
-      error: (err) => {
-        console.error('Logout error:', err);
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Vous avez été déconnecté(e) avec succès !' });
       },
       complete: () => {
         this.loading = false;
