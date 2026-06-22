@@ -25,12 +25,12 @@
 
   @if (loading) {
     <div class="surface-card border-round-xl border-1 surface-border p-4 text-center text-500 text-sm"
-         style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+         style="box-shadow:var(--shadow-sm)">
       <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
     </div>
   } @else if (!utilisateur) {
     <div class="surface-card border-round-xl border-1 surface-border p-4"
-         style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+         style="box-shadow:var(--shadow-sm)">
       <div class="flex flex-column align-items-center gap-2 py-4">
         <i class="pi pi-user-minus text-300" style="font-size:2rem"></i>
         <div class="text-600 font-medium">Utilisateur introuvable</div>
@@ -40,7 +40,7 @@
 
     <!-- ═══ IDENTITÉ ═══════════════════════════════════════════════════════ -->
     <div class="surface-card border-round-xl border-1 surface-border p-3"
-         style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+         style="box-shadow:var(--shadow-sm)">
       <div class="flex flex-wrap align-items-center gap-4">
         <div class="flex flex-column gap-1">
           <span class="text-500 text-xs font-medium">Statut</span>
@@ -57,7 +57,7 @@
 
     <!-- ═══ DÉPARTEMENTS ═══════════════════════════════════════════════════ -->
     <div class="surface-card border-round-xl border-1 surface-border p-3"
-         style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+         style="box-shadow:var(--shadow-sm)">
       <h3 class="text-900 font-bold m-0 mb-3" style="font-size:0.95rem">
         <i class="pi pi-sitemap mr-2 text-500"></i>Départements
       </h3>
@@ -134,7 +134,7 @@
 
     <!-- ═══ MOT DE PASSE ═══════════════════════════════════════════════════ -->
     <div class="surface-card border-round-xl border-1 surface-border p-3"
-         style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+         style="box-shadow:var(--shadow-sm)">
       <h3 class="text-900 font-bold m-0 mb-3" style="font-size:0.95rem">
         <i class="pi pi-lock mr-2 text-500"></i>Mot de passe
       </h3>
