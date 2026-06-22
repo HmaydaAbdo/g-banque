@@ -19,7 +19,7 @@ import staport.finance.gBanque.user.entities.UserDepartmentRole;
 import staport.finance.gBanque.user.enums.DepartmentRoleType;
 import staport.finance.gBanque.user.mappers.UserDepartmentRoleMapper;
 import staport.finance.gBanque.user.mappers.UserMapper;
-import staport.finance.gBanque.department.repositories.DepartmentRepository;
+import staport.finance.gBanque.department.services.DepartmentService;
 import staport.finance.gBanque.user.repositories.UserDepartmentRoleRepository;
 import staport.finance.gBanque.user.repositories.UserRepository;
 import staport.finance.gBanque.user.specifications.UserSpecification;
@@ -32,20 +32,20 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final DepartmentRepository departmentRepository;
+    private final DepartmentService departmentService;
     private final UserDepartmentRoleRepository userDepartmentRoleRepository;
     private final UserMapper userMapper;
     private final UserDepartmentRoleMapper userDepartmentRoleMapper;
 
     public UserService(UserRepository userRepository,
                         PasswordEncoder passwordEncoder,
-                        DepartmentRepository departmentRepository,
+                        DepartmentService departmentService,
                         UserDepartmentRoleRepository userDepartmentRoleRepository,
                         UserMapper userMapper,
                         UserDepartmentRoleMapper userDepartmentRoleMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.departmentRepository = departmentRepository;
+        this.departmentService = departmentService;
         this.userDepartmentRoleRepository = userDepartmentRoleRepository;
         this.userMapper = userMapper;
         this.userDepartmentRoleMapper = userDepartmentRoleMapper;
@@ -189,8 +189,7 @@ public class UserService {
     @Transactional
     public UserDepartmentRoleResponse assignDepartmentRole(Long userId, Long departmentId, DepartmentRoleType roleInDept) {
         User user = findEntityById(userId);
-        Department department = departmentRepository.findById(departmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Département introuvable avec l'ID " + departmentId));
+        Department department = departmentService.getDepartmentEntityById(departmentId);
 
         UserDepartmentRole existing = userDepartmentRoleRepository
                 .findByUserIdAndDepartmentId(userId, departmentId)
