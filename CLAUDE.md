@@ -89,8 +89,24 @@
 - Pagination : toute taille de page reçue en paramètre doit être bornée — `PageableUtils.clampSize(size)` si `PageRequest` est construit à la main depuis un `@RequestParam` brut ; sinon `spring.data.web.pageable.max-page-size` s'applique déjà automatiquement (injection directe de `Pageable`).
 - `/actuator/**` réservé à `SYSTEM_ADMIN`, sauf `/actuator/health` (public — requis par le healthcheck Docker, ne renvoie que UP/DOWN sans authentification).
 - JWT : durée de vie volontairement courte — toute évolution vers une session plus longue doit passer par un refresh token, jamais par l'allongement du token d'accès.
-- Logs : jamais logger une entité/DTO complet pouvant porter un champ sensible (mot de passe, numéro de compte, montant) — logger des identifiants (id, username) plutôt que l'objet entier.
 - `ddl-auto: update` est un raccourci de dev — toute évolution de schéma destinée à la prod doit passer par un outil de migration versionné (Flyway/Liquibase) dès qu'il sera introduit, jamais par une modification manuelle de la base de prod.
+
+## Logs
+
+- **Déclaration** : `private static final Logger log = LoggerFactory.getLogger(ClassName.class);` — pas de Lombok dans ce projet, déclaration manuelle uniquement. Nommer le champ `log` (convention SLF4J).
+- **Messages paramétrés** : toujours `log.error("msg id={}", id, e)` — jamais `log.error("msg " + id, e)`. La concaténation évalue l'expression même si le niveau est désactivé.
+- **Interdits** : `System.out.println`, `e.printStackTrace()`, `System.err.println` — lever une exception ou logguer avec la stack : `log.error("contexte", e)`.
+- **Données sensibles** : jamais logger un mot de passe, token, numéro de compte, montant brut, entité/DTO complet pouvant porter ces champs — logger uniquement des identifiants (id, username).
+- **Niveaux — règle stricte** :
+  - `ERROR` : échec irrécupérable, intervention humaine requise (ex. erreur de persistence non gérée).
+  - `WARN` : comportement anormal mais récupéré (ex. tentative de connexion échouée, retry réussi, blocage FK).
+  - `INFO` : événements métier significatifs (création/modification/suppression d'une entité, connexion réussie).
+  - `DEBUG` : diagnostic technique — désactivé en prod par défaut, ne jamais activer en prod sans raison.
+  - `TRACE` : jamais en prod.
+- **MDC** : `requestId` et `userId` sont injectés automatiquement par `MdcRequestFilter` sur chaque requête — ne jamais les poser manuellement dans les services ou controllers. Ces champs apparaissent dans tous les logs de la requête sans action supplémentaire.
+- **Où logguer** : dans les services (couche métier), pas dans les controllers ni les repositories. Un `INFO` par opération d'écriture (create/update/delete), un `WARN` sur les cas d'erreur métier capturés (ex. verrouillage compte, FK violation).
+- **Appender async** : en profil `prod`, les logs passent par un `AsyncAppender` pour ne pas bloquer le thread HTTP. Ne jamais lire/écrire un fichier de log directement depuis le code applicatif.
+- **Format prod** : JSON structuré via `logstash-logback-encoder` (configuré dans `logback-spring.xml`) — chaque champ (timestamp, level, service, traceId, requestId, userId, message) est interrogeable indépendamment.
 
 ## Documentation de module (`docs/modules/<nom>.md`)
 

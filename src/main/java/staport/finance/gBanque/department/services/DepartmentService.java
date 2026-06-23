@@ -1,5 +1,7 @@
 package staport.finance.gBanque.department.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,8 @@ import java.util.List;
 @Service
 public class DepartmentService {
 
+    private static final Logger log = LoggerFactory.getLogger(DepartmentService.class);
+
     private final DepartmentRepository departmentRepository;
     private final DepartmentMapper departmentMapper;
 
@@ -48,6 +52,7 @@ public class DepartmentService {
             throw new DuplicateEntryException("Un département nommé '" + request.name() + "' existe déjà.");
         }
         Department saved = departmentRepository.save(departmentMapper.toEntity(request));
+        log.info("Département créé id={} name={}", saved.getId(), saved.getName());
         return departmentMapper.toDto(saved);
     }
 
@@ -73,7 +78,9 @@ public class DepartmentService {
 
         department.setName(request.name());
         department.setDescription(request.description());
-        return departmentMapper.toDto(departmentRepository.save(department));
+        DepartmentResponse updated = departmentMapper.toDto(departmentRepository.save(department));
+        log.info("Département mis à jour id={} name={}", id, updated.name());
+        return updated;
     }
 
     /**
@@ -95,11 +102,14 @@ public class DepartmentService {
             departmentRepository.delete(department);
             departmentRepository.flush();
         } catch (DataIntegrityViolationException e) {
+            log.warn("Suppression bloquée département id={} name={} : utilisateurs encore assignés",
+                    id, department.getName());
             throw new DepartmentInUseException(
                     "Impossible de supprimer le département '" + department.getName() +
                             "' : des utilisateurs y sont encore assignés. Retirez-les d'abord."
             );
         }
+        log.info("Département supprimé id={} name={}", id, department.getName());
     }
 
     /**

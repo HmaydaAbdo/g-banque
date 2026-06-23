@@ -184,19 +184,22 @@ public class BanqueServiceImpl implements IBanqueService {
     @Transactional
     @AuditableAction(operation = AuditOperation.DELETE, entity = Banque.class)
     public void deleteBanque(Long id) {
+        logger.info("Suppression banque ID: {}", id);
         Banque banque = findOrThrow(id);
 
-
         if (transactionService.countPendingTransactions(id) > 0) {
+            logger.warn("Suppression banque ID: {} bloquée — transactions en attente", id);
             throw new BanqueDeletionException("Transactions en attente détectées.");
         }
 
         BigDecimal balance = computeLiveBalance(id);
         if (balance.compareTo(BigDecimal.ZERO) != 0) {
+            logger.warn("Suppression banque ID: {} bloquée — solde non nul ({})", id, balance);
             throw new BanqueDeletionException("Le solde doit être nul avant suppression.");
         }
 
         banqueRepository.delete(banque);
+        logger.info("Banque ID: {} supprimée.", id);
     }
 
     @Override

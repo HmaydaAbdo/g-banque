@@ -1,5 +1,7 @@
 package staport.finance.gBanque.user.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -31,6 +33,8 @@ import java.util.Optional;
 
 @Service
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -99,7 +103,9 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setEnabled(request.enabled() == null || request.enabled());
 
-        return userMapper.toDto(userRepository.save(user));
+        UserResponse saved = userMapper.toDto(userRepository.save(user));
+        log.info("Utilisateur créé id={} username={}", saved.id(), saved.username());
+        return saved;
     }
 
     /**
@@ -125,6 +131,7 @@ public class UserService {
     @AuditableAction(operation = AuditOperation.DELETE, entity = User.class)
     public void deleteUser(Long userId) {
         userRepository.delete(findEntityById(userId));
+        log.info("Utilisateur supprimé id={}", userId);
     }
 
     /**
@@ -135,6 +142,7 @@ public class UserService {
     public UserResponse setUserEnabled(Long userId, boolean enabled) {
         User user = findEntityById(userId);
         user.setEnabled(enabled);
+        log.info("Utilisateur id={} {} ", userId, enabled ? "activé" : "désactivé");
         return userMapper.toDto(userRepository.save(user));
     }
 
@@ -196,6 +204,7 @@ public class UserService {
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = UserDepartmentRole.class)
     public UserDepartmentRoleResponse assignDepartmentRole(Long userId, Long departmentId, DepartmentRoleType roleInDept) {
+        log.info("Assignation rôle userId={} departmentId={} role={}", userId, departmentId, roleInDept);
         User user = findEntityById(userId);
         Department department = departmentService.getDepartmentEntityById(departmentId);
 
@@ -229,6 +238,7 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Cet utilisateur n'a aucun rôle assigné dans ce département."));
         userDepartmentRoleRepository.delete(existing);
+        log.info("Rôle retiré userId={} departmentId={}", userId, departmentId);
         return existing.getId();
     }
 

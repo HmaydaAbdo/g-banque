@@ -1,5 +1,7 @@
 package staport.finance.gBanque.auth.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,6 +20,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class AuthenticationService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
 
     private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
@@ -43,12 +47,15 @@ public class AuthenticationService {
 
         Authentication authentication;
         try {
-            authentication = this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+            authentication = this.authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password));
         } catch (AuthenticationException ex) {
             loginAttemptService.recordFailure(username);
+            log.warn("Authentification échouée pour username={}", username);
             throw ex;
         }
         loginAttemptService.recordSuccess(username);
+        log.info("Connexion réussie username={}", username);
 
         List<String> authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)

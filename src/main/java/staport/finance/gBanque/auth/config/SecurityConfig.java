@@ -26,6 +26,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter;
 import staport.finance.gBanque.auth.services.UserDetailsServiceImpl;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.List;
@@ -79,6 +80,9 @@ public class SecurityConfig {
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(jsonAuthenticationEntryPoint)
                 )
+                // MDC filter posé après BearerTokenAuthenticationFilter : SecurityContextHolder
+                // est déjà peuplé, donc userId peut être lu depuis le principal JWT.
+                .addFilterAfter(new MdcRequestFilter(), BearerTokenAuthenticationFilter.class)
                 .build();
     }
 
