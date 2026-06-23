@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import {ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -45,11 +45,9 @@ export class HistoryOflinesComponent implements OnInit {
   loadingBankDetails: boolean = true;
   items: MenuItem[] | undefined;
 
-  constructor(
-    private route: ActivatedRoute,
-    private banqueService: BanqueService,
-    private messageService: MessageService
-  ) { }
+  private route = inject(ActivatedRoute);
+  private banqueService = inject(BanqueService);
+  private messageService = inject(MessageService);
 
   ngOnInit(): void {
     this.items = [

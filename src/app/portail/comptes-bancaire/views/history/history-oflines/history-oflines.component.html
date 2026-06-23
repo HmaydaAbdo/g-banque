@@ -15,17 +15,16 @@
         <div class="portail-section pt-1 lg:pt-3">
           <p-breadcrumb [model]="items" >
             <ng-template pTemplate="item" let-item>
-              <ng-container *ngIf="item.route; else elseBlock" class="pt-3">
+              @if (item.route) {
                 <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
                   <span [ngClass]="[item.icon ? item.icon : '', 'text-color', ]"></span>
                   <span class="text-black-alpha-90 pl-1  ">{{ item.label }}</span>
                 </a>
-              </ng-container>
-              <ng-template #elseBlock>
+              } @else {
                 <a [href]="item.url">
                   <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
                 </a>
-              </ng-template>
+              }
             </ng-template>
           </p-breadcrumb>
         </div>

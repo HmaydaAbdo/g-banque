@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {InputTextModule} from 'primeng/inputtext';
@@ -53,15 +53,14 @@ export class BanqueEditComponent implements OnInit {
   loading: boolean = false;
   isEditMode: boolean = false;
   items: MenuItem[] | undefined;
-  constructor(
-    private fb: FormBuilder,
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private route: ActivatedRoute,
-    private router: Router,
-    private authService: AuthService,
-  ) {}
+
+  private fb = inject(FormBuilder);
+  private banqueService = inject(BanqueService);
+  private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.initializeForm(); // Create the structure first
@@ -140,7 +139,7 @@ export class BanqueEditComponent implements OnInit {
 
     this.banqueForm.markAllAsTouched();
     if (this.banqueForm.invalid) {
-      this.messageService.add({ severity: 'error', summary: 'Validation', detail: 'Veuillez corriger les erreurs dans le formulaire.', life: 3000 });
+      this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez corriger les erreurs dans le formulaire.', life: 3000 });
       return;
     }
 
@@ -185,7 +184,7 @@ export class BanqueEditComponent implements OnInit {
         });
     } else { // Create mode
       if (!this.logoFile) {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez sélectionner un logo pour la nouvelle banque.', life: 3000 });
+        this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez sélectionner un logo pour la nouvelle banque.', life: 3000 });
         this.loading = false; // Stop loading if logo is missing
         return;
       }

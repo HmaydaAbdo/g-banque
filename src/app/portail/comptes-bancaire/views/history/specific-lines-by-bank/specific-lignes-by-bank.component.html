@@ -100,12 +100,14 @@
         >
           <ng-template pTemplate="header" let-columns>
             <tr>
-              <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
-                {{ col.header }}
-                @if (col.sortable) {
-                  <p-sortIcon [field]="col.field"></p-sortIcon>
-                }
-              </th>
+              @for (col of columns; track col.field) {
+                <th [pSortableColumn]="col.sortable ? col.field : null">
+                  {{ col.header }}
+                  @if (col.sortable) {
+                    <p-sortIcon [field]="col.field"></p-sortIcon>
+                  }
+                </th>
+              }
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-ligne>

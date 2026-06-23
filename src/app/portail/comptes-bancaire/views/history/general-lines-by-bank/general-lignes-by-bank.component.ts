@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import {ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -86,14 +86,12 @@ export class GeneralLignesByBankComponent implements OnInit {
 
   items: MenuItem[] | undefined;
 
-  constructor(
-    private route: ActivatedRoute,
-    private banqueService: BanqueService,
-    private ligneFonctionnelleService: LigneFonctionnelleService,
-    private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private fb: FormBuilder,
-    private messageService: MessageService,
-  ) { }
+  private route = inject(ActivatedRoute);
+  private banqueService = inject(BanqueService);
+  private ligneFonctionnelleService = inject(LigneFonctionnelleService);
+  private natureLigneFonctionnelleService = inject(NatureLigneFonctionnelleService);
+  private fb = inject(FormBuilder);
+  private messageService = inject(MessageService);
 
   ngOnInit(): void {
     this.initFunctionalLineSearchForm();

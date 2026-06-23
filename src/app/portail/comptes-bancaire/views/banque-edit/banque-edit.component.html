@@ -12,19 +12,17 @@
     <p-breadcrumb [model]="items" styleClass="border-none p-0"
                   [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
       <ng-template pTemplate="item" let-item>
-        <ng-container>
-          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
-            <span class="text-400 text-xs ml-1">{{ item.label }}</span>
-          </a>
-        </ng-container>
+        <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+          <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+          <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+        </a>
       </ng-template>
     </p-breadcrumb>
   </div>
 
   <!-- ═══ FORM CARD ════════════════════════════════════════════════════════ -->
   <div class="surface-card border-round-xl border-1 surface-border p-4"
-       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+       style="box-shadow:var(--shadow-md)">
 
     <form [formGroup]="banqueForm" (ngSubmit)="saveBanque()" class="p-fluid">
       <div class="formgrid grid">
@@ -35,9 +33,13 @@
             Nom <span class="text-red-500">*</span>
           </label>
           <input type="text" pInputText id="nom" formControlName="nom" autofocus />
-          <small class="p-error" *ngIf="f['nom'].invalid && f['nom'].touched">
-            <span *ngIf="f['nom'].errors?.['required']">Obligatoire.</span>
-          </small>
+          @if (f['nom'].invalid && f['nom'].touched) {
+            <small class="p-error">
+              @if (f['nom'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+            </small>
+          }
         </div>
 
         <!-- Numéro de compte -->
@@ -46,14 +48,22 @@
             Numéro de compte <span class="text-red-500">*</span>
           </label>
           <input type="text" pInputText id="numeroDeCompte" formControlName="numeroDeCompte" />
-          <small class="p-error" *ngIf="f['numeroDeCompte'].invalid && f['numeroDeCompte'].touched">
-            <span *ngIf="f['numeroDeCompte'].errors?.['required']">Obligatoire.</span>
-            <span *ngIf="f['numeroDeCompte'].errors?.['pattern']">Chiffres uniquement.</span>
-            <span *ngIf="f['numeroDeCompte'].errors?.['minlength'] || f['numeroDeCompte'].errors?.['maxlength']">
-              24 chiffres requis.
-            </span>
-          </small>
-          <small *ngIf="isEditMode" class="text-400 text-xs">Non modifiable après création.</small>
+          @if (f['numeroDeCompte'].invalid && f['numeroDeCompte'].touched) {
+            <small class="p-error">
+              @if (f['numeroDeCompte'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+              @if (f['numeroDeCompte'].errors?.['pattern']) {
+                <span>Chiffres uniquement.</span>
+              }
+              @if (f['numeroDeCompte'].errors?.['minlength'] || f['numeroDeCompte'].errors?.['maxlength']) {
+                <span>24 chiffres requis.</span>
+              }
+            </small>
+          }
+          @if (isEditMode) {
+            <small class="text-400 text-xs">Non modifiable après création.</small>
+          }
         </div>
 
         <!-- Devise -->
@@ -66,9 +76,13 @@
                       placeholder="Sélectionner une devise"
                       appendTo="body">
           </p-dropdown>
-          <small class="p-error" *ngIf="f['devise'].invalid && f['devise'].touched">
-            <span *ngIf="f['devise'].errors?.['required']">Obligatoire.</span>
-          </small>
+          @if (f['devise'].invalid && f['devise'].touched) {
+            <small class="p-error">
+              @if (f['devise'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+            </small>
+          }
         </div>
 
         <!-- Adresse -->
@@ -77,9 +91,13 @@
             Adresse <span class="text-red-500">*</span>
           </label>
           <input type="text" pInputText id="address" formControlName="address" />
-          <small class="p-error" *ngIf="f['address'].invalid && f['address'].touched">
-            <span *ngIf="f['address'].errors?.['required']">Obligatoire.</span>
-          </small>
+          @if (f['address'].invalid && f['address'].touched) {
+            <small class="p-error">
+              @if (f['address'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+            </small>
+          }
         </div>
 
         <!-- Agence -->
@@ -88,9 +106,13 @@
             Agence <span class="text-red-500">*</span>
           </label>
           <input type="text" pInputText id="agence" formControlName="agence" />
-          <small class="p-error" *ngIf="f['agence'].invalid && f['agence'].touched">
-            <span *ngIf="f['agence'].errors?.['required']">Obligatoire.</span>
-          </small>
+          @if (f['agence'].invalid && f['agence'].touched) {
+            <small class="p-error">
+              @if (f['agence'].errors?.['required']) {
+                <span>Obligatoire.</span>
+              }
+            </small>
+          }
         </div>
 
         <!-- Logo -->
@@ -105,19 +127,25 @@
                           (onSelect)="onLogoSelect($event)"
                           chooseLabel="Choisir un logo">
             </p-fileUpload>
-            <small class="p-error" *ngIf="!isEditMode && !logoFile && banqueForm.touched">
-              Logo obligatoire pour une nouvelle banque.
-            </small>
-            <div *ngIf="isEditMode && originalBanqueResponse?.logoBase64 && !logoFile" class="mt-1">
-              <span class="text-500 text-xs block mb-1">Logo actuel :</span>
-              <p-image [src]="'data:image/png;base64,' + originalBanqueResponse?.logoBase64"
-                       alt="Logo actuel" width="80">
-              </p-image>
-            </div>
-            <small *ngIf="logoFile" class="text-600 text-xs">
-              <i class="pi pi-check-circle text-green-500 mr-1"></i>
-              Nouveau logo : {{ logoFile.name }}
-            </small>
+            @if (!isEditMode && !logoFile && banqueForm.touched) {
+              <small class="p-error">
+                Logo obligatoire pour une nouvelle banque.
+              </small>
+            }
+            @if (isEditMode && originalBanqueResponse?.logoBase64 && !logoFile) {
+              <div class="mt-1">
+                <span class="text-500 text-xs block mb-1">Logo actuel :</span>
+                <p-image [src]="'data:image/png;base64,' + originalBanqueResponse?.logoBase64"
+                         alt="Logo actuel" width="80">
+                </p-image>
+              </div>
+            }
+            @if (logoFile) {
+              <small class="text-600 text-xs">
+                <i class="pi pi-check-circle text-green-500 mr-1"></i>
+                Nouveau logo : {{ logoFile.name }}
+              </small>
+            }
           </div>
         </div>
 

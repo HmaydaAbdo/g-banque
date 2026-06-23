@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -89,15 +89,13 @@ export class SpecificLignesByBankComponent implements OnInit {
     onLazyLoad: (event: any) => this.loadMarchesForDropdown(event)
   };
 
-  constructor(
-    private route: ActivatedRoute,
-    private specificLigneService: SpecificFunctionalLigneService,
-    private banqueService: BanqueService,
-    private marcheService: MarcheService,
-    private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private fb: FormBuilder,
-    private messageService: MessageService,
-  ) { }
+  private route = inject(ActivatedRoute);
+  private specificLigneService = inject(SpecificFunctionalLigneService);
+  private banqueService = inject(BanqueService);
+  private marcheService = inject(MarcheService);
+  private natureLigneFonctionnelleService = inject(NatureLigneFonctionnelleService);
+  private fb = inject(FormBuilder);
+  private messageService = inject(MessageService);
 
   ngOnInit(): void {
     this.initSearchForm();

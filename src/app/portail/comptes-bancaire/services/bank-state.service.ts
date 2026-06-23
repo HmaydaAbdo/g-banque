@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import {RecapitulatifCompte} from "../../accueil/dtos/RecapitulatifCompte";
 import {BanqueService} from "./BanqueService";
@@ -33,7 +33,7 @@ export class BankStateService {
   // Observable public pour que les composants puissent s'abonner
   public bankInfo$: Observable<RecapitulatifCompte | null> = this.bankInfoSubject.asObservable();
 
-  constructor(private banqueService: BanqueService) {}
+  private banqueService = inject(BanqueService);
 
   /**
    * Met à jour les informations de la banque dans le state

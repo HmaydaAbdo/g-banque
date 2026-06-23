@@ -14,15 +14,14 @@
       <p-breadcrumb [model]="items" styleClass="border-none p-0"
                     [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
               <span class="text-400 text-xs ml-1">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -39,7 +38,7 @@
 
   <!-- ═══ FILTRES ══════════════════════════════════════════════════════════ -->
   <div class="surface-card border-round-xl border-1 surface-border p-3"
-       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+       style="box-shadow:var(--shadow-sm)">
     <div class="flex flex-wrap gap-2 align-items-center" [formGroup]="searchForm">
 
       <span class="text-500 text-xs font-medium mr-1" style="white-space:nowrap">
@@ -64,7 +63,7 @@
 
   <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->
   <div class="surface-card border-round-xl border-1 surface-border"
-       style="box-shadow:0 1px 10px rgba(0,0,0,0.06)">
+       style="box-shadow:var(--shadow-md)">
 
     <p-table
       #dt
@@ -106,12 +105,14 @@
       <ng-template pTemplate="body" let-banque>
         <tr>
           <td class="text-center">
-            <p-image *ngIf="banque.logoBase64"
-                     [src]="'data:image/png;base64,' + banque.logoBase64"
-                     [alt]="banque.nom + ' logo'"
-                     width="40"
-                     [preview]="true"/>
-            <i *ngIf="!banque.logoBase64" class="pi pi-building text-300 text-xl"></i>
+            @if (banque.logoBase64) {
+              <p-image [src]="'data:image/png;base64,' + banque.logoBase64"
+                       [alt]="banque.nom + ' logo'"
+                       width="40"
+                       [preview]="true"/>
+            } @else {
+              <i class="pi pi-building text-300 text-xl"></i>
+            }
           </td>
           <td class="font-semibold text-800">{{ banque.nom }}</td>
           <td class="text-600 text-sm" style="font-family:monospace">{{ banque.numeroDeCompte }}</td>

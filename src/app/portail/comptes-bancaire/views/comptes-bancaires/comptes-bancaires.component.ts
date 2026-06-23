@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
@@ -22,6 +22,7 @@ import {PageResponse} from "../../../global/types/PageResponse";
 import {AuthService} from "../../../../auth/services/auth.service";
 import {BanqueSearchCriteria} from "../../dtos/BanqueSearchCriteria";
 import {BreadcrumbModule} from "primeng/breadcrumb";
+import {escapeHtml} from "../../../../shared/security/escape-html";
 
 @Component({
   selector: 'app-comptes-bancaires',
@@ -61,13 +62,11 @@ export class ComptesBancairesComponent implements OnInit {
   sortOrder: number = 1;
   searchForm!: FormGroup;
 
-  constructor(
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder,
-    private authService: AuthService,
-  ) { }
+  private banqueService = inject(BanqueService);
+  private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService);
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" },{ icon: 'pi pi-wallet', route: '/portail/comptes-bancaires', label:"liste des compte bancaires" } ]
@@ -154,11 +153,14 @@ export class ComptesBancairesComponent implements OnInit {
   }
 
   deleteBanque(banque: BanqueResponse): void {
+    // banque.nom est un champ libre saisi par un utilisateur — jamais interpolé brut dans
+    // le HTML du ConfirmDialog (PrimeNG le rend tel quel, sans échappement). Voir
+    // Frontend/CLAUDE.md, "Sécurité — XSS".
     const confirmationMessageHtml = `
     <div class="text-center ">
         <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
-        <p>Êtes-vous sûr de vouloir supprimer la banque "<strong>${banque.nom}</strong>" ?</p>
-        <p style="color: #ef4444; font-weight: bold;">
+        <p>Êtes-vous sûr de vouloir supprimer la banque "<strong>${escapeHtml(banque.nom)}</strong>" ?</p>
+        <p style="color: var(--color-danger); font-weight: bold;">
                 Toutes les lignes fonctionnelles (découverts, lignes de crédit, etc.) associées à cette banque seront également supprimées.
         </p>
         <p>Cette action est irréversible.</p>

@@ -18,8 +18,12 @@ interface SidebarItem {
   expanded?: boolean;
   badge?: string;
   badgeClass?: string;
-  /** Authority exacte requise pour voir l'item (ex. 'SYSTEM_ADMIN', 'DEPT_TRESORERIE:DIRECTOR'). SYSTEM_ADMIN voit toujours tout. */
-  requiredAuthority?: string;
+  /**
+   * Authority(s) requise(s) pour voir l'item (ex. 'SYSTEM_ADMIN', 'DEPT_TRESORERIE:DIRECTOR').
+   * Un tableau exprime un OR (ex. MEMBER ou DIRECTOR d'un même département).
+   * SYSTEM_ADMIN voit toujours tout, quel que soit l'item.
+   */
+  requiredAuthority?: string | string[];
 }
 
 @Component({
@@ -52,7 +56,12 @@ export class SidebarComponent implements OnInit {
 
   sidebarItems: SidebarItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
-    { label: 'Les Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires' },
+    {
+      label: 'Les Comptes Bancaires',
+      icon: 'pi pi-wallet',
+      routerLink: '/portail/comptes-bancaires',
+      requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
+    },
     {
       label: 'Les Lignes Fonctionnelles',
       icon: 'pi pi-receipt',
@@ -255,7 +264,10 @@ export class SidebarComponent implements OnInit {
     if (this.authService.isSystemAdmin()) {
       return true;
     }
-    return this.authService.getAuthorities().includes(item.requiredAuthority);
+    const authorities = this.authService.getAuthorities();
+    return Array.isArray(item.requiredAuthority)
+        ? item.requiredAuthority.some(auth => authorities.includes(auth))
+        : authorities.includes(item.requiredAuthority);
   }
 
   private filterSidebarItems(): void {
