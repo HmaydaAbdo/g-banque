@@ -22,6 +22,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.specs.VirementSpec;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.List;
 import java.util.NoSuchElementException;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
@@ -228,5 +229,15 @@ public class VirementService {
 
         virementRepository.delete(virement);
         log.info("Virement ID={} supprimé avec succès", id);
+    }
+
+    /**
+     * Nombre de virements échus à la date donnée, groupés par banque — façade publique sur
+     * {@link VirementRepository#countEchusGroupedByBanque}. Permet à d'autres domaines (ex.
+     * l'agrégateur accueil de Bank) de lire cette information sans jamais injecter
+     * {@code VirementRepository} directement (Backend/CLAUDE.md, "Encapsulation des domaines").
+     */
+    public List<Object[]> countEchusGroupedByBanque(LocalDate today) {
+        return virementRepository.countEchusGroupedByBanque(today);
     }
 }

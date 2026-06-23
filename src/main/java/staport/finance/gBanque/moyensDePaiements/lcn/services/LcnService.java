@@ -24,6 +24,7 @@ import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.List;
 import java.util.NoSuchElementException;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
@@ -342,6 +343,16 @@ public class LcnService {
 
         // Map the result to DTOs and return
         return new EncoursLcnResponse(totalDesEncours, result);
+    }
+
+    /**
+     * Nombre de LCN échus à la date donnée, groupés par banque — façade publique sur
+     * {@link LcnRepository#countEchusGroupedByBanque}. Permet à d'autres domaines (ex.
+     * l'agrégateur accueil de Bank) de lire cette information sans jamais injecter
+     * {@code LcnRepository} directement (Backend/CLAUDE.md, "Encapsulation des domaines").
+     */
+    public List<Object[]> countEchusGroupedByBanque(LocalDate today) {
+        return lcnRepository.countEchusGroupedByBanque(today);
     }
 
     private void validateEscompteBusinessRule(Type type, NatureLcn nature) {
