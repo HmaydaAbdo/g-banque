@@ -29,6 +29,7 @@ import staport.finance.gBanque.user.enums.DepartmentRoleType;
                 columnNames = {"user_id", "department_id"}
         ),
         indexes = {
+                @Index(name = "idx_user_department_role_user_id",       columnList = "user_id"),
                 @Index(name = "idx_user_department_role_department_id", columnList = "department_id")
         }
 )
@@ -114,8 +115,3 @@ public class UserDepartmentRole {
         return id != null && id.equals(that.id);
     }
 
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
-}

@@ -19,7 +19,12 @@ import java.time.Instant;
  */
 @Entity
 @Audited
-@Table(name = "department")
+@Table(
+        name = "department",
+        indexes = {
+                @Index(name = "idx_department_name", columnList = "name")
+        }
+)
 public class Department {
 
     @Id
@@ -93,11 +98,4 @@ public class Department {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Department that = (Department) o;
-        return id != null && id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
-}
+        return id != null && id.equals

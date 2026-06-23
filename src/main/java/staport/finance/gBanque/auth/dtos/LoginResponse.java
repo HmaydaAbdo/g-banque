@@ -1,10 +1,7 @@
 package staport.finance.gBanque.auth.dtos;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
-public record LoginResponse(
-        String accessToken,
-        String username,
-        List<String> authorities
-) {
-}
+@Schema(description = "Réponse renvoyée après une authentification

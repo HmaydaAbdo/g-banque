@@ -14,7 +14,13 @@ import java.util.List;
  */
 @Entity
 @Audited
-@Table(name = "users")
+@Table(
+        name = "users",
+        indexes = {
+                @Index(name = "idx_user_username",     columnList = "username"),
+                @Index(name = "idx_user_system_admin", columnList = "is_system_admin")
+        }
+)
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -95,11 +101,4 @@ public class User {
         this.enabled = enabled;
     }
 
-    public void setSystemAdmin(boolean systemAdmin) {
-        this.isSystemAdmin = systemAdmin;
-    }
-
-    public void setDepartmentRoles(List<UserDepartmentRole> departmentRoles) {
-        this.departmentRoles = departmentRoles;
-    }
-}
+    public void setSystemAdmi

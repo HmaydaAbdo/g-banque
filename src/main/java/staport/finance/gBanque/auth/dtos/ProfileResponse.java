@@ -1,9 +1,7 @@
 package staport.finance.gBanque.auth.dtos;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
-public record ProfileResponse(
-        String username,
-        List<String> roles
-) {
-}
+@Schema(description = "Profil de l'ut
