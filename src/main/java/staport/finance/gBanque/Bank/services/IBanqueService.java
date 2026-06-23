@@ -3,7 +3,6 @@ package staport.finance.gBanque.Bank.services;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
-import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
@@ -55,16 +54,6 @@ public interface IBanqueService {
     void deleteBanque(Long id);
 
     /**
-     * Returns accueil summary cards for ALL banques (live balance + FC plafond).
-     */
-    List<BankAcceuilResponse> getAccueilBankInfo();
-
-    /**
-     * Returns the accueil summary card for a single banque.
-     */
-    BankAcceuilResponse getAccueilBankInfoById(Long banqueId);
-
-    /**
      * Returns the plafond of the active Facilité de Caisse ligne for the given banque,
      * or {@link BigDecimal#ZERO} if none exists.
      */
@@ -73,4 +62,11 @@ public interface IBanqueService {
     List<Long> getAllBanqueIds();
 
     Banque findOrThrow(Long id);
+
+    /**
+     * Returns every Banque entity. Façade pour les domaines qui ont besoin de la liste
+     * complète des entités (ex. {@code BankAccueilAggregatorService}) — jamais via
+     * {@code BanqueRepository} directement (Backend/CLAUDE.md, "Encapsulation des domaines").
+     */
+    List<Banque> getAllBanqueEntities();
 }
