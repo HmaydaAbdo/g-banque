@@ -28,6 +28,7 @@
   --text-breadcrumb: 0.78rem;  //  12.5px ← breadcrumb (p-breadcrumb sur toutes les pages)
   --text-section   : 0.95rem;  //  15.2px ← titres de sous-section dans les cards (h3)
   --text-title     : 1.15rem;  //  18.4px ← titres de page / brand marks (card headers, brand letter)
+  --text-kpi       : 1.35rem;  //  21.6px ← valeurs KPI hero dans les cartes (solde, montant principal)
   --text-display   : 1.6rem;   //  25.6px ← titres display (login title, page hero)
   --text-icon      : 2rem;     //  32px   ← icônes décoratives large
 
@@ -43,6 +44,7 @@
   --leading-relaxed : 1.75;
 
   // Letter spacing
+  --tracking-tighter: -0.02em;
   --tracking-tight  : -0.01em;
   --tracking-normal :  0em;
   --tracking-loose  :  0.03em;   // ← noms de marque / titres serif
@@ -61,6 +63,7 @@
   --space-8  : 2rem;      // 32px
   --space-10 : 2.5rem;    // 40px
   --space-12 : 3rem;      // 48px
+  --space-16 : 4rem;      // 64px
 
   // ─────────────────────────────────────────────────────────────────────────
   // Border radius
@@ -319,9 +322,4 @@
   }
 
   &--definitif {
-    background   : var(--status-definitif-bg);
-    color        : var(--status-definitif-text);
-    border-color : var(--status-definitif-border);
-    &::before { background: var(--status-definitif-dot); }
-  }
-}
+    background   : var(--status-definitif
