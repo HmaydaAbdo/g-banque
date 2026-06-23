@@ -29,10 +29,14 @@ import java.util.List;
  * Exception handling is delegated to {@link BanqueExceptionHandler}.
  * No business logic lives here.
  *
- * <p>Lecture ouverte à tout utilisateur authentifié. Mutation (create/update/delete)
- * réservée à {@code SYSTEM_ADMIN} ou au département Finance (MEMBER ou DIRECTOR) —
- * {@code @PreAuthorize} posé par méthode plutôt qu'au niveau classe, car ce module
- * n'est pas uniformément restreint comme User/Department.
+ * <p>RBAC par méthode (pas au niveau classe — restrictions non uniformes) :
+ * <ul>
+ *   <li>Lecture liste/détail ({@code GET /banques}, {@code GET /banques/{id}}) — tout authentifié :
+ *       données de référence utilisées par d'autres modules (dropdowns).</li>
+ *   <li>Accueil info ({@code GET /banques/accueil-info[/{id}]}) — Finance ou SYSTEM_ADMIN :
+ *       tableau de bord Finance uniquement.</li>
+ *   <li>Mutations (create/update/delete) — Finance ou SYSTEM_ADMIN.</li>
+ * </ul>
  */
 @RestController
 @RequestMapping("/banques")
@@ -92,12 +96,14 @@ public class BanqueController {
     }
 
     @GetMapping("/accueil-info")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<List<BankAcceuilResponse>> getAccueilBankInformation() {
         logger.debug("GET /banques/accueil-info");
         return ResponseEntity.ok(accueilAggregatorService.getAccueilBankInfo());
     }
 
     @GetMapping("/accueil-info/{banqueId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<BankAcceuilResponse> getAccueilBankInformationById(
             @PathVariable Long banqueId) {
         logger.debug("GET /banques/accueil-info/{}", banqueId);
