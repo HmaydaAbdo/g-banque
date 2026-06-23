@@ -93,9 +93,7 @@ export class AcceuilComponent implements OnInit {
     this.recapService.downloadGlobalRecapForAllBanks()
       .pipe(
         // 1. Gérer l'erreur et afficher un message à l'utilisateur
-        catchError(error => {
-          console.error('Erreur lors du téléchargement du récapitulatif global:', error);
-          // Propage l'erreur pour que 'finalize' soit appelé
+        catchError(() => {
           return throwError(() => new Error('Global download failed'));
         }),
         // 2. Désactiver l'indicateur de chargement à la fin de l'opération (succès ou échec)
@@ -146,8 +144,7 @@ export class AcceuilComponent implements OnInit {
 
     this.recapService.downloadRecapGeneralDetailleAllBanquesPdf()
       .pipe(
-        catchError(error => {
-          console.error('Erreur lors du téléchargement du Récap Général Détaillé:', error);
+        catchError(() => {
           return throwError(() => new Error('Download failed'));
         }),
         finalize(() => { this.recapDetailleAllLoading = false; })
@@ -178,8 +175,7 @@ export class AcceuilComponent implements OnInit {
 
     this.recapService.downloadRecapGeneralDetaillePdf(banqueId)
       .pipe(
-        catchError(error => {
-          console.error(`Erreur lors du téléchargement du Récap Général Détaillé (banque ${banqueId}):`, error);
+        catchError(() => {
           return throwError(() => new Error('Download failed'));
         }),
         finalize(() => { this.recapDetailleBanqueLoadingMap.set(banqueId, false); })

@@ -25,13 +25,13 @@
   position: relative; z-index: 1;
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
 }
 
 // ── Back link ────────────────────────────────────────────
 .login-back {
-  position: fixed; top: 1.5rem; left: 2rem;
-  display: flex; align-items: center; gap: 0.5rem;
+  position: fixed; top: var(--space-6); left: var(--space-8);
+  display: flex; align-items: center; gap: var(--space-2);
   font-size: var(--text-sm); letter-spacing: var(--tracking-wide); text-transform: uppercase;
   color: var(--color-text-muted); text-decoration: none;
   transition: color 0.2s; z-index: 10;
@@ -44,7 +44,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  padding: 3rem 2.5rem;
+  padding: var(--space-12) var(--space-10);
   position: relative;
   box-shadow: var(--shadow-xl);
   animation: fadeInUp 0.7s ease both;
@@ -61,7 +61,7 @@
 // ── Brand ─────────────────────────────────────────────────
 .login-brand {
   display: flex; align-items: center; justify-content: center;
-  gap: 0.75rem; margin-bottom: 1.5rem;
+  gap: var(--space-3); margin-bottom: var(--space-6);
 }
 .login-brand-mark {
   width: 40px; height: 40px; border-radius: var(--radius-md);
@@ -76,7 +76,7 @@
 }
 
 .login-divider {
-  width: 100%; height: 1px; margin-bottom: 1.75rem;
+  width: 100%; height: 1px; margin-bottom: var(--space-7);
   background: var(--color-border);
 }
 
@@ -84,16 +84,16 @@
   font-family: 'Playfair Display', serif;
   font-size: var(--text-display); font-weight: var(--weight-medium);
   color: var(--color-text-primary);
-  text-align: center; margin-bottom: 0.5rem;
+  text-align: center; margin-bottom: var(--space-2);
 }
 .login-sub {
   font-size: var(--text-sm); color: var(--color-text-muted);
-  text-align: center; margin-bottom: 2rem;
+  text-align: center; margin-bottom: var(--space-8);
 }
 
 // ── Form ─────────────────────────────────────────────────
-.login-form { display: flex; flex-direction: column; gap: 1.25rem; }
-.form-field  { display: flex; flex-direction: column; gap: 0.4rem; }
+.login-form { display: flex; flex-direction: column; gap: var(--space-5); }
+.form-field  { display: flex; flex-direction: column; gap: var(--space-field-gap); }
 
 .field-label {
   font-size: var(--text-xs); letter-spacing: var(--tracking-wider); text-transform: uppercase;
@@ -103,17 +103,17 @@
 .field-input-wrap { position: relative; display: flex; align-items: center; }
 
 .field-icon {
-  position: absolute; left: 0.9rem;
+  position: absolute; left: var(--space-icon-inset);
   color: var(--color-text-muted); font-size: var(--text-base); pointer-events: none;
 }
 .field-icon-right {
-  position: absolute; right: 0.9rem;
+  position: absolute; right: var(--space-icon-inset);
   color: var(--color-text-muted); font-size: var(--text-base); cursor: pointer;
   transition: color 0.2s;
   &:hover { color: var(--color-primary); }
 }
 .field-input {
-  width: 100%; padding: 0.8rem 2.5rem;
+  width: 100%; padding: var(--space-input-pad-v) var(--space-10);
   background: var(--color-surface-2) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-md) !important;
@@ -134,8 +134,8 @@
 }
 
 .login-error {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.75rem 1rem; border-radius: var(--radius-md);
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-md);
   background: var(--color-danger-light);
   border: 1px solid var(--color-danger);
   color: var(--color-danger-text); font-size: var(--text-sm);
@@ -143,13 +143,13 @@
 
 // ── Button ────────────────────────────────────────────────
 .btn-login {
-  width: 100%; padding: 0.95rem;
+  width: 100%; padding: var(--space-btn-pad-v);
   border-radius: var(--radius-md); border: none; cursor: pointer;
   background: var(--color-primary);
   color: var(--color-text-inverse); font-size: var(--text-base); font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-wide); text-transform: uppercase;
   transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-  box-shadow: var(--shadow-md); margin-top: 0.5rem;
+  box-shadow: var(--shadow-md); margin-top: var(--space-2);
 
   &:hover:not(:disabled) {
     background: var(--color-primary-hover);

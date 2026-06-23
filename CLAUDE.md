@@ -62,3 +62,13 @@ Angular 17.3, composants standalone, PrimeNG 17.
 ## Lazy loading
 
 - Toute nouvelle route utilise `loadComponent`/`loadChildren` — jamais d'import eager d'un composant de page dans `app.routes.ts`/`*.routes.ts`.
+
+## Documentation de module — règle de mise à jour
+
+**Après chaque sweep de module, mettre à jour les 3 niveaux de documentation avant de passer au module suivant :**
+
+1. `docs/modules/<nom>.md` — fiche technique (backend + frontend).
+2. `docs/direction/<nom>.md` — présentation fonctionnelle 1-2 pages (métier, utilisateurs, valeur).
+3. `docs/guide-utilisateur/<profil>.md` — section du guide du profil concerné (`admin.md` si SYSTEM_ADMIN, `finance.md` si Finance).
+
+Ces 3 fichiers sont la source de vérité documentaire du projet. Ne jamais terminer un sweep sans les avoir tous mis à jour.

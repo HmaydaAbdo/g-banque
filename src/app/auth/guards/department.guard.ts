@@ -22,7 +22,6 @@ export function departmentGuard(department: string, minRole?: DepartmentRoleType
     return authService.isAuthenticated$.pipe(
       tap(isAuthenticated => {
         if (!isAuthenticated) {
-          console.warn(`departmentGuard(${department}): utilisateur non authentifié. Redirection vers /login.`);
           router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
         }
       }),
@@ -40,7 +39,6 @@ export function departmentGuard(department: string, minRole?: DepartmentRoleType
           : authService.belongsToDepartment(department);
 
         if (!hasAccess) {
-          console.warn(`departmentGuard(${department}): accès refusé. Redirection vers /portail/unauthorized.`);
           router.navigate(['/portail/unauthorized']);
         }
         return hasAccess;

@@ -15,7 +15,6 @@ export const systemAdminGuard: CanActivateFn = (route, state) => {
   return authService.isAuthenticated$.pipe(
     tap(isAuthenticated => {
       if (!isAuthenticated) {
-        console.warn('systemAdminGuard: utilisateur non authentifié. Redirection vers /login.');
         router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
       }
     }),
@@ -25,7 +24,6 @@ export const systemAdminGuard: CanActivateFn = (route, state) => {
       }
       const isSystemAdmin = authService.isSystemAdmin();
       if (!isSystemAdmin) {
-        console.warn('systemAdminGuard: authentifié mais pas SYSTEM_ADMIN. Redirection vers /portail/unauthorized.');
         router.navigate(['/portail/unauthorized']);
       }
       return isSystemAdmin;

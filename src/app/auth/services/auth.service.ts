@@ -3,7 +3,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap, of } from 'rxjs';
-import { delay, finalize } from 'rxjs/operators';
+import { delay } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { LoginResponse } from "../dto/LoginResponse";
@@ -39,20 +39,13 @@ export class AuthService {
           if (response.accessToken) {
             localStorage.setItem("token", response.accessToken);
             this.isAuthenticatedSubject.next(true);
-          } else {
-            console.warn("Login successful but 'accessToken' not found in response.");
           }
         })
       );
   }
 
   getToken(): string | null {
-    if (this.hasToken()) {
-      return localStorage.getItem("token");
-    } else {
-      console.log("No token found in localStorage.");
-      return null;
-    }
+    return this.hasToken() ? localStorage.getItem("token") : null;
   }
 
   isTokenValid(): boolean {
@@ -62,8 +55,7 @@ export class AuthService {
         const decodedToken: DecodedToken = jwtDecode(token);
         const currentTime = Date.now() / 1000;
         return decodedToken.exp > currentTime && this.isAuthenticatedSubject.value;
-      } catch (error) {
-        console.error("Error decoding token or token expired:", error);
+      } catch {
         return false;
       }
     }
@@ -81,8 +73,7 @@ export class AuthService {
         localStorage.removeItem("token");
         this.isAuthenticatedSubject.next(false);
         this.router.navigate(['/login']);
-      }),
-      finalize(() => console.log('Logout process finished'))
+      })
     );
   }
 
@@ -91,8 +82,7 @@ export class AuthService {
     if (token) {
       try {
         return jwtDecode<DecodedToken>(token);
-      } catch (error) {
-        console.error("Error decoding token:", error);
+      } catch {
         return null;
       }
     }
