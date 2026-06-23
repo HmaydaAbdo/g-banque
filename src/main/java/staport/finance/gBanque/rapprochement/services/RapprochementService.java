@@ -1,5 +1,6 @@
 package staport.finance.gBanque.rapprochement.services;
 
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -7,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.Bank.events.BanqueCreatedEvent;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
@@ -30,6 +32,7 @@ import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.spec.TransactionSpecifications;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -332,5 +335,47 @@ public class RapprochementService {
                                 (BigDecimal) row[4]
                         )
                 ));
+    }
+
+    // ── Façade publique pour les autres domaines ────────────────────────────────
+    // (Backend/CLAUDE.md, "Encapsulation des domaines" : jamais RapprochementRepository
+    // injecté directement par un autre domaine — toujours ces méthodes.)
+
+    /**
+     * Réagit à la création d'une banque pour lui ouvrir son premier rapprochement.
+     * Découple totalement Bank de Rapprochement : {@code BanqueServiceImpl} publie
+     * l'event via {@code ApplicationEventPublisher} (bean du framework), il n'a jamais
+     * besoin d'injecter {@code RapprochementService} — qui dépend déjà de
+     * {@code IBanqueService}, une dépendance dans l'autre sens créerait un cycle Spring.
+     */
+    @EventListener
+    public void onBanqueCreated(BanqueCreatedEvent event) {
+        createInitialRapprochement(event.banqueId());
+    }
+
+    /**
+     * Crée le premier rapprochement (statut EN_COURS, solde de début à zéro) pour une
+     * banque donnée.
+     */
+    @Transactional
+    public Rapprochement createInitialRapprochement(Long banqueId) {
+        Rapprochement initial = new Rapprochement();
+        initial.setBanque(banqueService.findOrThrow(banqueId));
+        initial.setDateRapprochement(YearMonth.now());
+        initial.setSoldeDebut(BigDecimal.ZERO);
+        initial.setStatut(StatutRapprochement.EN_COURS);
+        return rapprochementRepository.save(initial);
+    }
+
+    /** Tous les rapprochements actuellement EN_COURS, toutes banques confondues. */
+    @Transactional(readOnly = true)
+    public List<Rapprochement> findAllEnCours() {
+        return rapprochementRepository.findAllByStatut(StatutRapprochement.EN_COURS);
+    }
+
+    /** Le rapprochement EN_COURS d'une banque donnée, s'il existe. */
+    @Transactional(readOnly = true)
+    public Optional<Rapprochement> findEnCoursByBanqueId(Long banqueId) {
+        return rapprochementRepository.findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS);
     }
 }
