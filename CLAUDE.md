@@ -74,7 +74,7 @@
 - Le détail champ-par-champ (avant/après) n'est jamais calculé ni stocké à l'écriture — il est lu à la demande depuis Envers (`AuditReader`, via `EnversDiffService`, comparaison générique par réflexion sur les champs scalaires) quand on consulte le détail d'une ligne de `Log` (`GET /logs/{id}/details`).
 - Interdit : comparaison de champs écrite à la main dans un aspect (`compareField`/`compareAndLogFields` style) — c'est le rôle d'Envers (lu via `EnversDiffService`), jamais d'un aspect custom.
 - Interdit : un aspect d'audit dédié à une seule entité — toujours passer par `GenericAuditAspect`.
-- **Migration en cours, module par module** — les anciens aspects par entité (`BanqueAuditAspect`, `LigneFonctionnelleAuditAspect`, `NatureLigneFonctionnelleAuditAspect`) restent en place et continuent de fonctionner pour leurs modules tant que ceux-ci n'ont pas été migrés vers `@Audited`/`@AuditableAction` (coexistence assumée pendant la transition — voir TODO.md). Tout nouveau module doit utiliser directement le mécanisme générique, jamais un nouvel aspect dédié.
+- **Migration en cours, module par module** — les anciens aspects par entité (`LigneFonctionnelleAuditAspect`, `NatureLigneFonctionnelleAuditAspect`) restent en place et continuent de fonctionner pour leurs modules tant que ceux-ci n'ont pas été migrés vers `@Audited`/`@AuditableAction` (coexistence assumée pendant la transition — voir TODO.md). `Bank` est déjà migré (`@Audited` sur `Banque`, `@AuditableAction` sur `BanqueServiceImpl`) ; `BanqueAuditAspect` est neutralisé (son pointcut ciblait une classe renommée depuis, il était déjà inerte avant la migration). Tout nouveau module doit utiliser directement le mécanisme générique, jamais un nouvel aspect dédié.
 
 ## Configuration & secrets
 
