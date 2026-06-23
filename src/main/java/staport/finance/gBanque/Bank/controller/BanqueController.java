@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
@@ -16,6 +17,7 @@ import staport.finance.gBanque.Bank.dtos.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
 import staport.finance.gBanque.Bank.exceptions.BanqueExceptionHandler;
+import staport.finance.gBanque.Bank.services.BankAccueilAggregatorService;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.common.PageableUtils;
 import java.util.List;
@@ -26,6 +28,11 @@ import java.util.List;
  * Injects {@link IBanqueService} (DIP — never the concrete implementation).
  * Exception handling is delegated to {@link BanqueExceptionHandler}.
  * No business logic lives here.
+ *
+ * <p>Lecture ouverte à tout utilisateur authentifié. Mutation (create/update/delete)
+ * réservée à {@code SYSTEM_ADMIN} ou au département Finance (MEMBER ou DIRECTOR) —
+ * {@code @PreAuthorize} posé par méthode plutôt qu'au niveau classe, car ce module
+ * n'est pas uniformément restreint comme User/Department.
  */
 @RestController
 @RequestMapping("/banques")
@@ -33,15 +40,21 @@ public class BanqueController {
 
     private static final Logger logger = LoggerFactory.getLogger(BanqueController.class);
 
-    private final IBanqueService banqueService;
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
 
-    public BanqueController(IBanqueService banqueService) {
+    private final IBanqueService banqueService;
+    private final BankAccueilAggregatorService accueilAggregatorService;
+
+    public BanqueController(IBanqueService banqueService, BankAccueilAggregatorService accueilAggregatorService) {
         this.banqueService = banqueService;
+        this.accueilAggregatorService = accueilAggregatorService;
     }
 
     // ── Create ───────────────────────────────────────────────────────────────
 
     @PostMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<BanqueResponse> createBanque(
             @Valid @RequestPart("banque") BanqueRequest request,
             @RequestPart("logoFile") MultipartFile logoFile) {
@@ -81,19 +94,20 @@ public class BanqueController {
     @GetMapping("/accueil-info")
     public ResponseEntity<List<BankAcceuilResponse>> getAccueilBankInformation() {
         logger.debug("GET /banques/accueil-info");
-        return ResponseEntity.ok(banqueService.getAccueilBankInfo());
+        return ResponseEntity.ok(accueilAggregatorService.getAccueilBankInfo());
     }
 
     @GetMapping("/accueil-info/{banqueId}")
     public ResponseEntity<BankAcceuilResponse> getAccueilBankInformationById(
             @PathVariable Long banqueId) {
         logger.debug("GET /banques/accueil-info/{}", banqueId);
-        return ResponseEntity.ok(banqueService.getAccueilBankInfoById(banqueId));
+        return ResponseEntity.ok(accueilAggregatorService.getAccueilBankInfoById(banqueId));
     }
 
     // ── Update ───────────────────────────────────────────────────────────────
 
     @PutMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<BanqueResponse> updateBanque(
             @PathVariable Long id,
             @Valid @RequestPart("banque") BanqueRequest request,
@@ -106,6 +120,7 @@ public class BanqueController {
     // ── Delete ───────────────────────────────────────────────────────────────
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Void> deleteBanque(@PathVariable Long id) {
         logger.info("DELETE /banques/{}", id);
         banqueService.deleteBanque(id);
