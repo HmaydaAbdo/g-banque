@@ -1,0 +1,19 @@
+# =============================================================================
+# G-Banque — Profil PROD
+# Activé quand SPRING_PROFILES_ACTIVE=prod
+# =============================================================================
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate   # Flyway gère le schéma — Hibernate valide seulement
+    show-sql: false
+  batch:
+    jdbc:
+      initialize-schema: never   # Tables Spring Batch déjà créées par Flyway
+
+logging:
+  level:
+    root: WARN
+    staport.finance.gBanque: INFO
+    org.springframework.web: WARN

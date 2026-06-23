@@ -1,0 +1,23 @@
+# =============================================================================
+# G-Banque — Profil DEV
+# Activé quand SPRING_PROFILES_ACTIVE=dev (défaut)
+# =============================================================================
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update   # Hibernate crée/modifie le schéma automatiquement en dev
+    show-sql: false       # Passer à true localement si besoin de déboguer les requêtes
+  batch:
+    jdbc:
+      initialize-schema: always   # Recrée les tables Spring Batch au démarrage
+
+logging:
+  level:
+    root: INFO
+    staport.finance.gBanque: DEBUG
+    org.springframework.web: INFO
+    # Décommenter pour déboguer SQL ou Security :
+    # org.hibernate.SQL: DEBUG
+    # org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    # org.springframework.security: DEBUG

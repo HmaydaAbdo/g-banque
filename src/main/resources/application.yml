@@ -1,167 +1,147 @@
-  server:
-    address: ${SERVER_ADRESSE}
-    port: ${SERVER_PORT}
-    servlet:
-      context-path: ${CONTEXT_PATH}
-  spring:
-    main:
-      lazy-initialization: true
-    application:
-      name: gBanque
-    data:
-      web:
-        pageable:
-          # Borne globale appliquée par le résolveur Pageable de Spring Data — ne couvre
-          # pas les endpoints qui construisent PageRequest.of(...) à la main à partir d'un
-          # @RequestParam brut (voir staport.finance.gBanque.common.PageableUtils pour ceux-là).
-          max-page-size: 100
-    datasource:
+# =============================================================================
+# G-Banque — Configuration commune (tous profils)
+# Le profil actif est contrôlé par SPRING_PROFILES_ACTIVE dans .env
+# Dev : application-dev.yml  |  Prod : application-prod.yml
+# =============================================================================
 
-      url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
-      username: ${MYSQL_USER}
-      password: ${MYSQL_PASSWORD}
-      driver-class-name: com.mysql.cj.jdbc.Driver
-
-      hikari:
-        maximum-pool-size: 10
-        minimum-idle: 5
-        idle-timeout: 30000
-        connection-timeout: 20000
-        max-lifetime: 1800000
-    jpa:
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  main:
+    lazy-initialization: true
+  application:
+    name: gBanque
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: ${MYSQL_USER}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+      connection-timeout: 20000
+      max-lifetime: 1800000
+  jpa:
+    properties:
       hibernate:
-        ddl-auto: update
-      show-sql: false
-
-
-      properties:
-        hibernate:
-          temp:
-            use_jdbc_metadata_defaults: false
-          dialect: org.hibernate.dialect.MySQLDialect
-    batch:
-      job:
+        temp:
+          use_jdbc_metadata_defaults: false
+        dialect: org.hibernate.dialect.MySQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true  # DB existante (XAMPP/prod) : baseline à V1, V1 non ré-exécuté
+    baseline-version: 1        # DB vide : V1 exécuté normalement ; DB existante : V1 skippé
+    validate-on-migrate: true
+    out-of-order: false
+  batch:
+    job:
+      enabled: true
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    protocol: ${MAIL_PROTOCOL:smtp}
+    from: ${MAIL_FROM}
+    default-encoding: UTF-8
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: false
+      mail.smtp.ssl.trust: ${MAIL_HOST}
+      mail.smtp.ssl.checkserveridentity: false
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+    notification:
+      batch-job:
         enabled: true
-      jdbc:
-        initialize-schema: always
-    mail:
-        host: ${MAIL_HOST}
-        port: ${MAIL_PORT}
-        username: ${MAIL_USERNAME}
-        password: ${MAIL_PASSWORD}
-        protocol: ${MAIL_PROTOCOL:smtp}
-        from: ${MAIL_FROM}
-        default-encoding: UTF-8
-        properties:
-          mail.smtp.auth: true
-          mail.smtp.starttls.enable: true
-          mail.smtp.starttls.required: false
-          mail.smtp.ssl.trust: ${MAIL_HOST}
-          mail.smtp.ssl.checkserveridentity: false
-          mail.smtp.connectiontimeout: 5000
-          mail.smtp.timeout: 5000
-          mail.smtp.writetimeout: 5000
-        notification:
-          batch-job:
-            enabled: true
-            recipients: ${MAIL_NOTIFICATION_RECIPIENTS}
+        recipients: ${MAIL_NOTIFICATION_RECIPIENTS}
 
-  jwt:
-    secret: ${JWT_SECRET}
+server:
+  address: ${SERVER_ADRESSE}
+  port: ${SERVER_PORT}
+  servlet:
+    context-path: ${CONTEXT_PATH}
 
-  functional:
-    line:
-      expiration:
-        alert:
-          threshold:
-            months: 2
-        warning:
-          threshold:
-            months: 3
-      job:
-        # Configuration individuelle des jobs
-        general:
-          enabled: true
-        specific:
-          enabled: true
-      jobs:
-        # Configuration globale du scheduler
-        enabled: true
-        cron: 0 0 12 ? * SUN  # Dimanche à 12:00 PM
-        sequential: true  # Exécution séquentielle (recommandé)
-        abort-on-general-failure: false  # Annuler job spécifique si job général échoue
-  leasing:
-    main-levee:
-        job:
-          # Enable/disable leasing main levée job
-          enabled: true
+jwt:
+  secret: ${JWT_SECRET}
 
-          # CRON expression: Every Sunday at 2:00 PM (2 hours after functional lines)
-          # This ensures no database lock conflicts
-          cron: "0 0 14 ? * SUN"
-    contract:
-      valeur-residuelle: 0.01
-      taux-tva: 0.2
-  cmt:
-    main-levee:
-      job:
-        # Activer/désactiver le job de main levée CMT
-        enabled: true
+springdoc:
+  # Swagger activé en dev (SWAGGER_ENABLED=true), désactivé en prod (false)
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:false}
 
-        # Expression CRON : Tous les dimanches à 14h30 (30 minutes après le job leasing)
-        # Cela garantit l'absence de conflits de verrous de base de données
-        cron: "0 30 14 ? * SUN"
-  # Management endpoints (for healthcheck)
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: health,info,metrics
-        base-path: /actuator
-    endpoint:
-      health:
-        show-details: when-authorized
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
     health:
-      db:
+      show-details: when-authorized
+  health:
+    db:
+      enabled: true
+
+# =============================================================================
+# Domaine métier — commun aux deux profils
+# =============================================================================
+functional:
+  line:
+    expiration:
+      alert:
+        threshold:
+          months: 2
+      warning:
+        threshold:
+          months: 3
+    job:
+      general:
         enabled: true
-  commission:
-    leasing:
-      # Commissions par défaut pour les banques sans règles spéciales
-      default-commissions:
-        CIH: 11
-        "[SAHAM BANK]": 11
+      specific:
+        enabled: true
+    jobs:
+      enabled: true
+      cron: "0 0 12 ? * SUN"
+      sequential: true
+      abort-on-general-failure: false
 
-      # Règles conditionnelles basées sur l'organisme de leasing
-      organisme-rules:
-        BMCI:
-          organisme-name: "BMCI LEASING"
-          commission-if-match: 16.5
-          commission-if-not-match: 55
-  springdoc:
-    # Contrôlé par la variable d'environnement SWAGGER_ENABLED.
-    # dev/.env  : SWAGGER_ENABLED=true
-    # prod/.env : SWAGGER_ENABLED=false
-    # L'accès Spring Security aux chemins /swagger-ui/** et /v3/api-docs/** est
-    # en permitAll() — le verrou est ici, pas dans la SecurityConfig.
-    api-docs:
-      enabled: ${SWAGGER_ENABLED}
-    swagger-ui:
-      enabled: ${SWAGGER_ENABLED}
+leasing:
+  main-levee:
+    job:
+      enabled: true
+      cron: "0 0 14 ? * SUN"
+  contract:
+    valeur-residuelle: 0.01
+    taux-tva: 0.2
 
-  logging:
-    level:
-      root: INFO
-      staport.finance.gBanque: DEBUG
-      org.springframework.web: INFO
-#      org.springframework.security: DEBUG
-#      org.hibernate.SQL: DEBUG
-#      org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+cmt:
+  main-levee:
+    job:
+      enabled: true
+      cron: "0 30 14 ? * SUN"
 
-    pattern:
-      console: "%d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
+commission:
+  leasing:
+    default-commissions:
+      CIH: 11
+      "[SAHAM BANK]": 11
+    organisme-rules:
+      BMCI:
+        organisme-name: "BMCI LEASING"
+        commission-if-match: 16.5
+        commission-if-not-match: 55
 
-
-
-
-
-
+logging:
+  pattern:
+    console: "%d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
