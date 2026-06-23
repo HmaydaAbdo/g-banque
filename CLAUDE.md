@@ -45,6 +45,7 @@ Angular 17.3, composants standalone, PrimeNG 17.
 - **YAGNI** : ne jamais ajouter un champ, une option ou un input non demandé dans un formulaire ou un composant.
 - **Idempotence UI** : désactiver le bouton/action (`loading = true`) pendant un appel HTTP mutant pour empêcher une double soumission (double-clic).
 - **Single Source of Truth** : `_tokens.scss` est l'unique source de vérité pour le style ; les enums/constantes partagés avec le backend ne doivent jamais diverger silencieusement.
+- **Zéro dead code** : tout composant, service, pipe, directive, import ou route qui ne sert plus doit être supprimé lors du sweep du module concerné — pas commenté, pas conservé "au cas où". Un composant déréférencé, un import inutilisé dans le tableau `imports[]`, une route jamais atteinte : c'est du bruit, ça part.
 
 ## RBAC
 
