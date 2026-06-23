@@ -9,15 +9,14 @@
       <p-breadcrumb [model]="items" styleClass="border-none p-0"
                     [style]="{'background':'transparent','padding':'0','font-size':'0.75rem'}">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" routerLinkActive class="p-menuitem-link">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
               <span class="text-400 text-xs ml-1">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>

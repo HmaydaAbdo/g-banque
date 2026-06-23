@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, OnInit} from '@angular/core';
 import {Button} from "primeng/button";
 import {RecapitulatifCompte} from "../../dtos/RecapitulatifCompte";
 import {TooltipModule} from "primeng/tooltip";
@@ -30,9 +30,9 @@ import {throwError} from "rxjs";
   ],
   templateUrl: './acceuil.component.html',
   styleUrl: './acceuil.component.scss',
-  providers: [MessageService, provideAnimations(),DatePipe]
+  providers: [MessageService, provideAnimations(), DatePipe]
 })
-export class AcceuilComponent  implements OnInit{
+export class AcceuilComponent implements OnInit {
 
   recapitulatifComptes: RecapitulatifCompte[] = [];
   items: MenuItem[] | undefined;
@@ -42,13 +42,11 @@ export class AcceuilComponent  implements OnInit{
   recapDetailleAllLoading: boolean = false;
   recapDetailleBanqueLoadingMap: Map<number, boolean> = new Map();
 
-  constructor(
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private recapService:RecapService,
-    private funPaymentService: FunPaymentService,
-    private datePipe: DatePipe
-  ) {}
+  private banqueService      = inject(BanqueService);
+  private messageService     = inject(MessageService);
+  private recapService       = inject(RecapService);
+  private funPaymentService  = inject(FunPaymentService);
+  private datePipe           = inject(DatePipe);
 
   ngOnInit(): void {
     this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label:"Accueil" } ]

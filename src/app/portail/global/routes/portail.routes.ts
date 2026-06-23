@@ -1,10 +1,39 @@
 import { Routes } from '@angular/router';
 import { systemAdminGuard } from "../../../auth/guards/system-admin.guard";
+import { departmentGuard } from "../../../auth/guards/department.guard";
+import { accueilDispatchGuard } from "../../../auth/guards/accueil-dispatch.guard";
 
 export const PORTAIL_ROUTES: Routes = [
 
   { path: '', redirectTo: 'accueil', pathMatch: 'full' },
-  { path: 'accueil', loadComponent: () => import('../../accueil/views/acceuil/acceuil.component').then(m => m.AcceuilComponent) },
+
+  /**
+   * Accueil dispatcher — redirige chaque utilisateur vers l'accueil de son département.
+   * Le guard retourne toujours un UrlTree (redirection) : le composant '' n'est jamais rendu.
+   * Pour ajouter un accueil Marchés : ajouter l'entrée dans accueilDispatchGuard + ici.
+   */
+  {
+    path: 'accueil',
+    children: [
+      {
+        path: '',
+        canActivate: [accueilDispatchGuard],
+        loadComponent: () => import('../../accueil/views/accueil-bienvenue/accueil-bienvenue.component')
+          .then(m => m.AccueilBienvenueComponent)
+      },
+      {
+        path: 'finance',
+        canActivate: [departmentGuard('Finance')],
+        loadComponent: () => import('../../accueil/views/acceuil/acceuil.component')
+          .then(m => m.AcceuilComponent)
+      },
+      {
+        path: 'bienvenue',
+        loadComponent: () => import('../../accueil/views/accueil-bienvenue/accueil-bienvenue.component')
+          .then(m => m.AccueilBienvenueComponent)
+      }
+    ]
+  },
 
   {
     path: 'rapprochement',
