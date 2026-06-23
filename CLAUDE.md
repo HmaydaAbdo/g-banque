@@ -42,6 +42,7 @@
 - **Idempotence** : tout traitement batch/synchro (ex. FunPaiement) doit pouvoir être rejoué sans créer de doublon ni d'effet de bord — matcher sur une identité métier stable, jamais sur un insert aveugle ni sur une clé non garantie unique.
 - **Fail-fast** : valider en entrée le plus tôt possible (DTO + Jakarta Validation, variables d'env sans valeur par défaut) plutôt que de laisser une donnée invalide se propager dans le système.
 - **Single Source of Truth** : une règle métier, une constante ou un enum ne doit être défini qu'à un seul endroit — jamais dupliqué entre modules ou entre backend/frontend sans synchronisation explicite.
+- **Zéro dead code** : tout fichier, classe, méthode ou aspect qui ne sert plus doit être supprimé (`git rm`) lors du sweep du module concerné — pas commenté, pas conservé "au cas où". Un pointcut qui ne matche plus rien, un service extrait vers ailleurs, un import inutilisé : c'est du bruit, ça part. Si la suppression est techniquement impossible dans la session courante, neutraliser avec un commentaire explicite ET noter dans `TODO.md` pour suppression manuelle immédiate.
 
 ## Index sur les entités (performance)
 
