@@ -98,4 +98,11 @@ public class Department {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Department that = (Department) o;
-        return id != null && id.equals
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+}

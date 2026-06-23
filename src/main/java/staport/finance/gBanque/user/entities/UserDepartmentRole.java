@@ -115,3 +115,8 @@ public class UserDepartmentRole {
         return id != null && id.equals(that.id);
     }
 
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+}

@@ -101,4 +101,11 @@ public class User {
         this.enabled = enabled;
     }
 
-    public void setSystemAdmi
+    public void setSystemAdmin(boolean systemAdmin) {
+        this.isSystemAdmin = systemAdmin;
+    }
+
+    public void setDepartmentRoles(List<UserDepartmentRole> departmentRoles) {
+        this.departmentRoles = departmentRoles;
+    }
+}

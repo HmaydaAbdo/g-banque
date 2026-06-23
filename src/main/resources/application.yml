@@ -137,6 +137,17 @@
           organisme-name: "BMCI LEASING"
           commission-if-match: 16.5
           commission-if-not-match: 55
+  springdoc:
+    # Contrôlé par la variable d'environnement SWAGGER_ENABLED.
+    # dev/.env  : SWAGGER_ENABLED=true
+    # prod/.env : SWAGGER_ENABLED=false
+    # L'accès Spring Security aux chemins /swagger-ui/** et /v3/api-docs/** est
+    # en permitAll() — le verrou est ici, pas dans la SecurityConfig.
+    api-docs:
+      enabled: ${SWAGGER_ENABLED}
+    swagger-ui:
+      enabled: ${SWAGGER_ENABLED}
+
   logging:
     level:
       root: INFO

@@ -71,6 +71,16 @@ public class SecurityConfig {
                         // reste (info, metrics...) ne doit être visible qu'à un SYSTEM_ADMIN.
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/actuator/**").hasAuthority("SYSTEM_ADMIN")
+                        // Swagger UI (pages statiques + JSON spec) — accès contrôlé par
+                        // springdoc.swagger-ui.enabled / springdoc.api-docs.enabled dans
+                        // application.yml (SWAGGER_ENABLED=false en prod). Spring Security
+                        // ne doit pas être le verrou ici : la page est statique, l'auth
+                        // s'effectue via le bouton "Authorize" de l'UI (bearerAuth JWT).
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

@@ -108,6 +108,18 @@
 - **Appender async** : en profil `prod`, les logs passent par un `AsyncAppender` pour ne pas bloquer le thread HTTP. Ne jamais lire/écrire un fichier de log directement depuis le code applicatif.
 - **Format prod** : JSON structuré via `logstash-logback-encoder` (configuré dans `logback-spring.xml`) — chaque champ (timestamp, level, service, traceId, requestId, userId, message) est interrogeable indépendamment.
 
+## Documentation API (Swagger / OpenAPI 3)
+
+- **`@Tag`** : obligatoire au niveau classe controller — `name` court en français, `description` une phrase métier.
+- **`@Operation`** : obligatoire sur chaque méthode de controller — `summary` ≤ 8 mots, `description` uniquement si le comportement n'est pas trivial (cas de blocage, règle métier non évidente).
+- **`@ApiResponse`** : documenter les codes non-2xx pertinents uniquement — 201, 204, 400, 404, 409, 429. Ne jamais annoter 200 OK (Springdoc le génère automatiquement).
+- **`@Parameter`** : pour les query params dont le nom seul n'est pas explicite (filtres, pagination) ; inutile pour les `@PathVariable` simples (`{id}`).
+- **`@SecurityRequirement(name = "bearerAuth")`** : au niveau classe sur tout controller derrière JWT — ne pas le répéter sur chaque méthode.
+- **DTOs** : `@Schema(description = "...")` sur les champs non évidents (enums, contraintes de format) — ne pas redoubler la contrainte Bean Validation déjà présente.
+- **`OpenApiConfig`** : une seule classe de configuration centralisée déclare le `SecurityScheme` JWT (`bearerAuth`). Ne jamais redéfinir le scheme dans les controllers.
+- **Périmètre** : annoter uniquement la couche controller et les DTOs. Jamais les services, repositories, filtres ou aspects.
+- **Sécurité Swagger** : `/swagger-ui/**` et `/v3/api-docs/**` sont en `permitAll()` dans `SecurityConfig` (la page est statique, l'auth se fait via le bouton "Authorize" de l'UI). Le verrou réel est `springdoc.swagger-ui.enabled: ${SWAGGER_ENABLED}` dans `application.yml` — `SWAGGER_ENABLED=false` en prod, `true` en dev. Ne jamais retirer le `permitAll()` Swagger de `SecurityConfig` (casse l'UI) ni mettre `enabled: true` en dur.
+
 ## Documentation de module (`docs/modules/<nom>.md`)
 
 Chaque fiche de module couvre **backend et frontend** — elle sert à la fois de référence technique, de base pour la présentation fonctionnelle à la direction, et de source pour le futur guide utilisateur. Structure obligatoire :
