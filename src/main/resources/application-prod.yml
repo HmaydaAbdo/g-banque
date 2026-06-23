@@ -3,6 +3,15 @@
 # Activé quand SPRING_PROFILES_ACTIVE=prod
 # =============================================================================
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,loggers,env,threaddump,heapdump,scheduledtasks,flyway
+  endpoint:
+    health:
+      show-details: always
+
 spring:
   jpa:
     hibernate:

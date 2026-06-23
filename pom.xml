@@ -133,6 +133,12 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Micrometer — export métriques vers Prometheus -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
+
 		<!-- Flyway — gestion des migrations de schéma -->
 		<dependency>
 			<groupId>org.flywaydb</groupId>
@@ -184,17 +190,3 @@
 							<version>${mapstruct.version}</version>
 						</path>
 					</annotationProcessorPaths>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-					</excludes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
-</project>

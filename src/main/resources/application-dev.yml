@@ -3,6 +3,16 @@
 # Activé quand SPRING_PROFILES_ACTIVE=dev (défaut)
 # =============================================================================
 
+management:
+  endpoints:
+    web:
+      exposure:
+        # Dev : tous les endpoints Actuator disponibles
+        include: health,info,metrics,prometheus,loggers,env,threaddump,heapdump,scheduledtasks,liquibase,flyway
+  endpoint:
+    health:
+      show-details: always   # Détails santé visibles sans authentification en dev
+
 spring:
   jpa:
     hibernate:

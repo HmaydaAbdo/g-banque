@@ -143,6 +143,48 @@ Chaque fiche de module couvre **backend et frontend** — elle sert à la fois d
 7. **Audit** — couverture Envers (`@Audited`) + `@AuditableAction`, champs exclus et raison.
 8. **Qui peut faire quoi** — RBAC complet : `@PreAuthorize` backend (méthodes concernées), guard Angular (route parente ou enfant), sidebar (`requiredAuthority`).
 
+## Métriques Micrometer — règle de sweep
+
+**Lors du sweep de chaque module, ajouter les métriques Micrometer dans le même changement.**
+
+### Structure
+Créer une classe `XxxMetrics` dans un sous-package `metrics/` du domaine :
+```
+module/
+  metrics/
+    XxxMetrics.java   ← @Component, injecte MeterRegistry
+  service/
+    XxxServiceImpl.java ← injecte XxxMetrics
+```
+
+### Convention de nommage
+`gbanque.<module>.<objet>.<mesure>` — tout en minuscules, séparateur `.`
+Exemples :
+- `gbanque.rapprochement.en_cours.count`
+- `gbanque.caution.active.count`
+- `gbanque.batch.funpaiement.operations.total`
+- `gbanque.batch.funpaiement.job.duration`
+
+### Types à utiliser
+- **Gauge** : valeur instantanée interrogée à chaque scrape Prometheus (nb d'entités dans un état donné). Brancher sur un `Supplier<Number>` qui appelle le repository. Ne jamais incrémenter/décrémenter manuellement un Gauge.
+- **Counter** : valeur qui monte uniquement (nb d'opérations réalisées, nb d'erreurs). Incrémenter dans le service après chaque opération réussie ou échouée.
+- **Timer** : durée d'une opération (jobs batch, appels externes). Utiliser `Timer.record(Runnable)` ou `Timer.start()` / `stop()`.
+
+### Où appeler
+- **Gauge** : enregistré une seule fois au démarrage du bean (`@PostConstruct` ou constructeur de `XxxMetrics`). Le `Supplier` est appelé automatiquement par Prometheus à chaque scrape.
+- **Counter / Timer** : appelés depuis `XxxServiceImpl` après l'opération métier (dans le bloc `try` ou après le commit).
+
+### Ce qui ne génère pas de métriques custom
+Les modules CRUD purs sans état métier significatif (Auth, User, Department) — les métriques HTTP automatiques de Micrometer suffisent (temps de réponse, codes HTTP par endpoint).
+
+### Modules avec métriques attendues (à faire lors du sweep)
+- **Rapprochement** — Gauge : nb par statut (EN_COURS, CLOTURE_PROVISOIRE, CLOTURE_DEFINITIVE) par banque
+- **Caution** — Gauge : nb actives, nb expirées non levées
+- **Leasing** — Gauge : nb échéances à venir J-7 / J-30
+- **CMT** — Gauge : nb échéances à venir J-7 / J-30
+- **Batch FunPaiement** — Counter : opérations sync OK/KO ; Timer : durée job
+- **Moyens de paiement** — Counter : créations par type (LCN, virement, chèque), passages à l'état ECHU
+
 ## Argent (BigDecimal)
 
 - Tout montant est un `BigDecimal` — jamais `double`/`float`.
