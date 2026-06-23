@@ -10,7 +10,7 @@
       {{ isEditMode ? 'Modifier la banque' : 'Nouvelle banque' }}
     </h2>
     <p-breadcrumb [model]="items" styleClass="border-none p-0"
-                  [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+                  [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
       <ng-template pTemplate="item" let-item>
         <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
           <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>

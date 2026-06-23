@@ -8,7 +8,7 @@
     <div class="pg-header__left">
       <h2 class="pg-header__title">{{ utilisateur?.username ?? 'Utilisateur' }}</h2>
       <p-breadcrumb [model]="items" styleClass="border-none p-0"
-                    [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
+                    [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
       </p-breadcrumb>
     </div>
 
@@ -32,7 +32,7 @@
     <div class="surface-card border-round-xl border-1 surface-border p-4"
          style="box-shadow:var(--shadow-sm)">
       <div class="flex flex-column align-items-center gap-2 py-4">
-        <i class="pi pi-user-minus text-300" style="font-size:2rem"></i>
+        <i class="pi pi-user-minus text-300" style="font-size:var(--text-icon)"></i>
         <div class="text-600 font-medium">Utilisateur introuvable</div>
       </div>
     </div>
@@ -58,7 +58,7 @@
     <!-- ═══ DÉPARTEMENTS ═══════════════════════════════════════════════════ -->
     <div class="surface-card border-round-xl border-1 surface-border p-3"
          style="box-shadow:var(--shadow-sm)">
-      <h3 class="text-900 font-bold m-0 mb-3" style="font-size:0.95rem">
+      <h3 class="text-900 font-bold m-0 mb-3" style="font-size:var(--text-section)">
         <i class="pi pi-sitemap mr-2 text-500"></i>Départements
       </h3>
 
@@ -92,7 +92,7 @@
             <tr>
               <td [attr.colspan]="3">
                 <div class="flex flex-column align-items-center gap-1 py-3">
-                  <i class="pi pi-sitemap text-300" style="font-size:1.5rem"></i>
+                  <i class="pi pi-sitemap text-300" style="font-size:var(--text-2xl)"></i>
                   <div class="text-500 text-sm">N'appartient à aucun département</div>
                 </div>
               </td>
@@ -135,7 +135,7 @@
     <!-- ═══ MOT DE PASSE ═══════════════════════════════════════════════════ -->
     <div class="surface-card border-round-xl border-1 surface-border p-3"
          style="box-shadow:var(--shadow-sm)">
-      <h3 class="text-900 font-bold m-0 mb-3" style="font-size:0.95rem">
+      <h3 class="text-900 font-bold m-0 mb-3" style="font-size:var(--text-section)">
         <i class="pi pi-lock mr-2 text-500"></i>Mot de passe
       </h3>
       <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="flex flex-wrap align-items-end gap-2">

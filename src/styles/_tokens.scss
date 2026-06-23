@@ -25,8 +25,11 @@
   --text-xl   : 1.25rem;    //  20px
   --text-2xl  : 1.5rem;     //  24px
   --text-3xl  : 1.875rem;   //  30px
-  --text-title: 1.15rem;    //  18.4px ← titres de section (card headers)
-  --text-icon : 2rem;       //  32px   ← icônes décoratives large
+  --text-breadcrumb: 0.78rem;  //  12.5px ← breadcrumb (p-breadcrumb sur toutes les pages)
+  --text-section   : 0.95rem;  //  15.2px ← titres de sous-section dans les cards (h3)
+  --text-title     : 1.15rem;  //  18.4px ← titres de page / brand marks (card headers, brand letter)
+  --text-display   : 1.6rem;   //  25.6px ← titres display (login title, page hero)
+  --text-icon      : 2rem;     //  32px   ← icônes décoratives large
 
   // Font weights
   --weight-regular  : 400;
@@ -42,6 +45,7 @@
   // Letter spacing
   --tracking-tight  : -0.01em;
   --tracking-normal :  0em;
+  --tracking-loose  :  0.03em;   // ← noms de marque / titres serif
   --tracking-wide   :  0.04em;
   --tracking-wider  :  0.07em;
 

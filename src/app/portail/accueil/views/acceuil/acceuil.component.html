@@ -7,7 +7,7 @@
     <div class="dash-header__left">
       <h1 class="dash-header__title">Tableau de bord</h1>
       <p-breadcrumb [model]="items" styleClass="border-none p-0"
-                    [style]="{'background':'transparent','padding':'0','font-size':'0.75rem'}">
+                    [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
         <ng-template pTemplate="item" let-item>
           @if (item.route) {
             <a [routerLink]="item.route" routerLinkActive class="p-menuitem-link">
