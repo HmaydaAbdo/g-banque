@@ -35,7 +35,9 @@ public class BanqueMapper {
             return null;
         }
 
-        logger.debug("Converting BanqueRequest to Entity - request: {}", request);
+        // Ne jamais logger `request` en entier : un record expose tous ses champs via
+        // toString(), y compris numeroDeCompte (RIB) — voir Backend/CLAUDE.md "Sécurité".
+        logger.debug("Converting BanqueRequest to Entity - nom: {}", request.nom());
 
         Banque banque = new Banque();
         banque.setNom(request.nom());
