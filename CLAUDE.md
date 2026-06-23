@@ -51,7 +51,7 @@ Angular 17.3, composants standalone, PrimeNG 17.
 - JWT : claim `authorities: string[]`. Authorities possibles : `SYSTEM_ADMIN` (transversal), `DEPT_<nom>:<MEMBER|DIRECTOR>` (par département).
 - `Role` enum supprimé — n'existe plus côté backend.
 - Guards : `systemAdminGuard`, `departmentGuard(dept, minRole?)`.
-- Sidebar : `SidebarItem.requiredAuthority?: string`.
+- Sidebar : `SidebarItem.requiredAuthority?: string | string[]` (un tableau exprime un OR — ex. `['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR']`).
 
 ## Sécurité — XSS
 
