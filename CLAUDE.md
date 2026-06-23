@@ -120,6 +120,16 @@
 - **Périmètre** : annoter uniquement la couche controller et les DTOs. Jamais les services, repositories, filtres ou aspects.
 - **Sécurité Swagger** : `/swagger-ui/**` et `/v3/api-docs/**` sont en `permitAll()` dans `SecurityConfig` (la page est statique, l'auth se fait via le bouton "Authorize" de l'UI). Le verrou réel est `springdoc.swagger-ui.enabled: ${SWAGGER_ENABLED}` dans `application.yml` — `SWAGGER_ENABLED=false` en prod, `true` en dev. Ne jamais retirer le `permitAll()` Swagger de `SecurityConfig` (casse l'UI) ni mettre `enabled: true` en dur.
 
+## Documentation de module — règle de mise à jour
+
+**Après chaque sweep de module, mettre à jour les 3 niveaux de documentation avant de passer au module suivant :**
+
+1. `docs/modules/<nom>.md` — fiche technique (backend + frontend) : entités, endpoints, RBAC, audit, architecture interne.
+2. `docs/direction/<nom>.md` — présentation fonctionnelle 1-2 pages : ce que fait le module pour le métier, qui l'utilise, valeur ajoutée, captures d'écran si disponibles.
+3. `docs/guide-utilisateur/<profil>.md` — mettre à jour la section concernée dans le guide du profil qui utilise ce module (`admin.md` si SYSTEM_ADMIN, `finance.md` si Finance, les deux si partagé).
+
+Ces 3 fichiers sont la source de vérité documentaire du projet. Ne jamais terminer un sweep sans les avoir tous mis à jour.
+
 ## Documentation de module (`docs/modules/<nom>.md`)
 
 Chaque fiche de module couvre **backend et frontend** — elle sert à la fois de référence technique, de base pour la présentation fonctionnelle à la direction, et de source pour le futur guide utilisateur. Structure obligatoire :

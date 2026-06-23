@@ -29,13 +29,13 @@ import java.util.stream.Collectors;
 @RestControllerAdvice(assignableTypes = BanqueController.class)
 public class BanqueExceptionHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(BanqueExceptionHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(BanqueExceptionHandler.class);
 
     // ── 404 Not Found ────────────────────────────────────────────────────────
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
-        logger.warn("Banque not found: {}", ex.getMessage());
+        log.warn("Banque not found: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(404, "Not Found", ex.getMessage(), ex));
@@ -45,7 +45,7 @@ public class BanqueExceptionHandler {
 
     @ExceptionHandler(DuplicateEntryException.class)
     public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateEntryException ex) {
-        logger.warn("Duplicate banque entry: {}", ex.getMessage());
+        log.warn("Duplicate banque entry: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), ex));
@@ -53,7 +53,7 @@ public class BanqueExceptionHandler {
 
     @ExceptionHandler(BanqueDeletionException.class)
     public ResponseEntity<ErrorResponse> handleDeletionGuard(BanqueDeletionException ex) {
-        logger.warn("Banque deletion blocked: {}", ex.getMessage());
+        log.warn("Banque deletion blocked: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), ex));
@@ -67,7 +67,7 @@ public class BanqueExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining("; "));
         String message = "Validation échouée : " + fieldErrors;
-        logger.warn("Validation error on BanqueController: {}", message);
+        log.warn("Validation error on BanqueController: {}", message);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(400, "Bad Request", message, null, Instant.now()));
@@ -77,7 +77,7 @@ public class BanqueExceptionHandler {
 
     @ExceptionHandler(FileStorageException.class)
     public ResponseEntity<ErrorResponse> handleFileStorage(FileStorageException ex) {
-        logger.error("File storage error in BanqueController", ex);
+        log.error("File storage error in BanqueController", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.of(500, "Internal Server Error", ex.getMessage(), ex));
