@@ -92,6 +92,19 @@
 - Logs : jamais logger une entité/DTO complet pouvant porter un champ sensible (mot de passe, numéro de compte, montant) — logger des identifiants (id, username) plutôt que l'objet entier.
 - `ddl-auto: update` est un raccourci de dev — toute évolution de schéma destinée à la prod doit passer par un outil de migration versionné (Flyway/Liquibase) dès qu'il sera introduit, jamais par une modification manuelle de la base de prod.
 
+## Documentation de module (`docs/modules/<nom>.md`)
+
+Chaque fiche de module couvre **backend et frontend** — elle sert à la fois de référence technique, de base pour la présentation fonctionnelle à la direction, et de source pour le futur guide utilisateur. Structure obligatoire :
+
+1. **Rôle** — ce que fait le module pour le métier (2-3 phrases, sans jargon technique), puis sa place dans l'architecture (package, dépendances).
+2. **Entité(s)** — tableau des champs JPA + indexes. Omettre si le module n'a pas d'entité propre (ex. `auth`).
+3. **Interface utilisateur** — vues Angular : une ligne par écran (route, composant, description de ce que l'utilisateur voit et peut faire), plus la navigation (sidebar, breadcrumb, redirections).
+4. **Endpoints** — tableau `Méthode | Route | Accès | Description`.
+5. **Règles métier** — invariants, validations, blocages, comportements non triviaux visibles par l'utilisateur.
+6. **Architecture interne** — décisions de conception cross-domaines (encapsulation, events, services dédiés). Omettre si le module est un CRUD simple sans décision notable.
+7. **Audit** — couverture Envers (`@Audited`) + `@AuditableAction`, champs exclus et raison.
+8. **Qui peut faire quoi** — RBAC complet : `@PreAuthorize` backend (méthodes concernées), guard Angular (route parente ou enfant), sidebar (`requiredAuthority`).
+
 ## Argent (BigDecimal)
 
 - Tout montant est un `BigDecimal` — jamais `double`/`float`.
