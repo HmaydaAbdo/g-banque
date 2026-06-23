@@ -6,20 +6,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.Bank.dtos.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.BanqueResponse;
 import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
-import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
-import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.rapprochement.entities.Rapprochement;
-import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
-import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
+import staport.finance.gBanque.Bank.events.BanqueCreatedEvent;
 import staport.finance.gBanque.Bank.exceptions.BanqueDeletionException;
 import staport.finance.gBanque.Bank.mappers.BanqueMapper;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
@@ -33,14 +31,8 @@ import staport.finance.gBanque.transactions.service.ITransactionService;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.YearMonth;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-import static staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService.FC_CODE;
 
 
 @Service
@@ -55,9 +47,7 @@ public class BanqueServiceImpl implements IBanqueService {
     private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
     private final ITransactionService transactionService;
     private final ILigneFonctionnelleService ligneFonctionnelleService;
-    private final LcnRepository lcnRepository;
-    private final VirementRepository virementRepository;
-    private final RapprochementRepository rapprochementRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     public BanqueServiceImpl(BanqueRepository banqueRepository,
@@ -65,23 +55,20 @@ public class BanqueServiceImpl implements IBanqueService {
                              INatureLigneFonctionnelleService natureLigneFonctionnelleService,
                              ITransactionService transactionService,
                              ILigneFonctionnelleService ligneFonctionnelleService,
-                             LcnRepository lcnRepository,
-                             VirementRepository virementRepository,
-                             RapprochementRepository rapprochementRepository) {
+                             ApplicationEventPublisher eventPublisher) {
         this.banqueRepository = banqueRepository;
         this.banqueMapper = banqueMapper;
         this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
         this.ligneFonctionnelleService = ligneFonctionnelleService;
         this.transactionService = transactionService;
-        this.lcnRepository = lcnRepository;
-        this.virementRepository = virementRepository;
-        this.rapprochementRepository = rapprochementRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     // ── Create ───────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Banque.class)
     public BanqueResponse createBanque(BanqueRequest request, MultipartFile logoFile) {
         logger.info("Creating banque: {}", request.nom());
 
@@ -102,13 +89,10 @@ public class BanqueServiceImpl implements IBanqueService {
 
         Banque saved = banqueRepository.save(banque);
 
-        // Créer le premier rapprochement EN_COURS avec soldeDebut = 0
-        Rapprochement initial = new Rapprochement();
-        initial.setBanque(saved);
-        initial.setDateRapprochement(java.time.YearMonth.now());
-        initial.setSoldeDebut(BigDecimal.ZERO);
-        initial.setStatut(StatutRapprochement.EN_COURS);
-        rapprochementRepository.save(initial);
+        // Le domaine Rapprochement crée son premier rapprochement EN_COURS en réaction à
+        // cet event — Bank ne dépend jamais de RapprochementService directement (celui-ci
+        // dépend déjà de IBanqueService, une dépendance dans l'autre sens créerait un cycle).
+        eventPublisher.publishEvent(new BanqueCreatedEvent(saved.getId()));
 
         BigDecimal balance = computeLiveBalance(saved.getId());
         return banqueMapper.toDto(saved, balance);
@@ -151,59 +135,6 @@ public class BanqueServiceImpl implements IBanqueService {
 
 
     @Override
-    public List<BankAcceuilResponse> getAccueilBankInfo() {
-        // Query 1: Fetch Banks
-        List<Banque> banques = banqueRepository.findAll();
-        List<Long> ids = banques.stream().map(Banque::getId).toList();
-
-        // Query 2: Batch fetch  balances
-        Map<Long, BigDecimal> balanceMap = transactionService.computeBalancesForBanks(ids);
-
-        // Query 3: Batch fetch active FC
-        Map<Long, BigDecimal> plafondMap = ligneFonctionnelleService.getActivePlafondsForBanks(ids, FC_CODE);
-
-        // Query 4: soldeDebut des rapprochements EN_COURS (1 requête batch)
-        Map<Long, BigDecimal> soldeDebutMap = rapprochementRepository
-                .findAllByStatut(StatutRapprochement.EN_COURS)
-                .stream()
-                .collect(Collectors.toMap(
-                        r -> r.getBanque().getId(),
-                        r -> r.getSoldeDebut() != null ? r.getSoldeDebut() : BigDecimal.ZERO
-                ));
-
-        // Query 5 & 6: Échus LCN + Virements groupés par banque
-        LocalDate today = LocalDate.now();
-        Map<Long, Long> lcnCountMap      = new HashMap<>();
-        Map<Long, Long> virementCountMap = new HashMap<>();
-
-        lcnRepository.countEchusGroupedByBanque(today)
-                .forEach(row -> lcnCountMap.put((Long) row[0], (Long) row[1]));
-
-        virementRepository.countEchusGroupedByBanque(today)
-                .forEach(row -> virementCountMap.put((Long) row[0], (Long) row[1]));
-
-        // Assembly
-        return banques.stream()
-                .map(b -> {
-                    Long bid = b.getId();
-                    return banqueMapper.toAcceuilDto(b,
-                            balanceMap.get(bid),
-                            plafondMap.get(bid),
-                            soldeDebutMap.getOrDefault(bid, BigDecimal.ZERO),
-                            lcnCountMap.getOrDefault(bid, 0L),
-                            virementCountMap.getOrDefault(bid, 0L));
-                })
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public BankAcceuilResponse getAccueilBankInfoById(Long banqueId) {
-        Banque banque = findOrThrow(banqueId);
-        Long fcNatureId = natureLigneFonctionnelleService.findFaciliteDeCaisseNatureId();
-        return mapToAccueilResponse(banque, fcNatureId);
-    }
-
-    @Override
     public BigDecimal getPlafondFC(Long banqueId) {
         Long fcNatureId = natureLigneFonctionnelleService.findFaciliteDeCaisseNatureId();
         return this.ligneFonctionnelleService.getPlafondFCInternal(banqueId, fcNatureId);
@@ -213,6 +144,7 @@ public class BanqueServiceImpl implements IBanqueService {
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Banque.class)
     public BanqueResponse updateBanque(Long id, BanqueRequest request, MultipartFile logoFile) {
         logger.info("Updating banque ID: {}", id);
 
@@ -250,6 +182,7 @@ public class BanqueServiceImpl implements IBanqueService {
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = Banque.class)
     public void deleteBanque(Long id) {
         Banque banque = findOrThrow(id);
 
@@ -278,31 +211,12 @@ public class BanqueServiceImpl implements IBanqueService {
                 .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée ID: " + id));
     }
 
-    // ── Private Senior Helpers ────────────────────────────────────────────────
-
-    private BankAcceuilResponse mapToAccueilResponse(Banque banque, Long fcNatureId) {
-        Long       banqueId = banque.getId();
-        BigDecimal balance  = computeLiveBalance(banqueId);
-        BigDecimal plafond  = this.ligneFonctionnelleService.getPlafondFCInternal(banqueId, fcNatureId);
-
-        BigDecimal soldeDebut = rapprochementRepository
-                .findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS)
-                .map(r -> r.getSoldeDebut() != null ? r.getSoldeDebut() : BigDecimal.ZERO)
-                .orElse(BigDecimal.ZERO);
-
-        LocalDate today = LocalDate.now();
-        long lcnsCount     = lcnRepository.countEchusGroupedByBanque(today).stream()
-                .filter(row -> banqueId.equals(row[0]))
-                .mapToLong(row -> (Long) row[1])
-                .findFirst().orElse(0L);
-        long virementsCount = virementRepository.countEchusGroupedByBanque(today).stream()
-                .filter(row -> banqueId.equals(row[0]))
-                .mapToLong(row -> (Long) row[1])
-                .findFirst().orElse(0L);
-
-        return banqueMapper.toAcceuilDto(banque, balance, plafond, soldeDebut, lcnsCount, virementsCount);
+    @Override
+    public List<Banque> getAllBanqueEntities() {
+        return banqueRepository.findAll();
     }
 
+    // ── Private Senior Helpers ────────────────────────────────────────────────
 
     private BigDecimal computeLiveBalance(Long banqueId) {
         return transactionService.computeBalance(banqueId);
