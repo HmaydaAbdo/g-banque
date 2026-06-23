@@ -5,6 +5,8 @@ import jakarta.persistence.Index;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -12,8 +14,14 @@ import staport.finance.gBanque.Bank.enums.Devise;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Entité sensible (compte bancaire) — auditée via Hibernate Envers (Backend/CLAUDE.md,
+ * section "Audit"). {@code logoData} exclu via {@code @NotAudited} : un blob binaire
+ * dans chaque révision serait inutile à differ et gonflerait inutilement la table _AUD.
+ */
 @EntityListeners(AuditingEntityListener.class)
 @Entity
+@Audited
 @Table(
     name = "banque",
     indexes = {
@@ -28,6 +36,7 @@ public class Banque {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotAudited
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "logo_data", nullable = false, columnDefinition = "LONGBLOB")
