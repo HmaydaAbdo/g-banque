@@ -192,11 +192,11 @@ public class TransactionService implements ITransactionService{
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction with id " + id + " not found"));
 
         // Guard — rapprochement définitivement clôturé : aucune modification autorisée
-        if (transaction.getRapprochement().getStatut() == StatutRapprochement.CLOTURE_DEFINITIVE) {
-            throw new ValidationException(
-                    "Impossible de modifier la transaction " + id
-                    + " : le rapprochement est définitivement clôturé.");
-        }
+//        if (transaction.getRapprochement().getStatut() == StatutRapprochement.CLOTURE_DEFINITIVE) {
+//            throw new ValidationException(
+//                    "Impossible de modifier la transaction " + id
+//                    + " : le rapprochement est définitivement clôturé.");
+//        }
 
         transaction.setDateValeur(updateRequestDto.dateValeur());
         transaction.setDateOperations(updateRequestDto.dateOperation());
