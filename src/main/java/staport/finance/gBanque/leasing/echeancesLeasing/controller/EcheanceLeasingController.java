@@ -1,86 +1,64 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.*;
-import staport.finance.gBanque.leasing.echeancesLeasing.services.EcheanceLeasingService;
+import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
 
-
-/**
- * REST Controller pour la gestion et la consultation des opérations d'EcheanceLeasing.
- * Inclut la récupération du tableau d'amortissement et la recherche avancée.
- */
+@Tag(name = "Échéances de leasing", description = "Consultation et gestion des échéances de leasing")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/echeances-leasing") // Préfixe d'API recommandé
+@RequestMapping("/echeances-leasing")
 public class EcheanceLeasingController {
 
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
 
-    private static final Logger logger = LoggerFactory.getLogger(EcheanceLeasingController.class);
-    private final EcheanceLeasingService echeanceLeasingService;
+    private final IEcheanceLeasingService echeanceLeasingService;
 
-    public EcheanceLeasingController(EcheanceLeasingService echeanceLeasingService) {
+    public EcheanceLeasingController(IEcheanceLeasingService echeanceLeasingService) {
         this.echeanceLeasingService = echeanceLeasingService;
     }
 
-    /**
-     * Récupère le tableau d'amortissement complet pour un contrat de leasing spécifique.
-     * Permet également de filtrer les échéances affichées dans le tableau par numéro, mois/année, montant, statut.
-     * Mappe à GET /api/echeances-leasing/contrat/{contratId}/tableau-amortissement
-     *
-     * @param contratId L'ID du contrat de leasing.
-     * @param searchDTO Les critères de recherche optionnels pour filtrer les échéances au sein du tableau.
-     * Les champs `month`, `year`, `numeroEcheance`, `montantTTCMin`, `montantTTCMax`, `statutPaiement` sont utilisables.
-     * @param pageable Informations de pagination pour les échéances du tableau.
-     * @return ResponseEntity avec le TableauAmortissementDTO et HTTP Status 200 (OK).
-     */
+    @Operation(summary = "Tableau d'amortissement d'un contrat",
+            description = "Retourne le tableau complet avec filtres optionnels sur numéro, période, montant et statut")
+    @ApiResponse(responseCode = "404", description = "Contrat introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/tableau-amortissement/{contratId}")
     public ResponseEntity<TableauAmortissementDTO> getTableauAmortissement(
             @PathVariable Long contratId,
             EcheanceLeasingSearchDTO searchDTO,
             Pageable pageable) {
-        logger.info("Récupération du tableau d'amortissement pour le contrat ID : {}", contratId);
-        logger.debug("Critères de recherche : {}, Pagination : page={}, taille={}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
-        TableauAmortissementDTO tableau = echeanceLeasingService.getTableauAmortissementForContrat(contratId, searchDTO, pageable);
-        logger.info("Tableau d'amortissement récupéré avec succès pour le contrat ID : {}", contratId);
-        return ResponseEntity.ok(tableau);
+        return ResponseEntity.ok(
+                echeanceLeasingService.getTableauAmortissementForContrat(contratId, searchDTO, pageable));
     }
 
-    /**
-     * Permet de marquer une échéance comme payée.
-     * Mappe à PUT /api/echeances-leasing/{id}/mark-as-paid
-     *
-     * @param id L'ID de l'échéance à marquer comme payée.
-     * @return ResponseEntity avec l'échéance mise à jour et HTTP Status 200 (OK).
-     */
+    @Operation(summary = "Basculer le statut d'une échéance (PREVU ↔ PAYE)",
+            description = "Réservé aux administrateurs système")
+    @ApiResponse(responseCode = "404", description = "Échéance introuvable")
+    @PreAuthorize(ADMIN_ONLY)
     @PutMapping("/{id}/toggle-status")
-    public ResponseEntity<EcheanceLeasingResponseDTO> markEcheanceAsPaid(@PathVariable Long id) {
-        logger.info("Début de la modification du statut de l'échéance ID : {}", id);
-        EcheanceLeasingResponseDTO updatedEcheance = echeanceLeasingService.toggleStatus(id);
-        logger.info("Statut de l'échéance ID : {} modifié avec succès", id);
-        return ResponseEntity.ok(updatedEcheance);
+    public ResponseEntity<EcheanceLeasingResponseDTO> toggleStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(echeanceLeasingService.toggleStatus(id));
     }
 
-    /**
-     * Récupère les encours d'échéances de leasing pour une banque, avec une période et un organisme de leasing optionnel.
-     * Mappe à GET /api/echeances-leasing/encours
-     *
-     * @param requestDTO Le DTO contenant l'ID de la banque, la période et l'ID de l'organisme de leasing optionnel.
-     * @param pageable Les informations de pagination et de tri pour les échéances.
-     * @return ResponseEntity avec l'EncoursLeasingResponseDTO et HTTP Status 200 (OK).
-     */
+    @Operation(summary = "Encours de leasing pour une banque",
+            description = "Filtrable par période et organisme de leasing")
+    @ApiResponse(responseCode = "400", description = "Paramètres invalides")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/encours")
-    public ResponseEntity<EncoursLeasingResponseDTO> getEncoursLeasing(@Valid @ModelAttribute EncoursLeasingRequestDTO requestDTO,
+    public ResponseEntity<EncoursLeasingResponseDTO> getEncoursLeasing(
+            @Valid @ModelAttribute EncoursLeasingRequestDTO requestDTO,
             Pageable pageable) {
-
-        logger.info("Récupération des encours de leasing pour la banque ID : {}", requestDTO.getBanqueId());
-        logger.debug("Paramètres de la requête : {}, Pagination : page={}, taille={}", requestDTO, pageable.getPageNumber(), pageable.getPageSize());
-        EncoursLeasingResponseDTO encours = echeanceLeasingService.getEncoursLeasingForBanque(requestDTO, pageable);
-        logger.info("Encours de leasing récupérés avec succès pour la banque ID : {}", requestDTO.getBanqueId());
-        return ResponseEntity.ok(encours);
+        return ResponseEntity.ok(
+                echeanceLeasingService.getEncoursLeasingForBanque(requestDTO, pageable));
     }
-
 }

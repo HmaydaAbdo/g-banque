@@ -13,5 +13,6 @@ import java.util.Optional;
 public interface ContratLeasingRepository extends JpaRepository<ContratLeasing, Long>, JpaSpecificationExecutor<ContratLeasing> {
     Optional<ContratLeasing> findByNumeroContrat(String numeroContrat);
     Page<ContratLeasing> findByCompleted(boolean completed, Pageable pageable);
+    long countByCompleted(boolean completed);
 
 }

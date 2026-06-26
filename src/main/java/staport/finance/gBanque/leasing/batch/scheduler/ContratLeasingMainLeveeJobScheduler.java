@@ -43,13 +43,13 @@ public class ContratLeasingMainLeveeJobScheduler {
     private final Job contratLeasingMainLeveeJob;
 
     // Flag to prevent concurrent executions
-    public final AtomicBoolean isJobRunning = new AtomicBoolean(false);
+    private final AtomicBoolean isJobRunning = new AtomicBoolean(false);
 
     // Configuration properties
-    @Value("${leasing.main-levee.job.cron:0 0 14 ? * SUN}")
+    @Value("${leasing.main-levee.job.cron}")
     private String jobCron;
 
-    @Value("${leasing.main-levee.job.enabled:true}")
+    @Value("${leasing.main-levee.job.enabled}")
     private boolean jobEnabled;
 
     /**
@@ -74,7 +74,7 @@ public class ContratLeasingMainLeveeJobScheduler {
      * - Avoids database lock conflicts
      * - Allows time for any database maintenance between jobs
      */
-    @Scheduled(cron = "${leasing.main-levee.job.cron:0 0 14 ? * SUN}")
+    @Scheduled(cron = "${leasing.main-levee.job.cron}")
     public void runScheduledJob() {
         if (!jobEnabled) {
             log.info("Contrat Leasing Main Levée Job Scheduler is disabled in configuration. Skipping scheduled execution.");

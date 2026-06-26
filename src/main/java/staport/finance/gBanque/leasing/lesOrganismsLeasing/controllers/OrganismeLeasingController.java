@@ -1,70 +1,82 @@
 package staport.finance.gBanque.leasing.lesOrganismsLeasing.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingRequestDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingResponseDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingSearchDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.services.interfaces.OrganismeLeasingService;
 
-
+@Tag(name = "Organismes de leasing", description = "Gestion des organismes de leasing")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/0rganismesLeasing")
+@RequestMapping("/OrganismesLeasing")
 public class OrganismeLeasingController {
 
-    private static final Logger logger = LoggerFactory.getLogger(OrganismeLeasingController.class);
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
+
     private final OrganismeLeasingService organismeLeasingService;
 
     public OrganismeLeasingController(OrganismeLeasingService organismeLeasingService) {
         this.organismeLeasingService = organismeLeasingService;
     }
 
+    @Operation(summary = "Créer un organisme de leasing")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @PostMapping
-    public ResponseEntity<OrganismeLeasingResponseDTO> createOrganismeLeasing(@Valid @RequestBody OrganismeLeasingRequestDTO requestDTO) {
-        logger.info("Début de la création d'un nouvel organisme de leasing");
-        logger.debug("Données reçues pour la création : {}", requestDTO);
-        OrganismeLeasingResponseDTO createdOrganisme = organismeLeasingService.create(requestDTO);
-        logger.info("Organisme de leasing créé avec succès avec l'ID : {}", createdOrganisme.getId());
-        return new ResponseEntity<>(createdOrganisme, HttpStatus.CREATED);
+    public ResponseEntity<OrganismeLeasingResponseDTO> createOrganismeLeasing(
+            @Valid @RequestBody OrganismeLeasingRequestDTO requestDTO) {
+        OrganismeLeasingResponseDTO created = organismeLeasingService.create(requestDTO);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Modifier un organisme de leasing")
+    @ApiResponse(responseCode = "400", description = "Données invalides")
+    @ApiResponse(responseCode = "404", description = "Organisme introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @PutMapping("/{id}")
-    public ResponseEntity<OrganismeLeasingResponseDTO> updateOrganismeLeasing(@PathVariable Long id, @Valid @RequestBody OrganismeLeasingRequestDTO requestDTO) {
-        logger.info("Début de la mise à jour de l'organisme de leasing avec l'ID : {}", id);
-        logger.debug("Données reçues pour la mise à jour : {}", requestDTO);
-        OrganismeLeasingResponseDTO updatedOrganisme = organismeLeasingService.update(id, requestDTO);
-        logger.info("Organisme de leasing mis à jour avec succès avec l'ID : {}", id);
-        return ResponseEntity.ok(updatedOrganisme);
+    public ResponseEntity<OrganismeLeasingResponseDTO> updateOrganismeLeasing(
+            @PathVariable Long id,
+            @Valid @RequestBody OrganismeLeasingRequestDTO requestDTO) {
+        return ResponseEntity.ok(organismeLeasingService.update(id, requestDTO));
     }
 
+    @Operation(summary = "Récupérer un organisme par ID")
+    @ApiResponse(responseCode = "404", description = "Organisme introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/{id}")
     public ResponseEntity<OrganismeLeasingResponseDTO> getOrganismeLeasingById(@PathVariable Long id) {
-        logger.info("Récupération de l'organisme de leasing avec l'ID : {}", id);
-        OrganismeLeasingResponseDTO organisme = organismeLeasingService.getById(id);
-        logger.debug("Organisme de leasing trouvé : {}", organisme);
-        return ResponseEntity.ok(organisme);
+        return ResponseEntity.ok(organismeLeasingService.getById(id));
     }
 
+    @Operation(summary = "Supprimer un organisme de leasing",
+            description = "Bloqué si l'organisme est lié à des contrats existants")
+    @ApiResponse(responseCode = "400", description = "Organisme lié à des contrats — suppression bloquée")
+    @ApiResponse(responseCode = "404", description = "Organisme introuvable")
+    @PreAuthorize(ADMIN_ONLY)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrganismeLeasing(@PathVariable Long id) {
-        logger.info("Début de la suppression de l'organisme de leasing avec l'ID : {}", id);
         organismeLeasingService.delete(id);
-        logger.info("Organisme de leasing supprimé avec succès avec l'ID : {}", id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Rechercher des organismes de leasing")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping
-    public ResponseEntity<Page<OrganismeLeasingResponseDTO>> searchOrganismeLeasings(OrganismeLeasingSearchDTO criteria, Pageable pageable) {
-        logger.info("Début de la recherche d'organismes de leasing");
-        logger.debug("Critères de recherche : {}, Pagination : page={}, taille={}", criteria, pageable.getPageNumber(), pageable.getPageSize());
-        Page<OrganismeLeasingResponseDTO> organismes = organismeLeasingService.search(criteria, pageable);
-        logger.info("Recherche terminée avec succès. Nombre d'éléments trouvés : {} sur {} au total", organismes.getNumberOfElements(), organismes.getTotalElements());
-        return ResponseEntity.ok(organismes);
+    public ResponseEntity<Page<OrganismeLeasingResponseDTO>> searchOrganismeLeasings(
+            OrganismeLeasingSearchDTO criteria, Pageable pageable) {
+        return ResponseEntity.ok(organismeLeasingService.search(criteria, pageable));
     }
 }

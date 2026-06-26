@@ -3,6 +3,7 @@ package staport.finance.gBanque.leasing.echeancesLeasing.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import java.math.BigDecimal;
@@ -14,8 +15,13 @@ import java.util.Objects;
  * Entité représentant une échéance individuelle d'un contrat de leasing.
  * Contient les montants calculés pour un paiement spécifique.
  */
+@Audited
 @Entity
-@Table(name = "echeance_leasing")
+@Table(name = "echeance_leasing", indexes = {
+        @Index(name = "idx_echeance_leasing_contrat_id", columnList = "contrat_leasing_id"),
+        @Index(name = "idx_echeance_leasing_statut_paiement", columnList = "statut_paiement"),
+        @Index(name = "idx_echeance_leasing_date_echeance", columnList = "date_echeance")
+})
 public class EcheanceLeasing {
 
     @Id

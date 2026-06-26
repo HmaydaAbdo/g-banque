@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.leasing.contratLeasing.enums.TypeContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
@@ -18,8 +19,14 @@ import java.util.Objects;
 /**
  * Entité représentant un contrat de leasing.
  */
+@Audited
 @Entity
-@Table(name = "contrat_leasing")
+@Table(name = "contrat_leasing", indexes = {
+        @Index(name = "idx_contrat_leasing_banque_id", columnList = "banque_id"),
+        @Index(name = "idx_contrat_leasing_organisme_id", columnList = "organisme_leasing_id"),
+        @Index(name = "idx_contrat_leasing_type_contrat", columnList = "type_contrat"),
+        @Index(name = "idx_contrat_leasing_completed", columnList = "completed")
+})
 public class ContratLeasing {
 
     @Id
@@ -74,16 +81,6 @@ public class ContratLeasing {
 
     @Column(nullable = false)
     private boolean completed = false;
-
-    @Lob
-    @Column(name = "fichier_pdf_contenu", columnDefinition = "LONGBLOB")
-    private byte[] fichierPdfContenu;
-
-    @Column(name = "nom_fichier_pdf")
-    private String nomFichierPdf;
-
-    @Column(name = "date_upload_pdf")
-    private LocalDate dateUploadPdf;
 
     @Column(name = "date_creation", nullable = false, updatable = false)
     private OffsetDateTime dateCreation;
@@ -141,44 +138,6 @@ public class ContratLeasing {
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
 
-    // --- Getters et Setters pour le fichier PDF ---
-    public byte[] getFichierPdfContenu() { return fichierPdfContenu; }
-    public void setFichierPdfContenu(byte[] fichierPdfContenu) {
-        this.fichierPdfContenu = fichierPdfContenu;
-        if (fichierPdfContenu != null) {
-            this.dateUploadPdf = LocalDate.now();
-        }
-    }
-
-    public String getNomFichierPdf() { return nomFichierPdf; }
-    public void setNomFichierPdf(String nomFichierPdf) { this.nomFichierPdf = nomFichierPdf; }
-
-    public LocalDate getDateUploadPdf() { return dateUploadPdf; }
-    public void setDateUploadPdf(LocalDate dateUploadPdf) { this.dateUploadPdf = dateUploadPdf; }
-
-    /**
-     * Vérifie si un fichier PDF est attaché à ce contrat
-     */
-    public boolean hasFichierPdf() {
-        return fichierPdfContenu != null && fichierPdfContenu.length > 0;
-    }
-
-    /**
-     * Retourne la taille du fichier PDF en octets
-     */
-    public Long getTailleFichierPdf() {
-        return fichierPdfContenu != null ? (long) fichierPdfContenu.length : null;
-    }
-
-    /**
-     * Supprime le fichier PDF attaché
-     */
-    public void removeFichierPdf() {
-        this.fichierPdfContenu = null;
-        this.nomFichierPdf = null;
-        this.dateUploadPdf = null;
-    }
-
     // --- Callbacks du cycle de vie JPA ---
     @PrePersist
     protected void onCreate() {
@@ -217,8 +176,6 @@ public class ContratLeasing {
                 ", dateDebut=" + dateDebut +
                 ", typeContrat=" + typeContrat +
                 ", completed=" + completed +
-                ", hasFichierPdf=" + hasFichierPdf() +
-                ", nomFichierPdf='" + nomFichierPdf + '\'' +
                 '}';
     }
 }

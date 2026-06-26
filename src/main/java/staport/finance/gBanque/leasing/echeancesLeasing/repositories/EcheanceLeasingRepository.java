@@ -2,11 +2,14 @@ package staport.finance.gBanque.leasing.echeancesLeasing.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,4 +43,16 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
 
     List<EcheanceLeasing> findByContratLeasingId(Long contratId);
 
+    /**
+     * Nombre d'échéances PREVU dont la date tombe entre aujourd'hui et aujourd'hui+nbJours (inclus).
+     * Utilisé par les métriques Gauge J-7 / J-30.
+     */
+    @Query("SELECT COUNT(e) FROM EcheanceLeasing e " +
+           "WHERE e.statutPaiement = :statut " +
+           "AND e.dateEcheance >= :debut " +
+           "AND e.dateEcheance <= :fin")
+    long countByStatutPaiementAndDateEcheanceBetween(
+            @Param("statut") StatutEcheanceLeasing statut,
+            @Param("debut") LocalDate debut,
+            @Param("fin") LocalDate fin);
 }

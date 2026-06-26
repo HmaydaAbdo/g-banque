@@ -9,8 +9,10 @@
     import org.springframework.data.jpa.domain.Specification;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
-    import staport.finance.gBanque.Bank.entities.Banque;
-    import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+    import staport.finance.gBanque.Bank.dtos.BanqueResponse;
+    import staport.finance.gBanque.Bank.services.IBanqueService;
+    import staport.finance.gBanque.audit.AuditOperation;
+    import staport.finance.gBanque.audit.AuditableAction;
     import staport.finance.gBanque.commision.config.CommissionLeasingConfig;
     import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
     import staport.finance.gBanque.commision.service.CommissionService;
@@ -25,6 +27,7 @@
     import staport.finance.gBanque.leasing.echeancesLeasing.mapper.EcheanceLeasingMapper;
     import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
     import staport.finance.gBanque.leasing.echeancesLeasing.specification.EcheanceLeasingSpecification;
+    import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
     import staport.finance.gBanque.transactions.enums.TransactionSource;
 
     import java.time.LocalDate;
@@ -41,7 +44,7 @@ import java.math.BigDecimal;
      * des échéances de leasing avec génération automatique des commissions.
      */
     @Service
-    public class EcheanceLeasingService {
+    public class EcheanceLeasingService implements IEcheanceLeasingService {
 
         private static final Logger log = LoggerFactory.getLogger(EcheanceLeasingService.class);
 
@@ -50,7 +53,7 @@ import java.math.BigDecimal;
         private final EcheanceLeasingRepository echeanceLeasingRepository;
         private final ContratLeasingRepository contratLeasingRepository;
         private final EcheanceLeasingMapper echeanceLeasingMapper;
-        private final BanqueRepository banqueRepository;
+        private final IBanqueService banqueService;
         private static final int SCALE = 2;
 
         public EcheanceLeasingService(CommissionService commissionService,
@@ -58,13 +61,13 @@ import java.math.BigDecimal;
                                       EcheanceLeasingRepository echeanceLeasingRepository,
                                       ContratLeasingRepository contratLeasingRepository,
                                       EcheanceLeasingMapper echeanceLeasingMapper,
-                                      BanqueRepository banqueRepository) {
+                                      IBanqueService banqueService) {
             this.commissionService = commissionService;
             this.commissionConfig = commissionConfig;
             this.echeanceLeasingRepository = echeanceLeasingRepository;
             this.contratLeasingRepository = contratLeasingRepository;
             this.echeanceLeasingMapper = echeanceLeasingMapper;
-            this.banqueRepository = banqueRepository;
+            this.banqueService = banqueService;
         }
 
         /**
@@ -105,7 +108,7 @@ import java.math.BigDecimal;
             // 1. Charger le contrat et valider son existence
             ContratLeasing contrat = contratLeasingRepository.findById(contratId)
                     .orElseThrow(() -> {
-                        log.error("Contrat de leasing non trouvé avec l'ID : {}", contratId);
+                        log.warn("ContratLeasing non trouvé — ID : {}", contratId);
                         return new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found.");
                     });
 
@@ -115,7 +118,7 @@ import java.math.BigDecimal;
             boolean hasPaidEcheances = this.hasPaidEcheances(contratId);
 
             if (hasPaidEcheances) {
-                log.error("Tentative de régénération d'échéances pour le contrat ID : {} avec des échéances déjà payées", contratId);
+                log.warn("Régénération bloquée — contrat ID : {} contient des échéances payées", contratId);
                 throw new ValidationException("Impossible de régénérer les échéances pour le contrat " + contratId +
                         " car il contient des échéances déjà payées. c-à-d qu'on a déjà commencé l'amortissement pour ce contrat. Veuillez contacter l'administrateur.");
             }
@@ -146,13 +149,7 @@ import java.math.BigDecimal;
 
             // Date de début du contrat (déjà en LocalDate — aucune conversion timezone nécessaire)
             LocalDate dateReference = contrat.getDateDebut().minusMonths(1);
-            log.info(" Date de référence (1 mois avant la date début) : {}", dateReference);
-
-            log.info(" [ÉTAPE 5] Date de référence NORMALISÉE (12h UTC) : {}", dateReference);
-            log.info("   └─ Détails : Année={}, Mois={}, Jour={}",
-                    dateReference.getYear(),
-                    dateReference.getMonthValue(),
-                    dateReference.getDayOfMonth());
+            log.debug(" Date de référence (1 mois avant la date début) : {}", dateReference);
 
             int numeroEcheanceGlobal = 0;
 
@@ -165,8 +162,8 @@ import java.math.BigDecimal;
 
             // Génération des échéances de loyer
             for (ContratLeasingPhase phase : sortedPhases) {
-                log.debug("Traitement de la phase {} - Durée : {} mois, Mensualité TTC : {}",
-                        phase.getNumeroPhase(), phase.getDureeMois(), phase.getMensualiteTTC());
+                log.debug("Traitement de la phase {} - Durée : {} mois",
+                        phase.getNumeroPhase(), phase.getDureeMois());
 
                 BigDecimal mensualiteTTCDuMois = phase.getMensualiteTTC().setScale(SCALE, RoundingMode.HALF_UP);
 
@@ -178,13 +175,13 @@ import java.math.BigDecimal;
 
                     //  LOG 6 : Échéances générées (les 3 premières et les 2 dernières de chaque phase)
                     if (i < 3 || i >= phase.getDureeMois() - 2) {
-                        log.info("   ✓ Phase {} - Échéance {} : {} (ref + {} mois)",
+                        log.debug("   ✓ Phase {} - Échéance {} : {} (ref + {} mois)",
                                 phase.getNumeroPhase(),
                                 numeroEcheanceGlobal,
                                 dateEcheanceCourante,
                                 numeroEcheanceGlobal);
                     } else if (i == 3) {
-                        log.info("   ... ({} échéances intermédiaires) ...", phase.getDureeMois() - 5);
+                        log.debug("   ... ({} échéances intermédiaires) ...", phase.getDureeMois() - 5);
                     }
 
                     StatutEcheanceLeasing statut = StatutEcheanceLeasing.PREVU;
@@ -207,7 +204,7 @@ import java.math.BigDecimal;
             // Calculer la date de la valeur résiduelle à partir de la date de référence
             LocalDate dateValeurResiduelle = dateReference.plusMonths(numeroEcheanceGlobal);
 
-            log.info("  Échéance {} (Valeur résiduelle) : {} (ref + {} mois)",
+            log.debug("  Échéance {} (Valeur résiduelle) : {} (ref + {} mois)",
                     numeroEcheanceGlobal,
                     dateValeurResiduelle,
                     numeroEcheanceGlobal);
@@ -242,13 +239,12 @@ import java.math.BigDecimal;
             String nomBanque = contrat.getBanqueDePrelevement().getNom();
             String nomOrganisme = contrat.getOrganismeLeasing().getNom();
 
-            log.info("Vérification de l'éligibilité pour la génération de commissions");
-            log.info("  → Banque : {}", nomBanque);
-            log.info("  → Organisme : {}", nomOrganisme);
+            log.debug("Vérification de l'éligibilité pour la génération de commissions");
+            log.debug("  → Banque : {}, Organisme : {}", nomBanque, nomOrganisme);
 
             // Vérifier si la banque a une commission configurée
             if (!commissionConfig.hasCommission(nomBanque)) {
-                log.info("Aucune commission configurée pour la banque '{}'. Génération de commissions ignorée.", nomBanque);
+                log.debug("Aucune commission configurée pour la banque '{}'. Génération de commissions ignorée.", nomBanque);
                 return;
             }
 
@@ -260,8 +256,7 @@ import java.math.BigDecimal;
                 return;
             }
 
-            log.info("Commission calculée : {} DH par échéance (Banque: {}, Organisme: {})",
-                    montantCommission, nomBanque, nomOrganisme);
+            log.debug("Commission configurée pour la banque '{}' / organisme '{}'", nomBanque, nomOrganisme);
 
             int commissionsCreees = 0;
             int commissionsEchec = 0;
@@ -273,8 +268,7 @@ import java.math.BigDecimal;
                     commissionService.createCommission(commissionDto);
                     commissionsCreees++;
 
-                    log.debug("Commission créée pour l'échéance {} - Montant : {} DH",
-                            echeance.getNumeroEcheance(), montantCommission);
+                    log.debug("Commission créée pour l'échéance {}", echeance.getNumeroEcheance());
 
                 } catch (Exception e) {
                     commissionsEchec++;
@@ -335,12 +329,12 @@ import java.math.BigDecimal;
 
         @Transactional(readOnly = true)
         public TableauAmortissementDTO getTableauAmortissementForContrat(Long contratId, EcheanceLeasingSearchDTO searchDTO, Pageable pageable) {
-            log.info("Récupération du tableau d'amortissement pour le contrat ID : {}", contratId);
+            log.debug("Récupération du tableau d'amortissement pour le contrat ID : {}", contratId);
             log.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
 
             ContratLeasing contrat = contratLeasingRepository.findById(contratId)
                     .orElseThrow(() -> {
-                        log.error("Contrat de leasing non trouvé avec l'ID : {}", contratId);
+                        log.warn("ContratLeasing non trouvé — ID : {}", contratId);
                         return new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found.");
                     });
 
@@ -366,7 +360,7 @@ import java.math.BigDecimal;
                     .setScale(SCALE, RoundingMode.HALF_UP);
 
             BigDecimal montantRestantAPayer = totalIndemniteAPayer.subtract(montantTotalDejaPaye).setScale(SCALE, RoundingMode.HALF_UP);
-            log.info("Tableau d'amortissement calculé - Total : {}, Payé : {}, Restant : {}", totalIndemniteAPayer, montantTotalDejaPaye, montantRestantAPayer);
+            log.debug("Tableau d'amortissement calculé pour contrat ID : {} — {} échéances", contratId, allEcheancesForTotals.size());
 
             return new TableauAmortissementDTO(
                     contrat.getId(),
@@ -378,26 +372,21 @@ import java.math.BigDecimal;
             );
         }
 
+        @AuditableAction(operation = AuditOperation.UPDATE, entity = EcheanceLeasing.class)
         @Transactional
         public EcheanceLeasingResponseDTO toggleStatus(Long echeanceId) {
-            log.info("Début de la modification du statut de l'échéance ID : {}", echeanceId);
-
             EcheanceLeasing echeance = echeanceLeasingRepository.findById(echeanceId)
                     .orElseThrow(() -> {
-                        log.error("Échéance de leasing non trouvée avec l'ID : {}", echeanceId);
+                        log.warn("EcheanceLeasing non trouvée — ID : {}", echeanceId);
                         return new ResourceNotFoundException("EcheanceLeasing with ID " + echeanceId + " not found.");
                     });
 
-            StatutEcheanceLeasing currentStatus = echeance.getStatutPaiement();
-            StatutEcheanceLeasing newStatus = currentStatus == StatutEcheanceLeasing.PAYE
+            StatutEcheanceLeasing newStatus = echeance.getStatutPaiement() == StatutEcheanceLeasing.PAYE
                     ? StatutEcheanceLeasing.PREVU
                     : StatutEcheanceLeasing.PAYE;
-
-            log.debug("Changement du statut de {} à {} pour l'échéance ID : {}", currentStatus, newStatus, echeanceId);
             echeance.setStatutPaiement(newStatus);
             echeance = this.echeanceLeasingRepository.save(echeance);
-            log.info("Statut de l'échéance ID : {} modifié avec succès", echeanceId);
-
+            log.info("Statut échéance ID : {} → {}", echeanceId, newStatus);
             return echeanceLeasingMapper.toDto(echeance);
         }
 
@@ -405,16 +394,9 @@ import java.math.BigDecimal;
         public EncoursLeasingResponseDTO getEncoursLeasingForBanque(EncoursLeasingRequestDTO requestDTO, Pageable pageable) {
             LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-            log.info("Récupération des encours de leasing pour la banque ID : {}", requestDTO.getBanqueId());
-            log.debug("Paramètres de requête : {}, Page : {}, Taille : {}", requestDTO, pageable.getPageNumber(), pageable.getPageSize());
+            log.debug("Récupération des encours de leasing pour la banque ID : {}", requestDTO.getBanqueId());
 
-            Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
-                    .orElseThrow(() -> {
-                        log.error("Banque non trouvée avec l'ID : {}", requestDTO.getBanqueId());
-                        return new ResourceNotFoundException("Banque with ID " + requestDTO.getBanqueId() + " not found.");
-                    });
-
-            log.debug("Banque trouvée : {}", banque.getNom());
+            BanqueResponse banque = banqueService.getBanqueById(requestDTO.getBanqueId());
 
             Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratBanqueId(requestDTO.getBanqueId())
                     .and(EcheanceLeasingSpecification.outstandingUntil(endOfMonth));
@@ -430,7 +412,7 @@ import java.math.BigDecimal;
             }
 
             if (requestDTO.getMontant() != null) {
-                log.debug("Filtre par montant : {}", requestDTO.getMontant());
+                log.debug("Filtre par montant actif");
                 spec = spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.getMontant()));
             }
 
@@ -446,11 +428,11 @@ import java.math.BigDecimal;
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     .setScale(SCALE, RoundingMode.HALF_UP);
 
-            log.info("Encours total calculé pour la banque {} : {}", banque.getNom(), totalEncours);
+            log.debug("Encours calculé pour la banque ID : {}", banque.id());
 
             return new EncoursLeasingResponseDTO(
-                    banque.getId(),
-                    banque.getNom(),
+                    banque.id(),
+                    banque.nom(),
                     totalEncours,
                     echeancesDtoPage
             );

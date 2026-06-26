@@ -11,20 +11,25 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.contratLeasing.config.LeasingProperties;
-import staport.finance.gBanque.leasing.contratLeasing.dto.*;
+import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingPhaseRequestDTO;
+import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingRequestDTO;
+import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponseDTO;
+import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDTO;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.contratLeasing.mapper.ContratLeasingMapper;
 import staport.finance.gBanque.leasing.contratLeasing.repositories.ContratLeasingRepository;
 import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 import staport.finance.gBanque.leasing.contratLeasing.specification.ContratLeasingSpecification;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
-import staport.finance.gBanque.leasing.echeancesLeasing.services.EcheanceLeasingService;
+import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLeasing;
-import staport.finance.gBanque.leasing.lesOrganismsLeasing.repositories.OrganismeLeasingRepository;
+import staport.finance.gBanque.leasing.lesOrganismsLeasing.services.interfaces.OrganismeLeasingService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -45,27 +50,21 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     private static final Logger log = LoggerFactory.getLogger(ContratLeasingServiceImpl.class);
     private final ContratLeasingRepository contratLeasingRepository;
     private final ContratLeasingMapper contratLeasingMapper;
-    private final BanqueRepository banqueRepository;
-    private final OrganismeLeasingRepository organismeLeasingRepository;
-    private final  EcheanceLeasingService echeanceLeasingService;
+    private final IBanqueService banqueService;
+    private final OrganismeLeasingService organismeLeasingService;
+    private final IEcheanceLeasingService echeanceLeasingService;
     private final LeasingProperties leasingProperties;
 
-    /**
-     * Constructor for ContratLeasingServiceImpl, injecting necessary dependencies.
-     *
-     * @param contratLeasingRepository The repository for ContratLeasing entities.
-     * @param contratLeasingMapper The mapper for converting between DTOs and entities.
-     * @param banqueRepository The repository for Banque entities.
-     * @param organismeLeasingRepository The repository for OrganismeLeasing entities.
-     */
-    public ContratLeasingServiceImpl(EcheanceLeasingService echeanceLeasingService, ContratLeasingRepository contratLeasingRepository,
+    public ContratLeasingServiceImpl(IEcheanceLeasingService echeanceLeasingService,
+                                     ContratLeasingRepository contratLeasingRepository,
                                      ContratLeasingMapper contratLeasingMapper,
-                                     BanqueRepository banqueRepository,
-                                     OrganismeLeasingRepository organismeLeasingRepository, LeasingProperties leasingProperties) {
+                                     IBanqueService banqueService,
+                                     OrganismeLeasingService organismeLeasingService,
+                                     LeasingProperties leasingProperties) {
         this.contratLeasingRepository = contratLeasingRepository;
         this.contratLeasingMapper = contratLeasingMapper;
-        this.banqueRepository = banqueRepository;
-        this.organismeLeasingRepository = organismeLeasingRepository;
+        this.banqueService = banqueService;
+        this.organismeLeasingService = organismeLeasingService;
         this.echeanceLeasingService = echeanceLeasingService;
         this.leasingProperties = leasingProperties;
     }
@@ -80,35 +79,28 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
      */
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = ContratLeasing.class)
     public ContratLeasingResponseDTO createContratLeasing(ContratLeasingRequestDTO requestDTO) throws ValidationException {
         log.info("Début de la création d'un contrat de leasing dans la couche service");
-        log.debug("Type de contrat : {}, Numéro : {}, Montant : {}", requestDTO.getTypeContrat(), requestDTO.getNumeroContrat(), requestDTO.getMontantAchatTTC());
+        log.debug("Type de contrat : {}, Numéro : {}", requestDTO.getTypeContrat(), requestDTO.getNumeroContrat());
 
         // 1. Perform  type-specific validations
         log.debug("Validation des règles métier pour le type de contrat : {}", requestDTO.getTypeContrat());
         validateTypeSpecificContratLeasingRequest(requestDTO);
 
-        // 2. Retrieve related entities (Banque and OrganismeLeasing)
+        // 2. Retrieve related entities via services (Bounded Context — CLAUDE.md)
         log.debug("Récupération de la banque ID : {}", requestDTO.getBanqueDePrelevementId());
-        Banque banque = banqueRepository.findById(requestDTO.getBanqueDePrelevementId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID : {}", requestDTO.getBanqueDePrelevementId());
-                    return new ResourceNotFoundException("Banque with ID " + requestDTO.getBanqueDePrelevementId() + " not found.");
-                });
+        Banque banque = banqueService.findOrThrow(requestDTO.getBanqueDePrelevementId());
 
         log.debug("Récupération de l'organisme de leasing ID : {}", requestDTO.getOrganismeLeasingId());
-        OrganismeLeasing organismeLeasing = organismeLeasingRepository.findById(requestDTO.getOrganismeLeasingId())
-                .orElseThrow(() -> {
-                    log.error("Organisme de leasing non trouvé avec l'ID : {}", requestDTO.getOrganismeLeasingId());
-                    return new ResourceNotFoundException("OrganismeLeasing with ID " + requestDTO.getOrganismeLeasingId() + " not found.");
-                });
+        OrganismeLeasing organismeLeasing = organismeLeasingService.findOrThrow(requestDTO.getOrganismeLeasingId());
 
         // 3. Map the DTO to the ContratLeasing entity
         log.debug("Conversion du DTO vers l'entité ContratLeasing");
         ContratLeasing contratLeasing = contratLeasingMapper.toEntity(requestDTO, banque, organismeLeasing);
 
         // 4. Calculate and set the Residual Value
-        log.debug("Calcul de la valeur résiduelle pour le montant : {}", requestDTO.getMontantAchatTTC());
+        log.debug("Calcul de la valeur résiduelle");
         setValeurResiduelleBasedOnType(contratLeasing, requestDTO.getMontantAchatTTC());
 
         // 5. Save the new contract to the database
@@ -136,12 +128,12 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     @Override
     @Transactional(readOnly = true)
     public ContratLeasingResponseDTO getContratLeasingById(Long id) throws ResourceNotFoundException {
-        log.info("Récupération du contrat de leasing avec l'ID : {} dans la couche service", id);
+        log.debug("Récupération du contrat de leasing avec l'ID : {} dans la couche service", id);
 
         ContratLeasingResponseDTO dto = contratLeasingRepository.findById(id)
                 .map(contratLeasingMapper::toDto)
                 .orElseThrow(() -> {
-                    log.error("Contrat de leasing non trouvé avec l'ID : {}", id);
+                    log.warn("ContratLeasing non trouvé — ID : {}", id);
                     return new ResourceNotFoundException("ContratLeasing with ID " + id + " not found.");
                 });
 
@@ -160,6 +152,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
      */
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = ContratLeasing.class)
     public ContratLeasingResponseDTO updateContratLeasing(Long id, ContratLeasingRequestDTO requestDTO) throws ResourceNotFoundException, ValidationException {
         log.info("Début de la mise à jour du contrat de leasing avec l'ID : {} dans la couche service", id);
         log.debug("Nouvelles données : Type={}, Numéro={}", requestDTO.getTypeContrat(), requestDTO.getNumeroContrat());
@@ -167,7 +160,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         // 1. Retrieve the existing contract entity
         ContratLeasing existingContrat = contratLeasingRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Contrat de leasing non trouvé avec l'ID : {}", id);
+                    log.warn("ContratLeasing non trouvé — ID : {}", id);
                     return new ResourceNotFoundException("ContratLeasing with ID " + id + " not found.");
                 });
 
@@ -177,20 +170,12 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         log.debug("Validation des règles métier pour le type : {}", requestDTO.getTypeContrat());
         validateTypeSpecificContratLeasingRequest(requestDTO);
 
-        // 3. Re-fetch related entities
+        // 3. Re-fetch related entities via services (Bounded Context — CLAUDE.md)
         log.debug("Récupération de la banque ID : {}", requestDTO.getBanqueDePrelevementId());
-        Banque banque = banqueRepository.findById(requestDTO.getBanqueDePrelevementId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID : {}", requestDTO.getBanqueDePrelevementId());
-                    return new ResourceNotFoundException("Banque with ID " + requestDTO.getBanqueDePrelevementId() + " not found.");
-                });
+        Banque banque = banqueService.findOrThrow(requestDTO.getBanqueDePrelevementId());
 
         log.debug("Récupération de l'organisme de leasing ID : {}", requestDTO.getOrganismeLeasingId());
-        OrganismeLeasing organismeLeasing = organismeLeasingRepository.findById(requestDTO.getOrganismeLeasingId())
-                .orElseThrow(() -> {
-                    log.error("Organisme de leasing non trouvé avec l'ID : {}", requestDTO.getOrganismeLeasingId());
-                    return new ResourceNotFoundException("OrganismeLeasing with ID " + requestDTO.getOrganismeLeasingId() + " not found.");
-                });
+        OrganismeLeasing organismeLeasing = organismeLeasingService.findOrThrow(requestDTO.getOrganismeLeasingId());
 
         // 4. Update the existing entity using the mapper
         log.debug("Mise à jour de l'entité existante avec les nouvelles données");
@@ -228,13 +213,14 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
      */
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = ContratLeasing.class)
     public void deleteContratLeasing(Long id) throws ResourceNotFoundException, ValidationException {
         log.info("Début de la suppression du contrat de leasing avec l'ID : {} dans la couche service", id);
 
         // 1. Récupérer le contrat
         ContratLeasing contrat = contratLeasingRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Contrat de leasing non trouvé avec l'ID : {}", id);
+                    log.warn("ContratLeasing non trouvé — ID : {}", id);
                     return new ResourceNotFoundException("ContratLeasing with ID " + id + " not found.");
                 });
 
@@ -243,7 +229,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         // 2. Vérifier s'il y a des échéances payées (protection métier)
         boolean hasPaidEcheances = echeanceLeasingService.hasPaidEcheances(id);
         if (hasPaidEcheances) {
-            log.error("Tentative de suppression d'un contrat avec échéances payées : ID {}", id);
+            log.warn("Suppression bloquée — contrat ID : {} contient des échéances payées", id);
             throw new ValidationException(
                     "Impossible de supprimer le contrat avec l'ID " + id +
                             " car il contient des échéances déjà payées. " +
@@ -266,8 +252,8 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     @Override
     @Transactional(readOnly = true)
     public Page<ContratLeasingResponseDTO> getInactiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
-        log.info("Récupération des contrats inactifs dans la couche service");
-        log.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
+        log.debug("Récupération des contrats inactifs dans la couche service — page {}, taille {}",
+                pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<ContratLeasing> statusSpec = ContratLeasingSpecification.getInactiveContrats();
         Specification<ContratLeasing> searchSpec = ContratLeasingSpecification.bySearchCriteria(searchDTO);
@@ -275,7 +261,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         Page<ContratLeasingResponseDTO> result = contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")))
                 .map(contratLeasingMapper::toDto);
 
-        log.info("Nombre de contrats inactifs trouvés : {} sur {} au total", result.getNumberOfElements(), result.getTotalElements());
+        log.debug("Nombre de contrats inactifs trouvés : {} sur {} au total", result.getNumberOfElements(), result.getTotalElements());
 
         return result;
     }
@@ -283,8 +269,8 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     @Override
     @Transactional(readOnly = true)
     public Page<ContratLeasingResponseDTO> getPendingLienReleaseContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
-        log.info("Récupération des contrats en attente de main levée dans la couche service");
-        log.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
+        log.debug("Récupération des contrats en attente de main levée dans la couche service — page {}, taille {}",
+                pageable.getPageNumber(), pageable.getPageSize());
 
         Specification<ContratLeasing> statusSpec = ContratLeasingSpecification.getPendingLienReleaseContrats();
         Specification<ContratLeasing> searchSpec = ContratLeasingSpecification.bySearchCriteria(searchDTO);
@@ -292,7 +278,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         Page<ContratLeasingResponseDTO> result = contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")))
                 .map(contratLeasingMapper::toDto);
 
-        log.info("Nombre de contrats en attente de main levée trouvés : {} sur {} au total",
+        log.debug("Nombre de contrats en attente de main levée trouvés : {} sur {} au total",
                 result.getNumberOfElements(), result.getTotalElements());
 
         return result;
@@ -301,8 +287,8 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     @Override
     @Transactional(readOnly = true)
     public Page<ContratLeasingResponseDTO> getActiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable) {
-        log.info("Récupération des contrats actifs dans la couche service");
-        log.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
+        log.debug("Récupération des contrats actifs dans la couche service — page {}, taille {}",
+                pageable.getPageNumber(), pageable.getPageSize());
 
         // Crée la spécification de statut (e.g., actif)
         Specification<ContratLeasing> statusSpec = ContratLeasingSpecification.getActiveContrats();
@@ -314,20 +300,21 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         Page<ContratLeasingResponseDTO> result = contratLeasingRepository.findAll(Specification.where(statusSpec).and(searchSpec), pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")))
                 .map(contratLeasingMapper::toDto);
 
-        log.info("Nombre de contrats actifs trouvés : {} sur {} au total", result.getNumberOfElements(), result.getTotalElements());
+        log.debug("Nombre de contrats actifs trouvés : {} sur {} au total", result.getNumberOfElements(), result.getTotalElements());
 
         return result;
     }
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = ContratLeasing.class)
     public ContratLeasingResponseDTO markAsInactive(Long id) throws ResourceNotFoundException, ValidationException {
         log.info("Début du marquage du contrat ID : {} comme inactif dans la couche service", id);
 
         // 1. Récupérer le contrat existant
         ContratLeasing contrat = contratLeasingRepository.findById(id)
                 .orElseThrow(() -> {
-                    log.error("Contrat de leasing non trouvé avec l'ID : {}", id);
+                    log.warn("ContratLeasing non trouvé — ID : {}", id);
                     return new ResourceNotFoundException("ContratLeasing with ID " + id + " not found.");
                 });
 
@@ -335,7 +322,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
         // 2. Vérifier si le contrat est déjà terminé
         if (contrat.isCompleted()) {
-            log.error("Le contrat ID : {} est déjà marqué comme inactif", id);
+            log.warn("Contrat ID : {} est déjà inactif", id);
             throw new ValidationException("Le contrat avec l'ID " + id + " est déjà inactif.");
         }
 
@@ -344,7 +331,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
                 .anyMatch(echeance -> echeance.getStatutPaiement() == StatutEcheanceLeasing.PREVU);
 
         if (hasPendingInstallments) {
-            log.error("Le contrat ID : {} contient encore des échéances avec le statut PREVU", id);
+            log.warn("Clôture bloquée — contrat ID : {} contient encore des échéances PREVU", id);
             throw new ValidationException("Le contrat ne peut être marqué comme inactif que si toutes les échéances ont été payées.");
         }
 
@@ -373,7 +360,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
         // Rule: The contract type must be specified.
         if (requestDTO.getTypeContrat() == null) {
-            log.error("Type de contrat manquant dans la requête");
+            log.warn("Type de contrat manquant dans la requête");
             throw new ValidationException("Le type de contrat est obligatoire.");
         }
 
@@ -392,7 +379,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
                 validateDegressifContrat(requestDTO);
                 break;
             default:
-                log.error("Type de contrat inconnu : {}", requestDTO.getTypeContrat());
+                log.warn("Type de contrat inconnu : {}", requestDTO.getTypeContrat());
                 throw new ValidationException("Type de contrat inconnu: " + requestDTO.getTypeContrat());
         }
 
@@ -410,7 +397,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
         // Rule 1: LINEAIRE contracts must have **exactly one single phase**.
         if (requestDTO.getPhases() == null || requestDTO.getPhases().size() != 1) {
-            log.error("Contrat LINEAIRE avec un nombre de phases incorrect : {}",
+            log.warn("Contrat LINEAIRE avec un nombre de phases incorrect : {}",
                     requestDTO.getPhases() != null ? requestDTO.getPhases().size() : 0);
             throw new ValidationException("Un contrat de type LINEAIRE doit avoir exactement une seule phase.");
         }
@@ -420,13 +407,13 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
         // Rule 2: The single phase must have `numeroPhase` 1.
         if (singlePhase.getNumeroPhase() == null || singlePhase.getNumeroPhase() != 1) {
-            log.error("Phase unique du contrat LINEAIRE avec un numéro incorrect : {}", singlePhase.getNumeroPhase());
+            log.warn("Phase unique du contrat LINEAIRE avec un numéro incorrect : {}", singlePhase.getNumeroPhase());
             throw new ValidationException("Pour un contrat LINEAIRE, la phase unique doit avoir le numéro 1.");
         }
 
         // Rule 3: The duration of the single phase must match the total contract period.
         if (!singlePhase.getDureeMois().equals(requestDTO.getPeriodeEnMois())) {
-            log.error("Durée de phase ({}) ne correspond pas à la période du contrat ({})",
+            log.warn("Durée de phase ({}) ne correspond pas à la période du contrat ({})",
                     singlePhase.getDureeMois(), requestDTO.getPeriodeEnMois());
             throw new ValidationException(String.format(
                     "Pour un contrat LINEAIRE, la durée de la phase unique (%d mois) doit correspondre à la période totale du contrat (%d mois).",
@@ -463,9 +450,8 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
                 // Check if the current phase's monthly payment is less than the previous phase's.
                 // If so, it violates the progressive rule.
                 if (currentPhase.getMensualiteTTC().compareTo(previousPhase.getMensualiteTTC()) < 0) {
-                    log.error("Mensualité de la phase {} ({}) inférieure à la phase {} ({})",
-                            currentPhase.getNumeroPhase(), currentPhase.getMensualiteTTC(),
-                            previousPhase.getNumeroPhase(), previousPhase.getMensualiteTTC());
+                    log.warn("Contrat PROGRESSIF invalide — mensualité phase {} inférieure à phase {}",
+                            currentPhase.getNumeroPhase(), previousPhase.getNumeroPhase());
                     throw new ValidationException(String.format(
                             "Pour un contrat PROGRESSIF, la mensualité de la phase %d (%.2f) doit être supérieure ou égale à celle de la phase %d (%.2f).",
                             currentPhase.getNumeroPhase(),
@@ -506,9 +492,8 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
                 // Check if the current phase's monthly payment is greater than the previous phase's.
                 // If so, it violates the degressive rule.
                 if (currentPhase.getMensualiteTTC().compareTo(previousPhase.getMensualiteTTC()) > 0) {
-                    log.error("Mensualité de la phase {} ({}) supérieure à la phase {} ({})",
-                            currentPhase.getNumeroPhase(), currentPhase.getMensualiteTTC(),
-                            previousPhase.getNumeroPhase(), previousPhase.getMensualiteTTC());
+                    log.warn("Contrat DEGRESSIF invalide — mensualité phase {} supérieure à phase {}",
+                            currentPhase.getNumeroPhase(), previousPhase.getNumeroPhase());
                     throw new ValidationException(String.format(
                             "Pour un contrat DEGRESSIF, la mensualité de la phase %d (%.2f) doit être inférieure ou égale à celle de la phase %d (%.2f).",
                             currentPhase.getNumeroPhase(),
@@ -535,7 +520,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
         // Rule 1: Phased contracts must define at least one phase.
         if (requestDTO.getPhases() == null || requestDTO.getPhases().isEmpty()) {
-            log.error("Aucune phase définie pour le contrat de type {}", requestDTO.getTypeContrat());
+            log.warn("Aucune phase définie pour le contrat de type {}", requestDTO.getTypeContrat());
             throw new ValidationException("Un contrat de type " + requestDTO.getTypeContrat().name() + " doit définir des phases.");
         }
 
@@ -551,7 +536,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
             // Rule 2: Phase numbers must be unique within a contract.
             if (!phaseNumbers.add(phase.getNumeroPhase())) {
-                log.error("Numéro de phase dupliqué : {}", phase.getNumeroPhase());
+                log.warn("Numéro de phase dupliqué : {}", phase.getNumeroPhase());
                 throw new ValidationException("Les numéros de phase doivent être uniques par contrat.");
             }
 
@@ -565,7 +550,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
         // Rule 3: The sum of all phase durations must match the total contract period.
         if (!Integer.valueOf(totalPhaseDuration.get()).equals(requestDTO.getPeriodeEnMois())) {
-            log.error("Somme des durées des phases ({}) ne correspond pas à la période du contrat ({})",
+            log.warn("Somme des durées des phases ({}) ne correspond pas à la période du contrat ({})",
                     totalPhaseDuration.get(), requestDTO.getPeriodeEnMois());
             throw new ValidationException(String.format("La somme des durées des phases (%d mois) ne correspond pas à la période totale du contrat (%d mois).", totalPhaseDuration.get(), requestDTO.getPeriodeEnMois()));
         }
@@ -579,7 +564,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
         for (int i = 0; i < sortedPhaseNumbers.size(); i++) {
             if (sortedPhaseNumbers.get(i) != (i + 1)) {
-                log.error("Numéros de phase non séquentiels détectés");
+                log.warn("Numéros de phase non séquentiels détectés");
                 throw new ValidationException("Les numéros de phase doivent être séquentiels et commencer par 1 (e.g., 1, 2, 3...).");
             }
         }
@@ -594,122 +579,11 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
      * @param montantAchatTTC The total purchase amount, used for calculation.
      */
     private void setValeurResiduelleBasedOnType(ContratLeasing contratLeasing, BigDecimal montantAchatTTC) {
-        log.debug("Calcul de la valeur résiduelle pour le montant TTC : {}", montantAchatTTC);
+        log.debug("Calcul de la valeur résiduelle");
 
         BigDecimal valeurResiduelle = montantAchatTTC.multiply(leasingProperties.getValeurResiduelle()).setScale(2, RoundingMode.HALF_UP);
         contratLeasing.setValeurResiduelle(valeurResiduelle);
 
-        log.debug("Valeur résiduelle calculée : {}", valeurResiduelle);
+        log.debug("Valeur résiduelle calculée avec succès");
     }
-    /**
-     * Associe ou remplace un fichier PDF à un contrat de leasing.
-     *
-     * @param contratId L'ID du contrat
-     * @param pdfContent Le contenu binaire du fichier PDF
-     * @param fileName Le nom du fichier PDF
-     * @throws ResourceNotFoundException Si le contrat n'existe pas
-     * @throws ValidationException Si le fichier n'est pas un PDF valide
-     */
-    @Override
-    @Transactional
-    public void attachOrReplacePdfToContrat(Long contratId, byte[] pdfContent, String fileName)
-            throws ResourceNotFoundException, ValidationException {
-        log.info("Début de l'attachement/remplacement du fichier PDF pour le contrat ID : {}", contratId);
-        log.debug("Nom du fichier : {}, Taille : {} octets", fileName, pdfContent != null ? pdfContent.length : 0);
-
-        // 1. Vérifier que le contrat existe
-        ContratLeasing contrat = contratLeasingRepository.findById(contratId)
-                .orElseThrow(() -> {
-                    log.error("Contrat de leasing non trouvé avec l'ID : {}", contratId);
-                    return new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found.");
-                });
-
-        // 2. Valider que le fichier est un PDF
-        if (pdfContent == null || pdfContent.length == 0) {
-            log.error("Tentative d'upload d'un fichier PDF vide pour le contrat ID : {}", contratId);
-            throw new ValidationException("Le contenu du fichier PDF est vide.");
-        }
-
-        if (fileName == null || !fileName.toLowerCase().endsWith(".pdf")) {
-            log.error("Extension de fichier invalide : {}", fileName);
-            throw new ValidationException("Seuls les fichiers PDF sont acceptés.");
-        }
-
-        // 4. Attacher ou remplacer le fichier PDF
-        log.debug("Attachement du fichier PDF au contrat ID : {}", contratId);
-        contrat.setFichierPdfContenu(pdfContent);
-        contrat.setNomFichierPdf(fileName);
-
-        // 5. Sauvegarder
-        contratLeasingRepository.save(contrat);
-
-        log.info("Fichier PDF attaché avec succès au contrat ID : {}", contratId);
-    }
-
-    /**
-     * Récupère le contenu du fichier PDF d'un contrat de leasing.
-     *
-     * @param contratId L'ID du contrat
-     * @return Un objet PdfFileDTO contenant le contenu et les métadonnées du PDF
-     * @throws ResourceNotFoundException Si le contrat n'existe pas ou n'a pas de PDF attaché
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public PdfFileDTO getPdfFromContrat(Long contratId) throws ResourceNotFoundException {
-        log.info("Récupération du fichier PDF pour le contrat ID : {}", contratId);
-
-        // 1. Récupérer le contrat
-        ContratLeasing contrat = contratLeasingRepository.findById(contratId)
-                .orElseThrow(() -> {
-                    log.error("Contrat de leasing non trouvé avec l'ID : {}", contratId);
-                    return new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found.");
-                });
-
-        // 2. Vérifier qu'un PDF est attaché
-        if (!contrat.hasFichierPdf()) {
-            log.error("Aucun fichier PDF attaché au contrat ID : {}", contratId);
-            throw new ResourceNotFoundException("Aucun fichier PDF n'est attaché au contrat avec l'ID " + contratId + ".");
-        }
-
-        log.debug("Fichier PDF trouvé : {}, Taille : {} octets",
-                contrat.getNomFichierPdf(), contrat.getTailleFichierPdf());
-
-        // 3. Créer et retourner le DTO
-        PdfFileDTO pdfFileDTO = new PdfFileDTO();
-        pdfFileDTO.setContenu(contrat.getFichierPdfContenu());
-        pdfFileDTO.setNomFichier(contrat.getNomFichierPdf());
-        pdfFileDTO.setTailleFichier(contrat.getTailleFichierPdf());
-        pdfFileDTO.setDateUpload(contrat.getDateUploadPdf());
-
-        log.info("Fichier PDF récupéré avec succès pour le contrat ID : {}", contratId);
-        return pdfFileDTO;
-    }
-    /**
-     * Supprime le fichier PDF d'un contrat de leasing.
-     *
-     * @param contratId L'ID du contrat
-     * @throws ResourceNotFoundException Si le contrat n'existe pas
-     */
-    @Override
-    @Transactional
-    public void removePdfFromContrat(Long contratId) throws ResourceNotFoundException {
-        log.info("Début de la suppression du fichier PDF pour le contrat ID : {}", contratId);
-
-        // 1. Récupérer le contrat
-        ContratLeasing contrat = contratLeasingRepository.findById(contratId)
-                .orElseThrow(() -> {
-                    log.error("Contrat de leasing non trouvé avec l'ID : {}", contratId);
-                    return new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found.");
-                });
-
-        // 2. Supprimer le PDF
-        log.debug("Suppression du fichier PDF du contrat ID : {}", contratId);
-        contrat.removeFichierPdf();
-
-        // 3. Sauvegarder
-        contratLeasingRepository.save(contrat);
-
-        log.info("Fichier PDF supprimé avec succès pour le contrat ID : {}", contratId);
-    }
-
 }

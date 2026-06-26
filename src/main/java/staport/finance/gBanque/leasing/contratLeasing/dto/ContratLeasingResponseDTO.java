@@ -25,7 +25,6 @@ public class ContratLeasingResponseDTO {
     private OffsetDateTime dateCreation;
     private OffsetDateTime dateModification;
     private boolean completed;
-    private boolean hasFichierPdf;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -66,6 +65,4 @@ public class ContratLeasingResponseDTO {
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }
-    public boolean isHasFichierPdf() { return hasFichierPdf; }
-    public void setHasFichierPdf(boolean hasFichierPdf) { this.hasFichierPdf = hasFichierPdf; }
 }

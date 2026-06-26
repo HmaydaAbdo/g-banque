@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingRequestDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingResponseDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingSearchDTO;
+import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLeasing;
 
 /**
  * Interface for OrganismeLeasing service operations.
@@ -16,4 +17,11 @@ public interface OrganismeLeasingService {
     OrganismeLeasingResponseDTO getById(Long id);
     void delete(Long id);
     Page<OrganismeLeasingResponseDTO> search(OrganismeLeasingSearchDTO criteria, Pageable pageable);
+
+    /**
+     * Retourne l'entité OrganismeLeasing ou lève ResourceNotFoundException.
+     * Façade pour les domaines qui ont besoin de l'entité (ex. ContratLeasingServiceImpl)
+     * sans accéder directement à OrganismeLeasingRepository (CLAUDE.md — Bounded Context).
+     */
+    OrganismeLeasing findOrThrow(Long id);
 }

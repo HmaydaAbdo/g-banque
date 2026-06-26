@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.envers.Audited;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -13,8 +14,11 @@ import java.util.Objects;
  * Entité représentant une phase spécifique d'un contrat de leasing.
  * Utilisée pour les contrats PROGRESSIF ou DEGRESSIF où le montant du loyer HT varie sur différentes périodes.
  */
+@Audited
 @Entity
-@Table(name = "contrat_leasing_phase")
+@Table(name = "contrat_leasing_phase", indexes = {
+        @Index(name = "idx_contrat_leasing_phase_contrat_id", columnList = "contrat_leasing_id")
+})
 public class ContratLeasingPhase {
 
     @Id

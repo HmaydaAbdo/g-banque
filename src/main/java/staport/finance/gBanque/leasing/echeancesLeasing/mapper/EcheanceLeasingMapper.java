@@ -1,8 +1,10 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.mapper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.springframework.beans.factory.annotation.Autowired;
 import staport.finance.gBanque.leasing.contratLeasing.config.LeasingProperties;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingResponseDTO;
@@ -12,72 +14,59 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /**
- * Mapper pour convertir entre l'entité EcheanceLeasing et EcheanceLeasingResponseDTO.
+ * Mapper MapStruct pour EcheanceLeasing → EcheanceLeasingResponseDTO.
+ * Classe abstraite nécessaire pour injecter LeasingProperties (taux TVA)
+ * et calculer montantHT, montantTVA et libellé via @AfterMapping.
  */
-@Component
-public class EcheanceLeasingMapper {
+@Mapper(componentModel = "spring")
+public abstract class EcheanceLeasingMapper {
 
-    private static final Logger log = LoggerFactory.getLogger(EcheanceLeasingMapper.class);
-    private final LeasingProperties leasingProperties;
+    @Autowired
+    protected LeasingProperties leasingProperties;
+
     private static final int SCALE = 2;
 
-    public EcheanceLeasingMapper(LeasingProperties leasingProperties) {
-        this.leasingProperties = leasingProperties;
-    }
+    // ── toDto ─────────────────────────────────────────────────────────────────
 
-    public EcheanceLeasingResponseDTO toDto(EcheanceLeasing entity) {
-        log.debug("Début de la conversion de l'entité EcheanceLeasing vers le DTO");
+    @Mapping(target = "contratLeasingId", source = "contratLeasing.id")
+    @Mapping(target = "numeroContrat",    source = "contratLeasing.numeroContrat")
+    @Mapping(target = "montantHT",        ignore = true)
+    @Mapping(target = "montantTVA",       ignore = true)
+    @Mapping(target = "libelle",          ignore = true)
+    @Mapping(target = "observation",      ignore = true)
+    public abstract EcheanceLeasingResponseDTO toDto(EcheanceLeasing entity);
 
-        if (entity == null) {
-            log.warn("L'entité EcheanceLeasing reçue pour la conversion est null");
-            return null;
-        }
+    // ── @AfterMapping — calcul HT/TVA, libellé, observation ──────────────────
 
-        log.debug("Conversion de l'échéance numéro {} du contrat ID : {}", entity.getNumeroEcheance(), entity.getContratLeasing().getId());
-
-        EcheanceLeasingResponseDTO dto = new EcheanceLeasingResponseDTO();
-        dto.setId(entity.getId());
-        dto.setContratLeasingId(entity.getContratLeasing().getId());
-        dto.setNumeroContrat(entity.getContratLeasing().getNumeroContrat());
-        dto.setNumeroEcheance(entity.getNumeroEcheance());
-        dto.setDateEcheance(entity.getDateEcheance());
-        dto.setMontantTTC(entity.getMontantTTC());
-
-        // Calcul des montants HT et TVA comme défini dans les règles de gestion
+    /**
+     * Calcule les montants HT et TVA depuis le montant TTC,
+     * construit le libellé (standard ou valeur résiduelle)
+     * et fixe l'observation.
+     */
+    @AfterMapping
+    protected void computeCalculatedFields(EcheanceLeasing entity,
+                                            @MappingTarget EcheanceLeasingResponseDTO dto) {
+        // Montants HT et TVA
         if (entity.getMontantTTC() != null) {
-            log.debug("Calcul des montants HT et TVA pour le montant TTC : {}", entity.getMontantTTC());
-
-            // Ht = (TTC / (1 + Taux TVA))
-            BigDecimal montantHT = entity.getMontantTTC().divide((BigDecimal.ONE.add(leasingProperties.getTauxTva())), SCALE, RoundingMode.HALF_UP);
-            // TVA = TTC - Ht
-            BigDecimal montantTVA = entity.getMontantTTC().subtract(montantHT).setScale(SCALE, RoundingMode.HALF_UP);
+            BigDecimal montantHT = entity.getMontantTTC()
+                    .divide(BigDecimal.ONE.add(leasingProperties.getTauxTva()), SCALE, RoundingMode.HALF_UP);
+            BigDecimal montantTVA = entity.getMontantTTC().subtract(montantHT)
+                    .setScale(SCALE, RoundingMode.HALF_UP);
             dto.setMontantHT(montantHT);
             dto.setMontantTVA(montantTVA);
-
-            log.debug("Montants calculés - HT : {}, TVA : {}", montantHT, montantTVA);
         }
 
-        // 2. Construire le libellé
-        String libelle;
+        // Libellé : valeur résiduelle si dernière échéance (numéro = périodeEnMois + 1)
         ContratLeasing contrat = entity.getContratLeasing();
-        // La dernière échéance est celle dont le numéro est égal à PeriodeEnMois + 1
+        String libelle;
         if (entity.getNumeroEcheance().equals(contrat.getPeriodeEnMois() + 1)) {
-            libelle = contrat.getOrganismeLeasing().getNom() + ", V.R. pour le contrat N° " + contrat.getNumeroContrat();
-            log.debug("Libellé généré pour la dernière échéance (V.R.) : {}", libelle);
+            libelle = contrat.getOrganismeLeasing().getNom()
+                    + ", V.R. pour le contrat N° " + contrat.getNumeroContrat();
         } else {
-            libelle = contrat.getOrganismeLeasing().getNom() + ", contrat N° " + contrat.getNumeroContrat();
-            log.debug("Libellé généré pour l'échéance standard : {}", libelle);
+            libelle = contrat.getOrganismeLeasing().getNom()
+                    + ", contrat N° " + contrat.getNumeroContrat();
         }
         dto.setLibelle(libelle);
         dto.setObservation("Prélèvement leasing");
-        dto.setStatutPaiement(entity.getStatutPaiement());
-        dto.setDateOperation(entity.getDateOperation()!=null ? entity.getDateOperation(): null);
-        dto.setDateValeur(entity.getDateValeur()!=null ? entity.getDateValeur(): null);
-        dto.setDateCreation(entity.getDateCreation());
-        dto.setDateModification(entity.getDateModification());
-
-        log.debug("Conversion de l'entité EcheanceLeasing vers le DTO réussie pour l'échéance ID : {}", entity.getId());
-
-        return dto;
     }
 }

@@ -1,11 +1,14 @@
 package staport.finance.gBanque.leasing.batch.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.leasing.batch.scheduler.ContratLeasingMainLeveeJobScheduler;
 
@@ -14,14 +17,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Déclenchement manuel du job batch Leasing Main Levée.
- */
+@Tag(name = "Batch Leasing", description = "Déclenchement manuel du job batch Main Levée")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/test/batch/leasing")
 public class LeasingBatchController {
 
-    private static final Logger log = LoggerFactory.getLogger(LeasingBatchController.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     private final ContratLeasingMainLeveeJobScheduler leasingScheduler;
@@ -30,28 +31,23 @@ public class LeasingBatchController {
         this.leasingScheduler = leasingScheduler;
     }
 
-    /**
-     * Lance manuellement le job Leasing Main Levée.
-     * POST /test/batch/leasing/run
-     */
+    @Operation(summary = "Lancer manuellement le job Leasing Main Levée",
+            description = "Réservé aux administrateurs système — déclenche immédiatement le traitement des main levées")
+    @ApiResponse(responseCode = "500", description = "Échec du démarrage du job")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     @PostMapping("/run")
     public ResponseEntity<Map<String, Object>> runLeasingJob() {
-        log.info("📋 Requête reçue pour lancer le job Leasing Main Levée");
-
         try {
             JobExecution execution = leasingScheduler.runJobManually();
 
             if (execution != null) {
-                log.info("✅ Job Leasing Main Levée lancé avec succès - ID: {}", execution.getId());
                 return ResponseEntity.ok(buildSuccessResponse("Leasing Main Levée Job", execution));
             } else {
-                log.error("❌ Échec du lancement du job Leasing Main Levée");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(buildErrorResponse("Le job n'a pas pu démarrer. Vérifiez les logs pour plus de détails."));
             }
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors du lancement du job Leasing Main Levée", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(buildErrorResponse("Erreur: " + e.getMessage()));
         }

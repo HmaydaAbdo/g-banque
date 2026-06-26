@@ -3,13 +3,18 @@ package staport.finance.gBanque.leasing.lesOrganismsLeasing.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.envers.Audited;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
+@Audited
 @Entity
-@Table(name = "organisme_leasing")
+@Table(name = "organisme_leasing", indexes = {
+        @Index(name = "idx_organisme_leasing_nom", columnList = "nom"),
+        @Index(name = "idx_organisme_leasing_dates", columnList = "date_debut, date_fin")
+})
 public class OrganismeLeasing {
 
     @Id

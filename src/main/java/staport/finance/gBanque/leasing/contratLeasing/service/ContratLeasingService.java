@@ -7,7 +7,6 @@ import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingRequestDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponseDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDTO;
-import staport.finance.gBanque.leasing.contratLeasing.dto.PdfFileDTO;
 
 /**
  * Interface pour le service de gestion des contrats de leasing.
@@ -28,17 +27,5 @@ public interface ContratLeasingService {
 
     Page<ContratLeasingResponseDTO> getInactiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable);
 
-    /**
-     * Marque un contrat comme inactif et terminé.
-     * Cette action n'est possible que pour un contrat "en attente de main levée".
-     * @param id L'ID du contrat à marquer comme inactif.
-     * @return Le DTO du contrat mis à jour.
-     * @throws ResourceNotFoundException Si le contrat n'existe pas.
-     * @throws ValidationException Si le contrat n'est pas dans l'état "en attente de main levée".
-     */
     ContratLeasingResponseDTO markAsInactive(Long id) throws ResourceNotFoundException, ValidationException;
-
-    void attachOrReplacePdfToContrat(Long contratId, byte[] pdfContent, String fileName) throws ResourceNotFoundException, ValidationException;
-    PdfFileDTO getPdfFromContrat(Long contratId) throws ResourceNotFoundException;
-    void removePdfFromContrat(Long contratId) throws ResourceNotFoundException;
 }
