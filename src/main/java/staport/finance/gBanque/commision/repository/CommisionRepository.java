@@ -13,10 +13,10 @@ import java.util.List;
 @Repository
 public interface CommisionRepository extends JpaRepository<Commission, Long>, JpaSpecificationExecutor<Commission> {
 
-    List<Commission> findByLibelleLikeAndDateEmission(String libellePattern, LocalDate dateEmission);
 
     List<Commission> findByLibelleLike(String libellePattern);
 
+    boolean existsByOperationAndLibelle(TransactionSource operation, String libelle);
     /**
      * Vérifie si une caution possède au moins une commission non réglée (status = PREVU).
      * Utilisé pour bloquer la désactivation d'une caution tant qu'une commission est en cours.

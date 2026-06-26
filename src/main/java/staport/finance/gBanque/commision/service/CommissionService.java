@@ -7,12 +7,9 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import org.springframework.beans.factory.annotation.Value;
 import staport.finance.gBanque.commision.dtos.CommissionFusionRequest;
 import staport.finance.gBanque.commision.dtos.CommissionFusionResponse;
-import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
-import staport.finance.gBanque.impot_taxes.enums.Motif;
-import staport.finance.gBanque.impot_taxes.mapper.ImpotEtTaxeMapper;
-import staport.finance.gBanque.impot_taxes.dtos.ImpotEtTaxeResponseDto;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
@@ -31,6 +28,8 @@ import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
+import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -48,28 +47,28 @@ public class CommissionService {
     /** Taux TVA légal applicable aux commissions sur cautions bancaires (10%). */
     private static final BigDecimal TAUX_TVA_COMMISSION_CAUTION = new BigDecimal("0.10");
 
+    @Value("${commission.virement.bmci.montant-fixe}")
+    private BigDecimal montantCommissionBmci;
+
     @PersistenceContext
     private EntityManager entityManager;
 
-    private static final BigDecimal TAUX_TVA = new BigDecimal("0.10");
 
     private final CommisionRepository    commissionRepository;
     private final BanqueRepository       banqueRepository;
     private final CommissionMapper       commissionMapper;
     private final ImpotEtTaxeRepository  impotEtTaxeRepository;
-    private final ImpotEtTaxeMapper      impotEtTaxeMapper;
+
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public CommissionService(CommisionRepository commissionRepository,
                              BanqueRepository banqueRepository,
                              CommissionMapper commissionMapper,
-                             ImpotEtTaxeRepository impotEtTaxeRepository,
-                             ImpotEtTaxeMapper impotEtTaxeMapper) {
+                             ImpotEtTaxeRepository impotEtTaxeRepository) {
         this.commissionRepository  = commissionRepository;
         this.banqueRepository      = banqueRepository;
         this.commissionMapper      = commissionMapper;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
-        this.impotEtTaxeMapper     = impotEtTaxeMapper;
     }
 
     // --- Create ---
@@ -399,6 +398,54 @@ public class CommissionService {
         log.info("Statut de la commission avec l'id {} mis à jour. Nouveau statut : {}", commissionId, commission.getStatus());
 
         commissionRepository.save(commission);
+    }
+
+
+    @Transactional
+    public void generateCommissionIfNeeded(Virement virement) {
+
+        if (!isBmci(virement)) {
+            return;
+        }
+
+        if (virement.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            return;
+        }
+
+        String libelle = buildLibelle(virement);
+
+        if (commissionRepository.existsByOperationAndLibelle(
+                TransactionSource.Virement,
+                libelle)) {
+
+            log.debug("Commission already exists for virement {}", virement.getNumero());
+            return;
+        }
+
+        Commission commission = new Commission();
+
+        commission.setMontant(montantCommissionBmci);
+        commission.setBanque(virement.getBanqueEmettrice());
+        commission.setOperation(TransactionSource.Virement);
+        commission.setDateEmission(virement.getDateEmission());
+        commission.setLibelle(libelle);
+        commission.setStatus(Status.PREVU);
+
+        commissionRepository.save(commission);
+
+        log.info("Commission created for BMCI virement {}", virement.getNumero());
+    }
+
+    private String buildLibelle(Virement virement) {
+        return "Commission virement N° " + virement.getNumero();
+    }
+
+    private boolean isBmci(Virement virement) {
+        return virement.getBanqueEmettrice() != null
+                && virement.getBanqueEmettrice().getNom() != null
+                && "BMCI".equalsIgnoreCase(
+                virement.getBanqueEmettrice().getNom().trim()
+        );
     }
 
 }

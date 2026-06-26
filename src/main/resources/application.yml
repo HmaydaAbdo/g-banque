@@ -29,9 +29,7 @@ spring:
   jpa:
     properties:
       hibernate:
-        temp:
-          use_jdbc_metadata_defaults: false
-        dialect: org.hibernate.dialect.MySQLDialect
+        ddl-auto: validate
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -138,6 +136,9 @@ cmt:
       cron: "0 30 14 ? * SUN"
 
 commission:
+  virement:
+    bmci:
+      montant-fixe: 33
   leasing:
     default-commissions:
       CIH: 11

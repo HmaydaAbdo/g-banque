@@ -14,10 +14,28 @@ management:
       show-details: always   # Détails santé visibles sans authentification en dev
 
 spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/gbanque?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 30000
+      connection-timeout: 20000
+      max-lifetime: 1800000
   jpa:
     hibernate:
       ddl-auto: update   # Hibernate crée/modifie le schéma automatiquement en dev
     show-sql: false       # Passer à true localement si besoin de déboguer les requêtes
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: true  # DB existante (XAMPP/prod) : baseline à V1, V1 non ré-exécuté
+    baseline-version: 1        # DB vide : V1 exécuté normalement ; DB existante : V1 skippé
+    validate-on-migrate: true
+    out-of-order: false
   batch:
     jdbc:
       initialize-schema: always   # Recrée les tables Spring Batch au démarrage
@@ -27,7 +45,6 @@ logging:
     root: INFO
     staport.finance.gBanque: DEBUG
     org.springframework.web: INFO
-    # Décommenter pour déboguer SQL ou Security :
-    # org.hibernate.SQL: DEBUG
-    # org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    # org.springframework.security: DEBUG
+    # Décommentez ces lignes si vous avez un bug sur vos entités ou vos calculs :
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

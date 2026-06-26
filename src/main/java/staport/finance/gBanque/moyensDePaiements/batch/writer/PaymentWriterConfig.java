@@ -3,6 +3,7 @@ package staport.finance.gBanque.moyensDePaiements.batch.writer;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import staport.finance.gBanque.commision.service.CommissionService;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
@@ -11,7 +12,6 @@ import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepo
 import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
-
 import java.util.Map;
 
 /**
@@ -25,16 +25,20 @@ public class PaymentWriterConfig {
     private final LcnRepository lcnRepository;
     private final MiseADispositionRepository miseADispositionRepository;
     private final VirementRepository virementRepository;
+    private final CommissionService commissionService;
+
+
 
     public PaymentWriterConfig(
             ChequeRepository chequeRepository,
             LcnRepository lcnRepository,
             MiseADispositionRepository miseADispositionRepository,
-            VirementRepository virementRepository) {
+            VirementRepository virementRepository, CommissionService commissionService) {
         this.chequeRepository = chequeRepository;
         this.lcnRepository = lcnRepository;
         this.miseADispositionRepository = miseADispositionRepository;
         this.virementRepository = virementRepository;
+        this.commissionService = commissionService;
     }
 
     @Bean
@@ -49,7 +53,7 @@ public class PaymentWriterConfig {
 
     @Bean
     public VirementItemWriter virementItemWriter() {
-        return new VirementItemWriter(virementRepository);
+        return new VirementItemWriter(virementRepository, commissionService);
     }
 
     @Bean
