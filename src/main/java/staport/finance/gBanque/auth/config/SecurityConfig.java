@@ -66,21 +66,24 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login","/ws/**").permitAll()
-                        // /actuator/health reste public (healthcheck Docker, sans auth) ; le
-                        // reste (info, metrics...) ne doit être visible qu'à un SYSTEM_ADMIN.
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/auth/login", "/ws/**").permitAll()
+
+                        // Actuator
+                        .requestMatchers(
+                                "/actuator/health",
+                                "/actuator/health/**",
+                                "/actuator/prometheus"
+                        ).permitAll()
+
                         .requestMatchers("/actuator/**").hasAuthority("SYSTEM_ADMIN")
-                        // Swagger UI (pages statiques + JSON spec) — accès contrôlé par
-                        // springdoc.swagger-ui.enabled / springdoc.api-docs.enabled dans
-                        // application.yml (SWAGGER_ENABLED=false en prod). Spring Security
-                        // ne doit pas être le verrou ici : la page est statique, l'auth
-                        // s'effectue via le bouton "Authorize" de l'UI (bearerAuth JWT).
+
+                        // Swagger
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
