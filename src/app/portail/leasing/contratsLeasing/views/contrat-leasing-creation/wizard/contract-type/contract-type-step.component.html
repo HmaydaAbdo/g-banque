@@ -11,9 +11,13 @@
         formControlName="typeContrat"
         [ngClass]="{'ng-invalid ng-dirty': typeContratControl.invalid && (typeContratControl.dirty || typeContratControl.touched)}"
       ></p-dropdown>
-      <div *ngIf="typeContratControl?.invalid && (typeContratControl?.dirty || typeContratControl?.touched)" class="p-error">
-        <p-message *ngIf="typeContratControl?.errors?.['required']" severity="error" text="Le type de contrat est requis."></p-message>
-      </div>
+      @if (typeContratControl.invalid && (typeContratControl.dirty || typeContratControl.touched)) {
+        <div class="p-error">
+          @if (typeContratControl.errors?.['required']) {
+            <p-message severity="error" text="Le type de contrat est requis."></p-message>
+          }
+        </div>
+      }
     </div>
 
   </div>

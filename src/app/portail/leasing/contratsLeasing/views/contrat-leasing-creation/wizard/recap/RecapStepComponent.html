@@ -11,13 +11,14 @@
       class=" font-bold shadow-lg"
     ></p-tag>
   </div>
-  <ng-container *ngIf="contractData; else loadingData">
 
+  @if (contractData) {
 
-
-    <div *ngIf="formattedGlobalMessages.length > 0" class="mb-5">
-      <p-messages [value]="formattedGlobalMessages" [enableService]="false"></p-messages>
-    </div>
+    @if (formattedGlobalMessages.length > 0) {
+      <div class="mb-5">
+        <p-messages [value]="formattedGlobalMessages" [enableService]="false"></p-messages>
+      </div>
+    }
 
     <p-fieldset legend="Détails Principaux du Contrat" [toggleable]="true" [collapsed]="false" class="mb-4">
       <div class="grid p-nogutter">
@@ -98,7 +99,6 @@
             <div class="text-3xl font-bold text-green-900">{{ formatCurrency(contractData.expectedTotalAmountService) }}</div>
           </div>
         </div>
-
       </div>
     </p-fieldset>
 
@@ -135,11 +135,9 @@
       </p-table>
     </p-fieldset>
 
-  </ng-container>
-
-  <ng-template #loadingData>
+  } @else {
     <div class="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-md text-center shadow-sm">
       <span class="text-lg font-medium">Chargement des données du contrat...</span>
     </div>
-  </ng-template>
+  }
 </div>

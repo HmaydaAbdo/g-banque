@@ -6,7 +6,6 @@
         <h3 class="text-lg text-gray-600 mb-4 text-center">Suivez les étapes pour configurer votre nouveau contrat.</h3>
         <p-steps [model]="items" [activeIndex]="activeIndex" (activeIndexChange)="onStepChange($event)" [readonly]="false"></p-steps>
 
-
         <router-outlet (activate)="onActivate($event)"></router-outlet>
 
         <div class="flex justify-content-between w-screen px-4  border-t border-gray-200 pb-8 mb-8">
@@ -18,25 +17,27 @@
             severity="secondary"
           ></p-button>
 
-          <p-button
-            *ngIf="activeIndex < items.length - 1"
-            label="Suivant"
-            icon="pi pi-arrow-right"
-            iconPos="right"
-            (onClick)="navigateToStep('next')"
-            [disabled]="!isCurrentStepGloballyValid"
-            severity="primary"
-          ></p-button>
+          @if (activeIndex < items.length - 1) {
+            <p-button
+              label="Suivant"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              (onClick)="navigateToStep('next')"
+              [disabled]="!isCurrentStepGloballyValid"
+              severity="primary"
+            ></p-button>
+          }
 
-          <p-button
-            *ngIf="activeIndex === items.length - 1"
-            label="Soumettre"
-            icon="pi pi-check"
-            iconPos="left"
-            (onClick)="submitContract()"
-            [disabled]="!isSubmitEnabled()"
-            severity="success"
-          ></p-button>
+          @if (activeIndex === items.length - 1) {
+            <p-button
+              label="Soumettre"
+              icon="pi pi-check"
+              iconPos="left"
+              (onClick)="submitContract()"
+              [disabled]="!isSubmitEnabled()"
+              severity="success"
+            ></p-button>
+          }
         </div>
       </div>
     </div>

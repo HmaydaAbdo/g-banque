@@ -1,33 +1,31 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {ContratLeasingRequestDTO, ContratLeasingResponseDTO} from "../../dtos/contrat-leasing";
-import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
-import {TypeContratLeasing} from "../../dtos/type-contrat-leasing";
-import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
-import {debounceTime, distinctUntilChanged, Subscription, take} from "rxjs";
-import {ConfirmationService, MenuItem, MessageService, PrimeTemplate} from "primeng/api";
-import {ContratLeasingService} from "../../services/contrat-leasing.service";
-import {OrganismeLeasingService} from "../../../organismesLeasing/services/organisme-leasing.service";
-import {BanqueService} from "../../../../comptes-bancaire/services/BanqueService";
-import {Router, RouterLinkActive} from "@angular/router";
-import {PageResponse} from "../../../../global/types/PageResponse";
-import {OrganismeLeasingResponse} from "../../../organismesLeasing/dtos/OrganismeLeasingResponse";
-import {BanqueResponse} from "../../../../comptes-bancaire/dtos/BanqueResponse";
-import {ContratLeasingSearchDTO} from "../../dtos/contrat-leasing-search";
-import {BreadcrumbModule} from "primeng/breadcrumb";
-import {Button} from "primeng/button";
-import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {ContratLeasingDetailsComponent} from "../contrat-leasing-details/contrat-leasing-details.component";
-import {DatePipe, DecimalPipe, NgClass, NgIf} from "@angular/common";
-import {DialogModule} from "primeng/dialog";
-import {DropdownModule} from "primeng/dropdown";
-import {InputTextModule} from "primeng/inputtext";
-import {TagModule} from "primeng/tag";
-import {ToastModule} from "primeng/toast";
-import {TooltipModule} from "primeng/tooltip";
-import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
-import {ProgressSpinnerModule} from "primeng/progressspinner";
-import {InputNumberModule} from "primeng/inputnumber";
-import {LeasingContractWizardService} from "../../services/LeasingContractWizardService";
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { ContratLeasingRequestDTO, ContratLeasingResponseDTO } from "../../dtos/contrat-leasing";
+import { FormBuilder, FormGroup, ReactiveFormsModule } from "@angular/forms";
+import { TypeContratLeasing } from "../../dtos/type-contrat-leasing";
+import { Table, TableLazyLoadEvent, TableModule } from "primeng/table";
+import { debounceTime, distinctUntilChanged, Subscription, take } from "rxjs";
+import { ConfirmationService, MenuItem, MessageService, PrimeTemplate } from "primeng/api";
+import { ContratLeasingService } from "../../services/contrat-leasing.service";
+import { OrganismeLeasingService } from "../../../organismesLeasing/services/organisme-leasing.service";
+import { BanqueService } from "../../../../comptes-bancaire/services/BanqueService";
+import { Router, RouterLinkActive } from "@angular/router";
+import { PageResponse } from "../../../../global/types/PageResponse";
+import { OrganismeLeasingResponse } from "../../../organismesLeasing/dtos/OrganismeLeasingResponse";
+import { BanqueResponse } from "../../../../comptes-bancaire/dtos/BanqueResponse";
+import { ContratLeasingSearchDTO } from "../../dtos/contrat-leasing-search";
+import { BreadcrumbModule } from "primeng/breadcrumb";
+import { Button } from "primeng/button";
+import { ConfirmDialogModule } from "primeng/confirmdialog";
+import { ContratLeasingDetailsComponent } from "../contrat-leasing-details/contrat-leasing-details.component";
+import { DatePipe, DecimalPipe, NgClass, NgIf } from "@angular/common";
+import { DialogModule } from "primeng/dialog";
+import { DropdownModule } from "primeng/dropdown";
+import { InputTextModule } from "primeng/inputtext";
+import { TagModule } from "primeng/tag";
+import { ToastModule } from "primeng/toast";
+import { TooltipModule } from "primeng/tooltip";
+import { InputNumberModule } from "primeng/inputnumber";
+import { LeasingContractWizardService } from "../../services/LeasingContractWizardService";
 import { parseLocalDate } from '../../../../global/types/date.utils';
 
 @Component({
@@ -52,13 +50,21 @@ import { parseLocalDate } from '../../../../global/types/date.utils';
     TooltipModule,
     NgClass,
     DecimalPipe,
-    ProgressSpinnerModule,
     InputNumberModule
   ],
   templateUrl: './contrats-leasing-en-attente-de-ml.component.html',
   styleUrl: './contrats-leasing-en-attente-de-ml.component.scss'
 })
 export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy {
+
+  private readonly contratLeasingService = inject(ContratLeasingService);
+  private readonly organismeLeasingService = inject(OrganismeLeasingService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly wizardService = inject(LeasingContractWizardService);
 
   contrats: ContratLeasingResponseDTO[] = [];
   totalRecords: number = 0;
@@ -69,7 +75,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
   typeContratOptions = Object.values(TypeContratLeasing).map(type => ({ label: type, value: type }));
   organismeLeasingOptions: { label: string, value: number }[] = [];
   banqueOptions: { label: string, value: number }[] = [];
-
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -87,26 +92,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
   selectedContratDetails: ContratLeasingResponseDTO | null = null;
   items: MenuItem[] | undefined;
 
-  // Gestion du dialog PDF
-  displayPdfDialog: boolean = false;
-  selectedContratForPdf: ContratLeasingResponseDTO | null = null;
-  pdfBlobUrl: SafeResourceUrl | null = null;
-  pdfFileName: string = '';
-  pdfFileSize: string = '';
-  loadingPdf: boolean = false;
-
-  constructor(
-    private contratLeasingService: ContratLeasingService,
-    private organismeLeasingService: OrganismeLeasingService,
-    private banqueService: BanqueService,
-    private router: Router,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder,
-    private sanitizer: DomSanitizer,
-    private wizardService:LeasingContractWizardService
-  ) { }
-
   ngOnInit(): void {
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: "Accueil" },
@@ -116,7 +101,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
     this.initSearchForm();
     this.loadDropdownOptions();
 
-    // ⭐ OPTIMISATION : Une seule subscription pour tout le formulaire
     const searchFormSub = this.searchForm.valueChanges
       .pipe(
         debounceTime(300),
@@ -125,7 +109,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
       .subscribe(() => this.onSearch());
 
     this.subscriptions.push(searchFormSub);
-
     this.loadContrats(this.lastLazyLoadEvent);
   }
 
@@ -149,9 +132,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
             label: org.nom,
             value: org.id!
           }));
-        },
-        error: (error) => {
-          console.error('Error loading organisme leasing options:', error);
         }
       });
 
@@ -162,9 +142,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
             label: banque.nom,
             value: banque.id!
           }));
-        },
-        error: (error) => {
-          console.error('Error loading bank options:', error);
         }
       });
   }
@@ -202,9 +179,8 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
         this.totalRecords = page.page.totalElements;
         this.loading = false;
       },
-      error: (error) => {
+      error: () => {
         this.loading = false;
-        console.error('Erreur lors du chargement des contrats:', error);
       }
     });
   }
@@ -243,8 +219,7 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
   }
 
   onRowSelect(event: any): void {
-    const contratId = event.data.id;
-    this.getContratDetailsForDialog(contratId);
+    this.getContratDetailsForDialog(event.data.id);
   }
 
   getContratDetailsForDialog(id: number): void {
@@ -255,8 +230,7 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
         this.displayDetailsDialog = true;
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Error fetching contract details:', error);
+      error: () => {
         this.loading = false;
       }
     });
@@ -271,9 +245,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
     this.router.navigate(['portail/leasing/contratsLeasing', contratId, 'tableau-amortissement']);
   }
 
-  /**
-   * Confirms the archiving of a leasing contract with a dialog.
-   */
   confirmArchiveContrat(contrat: ContratLeasingResponseDTO): void {
     this.confirmationService.confirm({
       message: `Êtes-vous sûr de vouloir archiver le contrat N° ${contrat.numeroContrat} ?`,
@@ -316,19 +287,16 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
         this.router.navigate(['portail/leasing/contratsLeasing/creation/organisme']);
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Error fetching contract for edit:', error);
+      error: () => {
         this.loading = false;
       }
     });
   }
-  /**
-   * Archives a contract by calling the service.
-   */
+
   archiveContrat(id: number | undefined): void {
     if (id === undefined) {
       this.messageService.add({
-        severity: 'error',
+        severity: 'success',
         summary: 'Erreur',
         detail: 'ID du contrat non valide.'
       });
@@ -343,135 +311,10 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
           detail: 'Contrat archivé avec succès.'
         });
         this.refreshCurrentContratInList();
-      },
-      error: (error) => {
-        console.error('Erreur lors de l\'archivage:', error);
       }
     });
   }
 
-  openPdfDialog(contrat: ContratLeasingResponseDTO): void {
-    this.selectedContratForPdf = contrat;
-    this.displayPdfDialog = true;
-
-    if (contrat.hasFichierPdf) {
-      this.loadPdfPreview(contrat.id);
-    }
-  }
-
-  hidePdfDialog(): void {
-    this.displayPdfDialog = false;
-    this.selectedContratForPdf = null;
-    this.pdfBlobUrl = null;
-    this.pdfFileName = '';
-    this.pdfFileSize = '';
-  }
-
-  loadPdfPreview(contratId: number): void {
-    this.loadingPdf = true;
-
-    this.contratLeasingService.downloadPdfFromContrat(contratId).subscribe({
-      next: (blob: Blob) => {
-        const url = URL.createObjectURL(blob);
-        this.pdfBlobUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-        this.pdfFileName = `Contrat_${contratId}.pdf`;
-        this.pdfFileSize = this.formatFileSize(blob.size);
-        this.loadingPdf = false;
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement du PDF:', error);
-        this.loadingPdf = false;
-      }
-    });
-  }
-
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0 && this.selectedContratForPdf) {
-      const file = input.files[0];
-
-      if (file.type !== 'application/pdf') {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Seuls les fichiers PDF sont acceptés.'
-        });
-        return;
-      }
-
-      this.loadingPdf = true;
-      this.contratLeasingService.uploadPdfToContrat(this.selectedContratForPdf.id, file).subscribe({
-        next: (message) => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: message
-          });
-          this.selectedContratForPdf!.hasFichierPdf = true;
-          this.loadPdfPreview(this.selectedContratForPdf!.id);
-          this.refreshCurrentContratInList();
-        },
-        error: (error) => {
-          console.error('Erreur lors de l\'upload:', error);
-          this.loadingPdf = false;
-        }
-      });
-    }
-  }
-
-  downloadPdf(): void {
-    if (this.selectedContratForPdf) {
-      this.contratLeasingService.downloadPdfFile(
-        this.selectedContratForPdf.id,
-        `Contrat_${this.selectedContratForPdf.numeroContrat}.pdf`
-      );
-    }
-  }
-
-  confirmDeletePdf(): void {
-    this.confirmationService.confirm({
-      message: 'Êtes-vous sûr de vouloir supprimer ce fichier PDF ?',
-      header: 'Confirmation de suppression',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Oui',
-      rejectLabel: 'Non',
-      acceptButtonStyleClass: 'p-button-danger',
-      rejectButtonStyleClass: 'p-button-text',
-      accept: () => this.deletePdf()
-    });
-  }
-
-  deletePdf(): void {
-    if (this.selectedContratForPdf) {
-      this.contratLeasingService.deletePdfFromContrat(this.selectedContratForPdf.id).subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'PDF supprimé avec succès.'
-          });
-          this.selectedContratForPdf!.hasFichierPdf = false;
-          this.pdfBlobUrl = null;
-          this.refreshCurrentContratInList();
-        },
-        error: (error) => {
-          console.error('Erreur lors de la suppression:', error);
-        }
-      });
-    }
-  }
-
-  formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  }
-
-  /**
-   * Retourne l'affichage des échéances pour le tableau
-   */
   getEcheancesDisplay(contrat: ContratLeasingResponseDTO): string {
     if (!contrat.phases || contrat.phases.length === 0) {
       return 'N/A';
@@ -492,9 +335,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
     return `${this.formatCurrency(min)} - ${this.formatCurrency(max)}`;
   }
 
-  /**
-   * Retourne le contenu du tooltip avec toutes les échéances détaillées
-   */
   getEcheancesTooltip(contrat: ContratLeasingResponseDTO): string {
     if (!contrat.phases || contrat.phases.length === 0) {
       return 'Aucune phase définie';
@@ -505,7 +345,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
     }
 
     const sortedPhases = [...contrat.phases].sort((a, b) => a.numeroPhase - b.numeroPhase);
-
     let tooltip = 'Détail des échéances:\n';
     sortedPhases.forEach(phase => {
       tooltip += `\n• Phase ${phase.numeroPhase} (${phase.dureeMois} mois): ${this.formatCurrency(phase.mensualiteTTC)}`;
@@ -514,9 +353,6 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
     return tooltip;
   }
 
-  /**
-   * Formate un nombre en devise MAD
-   */
   private formatCurrency(amount: number | any): string {
     const numAmount = typeof amount === 'number' ? amount : Number(amount);
     return `${numAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`;
@@ -532,12 +368,5 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
-
-    if (this.pdfBlobUrl) {
-      const url = (this.pdfBlobUrl as any).changingThisBreaksApplicationSecurity;
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
-    }
   }
 }

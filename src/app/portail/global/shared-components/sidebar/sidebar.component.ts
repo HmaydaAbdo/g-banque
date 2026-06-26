@@ -95,11 +95,12 @@ export class SidebarComponent implements OnInit {
     {
       label: 'Leasing',
       icon: 'pi pi-money-bill',
+      requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
       items: [
-        { label: 'Les Contrats encours', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/encours' },
-        { label: 'Les Contrats en attente de main levées', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/en-attente-de-ML' },
-        { label: 'Les Contrats archivés', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/archives' },
-        { label: 'Les organismes leasing', icon: 'pi pi-list', routerLink: '/portail/leasing/organismesLeasing' },
+        { label: 'Les Contrats encours', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/encours', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Les Contrats en attente de main levées', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/en-attente-de-ML', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Les Contrats archivés', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/archives', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Les organismes leasing', icon: 'pi pi-list', routerLink: '/portail/leasing/organismesLeasing', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
       ]
     },
     {

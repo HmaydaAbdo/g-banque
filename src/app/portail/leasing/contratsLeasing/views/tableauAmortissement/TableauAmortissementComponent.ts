@@ -106,7 +106,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       } else {
         this.errorMessage = 'Contract ID not provided in the URL.';
         this.loading = false;
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: this.errorMessage });
       }
     });
 

@@ -158,21 +158,6 @@
         </div>
       </div>
 
-    <!-- Bandeau CLOTURE_DEFINITIVE -->
-    <div *ngIf="rapprochementDetails.statutRapprochement === 'CLOTURE_DEFINITIVE'"
-         class="flex align-items-center gap-3 border-round-xl px-4 py-3 mb-3"
-         style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border: 1.5px solid #fb8c00;">
-      <div class="flex align-items-center justify-content-center border-circle flex-shrink-0"
-           style="width: 40px; height: 40px; background: #fb8c00;">
-        <i class="pi pi-lock text-white text-lg"></i>
-      </div>
-      <div>
-        <div class="font-bold text-base" style="color: #e65100;">Rapprochement définitivement clôturé</div>
-        <div class="text-sm" style="color: #bf360c;">
-          Ce rapprochement est verrouillé. Les transactions ne peuvent plus être modifiées.
-        </div>
-      </div>
-    </div>
 
     <!-- Section Filtres de Recherche -->
     <form [formGroup]="searchForm">
@@ -406,14 +391,12 @@
             </td>
 
             <td>
-              <button *ngIf="rapprochementDetails?.statutRapprochement !== 'CLOTURE_DEFINITIVE'"
+              <button
                       pButton pRipple icon="pi pi-pencil"
                       class="p-button-rounded p-button-outlined p-button-secondary"
                       pTooltip="Modifier la transaction"
                       (click)="openEditDialog(transaction)"></button>
-              <i *ngIf="rapprochementDetails?.statutRapprochement === 'CLOTURE_DEFINITIVE'"
-                 class="pi pi-lock text-400"
-                 pTooltip="Transaction verrouillée (clôture définitive)"></i>
+
             </td>
           </tr>
         </ng-template>

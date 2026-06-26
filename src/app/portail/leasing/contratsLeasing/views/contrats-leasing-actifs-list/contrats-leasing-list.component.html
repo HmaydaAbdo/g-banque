@@ -7,17 +7,16 @@
   <div class="flex justify-content-between align-items-center bg-transparent gap-3">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
-          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+        @if (item.route) {
+          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
             <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
           </a>
-        </ng-container>
-        <ng-template #elseBlock>
+        } @else {
           <a [href]="item.url">
             <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
           </a>
-        </ng-template>
+        }
       </ng-template>
     </p-breadcrumb>
     <button pButton pRipple label="Nouveau Contrat" class="hidden md:block h-fit" size="small" icon="pi pi-plus" severity="primary" (click)="createNewContrat()"></button>
@@ -162,21 +161,21 @@
           <td>
             <div class="flex align-items-center gap-2">
               <span class="num font-semibold">{{ getEcheancesDisplay(contrat) }}</span>
-              <p-tag
-                *ngIf="contrat.phases && contrat.phases.length > 1"
-                [value]="contrat.phases.length + ' phases'"
-                severity="info"
-                [pTooltip]="getEcheancesTooltip(contrat)"
-                tooltipPosition="top"
-                [escape]="false">
-              </p-tag>
-              <i
-                *ngIf="contrat.phases && contrat.phases.length > 1"
-                class="pi pi-info-circle text-primary cursor-pointer"
-                [pTooltip]="getEcheancesTooltip(contrat)"
-                tooltipPosition="top"
-                [escape]="false">
-              </i>
+              @if (contrat.phases && contrat.phases.length > 1) {
+                <p-tag
+                  [value]="contrat.phases.length + ' phases'"
+                  severity="info"
+                  [pTooltip]="getEcheancesTooltip(contrat)"
+                  tooltipPosition="top"
+                  [escape]="false">
+                </p-tag>
+                <i
+                  class="pi pi-info-circle text-primary cursor-pointer"
+                  [pTooltip]="getEcheancesTooltip(contrat)"
+                  tooltipPosition="top"
+                  [escape]="false">
+                </i>
+              }
             </div>
           </td>
           <td class="white-space-nowrap">{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</td>
@@ -209,15 +208,6 @@
               (onClick)="editContrat(contrat.id)">
             </p-button>
             <p-button
-              icon="pi pi-file-pdf"
-              severity="secondary"
-              [outlined]="true"
-              size="small"
-              [rounded]="true"
-              pTooltip="Contrat PDF"
-              (onClick)="openPdfDialog(contrat)">
-            </p-button>
-            <p-button
               icon="pi pi-trash"
               severity="danger"
               [outlined]="true"
@@ -246,89 +236,4 @@
 
 
 
-  <!-- Dialog Gestion PDF -->
-  <p-dialog
-    header="Gestion du PDF du Contrat"
-    [(visible)]="displayPdfDialog"
-    (onHide)="hidePdfDialog()"
-    [modal]="true"
-    [style]="{ width: '80vw', height: '90vh' }"
-    [breakpoints]="{'960px': '90vw', '640px': '95vw'}"
-    [draggable]="false"
-    [resizable]="false">
-
-    <!-- Cas 1 : Aucun PDF attaché -->
-    <div *ngIf="!selectedContratForPdf?.hasFichierPdf" class="flex flex-column align-items-center justify-content-center gap-3 p-5">
-      <i class="pi pi-file-pdf text-6xl text-gray-400"></i>
-      <p class="text-xl text-gray-600">Aucun fichier PDF n'est associé à ce contrat.</p>
-
-      <div class="flex gap-2 mt-3">
-        <input #fileInput type="file" accept="application/pdf" (change)="onFileSelected($event)" style="display: none" />
-        <p-button
-          label="Uploader un PDF"
-          icon="pi pi-upload"
-          (onClick)="fileInput.click()">
-        </p-button>
-      </div>
-    </div>
-
-    <!-- Cas 2 : PDF attaché - Affichage et actions -->
-    <div *ngIf="selectedContratForPdf?.hasFichierPdf" class="flex flex-column gap-3 h-full">
-      <!-- Informations du fichier -->
-      <div class="flex justify-content-between align-items-center bg-gray-100 p-3 border-round">
-        <div class="flex align-items-center gap-2">
-          <i class="pi pi-file-pdf text-3xl text-red-500"></i>
-          <div>
-            <p class="font-bold m-0">{{ pdfFileName }}</p>
-            <p class="text-sm text-gray-600 m-0">Taille: {{ pdfFileSize }}</p>
-          </div>
-        </div>
-
-        <div class="flex gap-2">
-          <input #fileInputReplace type="file" accept="application/pdf" (change)="onFileSelected($event)" style="display: none" />
-          <p-button
-            icon="pi pi-upload"
-            severity="info"
-            [outlined]="true"
-            size="small"
-            pTooltip="Remplacer"
-            (onClick)="fileInputReplace.click()">
-          </p-button>
-          <p-button
-            icon="pi pi-download"
-            severity="success"
-            [outlined]="true"
-            size="small"
-            pTooltip="Télécharger"
-            (onClick)="downloadPdf()">
-          </p-button>
-          <p-button
-            icon="pi pi-trash"
-            severity="danger"
-            [outlined]="true"
-            size="small"
-            pTooltip="Supprimer"
-            (onClick)="confirmDeletePdf()">
-          </p-button>
-        </div>
-      </div>
-
-      <!-- Visualisation du PDF -->
-      <div class="flex-1 border-1 border-gray-300 border-round overflow-hidden">
-        <iframe *ngIf="pdfBlobUrl" [src]="pdfBlobUrl" class="w-full h-full" frameborder="0"></iframe>
-        <div *ngIf="loadingPdf" class="flex align-items-center justify-content-center h-full">
-          <p-progressSpinner></p-progressSpinner>
-        </div>
-      </div>
-    </div>
-
-    <ng-template pTemplate="footer">
-      <p-button
-        label="Fermer"
-        icon="pi pi-times"
-        (onClick)="hidePdfDialog()"
-        class="p-button-text">
-      </p-button>
-    </ng-template>
-  </p-dialog>
 </div>

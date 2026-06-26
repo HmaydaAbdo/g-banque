@@ -11,22 +11,29 @@
       ></p-button>
     </div>
 
-    <div *ngIf="showPhasesRequiredForTypeError()" class="mb-3">
-      <p-message severity="error" [text]="phasesRequiredForTypeMessage"></p-message>
-    </div>
+    @if (showPhasesRequiredForTypeError()) {
+      <div class="mb-3">
+        <p-message severity="error" [text]="phasesRequiredForTypeMessage"></p-message>
+      </div>
+    }
 
-    <div *ngIf="showTotalDurationMismatchError()" class="mb-3">
-      <p-message severity="error" [text]="totalDurationMismatchMessage"></p-message>
-    </div>
+    @if (showTotalDurationMismatchError()) {
+      <div class="mb-3">
+        <p-message severity="error" [text]="totalDurationMismatchMessage"></p-message>
+      </div>
+    }
 
-    <div *ngIf="showProgressiveOrderError()" class="mb-3">
-      <p-message severity="error" [text]="getProgressiveOrderMessage()"></p-message>
-    </div>
+    @if (showProgressiveOrderError()) {
+      <div class="mb-3">
+        <p-message severity="error" [text]="getProgressiveOrderMessage()"></p-message>
+      </div>
+    }
 
-    <div *ngIf="showDegressiveOrderError()" class="mb-3">
-      <p-message severity="error" [text]="getDegressiveOrderMessage()"></p-message>
-    </div>
-
+    @if (showDegressiveOrderError()) {
+      <div class="mb-3">
+        <p-message severity="error" [text]="getDegressiveOrderMessage()"></p-message>
+      </div>
+    }
 
     <p-table
       [value]="(phasesForTable$ | async) || []"
@@ -100,10 +107,16 @@
           incrementButtonIcon="pi pi-plus"
           [ngClass]="{'ng-invalid ng-dirty': dialogDureeMoisControl?.invalid && (dialogDureeMoisControl?.dirty || dialogDureeMoisControl?.touched)}"
         ></p-inputNumber>
-        <div *ngIf="dialogDureeMoisControl?.invalid && (dialogDureeMoisControl?.dirty || dialogDureeMoisControl?.touched)" class="p-error">
-          <p-message *ngIf="dialogDureeMoisControl?.errors?.['required']" severity="error" text="La durée est requise."></p-message>
-          <p-message *ngIf="dialogDureeMoisControl?.errors?.['min']" severity="error" text="La durée doit être au moins de 1 mois."></p-message>
-        </div>
+        @if (dialogDureeMoisControl?.invalid && (dialogDureeMoisControl?.dirty || dialogDureeMoisControl?.touched)) {
+          <div class="p-error">
+            @if (dialogDureeMoisControl?.errors?.['required']) {
+              <p-message severity="error" text="La durée est requise."></p-message>
+            }
+            @if (dialogDureeMoisControl?.errors?.['min']) {
+              <p-message severity="error" text="La durée doit être au moins de 1 mois."></p-message>
+            }
+          </div>
+        }
       </div>
 
       <div class="field mb-3">
@@ -118,10 +131,16 @@
           class="w-full"
           [ngClass]="{'ng-invalid ng-dirty': dialogMensualiteTTCControl?.invalid && (dialogMensualiteTTCControl?.dirty || dialogMensualiteTTCControl?.touched)}"
         ></p-inputNumber>
-        <div *ngIf="dialogMensualiteTTCControl?.invalid && (dialogMensualiteTTCControl?.dirty || dialogMensualiteTTCControl?.touched)" class="p-error">
-          <p-message *ngF="dialogMensualiteTTCControl?.errors?.['required']" severity="error" text="La mensualité est requise."></p-message>
-          <p-message *ngIf="dialogMensualiteTTCControl?.errors?.['min']" severity="error" text="La mensualité doit être supérieure à 0."></p-message>
-        </div>
+        @if (dialogMensualiteTTCControl?.invalid && (dialogMensualiteTTCControl?.dirty || dialogMensualiteTTCControl?.touched)) {
+          <div class="p-error">
+            @if (dialogMensualiteTTCControl?.errors?.['required']) {
+              <p-message severity="error" text="La mensualité est requise."></p-message>
+            }
+            @if (dialogMensualiteTTCControl?.errors?.['min']) {
+              <p-message severity="error" text="La mensualité doit être supérieure à 0."></p-message>
+            }
+          </div>
+        }
       </div>
     </form>
 

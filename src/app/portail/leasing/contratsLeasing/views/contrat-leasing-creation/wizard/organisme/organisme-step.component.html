@@ -13,9 +13,13 @@
         [showClear]="true"
         [ngClass]="{'ng-invalid ng-dirty': organismeLeasingIdControl?.invalid && (organismeLeasingIdControl?.dirty || organismeLeasingIdControl?.touched)}"
       ></p-dropdown>
-      <div *ngIf="organismeLeasingIdControl?.invalid && (organismeLeasingIdControl?.dirty || organismeLeasingIdControl?.touched)" class="p-error">
-        <p-message *ngIf="organismeLeasingIdControl?.errors?.['required']" severity="error" text="L'organisme de leasing est requis."></p-message>
-      </div>
+      @if (organismeLeasingIdControl?.invalid && (organismeLeasingIdControl?.dirty || organismeLeasingIdControl?.touched)) {
+        <div class="p-error">
+          @if (organismeLeasingIdControl?.errors?.['required']) {
+            <p-message severity="error" text="L'organisme de leasing est requis."></p-message>
+          }
+        </div>
+      }
     </div>
   </div>
 

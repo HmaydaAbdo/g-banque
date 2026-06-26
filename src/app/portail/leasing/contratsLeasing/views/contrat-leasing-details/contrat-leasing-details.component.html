@@ -1,4 +1,4 @@
-<ng-container *ngIf="contratDetails">
+@if (contratDetails) {
   <p-table [value]="[{}]" responsiveLayout="stacked" styleClass="p-datatable-sm p-datatable-gridlines">
     <ng-template pTemplate="body" >
       <tr>
@@ -36,10 +36,12 @@
         <td><b>Durée en Mois:</b></td>
         <td>{{ contratDetails.periodeEnMois }} mois</td>
       </tr>
-      <tr *ngIf="contratDetails.typeContrat === 'LINEAIRE' && contratDetails.valeurResiduelle !== undefined">
-        <td><b>Valeur Résiduelle:</b></td>
-        <td><span class="num font-bold text-lg text-primary">{{ contratDetails.valeurResiduelle | number:'1.2-2'}} </span></td>
-      </tr>
+      @if (contratDetails.typeContrat === 'LINEAIRE' && contratDetails.valeurResiduelle !== undefined) {
+        <tr>
+          <td><b>Valeur Résiduelle:</b></td>
+          <td><span class="num font-bold text-lg text-primary">{{ contratDetails.valeurResiduelle | number:'1.2-2'}} </span></td>
+        </tr>
+      }
     </ng-template>
   </p-table>
 
@@ -76,5 +78,4 @@
       </tr>
     </ng-template>
   </p-table>
-
-</ng-container>
+}

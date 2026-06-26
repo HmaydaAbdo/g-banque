@@ -16,9 +16,13 @@
         class="w-full"
         [ngClass]="{'ng-invalid ng-dirty': banqueDePrelevementIdControl?.invalid && (banqueDePrelevementIdControl?.dirty || banqueDePrelevementIdControl?.touched)}"
       ></p-dropdown>
-      <div *ngIf="banqueDePrelevementIdControl?.invalid && (banqueDePrelevementIdControl?.dirty || banqueDePrelevementIdControl?.touched)" class="p-error">
-        <p-message *ngIf="banqueDePrelevementIdControl?.errors?.['required']" severity="error" text="La banque de prélèvement est requise."></p-message>
-      </div>
+      @if (banqueDePrelevementIdControl?.invalid && (banqueDePrelevementIdControl?.dirty || banqueDePrelevementIdControl?.touched)) {
+        <div class="p-error">
+          @if (banqueDePrelevementIdControl?.errors?.['required']) {
+            <p-message severity="error" text="La banque de prélèvement est requise."></p-message>
+          }
+        </div>
+      }
     </div>
   </div>
 

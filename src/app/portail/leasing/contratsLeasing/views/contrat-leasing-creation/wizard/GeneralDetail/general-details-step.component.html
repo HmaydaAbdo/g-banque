@@ -1,8 +1,10 @@
 <div class="p-fluid">
   <div [formGroup]="formGroup" class="flex flex-column gap-4 p-4">
-    <div *ngIf="formattedGlobalMessages.length > 0" class="mb-4">
-      <p-messages [value]="formattedGlobalMessages" [enableService]="false"></p-messages>
-    </div>
+    @if (formattedGlobalMessages.length > 0) {
+      <div class="mb-4">
+        <p-messages [value]="formattedGlobalMessages" [enableService]="false"></p-messages>
+      </div>
+    }
 
     <div class="grid formgrid">
       <div class="field col-12 md:col-6">
@@ -15,10 +17,16 @@
           [ngClass]="{'ng-invalid ng-dirty': numeroContratControl.invalid && (numeroContratControl.dirty || numeroContratControl.touched)}"
           aria-describedby="numeroContrat-help"
         />
-        <div *ngIf="numeroContratControl?.invalid && (numeroContratControl?.dirty || numeroContratControl?.touched)" class="p-error">
-          <p-message *ngIf="numeroContratControl?.errors?.['required']" severity="error" text="Le numéro de contrat est requis."></p-message>
-          <p-message *ngIf="numeroContratControl?.errors?.['maxlength']" severity="error" text="Le numéro de contrat ne doit pas dépasser 50 caractères."></p-message>
-        </div>
+        @if (numeroContratControl.invalid && (numeroContratControl.dirty || numeroContratControl.touched)) {
+          <div class="p-error">
+            @if (numeroContratControl.errors?.['required']) {
+              <p-message severity="error" text="Le numéro de contrat est requis."></p-message>
+            }
+            @if (numeroContratControl.errors?.['maxlength']) {
+              <p-message severity="error" text="Le numéro de contrat ne doit pas dépasser 50 caractères."></p-message>
+            }
+          </div>
+        }
       </div>
 
       <div class="field col-12 md:col-6">
@@ -31,10 +39,16 @@
           [ngClass]="{'ng-invalid ng-dirty': immobilisationControl.invalid && (immobilisationControl.dirty || immobilisationControl.touched)}"
           aria-describedby="immobilisation-help"
         />
-        <div *ngIf="immobilisationControl?.invalid && (immobilisationControl?.dirty || immobilisationControl?.touched)" class="p-error">
-          <p-message *ngIf="immobilisationControl?.errors?.['required']" severity="error" text="L'immobilisation est requise."></p-message>
-          <p-message *ngIf="immobilisationControl?.errors?.['maxlength']" severity="error" text="L'immobilisation ne doit pas dépasser 100 caractères."></p-message>
-        </div>
+        @if (immobilisationControl.invalid && (immobilisationControl.dirty || immobilisationControl.touched)) {
+          <div class="p-error">
+            @if (immobilisationControl.errors?.['required']) {
+              <p-message severity="error" text="L'immobilisation est requise."></p-message>
+            }
+            @if (immobilisationControl.errors?.['maxlength']) {
+              <p-message severity="error" text="L'immobilisation ne doit pas dépasser 100 caractères."></p-message>
+            }
+          </div>
+        }
       </div>
 
       <div class="field col-12 md:col-6">
@@ -49,10 +63,16 @@
           [ngClass]="{'ng-invalid ng-dirty': montantAchatTTCControl.invalid && (montantAchatTTCControl.dirty || montantAchatTTCControl.touched)}"
           aria-describedby="montantAchatTTC-help"
         ></p-inputNumber>
-        <div *ngIf="montantAchatTTCControl?.invalid && (montantAchatTTCControl?.dirty || montantAchatTTCControl?.touched)" class="p-error">
-          <p-message *ngIf="montantAchatTTCControl?.errors?.['required']" severity="error" text="Le montant d'achat TTC est requis."></p-message>
-          <p-message *ngIf="montantAchatTTCControl?.errors?.['min']" severity="error" text="Le montant d'achat TTC doit être positif."></p-message>
-        </div>
+        @if (montantAchatTTCControl.invalid && (montantAchatTTCControl.dirty || montantAchatTTCControl.touched)) {
+          <div class="p-error">
+            @if (montantAchatTTCControl.errors?.['required']) {
+              <p-message severity="error" text="Le montant d'achat TTC est requis."></p-message>
+            }
+            @if (montantAchatTTCControl.errors?.['min']) {
+              <p-message severity="error" text="Le montant d'achat TTC doit être positif."></p-message>
+            }
+          </div>
+        }
       </div>
 
       <div class="field col-12 md:col-6">
@@ -69,7 +89,6 @@
         ></p-inputNumber>
       </div>
 
-
       <div class="field col-12 md:col-6">
         <label for="dateDebut" class="font-semibold">Date de Début <span class="p-error">*</span></label>
         <p-calendar
@@ -81,9 +100,13 @@
           [ngClass]="{'ng-invalid ng-dirty': dateDebutControl.invalid && (dateDebutControl.dirty || dateDebutControl.touched)}"
           aria-describedby="dateDebut-help"
         ></p-calendar>
-        <div *ngIf="dateDebutControl?.invalid && (dateDebutControl?.dirty || dateDebutControl?.touched)" class="p-error">
-          <p-message *ngIf="dateDebutControl?.errors?.['required']" severity="error" text="La date de début est requise."></p-message>
-        </div>
+        @if (dateDebutControl.invalid && (dateDebutControl.dirty || dateDebutControl.touched)) {
+          <div class="p-error">
+            @if (dateDebutControl.errors?.['required']) {
+              <p-message severity="error" text="La date de début est requise."></p-message>
+            }
+          </div>
+        }
       </div>
 
       <div class="field col-12 md:col-6">
@@ -100,11 +123,19 @@
           [ngClass]="{'ng-invalid ng-dirty': periodeEnMoisControl.invalid && (periodeEnMoisControl.dirty || periodeEnMoisControl.touched)}"
           aria-describedby="periodeEnMois-help"
         ></p-inputNumber>
-        <div *ngIf="periodeEnMoisControl?.invalid && (periodeEnMoisControl?.dirty || periodeEnMoisControl?.touched)" class="p-error">
-          <p-message *ngIf="periodeEnMoisControl?.errors?.['required']" severity="error" text="La période en mois est requise."></p-message>
-          <p-message *ngIf="periodeEnMoisControl?.errors?.['min']" severity="error" text="La période doit être au moins de 1 mois."></p-message>
-          <p-message *ngIf="periodeEnMoisControl?.errors?.['max']" severity="error" text="La période ne peut pas dépasser 360 mois (30 ans)."></p-message>
-        </div>
+        @if (periodeEnMoisControl.invalid && (periodeEnMoisControl.dirty || periodeEnMoisControl.touched)) {
+          <div class="p-error">
+            @if (periodeEnMoisControl.errors?.['required']) {
+              <p-message severity="error" text="La période en mois est requise."></p-message>
+            }
+            @if (periodeEnMoisControl.errors?.['min']) {
+              <p-message severity="error" text="La période doit être au moins de 1 mois."></p-message>
+            }
+            @if (periodeEnMoisControl.errors?.['max']) {
+              <p-message severity="error" text="La période ne peut pas dépasser 360 mois (30 ans)."></p-message>
+            }
+          </div>
+        }
       </div>
     </div>
   </div>

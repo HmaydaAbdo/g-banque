@@ -3,7 +3,6 @@
 
 <div class="portail-section w-screen h-screen overflow-y-scroll pt-2 pb-8 px-5">
 
-
   <p class="text-center font-bold md:text-2xl">{{ isEditMode ? 'Modifier Organisme de Leasing' : 'Ajouter un Organisme de Leasing' }}</p>
 
   <form [formGroup]="organismeLeasingForm" (ngSubmit)="onSubmit()">
@@ -12,7 +11,9 @@
         <label for="nom">Nom <span class="p-error">*</span></label>
         <input id="nom" type="text" pInputText formControlName="nom"
                [ngClass]="{'ng-dirty': f['nom'].invalid && f['nom'].touched}">
-        <small class="p-error" *ngIf="f['nom'].invalid && f['nom'].touched">Le nom est requis.</small>
+        @if (f['nom'].invalid && f['nom'].touched) {
+          <small class="p-error">Le nom est requis.</small>
+        }
       </div>
 
       <div class="field col-12 md:col-6">
@@ -20,9 +21,9 @@
         <p-inputNumber id="plafond" formControlName="plafond" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2"
                        [showButtons]="false"
                        [ngClass]="{'ng-dirty': f['plafond'].invalid && f['plafond'].touched}"></p-inputNumber>
-        <small class="p-error" *ngIf="f['plafond'].invalid && f['plafond'].touched">
-          Le plafond est requis et doit être un nombre positif.
-        </small>
+        @if (f['plafond'].invalid && f['plafond'].touched) {
+          <small class="p-error">Le plafond est requis et doit être un nombre positif.</small>
+        }
       </div>
 
       <div class="field col-12 md:col-6">
@@ -30,7 +31,9 @@
         <p-calendar id="dateDebut" formControlName="dateDebut" [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true"  appendTo="body"  dateFormat="dd/mm/yy"
                     [ngClass]="{'ng-dirty': f['dateDebut'].invalid && f['dateDebut'].touched}"
                     placeholder="JJ/MM/AA"></p-calendar>
-        <small class="p-error" *ngIf="f['dateDebut'].invalid && f['dateDebut'].touched">La date de début est requise.</small>
+        @if (f['dateDebut'].invalid && f['dateDebut'].touched) {
+          <small class="p-error">La date de début est requise.</small>
+        }
       </div>
 
       <div class="field col-12 md:col-6">
@@ -38,8 +41,12 @@
         <p-calendar id="dateFin" formControlName="dateFin"  [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true"  appendTo="body"  dateFormat="dd/mm/yy"
                     [ngClass]="{'ng-dirty': f['dateFin'].invalid && f['dateFin'].touched}"
                     placeholder="JJ/MM/AA"></p-calendar>
-        <small class="p-error" *ngIf="f['dateFin'].errors?.['required']">La date de fin est requise.</small>
-        <small class="p-error" *ngIf="f['dateFin'].errors?.['dateFinBeforeDateDebut']">La date de fin doit être postérieure à la date de début.</small>
+        @if (f['dateFin'].errors?.['required']) {
+          <small class="p-error">La date de fin est requise.</small>
+        }
+        @if (f['dateFin'].errors?.['dateFinBeforeDateDebut']) {
+          <small class="p-error">La date de fin doit être postérieure à la date de début.</small>
+        }
       </div>
     </div>
 

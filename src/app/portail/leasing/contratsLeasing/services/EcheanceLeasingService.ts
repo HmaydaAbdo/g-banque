@@ -1,13 +1,12 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from "../../../../../environments/environment";
 import { EcheanceLeasingResponse } from "../dtos/EcheanceLeasingResponse";
 import { TableauAmortissement } from "../dtos/table-amortissement";
 import { EcheanceLeasingSearchDTO } from "../dtos/echeance-leasing-search";
-import {EncoursLeasingRequestDTO} from "../dtos/encours-leasing-request.dto";
-import {EncoursLeasingResponseDTO} from "../dtos/encours-leasing-response.dto";
+import { EncoursLeasingRequestDTO } from "../dtos/encours-leasing-request.dto";
+import { EncoursLeasingResponseDTO } from "../dtos/encours-leasing-response.dto";
 
 
 @Injectable({
@@ -15,42 +14,12 @@ import {EncoursLeasingResponseDTO} from "../dtos/encours-leasing-response.dto";
 })
 export class EcheanceLeasingService {
 
-  // Updated base URL as per your input: "echeances-leasing"
+  private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}echeances-leasing`;
-
-  constructor(private http: HttpClient) { }
-
-  /**
-   * Handles HTTP errors centrally.
-   */
-  private handleError(error: HttpErrorResponse): Observable<never> {
-    let errorMessage = 'An unknown error occurred!';
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Client-side Error: ${error.error.message}`;
-    } else {
-      if (error.error && error.error.message) {
-        errorMessage = error.error.message;
-      } else if (error.error && typeof error.error === 'string') {
-        errorMessage = error.error;
-      } else {
-        errorMessage = `Server Error: ${error.status} ${error.statusText || ''}`;
-      }
-    }
-    console.error('API Error:', errorMessage, error);
-    return throwError(() => new Error(errorMessage));
-  }
 
   /**
    * Fetches the amortization table for a given contract ID.
    * Supports pagination, sorting, and search filters for individual installments.
-   *
-   * @param contratId The ID of the leasing contract.
-   * @param searchCriteria Optional search filters for the installments.
-   * @param page Optional page number (0-indexed).
-   * @param size Optional number of items per page.
-   * @param sortBy Optional field to sort by (e.g., 'dateEcheance').
-   * @param sortDirection Optional sort direction ('asc' or 'desc').
-   * @returns An Observable of TableauAmortissement.
    */
   getTableauAmortissementForContrat(
     contratId: number,
@@ -62,7 +31,6 @@ export class EcheanceLeasingService {
   ): Observable<TableauAmortissement> {
     let params = new HttpParams();
 
-    // Add search criteria to HttpParams
     if (searchCriteria) {
       if (searchCriteria.numeroEcheance != null) {
         params = params.set('numeroEcheance', searchCriteria.numeroEcheance.toString());
@@ -78,7 +46,6 @@ export class EcheanceLeasingService {
       }
     }
 
-    // Add pagination and sorting parameters
     params = params.set('page', page.toString());
     params = params.set('size', size.toString());
     if (sortBy && sortDirection) {
@@ -87,39 +54,25 @@ export class EcheanceLeasingService {
       params = params.set('sort', sortBy);
     }
 
-
     const url = `${this.apiUrl}/tableau-amortissement/${contratId}`;
-    return this.http.get<TableauAmortissement>(url, { params }).pipe(
-      catchError(this.handleError)
-    );
+    return this.http.get<TableauAmortissement>(url, { params });
   }
 
   /**
    * Marks a specific EcheanceLeasing installment as paid.
-   *
-   * @param id The ID of the installment to mark as paid.
-   * @returns An Observable of the updated EcheanceLeasingResponseDTO.
    */
   toggleStatus(id: number): Observable<EcheanceLeasingResponse> {
     const url = `${this.apiUrl}/${id}/toggle-status`;
-    return this.http.put<EcheanceLeasingResponse>(url, {}).pipe(
-      catchError(this.handleError)
-    );
+    return this.http.put<EcheanceLeasingResponse>(url, {});
   }
 
   /**
    * Récupère les encours de leasing en fonction des critères de recherche.
-   * @param request Le DTO de requête contenant les filtres (banqueId, periode, organismeLeasingId, etc.).
-   * @returns Un Observable de l'objet de réponse des encours.
    */
   getEncoursLeasing(request: EncoursLeasingRequestDTO): Observable<EncoursLeasingResponseDTO> {
     let params = new HttpParams();
 
-    // Ajout des paramètres obligatoires
     params = params.append('banqueId', request.banqueId.toString());
-
-
-    // Ajout des paramètres optionnels
 
     if (request.page !== undefined) {
       params = params.append('page', request.page.toString());
@@ -130,21 +83,16 @@ export class EcheanceLeasingService {
     if (request.sort) {
       params = params.append('sort', request.sort);
     }
-
     if (request.organismeLeasingId) {
       params = params.append('organismeLeasingId', request.organismeLeasingId.toString());
     }
-
-    if(request.numeroContrat){
+    if (request.numeroContrat) {
       params = params.append('numeroContrat', request.numeroContrat.toString());
     }
-
-    if(request.montant){
+    if (request.montant) {
       params = params.append('montant', request.montant.toString());
     }
 
-    return this.http.get<EncoursLeasingResponseDTO>(`${this.apiUrl}/encours`, { params }).pipe(
-      catchError(this.handleError)
-    );
+    return this.http.get<EncoursLeasingResponseDTO>(`${this.apiUrl}/encours`, { params });
   }
 }

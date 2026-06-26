@@ -32,5 +32,4 @@ export interface ContratLeasingResponseDTO {
   valeurResiduelle: number;
   phases?: ContratLeasingPhaseResponseDTO[];
   completed: boolean;
-  hasFichierPdf:boolean;
 }

@@ -2,95 +2,95 @@
 
 <div class="card flex flex-column gap-2 p-2 w-screen h-screen overflow-y-scroll">
 
-  <div *ngIf="loading" class="flex justify-content-center align-items-center h-full my-5">
-    <p-progressSpinner></p-progressSpinner>
-  </div>
-
-  <div *ngIf="errorMessage" class="p-message p-message-error mt-3">
-    <div class="p-message-wrapper">
-      <span class="p-message-icon pi pi-times-circle"></span>
-      <span class="p-message-summary">Error:</span>
-      <span class="p-message-detail">{{ errorMessage }}</span>
+  @if (loading) {
+    <div class="flex justify-content-center align-items-center h-full my-5">
+      <p-progressSpinner></p-progressSpinner>
     </div>
-  </div>
+  }
 
-  <div *ngIf="tableauAmortissement " class="flex flex-column  px-2 gap-2">
-    <div class="flex justify-content-between align-items-center">
-      <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
-        <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
-            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
-            </a>
-
-          </ng-container>
-          <ng-template #elseBlock>
-            <a [href]="item.url">
-              <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-            </a>
-          </ng-template>
-        </ng-template>
-      </p-breadcrumb>
+  @if (errorMessage) {
+    <div class="p-message p-message-error mt-3">
+      <div class="p-message-wrapper">
+        <span class="p-message-icon pi pi-times-circle"></span>
+        <span class="p-message-summary">Error:</span>
+        <span class="p-message-detail">{{ errorMessage }}</span>
+      </div>
     </div>
+  }
 
-    <div class="flex flex-row justify-content-around gap-2  ">
-      <p > N° Contract : <strong>{{tableauAmortissement.numeroContrat}} </strong></p>
-      <p > Endettement : <strong class="num">{{tableauAmortissement.totalIndemniteAPayer | number:'1.2-2'}} </strong></p>
-      <p > Montant Déjà Payé : <strong class="num">{{tableauAmortissement.montantTotalDejaPaye | number:'1.2-2'}} </strong></p>
-      <p > Le Reste : <strong class="num">{{tableauAmortissement.montantRestantAPayer | number:'1.2-2'}} </strong></p>
-    </div>
-
-    <div class="pg-filters">
-  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
-  <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center gap-2 w-full">
-      <p-inputNumber formControlName="numeroEcheance" placeholder="N° Échéance" mode="decimal" [useGrouping]="false" styleClass="w-full" class="flex-1"></p-inputNumber>
-
-      <p-inputNumber formControlName="month" placeholder="Mois (1-12)" mode="decimal" [useGrouping]="false" [min]="1" [max]="12" styleClass="w-full" class="flex-1"></p-inputNumber>
-
-      <p-inputNumber formControlName="year" placeholder="Année (Ex: 2025)" mode="decimal" [useGrouping]="false" styleClass="w-full" class="flex-1"></p-inputNumber>
-
-      <p-dropdown formControlName="statutPaiement" [options]="statutLeasingOptions" placeholder="Statut Paiement" [showClear]="true" appendTo="body" styleClass="w-full" class="flex-1"></p-dropdown>
-
-      <p-button icon="pi pi-times" severity="secondary" (onClick)="clearSearch()"></p-button>
-    </form>
-</div>
-    <div class="  mb-8">
-      <p-table
-        [value]="echeances"
-        [paginator]="true"
-        [rows]="10"
-        [totalRecords]="totalEcheancesRecords"
-        [lazy]="true"
-        (onLazyLoad)="loadTableauAmortissement($event)"
-        responsiveLayout="scroll"
-        [scrollable]="true"
-        styleClass="p-datatable-sm p-datatable-gridlines text-xs white-space-nowrap"
-        [loading]="loading"
-        [rowsPerPageOptions]="[3,5,10, 25, 50, 100]"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} échéances">
-        <ng-template pTemplate="header">
-          <tr>
-            <th pSortableColumn="id">Id <p-sortIcon field="id"></p-sortIcon></th>
-            <th pSortableColumn="dateEcheance">Date Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
-            <th pSortableColumn="montantHT">Montant HT <p-sortIcon field="montantHT"></p-sortIcon></th>
-            <th pSortableColumn="montantTVA">Montant TVA <p-sortIcon field="montantTVA"></p-sortIcon></th>
-            <th pSortableColumn="montantTTC">Montant TTC <p-sortIcon field="montantTTC"></p-sortIcon></th>
-            <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
-            @if (isAdmin()) {
-              <th style="width: 8rem;">Action</th>
+  @if (tableauAmortissement) {
+    <div class="flex flex-column  px-2 gap-2">
+      <div class="flex justify-content-between align-items-center">
+        <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+          <ng-template pTemplate="item" let-item>
+            @if (item.route) {
+              <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+                <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+                <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+              </a>
+            } @else {
+              <a [href]="item.url">
+                <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+              </a>
             }
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-echeance>
-          <tr >
-            <td>{{ echeance.id }}</td>
-            <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-            <td><span class="num">{{ echeance.montantHT | number:'1.2-2' }}</span></td>
-            <td><span class="num">{{ echeance.montantTVA | number:'1.2-2' }}</span></td>
-            <td><span class="num">{{ echeance.montantTTC | number:'1.2-2' }}</span></td>
-            <td><p-tag [value]="echeance.statutPaiement" [severity]="getStatutSeverity(echeance.statutPaiement)"></p-tag></td>
+          </ng-template>
+        </p-breadcrumb>
+      </div>
+
+      <div class="flex flex-row justify-content-around gap-2  ">
+        <p > N° Contract : <strong>{{tableauAmortissement.numeroContrat}} </strong></p>
+        <p > Endettement : <strong class="num">{{tableauAmortissement.totalIndemniteAPayer | number:'1.2-2'}} </strong></p>
+        <p > Montant Déjà Payé : <strong class="num">{{tableauAmortissement.montantTotalDejaPaye | number:'1.2-2'}} </strong></p>
+        <p > Le Reste : <strong class="num">{{tableauAmortissement.montantRestantAPayer | number:'1.2-2'}} </strong></p>
+      </div>
+
+      <div class="pg-filters">
+        <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+        <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center gap-2 w-full">
+          <p-inputNumber formControlName="numeroEcheance" placeholder="N° Échéance" mode="decimal" [useGrouping]="false" styleClass="w-full" class="flex-1"></p-inputNumber>
+          <p-inputNumber formControlName="month" placeholder="Mois (1-12)" mode="decimal" [useGrouping]="false" [min]="1" [max]="12" styleClass="w-full" class="flex-1"></p-inputNumber>
+          <p-inputNumber formControlName="year" placeholder="Année (Ex: 2025)" mode="decimal" [useGrouping]="false" styleClass="w-full" class="flex-1"></p-inputNumber>
+          <p-dropdown formControlName="statutPaiement" [options]="statutLeasingOptions" placeholder="Statut Paiement" [showClear]="true" appendTo="body" styleClass="w-full" class="flex-1"></p-dropdown>
+          <p-button icon="pi pi-times" severity="secondary" (onClick)="clearSearch()"></p-button>
+        </form>
+      </div>
+
+      <div class="mb-8">
+        <p-table
+          [value]="echeances"
+          [paginator]="true"
+          [rows]="10"
+          [totalRecords]="totalEcheancesRecords"
+          [lazy]="true"
+          (onLazyLoad)="loadTableauAmortissement($event)"
+          responsiveLayout="scroll"
+          [scrollable]="true"
+          styleClass="p-datatable-sm p-datatable-gridlines text-xs white-space-nowrap"
+          [loading]="loading"
+          [rowsPerPageOptions]="[3,5,10, 25, 50, 100]"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} échéances">
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="id">Id <p-sortIcon field="id"></p-sortIcon></th>
+              <th pSortableColumn="dateEcheance">Date Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
+              <th pSortableColumn="montantHT">Montant HT <p-sortIcon field="montantHT"></p-sortIcon></th>
+              <th pSortableColumn="montantTVA">Montant TVA <p-sortIcon field="montantTVA"></p-sortIcon></th>
+              <th pSortableColumn="montantTTC">Montant TTC <p-sortIcon field="montantTTC"></p-sortIcon></th>
+              <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
+              @if (isAdmin()) {
+                <th style="width: 8rem;">Action</th>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-echeance>
+            <tr>
+              <td>{{ echeance.id }}</td>
+              <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
+              <td><span class="num">{{ echeance.montantHT | number:'1.2-2' }}</span></td>
+              <td><span class="num">{{ echeance.montantTVA | number:'1.2-2' }}</span></td>
+              <td><span class="num">{{ echeance.montantTTC | number:'1.2-2' }}</span></td>
+              <td><p-tag [value]="echeance.statutPaiement" [severity]="getStatutSeverity(echeance.statutPaiement)"></p-tag></td>
               <td class="text-center">
                 <p-inputSwitch
                   [ngModel]="echeance.statutPaiement === 'PAYE'"
@@ -99,22 +99,20 @@
                   tooltipPosition="top"
                 ></p-inputSwitch>
               </td>
-
-
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptyMessage">
-          <tr>
-            <td [attr.colspan]="8" class="text-center p-4">Aucune échéance trouvée pour ce contrat ou ces critères de recherche.</td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="loadingbody">
-          <tr>
-            <td [attr.colspan]="8" class="text-center p-4">Chargement des échéances. Veuillez patienter...</td>
-          </tr>
-        </ng-template>
-      </p-table>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptyMessage">
+            <tr>
+              <td [attr.colspan]="8" class="text-center p-4">Aucune échéance trouvée pour ce contrat ou ces critères de recherche.</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="loadingbody">
+            <tr>
+              <td [attr.colspan]="8" class="text-center p-4">Chargement des échéances. Veuillez patienter...</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
     </div>
-  </div>
+  }
 </div>
-

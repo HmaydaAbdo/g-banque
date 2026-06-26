@@ -1,5 +1,5 @@
 
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {BehaviorSubject, Observable, throwError} from 'rxjs';
 import {distinctUntilChanged, tap, map, catchError} from 'rxjs/operators'; // Import 'map'
 import {ContratLeasingRequestDTO, ContratLeasingResponseDTO} from '../dtos/contrat-leasing';
@@ -42,7 +42,9 @@ export class LeasingContractWizardService {
   public expectedTotalAmount$: Observable<Decimal | null>;
 
 
-  constructor( private  contratLeasingService: ContratLeasingService ) {
+  private contratLeasingService = inject(ContratLeasingService);
+
+  constructor() {
     this.contract$.pipe(
       distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
     ).subscribe(contract => {

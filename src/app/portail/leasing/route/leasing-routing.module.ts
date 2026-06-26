@@ -1,87 +1,105 @@
 import { Routes } from '@angular/router';
-import { OrganismeLeasingListComponent } from "../organismesLeasing/views/organismesLeasingList/organisme-leasing-list.component";
-import {
-  OrganismeLeasingFormComponent
-} from "../organismesLeasing/views/organisme-leasing-form/organisme-leasing-form.component";
-import {
-  ContratLeasingListComponent
-} from "../contratsLeasing/views/contrats-leasing-actifs-list/contrats-leasing-list.component";
-import {
-  ContratLeasingCreationComponent
-} from "../contratsLeasing/views/contrat-leasing-creation/contrat-leasing-creation.component";
-import {
-  OrganismeStepComponent
-} from "../contratsLeasing/views/contrat-leasing-creation/wizard/organisme/organisme-step.component";
-import {
-  GeneralDetailsStepComponent
-} from "../contratsLeasing/views/contrat-leasing-creation/wizard/GeneralDetail/GeneralDetailsStepComponent";
-import {
-  BanqueStepComponent
-} from "../contratsLeasing/views/contrat-leasing-creation/wizard/BanqueOfDebit/BanqueStepComponent";
-import {
-  ContractTypeStepComponent
-} from "../contratsLeasing/views/contrat-leasing-creation/wizard/contract-type/contract-type-step.component";
-import {PhasesStepComponent} from "../contratsLeasing/views/contrat-leasing-creation/wizard/Phases/PhasesStepComponent";
-import {RecapStepComponent} from "../contratsLeasing/views/contrat-leasing-creation/wizard/recap/RecapStepComponent";
-import {
-  TableauAmortissementComponent
-} from "../contratsLeasing/views/tableauAmortissement/TableauAmortissementComponent";
-import {
-  ContratsLeasingEnAttenteDeMLComponent
-} from "../contratsLeasing/views/contrats-leasing-en-attente-de-ml/contrats-leasing-en-attente-de-ml.component";
-import {
-  ContratsLeasingArchivesComponent
-} from "../contratsLeasing/views/contrats-leasing-archives/contrats-leasing-archives.component";
+import {departmentGuard} from "../../../auth/guards/department.guard";
 
 export const LEASING_FEATURE_ROUTES: Routes = [
   {
-    path: 'organismesLeasing', // This will be the base path for all leasing-related routes
-    children: [ // Use children to nest the routes under 'leasing'
+    path: 'organismesLeasing',
+    canActivate: [departmentGuard('Finance')],
+    children: [
       {
         path: '',
-        component: OrganismeLeasingListComponent
+        loadComponent: () =>
+          import('../organismesLeasing/views/organismesLeasingList/organisme-leasing-list.component')
+            .then(m => m.OrganismeLeasingListComponent)
       },
       {
         path: 'new',
-        component: OrganismeLeasingFormComponent
+        loadComponent: () =>
+          import('../organismesLeasing/views/organisme-leasing-form/organisme-leasing-form.component')
+            .then(m => m.OrganismeLeasingFormComponent)
       },
       {
         path: 'edit/:id',
-        component: OrganismeLeasingFormComponent
+        loadComponent: () =>
+          import('../organismesLeasing/views/organisme-leasing-form/organisme-leasing-form.component')
+            .then(m => m.OrganismeLeasingFormComponent)
       }
     ]
   },
   {
     path: 'contratsLeasing',
+    canActivate: [departmentGuard('Finance')],
     children: [
-      {path: "",redirectTo:"encours",pathMatch:"full"},
+      { path: '', redirectTo: 'encours', pathMatch: 'full' },
       {
-        path: 'encours', // Path for the list of contracts: /contratsLeasing
-        component: ContratLeasingListComponent
+        path: 'encours',
+        loadComponent: () =>
+          import('../contratsLeasing/views/contrats-leasing-actifs-list/contrats-leasing-list.component')
+            .then(m => m.ContratLeasingListComponent)
       },
       {
-        path: 'en-attente-de-ML', // Path for the list of contracts: /contratsLeasing
-        component: ContratsLeasingEnAttenteDeMLComponent
+        path: 'en-attente-de-ML',
+        loadComponent: () =>
+          import('../contratsLeasing/views/contrats-leasing-en-attente-de-ml/contrats-leasing-en-attente-de-ml.component')
+            .then(m => m.ContratsLeasingEnAttenteDeMLComponent)
       },
       {
-        path: 'archives', // Path for the list of contracts: /contratsLeasing
-        component: ContratsLeasingArchivesComponent
+        path: 'archives',
+        loadComponent: () =>
+          import('../contratsLeasing/views/contrats-leasing-archives/contrats-leasing-archives.component')
+            .then(m => m.ContratsLeasingArchivesComponent)
       },
       {
-        path: 'creation', // Path for the creation wizard: /contratsLeasing/creation
-        component: ContratLeasingCreationComponent,
-        children: [ // Nested routes for each step of the wizard
-          { path: '', redirectTo: 'organisme', pathMatch: 'full' }, // Default step when hitting /contratsLeasing/creation
-          { path: 'organisme', component: OrganismeStepComponent },
-          { path: 'general-details', component: GeneralDetailsStepComponent },
-          { path: 'banque', component: BanqueStepComponent },
-          { path: 'type', component: ContractTypeStepComponent },
-          { path: 'phases', component: PhasesStepComponent },
-          { path: 'recap', component: RecapStepComponent },
+        path: 'creation',
+        loadComponent: () =>
+          import('../contratsLeasing/views/contrat-leasing-creation/contrat-leasing-creation.component')
+            .then(m => m.ContratLeasingCreationComponent),
+        children: [
+          { path: '', redirectTo: 'organisme', pathMatch: 'full' },
+          {
+            path: 'organisme',
+            loadComponent: () =>
+              import('../contratsLeasing/views/contrat-leasing-creation/wizard/organisme/organisme-step.component')
+                .then(m => m.OrganismeStepComponent)
+          },
+          {
+            path: 'general-details',
+            loadComponent: () =>
+              import('../contratsLeasing/views/contrat-leasing-creation/wizard/GeneralDetail/GeneralDetailsStepComponent')
+                .then(m => m.GeneralDetailsStepComponent)
+          },
+          {
+            path: 'banque',
+            loadComponent: () =>
+              import('../contratsLeasing/views/contrat-leasing-creation/wizard/BanqueOfDebit/BanqueStepComponent')
+                .then(m => m.BanqueStepComponent)
+          },
+          {
+            path: 'type',
+            loadComponent: () =>
+              import('../contratsLeasing/views/contrat-leasing-creation/wizard/contract-type/contract-type-step.component')
+                .then(m => m.ContractTypeStepComponent)
+          },
+          {
+            path: 'phases',
+            loadComponent: () =>
+              import('../contratsLeasing/views/contrat-leasing-creation/wizard/Phases/PhasesStepComponent')
+                .then(m => m.PhasesStepComponent)
+          },
+          {
+            path: 'recap',
+            loadComponent: () =>
+              import('../contratsLeasing/views/contrat-leasing-creation/wizard/recap/RecapStepComponent')
+                .then(m => m.RecapStepComponent)
+          }
         ]
       },
-      { path: ':id/tableau-amortissement',component: TableauAmortissementComponent,}
-
+      {
+        path: ':id/tableau-amortissement',
+        loadComponent: () =>
+          import('../contratsLeasing/views/tableauAmortissement/TableauAmortissementComponent')
+            .then(m => m.TableauAmortissementComponent)
+      }
     ]
   },
   {

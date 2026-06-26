@@ -337,7 +337,7 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
 
     if (this.phaseForm.invalid) {
       this.phaseForm.markAllAsTouched();
-      this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Veuillez corriger les erreurs dans le formulaire de la phase.' });
+      // Erreur affichée via les messages inline du formulaire — l'interceptor gère les erreurs HTTP
       console.log('PhasesStepComponent: Phase form is INVALID. Not saving.');
       return;
     }

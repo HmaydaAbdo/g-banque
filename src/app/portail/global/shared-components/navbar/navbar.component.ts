@@ -18,6 +18,7 @@ interface MenuItem {
   label: string;
   icon: string;
   routerLink: string;
+  requiredAuthority?: string | string[];
 }
 
 @Component({
@@ -58,9 +59,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   allMenuItems: MenuItem[] = [
     { label: 'Accueil', icon: 'pi pi-home', routerLink: '/portail/accueil' },
-    {label:"Historique des Rapprochements ",routerLink:"/portail/rapprochement/historique",icon:"pi pi-history"},
-    { label: 'Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires' },
-    { label: 'Lignes Ponctuelles', icon: 'pi pi-receipt', routerLink: '/portail/lignes-fonctionnelles-encours' },
+    { label: 'Historique des Rapprochements', routerLink: '/portail/rapprochement/historique', icon: 'pi pi-history' },
+    { label: 'Comptes Bancaires', icon: 'pi pi-wallet', routerLink: '/portail/comptes-bancaires', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+    { label: 'Lignes Ponctuelles', icon: 'pi pi-receipt', routerLink: '/portail/lignes-fonctionnelles-encours', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
   ];
 
   filteredMenuItems: MenuItem[] = [];
@@ -98,7 +99,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   private filterMenuItems(): void {
-    this.filteredMenuItems = this.allMenuItems;
+    this.filteredMenuItems = this.allMenuItems.filter(item => {
+      if (!item.requiredAuthority) return true;
+      if (this.authService.isSystemAdmin()) return true;
+      const authorities = this.authService.getAuthorities();
+      return Array.isArray(item.requiredAuthority)
+        ? item.requiredAuthority.some(auth => authorities.includes(auth))
+        : authorities.includes(item.requiredAuthority);
+    });
   }
 
   confirmLogout(event: Event) {
