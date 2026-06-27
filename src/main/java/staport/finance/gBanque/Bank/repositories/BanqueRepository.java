@@ -8,14 +8,17 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import java.util.List;
 import java.util.Optional;
 
-public interface BanqueRepository  extends JpaRepository<Banque, Long>, JpaSpecificationExecutor<Banque> {
+public interface BanqueRepository extends JpaRepository<Banque, Long>, JpaSpecificationExecutor<Banque> {
 
-
-
-    /** Exact match on account number — used for duplicate-check on create. */
+    /** Correspondance exacte sur le numéro de compte — utilisé pour le contrôle de doublon à la création. */
     Optional<Banque> findByNumeroDeCompte(String numeroDeCompte);
 
-    /** Case-insensitive match on name — used for duplicate-check on create/update. */
+    /**
+     * Correspondance insensible à la casse sur le nom.
+     * Utilisé par les batch processors (ChargesFixesScheduler, AbstractPaymentProcessor, VirementPaymentProcessor).
+     * Note : ces appelants injectent BanqueRepository directement depuis d'autres domaines,
+     * en violation de la convention d'encapsulation (CLAUDE.md). À corriger lors d'un refactoring batch.
+     */
     Optional<Banque> findByNomIgnoreCase(String nom);
 
     @Query("SELECT b.id FROM Banque b")
