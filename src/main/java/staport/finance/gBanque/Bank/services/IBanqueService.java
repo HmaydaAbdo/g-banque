@@ -3,9 +3,9 @@ package staport.finance.gBanque.Bank.services;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
-import staport.finance.gBanque.Bank.dtos.BanqueRequest;
-import staport.finance.gBanque.Bank.dtos.BanqueResponse;
-import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
+import staport.finance.gBanque.Bank.dtos.request.BanqueRequest;
+import staport.finance.gBanque.Bank.dtos.request.BanqueSearchCriteria;
+import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
 import staport.finance.gBanque.Bank.entities.Banque;
 
 import java.math.BigDecimal;
@@ -36,7 +36,7 @@ public interface IBanqueService {
     Page<BanqueResponse> getAllBanques(BanqueSearchCriteria criteria, Pageable pageable);
 
     /**
-     * Updates name, devise, address, and agence. Logo is optional on update.
+     * Updates name, devise, adresse, and agence. Logo is optional on update.
      */
     BanqueResponse updateBanque(Long id, BanqueRequest request, MultipartFile logoFile);
 

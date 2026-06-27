@@ -1,8 +1,10 @@
 package staport.finance.gBanque.Bank.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
+import staport.finance.gBanque.Bank.dtos.response.BankAcceuilResponse;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.mappers.BanqueMapper;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
@@ -34,13 +36,15 @@ import static staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnell
  * terminal — rien ne dépend d'elle — donc aucun cycle.
  *
  * <p>Dépend exclusivement des Services des autres domaines, jamais de leurs Repository
- * (Backend/CLAUDE.md, "Encapsulation des domaines"). Sans interface dédiée, comme
+ * (CLAUDE.md, "Encapsulation des domaines"). Sans interface dédiée, comme
  * {@code RecapitulatifService}/{@code AgiosOrchestrateurService} (même style dans ce repo
  * pour les agrégateurs cross-domaines).
  */
 @Service
 @Transactional(readOnly = true)
 public class BankAccueilAggregatorService {
+
+    private static final Logger log = LoggerFactory.getLogger(BankAccueilAggregatorService.class);
 
     private final IBanqueService bankService;
     private final ITransactionService transactionService;
@@ -52,13 +56,13 @@ public class BankAccueilAggregatorService {
     private final BanqueMapper banqueMapper;
 
     public BankAccueilAggregatorService(IBanqueService bankService,
-                                         ITransactionService transactionService,
-                                         ILigneFonctionnelleService ligneFonctionnelleService,
-                                         INatureLigneFonctionnelleService natureLigneFonctionnelleService,
-                                         RapprochementService rapprochementService,
-                                         LcnService lcnService,
-                                         VirementService virementService,
-                                         BanqueMapper banqueMapper) {
+                                        ITransactionService transactionService,
+                                        ILigneFonctionnelleService ligneFonctionnelleService,
+                                        INatureLigneFonctionnelleService natureLigneFonctionnelleService,
+                                        RapprochementService rapprochementService,
+                                        LcnService lcnService,
+                                        VirementService virementService,
+                                        BanqueMapper banqueMapper) {
         this.bankService = bankService;
         this.transactionService = transactionService;
         this.ligneFonctionnelleService = ligneFonctionnelleService;
@@ -71,6 +75,7 @@ public class BankAccueilAggregatorService {
 
     /** Cartes récapitulatives accueil pour TOUTES les banques. */
     public List<BankAcceuilResponse> getAccueilBankInfo() {
+        log.debug("Agrégation accueil — toutes les banques");
         List<Banque> banques = bankService.getAllBanqueEntities();
         List<Long> ids = banques.stream().map(Banque::getId).toList();
 
@@ -109,26 +114,22 @@ public class BankAccueilAggregatorService {
 
     /** Carte récapitulative accueil pour une seule banque. */
     public BankAcceuilResponse getAccueilBankInfoById(Long banqueId) {
+        log.debug("Agrégation accueil — banque ID: {}", banqueId);
         Banque banque = bankService.findOrThrow(banqueId);
         Long fcNatureId = natureLigneFonctionnelleService.findFaciliteDeCaisseNatureId();
 
-        BigDecimal balance = transactionService.computeBalance(banqueId);
-        BigDecimal plafond = ligneFonctionnelleService.getPlafondFCInternal(banqueId, fcNatureId);
+        LocalDate today = LocalDate.now();
 
+        BigDecimal balance   = transactionService.computeBalance(banqueId);
+        BigDecimal plafond   = ligneFonctionnelleService.getPlafondFCInternal(banqueId, fcNatureId);
         BigDecimal soldeDebut = rapprochementService.findEnCoursByBanqueId(banqueId)
                 .map(Rapprochement::getSoldeDebut)
                 .map(s -> s != null ? s : BigDecimal.ZERO)
                 .orElse(BigDecimal.ZERO);
 
-        LocalDate today = LocalDate.now();
-        long lcnsCount = lcnService.countEchusGroupedByBanque(today).stream()
-                .filter(row -> banqueId.equals(row[0]))
-                .mapToLong(row -> (Long) row[1])
-                .findFirst().orElse(0L);
-        long virementsCount = virementService.countEchusGroupedByBanque(today).stream()
-                .filter(row -> banqueId.equals(row[0]))
-                .mapToLong(row -> (Long) row[1])
-                .findFirst().orElse(0L);
+        // Requêtes ciblées sur la banque — évite de charger les échus de toutes les banques
+        long lcnsCount      = lcnService.countEchusByBanqueId(banqueId, today);
+        long virementsCount = virementService.countEchusByBanqueId(banqueId, today);
 
         return banqueMapper.toAcceuilDto(banque, balance, plafond, soldeDebut, lcnsCount, virementsCount);
     }

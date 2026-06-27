@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
-import staport.finance.gBanque.Bank.dtos.BanqueRequest;
-import staport.finance.gBanque.Bank.dtos.BanqueResponse;
-import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
+import staport.finance.gBanque.Bank.dtos.request.BanqueRequest;
+import staport.finance.gBanque.Bank.dtos.request.BanqueSearchCriteria;
+import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.events.BanqueCreatedEvent;
 import staport.finance.gBanque.Bank.exceptions.BanqueDeletionException;
@@ -39,7 +39,7 @@ import java.util.Map;
 @Transactional(readOnly = true)
 public class BanqueServiceImpl implements IBanqueService {
 
-    private static final Logger logger = LoggerFactory.getLogger(BanqueServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(BanqueServiceImpl.class);
 
     private final BanqueRepository banqueRepository;
     private final BanqueMapper banqueMapper;
@@ -70,7 +70,7 @@ public class BanqueServiceImpl implements IBanqueService {
     @Transactional
     @AuditableAction(operation = AuditOperation.CREATE, entity = Banque.class)
     public BanqueResponse createBanque(BanqueRequest request, MultipartFile logoFile) {
-        logger.info("Creating banque: {}", request.nom());
+        log.info("Création banque: {}", request.nom());
 
         if (banqueRepository.findByNumeroDeCompte(request.numeroDeCompte()).isPresent()) {
             throw new DuplicateEntryException("Le numéro de compte existe déjà.");
@@ -109,30 +109,27 @@ public class BanqueServiceImpl implements IBanqueService {
 
     @Override
     public Page<BanqueResponse> getAllBanques(BanqueSearchCriteria criteria, Pageable pageable) {
-        // 1. Execute the search and pagination (1 Query with Join/Where/Limit)
+        // 1. Recherche paginée (1 requête avec Join/Where/Limit)
         Specification<Banque> spec = BanqueSpecification.searchByCriteria(criteria);
-        Page<Banque> banquePage = banqueRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        Pageable effective = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+        Page<Banque> banquePage = banqueRepository.findAll(spec, effective);
 
-        if (banquePage.isEmpty()) {
-            return Page.empty(pageable);
-        }
-
-        // 2. Extract IDs from the CURRENT page
+        // 2. Extraction des IDs de la page courante
         List<Long> ids = banquePage.getContent().stream()
                 .map(Banque::getId)
                 .toList();
 
-        // 3. Batch fetch balances for these specific IDs (1 Query)
+        // 3. Chargement batch des soldes (1 requête)
         Map<Long, BigDecimal> balanceMap = transactionService.computeBalancesForBanks(ids);
 
-        // 4. Map to DTOs using the pre-calculated Map
+        // 4. Mapping vers les DTOs
         return banquePage.map(banque -> {
             BigDecimal balance = balanceMap.get(banque.getId());
             return banqueMapper.toDto(banque, balance);
         });
     }
-
-
 
     @Override
     public BigDecimal getPlafondFC(Long banqueId) {
@@ -146,20 +143,20 @@ public class BanqueServiceImpl implements IBanqueService {
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = Banque.class)
     public BanqueResponse updateBanque(Long id, BanqueRequest request, MultipartFile logoFile) {
-        logger.info("Updating banque ID: {}", id);
+        log.info("Mise à jour banque ID: {}", id);
 
-        // 1. Fetch the existing entity
         Banque banque = findOrThrow(id);
 
-        // 2. Manual Mapping / Business Logic
+        // Le numéro de compte (RIB) est immuable — toute tentative de modification est rejetée.
+        if (!banque.getNumeroDeCompte().equals(request.numeroDeCompte())) {
+            throw new DuplicateEntryException("Le numéro de compte ne peut pas être modifié.");
+        }
 
         banque.setNom(request.nom());
         banque.setDevise(request.devise());
-        banque.setAddress(request.address());
+        banque.setAdresse(request.adresse());
         banque.setAgence(request.agence());
 
-
-        // 3. Handle File Upload
         if (logoFile != null && !logoFile.isEmpty()) {
             try {
                 banque.setLogoData(logoFile.getBytes());
@@ -168,13 +165,10 @@ public class BanqueServiceImpl implements IBanqueService {
             }
         }
 
-        // 4. Save (triggers @PreUpdate and Audit)
         Banque updated = banqueRepository.save(banque);
-
-        // 5. Atomic Response construction
         BigDecimal balance = computeLiveBalance(id);
 
-        logger.info("Banque ID: {} successfully updated.", id);
+        log.info("Banque ID: {} mise à jour avec succès.", id);
         return banqueMapper.toDto(updated, balance);
     }
 
@@ -184,27 +178,35 @@ public class BanqueServiceImpl implements IBanqueService {
     @Transactional
     @AuditableAction(operation = AuditOperation.DELETE, entity = Banque.class)
     public void deleteBanque(Long id) {
-        logger.info("Suppression banque ID: {}", id);
+        log.info("Suppression banque ID: {}", id);
         Banque banque = findOrThrow(id);
 
+        // Guard 1 — Lignes fonctionnelles actives
+        if (ligneFonctionnelleService.hasActiveLignesForBanque(id)) {
+            log.warn("Suppression banque ID: {} bloquée — lignes fonctionnelles actives", id);
+            throw new BanqueDeletionException("Des lignes fonctionnelles actives sont associées à cette banque.");
+        }
+
+        // Guard 2 — Transactions en attente
         if (transactionService.countPendingTransactions(id) > 0) {
-            logger.warn("Suppression banque ID: {} bloquée — transactions en attente", id);
+            log.warn("Suppression banque ID: {} bloquée — transactions en attente", id);
             throw new BanqueDeletionException("Transactions en attente détectées.");
         }
 
+        // Guard 3 — Solde non nul
         BigDecimal balance = computeLiveBalance(id);
         if (balance.compareTo(BigDecimal.ZERO) != 0) {
-            logger.warn("Suppression banque ID: {} bloquée — solde non nul ({})", id, balance);
+            log.warn("Suppression banque ID: {} bloquée — solde non nul ({})", id, balance);
             throw new BanqueDeletionException("Le solde doit être nul avant suppression.");
         }
 
         banqueRepository.delete(banque);
-        logger.info("Banque ID: {} supprimée.", id);
+        log.info("Banque ID: {} supprimée.", id);
     }
 
     @Override
     public List<Long> getAllBanqueIds() {
-        logger.debug("Fetching all banque IDs");
+        log.debug("Récupération de tous les IDs de banques");
         return banqueRepository.findAllIds();
     }
 
@@ -219,7 +221,7 @@ public class BanqueServiceImpl implements IBanqueService {
         return banqueRepository.findAll();
     }
 
-    // ── Private Senior Helpers ────────────────────────────────────────────────
+    // ── Helpers privés ────────────────────────────────────────────────────────
 
     private BigDecimal computeLiveBalance(Long banqueId) {
         return transactionService.computeBalance(banqueId);
