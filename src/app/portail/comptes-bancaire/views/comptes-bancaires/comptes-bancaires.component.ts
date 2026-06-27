@@ -211,4 +211,8 @@ export class ComptesBancairesComponent implements OnInit {
   isFinanceOrAdmin(): boolean {
     return this.authService.isSystemAdmin() || this.authService.belongsToDepartment('Finance');
   }
+
+  isSystemAdmin(): boolean {
+    return this.authService.isSystemAdmin();
+  }
 }
