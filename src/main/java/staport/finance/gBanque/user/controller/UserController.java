@@ -17,6 +17,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.user.dtos.CreateUserRequest;
 import staport.finance.gBanque.user.dtos.DepartmentRoleRequest;
+import staport.finance.gBanque.user.dtos.SetEnabledRequest;
+import staport.finance.gBanque.user.dtos.SetSystemAdminRequest;
+import staport.finance.gBanque.user.dtos.UpdatePasswordRequest;
 import staport.finance.gBanque.user.dtos.UserDepartmentRoleResponse;
 import staport.finance.gBanque.user.dtos.UserResponse;
 import staport.finance.gBanque.user.dtos.UserSearchCriteria;
@@ -75,12 +78,12 @@ public class UserController {
     @Parameter(name = "departmentId", description = "Filtre sur l'appartenance à un département")
     @GetMapping
     public ResponseEntity<Page<UserResponse>> getAllUsers(
-            @RequestParam(defaultValue = "0")        int page,
-            @RequestParam(defaultValue = "10")       int size,
-            @RequestParam(defaultValue = "id")       String[] sort,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String[] sort,
             @ModelAttribute UserSearchCriteria searchCriteria) {
 
-        String         sortField = sort[0];
+        String sortField = sort[0];
         Sort.Direction direction = (sort.length > 1)
                 ? Sort.Direction.fromOptionalString(sort[1]).orElse(Sort.Direction.ASC)
                 : Sort.Direction.ASC;
@@ -89,10 +92,6 @@ public class UserController {
         return ResponseEntity.ok(userService.searchUsers(searchCriteria, pageable));
     }
 
-    /**
-     * Get user by ID (Admin only)
-     * GET /users/{userId}
-     */
     @Operation(summary = "Détail d'un utilisateur par ID")
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
@@ -102,11 +101,6 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(userId));
     }
 
-    /**
-     * Create a new user (Admin only)
-     * POST /users
-     * Body: {"username": "john", "password": "pass12345", "enabled": true}
-     */
     @Operation(summary = "Créer un nouvel utilisateur")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Utilisateur créé"),
@@ -118,10 +112,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
     }
 
-    /**
-     * Delete a user (Admin only)
-     * DELETE /users/{userId}
-     */
     @Operation(summary = "Supprimer un utilisateur")
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
@@ -129,13 +119,9 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
-        return ResponseEntity.ok().body(Map.of("message", "User deleted successfully"));
+        return ResponseEntity.ok(Map.of("message", "Utilisateur supprimé avec succès."));
     }
 
-    /**
-     * Liste les appartenances département+rôle d'un utilisateur (Admin système uniquement)
-     * GET /users/{userId}/department-roles
-     */
     @Operation(summary = "Rôles département de l'utilisateur")
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
@@ -145,11 +131,6 @@ public class UserController {
         return ResponseEntity.ok(userService.getDepartmentRoles(userId));
     }
 
-    /**
-     * Assigne (ou met à jour) le rôle d'un utilisateur dans un département (Admin système uniquement)
-     * POST /users/{userId}/department-roles
-     * Body: {"departmentId": 1, "roleInDept": "MEMBER"} (roleInDept omis → MEMBER par défaut)
-     */
     @Operation(
             summary = "Assigner un rôle dans un département",
             description = "Comportement upsert : remplace le rôle existant si l'utilisateur est déjà dans le département. " +
@@ -171,10 +152,6 @@ public class UserController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * Retire un utilisateur d'un département (Admin système uniquement)
-     * DELETE /users/{userId}/department-roles/{departmentId}
-     */
     @Operation(summary = "Retirer l'utilisateur d'un département")
     @ApiResponses({
             @ApiResponse(responseCode = "404", description = "Aucun rôle trouvé pour cet utilisateur dans ce département")
@@ -184,46 +161,33 @@ public class UserController {
             @PathVariable Long userId,
             @PathVariable Long departmentId) {
         userService.removeDepartmentRole(userId, departmentId);
-        return ResponseEntity.ok().body(Map.of("message", "Department role removed successfully"));
+        return ResponseEntity.ok(Map.of("message", "Rôle département retiré avec succès."));
     }
 
-    /**
-     * Définit le statut administrateur système d'un utilisateur (Admin système uniquement)
-     * PATCH /users/{userId}/system-admin
-     * Body: {"isSystemAdmin": true}
-     */
     @Operation(summary = "Définir le statut SYSTEM_ADMIN")
     @ApiResponses({
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
             @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
     })
     @PatchMapping("/{userId}/system-admin")
     public ResponseEntity<UserResponse> setSystemAdmin(
             @PathVariable Long userId,
-            @RequestBody Map<String, Boolean> request) {
-        return ResponseEntity.ok(userService.setSystemAdmin(userId, Boolean.TRUE.equals(request.get("isSystemAdmin"))));
+            @Valid @RequestBody SetSystemAdminRequest request) {
+        return ResponseEntity.ok(userService.setSystemAdmin(userId, Boolean.TRUE.equals(request.isSystemAdmin())));
     }
 
-    /**
-     * Enable or disable a user (Admin only)
-     * PATCH /users/{userId}/enabled
-     * Body: {"enabled": true}
-     */
     @Operation(summary = "Activer ou désactiver un compte utilisateur")
     @ApiResponses({
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
             @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
     })
     @PatchMapping("/{userId}/enabled")
     public ResponseEntity<UserResponse> setUserEnabled(
             @PathVariable Long userId,
-            @RequestBody Map<String, Boolean> request) {
-        return ResponseEntity.ok(userService.setUserEnabled(userId, Boolean.TRUE.equals(request.get("enabled"))));
+            @Valid @RequestBody SetEnabledRequest request) {
+        return ResponseEntity.ok(userService.setUserEnabled(userId, Boolean.TRUE.equals(request.enabled())));
     }
 
-    /**
-     * Update user password (Admin only)
-     * PATCH /users/{userId}/password
-     * Body: {"password": "newPassword123"}
-     */
     @Operation(summary = "Changer le mot de passe d'un utilisateur")
     @ApiResponses({
             @ApiResponse(responseCode = "400", description = "Mot de passe absent ou trop court"),
@@ -232,8 +196,8 @@ public class UserController {
     @PatchMapping("/{userId}/password")
     public ResponseEntity<Map<String, String>> updatePassword(
             @PathVariable Long userId,
-            @RequestBody Map<String, String> request) {
-        userService.updatePassword(userId, request.get("password"));
-        return ResponseEntity.ok().body(Map.of("message", "Password updated successfully"));
+            @Valid @RequestBody UpdatePasswordRequest request) {
+        userService.updatePassword(userId, request.password());
+        return ResponseEntity.ok(Map.of("message", "Mot de passe mis à jour avec succès."));
     }
 }

@@ -1,5 +1,6 @@
 package staport.finance.gBanque.auth.services;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import staport.finance.gBanque.exception.customExceptions.TooManyAttemptsException;
 
@@ -11,6 +12,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Verrouillage par compte après échecs d'authentification répétés sur
  * {@code /auth/login} — protection brute-force minimaliste, en mémoire.
  *
+ * <p>Le nombre maximal de tentatives ({@code login.max-attempts}) et la durée
+ * de verrouillage ({@code login.lockout-minutes}) sont configurables via les
+ * variables d'environnement {@code LOGIN_MAX_ATTEMPTS} et {@code LOGIN_LOCKOUT_MINUTES}.
+ *
  * <p>Suffisant pour une instance unique de l'application (cas actuel). En cas
  * de scaling horizontal multi-instance, ce compteur devrait être déplacé vers
  * un store partagé (Redis...) pour rester efficace entre toutes les instances.
@@ -18,8 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class LoginAttemptService {
 
-    private static final int MAX_ATTEMPTS = 5;
-    private static final long LOCKOUT_MINUTES = 15;
+    private final int maxAttempts;
+    private final long lockoutMinutes;
 
     private static final class Attempts {
         private int failureCount = 0;
@@ -28,8 +33,14 @@ public class LoginAttemptService {
 
     private final ConcurrentHashMap<String, Attempts> attemptsByUsername = new ConcurrentHashMap<>();
 
+    public LoginAttemptService(@Value("${login.max-attempts}") int maxAttempts,
+                               @Value("${login.lockout-minutes}") long lockoutMinutes) {
+        this.maxAttempts = maxAttempts;
+        this.lockoutMinutes = lockoutMinutes;
+    }
+
     /**
-     * @throws  TooManyAttemptsException si le compte est actuellement verrouillé
+     * @throws TooManyAttemptsException si le compte est actuellement verrouillé
      */
     public void checkNotLocked(String username) {
         Attempts attempts = attemptsByUsername.get(normalize(username));
@@ -53,8 +64,8 @@ public class LoginAttemptService {
         Attempts attempts = attemptsByUsername.computeIfAbsent(normalize(username), k -> new Attempts());
         synchronized (attempts) {
             attempts.failureCount++;
-            if (attempts.failureCount >= MAX_ATTEMPTS) {
-                attempts.lockedUntil = Instant.now().plus(LOCKOUT_MINUTES, ChronoUnit.MINUTES);
+            if (attempts.failureCount >= maxAttempts) {
+                attempts.lockedUntil = Instant.now().plus(lockoutMinutes, ChronoUnit.MINUTES);
             }
         }
     }

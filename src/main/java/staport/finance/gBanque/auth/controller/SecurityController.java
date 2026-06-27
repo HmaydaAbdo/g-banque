@@ -46,8 +46,10 @@ public class SecurityController {
 
     @Operation(
             summary = "Connexion (obtention du token JWT)",
-            description = "Authentifie l'utilisateur et retourne un token Bearer valable 4 h. " +
-                    "Le compte est verrouillé 15 min après 5 échecs consécutifs."
+            description = "Authentifie l'utilisateur et retourne un token Bearer. " +
+                    "La durée de validité et le seuil de verrouillage sont configurés " +
+                    "via les variables d'environnement JWT_EXPIRATION_HOURS, " +
+                    "LOGIN_MAX_ATTEMPTS et LOGIN_LOCKOUT_MINUTES."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "400", description = "Corps de requête invalide (champ manquant ou vide)"),

@@ -29,7 +29,6 @@ import staport.finance.gBanque.user.repositories.UserRepository;
 import staport.finance.gBanque.user.specifications.UserSpecification;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -66,6 +65,7 @@ public class UserService {
      * Utilisé par {@code NotificationController} — usage interne backend, jamais
      * sérialisé directement en JSON, donc le retour entité est légitime ici.
      */
+    @Transactional(readOnly = true)
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -79,6 +79,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalStateException("Authenticated user '" + username + "' not found in database."));
     }
 
+    @Transactional(readOnly = true)
     public List<String> getAllDistinctUsernames() {
         return userRepository.findDistinctUsernames();
     }
@@ -111,6 +112,7 @@ public class UserService {
     /**
      * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
+    @Transactional(readOnly = true)
     public UserResponse getUserById(Long userId) {
         return userMapper.toDto(findEntityById(userId));
     }
@@ -119,6 +121,7 @@ public class UserService {
      * Recherche paginée des utilisateurs — {@link UserSearchCriteria} : tous les
      * champs optionnels (username LIKE, enabled, systemAdmin, departmentId).
      */
+    @Transactional(readOnly = true)
     public Page<UserResponse> searchUsers(UserSearchCriteria criteria, Pageable pageable) {
         return userRepository.findAll(UserSpecification.searchByCriteria(criteria), pageable)
                 .map(userMapper::toDto);
@@ -155,6 +158,7 @@ public class UserService {
         User user = findEntityById(userId);
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        log.info("Mot de passe mis à jour id={}", userId);
     }
 
     // ========================================
@@ -166,6 +170,7 @@ public class UserService {
      *
      * @throws ResourceNotFoundException si l'utilisateur n'existe pas
      */
+    @Transactional(readOnly = true)
     public List<UserDepartmentRoleResponse> getDepartmentRoles(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new ResourceNotFoundException("Utilisateur introuvable avec l'ID " + userId);
@@ -254,6 +259,7 @@ public class UserService {
     public UserResponse setSystemAdmin(Long userId, boolean isSystemAdmin) {
         User user = findEntityById(userId);
         user.setSystemAdmin(isSystemAdmin);
+        log.info("Statut SYSTEM_ADMIN mis à jour id={} valeur={}", userId, isSystemAdmin);
         return userMapper.toDto(userRepository.save(user));
     }
 

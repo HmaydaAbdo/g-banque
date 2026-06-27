@@ -28,34 +28,37 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter;
 import staport.finance.gBanque.auth.services.UserDetailsServiceImpl;
+
 import javax.crypto.spec.SecretKeySpec;
+import java.util.Arrays;
 import java.util.List;
 
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity( )
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
     private final JsonAccessDeniedHandler jsonAccessDeniedHandler;
-
-    // Externalisé via application.yml (jwt.secret) — variable d'environnement JWT_SECRET,
-    // valeur actuelle conservée comme défaut pour ne pas invalider les JWT déjà émis.
-    @Value("${jwt.secret}")
-    private String secretKey;
+    private final String secretKey;
+    private final List<String> allowedOrigins;
 
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
-                           JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint,
-                           JsonAccessDeniedHandler jsonAccessDeniedHandler) {
+                          JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint,
+                          JsonAccessDeniedHandler jsonAccessDeniedHandler,
+                          @Value("${jwt.secret}") String secretKey,
+                          @Value("${cors.allowed-origins}") String allowedOrigins) {
         this.userDetailsService = userDetailsService;
         this.jsonAuthenticationEntryPoint = jsonAuthenticationEntryPoint;
         this.jsonAccessDeniedHandler = jsonAccessDeniedHandler;
+        this.secretKey = secretKey;
+        this.allowedOrigins = Arrays.asList(allowedOrigins.split(","));
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -64,11 +67,11 @@ public class SecurityConfig {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .sessionManagement(sm->sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/ws/**").permitAll()
 
-                        // Actuator
+                        // Actuator — health et prometheus publics (prometheus requis par le scraper)
                         .requestMatchers(
                                 "/actuator/health",
                                 "/actuator/health/**",
@@ -100,23 +103,20 @@ public class SecurityConfig {
     }
 
     @Bean
-    JwtEncoder jwtEncoder(){
+    public JwtEncoder jwtEncoder() {
         return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey.getBytes()));
     }
 
     @Bean
-    JwtDecoder jwtDecoder(){
+    public JwtDecoder jwtDecoder() {
         SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(), "HMACSHA256");
         return NimbusJwtDecoder.withSecretKey(secretKeySpec).macAlgorithm(MacAlgorithm.HS256).build();
     }
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-
         grantedAuthoritiesConverter.setAuthoritiesClaimName("authorities");
-
         grantedAuthoritiesConverter.setAuthorityPrefix("");
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
@@ -125,26 +125,22 @@ public class SecurityConfig {
     }
 
     @Bean
-    AuthenticationManager authenticationManager(){
-        DaoAuthenticationProvider daoAuthenticationProvider=new DaoAuthenticationProvider();
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
         daoAuthenticationProvider.setUserDetailsService(userDetailsService);
         return new ProviderManager(daoAuthenticationProvider);
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(){
-        CorsConfiguration corsConfiguration=new CorsConfiguration();
-        corsConfiguration.setAllowedOriginPatterns(List.of("*"));
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.setAllowedOrigins(allowedOrigins);
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource source=new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**",corsConfiguration);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
     }
-
-
-
-
 }

@@ -26,12 +26,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false, length = 50)
     private String username;
 
     @NotAudited
+    @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
     private boolean enabled;
 
     /**
