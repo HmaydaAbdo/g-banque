@@ -1,12 +1,12 @@
-package staport.finance.gBanque.Bank.dtos;
+package staport.finance.gBanque.Bank.dtos.response;
 
 import staport.finance.gBanque.Bank.enums.Devise;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * Immutable detailed response for Bank management.
- * Records automatically handle getters, toString, and final fields.
+ * Réponse détaillée du module Bank.
+ * {@code soldeActuel} est calculé en temps réel — il n'est pas stocké en base.
  */
 public record BanqueResponse(
         Long id,
@@ -14,7 +14,7 @@ public record BanqueResponse(
         String nom,
         String numeroDeCompte,
         Devise devise,
-        String address,
+        String adresse,
         String agence,
         BigDecimal soldeActuel,
         LocalDate dateCreation,

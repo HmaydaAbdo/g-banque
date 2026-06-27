@@ -1,10 +1,10 @@
-package staport.finance.gBanque.Bank.dtos;
+package staport.finance.gBanque.Bank.dtos.response;
 
 import staport.finance.gBanque.Bank.enums.Devise;
 import java.math.BigDecimal;
 
 /**
- * Clean, immutable response DTO for the Bank Home screen.
+ * Réponse agrégée pour le tableau de bord Finance (accueil).
  */
 public record BankAcceuilResponse(
         Long       bankId,
