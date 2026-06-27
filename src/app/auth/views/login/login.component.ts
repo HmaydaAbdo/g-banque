@@ -1,5 +1,4 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, ElementRef, ViewChild, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { LoginCredentials } from '../../dto/LoginCredentials';
@@ -9,14 +8,12 @@ import { ButtonModule } from 'primeng/button';
 import { InputGroupModule } from "primeng/inputgroup";
 import { InputGroupAddonModule } from "primeng/inputgroupaddon";
 import { Router, RouterLink } from "@angular/router";
-import { HttpErrorResponse } from "@angular/common/http";
 
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     InputTextModule,
     PasswordModule,
@@ -40,7 +37,6 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   private animFrameId = 0;
 
   loginForm!: FormGroup;
-  errorMessage: string | null = null;
   isLoading: boolean = false;
 
   ngOnInit(): void {
@@ -51,11 +47,8 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   login(): void {
-    this.errorMessage = null;
-
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
-      this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
       return;
     }
 
@@ -68,11 +61,10 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
         this.router.navigate(['/portail']);
       },
-      error: (error: HttpErrorResponse) => {
-        // Toast déjà affiché par l'interceptor centralisé — ici on garde uniquement
-        // l'effet de bord local (reset loading) + le message inline sous le formulaire.
+      error: () => {
+        // Toast d'erreur géré de façon centralisée par l'intercepteur HTTP.
+        // Le callback error est uniquement là pour stopper l'indicateur de chargement.
         this.isLoading = false;
-        this.errorMessage = error.error?.message || 'Identifiants incorrects.';
       }
     });
   }

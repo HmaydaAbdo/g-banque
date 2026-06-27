@@ -1,7 +1,6 @@
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { map } from 'rxjs/operators';
 
 /**
  * Guard dispatcher pour l'accueil : redirige chaque utilisateur vers
@@ -17,20 +16,16 @@ export const accueilDispatchGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router      = inject(Router);
 
-  return authService.isAuthenticated$.pipe(
-    map(isAuthenticated => {
-      if (!isAuthenticated) {
-        router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
-        return false;
-      }
+  if (!authService.isTokenValid()) {
+    router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+    return false;
+  }
 
-      if (authService.isSystemAdmin() || authService.belongsToDepartment('Finance')) {
-        return router.createUrlTree(['/portail/accueil/finance']);
-      }
+  if (authService.isSystemAdmin() || authService.belongsToDepartment('Finance')) {
+    return router.createUrlTree(['/portail/accueil/finance']);
+  }
 
-      // Placeholder — remplacer par une redirection spécifique
-      // quand l'accueil d'un autre département sera construit.
-      return router.createUrlTree(['/portail/accueil/bienvenue']);
-    })
-  );
+  // Placeholder — remplacer par une redirection spécifique
+  // quand l'accueil d'un autre département sera construit.
+  return router.createUrlTree(['/portail/accueil/bienvenue']);
 };

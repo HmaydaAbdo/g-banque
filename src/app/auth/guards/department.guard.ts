@@ -1,7 +1,6 @@
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { map, tap } from 'rxjs/operators';
 import { DepartmentRoleType } from '../types/DepartmentRoleType';
 
 /**
@@ -11,6 +10,8 @@ import { DepartmentRoleType } from '../types/DepartmentRoleType';
  * - Avec `minRole: 'DIRECTOR'` : réservé aux DIRECTOR de ce département.
  * - SYSTEM_ADMIN passe toujours (accès transversal).
  *
+ * Vérifie la validité du token (expiration comprise) avant le contrôle d'autorité.
+ *
  * Usage : `canActivate: [departmentGuard('TRESORERIE')]` ou
  * `canActivate: [departmentGuard('TRESORERIE', 'DIRECTOR')]`.
  */
@@ -19,30 +20,22 @@ export function departmentGuard(department: string, minRole?: DepartmentRoleType
     const authService = inject(AuthService);
     const router = inject(Router);
 
-    return authService.isAuthenticated$.pipe(
-      tap(isAuthenticated => {
-        if (!isAuthenticated) {
-          router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
-        }
-      }),
-      map(isAuthenticated => {
-        if (!isAuthenticated) {
-          return false;
-        }
+    if (!authService.isTokenValid()) {
+      router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+      return false;
+    }
 
-        if (authService.isSystemAdmin()) {
-          return true;
-        }
+    if (authService.isSystemAdmin()) {
+      return true;
+    }
 
-        const hasAccess = minRole
-          ? authService.hasDepartmentRole(department, minRole)
-          : authService.belongsToDepartment(department);
+    const hasAccess = minRole
+      ? authService.hasDepartmentRole(department, minRole)
+      : authService.belongsToDepartment(department);
 
-        if (!hasAccess) {
-          router.navigate(['/portail/unauthorized']);
-        }
-        return hasAccess;
-      })
-    );
+    if (!hasAccess) {
+      router.navigate(['/portail/unauthorized']);
+    }
+    return hasAccess;
   };
 }
