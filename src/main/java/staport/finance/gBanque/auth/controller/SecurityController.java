@@ -6,11 +6,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.auth.dtos.LoginRequest;
-import staport.finance.gBanque.auth.dtos.LoginResponse;
-import staport.finance.gBanque.auth.dtos.ProfileResponse;
+import staport.finance.gBanque.auth.dtos.request.LoginRequest;
+import staport.finance.gBanque.auth.dtos.response.LoginResponse;
+import staport.finance.gBanque.auth.dtos.response.ProfileResponse;
 import staport.finance.gBanque.auth.services.AuthenticationService;
 
 @Tag(name = "Authentification", description = "Connexion et consultation du profil de l'utilisateur courant")
@@ -28,8 +29,7 @@ public class SecurityController {
      * Retourne le profil de l'appelant — dérivé uniquement de son propre
      * {@code Authentication} (username + authorities), jamais d'un autre
      * utilisateur. Accessible à tout utilisateur authentifié (MEMBER,
-     * DIRECTOR, SYSTEM_ADMIN) — pas de {@code @PreAuthorize} ici, le filtre
-     * global {@code anyRequest().authenticated()} suffit.
+     * DIRECTOR, SYSTEM_ADMIN).
      */
     @Operation(
             summary = "Profil de l'utilisateur connecté",
@@ -39,6 +39,7 @@ public class SecurityController {
     @ApiResponses({
             @ApiResponse(responseCode = "401", description = "Token absent ou expiré")
     })
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/profile")
     public ProfileResponse authentication(Authentication authentication) {
         return this.authenticationService.getAuthentication(authentication);

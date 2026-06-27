@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import staport.finance.gBanque.Bank.dtos.request.BanqueRequest;
 import staport.finance.gBanque.Bank.dtos.request.BanqueSearchCriteria;
-import staport.finance.gBanque.Bank.dtos.response.BankAcceuilResponse;
+import staport.finance.gBanque.Bank.dtos.response.BankAccueilResponse;
 import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
 import staport.finance.gBanque.Bank.exceptions.BanqueExceptionHandler;
 import staport.finance.gBanque.Bank.services.BankAccueilAggregatorService;
@@ -52,7 +52,8 @@ public class BanqueController {
     private static final String FINANCE_OR_ADMIN =
             "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
 
-    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
+    private static final String SYSTEM_ADMIN    = "hasAuthority('SYSTEM_ADMIN')";
+    private static final String AUTHENTICATED   = "isAuthenticated()";
 
     private final IBanqueService banqueService;
     private final BankAccueilAggregatorService accueilAggregatorService;
@@ -87,13 +88,16 @@ public class BanqueController {
             @ApiResponse(responseCode = "404", description = "Banque introuvable")
     })
     @GetMapping("/{id}")
+    @PreAuthorize(AUTHENTICATED)
     public ResponseEntity<BanqueResponse> getBanqueById(@PathVariable Long id) {
         return ResponseEntity.ok(banqueService.getBanqueById(id));
     }
 
     @Operation(summary = "Liste paginée des banques")
-    @Parameter(name = "nom", description = "Filtre LIKE sur le nom")
+    @Parameter(name = "nom",             description = "Filtre LIKE sur le nom")
+    @Parameter(name = "numeroDeCompte",  description = "Filtre LIKE sur le numéro de compte")
     @GetMapping
+    @PreAuthorize(AUTHENTICATED)
     public ResponseEntity<Page<BanqueResponse>> getAllBanques(
             @RequestParam(defaultValue = "0")    int page,
             @RequestParam(defaultValue = "10")   int size,
@@ -115,7 +119,7 @@ public class BanqueController {
     )
     @GetMapping("/accueil-info")
     @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<List<BankAcceuilResponse>> getAccueilBankInformation() {
+    public ResponseEntity<List<BankAccueilResponse>> getAccueilBankInformation() {
         return ResponseEntity.ok(accueilAggregatorService.getAccueilBankInfo());
     }
 
@@ -128,7 +132,7 @@ public class BanqueController {
     })
     @GetMapping("/accueil-info/{banqueId}")
     @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<BankAcceuilResponse> getAccueilBankInformationById(
+    public ResponseEntity<BankAccueilResponse> getAccueilBankInformationById(
             @PathVariable Long banqueId) {
         return ResponseEntity.ok(accueilAggregatorService.getAccueilBankInfoById(banqueId));
     }
@@ -138,7 +142,8 @@ public class BanqueController {
     @Operation(summary = "Mettre à jour une banque", description = "logoFile optionnel — omis = logo inchangé.")
     @ApiResponses({
             @ApiResponse(responseCode = "400", description = "Données invalides"),
-            @ApiResponse(responseCode = "404", description = "Banque introuvable")
+            @ApiResponse(responseCode = "404", description = "Banque introuvable"),
+            @ApiResponse(responseCode = "409", description = "Tentative de modification du numéro de compte (immuable)")
     })
     @PutMapping("/{id}")
     @PreAuthorize(FINANCE_OR_ADMIN)

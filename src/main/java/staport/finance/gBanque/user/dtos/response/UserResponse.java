@@ -1,4 +1,4 @@
-package staport.finance.gBanque.user.dtos;
+package staport.finance.gBanque.user.dtos.response;
 
 import java.util.List;
 

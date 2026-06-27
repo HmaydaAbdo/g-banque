@@ -1,4 +1,4 @@
-package staport.finance.gBanque.department.dtos;
+package staport.finance.gBanque.department.dtos.response;
 
 import java.time.Instant;
 

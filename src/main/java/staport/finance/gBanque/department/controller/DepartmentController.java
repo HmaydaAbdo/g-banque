@@ -10,8 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.department.dtos.DepartmentRequest;
-import staport.finance.gBanque.department.dtos.DepartmentResponse;
+import staport.finance.gBanque.department.dtos.request.DepartmentRequest;
+import staport.finance.gBanque.department.dtos.response.DepartmentResponse;
 import staport.finance.gBanque.department.services.DepartmentService;
 
 import java.util.List;

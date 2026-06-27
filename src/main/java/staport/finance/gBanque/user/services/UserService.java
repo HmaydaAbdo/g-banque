@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,10 +14,10 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.user.dtos.CreateUserRequest;
-import staport.finance.gBanque.user.dtos.UserDepartmentRoleResponse;
-import staport.finance.gBanque.user.dtos.UserResponse;
-import staport.finance.gBanque.user.dtos.UserSearchCriteria;
+import staport.finance.gBanque.user.dtos.request.CreateUserRequest;
+import staport.finance.gBanque.user.dtos.request.UserSearchCriteria;
+import staport.finance.gBanque.user.dtos.response.UserDepartmentRoleResponse;
+import staport.finance.gBanque.user.dtos.response.UserResponse;
 import staport.finance.gBanque.department.entities.Department;
 import staport.finance.gBanque.user.entities.User;
 import staport.finance.gBanque.user.entities.UserDepartmentRole;
@@ -145,7 +146,7 @@ public class UserService {
     public UserResponse setUserEnabled(Long userId, boolean enabled) {
         User user = findEntityById(userId);
         user.setEnabled(enabled);
-        log.info("Utilisateur id={} {} ", userId, enabled ? "activé" : "désactivé");
+        log.info("Utilisateur id={} {}", userId, enabled ? "activé" : "désactivé");
         return userMapper.toDto(userRepository.save(user));
     }
 
@@ -261,6 +262,22 @@ public class UserService {
         user.setSystemAdmin(isSystemAdmin);
         log.info("Statut SYSTEM_ADMIN mis à jour id={} valeur={}", userId, isSystemAdmin);
         return userMapper.toDto(userRepository.save(user));
+    }
+
+    /**
+     * Lookup par username — utilisé exclusivement par {@code UserDetailsServiceImpl}
+     * (infrastructure auth) pour construire le {@code UserDetails} Spring Security.
+     *
+     * <p>Retourne l'entité {@link User} avec ses {@code departmentRoles} chargés
+     * (via {@code @EntityGraph} sur {@code UserRepository.findByUsername}) pour
+     * éviter le N+1 lors de la construction des authorities à chaque login.
+     *
+     * @throws UsernameNotFoundException si aucun utilisateur ne correspond au username
+     */
+    @Transactional(readOnly = true)
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur introuvable : " + username));
     }
 
     /**

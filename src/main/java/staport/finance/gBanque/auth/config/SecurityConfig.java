@@ -13,8 +13,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -42,24 +42,22 @@ public class SecurityConfig {
     private final UserDetailsServiceImpl userDetailsService;
     private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
     private final JsonAccessDeniedHandler jsonAccessDeniedHandler;
+    private final PasswordEncoder passwordEncoder;
     private final String secretKey;
     private final List<String> allowedOrigins;
 
     public SecurityConfig(UserDetailsServiceImpl userDetailsService,
                           JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint,
                           JsonAccessDeniedHandler jsonAccessDeniedHandler,
+                          PasswordEncoder passwordEncoder,
                           @Value("${jwt.secret}") String secretKey,
                           @Value("${cors.allowed-origins}") String allowedOrigins) {
         this.userDetailsService = userDetailsService;
         this.jsonAuthenticationEntryPoint = jsonAuthenticationEntryPoint;
         this.jsonAccessDeniedHandler = jsonAccessDeniedHandler;
+        this.passwordEncoder = passwordEncoder;
         this.secretKey = secretKey;
         this.allowedOrigins = Arrays.asList(allowedOrigins.split(","));
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -127,7 +125,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager() {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
         daoAuthenticationProvider.setUserDetailsService(userDetailsService);
         return new ProviderManager(daoAuthenticationProvider);
     }

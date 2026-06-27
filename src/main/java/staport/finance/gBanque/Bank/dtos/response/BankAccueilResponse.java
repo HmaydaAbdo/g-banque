@@ -6,11 +6,11 @@ import java.math.BigDecimal;
 /**
  * Réponse agrégée pour le tableau de bord Finance (accueil).
  */
-public record BankAcceuilResponse(
-        Long       bankId,
+public record BankAccueilResponse(
+        Long       banqueId,
         String     logoBase64,
-        String     name,
-        BigDecimal soldeActuelle,
+        String     nom,
+        BigDecimal soldeActuel,
         BigDecimal soldeDebut,
         BigDecimal plafondFC,
         Devise     devise,

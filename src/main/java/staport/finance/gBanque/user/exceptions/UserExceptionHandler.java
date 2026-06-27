@@ -4,8 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import staport.finance.gBanque.exception.ErrorResponse;
@@ -13,22 +11,17 @@ import staport.finance.gBanque.exception.customExceptions.DuplicateEntryExceptio
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.user.controller.UserController;
 
-import java.time.Instant;
-import java.util.stream.Collectors;
-
 /**
  * Gestionnaire d'exceptions du module User.
  *
  * <p>Scoped uniquement sur {@link UserController} via {@code assignableTypes}.
  * Le {@code GlobalExceptionHandler} reste actif comme fallback pour tout ce qui
- * n'est pas intercepté ici (sécurité, erreurs runtime non prévues).
+ * n'est pas intercepté ici (validation {@code @Valid}, erreurs runtime non prévues).
  *
  * <p>Mapping HTTP :
  * <ul>
  *   <li>404 — {@link ResourceNotFoundException} (utilisateur/département introuvable)</li>
  *   <li>409 — {@link DuplicateEntryException} (nom d'utilisateur déjà existant)</li>
- *   <li>400 — {@link MethodArgumentNotValidException} (validation {@code @Valid} —
- *       username/password/departmentId/roleInDept)</li>
  * </ul>
  */
 @RestControllerAdvice(assignableTypes = UserController.class)
@@ -38,29 +31,20 @@ public class UserExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
-        log.warn("Ressource introuvable [User module]: {}", ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ErrorResponse.of(404, "Not Found", ex.getMessage(), ex));
+        log.warn("Ressource introuvable [User module] : {}", ex.getMessage());
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage());
     }
 
     @ExceptionHandler(DuplicateEntryException.class)
     public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateEntryException ex) {
-        log.warn("Doublon détecté [User module]: {}", ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), ex));
+        log.warn("Doublon détecté [User module] : {}", ex.getMessage());
+        return build(HttpStatus.CONFLICT, "Conflict", ex.getMessage());
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
-        String fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.joining("; "));
-        String message = "Validation échouée : " + fieldErrors;
-        log.warn("Erreur de validation [User module]: {}", message);
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(400, "Bad Request", message, null, Instant.now()));
+    // ── Helper ────────────────────────────────────────────────────────────────
+
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String error, String message) {
+        return ResponseEntity.status(status)
+                .body(ErrorResponse.of(status.value(), error, message));
     }
 }

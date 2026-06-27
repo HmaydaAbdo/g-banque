@@ -2,7 +2,7 @@ package staport.finance.gBanque.user.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import staport.finance.gBanque.user.dtos.UserDepartmentRoleResponse;
+import staport.finance.gBanque.user.dtos.response.UserDepartmentRoleResponse;
 import staport.finance.gBanque.user.entities.UserDepartmentRole;
 
 @Mapper(componentModel = "spring")

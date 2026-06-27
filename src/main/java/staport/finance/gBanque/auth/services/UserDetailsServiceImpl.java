@@ -1,14 +1,12 @@
 package staport.finance.gBanque.auth.services;
 
-
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.user.entities.User;
 import staport.finance.gBanque.user.entities.UserDepartmentRole;
-import staport.finance.gBanque.user.repositories.UserRepository;
+import staport.finance.gBanque.user.services.UserService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,17 +14,15 @@ import java.util.List;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
-    public UserDetailsServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserDetailsServiceImpl(UserService userService) {
+        this.userService = userService;
     }
 
     @Override
-    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User appUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur introuvable : " + username));
+        User appUser = userService.findByUsername(username);
 
         return new org.springframework.security.core.userdetails.User(
                 appUser.getUsername(),

@@ -1,4 +1,4 @@
-package staport.finance.gBanque.user.dtos;
+package staport.finance.gBanque.user.dtos.request;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;

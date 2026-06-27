@@ -2,9 +2,6 @@ package staport.finance.gBanque.Bank.entities;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Index;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.springframework.data.annotation.CreatedDate;
@@ -42,13 +39,9 @@ public class Banque {
     @Column(name = "logo_data", nullable = false, columnDefinition = "LONGBLOB")
     private byte[] logoData;
 
-    @NotBlank
-    @Size(max = 100)
     @Column(nullable = false, length = 100)
     private String nom;
 
-    @NotBlank
-    @Pattern(regexp = "\\d{24}")
     @Column(name = "numero_compte", nullable = false, unique = true, length = 24)
     private String numeroDeCompte;
 
@@ -56,11 +49,9 @@ public class Banque {
     @Column(nullable = false)
     private Devise devise;
 
-    @NotBlank
     @Column(name = "address", nullable = false, length = 255)
     private String adresse;
 
-    @NotBlank
     @Column(nullable = false, length = 100)
     private String agence;
 

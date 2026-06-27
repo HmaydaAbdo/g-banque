@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.FileStorageException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.exception.customExceptions.TooManyAttemptsException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 
 import java.util.stream.Collectors;
@@ -66,15 +64,6 @@ public class GlobalExceptionHandler {
                 message.isBlank() ? "Validation failed." : message);
     }
 
-    // ── 401 — Authentification ────────────────────────────────────────────────
-
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
-        log.warn("Echec d'authentification : {}", ex.getMessage());
-        return build(HttpStatus.UNAUTHORIZED, "Unauthorized",
-                "Identifiant ou mot de passe incorrect.");
-    }
-
     // ── 403 — Autorisation ────────────────────────────────────────────────────
 
     @ExceptionHandler(AuthorizationDeniedException.class)
@@ -82,14 +71,6 @@ public class GlobalExceptionHandler {
         log.warn("Accès refusé : {}", ex.getMessage());
         return build(HttpStatus.FORBIDDEN, "Forbidden",
                 "Vous n'avez pas les droits nécessaires pour effectuer cette action.");
-    }
-
-    // ── 429 — Verrouillage brute-force ────────────────────────────────────────
-
-    @ExceptionHandler(TooManyAttemptsException.class)
-    public ResponseEntity<ErrorResponse> handleTooManyAttempts(TooManyAttemptsException ex) {
-        log.warn("Verrouillage anti brute-force : {}", ex.getMessage());
-        return build(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests", ex.getMessage());
     }
 
     // ── 404 — Ressource introuvable ───────────────────────────────────────────

@@ -143,8 +143,6 @@ public class BanqueServiceImpl implements IBanqueService {
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = Banque.class)
     public BanqueResponse updateBanque(Long id, BanqueRequest request, MultipartFile logoFile) {
-        log.info("Mise à jour banque ID: {}", id);
-
         Banque banque = findOrThrow(id);
 
         // Le numéro de compte (RIB) est immuable — toute tentative de modification est rejetée.

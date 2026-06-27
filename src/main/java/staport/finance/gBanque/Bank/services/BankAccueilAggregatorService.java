@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.Bank.dtos.response.BankAcceuilResponse;
+import staport.finance.gBanque.Bank.dtos.response.BankAccueilResponse;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.mappers.BanqueMapper;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
@@ -74,7 +74,7 @@ public class BankAccueilAggregatorService {
     }
 
     /** Cartes récapitulatives accueil pour TOUTES les banques. */
-    public List<BankAcceuilResponse> getAccueilBankInfo() {
+    public List<BankAccueilResponse> getAccueilBankInfo() {
         log.debug("Agrégation accueil — toutes les banques");
         List<Banque> banques = bankService.getAllBanqueEntities();
         List<Long> ids = banques.stream().map(Banque::getId).toList();
@@ -102,7 +102,7 @@ public class BankAccueilAggregatorService {
         return banques.stream()
                 .map(b -> {
                     Long bid = b.getId();
-                    return banqueMapper.toAcceuilDto(b,
+                    return banqueMapper.toAccueilDto(b,
                             balanceMap.get(bid),
                             plafondMap.get(bid),
                             soldeDebutMap.getOrDefault(bid, BigDecimal.ZERO),
@@ -113,7 +113,7 @@ public class BankAccueilAggregatorService {
     }
 
     /** Carte récapitulative accueil pour une seule banque. */
-    public BankAcceuilResponse getAccueilBankInfoById(Long banqueId) {
+    public BankAccueilResponse getAccueilBankInfoById(Long banqueId) {
         log.debug("Agrégation accueil — banque ID: {}", banqueId);
         Banque banque = bankService.findOrThrow(banqueId);
         Long fcNatureId = natureLigneFonctionnelleService.findFaciliteDeCaisseNatureId();
@@ -131,6 +131,6 @@ public class BankAccueilAggregatorService {
         long lcnsCount      = lcnService.countEchusByBanqueId(banqueId, today);
         long virementsCount = virementService.countEchusByBanqueId(banqueId, today);
 
-        return banqueMapper.toAcceuilDto(banque, balance, plafond, soldeDebut, lcnsCount, virementsCount);
+        return banqueMapper.toAccueilDto(banque, balance, plafond, soldeDebut, lcnsCount, virementsCount);
     }
 }

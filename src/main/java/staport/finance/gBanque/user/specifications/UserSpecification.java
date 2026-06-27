@@ -3,7 +3,7 @@ package staport.finance.gBanque.user.specifications;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
-import staport.finance.gBanque.user.dtos.UserSearchCriteria;
+import staport.finance.gBanque.user.dtos.request.UserSearchCriteria;
 import staport.finance.gBanque.user.entities.User;
 import staport.finance.gBanque.user.entities.UserDepartmentRole;
 

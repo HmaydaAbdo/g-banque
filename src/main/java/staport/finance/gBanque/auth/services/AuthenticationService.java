@@ -11,8 +11,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
-import staport.finance.gBanque.auth.dtos.LoginResponse;
-import staport.finance.gBanque.auth.dtos.ProfileResponse;
+import staport.finance.gBanque.auth.dtos.response.LoginResponse;
+import staport.finance.gBanque.auth.dtos.response.ProfileResponse;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

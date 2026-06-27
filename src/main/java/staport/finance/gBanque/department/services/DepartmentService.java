@@ -9,8 +9,8 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.department.dtos.DepartmentRequest;
-import staport.finance.gBanque.department.dtos.DepartmentResponse;
+import staport.finance.gBanque.department.dtos.request.DepartmentRequest;
+import staport.finance.gBanque.department.dtos.response.DepartmentResponse;
 import staport.finance.gBanque.department.entities.Department;
 import staport.finance.gBanque.department.exceptions.DepartmentInUseException;
 import staport.finance.gBanque.department.mappers.DepartmentMapper;
@@ -56,12 +56,14 @@ public class DepartmentService {
         return departmentMapper.toDto(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<DepartmentResponse> getAllDepartments() {
         return departmentRepository.findAll().stream()
                 .map(departmentMapper::toDto)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public DepartmentResponse getDepartmentById(Long id) {
         return departmentMapper.toDto(findEntityById(id));
     }

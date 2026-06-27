@@ -2,8 +2,8 @@ package staport.finance.gBanque.user.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import staport.finance.gBanque.user.dtos.CreateUserRequest;
-import staport.finance.gBanque.user.dtos.UserResponse;
+import staport.finance.gBanque.user.dtos.request.CreateUserRequest;
+import staport.finance.gBanque.user.dtos.response.UserResponse;
 import staport.finance.gBanque.user.entities.User;
 
 /**

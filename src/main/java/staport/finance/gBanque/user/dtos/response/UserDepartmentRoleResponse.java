@@ -1,4 +1,4 @@
-package staport.finance.gBanque.user.dtos;
+package staport.finance.gBanque.user.dtos.response;
 
 /**
  * DTO de sortie pour une appartenance département+rôle — jamais l'entité

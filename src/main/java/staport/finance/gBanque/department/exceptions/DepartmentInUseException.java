@@ -8,10 +8,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * sont encore assignés (via {@code UserDepartmentRole}). L'administrateur doit
  * d'abord retirer ou réassigner ces utilisateurs.
  *
- * <p>Annotée {@code @ResponseStatus} : capturée automatiquement par Spring même
- * sans {@code @ExceptionHandler} dédié (résolue en 409 Conflict avec le corps par
- * défaut de Spring). Un handler dédié pourra être ajouté plus tard si on veut
- * renvoyer le même format {@code ErrorResponse} unifié que les autres modules.
+ * <p>Gérée par {@link DepartmentExceptionHandler#handleInUse} — retourne 409 Conflict
+ * avec le format {@code ErrorResponse} unifié.
  */
 @ResponseStatus(HttpStatus.CONFLICT)
 public class DepartmentInUseException extends RuntimeException {

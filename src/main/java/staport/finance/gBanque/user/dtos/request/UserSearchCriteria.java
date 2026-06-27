@@ -1,4 +1,4 @@
-package staport.finance.gBanque.user.dtos;
+package staport.finance.gBanque.user.dtos.request;
 
 /**
  * Critères de recherche pour {@code GET /users} — tous les champs sont optionnels.
