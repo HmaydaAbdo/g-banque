@@ -57,11 +57,11 @@ public class Banque {
     private Devise devise;
 
     @NotBlank
-    @Column(nullable = false)
-    private String address;
+    @Column(name = "address", nullable = false, length = 255)
+    private String adresse;
 
     @NotBlank
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String agence;
 
     @CreatedDate
@@ -91,8 +91,8 @@ public class Banque {
     public Devise getDevise() { return devise; }
     public void setDevise(Devise devise) { this.devise = devise; }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public String getAdresse() { return adresse; }
+    public void setAdresse(String adresse) { this.adresse = adresse; }
 
     public String getAgence() { return agence; }
     public void setAgence(String agence) { this.agence = agence; }
@@ -124,6 +124,7 @@ public class Banque {
                 ", nom='" + nom + '\'' +
                 ", numeroDeCompte='" + numeroDeCompte + '\'' +
                 ", devise=" + devise +
+                ", adresse='" + adresse + '\'' +
                 ", agence='" + agence + '\'' +
                 ", dateModification=" + dateModification +
                 '}';
