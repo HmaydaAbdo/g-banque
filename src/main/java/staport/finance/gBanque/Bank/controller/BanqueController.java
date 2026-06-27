@@ -16,10 +16,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import staport.finance.gBanque.Bank.dtos.BankAcceuilResponse;
-import staport.finance.gBanque.Bank.dtos.BanqueRequest;
-import staport.finance.gBanque.Bank.dtos.BanqueResponse;
-import staport.finance.gBanque.Bank.dtos.BanqueSearchCriteria;
+import staport.finance.gBanque.Bank.dtos.request.BanqueRequest;
+import staport.finance.gBanque.Bank.dtos.request.BanqueSearchCriteria;
+import staport.finance.gBanque.Bank.dtos.response.BankAcceuilResponse;
+import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
 import staport.finance.gBanque.Bank.exceptions.BanqueExceptionHandler;
 import staport.finance.gBanque.Bank.services.BankAccueilAggregatorService;
 import staport.finance.gBanque.Bank.services.IBanqueService;
@@ -89,8 +89,7 @@ public class BanqueController {
     }
 
     @Operation(summary = "Liste paginée des banques")
-    @Parameter(name = "nom",    description = "Filtre LIKE sur le nom")
-    @Parameter(name = "devise", description = "Filtre sur la devise (ex. MAD, EUR)")
+    @Parameter(name = "nom", description = "Filtre LIKE sur le nom")
     @GetMapping
     public ResponseEntity<Page<BanqueResponse>> getAllBanques(
             @RequestParam(defaultValue = "0")    int page,
@@ -152,7 +151,7 @@ public class BanqueController {
 
     @Operation(
             summary = "Supprimer une banque",
-            description = "Bloqué si des transactions sont en attente ou si le solde est non nul."
+            description = "Bloqué si des lignes fonctionnelles actives existent, si des transactions sont en attente, ou si le solde est non nul."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Banque supprimée"),
