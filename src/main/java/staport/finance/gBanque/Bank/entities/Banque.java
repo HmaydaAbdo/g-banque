@@ -44,7 +44,7 @@ public class Banque {
 
     @NotBlank
     @Size(max = 100)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String nom;
 
     @NotBlank

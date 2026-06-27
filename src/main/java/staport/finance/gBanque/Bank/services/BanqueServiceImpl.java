@@ -196,7 +196,7 @@ public class BanqueServiceImpl implements IBanqueService {
         // Guard 3 — Solde non nul
         BigDecimal balance = computeLiveBalance(id);
         if (balance.compareTo(BigDecimal.ZERO) != 0) {
-            log.warn("Suppression banque ID: {} bloquée — solde non nul ({})", id, balance);
+            log.warn("Suppression banque ID: {} bloquée — solde non nul", id);
             throw new BanqueDeletionException("Le solde doit être nul avant suppression.");
         }
 
