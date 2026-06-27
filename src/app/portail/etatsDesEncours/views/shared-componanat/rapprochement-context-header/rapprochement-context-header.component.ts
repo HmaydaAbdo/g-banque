@@ -54,7 +54,7 @@ export class RapprochementContextHeaderComponent implements OnInit, OnDestroy {
           this.banqueId = +bid;
           this.subs.push(
             this.bankStateService.bankInfo$.subscribe(info => {
-              if (info && info.bankId === this.banqueId) {
+              if (info && info.banqueId === this.banqueId) {
                 this.bankInfo = info;
                 if (this.bankInfoInitialized && this.rapprochementId) {
                   this.loadAggregates();

@@ -2,8 +2,6 @@ import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { HttpErrorResponse } from '@angular/common/http';
-
 // PrimeNG Modules
 import { CardModule } from 'primeng/card';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
@@ -143,8 +141,7 @@ export class SpecificLignesByBankComponent implements OnInit {
         this.bankDetails = data;
         this.loadingBankDetails = false;
       },
-      error: (error: HttpErrorResponse) => {
-        console.error('Error loading bank details:', error);
+      error: () => {
         this.loadingBankDetails = false;
       }
     });
@@ -158,9 +155,8 @@ export class SpecificLignesByBankComponent implements OnInit {
           this.natureLigneOptions.push({ label: nature.label, value: nature.id! });
         });
       },
-      error: (err: HttpErrorResponse) => {
-        console.error('Error loading natures for filter:', err);
-      }
+      error: () => {}
+
     });
   }
 
@@ -183,8 +179,7 @@ export class SpecificLignesByBankComponent implements OnInit {
         this.marchesTotalRecords = pageResponse.page.totalElements;
         this.marchesLoading = false;
       },
-      error: (err: HttpErrorResponse) => {
-        console.error('Error loading markets for filter:', err);
+      error: () => {
         this.marchesLoading = false;
       }
     });
@@ -215,8 +210,7 @@ export class SpecificLignesByBankComponent implements OnInit {
         this.totalRecords = pageResponse.page.totalElements;
         this.loading = false;
       },
-      error: (error: HttpErrorResponse) => {
-        console.error('Error loading specific functional lines:', error);
+      error: () => {
         this.loading = false;
       }
     });

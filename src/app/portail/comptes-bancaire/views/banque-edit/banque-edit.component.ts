@@ -113,7 +113,6 @@ export class BanqueEditComponent implements OnInit {
         }
 
         this.loading = false;
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Banque chargée avec succès.', life: 1000 });
       },
       error: () => {
         this.loading = false;

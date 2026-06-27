@@ -140,9 +140,8 @@ export class GeneralLignesByBankComponent implements OnInit {
           this.natureLigneOptions.push({ label: nature.label, value: nature.id! });
         });
       },
-      error: (err) => {
-        console.error('Error loading natures for filter:', err);
-      }
+      error: () => {}
+
     });
   }
 
@@ -153,8 +152,7 @@ export class GeneralLignesByBankComponent implements OnInit {
         this.bankDetails = data;
         this.loadingBankDetails = false;
       },
-      error: (error) => {
-        console.error('Error loading bank details:', error);
+      error: () => {
         this.loadingBankDetails = false;
       }
     });
@@ -162,7 +160,6 @@ export class GeneralLignesByBankComponent implements OnInit {
 
   loadBankFunctionalLines(event: TableLazyLoadEvent): void {
     if (!this.bankId) {
-      console.warn('Bank ID is not available to load functional lignePrefi.');
       this.loading = false;
       return;
     }
@@ -195,8 +192,7 @@ export class GeneralLignesByBankComponent implements OnInit {
         this.totalRecords = pageResponse.page.totalElements;
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Error loading bank functional lignePrefi:', error);
+      error: () => {
         this.loading = false;
       }
     });

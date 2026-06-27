@@ -1,52 +1,99 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="h-screen overflow-y-scroll max-w-screen p-1 bg-gray-50">
+<div class="flex flex-column w-screen h-screen overflow-y-scroll gap-3 p-3 pb-12">
+
+  <!-- ═══ HEADER ══════════════════════════════════════════════════════════ -->
+  <div class="pg-header">
+    <div class="pg-header__left">
+      <h2 class="pg-header__title">Détails &amp; Historique</h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
+        <ng-template pTemplate="item" let-item>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
+              <span class="text-400 text-xs ml-1">{{ item.label }}</span>
+            </a>
+          } @else {
+            <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
+          }
+        </ng-template>
+      </p-breadcrumb>
+    </div>
+  </div>
+
+  <!-- ═══ LOADING ══════════════════════════════════════════════════════════ -->
   @if (loadingBankDetails) {
-    <p-card header="Chargement des détails de la banque..." class="h-full flex flex-column">
-      <div class="flex flex-col items-center justify-center h-full">
-        <i class="pi pi-spin pi-spinner text-4xl text-primary-500"></i>
-        <p class="mt-4 text-lg">Veuillez patienter...</p>
-      </div>
-    </p-card>
+    <div class="surface-card border-round-xl border-1 surface-border p-4 flex align-items-center gap-3"
+         style="box-shadow:var(--shadow-sm)">
+      <i class="pi pi-spin pi-spinner" style="color:var(--color-primary);font-size:1.4rem"></i>
+      <span class="text-sm" style="color:var(--color-text-muted)">Chargement des détails…</span>
+    </div>
+
   } @else if (bankDetails) {
-    <div class="px-4 flex flex-column gap-4 mb-8">
-      <div class="flex flex-wrap justify-content-between ">
-        <div class="portail-section pt-1 lg:pt-3">
-          <p-breadcrumb [model]="items" >
-            <ng-template pTemplate="item" let-item>
-              @if (item.route) {
-                <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-                  <span [ngClass]="[item.icon ? item.icon : '', 'text-color', ]"></span>
-                  <span class="text-black-alpha-90 pl-1  ">{{ item.label }}</span>
-                </a>
-              } @else {
-                <a [href]="item.url">
-                  <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
-                </a>
-              }
-            </ng-template>
-          </p-breadcrumb>
+
+    <!-- ═══ BANK INFO CARD ════════════════════════════════════════════════ -->
+    <div class="surface-card border-round-xl border-1 surface-border p-3 flex flex-wrap align-items-center gap-4"
+         style="box-shadow:var(--shadow-sm)">
+
+      <!-- Logo -->
+      @if (bankDetails.logoBase64) {
+        <img [src]="'data:image/png;base64,' + bankDetails.logoBase64"
+             [alt]="bankDetails.nom"
+             style="width:48px;height:48px;object-fit:contain;border-radius:var(--radius-md);flex-shrink:0"/>
+      } @else {
+        <div class="flex align-items-center justify-content-center flex-shrink-0"
+             style="width:48px;height:48px;background:var(--color-surface-3);border-radius:var(--radius-md)">
+          <i class="pi pi-building" style="color:var(--color-text-muted);font-size:1.4rem"></i>
         </div>
-        <div class="hidden md:flex justify-content-center  text-xs md:text-sm lg:text-xl ">
-          <p> Détails & Historique de la banque : {{bankDetails.nom}} </p>
-        </div>
+      }
+
+      <!-- Nom + RIB -->
+      <div class="flex flex-column gap-1 flex-shrink-0">
+        <span class="font-bold"
+              style="font-size:var(--text-title);color:var(--color-text-primary);letter-spacing:var(--tracking-tight)">
+          {{ bankDetails.nom }}
+        </span>
+        <span style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--color-text-secondary);letter-spacing:0.05em">
+          {{ bankDetails.numeroDeCompte }}
+        </span>
       </div>
 
-      <div class=" card rounded    px-2 flex flex-row flex-wrap  justify-content-center md:justify-content-between  text-xs md:text-sm  white-space-nowrap">
+      <div class="flex-1"></div>
 
-        <p class="hidden md:block"><strong> Nom :</strong> {{ bankDetails.nom }}</p>
-        <p class="hidden md:block"><strong>Solde Actuel :</strong>
+      <!-- KPIs -->
+      <div class="flex flex-wrap gap-4">
+
+        <div class="flex flex-column gap-1">
+          <span style="font-size:var(--text-xs);font-weight:var(--weight-medium);color:var(--color-text-muted)">Solde actuel</span>
           <span class="num font-bold"
                 [class.num-credit]="bankDetails.soldeActuel >= 0"
-                [class.num-debit]="bankDetails.soldeActuel < 0">
-            {{ bankDetails.soldeActuel | number:'1.2-2' }}</span>
-        </p>
-        <p><strong>Numéro de compte :</strong> {{ bankDetails.numeroDeCompte }}</p>
-        <p><strong>Agence :</strong> {{ bankDetails.agence }}</p>
-        <p><strong>Adresse :</strong> {{ bankDetails.adresse }}</p>
-      </div>
+                [class.num-debit]="bankDetails.soldeActuel < 0"
+                style="font-size:var(--text-kpi)">
+            {{ bankDetails.soldeActuel | number:'1.2-2' }}
+            <span style="font-size:var(--text-xs);font-weight:var(--weight-regular);color:var(--color-text-muted);margin-left:2px">
+              {{ bankDetails.devise }}
+            </span>
+          </span>
+        </div>
 
+        <div class="flex flex-column gap-1">
+          <span style="font-size:var(--text-xs);font-weight:var(--weight-medium);color:var(--color-text-muted)">Agence</span>
+          <span class="text-sm font-semibold" style="color:var(--color-text-primary)">{{ bankDetails.agence }}</span>
+        </div>
+
+        <div class="flex flex-column gap-1">
+          <span style="font-size:var(--text-xs);font-weight:var(--weight-medium);color:var(--color-text-muted)">Adresse</span>
+          <span class="text-sm" style="color:var(--color-text-secondary)">{{ bankDetails.adresse }}</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ TABS ══════════════════════════════════════════════════════════ -->
+    <div class="surface-card border-round-xl border-1 surface-border"
+         style="box-shadow:var(--shadow-md)">
       <p-tabView>
         <p-tabPanel header="Lignes fonctionnelles ponctuelles">
           <ng-template pTemplate="content">
@@ -60,9 +107,17 @@
         </p-tabPanel>
       </p-tabView>
     </div>
+
   } @else {
-    <p-card header="Banque non trouvée">
-      <p>Impossible de charger les détails de la banque. Veuillez vérifier l'ID.</p>
-    </p-card>
+
+    <!-- ═══ NOT FOUND ══════════════════════════════════════════════════════ -->
+    <div class="surface-card border-round-xl border-1 surface-border p-5 flex flex-column align-items-center gap-2"
+         style="box-shadow:var(--shadow-sm)">
+      <i class="pi pi-exclamation-triangle" style="font-size:var(--text-icon);color:var(--color-warning)"></i>
+      <span class="font-semibold" style="color:var(--color-text-primary)">Banque introuvable</span>
+      <span class="text-sm" style="color:var(--color-text-muted)">Impossible de charger les détails de ce compte.</span>
+    </div>
+
   }
+
 </div>

@@ -42,23 +42,23 @@
 
     <!-- ── GRILLE BANQUES ─────────────────────────────────────────────── -->
     <div class="dash-grid">
-      @for (account of recapitulatifComptes; track account.bankId) {
+      @for (account of recapitulatifComptes; track account.banqueId) {
 
         <div class="bank-card bank-card--anim">
 
           <!-- Logo -->
           <div class="bank-card__logo"
-               [routerLink]="['/portail/etats-des-encours', account.bankId, 'select']">
+               [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
             <img [src]="'data:image/png;base64,' + account.logoBase64"
-                 [alt]="'Logo ' + account.name" class="bank-card__logo-img"/>
+                 [alt]="'Logo ' + account.nom" class="bank-card__logo-img"/>
           </div>
 
           <!-- Contenu cliquable -->
           <div class="bank-card__body"
-               [routerLink]="['/portail/etats-des-encours', account.bankId, 'select']">
+               [routerLink]="['/portail/etats-des-encours', account.banqueId, 'select']">
 
             <!-- Nom -->
-            <div class="bank-card__name">{{ account.name }}</div>
+            <div class="bank-card__name">{{ account.nom }}</div>
 
             <!-- KPI rows — Solde + FC même style -->
             <div class="bank-card__kpi-row">
@@ -66,9 +66,9 @@
                 <i class="pi pi-chart-line mr-1"></i>Solde actuel
               </span>
               <span class="bank-card__kpi-amount"
-                    [class.bank-card__kpi-amount--pos]="account.soldeActuelle >= 0"
-                    [class.bank-card__kpi-amount--neg]="account.soldeActuelle < 0">
-                {{ account.soldeActuelle | number:'1.2-2':'fr-FR' }}
+                    [class.bank-card__kpi-amount--pos]="account.soldeActuel >= 0"
+                    [class.bank-card__kpi-amount--neg]="account.soldeActuel < 0">
+                {{ account.soldeActuel | number:'1.2-2':'fr-FR' }}
                 <span class="bank-card__devise">{{ account.devise }}</span>
               </span>
             </div>
@@ -112,9 +112,9 @@
               size="small"
               styleClass="w-full"
               [outlined]="true"
-              (onClick)="downloadRecapGeneralDetaillePourBanque(account.bankId)"
-              [loading]="recapDetailleBanqueLoadingMap.get(account.bankId) ?? false"
-              [disabled]="recapDetailleBanqueLoadingMap.get(account.bankId) ?? false"/>
+              (onClick)="downloadRecapGeneralDetaillePourBanque(account.banqueId)"
+              [loading]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"
+              [disabled]="recapDetailleBanqueLoadingMap.get(account.banqueId) ?? false"/>
           </div>
 
         </div>

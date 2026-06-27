@@ -1,10 +1,10 @@
 import {Devise} from "../../comptes-bancaire/enums/Devise";
 
 export interface RecapitulatifCompte {
-  bankId:   number;
-  name:     string;
+  banqueId:   number;
+  nom:        string;
   logoBase64: string;
-  soldeActuelle: number;
+  soldeActuel:   number;
   soldeDebut:    number;
   plafondFC?:    number;
   devise:        Devise;

@@ -68,8 +68,8 @@ export class BankStateService {
       next: (data: RecapitulatifCompte) => {
         this.updateBankInfo(data);
       },
-      error: (err: any) => {
-        console.error('Erreur lors du rechargement des informations bancaires', err);
+      error: () => {
+        // Erreur gérée globalement par l'intercepteur HTTP
       }
     });
   }

@@ -1,8 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import {ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet} from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
-
 
 
 // PrimeNG Modules
@@ -72,8 +70,7 @@ export class HistoryOflinesComponent implements OnInit {
         this.items?.push({ label: data.nom, route: `/portail/comptes-bancaires/history/${data.id}` });
         this.loadingBankDetails = false;
       },
-      error: (error: HttpErrorResponse) => {
-        console.error('Error loading bank details:', error);
+      error: () => {
         this.loadingBankDetails = false;
       }
     });
