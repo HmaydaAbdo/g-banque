@@ -39,7 +39,8 @@ import java.util.List;
  *       données de référence utilisées par d'autres modules (dropdowns).</li>
  *   <li>Accueil info ({@code GET /banques/accueil-info[/{id}]}) — Finance ou SYSTEM_ADMIN :
  *       tableau de bord Finance uniquement.</li>
- *   <li>Mutations (create/update/delete) — Finance ou SYSTEM_ADMIN.</li>
+ *   <li>Création/mise à jour — Finance ou SYSTEM_ADMIN.</li>
+ *   <li>Suppression — SYSTEM_ADMIN uniquement.</li>
  * </ul>
  */
 @Tag(name = "Comptes bancaires", description = "Gestion des comptes bancaires et tableau de bord Finance")
@@ -50,6 +51,8 @@ public class BanqueController {
 
     private static final String FINANCE_OR_ADMIN =
             "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
     private final IBanqueService banqueService;
     private final BankAccueilAggregatorService accueilAggregatorService;
@@ -151,7 +154,7 @@ public class BanqueController {
 
     @Operation(
             summary = "Supprimer une banque",
-            description = "Bloqué si des lignes fonctionnelles actives existent, si des transactions sont en attente, ou si le solde est non nul."
+            description = "Réservé SYSTEM_ADMIN. Bloqué si des lignes fonctionnelles actives existent, si des transactions sont en attente, ou si le solde est non nul."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Banque supprimée"),
@@ -159,7 +162,7 @@ public class BanqueController {
             @ApiResponse(responseCode = "409", description = "Transactions en attente ou solde non nul")
     })
     @DeleteMapping("/{id}")
-    @PreAuthorize(FINANCE_OR_ADMIN)
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deleteBanque(@PathVariable Long id) {
         banqueService.deleteBanque(id);
         return ResponseEntity.noContent().build();
