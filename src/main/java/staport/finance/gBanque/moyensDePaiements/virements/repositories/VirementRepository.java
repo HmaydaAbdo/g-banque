@@ -51,4 +51,18 @@ public interface VirementRepository extends JpaRepository<Virement, Long>, JpaSp
             END
     """)
     List<Object[]> countEchusGroupedByBanque(@Param("today") LocalDate today);
+
+    /** Nombre de virements échus pour une banque donnée — utilisé par l'agrégateur accueil banque unique. */
+    @Query("""
+        SELECT COUNT(v)
+        FROM Virement v
+        WHERE v.statut = 'ENCOURS'
+          AND v.dateEmission < :today
+          AND (
+              (v.type = 'DECAISSEMENT' AND v.banqueEmettrice.id = :banqueId)
+              OR
+              (v.type = 'ENCAISSEMENT' AND v.banqueBeneficiare.id = :banqueId)
+          )
+    """)
+    long countEchusByBanqueId(@Param("banqueId") Long banqueId, @Param("today") LocalDate today);
 }

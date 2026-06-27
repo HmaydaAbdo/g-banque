@@ -240,4 +240,13 @@ public class VirementService {
     public List<Object[]> countEchusGroupedByBanque(LocalDate today) {
         return virementRepository.countEchusGroupedByBanque(today);
     }
+
+    /**
+     * Nombre de virements échus pour une banque donnée — façade publique sur
+     * {@link VirementRepository#countEchusByBanqueId}. Utilisé par l'agrégateur accueil (requête
+     * ciblée sur une seule banque, plus efficace que {@link #countEchusGroupedByBanque}).
+     */
+    public long countEchusByBanqueId(Long banqueId, LocalDate today) {
+        return virementRepository.countEchusByBanqueId(banqueId, today);
+    }
 }

@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.entities.Agios;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Agios.spec.AgiosSpec;
-import staport.finance.gBanque.Bank.dtos.BanqueResponse;
+import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;

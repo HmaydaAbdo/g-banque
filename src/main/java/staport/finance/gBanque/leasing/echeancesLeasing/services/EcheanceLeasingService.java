@@ -9,7 +9,7 @@
     import org.springframework.data.jpa.domain.Specification;
     import org.springframework.stereotype.Service;
     import org.springframework.transaction.annotation.Transactional;
-    import staport.finance.gBanque.Bank.dtos.BanqueResponse;
+    import staport.finance.gBanque.Bank.dtos.response.BanqueResponse;
     import staport.finance.gBanque.Bank.services.IBanqueService;
     import staport.finance.gBanque.audit.AuditOperation;
     import staport.finance.gBanque.audit.AuditableAction;

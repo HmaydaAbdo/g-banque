@@ -33,4 +33,14 @@ public interface LcnRepository extends JpaRepository<Lcn, Long>, JpaSpecificatio
         GROUP BY l.banque.id
     """)
     List<Object[]> countEchusGroupedByBanque(@Param("today") LocalDate today);
+
+    /** Nombre de LCN échus pour une banque donnée — utilisé par l'agrégateur accueil banque unique. */
+    @Query("""
+        SELECT COUNT(l)
+        FROM Lcn l
+        WHERE l.banque.id = :banqueId
+          AND l.statut = 'ENCOURS'
+          AND l.dateEcheance < :today
+    """)
+    long countEchusByBanqueId(@Param("banqueId") Long banqueId, @Param("today") LocalDate today);
 }

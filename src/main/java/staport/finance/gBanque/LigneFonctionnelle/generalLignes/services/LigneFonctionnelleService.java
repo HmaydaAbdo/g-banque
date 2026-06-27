@@ -1119,4 +1119,9 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                 ));
     }
 
+    @Override
+    public boolean hasActiveLignesForBanque(Long banqueId) {
+        return ligneFonctionnelleRepository.existsByBanqueIdAndActifTrue(banqueId);
+    }
+
 }

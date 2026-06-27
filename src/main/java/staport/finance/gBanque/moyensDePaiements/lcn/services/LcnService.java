@@ -355,6 +355,15 @@ public class LcnService {
         return lcnRepository.countEchusGroupedByBanque(today);
     }
 
+    /**
+     * Nombre de LCN échus pour une banque donnée — façade publique sur
+     * {@link LcnRepository#countEchusByBanqueId}. Utilisé par l'agrégateur accueil (requête
+     * ciblée sur une seule banque, plus efficace que {@link #countEchusGroupedByBanque}).
+     */
+    public long countEchusByBanqueId(Long banqueId, LocalDate today) {
+        return lcnRepository.countEchusByBanqueId(banqueId, today);
+    }
+
     private void validateEscompteBusinessRule(Type type, NatureLcn nature) {
         if (nature == NatureLcn.ESCOMPTE && type != Type.ENCAISSEMENT) {
             log.error("Règle métier violée: tentative de création d'un LCN ESCOMPTE avec le type {}", type);

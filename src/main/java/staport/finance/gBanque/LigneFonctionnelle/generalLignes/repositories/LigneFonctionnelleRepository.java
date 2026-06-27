@@ -60,4 +60,7 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
     AND lf.actif = true
 """)
     List<Object[]> findActivePlafondsByBankIds(@Param("ids") List<Long> ids, @Param("code") String code);
+
+    /** Vérifie l'existence d'au moins une ligne fonctionnelle active pour une banque donnée. */
+    boolean existsByBanqueIdAndActifTrue(Long banqueId);
 }
