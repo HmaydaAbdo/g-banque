@@ -7,7 +7,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,loggers,env,threaddump,heapdump,scheduledtasks,flyway
+        include: health,info,metrics,prometheus,loggers,env,threaddump,heapdump,scheduledtasks
   endpoint:
     health:
       show-details: always
@@ -15,11 +15,11 @@ management:
 spring:
   jpa:
     hibernate:
-      ddl-auto: validate   # Flyway gère le schéma — Hibernate valide seulement
+      ddl-auto: update
     show-sql: false
   batch:
     jdbc:
-      initialize-schema: never   # Tables Spring Batch déjà créées par Flyway
+      initialize-schema: never
 
 logging:
   level:
