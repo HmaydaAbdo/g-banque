@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, tap } from 'rxjs';
 import {RecapitulatifCompte} from "../../accueil/dtos/RecapitulatifCompte";
 import {BanqueService} from "./BanqueService";
 
@@ -75,23 +75,13 @@ export class BankStateService {
   }
 
   /**
-   * Charge les informations initiales de la banque
+   * Charge les informations initiales de la banque et met à jour le state.
    * @param banqueId L'ID de la banque
    * @returns Observable des informations bancaires
    */
   loadBankInfo(banqueId: number): Observable<RecapitulatifCompte> {
-    return new Observable(observer => {
-      this.banqueService.getAccueilBankInfoById(banqueId).subscribe({
-        next: (data: RecapitulatifCompte) => {
-          this.updateBankInfo(data);
-          observer.next(data);
-          observer.complete();
-        },
-        error: (err: any) => {
-          console.error('Erreur lors du chargement initial des informations bancaires', err);
-          observer.error(err);
-        }
-      });
-    });
+    return this.banqueService.getAccueilBankInfoById(banqueId).pipe(
+      tap((data: RecapitulatifCompte) => this.updateBankInfo(data))
+    );
   }
 }

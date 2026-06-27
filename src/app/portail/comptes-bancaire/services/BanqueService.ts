@@ -66,13 +66,6 @@ export class BanqueService {
     if (criteria.numeroDeCompte) {
       params = params.set('numeroDeCompte', criteria.numeroDeCompte);
     }
-    if (criteria.minSolde !== undefined && criteria.minSolde !== null) {
-      params = params.set('minSolde', criteria.minSolde.toString());
-    }
-    if (criteria.maxSolde !== undefined && criteria.maxSolde !== null) {
-      params = params.set('maxSolde', criteria.maxSolde.toString());
-    }
-
     return this.http.get<PageResponse<BanqueResponse>>(this.apiUrl, {params});
   }
 

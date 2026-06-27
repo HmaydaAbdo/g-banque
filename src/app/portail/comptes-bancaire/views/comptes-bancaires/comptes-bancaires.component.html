@@ -95,9 +95,7 @@
           </th>
           <th >Adresse</th>
           <th >Agence</th>
-          <th pSortableColumn="soldeActuel" class="text-right" >
-            Solde actuel <p-sortIcon field="soldeActuel"></p-sortIcon>
-          </th>
+          <th class="text-right">Solde actuel</th>
           <th class="text-center">Actions</th>
         </tr>
       </ng-template>
@@ -122,7 +120,7 @@
                    styleClass="text-xs">
             </p-tag>
           </td>
-          <td class="text-600 text-sm">{{ banque.address }}</td>
+          <td class="text-600 text-sm">{{ banque.adresse }}</td>
           <td class="text-600 text-sm">{{ banque.agence }}</td>
           <td class="text-right">
             <span class="font-bold num"
@@ -143,7 +141,7 @@
                       [routerLink]="['/portail/comptes-bancaires/edit', banque.id]"
                       pTooltip="Modifier" tooltipPosition="top">
               </button>
-              @if (isAdmin()) {
+              @if (isFinanceOrAdmin()) {
                 <button pButton pRipple icon="pi pi-trash"
                         class="p-button-rounded p-button-text p-button-danger p-button-sm"
                         pTooltip="Supprimer" tooltipPosition="top"

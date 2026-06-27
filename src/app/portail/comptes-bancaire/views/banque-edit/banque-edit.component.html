@@ -87,13 +87,13 @@
 
         <!-- Adresse -->
         <div class="field col-12 md:col-6">
-          <label for="address" class="font-semibold block mb-2 text-700 text-sm">
+          <label for="adresse" class="font-semibold block mb-2 text-700 text-sm">
             Adresse <span class="text-red-500">*</span>
           </label>
-          <input type="text" pInputText id="address" formControlName="address" />
-          @if (f['address'].invalid && f['address'].touched) {
+          <input type="text" pInputText id="adresse" formControlName="adresse" />
+          @if (f['adresse'].invalid && f['adresse'].touched) {
             <small class="p-error">
-              @if (f['address'].errors?.['required']) {
+              @if (f['adresse'].errors?.['required']) {
                 <span>Obligatoire.</span>
               }
             </small>

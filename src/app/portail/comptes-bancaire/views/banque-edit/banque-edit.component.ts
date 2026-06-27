@@ -90,7 +90,7 @@ export class BanqueEditComponent implements OnInit {
       // Pattern and length validators remain for creation mode
       numeroDeCompte: ['', [Validators.required, Validators.pattern(/^\d+$/), Validators.maxLength(24), Validators.minLength(24)]],
       devise: [Devise.MAD, Validators.required],
-      address: ['', Validators.required],
+      adresse: ['', Validators.required],
       agence: ['', Validators.required],
     });
   }
@@ -104,7 +104,7 @@ export class BanqueEditComponent implements OnInit {
           nom: data.nom,
           numeroDeCompte: data.numeroDeCompte,
           devise: data.devise,
-          address: data.address,
+          adresse: data.adresse,
           agence: data.agence,
         });
         // Ensure disabling happens after patching value if it's edit mode
@@ -164,7 +164,7 @@ export class BanqueEditComponent implements OnInit {
       nom: formValue.nom,
       numeroDeCompte: formValue.numeroDeCompte, // Will include value even if disabled
       devise: formValue.devise,
-      address: formValue.address,
+      adresse: formValue.adresse,
       agence: formValue.agence,
     };
 
