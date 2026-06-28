@@ -174,12 +174,7 @@ public class ChargesFixesScheduler {
         if (dejaPresent(agiosRepository::existsByBanqueIdAndLibelleAndDateEmissionBetween,
                         banque.getId(), libelle, charge.jourEmission())) return;
 
-        AgiosRequestDto dto = new AgiosRequestDto();
-        dto.setLibelle(libelle);
-        dto.setObservation(OBS);
-        dto.setMontant(charge.montant());
-        dto.setBanqueId(banque.getId());
-        dto.setDateEmission(dateEmission);
+        AgiosRequestDto dto = new AgiosRequestDto(libelle, OBS, charge.montant(), banque.getId(), dateEmission);
 
         agiosService.createAgios(dto);
         log.info("[ChargesFixes] Agios '{}' créé (PREVU) pour {}.", libelle, banque.getNom());

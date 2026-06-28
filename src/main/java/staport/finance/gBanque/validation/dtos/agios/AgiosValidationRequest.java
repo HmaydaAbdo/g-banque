@@ -3,95 +3,36 @@ package staport.finance.gBanque.validation.dtos.agios;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class AgiosValidationRequest {
+/**
+ * DTO de requête pour la validation (rapprochement) d'un agios.
+ */
+public record AgiosValidationRequest(
 
-    @NotNull(message = "L'id de l'agio est obligatoire ")
-    private Long idAgio;
+        @NotNull(message = "L'id de l'agio est obligatoire")
+        Long idAgio,
 
-    @NotNull(message = "TVA est obligatoire")
-    private Double tva;
+        @NotNull(message = "La TVA est obligatoire")
+        BigDecimal tva,
 
-    @NotNull(message = "date d'mission est obligatoire ")
-    private LocalDate dateEmission ;
+        @NotNull(message = "La date d'émission est obligatoire")
+        LocalDate dateEmission,
 
-    @NotNull(message = "La date de valeur est obligatoire")
-    private LocalDate dateValeur ;
+        @NotNull(message = "La date de valeur est obligatoire")
+        LocalDate dateValeur,
 
-    @NotNull(message = "La date d’opération est obligatoire")
-    private LocalDate dateOperation ;
+        @NotNull(message = "La date d'opération est obligatoire")
+        LocalDate dateOperation,
 
-    @NotBlank(message = "L'observation' est obligatoire")
-    private String observation;
+        @NotBlank(message = "L'observation est obligatoire")
+        String observation,
 
-    @NotBlank(message = "libelle est obligatoire")
-    private String libelle;
+        @NotBlank(message = "Le libellé est obligatoire")
+        String libelle,
 
-    @NotNull(message = "rapprochementId est obligatoire")
-    private Long rapprochementId;
+        @NotNull(message = "Le rapprochementId est obligatoire")
+        Long rapprochementId
 
-    public AgiosValidationRequest() {
-    }
-
-    public Long getIdAgio() {
-        return idAgio;
-    }
-
-    public void setIdAgio(Long idAgio) {
-        this.idAgio = idAgio;
-    }
-
-
-
-    public LocalDate getDateEmission() {
-        return dateEmission;
-    }
-
-    public void setDateEmission(LocalDate dateEmission) {
-        this.dateEmission = dateEmission;
-    }
-
-    public LocalDate getDateValeur() {
-        return dateValeur;
-    }
-
-    public void setDateValeur(LocalDate dateValeur) {
-        this.dateValeur = dateValeur;
-    }
-
-    public LocalDate getDateOperation() {
-        return dateOperation;
-    }
-
-    public void setDateOperation(LocalDate dateOperation) {
-        this.dateOperation = dateOperation;
-    }
-
-    public String getObservation() {
-        return observation;
-    }
-
-    public void setObservation(String observation) {
-        this.observation = observation;
-    }
-
-    public String getLibelle() {
-        return libelle;
-    }
-
-    public void setLibelle(String libelle) {
-        this.libelle = libelle;
-    }
-
-    public Double getTva() {
-        return tva;
-    }
-
-    public void setTva(Double tva) {
-        this.tva = tva;
-    }
-
-    public Long getRapprochementId() { return rapprochementId; }
-    public void setRapprochementId(Long rapprochementId) { this.rapprochementId = rapprochementId; }
-}
+) {}

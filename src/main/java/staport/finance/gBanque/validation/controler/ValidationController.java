@@ -31,6 +31,7 @@ import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionRequestDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionResponseDTO;
+import staport.finance.gBanque.Agios.service.interfaces.IAgiosValidationService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
 import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionResponseDto;
@@ -54,13 +55,16 @@ public class ValidationController {
     private final ValidationService validationService;
     private final ReverseTransactionService reverseTransactionService;
     private final ILeasingValidationService leasingValidationService;
+    private final IAgiosValidationService agiosValidationService;
 
     public ValidationController(ValidationService validationService,
                                 ReverseTransactionService reverseTransactionService,
-                                ILeasingValidationService leasingValidationService) {
-        this.validationService = validationService;
+                                ILeasingValidationService leasingValidationService,
+                                IAgiosValidationService agiosValidationService) {
+        this.validationService      = validationService;
         this.reverseTransactionService = reverseTransactionService;
-        this.leasingValidationService = leasingValidationService;
+        this.leasingValidationService  = leasingValidationService;
+        this.agiosValidationService    = agiosValidationService;
     }
 
 
@@ -202,8 +206,7 @@ public class ValidationController {
 
     @PostMapping("/process/agios")
     public ResponseEntity<AgiosTransactionResponse> processAgiosToTransaction(@Valid @RequestBody AgiosValidationRequest requestDto) throws Exception {
-        AgiosTransactionResponse responseDto = validationService.processAgiosToTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+        return new ResponseEntity<>(agiosValidationService.processAgiosToTransaction(requestDto), HttpStatus.CREATED);
     }
 
     @PostMapping("/process/prelevement")

@@ -4,24 +4,12 @@ import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 
-public class EncoursAgiosDto {
+/**
+ * Réponse de l'endpoint encours agios : total des montants + page d'agios PREVU.
+ */
+public record EncoursAgiosDto(
 
-    private BigDecimal totalDesEncours;
-    private Page<AgiosResponseDto> page;
+        BigDecimal totalDesEncours,
+        Page<AgiosResponseDto> page
 
-    public BigDecimal getTotalDesEncours() {
-        return totalDesEncours;
-    }
-
-    public void setTotalDesEncours(BigDecimal totalDesEncours) {
-        this.totalDesEncours = totalDesEncours;
-    }
-
-    public Page<AgiosResponseDto> getPage() {
-        return page;
-    }
-
-    public void setPage(Page<AgiosResponseDto> page) {
-        this.page = page;
-    }
-}
+) {}

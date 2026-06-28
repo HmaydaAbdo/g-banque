@@ -11,73 +11,51 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 
-
 @Component
 public class AgiosTransactionMapper {
 
-
-    public AgiosTransactionMapper() {
-    }
-
-    public Transaction toEntity(AgiosValidationRequest requestDto, Agios agios )  {
-
-
-        if (requestDto == null || agios == null ) {
+    public Transaction toEntity(AgiosValidationRequest dto, Agios agios) {
+        if (dto == null || agios == null) {
             return null;
         }
 
         Transaction transaction = new Transaction();
-
-        // Mapping simple fields
         transaction.setReferent(agios.getId());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission());
-        transaction.setDateValeur(requestDto.getDateValeur());
-        transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setLibelle(requestDto.getLibelle());
+        transaction.setObservation(dto.observation());
+        transaction.setDateEmission(dto.dateEmission());
+        transaction.setDateValeur(dto.dateValeur());
+        transaction.setDateOperations(dto.dateOperation());
+        transaction.setLibelle(dto.libelle());
         transaction.setTransactionSource(TransactionSource.AGIOS);
         transaction.setDebit(agios.getMontant());
         transaction.setCredit(BigDecimal.ZERO);
         transaction.setBanqueDePrelevement(agios.getBanque());
 
-        BigDecimal ttc = agios.getMontant();
-        BigDecimal tauxTVA = BigDecimal.valueOf(requestDto.getTva());
-
-        // Calculer uniquement le montant de la TVA
-        BigDecimal tva = TVAUtils.calculerTVA(ttc, tauxTVA);
-
-        // Stocker la TVA dans la transaction
+        BigDecimal tva = TVAUtils.calculerTVA(agios.getMontant(), BigDecimal.valueOf(dto.tva().doubleValue()));
         transaction.setTvaDeductible(tva);
-
 
         return transaction;
     }
 
-
-    public AgiosTransactionResponse toResponseDto(Transaction transaction)   {
+    public AgiosTransactionResponse toResponseDto(Transaction transaction) {
         if (transaction == null) {
             return null;
         }
 
-        AgiosTransactionResponse responseDto = new AgiosTransactionResponse();
-
-        // Mapping fields from the entity to the DTO
-        responseDto.setId(transaction.getId());
-        // Lazy loading might require calling getBanqueDePrelevement() before getName()
         Banque banque = transaction.getBanqueDePrelevement();
-        if (banque != null) {
-            responseDto.setBanqueName(banque.getNom());
-        }
-        responseDto.setLibelle(transaction.getLibelle());
-        responseDto.setObservation(transaction.getObservation());
-        responseDto.setDateEmission(transaction.getDateEmission());
-        responseDto.setDateValeur(transaction.getDateValeur());
-        responseDto.setDateOperations(transaction.getDateOperations());
-        responseDto.setTvaDeductible(transaction.getTvaDeductible());
-        responseDto.setTvaCollectee(transaction.getTvaCollectee());
-        responseDto.setDebit(transaction.getDebit());
-        responseDto.setCredit(transaction.getCredit());
-        return responseDto;
-    }
 
+        return new AgiosTransactionResponse(
+                transaction.getId(),
+                banque != null ? banque.getNom() : null,
+                transaction.getLibelle(),
+                transaction.getObservation(),
+                transaction.getDateEmission(),
+                transaction.getDateValeur(),
+                transaction.getDateOperations(),
+                transaction.getTvaDeductible(),
+                transaction.getTvaCollectee(),
+                transaction.getDebit(),
+                transaction.getCredit()
+        );
+    }
 }

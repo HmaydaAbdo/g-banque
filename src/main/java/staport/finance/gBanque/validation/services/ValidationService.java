@@ -6,8 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.Agios.entities.Agios;
-import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.impayees.entities.Impayee;
@@ -39,8 +37,6 @@ import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.restitution.repository.RestitutionRepository;
-import staport.finance.gBanque.validation.dtos.agios.AgiosTransactionResponse;
-import staport.finance.gBanque.validation.dtos.agios.AgiosValidationRequest;
 import staport.finance.gBanque.validation.dtos.commision.CommissionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.commision.CommissionValidationDto;
 import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionRequestDto;
@@ -130,9 +126,6 @@ public class ValidationService {
     private final CommisionRepository commisionRepository;
     private final CommisionTransactionMapper commisionTransactionMapper;
 
-    private final AgiosTransactionMapper agiosTransactionMapper;
-    private  final AgiosRepository agiosRepository;
-
     private final PrelevementRepository prelevementRepository;
     private final PrelevementTransactionMapper prelevementTransactionMapper;
 
@@ -164,7 +157,7 @@ public class ValidationService {
     private final SoldeCascadeService soldeCascadeService;
 
 
-    public ValidationService(CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
+    public ValidationService(CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
@@ -186,8 +179,6 @@ public class ValidationService {
         this.decompteTransactionMapper = decompteTransactionMapper;
         this.commisionRepository = commisionRepository;
         this.commisionTransactionMapper = commisionTransactionMapper;
-        this.agiosTransactionMapper = agiosTransactionMapper;
-        this.agiosRepository = agiosRepository;
         this.prelevementRepository = prelevementRepository;
         this.prelevementTransactionMapper = prelevementTransactionMapper;
         this.fraisBancaireRepository = fraisBancaireRepository;
@@ -708,41 +699,6 @@ public class ValidationService {
         // using the mapper and return it as the response.
         return commisionTransactionMapper.toResponseDto(savedTransaction);
     }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public AgiosTransactionResponse processAgiosToTransaction(AgiosValidationRequest requestDto)  {
-        // Step 1: Fetch agios from the database using it's id from the request.
-        Agios agios=this.agiosRepository.findById(requestDto.getIdAgio())
-                .orElseThrow(()->new ResourceNotFoundException("Agios with id "+requestDto.getIdAgio()+" not found"));
-
-        // Step 2: Check if the agios is not already paid.
-        // If it's already paid , throw an exception.
-        if (agios.getStatus()== Status.PAYE) {
-            throw new RuntimeException(" agios is already paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
-        Transaction transactionEntity = agiosTransactionMapper.toEntity(requestDto,agios);
-
-        Banque banque = banqueRepository.findById(agios.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+agios.getBanque().getId()+" not found"));
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the agios as * (paid) and save the updated agios entity.
-        agios.setStatus(Status.PAYE);
-        agios.setObservation(savedTransaction.getObservation());
-        agios.setLibelle(savedTransaction.getLibelle());
-        agios.setDateValeur(savedTransaction.getDateValeur());
-        agios.setDateOperation(savedTransaction.getDateOperations());
-        agiosRepository.save(agios);
-
-        // Step 7: Convert the saved Transaction entity into a AgiosTransactionResponse
-        // using the mapper and return it as the response.
-        return agiosTransactionMapper.toResponseDto(savedTransaction);
-    }
-
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public PrelevementTransactionResponse processPrelevementToTransaction(PrelevementValidationRequest requestDto)  {

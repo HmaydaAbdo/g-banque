@@ -5,8 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.Agios.entities.Agios;
-import staport.finance.gBanque.Agios.repository.AgiosRepository;
+import staport.finance.gBanque.Agios.service.interfaces.IAgiosValidationService;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
@@ -77,7 +76,7 @@ public class ReverseTransactionService {
     private final DroitConstateRepository droitConstateRepository;
     private final DecompteRepository decompteRepository;
     private final CommisionRepository commisionRepository;
-    private final AgiosRepository agiosRepository;
+    private final IAgiosValidationService agiosValidationService;
     private final PrelevementRepository prelevementRepository;
     private final FraisBancaireRepository fraisBancaireRepository;
     private final FactoringRepository factoringRepository;
@@ -100,7 +99,7 @@ public class ReverseTransactionService {
             DroitConstateRepository droitConstateRepository,
             DecompteRepository decompteRepository,
             CommisionRepository commisionRepository,
-            AgiosRepository agiosRepository,
+            IAgiosValidationService agiosValidationService,
             PrelevementRepository prelevementRepository,
             FraisBancaireRepository fraisBancaireRepository,
             FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, SoldeCascadeService soldeCascadeService) {
@@ -115,7 +114,7 @@ public class ReverseTransactionService {
         this.droitConstateRepository = droitConstateRepository;
         this.decompteRepository = decompteRepository;
         this.commisionRepository = commisionRepository;
-        this.agiosRepository = agiosRepository;
+        this.agiosValidationService = agiosValidationService;
         this.prelevementRepository = prelevementRepository;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.factoringRepository = factoringRepository;
@@ -211,7 +210,7 @@ public class ReverseTransactionService {
                 resetCommission(referentId);
                 break;
             case AGIOS:
-                resetAgios(referentId);
+                agiosValidationService.resetAgios(referentId);
                 break;
             case PRELEVEMENT:
                 resetPrelevement(referentId);
@@ -352,17 +351,6 @@ public class ReverseTransactionService {
         commission.setDateValeur(null);
         commisionRepository.save(commission);
         log.debug("Commission {} remise à NON_PAYE", commissionId);
-    }
-
-    private void resetAgios(Long agiosId) throws Exception {
-        Agios agios = agiosRepository.findById(agiosId)
-                .orElseThrow(() -> new ResourceNotFoundException("Agios introuvable: " + agiosId));
-
-        agios.setStatus(Status.PREVU);
-        agios.setDateOperation(null);
-        agios.setDateValeur(null);
-        agiosRepository.save(agios);
-        log.debug("Agios {} remis à NON_PAYE", agiosId);
     }
 
     private void resetPrelevement(Long prelevementId) throws Exception {

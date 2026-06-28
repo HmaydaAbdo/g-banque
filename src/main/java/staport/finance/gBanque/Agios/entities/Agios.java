@@ -1,14 +1,23 @@
 package staport.finance.gBanque.Agios.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Objects;
 
+@Audited
 @Entity
+@Table(
+        name = "agios",
+        indexes = {
+                @Index(name = "idx_agios_banque_id",    columnList = "banque_id"),
+                @Index(name = "idx_agios_status",       columnList = "status"),
+                @Index(name = "idx_agios_date_emission",columnList = "date_emission")
+        }
+)
 public class Agios {
 
     @Id
@@ -22,22 +31,26 @@ public class Agios {
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 
+    @Column(name = "date_emission")
+    private LocalDate dateEmission;
 
-    private LocalDate dateEmission ;
-    private LocalDate dateValeur ;
-    private LocalDate dateOperation ;
+    @Column(name = "date_valeur")
+    private LocalDate dateValeur;
 
-    @Column( length = 150)
+    @Column(name = "date_operation")
+    private LocalDate dateOperation;
+
+    @Column(length = 150)
     private String libelle;
+
     @Column(length = 500)
     private String observation;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private Status status=Status.PREVU;
+    private Status status = Status.PREVU;
 
-    public Agios() {
-    }
+    public Agios() {}
 
     public Long getId() {
         return id;
@@ -58,7 +71,6 @@ public class Agios {
     public void setBanque(Banque banque) {
         this.banque = banque;
     }
-
 
     public LocalDate getDateEmission() {
         return dateEmission;
@@ -106,33 +118,5 @@ public class Agios {
 
     public void setStatus(Status status) {
         this.status = status;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Agios agios = (Agios) o;
-        return Objects.equals(id, agios.id) && Objects.equals(montant, agios.montant) && Objects.equals(banque, agios.banque)  && Objects.equals(dateEmission, agios.dateEmission) && Objects.equals(dateValeur, agios.dateValeur) && Objects.equals(dateOperation, agios.dateOperation) && Objects.equals(libelle, agios.libelle) && Objects.equals(observation, agios.observation) && status == agios.status;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, montant, banque, dateEmission, dateValeur, dateOperation, libelle, observation, status);
-    }
-
-
-    @Override
-    public String toString() {
-        return "Agios{" +
-                "id=" + id +
-                ", montant=" + montant +
-                ", banque=" + banque +
-                ", dateEmission=" + dateEmission +
-                ", dateValeur=" + dateValeur +
-                ", dateOperation=" + dateOperation +
-                ", libelle='" + libelle + '\'' +
-                ", observation='" + observation + '\'' +
-                ", status=" + status +
-                '}';
     }
 }

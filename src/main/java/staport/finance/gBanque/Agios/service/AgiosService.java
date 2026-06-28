@@ -14,219 +14,155 @@ import staport.finance.gBanque.Agios.dtos.AgiosResponseDto;
 import staport.finance.gBanque.Agios.dtos.AgiosSearchDto;
 import staport.finance.gBanque.Agios.dtos.EncoursAgiosDto;
 import staport.finance.gBanque.Agios.entities.Agios;
+import staport.finance.gBanque.Agios.exceptions.AgiosNotFoundException;
 import staport.finance.gBanque.Agios.mapper.AgiosMapper;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
 import staport.finance.gBanque.Agios.spec.AgiosSpec;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditableAction;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.prefinancement.enums.Status;
-import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
-import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 
 @Service
 public class AgiosService {
 
     private static final Logger log = LoggerFactory.getLogger(AgiosService.class);
+
     private final AgiosRepository agiosRepository;
-    private final BanqueRepository banqueRepository;
+    private final IBanqueService banqueService;
     private final AgiosMapper agiosMapper;
-    private final RapprochementRepository rapprochementRepository;
-    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-    public AgiosService(AgiosRepository agiosRepository, BanqueRepository banqueRepository, AgiosMapper agiosMapper, RapprochementRepository rapprochementRepository) {
+    public AgiosService(AgiosRepository agiosRepository,
+                        IBanqueService banqueService,
+                        AgiosMapper agiosMapper) {
         this.agiosRepository = agiosRepository;
-        this.banqueRepository = banqueRepository;
-        this.agiosMapper = agiosMapper;
-        this.rapprochementRepository = rapprochementRepository;
-        log.info("Initialisation du service Agios");
+        this.banqueService   = banqueService;
+        this.agiosMapper     = agiosMapper;
     }
 
-    /**
-     * Crée un nouvel agios
-     *
-     * @param requestDto Données de l'agios à créer
-     * @return L'agios créé
-     */
+    // ── Création ──────────────────────────────────────────────────────────────
+
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Agios.class)
     @Transactional
-    public AgiosResponseDto createAgios(AgiosRequestDto requestDto) {
-        log.info("Création d'un agios avec les données suivantes {}", requestDto);
+    public AgiosResponseDto createAgios(AgiosRequestDto dto) {
+        log.info("Création d'un agios — banqueId: {}, montant: {}", dto.banqueId(), dto.montant());
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
-                });
+        Banque banque = findBanqueOuLeverException(dto.banqueId());
 
-        log.debug("Banque trouvée: {} (ID: {})", banque.getNom(), banque.getId());
+        Agios agios = new Agios();
+        agios.setLibelle(dto.libelle());
+        agios.setObservation(dto.observation());
+        agios.setMontant(dto.montant());
+        agios.setBanque(banque);
+        agios.setDateEmission(dto.dateEmission());
 
-        Agios agios = agiosMapper.toEntity(requestDto, banque);
-        Agios savedAgios = agiosRepository.save(agios);
-
-        log.info("Agios créé avec succès - ID: {}, Statut: {}", savedAgios.getId(), savedAgios.getStatus());
-        return agiosMapper.toResponseDto(savedAgios);
+        Agios saved = agiosRepository.save(agios);
+        log.info("Agios créé — id: {}, statut: {}", saved.getId(), saved.getStatus());
+        return agiosMapper.toResponseDto(saved);
     }
 
-    /**
-     * Récupère un agios par son ID
-     *
-     * @param id Identifiant de l'agios
-     * @return L'agios demandé
-     */
+    // ── Lecture ───────────────────────────────────────────────────────────────
+
     @Transactional(readOnly = true)
     public AgiosResponseDto getById(Long id) {
-        log.info("Récupération de l'agios avec l'ID: {}", id);
-
-        Agios agios = agiosRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Agios non trouvé avec l'ID: {}", id);
-                    return new IllegalArgumentException("Agios non trouvé avec l'ID: " + id);
-                });
-
-        log.debug("Agios trouvé - Libellé: '{}', Montant: {}, Statut: {}",
-                agios.getLibelle(), agios.getMontant(), agios.getStatus());
-        return agiosMapper.toResponseDto(agios);
+        log.info("Récupération de l'agios — id: {}", id);
+        return agiosMapper.toResponseDto(findAgiosOuLeverException(id));
     }
 
-    /**
-     * Recherche des agios selon des critères avec pagination
-     *
-     * @param searchDto Critères de recherche
-     * @param pageable Informations de pagination
-     * @return Page d'agios correspondant aux critères
-     */
     @Transactional(readOnly = true)
-    public Page<AgiosResponseDto> searchAgios(AgiosSearchDto searchDto, Pageable pageable) {
-        log.info("Recherche d'agios avec critères: {}, Page: {}, Taille: {}",
-                searchDto, pageable.getPageNumber(), pageable.getPageSize());
-
-        Page<AgiosResponseDto> result = agiosRepository.findAll(
-                        AgiosSpec.buildSpecification(searchDto),
-                        pageable
-                )
+    public Page<AgiosResponseDto> searchAgios(AgiosSearchDto dto, Pageable pageable) {
+        log.info("Recherche d'agios — page: {}, taille: {}", pageable.getPageNumber(), pageable.getPageSize());
+        return agiosRepository.findAll(AgiosSpec.searchByCriteria(dto), pageable)
                 .map(agiosMapper::toResponseDto);
-
-        log.info("Recherche terminée - {} agios trouvé(s) sur {} au total",
-                result.getNumberOfElements(), result.getTotalElements());
-        return result;
     }
 
-    /**
-     * Met à jour un agios existant
-     *
-     * @param id Identifiant de l'agios à modifier
-     * @param requestDto Nouvelles données de l'agios
-     * @return L'agios mis à jour
-     */
-    @Transactional
-    public AgiosResponseDto updateAgios(Long id, AgiosRequestDto requestDto) {
-        log.info("Mise à jour de l'agios ID: {} - Nouveau libellé: '{}', Nouveau montant: {}",
-                id, requestDto.getLibelle(), requestDto.getMontant());
-
-        Agios agios = agiosRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Agios non trouvé avec l'ID: {}", id);
-                    return new IllegalArgumentException("Agios non trouvé avec l'ID: " + id);
-                });
-
-        log.debug("Agios actuel avant modification - Libellé: '{}', Montant: {}, Statut: {}",
-                agios.getLibelle(), agios.getMontant(), agios.getStatus());
-
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
-                });
-
-        agios.setLibelle(requestDto.getLibelle());
-        agios.setMontant(requestDto.getMontant());
-        agios.setBanque(banque);
-        agios.setDateEmission(requestDto.getDateEmission());
-
-        Agios updatedAgios = agiosRepository.save(agios);
-        log.info("Agios ID: {} mis à jour avec succès", id);
-        return agiosMapper.toResponseDto(updatedAgios);
-    }
-
-    /**
-     * Supprime un agios
-     *
-     * @param id Identifiant de l'agios à supprimer
-     */
-    @Transactional
-    public void deleteAgios(Long id) {
-        log.info("Suppression de l'agios avec l'ID: {}", id);
-
-        if (!agiosRepository.existsById(id)) {
-            log.error("Agios non trouvé avec l'ID: {}", id);
-            throw new IllegalArgumentException("Agios non trouvé avec l'ID: " + id);
-        }
-
-        agiosRepository.deleteById(id);
-        log.info("Agios ID: {} supprimé avec succès", id);
-    }
-
-    /**
-     * Récupère les agios en cours avec leur montant total
-     * Les agios en cours sont ceux avec un statut 'PREVU' et une date d'émission dans le passé
-     *
-     * @param searchDto Critères de recherche optionnels
-     * @param pageable Informations de pagination et de tri
-     * @return Un EncoursAgiosDto contenant la page d'agios et le montant total en cours
-     */
     @Transactional(readOnly = true)
-    public EncoursAgiosDto getOutstandingAgios(AgiosSearchDto searchDto, Pageable pageable) {
-
-        // Déterminer la période : rapprochement EN_COURS si disponible, sinon mois courant
-        YearMonth periode = rapprochementRepository
-                .findByBanqueIdAndStatut(searchDto.getBanqueId(), StatutRapprochement.EN_COURS)
-                .map(r -> r.getDateRapprochement())
-                .orElse(YearMonth.now()); // fallback si pas encore de rapprochement EN_COURS
+    public EncoursAgiosDto getOutstandingAgios(AgiosSearchDto dto, Pageable pageable) {
+        LocalDate finDuMois = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
         Specification<Agios> spec = Specification
-                .where(AgiosSpec.outstandingUntil(endOfMonth))
-                .and(AgiosSpec.hasBanque(searchDto.getBanqueId()))
-                .and(AgiosSpec.hasLibelle(searchDto.getLibelle()))
-                .and(AgiosSpec.hasMontant(searchDto.getMontant()));
+                .where(AgiosSpec.outstandingUntil(finDuMois))
+                .and(AgiosSpec.hasBanque(dto.banqueId()))
+                .and(AgiosSpec.hasLibelle(dto.libelle()))
+                .and(AgiosSpec.hasMontant(dto.montant()));
 
-        Page<Agios> agiosPage = agiosRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        Pageable orderedPageable = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+
+        Page<AgiosResponseDto> pageDto = agiosRepository.findAll(spec, orderedPageable)
+                .map(agiosMapper::toResponseDto);
 
         BigDecimal totalDesEncours = agiosRepository.findAll(spec).stream()
                 .map(Agios::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Page<AgiosResponseDto> pageDto = agiosPage.map(agiosMapper::toResponseDto);
-
-        EncoursAgiosDto result = new EncoursAgiosDto();
-        result.setPage(pageDto);
-        result.setTotalDesEncours(totalDesEncours);
-
-        return result;
+        log.info("Encours agios récupérés — banqueId: {}, total: {}", dto.banqueId(), totalDesEncours);
+        return new EncoursAgiosDto(totalDesEncours, pageDto);
     }
 
+    // ── Modification ──────────────────────────────────────────────────────────
+
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Agios.class)
+    @Transactional
+    public AgiosResponseDto updateAgios(Long id, AgiosRequestDto dto) {
+        log.info("Mise à jour de l'agios — id: {}", id);
+
+        Agios agios  = findAgiosOuLeverException(id);
+        Banque banque = findBanqueOuLeverException(dto.banqueId());
+
+        agios.setLibelle(dto.libelle());
+        agios.setMontant(dto.montant());
+        agios.setBanque(banque);
+        agios.setDateEmission(dto.dateEmission());
+        agios.setObservation(dto.observation());
+
+        Agios updated = agiosRepository.save(agios);
+        log.info("Agios mis à jour — id: {}", updated.getId());
+        return agiosMapper.toResponseDto(updated);
+    }
+
+    // ── Suppression ───────────────────────────────────────────────────────────
+
+    @AuditableAction(operation = AuditOperation.DELETE, entity = Agios.class)
+    @Transactional
+    public void deleteAgios(Long id) {
+        log.info("Suppression de l'agios — id: {}", id);
+        findAgiosOuLeverException(id);
+        agiosRepository.deleteById(id);
+        log.info("Agios supprimé — id: {}", id);
+    }
+
+    // ── Toggle statut ─────────────────────────────────────────────────────────
+
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Agios.class)
     @Transactional
     public AgiosResponseDto toggleStatus(Long id) {
-        log.info("Basculement du statut de l'agios ID: {}", id);
+        log.info("Basculement du statut de l'agios — id: {}", id);
 
-        Agios agios = agiosRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Agios non trouvé avec l'ID: {}", id);
-                    return new IllegalArgumentException("Agios non trouvé avec l'ID: " + id);
-                });
-
-        Status oldStatus = agios.getStatus();
-        Status newStatus=oldStatus==Status.PAYE ? Status.PREVU : Status.PAYE;
-
+        Agios agios     = findAgiosOuLeverException(id);
+        Status newStatus = agios.getStatus() == Status.PAYE ? Status.PREVU : Status.PAYE;
         agios.setStatus(newStatus);
-        Agios updatedAgios = agiosRepository.save(agios);
 
-        log.info("Statut de l'agios ID: {} basculé avec succès de {} vers {}",
-                id, oldStatus, newStatus);
+        Agios updated = agiosRepository.save(agios);
+        log.info("Statut basculé — id: {}, nouveau statut: {}", id, newStatus);
+        return agiosMapper.toResponseDto(updated);
+    }
 
-        return agiosMapper.toResponseDto(updatedAgios);
+    // ── Méthodes privées ──────────────────────────────────────────────────────
+
+    private Agios findAgiosOuLeverException(Long id) {
+        return agiosRepository.findById(id)
+                .orElseThrow(() -> new AgiosNotFoundException(id));
+    }
+
+    private Banque findBanqueOuLeverException(Long banqueId) {
+        return banqueService.findOrThrow(banqueId);
     }
 }

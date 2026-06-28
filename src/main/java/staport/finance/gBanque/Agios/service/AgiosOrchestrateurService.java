@@ -304,18 +304,17 @@ public class AgiosOrchestrateurService {
 
         // Générer l'agios définitif si montant > 0
         if (trimestre.getTotalAgiosTTC().compareTo(BigDecimal.ZERO) > 0) {
-            AgiosRequestDto req = new AgiosRequestDto();
-            req.setLibelle(String.format("Agios %s T%d/%d", type.getLibelle(), trimNum, annee));
-            req.setObservation(String.format(
-                    "Clôture trimestrielle | HT: %s | TVA: %s | Jours: %d/%d",
-                    trimestre.getTotalAgiosHT(), trimestre.getTotalTVA(),
-                    trimestre.getNbJoursCalcules(), trimestre.getNbJoursTotal()));
-            req.setMontant(trimestre.getTotalAgiosTTC());
-            req.setBanqueId(banqueId);
-            req.setDateEmission(LocalDate.now(ZONE_MAROC));
-
+            AgiosRequestDto req = new AgiosRequestDto(
+                    String.format("Agios %s T%d/%d", type.getLibelle(), trimNum, annee),
+                    String.format("Clôture trimestrielle | HT: %s | TVA: %s | Jours: %d/%d",
+                            trimestre.getTotalAgiosHT(), trimestre.getTotalTVA(),
+                            trimestre.getNbJoursCalcules(), trimestre.getNbJoursTotal()),
+                    trimestre.getTotalAgiosTTC(),
+                    banqueId,
+                    LocalDate.now(ZONE_MAROC)
+            );
             var agiosCree = agiosService.createAgios(req);
-            trimestre.setAgiosDefinitifId(agiosCree.getId());
+            trimestre.setAgiosDefinitifId(agiosCree.id());
         }
 
         trimestre.setStatut(StatutTrimestre.CLOTURE);
