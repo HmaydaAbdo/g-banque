@@ -13,9 +13,9 @@
     import staport.finance.gBanque.Bank.services.IBanqueService;
     import staport.finance.gBanque.audit.AuditOperation;
     import staport.finance.gBanque.audit.AuditableAction;
-    import staport.finance.gBanque.commision.config.CommissionLeasingConfig;
     import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
-    import staport.finance.gBanque.commision.service.CommissionService;
+    import staport.finance.gBanque.commision.service.ICommissionService;
+    import staport.finance.gBanque.leasing.config.CommissionLeasingConfig;
     import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
     import staport.finance.gBanque.exception.customExceptions.ValidationException;
     import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
@@ -48,7 +48,7 @@ import java.math.BigDecimal;
 
         private static final Logger log = LoggerFactory.getLogger(EcheanceLeasingService.class);
 
-        private final CommissionService commissionService;
+        private final ICommissionService commissionService;
         private final CommissionLeasingConfig commissionConfig;
         private final EcheanceLeasingRepository echeanceLeasingRepository;
         private final ContratLeasingRepository contratLeasingRepository;
@@ -56,7 +56,7 @@ import java.math.BigDecimal;
         private final IBanqueService banqueService;
         private static final int SCALE = 2;
 
-        public EcheanceLeasingService(CommissionService commissionService,
+        public EcheanceLeasingService(ICommissionService commissionService,
                                       CommissionLeasingConfig commissionConfig,
                                       EcheanceLeasingRepository echeanceLeasingRepository,
                                       ContratLeasingRepository contratLeasingRepository,

@@ -41,7 +41,7 @@ import java.util.List;
 
 
 @Service
-public class CommissionService {
+public class CommissionService implements ICommissionService {
 
     private static final Logger log = LogManager.getLogger(CommissionService.class);
     /** Taux TVA légal applicable aux commissions sur cautions bancaires (10%). */
