@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidatorFn } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { CardModule } from "primeng/card";
@@ -15,7 +15,7 @@ import { finalize } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {Ripple} from "primeng/ripple";
-import {StyleClassModule} from "primeng/styleclass"; // Import ActivatedRoute and Router
+import {StyleClassModule} from "primeng/styleclass";
 import { toLocalDateString, parseLocalDate } from '../../../../global/types/date.utils';
 
 @Component({
@@ -40,23 +40,20 @@ import { toLocalDateString, parseLocalDate } from '../../../../global/types/date
 })
 export class OrganismeLeasingFormComponent implements OnInit {
 
+  private readonly fb = inject(FormBuilder);
+  private readonly organismeLeasingService = inject(OrganismeLeasingService);
+  private readonly messageService = inject(MessageService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
   organismeLeasingForm!: FormGroup;
   isEditMode: boolean = false;
   submittingForm: boolean = false;
   organismeId: number | null = null;
 
-  constructor(
-    private fb: FormBuilder,
-    private organismeLeasingService: OrganismeLeasingService,
-    private messageService: MessageService,
-    private route: ActivatedRoute, // Inject ActivatedRoute
-    private router: Router // Inject Router
-  ) { }
-
   ngOnInit(): void {
     this.initForm();
 
-    // Check for ID in route parameters for edit mode
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id) {
@@ -109,9 +106,8 @@ export class OrganismeLeasingFormComponent implements OnInit {
       next: (data: OrganismeLeasingResponse) => {
         this.populateForm(data);
       },
-      error: (err: Error) => {
-        console.error('Error loading organisme leasing:', err);
-        this.router.navigate(['/organismes-leasing']);
+      error: () => {
+        this.router.navigate(['/portail/leasing/organismesLeasing']);
       }
     });
   }
@@ -149,37 +145,27 @@ export class OrganismeLeasingFormComponent implements OnInit {
       this.organismeLeasingService.updateOrganismeLeasing(this.organismeId, request)
         .pipe(finalize(() => this.submittingForm = false))
         .subscribe({
-          next: (response) => {
+          next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Organisme de leasing mis à jour avec succès.' });
-            this.router.navigate(['/portail/leasing/organismesLeasing']); // Navigate back to the list
-          },
-          error: (err: Error) => {
-            this.handleServiceError(err);
+            this.router.navigate(['/portail/leasing/organismesLeasing']);
           }
         });
     } else {
       this.organismeLeasingService.createOrganismeLeasing(request)
         .pipe(finalize(() => this.submittingForm = false))
         .subscribe({
-          next: (response) => {
+          next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Organisme de leasing créé avec succès.' });
             this.organismeLeasingForm.reset();
             this.isEditMode = false;
             this.router.navigate(['/portail/leasing/organismesLeasing']);
-          },
-          error: (err: Error) => {
-            this.handleServiceError(err);
           }
         });
     }
   }
 
   onCancel(): void {
-    this.router.navigate(['/organismes-leasing']);
-  }
-
-  private handleServiceError(err: Error): void {
-    console.error('Frontend caught service error:', err);
+    this.router.navigate(['/portail/leasing/organismesLeasing']);
   }
 
   get f() { return this.organismeLeasingForm.controls; }

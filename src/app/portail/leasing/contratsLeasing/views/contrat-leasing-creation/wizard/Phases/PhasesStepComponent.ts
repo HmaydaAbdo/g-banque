@@ -1,6 +1,6 @@
 // src/app/contrat-leasing-creation/wizard/Phases/PhasesStepComponent.ts
 
-import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, ChangeDetectorRef, inject } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators, FormBuilder } from '@angular/forms';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { Subscription, Subject, BehaviorSubject, combineLatest } from 'rxjs';
@@ -46,6 +46,12 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
   @Input() globalValidationMessages: string[] = [];
 
 
+  private readonly fb = inject(FormBuilder);
+  private readonly wizardService = inject(LeasingContractWizardService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   formGroup!: FormGroup;
   phasesForTable$: BehaviorSubject<FormGroup[]> = new BehaviorSubject<FormGroup[]>([]);
 
@@ -60,16 +66,7 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   private componentDestroyed$ = new Subject<void>();
 
-  constructor(
-    private fb: FormBuilder,
-    private wizardService: LeasingContractWizardService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private cdr: ChangeDetectorRef
-  ) { }
-
   ngOnInit(): void {
-    console.log('PhasesStepComponent: ngOnInit called.');
     this.initFormGroup()
 
     this.formGroup.updateValueAndValidity();
@@ -95,18 +92,10 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
         const periodeEnMoisChanged = prevContract.periodeEnMois !== currContract.periodeEnMois;
         const errorsChanged = JSON.stringify(prevErrors) !== JSON.stringify(currErrors);
 
-        if (!phasesChanged && !typeContratChanged && !periodeEnMoisChanged && !errorsChanged) {
-          console.log('PhasesStepComponent: combinedServiceData$ distinctUntilChanged prevented emission (no relevant changes detected).');
-        }
-
         return !phasesChanged && !typeContratChanged && !periodeEnMoisChanged && !errorsChanged;
       })
     ).subscribe(([contract, errors]) => {
-      console.log('PhasesStepComponent: combinedServiceData$ subscription received update from service.');
-      console.log('PhasesStepComponent: Current phases in service contract (received):', contract.phases.length, contract.phases);
-      console.log('PhasesStepComponent: Global validation errors (received):', errors);
-
-      this.globalValidationMessages = errors; // Update the @Input() property
+      this.globalValidationMessages = errors;
 
       const previousTypeContrat = this.currentTypeContrat;
       this.currentTypeContrat = contract.typeContrat || null;
@@ -114,8 +103,6 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
       this.currentPeriodeEnMois = contract.periodeEnMois || null;
 
       if (previousTypeContrat !== null && previousTypeContrat !== this.currentTypeContrat) {
-        console.log(`PhasesStepComponent: Contract type changed from ${previousTypeContrat} to ${this.currentTypeContrat}.`);
-
         if (contract.phases.length > 0) {
           this.wizardService.clearPhases();
           this.messageService.add({
@@ -133,7 +120,6 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
 
       this.formGroup.updateValueAndValidity();
 
-      console.log('PhasesStepComponent: Form patched after service update. Valid:', this.formGroup.valid, 'Value:', this.formGroup.value);
     });
     this.subscriptions.push(combinedServiceDataSub);
 
@@ -150,20 +136,14 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
           mensualiteTTC: p.mensualiteTTC ? p.mensualiteTTC.toString() : null
         }));
 
-        if (JSON.stringify(prevPhasesNormalized) === JSON.stringify(currPhasesNormalized)) {
-          console.log('PhasesStepComponent: phases.valueChanges distinctUntilChanged prevented emission (no deep changes).');
-        }
-
         return JSON.stringify(prevPhasesNormalized) === JSON.stringify(currPhasesNormalized);
       })
     ).subscribe(phasesValue => {
-      console.log('PhasesStepComponent: phases.valueChanges subscription triggered.');
       const phasesForService = phasesValue.map((phase: any) => ({
         ...phase,
         mensualiteTTC: new Decimal(phase.mensualiteTTC)
       }));
       this.wizardService.updateContract({ phases: phasesForService });
-      console.log('PhasesStepComponent: Phases FormArray value changed, updated service with:', phasesForService);
     });
     this.subscriptions.push(phasesValueChangeSub);
 
@@ -172,11 +152,9 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
       takeUntil(this.componentDestroyed$),
       distinctUntilChanged()
     ).subscribe(status => {
-      console.log('PhasesStepComponent: phases.statusChanges subscription triggered. Status:', status);
       Promise.resolve().then(() => {
         this.stepValid.emit(status === 'VALID');
         this.cdr.detectChanges();
-        console.log('PhasesStepComponent: Emitted stepValid:', status === 'VALID', 'Overall form valid:', this.formGroup.valid);
       });
     });
     this.subscriptions.push(phasesStatusSub);
@@ -184,7 +162,6 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
     Promise.resolve().then(() => {
       this.stepValid.emit(this.formGroup.valid);
       this.cdr.detectChanges();
-      console.log('PhasesStepComponent: Initial stepValid emitted:', this.formGroup.valid);
     });
   }
 
@@ -199,15 +176,12 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
       mensualiteTTC: [null, [Validators.required, Validators.min(0.01)]]
     });
 
-    console.log('PhasesStepComponent: Form initialized. Root form valid:', this.formGroup.valid, 'Value:', this.formGroup.value);
 
   }
   ngOnDestroy(): void {
-    console.log('PhasesStepComponent: ngOnDestroy called. Unsubscribing all subscriptions.');
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.componentDestroyed$.next();
     this.componentDestroyed$.complete();
-    console.log('PhasesStepComponent: All subscriptions unsubscribed.');
   }
 
   get phases(): FormArray {
@@ -215,7 +189,6 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
   }
 
   private createPhaseFormGroup(phase: ContratLeasingPhaseRequestDTO): FormGroup {
-    console.log('PhasesStepComponent: createPhaseFormGroup called for phase:', phase.numeroPhase);
     return this.fb.group({
       numeroPhase: [phase.numeroPhase, Validators.required],
       dureeMois: [phase.dureeMois ?? 1, [Validators.required, Validators.min(1)]],
@@ -224,8 +197,6 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
   }
 
   private updatePhasesFormArray(phasesDto: ContratLeasingPhaseRequestDTO[]): void {
-    console.log('PhasesStepComponent: updatePhasesFormArray called with DTO:', phasesDto);
-    console.log('PhasesStepComponent: Current FormArray controls BEFORE update:', this.phases.controls.length);
 
     const currentPhaseControls = this.phases.controls;
     const currentLength = currentPhaseControls.length;
@@ -247,28 +218,22 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
 
         formGroup.patchValue(patchValue, { emitEvent: false });
         formGroup.updateValueAndValidity({ emitEvent: false });
-        console.log(`PhasesStepComponent: Patched existing phase ${i}. Current form value:`, formGroup.value);
       } else {
-        console.log(`PhasesStepComponent: Phase ${i} already matches DTO. No patch needed.`);
       }
     }
 
     for (let i = currentLength; i < dtoLength; i++) {
       const newPhaseGroup = this.createPhaseFormGroup(phasesDto[i]);
       this.phases.push(newPhaseGroup, { emitEvent: false });
-      console.log(`PhasesStepComponent: Added new phase ${i}. New FormArray length: ${this.phases.length}`);
     }
 
     for (let i = currentLength - 1; i >= dtoLength; i--) {
       this.phases.removeAt(i, { emitEvent: false });
-      console.log(`PhasesStepComponent: Removed phase ${i}. New FormArray length: ${this.phases.length}`);
     }
 
     this.phases.updateValueAndValidity();
-    console.log('PhasesStepComponent: Emitting updated phasesForTable$ with controls:', this.phases.controls.length, this.phases.controls);
     this.phasesForTable$.next([...this.phases.controls] as FormGroup[]);
     this.cdr.detectChanges();
-    console.log('PhasesStepComponent: updatePhasesFormArray completed. FormArray Valid:', this.phases.valid, 'Current phases controls AFTER update:', this.phases.controls.length);
   }
 
 
@@ -281,22 +246,18 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
   }
 
   private applyMandatoryPhaseValidation(): void {
-    console.log('PhasesStepComponent: applyMandatoryPhaseValidation called. Applying minLength(1) validator.');
     this.phases.setValidators(Validators.minLength(1));
     this.phases.updateValueAndValidity();
     this.formGroup.updateValueAndValidity();
-    console.log('PhasesStepComponent: applyMandatoryPhaseValidation completed. FormArray Valid:', this.phases.valid);
   }
 
   openNewPhaseDialog(): void {
-    console.log('PhasesStepComponent: openNewPhaseDialog called.');
     if (!this.canAddPhase()) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Attention',
         detail: 'Pour un contrat Linéaire, une seule phase est autorisée.'
       });
-      console.log('PhasesStepComponent: Cannot add phase (linear contract rule).');
       return;
     }
 
@@ -309,11 +270,9 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
     this.phaseForm.updateValueAndValidity();
 
     this.displayPhaseDialog = true;
-    console.log('PhasesStepComponent: Opened new phase dialog. displayPhaseDialog:', this.displayPhaseDialog);
   }
 
   editPhase(phaseIndex: number): void {
-    console.log('PhasesStepComponent: editPhase called for index:', phaseIndex);
     this.currentPhaseIndex = phaseIndex;
     this.phaseDialogHeader = 'Modifier la Phase ' + (phaseIndex + 1);
     const phaseToEdit = this.wizardService.getCurrentContract().phases[phaseIndex];
@@ -328,17 +287,14 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
     this.phaseForm.updateValueAndValidity();
 
     this.displayPhaseDialog = true;
-    console.log('PhasesStepComponent: Opened edit phase dialog for index:', phaseIndex, 'displayPhaseDialog:', this.displayPhaseDialog);
   }
 
   savePhase(): void {
-    console.log('PhasesStepComponent: savePhase called.');
     this.phaseForm.updateValueAndValidity();
 
     if (this.phaseForm.invalid) {
       this.phaseForm.markAllAsTouched();
       // Erreur affichée via les messages inline du formulaire — l'interceptor gère les erreurs HTTP
-      console.log('PhasesStepComponent: Phase form is INVALID. Not saving.');
       return;
     }
 
@@ -353,43 +309,32 @@ export class PhasesStepComponent implements OnInit, OnDestroy {
     if (this.currentPhaseIndex === -1) {
       this.wizardService.addPhase(phaseDataForService);
       this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Phase ajoutée avec succès.' });
-      console.log('PhasesStepComponent: Called wizardService.addPhase with:', phaseDataForService);
     } else {
       this.wizardService.updatePhase(this.currentPhaseIndex, phaseDataForService);
       this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Phase modifiée avec succès.' });
-      console.log('PhasesStepComponent: Called wizardService.updatePhase for index', this.currentPhaseIndex, 'with:', phaseDataForService);
     }
 
-    console.log('PhasesStepComponent: Scheduling dialog close with setTimeout(0) to allow async updates to propagate.');
     setTimeout(() => {
-      console.log('PhasesStepComponent: setTimeout(0) callback executed. Triggering change detection before dialog close.');
       this.cdr.detectChanges();
       this.displayPhaseDialog = false;
-      console.log('PhasesStepComponent: Dialog displayPhaseDialog set to false.');
     }, 0);
   }
 
   cancelPhaseDialog(): void {
-    console.log('PhasesStepComponent: cancelPhaseDialog called.');
     this.displayPhaseDialog = false;
-    console.log('PhasesStepComponent: Cancelled phase dialog. displayPhaseDialog:', this.displayPhaseDialog);
   }
 
   deletePhase(index: number): void {
-    console.log('PhasesStepComponent: deletePhase called for index:', index);
     this.confirmationService.confirm({
       message: 'Êtes-vous sûr de vouloir supprimer cette phase ?',
       header: 'Confirmation de Suppression',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        console.log('PhasesStepComponent: User confirmed deletion. Calling wizardService.removePhase.');
         this.wizardService.removePhase(index);
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Phase supprimée avec succès.' });
-        console.log('PhasesStepComponent: Called wizardService.removePhase for index:', index);
       },
       reject: () => {
         this.messageService.add({ severity: 'info', summary: 'Annulé', detail: 'Suppression de la phase annulée.' });
-        console.log('PhasesStepComponent: Phase deletion cancelled.');
       }
     });
   }

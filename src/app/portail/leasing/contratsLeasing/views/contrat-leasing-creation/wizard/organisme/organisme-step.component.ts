@@ -1,6 +1,6 @@
 // src/app/contrat-leasing-creation/wizard/organisme/organisme-step.component.ts
 
-import { Component, OnInit, OnDestroy, Output, EventEmitter, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, Input, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription, Subject } from 'rxjs';
@@ -49,19 +49,17 @@ export class OrganismeStepComponent implements OnInit, OnDestroy {
     }));
   }
 
-  formGroup!: FormGroup; // Local FormGroup for this step
+  private readonly fb = inject(FormBuilder);
+  private readonly organismeLeasingService = inject(OrganismeLeasingService);
+  private readonly messageService = inject(MessageService);
+  private readonly wizardService = inject(LeasingContractWizardService);
+
+  formGroup!: FormGroup;
 
   organismes: { label: string, value: number }[] = [];
   private subscriptions: Subscription[] = [];
 
   private componentDestroyed$ = new Subject<void>();
-
-  constructor(
-    private fb: FormBuilder,
-    private organismeLeasingService: OrganismeLeasingService,
-    private messageService: MessageService,
-    private wizardService: LeasingContractWizardService
-  ) { }
 
   ngOnInit(): void {
 
@@ -83,10 +81,7 @@ export class OrganismeStepComponent implements OnInit, OnDestroy {
       if (this.organismeLeasingIdControl?.value !== contract.organismeLeasingId) {
         this.formGroup.patchValue({
           organismeLeasingId: contract.organismeLeasingId
-        }, { emitEvent: false }); // Do NOT emit event here to prevent loop
-        console.log('OrganismeStepComponent: Form patched. Valid:', this.formGroup.valid, 'Value:', this.formGroup.value);
-      } else {
-
+        }, { emitEvent: false });
       }
 
       // Force re-evaluation of validity after patching
@@ -104,7 +99,6 @@ export class OrganismeStepComponent implements OnInit, OnDestroy {
       this.wizardService.updateContract({
         organismeLeasingId: value.organismeLeasingId
       });
-      console.log('OrganismeStepComponent: Form value changed, updated service with ID:', value.organismeLeasingId);
     });
     this.subscriptions.push(valueChangeSub);
 
@@ -113,7 +107,6 @@ export class OrganismeStepComponent implements OnInit, OnDestroy {
       distinctUntilChanged() // Only emit if status actually changes (e.g., from INVALID to VALID)
     ).subscribe(status => {
       this.stepValid.emit(status === 'VALID');
-      console.log('OrganismeStepComponent: Form status changed to:', status, 'Overall form valid:', this.formGroup.valid);
     });
     this.subscriptions.push(statusChangeSub);
 
@@ -144,15 +137,11 @@ export class OrganismeStepComponent implements OnInit, OnDestroy {
             this.formGroup.patchValue({
               organismeLeasingId: currentContract.organismeLeasingId
             }, { emitEvent: false });
-            // NEW: Force re-evaluation of validity here too after patching if options just loaded
             this.formGroup.updateValueAndValidity();
-          } else {
-
           }
         },
-        error: (error) => {
-          console.error('Error loading organisme leasing options:', error);
-        }
+        error: () => {}
+
       });
   }
 

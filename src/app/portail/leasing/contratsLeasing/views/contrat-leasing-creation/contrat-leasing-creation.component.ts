@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { MenuItem, Message, MessageService, ConfirmationService } from 'primeng/api';
 import { Router, ActivatedRoute, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { Subscription, filter, Observable, BehaviorSubject, combineLatest } from 'rxjs';
@@ -51,17 +51,23 @@ interface WizardStepComponent {
 })
 export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
 
+  private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly wizardService = inject(LeasingContractWizardService);
+
   items: MenuItem[] = [];
   activeIndex: number = 0;
-  currentStepValid: boolean = false; // Local validity of the current child component's form
-  isCurrentStepGloballyValid: boolean = false; // Combines local validity and global errors for the current step
+  currentStepValid: boolean = false;
+  isCurrentStepGloballyValid: boolean = false;
 
   private currentActiveChildComponent: WizardStepComponent | null = null;
 
   private _globalMessages = new BehaviorSubject<Message[]>([]);
   globalMessages$: Observable<Message[]> = this._globalMessages.asObservable();
 
-  private allGlobalErrors: string[] = []; // Raw global errors from the service (for overall contract validity)
+  private allGlobalErrors: string[] = [];
 
   private routerSubscription!: Subscription;
   private currentStepValiditySubscription!: Subscription | null;
@@ -77,21 +83,14 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
     'recap': RecapStepComponent
   };
 
-  constructor(
-    private router: Router,
-    private activatedRoute: ActivatedRoute,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private wizardService: LeasingContractWizardService
-  ) {
+  ngOnInit(): void {
+    this.initSteps();
+    this.subscribeToRouterEvents();
+
     // Subscribe to global validation errors from the service
-    // This subscription keeps `this.allGlobalErrors` up-to-date with ALL global errors.
     this.globalErrorsSubscription = this.wizardService.globalValidationErrors$.pipe(
       map(errors => {
-        // Store the raw errors directly for `isSubmitEnabled` check
-        this.allGlobalErrors = errors; // <--- IMPORTANT: Update this here
-
-        // Format for p-messages display
+        this.allGlobalErrors = errors;
         return errors.map(errorDetail => ({
           severity: 'error',
           summary: 'Erreur de Validation Globale',
@@ -100,14 +99,8 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
       })
     ).subscribe(messages => {
       this._globalMessages.next(messages);
-      this.distributeGlobalErrorsToActiveChild(); // Distribute to the currently active child if needed
-      // `updateCombinedValidity()` is now mostly handled by the `combineLatest` in `onActivate`
+      this.distributeGlobalErrorsToActiveChild();
     });
-  }
-
-  ngOnInit(): void {
-    this.initSteps();
-    this.subscribeToRouterEvents();
   }
 
   ngOnDestroy(): void {
@@ -148,7 +141,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
         if (index !== -1) {
           Promise.resolve().then(() => {
             this.activeIndex = index;
-            console.log(`ContratLeasingCreationComponent: Active index updated to ${this.activeIndex} based on router event (deferred).`);
           });
         }
       }
@@ -185,7 +177,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
     );
 
     if (!pathFromComponent) {
-      console.warn('ContratLeasingCreationComponent: Activated component type not found in map:', componentRef.constructor.name);
       this.currentActiveChildComponent = null;
       this.currentStepValid = false;
       this.isCurrentStepGloballyValid = false;
@@ -196,7 +187,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
       const newActiveIndex = this.items.findIndex(item => item.routerLink === pathFromComponent);
       if (newActiveIndex !== -1 && newActiveIndex !== this.activeIndex) {
         this.activeIndex = newActiveIndex;
-        console.log(`ContratLeasingCreationComponent: Active index updated to ${this.activeIndex} based on activated component (deferred).`);
       }
     });
 
@@ -206,8 +196,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
       startWith(false)
     ).subscribe((isValid: boolean) => {
       this.currentStepValid = isValid;
-      console.log(`ContratLeasingCreationComponent: currentStepValid updated to ${isValid} for ${componentRef.constructor.name}`);
-      // The combineLatest below will handle isCurrentStepGloballyValid
     });
 
     // Combine local step validity with global errors for the current step
@@ -220,10 +208,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
       const errorsForCurrentStep = globalErrors.filter(msg => msg.startsWith(`${currentStepRouterLink}:`));
       this.isCurrentStepGloballyValid = localValid && errorsForCurrentStep.length === 0;
 
-      // Note: `this.allGlobalErrors` is already updated by the `globalErrorsSubscription`
-      // so no need to explicitly update it here.
-
-      console.log(`ContratLeasingCreationComponent: isCurrentStepGloballyValid updated to ${this.isCurrentStepGloballyValid} (Local: ${localValid}, Global Errors for step: ${errorsForCurrentStep.length})`);
     });
 
     this.distributeGlobalErrorsToActiveChild();
@@ -288,7 +272,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
 
 
   submitContract(): void {
-    console.log('ContratLeasingCreationComponent: submitContract');
     this.confirmationService.confirm({
       message: 'Êtes-vous sûr de vouloir soumettre ce contrat de leasing ?',
       header: 'Confirmation de Soumission',
@@ -301,8 +284,8 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
             this.wizardService.resetContract(); // Clear wizard state
             this.router.navigate(['portail/leasing/contratsLeasing']);
           },
-          error: (error) => {
-            console.error('Submission error:', error);
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la soumission du contrat.' });
           }
         });
       },

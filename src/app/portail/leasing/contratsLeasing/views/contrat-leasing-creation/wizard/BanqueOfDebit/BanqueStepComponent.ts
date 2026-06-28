@@ -1,6 +1,6 @@
 // src/app/contrat-leasing-creation/wizard/BanqueOfDebit/BanqueStepComponent.ts
 
-import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription, Subject } from 'rxjs';
@@ -47,6 +47,11 @@ export class BanqueStepComponent implements OnInit, OnDestroy {
     }));
   }
 
+  private readonly fb = inject(FormBuilder);
+  private readonly banqueService = inject(BanqueService);
+  private readonly messageService = inject(MessageService);
+  private readonly wizardService = inject(LeasingContractWizardService);
+
   formGroup!: FormGroup;
 
   banques: { label: string, value: number }[] = [];
@@ -54,22 +59,11 @@ export class BanqueStepComponent implements OnInit, OnDestroy {
 
   private componentDestroyed$ = new Subject<void>();
 
-  constructor(
-    private fb: FormBuilder,
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private wizardService: LeasingContractWizardService
-  ) { }
-
   ngOnInit(): void {
-    console.log('BanqueStepComponent ngOnInit called');
-
     // 1. Initialize local FormGroup with validators
     this.formGroup = this.fb.group({
       banqueDePrelevementId: [null, Validators.required]
     });
-
-    console.log('BanqueStepComponent: Form initialized. Valid:', this.formGroup.valid, 'Value:', this.formGroup.value);
 
     // 2. Load dropdown options
     this.loadBanqueOptions();
@@ -81,19 +75,14 @@ export class BanqueStepComponent implements OnInit, OnDestroy {
       distinctUntilChanged((prev, curr) => prev.banqueDePrelevementId === curr.banqueDePrelevementId),
       takeUntil(this.componentDestroyed$) // Ensure subscription is cleaned up
     ).subscribe(contract => {
-      console.log('BanqueStepComponent: Received contract update from service:', contract.banqueDePrelevementId);
-
       // Only patch if the value from the service is different from the current form value
       if (this.banqueDePrelevementIdControl?.value !== contract.banqueDePrelevementId) {
         this.formGroup.patchValue({
           banqueDePrelevementId: contract.banqueDePrelevementId
-        }, { emitEvent: false }); // Do NOT emit event here to prevent loop
-        console.log('BanqueStepComponent: Form patched. Valid:', this.formGroup.valid, 'Value:', this.formGroup.value);
-      } else {
-        console.log('BanqueStepComponent: Service update received, but form value already matches. No patch needed.');
+        }, { emitEvent: false });
       }
 
-      // NEW: Force re-evaluation of validity after patching
+      // Force re-evaluation of validity after patching
       this.formGroup.updateValueAndValidity();
     });
     this.subscriptions.push(contractSub);
@@ -108,7 +97,6 @@ export class BanqueStepComponent implements OnInit, OnDestroy {
       this.wizardService.updateContract({
         banqueDePrelevementId: value.banqueDePrelevementId
       });
-      console.log('BanqueStepComponent: Form value changed, updated service with ID:', value.banqueDePrelevementId);
     });
     this.subscriptions.push(valueChangeSub);
 
@@ -118,7 +106,6 @@ export class BanqueStepComponent implements OnInit, OnDestroy {
       // takeUntil(this.componentDestroyed$) // Already there in the original code. Good.
     ).subscribe(status => {
       this.stepValid.emit(status === 'VALID');
-      console.log('BanqueStepComponent: Form status changed to:', status, 'Overall form valid:', this.formGroup.valid);
     });
     this.subscriptions.push(statusChangeSub);
 
@@ -130,7 +117,6 @@ export class BanqueStepComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.componentDestroyed$.next();
     this.componentDestroyed$.complete();
-    console.log('BanqueStepComponent ngOnDestroy called');
   }
 
   loadBanqueOptions(): void {
@@ -138,10 +124,9 @@ export class BanqueStepComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: PageResponse<BanqueResponse>) => {
           this.banques = response.content.map(bank => ({
-            label: bank.nom, // Assuming 'nom' is the bank name field
+            label: bank.nom,
             value: bank.id!
           }));
-          console.log('BanqueStepComponent: Banque options loaded:', this.banques);
 
           // IMPORTANT: After options are loaded, re-patch the form in case the contract
           // was loaded from the service *before* options were available (race condition).
@@ -151,30 +136,22 @@ export class BanqueStepComponent implements OnInit, OnDestroy {
             this.formGroup.patchValue({
               banqueDePrelevementId: currentContract.banqueDePrelevementId
             }, { emitEvent: false });
-            // NEW: Force re-evaluation of validity here too after patching if options just loaded
             this.formGroup.updateValueAndValidity();
-            console.log('BanqueStepComponent: Re-patched form after options loaded with ID:', currentContract.banqueDePrelevementId, 'Valid:', this.formGroup.valid);
-          } else {
-            console.log('BanqueStepComponent: Banque options loaded, but form value already matches service. No re-patch needed.');
           }
         },
-        error: (error) => {
-          console.error('Error loading bank options:', error);
-        }
+        error: () => {}
+
       });
   }
 
   // Public method for parent to call to mark form as touched
   markFormAsTouched(): void {
     this.formGroup.markAllAsTouched();
-    this.formGroup.updateValueAndValidity(); // Ensure validation state is updated
-    console.log('BanqueStepComponent: markFormAsTouched called. Form Valid:', this.formGroup.valid);
+    this.formGroup.updateValueAndValidity();
   }
 
-  // Public method for parent to call to set global validation messages
   setGlobalValidationMessages(messages: string[]): void {
     this.globalValidationMessages = messages;
-    console.log('BanqueStepComponent: setGlobalValidationMessages called with:', messages);
   }
 
   get banqueDePrelevementIdControl(): FormControl | null {

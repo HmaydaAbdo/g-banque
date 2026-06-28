@@ -207,15 +207,17 @@
               pTooltip="Modifier"
               (onClick)="editContrat(contrat.id)">
             </p-button>
-            <p-button
-              icon="pi pi-trash"
-              severity="danger"
-              [outlined]="true"
-              size="small"
-              [rounded]="true"
-              pTooltip="Supprimer"
-              (onClick)="confirmDeleteContrat(contrat)">
-            </p-button>
+            @if (isSystemAdmin()) {
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+                [rounded]="true"
+                pTooltip="Supprimer"
+                (onClick)="confirmDeleteContrat(contrat)">
+              </p-button>
+            }
           </td>
         </tr>
       </ng-template>

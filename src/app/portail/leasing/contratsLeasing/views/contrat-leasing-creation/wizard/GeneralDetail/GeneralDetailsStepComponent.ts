@@ -1,6 +1,6 @@
 // src/app/contrat-leasing-creation/wizard/GeneralDetail/GeneralDetailsStepComponent.ts
 
-import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription, Subject } from 'rxjs';
@@ -43,14 +43,12 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
     }));
   }
 
+  private readonly fb = inject(FormBuilder);
+  private readonly wizardService = inject(LeasingContractWizardService);
+
   formGroup!: FormGroup;
   private subscriptions: Subscription[] = [];
   private componentDestroyed$ = new Subject<void>();
-
-  constructor(
-    private fb: FormBuilder,
-    private wizardService: LeasingContractWizardService
-  ) { }
 
   ngOnInit(): void {
 
@@ -86,7 +84,6 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
       }),
       takeUntil(this.componentDestroyed$)
     ).subscribe(contract => {
-      console.log('GeneralDetailsStepComponent: Received contract update from service:', contract);
       const currentFormValue = this.formGroup.getRawValue(); // Use getRawValue to include disabled controls
       const patchObject: {
         numeroContrat?: string | null,
@@ -127,9 +124,7 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
       if (Object.keys(patchObject).length > 0) {
         // Use { emitEvent: false } to prevent this patch from triggering valueChanges subscription below
         this.formGroup.patchValue(patchObject, { emitEvent: false });
-        console.log('GeneralDetailsStepComponent: Form patched from service. Valid:', this.formGroup.valid, 'Value:', this.formGroup.value);
       } else {
-        console.log('GeneralDetailsStepComponent: Service update received, but form values already match. No patch needed.');
       }
       // ALWAYS recalculate on service update to ensure consistency
       this.calculateValeurResiduelle();
@@ -177,7 +172,6 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
       }),
       takeUntil(this.componentDestroyed$)
     ).subscribe(value => {
-      console.log('GeneralDetailsStepComponent: Form value changed locally (debounced):', value);
 
       // Safely convert form values to Decimal before updating service
       const montantAchatTTCForService = value.montantAchatTTC
@@ -212,7 +206,6 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.componentDestroyed$.next();
     this.componentDestroyed$.complete();
-    console.log('GeneralDetailsStepComponent ngOnDestroy called');
   }
 
   //  calculate valeurResiduelle
@@ -263,6 +256,5 @@ export class GeneralDetailsStepComponent implements OnInit, OnDestroy {
   markFormAsTouched(): void {
     this.formGroup.markAllAsTouched();
     this.stepValid.emit(this.formGroup.valid); // Re-emit validity after marking touched
-    console.log('GeneralDetailsStepComponent: markFormAsTouched called. Form valid:', this.formGroup.valid);
   }
 }

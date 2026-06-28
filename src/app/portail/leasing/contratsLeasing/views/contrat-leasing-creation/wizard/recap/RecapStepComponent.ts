@@ -1,6 +1,6 @@
 // src/app/portail/leasing/contratsLeasing/views/contrat-leasing-creation/wizard/recap/RecapStepComponent.ts
 
-import { Component, OnInit, OnDestroy, Output, EventEmitter, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, ChangeDetectionStrategy, Input, inject } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { Subscription, forkJoin, of, Subject, combineLatest } from 'rxjs';
 import { switchMap, map, catchError, takeUntil, distinctUntilChanged } from 'rxjs/operators';
@@ -62,17 +62,14 @@ export class RecapStepComponent implements OnInit, OnDestroy {
 
   public TypeContratLeasing = TypeContratLeasing;
 
-  constructor(
-    private wizardService: LeasingContractWizardService,
-    private banqueService: BanqueService,
-    private organismeLeasingService: OrganismeLeasingService,
-    private decimalPipe: DecimalPipe,
-    private datePipe: DatePipe,
-    private messageService: MessageService
-  ) { }
+  private readonly wizardService = inject(LeasingContractWizardService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly organismeLeasingService = inject(OrganismeLeasingService);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly datePipe = inject(DatePipe);
+  private readonly messageService = inject(MessageService);
 
   ngOnInit(): void {
-    console.log('RecapStepComponent ngOnInit called');
 
     this.stepValid.emit(true);
 
@@ -93,8 +90,7 @@ export class RecapStepComponent implements OnInit, OnDestroy {
 
         return !contractChanged && !errorsChanged && !expectedTotalChanged;
       }),
-      switchMap(([contract, errors, expectedTotalAmountFromService]) => { // NEW: Destructure expectedTotalAmount
-        console.log('RecapStepComponent: Received new contract, errors, or expected total from service.', { contract, errors, expectedTotalAmountFromService });
+      switchMap(([contract, errors, expectedTotalAmountFromService]) => {
 
         this.formattedGlobalMessages = errors.map((errorDetail: string) => ({
           severity: 'error',
@@ -122,18 +118,12 @@ export class RecapStepComponent implements OnInit, OnDestroy {
 
         const bankName$ = bankId ? this.banqueService.getBanqueById(bankId).pipe(
           map(bank => bank.nom),
-          catchError(err => {
-            console.error(`Error fetching bank name for ID ${bankId}:`, err);
-            return of('Nom de banque indisponible');
-          })
+          catchError(() => of('Nom de banque indisponible'))
         ) : of(undefined);
 
         const organismeName$ = organismeId ? this.organismeLeasingService.getOrganismeLeasingById(organismeId).pipe(
           map(organisme => organisme.nom),
-          catchError(err => {
-            console.error(`Error fetching organisme name for ID ${organismeId}:`, err);
-            return of('Nom d\'organisme indisponible');
-          })
+          catchError(() => of('Nom d\'organisme indisponible'))
         ) : of(undefined);
 
         return forkJoin([bankName$, organismeName$]).pipe(
@@ -143,29 +133,20 @@ export class RecapStepComponent implements OnInit, OnDestroy {
               nomBanqueDePrelevement: nomBanque,
               nomOrganismeLeasing: nomOrganisme,
               totalMensualitesCalculated: totalMensualitesCalculated,
-              expectedTotalAmountService: expectedTotalAmountFromService, // Use the value from the service
+              expectedTotalAmountService: expectedTotalAmountFromService,
               dateDebut: contract.dateDebut
             };
-            console.log('RecapStepComponent: Final recap data prepared:', recapData);
             return recapData;
           })
         );
       }),
-      catchError(err => {
-        console.error('RecapStepComponent: Error in combined data stream processing:', err);
-        return of(null);
-      })
+      catchError(() => of(null))
     );
 
     this.subscriptions.push(
-      combinedData$.subscribe(
-        (data) => {
-          this.contractData = data;
-        },
-        (error) => {
-          console.error('RecapStepComponent: Error subscribing to combinedData$:', error);
-        }
-      )
+      combinedData$.subscribe((data) => {
+        this.contractData = data;
+      })
     );
   }
 
@@ -173,7 +154,6 @@ export class RecapStepComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.componentDestroyed$.next();
     this.componentDestroyed$.complete();
-    console.log('RecapStepComponent ngOnDestroy called');
   }
 
   getContractTypeDisplayName(type: TypeContratLeasing | null | undefined): string {

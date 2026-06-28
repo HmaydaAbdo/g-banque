@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OrganismeLeasingService } from '../../services/organisme-leasing.service';
 import { OrganismeLeasingResponse } from '../../dtos/OrganismeLeasingResponse';
@@ -6,7 +6,6 @@ import { OrganismeLeasingSearch } from '../../dtos/OrganismeLeasingSearch';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-// Removed: DialogService, DynamicDialogRef
 import { ConfirmationService, MessageService, ConfirmEventType } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -17,7 +16,8 @@ import { PageResponse } from "../../../../global/types/PageResponse";
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { RippleModule } from "primeng/ripple";
 import { TooltipModule } from "primeng/tooltip";
-import { Router } from '@angular/router'; // Import Router
+import { Router } from '@angular/router';
+import { AuthService } from '../../../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-organisme-leasing-list',
@@ -39,13 +39,19 @@ import { Router } from '@angular/router'; // Import Router
   styleUrls: ['./organisme-leasing-list.component.scss'],
   providers: [
     MessageService,
-    // Removed: DialogService,
     ConfirmationService
   ]
 })
 export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
 
   @ViewChild('dt') dt: Table | undefined;
+
+  private readonly organismeLeasingService = inject(OrganismeLeasingService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   organismeLeasings: OrganismeLeasingResponse[] = [];
   totalRecords: number = 0;
@@ -58,14 +64,6 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
 
   private subscriptions: Subscription = new Subscription();
-
-  constructor(
-    private organismeLeasingService: OrganismeLeasingService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder,
-    private router: Router // Inject Router
-  ) { }
 
   ngOnInit(): void {
     this.initSearchForm();
@@ -123,9 +121,6 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
         next: (pageResponse: PageResponse<OrganismeLeasingResponse>) => {
           this.organismeLeasings = pageResponse.content;
           this.totalRecords = pageResponse.page.totalElements;
-        },
-        error: (err: Error) => {
-          this.handleServiceError(err);
         }
       })
     );
@@ -146,12 +141,10 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Changed to navigate to the new form page
   openNewOrganismeLeasingPage(): void {
     this.router.navigate(['/portail/leasing/organismesLeasing/new']);
   }
 
-  // Changed to navigate to the edit form page with ID
   editOrganismeLeasing(organisme: OrganismeLeasingResponse): void {
     this.router.navigate(['/portail/leasing/organismesLeasing/edit', organisme.id]);
   }
@@ -183,9 +176,6 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Organisme de leasing supprimé avec succès.' });
           this.refreshList();
-        },
-        error: (err: Error) => {
-          this.handleServiceError(err);
         }
       })
     );
@@ -205,8 +195,8 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
     }
   }
 
-  private handleServiceError(err: Error): void {
-    console.error('Frontend caught service error:', err);
+  isSystemAdmin(): boolean {
+    return this.authService.isSystemAdmin();
   }
 
   ngOnDestroy(): void {

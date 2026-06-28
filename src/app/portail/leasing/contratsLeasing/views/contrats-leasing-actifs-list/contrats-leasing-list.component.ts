@@ -34,6 +34,7 @@ import { BreadcrumbModule } from "primeng/breadcrumb";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { InputNumberModule } from "primeng/inputnumber";
 import { parseLocalDate } from '../../../../global/types/date.utils';
+import {AuthService} from "../../../../../auth/services/auth.service";
 
 @Component({
   selector: 'app-contrat-leasing-list',
@@ -72,6 +73,7 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly fb = inject(FormBuilder);
   private readonly wizardService = inject(LeasingContractWizardService);
+  private readonly authService = inject(AuthService);
 
   contrats: ContratLeasingResponseDTO[] = [];
   totalRecords: number = 0;
@@ -360,6 +362,10 @@ export class ContratLeasingListComponent implements OnInit, OnDestroy {
   private formatCurrency(amount: number | any): string {
     const numAmount = typeof amount === 'number' ? amount : Number(amount);
     return `${numAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`;
+  }
+
+  isSystemAdmin(): boolean {
+    return this.authService.isSystemAdmin();
   }
 
   refreshCurrentContratInList(): void {

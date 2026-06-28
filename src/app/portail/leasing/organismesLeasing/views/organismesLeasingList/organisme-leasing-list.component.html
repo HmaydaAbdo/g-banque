@@ -65,8 +65,10 @@
         <td class="flex flex-row  gap-2">
           <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-success p-mr-2"
                   (click)="editOrganismeLeasing(organisme)" pTooltip="Modifier" tooltipPosition="top"></button>
-          <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
-                  (click)="confirmDeleteOrganismeLeasing(organisme.id, organisme.nom)" pTooltip="Supprimer" tooltipPosition="top"></button>
+          @if (isSystemAdmin()) {
+            <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
+                    (click)="confirmDeleteOrganismeLeasing(organisme.id, organisme.nom)" pTooltip="Supprimer" tooltipPosition="top"></button>
+          }
         </td>
       </tr>
     </ng-template>

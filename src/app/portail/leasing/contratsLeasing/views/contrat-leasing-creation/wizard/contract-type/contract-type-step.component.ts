@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subscription, Subject } from 'rxjs';
@@ -41,26 +41,19 @@ export class ContractTypeStepComponent implements OnInit, OnDestroy {
     }));
   }
 
+  private readonly fb = inject(FormBuilder);
+  private readonly wizardService = inject(LeasingContractWizardService);
+
   formGroup!: FormGroup;
   contractTypes: { label: string, value: TypeContratLeasing }[] = [];
   private subscriptions: Subscription[] = [];
   public TypeContratLeasing = TypeContratLeasing;
   private componentDestroyed$ = new Subject<void>();
 
-
-  constructor(
-    private fb: FormBuilder,
-    private wizardService: LeasingContractWizardService
-  ) { }
-
   ngOnInit(): void {
-    console.log('ContractTypeStepComponent ngOnInit called');
-
     this.formGroup = this.fb.group({
       typeContrat: [null, Validators.required]
     });
-
-    console.log('ContractTypeStepComponent: Form initialized. Valid:', this.formGroup.valid, 'Value:', this.formGroup.value);
 
     this.initContractTypes();
 
@@ -71,7 +64,6 @@ export class ContractTypeStepComponent implements OnInit, OnDestroy {
       }),
       takeUntil(this.componentDestroyed$)
     ).subscribe(contract => {
-      console.log('ContractTypeStepComponent: Received contract update from service:', contract);
 
 
       const currentFormValue = this.formGroup.value;
@@ -83,9 +75,6 @@ export class ContractTypeStepComponent implements OnInit, OnDestroy {
 
       if (Object.keys(patchObject).length > 0) {
         this.formGroup.patchValue(patchObject, { emitEvent: false });
-        console.log('ContractTypeStepComponent: Form patched from service. Valid:', this.formGroup.valid, 'Value:', this.formGroup.value);
-      } else {
-        console.log('ContractTypeStepComponent: Service update received, but form values already match. No patch needed.');
       }
 
 
@@ -101,10 +90,6 @@ export class ContractTypeStepComponent implements OnInit, OnDestroy {
       }),
       takeUntil(this.componentDestroyed$)
     ).subscribe(value => {
-      console.log('ContractTypeStepComponent: Form value changed locally:', value);
-
-
-
       this.wizardService.updateContract({
         typeContrat: value.typeContrat
       });
@@ -128,7 +113,6 @@ export class ContractTypeStepComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     this.componentDestroyed$.next();
     this.componentDestroyed$.complete();
-    console.log('ContractTypeStepComponent ngOnDestroy called');
   }
 
   initContractTypes(): void {

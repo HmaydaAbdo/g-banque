@@ -17,7 +17,7 @@ import { BreadcrumbModule } from "primeng/breadcrumb";
 import { Button } from "primeng/button";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
 import { ContratLeasingDetailsComponent } from "../contrat-leasing-details/contrat-leasing-details.component";
-import { DatePipe, DecimalPipe, NgClass, NgIf } from "@angular/common";
+import { DatePipe, DecimalPipe, NgClass } from "@angular/common";
 import { DialogModule } from "primeng/dialog";
 import { DropdownModule } from "primeng/dropdown";
 import { InputTextModule } from "primeng/inputtext";
@@ -40,7 +40,6 @@ import { parseLocalDate } from '../../../../global/types/date.utils';
     DialogModule,
     DropdownModule,
     InputTextModule,
-    NgIf,
     PrimeTemplate,
     ReactiveFormsModule,
     RouterLinkActive,
