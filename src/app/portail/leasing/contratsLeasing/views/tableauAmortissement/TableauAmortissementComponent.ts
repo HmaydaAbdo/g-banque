@@ -25,15 +25,18 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 
 import { TableauAmortissement } from '../../dtos/table-amortissement';
 import { EcheanceLeasingResponse } from '../../dtos/EcheanceLeasingResponse';
+import { EcheanceLeasingUpdateRequest } from '../../dtos/EcheanceLeasingUpdateRequest';
 import { StatutEcheanceLeasing } from '../../dtos/StatutEcheanceLeasing';
 import { EcheanceLeasingService } from '../../services/EcheanceLeasingService';
 import { EcheanceLeasingSearchDTO } from '../../dtos/echeance-leasing-search';
 import { AuthService } from '../../../../../auth/services/auth.service';
+import { CalendarModule } from 'primeng/calendar';
 
 
 @Component({
   selector: 'app-tableau-amortissement',
   templateUrl: './tableau-amortissement.component.html',
+  styleUrls: ['./tableau-amortissement.component.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -53,7 +56,8 @@ import { AuthService } from '../../../../../auth/services/auth.service';
     FormsModule,
     DialogModule,
     InputTextareaModule,
-    BreadcrumbModule
+    BreadcrumbModule,
+    CalendarModule
   ],
   providers: [MessageService]
 })
@@ -74,6 +78,10 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
   searchForm!: FormGroup;
   statutLeasingOptions = Object.values(StatutEcheanceLeasing).map(status => ({ label: status, value: status }));
+
+  showEditDialog = false;
+  editingEcheanceId: number | null = null;
+  editForm!: FormGroup;
 
   private subscriptions: Subscription[] = [];
 
@@ -115,6 +123,15 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       month: [null],
       year: [null],
       statutPaiement: [null]
+    });
+
+    this.editForm = this.fb.group({
+      dateEcheance: [null],
+      montantTTC: [null],
+      dateOperation: [null],
+      dateValeur: [null],
+      observation: [null],
+      libelle: [null]
     });
 
     const searchSub = this.searchForm.valueChanges.pipe(
@@ -219,5 +236,56 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
 
   isAdmin(): boolean {
     return this.authService.isSystemAdmin();
+  }
+
+  openEditDialog(echeance: EcheanceLeasingResponse): void {
+    this.editingEcheanceId = echeance.id;
+    this.editForm.reset({
+      dateEcheance: echeance.dateEcheance ? new Date(echeance.dateEcheance) : null,
+      montantTTC: echeance.montantTTC,
+      dateOperation: echeance.dateOperation ? new Date(echeance.dateOperation) : null,
+      dateValeur: echeance.dateValeur ? new Date(echeance.dateValeur) : null,
+      observation: echeance.observation ?? null,
+      libelle: echeance.libelle ?? null
+    });
+    this.showEditDialog = true;
+  }
+
+  closeEditDialog(): void {
+    this.showEditDialog = false;
+    this.editingEcheanceId = null;
+    this.editForm.reset();
+  }
+
+  saveEdit(): void {
+    if (!this.editingEcheanceId || this.editForm.invalid) return;
+
+    const toIso = (d: Date | null | undefined): string | null =>
+      d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : null;
+
+    const raw = this.editForm.value;
+    const dto: EcheanceLeasingUpdateRequest = {
+      dateEcheance: toIso(raw.dateEcheance)!,
+      montantTTC: raw.montantTTC,
+      dateOperation: toIso(raw.dateOperation),
+      dateValeur: toIso(raw.dateValeur),
+      observation: raw.observation ?? null,
+      libelle: raw.libelle ?? null
+    };
+
+    this.loading = true;
+    this.echeanceLeasingService.updateEcheance(this.editingEcheanceId, dto).pipe(
+      finalize(() => { this.loading = false; })
+    ).subscribe({
+      next: () => {
+        this.closeEditDialog();
+        this.loadTableauAmortissement(this.lastLazyLoadEvent);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: 'Échéance mise à jour avec succès.'
+        });
+      }
+    });
   }
 }

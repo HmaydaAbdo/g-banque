@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from "../../../../../environments/environment";
 import { EcheanceLeasingResponse } from "../dtos/EcheanceLeasingResponse";
+import { EcheanceLeasingUpdateRequest } from "../dtos/EcheanceLeasingUpdateRequest";
 import { TableauAmortissement } from "../dtos/table-amortissement";
 import { EcheanceLeasingSearchDTO } from "../dtos/echeance-leasing-search";
 import { EncoursLeasingRequestDTO } from "../dtos/encours-leasing-request.dto";
@@ -64,6 +65,14 @@ export class EcheanceLeasingService {
   toggleStatus(id: number): Observable<EcheanceLeasingResponse> {
     const url = `${this.apiUrl}/${id}/toggle-status`;
     return this.http.put<EcheanceLeasingResponse>(url, {});
+  }
+
+  /**
+   * Met à jour une échéance au statut PREVU (admin uniquement).
+   * Bloqué côté backend si le statut est PAYE.
+   */
+  updateEcheance(id: number, dto: EcheanceLeasingUpdateRequest): Observable<EcheanceLeasingResponse> {
+    return this.http.put<EcheanceLeasingResponse>(`${this.apiUrl}/${id}`, dto);
   }
 
   /**

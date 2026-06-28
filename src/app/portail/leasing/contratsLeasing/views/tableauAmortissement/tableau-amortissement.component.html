@@ -21,12 +21,12 @@
   @if (tableauAmortissement) {
     <div class="flex flex-column  px-2 gap-2">
       <div class="flex justify-content-between align-items-center">
-        <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
+        <p-breadcrumb [model]="items" styleClass="breadcrumb-transparent">
           <ng-template pTemplate="item" let-item>
             @if (item.route) {
               <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
                 <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-                <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+                <span class="pg-text-primary p-2 font-bold">{{ item.label }}</span>
               </a>
             } @else {
               <a [href]="item.url">
@@ -79,7 +79,7 @@
               <th pSortableColumn="montantTTC">Montant TTC <p-sortIcon field="montantTTC"></p-sortIcon></th>
               <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
               @if (isAdmin()) {
-                <th style="width: 8rem;">Action</th>
+                <th class="col-action">Action</th>
               }
             </tr>
           </ng-template>
@@ -91,14 +91,29 @@
               <td><span class="num">{{ echeance.montantTVA | number:'1.2-2' }}</span></td>
               <td><span class="num">{{ echeance.montantTTC | number:'1.2-2' }}</span></td>
               <td><p-tag [value]="echeance.statutPaiement" [severity]="getStatutSeverity(echeance.statutPaiement)"></p-tag></td>
-              <td class="text-center">
-                <p-inputSwitch
-                  [ngModel]="echeance.statutPaiement === 'PAYE'"
-                  (onChange)="onStatutChange(echeance)"
-                  pTooltip="changer le status de l'échéance"
-                  tooltipPosition="top"
-                ></p-inputSwitch>
-              </td>
+              @if (isAdmin()) {
+                <td class="col-action">
+                  <div class="cell-actions">
+                    <p-inputSwitch
+                      [ngModel]="echeance.statutPaiement === 'PAYE'"
+                      (onChange)="onStatutChange(echeance)"
+                      pTooltip="Changer le statut de l'échéance"
+                      tooltipPosition="top"
+                    ></p-inputSwitch>
+                    @if (echeance.statutPaiement === 'PREVU') {
+                      <p-button
+                        icon="pi pi-pencil"
+                        [text]="true"
+                        severity="secondary"
+                        size="small"
+                        (onClick)="openEditDialog(echeance)"
+                        pTooltip="Modifier l'échéance"
+                        tooltipPosition="top"
+                      ></p-button>
+                    }
+                  </div>
+                </td>
+              }
             </tr>
           </ng-template>
           <ng-template pTemplate="emptyMessage">
@@ -116,3 +131,53 @@
     </div>
   }
 </div>
+
+<!-- Dialog édition échéance PREVU (admin uniquement) -->
+<p-dialog
+  header="Modifier l'échéance"
+  [(visible)]="showEditDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '32rem' }"
+  (onHide)="closeEditDialog()">
+
+  <form [formGroup]="editForm" class="flex flex-column gap-3 pt-2">
+
+    <div class="flex flex-column gap-1">
+      <label class="font-semibold text-sm">Date échéance <span class="text-danger">*</span></label>
+      <p-calendar formControlName="dateEcheance" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full"></p-calendar>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="font-semibold text-sm">Montant TTC <span class="text-danger">*</span></label>
+      <p-inputNumber formControlName="montantTTC" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [min]="0.01" styleClass="w-full"></p-inputNumber>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="font-semibold text-sm">Date opération</label>
+      <p-calendar formControlName="dateOperation" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full"></p-calendar>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="font-semibold text-sm">Date valeur</label>
+      <p-calendar formControlName="dateValeur" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" styleClass="w-full"></p-calendar>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="font-semibold text-sm">Observation</label>
+      <textarea pInputTextarea formControlName="observation" rows="2" class="w-full"></textarea>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="font-semibold text-sm">Libellé</label>
+      <input pInputText formControlName="libelle" class="w-full" />
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Annuler" icon="pi pi-times" [text]="true" severity="secondary" (onClick)="closeEditDialog()"></p-button>
+    <p-button label="Enregistrer" icon="pi pi-check" (onClick)="saveEdit()" [disabled]="editForm.invalid || loading"></p-button>
+  </ng-template>
+</p-dialog>
