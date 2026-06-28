@@ -101,6 +101,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Les Contrats en attente de main levées', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/en-attente-de-ML', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
         { label: 'Les Contrats archivés', icon: 'pi pi-list', routerLink: '/portail/leasing/contratsLeasing/archives', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
         { label: 'Les organismes leasing', icon: 'pi pi-list', routerLink: '/portail/leasing/organismesLeasing', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Les Contrats cadres',    icon: 'pi pi-file-edit', routerLink: '/portail/leasing/contratsCadres', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
       ]
     },
     {
@@ -184,8 +185,9 @@ export class SidebarComponent implements OnInit {
       icon: 'pi pi-shield',
       requiredAuthority: 'SYSTEM_ADMIN',
       items: [
-        { label: 'Départements', icon: 'pi pi-sitemap', routerLink: '/portail/admin/departements' },
-        { label: 'Utilisateurs', icon: 'pi pi-users', routerLink: '/portail/admin/utilisateurs' },
+        { label: 'Départements',        icon: 'pi pi-sitemap',    routerLink: '/portail/admin/departements'      },
+        { label: 'Utilisateurs',         icon: 'pi pi-users',      routerLink: '/portail/admin/utilisateurs'      },
+        { label: 'Règles de commission', icon: 'pi pi-sliders-h',  routerLink: '/portail/admin/commission-config' },
       ]
     },
     {

@@ -21,5 +21,10 @@ export const ADMIN_ROUTES: Routes = [
     path: 'utilisateurs/:id',
     loadComponent: () => import('./utilisateurs/views/utilisateur-detail/utilisateur-detail.component')
       .then(m => m.UtilisateurDetailComponent)
+  },
+  {
+    path: 'commission-config',
+    loadComponent: () => import('./commission-config/views/commission-config-list/commission-config-list.component')
+      .then(m => m.CommissionConfigListComponent)
   }
 ];

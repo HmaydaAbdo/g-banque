@@ -79,13 +79,6 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
         })
     );
 
-    this.loadOrganismeLeasings({
-      first: this.first,
-      rows: this.rows,
-      sortField: this.sortField,
-      sortOrder: this.sortOrder,
-      filters: {}
-    });
   }
 
   initSearchForm(): void {
@@ -147,6 +140,10 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
 
   editOrganismeLeasing(organisme: OrganismeLeasingResponse): void {
     this.router.navigate(['/portail/leasing/organismesLeasing/edit', organisme.id]);
+  }
+
+  viewContratsCadres(_organismeId: number): void {
+    this.router.navigate(['/portail/leasing/contratsCadres']);
   }
 
   confirmDeleteOrganismeLeasing(id: number, nom: string): void {

@@ -27,6 +27,13 @@ export const LEASING_FEATURE_ROUTES: Routes = [
     ]
   },
   {
+    path: 'contratsCadres',
+    canActivate: [departmentGuard('Finance')],
+    loadComponent: () =>
+      import('../contratCadre/views/contrat-cadre-list/contrat-cadre-list.component')
+        .then(m => m.ContratCadreListComponent)
+  },
+  {
     path: 'contratsLeasing',
     canActivate: [departmentGuard('Finance')],
     children: [

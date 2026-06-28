@@ -1,0 +1,156 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="pg-wrap">
+
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="pg-header">
+    <div class="pg-header__left">
+      <h2 class="pg-header__title">Règles de commission</h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
+      </p-breadcrumb>
+    </div>
+    <div class="pg-header__actions">
+      <button pButton pRipple
+              label="Nouvelle règle"
+              icon="pi pi-plus"
+              size="small"
+              (click)="openCreate()">
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->
+  <div class="pg-table">
+    <p-table [value]="configs" [loading]="loading" dataKey="id"
+             styleClass="p-datatable-sm" rowHover>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Banque</th>
+          <th>Organisme</th>
+          <th>Type transaction</th>
+          <th>Condition</th>
+          <th class="text-right">Montant (MAD)</th>
+          <th class="text-center" style="width:8rem">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-cfg>
+        <tr>
+          <td class="font-semibold">{{ cfg.banqueNom }}</td>
+          <td class="text-600 text-sm">{{ cfg.organismeNom || '—' }}</td>
+          <td class="text-sm">{{ typeLabel(cfg.type) }}</td>
+          <td>
+            <p-tag [value]="conditionLabel(cfg.condition)"
+                   [severity]="conditionSeverity(cfg.condition)">
+            </p-tag>
+          </td>
+          <td class="text-right font-semibold">{{ cfg.montant | number:'1.2-4' }}</td>
+          <td>
+            <div class="flex align-items-center justify-content-center gap-1">
+              <button pButton pRipple icon="pi pi-pencil"
+                      class="p-button-rounded p-button-text p-button-secondary p-button-sm"
+                      pTooltip="Modifier" tooltipPosition="top"
+                      (click)="openEdit(cfg)">
+              </button>
+              <button pButton pRipple icon="pi pi-trash"
+                      class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                      pTooltip="Supprimer" tooltipPosition="top"
+                      (click)="confirmDelete(cfg, $event)">
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="6">
+            <div class="flex flex-column align-items-center gap-2 py-5">
+              <i class="pi pi-sliders-h text-300" style="font-size:var(--text-icon)"></i>
+              <div class="text-600 font-medium">Aucune règle configurée</div>
+              <div class="text-400 text-sm">Ajoutez des règles pour activer la génération automatique de commissions.</div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td [attr.colspan]="6" class="text-center p-4 text-500 text-sm">
+            <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>
+
+<!-- ═══ DIALOG CRÉATION / MODIFICATION ═══════════════════════════════════ -->
+<p-dialog [(visible)]="dialogVisible"
+          [header]="editingId ? 'Modifier une règle' : 'Nouvelle règle'"
+          [modal]="true" [draggable]="false"
+          styleClass="pg-dialog"
+          [style]="{ width: '480px' }">
+
+  <form [formGroup]="form" class="flex flex-column gap-3 pt-2">
+
+    <div class="flex flex-column gap-1">
+      <label class="text-sm font-medium">Banque <span class="text-red-500">*</span></label>
+      <p-dropdown formControlName="banqueId" [options]="banqueOptions"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Sélectionner une banque…" [filter]="true"
+                  appendTo="body" styleClass="w-full">
+      </p-dropdown>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="text-sm font-medium">Organisme <span class="text-400 text-xs">(uniquement pour SI_MATCH)</span></label>
+      <p-dropdown formControlName="organismeNom" [options]="organismeOptions"
+                  optionLabel="label" optionValue="value"
+                  placeholder="— Aucun —" [filter]="true"
+                  appendTo="body" styleClass="w-full">
+      </p-dropdown>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="text-sm font-medium">Type de transaction <span class="text-red-500">*</span></label>
+      <p-dropdown formControlName="type" [options]="typeOptions"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Sélectionner…" [filter]="true" styleClass="w-full">
+      </p-dropdown>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="text-sm font-medium">Condition <span class="text-red-500">*</span></label>
+      <p-dropdown formControlName="condition" [options]="conditionOptions"
+                  optionLabel="label" optionValue="value" appendTo="body"
+                  placeholder="Sélectionner…" styleClass="w-full">
+      </p-dropdown>
+    </div>
+
+    <div class="flex flex-column gap-1">
+      <label class="text-sm font-medium">Montant (MAD) <span class="text-red-500">*</span></label>
+      <p-inputNumber formControlName="montant" [minFractionDigits]="2" [maxFractionDigits]="4"
+                     mode="decimal" locale="fr-FR" styleClass="w-full">
+      </p-inputNumber>
+    </div>
+
+  </form>
+
+  <ng-template pTemplate="footer">
+    <button pButton pRipple label="Annuler" icon="pi pi-times"
+            class="p-button-text p-button-secondary"
+            (click)="dialogVisible = false">
+    </button>
+    <button pButton pRipple [label]="editingId ? 'Enregistrer' : 'Créer'"
+            icon="pi pi-check"
+            [disabled]="form.invalid"
+            (click)="save()">
+    </button>
+  </ng-template>
+
+</p-dialog>

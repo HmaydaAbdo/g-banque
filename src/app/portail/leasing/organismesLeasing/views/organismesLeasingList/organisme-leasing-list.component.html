@@ -49,21 +49,17 @@
       <tr>
         <th pSortableColumn="id" style="width: 5rem;">ID <p-sortIcon field="id"></p-sortIcon></th>
         <th pSortableColumn="nom">Nom <p-sortIcon field="nom"></p-sortIcon></th>
-        <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
-        <th pSortableColumn="dateDebut">Date Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
-        <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
-        <th style="width: 8rem;">Actions</th>
+        <th style="width: 12rem;">Actions</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-organisme>
       <tr>
         <td>{{ organisme.id }}</td>
         <td>{{ organisme.nom }}</td>
-        <td><span class="num">{{ organisme.plafond | number:'1.2-2' }}</span></td>
-        <td>{{ organisme.dateDebut | date:'dd/MM/yyyy' }}</td>
-        <td>{{ organisme.dateFin | date:'dd/MM/yyyy' }}</td>
-        <td class="flex flex-row  gap-2">
-          <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-success p-mr-2"
+        <td class="flex flex-row gap-2">
+          <button pButton pRipple icon="pi pi-file-edit" class="p-button-rounded p-button-outlined p-button-info"
+                  (click)="viewContratsCadres(organisme.id)" pTooltip="Contrats cadres" tooltipPosition="top"></button>
+          <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-success"
                   (click)="editOrganismeLeasing(organisme)" pTooltip="Modifier" tooltipPosition="top"></button>
           @if (isSystemAdmin()) {
             <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
@@ -74,12 +70,12 @@
     </ng-template>
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="6" class="text-center">Aucun organisme de leasing trouvé.</td>
+        <td colspan="3" class="text-center">Aucun organisme de leasing trouvé.</td>
       </tr>
     </ng-template>
     <ng-template pTemplate="loadingbody">
       <tr>
-        <td colspan="6" class="text-center">Chargement des organismes de leasing. Veuillez patienter...</td>
+        <td colspan="3" class="text-center">Chargement des organismes de leasing. Veuillez patienter...</td>
       </tr>
     </ng-template>
   </p-table>
