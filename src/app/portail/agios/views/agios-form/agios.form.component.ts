@@ -1,10 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import {CommonModule, Location} from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, inject, OnInit } from '@angular/core';
+import { Location, NgClass } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
-import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
-import { PageResponse } from '../../../global/types/PageResponse';
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -17,16 +14,20 @@ import { CalendarModule } from 'primeng/calendar';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import { AgiosService } from "../../service/agios.service";
-import { AgiosResponseDto } from "../../dtos/AgiosResponseDto";
-import { AgiosRequestDto } from "../../dtos/AgiosRequestDto";
+
+import { AgiosService } from '../../service/agios.service';
+import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
+import { BanqueResponse } from '../../../comptes-bancaire/dtos/BanqueResponse';
+import { AgiosResponseDto } from '../../dtos/AgiosResponseDto';
+import { AgiosRequestDto } from '../../dtos/AgiosRequestDto';
+import { PageResponse } from '../../../global/types/PageResponse';
 import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 @Component({
   selector: 'app-agios-form',
   standalone: true,
   imports: [
-    CommonModule,
+    NgClass,
     ReactiveFormsModule,
     InputTextModule,
     DropdownModule,
@@ -44,39 +45,40 @@ import { toLocalDateString, parseLocalDate } from '../../../global/types/date.ut
   providers: [MessageService, ConfirmationService],
 })
 export class AgiosFormComponent implements OnInit {
-  agiosForm!: FormGroup;
+
+  private readonly fb                  = inject(FormBuilder);
+  private readonly route               = inject(ActivatedRoute);
+  private readonly location            = inject(Location);
+  private readonly agiosService        = inject(AgiosService);
+  private readonly banqueService       = inject(BanqueService);
+  private readonly messageService      = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+
+  agiosForm = this.fb.group({
+    banqueId:     [null as number | null, Validators.required],
+    montant:      [null as number | null, [Validators.required, Validators.min(0.01)]],
+    dateEmission: [null as Date | null,   Validators.required],
+    observation:  [null as string | null, Validators.required],
+    libelle:      [null as string | null, Validators.required],
+  });
+
   isEditMode = false;
   agiosId: number | null = null;
   loading = false;
 
   banquesOptions: BanqueResponse[] = [];
-
   items: MenuItem[] | undefined;
 
-  selectedBanque?: BanqueResponse;
-
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private location:Location,
-    private agiosService: AgiosService,
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) {}
-
   ngOnInit(): void {
-    this.initForm();
     this.setupBreadcrumbs();
 
     this.route.paramMap.subscribe((params: ParamMap) => {
       const id = params.get('id');
       if (id) {
         this.isEditMode = true;
-        this.agiosId = Number(id);
+        this.agiosId    = Number(id);
         this.loadAgios(this.agiosId);
       } else {
-        // Mode création : pré-sélectionner la banque si banqueId est passé en queryParam
         const banqueIdParam = this.route.snapshot.queryParamMap.get('banqueId');
         if (banqueIdParam) {
           this.banqueService.getBanqueById(+banqueIdParam).subscribe(banque => {
@@ -88,28 +90,16 @@ export class AgiosFormComponent implements OnInit {
     });
   }
 
-  initForm(): void {
-    this.agiosForm = this.fb.group({
-      banqueId: [null, Validators.required],
-      montant: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
-      dateEmission: [null, Validators.required],
-      observation: [null, Validators.required],
-      libelle: [null, Validators.required],
-    });
-  }
-
   loadBanques(event: any): void {
     this.loading = true;
     const page = Math.floor((event.first ?? 0) / (event.rows ?? 10));
     const size = event.rows ?? 10;
-    const sort = 'nom,asc';
-
-    this.banqueService.getAllBanques({}, page, size, sort).subscribe({
+    this.banqueService.getAllBanques({}, page, size, 'nom,asc').subscribe({
       next: (res: PageResponse<BanqueResponse>) => {
         this.banquesOptions = res.content;
         this.loading = false;
       },
-      error: () => (this.loading = false),
+      error: () => { this.loading = false; }
     });
   }
 
@@ -125,27 +115,23 @@ export class AgiosFormComponent implements OnInit {
     this.agiosService.getById(id).subscribe({
       next: (agios: AgiosResponseDto) => {
         this.agiosForm.patchValue({
-          banqueId: agios.banqueId,
-          observation: agios.observation,
-          libelle: agios.libelle,
-          montant: agios.montant,
+          banqueId:     agios.banqueId,
+          observation:  agios.observation,
+          libelle:      agios.libelle,
+          montant:      agios.montant,
           dateEmission: parseLocalDate(agios.dateEmission),
         });
-
-        // Ajout de la banque dans options si manquante
         if (agios.banqueId && !this.banquesOptions.find(b => b.id === agios.banqueId)) {
           this.banqueService.getBanqueById(agios.banqueId).subscribe(banque => {
             this.banquesOptions = [...this.banquesOptions, banque];
           });
         }
-
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Erreur lors du chargement de l\'agios:', err);
+      error: () => {
         this.loading = false;
         this.location.back();
-      },
+      }
     });
   }
 
@@ -180,46 +166,30 @@ export class AgiosFormComponent implements OnInit {
     this.loading = true;
     const formValue = this.agiosForm.value;
     const request: AgiosRequestDto = {
-      banqueId: formValue.banqueId,
-      libelle: formValue.libelle,
-      observation: formValue.observation,
-      montant: formValue.montant,
+      banqueId:     formValue.banqueId!,
+      libelle:      formValue.libelle ?? undefined,
+      observation:  formValue.observation ?? undefined,
+      montant:      formValue.montant!,
       dateEmission: toLocalDateString(formValue.dateEmission)!,
     };
 
     if (this.isEditMode && this.agiosId) {
       this.agiosService.updateAgios(this.agiosId, request).subscribe({
         next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'Agios mis à jour.',
-            life: 3000
-          });
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Agios mis à jour.', life: 3000 });
           this.loading = false;
           this.location.back();
         },
-        error: (error) => {
-          console.error('Erreur lors de la mise à jour de l\'agios:', error);
-          this.loading = false;
-        },
+        error: () => { this.loading = false; }
       });
     } else {
       this.agiosService.createAgios(request).subscribe({
         next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'Agios créé.',
-            life: 3000
-          });
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Agios créé.', life: 3000 });
           this.loading = false;
           this.location.back();
         },
-        error: (error) => {
-          console.error('Erreur lors de la création de l\'agios:', error);
-          this.loading = false;
-        },
+        error: () => { this.loading = false; }
       });
     }
   }

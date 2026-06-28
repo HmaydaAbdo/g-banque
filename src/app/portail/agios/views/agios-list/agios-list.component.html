@@ -7,18 +7,16 @@
     <div class="flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
-            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
-               #rla="routerLinkActive">
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
               <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <a [href]="item.url">
               <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
             </a>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -31,13 +29,12 @@
 
   <p-toolbar styleClass="bg-white">
     <ng-template pTemplate="left">
-      <div class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
+      <form [formGroup]="filterForm" class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <p-dropdown
-            name="banque"
+            formControlName="banque"
             [options]="banques"
-            [(ngModel)]="selectedBanque"
             optionLabel="nom"
             placeholder="Sélectionner une banque"
             [virtualScroll]="true"
@@ -55,9 +52,8 @@
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <p-dropdown
-            name="status"
+            formControlName="status"
             [options]="statusOptions"
-            [(ngModel)]="selectedStatus"
             optionLabel="label"
             optionValue="value"
             placeholder="Tous les statuts"
@@ -70,17 +66,17 @@
 
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
-          <input pInputText type="text" name="libelleFilter" placeholder="Rechercher par libellé"
-                 [(ngModel)]="libelleFilter" (input)="applyFilters()"
+          <input pInputText type="text" formControlName="libelle"
+                 placeholder="Rechercher par libellé"
+                 (input)="applyFilters()"
                  [style]="{'min-width': '200px'}" />
         </div>
-      </div>
+      </form>
     </ng-template>
 
     <ng-template pTemplate="right">
       <button
-        pButton
-        pRipple
+        pButton pRipple
         icon="pi pi-filter-slash"
         class="p-button-outlined p-button-secondary"
         (click)="clearFilters()"
@@ -95,11 +91,11 @@
              [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
              responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadAgios($event)"
              [columns]="[
-               {field: 'libelle', header: 'Libellé', sortable: true},
-               {field: 'banqueNom', header: 'Banque', sortable: true},
-               {field: 'montant', header: 'Montant', sortable: true},
-               {field: 'dateEmission', header: 'Date d\'émission', sortable: true},
-               {field: 'status', header: 'Statut', sortable: true}
+               {field: 'libelle',      header: 'Libellé',          sortable: true},
+               {field: 'banqueNom',    header: 'Banque',            sortable: true},
+               {field: 'montant',      header: 'Montant',           sortable: true},
+               {field: 'dateEmission', header: 'Date d\'émission',  sortable: true},
+               {field: 'status',       header: 'Statut',            sortable: true}
              ]"
              styleClass="p-datatable-gridlines text-xs"
              [showCurrentPageReport]="true"
@@ -107,12 +103,14 @@
 
       <ng-template pTemplate="header" let-columns>
         <tr class="white-space-nowrap">
-          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
-            {{ col.header }}
-            @if (col.sortable) {
-              <p-sortIcon [field]="col.field"></p-sortIcon>
-            }
-          </th>
+          @for (col of columns; track col.field) {
+            <th [pSortableColumn]="col.sortable ? col.field : null">
+              {{ col.header }}
+              @if (col.sortable) {
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+              }
+            </th>
+          }
           <th style="width: 8rem;">Actions</th>
         </tr>
       </ng-template>
@@ -124,22 +122,21 @@
           <td>{{ agios.montant | number:'1.2-2' }} MAD</td>
           <td>{{ agios.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>
-            <p-tag
-              [value]="agios.status"
-              [severity]="getStatusSeverity(agios.status)"
-            ></p-tag>
+            <p-tag [value]="agios.status" [severity]="getStatusSeverity(agios.status)"></p-tag>
           </td>
           <td class="flex flex-row align-items-center gap-2">
             <button pButton pRipple icon="pi pi-pencil"
                     class="p-button-rounded p-button-outlined p-button-secondary mr-2"
                     [routerLink]="['/portail/agios/edit', agios.id]"></button>
 
-            @if (isAdmin()) {
-              <p-inputSwitch
-                [ngModel]="agios.status === Status.PAYE"
+            @if (isSystemAdmin()) {
+              <button pButton pRipple
+                [icon]="agios.status === Status.PAYE ? 'pi pi-toggle-on' : 'pi pi-toggle-off'"
+                [severity]="agios.status === Status.PAYE ? 'success' : 'secondary'"
+                class="p-button-rounded p-button-sm p-button-outlined"
                 (click)="toggleAgiosStatus(agios)"
-                [pTooltip]="agios.status === 'REALISE' ? 'Marquer comme prévu' : 'Marquer comme réalisé'"
-              ></p-inputSwitch>
+                [pTooltip]="agios.status === Status.PAYE ? 'Marquer comme prévu' : 'Marquer comme payé'">
+              </button>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
                       (click)="deleteAgios(agios)"></button>
@@ -150,13 +147,13 @@
 
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td [attr.colspan]="8">Aucun agios trouvé.</td>
+          <td [attr.colspan]="6">Aucun agios trouvé.</td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="8">Chargement en cours...</td>
+          <td [attr.colspan]="6">Chargement en cours...</td>
         </tr>
       </ng-template>
     </p-table>

@@ -3,18 +3,14 @@
 
 <div class="w-screen h-screen overflow-y-scroll p-2">
   <div class="portail-section flex justify-content-center align-items-center">
-    <div class="flex justify-content-center w-full">
-      <p-breadcrumb [model]="items">
-        <ng-template pTemplate="item" let-item>
-          <ng-container>
-            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-              <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
-              <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
-            </a>
-          </ng-container>
-        </ng-template>
-      </p-breadcrumb>
-    </div>
+    <p-breadcrumb [model]="items">
+      <ng-template pTemplate="item" let-item>
+        <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+          <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+          <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
+        </a>
+      </ng-template>
+    </p-breadcrumb>
   </div>
 
   <div class="card p-4 shadow-sm w-full lg:w-9 md:w-10 mx-auto">
@@ -24,6 +20,7 @@
 
     <form [formGroup]="agiosForm" (ngSubmit)="onSubmit()">
       <div class="p-fluid grid formgrid">
+
         <div class="field col-12 md:col-4">
           <label>Banque</label>
           <p-dropdown
@@ -87,14 +84,14 @@
         </div>
 
         <div class="col-12 mt-4 flex flex-row gap-2">
-          <button pButton pRipple label="Annuler" icon="pi pi-times" type="button" class="p-button-secondary" (click)="onCancel()"></button>
-          <button
-            pButton pRipple
-            [label]="isEditMode ? 'Modifier' : 'Créer'"
-            [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
-            type="submit"
-            class="p-button-success"
-            [disabled]="agiosForm.invalid || loading">
+          <button pButton pRipple label="Annuler" icon="pi pi-times" type="button"
+                  class="p-button-secondary" (click)="onCancel()"></button>
+          <button pButton pRipple
+                  [label]="isEditMode ? 'Modifier' : 'Créer'"
+                  [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+                  type="submit"
+                  class="p-button-success"
+                  [disabled]="agiosForm.invalid || loading">
           </button>
         </div>
       </div>
