@@ -50,6 +50,18 @@ public class EcheanceLeasingController {
         return ResponseEntity.ok(echeanceLeasingService.toggleStatus(id));
     }
 
+    @Operation(summary = "Modifier une échéance au statut PREVU",
+            description = "Permet à l'administrateur de modifier les champs d'une échéance non encore validée (statut PREVU). Bloqué si l'échéance est PAYE.")
+    @ApiResponse(responseCode = "404", description = "Échéance introuvable")
+    @ApiResponse(responseCode = "400", description = "Échéance déjà payée ou données invalides")
+    @PreAuthorize(ADMIN_ONLY)
+    @PutMapping("/{id}")
+    public ResponseEntity<EcheanceLeasingResponseDTO> updateEcheance(
+            @PathVariable Long id,
+            @Valid @RequestBody EcheanceLeasingUpdateRequestDTO dto) {
+        return ResponseEntity.ok(echeanceLeasingService.updateEcheance(id, dto));
+    }
+
     @Operation(summary = "Encours de leasing pour une banque",
             description = "Filtrable par période et organisme de leasing")
     @ApiResponse(responseCode = "400", description = "Paramètres invalides")

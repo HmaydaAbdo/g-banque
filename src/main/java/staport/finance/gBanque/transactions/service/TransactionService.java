@@ -11,11 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
+import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
 import staport.finance.gBanque.transactions.dtos.TransactionUpdateRequestDto;
 import staport.finance.gBanque.transactions.entities.Transaction;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
 
@@ -32,9 +34,12 @@ public class TransactionService implements ITransactionService{
 
     private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
     private final TransactionRepository transactionRepository;
+    private final ILeasingValidationService leasingValidationService;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    public TransactionService(TransactionRepository transactionRepository,
+                              ILeasingValidationService leasingValidationService) {
         this.transactionRepository = transactionRepository;
+        this.leasingValidationService = leasingValidationService;
     }
 
     @Transactional(readOnly = true)
@@ -203,7 +208,20 @@ public class TransactionService implements ITransactionService{
         transaction.setTvaCollectee(updateRequestDto.tvaCollecte());
         transaction.setTvaDeductible(updateRequestDto.tvaDeductible());
 
-        return TransactionMapper.toDto(transactionRepository.save(transaction));
+        Transaction saved = transactionRepository.save(transaction);
+
+        // Synchronisation échéance leasing : si la transaction provient d'une échéance leasing,
+        // on propage dateValeur et dateOperation vers l'échéance source (referent = echeanceId).
+        if (TransactionSource.LEASING == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction LEASING ID: {} mise à jour — synchronisation de l'échéance ID: {}",
+                    saved.getId(), saved.getReferent());
+            leasingValidationService.syncEcheanceFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        return TransactionMapper.toDto(saved);
     }
 
 

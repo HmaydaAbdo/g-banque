@@ -29,8 +29,9 @@ import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
-import staport.finance.gBanque.validation.dtos.leasing.LeasingTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.leasing.LeasingTransactionResponseDto;
+import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionRequestDTO;
+import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionResponseDTO;
+import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
 import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.prelevements.PrelevementTransactionResponse;
@@ -52,24 +53,25 @@ public class ValidationController {
 
     private final ValidationService validationService;
     private final ReverseTransactionService reverseTransactionService;
+    private final ILeasingValidationService leasingValidationService;
 
-    public ValidationController(ValidationService validationService, ReverseTransactionService reverseTransactionService) {
+    public ValidationController(ValidationService validationService,
+                                ReverseTransactionService reverseTransactionService,
+                                ILeasingValidationService leasingValidationService) {
         this.validationService = validationService;
         this.reverseTransactionService = reverseTransactionService;
+        this.leasingValidationService = leasingValidationService;
     }
 
 
     /**
-     * Endpoint pour traiter une transaction de rapprochement de leasing.
-     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
-     *
-     * @param requestDto Le DTO de la requête de transaction de leasing.
-     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     * Valide une échéance de leasing : crée la transaction bancaire et marque l'échéance PAYE.
+     * Délègue au {@code LeasingValidationService} du module leasing.
      */
     @PostMapping("/process/echeance-leasing")
-    public ResponseEntity<LeasingTransactionResponseDto> processLeasingTransaction(@Valid @RequestBody LeasingTransactionRequestDto requestDto) throws Exception {
-        LeasingTransactionResponseDto responseDto = validationService.processLeasingTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    public ResponseEntity<LeasingTransactionResponseDTO> processLeasingTransaction(
+            @Valid @RequestBody LeasingTransactionRequestDTO requestDto) {
+        return new ResponseEntity<>(leasingValidationService.processLeasingTransaction(requestDto), HttpStatus.CREATED);
     }
 
 

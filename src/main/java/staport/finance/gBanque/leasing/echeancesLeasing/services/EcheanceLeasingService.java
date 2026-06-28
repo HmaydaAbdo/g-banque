@@ -390,6 +390,40 @@ import java.math.BigDecimal;
             return echeanceLeasingMapper.toDto(echeance);
         }
 
+        /**
+         * Met à jour les champs d'une échéance dont le statut est {@code PREVU}.
+         * Toute tentative de modification d'une échéance {@code PAYE} lève une {@link ValidationException}.
+         *
+         * @param id  L'identifiant de l'échéance à modifier
+         * @param dto Les nouvelles valeurs des champs
+         * @return Le DTO de l'échéance mise à jour
+         */
+        @AuditableAction(operation = AuditOperation.UPDATE, entity = EcheanceLeasing.class)
+        @Transactional
+        public EcheanceLeasingResponseDTO updateEcheance(Long id, EcheanceLeasingUpdateRequestDTO dto) {
+            EcheanceLeasing echeance = echeanceLeasingRepository.findById(id)
+                    .orElseThrow(() -> {
+                        log.warn("EcheanceLeasing non trouvée — ID : {}", id);
+                        return new ResourceNotFoundException("EcheanceLeasing with ID " + id + " not found.");
+                    });
+
+            if (echeance.getStatutPaiement() == StatutEcheanceLeasing.PAYE) {
+                log.warn("Tentative de modification d'une échéance déjà payée — ID : {}", id);
+                throw new ValidationException("Impossible de modifier une échéance dont le statut est PAYE.");
+            }
+
+            echeance.setDateEcheance(dto.dateEcheance());
+            echeance.setMontantTTC(dto.montantTTC());
+            echeance.setDateOperation(dto.dateOperation());
+            echeance.setDateValeur(dto.dateValeur());
+            if (dto.observation() != null) echeance.setObservation(dto.observation());
+            if (dto.libelle() != null) echeance.setLibelle(dto.libelle());
+
+            EcheanceLeasing saved = echeanceLeasingRepository.save(echeance);
+            log.info("Échéance ID : {} mise à jour avec succès", id);
+            return echeanceLeasingMapper.toDto(saved);
+        }
+
         @Transactional(readOnly = true)
         public EncoursLeasingResponseDTO getEncoursLeasingForBanque(EncoursLeasingRequestDTO requestDTO, Pageable pageable) {
             LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());

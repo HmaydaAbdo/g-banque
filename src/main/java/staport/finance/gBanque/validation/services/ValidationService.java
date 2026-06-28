@@ -56,11 +56,6 @@ import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
-import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
-import staport.finance.gBanque.leasing.contratLeasing.repositories.ContratLeasingRepository;
-import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
-import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
-import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionRequest;
@@ -82,8 +77,6 @@ import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
-import staport.finance.gBanque.validation.dtos.leasing.LeasingTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.leasing.LeasingTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.prelevements.PrelevementTransactionResponse;
@@ -108,10 +101,6 @@ public class ValidationService {
 
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
-
-    private final LeasingTransactionMapper leasingTransactionMapper;
-    private final ContratLeasingRepository contratLeasingRepository;
-    private final EcheanceLeasingRepository echeanceLeasingRepository;
 
     private final CreditMoyenTermeRepository creditMoyenTermeRepository;
     private final EcheanceCMTRepository echeanceCMTRepository;
@@ -175,12 +164,9 @@ public class ValidationService {
     private final SoldeCascadeService soldeCascadeService;
 
 
-    public ValidationService(LeasingTransactionMapper mapper, CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, EcheanceLeasingRepository echeanceLeasingRepository, ContratLeasingRepository contratLeasingRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
-        this.leasingTransactionMapper = mapper;
+    public ValidationService(CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, AgiosTransactionMapper agiosTransactionMapper, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
         this.cmtTransactionMapper = cmtMapper;
         this.transactionRepository = transactionRepository;
-        this.echeanceLeasingRepository = echeanceLeasingRepository;
-        this.contratLeasingRepository = contratLeasingRepository;
         this.banqueRepository = banqueRepository;
         this.creditMoyenTermeRepository = creditMoyenTermeRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
@@ -221,40 +207,6 @@ public class ValidationService {
         this.rapprochementRepository = rapprochementRepository;
         this.soldeCascadeService = soldeCascadeService;
     }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public LeasingTransactionResponseDto processLeasingTransaction(LeasingTransactionRequestDto requestDto)   {
-
-        // Étape 1: Récupérer les entités liées avant le mappage
-        ContratLeasing contratLeasing = contratLeasingRepository.findById(requestDto.getContratLeasingId())
-                .orElseThrow(() -> new ResourceNotFoundException("Contrat de leasing introuvable avec l'ID: " + requestDto.getContratLeasingId()));
-
-        EcheanceLeasing echeanceLeasing = echeanceLeasingRepository.findByIdAndContratLeasingId(requestDto.getEcheanceId(), requestDto.getContratLeasingId())
-                .orElseThrow(() -> new ResourceNotFoundException("Echeance de leasing introuvable avec l'ID: " + requestDto.getEcheanceId() + " et contrat id " + requestDto.getContratLeasingId()));
-
-        if( echeanceLeasing.getStatutPaiement() == StatutEcheanceLeasing.PAYE){
-            throw new RuntimeException("l echéance est deja payee");
-        }
-        // Étape 2: Utiliser le mapper pour convertir le DTO et les entités en une nouvelle entité Transaction.
-        Transaction transactionEntity = leasingTransactionMapper.toEntity(requestDto, contratLeasing, echeanceLeasing);
-
-        // Étape 3: Attacher au rapprochement  puis sauvegarder.
-        Banque banque = contratLeasing.getBanqueDePrelevement();
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Étape 5: Marquer l'échéance comme payée.
-        echeanceLeasing.setStatutPaiement(StatutEcheanceLeasing.PAYE);
-        echeanceLeasing.setDateValeur(savedTransaction.getDateValeur());
-        echeanceLeasing.setDateOperation(savedTransaction.getDateOperations());
-        echeanceLeasing.setLibelle(savedTransaction.getLibelle());
-        echeanceLeasing.setObservation(savedTransaction.getObservation());
-        echeanceLeasingRepository.save(echeanceLeasing);
-
-        // Étape 6: Utiliser le mapper pour convertir l'entité sauvegardée en DTO de réponse.
-        return leasingTransactionMapper.toResponseDto(savedTransaction);
-    }
-
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public CmtTransactionResponseDto processCmtTransaction(CmtTransactionRequestDto requestDto)   {
