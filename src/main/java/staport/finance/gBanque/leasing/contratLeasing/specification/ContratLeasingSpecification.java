@@ -27,7 +27,9 @@ public class ContratLeasingSpecification {
                 predicates.add(criteriaBuilder.equal(root.get("banqueDePrelevement").get("id"), searchDTO.banqueDePrelevementId()));
             }
             if (searchDTO.organismeLeasingId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("organismeLeasing").get("id"), searchDTO.organismeLeasingId()));
+                predicates.add(criteriaBuilder.equal(
+                        root.get("contratCadre").get("organisme").get("id"),
+                        searchDTO.organismeLeasingId()));
             }
             if (searchDTO.immobilisation() != null && !searchDTO.immobilisation().isEmpty()) {
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("immobilisation")), "%" + searchDTO.immobilisation().toLowerCase() + "%"));

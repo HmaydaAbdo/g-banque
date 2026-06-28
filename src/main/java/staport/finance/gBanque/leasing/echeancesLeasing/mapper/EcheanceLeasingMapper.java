@@ -51,10 +51,10 @@ public abstract class EcheanceLeasingMapper {
     protected String computeLibelle(EcheanceLeasing entity) {
         ContratLeasing contrat = entity.getContratLeasing();
         if (entity.getNumeroEcheance().equals(contrat.getPeriodeEnMois() + 1)) {
-            return contrat.getOrganismeLeasing().getNom()
+            return contrat.getContratCadre().getOrganisme().getNom()
                     + ", V.R. pour le contrat N° " + contrat.getNumeroContrat();
         }
-        return contrat.getOrganismeLeasing().getNom()
+        return contrat.getContratCadre().getOrganisme().getNom()
                 + ", contrat N° " + contrat.getNumeroContrat();
     }
 }

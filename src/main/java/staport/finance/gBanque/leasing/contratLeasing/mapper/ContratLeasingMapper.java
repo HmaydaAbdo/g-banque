@@ -11,7 +11,6 @@ import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingRequestD
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponseDTO;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasingPhase;
-import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLeasing;
 
 import java.util.ArrayList;
 
@@ -29,24 +28,24 @@ public abstract class ContratLeasingMapper {
     // ── toEntity ─────────────────────────────────────────────────────────────
 
     @Mapping(target = "banqueDePrelevement", source = "banque")
-    @Mapping(target = "organismeLeasing",    source = "organismeLeasing")
     @Mapping(target = "dateDebut",           source = "requestDTO.dateDebut")
     @Mapping(target = "id",                  ignore = true)
     @Mapping(target = "completed",           ignore = true)
     @Mapping(target = "echeances",           ignore = true)
     @Mapping(target = "phases",              ignore = true)
+    @Mapping(target = "contratCadre",        ignore = true)
     @Mapping(target = "dateCreation",        ignore = true)
     @Mapping(target = "dateModification",    ignore = true)
-    public abstract ContratLeasing toEntity(ContratLeasingRequestDTO requestDTO,
-                                            Banque banque,
-                                            OrganismeLeasing organismeLeasing);
+    public abstract ContratLeasing toEntity(ContratLeasingRequestDTO requestDTO, Banque banque);
 
     // ── toDto ─────────────────────────────────────────────────────────────────
 
     @Mapping(target = "banqueDePrelevementId",  source = "banqueDePrelevement.id")
     @Mapping(target = "nomBanqueDePrelevement", source = "banqueDePrelevement.nom")
-    @Mapping(target = "organismeLeasingId",     source = "organismeLeasing.id")
-    @Mapping(target = "nomOrganismeLeasing",    source = "organismeLeasing.nom")
+    @Mapping(target = "organismeLeasingId",     source = "contratCadre.organisme.id")
+    @Mapping(target = "nomOrganismeLeasing",    source = "contratCadre.organisme.nom")
+    @Mapping(target = "contratCadreId",         source = "contratCadre.id")
+    @Mapping(target = "plafond",                source = "contratCadre.plafond")
     @Mapping(target = "dateFin",
              expression = "java(entity.getDateDebut().plusMonths(entity.getPeriodeEnMois()))")
     public abstract ContratLeasingResponseDTO toDto(ContratLeasing entity);
@@ -54,18 +53,17 @@ public abstract class ContratLeasingMapper {
     // ── updateEntityFromDto ────────────────────────────────────────────────────
 
     @Mapping(target = "banqueDePrelevement", source = "banque")
-    @Mapping(target = "organismeLeasing",    source = "organismeLeasing")
     @Mapping(target = "dateDebut",           source = "requestDTO.dateDebut")
     @Mapping(target = "id",                  ignore = true)
     @Mapping(target = "completed",           ignore = true)
     @Mapping(target = "echeances",           ignore = true)
     @Mapping(target = "phases",              ignore = true)
+    @Mapping(target = "contratCadre",        ignore = true)
     @Mapping(target = "dateCreation",        ignore = true)
     @Mapping(target = "dateModification",    ignore = true)
     public abstract void updateEntityFromDto(ContratLeasingRequestDTO requestDTO,
                                              @MappingTarget ContratLeasing existingEntity,
-                                             Banque banque,
-                                             OrganismeLeasing organismeLeasing);
+                                             Banque banque);
 
     // ── @AfterMapping — synchronisation des phases ────────────────────────────
 

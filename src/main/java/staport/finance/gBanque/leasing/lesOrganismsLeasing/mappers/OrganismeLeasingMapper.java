@@ -10,15 +10,17 @@ import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLea
 @Mapper(componentModel = "spring")
 public interface OrganismeLeasingMapper {
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "dateCreation", ignore = true)
+    @Mapping(target = "id",               ignore = true)
+    @Mapping(target = "contratsCadres",   ignore = true)
+    @Mapping(target = "dateCreation",     ignore = true)
     @Mapping(target = "dateModification", ignore = true)
     OrganismeLeasing toEntity(OrganismeLeasingRequestDTO dto);
 
     OrganismeLeasingResponseDTO toDto(OrganismeLeasing entity);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "dateCreation", ignore = true)
+    @Mapping(target = "id",               ignore = true)
+    @Mapping(target = "contratsCadres",   ignore = true)
+    @Mapping(target = "dateCreation",     ignore = true)
     @Mapping(target = "dateModification", ignore = true)
     void updateOrganismeLeasingFromDto(OrganismeLeasingRequestDTO dto, @MappingTarget OrganismeLeasing entity);
 }

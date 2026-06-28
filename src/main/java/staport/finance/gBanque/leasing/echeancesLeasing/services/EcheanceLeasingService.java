@@ -14,8 +14,8 @@
     import staport.finance.gBanque.audit.AuditOperation;
     import staport.finance.gBanque.audit.AuditableAction;
     import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
+    import staport.finance.gBanque.commision.service.ICommissionConfigService;
     import staport.finance.gBanque.commision.service.ICommissionService;
-    import staport.finance.gBanque.leasing.config.CommissionLeasingConfig;
     import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
     import staport.finance.gBanque.exception.customExceptions.ValidationException;
     import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
@@ -49,7 +49,7 @@ import java.math.BigDecimal;
         private static final Logger log = LoggerFactory.getLogger(EcheanceLeasingService.class);
 
         private final ICommissionService commissionService;
-        private final CommissionLeasingConfig commissionConfig;
+        private final ICommissionConfigService commissionConfigService;
         private final EcheanceLeasingRepository echeanceLeasingRepository;
         private final ContratLeasingRepository contratLeasingRepository;
         private final EcheanceLeasingMapper echeanceLeasingMapper;
@@ -57,17 +57,17 @@ import java.math.BigDecimal;
         private static final int SCALE = 2;
 
         public EcheanceLeasingService(ICommissionService commissionService,
-                                      CommissionLeasingConfig commissionConfig,
+                                      ICommissionConfigService commissionConfigService,
                                       EcheanceLeasingRepository echeanceLeasingRepository,
                                       ContratLeasingRepository contratLeasingRepository,
                                       EcheanceLeasingMapper echeanceLeasingMapper,
                                       IBanqueService banqueService) {
-            this.commissionService = commissionService;
-            this.commissionConfig = commissionConfig;
+            this.commissionService       = commissionService;
+            this.commissionConfigService = commissionConfigService;
             this.echeanceLeasingRepository = echeanceLeasingRepository;
-            this.contratLeasingRepository = contratLeasingRepository;
-            this.echeanceLeasingMapper = echeanceLeasingMapper;
-            this.banqueService = banqueService;
+            this.contratLeasingRepository  = contratLeasingRepository;
+            this.echeanceLeasingMapper     = echeanceLeasingMapper;
+            this.banqueService             = banqueService;
         }
 
         /**
@@ -237,19 +237,21 @@ import java.math.BigDecimal;
          */
         private void generateCommissionsForEcheances(ContratLeasing contrat, List<EcheanceLeasing> echeances) {
             String nomBanque = contrat.getBanqueDePrelevement().getNom();
-            String nomOrganisme = contrat.getOrganismeLeasing().getNom();
+            String nomOrganisme = contrat.getContratCadre().getOrganisme().getNom();
 
             log.debug("Vérification de l'éligibilité pour la génération de commissions");
             log.debug("  → Banque : {}, Organisme : {}", nomBanque, nomOrganisme);
 
             // Vérifier si la banque a une commission configurée
-            if (!commissionConfig.hasCommission(nomBanque)) {
-                log.debug("Aucune commission configurée pour la banque '{}'. Génération de commissions ignorée.", nomBanque);
+            if (!commissionConfigService.hasCommission(nomBanque, TransactionSource.LEASING)) {
+                log.debug("Aucune commission configurée pour la banque '{}'. Génération ignorée.", nomBanque);
                 return;
             }
 
-            //  Récupérer la commission en tenant compte de l'organisme
-            BigDecimal montantCommission = commissionConfig.getCommission(nomBanque, nomOrganisme);
+            // Récupérer le montant en tenant compte de l'organisme
+            BigDecimal montantCommission = commissionConfigService
+                    .resolveCommission(nomBanque, nomOrganisme, TransactionSource.LEASING)
+                    .orElse(null);
 
             if (montantCommission == null) {
                 log.warn("Impossible de déterminer le montant de commission pour {} / {}", nomBanque, nomOrganisme);

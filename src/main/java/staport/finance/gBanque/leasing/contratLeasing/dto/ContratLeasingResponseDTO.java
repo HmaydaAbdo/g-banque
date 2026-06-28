@@ -14,6 +14,10 @@ public record ContratLeasingResponseDTO(
         String nomBanqueDePrelevement,
         Long organismeLeasingId,
         String nomOrganismeLeasing,
+        /** ID du contrat cadre actif au moment de la signature. */
+        Long contratCadreId,
+        /** Plafond du contrat cadre au moment de la signature. */
+        BigDecimal plafond,
         String immobilisation,
         BigDecimal montantAchatTTC,
         LocalDate dateDebut,

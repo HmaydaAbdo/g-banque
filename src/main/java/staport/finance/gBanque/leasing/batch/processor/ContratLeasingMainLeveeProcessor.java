@@ -74,8 +74,8 @@ public class ContratLeasingMainLeveeProcessor implements ItemProcessor<ContratLe
     }
 
     private String getOrganismeName(ContratLeasing contrat) {
-        return contrat.getOrganismeLeasing() != null
-                ? contrat.getOrganismeLeasing().getNom()
+        return contrat.getContratCadre() != null
+                ? contrat.getContratCadre().getOrganisme().getNom()
                 : "N/A";
     }
 }

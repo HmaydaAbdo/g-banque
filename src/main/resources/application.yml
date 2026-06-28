@@ -136,20 +136,6 @@ cmt:
       enabled: true
       cron: "0 30 14 ? * SUN"
 
-commission:
-  virement:
-    bmci:
-      montant-fixe: 33
-  leasing:
-    default-commissions:
-      CIH: 11
-      "[SAHAM BANK]": 11
-    organisme-rules:
-      BMCI:
-        organisme-name: "BMCI LEASING"
-        commission-if-match: 16.5
-        commission-if-not-match: 55
-
 logging:
   pattern:
     console: "%d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"

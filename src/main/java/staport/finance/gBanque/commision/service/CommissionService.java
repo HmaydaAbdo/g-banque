@@ -7,7 +7,6 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import org.springframework.beans.factory.annotation.Value;
 import staport.finance.gBanque.commision.dtos.CommissionFusionRequest;
 import staport.finance.gBanque.commision.dtos.CommissionFusionResponse;
 import org.apache.logging.log4j.LogManager;
@@ -47,28 +46,27 @@ public class CommissionService implements ICommissionService {
     /** Taux TVA légal applicable aux commissions sur cautions bancaires (10%). */
     private static final BigDecimal TAUX_TVA_COMMISSION_CAUTION = new BigDecimal("0.10");
 
-    @Value("${commission.virement.bmci.montant-fixe}")
-    private BigDecimal montantCommissionBmci;
-
     @PersistenceContext
     private EntityManager entityManager;
 
-
-    private final CommisionRepository    commissionRepository;
-    private final BanqueRepository       banqueRepository;
-    private final CommissionMapper       commissionMapper;
-    private final ImpotEtTaxeRepository  impotEtTaxeRepository;
+    private final CommisionRepository       commissionRepository;
+    private final BanqueRepository          banqueRepository;
+    private final CommissionMapper          commissionMapper;
+    private final ImpotEtTaxeRepository     impotEtTaxeRepository;
+    private final ICommissionConfigService  commissionConfigService;
 
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public CommissionService(CommisionRepository commissionRepository,
                              BanqueRepository banqueRepository,
                              CommissionMapper commissionMapper,
-                             ImpotEtTaxeRepository impotEtTaxeRepository) {
-        this.commissionRepository  = commissionRepository;
-        this.banqueRepository      = banqueRepository;
-        this.commissionMapper      = commissionMapper;
-        this.impotEtTaxeRepository = impotEtTaxeRepository;
+                             ImpotEtTaxeRepository impotEtTaxeRepository,
+                             ICommissionConfigService commissionConfigService) {
+        this.commissionRepository   = commissionRepository;
+        this.banqueRepository       = banqueRepository;
+        this.commissionMapper       = commissionMapper;
+        this.impotEtTaxeRepository  = impotEtTaxeRepository;
+        this.commissionConfigService = commissionConfigService;
     }
 
     // --- Create ---
@@ -412,19 +410,25 @@ public class CommissionService implements ICommissionService {
             return;
         }
 
+        String nomBanque = virement.getBanqueEmettrice().getNom();
+        BigDecimal montant = commissionConfigService
+                .resolveCommission(nomBanque, null, TransactionSource.Virement)
+                .orElse(null);
+
+        if (montant == null) {
+            log.warn("Aucune règle de commission configurée pour banque='{}' type=Virement — commission non générée", nomBanque);
+            return;
+        }
+
         String libelle = buildLibelle(virement);
 
-        if (commissionRepository.existsByOperationAndLibelle(
-                TransactionSource.Virement,
-                libelle)) {
-
+        if (commissionRepository.existsByOperationAndLibelle(TransactionSource.Virement, libelle)) {
             log.debug("Commission already exists for virement {}", virement.getNumero());
             return;
         }
 
         Commission commission = new Commission();
-
-        commission.setMontant(montantCommissionBmci);
+        commission.setMontant(montant);
         commission.setBanque(virement.getBanqueEmettrice());
         commission.setOperation(TransactionSource.Virement);
         commission.setDateEmission(virement.getDateEmission());
@@ -432,8 +436,7 @@ public class CommissionService implements ICommissionService {
         commission.setStatus(Status.PREVU);
 
         commissionRepository.save(commission);
-
-        log.info("Commission created for BMCI virement {}", virement.getNumero());
+        log.info("Commission créée pour virement BMCI {} — montant={}", virement.getNumero(), montant);
     }
 
     private String buildLibelle(Virement virement) {

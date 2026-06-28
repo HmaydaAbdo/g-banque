@@ -55,9 +55,9 @@ public class RecapitulatifDecaissementMapper {
         String libelle;
         // Logic to check if it's the final residual value payment
         if (echeance.getNumeroEcheance() == (contrat.getPeriodeEnMois() + 1)) {
-            libelle = contrat.getOrganismeLeasing().getNom() + ", V.R. contrat N° " + contrat.getNumeroContrat();
+            libelle = contrat.getContratCadre().getOrganisme().getNom() + ", V.R. contrat N° " + contrat.getNumeroContrat();
         } else {
-            libelle = contrat.getOrganismeLeasing().getNom() + ", contrat N° " + contrat.getNumeroContrat();
+            libelle = contrat.getContratCadre().getOrganisme().getNom() + ", contrat N° " + contrat.getNumeroContrat();
         }
         dto.setLibelle(libelle);
         dto.setSource(TransactionSource.LEASING);

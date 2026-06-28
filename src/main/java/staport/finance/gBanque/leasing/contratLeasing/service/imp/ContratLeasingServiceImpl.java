@@ -27,8 +27,8 @@ import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingServ
 import staport.finance.gBanque.leasing.contratLeasing.specification.ContratLeasingSpecification;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
-import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLeasing;
-import staport.finance.gBanque.leasing.lesOrganismsLeasing.services.interfaces.OrganismeLeasingService;
+import staport.finance.gBanque.leasing.contratCadre.entities.ContratCadre;
+import staport.finance.gBanque.leasing.contratCadre.services.IContratCadreService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -46,7 +46,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     private final ContratLeasingRepository contratLeasingRepository;
     private final ContratLeasingMapper contratLeasingMapper;
     private final IBanqueService banqueService;
-    private final OrganismeLeasingService organismeLeasingService;
+    private final IContratCadreService contratCadreService;
     private final IEcheanceLeasingService echeanceLeasingService;
     private final LeasingProperties leasingProperties;
 
@@ -54,12 +54,12 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
                                      ContratLeasingRepository contratLeasingRepository,
                                      ContratLeasingMapper contratLeasingMapper,
                                      IBanqueService banqueService,
-                                     OrganismeLeasingService organismeLeasingService,
+                                     IContratCadreService contratCadreService,
                                      LeasingProperties leasingProperties) {
         this.contratLeasingRepository = contratLeasingRepository;
         this.contratLeasingMapper = contratLeasingMapper;
         this.banqueService = banqueService;
-        this.organismeLeasingService = organismeLeasingService;
+        this.contratCadreService = contratCadreService;
         this.echeanceLeasingService = echeanceLeasingService;
         this.leasingProperties = leasingProperties;
     }
@@ -86,9 +86,10 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         validateTypeSpecificContratLeasingRequest(requestDTO);
 
         Banque banque = banqueService.findOrThrow(requestDTO.banqueDePrelevementId());
-        OrganismeLeasing organismeLeasing = organismeLeasingService.findOrThrow(requestDTO.organismeLeasingId());
+        ContratCadre contratCadre = contratCadreService.resolveActif(requestDTO.organismeLeasingId());
 
-        ContratLeasing contratLeasing = contratLeasingMapper.toEntity(requestDTO, banque, organismeLeasing);
+        ContratLeasing contratLeasing = contratLeasingMapper.toEntity(requestDTO, banque);
+        contratLeasing.setContratCadre(contratCadre);
         setValeurResiduelleBasedOnType(contratLeasing, requestDTO.montantAchatTTC());
 
         ContratLeasing savedContrat = contratLeasingRepository.save(contratLeasing);
@@ -117,9 +118,10 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         validateTypeSpecificContratLeasingRequest(requestDTO);
 
         Banque banque = banqueService.findOrThrow(requestDTO.banqueDePrelevementId());
-        OrganismeLeasing organismeLeasing = organismeLeasingService.findOrThrow(requestDTO.organismeLeasingId());
+        ContratCadre contratCadre = contratCadreService.resolveActif(requestDTO.organismeLeasingId());
 
-        contratLeasingMapper.updateEntityFromDto(requestDTO, existingContrat, banque, organismeLeasing);
+        contratLeasingMapper.updateEntityFromDto(requestDTO, existingContrat, banque);
+        existingContrat.setContratCadre(contratCadre);
         setValeurResiduelleBasedOnType(existingContrat, existingContrat.getMontantAchatTTC());
 
         ContratLeasing updatedContrat = contratLeasingRepository.save(existingContrat);

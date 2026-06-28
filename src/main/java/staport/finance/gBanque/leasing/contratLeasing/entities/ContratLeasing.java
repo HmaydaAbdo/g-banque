@@ -6,9 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
 import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.leasing.contratCadre.entities.ContratCadre;
 import staport.finance.gBanque.leasing.contratLeasing.enums.TypeContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
-import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLeasing;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -22,10 +22,10 @@ import java.util.Objects;
 @Audited
 @Entity
 @Table(name = "contrat_leasing", indexes = {
-        @Index(name = "idx_contrat_leasing_banque_id", columnList = "banque_id"),
-        @Index(name = "idx_contrat_leasing_organisme_id", columnList = "organisme_leasing_id"),
-        @Index(name = "idx_contrat_leasing_type_contrat", columnList = "type_contrat"),
-        @Index(name = "idx_contrat_leasing_completed", columnList = "completed")
+        @Index(name = "idx_contrat_leasing_banque_id",     columnList = "banque_id"),
+        @Index(name = "idx_contrat_leasing_contrat_cadre", columnList = "contrat_cadre_id"),
+        @Index(name = "idx_contrat_leasing_type_contrat",  columnList = "type_contrat"),
+        @Index(name = "idx_contrat_leasing_completed",     columnList = "completed")
 })
 public class ContratLeasing {
 
@@ -42,10 +42,14 @@ public class ContratLeasing {
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banqueDePrelevement;
 
-    @NotNull(message = "Un organisme de leasing est obligatoire")
+    /**
+     * Contrat cadre actif au moment de la signature.
+     * Porte les conditions commerciales (plafond, période de validité) de l'organisme.
+     */
+    @NotNull(message = "Un contrat cadre est obligatoire")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "organisme_leasing_id", nullable = false)
-    private OrganismeLeasing organismeLeasing;
+    @JoinColumn(name = "contrat_cadre_id", nullable = false)
+    private ContratCadre contratCadre;
 
     @NotBlank(message = "L'immobilisation est obligatoire")
     @Column(nullable = false)
@@ -110,8 +114,8 @@ public class ContratLeasing {
     public void setTypeContrat(TypeContratLeasing typeContrat) { this.typeContrat = typeContrat; }
     public Banque getBanqueDePrelevement() { return banqueDePrelevement; }
     public void setBanqueDePrelevement(Banque banqueDePrelevement) { this.banqueDePrelevement = banqueDePrelevement; }
-    public OrganismeLeasing getOrganismeLeasing() { return organismeLeasing; }
-    public void setOrganismeLeasing(OrganismeLeasing organismeLeasing) { this.organismeLeasing = organismeLeasing; }
+    public ContratCadre getContratCadre() { return contratCadre; }
+    public void setContratCadre(ContratCadre contratCadre) { this.contratCadre = contratCadre; }
     public List<ContratLeasingPhase> getPhases() { return phases; }
     public void setPhases(List<ContratLeasingPhase> phases) { this.phases = phases; }
 

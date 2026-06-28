@@ -79,7 +79,7 @@ public class ContratLeasingMainLeveeWriter implements ItemWriter<ProcessedContra
         log.info("Notification sent successfully for ContratLeasing ID: {} (Numéro: {}, Organisme: {}). Type: {}",
                 contrat.getId(),
                 contrat.getNumeroContrat(),
-                contrat.getOrganismeLeasing() != null ? contrat.getOrganismeLeasing().getNom() : "N/A",
+                contrat.getContratCadre() != null ? contrat.getContratCadre().getOrganisme().getNom() : "N/A",
                 processedContrat.getNotificationType());
     }
 }
