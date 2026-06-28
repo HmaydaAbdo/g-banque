@@ -1,13 +1,15 @@
 package staport.finance.gBanque.leasing.contratCadre.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import staport.finance.gBanque.leasing.contratCadre.entities.ContratCadre;
 import staport.finance.gBanque.leasing.contratCadre.enums.StatutContratCadre;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface ContratCadreRepository extends JpaRepository<ContratCadre, Long> {
+public interface ContratCadreRepository extends JpaRepository<ContratCadre, Long>,
+        JpaSpecificationExecutor<ContratCadre> {
 
     /** Retourne le contrat cadre actif d'un organisme, s'il existe. */
     Optional<ContratCadre> findByOrganisme_IdAndStatut(Long organismeId, StatutContratCadre statut);
