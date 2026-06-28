@@ -83,8 +83,8 @@ public abstract class ContratLeasingMapper {
         } else {
             entity.setPhases(new ArrayList<>());
         }
-        if (requestDTO.getPhases() != null) {
-            for (ContratLeasingPhaseRequestDTO phaseDto : requestDTO.getPhases()) {
+        if (requestDTO.phases() != null) {
+            for (ContratLeasingPhaseRequestDTO phaseDto : requestDTO.phases()) {
                 ContratLeasingPhase phase = phaseMapper.toEntity(phaseDto);
                 phase.setContratLeasing(entity);
                 entity.getPhases().add(phase);

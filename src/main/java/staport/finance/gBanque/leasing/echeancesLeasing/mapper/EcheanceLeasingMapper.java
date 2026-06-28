@@ -1,9 +1,7 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.mapper;
 
-import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Autowired;
 import staport.finance.gBanque.leasing.contratLeasing.config.LeasingProperties;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
@@ -16,7 +14,7 @@ import java.math.RoundingMode;
 /**
  * Mapper MapStruct pour EcheanceLeasing → EcheanceLeasingResponseDTO.
  * Classe abstraite nécessaire pour injecter LeasingProperties (taux TVA)
- * et calculer montantHT, montantTVA et libellé via @AfterMapping.
+ * et calculer montantHT, montantTVA et libellé via des méthodes protégées.
  */
 @Mapper(componentModel = "spring")
 public abstract class EcheanceLeasingMapper {
@@ -30,43 +28,33 @@ public abstract class EcheanceLeasingMapper {
 
     @Mapping(target = "contratLeasingId", source = "contratLeasing.id")
     @Mapping(target = "numeroContrat",    source = "contratLeasing.numeroContrat")
-    @Mapping(target = "montantHT",        ignore = true)
-    @Mapping(target = "montantTVA",       ignore = true)
-    @Mapping(target = "libelle",          ignore = true)
-    @Mapping(target = "observation",      ignore = true)
+    @Mapping(target = "montantHT",        expression = "java(computeMontantHT(entity))")
+    @Mapping(target = "montantTVA",       expression = "java(computeMontantTVA(entity))")
+    @Mapping(target = "libelle",          expression = "java(computeLibelle(entity))")
+    @Mapping(target = "observation",      constant = "Prélèvement leasing")
     public abstract EcheanceLeasingResponseDTO toDto(EcheanceLeasing entity);
 
-    // ── @AfterMapping — calcul HT/TVA, libellé, observation ──────────────────
+    // ── Méthodes de calcul ────────────────────────────────────────────────────
 
-    /**
-     * Calcule les montants HT et TVA depuis le montant TTC,
-     * construit le libellé (standard ou valeur résiduelle)
-     * et fixe l'observation.
-     */
-    @AfterMapping
-    protected void computeCalculatedFields(EcheanceLeasing entity,
-                                            @MappingTarget EcheanceLeasingResponseDTO dto) {
-        // Montants HT et TVA
-        if (entity.getMontantTTC() != null) {
-            BigDecimal montantHT = entity.getMontantTTC()
-                    .divide(BigDecimal.ONE.add(leasingProperties.getTauxTva()), SCALE, RoundingMode.HALF_UP);
-            BigDecimal montantTVA = entity.getMontantTTC().subtract(montantHT)
-                    .setScale(SCALE, RoundingMode.HALF_UP);
-            dto.setMontantHT(montantHT);
-            dto.setMontantTVA(montantTVA);
-        }
+    protected BigDecimal computeMontantHT(EcheanceLeasing entity) {
+        if (entity.getMontantTTC() == null) return null;
+        return entity.getMontantTTC()
+                .divide(BigDecimal.ONE.add(leasingProperties.getTauxTva()), SCALE, RoundingMode.HALF_UP);
+    }
 
-        // Libellé : valeur résiduelle si dernière échéance (numéro = périodeEnMois + 1)
+    protected BigDecimal computeMontantTVA(EcheanceLeasing entity) {
+        if (entity.getMontantTTC() == null) return null;
+        BigDecimal montantHT = computeMontantHT(entity);
+        return entity.getMontantTTC().subtract(montantHT).setScale(SCALE, RoundingMode.HALF_UP);
+    }
+
+    protected String computeLibelle(EcheanceLeasing entity) {
         ContratLeasing contrat = entity.getContratLeasing();
-        String libelle;
         if (entity.getNumeroEcheance().equals(contrat.getPeriodeEnMois() + 1)) {
-            libelle = contrat.getOrganismeLeasing().getNom()
+            return contrat.getOrganismeLeasing().getNom()
                     + ", V.R. pour le contrat N° " + contrat.getNumeroContrat();
-        } else {
-            libelle = contrat.getOrganismeLeasing().getNom()
-                    + ", contrat N° " + contrat.getNumeroContrat();
         }
-        dto.setLibelle(libelle);
-        dto.setObservation("Prélèvement leasing");
+        return contrat.getOrganismeLeasing().getNom()
+                + ", contrat N° " + contrat.getNumeroContrat();
     }
 }

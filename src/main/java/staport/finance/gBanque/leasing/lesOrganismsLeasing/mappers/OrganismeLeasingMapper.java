@@ -7,8 +7,6 @@ import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasing
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingResponseDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.entities.OrganismeLeasing;
 
-import java.util.List;
-
 @Mapper(componentModel = "spring")
 public interface OrganismeLeasingMapper {
 
@@ -18,8 +16,6 @@ public interface OrganismeLeasingMapper {
     OrganismeLeasing toEntity(OrganismeLeasingRequestDTO dto);
 
     OrganismeLeasingResponseDTO toDto(OrganismeLeasing entity);
-
-    List<OrganismeLeasingResponseDTO> toDtoList(List<OrganismeLeasing> entities);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "dateCreation", ignore = true)

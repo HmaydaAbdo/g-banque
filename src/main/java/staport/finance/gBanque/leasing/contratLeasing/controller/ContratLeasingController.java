@@ -38,6 +38,7 @@ public class ContratLeasingController {
     }
 
     @Operation(summary = "Créer un contrat de leasing")
+    @ApiResponse(responseCode = "201", description = "Contrat créé")
     @ApiResponse(responseCode = "400", description = "Données invalides ou règles métier non respectées")
     @ApiResponse(responseCode = "404", description = "Banque ou organisme de leasing introuvable")
     @PreAuthorize(FINANCE_OR_ADMIN)
@@ -78,6 +79,7 @@ public class ContratLeasingController {
 
     @Operation(summary = "Supprimer un contrat de leasing",
             description = "Bloqué si le contrat contient des échéances déjà payées")
+    @ApiResponse(responseCode = "204", description = "Contrat supprimé")
     @ApiResponse(responseCode = "400", description = "Contrat avec échéances payées — suppression bloquée")
     @ApiResponse(responseCode = "404", description = "Contrat introuvable")
     @PreAuthorize(ADMIN_ONLY)

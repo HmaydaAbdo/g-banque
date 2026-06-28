@@ -21,25 +21,25 @@ import java.util.List;
  */
 public class EcheanceLeasingSpecification {
 
-    public static Specification<EcheanceLeasing> buildSpecification(EcheanceLeasingSearchDTO searchDTO) {
+    public static Specification<EcheanceLeasing> searchByCriteria(EcheanceLeasingSearchDTO searchDTO) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (searchDTO.getContratLeasingId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("contratLeasing").get("id"), searchDTO.getContratLeasingId()));
+            if (searchDTO.contratLeasingId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("contratLeasing").get("id"), searchDTO.contratLeasingId()));
             }
 
-            if (searchDTO.getNumeroEcheance() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("numeroEcheance"), searchDTO.getNumeroEcheance()));
+            if (searchDTO.numeroEcheance() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("numeroEcheance"), searchDTO.numeroEcheance()));
             }
 
-            if (searchDTO.getStatutPaiement() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), searchDTO.getStatutPaiement()));
+            if (searchDTO.statutPaiement() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("statutPaiement"), searchDTO.statutPaiement()));
             }
 
             // Gestion du mois / année
-            Integer year = searchDTO.getYear();
-            Integer month = searchDTO.getMonth();
+            Integer year = searchDTO.year();
+            Integer month = searchDTO.month();
 
             if (year != null && month != null) {
                 // Cas mois + année

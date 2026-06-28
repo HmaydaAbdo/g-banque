@@ -9,120 +9,90 @@ import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasingPhase;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ContratLeasingSpecification {
 
-    public static Specification<ContratLeasing> bySearchCriteria(ContratLeasingSearchDTO searchDTO) {
+    public static Specification<ContratLeasing> searchByCriteria(ContratLeasingSearchDTO searchDTO) {
         return (root, query, criteriaBuilder) -> {
 
             List<Predicate> predicates = new ArrayList<>();
 
-            // Filter by numeroContrat (case-insensitive, like search)
-            if (searchDTO.getNumeroContrat() != null && !searchDTO.getNumeroContrat().isEmpty()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("numeroContrat")), "%" + searchDTO.getNumeroContrat().toLowerCase() + "%"));
+            if (searchDTO.numeroContrat() != null && !searchDTO.numeroContrat().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("numeroContrat")), "%" + searchDTO.numeroContrat().toLowerCase() + "%"));
             }
-            // Filter by banqueDePrelevementId
-            if (searchDTO.getBanqueDePrelevementId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("banqueDePrelevement").get("id"), searchDTO.getBanqueDePrelevementId()));
+            if (searchDTO.banqueDePrelevementId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("banqueDePrelevement").get("id"), searchDTO.banqueDePrelevementId()));
             }
-            // Filter by organismeLeasingId
-            if (searchDTO.getOrganismeLeasingId() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("organismeLeasing").get("id"), searchDTO.getOrganismeLeasingId()));
+            if (searchDTO.organismeLeasingId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("organismeLeasing").get("id"), searchDTO.organismeLeasingId()));
             }
-            // Filter by immobilisation (case-insensitive, like search)
-            if (searchDTO.getImmobilisation() != null && !searchDTO.getImmobilisation().isEmpty()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("immobilisation")), "%" + searchDTO.getImmobilisation().toLowerCase() + "%"));
+            if (searchDTO.immobilisation() != null && !searchDTO.immobilisation().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("immobilisation")), "%" + searchDTO.immobilisation().toLowerCase() + "%"));
             }
-
-            // Filter by typeContrat
-            if (searchDTO.getTypeContrat() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("typeContrat"), searchDTO.getTypeContrat()));
+            if (searchDTO.typeContrat() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("typeContrat"), searchDTO.typeContrat()));
             }
-
-            //  filtre pour le champ 'completed'
-            if (searchDTO.getCompleted() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("completed"), searchDTO.getCompleted()));
+            if (searchDTO.completed() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("completed"), searchDTO.completed()));
             }
-
-            if (searchDTO.getMontantEcheance() != null) {
+            if (searchDTO.montantEcheance() != null) {
                 Subquery<Long> phaseSubquery = query.subquery(Long.class);
                 Root<ContratLeasingPhase> phaseRoot = phaseSubquery.from(ContratLeasingPhase.class);
-
                 phaseSubquery.select(phaseRoot.get("id"))
                         .where(criteriaBuilder.and(
                                 criteriaBuilder.equal(phaseRoot.get("contratLeasing").get("id"), root.get("id")),
-                                criteriaBuilder.equal(phaseRoot.get("mensualiteTTC"), searchDTO.getMontantEcheance())
+                                criteriaBuilder.equal(phaseRoot.get("mensualiteTTC"), searchDTO.montantEcheance())
                         ));
-
                 predicates.add(criteriaBuilder.exists(phaseSubquery));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
-
-
     }
 
     /**
-     * Les contracts leasing encours
-     * Specification to filter for active contracts.
-     * Condition: completed = false AND there is at least one unpaid installment.
+     * Contrats leasing encours : completed = false ET au moins une échéance impayée.
      */
     public static Specification<ContratLeasing> getActiveContrats() {
         return (root, query, criteriaBuilder) -> {
-            // Predicate 1: completed is false
             Predicate completedIsFalse = criteriaBuilder.isFalse(root.get("completed"));
 
-            // Predicate 2: exists a subquery with unpaid installments
             Subquery<EcheanceLeasing> subquery = query.subquery(EcheanceLeasing.class);
             jakarta.persistence.criteria.Root<EcheanceLeasing> echeanceRoot = subquery.from(EcheanceLeasing.class);
-
             subquery.select(echeanceRoot.get("id"))
                     .where(criteriaBuilder.and(
-                            // Link the subquery to the main query by contratLeasing ID
                             criteriaBuilder.equal(echeanceRoot.get("contratLeasing").get("id"), root.get("id")),
-                            // Condition for unpaid installment (statutPaiement != PAYEE)
                             criteriaBuilder.notEqual(echeanceRoot.get("statutPaiement"), StatutEcheanceLeasing.PAYE)
                     ));
 
-            // Combine both predicates
             return criteriaBuilder.and(completedIsFalse, criteriaBuilder.exists(subquery));
         };
     }
 
     /**
-     * Les contracts leasing en attente de main levées.
-     * Specification to filter for contracts pending lien release.
-     * Condition: completed = false AND ALL installments are paid.
+     * Contrats leasing en attente de main levée : completed = false ET toutes les échéances payées.
      */
     public static Specification<ContratLeasing> getPendingLienReleaseContrats() {
         return (root, query, criteriaBuilder) -> {
-            // Predicate 1: completed is false
             Predicate completedIsFalse = criteriaBuilder.isFalse(root.get("completed"));
 
-            // Predicate 2: does NOT exist a subquery with unpaid installments
             Subquery<EcheanceLeasing> subquery = query.subquery(EcheanceLeasing.class);
             jakarta.persistence.criteria.Root<EcheanceLeasing> echeanceRoot = subquery.from(EcheanceLeasing.class);
-
             subquery.select(echeanceRoot.get("id"))
                     .where(criteriaBuilder.and(
-                            // Link the subquery to the main query by contratLeasing ID
                             criteriaBuilder.equal(echeanceRoot.get("contratLeasing").get("id"), root.get("id")),
-                            // Condition for unpaid installment
                             criteriaBuilder.notEqual(echeanceRoot.get("statutPaiement"), StatutEcheanceLeasing.PAYE)
                     ));
 
-            // Combine both predicates
             return criteriaBuilder.and(completedIsFalse, criteriaBuilder.not(criteriaBuilder.exists(subquery)));
         };
     }
 
     /**
-     * Les contracts leasing Archivées.
-     * Specification to filter for inactive contracts.
-     * Condition: completed = true.
+     * Contrats leasing archivés : completed = true.
      */
     public static Specification<ContratLeasing> getInactiveContrats() {
         return (root, query, criteriaBuilder) -> criteriaBuilder.isTrue(root.get("completed"));

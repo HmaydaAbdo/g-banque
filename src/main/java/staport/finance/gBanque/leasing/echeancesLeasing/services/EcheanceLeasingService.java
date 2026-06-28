@@ -338,7 +338,7 @@ import java.math.BigDecimal;
                         return new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found.");
                     });
 
-            Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.buildSpecification(searchDTO)
+            Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.searchByCriteria(searchDTO)
                     .and(EcheanceLeasingSpecification.byContratId(contratId));
 
             Page<EcheanceLeasing> echeancesPage = echeanceLeasingRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
@@ -394,26 +394,26 @@ import java.math.BigDecimal;
         public EncoursLeasingResponseDTO getEncoursLeasingForBanque(EncoursLeasingRequestDTO requestDTO, Pageable pageable) {
             LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-            log.debug("Récupération des encours de leasing pour la banque ID : {}", requestDTO.getBanqueId());
+            log.debug("Récupération des encours de leasing pour la banque ID : {}", requestDTO.banqueId());
 
-            BanqueResponse banque = banqueService.getBanqueById(requestDTO.getBanqueId());
+            BanqueResponse banque = banqueService.getBanqueById(requestDTO.banqueId());
 
-            Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratBanqueId(requestDTO.getBanqueId())
+            Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratBanqueId(requestDTO.banqueId())
                     .and(EcheanceLeasingSpecification.outstandingUntil(endOfMonth));
 
-            if (requestDTO.getOrganismeLeasingId() != null) {
-                log.debug("Filtre par organisme de leasing ID : {}", requestDTO.getOrganismeLeasingId());
-                spec = spec.and(EcheanceLeasingSpecification.byContratOrganismeLeasingId(requestDTO.getOrganismeLeasingId()));
+            if (requestDTO.organismeLeasingId() != null) {
+                log.debug("Filtre par organisme de leasing ID : {}", requestDTO.organismeLeasingId());
+                spec = spec.and(EcheanceLeasingSpecification.byContratOrganismeLeasingId(requestDTO.organismeLeasingId()));
             }
 
-            if (requestDTO.getNumeroContrat() != null && !requestDTO.getNumeroContrat().isEmpty()) {
-                log.debug("Filtre par numéro de contrat : {}", requestDTO.getNumeroContrat());
-                spec = spec.and(EcheanceLeasingSpecification.byContratNumeroContrat(requestDTO.getNumeroContrat()));
+            if (requestDTO.numeroContrat() != null && !requestDTO.numeroContrat().isEmpty()) {
+                log.debug("Filtre par numéro de contrat : {}", requestDTO.numeroContrat());
+                spec = spec.and(EcheanceLeasingSpecification.byContratNumeroContrat(requestDTO.numeroContrat()));
             }
 
-            if (requestDTO.getMontant() != null) {
+            if (requestDTO.montant() != null) {
                 log.debug("Filtre par montant actif");
-                spec = spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.getMontant()));
+                spec = spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.montant()));
             }
 
             Page<EcheanceLeasing> encoursEcheancesPage = echeanceLeasingRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));

@@ -25,11 +25,10 @@ import staport.finance.gBanque.leasing.lesOrganismsLeasing.specifications.Organi
 public class OrganismeLeasingServiceImpl implements OrganismeLeasingService {
 
     private static final Logger log = LoggerFactory.getLogger(OrganismeLeasingServiceImpl.class);
+
     private final OrganismeLeasingRepository repository;
     private final OrganismeLeasingMapper mapper;
 
-
-    //constructors
     public OrganismeLeasingServiceImpl(OrganismeLeasingRepository repository, OrganismeLeasingMapper mapper) {
         this.repository = repository;
         this.mapper = mapper;
@@ -41,7 +40,7 @@ public class OrganismeLeasingServiceImpl implements OrganismeLeasingService {
     public OrganismeLeasingResponseDTO create(OrganismeLeasingRequestDTO dto) {
         OrganismeLeasing entity = mapper.toEntity(dto);
         OrganismeLeasing savedEntity = repository.save(entity);
-        log.info("Organisme de leasing créé avec l'ID : {}", savedEntity.getId());
+        log.info("Organisme de leasing créé — ID : {}", savedEntity.getId());
         return mapper.toDto(savedEntity);
     }
 
@@ -49,11 +48,7 @@ public class OrganismeLeasingServiceImpl implements OrganismeLeasingService {
     @Transactional
     @Override
     public OrganismeLeasingResponseDTO update(Long id, OrganismeLeasingRequestDTO dto) {
-        OrganismeLeasing existing = repository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("OrganismeLeasing non trouvé — ID : {}", id);
-                    return new ResourceNotFoundException("OrganismeLeasing non trouvé avec l'ID: " + id);
-                });
+        OrganismeLeasing existing = findOrThrow(id);
         mapper.updateOrganismeLeasingFromDto(dto, existing);
         OrganismeLeasing updatedEntity = repository.save(existing);
         log.info("Organisme de leasing mis à jour — ID : {}", id);
@@ -63,23 +58,15 @@ public class OrganismeLeasingServiceImpl implements OrganismeLeasingService {
     @Transactional(readOnly = true)
     @Override
     public OrganismeLeasingResponseDTO getById(Long id) {
-        OrganismeLeasing entity = repository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("OrganismeLeasing non trouvé — ID : {}", id);
-                    return new ResourceNotFoundException("OrganismeLeasing non trouvé avec l'ID: " + id);
-                });
-        return mapper.toDto(entity);
+        return mapper.toDto(findOrThrow(id));
     }
 
     @AuditableAction(operation = AuditOperation.DELETE, entity = OrganismeLeasing.class)
     @Transactional
     @Override
     public void delete(Long id) {
-        if (!repository.existsById(id)) {
-            log.warn("OrganismeLeasing non trouvé — ID : {}", id);
-            throw new ResourceNotFoundException("OrganismeLeasing non trouvé avec l'ID: " + id);
-        }
-        repository.deleteById(id);
+        OrganismeLeasing entity = findOrThrow(id);
+        repository.delete(entity);
         log.info("Organisme de leasing supprimé — ID : {}", id);
     }
 
@@ -96,7 +83,10 @@ public class OrganismeLeasingServiceImpl implements OrganismeLeasingService {
     @Transactional(readOnly = true)
     @Override
     public Page<OrganismeLeasingResponseDTO> search(OrganismeLeasingSearchDTO criteria, Pageable pageable) {
-        Specification<OrganismeLeasing> spec = OrganismeLeasingSpecification.withFilters(criteria);
-        return repository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"))).map(mapper::toDto);
+        Specification<OrganismeLeasing> spec = OrganismeLeasingSpecification.searchByCriteria(criteria);
+        Pageable effective = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+        return repository.findAll(spec, effective).map(mapper::toDto);
     }
 }

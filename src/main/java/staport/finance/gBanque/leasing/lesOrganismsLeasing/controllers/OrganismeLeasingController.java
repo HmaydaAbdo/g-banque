@@ -33,6 +33,7 @@ public class OrganismeLeasingController {
     }
 
     @Operation(summary = "Créer un organisme de leasing")
+    @ApiResponse(responseCode = "201", description = "Organisme créé")
     @ApiResponse(responseCode = "400", description = "Données invalides")
     @PreAuthorize(FINANCE_OR_ADMIN)
     @PostMapping
@@ -63,6 +64,7 @@ public class OrganismeLeasingController {
 
     @Operation(summary = "Supprimer un organisme de leasing",
             description = "Bloqué si l'organisme est lié à des contrats existants")
+    @ApiResponse(responseCode = "204", description = "Organisme supprimé")
     @ApiResponse(responseCode = "400", description = "Organisme lié à des contrats — suppression bloquée")
     @ApiResponse(responseCode = "404", description = "Organisme introuvable")
     @PreAuthorize(ADMIN_ONLY)
