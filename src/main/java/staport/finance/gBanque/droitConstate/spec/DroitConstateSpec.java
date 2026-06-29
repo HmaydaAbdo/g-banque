@@ -11,10 +11,8 @@ import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,18 +83,18 @@ public class DroitConstateSpec {
         };
     }
 
+    /**
+     * Filtre par la banque directement liée au DroitConstate (champ banque_id).
+     * Tous les DCs ont une banque_id après backfill — chemin direct uniquement.
+     *
+     * PATH : DroitConstate.banque.id
+     */
     public static Specification<DroitConstate> byBanqueId(Long banqueId) {
         return (root, query, cb) -> {
             if (banqueId == null) {
                 return cb.conjunction();
             }
-
-            //  PATH: DroitConstate -> Marche -> Banque
-            Join<DroitConstate, Marche> marcheJoin = root.join("marche", JoinType.INNER);
-            // The Marche entity has a direct ManyToOne relationship with Banque
-            Join<Marche, Banque> banqueJoin = marcheJoin.join("banque", JoinType.INNER);
-
-            // Add predicate for the Banque ID
+            Join<DroitConstate, Banque> banqueJoin = root.join("banque", JoinType.INNER);
             return cb.equal(banqueJoin.get("id"), banqueId);
         };
     }

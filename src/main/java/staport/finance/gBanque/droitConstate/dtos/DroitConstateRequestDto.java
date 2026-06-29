@@ -17,6 +17,15 @@ public class DroitConstateRequestDto {
     @NotNull(message = "Marche ID cannot be null")
     private Long marcheId;
 
+    /**
+     * Identifiant de la banque liée à ce droit constaté. Obligatoire.
+     * Pré-remplie depuis marche.banque dans l'UI, mais modifiable.
+     * - DEBLOCAGE     → banque d'encaissement (reçoit les fonds du Trésor)
+     * - REMBOURSEMENT → banque de décaissement (effectue le remboursement)
+     */
+    @NotNull(message = "La banque est obligatoire")
+    private Long banqueId;
+
     @NotNull(message = "Date of emission cannot be null")
     private LocalDate dateEmission ;
 
@@ -30,8 +39,9 @@ public class DroitConstateRequestDto {
     public DroitConstateRequestDto() {
     }
 
-    public DroitConstateRequestDto(Long marcheId, LocalDate dateEmission, BigDecimal montant, Type type) {
+    public DroitConstateRequestDto(Long marcheId, Long banqueId, LocalDate dateEmission, BigDecimal montant, Type type) {
         this.marcheId = marcheId;
+        this.banqueId = banqueId;
         this.dateEmission = dateEmission;
         this.montant = montant;
         this.type = type;
@@ -44,6 +54,14 @@ public class DroitConstateRequestDto {
 
     public void setMarcheId(Long marcheId) {
         this.marcheId = marcheId;
+    }
+
+    public Long getBanqueId() {
+        return banqueId;
+    }
+
+    public void setBanqueId(Long banqueId) {
+        this.banqueId = banqueId;
     }
 
     public LocalDate getDateEmission() {
@@ -75,6 +93,7 @@ public class DroitConstateRequestDto {
     public String toString() {
         return "DroitConstateRequestDto{" +
                 "marcheId=" + marcheId +
+                ", banqueId=" + banqueId +
                 ", dateEmission=" + dateEmission +
                 ", montant=" + montant +
                 ", type=" + type +

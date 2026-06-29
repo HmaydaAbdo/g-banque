@@ -3,6 +3,7 @@ package staport.finance.gBanque.droitConstate.mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.droitConstate.dtos.DroitConstateRequestDto;
 import staport.finance.gBanque.droitConstate.dtos.DroitConstateResponseDto;
 import staport.finance.gBanque.droitConstate.dtos.SuivieDcLigneResponseDto;
@@ -21,13 +22,14 @@ public class DroitConstateMapper {
     /**
      * Converts a DroitConstateRequestDto to a DroitConstate entity.
      * This method maps the basic fields from the DTO to the entity and sets the
-     * related Marche entity passed as argument.
+     * related Marche and Banque entities passed as arguments.
      *
      * @param requestDTO The DroitConstateRequestDto to map.
      * @param marche The Marche entity fetched from the database.
+     * @param banque The Banque entity : fournie explicitement ou déduite de marche.banque.
      * @return A new DroitConstate entity instance with relationships set.
      */
-    public DroitConstate toEntity(DroitConstateRequestDto requestDTO , Marche marche) {
+    public DroitConstate toEntity(DroitConstateRequestDto requestDTO, Marche marche, Banque banque) {
         log.debug("Début de la conversion du DroitConstateRequestDto vers l'entité DroitConstate");
 
         if (requestDTO == null) {
@@ -40,13 +42,16 @@ public class DroitConstateMapper {
         DroitConstate entity = new DroitConstate();
         entity.setDateEmission(requestDTO.getDateEmission());
         entity.setMontant(requestDTO.getMontant());
-        entity.setObservation( marche.getNumero());
+        entity.setObservation(marche.getNumero());
         entity.setType(requestDTO.getType());
         entity.setMarche(marche);
+        entity.setBanque(banque);
         entity.setStatus(Status.PREVU);
 
-        log.info("DroitConstate créé avec succès - Type: {}, Montant: {}, Marché: {}",
-                requestDTO.getType(), requestDTO.getMontant(), marche != null ? marche.getNumero() : "null");
+        log.info("DroitConstate créé avec succès - Type: {}, Montant: {}, Marché: {}, Banque: {}",
+                requestDTO.getType(), requestDTO.getMontant(),
+                marche != null ? marche.getNumero() : "null",
+                banque != null ? banque.getNom() : "null");
 
         return entity;
     }
@@ -84,17 +89,22 @@ public class DroitConstateMapper {
         Marche marche = droitConstate.getMarche();
 
         if (marche != null) {
-            log.debug("Récupération des informations du marché: {} et de la banque: {}",
-                    marche.getNom(), marche.getBanque() != null ? marche.getBanque().getNom() : "null");
-
             dto.setMarcheId(marche.getId());
             dto.setMarcheName(marche.getNom());
             dto.setMarcheNumero(marche.getNumero());
-            dto.setBanqueId(marche.getBanque().getId());
-            dto.setBanqueName(marche.getBanque().getNom());
         } else {
             log.warn("Le marché associé au DroitConstate ID: {} est null", droitConstate.getId());
-            throw  new ResourceNotFoundException("Le marché associé au DroitConstate ID: "+droitConstate.getId()+" est null");
+            throw new ResourceNotFoundException("Le marché associé au DroitConstate ID: " + droitConstate.getId() + " est null");
+        }
+
+        // Banque directe du DC — toujours obligatoire.
+        Banque banque = droitConstate.getBanque();
+        if (banque != null) {
+            log.debug("Banque du DC: {}", banque.getNom());
+            dto.setBanqueId(banque.getId());
+            dto.setBanqueName(banque.getNom());
+        } else {
+            log.warn("Aucune banque trouvée pour le DroitConstate ID: {} (données legacy sans backfill)", droitConstate.getId());
         }
 
         if( droitConstate.getType()== Type.DEBLOCAGE){
@@ -134,14 +144,14 @@ public class DroitConstateMapper {
 
         if (marche != null) {
             log.debug("Attribution des informations du marché et de la banque au DTO de suivi");
-
             dto.setMarcheName(marche.getNom());
             dto.setMarcheNumero(marche.getNumero());
-            dto.setBanqueName(marche.getBanque().getNom());
-
+            // Banque directe du DC — toujours obligatoire.
+            Banque banqueSuivi = droitConstate.getBanque();
+            dto.setBanqueName(banqueSuivi != null ? banqueSuivi.getNom() : null);
         } else {
             log.warn("Le marché associé est null pour le suivi du DroitConstate ID: {}", droitConstate.getId());
-            throw  new ResourceNotFoundException("Le marché associé au DroitConstate ID: "+droitConstate.getId()+" est null");
+            throw new ResourceNotFoundException("Le marché associé au DroitConstate ID: " + droitConstate.getId() + " est null");
         }
 
         if( droitConstate.getType()== Type.DEBLOCAGE){

@@ -402,28 +402,45 @@ public class CommissionService implements ICommissionService {
     @Transactional
     public void generateCommissionIfNeeded(Virement virement) {
 
-        if (!isBmci(virement)) {
+        // Guard 1 : banque émettrice obligatoire
+        if (virement.getBanqueEmettrice() == null
+                || virement.getBanqueEmettrice().getNom() == null) {
             return;
         }
 
+        // Guard 2 : uniquement les virements ENCOURS
         if (virement.getStatut() != StatutMoyenPaiement.ENCOURS) {
             return;
         }
 
-        String nomBanque = virement.getBanqueEmettrice().getNom();
-        BigDecimal montant = commissionConfigService
-                .resolveCommission(nomBanque, null, TransactionSource.Virement)
-                .orElse(null);
+        String nomEmettrice = virement.getBanqueEmettrice().getNom().trim();
 
-        if (montant == null) {
-            log.warn("Aucune règle de commission configurée pour banque='{}' type=Virement — commission non générée", nomBanque);
+        // Guard 3 : au moins une règle configurée pour cette banque + Virement
+        if (!commissionConfigService.hasCommission(nomEmettrice, TransactionSource.Virement)) {
+            log.debug("Aucune règle commission pour banque='{}' type=Virement — ignoré", nomEmettrice);
             return;
         }
 
-        String libelle = buildLibelle(virement);
+        // Résolution de la banque bénéficiaire :
+        // FK Banque en priorité, sinon champ texte libre (nomBanqueBeneficiaireLibre)
+        String nomBeneficiaire = resolveBeneficiaireName(virement);
 
+        // Résolution du montant : SI_MATCH si bénéficiaire = BMCI (27,50),
+        // SI_NON_MATCH sinon (33,00)
+        BigDecimal montant = commissionConfigService
+                .resolveCommission(nomEmettrice, nomBeneficiaire, TransactionSource.Virement)
+                .orElse(null);
+
+        if (montant == null) {
+            log.warn("Aucun montant résolu pour banque='{}', bénéficiaire='{}', type=Virement — commission non générée",
+                    nomEmettrice, nomBeneficiaire);
+            return;
+        }
+
+        // Idempotence : une seule commission par numéro de virement
+        String libelle = buildLibelle(virement);
         if (commissionRepository.existsByOperationAndLibelle(TransactionSource.Virement, libelle)) {
-            log.debug("Commission already exists for virement {}", virement.getNumero());
+            log.debug("Commission déjà existante pour virement {} — ignoré", virement.getNumero());
             return;
         }
 
@@ -436,19 +453,27 @@ public class CommissionService implements ICommissionService {
         commission.setStatus(Status.PREVU);
 
         commissionRepository.save(commission);
-        log.info("Commission créée pour virement BMCI {} — montant={}", virement.getNumero(), montant);
+        log.info("Commission créée — virement N°{}, émettrice='{}', bénéficiaire='{}', montant={}",
+                virement.getNumero(), nomEmettrice, nomBeneficiaire, montant);
+    }
+
+    /**
+     * Résout le nom de la banque bénéficiaire d'un virement.
+     * Priorité : relation FK {@code banqueBeneficiare} → champ libre {@code nomBanqueBeneficiaireLibre}.
+     * Retourne {@code null} si aucun n'est renseigné.
+     */
+    private String resolveBeneficiaireName(Virement virement) {
+        if (virement.getBanqueBeneficiare() != null
+                && virement.getBanqueBeneficiare().getNom() != null) {
+            return virement.getBanqueBeneficiare().getNom().trim();
+        }
+        return virement.getNomBanqueBeneficiaireLibre() != null
+                ? virement.getNomBanqueBeneficiaireLibre().trim()
+                : null;
     }
 
     private String buildLibelle(Virement virement) {
         return "Commission virement N° " + virement.getNumero();
-    }
-
-    private boolean isBmci(Virement virement) {
-        return virement.getBanqueEmettrice() != null
-                && virement.getBanqueEmettrice().getNom() != null
-                && "BMCI".equalsIgnoreCase(
-                virement.getBanqueEmettrice().getNom().trim()
-        );
     }
 
 }

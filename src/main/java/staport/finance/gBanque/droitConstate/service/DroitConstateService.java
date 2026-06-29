@@ -9,6 +9,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
@@ -36,21 +38,44 @@ public class DroitConstateService {
 
     private static final Logger log = LoggerFactory.getLogger(DroitConstateService.class);
     private final DroitConstateRepository droitConstateRepository;
-    private  final DroitConstateMapper droitConstateMapper;
+    private final DroitConstateMapper droitConstateMapper;
     private final MarcheRepository marcheRepository;
+    private final BanqueRepository banqueRepository;
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
     private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
     private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
 
-    public DroitConstateService(DroitConstateRepository droitConstateRepository, DroitConstateMapper droitConstateMapper, MarcheRepository marcheRepository, NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, LigneFonctionnelleRepository ligneFonctionnelleRepository) {
+    public DroitConstateService(DroitConstateRepository droitConstateRepository,
+                                DroitConstateMapper droitConstateMapper,
+                                MarcheRepository marcheRepository,
+                                BanqueRepository banqueRepository,
+                                NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository,
+                                LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
+                                LigneFonctionnelleRepository ligneFonctionnelleRepository) {
         this.droitConstateRepository = droitConstateRepository;
         this.droitConstateMapper = droitConstateMapper;
         this.marcheRepository = marcheRepository;
+        this.banqueRepository = banqueRepository;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
         this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
         this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
+    }
+
+    /**
+     * Résout la banque à associer à un DroitConstate.
+     * Le banqueId est obligatoire — aucun fallback sur marche.banque.
+     */
+    private Banque resolveBanque(Long banqueId) {
+        if (banqueId == null) {
+            throw new ResourceNotFoundException("La banque est obligatoire pour un droit constaté.");
+        }
+        return banqueRepository.findById(banqueId)
+                .orElseThrow(() -> {
+                    log.error("Banque non trouvée avec l'ID: {}", banqueId);
+                    return new ResourceNotFoundException("Banque non trouvée avec l'ID: " + banqueId);
+                });
     }
 
     @Transactional
@@ -81,7 +106,11 @@ public class DroitConstateService {
         log.debug("Vérification de l'existence d'une ligne fonctionnelle 'Droit constaté' active pour le marché");
         validateActiveDroitConstateLine(marche, dcNature);
 
-        DroitConstate droitConstate = droitConstateMapper.toEntity(requestDTO, marche);
+        // Step 3: Resolve the bank (mandatory — no fallback)
+        Banque banque = resolveBanque(requestDTO.getBanqueId());
+        log.debug("Banque résolue pour le DC: {} (ID: {})", banque.getNom(), banque.getId());
+
+        DroitConstate droitConstate = droitConstateMapper.toEntity(requestDTO, marche, banque);
 
         droitConstate = droitConstateRepository.save(droitConstate);
 
@@ -122,11 +151,16 @@ public class DroitConstateService {
 
             validateActiveDroitConstateLine(marche, dcNature);
         }
+        // Resolve bank (mandatory — no fallback)
+        Banque banque = resolveBanque(requestDTO.getBanqueId());
+        log.debug("Banque résolue pour la mise à jour du DC: {} (ID: {})", banque.getNom(), banque.getId());
+
         existingDroitConstate.setMarche(marche);
+        existingDroitConstate.setBanque(banque);
         existingDroitConstate.setDateEmission(requestDTO.getDateEmission());
         existingDroitConstate.setMontant(requestDTO.getMontant());
         existingDroitConstate.setType(requestDTO.getType());
-        existingDroitConstate.setObservation("Marche: " + marche.getNumero() );
+        existingDroitConstate.setObservation("Marche: " + marche.getNumero());
 
         DroitConstate updatedPrefinancement = droitConstateRepository.save(existingDroitConstate);
 
