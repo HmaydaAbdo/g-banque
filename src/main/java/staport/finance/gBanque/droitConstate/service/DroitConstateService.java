@@ -318,59 +318,48 @@ public class DroitConstateService {
      * @param dcNature The "Droit constaté" nature
      * @throws Exception if no active line is found
      */
+    /**
+     * Valide qu'un marché possède une ligne fonctionnelle "Droit constaté" active.
+     * Critère : marché + nature uniquement — la banque du DC n'intervient pas ici.
+     *
+     * Ordre de recherche :
+     *   1. LigneFonctionnelleSpecifique liée au marché (prioritaire)
+     *   2. LigneFonctionnelle générale liée au marché
+     */
     private void validateActiveDroitConstateLine(Marche marche, NatureLigneFonctionnelle dcNature) throws Exception {
         log.debug("Validation de l'existence d'une ligne 'Droit constaté' active pour le marché ID: {}", marche.getId());
 
-        //  ÉTAPE 1 : Chercher d'abord dans LigneFonctionnelleSpecifique (prioritaire)
+        // ÉTAPE 1 : Ligne spécifique au marché (prioritaire)
         Optional<LigneFonctionnelleSpecifique> ligneSpecifique =
                 ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, dcNature);
 
         if (ligneSpecifique.isPresent()) {
-            log.info(" Ligne fonctionnelle spécifique 'Droit constaté' active trouvée pour le marché '{}' (ID: {})",
+            log.info("Ligne fonctionnelle spécifique 'Droit constaté' active trouvée pour le marché '{}' (ID: {})",
                     marche.getNom(), ligneSpecifique.get().getId());
-            return; // Validation réussie
+            return;
         }
 
         log.debug("Aucune ligne spécifique trouvée, recherche dans les lignes générales...");
 
-        // ÉTAPE 2 : Chercher dans LigneFonctionnelle (ligne générale de la banque)
-        // Option A : Ligne générale liée à CE marché spécifique
-        Optional<LigneFonctionnelle> ligneGeneraleMarcheSpecifique =
+        // ÉTAPE 2 : Ligne générale liée à ce marché
+        Optional<LigneFonctionnelle> ligneGenerale =
                 ligneFonctionnelleRepository.findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(
                         marche.getId(),
                         dcNature.getId()
                 );
 
-
-
-        if (ligneGeneraleMarcheSpecifique.isPresent()) {
-            log.info(" Ligne fonctionnelle générale 'Droit constaté' active trouvée pour le marché spécifique '{}' (ID: {})",
-                    marche.getNom(), ligneGeneraleMarcheSpecifique.get().getId());
-            return; // Validation réussie
+        if (ligneGenerale.isPresent()) {
+            log.info("Ligne fonctionnelle générale 'Droit constaté' active trouvée pour le marché '{}' (ID: {})",
+                    marche.getNom(), ligneGenerale.get().getId());
+            return;
         }
 
-        log.debug("Aucune ligne générale spécifique au marché trouvée, recherche de ligne générale de la banque...");
-
-        // Option B : Ligne générale de la banque (sans marché spécifique)
-        Optional<LigneFonctionnelle> ligneGeneraleBanque =
-                ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(
-                        marche.getBanque().getId(),
-                        dcNature.getId()
-                );
-
-        if (ligneGeneraleBanque.isPresent()) {
-            log.info(" Ligne fonctionnelle générale 'Droit constaté' active trouvée pour la banque '{}' (ID: {})",
-                    marche.getBanque().getNom(), ligneGeneraleBanque.get().getId());
-            return; // Validation réussie
-        }
-
-        //  ÉTAPE 3 : Aucune ligne active trouvée
-        log.error(" Aucune ligne fonctionnelle 'Droit constaté' active trouvée pour le marché '{}'", marche.getNom());
+        // Aucune ligne active trouvée
+        log.error("Aucune ligne fonctionnelle 'Droit constaté' active trouvée pour le marché '{}'", marche.getNom());
         throw new Exception(
                 "Impossible de créer un droit constaté. Le marché '" + marche.getNom() +
                         "' n'est pas associé à une ligne fonctionnelle 'Droit constaté' active. " +
-                        "Veuillez créer une ligne spécifique au marché ou une ligne générale pour la banque '" +
-                        marche.getBanque().getNom() + "'."
+                        "Veuillez créer une ligne spécifique ou générale pour ce marché."
         );
     }
 
