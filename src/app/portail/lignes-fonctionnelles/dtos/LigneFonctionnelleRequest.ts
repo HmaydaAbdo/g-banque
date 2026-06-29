@@ -1,12 +1,13 @@
-  import {SousLigneRequestDto} from "./SousLigneRequestDto";
+import { SousLigneRequestDto } from "./SousLigneRequestDto";
 
-  export interface LigneFonctionnelleRequest {
-    banqueId: number;
-    natureLigneFonctionnelleId: number; // New: ID of the NatureLigneFonctionnelle entity
-    marcheId?: number | null;
-    plafond: number;
-    taux: number;
-    dateDepart: string;
-    dateFin: string;
-    sousLignes:SousLigneRequestDto[]
-  }
+export interface LigneFonctionnelleRequest {
+  banqueId: number;
+  natureLigneFonctionnelleId: number;
+  /** Liste des IDs des marchés associés. Vide = ligne générale sans marché. */
+  marcheIds: number[];
+  plafond: number;
+  taux: number;
+  dateDepart: string;
+  dateFin: string;
+  sousLignes: SousLigneRequestDto[];
+}

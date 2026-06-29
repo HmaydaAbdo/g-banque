@@ -82,9 +82,9 @@ export class LineNavigationService {
 
   /**
    * Redirige automatiquement en détectant le type de ligne depuis l'objet
-   * Détecte si c'est une ligne spécifique (avec marcheId) ou générale (sans marcheId)
+   * Détecte si c'est une ligne spécifique (avec marchés) ou générale (sans marché)
    *
-   * @param ligne - Objet ligne avec propriétés id, natureLigneFonctionnelleLabel, et optionnellement marcheId
+   * @param ligne - Objet ligne avec propriétés id, natureLigneFonctionnelleLabel, et optionnellement marches
    *
    * @example
    * // Détection automatique du type
@@ -113,8 +113,8 @@ export class LineNavigationService {
       return;
     }
 
-    // Détection automatique : si marcheId existe, c'est une ligne spécifique
-    const lineType = ligne.marcheId ? LineType.SPECIFIC : LineType.GENERAL;
+    // Détection automatique : si des marchés sont associés, c'est une ligne spécifique
+    const lineType = ligne.marches && ligne.marches.length > 0 ? LineType.SPECIFIC : LineType.GENERAL;
 
     this.redirectToLineDetails(ligne.id, ligne.natureLigneFonctionnelleLabel, lineType);
   }

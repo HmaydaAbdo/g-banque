@@ -264,10 +264,6 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   //  HELPERS
   // ═══════════════════════════════════════════════════════════════
 
-  isDecouvert(jour: AgiosJournalierResponseDto): boolean {
-    return jour.soldeJournalier < 0;
-  }
-
   getStatutSeverity(statut: StatutTrimestre): 'success' | 'danger' | 'warning' | 'info' {
     return statut === StatutTrimestre.CLOTURE ? 'success' : 'warning';
   }
@@ -284,5 +280,20 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
 
   get hasDateFilter(): boolean {
     return !!this.journalierDto.dateLimite;
+  }
+
+  /** Vrai si le type d'agios courant est Préfinancement (multi-marché). */
+  get isPrefi(): boolean {
+    return this.typeAgios === TypeAgios.PREFINANCEMENT;
+  }
+
+  /** Libellé de la colonne "Solde" : encours pour PREFI, solde comptable pour FC. */
+  get soldeColLabel(): string {
+    return this.isPrefi ? 'Encours' : 'Solde';
+  }
+
+  /** Libellé du KPI "jours actifs" : encours pour PREFI, découvert pour FC. */
+  get joursActifsLabel(): string {
+    return this.isPrefi ? 'JOURS ENCOURS' : 'JOURS DÉC.';
   }
 }

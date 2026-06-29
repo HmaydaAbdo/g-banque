@@ -125,6 +125,12 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // ========== TEMPLATE HELPERS ==========
+
+  getMarchesExtraTooltip(marches: any[]): string {
+    return marches.slice(2).map((m: any) => m.numero).join(', ');
+  }
+
   // ========== INITIALIZATION ==========
 
   private initBreadcrumb(): void {

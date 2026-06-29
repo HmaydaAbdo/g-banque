@@ -155,54 +155,34 @@
             </small>
           </div>
 
-          <!-- ========== MARCHÉ (OPTIONNEL) ========== -->
-          <div class="field col-12 md:col-6">
-            <label for="marche" class="block text-900 font-medium mb-2">
-              Marché
+          <!-- ========== MARCHÉS (OPTIONNEL — ManyToMany) ========== -->
+          <div class="field col-12">
+            <label for="marcheIds" class="block text-900 font-medium mb-2">
+              Marchés associés
+              <span class="text-500 font-normal text-sm ml-1">(optionnel — plusieurs possibles)</span>
             </label>
-            <p-dropdown
-              id="marche"
-              formControlName="marcheId"
+            <p-multiSelect
+              id="marcheIds"
+              formControlName="marcheIds"
               [options]="marchesOptions"
               optionLabel="label"
               optionValue="value"
               [filter]="true"
               filterBy="label"
-              placeholder="Sélectionnez un marché (optionnel)"
+              placeholder="Sélectionnez un ou plusieurs marchés"
               [showClear]="true"
-              [virtualScroll]="true"
-              [virtualScrollItemSize]="38"
-              [lazy]="true"
-              [virtualScrollOptions]="marchesScrollerOptions"
-              (onFilter)="onFilterMarches($event)"
-              [loading]="loadingMarches"
               [disabled]="!selectedBanqueId"
-              styleClass="w-full">
-
-              <!-- Template pour l'élément sélectionné -->
-              <ng-template pTemplate="selectedItem" let-selectedOption>
-                <div class="flex align-items-center gap-2" *ngIf="selectedOption">
-                  <i class="pi pi-file p-text-secondary"></i>
-                  <div>{{ selectedOption.label }}</div>
-                </div>
-              </ng-template>
-
-              <!-- Template pour les items dans la liste -->
-              <ng-template let-marche pTemplate="item">
-                <div class="flex align-items-center gap-2" style="height: 38px">
-                  <!-- Item chargé -->
-                  <ng-container *ngIf="marche && marche.value">
-                    <i class="pi pi-file"></i>
-                    <div>{{ marche.label }}</div>
-                  </ng-container>
-                  <!-- Placeholder de chargement -->
-                  <ng-container *ngIf="!marche || !marche.value">
-                    <i class="pi pi-spin pi-spinner text-secondary"></i>
-                    <span class="text-secondary">Chargement...</span>
-                  </ng-container>
-                </div>
-              </ng-template>
-            </p-dropdown>
+              [loading]="loadingMarches"
+              (onFilter)="onFilterMarches($event)"
+              styleClass="w-full"
+              display="chip"
+              emptyMessage="Aucun marché disponible pour cette banque"
+              emptyFilterMessage="Aucun marché correspondant">
+            </p-multiSelect>
+            <small class="text-500 mt-1 block">
+              <i class="pi pi-info-circle mr-1"></i>
+              Laissez vide pour une ligne générale non liée à un marché spécifique.
+            </small>
           </div>
 
           <!-- ========== PLAFOND ========== -->

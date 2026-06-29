@@ -521,6 +521,16 @@ div.flex.flex-column.gap-1.px-2 {
   background: var(--color-surface-2);
 }
 
+// ── Découvert row — agios calcul detail ────────────────────────────────────
+// Cible les <td> directement car PrimeNG applique son stripe sur les td,
+// pas sur le tr — un style sur le tr est donc invisible sur les lignes paires.
+.p-datatable .p-datatable-tbody > tr.row-decouvert > td {
+  background-color: var(--color-danger-light) !important;
+}
+
+.solde-negatif { color: var(--color-danger)  !important; }
+.solde-positif { color: var(--color-success) !important; }
+
 // Tags PrimeNG — jamais de coupure au milieu d'un mot (LINEAIRE, En Cours, etc.)
 .p-tag, .p-tag .p-tag-value { white-space: nowrap; }
 

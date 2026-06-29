@@ -158,6 +158,7 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'agios',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../agios/agios.routes').then(m => m.AGIOS_ROUTES)
   },
 

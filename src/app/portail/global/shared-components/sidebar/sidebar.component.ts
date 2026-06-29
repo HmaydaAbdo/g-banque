@@ -152,9 +152,10 @@ export class SidebarComponent implements OnInit {
     {
       label: 'Les Agios',
       icon: 'pi pi-money-bill',
+      requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
       items: [
-        { label: 'Liste des Agios', icon: 'pi pi-list', routerLink: '/portail/agios' },
-        { label: 'Calcul des Agios', icon: 'pi pi-calculator', routerLink: '/portail/agios/calcul' },
+        { label: 'Liste des Agios', icon: 'pi pi-list', routerLink: '/portail/agios', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Calcul des Agios', icon: 'pi pi-calculator', routerLink: '/portail/agios/calcul', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
       ]
     },
     {

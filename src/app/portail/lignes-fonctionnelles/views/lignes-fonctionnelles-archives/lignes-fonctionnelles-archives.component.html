@@ -157,7 +157,7 @@
           <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
           <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
           <th pSortableColumn="natureLigneFonctionnelleLabel">Nature <p-sortIcon field="natureLigneFonctionnelleLabel"></p-sortIcon></th>
-          <th pSortableColumn="numeroMarche">Marché <p-sortIcon field="numeroMarche"></p-sortIcon></th>
+          <th>Marché(s)</th>
           <th pSortableColumn="plafond">Plafond <p-sortIcon field="plafond"></p-sortIcon></th>
           <th pSortableColumn="encours">Encours <p-sortIcon field="encours"></p-sortIcon></th>
           <th pSortableColumn="solde">Solde <p-sortIcon field="solde"></p-sortIcon></th>
@@ -187,7 +187,26 @@
           <td>{{ ligne.id }}</td>
           <td>{{ ligne.banqueNom }}</td>
           <td>{{ ligne.natureLigneFonctionnelleLabel }}</td>
-          <td>{{ ligne.numeroMarche ?? ligne.marcheNumero ?? '****' }}</td>
+          <td>
+            @if (ligne.marches && ligne.marches.length > 0) {
+              <span class="flex flex-wrap gap-1">
+                @for (m of ligne.marches.slice(0, 2); track m.id) {
+                  <p-tag [value]="m.numero" severity="info" styleClass="text-xs"></p-tag>
+                }
+                @if (ligne.marches.length > 2) {
+                  <p-tag
+                    [value]="'+' + (ligne.marches.length - 2)"
+                    severity="secondary"
+                    styleClass="text-xs"
+                    [pTooltip]="getMarchesExtraTooltip(ligne.marches)"
+                    tooltipPosition="top">
+                  </p-tag>
+                }
+              </span>
+            } @else {
+              <span class="text-400 font-italic text-xs">Général</span>
+            }
+          </td>
           <td>{{ ligne.plafond | number:'1.2-2' }}</td>
           <td>{{ ligne.encours !== null && ligne.encours !== undefined ? (ligne.encours | number:'1.2-2') : '***' }}</td>
           <td>{{ ligne.solde !== null && ligne.solde !== undefined ? (ligne.solde | number) : '***' }}</td>

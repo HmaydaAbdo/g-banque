@@ -33,11 +33,12 @@ import {
 // PrimeNG
 import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import { MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { CalendarModule } from 'primeng/calendar';
@@ -70,9 +71,9 @@ const DEBOUNCE_TIME = 300;
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, NgIf, InputTextModule, DropdownModule,
-    InputNumberModule, ButtonModule, RippleModule, ToastModule, ConfirmDialogModule,
-    CalendarModule, BreadcrumbModule, RouterLink, RouterLinkActive, TooltipModule,
-    DialogModule, TableModule
+    MultiSelectModule, InputNumberModule, ButtonModule, RippleModule, ToastModule,
+    ConfirmDialogModule, CalendarModule, BreadcrumbModule, RouterLink, RouterLinkActive,
+    TooltipModule, DialogModule, TableModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -104,9 +105,8 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
   sousLigneEditMode = false;
   currentSousLigneIndex: number | null = null;
 
-  // ========== MARCHÉ LAZY LOADING ==========
+  // ========== MARCHÉ LOADING ==========
   loadingMarches = false;
-  marchesScrollerOptions: ScrollerOptions;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -118,14 +118,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
     private readonly messageService: MessageService,
     private readonly confirmationService: ConfirmationService,
     private readonly marcheService: MarcheService
-  ) {
-    this.marchesScrollerOptions = {
-      delay: 250,
-      showLoader: true,
-      lazy: true,
-      onLazyLoad: this.onLazyLoadMarches.bind(this)
-    };
-  }
+  ) {}
 
   // ========== LIFECYCLE HOOKS ==========
 
@@ -155,7 +148,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
     this.ligneFonctionnelleForm = this.fb.group({
       banqueId: [null, Validators.required],
       natureLigneFonctionnelleId: [null, Validators.required],
-      marcheId: [null], // ✅ Optionnel
+      marcheIds: [[]], // Optionnel — liste de marchés (ManyToMany)
       plafond: [null, [Validators.required, Validators.min(0.01), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       taux: [null, [Validators.required, Validators.min(0), Validators.max(100), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       dateDepart: [null, Validators.required],
@@ -179,13 +172,11 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
     ]).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: ([banques, natures]) => {
+      next: ([banques, natures]: [any[], any[]]) => {
         this.banquesOptions = banques;
         this.natureLigneOptions = natures;
       },
-      error: (err) => {
-        console.error('Error loading dropdowns:', err);
-      }
+      error: (_err: unknown) => {}
     });
   }
 
@@ -228,40 +219,34 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
     this.ligneFonctionnelleForm.get('banqueId')!.valueChanges.pipe(
       takeUntil(this.destroy$),
       tap(banqueId => {
-        // Reset marché quand banque change
-        this.ligneFonctionnelleForm.patchValue({ marcheId: null }, { emitEvent: false });
+        // Reset marchés quand la banque change
+        this.ligneFonctionnelleForm.patchValue({ marcheIds: [] }, { emitEvent: false });
         this.selectedBanqueId$.next(banqueId);
-        this.marchesOptions = []; // Clear previous options
+        this.marchesOptions = [];
       }),
       filter(banqueId => !!banqueId),
-      switchMap(banqueId => this.loadMarchesForBanque(banqueId, 0))
+      switchMap(banqueId => this.loadMarchesForBanque(banqueId))
     ).subscribe({
-      next: (response) => {
-        this.initializeMarchesOptions(response);
-      },
-      error: (err) => {
-        console.error('Error loading marchés:', err);
-        this.marchesOptions = [];
-      }
+      next: (response) => this.marchesOptions = this.toMarcheOptions(response),
+      error: () => this.marchesOptions = []
     });
   }
 
   private setupMarcheFilterStream(): void {
-    combineLatest([
-      this.marcheFilter$.pipe(debounceTime(DEBOUNCE_TIME), distinctUntilChanged()),
-      this.selectedBanqueId$.pipe(filter(id => id !== null))
-    ]).pipe(
+    // Recherche réactive dans le MultiSelect
+    this.marcheFilter$.pipe(
       takeUntil(this.destroy$),
-      switchMap(([filter, banqueId]) =>
-        this.loadMarchesForBanque(banqueId!, 0, filter)
-      )
-    ).subscribe({
-      next: (response) => {
-        this.initializeMarchesOptions(response);
-      },
-      error: (err) => {
-        console.error('Error filtering marchés:', err);
-      }
+      debounceTime(DEBOUNCE_TIME),
+      distinctUntilChanged()
+    ).subscribe(filter => {
+      const banqueId = this.selectedBanqueId$.value;
+      if (!banqueId) return;
+      this.loadMarchesForBanque(banqueId, filter)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => this.marchesOptions = this.toMarcheOptions(response),
+          error: () => {}
+        });
     });
   }
 
@@ -295,59 +280,26 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
 
   // ========== MARCHÉ LOADING ==========
 
-  private loadMarchesForBanque(banqueId: number, page: number, filter: string = '') {
+  private loadMarchesForBanque(banqueId: number, filter: string = '') {
     return this.marcheService.getAllMarches(
-      { banqueId, numero: filter },
-      page,
-      MARCHE_PAGE_SIZE,
+      { banqueId, numero: filter || undefined },
+      0,
+      100,
       'numero,asc'
     ).pipe(
-      catchError(err => {
-        console.error('Error loading marchés:', err);
-        return of({ content: [], page: { totalElements: 0 } });
-      })
+      catchError(() => of({ content: [] }))
     );
   }
 
-  private initializeMarchesOptions(response: any): void {
-    const total = response.page.totalElements;
-    const data = response.content.map((m: any) => ({ label: m.numero, value: m.id }));
-
-    this.marchesOptions = Array.from({ length: total }).map(() => ({}));
-    this.marchesOptions.splice(0, data.length, ...data);
-  }
-
-  onLazyLoadMarches(event: any): void {
-    const banqueId = this.selectedBanqueId$.value;
-    if (!banqueId) return;
-
-    const { first } = event;
-    const page = Math.floor(first / MARCHE_PAGE_SIZE);
-
-    if (this.marchesOptions[first]?.value !== undefined) {
-      return;
-    }
-
-    this.loadingMarches = true;
-    this.loadMarchesForBanque(banqueId, page, this.marcheFilter$.value)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          const newItems = response.content.map((m: any) => ({ label: m.numero, value: m.id }));
-          const updatedOptions = [...this.marchesOptions];
-          updatedOptions.splice(first, newItems.length, ...newItems);
-          this.marchesOptions = updatedOptions;
-          this.loadingMarches = false;
-        },
-        error: () => {
-          this.loadingMarches = false;
-        }
-      });
+  private toMarcheOptions(response: any): Array<{ label: string; value: number }> {
+    return (response.content ?? []).map((m: any) => ({
+      label: `${m.numero} — ${m.nom}`,
+      value: m.id
+    }));
   }
 
   onFilterMarches(event: any): void {
-    const query = event.filter?.trim() || '';
-    this.marcheFilter$.next(query);
+    this.marcheFilter$.next(event.filter?.trim() ?? '');
   }
 
   // ========== ROUTE HANDLING ==========
@@ -381,42 +333,37 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
   }
 
   private patchFormWithLigne(ligne: LigneFonctionnelleResponse): void {
-    // Patch banque first pour trigger marché loading
-    this.ligneFonctionnelleForm.patchValue({
-      banqueId: ligne.banqueId
-    }, { emitEvent: true });
+    // Patch banque en premier pour déclencher le chargement des marchés
+    this.ligneFonctionnelleForm.patchValue({ banqueId: ligne.banqueId }, { emitEvent: true });
 
-    // Attendre que les marchés soient chargés
+    // Attendre que les marchés soient chargés puis injecter les valeurs
     setTimeout(() => {
-      if (ligne.marcheId) {
-        this.ensureMarcheInOptions(ligne.marcheId).pipe(
-          takeUntil(this.destroy$)
-        ).subscribe(() => {
-          this.patchRemainingFields(ligne);
-        });
-      } else {
-        this.patchRemainingFields(ligne);
-      }
+      const marcheIds = ligne.marches?.map(m => m.id) ?? [];
+      this.ensureMarchesInOptions(marcheIds).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(() => this.patchRemainingFields(ligne));
     }, 500);
   }
 
-  private ensureMarcheInOptions(marcheId: number) {
-    if (this.marchesOptions.find(m => m?.value === marcheId)) {
-      return of(null);
-    }
+  private ensureMarchesInOptions(marcheIds: number[]) {
+    if (!marcheIds.length) return of(null);
 
-    return this.marcheService.getMarcheById(marcheId).pipe(
-      tap(marche => {
-        const selected = { label: marche.numero, value: marche.id };
-        this.marchesOptions[0] = selected;
-      }),
+    const missingIds = marcheIds.filter(id => !this.marchesOptions.find(m => m?.value === id));
+    if (!missingIds.length) return of(null);
+
+    // Recharger les marchés de la banque pour inclure ceux manquants
+    const banqueId = this.selectedBanqueId$.value;
+    if (!banqueId) return of(null);
+
+    return this.loadMarchesForBanque(banqueId).pipe(
+      tap(response => this.marchesOptions = this.toMarcheOptions(response)),
       catchError(() => of(null))
     );
   }
 
   private patchRemainingFields(ligne: LigneFonctionnelleResponse): void {
     this.ligneFonctionnelleForm.patchValue({
-      marcheId: ligne.marcheId,
+      marcheIds: ligne.marches?.map(m => m.id) ?? [],
       natureLigneFonctionnelleId: ligne.natureLigneFonctionnelleId,
       plafond: ligne.plafond,
       taux: ligne.taux,
@@ -599,7 +546,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
     return {
       banqueId: formValue.banqueId,
       natureLigneFonctionnelleId: formValue.natureLigneFonctionnelleId,
-      marcheId: formValue.marcheId || null, // ✅ Peut être null
+      marcheIds: formValue.marcheIds ?? [],
       plafond: formValue.plafond,
       taux: formValue.taux,
       dateDepart: toLocalDateString(formValue.dateDepart)!,

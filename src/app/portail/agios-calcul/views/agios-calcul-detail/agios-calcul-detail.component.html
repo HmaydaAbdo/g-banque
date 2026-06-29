@@ -103,9 +103,9 @@
         </span>
       </div>
 
-      <!-- KPI: Jours découvert -->
+      <!-- KPI: Jours actifs (découvert pour FC, encours pour PREFI) -->
       <div *ngIf="aggregates" class="flex flex-column align-items-center gap-0">
-        <span class="text-400 text-xs font-medium" style="letter-spacing:0.04em">JOURS DÉC.</span>
+        <span class="text-400 text-xs font-medium" style="letter-spacing:0.04em">{{ joursActifsLabel }}</span>
         <span class="font-bold text-800 text-base">
           {{ aggregates.nbJoursDecouvert }}
           <span class="text-400 text-xs font-normal"> / {{ aggregates.nbJoursTotal }}</span>
@@ -169,8 +169,11 @@
           <th pSortableColumn="dateValeur" style="min-width:110px">
             Date <p-sortIcon field="dateValeur"></p-sortIcon>
           </th>
+          <th *ngIf="isPrefi" pSortableColumn="marcheNom" style="min-width:150px">
+            Marché <p-sortIcon field="marcheNom"></p-sortIcon>
+          </th>
           <th pSortableColumn="soldeJournalier" class="text-right" style="min-width:120px">
-            Solde <p-sortIcon field="soldeJournalier"></p-sortIcon>
+            {{ soldeColLabel }} <p-sortIcon field="soldeJournalier"></p-sortIcon>
           </th>
           <th pSortableColumn="baseCalcul" class="text-right" style="min-width:115px">
             Base calcul <p-sortIcon field="baseCalcul"></p-sortIcon>
@@ -187,12 +190,17 @@
       </ng-template>
 
       <ng-template pTemplate="body" let-jour>
-        <tr [style]="isDecouvert(jour) ? 'background:var(--color-danger-light)' : ''">
+        <tr [ngClass]="{'row-decouvert': !isPrefi && jour.soldeJournalier < 0}">
 
           <td class="font-semibold text-800">{{ jour.dateValeur | date:'dd/MM/yyyy' }}</td>
 
+          <!-- Colonne Marché — visible uniquement pour PREFI -->
+          <td *ngIf="isPrefi" class="text-700 text-sm font-medium">
+            {{ jour.marcheNom || '—' }}
+          </td>
+
           <td class="text-right font-semibold"
-              [style]="isDecouvert(jour) ? 'color:var(--color-danger)' : 'color:var(--color-success)'">
+              [ngClass]="!isPrefi && jour.soldeJournalier < 0 ? 'solde-negatif' : 'solde-positif'">
             {{ jour.soldeJournalier | number:'1.2-2' }}
           </td>
 
@@ -232,6 +240,7 @@
         <tr *ngIf="aggregates"
             style="background:var(--color-info-light);font-weight:700;border-top:2px solid var(--color-info)">
           <td class="font-bold text-700 text-sm">TOTAL</td>
+          <td *ngIf="isPrefi"></td>
           <td></td>
           <td></td>
           <td></td>
@@ -241,13 +250,12 @@
             {{ aggregates.totalAgiosTTC | number:'1.2-2' }}
             <span class="text-xs font-normal ml-1">MAD</span>
           </td>
-          <td></td>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="8">
+          <td [attr.colspan]="isPrefi ? 8 : 7">
             <div class="flex flex-column align-items-center gap-2 py-6">
               <div class="text-600 font-medium">Aucun détail journalier</div>
               <div class="text-400 text-sm">Lancez un recalcul depuis le dashboard.</div>
@@ -258,7 +266,7 @@
 
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="8" class="text-center p-4 text-500 text-sm">
+          <td [attr.colspan]="isPrefi ? 8 : 7" class="text-center p-4 text-500 text-sm">
             <i class="pi pi-spin pi-spinner mr-2"></i>Chargement…
           </td>
         </tr>

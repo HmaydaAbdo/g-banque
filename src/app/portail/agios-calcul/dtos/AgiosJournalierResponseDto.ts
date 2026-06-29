@@ -14,4 +14,8 @@ export interface AgiosJournalierResponseDto {
   agiosTTC: number;
   dateCalcul: string;
   nbRecalculs: number;
+  /** Identifiant du marché — absent pour les agios Facilité de Caisse. */
+  marcheId?: number;
+  /** Nom du marché — absent pour les agios Facilité de Caisse. */
+  marcheNom?: string;
 }
