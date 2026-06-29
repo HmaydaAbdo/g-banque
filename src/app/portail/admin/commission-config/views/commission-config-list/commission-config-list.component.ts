@@ -74,6 +74,12 @@ export class CommissionConfigListComponent implements OnInit {
   ngOnInit(): void {
     this.buildForm();
     this.loadAll();
+
+    // Reset du champ référence quand le type change
+    // (évite de garder un organisme leasing sélectionné en mode Virement et vice-versa)
+    this.form.get('type')?.valueChanges.subscribe(() => {
+      this.form.get('organismeNom')?.reset(null);
+    });
   }
 
   private buildForm(): void {
@@ -122,6 +128,34 @@ export class CommissionConfigListComponent implements OnInit {
       { label: '— Aucun —', value: null },
       ...this.organismes.map(o => ({ label: o.nom, value: o.nom }))
     ];
+  }
+
+  /**
+   * Options du champ "référence" (organismeNom en base) :
+   * - Virement → liste des banques (valeur = nom, pour correspondre à banqueBeneficiaire.nom)
+   * - Autres types → liste des organismes leasing
+   */
+  get referenceOptions() {
+    const currentType = this.form.get('type')?.value as string | null;
+    if (currentType === 'Virement') {
+      return [
+        { label: '— Aucune —', value: null },
+        ...this.banques.map(b => ({ label: b.nom, value: b.nom }))
+      ];
+    }
+    return this.organismeOptions;
+  }
+
+  get referenceLabel(): string {
+    const currentType = this.form.get('type')?.value as string | null;
+    return currentType === 'Virement'
+      ? 'Banque bénéficiaire'
+      : 'Organisme leasing';
+  }
+
+  get referencePlaceholder(): string {
+    const currentType = this.form.get('type')?.value as string | null;
+    return currentType === 'Virement' ? '— Toutes banques —' : '— Aucun —';
   }
 
   openCreate(): void {

@@ -67,6 +67,43 @@
         </div>
 
 
+        <!-- ─── Banque ─────────────────────────────────────────────────────────── -->
+        <div class="field col-12 md:col-6">
+          <label for="banqueId" class="block font-medium mb-2">{{ banqueLabel }}</label>
+          <p-dropdown
+            id="banqueId"
+            formControlName="banqueId"
+            [options]="banquesOptions"
+            [loading]="loadingBanques"
+            placeholder="Sélectionner une banque"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="true"
+            filterBy="label"
+            [showClear]="false"
+            [ngClass]="{ 'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched }">
+            <ng-template pTemplate="selectedItem" let-selected>
+              <div class="flex align-items-center gap-2" *ngIf="selected">
+                <i class="pi pi-building"></i>
+                <span>{{ selected.label }}</span>
+              </div>
+            </ng-template>
+            <ng-template let-b pTemplate="item">
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-building text-secondary"></i>
+                <span>{{ b.label }}</span>
+              </div>
+            </ng-template>
+          </p-dropdown>
+          <small class="text-color-secondary block mt-1">
+            <i class="pi pi-info-circle mr-1"></i>{{ banqueHelperText }}
+          </small>
+          <small class="p-error" *ngIf="f['banqueId'].invalid && f['banqueId'].touched">
+            La banque est requise.
+          </small>
+        </div>
+
+        <!-- ─── Montant ────────────────────────────────────────────────────────── -->
         <div class="field col-12 md:col-6">
           <label for="montant" class="block font-medium mb-2">Montant (MAD) *</label>
           <p-inputNumber
@@ -84,16 +121,28 @@
         </div>
 
         <div class="field col-12 md:col-6">
-          <label for="type" class="block font-medium mb-2">Type *</label>
+          <label for="type" class="block font-medium mb-2">Type d'opération *</label>
           <p-dropdown
             id="type"
             formControlName="type"
             [options]="typeOptions"
-            placeholder="Sélectionner un type"
+            placeholder="Sélectionner un type d'opération"
             optionLabel="label"
             optionValue="value"
-            [ngClass]="{ 'ng-invalid ng-dirty': f['type'].invalid && f['type'].touched }"
-          ></p-dropdown>
+            [ngClass]="{ 'ng-invalid ng-dirty': f['type'].invalid && f['type'].touched }">
+            <ng-template pTemplate="selectedItem" let-selected>
+              <div class="flex align-items-center gap-2" *ngIf="selected">
+                <i [class]="selected.value === 'DEBLOCAGE' ? 'pi pi-arrow-down text-green-500' : 'pi pi-arrow-up text-red-500'"></i>
+                <span>{{ selected.label }}</span>
+              </div>
+            </ng-template>
+            <ng-template let-opt pTemplate="item">
+              <div class="flex align-items-center gap-2">
+                <i [class]="opt.value === 'DEBLOCAGE' ? 'pi pi-arrow-down text-green-500' : 'pi pi-arrow-up text-red-500'"></i>
+                <span>{{ opt.label }}</span>
+              </div>
+            </ng-template>
+          </p-dropdown>
           <small class="p-error" *ngIf="f['type'].invalid && f['type'].touched">
             Le type est requis.
           </small>

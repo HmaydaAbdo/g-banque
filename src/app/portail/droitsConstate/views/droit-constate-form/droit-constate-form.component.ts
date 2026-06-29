@@ -21,6 +21,7 @@ import { TooltipModule } from 'primeng/tooltip';
 // Services & DTOs
 import { DroitConstateService } from "../../service/DroitConstateService";
 import { MarcheService } from '../../../Marches/service/marche-service.service';
+import { BanqueService } from '../../../comptes-bancaire/services/BanqueService';
 import { Type } from "../../../prefinancements/enums/Type";
 import { DroitConstateRequestDto } from '../../dtos/DroitConstateRequestDto';
 import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
@@ -57,6 +58,8 @@ export class DroitConstateFormComponent implements OnInit {
   };
 
   typeOptions: any[] = [];
+  banquesOptions: { label: string; value: number }[] = [];
+  loadingBanques = false;
   items: MenuItem[] | undefined;
 
   constructor(
@@ -64,6 +67,7 @@ export class DroitConstateFormComponent implements OnInit {
     private route: ActivatedRoute,
     private droitConstateService: DroitConstateService,
     private marcheService: MarcheService,
+    private banqueService: BanqueService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private location: Location,
@@ -73,6 +77,7 @@ export class DroitConstateFormComponent implements OnInit {
     this.setupBreadcrumbs();
     this.initForm();
     this.loadTypeOptions();
+    this.loadBanques();
 
     // Initialisation de la recherche avec debounce
     this.filterSubject.pipe(
@@ -85,6 +90,13 @@ export class DroitConstateFormComponent implements OnInit {
     // Chargement initial (page 0)
     this.loadInitialMarches();
 
+    // Quand l'utilisateur change de marché, pré-remplir la banque automatiquement
+    this.droitConstateForm.get('marcheId')!.valueChanges.subscribe(marcheId => {
+      if (marcheId && !this.isEditMode) {
+        this.prefillBanqueFromMarche(marcheId);
+      }
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode = true;
@@ -96,6 +108,7 @@ export class DroitConstateFormComponent implements OnInit {
   initForm(): void {
     this.droitConstateForm = this.fb.group({
       marcheId: [null, Validators.required],
+      banqueId: [null, Validators.required],
       dateEmission: [null, Validators.required],
       montant: [null, [Validators.required, Validators.min(0.01)]],
       type: [null, Validators.required],
@@ -159,6 +172,7 @@ export class DroitConstateFormComponent implements OnInit {
           }
           this.droitConstateForm.patchValue({
             marcheId: dto.marcheId,
+            banqueId: dto.banqueId,
             dateEmission: parseLocalDate(dto.dateEmission),
             montant: dto.montant,
             type: dto.type,
@@ -174,10 +188,59 @@ export class DroitConstateFormComponent implements OnInit {
   }
 
   loadTypeOptions(): void {
-    this.typeOptions = Object.keys(Type).map((key) => ({
-      label: key,
-      value: Type[key as keyof typeof Type],
-    }));
+    this.typeOptions = [
+      { label: 'Déblocage (encaissement)', value: Type.DEBLOCAGE },
+      { label: 'Remboursement (décaissement)', value: Type.REMBOURSEMENT },
+    ];
+  }
+
+  /** Charge toutes les banques pour le dropdown banque. */
+  loadBanques(): void {
+    this.loadingBanques = true;
+    this.banqueService.getAllBanques({}, 0, 1000).subscribe({
+      next: (res) => {
+        this.banquesOptions = res.content.map(b => ({ label: b.nom, value: b.id }));
+        this.loadingBanques = false;
+      },
+      error: () => { this.loadingBanques = false; }
+    });
+  }
+
+  /**
+   * Pré-remplit le champ banque depuis la banque du marché sélectionné.
+   * L'utilisateur peut ensuite modifier ce choix librement.
+   */
+  prefillBanqueFromMarche(marcheId: number): void {
+    this.marcheService.getMarcheById(marcheId).subscribe({
+      next: (marche) => {
+        if (marche.banqueId) {
+          this.droitConstateForm.patchValue({ banqueId: marche.banqueId }, { emitEvent: false });
+        }
+      }
+    });
+  }
+
+  /**
+   * Libellé contextuel du champ banque selon le type sélectionné.
+   * Aide l'utilisateur à comprendre le rôle de la banque dans l'opération.
+   */
+  get banqueLabel(): string {
+    const type = this.droitConstateForm.get('type')?.value;
+    if (type === Type.DEBLOCAGE) return 'Banque d\'encaissement (reçoit les fonds du Trésor) *';
+    if (type === Type.REMBOURSEMENT) return 'Banque de décaissement (effectue le remboursement) *';
+    return 'Banque *';
+  }
+
+  /**
+   * Helper text contextuel selon le type sélectionné.
+   */
+  get banqueHelperText(): string {
+    const type = this.droitConstateForm.get('type')?.value;
+    if (type === Type.DEBLOCAGE)
+      return 'Pré-remplie depuis la banque du marché. Modifiable si les fonds arrivent sur un autre compte.';
+    if (type === Type.REMBOURSEMENT)
+      return 'Pré-remplie depuis la banque du marché. Modifiable si le remboursement part d\'un autre compte.';
+    return 'Sélectionnez d\'abord un marché pour pré-remplir automatiquement.';
   }
 
   setupBreadcrumbs(): void {

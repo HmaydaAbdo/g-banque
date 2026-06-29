@@ -29,7 +29,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th>Banque</th>
-          <th>Organisme</th>
+          <th>Référence (organisme / bénéficiaire)</th>
           <th>Type transaction</th>
           <th>Condition</th>
           <th class="text-right">Montant (MAD)</th>
@@ -108,10 +108,13 @@
     </div>
 
     <div class="flex flex-column gap-1">
-      <label class="text-sm font-medium">Organisme <span class="text-400 text-xs">(uniquement pour SI_MATCH)</span></label>
-      <p-dropdown formControlName="organismeNom" [options]="organismeOptions"
+      <label class="text-sm font-medium">
+        {{ referenceLabel }}
+        <span class="text-400 text-xs">(uniquement pour SI_MATCH / SI_NON_MATCH)</span>
+      </label>
+      <p-dropdown formControlName="organismeNom" [options]="referenceOptions"
                   optionLabel="label" optionValue="value"
-                  placeholder="— Aucun —" [filter]="true"
+                  [placeholder]="referencePlaceholder" [filter]="true"
                   appendTo="body" styleClass="w-full">
       </p-dropdown>
     </div>
