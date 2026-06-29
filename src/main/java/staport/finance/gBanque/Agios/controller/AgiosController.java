@@ -25,6 +25,12 @@ import staport.finance.gBanque.Agios.service.AgiosService;
  * <p>Thin controller — délègue toute la logique à {@link AgiosService}.
  * La gestion des exceptions est déléguée à
  * {@link staport.finance.gBanque.Agios.exceptions.AgiosExceptionHandler}.
+ *
+ * <h2>RBAC</h2>
+ * <ul>
+ *   <li>Lecture, création, modification — {@code DEPT_Finance:MEMBER}, {@code DEPT_Finance:DIRECTOR} ou {@code SYSTEM_ADMIN}</li>
+ *   <li>Suppression et toggle statut — {@code SYSTEM_ADMIN} uniquement</li>
+ * </ul>
  */
 @Tag(name = "Agios", description = "Gestion des agios bancaires")
 @SecurityRequirement(name = "bearerAuth")
@@ -32,10 +38,9 @@ import staport.finance.gBanque.Agios.service.AgiosService;
 @RequestMapping("/agios")
 public class AgiosController {
 
-    private static final String AUTHENTICATED  = "isAuthenticated()";
     private static final String FINANCE_OR_ADMIN =
-            "hasAnyAuthority('FINANCE','SYSTEM_ADMIN')";
-    private static final String SYSTEM_ADMIN   = "hasAuthority('SYSTEM_ADMIN')";
+            "hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
     private final AgiosService agiosService;
 
@@ -64,7 +69,7 @@ public class AgiosController {
             @ApiResponse(responseCode = "404", description = "Agios introuvable")
     })
     @GetMapping("/{id}")
-    @PreAuthorize(AUTHENTICATED)
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<AgiosResponseDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(agiosService.getById(id));
     }
@@ -73,7 +78,7 @@ public class AgiosController {
 
     @Operation(summary = "Rechercher des agios")
     @PostMapping("/search")
-    @PreAuthorize(AUTHENTICATED)
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Page<AgiosResponseDto>> searchAgios(
             @RequestBody AgiosSearchDto dto,
             Pageable pageable) {
@@ -113,7 +118,7 @@ public class AgiosController {
 
     @Operation(summary = "Récupérer les agios en cours d'une banque")
     @GetMapping("/encours/{banqueId}")
-    @PreAuthorize(AUTHENTICATED)
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursAgiosDto> getOutstandingAgios(
             @PathVariable Long banqueId,
             @RequestParam(required = false) String libelle,
@@ -131,7 +136,7 @@ public class AgiosController {
             @ApiResponse(responseCode = "404", description = "Agios introuvable")
     })
     @PatchMapping("/{id}/toggle-status")
-    @PreAuthorize(FINANCE_OR_ADMIN)
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<AgiosResponseDto> toggleStatus(@PathVariable Long id) {
         return ResponseEntity.ok(agiosService.toggleStatus(id));
     }

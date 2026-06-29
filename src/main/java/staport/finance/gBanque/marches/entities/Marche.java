@@ -52,7 +52,7 @@ public class Marche  {
     @Column(name = "is_nanti", nullable = false)
     private boolean isNanti = true;
 
-    @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ManyToMany(mappedBy = "marches", fetch = FetchType.LAZY)
     private List<LigneFonctionnelle> lignesFonctionnelles = new ArrayList<>();
 
 
@@ -151,16 +151,6 @@ public class Marche  {
 
     public void setLignesFonctionnelles(List<LigneFonctionnelle> lignesFonctionnelles) {
         this.lignesFonctionnelles = lignesFonctionnelles;
-    }
-
-    public void addLigneFonctionnelle(LigneFonctionnelle ligne) {
-        this.lignesFonctionnelles.add(ligne);
-        ligne.setMarche(this);
-    }
-
-    public void removeLigneFonctionnelle(LigneFonctionnelle ligne) {
-        this.lignesFonctionnelles.remove(ligne);
-        ligne.setMarche(null);
     }
 
     public List<LigneFonctionnelleSpecifique> getLignesFonctionnellesSpecifiques() {

@@ -12,6 +12,8 @@ import staport.finance.gBanque.marches.entities.Marche;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 public class LigneFonctionnelleSpecifiqueMapper {
@@ -109,18 +111,22 @@ public class LigneFonctionnelleSpecifiqueMapper {
         if (entity.getNatureLigneFonctionnelle() != null) {
             Long natureId = entity.getNatureLigneFonctionnelle().getId();
 
+            List<Marche> marcheList = entity.getMarche() != null
+                    ? List.of(entity.getMarche())
+                    : Collections.emptyList();
+
             BigDecimal encours = encoursCalculatorService.calculateEncours(
                     entity.getId(),
                     natureId,
-                    entity.getMarche(),
-                    entity.getMarche().getBanque(),
+                    marcheList,
+                    entity.getMarche() != null ? entity.getMarche().getBanque() : null,
                     entity.getPlafond()
             );
 
             BigDecimal solde = encoursCalculatorService.calculateSolde(
                     entity.getId(),
                     natureId,
-                    entity.getMarche(),
+                    marcheList,
                     entity.getPlafond(),
                     encours
             );

@@ -1,10 +1,10 @@
 package staport.finance.gBanque.Agios.service.calculateurs;
 
-
+// @deprecated Remplacé par FcAgiosCalculateur — ce fichier sera supprimé.
+// Conservé temporairement pour éviter les erreurs de compilation liées aux targets compilés.
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
@@ -16,7 +16,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
+/** @deprecated Utiliser {@link FcAgiosCalculateur} à la place. */
+@Deprecated
 public class FaciliteCaisseCalculateur implements AgiosCalculateur {
 
     private static final Logger log = LoggerFactory.getLogger(FaciliteCaisseCalculateur.class);

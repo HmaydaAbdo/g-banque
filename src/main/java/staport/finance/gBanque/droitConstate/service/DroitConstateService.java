@@ -343,7 +343,7 @@ public class DroitConstateService {
 
         // ÉTAPE 2 : Ligne générale liée à ce marché
         Optional<LigneFonctionnelle> ligneGenerale =
-                ligneFonctionnelleRepository.findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(
+                ligneFonctionnelleRepository.findActiveLineForMarche(
                         marche.getId(),
                         dcNature.getId()
                 );

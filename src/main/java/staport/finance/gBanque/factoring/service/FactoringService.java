@@ -299,7 +299,7 @@ public class FactoringService {
 
         // ÉTAPE 2 : LigneFonctionnelle liée au marché spécifique
         Optional<LigneFonctionnelle> ligneGeneraleMarcheSpecifique =
-                ligneFonctionnelleRepository.findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(
+                ligneFonctionnelleRepository.findActiveLineForMarche(
                         marche.getId(),
                         factoringNature.getId()
                 );
@@ -313,7 +313,7 @@ public class FactoringService {
 
         // ÉTAPE 3 : LigneFonctionnelle générale de la banque
         Optional<LigneFonctionnelle> ligneGeneraleBanque =
-                ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndMarcheIsNullAndActifTrue(
+                ligneFonctionnelleRepository.findActiveGeneralLine(
                         marche.getBanque().getId(),
                         factoringNature.getId()
                 );

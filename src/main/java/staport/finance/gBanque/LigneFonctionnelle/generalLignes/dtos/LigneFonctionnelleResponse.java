@@ -3,6 +3,7 @@ package staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LigneFonctionnelleResponse {
@@ -14,9 +15,7 @@ public class LigneFonctionnelleResponse {
     private String natureLigneFonctionnelleLabel;
     private String natureLigneFonctionnelleDescription;
 
-    private Long marcheId;
-    private String numeroMarche;
-    private String nomMarche;
+    private List<MarcheRefDto> marches = new ArrayList<>();
 
     private BigDecimal plafond;
     private BigDecimal encours;
@@ -88,28 +87,12 @@ public class LigneFonctionnelleResponse {
         this.natureLigneFonctionnelleDescription = natureLigneFonctionnelleDescription;
     }
 
-    public Long getMarcheId() {
-        return marcheId;
+    public List<MarcheRefDto> getMarches() {
+        return marches;
     }
 
-    public void setMarcheId(Long marcheId) {
-        this.marcheId = marcheId;
-    }
-
-    public String getNumeroMarche() {
-        return numeroMarche;
-    }
-
-    public void setNumeroMarche(String numeroMarche) {
-        this.numeroMarche = numeroMarche;
-    }
-
-    public String getNomMarche() {
-        return nomMarche;
-    }
-
-    public void setNomMarche(String nomMarche) {
-        this.nomMarche = nomMarche;
+    public void setMarches(List<MarcheRefDto> marches) {
+        this.marches = marches;
     }
 
     public BigDecimal getPlafond() {
@@ -231,9 +214,7 @@ public class LigneFonctionnelleResponse {
                 ", banqueId=" + banqueId +
                 ", banqueNom='" + banqueNom + '\'' +
                 ", natureLigneFonctionnelleLabel='" + natureLigneFonctionnelleLabel + '\'' +
-                ", marcheId=" + marcheId +
-                ", numeroMarche='" + numeroMarche + '\'' +
-                ", nomMarche='" + nomMarche + '\'' +
+                ", marches=" + marches +
                 ", plafond=" + plafond +
                 ", encours=" + encours +
                 ", solde=" + solde +

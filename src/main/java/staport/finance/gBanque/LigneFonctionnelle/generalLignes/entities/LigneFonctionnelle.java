@@ -9,6 +9,7 @@
     import java.math.BigDecimal;
     import java.time.LocalDate;
 import java.time.OffsetDateTime;
+    import java.util.ArrayList;
     import java.util.List;
     import java.util.Objects;
 
@@ -28,9 +29,13 @@ import java.time.OffsetDateTime;
         @JoinColumn(name = "nature_ligne_id", nullable = false)
         private NatureLigneFonctionnelle natureLigneFonctionnelle;
 
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JoinColumn(name = "marche_id", nullable = true)
-        private Marche marche;
+        @ManyToMany(fetch = FetchType.LAZY)
+        @JoinTable(
+                name = "ligne_fonctionnelle_marche",
+                joinColumns = @JoinColumn(name = "ligne_id"),
+                inverseJoinColumns = @JoinColumn(name = "marche_id")
+        )
+        private List<Marche> marches = new ArrayList<>();
 
         @Column
         private BigDecimal plafond;
@@ -99,12 +104,12 @@ import java.time.OffsetDateTime;
             this.natureLigneFonctionnelle = natureLigneFonctionnelle;
         }
 
-        public Marche getMarche() {
-            return marche;
+        public List<Marche> getMarches() {
+            return marches;
         }
 
-        public void setMarche(Marche marche) {
-            this.marche = marche;
+        public void setMarches(List<Marche> marches) {
+            this.marches = marches;
         }
 
         public BigDecimal getPlafond() { return plafond; }
@@ -193,7 +198,7 @@ import java.time.OffsetDateTime;
                     "id=" + id +
                     ", banque=" + banque +
                     ", natureLigneFonctionnelle=" + natureLigneFonctionnelle +
-                    ", marche=" + marche +
+                    ", marches=" + marches +
                     ", plafond=" + plafond +
                     ", taux=" + taux +
                     ", dateDepart=" + dateDepart +

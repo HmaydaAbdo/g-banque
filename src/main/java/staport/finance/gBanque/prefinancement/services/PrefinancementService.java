@@ -330,7 +330,7 @@ public class PrefinancementService {
 
         // ÉTAPE 2 : LigneFonctionnelle liée au marché spécifique
         Optional<LigneFonctionnelle> ligneGeneraleMarcheSpecifique =
-                ligneFonctionnelleRepository.findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(
+                ligneFonctionnelleRepository.findActiveLineForMarche(
                         marche.getId(),
                         prefiNature.getId()
                 );
@@ -344,7 +344,7 @@ public class PrefinancementService {
 
         // ÉTAPE 3 : LigneFonctionnelle générale de la banque
         Optional<LigneFonctionnelle> ligneGeneraleBanque =
-                ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndMarcheIsNullAndActifTrue(
+                ligneFonctionnelleRepository.findActiveGeneralLine(
                         marche.getBanque().getId(),
                         prefiNature.getId()
                 );

@@ -22,6 +22,9 @@ public interface AgiosTrimestrielRepository extends JpaRepository<AgiosTrimestri
     List<AgiosTrimestriel> findByBanqueIdAndTrimestreAndAnnee(
             Long banqueId, int trimestre, int annee);
 
+    List<AgiosTrimestriel> findByBanqueIdAndTypeAgiosAndStatut(
+            Long banqueId, TypeAgios typeAgios, StatutTrimestre statut);
+
     List<AgiosTrimestriel> findByStatut(StatutTrimestre statut);
 
     List<AgiosTrimestriel> findAllByOrderByAnneeDescTrimestreDesc();

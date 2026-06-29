@@ -20,9 +20,9 @@ import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
-import staport.finance.gBanque.validation.dtos.agios.AgiosTransactionResponse;
-import staport.finance.gBanque.validation.dtos.agios.AgiosValidationRequest;
-import staport.finance.gBanque.validation.mapper.AgiosTransactionMapper;
+import staport.finance.gBanque.Agios.dtos.AgiosTransactionResponse;
+import staport.finance.gBanque.Agios.dtos.AgiosValidationRequest;
+import staport.finance.gBanque.Agios.mapper.AgiosTransactionMapper;
 
 import java.time.LocalDate;
 

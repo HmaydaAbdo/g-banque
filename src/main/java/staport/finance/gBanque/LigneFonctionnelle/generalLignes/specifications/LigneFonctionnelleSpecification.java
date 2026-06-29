@@ -2,10 +2,13 @@
 
     import jakarta.persistence.criteria.CriteriaBuilder;
     import jakarta.persistence.criteria.CriteriaQuery;
+    import jakarta.persistence.criteria.Join;
+    import jakarta.persistence.criteria.JoinType;
     import jakarta.persistence.criteria.Predicate;
     import jakarta.persistence.criteria.Root;
     import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleSearchCriteria;
     import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
+    import staport.finance.gBanque.marches.entities.Marche;
     import org.springframework.data.jpa.domain.Specification;
 
     import java.time.LocalDate;
@@ -29,7 +32,10 @@
                 }
 
                 if (criteria.getMarcheId() != null) {
-                    predicates.add(criteriaBuilder.equal(root.get("marche").get("id"), criteria.getMarcheId()));
+                    // JOIN sur la collection @ManyToMany marches
+                    Join<LigneFonctionnelle, Marche> marcheJoin = root.join("marches", JoinType.INNER);
+                    predicates.add(criteriaBuilder.equal(marcheJoin.get("id"), criteria.getMarcheId()));
+                    query.distinct(true);
                 }
 
                 // Search by Year of dateDepart
@@ -75,7 +81,7 @@
         }
 
         public static Specification<LigneFonctionnelle> hasMarche() {
-            return (Root<LigneFonctionnelle> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> criteriaBuilder.isNotNull(root.get("marche"));
+            return (Root<LigneFonctionnelle> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> criteriaBuilder.isNotEmpty(root.get("marches"));
         }
 
     }

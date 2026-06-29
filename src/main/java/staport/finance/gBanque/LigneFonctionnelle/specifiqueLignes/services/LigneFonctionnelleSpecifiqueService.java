@@ -549,7 +549,7 @@ public class LigneFonctionnelleSpecifiqueService {
 
     private void checkNoConflictWithGeneralLine(Marche marche, NatureLigneFonctionnelle nature) {
         Optional<LigneFonctionnelle> existingGeneralLine =
-                ligneFonctionnelleRepository.findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(
+                ligneFonctionnelleRepository.findActiveLineForMarche(
                         marche.getId(),
                         nature.getId()
                 );

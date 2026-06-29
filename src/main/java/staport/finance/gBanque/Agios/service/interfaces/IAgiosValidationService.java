@@ -1,7 +1,7 @@
 package staport.finance.gBanque.Agios.service.interfaces;
 
-import staport.finance.gBanque.validation.dtos.agios.AgiosTransactionResponse;
-import staport.finance.gBanque.validation.dtos.agios.AgiosValidationRequest;
+import staport.finance.gBanque.Agios.dtos.AgiosTransactionResponse;
+import staport.finance.gBanque.Agios.dtos.AgiosValidationRequest;
 
 import java.time.LocalDate;
 

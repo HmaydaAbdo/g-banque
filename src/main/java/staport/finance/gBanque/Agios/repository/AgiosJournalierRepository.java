@@ -11,10 +11,19 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AgiosJournalierRepository extends JpaRepository<AgiosJournalier, Long> , JpaSpecificationExecutor<AgiosJournalier> {
+public interface AgiosJournalierRepository extends JpaRepository<AgiosJournalier, Long>, JpaSpecificationExecutor<AgiosJournalier> {
 
-    Optional<AgiosJournalier> findByDateValeurAndBanqueIdAndTypeAgios(
+    // ── FC et types sans marché (marche IS NULL) ─────────────────────────────
+
+    Optional<AgiosJournalier> findByDateValeurAndBanqueIdAndTypeAgiosAndMarcheIsNull(
             LocalDate dateValeur, Long banqueId, TypeAgios typeAgios);
+
+    // ── Préfinancement et types avec marché (marche IS NOT NULL) ─────────────
+
+    Optional<AgiosJournalier> findByDateValeurAndBanqueIdAndTypeAgiosAndMarcheId(
+            LocalDate dateValeur, Long banqueId, TypeAgios typeAgios, Long marcheId);
+
+    // ── Consultation ──────────────────────────────────────────────────────────
 
     List<AgiosJournalier> findByBanqueIdAndTypeAgiosAndDateValeurBetweenOrderByDateValeurAsc(
             Long banqueId, TypeAgios typeAgios, LocalDate debut, LocalDate fin);

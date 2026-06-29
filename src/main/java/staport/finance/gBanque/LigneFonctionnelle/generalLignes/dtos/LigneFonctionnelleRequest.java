@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LigneFonctionnelleRequest {
@@ -14,7 +15,7 @@ public class LigneFonctionnelleRequest {
     @NotNull(message = "L'ID de la nature de ligne fonctionnelle est obligatoire.")
     private Long natureLigneFonctionnelleId;
 
-    private Long marcheId;
+    private List<Long> marcheIds = new ArrayList<>();
 
     @DecimalMin(value = "0.0", inclusive = false, message = "Le plafond doit être supérieur à zéro.")
     private BigDecimal plafond;
@@ -59,11 +60,11 @@ public class LigneFonctionnelleRequest {
         this.natureLigneFonctionnelleId = natureLigneFonctionnelleId;
     }
 
-    public Long getMarcheId() {
-        return marcheId;
+    public List<Long> getMarcheIds() {
+        return marcheIds;
     }
-    public void setMarcheId(Long marcheId) {
-        this.marcheId = marcheId;
+    public void setMarcheIds(List<Long> marcheIds) {
+        this.marcheIds = marcheIds;
     }
 
     public BigDecimal getPlafond() { return plafond; }
@@ -84,7 +85,7 @@ public class LigneFonctionnelleRequest {
                 "banqueId=" + banqueId +
                 ", natureLigneFonctionnelleId=" + natureLigneFonctionnelleId +
                 ", plafond=" + plafond +
-                ", marcheId=" + marcheId +
+                ", marcheIds=" + marcheIds +
                 ", taux=" + taux +
                 ", dateDepart=" + dateDepart +
                 ", dateFin=" + dateFin +

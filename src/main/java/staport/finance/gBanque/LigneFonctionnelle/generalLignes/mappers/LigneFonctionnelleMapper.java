@@ -7,6 +7,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleRequest;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleResponse;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.MarcheRefDto;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.SousLigneRequestDto;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.SousLigneResponseDto;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
@@ -36,7 +37,7 @@ public class LigneFonctionnelleMapper {
     public LigneFonctionnelle toEntity(LigneFonctionnelleRequest request,
                                        Banque banque,
                                        NatureLigneFonctionnelle natureLigneFonctionnelle,
-                                       Marche marche) {
+                                       List<Marche> marches) {
         if (request == null) {
             logger.warn("Attempted to convert null LigneFonctionnelleRequest to Entity");
             return null;
@@ -48,7 +49,7 @@ public class LigneFonctionnelleMapper {
 
         ligneFonctionnelle.setBanque(banque);
         ligneFonctionnelle.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
-        ligneFonctionnelle.setMarche(marche);
+        ligneFonctionnelle.setMarches(marches != null ? new ArrayList<>(marches) : new ArrayList<>());
         ligneFonctionnelle.setPlafond(request.getPlafond());
         ligneFonctionnelle.setTaux(request.getTaux());
         ligneFonctionnelle.setDateDepart(request.getDateDepart());
@@ -85,7 +86,7 @@ public class LigneFonctionnelleMapper {
         sousLigne.setPlafond(request.getPlafond());
         sousLigne.setNatureLigneFonctionnelle(natureSousLigne);
         sousLigne.setBanque(ligneMere.getBanque());
-        sousLigne.setMarche(ligneMere.getMarche());
+        sousLigne.setMarches(new ArrayList<>(ligneMere.getMarches()));
         sousLigne.setTaux(ligneMere.getTaux());
         sousLigne.setDateDepart(ligneMere.getDateDepart());
         sousLigne.setDateFin(ligneMere.getDateFin());
@@ -116,10 +117,11 @@ public class LigneFonctionnelleMapper {
             response.setBanqueNom(ligneFonctionnelle.getBanque().getNom());
         }
 
-        if (ligneFonctionnelle.getMarche() != null) {
-            response.setMarcheId(ligneFonctionnelle.getMarche().getId());
-            response.setNumeroMarche(ligneFonctionnelle.getMarche().getNumero());
-            response.setNomMarche(ligneFonctionnelle.getMarche().getNom());
+        if (ligneFonctionnelle.getMarches() != null && !ligneFonctionnelle.getMarches().isEmpty()) {
+            List<MarcheRefDto> marcheRefs = ligneFonctionnelle.getMarches().stream()
+                    .map(m -> new MarcheRefDto(m.getId(), m.getNumero(), m.getNom()))
+                    .collect(Collectors.toList());
+            response.setMarches(marcheRefs);
         }
 
         if (ligneFonctionnelle.getNatureLigneFonctionnelle() != null) {
@@ -197,7 +199,7 @@ public class LigneFonctionnelleMapper {
                                                 LigneFonctionnelle ligneFonctionnelle,
                                                 Banque newBanque,
                                                 NatureLigneFonctionnelle newNature,
-                                                Marche newMarche) {
+                                                List<Marche> newMarches) {
         if (request == null || ligneFonctionnelle == null) {
             logger.warn("Attempted to update with null request or entity");
             return;
@@ -227,7 +229,7 @@ public class LigneFonctionnelleMapper {
             ligneFonctionnelle.setNatureLigneFonctionnelle(newNature);
         }
 
-        ligneFonctionnelle.setMarche(newMarche);
+        ligneFonctionnelle.setMarches(newMarches != null ? new ArrayList<>(newMarches) : new ArrayList<>());
 
         logger.debug("Successfully updated LigneFonctionnelle Entity ID: {}", ligneFonctionnelle.getId());
     }
@@ -253,7 +255,7 @@ public class LigneFonctionnelleMapper {
 
         Long natureId = ligneFonctionnelle.getNatureLigneFonctionnelle().getId();
         Long ligneId = ligneFonctionnelle.getId();
-        Marche marche = ligneFonctionnelle.getMarche();
+        List<Marche> marches = ligneFonctionnelle.getMarches();
         BigDecimal plafond = ligneFonctionnelle.getPlafond();
 
         logger.debug("Calculating encours and solde for ligne ID: {}, nature ID: {}", ligneId, natureId);
@@ -262,7 +264,7 @@ public class LigneFonctionnelleMapper {
         BigDecimal encours = encoursCalculatorService.calculateEncours(
                 ligneId,
                 natureId,
-                marche,
+                marches,
                 ligneFonctionnelle.getBanque(),
                 plafond
         );
@@ -271,7 +273,7 @@ public class LigneFonctionnelleMapper {
         BigDecimal solde = encoursCalculatorService.calculateSolde(
                 ligneId,
                 natureId,
-                marche,
+                marches,
                 plafond,
                 encours
         );

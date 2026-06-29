@@ -3,7 +3,8 @@ package staport.finance.gBanque.Agios.enums;
 
 public enum TypeAgios {
 
-    FACILITE_CAISSE("Facilité de Caisse");
+    FACILITE_CAISSE("Facilité de Caisse"),
+    PREFINANCEMENT("Préfinancement");
 
     private final String libelle;
 

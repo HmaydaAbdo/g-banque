@@ -23,6 +23,9 @@ import staport.finance.gBanque.Agios.repository.AgiosJournalierRepository;
 import staport.finance.gBanque.Agios.repository.AgiosTrimestrielRepository;
 import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateur;
 import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateur.ResultatJournalier;
+import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateurMultiMarche;
+import staport.finance.gBanque.Agios.service.calculateurs.PrefinancementAgiosCalculateur;
+import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.Agios.spec.AgiosJournalierSpecification;
 import staport.finance.gBanque.Agios.spec.AgiosTrimestrielSpecification;
 import staport.finance.gBanque.Bank.entities.Banque;
@@ -96,8 +99,8 @@ public class AgiosOrchestrateurService {
         int trimActuel = trimestreDeLaDate(aujourdhui);
         int anneeActuelle = aujourdhui.getYear();
 
-        log.info("══════ Calcul quotidien des agios — T{}/{} — {} type(s) actif(s) ══════",
-                trimActuel, anneeActuelle, calculateurs.size());
+        log.info("══════ Calcul quotidien des agios — {} — {} type(s) actif(s) ══════",
+                aujourdhui, calculateurs.size());
 
         List<Banque> banques = banqueRepository.findAll();
 
@@ -107,13 +110,37 @@ public class AgiosOrchestrateurService {
             int succes = 0, nonEligibles = 0, erreurs = 0;
 
             for (Banque banque : banques) {
+                // Vider le cache de taux avant chaque banque pour éviter des données périmées
+                if (calculateur instanceof PrefinancementAgiosCalculateur prefiCalc) {
+                    prefiCalc.viderCache();
+                }
+
                 try {
                     if (!calculateur.estEligible(banque)) {
                         nonEligibles++;
                         continue;
                     }
 
-                    recalculerTrimestre(banque, calculateur, trimActuel, anneeActuelle);
+                    // Tous les trimestres OUVERTS de cette banque (courant + passés non clôturés).
+                    // Un trimestre reste recalculé tant qu'il n'est pas clôturé, ce qui permet
+                    // de répercuter toute modification de transaction sur les agios correspondants.
+                    List<AgiosTrimestriel> ouverts = agiosTrimestrielRepository
+                            .findByBanqueIdAndTypeAgiosAndStatut(
+                                    banque.getId(), calculateur.getType(), StatutTrimestre.OUVERT);
+
+                    // S'assurer que le trimestre courant est toujours traité,
+                    // même s'il n'a pas encore été créé (obtenirOuCreerTrimestre le crée).
+                    boolean courantPresent = ouverts.stream()
+                            .anyMatch(t -> t.getTrimestre() == trimActuel && t.getAnnee() == anneeActuelle);
+
+                    if (!courantPresent) {
+                        recalculerTrimestre(banque, calculateur, trimActuel, anneeActuelle);
+                    }
+
+                    for (AgiosTrimestriel t : ouverts) {
+                        recalculerTrimestre(banque, calculateur, t.getTrimestre(), t.getAnnee());
+                    }
+
                     succes++;
 
                 } catch (Exception e) {
@@ -200,74 +227,101 @@ public class AgiosOrchestrateurService {
             return;
         }
 
-        // ── Solde comptable de départ ──────────────────────────────────
-        // = soldeDebut du 1er rapprochement mensuel du trimestre
-        // (Jan pour T1, Avr pour T2, Juil pour T3, Oct pour T4)
-        BigDecimal soldeInitial = getSoldeDebutTrimestre(banque.getId(), trimNum, annee);
-
-        // ── Transactions du trimestre ──────────────────────────────────
-        // Chargées depuis les rapprochements des 3 mois du trimestre.
-        List<Transaction> transactions = chargerTransactionsParRapprochement(banque.getId(), trimNum, annee);
-
-        // ── Cas particulier : dateValeur antérieure au trimestre ────────
-        // Une transaction peut appartenir comptablement au rapprochement de
-        // janvier (enregistrée en janvier) tout en ayant une dateValeur en
-        // décembre. Son effet financier a démarré avant le trimestre : on
-        // l'intègre directement dans le soldeInitial plutôt que dans la boucle.
-        for (Transaction tx : transactions) {
-            if (tx.getDateValeur() == null) continue;
-            LocalDate dv = tx.getDateValeur();
-            if (dv.isBefore(debutTrim)) {
-                BigDecimal credit = tx.getCredit() != null ? tx.getCredit() : BigDecimal.ZERO;
-                BigDecimal debit  = tx.getDebit()  != null ? tx.getDebit()  : BigDecimal.ZERO;
-                soldeInitial = soldeInitial.add(credit).subtract(debit);
-                log.debug("Tx id={} dateValeur={} antérieure au trimestre → ajustement soldeInitial",
-                        tx.getId(), dv);
-            }
-        }
-
-        // ── Groupement par dateValeur pour la boucle journalière ───────
-        // On ne retient que les transactions dont la dateValeur tombe
-        // dans la fenêtre [debutTrim, finCalcul].
-        Map<LocalDate, List<Transaction>> txParJour = transactions.stream()
-                .filter(t -> t.getDateValeur() != null)
-                .filter(t -> {
-                    LocalDate dv = t.getDateValeur();
-                    return !dv.isBefore(debutTrim) && !dv.isAfter(finCalcul);
-                })
-                .collect(Collectors.groupingBy(Transaction::getDateValeur));
-
-        // ── Calcul jour par jour ───────────────────────────────────────
-        BigDecimal soldeCourant = soldeInitial;
+        long nbJours = ChronoUnit.DAYS.between(debutTrim, finCalcul) + 1;
         BigDecimal totalHT = BigDecimal.ZERO, totalTVA = BigDecimal.ZERO, totalTTC = BigDecimal.ZERO;
         int nbJoursCalcules = 0;
-        long nbJours = ChronoUnit.DAYS.between(debutTrim, finCalcul) + 1;
 
-        for (long i = 0; i < nbJours; i++) {
-            LocalDate jour = debutTrim.plusDays(i);
+        if (calculateur instanceof AgiosCalculateurMultiMarche multiCalculateur) {
+            // ════════════════════════════════════════════════════════════
+            //  FLUX MULTI-MARCHÉ (Préfinancement)
+            //  L'encours est reconstitué depuis les Prefinancement PAYE,
+            //  indépendamment du solde comptable du rapprochement.
+            // ════════════════════════════════════════════════════════════
+            for (long i = 0; i < nbJours; i++) {
+                LocalDate jour = debutTrim.plusDays(i);
 
-            // Appliquer les mouvements du jour (par dateValeur)
-            for (Transaction tx : txParJour.getOrDefault(jour, Collections.emptyList())) {
-                BigDecimal credit = tx.getCredit() != null ? tx.getCredit() : BigDecimal.ZERO;
-                BigDecimal debit  = tx.getDebit()  != null ? tx.getDebit()  : BigDecimal.ZERO;
-                soldeCourant = soldeCourant.add(credit).subtract(debit);
+                List<AgiosCalculateurMultiMarche.ResultatParMarche> resultats =
+                        multiCalculateur.calculerJourParMarche(banque, jour);
+
+                for (AgiosCalculateurMultiMarche.ResultatParMarche r : resultats) {
+                    ResultatJournalier res = r.resultat();
+
+                    BigDecimal tvaJour = res.agiosHT()
+                            .multiply(TAUX_TVA)
+                            .divide(BigDecimal.valueOf(100), SCALE, ROUNDING);
+                    BigDecimal ttcJour = res.agiosHT().add(tvaJour);
+
+                    enregistrerJournalier(jour, banque, type, trimestre,
+                            res.baseCalcul(), res, tvaJour, ttcJour, r.marche());
+
+                    totalHT  = totalHT.add(res.agiosHT());
+                    totalTVA = totalTVA.add(tvaJour);
+                    totalTTC = totalTTC.add(ttcJour);
+                    if (res.baseCalcul().compareTo(BigDecimal.ZERO) > 0) nbJoursCalcules++;
+                }
             }
 
-            // Déléguer le calcul au calculateur spécifique
-            ResultatJournalier resultat = calculateur.calculerJour(banque, jour, soldeCourant);
+        } else {
+            // ════════════════════════════════════════════════════════════
+            //  FLUX SOLDE COMPTABLE (Facilité de Caisse et autres)
+            //  L'encours est reconstitué depuis le solde du rapprochement.
+            // ════════════════════════════════════════════════════════════
 
-            BigDecimal tvaJour = resultat.agiosHT()
-                    .multiply(TAUX_TVA)
-                    .divide(BigDecimal.valueOf(100), SCALE, ROUNDING);
+            // ── Solde comptable de départ ──────────────────────────────────
+            BigDecimal soldeInitial = getSoldeDebutTrimestre(banque.getId(), trimNum, annee);
 
-            BigDecimal ttcJour = resultat.agiosHT().add(tvaJour);
+            // ── Transactions du trimestre ──────────────────────────────────
+            List<Transaction> transactions = chargerTransactionsParRapprochement(banque.getId(), trimNum, annee);
 
-            enregistrerJournalier(jour, banque, type, trimestre, soldeCourant, resultat, tvaJour, ttcJour);
+            // ── Transactions antérieures au trimestre → ajustement solde ──
+            for (Transaction tx : transactions) {
+                if (tx.getDateValeur() == null) continue;
+                LocalDate dv = tx.getDateValeur();
+                if (dv.isBefore(debutTrim)) {
+                    BigDecimal credit = tx.getCredit() != null ? tx.getCredit() : BigDecimal.ZERO;
+                    BigDecimal debit  = tx.getDebit()  != null ? tx.getDebit()  : BigDecimal.ZERO;
+                    soldeInitial = soldeInitial.add(credit).subtract(debit);
+                    log.debug("Tx id={} dateValeur={} antérieure au trimestre → ajustement soldeInitial",
+                            tx.getId(), dv);
+                }
+            }
 
-            totalHT  = totalHT.add(resultat.agiosHT());
-            totalTVA = totalTVA.add(tvaJour);
-            totalTTC = totalTTC.add(ttcJour);
-            if (resultat.baseCalcul().compareTo(BigDecimal.ZERO) > 0) nbJoursCalcules++;
+            // ── Groupement par dateValeur ──────────────────────────────────
+            Map<LocalDate, List<Transaction>> txParJour = transactions.stream()
+                    .filter(t -> t.getDateValeur() != null)
+                    .filter(t -> {
+                        LocalDate dv = t.getDateValeur();
+                        return !dv.isBefore(debutTrim) && !dv.isAfter(finCalcul);
+                    })
+                    .collect(Collectors.groupingBy(Transaction::getDateValeur));
+
+            // ── Calcul jour par jour ───────────────────────────────────────
+            BigDecimal soldeCourant = soldeInitial;
+
+            for (long i = 0; i < nbJours; i++) {
+                LocalDate jour = debutTrim.plusDays(i);
+
+                for (Transaction tx : txParJour.getOrDefault(jour, Collections.emptyList())) {
+                    BigDecimal credit = tx.getCredit() != null ? tx.getCredit() : BigDecimal.ZERO;
+                    BigDecimal debit  = tx.getDebit()  != null ? tx.getDebit()  : BigDecimal.ZERO;
+                    soldeCourant = soldeCourant.add(credit).subtract(debit);
+                }
+
+                ResultatJournalier resultat = calculateur.calculerJour(banque, jour, soldeCourant);
+
+                BigDecimal tvaJour = resultat.agiosHT()
+                        .multiply(TAUX_TVA)
+                        .divide(BigDecimal.valueOf(100), SCALE, ROUNDING);
+                BigDecimal ttcJour = resultat.agiosHT().add(tvaJour);
+
+                enregistrerJournalier(jour, banque, type, trimestre,
+                        soldeCourant, resultat, tvaJour, ttcJour, null);
+
+                totalHT  = totalHT.add(resultat.agiosHT());
+                totalTVA = totalTVA.add(tvaJour);
+                totalTTC = totalTTC.add(ttcJour);
+                if (resultat.baseCalcul().compareTo(BigDecimal.ZERO) > 0) nbJoursCalcules++;
+            }
         }
 
         // Mettre à jour les totaux du trimestre
@@ -332,26 +386,26 @@ public class AgiosOrchestrateurService {
     @Transactional(readOnly = true)
     public Page<AgiosTrimestriel> searchTrimestres(AgiosTrimestrielSearchDto dto, Pageable pageable) {
         Specification<AgiosTrimestriel> spec = AgiosTrimestrielSpecification.buildSpec(
-                dto.getBanqueId(), dto.getType(), dto.getAnnee(),
-                dto.getTrimestre(), dto.getStatut(), dto.getSearch());
+                dto.banqueId(), dto.type(), dto.annee(),
+                dto.trimestre(), dto.statut(), dto.search());
         return agiosTrimestrielRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
     }
 
     @Transactional(readOnly = true)
     public Page<AgiosJournalier> searchJournaliers(AgiosJournalierSearchDto dto, Pageable pageable) {
-        LocalDate debut = debutDuTrimestrePourNumero(dto.getTrimestre(), dto.getAnnee());
-        LocalDate fin   = finDuTrimestrePourNumero(dto.getTrimestre(), dto.getAnnee());
+        LocalDate debut = debutDuTrimestrePourNumero(dto.trimestre(), dto.annee());
+        LocalDate fin   = finDuTrimestrePourNumero(dto.trimestre(), dto.annee());
         Specification<AgiosJournalier> spec = AgiosJournalierSpecification.buildSpec(
-                dto.getBanqueId(), dto.getType(), debut, fin, dto.getDateLimite());
+                dto.banqueId(), dto.type(), debut, fin, dto.dateLimite());
         return agiosJournalierRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
     }
 
     @Transactional(readOnly = true)
     public AgiosDetailAggregateDto getAggregates(AgiosJournalierSearchDto dto) {
-        LocalDate debut = debutDuTrimestrePourNumero(dto.getTrimestre(), dto.getAnnee());
-        LocalDate fin   = finDuTrimestrePourNumero(dto.getTrimestre(), dto.getAnnee());
+        LocalDate debut = debutDuTrimestrePourNumero(dto.trimestre(), dto.annee());
+        LocalDate fin   = finDuTrimestrePourNumero(dto.trimestre(), dto.annee());
         Specification<AgiosJournalier> spec = AgiosJournalierSpecification.buildSpec(
-                dto.getBanqueId(), dto.getType(), debut, fin, dto.getDateLimite());
+                dto.banqueId(), dto.type(), debut, fin, dto.dateLimite());
 
         List<AgiosJournalier> jours = agiosJournalierRepository.findAll(spec);
 
@@ -436,18 +490,30 @@ public class AgiosOrchestrateurService {
         );
     }
 
+    /**
+     * Crée ou met à jour un enregistrement journalier.
+     *
+     * @param solde   solde comptable (flux FC) ou encours préfinancement (flux multi-marché)
+     * @param marche  marché rattaché (null pour FC, non-null pour préfinancement)
+     */
     private void enregistrerJournalier(LocalDate jour, Banque banque, TypeAgios type,
                                        AgiosTrimestriel trimestre, BigDecimal solde,
-                                       ResultatJournalier resultat, BigDecimal tva, BigDecimal ttc) {
+                                       ResultatJournalier resultat, BigDecimal tva, BigDecimal ttc,
+                                       Marche marche) {
 
-        AgiosJournalier aj = agiosJournalierRepository
-                .findByDateValeurAndBanqueIdAndTypeAgios(jour, banque.getId(), type)
-                .orElse(new AgiosJournalier());
+        AgiosJournalier aj = (marche == null)
+                ? agiosJournalierRepository
+                        .findByDateValeurAndBanqueIdAndTypeAgiosAndMarcheIsNull(jour, banque.getId(), type)
+                        .orElse(new AgiosJournalier())
+                : agiosJournalierRepository
+                        .findByDateValeurAndBanqueIdAndTypeAgiosAndMarcheId(jour, banque.getId(), type, marche.getId())
+                        .orElse(new AgiosJournalier());
 
         aj.setDateValeur(jour);
         aj.setBanque(banque);
         aj.setTypeAgios(type);
         aj.setTrimestre(trimestre);
+        aj.setMarche(marche);
         aj.setSoldeJournalier(solde);
         aj.setBaseCalcul(resultat.baseCalcul());
         aj.setTauxApplique(resultat.tauxApplique());

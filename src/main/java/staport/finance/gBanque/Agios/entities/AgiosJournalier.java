@@ -3,6 +3,7 @@ package staport.finance.gBanque.Agios.entities;
 import jakarta.persistence.*;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.marches.entities.Marche;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -10,11 +11,10 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "agios_journalier",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_agios_jour_banque_type",
-                columnNames = {"date_valeur", "banque_id", "type_agios"}
-        ))
+@Table(name = "agios_journalier")
+// Contrainte d'unicité gérée via deux index partiels MySQL (migration SQL manuelle) :
+//   uk_agios_jour_banque_type_nomarche : (date_valeur, banque_id, type_agios) WHERE marche_id IS NULL
+//   uk_agios_jour_banque_type_marche   : (date_valeur, banque_id, type_agios, marche_id) WHERE marche_id IS NOT NULL
 public class AgiosJournalier {
 
     @Id
@@ -63,6 +63,15 @@ public class AgiosJournalier {
     @Column(name = "nb_recalculs", nullable = false)
     private int nbRecalculs = 0;
 
+    /**
+     * Marché rattaché à cet enregistrement journalier.
+     * Null pour la Facilité de Caisse (type sans marché).
+     * Obligatoire pour le Préfinancement (un enregistrement par marché par jour).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "marche_id")
+    private Marche marche;
+
     /** Informations complémentaires libres (ID de ligne, détail...) */
     @Column(name = "metadata", columnDefinition = "TEXT")
     private String metadata;
@@ -109,6 +118,9 @@ public class AgiosJournalier {
 
     public int getNbRecalculs() { return nbRecalculs; }
     public void setNbRecalculs(int nbRecalculs) { this.nbRecalculs = nbRecalculs; }
+
+    public Marche getMarche() { return marche; }
+    public void setMarche(Marche marche) { this.marche = marche; }
 
     public String getMetadata() { return metadata; }
     public void setMetadata(String metadata) { this.metadata = metadata; }

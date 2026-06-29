@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import staport.finance.gBanque.validation.dtos.agios.AgiosTransactionResponse;
-import staport.finance.gBanque.validation.dtos.agios.AgiosValidationRequest;
+import staport.finance.gBanque.Agios.dtos.AgiosTransactionResponse;
+import staport.finance.gBanque.Agios.dtos.AgiosValidationRequest;
 import staport.finance.gBanque.validation.dtos.commision.CommissionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.commision.CommissionValidationDto;
 import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionRequestDto;

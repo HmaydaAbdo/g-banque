@@ -18,7 +18,6 @@ import staport.finance.gBanque.droitConstate.dtos.SuivieDcLigneResponseDto;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
-import staport.finance.gBanque.droitConstate.spec.DroitConstateSpec;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +42,6 @@ import staport.finance.gBanque.factoring.dtos.SuivieFactoringLineResponseDto;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.mapper.FactoringMapper;
 import staport.finance.gBanque.factoring.repository.FactoringRepository;
-import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.moyensDePaiements.lcn.dtos.LcnResponseDTO;
@@ -57,7 +55,6 @@ import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.mapper.PrefinancementMapper;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
-import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 
 
 @Service
@@ -102,6 +99,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     }
 
 
+    @Transactional
     public LigneFonctionnelleResponse createLigneFonctionnelle(LigneFonctionnelleRequest request) {
 
         logger.debug("Creating ligne fonctionnelle, Full creation request: {}", request);
@@ -130,22 +128,23 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         // Validation portée : une ligne générale n'accepte que GENERALE ou GENERALE_ET_SPECIFIQUE
         validatePorteeForLigneGenerale(natureLigneFonctionnelle);
 
-        //  4 : Récupération et validation du Marché (optionnel)
-        Marche marche = validateAndGetMarche(request.getMarcheId(), request.getBanqueId());
+        //  4 : Récupération et validation des Marchés (optionnel)
+        List<Marche> marches = validateAndGetMarches(request.getMarcheIds(), request.getBanqueId());
 
-        if (marche != null) {
-            logger.debug("Found marche: {} (ID: {}, Numero: {})",
-                    marche.getNom(), marche.getId(), marche.getNumero());
+        if (!marches.isEmpty()) {
+            logger.debug("Found {} marché(s): {}",
+                    marches.size(),
+                    marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
         } else {
             logger.debug("No marche specified - creating general ligne fonctionnelle");
         }
 
-        // 5 : Vérification des doublons avec le marché
-        avoidDuplicateActifLines(banque, natureLigneFonctionnelle, marche);
+        // 5 : Vérification des doublons avec les marchés
+        avoidDuplicateActifLines(banque, natureLigneFonctionnelle, marches);
 
-        //  6 : Création de l'entité avec le marché
+        //  6 : Création de l'entité avec les marchés
         LigneFonctionnelle ligneFonctionnelle = ligneFonctionnelleMapper.toEntity(
-                request, banque, natureLigneFonctionnelle, marche
+                request, banque, natureLigneFonctionnelle, marches
         );
 
         // 7. Gestion des sous-lignes (inchangé)
@@ -186,9 +185,9 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         // 8. Sauvegarde
         LigneFonctionnelle savedLigneFonctionnelle = ligneFonctionnelleRepository.save(ligneFonctionnelle);
-        logger.info("Successfully created ligne fonctionnelle with ID: {}, Marche: {}, Has {} sous-ligne(s)",
+        logger.info("Successfully created ligne fonctionnelle with ID: {}, Marchés: [{}], Has {} sous-ligne(s)",
                 savedLigneFonctionnelle.getId(),
-                marche != null ? marche.getNumero() : "N/A",
+                marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")),
                 savedLigneFonctionnelle.getSousLignes() != null ? savedLigneFonctionnelle.getSousLignes().size() : 0);
 
         return ligneFonctionnelleMapper.toDto(savedLigneFonctionnelle);
@@ -323,10 +322,10 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                     return new ResourceNotFoundException("Ligne Fonctionnelle non trouvée avec l'ID: " + id);
                 });
 
-        logger.debug("Found existing ligne fonctionnelle: ID {}, Current plafond: {}, Current marche: {}, Has {} sous-ligne(s)",
+        logger.debug("Found existing ligne fonctionnelle: ID {}, Current plafond: {}, Current marchés: [{}], Has {} sous-ligne(s)",
                 existingLigneFonctionnelle.getId(),
                 existingLigneFonctionnelle.getPlafond(),
-                existingLigneFonctionnelle.getMarche() != null ? existingLigneFonctionnelle.getMarche().getNumero() : "N/A",
+                existingLigneFonctionnelle.getMarches().stream().map(Marche::getNumero).collect(Collectors.joining(", ")),
                 existingLigneFonctionnelle.getSousLignes() != null ? existingLigneFonctionnelle.getSousLignes().size() : 0);
 
         // 2. Validation de la plage de dates
@@ -349,12 +348,12 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         // Validation portée : une ligne générale n'accepte que GENERALE ou GENERALE_ET_SPECIFIQUE
         validatePorteeForLigneGenerale(targetNature);
 
-        // ✅ 5. NOUVEAU : Récupération et validation du marché cible (optionnel)
-        Marche targetMarche = validateAndGetMarche(request.getMarcheId(), request.getBanqueId());
+        // 5. Récupération et validation des marchés cibles (optionnel)
+        List<Marche> targetMarches = validateAndGetMarches(request.getMarcheIds(), request.getBanqueId());
 
-        if (targetMarche != null) {
-            logger.debug("Target marche: {} (ID: {}, Numero: {})",
-                    targetMarche.getNom(), targetMarche.getId(), targetMarche.getNumero());
+        if (!targetMarches.isEmpty()) {
+            logger.debug("Target marchés: [{}]",
+                    targetMarches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
         } else {
             logger.debug("No target marche - ligne will be/remain general");
         }
@@ -366,19 +365,19 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
             validateNatureForMere(targetNature);
         }
 
-        // ✅ 7. MODIFIÉ : Vérification des doublons si clé modifiée (banque, nature OU marché)
-        if (existingLigneFonctionnelle.isActif() && hasKeyChanged(existingLigneFonctionnelle, targetBanque, targetNature, targetMarche)) {
-            logger.debug("Key changed (banque, nature, or marche), checking for duplicate active lines");
-            avoidDuplicateActifLinesForUpdate(id, targetBanque, targetNature, targetMarche);
+        // 7. Vérification des doublons si clé modifiée (banque, nature OU marchés)
+        if (existingLigneFonctionnelle.isActif() && hasKeyChanged(existingLigneFonctionnelle, targetBanque, targetNature, targetMarches)) {
+            logger.debug("Key changed (banque, nature, or marchés), checking for duplicate active lines");
+            avoidDuplicateActifLinesForUpdate(id, targetBanque, targetNature, targetMarches);
         }
 
-        // ✅ 8. MODIFIÉ : Mise à jour de la ligne avec le marché
+        // 8. Mise à jour de la ligne avec les marchés
         ligneFonctionnelleMapper.updateLigneFonctionnelleFromDto(
                 request,
                 existingLigneFonctionnelle,
                 targetBanque,
                 targetNature,
-                targetMarche  // ✅ Ajout du marché
+                targetMarches
         );
 
         // 9. Propagation des propriétés héritées aux sous-lignes
@@ -388,7 +387,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
             for (LigneFonctionnelle sousLigne : existingLigneFonctionnelle.getSousLignes()) {
                 sousLigne.setTaux(existingLigneFonctionnelle.getTaux());
                 sousLigne.setBanque(existingLigneFonctionnelle.getBanque());
-                sousLigne.setMarche(existingLigneFonctionnelle.getMarche()); // ✅ Propagation du marché
+                sousLigne.setMarches(new ArrayList<>(existingLigneFonctionnelle.getMarches()));
                 sousLigne.setDateDepart(existingLigneFonctionnelle.getDateDepart());
                 sousLigne.setDateFin(existingLigneFonctionnelle.getDateFin());
             }
@@ -436,7 +435,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         BigDecimal mereTaux = ligneMere.getTaux();
         LocalDate mereDateDepart = ligneMere.getDateDepart();
         LocalDate mereDateFin = ligneMere.getDateFin();
-        Marche mereMarche = ligneMere.getMarche();
+        List<Marche> mereMarches = ligneMere.getMarches();
 
 
         int updateCount = 0;
@@ -461,7 +460,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
                 updateSousLigneProperties(
                         currentSousLigne, sousLigneRequest, natureSousLigne,
-                        mereBanque, mereTaux, mereDateDepart, mereDateFin,mereMarche
+                        mereBanque, mereTaux, mereDateDepart, mereDateFin, mereMarches
                 );
                 updateCount++;
             } else {
@@ -665,7 +664,8 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                                            Banque mereBanque,
                                            BigDecimal mereTaux,
                                            LocalDate mereDateDepart,
-                                           LocalDate mereDateFin,Marche mereMarche) {
+                                           LocalDate mereDateFin,
+                                           List<Marche> mereMarches) {
 
         // Propriétés spécifiques
         sousLigneEntity.setPlafond(request.getPlafond());
@@ -673,7 +673,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         // Propriétés héritées
         sousLigneEntity.setBanque(mereBanque);
-        sousLigneEntity.setMarche(mereMarche);
+        sousLigneEntity.setMarches(new ArrayList<>(mereMarches));
         sousLigneEntity.setTaux(mereTaux);
         sousLigneEntity.setDateDepart(mereDateDepart);
         sousLigneEntity.setDateFin(mereDateFin);
@@ -691,17 +691,20 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                     return new ResourceNotFoundException("Ligne Fonctionnelle générale non trouvée avec l'ID: " + lineId);
                 });
 
-        Marche marche = Line.getMarche();
+        List<Marche> marches = Line.getMarches();
 
-        if (marche == null) {
+        if (marches == null || marches.isEmpty()) {
             logger.error("Aucun marché associé à la ligne ID: {}", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle générale avec l'ID: " + lineId);
         }
 
-        logger.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
+        logger.debug("{} marché(s) associé(s): [{}]", marches.size(),
+                marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
 
-        List<Prefinancement> allPrefi = prefinancementRepository.findByMarche(marche);
-        logger.debug("{} préfinancements  trouvés", allPrefi.size());
+        List<Prefinancement> allPrefi = marches.stream()
+                .flatMap(m -> prefinancementRepository.findByMarche(m).stream())
+                .collect(Collectors.toList());
+        logger.debug("{} préfinancements trouvés", allPrefi.size());
 
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
@@ -714,17 +717,21 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         logger.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
-        Specification<Prefinancement> spec = Specification.where(PrefinancementSpecification.byMarcheId(marche.getId()));
+        List<Long> marcheIds = marches.stream().map(Marche::getId).collect(Collectors.toList());
+        Specification<Prefinancement> spec = (root, query, cb) -> root.get("marche").get("id").in(marcheIds);
 
         Page<Prefinancement> prefiPage = prefinancementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         logger.debug("{} préfinancements récupérés pour la page courante", prefiPage.getNumberOfElements());
 
         Page<SuiviePrefiLigneResponseDto> pageOfDtos = prefiPage.map(prefinancementMapper::toSuiviePrefiLigneResponseDto);
 
+        String marcheNoms = marches.stream().map(Marche::getNom).collect(Collectors.joining(", "));
+        String marcheNumeros = marches.stream().map(Marche::getNumero).collect(Collectors.joining(", "));
+
         AgregatedSuiviePrefiLigneResponseDto aggregatedDto = new AgregatedSuiviePrefiLigneResponseDto();
-        aggregatedDto.setBanqueName(Line.getMarche().getBanque().getNom());
-        aggregatedDto.setMarcheName(marche.getNom());
-        aggregatedDto.setMarcheNumero(marche.getNumero());
+        aggregatedDto.setBanqueName(Line.getBanque().getNom());
+        aggregatedDto.setMarcheName(marcheNoms);
+        aggregatedDto.setMarcheNumero(marcheNumeros);
         aggregatedDto.setTotalDebit(totalDebit);
         aggregatedDto.setTotalCredit(totalCredit);
         aggregatedDto.setReste(reste);
@@ -744,16 +751,19 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                     return new ResourceNotFoundException("Ligne Fonctionnelle général non trouvée avec l'ID: " + lineId);
                 });
 
-        Marche marche = line.getMarche();
-        if (marche == null) {
+        List<Marche> marches = line.getMarches();
+        if (marches == null || marches.isEmpty()) {
             logger.error("Aucun marché associé à la ligne ID: {}", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
         }
 
-        logger.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
+        logger.debug("{} marché(s) associé(s): [{}]", marches.size(),
+                marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
 
-        List<DroitConstate> allDc = droitConstateRepository.findByMarche(marche);
-        logger.debug("{} droits constatés  trouvés", allDc.size());
+        List<DroitConstate> allDc = marches.stream()
+                .flatMap(m -> droitConstateRepository.findByMarche(m).stream())
+                .collect(Collectors.toList());
+        logger.debug("{} droits constatés trouvés", allDc.size());
 
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
@@ -767,17 +777,21 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         logger.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
-        Specification<DroitConstate> spec = Specification.where(DroitConstateSpec.byMarcheId(marche.getId())) ;
+        List<Long> marcheIds = marches.stream().map(Marche::getId).collect(Collectors.toList());
+        Specification<DroitConstate> spec = (root, query, cb) -> root.get("marche").get("id").in(marcheIds);
         Page<DroitConstate> dcPage = droitConstateRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         logger.debug("{} droits constatés récupérés pour la page courante", dcPage.getNumberOfElements());
 
         Page<SuivieDcLigneResponseDto> pageOfDtos = dcPage.map(droitConstateMapper::toSuivieDcLigneResponseDto);
 
+        String marcheNomsDc = marches.stream().map(Marche::getNom).collect(Collectors.joining(", "));
+        String marcheNumerosDc = marches.stream().map(Marche::getNumero).collect(Collectors.joining(", "));
+
         AgregatedSuivieDcLigneResponseDto aggregatedDto = new AgregatedSuivieDcLigneResponseDto();
-        aggregatedDto.setBanqueName(line.getMarche().getBanque().getNom());
-        aggregatedDto.setMarcheName(marche.getNom());
-        aggregatedDto.setMarcheNumero(marche.getNumero());
+        aggregatedDto.setBanqueName(line.getBanque().getNom());
+        aggregatedDto.setMarcheName(marcheNomsDc);
+        aggregatedDto.setMarcheNumero(marcheNumerosDc);
         aggregatedDto.setTotalDebit(totalDebit);
         aggregatedDto.setTotalCredit(totalCredit);
         aggregatedDto.setReste(reste);
@@ -797,16 +811,19 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                     return new ResourceNotFoundException("Ligne Fonctionnelle général non trouvée avec l'ID: " + lineId);
                 });
 
-        Marche marche = line.getMarche();
-        if (marche == null) {
+        List<Marche> marches = line.getMarches();
+        if (marches == null || marches.isEmpty()) {
             logger.error("Aucun marché associé à la ligne ID: {}", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
         }
 
-        logger.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
+        logger.debug("{} marché(s) associé(s): [{}]", marches.size(),
+                marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
 
-        List<Factoring> allPaidFactoring = factoringRepository.findByMarche(marche);
-        logger.debug("{} factorings payés trouvés", allPaidFactoring.size());
+        List<Factoring> allPaidFactoring = marches.stream()
+                .flatMap(m -> factoringRepository.findByMarche(m).stream())
+                .collect(Collectors.toList());
+        logger.debug("{} factorings trouvés", allPaidFactoring.size());
 
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
@@ -818,17 +835,21 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         logger.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
-        Specification<Factoring> spec = Specification.where(FactoringSpec.byMarcheId(marche.getId()));
+        List<Long> marcheIds = marches.stream().map(Marche::getId).collect(Collectors.toList());
+        Specification<Factoring> spec = (root, query, cb) -> root.get("marche").get("id").in(marcheIds);
         Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         logger.debug("{} factorings récupérés pour la page courante", factoringPage.getNumberOfElements());
 
         Page<SuivieFactoringLineResponseDto> pageOfDtos = factoringPage.map(factoringMapper::toSuivieFactoringLigneResponseDto);
 
+        String marcheNomsF = marches.stream().map(Marche::getNom).collect(Collectors.joining(", "));
+        String marcheNumerosF = marches.stream().map(Marche::getNumero).collect(Collectors.joining(", "));
+
         AgregatedSuivieFactoringLigneResponseDto aggregatedDto = new AgregatedSuivieFactoringLigneResponseDto();
-        aggregatedDto.setBanqueName(line.getMarche().getBanque().getNom());
-        aggregatedDto.setMarcheName(marche.getNom());
-        aggregatedDto.setMarcheNumero(marche.getNumero());
+        aggregatedDto.setBanqueName(line.getBanque().getNom());
+        aggregatedDto.setMarcheName(marcheNomsF);
+        aggregatedDto.setMarcheNumero(marcheNumerosF);
         aggregatedDto.setTotalDebit(totalDebit);
         aggregatedDto.setTotalCredit(totalCredit);
         aggregatedDto.setReste(reste);
@@ -878,184 +899,137 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     }
 
     /**
-     *
-     * Vérifie qu'il n'existe pas déjà une ligne fonctionnelle active avec la même combinaison
-     * Banque + Nature + Marché.
+     * Vérifie qu'il n'existe pas déjà une ligne fonctionnelle active avec la même combinaison.
      * RÈGLE MÉTIER :
-     * - Une banque ne peut avoir qu'UNE SEULE ligne générale active par nature (sans marché)
-     * - Une banque peut avoir plusieurs lignes actives de la même nature SI elles sont pour des marchés différents
-     * - Un marché ne peut avoir qu'UNE SEULE ligne active par nature
+     * - Ligne sans marché : une seule ligne générale active par banque + nature.
+     * - Ligne avec marchés : pour chaque marché, un seul actif par nature (général ou spécifique).
      */
-    private void avoidDuplicateActifLines(Banque banque, NatureLigneFonctionnelle nature, Marche marche) {
+    private void avoidDuplicateActifLines(Banque banque, NatureLigneFonctionnelle nature, List<Marche> marches) {
 
-
-        checkNoConflictWithSpecificLine(marche, nature);
-
-        if (marche == null) {
-            // Cas 1 : Ligne sans marché
-            Optional<LigneFonctionnelle> existingGeneralLine = ligneFonctionnelleRepository
-                    .findByBanqueIdAndNatureLigneFonctionnelleIdAndMarcheIsNullAndActifTrue(
-                            banque.getId(),
-                            nature.getId()
-                    );
-
-            existingGeneralLine.ifPresent(existing -> {
-                logger.warn("Duplicate  active ligne detected - Banque: '{}', Nature: '{}'",
-                        banque.getNom(), nature.getLabel());
-                throw new DuplicateEntryException(
-                        "Une ligne fonctionnelle générale ACTIVE de type '" + nature.getLabel() +
-                                "' existe déjà pour la banque '" + banque.getNom() + "' (ID: " + existing.getId() + ")."
-                );
-            });
-
+        if (marches == null || marches.isEmpty()) {
+            // Ligne générale sans marché
+            ligneFonctionnelleRepository.findActiveGeneralLine(banque.getId(), nature.getId())
+                    .ifPresent(existing -> {
+                        logger.warn("Duplicate active ligne générale - Banque: '{}', Nature: '{}'",
+                                banque.getNom(), nature.getLabel());
+                        throw new DuplicateEntryException(
+                                "Une ligne fonctionnelle générale ACTIVE de type '" + nature.getLabel() +
+                                        "' existe déjà pour la banque '" + banque.getNom() + "' (ID: " + existing.getId() + ")."
+                        );
+                    });
         } else {
-            // Cas 2 : Ligne spécifique à un marché
-            Optional<LigneFonctionnelle> existingMarcheLine = ligneFonctionnelleRepository
-                    .findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(
-                            marche.getId(),
-                            nature.getId()
-                    );
-
-            existingMarcheLine.ifPresent(existing -> {
-                logger.warn("Duplicate marche-specific active ligne detected - Marche: '{}', Nature: '{}'",
-                        marche.getNumero(), nature.getLabel());
-                throw new DuplicateEntryException(
-                        "Une ligne fonctionnelle ACTIVE de type '" + nature.getLabel() +
-                                "' existe déjà pour le marché '" + marche.getNumero() + "' (ID: " + existing.getId() + ")."
-                );
-            });
+            // Ligne liée à des marchés — vérifier chaque marché
+            for (Marche marche : marches) {
+                checkNoConflictWithSpecificLine(marche, nature);
+                ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), nature.getId())
+                        .ifPresent(existing -> {
+                            logger.warn("Duplicate active ligne pour le marché '{}', Nature: '{}'",
+                                    marche.getNumero(), nature.getLabel());
+                            throw new DuplicateEntryException(
+                                    "Une ligne fonctionnelle ACTIVE de type '" + nature.getLabel() +
+                                            "' existe déjà pour le marché '" + marche.getNumero() + "' (ID: " + existing.getId() + ")."
+                            );
+                        });
+            }
         }
 
         logger.debug("No duplicate active ligne found - validation passed");
     }
 
-    private Marche validateAndGetMarche(Long marcheId, Long banqueId) {
-
-        if (marcheId == null) {
-            logger.debug("No marcheId provided - ligne will be general (not associated with any marche)");
-            return null;
+    /**
+     * Charge et valide une liste de marchés depuis leurs IDs.
+     * Chaque marché doit appartenir à la banque spécifiée.
+     *
+     * @param marcheIds Liste d'IDs de marchés (peut être null ou vide = ligne générale sans marché)
+     * @param banqueId  ID de la banque propriétaire
+     * @return Liste de Marche validés (vide si aucun marché spécifié)
+     */
+    private List<Marche> validateAndGetMarches(List<Long> marcheIds, Long banqueId) {
+        if (marcheIds == null || marcheIds.isEmpty()) {
+            logger.debug("Aucun marcheId fourni - ligne générale sans marché");
+            return new ArrayList<>();
         }
 
-        logger.debug("Validating marche ID: {} for banque ID: {}", marcheId, banqueId);
-
-        Marche marche = marcheRepository.findById(marcheId)
-                .orElseThrow(() -> {
-                    logger.error("Marche not found with ID: {}", marcheId);
-                    return new ResourceNotFoundException("Marché non trouvé avec l'ID: " + marcheId);
-                });
-
-        // Vérification que le marché appartient bien à la banque
-        if (!marche.getBanque().getId().equals(banqueId)) {
-            logger.error("Marche ID: {} belongs to banque ID: {}, but requested for banque ID: {}",
-                    marcheId, marche.getBanque().getId(), banqueId);
-            throw new IllegalArgumentException(
-                    "Le marché '" + marche.getNumero() + "' n'appartient pas à la banque spécifiée. " +
-                            "Il appartient à la banque '" + marche.getBanque().getNom() + "'."
-            );
+        List<Marche> result = new ArrayList<>();
+        for (Long marcheId : marcheIds) {
+            logger.debug("Validating marche ID: {} for banque ID: {}", marcheId, banqueId);
+            Marche marche = marcheRepository.findById(marcheId)
+                    .orElseThrow(() -> {
+                        logger.error("Marche not found with ID: {}", marcheId);
+                        return new ResourceNotFoundException("Marché non trouvé avec l'ID: " + marcheId);
+                    });
+            if (!marche.getBanque().getId().equals(banqueId)) {
+                logger.error("Marche ID: {} appartient à la banque {}, pas à la banque {}",
+                        marcheId, marche.getBanque().getId(), banqueId);
+                throw new IllegalArgumentException(
+                        "Le marché '" + marche.getNumero() + "' n'appartient pas à la banque spécifiée. " +
+                                "Il appartient à la banque '" + marche.getBanque().getNom() + "'."
+                );
+            }
+            result.add(marche);
         }
-
-        logger.debug("Marche validated successfully - ID: {}, Numero: {}, Nom: {}",
-                marche.getId(), marche.getNumero(), marche.getNom());
-
-        return marche;
+        logger.debug("{} marché(s) validé(s)", result.size());
+        return result;
     }
 
     /**
-     * Vérifie si les propriétés qui constituent la "clé métier" ont changé.
-     * La clé métier comprend : Banque + Nature + Marché
-     *
-     * @param existing Ligne fonctionnelle existante
-     * @param newBanque Nouvelle banque
-     * @param newNature Nouvelle nature
-     * @param newMarche Nouveau marché (peut être null)
-     * @return true si au moins une propriété de la clé a changé
+     * Vérifie si la clé métier (Banque + Nature + ensemble de marchés) a changé.
      */
     private boolean hasKeyChanged(LigneFonctionnelle existing, Banque newBanque,
-                                  NatureLigneFonctionnelle newNature, Marche newMarche) {
+                                  NatureLigneFonctionnelle newNature, List<Marche> newMarches) {
 
         boolean banqueChanged = !existing.getBanque().getId().equals(newBanque.getId());
         boolean natureChanged = !existing.getNatureLigneFonctionnelle().getId().equals(newNature.getId());
 
-        // Vérification du changement de marché (plus complexe car peut être null)
-        boolean marcheChanged;
-        if (existing.getMarche() == null && newMarche == null) {
-            marcheChanged = false; // Les deux sont null, pas de changement
-        } else if (existing.getMarche() == null || newMarche == null) {
-            marcheChanged = true; // L'un est null, l'autre non = changement
-        } else {
-            marcheChanged = !existing.getMarche().getId().equals(newMarche.getId());
-        }
+        Set<Long> existingMarcheIds = existing.getMarches().stream()
+                .map(Marche::getId)
+                .collect(Collectors.toSet());
+        List<Marche> safeNewMarches = newMarches != null ? newMarches : Collections.emptyList();
+        Set<Long> newMarcheIds = safeNewMarches.stream()
+                .map(Marche::getId)
+                .collect(Collectors.toSet());
+        boolean marchesChanged = !existingMarcheIds.equals(newMarcheIds);
 
-        if (banqueChanged) {
-            logger.debug("Banque changed from ID {} to ID {}", existing.getBanque().getId(), newBanque.getId());
-        }
-        if (natureChanged) {
-            logger.debug("Nature changed from ID {} to ID {}",
-                    existing.getNatureLigneFonctionnelle().getId(), newNature.getId());
-        }
-        if (marcheChanged) {
-            logger.debug("Marche changed from {} to {}",
-                    existing.getMarche() != null ? existing.getMarche().getId() : "null",
-                    newMarche != null ? newMarche.getId() : "null");
-        }
+        if (banqueChanged) logger.debug("Banque changed from ID {} to ID {}", existing.getBanque().getId(), newBanque.getId());
+        if (natureChanged) logger.debug("Nature changed from ID {} to ID {}", existing.getNatureLigneFonctionnelle().getId(), newNature.getId());
+        if (marchesChanged) logger.debug("Marchés changed from {} to {}", existingMarcheIds, newMarcheIds);
 
-        return banqueChanged || natureChanged || marcheChanged;
+        return banqueChanged || natureChanged || marchesChanged;
     }
 
     /**
-     * Vérifie qu'il n'existe pas déjà une AUTRE ligne active avec la même clé métier.
-     * Exclut la ligne en cours de modification de la recherche.
-     *
-     * @param currentId ID de la ligne en cours de modification
-     * @param banque Banque cible
-     * @param nature Nature cible
-     * @param marche Marché cible (peut être null)
+     * Vérifie qu'il n'existe pas déjà une AUTRE ligne active avec la même clé métier (hors ligne courante).
      */
     private void avoidDuplicateActifLinesForUpdate(Long currentId, Banque banque,
-                                                   NatureLigneFonctionnelle nature, Marche marche) {
+                                                   NatureLigneFonctionnelle nature, List<Marche> marches) {
 
-
-        checkNoConflictWithSpecificLine(marche, nature);
-
-        if (marche == null) {
-            // Cas 1 : Ligne générale (sans marché)
-            Optional<LigneFonctionnelle> existingGeneralLine = ligneFonctionnelleRepository
-                    .findByBanqueIdAndNatureLigneFonctionnelleIdAndMarcheIsNullAndActifTrue(
-                            banque.getId(),
-                            nature.getId()
-                    );
-
-            existingGeneralLine.ifPresent(existing -> {
-                // Vérifier que ce n'est pas la ligne en cours de modification
-                if (!existing.getId().equals(currentId)) {
-                    logger.warn("Duplicate general active ligne detected during update - Banque: '{}', Nature: '{}', Existing ID: {}",
-                            banque.getNom(), nature.getLabel(), existing.getId());
-                    throw new DuplicateEntryException(
-                            "Une autre ligne fonctionnelle générale ACTIVE de type '" + nature.getLabel() +
-                                    "' existe déjà pour la banque '" + banque.getNom() + "' (ID: " + existing.getId() + ")."
-                    );
-                }
-            });
-
+        if (marches == null || marches.isEmpty()) {
+            ligneFonctionnelleRepository.findActiveGeneralLine(banque.getId(), nature.getId())
+                    .ifPresent(existing -> {
+                        if (!existing.getId().equals(currentId)) {
+                            logger.warn("Duplicate general active ligne during update - Banque: '{}', Nature: '{}', Existing ID: {}",
+                                    banque.getNom(), nature.getLabel(), existing.getId());
+                            throw new DuplicateEntryException(
+                                    "Une autre ligne fonctionnelle générale ACTIVE de type '" + nature.getLabel() +
+                                            "' existe déjà pour la banque '" + banque.getNom() + "' (ID: " + existing.getId() + ")."
+                            );
+                        }
+                    });
         } else {
-            // Cas 2 : Ligne spécifique à un marché
-            Optional<LigneFonctionnelle> existingMarcheLine = ligneFonctionnelleRepository
-                    .findByMarcheIdAndNatureLigneFonctionnelleIdAndActifTrue(
-                            marche.getId(),
-                            nature.getId()
-                    );
-
-            existingMarcheLine.ifPresent(existing -> {
-                // Vérifier que ce n'est pas la ligne en cours de modification
-                if (!existing.getId().equals(currentId)) {
-                    logger.warn("Duplicate marche-specific active ligne detected during update - Marche: '{}', Nature: '{}', Existing ID: {}",
-                            marche.getNumero(), nature.getLabel(), existing.getId());
-                    throw new DuplicateEntryException(
-                            "Une autre ligne fonctionnelle ACTIVE de type '" + nature.getLabel() +
-                                    "' existe déjà pour le marché '" + marche.getNumero() + "' (ID: " + existing.getId() + ")."
-                    );
-                }
-            });
+            for (Marche marche : marches) {
+                checkNoConflictWithSpecificLine(marche, nature);
+                ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), nature.getId())
+                        .ifPresent(existing -> {
+                            if (!existing.getId().equals(currentId)) {
+                                logger.warn("Duplicate marche-specific active ligne during update - Marche: '{}', Nature: '{}', Existing ID: {}",
+                                        marche.getNumero(), nature.getLabel(), existing.getId());
+                                throw new DuplicateEntryException(
+                                        "Une autre ligne fonctionnelle ACTIVE de type '" + nature.getLabel() +
+                                                "' existe déjà pour le marché '" + marche.getNumero() + "' (ID: " + existing.getId() + ")."
+                                );
+                            }
+                        });
+            }
         }
 
         logger.debug("No duplicate active ligne found for update - validation passed");
