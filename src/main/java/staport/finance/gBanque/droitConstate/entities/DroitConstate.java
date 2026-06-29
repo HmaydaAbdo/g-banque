@@ -1,6 +1,7 @@
 package staport.finance.gBanque.droitConstate.entities;
 
 import jakarta.persistence.*;
+import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
@@ -19,6 +20,17 @@ public class DroitConstate {
     @ManyToOne
     @JoinColumn(name = "marche_id")
     private Marche marche;
+
+    /**
+     * Banque directement liée à ce droit constaté.
+     * Pré-remplie depuis marche.banque à la création, mais modifiable indépendamment.
+     * - Pour un DEBLOCAGE  : banque qui reçoit les fonds (encaissement).
+     * - Pour un REMBOURSEMENT : banque qui rembourse (décaissement).
+     * Nullable pour compatibilité avec les enregistrements existants (backfill SQL requis).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "banque_id", nullable = false)
+    private Banque banque;
 
     private LocalDate dateEmission ;
 
@@ -53,6 +65,14 @@ public class DroitConstate {
 
     public void setMarche(Marche marche) {
         this.marche = marche;
+    }
+
+    public Banque getBanque() {
+        return banque;
+    }
+
+    public void setBanque(Banque banque) {
+        this.banque = banque;
     }
 
     public LocalDate getDateEmission() {
