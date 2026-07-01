@@ -282,18 +282,22 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
     return !!this.journalierDto.dateLimite;
   }
 
-  /** Vrai si le type d'agios courant est Préfinancement (multi-marché). */
-  get isPrefi(): boolean {
-    return this.typeAgios === TypeAgios.PREFINANCEMENT;
+  /**
+   * Vrai pour les types multi-marchés (Préfinancement, Droits Constatés) :
+   * affiche la colonne Marché et adapte les libellés encours/jours.
+   */
+  get isMultiMarche(): boolean {
+    return this.typeAgios === TypeAgios.PREFINANCEMENT
+        || this.typeAgios === TypeAgios.DROIT_CONSTATE;
   }
 
-  /** Libellé de la colonne "Solde" : encours pour PREFI, solde comptable pour FC. */
+  /** Libellé de la colonne "Solde" : encours pour les types multi-marchés, solde comptable pour FC. */
   get soldeColLabel(): string {
-    return this.isPrefi ? 'Encours' : 'Solde';
+    return this.isMultiMarche ? 'Encours' : 'Solde';
   }
 
-  /** Libellé du KPI "jours actifs" : encours pour PREFI, découvert pour FC. */
+  /** Libellé du KPI "jours actifs" : encours pour multi-marchés, découvert pour FC. */
   get joursActifsLabel(): string {
-    return this.isPrefi ? 'JOURS ENCOURS' : 'JOURS DÉC.';
+    return this.isMultiMarche ? 'JOURS ENCOURS' : 'JOURS DÉC.';
   }
 }

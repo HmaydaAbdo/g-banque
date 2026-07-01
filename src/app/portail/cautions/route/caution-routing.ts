@@ -6,8 +6,8 @@ import { systemAdminGuard } from '../../../auth/guards/system-admin.guard';
  *
  * Structure :
  *   /portail/cautions                → liste des cautions
- *   /portail/cautions/new            → création (admin)
- *   /portail/cautions/edit/:id       → modification (admin)
+ *   /portail/cautions/new            → création
+ *   /portail/cautions/edit/:id       → modification
  *   /portail/cautions/commissions    → liste des commissions sur cautions
  *   /portail/cautions/tva            → liste des TVA sur cautions
  */
@@ -20,14 +20,12 @@ export const CAUTION_ROUTES: Routes = [
   },
   {
     path: 'new',
-    canActivate: [systemAdminGuard],
     loadComponent: () =>
       import('../views/caution-form/caution-form.component')
         .then(m => m.CautionFormComponent),
   },
   {
     path: 'edit/:id',
-    canActivate: [systemAdminGuard],
     loadComponent: () =>
       import('../views/caution-form/caution-form.component')
         .then(m => m.CautionFormComponent),
@@ -40,7 +38,6 @@ export const CAUTION_ROUTES: Routes = [
   },
   {
     path: 'commissions/edit/:id',
-    canActivate: [systemAdminGuard],
     loadComponent: () =>
       import('../views/commission-caution-form/commission-caution-form.component')
         .then(m => m.CommissionCautionFormComponent),
