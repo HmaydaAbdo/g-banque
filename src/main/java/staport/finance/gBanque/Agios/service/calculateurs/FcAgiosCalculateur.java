@@ -44,13 +44,20 @@ public class FcAgiosCalculateur implements AgiosCalculateur {
 
     @Override
     public boolean estEligible(Banque banque) {
-        return trouverLigneFC(banque.getId()) != null;
+        LigneFonctionnelle ligne = trouverLigneFC(banque.getId());
+        if (ligne == null) {
+            log.info("FC — {} : aucune ligne Facilité de Caisse active → banque ignorée", banque.getNom());
+            return false;
+        }
+        log.info("FC — {} : ligne id={} taux={}% → éligible", banque.getNom(), ligne.getId(), ligne.getTaux());
+        return true;
     }
 
     @Override
     public ResultatJournalier calculerJour(Banque banque, LocalDate jour, BigDecimal soldeJournalier) {
         // Pas de découvert → pas d'agios
         if (soldeJournalier.compareTo(BigDecimal.ZERO) >= 0) {
+            log.debug("FC — {} — {} : solde={} ≥ 0, pas de découvert", banque.getNom(), jour, soldeJournalier);
             return ResultatJournalier.ZERO;
         }
 

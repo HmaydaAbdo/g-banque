@@ -24,6 +24,7 @@ import staport.finance.gBanque.Agios.repository.AgiosTrimestrielRepository;
 import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateur;
 import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateur.ResultatJournalier;
 import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateurMultiMarche;
+import staport.finance.gBanque.Agios.service.calculateurs.DroitConstateAgiosCalculateur;
 import staport.finance.gBanque.Agios.service.calculateurs.PrefinancementAgiosCalculateur;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.Agios.spec.AgiosJournalierSpecification;
@@ -110,9 +111,13 @@ public class AgiosOrchestrateurService {
             int succes = 0, nonEligibles = 0, erreurs = 0;
 
             for (Banque banque : banques) {
+
                 // Vider le cache de taux avant chaque banque pour éviter des données périmées
                 if (calculateur instanceof PrefinancementAgiosCalculateur prefiCalc) {
                     prefiCalc.viderCache();
+                }
+                if (calculateur instanceof DroitConstateAgiosCalculateur dcCalc) {
+                    dcCalc.viderCache();
                 }
 
                 try {
