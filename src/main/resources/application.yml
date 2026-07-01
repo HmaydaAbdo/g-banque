@@ -7,8 +7,6 @@
 spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE}
-  main:
-    lazy-initialization: true
   application:
     name: gBanque
   data:
@@ -16,14 +14,16 @@ spring:
       pageable:
         max-page-size: 100
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${MYSQL_DATABASE}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${MYSQL_USER}
     password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
+      pool-name: GbanquePool
       maximum-pool-size: 10
       minimum-idle: 5
       idle-timeout: 30000
+      validation-timeout: 5000
       connection-timeout: 20000
       max-lifetime: 1800000
   jpa:

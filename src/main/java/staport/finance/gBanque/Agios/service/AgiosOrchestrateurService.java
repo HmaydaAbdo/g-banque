@@ -243,6 +243,8 @@ public class AgiosOrchestrateurService {
                 List<AgiosCalculateurMultiMarche.ResultatParMarche> resultats =
                         multiCalculateur.calculerJourParMarche(banque, jour);
 
+                // Un jour est "actif" si au moins un marché a un encours > 0 ce jour-là
+                boolean jourAvecEncours = false;
                 for (AgiosCalculateurMultiMarche.ResultatParMarche r : resultats) {
                     ResultatJournalier res = r.resultat();
 
@@ -257,8 +259,9 @@ public class AgiosOrchestrateurService {
                     totalHT  = totalHT.add(res.agiosHT());
                     totalTVA = totalTVA.add(tvaJour);
                     totalTTC = totalTTC.add(ttcJour);
-                    if (res.baseCalcul().compareTo(BigDecimal.ZERO) > 0) nbJoursCalcules++;
+                    if (res.baseCalcul().compareTo(BigDecimal.ZERO) > 0) jourAvecEncours = true;
                 }
+                if (jourAvecEncours) nbJoursCalcules++;
             }
 
         } else {
@@ -329,7 +332,8 @@ public class AgiosOrchestrateurService {
         trimestre.setTotalTVA(totalTVA);
         trimestre.setTotalAgiosTTC(totalTTC);
         trimestre.setNbJoursCalcules(nbJoursCalcules);
-        trimestre.setNbJoursTotal((int) nbJours);
+        // Dénominateur = total jours du trimestre (pas juste les jours calculés)
+        trimestre.setNbJoursTotal((int) ChronoUnit.DAYS.between(debutTrim, finTrim) + 1);
         trimestre.setDateDernierCalcul(OffsetDateTime.now(ZONE_MAROC));
         agiosTrimestrielRepository.save(trimestre);
 
@@ -412,23 +416,27 @@ public class AgiosOrchestrateurService {
         BigDecimal totalHT  = BigDecimal.ZERO;
         BigDecimal totalTVA = BigDecimal.ZERO;
         BigDecimal totalTTC = BigDecimal.ZERO;
-        int nbJoursDecouvert = 0;
+        // Dates distinctes avec encours/découvert > 0 (évite de compter plusieurs marchés le même jour)
+        Set<LocalDate> datesActives = new HashSet<>();
 
         for (AgiosJournalier j : jours) {
             totalHT  = totalHT.add(j.getAgiosHT()  != null ? j.getAgiosHT()  : BigDecimal.ZERO);
             totalTVA = totalTVA.add(j.getTva()      != null ? j.getTva()      : BigDecimal.ZERO);
             totalTTC = totalTTC.add(j.getAgiosTTC() != null ? j.getAgiosTTC() : BigDecimal.ZERO);
             if (j.getBaseCalcul() != null && j.getBaseCalcul().compareTo(BigDecimal.ZERO) > 0) {
-                nbJoursDecouvert++;
+                datesActives.add(j.getDateValeur());
             }
         }
+
+        // Dénominateur = total jours calendaires du trimestre (pas le nombre de lignes)
+        int nbJoursTotal = (int) ChronoUnit.DAYS.between(debut, fin) + 1;
 
         return new AgiosDetailAggregateDto(
                 totalHT,
                 totalTVA,
                 totalTTC,
-                nbJoursDecouvert,
-                jours.size()
+                datesActives.size(),
+                nbJoursTotal
         );
     }
 
