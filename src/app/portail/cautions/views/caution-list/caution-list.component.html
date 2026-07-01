@@ -304,13 +304,13 @@
                       [routerLink]="['/portail/cautions/edit', caution.id]"
                       pTooltip="Modifier" tooltipPosition="top">
               </button>
-              <button *ngIf="isAdmin && caution.actif"
+              <button *ngIf="caution.actif"
                       pButton pRipple icon="pi pi-lock"
                       class="p-button-rounded p-button-text p-button-warning p-button-sm"
                       (click)="ouvrirCloturerDialog(caution)"
                       pTooltip="Clôturer" tooltipPosition="top">
               </button>
-              <button *ngIf="isAdmin && caution.actif"
+              <button *ngIf="caution.actif"
                       pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-text p-button-danger p-button-sm"
                       (click)="supprimer(caution)"
