@@ -57,6 +57,18 @@ public class EcheanceCMTController {
         return ResponseEntity.ok(echeanceCmtService.toggleStatus(id));
     }
 
+    @Operation(summary = "Modifier une échéance au statut PREVU",
+            description = "Permet à l'administrateur de modifier les champs d'une échéance non encore validée (statut PREVU). Bloqué si l'échéance est PAYE.")
+    @ApiResponse(responseCode = "404", description = "Échéance introuvable")
+    @ApiResponse(responseCode = "400", description = "Échéance déjà payée ou données invalides")
+    @PreAuthorize(ADMIN_ONLY)
+    @PutMapping("/{id}")
+    public ResponseEntity<EcheanceCMTResponseDto> updateEcheance(
+            @PathVariable Long id,
+            @Valid @RequestBody EcheanceCMTUpdateRequestDto dto) {
+        return ResponseEntity.ok(echeanceCmtService.updateEcheance(id, dto));
+    }
+
     @Operation(summary = "Récupérer les encours CMT d'une banque")
     @ApiResponse(responseCode = "404", description = "Banque introuvable")
     @PreAuthorize(FINANCE_OR_ADMIN)

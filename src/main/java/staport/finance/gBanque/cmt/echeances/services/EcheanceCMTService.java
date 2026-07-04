@@ -102,6 +102,37 @@ public class EcheanceCMTService {
         return echeanceCmtMapper.toResponseDto(echeance);
     }
 
+    /**
+     * Met à jour les champs d'une échéance dont le statut est {@code PREVU}.
+     * Toute tentative de modification d'une échéance {@code PAYE} lève une {@link ValidationException}.
+     *
+     * @param id  L'identifiant de l'échéance à modifier
+     * @param dto Les nouvelles valeurs des champs
+     * @return Le DTO de l'échéance mise à jour
+     */
+    @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = EcheanceCMT.class)
+    public EcheanceCMTResponseDto updateEcheance(Long id, EcheanceCMTUpdateRequestDto dto) {
+        EcheanceCMT echeance = echeanceCmtRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Echeance avec l'ID " + id + " introuvable."));
+
+        if (echeance.getStatutPaiement() == StatutEcheanceCMT.PAYE) {
+            log.warn("Tentative de modification d'une échéance CMT déjà payée — ID: {}", id);
+            throw new ValidationException("Impossible de modifier une échéance dont le statut est PAYE.");
+        }
+
+        echeance.setDateEcheance(dto.dateEcheance());
+        echeance.setMontant(dto.montant());
+        echeance.setDateOperation(dto.dateOperation());
+        echeance.setDateValeur(dto.dateValeur());
+        if (dto.observation() != null) echeance.setObservation(dto.observation());
+        if (dto.libelle() != null) echeance.setLibelle(dto.libelle());
+
+        EcheanceCMT saved = echeanceCmtRepository.save(echeance);
+        log.info("Échéance CMT ID: {} mise à jour avec succès", id);
+        return echeanceCmtMapper.toResponseDto(saved);
+    }
+
     @Transactional(readOnly = true)
     public TableauAmortissementCMTResponseDto getTableauAmortissementForCMT(CreditMoyenTerme credit, EcheanceCMTSearchDto searchDto, Pageable pageable) {
         Long creditId = credit.getId();
