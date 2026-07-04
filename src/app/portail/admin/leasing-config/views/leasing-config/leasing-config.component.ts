@@ -54,7 +54,9 @@ export class LeasingConfigComponent implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       valeurResiduelle: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
-      tauxTva: [null, [Validators.required, Validators.min(0), Validators.max(100)]]
+      tauxTva: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
+      alerteEcheanceJoursCourtTerme: [null, [Validators.required, Validators.min(1)]],
+      alerteEcheanceJoursLongTerme: [null, [Validators.required, Validators.min(1)]]
     });
 
     this.loading = true;
@@ -65,7 +67,9 @@ export class LeasingConfigComponent implements OnInit {
           this.dateModification = config.dateModification;
           this.form.setValue({
             valeurResiduelle: config.valeurResiduelle * 100,
-            tauxTva: config.tauxTva * 100
+            tauxTva: config.tauxTva * 100,
+            alerteEcheanceJoursCourtTerme: config.alerteEcheanceJoursCourtTerme,
+            alerteEcheanceJoursLongTerme: config.alerteEcheanceJoursLongTerme
           });
         }
       });
@@ -78,7 +82,9 @@ export class LeasingConfigComponent implements OnInit {
     this.submitting = true;
     const payload = {
       valeurResiduelle: this.form.value.valeurResiduelle / 100,
-      tauxTva: this.form.value.tauxTva / 100
+      tauxTva: this.form.value.tauxTva / 100,
+      alerteEcheanceJoursCourtTerme: this.form.value.alerteEcheanceJoursCourtTerme,
+      alerteEcheanceJoursLongTerme: this.form.value.alerteEcheanceJoursLongTerme
     };
 
     this.leasingConfigService.update(payload)

@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgIf } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {ActivatedRoute, Router, ParamMap, RouterLinkActive} from '@angular/router';
 
@@ -33,7 +33,6 @@ import { toLocalDateString, parseLocalDate } from '../../../global/types/date.ut
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    NgIf,
     InputTextModule,
     DropdownModule,
     InputNumberModule,
@@ -56,15 +55,13 @@ export class CmtFormComponent implements OnInit {
   loading: boolean = false;
   items: MenuItem[] | undefined;
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router,
-    private cmtService: CmtService,
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) { }
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly cmtService = inject(CmtService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   ngOnInit(): void {
     this.items = [
@@ -109,9 +106,7 @@ export class CmtFormComponent implements OnInit {
             value: banque.id!
           }));
         },
-        error: (err) => {
-          console.error('Error loading banks:', err);
-        }
+        error: () => {}
       });
   }
 
@@ -131,8 +126,7 @@ export class CmtFormComponent implements OnInit {
         });
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Erreur lors du chargement du crédit:', error);
+      error: () => {
         this.loading = false;
         this.router.navigate(['/portail/cmt/list']);
       }
@@ -179,8 +173,7 @@ export class CmtFormComponent implements OnInit {
             this.loading = false;
             this.router.navigate(['/portail/cmt/encours']);
           },
-          error: (error) => {
-            console.error('Erreur lors de la mise à jour du crédit:', error);
+          error: () => {
             this.loading = false;
           }
         });
@@ -192,8 +185,7 @@ export class CmtFormComponent implements OnInit {
             this.loading = false;
             this.router.navigate(['/portail/cmt/encours']);
           },
-          error: (error) => {
-            console.error('Erreur lors de la création du crédit:', error);
+          error: () => {
             this.loading = false;
           }
         });

@@ -1,38 +1,46 @@
 import { Routes } from '@angular/router';
-import {CmtListComponent} from "../views/cmt-list-actifs/cmt-list.component";
-import {CmtFormComponent} from "../views/cmt-form/cmt-form.component";
-import {TableauAmortissementComponent} from "../views/tableau-amortissement-cmt/tableau-amortissement.componen";
-import {CmtListEnAttenteDeMLComponent} from "../views/cmt-list-en-attente-de-ml/cmt-list-en-attente-de-ml.component";
-import {CmtListArchivedComponent} from "../views/cmt-list-archived/cmt-list-archived.component";
+import { departmentGuard } from '../../../auth/guards/department.guard';
 
 export const cmtRoutes: Routes = [
   {
     path: '',
-    redirectTo: 'encours',
-    pathMatch: 'full'
-  },
-  {
-    path: 'encours',
-    component:CmtListComponent,
-  },
-  {
-    path: 'en-attente-de-ML',
-    component:CmtListEnAttenteDeMLComponent,
-  },
-  {
-    path: 'archives',
-    component:CmtListArchivedComponent,
-  },
-  {
-    path: 'new',
-    component: CmtFormComponent,
-  },
-  {
-    path: 'edit/:id',
-    component: CmtFormComponent,
-  },
-  {
-    path: ':id/tableau-amortissement',
-    component: TableauAmortissementComponent
+    canActivate: [departmentGuard('Finance')],
+    children: [
+      {
+        path: '',
+        redirectTo: 'encours',
+        pathMatch: 'full'
+      },
+      {
+        path: 'encours',
+        loadComponent: () =>
+          import('../views/cmt-list-actifs/cmt-list.component').then(m => m.CmtListComponent)
+      },
+      {
+        path: 'en-attente-de-ML',
+        loadComponent: () =>
+          import('../views/cmt-list-en-attente-de-ml/cmt-list-en-attente-de-ml.component').then(m => m.CmtListEnAttenteDeMLComponent)
+      },
+      {
+        path: 'archives',
+        loadComponent: () =>
+          import('../views/cmt-list-archived/cmt-list-archived.component').then(m => m.CmtListArchivedComponent)
+      },
+      {
+        path: 'new',
+        loadComponent: () =>
+          import('../views/cmt-form/cmt-form.component').then(m => m.CmtFormComponent)
+      },
+      {
+        path: 'edit/:id',
+        loadComponent: () =>
+          import('../views/cmt-form/cmt-form.component').then(m => m.CmtFormComponent)
+      },
+      {
+        path: ':id/tableau-amortissement',
+        loadComponent: () =>
+          import('../views/tableau-amortissement-cmt/tableau-amortissement.componen').then(m => m.TableauAmortissementComponent)
+      }
+    ]
   }
 ];

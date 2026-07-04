@@ -1,15 +1,12 @@
-import {TransactionSource} from "../../../transactions/dtos/TransactionSource";
-
 export interface CmtTransactionRequest {
 
-  cmtId:number
-  echeanceId:number
-  transactionSource:TransactionSource
+  creditMoyenTermeId: number;
+  echeanceId: number;
   dateEmission: string;
   dateValeur: string;
   dateOperation: string;
   observation: string;
-  libelle:string;
+  libelle: string;
   tvaDeductible: number;
   rapprochementId: number;
 }

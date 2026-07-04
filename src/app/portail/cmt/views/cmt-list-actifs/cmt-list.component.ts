@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild, inject} from '@angular/core';
 import {Router} from '@angular/router';
 import {ConfirmationService, MenuItem, MessageService} from "primeng/api";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
@@ -69,15 +69,13 @@ export class CmtListComponent implements OnInit, OnDestroy {
   items: MenuItem[] | undefined;
 
 
-  constructor(
-    private cmtService: CmtService,
-    private banqueService: BanqueService,
-    private router: Router,
-    private authService: AuthService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder
-  ) { }
+  private readonly cmtService = inject(CmtService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly fb = inject(FormBuilder);
 
   ngOnInit(): void {
 
@@ -120,9 +118,7 @@ export class CmtListComponent implements OnInit, OnDestroy {
           value: banque.id
         }));
       },
-      error: (error) => {
-        console.error('Error loading bank options:', error);
-      }
+      error: () => {}
     });
   }
 
@@ -153,9 +149,8 @@ export class CmtListComponent implements OnInit, OnDestroy {
         this.totalRecords = page.page.totalElements;
         this.loading = false;
       },
-      error: (error) => {
+      error: () => {
         this.loading = false;
-        console.error('Erreur lors du chargement des crédits:', error);
       }
     });
   }
@@ -224,9 +219,7 @@ export class CmtListComponent implements OnInit, OnDestroy {
           this.loadCredits(this.lastLazyLoadEvent);
         }
       },
-      error: (error) => {
-        console.error('Erreur lors de la suppression:', error);
-      }
+      error: () => {}
     });
   }
 

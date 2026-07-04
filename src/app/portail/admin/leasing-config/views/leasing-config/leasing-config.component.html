@@ -42,6 +42,34 @@
           </small>
         </div>
 
+        <div class="field">
+          <label for="alerteEcheanceJoursCourtTerme">Seuil d'alerte court terme (jours)</label>
+          <p-inputNumber id="alerteEcheanceJoursCourtTerme" formControlName="alerteEcheanceJoursCourtTerme"
+                         mode="decimal" [useGrouping]="false" [min]="1"
+                         [ngClass]="{'ng-dirty': f['alerteEcheanceJoursCourtTerme'].invalid && f['alerteEcheanceJoursCourtTerme'].touched}">
+          </p-inputNumber>
+          @if (f['alerteEcheanceJoursCourtTerme'].invalid && f['alerteEcheanceJoursCourtTerme'].touched) {
+            <small class="p-error">Valeur requise, d'au moins 1 jour.</small>
+          }
+          <small class="block text-color-secondary mt-1">
+            Fenêtre (en jours) utilisée pour la métrique "échéances leasing à venir à court terme".
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="alerteEcheanceJoursLongTerme">Seuil d'alerte long terme (jours)</label>
+          <p-inputNumber id="alerteEcheanceJoursLongTerme" formControlName="alerteEcheanceJoursLongTerme"
+                         mode="decimal" [useGrouping]="false" [min]="1"
+                         [ngClass]="{'ng-dirty': f['alerteEcheanceJoursLongTerme'].invalid && f['alerteEcheanceJoursLongTerme'].touched}">
+          </p-inputNumber>
+          @if (f['alerteEcheanceJoursLongTerme'].invalid && f['alerteEcheanceJoursLongTerme'].touched) {
+            <small class="p-error">Valeur requise, d'au moins 1 jour.</small>
+          }
+          <small class="block text-color-secondary mt-1">
+            Fenêtre (en jours) utilisée pour la métrique "échéances leasing à venir à long terme".
+          </small>
+        </div>
+
         @if (dateModification) {
           <small class="text-color-secondary">Dernière modification : {{ dateModification | date:'dd/MM/yyyy HH:mm' }}</small>
         }

@@ -1,5 +1,5 @@
 
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable,  } from 'rxjs';
 import {environment} from "../../../../environments/environment";
@@ -15,9 +15,8 @@ import {EncoursCMTResponseDTO} from "../dtos/EncoursCMTResponseDTO";
 })
 export class EcheanceCmtService {
 
-  private apiUrl = `${environment.apiUrl}echeances-cmt`;
-
-  constructor(private http: HttpClient) { }
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}echeances-cmt`;
 
 
 

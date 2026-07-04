@@ -86,10 +86,11 @@ export class SidebarComponent implements OnInit {
     {
       label: 'Les Crédits Moyen Terme',
       icon: 'pi pi-money-bill',
+      requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
       items: [
-        { label: 'Les Crédits encours', icon: 'pi pi-list', routerLink: '/portail/cmt/encours' },
-        { label: 'Les Crédits en attente de main levées', icon: 'pi pi-list', routerLink: '/portail/cmt/en-attente-de-ML' },
-        { label: 'Les Crédits archivés', icon: 'pi pi-list', routerLink: '/portail/cmt/archives' },
+        { label: 'Les Crédits encours', icon: 'pi pi-list', routerLink: '/portail/cmt/encours', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Les Crédits en attente de main levées', icon: 'pi pi-list', routerLink: '/portail/cmt/en-attente-de-ML', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Les Crédits archivés', icon: 'pi pi-list', routerLink: '/portail/cmt/archives', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
       ]
     },
     {
@@ -190,6 +191,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Utilisateurs',         icon: 'pi pi-users',      routerLink: '/portail/admin/utilisateurs'      },
         { label: 'Règles de commission', icon: 'pi pi-sliders-h',  routerLink: '/portail/admin/commission-config' },
         { label: 'Configuration leasing', icon: 'pi pi-sliders-h', routerLink: '/portail/admin/leasing-config'    },
+        { label: 'Configuration CMT',     icon: 'pi pi-sliders-h', routerLink: '/portail/admin/cmt-config'        },
       ]
     },
     {

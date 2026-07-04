@@ -5,7 +5,5 @@ export interface EncoursCMTResponseDTO {
   banqueId: number;
   nomBanque: string;
   totalEncours: number;
-  nombreEcheancesEnAttente: number;
-  nombreCreditsConcernes: number;
   echeances: PageResponse<EcheanceCMTResponseDto>;
 }

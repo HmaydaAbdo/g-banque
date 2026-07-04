@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -25,7 +25,6 @@ import {DialogModule} from "primeng/dialog";
 import {InputTextareaModule} from "primeng/inputtextarea";
 import {ValidationService} from "../../../../services/validation/validation.service";
 import {DonneesComplementairesRapprochementDTO} from "../../../../dtos/DonneesComplementairesRapprochementDTO";
-import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {CmtTransactionRequest} from "../../../../dtos/cmt/CmtTransactionRequest";
 import {EcheanceCMTResponseDto} from "../../../../../cmt/dtos/EcheanceCMTResponseDto";
 import { InputTextModule } from 'primeng/inputtext';
@@ -89,18 +88,15 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   isSubmitting: boolean = false;
 
-  constructor(
-    private echeanceCmtService: EcheanceCmtService,
-    private route: ActivatedRoute,
-    private messageService: MessageService,
-    private fb: FormBuilder,
-    private rapprochementService: ValidationService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private bankStateService: BankStateService
-
-  ) { }
+  private readonly echeanceCmtService = inject(EcheanceCmtService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly fb = inject(FormBuilder);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     this.subscriptions.push(
@@ -169,9 +165,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.currentMonthYear = this.datePipe.transform(new Date(), 'MM/yyyy');
       },
-      error: (error) => {
+      error: () => {
         this.loading = false;
-        console.error('Erreur lors du chargement des encours CMT:', error);
       }
     });
   }
@@ -285,9 +280,8 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
       const rapprochementId = this.bankStateService.getRapprochementId();
 
       const cmtTransactionRequest: CmtTransactionRequest = {
-        cmtId: this.selectedEcheance.credit.id,
+        creditMoyenTermeId: this.selectedEcheance.credit.id,
         echeanceId: this.selectedEcheance.id,
-        transactionSource: TransactionSource.CMT,
         dateEmission: this.datePipe.transform( donneesComplementaires.dateEmission,'yyyy-MM-dd') as string,
         dateValeur: this.datePipe.transform( donneesComplementaires.dateValeur, 'yyyy-MM-dd') as string ,
         dateOperation: this.datePipe.transform(donneesComplementaires.dateOperation,'yyyy-MM-dd') as string,
@@ -302,8 +296,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
       this.rapprochementService.echeanceCmtToRapprochement(cmtTransactionRequest)
         .subscribe({
-          next: (response) => {
-            console.log(response);
+          next: () => {
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
@@ -315,8 +308,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
             this.bankStateService.notifyValidation();
 
           },
-          error: (error) => {
-            console.error('Erreur lors du validation CMT:', error);
+          error: () => {
             this.isSubmitting = false;
           }
         });

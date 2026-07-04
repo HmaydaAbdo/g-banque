@@ -5,18 +5,16 @@
   <div class="flex justify-content-center ">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
+        @if (item.route) {
           <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
             <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
           </a>
-
-        </ng-container>
-        <ng-template #elseBlock>
+        } @else {
           <a [href]="item.url">
             <span class="text-color text-sm   text-center">{{ item.label }}</span>
           </a>
-        </ng-template>
+        }
       </ng-template>
     </p-breadcrumb>
   </div>
@@ -33,9 +31,13 @@
                      [ngClass]="{'ng-invalid ng-dirty': f['designation'].invalid && f['designation'].touched}"
                      placeholder="Désignation du crédit"
      >
-   <small class="p-error" *ngIf="f['designation'].invalid && f['designation'].touched">
-   <span *ngIf="f['designation'].errors?.['required']">La désignation est obligatoire.</span>
- </small>
+   @if (f['designation'].invalid && f['designation'].touched) {
+     <small class="p-error">
+       @if (f['designation'].errors?.['required']) {
+         <span>La désignation est obligatoire.</span>
+       }
+     </small>
+   }
    </div>
 
    <div class="field col-12 md:col-6">
@@ -52,9 +54,13 @@
                           styleClass="w-full"
                            [ngClass]="{'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched}"
                           ></p-dropdown>
-   <small class="p-error" *ngIf="f['banqueId'].invalid && f['banqueId'].touched">
- <span *ngIf="f['banqueId'].errors?.['required']">La banque est obligatoire.</span>
-  </small>
+   @if (f['banqueId'].invalid && f['banqueId'].touched) {
+     <small class="p-error">
+       @if (f['banqueId'].errors?.['required']) {
+         <span>La banque est obligatoire.</span>
+       }
+     </small>
+   }
  </div>
 
     <div class="field col-12 md:col-6">
@@ -69,10 +75,16 @@
                              styleClass="w-full"
                              [ngClass]="{'ng-invalid ng-dirty': f['nominal'].invalid && f['nominal'].touched}"
                               ></p-inputNumber>
-  <small class="p-error" *ngIf="f['nominal'].invalid && f['nominal'].touched">
-  <span *ngIf="f['nominal'].errors?.['required']">Le montant nominal est obligatoire.</span>
- <span *ngIf="f['nominal'].errors?.['min']">Le nominal doit être supérieur à zéro.</span>
-  </small>
+  @if (f['nominal'].invalid && f['nominal'].touched) {
+    <small class="p-error">
+      @if (f['nominal'].errors?.['required']) {
+        <span>Le montant nominal est obligatoire.</span>
+      }
+      @if (f['nominal'].errors?.['min']) {
+        <span>Le nominal doit être supérieur à zéro.</span>
+      }
+    </small>
+  }
  </div>
 
        <div class="field col-12 md:col-6">
@@ -87,10 +99,16 @@
                 styleClass="w-full"
                 [ngClass]="{'ng-invalid ng-dirty': f['periodicite'].invalid && f['periodicite'].touched}"
  ></p-inputNumber>
-    <small class="p-error" *ngIf="f['periodicite'].invalid && f['periodicite'].touched">
-      <span *ngIf="f['periodicite'].errors?.['required']">La périodicité est obligatoire.</span>
-      <span *ngIf="f['periodicite'].errors?.['min']">La périodicité doit être d'au moins un mois.</span>
-    </small>
+    @if (f['periodicite'].invalid && f['periodicite'].touched) {
+      <small class="p-error">
+        @if (f['periodicite'].errors?.['required']) {
+          <span>La périodicité est obligatoire.</span>
+        }
+        @if (f['periodicite'].errors?.['min']) {
+          <span>La périodicité doit être d'au moins un mois.</span>
+        }
+      </small>
+    }
 
   </div>
        <div class="field col-12 md:col-6">
@@ -106,10 +124,16 @@
                   styleClass="w-full"
                   [ngClass]="{'ng-invalid ng-dirty': f['taux'].invalid && f['taux'].touched}"
    ></p-inputNumber>
-   <small class="p-error" *ngIf="f['taux'].invalid && f['taux'].touched">
-       <span *ngIf="f['taux'].errors?.['required']">Le taux est obligatoire.</span>
-       <span *ngIf="f['taux'].errors?.['min'] || f['taux'].errors?.['max']">Le taux doit être entre 0 et 100.</span>
-   </small>
+   @if (f['taux'].invalid && f['taux'].touched) {
+     <small class="p-error">
+       @if (f['taux'].errors?.['required']) {
+         <span>Le taux est obligatoire.</span>
+       }
+       @if (f['taux'].errors?.['min'] || f['taux'].errors?.['max']) {
+         <span>Le taux doit être entre 0 et 100.</span>
+       }
+     </small>
+   }
  </div>
        <div class="field col-12 md:col-6">
    <label for="duree" class="block text-900 font-medium mb-2">Durée (en mois) <span class="p-text-danger">*</span></label>
@@ -123,10 +147,16 @@
                             styleClass="w-full"
                              [ngClass]="{'ng-invalid ng-dirty': f['duree'].invalid && f['duree'].touched}"
                        ></p-inputNumber>
-   <small class="p-error" *ngIf="f['duree'].invalid && f['duree'].touched">
- <span *ngIf="f['duree'].errors?.['required']">La durée est obligatoire.</span>
- <span *ngIf="f['duree'].errors?.['min']">La durée doit être d'au moins un mois.</span>
-</small>
+   @if (f['duree'].invalid && f['duree'].touched) {
+     <small class="p-error">
+       @if (f['duree'].errors?.['required']) {
+         <span>La durée est obligatoire.</span>
+       }
+       @if (f['duree'].errors?.['min']) {
+         <span>La durée doit être d'au moins un mois.</span>
+       }
+     </small>
+   }
    </div>
        <div class="field col-12 md:col-6">
     <label for="echeance" class="block text-900 font-medium mb-2">Échéance <span class="p-text-danger">*</span></label>
@@ -140,10 +170,16 @@
                    styleClass="w-full"
                    [ngClass]="{'ng-invalid ng-dirty': f['echeance'].invalid && f['echeance'].touched}"
     ></p-inputNumber>
-    <small class="p-error" *ngIf="f['echeance'].invalid && f['echeance'].touched">
-      <span *ngIf="f['echeance'].errors?.['required']">L'échéance est obligatoire.</span>
-      <span *ngIf="f['echeance'].errors?.['min']">L'échéance doit être supérieure à zéro.</span>
-    </small>
+    @if (f['echeance'].invalid && f['echeance'].touched) {
+      <small class="p-error">
+        @if (f['echeance'].errors?.['required']) {
+          <span>L'échéance est obligatoire.</span>
+        }
+        @if (f['echeance'].errors?.['min']) {
+          <span>L'échéance doit être supérieure à zéro.</span>
+        }
+      </small>
+    }
   </div>
        <div class="field col-12 md:col-6">
   <label for="dateDebut" class="block text-900 font-medium mb-2">Date de Début <span class="p-text-danger">*</span></label>
@@ -154,9 +190,13 @@
                         styleClass="w-full"
                          [ngClass]="{'ng-invalid ng-dirty': f['dateDebut'].invalid && f['dateDebut'].touched}"
                            ></p-calendar>
-   <small class="p-error" *ngIf="f['dateDebut'].invalid && f['dateDebut'].touched">
- <span *ngIf="f['dateDebut'].errors?.['required']">La date de début est obligatoire.</span>
-  </small>
+   @if (f['dateDebut'].invalid && f['dateDebut'].touched) {
+     <small class="p-error">
+       @if (f['dateDebut'].errors?.['required']) {
+         <span>La date de début est obligatoire.</span>
+       }
+     </small>
+   }
    </div>
 </div>
 

@@ -3,45 +3,50 @@
 
 <div class="card px-2 h-screen w-screen overflow-y-scroll">
 
-  <div *ngIf="loading && !tableauDetails" class="flex justify-content-center align-items-center h-full my-5">
-    <p-progressSpinner></p-progressSpinner>
-  </div>
-
-  <div *ngIf="errorMessage" class="p-message p-message-error mt-3">
-    <div class="p-message-wrapper">
-      <span class="p-message-icon pi pi-times-circle"></span>
-      <span class="p-message-summary">Erreur:</span>
-      <span class="p-message-detail">{{ errorMessage }}</span>
+  @if (loading && !tableauDetails) {
+    <div class="flex justify-content-center align-items-center h-full my-5">
+      <p-progressSpinner></p-progressSpinner>
     </div>
-  </div>
+  }
 
-  <div *ngIf="tableauDetails || !loading" class="flex flex-column px-2">
+  @if (errorMessage) {
+    <div class="p-message p-message-error mt-3">
+      <div class="p-message-wrapper">
+        <span class="p-message-icon pi pi-times-circle"></span>
+        <span class="p-message-summary">Erreur:</span>
+        <span class="p-message-detail">{{ errorMessage }}</span>
+      </div>
+    </div>
+  }
+
+  @if (tableauDetails || !loading) {
+    <div class="flex flex-column px-2">
 
     <div class="flex justify-content-between align-items-center">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
+        @if (item.route) {
           <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color' ]"></span>
             <span class="text-black-alpha-90  text-sm p-2 font-bold">{{ item.label }}</span>
           </a>
-
-        </ng-container>
-        <ng-template #elseBlock>
+        } @else {
           <a [href]="item.url">
             <span class="text-color text-sm  text-center">{{ item.label }}</span>
           </a>
-        </ng-template>
+        }
       </ng-template>
     </p-breadcrumb>
       <p class="text-sm font-bold">Désignation CMT : "{{tableauDetails?.designationCredit}}"</p>
   </div>
 
-    <div *ngIf="tableauDetails" class="flex flex-row justify-content-around gap-2 text-center text-sm  ">
-      <p>Endettement : <strong>{{ tableauDetails.montantTotalAPayer | number }} MAD</strong> </p>
-      <p>Montant Total Déjà Payé : <strong>{{ tableauDetails.montantTotalDejaPaye | number }} MAD</strong> </p>
-      <p>Montant Restant à Payer : <strong>{{ tableauDetails.montantRestantAPayer | number }} MAD</strong> </p>
-    </div>
+    @if (tableauDetails) {
+      <div class="flex flex-row justify-content-around gap-2 text-center text-sm  ">
+        <p>Endettement : <strong>{{ tableauDetails.montantTotalAPayer | number }} MAD</strong> </p>
+        <p>Montant Total Déjà Payé : <strong>{{ tableauDetails.montantTotalDejaPaye | number }} MAD</strong> </p>
+        <p>Montant Restant à Payer : <strong>{{ tableauDetails.montantRestantAPayer | number }} MAD</strong> </p>
+      </div>
+    }
 
     <div class="pg-filters">
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
@@ -112,7 +117,9 @@
             <th pSortableColumn="dateEcheance">Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
             <th>Montant TTC</th>
             <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
-            <th style="width: 8rem;">Actions</th>
+            @if (isAdmin()) {
+              <th style="width: 8rem;">Actions</th>
+            }
 
           </tr>
         </ng-template>
@@ -125,9 +132,11 @@
             <td>
               <p-tag [value]="echeance.statutPaiement" [severity]="getStatusSeverity(echeance.statutPaiement)"></p-tag>
             </td>
-            <td class="text-center">
-                <p-inputSwitch [ngModel]="echeance.statutPaiement" (onChange)="onStatutChange(echeance)" pTooltip="changer le status de l'échéance" tooltipPosition="top"></p-inputSwitch>
-            </td>
+            @if (isAdmin()) {
+              <td class="text-center">
+                  <p-inputSwitch [ngModel]="echeance.statutPaiement === 'PAYE'" (onChange)="onStatutChange(echeance)" pTooltip="changer le status de l'échéance" tooltipPosition="top"></p-inputSwitch>
+              </td>
+            }
           </tr>
         </ng-template>
         <ng-template pTemplate="emptymessage">
@@ -143,6 +152,7 @@
       </p-table>
 
   </div>
+  }
 
 </div>
 

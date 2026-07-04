@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild, inject} from '@angular/core';
 import {CreditMoyenTermeResponseDto} from "../../dtos/CreditMoyenTermeResponseDto";
 import {FormBuilder, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
@@ -13,7 +13,7 @@ import {CreditMoyenTermeSearchDto} from "../../dtos/CreditMoyenTermeSearchDto";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {Button, ButtonDirective} from "primeng/button";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {DatePipe, DecimalPipe, NgClass, NgIf} from "@angular/common";
+import {DatePipe, DecimalPipe, NgClass} from "@angular/common";
 import {DropdownModule} from "primeng/dropdown";
 import {InputTextModule} from "primeng/inputtext";
 import {Ripple} from "primeng/ripple";
@@ -32,7 +32,6 @@ import {TooltipModule} from "primeng/tooltip";
     DatePipe,
     DropdownModule,
     InputTextModule,
-    NgIf,
     PrimeTemplate,
     ReactiveFormsModule,
     Ripple,
@@ -70,13 +69,11 @@ export class CmtListArchivedComponent implements OnInit, OnDestroy {
   items: MenuItem[] | undefined;
 
 
-  constructor(
-    private cmtService: CmtService,
-    private banqueService: BanqueService,
-    private router: Router,
-    private messageService: MessageService,
-    private fb: FormBuilder
-  ) { }
+  private readonly cmtService = inject(CmtService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
+  private readonly fb = inject(FormBuilder);
 
   ngOnInit(): void {
 
@@ -119,9 +116,7 @@ export class CmtListArchivedComponent implements OnInit, OnDestroy {
           value: banque.id
         }));
       },
-      error: (error) => {
-        console.error('Error loading bank options:', error);
-      }
+      error: () => {}
     });
   }
 
@@ -152,9 +147,8 @@ export class CmtListArchivedComponent implements OnInit, OnDestroy {
         this.totalRecords = page.page.totalElements;
         this.loading = false;
       },
-      error: (error) => {
+      error: () => {
         this.loading = false;
-        console.error('Erreur lors du chargement des crédits:', error);
       }
     });
   }

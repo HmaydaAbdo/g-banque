@@ -7,7 +7,6 @@ export interface CmtTransactionResponseDto {
   banqueName: string;
   libelle: string;
   observation: string;
-  creditoMoyenTermeId: number;
   echeanceId: number;
   dateEmission: string;
   dateValeur: string;

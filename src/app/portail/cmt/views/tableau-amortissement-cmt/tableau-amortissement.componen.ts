@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, OnDestroy, OnInit, ViewChild, inject} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {ActivatedRoute, Router} from '@angular/router';
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -79,14 +79,12 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   private lastLazyLoadEvent: TableLazyLoadEvent = {};
   items: MenuItem[] | undefined;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private echeanceCmtService: EcheanceCmtService,
-    private messageService: MessageService,
-    private fb: FormBuilder,
-    private authService: AuthService,
-  ) { }
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly echeanceCmtService = inject(EcheanceCmtService);
+  private readonly messageService = inject(MessageService);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
 
   ngOnInit(): void {
     this.items = [
@@ -235,7 +233,6 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
         this.loadEcheances(this.lastLazyLoadEvent);
       },
       error: (error) => {
-        console.error('Error toggling  echeance status  :', error);
         this.errorMessage = 'Échec de la mise à jour du statut. ' + (error.message || 'Veuillez réessayer.');
       }
     });
