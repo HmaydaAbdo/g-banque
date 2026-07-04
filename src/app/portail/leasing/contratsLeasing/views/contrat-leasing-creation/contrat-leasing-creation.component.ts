@@ -283,9 +283,6 @@ export class ContratLeasingCreationComponent implements OnInit, OnDestroy {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Contrat soumis avec succès!' });
             this.wizardService.resetContract(); // Clear wizard state
             this.router.navigate(['portail/leasing/contratsLeasing']);
-          },
-          error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la soumission du contrat.' });
           }
         });
       },

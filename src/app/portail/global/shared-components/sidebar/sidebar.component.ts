@@ -189,6 +189,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Départements',        icon: 'pi pi-sitemap',    routerLink: '/portail/admin/departements'      },
         { label: 'Utilisateurs',         icon: 'pi pi-users',      routerLink: '/portail/admin/utilisateurs'      },
         { label: 'Règles de commission', icon: 'pi pi-sliders-h',  routerLink: '/portail/admin/commission-config' },
+        { label: 'Configuration leasing', icon: 'pi pi-sliders-h', routerLink: '/portail/admin/leasing-config'    },
       ]
     },
     {

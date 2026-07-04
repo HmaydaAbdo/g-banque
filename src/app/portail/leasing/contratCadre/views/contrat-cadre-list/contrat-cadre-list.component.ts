@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService, ConfirmationService, ConfirmEventType } from 'primeng/api';
 import { debounceTime, distinctUntilChanged, finalize, Subscription } from 'rxjs';
@@ -59,6 +60,7 @@ export class ContratCadreListComponent implements OnInit, OnDestroy {
   private readonly messageService          = inject(MessageService);
   private readonly confirmationService     = inject(ConfirmationService);
   private readonly authService             = inject(AuthService);
+  private readonly route                   = inject(ActivatedRoute);
 
   // --- Liste ---
   contratsCadres: ContratCadreResponse[] = [];
@@ -92,8 +94,11 @@ export class ContratCadreListComponent implements OnInit, OnDestroy {
   private subs = new Subscription();
 
   ngOnInit(): void {
+    const organismeIdParam = this.route.snapshot.queryParamMap.get('organismeId');
+    const initialOrganismeId = organismeIdParam ? +organismeIdParam : null;
+
     this.searchForm = this.fb.group({
-      organismeId: [null],
+      organismeId: [initialOrganismeId],
       statut:      [null]
     });
 

@@ -1,7 +1,7 @@
 
 import { Injectable, inject } from '@angular/core';
 import {BehaviorSubject, Observable, throwError} from 'rxjs';
-import {distinctUntilChanged, tap, map, catchError} from 'rxjs/operators'; // Import 'map'
+import {distinctUntilChanged, map, catchError} from 'rxjs/operators';
 import {ContratLeasingRequestDTO, ContratLeasingResponseDTO} from '../dtos/contrat-leasing';
 import { Decimal } from 'decimal.js';
 import {ContratLeasingPhaseRequestDTO} from "../dtos/contrat-leasing-phase";
@@ -68,7 +68,6 @@ export class LeasingContractWizardService {
         const valeurResiduelle = contract.valeurResiduelle || new Decimal(0); // Treat null/undefined valeurResiduelle as 0
         const expectedTotal = totalMensualities.plus(valeurResiduelle);
 
-        console.log('LeasingContractWizardService: Calculated expectedTotalAmount:', expectedTotal.toFixed(2));
         return expectedTotal;
       }),
       distinctUntilChanged((prev, curr) => prev?.eq(curr || new Decimal(0))) // Prevent emission if value hasn't numerically changed
@@ -91,7 +90,6 @@ export class LeasingContractWizardService {
     }
 
     this._contract.next(updatedContract);
-    console.log('LeasingContractWizardService: Contract updated', updatedContract);
   }
 
   addPhase(phase: ContratLeasingPhaseRequestDTO): void {
@@ -115,8 +113,6 @@ export class LeasingContractWizardService {
         mensualiteTTC: new Decimal(updatedPhase.mensualiteTTC)
       };
       this.updateContract({ phases: updatedPhases });
-    } else {
-      console.warn(`LeasingContractWizardService: Attempted to update phase at invalid index: ${index}`);
     }
   }
 
@@ -134,12 +130,10 @@ export class LeasingContractWizardService {
 
   clearPhases(): void {
     this.updateContract({ phases: [] });
-    console.log('LeasingContractWizardService: Phases cleared.');
   }
 
   submitContractToBackend(): Observable<SubmissionSuccessResponse> {
     const finalContract = this.getCurrentContract();
-    console.log('LeasingContractWizardService: Attempting to submit contract to backend:', finalContract);
 
     // Clear any previous submission errors before a new attempt
     this._submissionError.next(null);
@@ -149,10 +143,8 @@ export class LeasingContractWizardService {
     // Determine if it's a creation or an update based on the presence of an ID
     if (finalContract.id !== null && finalContract.id !== undefined) {
       submissionObservable = this.contratLeasingService.updateContratLeasing(finalContract.id, finalContract);
-      console.log('LeasingContractWizardService: Performing contract UPDATE (ID present).');
     } else {
       submissionObservable = this.contratLeasingService.createContratLeasing(finalContract);
-      console.log('LeasingContractWizardService: Performing contract CREATION (No ID present).');
     }
 
     return submissionObservable.pipe(
@@ -164,7 +156,6 @@ export class LeasingContractWizardService {
           contractId: response.id.toString()
         };
       }),
-      tap(response => console.log('LeasingContractWizardService: Backend submission successful, response:', response)),
       catchError(error => {
         // On error: set the submission error state and re-throw the error
         let errorMessage = 'Une erreur inattendue est survenue lors de la soumission.';
@@ -172,7 +163,6 @@ export class LeasingContractWizardService {
           errorMessage = error.message; // Use the message propagated from handleError in ContratLeasingService
         }
         this._submissionError.next(errorMessage);
-        console.error('LeasingContractWizardService: Submission failed:', error);
         return throwError(() => new Error(errorMessage)); // Re-throw for the component to handle
       })
     );
@@ -182,7 +172,6 @@ export class LeasingContractWizardService {
     this._contract.next(initialContract);
     this._globalValidationErrors.next([]); // Clear global errors on reset
     this._submissionError.next(null);
-    console.log('LeasingContractWizardService: Contract state reset to initial.');
   }
 
   // --- Global Validation ---
@@ -232,7 +221,6 @@ export class LeasingContractWizardService {
     }
 
     this._globalValidationErrors.next(errors);
-    console.log('LeasingContractWizardService: Global validation errors:', errors);
   }
 
   private getContractTypeDisplayName(type: TypeContratLeasing | null | undefined): string {
@@ -256,6 +244,5 @@ export class LeasingContractWizardService {
       }))
     };
     this._contract.next(contractToLoad);
-    console.log('LeasingContractWizardService: Loaded contract for edit', contractToLoad);
   }
 }

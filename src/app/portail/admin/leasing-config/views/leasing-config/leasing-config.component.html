@@ -1,0 +1,56 @@
+<p-toast position="center"></p-toast>
+
+<div class="card flex flex-column gap-3 p-2">
+
+  <p-breadcrumb [model]="items" [home]="home"></p-breadcrumb>
+
+  <h3 class="m-0">Configuration Leasing</h3>
+
+  <p-card styleClass="w-full md:w-30rem">
+    @if (loading) {
+      <p>Chargement de la configuration...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
+
+        <div class="field">
+          <label for="valeurResiduelle">Valeur résiduelle (%)</label>
+          <p-inputNumber id="valeurResiduelle" formControlName="valeurResiduelle"
+                         mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2"
+                         suffix=" %"
+                         [ngClass]="{'ng-dirty': f['valeurResiduelle'].invalid && f['valeurResiduelle'].touched}">
+          </p-inputNumber>
+          @if (f['valeurResiduelle'].invalid && f['valeurResiduelle'].touched) {
+            <small class="p-error">Valeur requise, comprise entre 0 et 100.</small>
+          }
+          <small class="block text-color-secondary mt-1">
+            Taux appliqué au montant d'achat TTC pour calculer la valeur résiduelle d'un nouveau contrat de leasing.
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="tauxTva">Taux de TVA (%)</label>
+          <p-inputNumber id="tauxTva" formControlName="tauxTva"
+                         mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2"
+                         suffix=" %"
+                         [ngClass]="{'ng-dirty': f['tauxTva'].invalid && f['tauxTva'].touched}">
+          </p-inputNumber>
+          @if (f['tauxTva'].invalid && f['tauxTva'].touched) {
+            <small class="p-error">Valeur requise, comprise entre 0 et 100.</small>
+          }
+          <small class="block text-color-secondary mt-1">
+            Taux de TVA utilisé pour ventiler les échéances de leasing (montant HT / TVA).
+          </small>
+        </div>
+
+        @if (dateModification) {
+          <small class="text-color-secondary">Dernière modification : {{ dateModification | date:'dd/MM/yyyy HH:mm' }}</small>
+        }
+
+        <div class="flex justify-content-end">
+          <button pButton type="submit" label="Enregistrer" icon="pi pi-check"
+                  [loading]="submitting" [disabled]="submitting"></button>
+        </div>
+      </form>
+    }
+  </p-card>
+</div>

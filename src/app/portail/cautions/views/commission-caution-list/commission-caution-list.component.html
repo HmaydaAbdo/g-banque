@@ -127,8 +127,6 @@
       </div>
     </div>
 
-    <!-- Séparateur + sélection (droite) — visible dès qu'au moins 1 ligne cochée -->
-    @if (isAdmin && selectionCount>0){
       <ng-container >
 
         <div class="border-left-1 surface-border mx-2 h-2rem"></div>
@@ -168,7 +166,7 @@
           [pTooltip]="selectionIsBmci ? 'Fusion non autorisée pour la BMCI (TVA séparée)' : ''"
           (onClick)="openFusionDialog()" />
       </ng-container>
-    }
+
 
 
 
@@ -200,7 +198,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th style="width:3rem">
-            <p-tableHeaderCheckbox *ngIf="isAdmin" />
+            <p-tableHeaderCheckbox  />
           </th>
           <th pSortableColumn="libelle"      style="min-width:16rem">Libellé          <p-sortIcon field="libelle"      /></th>
           <th pSortableColumn="banqueNom"    style="min-width:10rem">Banque           <p-sortIcon field="banqueNom"    /></th>
@@ -214,7 +212,7 @@
       <ng-template pTemplate="body" let-commission>
         <tr [pSelectableRow]="commission">
           <td>
-            <p-tableCheckbox *ngIf="isAdmin" [value]="commission" />
+            <p-tableCheckbox [value]="commission" />
           </td>
           <td>{{ commission.libelle }}</td>
           <td>{{ commission.banqueNom }}</td>

@@ -115,6 +115,29 @@
           }
         </div>
 
+        <!-- Solde initial (création uniquement) -->
+        @if (!isEditMode) {
+          <div class="field col-12 md:col-6">
+            <label for="soldeInitial" class="font-semibold block mb-2 text-700 text-sm">
+              Solde initial <span class="text-red-500">*</span>
+            </label>
+            <input type="number" pInputText id="soldeInitial" formControlName="soldeInitial" min="0" step="0.01" />
+            @if (f['soldeInitial'].invalid && f['soldeInitial'].touched) {
+              <small class="p-error">
+                @if (f['soldeInitial'].errors?.['required']) {
+                  <span>Obligatoire.</span>
+                }
+                @if (f['soldeInitial'].errors?.['min']) {
+                  <span>Le solde initial doit être positif ou nul.</span>
+                }
+              </small>
+            }
+            <small class="text-400 text-xs">
+              Solde de départ du premier rapprochement, ouvert automatiquement à la création.
+            </small>
+          </div>
+        }
+
         <!-- Logo -->
         <div class="field col-12">
           <label class="font-semibold block mb-2 text-700 text-sm">Logo</label>

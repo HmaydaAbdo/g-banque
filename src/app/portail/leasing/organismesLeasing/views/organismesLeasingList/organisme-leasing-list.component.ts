@@ -142,8 +142,8 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/portail/leasing/organismesLeasing/edit', organisme.id]);
   }
 
-  viewContratsCadres(_organismeId: number): void {
-    this.router.navigate(['/portail/leasing/contratsCadres']);
+  viewContratsCadres(organismeId: number): void {
+    this.router.navigate(['/portail/leasing/contratsCadres'], { queryParams: { organismeId } });
   }
 
   confirmDeleteOrganismeLeasing(id: number, nom: string): void {

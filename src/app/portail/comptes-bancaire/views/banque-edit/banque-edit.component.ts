@@ -92,6 +92,9 @@ export class BanqueEditComponent implements OnInit {
       devise: [Devise.MAD, Validators.required],
       adresse: ['', Validators.required],
       agence: ['', Validators.required],
+      // Solde de départ du premier rapprochement — saisi une seule fois, à la création.
+      // Non affiché ni modifiable en édition (non stocké sur la banque elle-même).
+      soldeInitial: [0, [Validators.required, Validators.min(0)]],
     });
   }
 
@@ -165,6 +168,8 @@ export class BanqueEditComponent implements OnInit {
       devise: formValue.devise,
       adresse: formValue.adresse,
       agence: formValue.agence,
+      // Ignoré par le backend en modification — seule la création l'utilise.
+      soldeInitial: formValue.soldeInitial,
     };
 
     if (this.isEditMode && this.originalBanqueResponse?.id) {

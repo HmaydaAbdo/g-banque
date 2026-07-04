@@ -26,5 +26,10 @@ export const ADMIN_ROUTES: Routes = [
     path: 'commission-config',
     loadComponent: () => import('./commission-config/views/commission-config-list/commission-config-list.component')
       .then(m => m.CommissionConfigListComponent)
+  },
+  {
+    path: 'leasing-config',
+    loadComponent: () => import('./leasing-config/views/leasing-config/leasing-config.component')
+      .then(m => m.LeasingConfigComponent)
   }
 ];

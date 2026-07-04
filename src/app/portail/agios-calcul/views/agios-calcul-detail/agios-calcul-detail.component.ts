@@ -96,10 +96,16 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
         this.annee = +params['annee'];
         this.typeLabel = TypeAgiosLabels[this.typeAgios] || this.typeAgios;
 
-        // Bornes du trimestre pour le calendrier
-        const moisDebut = (this.trimestre - 1) * 3;
-        this.minDate = new Date(this.annee, moisDebut, 1);
-        this.maxDate = new Date(this.annee, moisDebut + 3, 0); // dernier jour du trimestre
+        // Bornes de la période pour le calendrier (mois ou trimestre selon le type)
+        if (this.typeAgios === TypeAgios.FACTORING) {
+          // FACTORING : période mensuelle → trimestre contient le numéro de mois
+          this.minDate = new Date(this.annee, this.trimestre - 1, 1);
+          this.maxDate = new Date(this.annee, this.trimestre, 0); // dernier jour du mois
+        } else {
+          const moisDebut = (this.trimestre - 1) * 3;
+          this.minDate = new Date(this.annee, moisDebut, 1);
+          this.maxDate = new Date(this.annee, moisDebut + 3, 0); // dernier jour du trimestre
+        }
 
         // DTO de base
         this.journalierDto = {
@@ -112,7 +118,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
         this.items = [
           { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
           { icon: 'pi pi-calculator', route: '/portail/agios/calcul', label: 'Calcul des Agios' },
-          { label: `T${this.trimestre}/${this.annee}` }
+          { label: this.periodeLabel }
         ];
 
         this.loadTrimestreInfo();
@@ -227,7 +233,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
     if (!this.trimestreInfo) return;
 
     this.confirmationService.confirm({
-      message: `Clôturer définitivement ${this.typeLabel} T${this.trimestre}/${this.annee} pour ${this.banqueNom} ?
+      message: `Clôturer définitivement ${this.typeLabel} ${this.periodeLabel} pour ${this.banqueNom} ?
                 Le montant TTC de ${this.trimestreInfo.totalAgiosTTC.toFixed(2)} MAD sera figé.`,
       header: 'Confirmer la clôture',
       icon: 'pi pi-lock',
@@ -245,7 +251,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
           next: result => {
             this.messageService.add({
               severity: 'success', summary: 'Clôturé',
-              detail: `T${result.trimestre}/${result.annee} clôturé — TTC: ${result.totalAgiosTTC.toFixed(2)} MAD`
+              detail: `${this.periodeLabel} clôturé — TTC: ${result.totalAgiosTTC.toFixed(2)} MAD`
             });
             this.loadTrimestreInfo();
             this.loadAggregates();
@@ -283,12 +289,27 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Vrai pour les types multi-marchés (Préfinancement, Droits Constatés) :
+   * Libellé de la période affiché dans le header et le fil d'Ariane.
+   * – FACTORING (mensuel) : "Juillet 2026"
+   * – Autres (trimestriel) : "T2/2026"
+   */
+  get periodeLabel(): string {
+    if (this.typeAgios === TypeAgios.FACTORING) {
+      const mois = ['Janvier','Février','Mars','Avril','Mai','Juin',
+                    'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+      return `${mois[(this.trimestre - 1) % 12]} ${this.annee}`;
+    }
+    return `T${this.trimestre}/${this.annee}`;
+  }
+
+  /**
+   * Vrai pour les types multi-marchés (Préfinancement, Droits Constatés, Factoring) :
    * affiche la colonne Marché et adapte les libellés encours/jours.
    */
   get isMultiMarche(): boolean {
     return this.typeAgios === TypeAgios.PREFINANCEMENT
-        || this.typeAgios === TypeAgios.DROIT_CONSTATE;
+        || this.typeAgios === TypeAgios.DROIT_CONSTATE
+        || this.typeAgios === TypeAgios.FACTORING;
   }
 
   /** Libellé de la colonne "Solde" : encours pour les types multi-marchés, solde comptable pour FC. */
