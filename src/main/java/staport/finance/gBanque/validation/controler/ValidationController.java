@@ -1,8 +1,10 @@
 package staport.finance.gBanque.validation.controler;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import staport.finance.gBanque.Agios.dtos.AgiosTransactionResponse;
@@ -29,6 +31,8 @@ import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
+import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
+import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionRequestDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionResponseDTO;
 import staport.finance.gBanque.Agios.service.interfaces.IAgiosValidationService;
@@ -48,34 +52,51 @@ import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResp
 import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import staport.finance.gBanque.validation.services.ValidationService;
 
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/rapprochement")
+@PreAuthorize(ValidationController.FINANCE_OR_ADMIN)
 public class ValidationController {
+
+    static final String FINANCE_OR_ADMIN =
+            "hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')";
 
     private final ValidationService validationService;
     private final ReverseTransactionService reverseTransactionService;
     private final ILeasingValidationService leasingValidationService;
     private final IAgiosValidationService agiosValidationService;
+    private final ContratLeasingService contratLeasingService;
 
     public ValidationController(ValidationService validationService,
                                 ReverseTransactionService reverseTransactionService,
                                 ILeasingValidationService leasingValidationService,
-                                IAgiosValidationService agiosValidationService) {
+                                IAgiosValidationService agiosValidationService,
+                                ContratLeasingService contratLeasingService) {
         this.validationService      = validationService;
         this.reverseTransactionService = reverseTransactionService;
         this.leasingValidationService  = leasingValidationService;
         this.agiosValidationService    = agiosValidationService;
+        this.contratLeasingService    = contratLeasingService;
     }
 
 
     /**
      * Valide une échéance de leasing : crée la transaction bancaire et marque l'échéance PAYE.
      * Délègue au {@code LeasingValidationService} du module leasing.
+     * <p>
+     * Le {@code ContratLeasing} est résolu ici (via {@code ContratLeasingService}, le point d'entrée
+     * public du domaine {@code contratLeasing}) et transmis directement à {@code LeasingValidationService}
+     * pour éviter que ce dernier n'ait besoin d'injecter {@code ContratLeasingService} — une telle
+     * dépendance fermerait un cycle de beans Spring (LeasingValidationService → ContratLeasingService
+     * → ... → TransactionService → LeasingValidationService, ce dernier étant déjà appelé par
+     * TransactionService pour {@code syncEcheanceFromTransaction}).
      */
     @PostMapping("/process/echeance-leasing")
     public ResponseEntity<LeasingTransactionResponseDTO> processLeasingTransaction(
             @Valid @RequestBody LeasingTransactionRequestDTO requestDto) {
-        return new ResponseEntity<>(leasingValidationService.processLeasingTransaction(requestDto), HttpStatus.CREATED);
+        ContratLeasing contratLeasing = contratLeasingService.findOrThrow(requestDto.contratLeasingId());
+        return new ResponseEntity<>(
+                leasingValidationService.processLeasingTransaction(contratLeasing, requestDto), HttpStatus.CREATED);
     }
 
 

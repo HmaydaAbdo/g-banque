@@ -2,8 +2,8 @@ package staport.finance.gBanque.leasing.contratCadre.specifications;
 
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import staport.finance.gBanque.leasing.contratCadre.dtos.ContratCadreSearchDTO;
 import staport.finance.gBanque.leasing.contratCadre.entities.ContratCadre;
-import staport.finance.gBanque.leasing.contratCadre.enums.StatutContratCadre;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,15 +15,15 @@ public class ContratCadreSpecification {
 
     private ContratCadreSpecification() {}
 
-    public static Specification<ContratCadre> build(Long organismeId, StatutContratCadre statut) {
+    public static Specification<ContratCadre> searchByCriteria(ContratCadreSearchDTO criteria) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (organismeId != null) {
-                predicates.add(cb.equal(root.get("organisme").get("id"), organismeId));
+            if (criteria.organismeId() != null) {
+                predicates.add(cb.equal(root.get("organisme").get("id"), criteria.organismeId()));
             }
-            if (statut != null) {
-                predicates.add(cb.equal(root.get("statut"), statut));
+            if (criteria.statut() != null) {
+                predicates.add(cb.equal(root.get("statut"), criteria.statut()));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

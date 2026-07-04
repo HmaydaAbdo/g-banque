@@ -1,6 +1,8 @@
 package staport.finance.gBanque.factoring.entities;
 
 import jakarta.persistence.*;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
@@ -19,6 +21,16 @@ public class Factoring {
     @ManyToOne
     @JoinColumn(name = "marche_id")
     private Marche marche;
+
+    /** Ligne spécifique active au moment de la création (null si couverte par une ligne générale). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ligne_fonctionnelle_specifique_id")
+    private LigneFonctionnelleSpecifique ligneFonctionnelleSpecifique;
+
+    /** Ligne générale active au moment de la création (null si couverte par une ligne spécifique). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ligne_fonctionnelle_id")
+    private LigneFonctionnelle ligneFonctionnelle;
 
     private LocalDate dateEmission ;
 
@@ -53,6 +65,22 @@ public class Factoring {
 
     public void setMarche(Marche marche) {
         this.marche = marche;
+    }
+
+    public LigneFonctionnelleSpecifique getLigneFonctionnelleSpecifique() {
+        return ligneFonctionnelleSpecifique;
+    }
+
+    public void setLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique ligneFonctionnelleSpecifique) {
+        this.ligneFonctionnelleSpecifique = ligneFonctionnelleSpecifique;
+    }
+
+    public LigneFonctionnelle getLigneFonctionnelle() {
+        return ligneFonctionnelle;
+    }
+
+    public void setLigneFonctionnelle(LigneFonctionnelle ligneFonctionnelle) {
+        this.ligneFonctionnelle = ligneFonctionnelle;
     }
 
     public LocalDate getDateEmission() {

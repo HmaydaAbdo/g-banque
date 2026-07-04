@@ -23,8 +23,3 @@ spring:
       # Les tables Spring Batch sont gérées par les migrations
       initialize-schema: never
 
-logging:
-  level:
-    root: WARN
-    staport.finance.gBanque: INFO
-    org.springframework.web: WARN

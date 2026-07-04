@@ -9,19 +9,16 @@ public class ProcessedContratLeasing {
     private final String notificationTitle;
     private final String notificationContent;
     private final NotificationType notificationType;
-    private final boolean needsPersistence;
 
     public ProcessedContratLeasing(
             ContratLeasing contratLeasing,
             String notificationTitle,
             String notificationContent,
-            NotificationType notificationType,
-            boolean needsPersistence) {
+            NotificationType notificationType) {
         this.contratLeasing = contratLeasing;
         this.notificationTitle = notificationTitle;
         this.notificationContent = notificationContent;
         this.notificationType = notificationType;
-        this.needsPersistence = needsPersistence;
     }
 
     public ContratLeasing getContratLeasing() {
@@ -40,10 +37,6 @@ public class ProcessedContratLeasing {
         return notificationType;
     }
 
-    public boolean needsPersistence() {
-        return needsPersistence;
-    }
-
     public boolean hasNotification() {
         return notificationTitle != null && notificationContent != null && notificationType != null;
     }
@@ -54,7 +47,6 @@ public class ProcessedContratLeasing {
                 "contratId=" + contratLeasing.getId() +
                 ", numeroContrat='" + contratLeasing.getNumeroContrat() + '\'' +
                 ", hasNotification=" + hasNotification() +
-                ", needsPersistence=" + needsPersistence +
                 '}';
     }
 }

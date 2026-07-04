@@ -3,7 +3,7 @@ package staport.finance.gBanque.leasing.echeancesLeasing.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
-import staport.finance.gBanque.leasing.contratLeasing.config.LeasingProperties;
+import staport.finance.gBanque.leasing.config.services.interfaces.ILeasingConfigService;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingResponseDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
@@ -13,14 +13,14 @@ import java.math.RoundingMode;
 
 /**
  * Mapper MapStruct pour EcheanceLeasing → EcheanceLeasingResponseDTO.
- * Classe abstraite nécessaire pour injecter LeasingProperties (taux TVA)
+ * Classe abstraite nécessaire pour injecter ILeasingConfigService (taux TVA administrable)
  * et calculer montantHT, montantTVA et libellé via des méthodes protégées.
  */
 @Mapper(componentModel = "spring")
 public abstract class EcheanceLeasingMapper {
 
     @Autowired
-    protected LeasingProperties leasingProperties;
+    protected ILeasingConfigService leasingConfigService;
 
     private static final int SCALE = 2;
 
@@ -39,7 +39,7 @@ public abstract class EcheanceLeasingMapper {
     protected BigDecimal computeMontantHT(EcheanceLeasing entity) {
         if (entity.getMontantTTC() == null) return null;
         return entity.getMontantTTC()
-                .divide(BigDecimal.ONE.add(leasingProperties.getTauxTva()), SCALE, RoundingMode.HALF_UP);
+                .divide(BigDecimal.ONE.add(leasingConfigService.getTauxTva()), SCALE, RoundingMode.HALF_UP);
     }
 
     protected BigDecimal computeMontantTVA(EcheanceLeasing entity) {

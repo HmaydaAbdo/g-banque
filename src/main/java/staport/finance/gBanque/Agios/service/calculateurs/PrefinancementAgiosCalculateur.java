@@ -98,17 +98,42 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
     /**
      * Une banque est éligible si elle possède au moins un marché avec une ligne
      * préfinancement active (spécifique ou générale).
+     * Produit un log INFO détaillant la répartition des marchés (avec/sans ligne).
      */
     @Override
     @Transactional(readOnly = true)
     public boolean estEligible(Banque banque) {
         if (resolveNaturePrefi().isEmpty()) {
-            log.warn("Nature '{}' (code={}) introuvable en base — aucune banque éligible PREFI",
-                    NATURE_PREFI_LABEL, NATURE_PREFI_CODE);
+            log.warn("PREFI — {} : nature '{}' (code={}) introuvable en base → banque ignorée",
+                    banque.getNom(), NATURE_PREFI_LABEL, NATURE_PREFI_CODE);
             return false;
         }
         List<Marche> marches = marcheRepository.findByBanqueId(banque.getId());
-        return marches.stream().anyMatch(m -> resoudreTaux(m).isPresent());
+        if (marches.isEmpty()) {
+            log.info("PREFI — {} : aucun marché rattaché → banque ignorée", banque.getNom());
+            return false;
+        }
+
+        // Pré-chauffe le cache et classe chaque marché
+        List<String> avecLigne = new ArrayList<>();
+        List<String> sansLigne = new ArrayList<>();
+        for (Marche m : marches) {
+            if (resoudreTaux(m).isPresent()) avecLigne.add(m.getNom() + " #" + m.getId());
+            else                              sansLigne.add(m.getNom() + " #" + m.getId());
+        }
+
+        if (avecLigne.isEmpty()) {
+            log.info("PREFI — {} : {}/{} marchés, aucune ligne PREFI active → banque ignorée | sans ligne : {}",
+                    banque.getNom(), marches.size(), marches.size(), sansLigne);
+            return false;
+        }
+
+        log.info("PREFI — {} : {}/{} marchés avec ligne [{}]{}",
+                banque.getNom(),
+                avecLigne.size(), marches.size(),
+                String.join(", ", avecLigne),
+                sansLigne.isEmpty() ? "" : " | " + sansLigne.size() + " sans ligne : " + sansLigne);
+        return true;
     }
 
     /**
@@ -125,15 +150,17 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
         for (Marche marche : marches) {
             Optional<BigDecimal> tauxOpt = resoudreTaux(marche);
             if (tauxOpt.isEmpty()) {
-                log.debug("Marché {} — aucune ligne PREFI active, ignoré", marche.getId());
+                log.debug("PREFI — {} — {} : marché '{}' #{} sans ligne active, ignoré",
+                        banque.getNom(), jour, marche.getNom(), marche.getId());
                 continue;
             }
 
-            BigDecimal taux = tauxOpt.get();
+            BigDecimal taux    = tauxOpt.get();
             BigDecimal encours = calculerEncours(marche, jour);
 
             if (encours.compareTo(BigDecimal.ZERO) <= 0) {
-                // Encours nul ou négatif : pas d'agios ce jour pour ce marché
+                log.debug("PREFI — {} — {} : marché '{}' #{} encours={} ≤ 0, pas d'agios",
+                        banque.getNom(), jour, marche.getNom(), marche.getId(), encours);
                 resultats.add(new ResultatParMarche(marche, AgiosCalculateur.ResultatJournalier.ZERO));
                 continue;
             }
@@ -147,8 +174,8 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
             String metadata = String.format("marche_id=%d|taux=%s|encours=%s",
                     marche.getId(), taux.toPlainString(), encours.toPlainString());
 
-            log.debug("Marché {} — encours={} taux={}% agiosHT={} [{}]",
-                    marche.getId(), encours, taux, agiosHT, jour);
+            log.debug("PREFI — {} — {} : marché '{}' #{} encours={} taux={}% → agiosHT={}",
+                    banque.getNom(), jour, marche.getNom(), marche.getId(), encours, taux, agiosHT);
 
             resultats.add(new ResultatParMarche(
                     marche,

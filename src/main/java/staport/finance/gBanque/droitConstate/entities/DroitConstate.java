@@ -2,6 +2,8 @@ package staport.finance.gBanque.droitConstate.entities;
 
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
@@ -31,6 +33,16 @@ public class DroitConstate {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
+
+    /** Ligne spécifique active au moment de la création (null si couverte par une ligne générale). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ligne_fonctionnelle_specifique_id")
+    private LigneFonctionnelleSpecifique ligneFonctionnelleSpecifique;
+
+    /** Ligne générale active au moment de la création (null si couverte par une ligne spécifique). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ligne_fonctionnelle_id")
+    private LigneFonctionnelle ligneFonctionnelle;
 
     private LocalDate dateEmission ;
 
@@ -73,6 +85,22 @@ public class DroitConstate {
 
     public void setBanque(Banque banque) {
         this.banque = banque;
+    }
+
+    public LigneFonctionnelleSpecifique getLigneFonctionnelleSpecifique() {
+        return ligneFonctionnelleSpecifique;
+    }
+
+    public void setLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifique ligneFonctionnelleSpecifique) {
+        this.ligneFonctionnelleSpecifique = ligneFonctionnelleSpecifique;
+    }
+
+    public LigneFonctionnelle getLigneFonctionnelle() {
+        return ligneFonctionnelle;
+    }
+
+    public void setLigneFonctionnelle(LigneFonctionnelle ligneFonctionnelle) {
+        this.ligneFonctionnelle = ligneFonctionnelle;
     }
 
     public LocalDate getDateEmission() {

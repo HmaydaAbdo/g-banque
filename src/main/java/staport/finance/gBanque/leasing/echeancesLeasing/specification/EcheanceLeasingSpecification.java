@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import staport.finance.gBanque.leasing.contratCadre.entities.ContratCadre;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingSearchDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
@@ -123,6 +124,8 @@ public class EcheanceLeasingSpecification {
 
     /**
      * Crée une Specification pour filtrer les échéances par l'organisme de leasing du contrat.
+     * L'organisme n'est pas directement porté par {@code ContratLeasing} — il est atteint via
+     * son {@code contratCadre} ({@code ContratLeasing.contratCadre.organisme}).
      *
      * @param organismeLeasingId L'ID de l'organisme de leasing.
      * @return Une Specification qui filtre par l'ID de l'organisme.
@@ -130,7 +133,8 @@ public class EcheanceLeasingSpecification {
     public static Specification<EcheanceLeasing> byContratOrganismeLeasingId(Long organismeLeasingId) {
         return (root, query, criteriaBuilder) -> {
             Join<EcheanceLeasing, ContratLeasing> contratLeasingJoin = root.join("contratLeasing");
-            return criteriaBuilder.equal(contratLeasingJoin.get("organismeLeasing").get("id"), organismeLeasingId);
+            Join<ContratLeasing, ContratCadre> contratCadreJoin = contratLeasingJoin.join("contratCadre");
+            return criteriaBuilder.equal(contratCadreJoin.get("organisme").get("id"), organismeLeasingId);
         };
     }
 

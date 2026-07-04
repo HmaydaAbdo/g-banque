@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.*;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
 
@@ -23,9 +24,12 @@ public class EcheanceLeasingController {
     private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
 
     private final IEcheanceLeasingService echeanceLeasingService;
+    private final ContratLeasingService contratLeasingService;
 
-    public EcheanceLeasingController(IEcheanceLeasingService echeanceLeasingService) {
+    public EcheanceLeasingController(IEcheanceLeasingService echeanceLeasingService,
+                                     ContratLeasingService contratLeasingService) {
         this.echeanceLeasingService = echeanceLeasingService;
+        this.contratLeasingService = contratLeasingService;
     }
 
     @Operation(summary = "Tableau d'amortissement d'un contrat",
@@ -37,8 +41,9 @@ public class EcheanceLeasingController {
             @PathVariable Long contratId,
             EcheanceLeasingSearchDTO searchDTO,
             Pageable pageable) {
+        String numeroContrat = contratLeasingService.getContratLeasingById(contratId).numeroContrat();
         return ResponseEntity.ok(
-                echeanceLeasingService.getTableauAmortissementForContrat(contratId, searchDTO, pageable));
+                echeanceLeasingService.getTableauAmortissementForContrat(contratId, numeroContrat, searchDTO, pageable));
     }
 
     @Operation(summary = "Basculer le statut d'une échéance (PREVU ↔ PAYE)",

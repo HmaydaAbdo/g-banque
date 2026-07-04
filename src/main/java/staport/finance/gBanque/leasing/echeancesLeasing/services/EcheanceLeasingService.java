@@ -1,5 +1,10 @@
     package staport.finance.gBanque.leasing.echeancesLeasing.services;
 
+    import jakarta.persistence.EntityManager;
+    import jakarta.persistence.criteria.CriteriaBuilder;
+    import jakarta.persistence.criteria.CriteriaQuery;
+    import jakarta.persistence.criteria.Predicate;
+    import jakarta.persistence.criteria.Root;
     import org.slf4j.Logger;
     import org.slf4j.LoggerFactory;
     import org.springframework.data.domain.Page;
@@ -20,7 +25,6 @@
     import staport.finance.gBanque.exception.customExceptions.ValidationException;
     import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
     import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasingPhase;
-    import staport.finance.gBanque.leasing.contratLeasing.repositories.ContratLeasingRepository;
     import staport.finance.gBanque.leasing.echeancesLeasing.dto.*;
     import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
     import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
@@ -51,23 +55,23 @@ import java.math.BigDecimal;
         private final ICommissionService commissionService;
         private final ICommissionConfigService commissionConfigService;
         private final EcheanceLeasingRepository echeanceLeasingRepository;
-        private final ContratLeasingRepository contratLeasingRepository;
         private final EcheanceLeasingMapper echeanceLeasingMapper;
         private final IBanqueService banqueService;
+        private final EntityManager entityManager;
         private static final int SCALE = 2;
 
         public EcheanceLeasingService(ICommissionService commissionService,
                                       ICommissionConfigService commissionConfigService,
                                       EcheanceLeasingRepository echeanceLeasingRepository,
-                                      ContratLeasingRepository contratLeasingRepository,
                                       EcheanceLeasingMapper echeanceLeasingMapper,
-                                      IBanqueService banqueService) {
+                                      IBanqueService banqueService,
+                                      EntityManager entityManager) {
             this.commissionService       = commissionService;
             this.commissionConfigService = commissionConfigService;
             this.echeanceLeasingRepository = echeanceLeasingRepository;
-            this.contratLeasingRepository  = contratLeasingRepository;
             this.echeanceLeasingMapper     = echeanceLeasingMapper;
             this.banqueService             = banqueService;
+            this.entityManager             = entityManager;
         }
 
         /**
@@ -99,22 +103,14 @@ import java.math.BigDecimal;
          * Régénère les échéances ET les commissions pour un contrat existant.
          * Supprime d'abord les anciennes commissions et échéances avant de tout régénérer.
          *
-         * @param contratId L'ID du contrat
+         * @param contrat Le contrat de leasing (déjà chargé par l'appelant — ContratLeasingServiceImpl).
          */
         @Transactional
-        public void regenerateEcheances(Long contratId) {
+        public void regenerateEcheances(ContratLeasing contrat) {
+            Long contratId = contrat.getId();
             log.info("Début de la régénération des échéances pour le contrat ID : {}", contratId);
 
-            // 1. Charger le contrat et valider son existence
-            ContratLeasing contrat = contratLeasingRepository.findById(contratId)
-                    .orElseThrow(() -> {
-                        log.warn("ContratLeasing non trouvé — ID : {}", contratId);
-                        return new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found.");
-                    });
-
-            log.debug("Contrat trouvé : {}", contrat.getNumeroContrat());
-
-            // 2. Vérifier s'il existe des échéances PAYÉES pour ce contrat
+            // 1. Vérifier s'il existe des échéances PAYÉES pour ce contrat
             boolean hasPaidEcheances = this.hasPaidEcheances(contratId);
 
             if (hasPaidEcheances) {
@@ -125,9 +121,7 @@ import java.math.BigDecimal;
 
             deleteEcheancesAndCommissionByContrat(contrat);
 
-
-
-            // 5. Régénérer les nouvelles échéances et commissions
+            // 2. Régénérer les nouvelles échéances et commissions
             log.debug("Génération des nouvelles échéances pour le contrat ID : {}", contratId);
             generateEcheances(contrat);
 
@@ -330,15 +324,10 @@ import java.math.BigDecimal;
         // ==================== MÉTHODES EXISTANTES (INCHANGÉES) ====================
 
         @Transactional(readOnly = true)
-        public TableauAmortissementDTO getTableauAmortissementForContrat(Long contratId, EcheanceLeasingSearchDTO searchDTO, Pageable pageable) {
+        public TableauAmortissementDTO getTableauAmortissementForContrat(Long contratId, String numeroContrat,
+                                                                          EcheanceLeasingSearchDTO searchDTO, Pageable pageable) {
             log.debug("Récupération du tableau d'amortissement pour le contrat ID : {}", contratId);
             log.debug("Critères de recherche : {}, Page : {}, Taille : {}", searchDTO, pageable.getPageNumber(), pageable.getPageSize());
-
-            ContratLeasing contrat = contratLeasingRepository.findById(contratId)
-                    .orElseThrow(() -> {
-                        log.warn("ContratLeasing non trouvé — ID : {}", contratId);
-                        return new ResourceNotFoundException("ContratLeasing with ID " + contratId + " not found.");
-                    });
 
             Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.searchByCriteria(searchDTO)
                     .and(EcheanceLeasingSpecification.byContratId(contratId));
@@ -348,25 +337,20 @@ import java.math.BigDecimal;
 
             log.debug("Nombre d'échéances dans la page : {}", echeancesPage.getNumberOfElements());
 
-            List<EcheanceLeasing> allEcheancesForTotals = echeanceLeasingRepository.findByContratLeasing(contrat);
-
-            BigDecimal totalIndemniteAPayer = allEcheancesForTotals.stream()
-                    .map(EcheanceLeasing::getMontantTTC)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+            BigDecimal totalIndemniteAPayer = echeanceLeasingRepository
+                    .sumMontantTTCByContratLeasingId(contratId)
                     .setScale(SCALE, RoundingMode.HALF_UP);
 
-            BigDecimal montantTotalDejaPaye = allEcheancesForTotals.stream()
-                    .filter(e -> e.getStatutPaiement() == StatutEcheanceLeasing.PAYE)
-                    .map(EcheanceLeasing::getMontantTTC)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+            BigDecimal montantTotalDejaPaye = echeanceLeasingRepository
+                    .sumMontantTTCByContratLeasingIdAndStatutPaiement(contratId, StatutEcheanceLeasing.PAYE)
                     .setScale(SCALE, RoundingMode.HALF_UP);
 
             BigDecimal montantRestantAPayer = totalIndemniteAPayer.subtract(montantTotalDejaPaye).setScale(SCALE, RoundingMode.HALF_UP);
-            log.debug("Tableau d'amortissement calculé pour contrat ID : {} — {} échéances", contratId, allEcheancesForTotals.size());
+            log.debug("Tableau d'amortissement calculé pour contrat ID : {}", contratId);
 
             return new TableauAmortissementDTO(
-                    contrat.getId(),
-                    contrat.getNumeroContrat(),
+                    contratId,
+                    numeroContrat,
                     totalIndemniteAPayer,
                     montantTotalDejaPaye,
                     montantRestantAPayer,
@@ -457,12 +441,7 @@ import java.math.BigDecimal;
 
             log.debug("Nombre d'échéances en encours dans la page : {}", encoursEcheancesPage.getNumberOfElements());
 
-            List<EcheanceLeasing> allOutstandingEcheances = echeanceLeasingRepository.findAll(spec);
-
-            BigDecimal totalEncours = allOutstandingEcheances.stream()
-                    .map(EcheanceLeasing::getMontantTTC)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add)
-                    .setScale(SCALE, RoundingMode.HALF_UP);
+            BigDecimal totalEncours = sumMontantTTC(spec).setScale(SCALE, RoundingMode.HALF_UP);
 
             log.debug("Encours calculé pour la banque ID : {}", banque.id());
 
@@ -485,6 +464,24 @@ import java.math.BigDecimal;
                     contratId, hasPaid ? "possède" : "ne possède pas");
 
             return hasPaid;
+        }
+
+        /**
+         * Calcule la somme de {@code montantTTC} pour les échéances vérifiant la Specification donnée,
+         * sans charger les entités en mémoire (évite tout chargement de liste pour un simple agrégat).
+         */
+        private BigDecimal sumMontantTTC(Specification<EcheanceLeasing> spec) {
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<BigDecimal> query = cb.createQuery(BigDecimal.class);
+            Root<EcheanceLeasing> root = query.from(EcheanceLeasing.class);
+            query.select(cb.coalesce(cb.sum(root.get("montantTTC")), BigDecimal.ZERO));
+
+            Predicate predicate = spec.toPredicate(root, query, cb);
+            if (predicate != null) {
+                query.where(predicate);
+            }
+
+            return entityManager.createQuery(query).getSingleResult();
         }
 
         public void deleteEcheancesAndCommissionByContrat(ContratLeasing contrat){

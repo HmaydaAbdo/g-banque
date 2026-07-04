@@ -25,12 +25,3 @@ spring:
     jdbc:
       initialize-schema: always
 
-logging:
-  level:
-    root: INFO
-    staport.finance.gBanque: DEBUG
-    org.springframework.web: INFO
-
-    # SQL (à activer uniquement si besoin)
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

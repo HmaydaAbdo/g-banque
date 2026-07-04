@@ -60,14 +60,14 @@ public class LeasingMetrics {
         // Échéances PREVU
         Gauge.builder("gbanque.leasing.echeance.prevu",
                         echeanceLeasingRepository,
-                        repo -> (double) repo.findByStatutPaiement(StatutEcheanceLeasing.PREVU).size())
+                        repo -> (double) repo.countByStatutPaiement(StatutEcheanceLeasing.PREVU))
                 .description("Nombre d'échéances de leasing en attente de paiement (PREVU)")
                 .register(registry);
 
         // Échéances PAYE
         Gauge.builder("gbanque.leasing.echeance.paye",
                         echeanceLeasingRepository,
-                        repo -> (double) repo.findByStatutPaiement(StatutEcheanceLeasing.PAYE).size())
+                        repo -> (double) repo.countByStatutPaiement(StatutEcheanceLeasing.PAYE))
                 .description("Nombre d'échéances de leasing déjà payées (PAYE)")
                 .register(registry);
 

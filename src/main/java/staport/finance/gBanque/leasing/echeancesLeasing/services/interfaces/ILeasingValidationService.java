@@ -1,5 +1,6 @@
 package staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces;
 
+import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionRequestDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionResponseDTO;
 
@@ -16,11 +17,16 @@ public interface ILeasingValidationService {
     /**
      * Valide une échéance de leasing : crée la transaction bancaire associée,
      * attache au rapprochement cible et marque l'échéance comme PAYE.
+     * <p>
+     * Prend le {@code ContratLeasing} directement (résolu par l'appelant, {@code ValidationController})
+     * plutôt que son ID, pour éviter que ce service n'ait besoin d'injecter {@code ContratLeasingService} —
+     * une telle dépendance créerait un cycle de beans Spring (voir Javadoc de l'appelant).
      *
-     * @param dto DTO de la requête de validation
+     * @param contratLeasing contrat de leasing déjà résolu par l'appelant
+     * @param dto            DTO de la requête de validation
      * @return DTO de la transaction créée
      */
-    LeasingTransactionResponseDTO processLeasingTransaction(LeasingTransactionRequestDTO dto);
+    LeasingTransactionResponseDTO processLeasingTransaction(ContratLeasing contratLeasing, LeasingTransactionRequestDTO dto);
 
     /**
      * Synchronise une échéance liée à une transaction mise à jour.

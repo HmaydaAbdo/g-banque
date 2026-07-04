@@ -92,25 +92,21 @@ public class DroitConstateService {
 
         log.debug("Marché récupéré: {} (Numéro: {})", marche.getNom(), marche.getNumero());
 
-        // Step 1: Find the "Droit constaté" nature line by its label
-        log.debug("Recherche de la nature de ligne fonctionnelle 'Droit constaté'");
-        NatureLigneFonctionnelle dcNature = natureLigneFonctionnelleRepository.findByLabel("Droit constaté")
-                .orElseThrow(() -> {
-                    log.error("Nature de ligne fonctionnelle 'Droit constaté' non trouvée");
-                    return new ResourceNotFoundException("Nature de ligne fonctionnelle 'Droit constaté' non trouvée.");
-                });
-
+        // Step 1: Find the "Droit constaté" nature line by its code
+        NatureLigneFonctionnelle dcNature = getDroitConstateNature();
         log.debug("Nature de ligne fonctionnelle trouvée: ID {}", dcNature.getId());
 
-        // Step 2: Check for an active 'Droit constaté' specific line for the Marche
-        log.debug("Vérification de l'existence d'une ligne fonctionnelle 'Droit constaté' active pour le marché");
-        validateActiveDroitConstateLine(marche, dcNature);
+        // Step 2: Check for an active 'Droit constaté' line and retrieve it
+        log.debug("Recherche d'une ligne fonctionnelle 'Droit constaté' active pour le marché");
+        LigneResult ligneResult = findActiveDroitConstateLine(marche, dcNature);
 
         // Step 3: Resolve the bank (mandatory — no fallback)
         Banque banque = resolveBanque(requestDTO.getBanqueId());
         log.debug("Banque résolue pour le DC: {} (ID: {})", banque.getNom(), banque.getId());
 
         DroitConstate droitConstate = droitConstateMapper.toEntity(requestDTO, marche, banque);
+        droitConstate.setLigneFonctionnelleSpecifique(ligneResult.specifique());
+        droitConstate.setLigneFonctionnelle(ligneResult.generale());
 
         droitConstate = droitConstateRepository.save(droitConstate);
 
@@ -143,13 +139,12 @@ public class DroitConstateService {
         log.debug("Marché récupéré pour la mise à jour: {}", marche.getNom());
 
         if (!existingDroitConstate.getMarche().getId().equals(marche.getId())) {
-            log.warn(" Changement de marché détecté (ancien: {}, nouveau: {}), re-validation nécessaire",
+            log.warn("Changement de marché détecté (ancien: {}, nouveau: {}), re-validation nécessaire",
                     existingDroitConstate.getMarche().getNom(), marche.getNom());
 
-            NatureLigneFonctionnelle dcNature = natureLigneFonctionnelleRepository.findByLabel("Droit constaté")
-                    .orElseThrow(() -> new ResourceNotFoundException("Nature 'Droit constaté' non trouvée"));
-
-            validateActiveDroitConstateLine(marche, dcNature);
+            LigneResult ligneResult = findActiveDroitConstateLine(marche, getDroitConstateNature());
+            existingDroitConstate.setLigneFonctionnelleSpecifique(ligneResult.specifique());
+            existingDroitConstate.setLigneFonctionnelle(ligneResult.generale());
         }
         // Resolve bank (mandatory — no fallback)
         Banque banque = resolveBanque(requestDTO.getBanqueId());
@@ -310,58 +305,57 @@ public class DroitConstateService {
     }
 
 
-    /**
-     * Validates if a Marche has an active "Droit constaté" line.
-     * Searches in both LigneFonctionnelleSpecifique (priority) and LigneFonctionnelle (fallback).
-     *
-     * @param marche The Marche to validate
-     * @param dcNature The "Droit constaté" nature
-     * @throws Exception if no active line is found
-     */
-    /**
-     * Valide qu'un marché possède une ligne fonctionnelle "Droit constaté" active.
-     * Critère : marché + nature uniquement — la banque du DC n'intervient pas ici.
-     *
-     * Ordre de recherche :
-     *   1. LigneFonctionnelleSpecifique liée au marché (prioritaire)
-     *   2. LigneFonctionnelle générale liée au marché
-     */
-    private void validateActiveDroitConstateLine(Marche marche, NatureLigneFonctionnelle dcNature) throws Exception {
-        log.debug("Validation de l'existence d'une ligne 'Droit constaté' active pour le marché ID: {}", marche.getId());
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Helpers privés
+    // ─────────────────────────────────────────────────────────────────────────
 
-        // ÉTAPE 1 : Ligne spécifique au marché (prioritaire)
+    private NatureLigneFonctionnelle getDroitConstateNature() {
+        log.debug("Recherche de la nature de ligne fonctionnelle Droit Constaté (code=DROIT_CONSTATE)");
+        return natureLigneFonctionnelleRepository.findByCode("DROIT_CONSTATE")
+                .orElseThrow(() -> {
+                    log.error("Nature de ligne fonctionnelle 'DROIT_CONSTATE' introuvable en base");
+                    return new ResourceNotFoundException(
+                            "Nature de ligne fonctionnelle DROIT_CONSTATE introuvable. " +
+                            "Vérifiez la table nature_ligne_fonctionnelle."
+                    );
+                });
+    }
+
+    /**
+     * Recherche et retourne la ligne fonctionnelle 'Droit constaté' active pour un marché.
+     * Priorité : spécifique > générale liée au marché.
+     * Lève une exception si aucune ligne n'est trouvée.
+     */
+    private LigneResult findActiveDroitConstateLine(Marche marche, NatureLigneFonctionnelle dcNature) throws Exception {
+        log.debug("Recherche d'une ligne 'Droit constaté' active pour le marché '{}' (ID: {})",
+                marche.getNom(), marche.getId());
+
+        // ÉTAPE 1 : Ligne spécifique (prioritaire)
         Optional<LigneFonctionnelleSpecifique> ligneSpecifique =
                 ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, dcNature);
-
         if (ligneSpecifique.isPresent()) {
-            log.info("Ligne fonctionnelle spécifique 'Droit constaté' active trouvée pour le marché '{}' (ID: {})",
+            log.info("Ligne spécifique 'Droit constaté' active trouvée pour le marché '{}' (ID: {})",
                     marche.getNom(), ligneSpecifique.get().getId());
-            return;
+            return new LigneResult(ligneSpecifique.get(), null);
         }
 
-        log.debug("Aucune ligne spécifique trouvée, recherche dans les lignes générales...");
-
-        // ÉTAPE 2 : Ligne générale liée à ce marché
+        // ÉTAPE 2 : Ligne générale liée au marché
         Optional<LigneFonctionnelle> ligneGenerale =
-                ligneFonctionnelleRepository.findActiveLineForMarche(
-                        marche.getId(),
-                        dcNature.getId()
-                );
-
+                ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), dcNature.getId());
         if (ligneGenerale.isPresent()) {
-            log.info("Ligne fonctionnelle générale 'Droit constaté' active trouvée pour le marché '{}' (ID: {})",
+            log.info("Ligne générale 'Droit constaté' active trouvée pour le marché '{}' (ID: {})",
                     marche.getNom(), ligneGenerale.get().getId());
-            return;
+            return new LigneResult(null, ligneGenerale.get());
         }
 
-        // Aucune ligne active trouvée
-        log.error("Aucune ligne fonctionnelle 'Droit constaté' active trouvée pour le marché '{}'", marche.getNom());
+        log.error("Aucune ligne 'Droit constaté' active pour le marché '{}'", marche.getNom());
         throw new Exception(
                 "Impossible de créer un droit constaté. Le marché '" + marche.getNom() +
-                        "' n'est pas associé à une ligne fonctionnelle 'Droit constaté' active. " +
-                        "Veuillez créer une ligne spécifique ou générale pour ce marché."
+                "' n'est associé à aucune ligne fonctionnelle 'Droit Constaté' active " +
+                "(ni spécifique, ni générale liée à ce marché)."
         );
     }
 
-
+    /** Résultat de la recherche de ligne : exactement l'une des deux est non-null. */
+    private record LigneResult(LigneFonctionnelleSpecifique specifique, LigneFonctionnelle generale) {}
 }

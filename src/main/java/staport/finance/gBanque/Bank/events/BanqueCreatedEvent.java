@@ -1,5 +1,7 @@
 package staport.finance.gBanque.Bank.events;
 
+import java.math.BigDecimal;
+
 /**
  * Publié par {@link staport.finance.gBanque.Bank.services.BanqueServiceImpl#createBanque}
  * après la création d'une banque. Permet au domaine Rapprochement de créer le premier
@@ -10,6 +12,9 @@ package staport.finance.gBanque.Bank.events;
  *
  * <p>Publié via {@code ApplicationEventPublisher} (bean du framework, pas du domaine
  * Bank) — aucune dépendance directe entre les deux Services.
+ *
+ * @param soldeInitial solde de départ saisi à la création de la banque (obligatoire, >= 0).
+ *                      Devient le {@code soldeDebut} du premier rapprochement EN_COURS.
  */
-public record BanqueCreatedEvent(Long banqueId) {
+public record BanqueCreatedEvent(Long banqueId, BigDecimal soldeInitial) {
 }

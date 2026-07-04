@@ -46,8 +46,7 @@ public class ContratLeasingMainLeveeProcessor implements ItemProcessor<ContratLe
                         contrat,
                         notificationTitle,
                         notificationContent,
-                        notificationType,
-                        false
+                        notificationType
                 );
             }
 

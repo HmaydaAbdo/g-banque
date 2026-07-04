@@ -65,7 +65,7 @@ public class BanqueController {
 
     // ── Create ───────────────────────────────────────────────────────────────
 
-    @Operation(summary = "Créer une banque", description = "Requiert un logo (multipart). Réservé Finance / SYSTEM_ADMIN.")
+    @Operation(summary = "Créer une banque", description = "Requiert un logo (multipart) et un solde initial (>= 0), utilisé comme solde de début du premier rapprochement. Réservé Finance / SYSTEM_ADMIN.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Banque créée"),
             @ApiResponse(responseCode = "400", description = "Données invalides ou logo manquant"),

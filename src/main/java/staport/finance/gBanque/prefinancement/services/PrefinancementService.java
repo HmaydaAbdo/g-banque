@@ -73,9 +73,11 @@ public class PrefinancementService {
         log.debug("Marché trouvé - Nom: {}, Numéro: {}", marche.getNom(), marche.getNumero());
 
         NatureLigneFonctionnelle prefiNature = getPrefinancementNature();
-        validateActivePrefinancementLine(marche, prefiNature);
+        LigneResult ligneResult = findActivePrefinancementLine(marche, prefiNature);
 
         Prefinancement prefinancement = prefinancementMapper.toEntity(requestDTO, marche);
+        prefinancement.setLigneFonctionnelleSpecifique(ligneResult.specifique());
+        prefinancement.setLigneFonctionnelle(ligneResult.generale());
         log.debug("Entité Prefinancement créée, prête à être sauvegardée");
 
         prefinancement = prefinancementRepository.save(prefinancement);
@@ -115,7 +117,9 @@ public class PrefinancementService {
                     existingPrefinancement.getMarche().getNom(), marche.getNom());
 
             NatureLigneFonctionnelle prefiNature = getPrefinancementNature();
-            validateActivePrefinancementLine(marche, prefiNature);
+            LigneResult ligneResult = findActivePrefinancementLine(marche, prefiNature);
+            existingPrefinancement.setLigneFonctionnelleSpecifique(ligneResult.specifique());
+            existingPrefinancement.setLigneFonctionnelle(ligneResult.generale());
         }
 
         existingPrefinancement.setMarche(marche);
@@ -292,78 +296,53 @@ public class PrefinancementService {
 
 
     private NatureLigneFonctionnelle getPrefinancementNature() {
-
-        log.debug("Recherche de la nature de ligne fonctionnelle Préfinancement");
-        return natureLigneFonctionnelleRepository.findByLabel("Préfinancement")
+        log.debug("Recherche de la nature de ligne fonctionnelle Préfinancement (code=PREFINANCEMENT)");
+        return natureLigneFonctionnelleRepository.findByCode("PREFINANCEMENT")
                 .orElseThrow(() -> {
-                    log.error("Nature de ligne fonctionnelle Préfinancement non trouvée");
+                    log.error("Nature de ligne fonctionnelle 'PREFINANCEMENT' introuvable en base");
                     return new ResourceNotFoundException(
-                            "Nature de ligne fonctionnelle Préfinancement non trouvée."
+                            "Nature de ligne fonctionnelle PREFINANCEMENT introuvable. " +
+                            "Vérifiez la table nature_ligne_fonctionnelle."
                     );
                 });
-
     }
 
     /**
-     * Validates if a Marche has an active "Préfinancement" line.
-     * Searches in LigneFonctionnelleSpecifique (priority), then LigneFonctionnelle (fallback).
-     *
-     * @param marche The Marche to validate
-     * @param prefiNature The "Préfinancement" nature
-     * @throws Exception if no active line is found
+     * Recherche et retourne la ligne fonctionnelle Préfinancement active pour un marché.
+     * Priorité : spécifique > générale liée au marché.
+     * Lève une exception si aucune ligne n'est trouvée.
      */
-    private void validateActivePrefinancementLine(Marche marche, NatureLigneFonctionnelle prefiNature) throws Exception {
-        log.debug("Validation de l'existence d'une ligne Préfinancement active pour le marché ID: {}", marche.getId());
+    private LigneResult findActivePrefinancementLine(Marche marche, NatureLigneFonctionnelle prefiNature) throws Exception {
+        log.debug("Recherche d'une ligne Préfinancement active pour le marché ID: {}", marche.getId());
 
         // ÉTAPE 1 : LigneFonctionnelleSpecifique (PRIORITAIRE)
         Optional<LigneFonctionnelleSpecifique> ligneSpecifique =
-                ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
-                        marche, prefiNature
-                );
+                ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, prefiNature);
         if (ligneSpecifique.isPresent()) {
-            log.info(" Ligne fonctionnelle spécifique Préfinancement active trouvée pour le marché '{}' (ID: {})", marche.getNom(), ligneSpecifique.get().getId());
-            return;
+            log.info("Ligne spécifique Préfinancement active trouvée pour le marché '{}' (ID: {})",
+                    marche.getNom(), ligneSpecifique.get().getId());
+            return new LigneResult(ligneSpecifique.get(), null);
         }
 
-        log.debug("Aucune ligne spécifique trouvée, recherche dans les lignes générales...");
-
-
-        // ÉTAPE 2 : LigneFonctionnelle liée au marché spécifique
-        Optional<LigneFonctionnelle> ligneGeneraleMarcheSpecifique =
-                ligneFonctionnelleRepository.findActiveLineForMarche(
-                        marche.getId(),
-                        prefiNature.getId()
-                );
-
-        if (ligneGeneraleMarcheSpecifique.isPresent()) {
-            log.info(" Ligne fonctionnelle générale Préfinancement active trouvée pour le marché spécifique '{}' (ID: {})", marche.getNom(), ligneGeneraleMarcheSpecifique.get().getId());
-            return;
+        // ÉTAPE 2 : LigneFonctionnelle générale liée au marché
+        Optional<LigneFonctionnelle> ligneGenerale =
+                ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), prefiNature.getId());
+        if (ligneGenerale.isPresent()) {
+            log.info("Ligne générale Préfinancement active trouvée pour le marché '{}' (ID: {})",
+                    marche.getNom(), ligneGenerale.get().getId());
+            return new LigneResult(null, ligneGenerale.get());
         }
 
-        log.debug("Aucune ligne générale spécifique au marché trouvée, recherche de ligne générale de la banque...");
-
-        // ÉTAPE 3 : LigneFonctionnelle générale de la banque
-        Optional<LigneFonctionnelle> ligneGeneraleBanque =
-                ligneFonctionnelleRepository.findActiveGeneralLine(
-                        marche.getBanque().getId(),
-                        prefiNature.getId()
-                );
-
-        if (ligneGeneraleBanque.isPresent()) {
-            log.info(" Ligne fonctionnelle générale Préfinancement active trouvée pour la banque '{}' (ID: {})", marche.getBanque().getNom(), ligneGeneraleBanque.get().getId());
-            return;
-        }
-
-        // ÉTAPE 4 : Aucune ligne active trouvée
-        log.error(" Aucune ligne fonctionnelle Préfinancement active trouvée pour le marché '{}'",marche.getNom());
-
+        log.error("Aucune ligne Préfinancement active pour le marché '{}'", marche.getNom());
         throw new Exception(
                 "Impossible de créer un Préfinancement. Le marché '" + marche.getNom() +
-                        "' n'est pas associé à une ligne fonctionnelle Préfinancement active. " +
-                        "Veuillez créer une ligne spécifique ou une ligne générale au marché '" +
-                        marche.getBanque().getNom() + "'."
+                "' n'est associé à aucune ligne fonctionnelle Préfinancement active " +
+                "(ni spécifique, ni générale liée à ce marché)."
         );
     }
+
+    /** Résultat de la recherche de ligne : exactement l'une des deux est non-null. */
+    private record LigneResult(LigneFonctionnelleSpecifique specifique, LigneFonctionnelle generale) {}
 
 
 

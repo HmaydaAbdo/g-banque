@@ -13,9 +13,21 @@ public interface IEcheanceLeasingService {
 
     void generateEcheances(ContratLeasing contrat);
 
-    void regenerateEcheances(Long contratId);
+    /**
+     * Régénère les échéances et commissions d'un contrat de leasing existant.
+     * Prend l'entité directement (et non un simple ID) pour éviter que ce service
+     * n'ait besoin d'injecter le Repository du module contratLeasing — l'appelant
+     * (ContratLeasingServiceImpl) possède déjà l'entité au moment de l'appel.
+     */
+    void regenerateEcheances(ContratLeasing contrat);
 
-    TableauAmortissementDTO getTableauAmortissementForContrat(Long contratId, EcheanceLeasingSearchDTO searchDTO, Pageable pageable);
+    /**
+     * @param contratId     ID du contrat (déjà validé par l'appelant — voir ContratLeasingService.getContratLeasingById).
+     * @param numeroContrat Numéro du contrat, résolu par l'appelant (module contratLeasing) et transmis
+     *                       pour éviter à ce service de dépendre du Repository d'un autre domaine.
+     */
+    TableauAmortissementDTO getTableauAmortissementForContrat(Long contratId, String numeroContrat,
+                                                               EcheanceLeasingSearchDTO searchDTO, Pageable pageable);
 
     EcheanceLeasingResponseDTO toggleStatus(Long echeanceId);
 

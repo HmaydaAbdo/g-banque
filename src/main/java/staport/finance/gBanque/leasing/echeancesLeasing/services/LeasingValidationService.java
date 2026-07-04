@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
-import staport.finance.gBanque.leasing.contratLeasing.repositories.ContratLeasingRepository;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionRequestDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionResponseDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
@@ -37,7 +36,6 @@ public class LeasingValidationService implements ILeasingValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(LeasingValidationService.class);
 
-    private final ContratLeasingRepository contratLeasingRepository;
     private final EcheanceLeasingRepository echeanceLeasingRepository;
     private final LeasingTransactionMapper leasingTransactionMapper;
     private final TransactionRepository transactionRepository;
@@ -45,13 +43,11 @@ public class LeasingValidationService implements ILeasingValidationService {
     private final SoldeCascadeService soldeCascadeService;
 
     public LeasingValidationService(
-            ContratLeasingRepository contratLeasingRepository,
             EcheanceLeasingRepository echeanceLeasingRepository,
             LeasingTransactionMapper leasingTransactionMapper,
             TransactionRepository transactionRepository,
             RapprochementRepository rapprochementRepository,
             SoldeCascadeService soldeCascadeService) {
-        this.contratLeasingRepository = contratLeasingRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.leasingTransactionMapper = leasingTransactionMapper;
         this.transactionRepository = transactionRepository;
@@ -64,15 +60,8 @@ public class LeasingValidationService implements ILeasingValidationService {
      */
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public LeasingTransactionResponseDTO processLeasingTransaction(LeasingTransactionRequestDTO dto) {
+    public LeasingTransactionResponseDTO processLeasingTransaction(ContratLeasing contratLeasing, LeasingTransactionRequestDTO dto) {
         log.info("Validation échéance leasing — contratId: {}, écheanceId: {}", dto.contratLeasingId(), dto.echeanceId());
-
-        ContratLeasing contratLeasing = contratLeasingRepository.findById(dto.contratLeasingId())
-                .orElseThrow(() -> {
-                    log.warn("Contrat de leasing introuvable — ID: {}", dto.contratLeasingId());
-                    return new ResourceNotFoundException(
-                            "Contrat de leasing introuvable avec l'ID: " + dto.contratLeasingId());
-                });
 
         EcheanceLeasing echeanceLeasing = echeanceLeasingRepository
                 .findByIdAndContratLeasingId(dto.echeanceId(), dto.contratLeasingId())

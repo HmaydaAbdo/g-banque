@@ -25,7 +25,13 @@ public class OrganismeLeasing {
     @Column(nullable = false)
     private String nom;
 
-    @OneToMany(mappedBy = "organisme", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    /**
+     * Contrats cadres de l'organisme. Persistés/modifiés exclusivement via leur propre
+     * Repository ({@code ContratCadreServiceImpl}) — jamais de cascade ici. La suppression
+     * d'un organisme est bloquée tant que cette collection n'est pas vide
+     * (voir {@code OrganismeLeasingServiceImpl.delete()}).
+     */
+    @OneToMany(mappedBy = "organisme", fetch = FetchType.LAZY)
     private List<ContratCadre> contratsCadres = new ArrayList<>();
 
     @Column(name = "date_creation", nullable = false, updatable = false)

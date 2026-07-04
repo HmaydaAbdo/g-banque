@@ -92,7 +92,8 @@ public class BanqueServiceImpl implements IBanqueService {
         // Le domaine Rapprochement crée son premier rapprochement EN_COURS en réaction à
         // cet event — Bank ne dépend jamais de RapprochementService directement (celui-ci
         // dépend déjà de IBanqueService, une dépendance dans l'autre sens créerait un cycle).
-        eventPublisher.publishEvent(new BanqueCreatedEvent(saved.getId()));
+        // Le solde initial saisi à la création devient le soldeDebut de ce premier rapprochement.
+        eventPublisher.publishEvent(new BanqueCreatedEvent(saved.getId(), request.soldeInitial()));
 
         BigDecimal balance = computeLiveBalance(saved.getId());
         return banqueMapper.toDto(saved, balance);

@@ -350,19 +350,19 @@ public class RapprochementService {
      */
     @EventListener
     public void onBanqueCreated(BanqueCreatedEvent event) {
-        createInitialRapprochement(event.banqueId());
+        createInitialRapprochement(event.banqueId(), event.soldeInitial());
     }
 
     /**
-     * Crée le premier rapprochement (statut EN_COURS, solde de début à zéro) pour une
-     * banque donnée.
+     * Crée le premier rapprochement (statut EN_COURS) pour une banque donnée, avec le
+     * solde initial saisi à la création de la banque comme solde de début.
      */
     @Transactional
-    public Rapprochement createInitialRapprochement(Long banqueId) {
+    public Rapprochement createInitialRapprochement(Long banqueId, BigDecimal soldeInitial) {
         Rapprochement initial = new Rapprochement();
         initial.setBanque(banqueService.findOrThrow(banqueId));
         initial.setDateRapprochement(YearMonth.now());
-        initial.setSoldeDebut(BigDecimal.ZERO);
+        initial.setSoldeDebut(soldeInitial != null ? soldeInitial : BigDecimal.ZERO);
         initial.setStatut(StatutRapprochement.EN_COURS);
         return rapprochementRepository.save(initial);
     }

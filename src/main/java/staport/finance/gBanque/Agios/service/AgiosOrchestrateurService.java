@@ -21,10 +21,12 @@ import staport.finance.gBanque.Agios.enums.StatutTrimestre;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 import staport.finance.gBanque.Agios.repository.AgiosJournalierRepository;
 import staport.finance.gBanque.Agios.repository.AgiosTrimestrielRepository;
+import staport.finance.gBanque.Agios.enums.PeriodeCalculAgios;
 import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateur;
 import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateur.ResultatJournalier;
 import staport.finance.gBanque.Agios.service.calculateurs.AgiosCalculateurMultiMarche;
 import staport.finance.gBanque.Agios.service.calculateurs.DroitConstateAgiosCalculateur;
+import staport.finance.gBanque.Agios.service.calculateurs.FactoringAgiosCalculateur;
 import staport.finance.gBanque.Agios.service.calculateurs.PrefinancementAgiosCalculateur;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.Agios.spec.AgiosJournalierSpecification;
@@ -97,7 +99,6 @@ public class AgiosOrchestrateurService {
     @Scheduled(cron = "0 0 2 * * *", zone = "Africa/Casablanca")
     public void calculQuotidienAutomatique() {
         LocalDate aujourdhui = LocalDate.now(ZONE_MAROC);
-        int trimActuel = trimestreDeLaDate(aujourdhui);
         int anneeActuelle = aujourdhui.getYear();
 
         log.info("══════ Calcul quotidien des agios — {} — {} type(s) actif(s) ══════",
@@ -107,6 +108,9 @@ public class AgiosOrchestrateurService {
 
         for (AgiosCalculateur calculateur : calculateurs) {
             log.info("── Type : {} ──", calculateur.getType().getLibelle());
+
+            // Période courante selon la périodicité du type (mois 1-12 ou trimestre 1-4)
+            int periodeActuelleCalc = periodeActuelle(calculateur.getType(), aujourdhui);
 
             int succes = 0, nonEligibles = 0, erreurs = 0;
 
@@ -119,6 +123,9 @@ public class AgiosOrchestrateurService {
                 if (calculateur instanceof DroitConstateAgiosCalculateur dcCalc) {
                     dcCalc.viderCache();
                 }
+                if (calculateur instanceof FactoringAgiosCalculateur factoringCalc) {
+                    factoringCalc.viderCache();
+                }
 
                 try {
                     if (!calculateur.estEligible(banque)) {
@@ -126,20 +133,20 @@ public class AgiosOrchestrateurService {
                         continue;
                     }
 
-                    // Tous les trimestres OUVERTS de cette banque (courant + passés non clôturés).
-                    // Un trimestre reste recalculé tant qu'il n'est pas clôturé, ce qui permet
+                    // Toutes les périodes OUVERTES de cette banque (courante + passées non clôturées).
+                    // Une période reste recalculée tant qu'elle n'est pas clôturée, ce qui permet
                     // de répercuter toute modification de transaction sur les agios correspondants.
                     List<AgiosTrimestriel> ouverts = agiosTrimestrielRepository
                             .findByBanqueIdAndTypeAgiosAndStatut(
                                     banque.getId(), calculateur.getType(), StatutTrimestre.OUVERT);
 
-                    // S'assurer que le trimestre courant est toujours traité,
-                    // même s'il n'a pas encore été créé (obtenirOuCreerTrimestre le crée).
+                    // S'assurer que la période courante est toujours traitée,
+                    // même si elle n'a pas encore été créée (obtenirOuCreerTrimestre la crée).
                     boolean courantPresent = ouverts.stream()
-                            .anyMatch(t -> t.getTrimestre() == trimActuel && t.getAnnee() == anneeActuelle);
+                            .anyMatch(t -> t.getTrimestre() == periodeActuelleCalc && t.getAnnee() == anneeActuelle);
 
                     if (!courantPresent) {
-                        recalculerTrimestre(banque, calculateur, trimActuel, anneeActuelle);
+                        recalculerTrimestre(banque, calculateur, periodeActuelleCalc, anneeActuelle);
                     }
 
                     for (AgiosTrimestriel t : ouverts) {
@@ -173,20 +180,41 @@ public class AgiosOrchestrateurService {
     @Transactional
     public void recalculerTrimestreManuel(Long banqueId, int trimNum, int annee) {
         LocalDate aujourdhui = LocalDate.now(ZONE_MAROC);
-        int trimActuel = trimestreDeLaDate(aujourdhui);
-        int anneeActuelle = aujourdhui.getYear();
+        int anneeActuelle    = aujourdhui.getYear();
 
-        if (annee > anneeActuelle || (annee == anneeActuelle && trimNum > trimActuel)) {
+        // Validation globale : plage maximale 1–12 (couvre TRIMESTRIEL 1–4 et MENSUEL 1–12)
+        if (trimNum < 1 || trimNum > 12) {
             throw new IllegalArgumentException(
-                    "Impossible de calculer un trimestre futur : T" + trimNum + "/" + annee);
+                    "Numéro de période invalide : " + trimNum + " (attendu : 1–12)");
+        }
+        if (annee > anneeActuelle) {
+            throw new IllegalArgumentException(
+                    "Impossible de calculer une année future : " + annee);
         }
 
         Banque banque = banqueRepository.findById(banqueId)
                 .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée : " + banqueId));
 
-        log.info("══════ Recalcul manuel T{}/{} — Banque {} ══════", trimNum, annee, banque.getNom());
+        log.info("══════ Recalcul manuel période {}/{} — Banque {} ══════", trimNum, annee, banque.getNom());
 
         for (AgiosCalculateur calculateur : calculateurs) {
+            PeriodeCalculAgios periodeType = calculateur.getType().getPeriodeCalcul();
+            int maxPeriode = (periodeType == PeriodeCalculAgios.TRIMESTRIEL) ? 4 : 12;
+
+            // Skip si trimNum hors plage pour ce type (ex : période 7 → ignoré par TRIMESTRIEL)
+            if (trimNum > maxPeriode) {
+                log.debug("{} ignoré : période {} hors plage (max={})", calculateur.getType(), trimNum, maxPeriode);
+                continue;
+            }
+
+            // Skip si période dans le futur pour ce type
+            int periodeCourante = periodeActuelle(calculateur.getType(), aujourdhui);
+            if (annee == anneeActuelle && trimNum > periodeCourante) {
+                log.debug("{} ignoré : période {}/{} dans le futur (courante={}/{})",
+                        calculateur.getType(), trimNum, annee, periodeCourante, anneeActuelle);
+                continue;
+            }
+
             if (!calculateur.estEligible(banque)) {
                 log.debug("{} non éligible pour banque {}", calculateur.getType(), banque.getNom());
                 continue;
@@ -215,8 +243,9 @@ public class AgiosOrchestrateurService {
     @Transactional
     public void recalculerTrimestre(Banque banque, AgiosCalculateur calculateur, int trimNum, int annee) {
         TypeAgios type = calculateur.getType();
-        LocalDate debutTrim = debutDuTrimestrePourNumero(trimNum, annee);
-        LocalDate finTrim   = finDuTrimestrePourNumero(trimNum, annee);
+        PeriodeCalculAgios periodeType = type.getPeriodeCalcul();
+        LocalDate debutTrim = debutDePeriode(trimNum, annee, periodeType);
+        LocalDate finTrim   = finDePeriode(trimNum, annee, periodeType);
 
         // On ne calcule pas au-delà d'hier (on ne prédit pas le futur)
         LocalDate aujourdhui = LocalDate.now(ZONE_MAROC);
@@ -238,10 +267,16 @@ public class AgiosOrchestrateurService {
 
         if (calculateur instanceof AgiosCalculateurMultiMarche multiCalculateur) {
             // ════════════════════════════════════════════════════════════
-            //  FLUX MULTI-MARCHÉ (Préfinancement)
-            //  L'encours est reconstitué depuis les Prefinancement PAYE,
+            //  FLUX MULTI-MARCHÉ (Préfinancement, Droits Constatés)
+            //  L'encours est reconstitué depuis les opérations PAYE,
             //  indépendamment du solde comptable du rapprochement.
             // ════════════════════════════════════════════════════════════
+
+            // Stats marchés sur tout le trimestre
+            Set<Long>         marchesVus            = new LinkedHashSet<>(); // ont une ligne → présents dans résultats
+            Set<Long>         marchesActifs         = new LinkedHashSet<>(); // encours > 0 au moins un jour
+            Map<Long, String> nomParMarcheId        = new LinkedHashMap<>();
+
             for (long i = 0; i < nbJours; i++) {
                 LocalDate jour = debutTrim.plusDays(i);
 
@@ -252,6 +287,9 @@ public class AgiosOrchestrateurService {
                 boolean jourAvecEncours = false;
                 for (AgiosCalculateurMultiMarche.ResultatParMarche r : resultats) {
                     ResultatJournalier res = r.resultat();
+
+                    marchesVus.add(r.marche().getId());
+                    nomParMarcheId.putIfAbsent(r.marche().getId(), r.marche().getNom());
 
                     BigDecimal tvaJour = res.agiosHT()
                             .multiply(TAUX_TVA)
@@ -264,10 +302,41 @@ public class AgiosOrchestrateurService {
                     totalHT  = totalHT.add(res.agiosHT());
                     totalTVA = totalTVA.add(tvaJour);
                     totalTTC = totalTTC.add(ttcJour);
-                    if (res.baseCalcul().compareTo(BigDecimal.ZERO) > 0) jourAvecEncours = true;
+                    if (res.baseCalcul().compareTo(BigDecimal.ZERO) > 0) {
+                        jourAvecEncours = true;
+                        marchesActifs.add(r.marche().getId());
+                    }
                 }
                 if (jourAvecEncours) nbJoursCalcules++;
             }
+
+            // Marchés avec ligne mais encours toujours nul sur tout le trimestre
+            Set<Long> marchesEncoursToujoursNul = new LinkedHashSet<>(marchesVus);
+            marchesEncoursToujoursNul.removeAll(marchesActifs);
+
+            // Persistance
+            trimestre.setTotalAgiosHT(totalHT);
+            trimestre.setTotalTVA(totalTVA);
+            trimestre.setTotalAgiosTTC(totalTTC);
+            trimestre.setNbJoursCalcules(nbJoursCalcules);
+            trimestre.setNbJoursTotal((int) ChronoUnit.DAYS.between(debutTrim, finTrim) + 1);
+            trimestre.setDateDernierCalcul(OffsetDateTime.now(ZONE_MAROC));
+            agiosTrimestrielRepository.save(trimestre);
+
+            log.info("{} — {} T{}/{} : HT={} TVA={} TTC={} | {}/{} jours avec encours" +
+                            " | marchés actifs {}/{} [{}]{}",
+                    type, banque.getNom(), trimNum, annee,
+                    totalHT, totalTVA, totalTTC,
+                    nbJoursCalcules, nbJours,
+                    marchesActifs.size(), marchesVus.size(),
+                    marchesActifs.stream()
+                            .map(id -> nomParMarcheId.getOrDefault(id, "#" + id))
+                            .collect(Collectors.joining(", ")),
+                    marchesEncoursToujoursNul.isEmpty() ? "" :
+                            " | encours nul tout le trimestre : " +
+                            marchesEncoursToujoursNul.stream()
+                                    .map(id -> nomParMarcheId.getOrDefault(id, "#" + id))
+                                    .collect(Collectors.joining(", ")));
 
         } else {
             // ════════════════════════════════════════════════════════════
@@ -304,7 +373,9 @@ public class AgiosOrchestrateurService {
                     .collect(Collectors.groupingBy(Transaction::getDateValeur));
 
             // ── Calcul jour par jour ───────────────────────────────────────
-            BigDecimal soldeCourant = soldeInitial;
+            BigDecimal soldeCourant    = soldeInitial;
+            BigDecimal totalDecouvert  = BigDecimal.ZERO; // cumul découvert sur le trimestre
+            BigDecimal tauxFC          = BigDecimal.ZERO; // taux retenu (constant pour une banque)
 
             for (long i = 0; i < nbJours; i++) {
                 LocalDate jour = debutTrim.plusDays(i);
@@ -328,24 +399,35 @@ public class AgiosOrchestrateurService {
                 totalHT  = totalHT.add(resultat.agiosHT());
                 totalTVA = totalTVA.add(tvaJour);
                 totalTTC = totalTTC.add(ttcJour);
-                if (resultat.baseCalcul().compareTo(BigDecimal.ZERO) > 0) nbJoursCalcules++;
+                if (resultat.baseCalcul().compareTo(BigDecimal.ZERO) > 0) {
+                    nbJoursCalcules++;
+                    totalDecouvert = totalDecouvert.add(resultat.baseCalcul());
+                    if (tauxFC.compareTo(BigDecimal.ZERO) == 0) tauxFC = resultat.tauxApplique();
+                }
             }
+
+            // Persistance
+            trimestre.setTotalAgiosHT(totalHT);
+            trimestre.setTotalTVA(totalTVA);
+            trimestre.setTotalAgiosTTC(totalTTC);
+            trimestre.setNbJoursCalcules(nbJoursCalcules);
+            trimestre.setNbJoursTotal((int) ChronoUnit.DAYS.between(debutTrim, finTrim) + 1);
+            trimestre.setDateDernierCalcul(OffsetDateTime.now(ZONE_MAROC));
+            agiosTrimestrielRepository.save(trimestre);
+
+            BigDecimal decouvertMoyen = nbJoursCalcules > 0
+                    ? totalDecouvert.divide(BigDecimal.valueOf(nbJoursCalcules), SCALE, ROUNDING)
+                    : BigDecimal.ZERO;
+
+            log.info("FC — {} T{}/{} : HT={} TVA={} TTC={}" +
+                            " | {}/{} jours découvert | taux={}% | cumul découvert={} | moy/jour={}",
+                    banque.getNom(), trimNum, annee,
+                    totalHT, totalTVA, totalTTC,
+                    nbJoursCalcules, nbJours,
+                    tauxFC, totalDecouvert.setScale(SCALE, ROUNDING), decouvertMoyen);
+            return; // log déjà émis, on sort
         }
 
-        // Mettre à jour les totaux du trimestre
-        trimestre.setTotalAgiosHT(totalHT);
-        trimestre.setTotalTVA(totalTVA);
-        trimestre.setTotalAgiosTTC(totalTTC);
-        trimestre.setNbJoursCalcules(nbJoursCalcules);
-        // Dénominateur = total jours du trimestre (pas juste les jours calculés)
-        trimestre.setNbJoursTotal((int) ChronoUnit.DAYS.between(debutTrim, finTrim) + 1);
-        trimestre.setDateDernierCalcul(OffsetDateTime.now(ZONE_MAROC));
-        agiosTrimestrielRepository.save(trimestre);
-
-        log.info("{} — {} T{}/{} : HT={} TVA={} TTC={} | {}/{} jours",
-                type, banque.getNom(), trimNum, annee,
-                trimestre.getTotalAgiosHT(), trimestre.getTotalTVA(), trimestre.getTotalAgiosTTC(),
-                nbJoursCalcules, nbJours);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -402,8 +484,9 @@ public class AgiosOrchestrateurService {
 
     @Transactional(readOnly = true)
     public Page<AgiosJournalier> searchJournaliers(AgiosJournalierSearchDto dto, Pageable pageable) {
-        LocalDate debut = debutDuTrimestrePourNumero(dto.trimestre(), dto.annee());
-        LocalDate fin   = finDuTrimestrePourNumero(dto.trimestre(), dto.annee());
+        PeriodeCalculAgios periodeDto = dto.type() != null ? dto.type().getPeriodeCalcul() : PeriodeCalculAgios.TRIMESTRIEL;
+        LocalDate debut = debutDePeriode(dto.trimestre(), dto.annee(), periodeDto);
+        LocalDate fin   = finDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         Specification<AgiosJournalier> spec = AgiosJournalierSpecification.buildSpec(
                 dto.banqueId(), dto.type(), debut, fin, dto.dateLimite());
         return agiosJournalierRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
@@ -411,8 +494,9 @@ public class AgiosOrchestrateurService {
 
     @Transactional(readOnly = true)
     public AgiosDetailAggregateDto getAggregates(AgiosJournalierSearchDto dto) {
-        LocalDate debut = debutDuTrimestrePourNumero(dto.trimestre(), dto.annee());
-        LocalDate fin   = finDuTrimestrePourNumero(dto.trimestre(), dto.annee());
+        PeriodeCalculAgios periodeDto = dto.type() != null ? dto.type().getPeriodeCalcul() : PeriodeCalculAgios.TRIMESTRIEL;
+        LocalDate debut = debutDePeriode(dto.trimestre(), dto.annee(), periodeDto);
+        LocalDate fin   = finDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         Specification<AgiosJournalier> spec = AgiosJournalierSpecification.buildSpec(
                 dto.banqueId(), dto.type(), debut, fin, dto.dateLimite());
 
@@ -549,15 +633,49 @@ public class AgiosOrchestrateurService {
                     t.setTrimestre(trimNum);
                     t.setAnnee(annee);
                     t.setBanque(banque);
-                    t.setDateDebut(debutDuTrimestrePourNumero(trimNum, annee));
-                    t.setDateFin(finDuTrimestrePourNumero(trimNum, annee));
+                    t.setDateDebut(debutDePeriode(trimNum, annee, type.getPeriodeCalcul()));
+                    t.setDateFin(finDePeriode(trimNum, annee, type.getPeriodeCalcul()));
                     t.setStatut(StatutTrimestre.OUVERT);
                     return agiosTrimestrielRepository.save(t);
                 });
     }
 
-    // --- Utilitaires trimestre ---
+    // --- Utilitaires trimestre / période ---
+
     private int trimestreDeLaDate(LocalDate d) { return (d.getMonthValue() - 1) / 3 + 1; }
     private LocalDate debutDuTrimestrePourNumero(int t, int a) { return LocalDate.of(a, (t - 1) * 3 + 1, 1); }
     private LocalDate finDuTrimestrePourNumero(int t, int a)   { return LocalDate.of(a, t * 3, 1).plusMonths(1).minusDays(1); }
+
+    /**
+     * Retourne le numéro de période courante selon la périodicité du type :
+     * – TRIMESTRIEL → numéro de trimestre (1–4)
+     * – MENSUEL     → numéro de mois (1–12)
+     */
+    private int periodeActuelle(TypeAgios type, LocalDate date) {
+        return type.getPeriodeCalcul() == PeriodeCalculAgios.MENSUEL
+                ? date.getMonthValue()
+                : trimestreDeLaDate(date);
+    }
+
+    /**
+     * Date de début de période selon la périodicité :
+     * – TRIMESTRIEL → 1er jour du trimestre
+     * – MENSUEL     → 1er jour du mois
+     */
+    private LocalDate debutDePeriode(int num, int annee, PeriodeCalculAgios periode) {
+        return periode == PeriodeCalculAgios.MENSUEL
+                ? LocalDate.of(annee, num, 1)
+                : debutDuTrimestrePourNumero(num, annee);
+    }
+
+    /**
+     * Date de fin de période selon la périodicité :
+     * – TRIMESTRIEL → dernier jour du trimestre
+     * – MENSUEL     → dernier jour du mois
+     */
+    private LocalDate finDePeriode(int num, int annee, PeriodeCalculAgios periode) {
+        return periode == PeriodeCalculAgios.MENSUEL
+                ? YearMonth.of(annee, num).atEndOfMonth()
+                : finDuTrimestrePourNumero(num, annee);
+    }
 }

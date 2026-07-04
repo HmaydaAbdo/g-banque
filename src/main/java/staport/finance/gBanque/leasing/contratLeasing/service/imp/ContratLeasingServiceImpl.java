@@ -15,7 +15,7 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
-import staport.finance.gBanque.leasing.contratLeasing.config.LeasingProperties;
+import staport.finance.gBanque.leasing.config.services.interfaces.ILeasingConfigService;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingPhaseRequestDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingRequestDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponseDTO;
@@ -48,20 +48,20 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
     private final IBanqueService banqueService;
     private final IContratCadreService contratCadreService;
     private final IEcheanceLeasingService echeanceLeasingService;
-    private final LeasingProperties leasingProperties;
+    private final ILeasingConfigService leasingConfigService;
 
     public ContratLeasingServiceImpl(IEcheanceLeasingService echeanceLeasingService,
                                      ContratLeasingRepository contratLeasingRepository,
                                      ContratLeasingMapper contratLeasingMapper,
                                      IBanqueService banqueService,
                                      IContratCadreService contratCadreService,
-                                     LeasingProperties leasingProperties) {
+                                     ILeasingConfigService leasingConfigService) {
         this.contratLeasingRepository = contratLeasingRepository;
         this.contratLeasingMapper = contratLeasingMapper;
         this.banqueService = banqueService;
         this.contratCadreService = contratCadreService;
         this.echeanceLeasingService = echeanceLeasingService;
-        this.leasingProperties = leasingProperties;
+        this.leasingConfigService = leasingConfigService;
     }
 
     // ── Méthode interne centralisée ──────────────────────────────────────────
@@ -72,6 +72,12 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
                     log.warn("ContratLeasing non trouvé — ID : {}", id);
                     return new ResourceNotFoundException("ContratLeasing with ID " + id + " not found.");
                 });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ContratLeasing findOrThrow(Long id) {
+        return findContratOrThrow(id);
     }
 
     // ── CRUD ─────────────────────────────────────────────────────────────────
@@ -125,7 +131,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
         setValeurResiduelleBasedOnType(existingContrat, existingContrat.getMontantAchatTTC());
 
         ContratLeasing updatedContrat = contratLeasingRepository.save(existingContrat);
-        echeanceLeasingService.regenerateEcheances(updatedContrat.getId());
+        echeanceLeasingService.regenerateEcheances(updatedContrat);
 
         log.info("Contrat de leasing mis à jour — ID : {}", id);
         return contratLeasingMapper.toDto(updatedContrat);
@@ -319,7 +325,7 @@ public class ContratLeasingServiceImpl implements ContratLeasingService {
 
     private void setValeurResiduelleBasedOnType(ContratLeasing contratLeasing, BigDecimal montantAchatTTC) {
         BigDecimal valeurResiduelle = montantAchatTTC
-                .multiply(leasingProperties.getValeurResiduelle())
+                .multiply(leasingConfigService.getValeurResiduelle())
                 .setScale(2, RoundingMode.HALF_UP);
         contratLeasing.setValeurResiduelle(valeurResiduelle);
     }

@@ -14,9 +14,6 @@ import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingRequestD
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponseDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDTO;
 import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
-import staport.finance.gBanque.leasing.echeancesLeasing.dto.EcheanceLeasingSearchDTO;
-import staport.finance.gBanque.leasing.echeancesLeasing.dto.TableauAmortissementDTO;
-import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
 
 @Tag(name = "Contrats de leasing", description = "Gestion des contrats de leasing et de leurs échéances")
 @SecurityRequirement(name = "bearerAuth")
@@ -29,12 +26,9 @@ public class ContratLeasingController {
     private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
 
     private final ContratLeasingService contratLeasingService;
-    private final IEcheanceLeasingService echeanceLeasingService;
 
-    public ContratLeasingController(ContratLeasingService contratLeasingService,
-                                    IEcheanceLeasingService echeanceLeasingService) {
+    public ContratLeasingController(ContratLeasingService contratLeasingService) {
         this.contratLeasingService = contratLeasingService;
-        this.echeanceLeasingService = echeanceLeasingService;
     }
 
     @Operation(summary = "Créer un contrat de leasing")
@@ -111,17 +105,5 @@ public class ContratLeasingController {
     public ResponseEntity<Page<ContratLeasingResponseDTO>> getInactiveContrats(
             ContratLeasingSearchDTO searchDTO, Pageable pageable) {
         return ResponseEntity.ok(contratLeasingService.getInactiveContrats(searchDTO, pageable));
-    }
-
-    @Operation(summary = "Tableau d'amortissement d'un contrat")
-    @ApiResponse(responseCode = "404", description = "Contrat introuvable")
-    @PreAuthorize(FINANCE_OR_ADMIN)
-    @GetMapping("/{contratId}/tableauAmortissement")
-    public ResponseEntity<TableauAmortissementDTO> getTableauAmortissement(
-            @PathVariable Long contratId,
-            EcheanceLeasingSearchDTO searchDTO,
-            Pageable pageable) {
-        return ResponseEntity.ok(
-                echeanceLeasingService.getTableauAmortissementForContrat(contratId, searchDTO, pageable));
     }
 }

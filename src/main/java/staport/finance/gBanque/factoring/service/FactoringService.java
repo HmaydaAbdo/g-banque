@@ -42,7 +42,12 @@ public class FactoringService {
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-    public FactoringService(FactoringRepository factoringRepository, MarcheRepository marcheRepository, FactoringMapper factoringMapper, LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, LigneFonctionnelleRepository ligneFonctionnelleRepository, NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository) {
+    public FactoringService(FactoringRepository factoringRepository,
+                            MarcheRepository marcheRepository,
+                            FactoringMapper factoringMapper,
+                            LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
+                            LigneFonctionnelleRepository ligneFonctionnelleRepository,
+                            NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository) {
         this.factoringRepository = factoringRepository;
         this.marcheRepository = marcheRepository;
         this.factoringMapper = factoringMapper;
@@ -65,15 +70,13 @@ public class FactoringService {
 
         log.debug("Marché récupéré: {} (Numéro: {})", marche.getNom(), marche.getNumero());
 
-        // vérifiez si le marché a une ligne spécifique actif de nature Factoring
-
-        // Step 1: Find the "Factoring" nature line by its label
         log.debug("Recherche de la nature de ligne fonctionnelle 'Factoring'");
         NatureLigneFonctionnelle factoringNature = getFactoringNature();
-        validateActiveFactoringLine(marche, factoringNature);
-
+        LigneResult ligneResult = findActiveFactoringLine(marche, factoringNature);
 
         Factoring factoring = factoringMapper.toEntity(requestDTO, marche);
+        factoring.setLigneFonctionnelleSpecifique(ligneResult.specifique());
+        factoring.setLigneFonctionnelle(ligneResult.generale());
         factoring = factoringRepository.save(factoring);
 
         log.info("Factoring créé avec succès - ID: {}, Type: {}, Montant: {}",
@@ -108,7 +111,9 @@ public class FactoringService {
                     existingFactoring.getMarche().getNom(), marche.getNom());
 
             NatureLigneFonctionnelle factoringNature = getFactoringNature();
-            validateActiveFactoringLine(marche, factoringNature);
+            LigneResult ligneResult = findActiveFactoringLine(marche, factoringNature);
+            existingFactoring.setLigneFonctionnelleSpecifique(ligneResult.specifique());
+            existingFactoring.setLigneFonctionnelle(ligneResult.generale());
         }
         existingFactoring.setMarche(marche);
         existingFactoring.setDateEmission(requestDTO.getDateEmission());
@@ -264,74 +269,52 @@ public class FactoringService {
 
 
     private NatureLigneFonctionnelle getFactoringNature() {
-        log.debug("Recherche de la nature de ligne fonctionnelle Factoring");
-        return natureLigneFonctionnelleRepository.findByLabel("Factoring")
+        log.debug("Recherche de la nature de ligne fonctionnelle Factoring (code=FACTORING)");
+        return natureLigneFonctionnelleRepository.findByCode("FACTORING")
                 .orElseThrow(() -> {
-                    log.error("Nature de ligne fonctionnelle Factoring non trouvée");
+                    log.error("Nature de ligne fonctionnelle 'FACTORING' introuvable en base");
                     return new ResourceNotFoundException(
-                            "Nature de ligne fonctionnelle Factoring non trouvée."
+                            "Nature de ligne fonctionnelle FACTORING introuvable. " +
+                            "Vérifiez la table nature_ligne_fonctionnelle."
                     );
                 });
     }
+
     /**
-     * Validates if a Marche has an active "Factoring" line.
-     * Searches in LigneFonctionnelleSpecifique (priority), then LigneFonctionnelle (fallback).
-     *
-     * @param marche The Marche to validate
-     * @param factoringNature The "Factoring" nature
-     * @throws Exception if no active line is found
+     * Recherche et retourne la ligne fonctionnelle Factoring active pour un marché.
+     * Priorité : spécifique > générale liée au marché.
+     * Lève une exception si aucune ligne n'est trouvée.
      */
-    private void validateActiveFactoringLine(Marche marche, NatureLigneFonctionnelle factoringNature) throws Exception {
-        log.debug("Validation de l'existence d'une ligne Factoring active pour le marché ID: {}", marche.getId());
+    private LigneResult findActiveFactoringLine(Marche marche, NatureLigneFonctionnelle factoringNature) throws Exception {
+        log.debug("Recherche d'une ligne Factoring active pour le marché '{}' (ID: {})",
+                marche.getNom(), marche.getId());
 
-        // ÉTAPE 1 : LigneFonctionnelleSpecifique (PRIORITAIRE)
+        // ÉTAPE 1 : Ligne spécifique (prioritaire)
         Optional<LigneFonctionnelleSpecifique> ligneSpecifique =
-                ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
-                        marche, factoringNature
-                );
-
+                ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, factoringNature);
         if (ligneSpecifique.isPresent()) {
-            log.info(" Ligne fonctionnelle spécifique Factoring active trouvée pour le marché '{}' (ID: {})", marche.getNom(), ligneSpecifique.get().getId());
-            return;
+            log.info("Ligne spécifique Factoring active trouvée pour le marché '{}' (ID: {})",
+                    marche.getNom(), ligneSpecifique.get().getId());
+            return new LigneResult(ligneSpecifique.get(), null);
         }
 
-        log.debug("Aucune ligne spécifique trouvée, recherche dans les lignes générales...");
-
-        // ÉTAPE 2 : LigneFonctionnelle liée au marché spécifique
-        Optional<LigneFonctionnelle> ligneGeneraleMarcheSpecifique =
-                ligneFonctionnelleRepository.findActiveLineForMarche(
-                        marche.getId(),
-                        factoringNature.getId()
-                );
-
-        if (ligneGeneraleMarcheSpecifique.isPresent()) {
-            log.info(" Ligne fonctionnelle générale Factoring active trouvée pour le marché spécifique '{}' (ID: {})", marche.getNom(), ligneGeneraleMarcheSpecifique.get().getId());
-            return;
+        // ÉTAPE 2 : Ligne générale liée au marché
+        Optional<LigneFonctionnelle> ligneGenerale =
+                ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), factoringNature.getId());
+        if (ligneGenerale.isPresent()) {
+            log.info("Ligne générale Factoring active trouvée pour le marché '{}' (ID: {})",
+                    marche.getNom(), ligneGenerale.get().getId());
+            return new LigneResult(null, ligneGenerale.get());
         }
 
-        log.debug("Aucune ligne générale spécifique au marché trouvée, recherche de ligne générale de la banque...");
-
-        // ÉTAPE 3 : LigneFonctionnelle générale de la banque
-        Optional<LigneFonctionnelle> ligneGeneraleBanque =
-                ligneFonctionnelleRepository.findActiveGeneralLine(
-                        marche.getBanque().getId(),
-                        factoringNature.getId()
-                );
-
-        if (ligneGeneraleBanque.isPresent()) {
-            log.info(" Ligne fonctionnelle générale Factoring active trouvée pour la banque '{}' (ID: {})", marche.getBanque().getNom(), ligneGeneraleBanque.get().getId());
-            return;
-        }
-
-        // ÉTAPE 4 : Aucune ligne active trouvée
-        log.error(" Aucune ligne fonctionnelle Factoring active trouvée pour le marché '{}'",marche.getNom());
-
+        log.error("Aucune ligne Factoring active pour le marché '{}'", marche.getNom());
         throw new Exception(
                 "Impossible de créer un factoring. Le marché '" + marche.getNom() +
-                        "' n'est pas associé à une ligne fonctionnelle Factoring active. " +
-                        "Veuillez créer une ligne spécifique au marché ou une ligne générale pour la banque '" +
-                        marche.getBanque().getNom() + "'."
+                "' n'est associé à aucune ligne fonctionnelle Factoring active " +
+                "(ni spécifique, ni générale liée à ce marché)."
         );
     }
 
+    /** Résultat de la recherche de ligne : exactement l'une des deux est non-null. */
+    private record LigneResult(LigneFonctionnelleSpecifique specifique, LigneFonctionnelle generale) {}
 }

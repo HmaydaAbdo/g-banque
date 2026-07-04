@@ -3,6 +3,8 @@ package staport.finance.gBanque.Bank.dtos.request;
 import jakarta.validation.constraints.*;
 import staport.finance.gBanque.Bank.enums.Devise;
 
+import java.math.BigDecimal;
+
 public record BanqueRequest(
 
         @NotBlank(message = "Le nom de la banque est obligatoire.")
@@ -30,6 +32,10 @@ public record BanqueRequest(
 
         @NotBlank(message = "L'agence est obligatoire.")
         @Size(min = 2, max = 100, message = "L'agence doit avoir entre 2 et 100 caractères.")
-        String agence
+        String agence,
+
+        @NotNull(message = "Le solde initial est obligatoire.")
+        @DecimalMin(value = "0.00", message = "Le solde initial doit être positif ou nul.")
+        BigDecimal soldeInitial
 
 ) {}

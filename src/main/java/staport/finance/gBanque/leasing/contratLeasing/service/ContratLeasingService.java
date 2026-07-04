@@ -7,6 +7,7 @@ import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingRequestDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponseDTO;
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDTO;
+import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 
 /**
  * Interface pour le service de gestion des contrats de leasing.
@@ -28,4 +29,11 @@ public interface ContratLeasingService {
     Page<ContratLeasingResponseDTO> getInactiveContrats(ContratLeasingSearchDTO searchDTO, Pageable pageable);
 
     ContratLeasingResponseDTO markAsInactive(Long id) throws ResourceNotFoundException, ValidationException;
+
+    /**
+     * Retourne l'entité ContratLeasing ou lève ResourceNotFoundException.
+     * Façade pour les domaines qui ont besoin de l'entité (ex. LeasingValidationService)
+     * sans accéder directement à ContratLeasingRepository (CLAUDE.md — Bounded Context).
+     */
+    ContratLeasing findOrThrow(Long id);
 }

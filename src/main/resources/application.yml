@@ -126,9 +126,6 @@ leasing:
     job:
       enabled: true
       cron: "0 0 14 ? * SUN"
-  contract:
-    valeur-residuelle: 0.01
-    taux-tva: 0.2
 
 cmt:
   main-levee:

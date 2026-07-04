@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingRequestDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingResponseDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingSearchDTO;
@@ -66,6 +67,12 @@ public class OrganismeLeasingServiceImpl implements OrganismeLeasingService {
     @Override
     public void delete(Long id) {
         OrganismeLeasing entity = findOrThrow(id);
+        if (!entity.getContratsCadres().isEmpty()) {
+            log.warn("Suppression bloquée — organisme ID : {} lié à des contrats cadres existants", id);
+            throw new ValidationException(
+                    "Impossible de supprimer l'organisme avec l'ID " + id +
+                            " car il est lié à des contrats cadres existants.");
+        }
         repository.delete(entity);
         log.info("Organisme de leasing supprimé — ID : {}", id);
     }

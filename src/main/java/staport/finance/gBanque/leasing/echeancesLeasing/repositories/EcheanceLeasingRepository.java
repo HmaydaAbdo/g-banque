@@ -9,6 +9,7 @@ import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +42,8 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
 
     List<EcheanceLeasing> findByStatutPaiement(StatutEcheanceLeasing statut);
 
+    long countByStatutPaiement(StatutEcheanceLeasing statut);
+
     List<EcheanceLeasing> findByContratLeasingId(Long contratId);
 
     /**
@@ -55,4 +58,23 @@ public interface EcheanceLeasingRepository extends JpaRepository<EcheanceLeasing
             @Param("statut") StatutEcheanceLeasing statut,
             @Param("debut") LocalDate debut,
             @Param("fin") LocalDate fin);
+
+    /**
+     * Total TTC de toutes les échéances d'un contrat (loyer + valeur résiduelle),
+     * tous statuts confondus. Utilisé par le tableau d'amortissement.
+     * Filtre sur l'ID du contrat uniquement (pas l'entité) — évite à EcheanceLeasingService
+     * de dépendre du Repository du module contratLeasing.
+     */
+    @Query("SELECT COALESCE(SUM(e.montantTTC), 0) FROM EcheanceLeasing e WHERE e.contratLeasing.id = :contratId")
+    BigDecimal sumMontantTTCByContratLeasingId(@Param("contratId") Long contratId);
+
+    /**
+     * Total TTC déjà payé (statut PAYE) des échéances d'un contrat.
+     * Utilisé par le tableau d'amortissement.
+     */
+    @Query("SELECT COALESCE(SUM(e.montantTTC), 0) FROM EcheanceLeasing e " +
+           "WHERE e.contratLeasing.id = :contratId AND e.statutPaiement = :statut")
+    BigDecimal sumMontantTTCByContratLeasingIdAndStatutPaiement(
+            @Param("contratId") Long contratId,
+            @Param("statut") StatutEcheanceLeasing statut);
 }

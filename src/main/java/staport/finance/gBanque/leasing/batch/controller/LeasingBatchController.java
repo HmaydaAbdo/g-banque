@@ -20,7 +20,7 @@ import java.util.Map;
 @Tag(name = "Batch Leasing", description = "Déclenchement manuel du job batch Main Levée")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/test/batch/leasing")
+@RequestMapping("/batch/leasing")
 public class LeasingBatchController {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");

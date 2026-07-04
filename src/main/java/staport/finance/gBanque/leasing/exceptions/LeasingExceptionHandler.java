@@ -12,6 +12,7 @@ import staport.finance.gBanque.exception.ErrorResponse;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.batch.controller.LeasingBatchController;
+import staport.finance.gBanque.leasing.config.controllers.LeasingConfigController;
 import staport.finance.gBanque.leasing.contratLeasing.controller.ContratLeasingController;
 import staport.finance.gBanque.leasing.echeancesLeasing.controller.EcheanceLeasingController;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.controllers.OrganismeLeasingController;
@@ -22,8 +23,8 @@ import java.util.stream.Collectors;
 /**
  * Exception handler for the Leasing module.
  *
- * Covers all four leasing controllers: ContratLeasing, EcheancesLeasing,
- * OrganismesLeasing, and LeasingBatch.
+ * Covers all five leasing controllers: ContratLeasing, EcheancesLeasing,
+ * OrganismesLeasing, LeasingBatch et LeasingConfig.
  *
  * The global {@code GlobalExceptionHandler} acts as fallback for any exception
  * not matched here (security, unhandled runtime errors, etc.).
@@ -32,7 +33,8 @@ import java.util.stream.Collectors;
         ContratLeasingController.class,
         EcheanceLeasingController.class,
         OrganismeLeasingController.class,
-        LeasingBatchController.class
+        LeasingBatchController.class,
+        LeasingConfigController.class
 })
 public class LeasingExceptionHandler {
 

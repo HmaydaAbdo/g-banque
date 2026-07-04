@@ -91,17 +91,42 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
     /**
      * Une banque est éligible si elle possède au moins un marché avec une ligne
      * droits constatés active (spécifique ou générale).
+     * Produit un log INFO détaillant la répartition des marchés (avec/sans ligne).
      */
     @Override
     @Transactional(readOnly = true)
     public boolean estEligible(Banque banque) {
         if (resolveNatureDC().isEmpty()) {
-            log.warn("Nature '{}' (code={}) introuvable en base — aucune banque éligible DROIT_CONSTATE",
-                    NATURE_DC_LABEL, NATURE_DC_CODE);
+            log.warn("DC — {} : nature '{}' (code={}) introuvable en base → banque ignorée",
+                    banque.getNom(), NATURE_DC_LABEL, NATURE_DC_CODE);
             return false;
         }
         List<Marche> marches = marcheRepository.findByBanqueId(banque.getId());
-        return marches.stream().anyMatch(m -> resoudreTaux(m).isPresent());
+        if (marches.isEmpty()) {
+            log.info("DC — {} : aucun marché rattaché → banque ignorée", banque.getNom());
+            return false;
+        }
+
+        // Pré-chauffe le cache et classe chaque marché
+        List<String> avecLigne = new ArrayList<>();
+        List<String> sansLigne = new ArrayList<>();
+        for (Marche m : marches) {
+            if (resoudreTaux(m).isPresent()) avecLigne.add(m.getNom() + " #" + m.getId());
+            else                              sansLigne.add(m.getNom() + " #" + m.getId());
+        }
+
+        if (avecLigne.isEmpty()) {
+            log.info("DC — {} : {}/{} marchés, aucune ligne DC active → banque ignorée | sans ligne : {}",
+                    banque.getNom(), marches.size(), marches.size(), sansLigne);
+            return false;
+        }
+
+        log.info("DC — {} : {}/{} marchés avec ligne [{}]{}",
+                banque.getNom(),
+                avecLigne.size(), marches.size(),
+                String.join(", ", avecLigne),
+                sansLigne.isEmpty() ? "" : " | " + sansLigne.size() + " sans ligne : " + sansLigne);
+        return true;
     }
 
     /**
@@ -116,14 +141,17 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
         for (Marche marche : marches) {
             Optional<BigDecimal> tauxOpt = resoudreTaux(marche);
             if (tauxOpt.isEmpty()) {
-                log.debug("Marché {} — aucune ligne DROIT_CONSTATE active, ignoré", marche.getId());
+                log.debug("DC — {} — {} : marché '{}' #{} sans ligne active, ignoré",
+                        banque.getNom(), jour, marche.getNom(), marche.getId());
                 continue;
             }
 
-            BigDecimal taux = tauxOpt.get();
+            BigDecimal taux    = tauxOpt.get();
             BigDecimal encours = calculerEncours(marche, jour);
 
             if (encours.compareTo(BigDecimal.ZERO) <= 0) {
+                log.debug("DC — {} — {} : marché '{}' #{} encours={} ≤ 0, pas d'agios",
+                        banque.getNom(), jour, marche.getNom(), marche.getId(), encours);
                 resultats.add(new ResultatParMarche(marche, AgiosCalculateur.ResultatJournalier.ZERO));
                 continue;
             }
@@ -137,8 +165,8 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
             String metadata = String.format("marche_id=%d|taux=%s|encours=%s",
                     marche.getId(), taux.toPlainString(), encours.toPlainString());
 
-            log.debug("Marché {} — encours={} taux={}% agiosHT={} [{}]",
-                    marche.getId(), encours, taux, agiosHT, jour);
+            log.debug("DC — {} — {} : marché '{}' #{} encours={} taux={}% → agiosHT={}",
+                    banque.getNom(), jour, marche.getNom(), marche.getId(), encours, taux, agiosHT);
 
             resultats.add(new ResultatParMarche(
                     marche,

@@ -64,8 +64,7 @@ public class ContratCadreServiceImpl implements IContratCadreService {
     @Transactional(readOnly = true)
     @Override
     public Page<ContratCadreResponseDTO> search(ContratCadreSearchDTO criteria, Pageable pageable) {
-        Specification<ContratCadre> spec =
-                ContratCadreSpecification.build(criteria.organismeId(), criteria.statut());
+        Specification<ContratCadre> spec = ContratCadreSpecification.searchByCriteria(criteria);
         return repository.findAll(spec, pageable).map(mapper::toDto);
     }
 
