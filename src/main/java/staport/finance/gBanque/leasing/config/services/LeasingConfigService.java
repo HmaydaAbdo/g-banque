@@ -32,6 +32,8 @@ public class LeasingConfigService implements ILeasingConfigService {
      */
     private static final BigDecimal VALEUR_RESIDUELLE_INITIALE = new BigDecimal("0.0100");
     private static final BigDecimal TAUX_TVA_INITIAL = new BigDecimal("0.2000");
+    private static final int ALERTE_COURT_TERME_INITIALE = 7;
+    private static final int ALERTE_LONG_TERME_INITIALE = 30;
 
     private final LeasingConfigRepository repository;
     private final LeasingConfigMapper mapper;
@@ -48,6 +50,8 @@ public class LeasingConfigService implements ILeasingConfigService {
             config.setId(SINGLETON_ID);
             config.setValeurResiduelle(VALEUR_RESIDUELLE_INITIALE);
             config.setTauxTva(TAUX_TVA_INITIAL);
+            config.setAlerteEcheanceJoursCourtTerme(ALERTE_COURT_TERME_INITIALE);
+            config.setAlerteEcheanceJoursLongTerme(ALERTE_LONG_TERME_INITIALE);
             repository.save(config);
             log.info("Configuration leasing initialisée avec les valeurs historiques");
         }
@@ -80,6 +84,18 @@ public class LeasingConfigService implements ILeasingConfigService {
     @Transactional(readOnly = true)
     public BigDecimal getTauxTva() {
         return findSingleton().getTauxTva();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getAlerteEcheanceJoursCourtTerme() {
+        return findSingleton().getAlerteEcheanceJoursCourtTerme();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getAlerteEcheanceJoursLongTerme() {
+        return findSingleton().getAlerteEcheanceJoursLongTerme();
     }
 
     private LeasingConfig findSingleton() {

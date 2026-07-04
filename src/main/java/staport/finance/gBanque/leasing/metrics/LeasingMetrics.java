@@ -4,6 +4,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.leasing.config.services.interfaces.ILeasingConfigService;
 import staport.finance.gBanque.leasing.contratLeasing.repositories.ContratLeasingRepository;
 import staport.finance.gBanque.leasing.echeancesLeasing.enums.StatutEcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
@@ -22,15 +23,18 @@ public class LeasingMetrics {
     private final ContratLeasingRepository contratLeasingRepository;
     private final EcheanceLeasingRepository echeanceLeasingRepository;
     private final OrganismeLeasingRepository organismeLeasingRepository;
+    private final ILeasingConfigService leasingConfigService;
 
     public LeasingMetrics(MeterRegistry registry,
                           ContratLeasingRepository contratLeasingRepository,
                           EcheanceLeasingRepository echeanceLeasingRepository,
-                          OrganismeLeasingRepository organismeLeasingRepository) {
+                          OrganismeLeasingRepository organismeLeasingRepository,
+                          ILeasingConfigService leasingConfigService) {
         this.registry = registry;
         this.contratLeasingRepository = contratLeasingRepository;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.organismeLeasingRepository = organismeLeasingRepository;
+        this.leasingConfigService = leasingConfigService;
     }
 
     @PostConstruct
@@ -71,24 +75,24 @@ public class LeasingMetrics {
                 .description("Nombre d'échéances de leasing déjà payées (PAYE)")
                 .register(registry);
 
-        // Échéances à venir dans les 7 prochains jours (PREVU)
+        // Échéances à venir à court terme (PREVU) — fenêtre administrable via /leasing-config
         Gauge.builder("gbanque.leasing.echeance.a_venir_j7",
                         echeanceLeasingRepository,
                         repo -> (double) repo.countByStatutPaiementAndDateEcheanceBetween(
                                 StatutEcheanceLeasing.PREVU,
                                 LocalDate.now(),
-                                LocalDate.now().plusDays(7)))
-                .description("Nombre d'échéances PREVU dont la date tombe dans les 7 prochains jours")
+                                LocalDate.now().plusDays(leasingConfigService.getAlerteEcheanceJoursCourtTerme())))
+                .description("Nombre d'échéances PREVU dont la date tombe dans la fenêtre d'alerte court terme (jours administrables via /leasing-config)")
                 .register(registry);
 
-        // Échéances à venir dans les 30 prochains jours (PREVU)
+        // Échéances à venir à long terme (PREVU) — fenêtre administrable via /leasing-config
         Gauge.builder("gbanque.leasing.echeance.a_venir_j30",
                         echeanceLeasingRepository,
                         repo -> (double) repo.countByStatutPaiementAndDateEcheanceBetween(
                                 StatutEcheanceLeasing.PREVU,
                                 LocalDate.now(),
-                                LocalDate.now().plusDays(30)))
-                .description("Nombre d'échéances PREVU dont la date tombe dans les 30 prochains jours")
+                                LocalDate.now().plusDays(leasingConfigService.getAlerteEcheanceJoursLongTerme())))
+                .description("Nombre d'échéances PREVU dont la date tombe dans la fenêtre d'alerte long terme (jours administrables via /leasing-config)")
                 .register(registry);
     }
 }

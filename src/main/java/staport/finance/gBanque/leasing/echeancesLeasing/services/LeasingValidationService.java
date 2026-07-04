@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
@@ -60,6 +62,7 @@ public class LeasingValidationService implements ILeasingValidationService {
      */
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = EcheanceLeasing.class, idAccessor = "echeanceId")
     public LeasingTransactionResponseDTO processLeasingTransaction(ContratLeasing contratLeasing, LeasingTransactionRequestDTO dto) {
         log.info("Validation échéance leasing — contratId: {}, écheanceId: {}", dto.contratLeasingId(), dto.echeanceId());
 

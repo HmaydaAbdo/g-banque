@@ -40,7 +40,9 @@ public class GenericAuditAspect {
     public Object around(ProceedingJoinPoint pjp, AuditableAction auditableAction) throws Throwable {
         Object result = pjp.proceed();
 
-        Long entityId = extractEntityId(result, pjp.getArgs());
+        Long entityId = auditableAction.idAccessor().isEmpty()
+                ? extractEntityId(result, pjp.getArgs())
+                : extractIdViaAccessor(result, auditableAction.idAccessor());
         if (entityId == null) {
             // On ne bloque jamais l'opération métier pour un souci d'audit —
             // si l'ID n'est pas extractible, on logue l'absence et on continue.
@@ -63,6 +65,25 @@ public class GenericAuditAspect {
         }
 
         return result;
+    }
+
+    /**
+     * Invoque explicitement l'accesseur nommé par {@code AuditableAction#idAccessor()}
+     * sur la valeur de retour — utilisé lorsque l'entité auditée n'est pas celle dont
+     * l'ID figure en premier dans le résultat (ex. DTO de transaction exposant à la fois
+     * l'ID de la transaction et celui de l'échéance source).
+     */
+    private Long extractIdViaAccessor(Object result, String accessorName) {
+        if (result == null) {
+            return null;
+        }
+        try {
+            Method accessor = result.getClass().getMethod(accessorName);
+            Object value = accessor.invoke(result);
+            return value instanceof Long ? (Long) value : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Long extractEntityId(Object result, Object[] args) {

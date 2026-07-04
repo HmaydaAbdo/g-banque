@@ -21,4 +21,10 @@ public interface ILeasingConfigService {
 
     /** Taux de TVA utilisé pour ventiler les échéances (montant HT / TVA). */
     BigDecimal getTauxTva();
+
+    /** Fenêtre (en jours) de la métrique "échéances à venir à court terme". */
+    int getAlerteEcheanceJoursCourtTerme();
+
+    /** Fenêtre (en jours) de la métrique "échéances à venir à long terme". */
+    int getAlerteEcheanceJoursLongTerme();
 }

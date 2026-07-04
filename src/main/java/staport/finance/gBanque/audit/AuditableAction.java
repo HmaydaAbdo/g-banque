@@ -25,4 +25,19 @@ public @interface AuditableAction {
 
     /** Classe de l'entité métier concernée — sert à dériver {@code Log.entityName}. */
     Class<?> entity();
+
+    /**
+     * Nom de l'accesseur sans argument (record ou getter) à invoquer sur la valeur de
+     * retour pour extraire l'identifiant à auditer, lorsque celui-ci ne correspond ni à
+     * {@code result.id()}/{@code result.getId()} ni à un paramètre {@code Long} de la
+     * méthode (comportement par défaut de {@code GenericAuditAspect}).
+     *
+     * <p>Exemple : une méthode qui crée une {@code Transaction} mais dont l'entité auditée
+     * est l'échéance source (champ {@code echeanceId} du DTO de retour) déclare
+     * {@code idAccessor = "echeanceId"}.
+     *
+     * <p>Laissé vide par défaut — n'affecte aucune des méthodes déjà annotées sans cet
+     * attribut, qui conservent l'extraction par défaut.
+     */
+    String idAccessor() default "";
 }

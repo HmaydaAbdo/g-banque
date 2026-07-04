@@ -1,18 +1,3 @@
-package staport.finance.gBanque.cmt.dtos;
-
-public class DeleteResponceDto {
-    String msg;
-    public DeleteResponceDto() {
-    }
-    public DeleteResponceDto(String msg) {
-        this.msg = msg;
-    }
-
-    public String getMsg() {
-        return msg;
-    }
-
-    public void setMsg(String msg) {
-        this.msg = msg;
-    }
-}
+// Fichier obsolète — remplacé par DeleteResponseDto.java (record, faute de frappe corrigée).
+// Suppression physique impossible depuis cet environnement (voir TODO.md).
+// Aucune classe déclarée ici volontairement : aucune référence, aucun impact sur la compilation.

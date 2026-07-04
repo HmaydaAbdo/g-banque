@@ -7,5 +7,7 @@ public record LeasingConfigResponseDTO(
         Long id,
         BigDecimal valeurResiduelle,
         BigDecimal tauxTva,
+        Integer alerteEcheanceJoursCourtTerme,
+        Integer alerteEcheanceJoursLongTerme,
         OffsetDateTime dateModification
 ) {}

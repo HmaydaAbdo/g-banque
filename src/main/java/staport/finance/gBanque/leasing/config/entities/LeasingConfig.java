@@ -15,7 +15,11 @@ import java.time.OffsetDateTime;
  * <ul>
  *   <li>{@code valeurResiduelle} — taux appliqué au montant d'achat TTC pour calculer
  *       la valeur résiduelle d'un contrat de leasing ;</li>
- *   <li>{@code tauxTva} — taux de TVA utilisé pour ventiler les échéances (montant HT / TVA).</li>
+ *   <li>{@code tauxTva} — taux de TVA utilisé pour ventiler les échéances (montant HT / TVA) ;</li>
+ *   <li>{@code alerteEcheanceJoursCourtTerme} — fenêtre (en jours) de la métrique
+ *       "échéances à venir à court terme" (auparavant codée en dur dans {@code LeasingMetrics}) ;</li>
+ *   <li>{@code alerteEcheanceJoursLongTerme} — fenêtre (en jours) de la métrique
+ *       "échéances à venir à long terme" (idem).</li>
  * </ul>
  */
 @Audited
@@ -34,6 +38,14 @@ public class LeasingConfig {
     @Column(name = "taux_tva", nullable = false, precision = 6, scale = 4)
     private BigDecimal tauxTva;
 
+    @NotNull
+    @Column(name = "alerte_echeance_jours_court_terme", nullable = false)
+    private Integer alerteEcheanceJoursCourtTerme;
+
+    @NotNull
+    @Column(name = "alerte_echeance_jours_long_terme", nullable = false)
+    private Integer alerteEcheanceJoursLongTerme;
+
     @Column(name = "date_modification", nullable = false)
     private OffsetDateTime dateModification;
 
@@ -48,6 +60,12 @@ public class LeasingConfig {
     public BigDecimal getTauxTva() { return tauxTva; }
     public void setTauxTva(BigDecimal tauxTva) { this.tauxTva = tauxTva; }
 
+    public Integer getAlerteEcheanceJoursCourtTerme() { return alerteEcheanceJoursCourtTerme; }
+    public void setAlerteEcheanceJoursCourtTerme(Integer alerteEcheanceJoursCourtTerme) { this.alerteEcheanceJoursCourtTerme = alerteEcheanceJoursCourtTerme; }
+
+    public Integer getAlerteEcheanceJoursLongTerme() { return alerteEcheanceJoursLongTerme; }
+    public void setAlerteEcheanceJoursLongTerme(Integer alerteEcheanceJoursLongTerme) { this.alerteEcheanceJoursLongTerme = alerteEcheanceJoursLongTerme; }
+
     public OffsetDateTime getDateModification() { return dateModification; }
     public void setDateModification(OffsetDateTime dateModification) { this.dateModification = dateModification; }
 
@@ -59,6 +77,8 @@ public class LeasingConfig {
 
     @Override
     public String toString() {
-        return "LeasingConfig{id=" + id + ", valeurResiduelle=" + valeurResiduelle + ", tauxTva=" + tauxTva + '}';
+        return "LeasingConfig{id=" + id + ", valeurResiduelle=" + valeurResiduelle + ", tauxTva=" + tauxTva
+                + ", alerteEcheanceJoursCourtTerme=" + alerteEcheanceJoursCourtTerme
+                + ", alerteEcheanceJoursLongTerme=" + alerteEcheanceJoursLongTerme + '}';
     }
 }

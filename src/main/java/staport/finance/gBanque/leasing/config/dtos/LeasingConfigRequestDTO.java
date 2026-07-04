@@ -2,6 +2,7 @@ package staport.finance.gBanque.leasing.config.dtos;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -20,6 +21,14 @@ public record LeasingConfigRequestDTO(
         @NotNull(message = "Le taux de TVA est obligatoire")
         @DecimalMin(value = "0.0", message = "Le taux de TVA ne peut pas être négatif")
         @DecimalMax(value = "1.0", message = "Le taux de TVA doit être une fraction entre 0 et 1")
-        BigDecimal tauxTva
+        BigDecimal tauxTva,
+
+        @NotNull(message = "Le seuil d'alerte court terme est obligatoire")
+        @Min(value = 1, message = "Le seuil d'alerte court terme doit être d'au moins 1 jour")
+        Integer alerteEcheanceJoursCourtTerme,
+
+        @NotNull(message = "Le seuil d'alerte long terme est obligatoire")
+        @Min(value = 1, message = "Le seuil d'alerte long terme doit être d'au moins 1 jour")
+        Integer alerteEcheanceJoursLongTerme
 
 ) {}
