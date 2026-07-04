@@ -1,196 +1,121 @@
 package staport.finance.gBanque.cmt.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.cmt.dtos.DeleteResponceDto;
+import staport.finance.gBanque.cmt.dtos.DeleteResponseDto;
 import staport.finance.gBanque.cmt.echeances.dtos.EcheanceCMTSearchDto;
 import staport.finance.gBanque.cmt.echeances.dtos.TableauAmortissementCMTResponseDto;
 import staport.finance.gBanque.cmt.echeances.services.EcheanceCMTService;
 import staport.finance.gBanque.cmt.dtos.CreditMoyenTermeRequestDto;
 import staport.finance.gBanque.cmt.dtos.CreditMoyenTermeResponseDto;
 import staport.finance.gBanque.cmt.dtos.CreditMoyenTermeSearchDto;
+import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.services.CreditMoyenTermeService;
-import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-
 
 /**
- * Contrôleur REST pour la gestion des opérations sur les crédits à moyen terme (CMT).
- * Gère les requêtes HTTP entrantes et délègue les tâches aux services correspondants.
+ * Contrôleur REST pour la gestion des crédits à moyen terme (CMT).
  */
+@Tag(name = "Crédits Moyen Terme", description = "Gestion des crédits à moyen terme et de leur tableau d'amortissement")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/credits-cmt")
 public class CreditMoyenTermeController {
 
-    private static final Logger log = LoggerFactory.getLogger(CreditMoyenTermeController.class);
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
+
     private final CreditMoyenTermeService creditMoyenTermeService;
     private final EcheanceCMTService echeanceCmtService;
 
-    /**
-     * Constructeur pour le contrôleur, injectant les services nécessaires.
-     *
-     * @param creditMoyenTermeService Le service pour les opérations sur les crédits.
-     * @param echeanceCmtService Le service pour les opérations sur les échéances.
-     */
     public CreditMoyenTermeController(CreditMoyenTermeService creditMoyenTermeService, EcheanceCMTService echeanceCmtService) {
         this.creditMoyenTermeService = creditMoyenTermeService;
         this.echeanceCmtService = echeanceCmtService;
     }
 
-    /**
-     * Point d'accès pour créer un nouveau crédit à moyen terme.
-     * Mappe à POST /api/credits-cmt
-     *
-     * @param requestDto Le DTO contenant les données du nouveau crédit.
-     * @return ResponseEntity avec le DTO du crédit créé et le statut HTTP 201 (Created).
-     */
+    @Operation(summary = "Créer un crédit à moyen terme")
+    @ApiResponse(responseCode = "201", description = "Crédit créé")
+    @ApiResponse(responseCode = "404", description = "Banque introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @PostMapping
     public ResponseEntity<CreditMoyenTermeResponseDto> createCreditMoyenTerme(@Valid @RequestBody CreditMoyenTermeRequestDto requestDto) {
-        log.info("Réception d'une demande de création de crédit CMT ");
-        log.debug("Détails de la demande: {}", requestDto);
         CreditMoyenTermeResponseDto createdCredit = creditMoyenTermeService.create(requestDto);
-        log.info("Crédit CMT créé avec succès - ID: {}", createdCredit.getId());
         return new ResponseEntity<>(createdCredit, HttpStatus.CREATED);
-
     }
 
-
-
-    /**
-     * Récupère une liste paginée de crédits actifs.
-     * Mappe à GET /api/credits-cmt/actifs
-     *
-     * @param searchDto Un DTO contenant les filtres de recherche.
-     * @param pageable Informations de pagination et de tri.
-     * @return Une page de DTOs des crédits actifs.
-     */
+    @Operation(summary = "Lister les crédits actifs")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/actifs")
     public ResponseEntity<Page<CreditMoyenTermeResponseDto>> searchActiveCreditsMoyenTerme(CreditMoyenTermeSearchDto searchDto, Pageable pageable) {
-
-        log.info("Recherche de crédits CMT actifs - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
-        log.debug("Critères de recherche: {}", searchDto);
-        Page<CreditMoyenTermeResponseDto> resultPage = creditMoyenTermeService.searchActiveCredits(searchDto, pageable);
-        log.info("Recherche de crédits actifs terminée - {} résultat(s) trouvé(s)", resultPage.getTotalElements());
-        return ResponseEntity.ok(resultPage);
-
+        return ResponseEntity.ok(creditMoyenTermeService.searchActiveCredits(searchDto, pageable));
     }
 
-    /**
-     * Récupère une liste paginée de crédits en attente de clôture.
-     * Mappe à GET /api/credits-cmt/en-attente-cloture
-     *
-     * @param searchDto Un DTO contenant les filtres de recherche.
-     * @param pageable Informations de pagination et de tri.
-     * @return Une page de DTOs des crédits en attente.
-     */
+    @Operation(summary = "Lister les crédits en attente de main levée")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/en-attente-de-main-levees")
     public ResponseEntity<Page<CreditMoyenTermeResponseDto>> searchPendingClosureCreditsMoyenTerme(CreditMoyenTermeSearchDto searchDto, Pageable pageable) {
-        log.info("Recherche de crédits CMT en attente de main levée - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
-        log.debug("Critères de recherche: {}", searchDto);
-        Page<CreditMoyenTermeResponseDto> resultPage = creditMoyenTermeService.searchPendingClosureCredits(searchDto, pageable);
-        log.info("Recherche de crédits en attente terminée - {} résultat(s) trouvé(s)", resultPage.getTotalElements());
-        return ResponseEntity.ok(resultPage);
+        return ResponseEntity.ok(creditMoyenTermeService.searchPendingClosureCredits(searchDto, pageable));
     }
 
-    /**
-     * Récupère une liste paginée de crédits archivés.
-     * Mappe à GET /api/credits-cmt/archives
-     *
-     * @param searchDto Un DTO contenant les filtres de recherche.
-     * @param pageable Informations de pagination et de tri.
-     * @return Une page de DTOs des crédits archivés.
-     */
+    @Operation(summary = "Lister les crédits archivés")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/archives")
     public ResponseEntity<Page<CreditMoyenTermeResponseDto>> searchArchivedCreditsMoyenTerme(CreditMoyenTermeSearchDto searchDto, Pageable pageable) {
-        log.info("Recherche de crédits CMT archivés - Page: {}, Taille: {}", pageable.getPageNumber(), pageable.getPageSize());
-        log.debug("Critères de recherche: {}", searchDto);
-        Page<CreditMoyenTermeResponseDto> resultPage = creditMoyenTermeService.searchArchivedCredits(searchDto, pageable);
-        log.info("Recherche de crédits archivés terminée - {} résultat(s) trouvé(s)", resultPage.getTotalElements());
-        return ResponseEntity.ok(resultPage);
+        return ResponseEntity.ok(creditMoyenTermeService.searchArchivedCredits(searchDto, pageable));
     }
 
-    /**
-     * Point d'accès pour marquer un crédit comme archivé.
-     * Mappe à PUT /api/credits-cmt/{id}/archiver
-     *
-     * @param id L'ID du crédit à archiver.
-     * @return ResponseEntity avec le DTO du crédit mis à jour.
-     */
+    @Operation(summary = "Archiver un crédit (main levée)",
+            description = "Bloqué si au moins une échéance reste PREVU")
+    @ApiResponse(responseCode = "400", description = "Crédit déjà archivé ou échéances encore PREVU")
+    @ApiResponse(responseCode = "404", description = "Crédit introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @PutMapping("/{id}/archiver")
     public ResponseEntity<CreditMoyenTermeResponseDto> markAsArchived(@PathVariable Long id) {
-        log.info("Demande d'archivage du crédit CMT - ID: {}", id);
-        CreditMoyenTermeResponseDto updatedCredit = creditMoyenTermeService.markAsArchived(id);
-        log.info("Crédit CMT archivé avec succès - ID: {}", id);
-        return ResponseEntity.ok(updatedCredit);
+        return ResponseEntity.ok(creditMoyenTermeService.markAsArchived(id));
     }
 
-
-    /**
-     * Point d'accès pour récupérer un crédit par son ID.
-     * Mappe à GET /api/credits-cmt/{id}
-     *
-     * @param id L'ID du crédit à récupérer.
-     * @return ResponseEntity avec le DTO du crédit trouvé.
-     * @throws ResourceNotFoundException si le crédit n'est pas trouvé.
-     */
+    @Operation(summary = "Récupérer un crédit par ID")
+    @ApiResponse(responseCode = "404", description = "Crédit introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/{id}")
     public ResponseEntity<CreditMoyenTermeResponseDto> getCreditMoyenTermeById(@PathVariable Long id) {
-        log.info("Récupération du crédit CMT - ID: {}", id);
-        CreditMoyenTermeResponseDto credit = creditMoyenTermeService.findById(id);
-        log.debug("Crédit CMT récupéré avec succès - ID: {}", id);
-        return ResponseEntity.ok(credit);
+        return ResponseEntity.ok(creditMoyenTermeService.findById(id));
     }
 
-    /**
-     * Point d'accès pour mettre à jour un crédit existant par son ID.
-     * Mappe à PUT /api/credits-cmt/{id}
-     *
-     * @param id L'ID du crédit à mettre à jour.
-     * @param requestDto Le DTO contenant les données de mise à jour.
-     * @return ResponseEntity avec le DTO du crédit mis à jour.
-     * @throws ResourceNotFoundException si le crédit ou la banque n'est pas trouvé.
-     */
+    @Operation(summary = "Modifier un crédit à moyen terme",
+            description = "Régénère intégralement le tableau d'amortissement")
+    @ApiResponse(responseCode = "404", description = "Crédit ou banque introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @PutMapping("/{id}")
     public ResponseEntity<CreditMoyenTermeResponseDto> updateCreditMoyenTerme(@PathVariable Long id, @Valid @RequestBody CreditMoyenTermeRequestDto requestDto) {
-        log.info("Demande de mise à jour du crédit CMT - ID: {}", id);
-        log.debug("Nouvelles données: {}", requestDto);
-        CreditMoyenTermeResponseDto updatedCredit = creditMoyenTermeService.update(id, requestDto);
-        log.info("Crédit CMT mis à jour avec succès - ID: {}", id);
-        return ResponseEntity.ok(updatedCredit);
+        return ResponseEntity.ok(creditMoyenTermeService.update(id, requestDto));
     }
 
-    /**
-     * Récupère le tableau d'amortissement pour un crédit spécifique,
-     * avec pagination, tri et critères de recherche sur les échéances.
-     * Mappe à GET /api/credits-cmt/{creditId}/tableau-amortissement
-     *
-     * @param creditId L'ID du crédit.
-     * @param searchDto Un DTO contenant les filtres pour les échéances.
-     * @param pageable Informations de pagination et de tri.
-     * @return ResponseEntity avec le DTO du tableau d'amortissement.
-     * @throws ResourceNotFoundException si le crédit n'est pas trouvé.
-     */
+    @Operation(summary = "Récupérer le tableau d'amortissement d'un crédit")
+    @ApiResponse(responseCode = "404", description = "Crédit introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/{creditId}/tableau-amortissement")
     public ResponseEntity<TableauAmortissementCMTResponseDto> getTableauAmortissementForCredit(@PathVariable Long creditId, EcheanceCMTSearchDto searchDto, Pageable pageable) {
-        log.info("Récupération du tableau d'amortissement pour le crédit CMT - ID: {}", creditId);
-        log.debug("Critères de recherche des échéances: {}, Page: {}, Taille: {}", searchDto, pageable.getPageNumber(), pageable.getPageSize());
-        TableauAmortissementCMTResponseDto tableau = echeanceCmtService.getTableauAmortissementForCMT(creditId, searchDto, pageable);
-        log.info("Tableau d'amortissement récupéré avec succès pour le crédit CMT - ID: {}", creditId);
-        return ResponseEntity.ok(tableau);
+        CreditMoyenTerme credit = creditMoyenTermeService.findOrThrow(creditId);
+        return ResponseEntity.ok(echeanceCmtService.getTableauAmortissementForCMT(credit, searchDto, pageable));
     }
 
-    @DeleteMapping("{id}")
-    public ResponseEntity<DeleteResponceDto> deleteCreditMoyenTerme(@PathVariable Long id) {
-        log.warn("Demande de suppression du crédit CMT - ID: {}", id);
-
-        DeleteResponceDto response = this.creditMoyenTermeService.delete(id);
-
-        log.info("Crédit CMT supprimé avec succès - ID: {}", id);
-        return ResponseEntity.ok(response);
+    @Operation(summary = "Supprimer un crédit à moyen terme",
+            description = "Bloqué si le crédit contient des échéances déjà payées")
+    @ApiResponse(responseCode = "400", description = "Crédit avec échéances payées — suppression bloquée")
+    @ApiResponse(responseCode = "404", description = "Crédit introuvable")
+    @PreAuthorize(ADMIN_ONLY)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<DeleteResponseDto> deleteCreditMoyenTerme(@PathVariable Long id) {
+        return ResponseEntity.ok(creditMoyenTermeService.delete(id));
     }
 }

@@ -23,28 +23,28 @@ import java.util.List;
  */
 public class EcheanceCMTSpecification {
 
-    public static Specification<EcheanceCMT> withSearchCriteria(EcheanceCMTSearchDto searchDto) {
+    public static Specification<EcheanceCMT> searchByCriteria(EcheanceCMTSearchDto searchDto) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             // Prédicat pour l'ID du crédit parent
-            if (searchDto.getCreditMoyenTermeId() != null) {
-                predicates.add(builder.equal(root.get("creditMoyenTerme").get("id"), searchDto.getCreditMoyenTermeId()));
+            if (searchDto.creditMoyenTermeId() != null) {
+                predicates.add(builder.equal(root.get("creditMoyenTerme").get("id"), searchDto.creditMoyenTermeId()));
             }
 
             // Prédicat pour le numéro d'échéance
-            if (searchDto.getNumeroEcheance() != null) {
-                predicates.add(builder.equal(root.get("numeroEcheance"), searchDto.getNumeroEcheance()));
+            if (searchDto.numeroEcheance() != null) {
+                predicates.add(builder.equal(root.get("numeroEcheance"), searchDto.numeroEcheance()));
             }
 
             // Prédicat pour le statut de paiement
-            if (searchDto.getStatutPaiement() != null) {
-                predicates.add(builder.equal(root.get("statutPaiement"), searchDto.getStatutPaiement()));
+            if (searchDto.statutPaiement() != null) {
+                predicates.add(builder.equal(root.get("statutPaiement"), searchDto.statutPaiement()));
             }
 
             // Prédicats pour le mois et l'année en utilisant une plage de dates pour plus de robustesse.
-            Integer year = searchDto.getYear();
-            Integer month = searchDto.getMonth();
+            Integer year = searchDto.year();
+            Integer month = searchDto.month();
 
             if (year != null && month != null) {
                 // Cas : Année + Mois

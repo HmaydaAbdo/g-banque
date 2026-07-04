@@ -1,48 +1,29 @@
 package staport.finance.gBanque.cmt.echeances.dtos;
 
-
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 
 /**
  * DTO utilisé pour la recherche et le filtrage des échéances de crédits à moyen terme.
  * Tous les champs sont optionnels pour permettre des requêtes flexibles.
+ * {@code creditMoyenTermeId} est renseigné par le Service (pas par l'appelant HTTP).
  */
-public class EcheanceCMTSearchDto {
+public record EcheanceCMTSearchDto(
+        Long creditMoyenTermeId,
+        Integer numeroEcheance,
+        Integer month,
+        Integer year,
+        StatutEcheanceCMT statutPaiement
+) {
 
-    private Long creditMoyenTermeId;
-    private Integer numeroEcheance;
-    private Integer month;              // Nouveau champ : mois de l'échéance (1-12)
-    private Integer year;               // Nouveau champ : année de l'échéance
-    private StatutEcheanceCMT statutPaiement;
-
-    public EcheanceCMTSearchDto() {}
-
-    public EcheanceCMTSearchDto(Integer month, Integer year, StatutEcheanceCMT statutPaiement) {
-        this.month = month;
-        this.year = year;
-        this.statutPaiement = statutPaiement;
+    public EcheanceCMTSearchDto() {
+        this(null, null, null, null, null);
     }
 
-    // Getters et Setters pour tous les champs
-    public Long getCreditMoyenTermeId() { return creditMoyenTermeId; }
-    public void setCreditMoyenTermeId(Long creditMoyenTermeId) { this.creditMoyenTermeId = creditMoyenTermeId; }
-    public Integer getNumeroEcheance() { return numeroEcheance; }
-    public void setNumeroEcheance(Integer numeroEcheance) { this.numeroEcheance = numeroEcheance; }
-    public Integer getMonth() { return month; }
-    public void setMonth(Integer month) { this.month = month; }
-    public Integer getYear() { return year; }
-    public void setYear(Integer year) { this.year = year; }
-    public StatutEcheanceCMT getStatutPaiement() { return statutPaiement; }
-    public void setStatutPaiement(StatutEcheanceCMT statutPaiement) { this.statutPaiement = statutPaiement; }
-
-    @Override
-    public String toString() {
-        return "EcheanceCMTSearchDto{" +
-                "creditMoyenTermeId=" + creditMoyenTermeId +
-                ", numeroEcheance=" + numeroEcheance +
-                ", month=" + month +
-                ", year=" + year +
-                ", statutPaiement=" + statutPaiement +
-                '}';
+    /**
+     * Retourne une copie de ce DTO avec l'ID du crédit renseigné.
+     * Les DTOs étant immuables, cette méthode remplace l'ancien {@code setCreditMoyenTermeId}.
+     */
+    public EcheanceCMTSearchDto withCreditMoyenTermeId(Long creditMoyenTermeId) {
+        return new EcheanceCMTSearchDto(creditMoyenTermeId, numeroEcheance, month, year, statutPaiement);
     }
 }

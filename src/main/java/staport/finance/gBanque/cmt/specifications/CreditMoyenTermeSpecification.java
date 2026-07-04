@@ -25,23 +25,23 @@ public class CreditMoyenTermeSpecification {
      * @param searchDto Le DTO de recherche contenant les critères de filtre.
      * @return Un objet Specification combinant tous les prédicats de recherche.
      */
-    public static Specification<CreditMoyenTerme> withSearchCriteria(CreditMoyenTermeSearchDto searchDto) {
+    public static Specification<CreditMoyenTerme> searchByCriteria(CreditMoyenTermeSearchDto searchDto) {
         return (root, query, builder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             // Prédicat pour l'ID de la banque
-            if (searchDto.getBanqueId() != null) {
-                predicates.add(builder.equal(root.get("banque").get("id"), searchDto.getBanqueId()));
+            if (searchDto.banqueId() != null) {
+                predicates.add(builder.equal(root.get("banque").get("id"), searchDto.banqueId()));
             }
 
             // Prédicat pour la désignation (recherche partielle, insensible à la casse)
-            if (searchDto.getDesignation() != null && !searchDto.getDesignation().isBlank()) {
-                predicates.add(builder.like(builder.lower(root.get("designation")), "%" + searchDto.getDesignation().toLowerCase() + "%"));
+            if (searchDto.designation() != null && !searchDto.designation().isBlank()) {
+                predicates.add(builder.like(builder.lower(root.get("designation")), "%" + searchDto.designation().toLowerCase() + "%"));
             }
 
             // Nouveau prédicat pour le champ 'completed'
-            if (searchDto.getCompleted() != null) {
-                predicates.add(builder.equal(root.get("completed"), searchDto.getCompleted()));
+            if (searchDto.completed() != null) {
+                predicates.add(builder.equal(root.get("completed"), searchDto.completed()));
             }
 
             // Combine tous les prédicats avec un opérateur AND

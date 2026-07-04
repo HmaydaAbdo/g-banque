@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
+import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
@@ -35,11 +36,14 @@ public class TransactionService implements ITransactionService{
     private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
     private final TransactionRepository transactionRepository;
     private final ILeasingValidationService leasingValidationService;
+    private final ICmtValidationService cmtValidationService;
 
     public TransactionService(TransactionRepository transactionRepository,
-                              ILeasingValidationService leasingValidationService) {
+                              ILeasingValidationService leasingValidationService,
+                              ICmtValidationService cmtValidationService) {
         this.transactionRepository = transactionRepository;
         this.leasingValidationService = leasingValidationService;
+        this.cmtValidationService = cmtValidationService;
     }
 
     @Transactional(readOnly = true)
@@ -216,6 +220,17 @@ public class TransactionService implements ITransactionService{
             log.info("Transaction LEASING ID: {} mise à jour — synchronisation de l'échéance ID: {}",
                     saved.getId(), saved.getReferent());
             leasingValidationService.syncEcheanceFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation échéance CMT : si la transaction provient d'une échéance CMT,
+        // on propage dateValeur et dateOperation vers l'échéance source (referent = echeanceId).
+        if (TransactionSource.CMT == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction CMT ID: {} mise à jour — synchronisation de l'échéance ID: {}",
+                    saved.getId(), saved.getReferent());
+            cmtValidationService.syncEcheanceFromTransaction(
                     saved.getReferent(),
                     saved.getDateValeur(),
                     saved.getDateOperations());

@@ -27,8 +27,11 @@ import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTra
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
 import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionRequest;
 import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionResponseDto;
+import staport.finance.gBanque.cmt.echeances.dtos.CmtTransactionRequestDto;
+import staport.finance.gBanque.cmt.echeances.dtos.CmtTransactionResponseDto;
+import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationService;
+import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
+import staport.finance.gBanque.cmt.services.CreditMoyenTermeService;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
@@ -66,17 +69,23 @@ public class ValidationController {
     private final ILeasingValidationService leasingValidationService;
     private final IAgiosValidationService agiosValidationService;
     private final ContratLeasingService contratLeasingService;
+    private final ICmtValidationService cmtValidationService;
+    private final CreditMoyenTermeService creditMoyenTermeService;
 
     public ValidationController(ValidationService validationService,
                                 ReverseTransactionService reverseTransactionService,
                                 ILeasingValidationService leasingValidationService,
                                 IAgiosValidationService agiosValidationService,
-                                ContratLeasingService contratLeasingService) {
+                                ContratLeasingService contratLeasingService,
+                                ICmtValidationService cmtValidationService,
+                                CreditMoyenTermeService creditMoyenTermeService) {
         this.validationService      = validationService;
         this.reverseTransactionService = reverseTransactionService;
         this.leasingValidationService  = leasingValidationService;
         this.agiosValidationService    = agiosValidationService;
         this.contratLeasingService    = contratLeasingService;
+        this.cmtValidationService     = cmtValidationService;
+        this.creditMoyenTermeService   = creditMoyenTermeService;
     }
 
 
@@ -101,16 +110,19 @@ public class ValidationController {
 
 
     /**
-     * Endpoint pour traiter une transaction de rapprochement de leasing.
-     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
-     *
-     * @param requestDto Le DTO de la requête de transaction de leasing.
-     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     * Valide une échéance CMT : crée la transaction bancaire et marque l'échéance PAYE.
+     * Délègue au {@code CmtValidationService} du module cmt.
+     * <p>
+     * Le {@code CreditMoyenTerme} est résolu ici (via {@code CreditMoyenTermeService}, le point d'entrée
+     * public du domaine {@code cmt}) et transmis directement à {@code CmtValidationService} pour éviter
+     * que ce dernier n'ait besoin d'injecter {@code CreditMoyenTermeService} — même précaution que pour
+     * le Leasing (cf. Javadoc de {@code processLeasingTransaction} ci-dessus).
      */
     @PostMapping("/process/echeance-cmt")
-    public ResponseEntity<CmtTransactionResponseDto> processCmtTransaction(@Valid @RequestBody CmtTransactionRequestDto requestDto) throws Exception {
-        CmtTransactionResponseDto responseDto = validationService.processCmtTransaction(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    public ResponseEntity<CmtTransactionResponseDto> processCmtTransaction(@Valid @RequestBody CmtTransactionRequestDto requestDto) {
+        CreditMoyenTerme creditMoyenTerme = creditMoyenTermeService.findOrThrow(requestDto.creditMoyenTermeId());
+        return new ResponseEntity<>(
+                cmtValidationService.processCmtTransaction(creditMoyenTerme, requestDto), HttpStatus.CREATED);
     }
 
 

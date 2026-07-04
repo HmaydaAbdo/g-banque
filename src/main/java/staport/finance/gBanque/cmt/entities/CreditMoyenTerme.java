@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
 
@@ -15,7 +16,15 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Table(name = "credit_moyen_terme")
+@Audited
+@Table(
+        name = "credit_moyen_terme",
+        indexes = {
+                @Index(name = "idx_credit_moyen_terme_banque_id", columnList = "banque_id"),
+                @Index(name = "idx_credit_moyen_terme_completed", columnList = "completed"),
+                @Index(name = "idx_credit_moyen_terme_date_debut", columnList = "date_debut")
+        }
+)
 public class CreditMoyenTerme {
 
     @Id

@@ -27,7 +27,7 @@ public class CreditMoyenTermeMainLeveeJobListener implements JobExecutionListene
     @Value("${spring.mail.notification.batch-job.recipients}")
     private String notificationEmail;
 
-    @Value("${spring.mail.notification.batch-job.enabled:true}")
+    @Value("${spring.mail.notification.batch-job.enabled}")
     private boolean emailNotificationEnabled;
 
     @Autowired

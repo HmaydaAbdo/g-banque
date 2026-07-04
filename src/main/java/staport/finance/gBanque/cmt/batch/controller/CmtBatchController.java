@@ -1,11 +1,14 @@
 package staport.finance.gBanque.cmt.batch.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.cmt.batch.scheduler.CreditMoyenTermeMainLeveeJobScheduler;
 
@@ -17,11 +20,12 @@ import java.util.Map;
 /**
  * Déclenchement manuel du job batch CMT Main Levée.
  */
+@Tag(name = "Batch CMT", description = "Déclenchement manuel du job batch Main Levée")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/test/batch/cmt")
+@RequestMapping("/batch/cmt")
 public class CmtBatchController {
 
-    private static final Logger log = LoggerFactory.getLogger(CmtBatchController.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     private final CreditMoyenTermeMainLeveeJobScheduler cmtScheduler;
@@ -30,41 +34,32 @@ public class CmtBatchController {
         this.cmtScheduler = cmtScheduler;
     }
 
-    /**
-     * Lance manuellement le job CMT Main Levée.
-     * POST /test/batch/cmt/run
-     */
+    @Operation(summary = "Lancer manuellement le job CMT Main Levée",
+            description = "Réservé aux administrateurs système — déclenche immédiatement le traitement des main levées")
+    @ApiResponse(responseCode = "500", description = "Échec du démarrage du job")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     @PostMapping("/run")
     public ResponseEntity<Map<String, Object>> runCmtJob() {
-        log.info("📋 Requête reçue pour lancer le job CMT Main Levée");
-
         try {
             JobExecution execution = cmtScheduler.runJobManually();
 
             if (execution != null) {
-                log.info("✅ Job CMT Main Levée lancé avec succès - ID: {}", execution.getId());
                 return ResponseEntity.ok(buildSuccessResponse("CMT Main Levée Job", execution));
             } else {
-                log.error("❌ Échec du lancement du job CMT Main Levée");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(buildErrorResponse("Le job n'a pas pu démarrer. Vérifiez les logs pour plus de détails."));
             }
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors du lancement du job CMT Main Levée", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(buildErrorResponse("Erreur: " + e.getMessage()));
         }
     }
 
-    /**
-     * Récupère le statut actuel du job CMT.
-     * GET /test/batch/cmt/status
-     */
+    @Operation(summary = "Consulter le statut du job CMT Main Levée")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getCmtJobStatus() {
-        log.debug("Vérification du statut du job CMT Main Levée");
-
         try {
             Map<String, Object> status = new HashMap<>();
             status.put("jobName", "CMT Main Levée Job");
@@ -76,7 +71,6 @@ public class CmtBatchController {
             return ResponseEntity.ok(status);
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors de la récupération du statut du job CMT", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(buildErrorResponse("Erreur: " + e.getMessage()));
         }

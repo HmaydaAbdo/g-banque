@@ -44,8 +44,7 @@ public class CreditMoyenTermeMainLeveeProcessor implements ItemProcessor<CreditM
                         credit,
                         notificationTitle,
                         notificationContent,
-                        notificationType,
-                        false
+                        notificationType
                 );
             }
 

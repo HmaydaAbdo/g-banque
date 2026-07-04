@@ -1,94 +1,69 @@
 package staport.finance.gBanque.cmt.echeances.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.cmt.echeances.dtos.*;
 import staport.finance.gBanque.cmt.echeances.services.EcheanceCMTService;
+import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
+import staport.finance.gBanque.cmt.services.CreditMoyenTermeService;
 
 
 /**
  * Contrôleur REST pour la gestion et la consultation des échéances de crédit à moyen terme (CMT).
- * Il expose les points d'accès pour obtenir le tableau d'amortissement et marquer une échéance comme payée.
  */
+@Tag(name = "Échéances CMT", description = "Consultation du tableau d'amortissement, des encours et gestion du statut des échéances")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/echeances-cmt") // Préfixe d'API recommandé
+@RequestMapping("/echeances-cmt")
 public class EcheanceCMTController {
 
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
 
-    private static final Logger log = LoggerFactory.getLogger(EcheanceCMTController.class);
     private final EcheanceCMTService echeanceCmtService;
+    private final CreditMoyenTermeService creditMoyenTermeService;
 
-    public EcheanceCMTController(EcheanceCMTService echeanceCmtService) {
+    public EcheanceCMTController(EcheanceCMTService echeanceCmtService, CreditMoyenTermeService creditMoyenTermeService) {
         this.echeanceCmtService = echeanceCmtService;
+        this.creditMoyenTermeService = creditMoyenTermeService;
     }
 
-    /**
-     * Récupère le tableau d'amortissement complet pour un crédit à moyen terme spécifique.
-     * Permet de filtrer les échéances affichées dans le tableau et de les paginer.
-     * Mappe à GET /api/echeances-cmt/tableau-amortissement/{creditId}
-     *
-     * @param creditId L'ID du crédit à moyen terme.
-     * @param searchDto Les critères de recherche optionnels pour filtrer les échéances.
-     * @param pageable Informations de pagination et de tri pour les échéances du tableau.
-     * @return ResponseEntity avec le TableauAmortissementCMTResponseDto et le statut HTTP 200 (OK).
-     */
+    @Operation(summary = "Récupérer le tableau d'amortissement d'un crédit")
+    @ApiResponse(responseCode = "404", description = "Crédit introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/tableau-amortissement/{creditId}")
     public ResponseEntity<TableauAmortissementCMTResponseDto> getTableauAmortissement(
             @PathVariable Long creditId,
             EcheanceCMTSearchDto searchDto,
             Pageable pageable) {
-
-        log.info("Récupération du tableau d'amortissement pour le crédit CMT - ID: {}", creditId);
-        log.debug("Critères de recherche: {}, Page: {}, Taille: {}", searchDto, pageable.getPageNumber(), pageable.getPageSize());
-        TableauAmortissementCMTResponseDto tableau = echeanceCmtService.getTableauAmortissementForCMT(creditId, searchDto, pageable);
-        log.info("Tableau d'amortissement récupéré avec succès - Crédit ID: {}, Nombre d'échéances: {}", creditId, tableau.getEcheances().getTotalElements());
-        return ResponseEntity.ok(tableau);
+        CreditMoyenTerme credit = creditMoyenTermeService.findOrThrow(creditId);
+        return ResponseEntity.ok(echeanceCmtService.getTableauAmortissementForCMT(credit, searchDto, pageable));
     }
 
-
-    /**
-     * Permet de marquer une échéance comme payée.
-     * Mappe à PUT /api/echeances-cmt/{id}/mark-as-paid
-     *
-     * @param id L'ID de l'échéance à marquer comme payée.
-     * @return ResponseEntity avec le DTO de l'échéance mise à jour et le statut HTTP 200 (OK).
-     */
+    @Operation(summary = "Basculer le statut d'une échéance (PREVU ↔ PAYE)",
+            description = "Action sensible réservée à l'administrateur système")
+    @ApiResponse(responseCode = "404", description = "Échéance introuvable")
+    @PreAuthorize(ADMIN_ONLY)
     @PutMapping("/{id}/toggle-status")
     public ResponseEntity<EcheanceCMTResponseDto> toggleStatus(@PathVariable Long id) {
-
-        log.info("Demande de changement de statut de l'échéance CMT - ID: {}", id);
-        EcheanceCMTResponseDto updatedEcheance = echeanceCmtService.toggleStatus(id);
-        log.info("Statut de l'échéance modifié avec succès - ID: {}, Nouveau statut: {}", id, updatedEcheance.getStatutPaiement());
-        return ResponseEntity.ok(updatedEcheance);
-
+        return ResponseEntity.ok(echeanceCmtService.toggleStatus(id));
     }
 
-
-    /**
-     * Récupère les encours d'échéances de leasing pour une banque, avec une période et un organisme de leasing optionnel.
-     * Mappe à GET /api/echeances-leasing/encours
-     *
-     * @param requestDTO Le DTO contenant l'ID de la banque, la période et l'ID de l'organisme de leasing optionnel.
-     * @param pageable Les informations de pagination et de tri pour les échéances.
-     * @return ResponseEntity avec l'EncoursLeasingResponseDTO et HTTP Status 200 (OK).
-     */
+    @Operation(summary = "Récupérer les encours CMT d'une banque")
+    @ApiResponse(responseCode = "404", description = "Banque introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     @GetMapping("/encours")
     public ResponseEntity<EncoursCMTResponseDTO> getEncoursCMT(
             @Valid @ModelAttribute EncoursCMTRequestDTO requestDTO,
             Pageable pageable) {
-
-        log.info("Récupération des encours CMT - Banque ID: {}:", requestDTO.getBanqueId());
-        log.debug("Détails de la requête: {}, Page: {}, Taille: {}", requestDTO, pageable.getPageNumber(), pageable.getPageSize());
-
-        EncoursCMTResponseDTO encours = echeanceCmtService.getEncoursCMTForBanque(requestDTO, pageable);
-
-        log.info("Encours CMT récupérés avec succès - Banque ID: {}, Nombre d'échéances: {}", requestDTO.getBanqueId(), encours.getEcheances().getTotalElements());
-        log.debug("Totaux des encours {}", encours.getTotalEncours());
-
-        return ResponseEntity.ok(encours);
+        return ResponseEntity.ok(echeanceCmtService.getEncoursCMTForBanque(requestDTO, pageable));
     }
 }

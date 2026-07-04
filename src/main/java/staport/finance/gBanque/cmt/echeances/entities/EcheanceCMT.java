@@ -4,6 +4,7 @@ package staport.finance.gBanque.cmt.echeances.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 
@@ -16,7 +17,15 @@ import java.util.Objects;
  * Entité représentant une échéance individuelle d'un crédit à moyen terme.
  */
 @Entity
-@Table(name = "echeance_cmt")
+@Audited
+@Table(
+        name = "echeance_cmt",
+        indexes = {
+                @Index(name = "idx_echeance_cmt_credit_moyen_terme_id", columnList = "credit_moyen_terme_id"),
+                @Index(name = "idx_echeance_cmt_statut_paiement", columnList = "statut_paiement"),
+                @Index(name = "idx_echeance_cmt_date_echeance", columnList = "date_echeance")
+        }
+)
 public class EcheanceCMT {
 
     @Id

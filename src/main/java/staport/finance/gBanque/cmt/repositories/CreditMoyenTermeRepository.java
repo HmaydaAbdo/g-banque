@@ -26,4 +26,9 @@ public interface CreditMoyenTermeRepository extends JpaRepository<CreditMoyenTer
      */
     Page<CreditMoyenTerme> findByCompleted(boolean completed, Pageable pageable);
 
+    /**
+     * Utilisé par les métriques Gauge (metrics.md) — évite de charger les entités juste pour compter.
+     */
+    long countByCompleted(boolean completed);
+
 }

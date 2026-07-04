@@ -46,10 +46,10 @@ public class CreditMoyenTermeMainLeveeJobScheduler {
     private final AtomicBoolean isJobRunning = new AtomicBoolean(false);
 
     // Propriétés de configuration
-    @Value("${cmt.main-levee.job.cron:0 30 14 ? * SUN}")
+    @Value("${cmt.main-levee.job.cron}")
     private String jobCron;
 
-    @Value("${cmt.main-levee.job.enabled:true}")
+    @Value("${cmt.main-levee.job.enabled}")
     private boolean jobEnabled;
 
     /**
@@ -80,7 +80,7 @@ public class CreditMoyenTermeMainLeveeJobScheduler {
      * - Permet un temps de traitement suffisant entre les jobs
      * - Planifié le dimanche pour minimiser l'impact sur les opérations quotidiennes
      */
-    @Scheduled(cron = "${cmt.main-levee.job.cron:0 30 14 ? * SUN}")
+    @Scheduled(cron = "${cmt.main-levee.job.cron}")
     public void runScheduledJob() {
         if (!jobEnabled) {
             log.info("Le scheduler du job CMT Main Levée est désactivé dans la configuration. Exécution planifiée ignorée.");

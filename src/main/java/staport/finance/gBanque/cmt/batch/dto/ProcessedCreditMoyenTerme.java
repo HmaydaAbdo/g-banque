@@ -9,19 +9,16 @@ public class ProcessedCreditMoyenTerme {
     private final String notificationTitle;
     private final String notificationContent;
     private final NotificationType notificationType;
-    private final boolean needsPersistence;
 
     public ProcessedCreditMoyenTerme(
             CreditMoyenTerme creditMoyenTerme,
             String notificationTitle,
             String notificationContent,
-            NotificationType notificationType,
-            boolean needsPersistence) {
+            NotificationType notificationType) {
         this.creditMoyenTerme = creditMoyenTerme;
         this.notificationTitle = notificationTitle;
         this.notificationContent = notificationContent;
         this.notificationType = notificationType;
-        this.needsPersistence = needsPersistence;
     }
 
     public CreditMoyenTerme getCreditMoyenTerme() {
@@ -40,10 +37,6 @@ public class ProcessedCreditMoyenTerme {
         return notificationType;
     }
 
-    public boolean needsPersistence() {
-        return needsPersistence;
-    }
-
     public boolean hasNotification() {
         return notificationTitle != null && notificationContent != null && notificationType != null;
     }
@@ -54,7 +47,6 @@ public class ProcessedCreditMoyenTerme {
                 "creditId=" + creditMoyenTerme.getId() +
                 ", designation='" + creditMoyenTerme.getDesignation() + '\'' +
                 ", hasNotification=" + hasNotification() +
-                ", needsPersistence=" + needsPersistence +
                 '}';
     }
 }

@@ -14,11 +14,6 @@ import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepository;
-import staport.finance.gBanque.cmt.echeances.entities.EcheanceCMT;
-import staport.finance.gBanque.cmt.echeances.enums.StatutEcheanceCMT;
-import staport.finance.gBanque.cmt.echeances.repositories.EcheanceCMTRepository;
-import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
-import staport.finance.gBanque.cmt.repositories.CreditMoyenTermeRepository;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.factoring.entities.Factoring;
@@ -69,8 +64,6 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
 import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionRequest;
 import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.cmt.CmtTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
 import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
 import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionRequestDto;
@@ -97,10 +90,6 @@ public class ValidationService {
 
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
-
-    private final CreditMoyenTermeRepository creditMoyenTermeRepository;
-    private final EcheanceCMTRepository echeanceCMTRepository;
-    private final CmtTransactionMapper cmtTransactionMapper;
 
     private final ChequeRepository chequeRepository;
     private final ChequeTransactionMapper chequeTransactionMapper;
@@ -157,12 +146,9 @@ public class ValidationService {
     private final SoldeCascadeService soldeCascadeService;
 
 
-    public ValidationService(CmtTransactionMapper cmtMapper, TransactionRepository transactionRepository, BanqueRepository banqueRepository, CreditMoyenTermeRepository creditMoyenTermeRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
-        this.cmtTransactionMapper = cmtMapper;
+    public ValidationService(TransactionRepository transactionRepository, BanqueRepository banqueRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
-        this.creditMoyenTermeRepository = creditMoyenTermeRepository;
-        this.echeanceCMTRepository = echeanceCMTRepository;
         this.chequeRepository = chequeRepository;
         this.chequeTransactionMapper = chequeTransactionMapper;
         this.lcnRepository = lcnRepository;
@@ -198,41 +184,6 @@ public class ValidationService {
         this.rapprochementRepository = rapprochementRepository;
         this.soldeCascadeService = soldeCascadeService;
     }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public CmtTransactionResponseDto processCmtTransaction(CmtTransactionRequestDto requestDto)   {
-
-
-        // Étape 1: Récupérer les entités liées avant le mappage
-        CreditMoyenTerme creditMoyenTerme = creditMoyenTermeRepository.findById(requestDto.getCmtId())
-                .orElseThrow(() -> new ResourceNotFoundException("Credit Moyen Terme introuvable avec l'ID: " + requestDto.getCmtId()));
-
-        EcheanceCMT echeanceCMT = echeanceCMTRepository.findByIdAndCreditMoyenTermeId(requestDto.getEcheanceId(), requestDto.getCmtId())
-                .orElseThrow(() -> new ResourceNotFoundException("Echeance cmt introuvable avec l'ID: " + requestDto.getEcheanceId() + " et credit id " + requestDto.getCmtId()));
-
-        if( echeanceCMT.getStatutPaiement() == StatutEcheanceCMT.PAYE){
-            throw new RuntimeException("l echéance est deja payee");
-        }
-
-        // Étape 2: Utiliser le mapper pour convertir le DTO et les entités en une nouvelle entité Transaction.
-        Transaction transactionEntity = cmtTransactionMapper.toEntity(requestDto, creditMoyenTerme, echeanceCMT);
-
-        // Étape 3: Attacher au rapprochement  puis sauvegarder.
-        Banque banque = creditMoyenTerme.getBanque();
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-        // Étape 5 : Marquer l'échéance comme payée et enregistrer les dates rélatives au rapprochement .
-        echeanceCMT.setStatutPaiement(StatutEcheanceCMT.PAYE);
-        echeanceCMT.setDateValeur(savedTransaction.getDateValeur());
-        echeanceCMT.setDateOperation(savedTransaction.getDateOperations());
-        echeanceCMT.setLibelle(savedTransaction.getLibelle());
-        echeanceCMT.setObservation(savedTransaction.getObservation());
-        echeanceCMTRepository.save(echeanceCMT);
-
-        // Étape 6: Utiliser le mapper pour convertir l'entité sauvegardée en DTO de réponse.
-        return cmtTransactionMapper.toResponseDto(savedTransaction);
-    }
-
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto)  {
