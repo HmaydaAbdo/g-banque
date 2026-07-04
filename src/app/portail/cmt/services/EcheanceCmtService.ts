@@ -8,6 +8,7 @@ import {TableauAmortissementCMTResponseDto} from "../dtos/TableauAmortissementCM
 import {EcheanceCMTSearchDto} from "../dtos/EcheanceCMTSearchDto";
 import {EncoursCMTRequestDTO} from "../dtos/EncoursCMTRequestDTO";
 import {EncoursCMTResponseDTO} from "../dtos/EncoursCMTResponseDTO";
+import {EcheanceCMTUpdateRequest} from "../dtos/EcheanceCMTUpdateRequest";
 
 
 @Injectable({
@@ -59,6 +60,14 @@ export class EcheanceCmtService {
   toggleStatus(id: number): Observable<EcheanceCMTResponseDto> {
     const url = `${this.apiUrl}/${id}/toggle-status`;
     return this.http.put<EcheanceCMTResponseDto>(url, {})
+  }
+
+  /**
+   * Met à jour une échéance au statut PREVU (admin uniquement).
+   * Bloqué côté backend si le statut est PAYE.
+   */
+  updateEcheance(id: number, dto: EcheanceCMTUpdateRequest): Observable<EcheanceCMTResponseDto> {
+    return this.http.put<EcheanceCMTResponseDto>(`${this.apiUrl}/${id}`, dto);
   }
 
   /**
