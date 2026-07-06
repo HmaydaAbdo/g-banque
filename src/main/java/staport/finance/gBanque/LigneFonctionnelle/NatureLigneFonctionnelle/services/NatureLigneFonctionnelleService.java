@@ -39,7 +39,19 @@ import java.util.List;
 public class NatureLigneFonctionnelleService implements INatureLigneFonctionnelleService {
 
     private static final Logger log = LoggerFactory.getLogger(NatureLigneFonctionnelleService.class);
+
+    /**
+     * Codes système des natures de ligne fonctionnelle nécessitant un traitement métier spécifique
+     * (calcul d'encours/solde, association automatique). Le {@code code} est immuable (voir
+     * {@link #updateNatureLigneFonctionnelle}) — contrairement à l'ID technique, il peut être
+     * référencé en toute sécurité dans le code métier.
+     */
     public static final String FC_CODE = "FC";
+    public static final String ESC_COM_CODE = "ESC_COM";
+    public static final String PREFINANCEMENT_CODE = "PREFINANCEMENT";
+    public static final String DROIT_CONSTATE_CODE = "DROIT_CONSTATE";
+    public static final String FACTORING_CODE = "FACTORING";
+    public static final String CAUT_ADMIN_CODE = "CAUT_ADMIN";
 
     private final NatureLigneFonctionnelleRepository repository;
     private final NatureLigneFonctionnelleMapper mapper;

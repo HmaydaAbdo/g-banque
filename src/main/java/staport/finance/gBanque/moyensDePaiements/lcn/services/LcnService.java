@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
+import static staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService.ESC_COM_CODE;
+
 @Service
 public class LcnService {
 
@@ -65,7 +67,7 @@ public class LcnService {
                     banque.getId());
 
             ligneFonctionnelle = ligneFonctionnelleReader
-                    .findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banque.getId(), 2L)
+                    .findByBanqueIdAndNatureLigneFonctionnelleCodeAndActifTrue(banque.getId(), ESC_COM_CODE)
                     .orElseThrow(() -> {
                         log.error("Ligne fonctionnelle escompte commerciale active introuvable pour la banque ID: {}",
                                 banque.getId());
@@ -144,8 +146,8 @@ public class LcnService {
 
                 log.debug("Changement de nature vers ESCOMPTE - recherche de la ligne fonctionnelle");
                 LigneFonctionnelle ligneFonctionnelle = ligneFonctionnelleReader
-                        .findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(
-                                existingLcn.getBanque().getId(), 2L)
+                        .findByBanqueIdAndNatureLigneFonctionnelleCodeAndActifTrue(
+                                existingLcn.getBanque().getId(), ESC_COM_CODE)
                         .orElseThrow(() -> {
                             log.error("Ligne fonctionnelle escompte commerciale active introuvable pour la banque ID: {}",
                                     dto.getBanqueId());

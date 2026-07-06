@@ -3,6 +3,7 @@
     import jakarta.persistence.*;
     import jakarta.persistence.Index;
     import org.hibernate.envers.Audited;
+    import org.hibernate.envers.NotAudited;
     import org.hibernate.envers.RelationTargetAuditMode;
     import staport.finance.gBanque.Bank.entities.Banque;
     import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
@@ -82,7 +83,7 @@ import java.time.OffsetDateTime;
         private List<LigneFonctionnelle> sousLignes;
 
         @OneToMany(mappedBy = "ligneFonctionnelle", cascade = CascadeType.ALL)
-        @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+        @NotAudited
         private List<Lcn> lcns;
 
         // --- Constructors ---

@@ -66,10 +66,12 @@ public class LigneFonctionnelleSpecifiqueMapper {
         }
 
         Long natureId = null;
+        String natureCode = null;
         String natureLabel = null;
         String natureDescription = null;
         if (entity.getNatureLigneFonctionnelle() != null) {
             natureId = entity.getNatureLigneFonctionnelle().getId();
+            natureCode = entity.getNatureLigneFonctionnelle().getCode();
             natureLabel = entity.getNatureLigneFonctionnelle().getLabel();
             natureDescription = entity.getNatureLigneFonctionnelle().getDescription();
         }
@@ -97,7 +99,7 @@ public class LigneFonctionnelleSpecifiqueMapper {
 
             encours = encoursCalculatorService.calculateEncours(
                     entity.getId(),
-                    natureId,
+                    natureCode,
                     marcheList,
                     entity.getMarche() != null ? entity.getMarche().getBanque() : null,
                     entity.getPlafond()
@@ -105,7 +107,7 @@ public class LigneFonctionnelleSpecifiqueMapper {
 
             solde = encoursCalculatorService.calculateSolde(
                     entity.getId(),
-                    natureId,
+                    natureCode,
                     marcheList,
                     entity.getPlafond(),
                     encours

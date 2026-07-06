@@ -47,4 +47,13 @@ public class LigneFonctionnelleReader {
     public Optional<LigneFonctionnelle> findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(Long banqueId, Long natureId) {
         return ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banqueId, natureId);
     }
+
+    /**
+     * Idem, résolue via le code système (immuable) de la nature — voir
+     * {@code NatureLigneFonctionnelleService}.
+     */
+    @Transactional(readOnly = true)
+    public Optional<LigneFonctionnelle> findByBanqueIdAndNatureLigneFonctionnelleCodeAndActifTrue(Long banqueId, String natureCode) {
+        return ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleCodeAndActifTrue(banqueId, natureCode);
+    }
 }

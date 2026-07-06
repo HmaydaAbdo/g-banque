@@ -240,14 +240,14 @@ public class LigneFonctionnelleMapper {
             return new BigDecimal[] { null, null };
         }
 
-        Long natureId = ligneFonctionnelle.getNatureLigneFonctionnelle().getId();
+        String natureCode = ligneFonctionnelle.getNatureLigneFonctionnelle().getCode();
         Long ligneId = ligneFonctionnelle.getId();
         List<Marche> marches = ligneFonctionnelle.getMarches();
         BigDecimal plafond = ligneFonctionnelle.getPlafond();
 
         BigDecimal encours = encoursCalculatorService.calculateEncours(
                 ligneId,
-                natureId,
+                natureCode,
                 marches,
                 ligneFonctionnelle.getBanque(),
                 plafond
@@ -255,7 +255,7 @@ public class LigneFonctionnelleMapper {
 
         BigDecimal solde = encoursCalculatorService.calculateSolde(
                 ligneId,
-                natureId,
+                natureCode,
                 marches,
                 plafond,
                 encours

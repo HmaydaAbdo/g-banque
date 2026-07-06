@@ -27,6 +27,13 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
      */
     Optional<LigneFonctionnelle> findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(Long banqueId, Long natureLigneFonctionnelleId);
 
+    /**
+     * Idem, mais résolue via le code système (immuable) de la nature plutôt que son ID technique.
+     * Préféré pour toute association métier automatique (ex. Lcn ↔ Escompte Commercial) — voir
+     * {@code NatureLigneFonctionnelleService}.
+     */
+    Optional<LigneFonctionnelle> findByBanqueIdAndNatureLigneFonctionnelleCodeAndActifTrue(Long banqueId, String natureLigneFonctionnelleCode);
+
 
     /**
      * Finds all functional lines for a specific bank and nature, ordered by their start date ascending.
