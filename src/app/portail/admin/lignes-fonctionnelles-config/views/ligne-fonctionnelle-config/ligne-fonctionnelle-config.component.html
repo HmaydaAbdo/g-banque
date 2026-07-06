@@ -1,0 +1,56 @@
+<p-toast position="center"></p-toast>
+
+<div class="card flex flex-column gap-3 p-2">
+
+  <p-breadcrumb [model]="items" [home]="home"></p-breadcrumb>
+
+  <h3 class="m-0">Configuration Lignes Fonctionnelles</h3>
+
+  <p-card styleClass="w-full md:w-30rem">
+    @if (loading) {
+      <p>Chargement de la configuration...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
+
+        <div class="field">
+          <label for="alertThresholdMonths">Seuil d'alerte (mois)</label>
+          <p-inputNumber id="alertThresholdMonths" formControlName="alertThresholdMonths"
+                         mode="decimal" [useGrouping]="false" [min]="1"
+                         [ngClass]="{'ng-dirty': f['alertThresholdMonths'].invalid && f['alertThresholdMonths'].touched}">
+          </p-inputNumber>
+          @if (f['alertThresholdMonths'].invalid && f['alertThresholdMonths'].touched) {
+            <small class="p-error">Valeur requise, d'au moins 1 mois.</small>
+          }
+          <small class="block text-color-secondary mt-1">
+            Nombre de mois restants avant expiration en-deçà duquel une notification d'ALERTE
+            (action immédiate requise) est générée pour une ligne fonctionnelle (générale ou spécifique).
+          </small>
+        </div>
+
+        <div class="field">
+          <label for="warningThresholdMonths">Seuil d'avertissement (mois)</label>
+          <p-inputNumber id="warningThresholdMonths" formControlName="warningThresholdMonths"
+                         mode="decimal" [useGrouping]="false" [min]="1"
+                         [ngClass]="{'ng-dirty': f['warningThresholdMonths'].invalid && f['warningThresholdMonths'].touched}">
+          </p-inputNumber>
+          @if (f['warningThresholdMonths'].invalid && f['warningThresholdMonths'].touched) {
+            <small class="p-error">Valeur requise, d'au moins 1 mois.</small>
+          }
+          <small class="block text-color-secondary mt-1">
+            Nombre de mois restants avant expiration en-deçà duquel une notification d'AVERTISSEMENT
+            (planifier le renouvellement) est générée. Doit être supérieur au seuil d'alerte.
+          </small>
+        </div>
+
+        @if (dateModification) {
+          <small class="text-color-secondary">Dernière modification : {{ dateModification | date:'dd/MM/yyyy HH:mm' }}</small>
+        }
+
+        <div class="flex justify-content-end">
+          <button pButton type="submit" label="Enregistrer" icon="pi pi-check"
+                  [loading]="submitting" [disabled]="submitting"></button>
+        </div>
+      </form>
+    }
+  </p-card>
+</div>

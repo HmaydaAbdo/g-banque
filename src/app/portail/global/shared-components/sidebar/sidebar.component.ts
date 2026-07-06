@@ -195,6 +195,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Règles de commission', icon: 'pi pi-sliders-h',  routerLink: '/portail/admin/commission-config' },
         { label: 'Configuration leasing', icon: 'pi pi-sliders-h', routerLink: '/portail/admin/leasing-config'    },
         { label: 'Configuration CMT',     icon: 'pi pi-sliders-h', routerLink: '/portail/admin/cmt-config'        },
+        { label: 'Configuration Lignes Fonctionnelles', icon: 'pi pi-sliders-h', routerLink: '/portail/admin/lignes-fonctionnelles-config' },
       ]
     },
     {

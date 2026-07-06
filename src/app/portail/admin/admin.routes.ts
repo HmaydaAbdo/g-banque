@@ -36,5 +36,10 @@ export const ADMIN_ROUTES: Routes = [
     path: 'cmt-config',
     loadComponent: () => import('./cmt-config/views/cmt-config/cmt-config.component')
       .then(m => m.CmtConfigComponent)
+  },
+  {
+    path: 'lignes-fonctionnelles-config',
+    loadComponent: () => import('./lignes-fonctionnelles-config/views/ligne-fonctionnelle-config/ligne-fonctionnelle-config.component')
+      .then(m => m.LigneFonctionnelleConfigComponent)
   }
 ];
