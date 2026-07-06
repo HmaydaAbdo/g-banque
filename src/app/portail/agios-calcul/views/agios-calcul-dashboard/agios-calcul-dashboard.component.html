@@ -12,15 +12,14 @@
       <p-breadcrumb [model]="items" styleClass="border-none p-0"
                     [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
               <span class="text-400 text-xs ml-1">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -39,49 +38,50 @@
     </div>
   </div>
 
-  <p-progressBar *ngIf="recalculEnCours" mode="indeterminate"
-                 [style]="{'height':'2px','border-radius':'2px','margin':'-6px 0 0'}">
-  </p-progressBar>
+  @if (recalculEnCours) {
+    <p-progressBar mode="indeterminate"
+                   [style]="{'height':'2px','border-radius':'2px','margin':'-6px 0 0'}">
+    </p-progressBar>
+  }
 
   <!-- ═══ FILTRES ══════════════════════════════════════════════════ -->
   <div class="surface-card border-round-xl border-1 surface-border p-3"
-       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
+       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)"
+       [formGroup]="searchForm">
     <div class="flex flex-wrap gap-2 align-items-center">
 
       <span class="text-500 text-xs font-medium mr-1" style="white-space:nowrap">
         <i class="pi pi-sliders-h mr-1"></i>Filtres
       </span>
 
-      <p-dropdown [options]="banques" [(ngModel)]="selectedBanque"
-                  optionLabel="nom" placeholder="Toutes les banques"
+      <p-dropdown [options]="banques" formControlName="banqueId"
+                  optionLabel="nom" optionValue="id" placeholder="Toutes les banques"
                   [virtualScroll]="true" [virtualScrollItemSize]="40" [lazy]="true"
                   [loading]="banquesLoading" (onLazyLoad)="loadBanquesLazy($event)"
-                  (onChange)="onBanqueChange(dt)" [showClear]="true" appendTo="body"
+                  [showClear]="true" appendTo="body"
                   [style]="{'min-width':'200px'}">
       </p-dropdown>
 
-      <p-dropdown [options]="typeOptions" [(ngModel)]="searchDto.type"
+      <p-dropdown [options]="typeOptions" formControlName="type"
                   optionLabel="label" optionValue="value" placeholder="Type d'agios"
-                  (onChange)="onFilterChange(dt)" [showClear]="true" appendTo="body"
+                  [showClear]="true" appendTo="body"
                   [style]="{'min-width':'170px'}">
       </p-dropdown>
 
-      <p-inputNumber [(ngModel)]="anneeInput" placeholder="Année"
+      <p-inputNumber formControlName="annee" placeholder="Année"
                      [useGrouping]="false" [min]="2000" [max]="2099"
-                     (onInput)="onAnneeChange(dt)"
-                     (onKeyDown)="$event.key === 'Enter' && onAnneeChange(dt)"
                      [style]="{'width':'90px'}" [inputStyle]="{'width':'100%'}">
       </p-inputNumber>
 
-      <p-dropdown [options]="trimestreOptions" [(ngModel)]="searchDto.trimestre"
+      <p-dropdown [options]="trimestreOptions" formControlName="trimestre"
                   optionLabel="label" optionValue="value" placeholder="Trimestre"
-                  (onChange)="onFilterChange(dt)" [showClear]="true" appendTo="body"
+                  [showClear]="true" appendTo="body"
                   [style]="{'min-width':'130px'}">
       </p-dropdown>
 
-      <p-dropdown [options]="statutOptions" [(ngModel)]="searchDto.statut"
+      <p-dropdown [options]="statutOptions" formControlName="statut"
                   optionLabel="label" optionValue="value" placeholder="Statut"
-                  (onChange)="onFilterChange(dt)" [showClear]="true" appendTo="body"
+                  [showClear]="true" appendTo="body"
                   [style]="{'min-width':'130px'}">
       </p-dropdown>
 

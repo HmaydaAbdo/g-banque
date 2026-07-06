@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, takeUntil, finalize, forkJoin } from 'rxjs';
+import { Subject, takeUntil, finalize } from 'rxjs';
 
 // PrimeNG
 import { TableModule, Table, TableLazyLoadEvent } from 'primeng/table';
@@ -25,13 +25,13 @@ import { AgiosJournalierResponseDto } from '../../dtos/AgiosJournalierResponseDt
 import { TypeAgios, TypeAgiosLabels } from '../../enums/TypeAgios';
 import { StatutTrimestre } from '../../enums/StatutTrimestre';
 import { AuthService } from '../../../../auth/services/auth.service';
-import {AgiosDetailAggregateDto} from "../../dtos/Agiosdetailaggregatedto";
+import { AgiosDetailAggregateDto } from '../../dtos/Agiosdetailaggregatedto';
 
 @Component({
   selector: 'app-agios-calcul-detail',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, RouterLink, DatePipe, DecimalPipe,
+    CommonModule, ReactiveFormsModule, RouterLink, DatePipe, DecimalPipe,
     TableModule, ButtonModule, RippleModule, BreadcrumbModule,
     ToastModule, TooltipModule, TagModule, CalendarModule, ConfirmDialogModule
   ],
@@ -39,6 +39,13 @@ import {AgiosDetailAggregateDto} from "../../dtos/Agiosdetailaggregatedto";
   providers: [MessageService, ConfirmationService]
 })
 export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
+
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly agiosCalculService = inject(AgiosCalculService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly authService = inject(AuthService);
 
   private destroy$ = new Subject<void>();
 
@@ -59,8 +66,8 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   rows = 31;
   first = 0;
 
-  // Date limite filter
-  dateLimite?: Date;
+  // Date limite filter (Reactive Forms)
+  dateLimiteControl = new FormControl<Date | null>(null);
   minDate!: Date;
   maxDate!: Date;
 
@@ -76,15 +83,6 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
 
   // Template refs
   readonly StatutTrimestre = StatutTrimestre;
-
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private agiosCalculService: AgiosCalculService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private authService: AuthService
-  ) {}
 
   ngOnInit(): void {
     this.route.params
@@ -198,8 +196,8 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   // ═══════════════════════════════════════════════════════════════
 
   onDateLimiteChange(dt: Table): void {
-    if (this.dateLimite) {
-      const d = this.dateLimite;
+    const d = this.dateLimiteControl.value;
+    if (d) {
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
@@ -221,7 +219,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   }
 
   clearDateLimite(dt: Table): void {
-    this.dateLimite = undefined;
+    this.dateLimiteControl.setValue(null);
     this.onDateLimiteChange(dt);
   }
 
@@ -281,8 +279,6 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   isAdmin(): boolean {
     return this.authService.isAdmin();
   }
-
-
 
   get hasDateFilter(): boolean {
     return !!this.journalierDto.dateLimite;

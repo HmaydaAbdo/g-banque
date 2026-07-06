@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Subject, takeUntil, finalize } from 'rxjs';
+import { Subject, takeUntil, finalize, debounceTime, distinctUntilChanged } from 'rxjs';
 
 // PrimeNG
 import { TableModule, Table, TableLazyLoadEvent } from 'primeng/table';
@@ -34,7 +34,7 @@ import { AuthService } from '../../../../auth/services/auth.service';
   selector: 'app-agios-calcul-dashboard',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, RouterLink, DatePipe, DecimalPipe,
+    CommonModule, ReactiveFormsModule, RouterLink, DatePipe, DecimalPipe,
     TableModule, DropdownModule, InputTextModule, InputNumberModule,
     ButtonModule, RippleModule, BreadcrumbModule, ToastModule,
     TooltipModule, TagModule, ToolbarModule, ConfirmDialogModule, ProgressBarModule
@@ -44,7 +44,17 @@ import { AuthService } from '../../../../auth/services/auth.service';
 })
 export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
 
+  private readonly agiosCalculService = inject(AgiosCalculService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+
   private destroy$ = new Subject<void>();
+
+  @ViewChild('dt') dt?: Table;
 
   // Data
   trimestres: AgiosTrimestrielResponseDto[] = [];
@@ -60,17 +70,19 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   sortField = 'annee';
   sortOrder = -1;
 
-  // Search DTO
-  searchDto: AgiosTrimestrielSearchDto = {};
+  // Filtres (Reactive Forms)
+  searchForm: FormGroup = this.fb.group({
+    banqueId: [null],
+    type: [null],
+    annee: [null],
+    trimestre: [null],
+    statut: [null]
+  });
 
   // Banques dropdown (lazy)
   banques: BanqueResponse[] = [];
   banquesLoading = false;
   banquesTotal = 0;
-  selectedBanque?: BanqueResponse;
-
-  // Année (saisie libre)
-  anneeInput?: number;
 
   // Dropdown options
   typeOptions: { label: string; value: TypeAgios }[] = Object.values(TypeAgios).map(t => ({
@@ -97,20 +109,19 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   readonly StatutTrimestre = StatutTrimestre;
   readonly TypeAgiosLabels = TypeAgiosLabels;
 
-  constructor(
-    private agiosCalculService: AgiosCalculService,
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private authService: AuthService,
-    private router: Router
-  ) {}
-
   ngOnInit(): void {
     this.items = [
       { icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' },
       { icon: 'pi pi-calculator', route: '/portail/agios/calcul', label: 'Calcul des Agios' },
     ];
+
+    this.searchForm.valueChanges
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(300),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+      )
+      .subscribe(() => this.onFilterChange());
   }
 
   ngOnDestroy(): void {
@@ -135,7 +146,9 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
       sort = `${field},${order}`;
     }
 
-    this.agiosCalculService.searchTrimestres(this.searchDto, page, size, sort)
+    const dto: AgiosTrimestrielSearchDto = this.searchForm.value;
+
+    this.agiosCalculService.searchTrimestres(dto, page, size, sort)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => this.loading = false)
@@ -174,31 +187,29 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   //  FILTRAGE — DÉCLENCHE LE RELOAD SERVEUR
   // ═══════════════════════════════════════════════════════════════
 
-  onBanqueChange(dt: Table): void {
-    this.searchDto.banqueId = this.selectedBanque?.id ?? undefined;
-    this.onFilterChange(dt);
-  }
-
-  onAnneeChange(dt: Table): void {
-    this.searchDto.annee = this.anneeInput ?? undefined;
-    this.onFilterChange(dt);
-  }
-
-  onFilterChange(dt: Table): void {
+  onFilterChange(dt?: Table): void {
+    const table = dt ?? this.dt;
     this.first = 0;
-    dt.first = 0;
-    dt.onLazyLoad.emit({
-      first: 0,
-      rows: this.rows,
-      sortField: this.sortField,
-      sortOrder: this.sortOrder
-    });
+    if (table) {
+      table.first = 0;
+      table.onLazyLoad.emit({
+        first: 0,
+        rows: this.rows,
+        sortField: this.sortField,
+        sortOrder: this.sortOrder
+      });
+    } else {
+      this.loadTrimestres({
+        first: 0,
+        rows: this.rows,
+        sortField: this.sortField,
+        sortOrder: this.sortOrder
+      });
+    }
   }
 
   clearFilters(dt: Table): void {
-    this.searchDto = {};
-    this.selectedBanque = undefined;
-    this.anneeInput = undefined;
+    this.searchForm.reset();
     this.onFilterChange(dt);
   }
 
