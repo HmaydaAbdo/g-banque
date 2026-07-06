@@ -1,7 +1,7 @@
 // line-navigation.service.ts
 // Emplacement recommandé : src/app/shared/services/line-navigation.service.ts
 
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 
@@ -22,10 +22,8 @@ export enum LineType {
 })
 export class LineNavigationService {
 
-  constructor(
-    private router: Router,
-    private messageService: MessageService
-  ) {}
+  private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
 
   /**
    * Redirige vers l'écran de détails approprié selon la nature et le type de ligne
@@ -75,7 +73,6 @@ export class LineNavigationService {
 
       default:
         this.showNoTrackingScreenWarning(nature);
-        console.warn(`Redirection non gérée pour le label de nature: "${nature}"`);
         break;
     }
   }
@@ -92,7 +89,6 @@ export class LineNavigationService {
    */
   redirectToLineDetailsAuto(ligne: any): void {
     if (!ligne) {
-      console.error('Ligne object is null or undefined');
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
@@ -103,7 +99,6 @@ export class LineNavigationService {
     }
 
     if (!ligne.id || !ligne.natureLigneFonctionnelleLabel) {
-      console.error('Ligne object missing required properties (id or natureLigneFonctionnelleLabel)', ligne);
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
