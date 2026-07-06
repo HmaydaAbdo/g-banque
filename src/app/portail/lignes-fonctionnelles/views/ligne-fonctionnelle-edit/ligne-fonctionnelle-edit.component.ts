@@ -60,7 +60,9 @@ import { MarcheService } from "../../../Marches/service/marche-service.service";
 import { parseLocalDate, toLocalDateString } from "../../../global/types/date.utils";
 
 // ========== CONSTANTS ==========
-const CAUTION_ADMINISTRATIVE_ID = 16;
+// Code système (immuable) de la nature "Caution Administrative" — voir NatureLigneFonctionnelleService
+// côté backend. Ne jamais utiliser l'ID technique ici : il varie selon l'environnement/le seed.
+const CAUTION_ADMINISTRATIVE_CODE = 'CAUT_ADMIN';
 const MARCHE_PAGE_SIZE = 10;
 const DEBOUNCE_TIME = 300;
 
@@ -95,7 +97,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
 
   // ========== UI DATA ==========
   totalSousLignesPlafond = 0;
-  natureLigneOptions: Array<{ label: string; value: number }> = [];
+  natureLigneOptions: Array<{ label: string; value: number; code: string }> = [];
   banquesOptions: Array<{ label: string; value: number }> = [];
   marchesOptions: any[] = [];
   items: MenuItem[] = [];
@@ -192,7 +194,8 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
     return this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList(PorteeNature.GENERALE).pipe(
       map(natures => natures.map(nature => ({
         label: nature.label,
-        value: nature.id!
+        value: nature.id!,
+        code: nature.code
       }))),
       catchError(() => of([]))
     );
@@ -263,7 +266,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
     this.ligneFonctionnelleForm.get('natureLigneFonctionnelleId')!.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(natureId => {
-      if (natureId !== CAUTION_ADMINISTRATIVE_ID) {
+      if (!this.isNatureCautionAdministrative(natureId)) {
         this.sousLignesArray.clear();
       }
       this.ligneFonctionnelleForm.updateValueAndValidity();
@@ -616,7 +619,18 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
   }
 
   get isCautionAdministrativeSelected(): boolean {
-    return this.ligneFonctionnelleForm.get('natureLigneFonctionnelleId')?.value === CAUTION_ADMINISTRATIVE_ID;
+    return this.isNatureCautionAdministrative(this.ligneFonctionnelleForm.get('natureLigneFonctionnelleId')?.value);
+  }
+
+  /**
+   * Compare via le code système (immuable) de la nature, jamais son ID technique — voir
+   * NatureLigneFonctionnelleService (backend) et la constante CAUTION_ADMINISTRATIVE_CODE ci-dessus.
+   */
+  private isNatureCautionAdministrative(natureId: number | null | undefined): boolean {
+    if (natureId == null) {
+      return false;
+    }
+    return this.natureLigneOptions.find(n => n.value === natureId)?.code === CAUTION_ADMINISTRATIVE_CODE;
   }
 
   get f() {
