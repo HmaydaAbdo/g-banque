@@ -1,11 +1,14 @@
 package staport.finance.gBanque.LigneFonctionnelle.batch.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.LigneFonctionnelle.batch.scheduler.FunctionalLinesJobScheduler;
 
@@ -16,12 +19,15 @@ import java.util.Map;
 
 /**
  * Déclenchement manuel des jobs batch Functional Lines (general + specific).
+ * Réservé SYSTEM_ADMIN, mirroring {@code CmtBatchController}/{@code LeasingBatchController}.
  */
+@Tag(name = "Batch Lignes Fonctionnelles", description = "Déclenchement manuel des jobs batch d'expiration des lignes fonctionnelles")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
-@RequestMapping("/test/batch/functional-lines")
+@RequestMapping("/batch/functional-lines")
 public class FunctionalLinesBatchController {
 
-    private static final Logger log = LoggerFactory.getLogger(FunctionalLinesBatchController.class);
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     private final FunctionalLinesJobScheduler functionalLinesScheduler;
@@ -30,68 +36,53 @@ public class FunctionalLinesBatchController {
         this.functionalLinesScheduler = functionalLinesScheduler;
     }
 
-    /**
-     * Lance manuellement le job General Functional Lines.
-     * POST /test/batch/functional-lines/run-general
-     */
+    @Operation(summary = "Lancer manuellement le job General Functional Lines")
+    @ApiResponse(responseCode = "500", description = "Échec du démarrage du job")
+    @PreAuthorize(SYSTEM_ADMIN)
     @PostMapping("/run-general")
     public ResponseEntity<Map<String, Object>> runGeneralFunctionalLinesJob() {
-        log.info("📋 Requête reçue pour lancer le job General Functional Lines");
-
         try {
             JobExecution execution = functionalLinesScheduler.runGeneralJobManually();
 
             if (execution != null) {
-                log.info("✅ Job General Functional Lines lancé avec succès - ID: {}", execution.getId());
                 return ResponseEntity.ok(buildSuccessResponse("General Functional Lines Job", execution));
             } else {
-                log.error("❌ Échec du lancement du job General Functional Lines");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(buildErrorResponse("Le job n'a pas pu démarrer. Vérifiez les logs pour plus de détails."));
             }
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors du lancement du job General Functional Lines", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(buildErrorResponse("Erreur: " + e.getMessage()));
         }
     }
 
-    /**
-     * Lance manuellement le job Specific Functional Lines.
-     * POST /test/batch/functional-lines/run-specific
-     */
+    @Operation(summary = "Lancer manuellement le job Specific Functional Lines")
+    @ApiResponse(responseCode = "500", description = "Échec du démarrage du job")
+    @PreAuthorize(SYSTEM_ADMIN)
     @PostMapping("/run-specific")
     public ResponseEntity<Map<String, Object>> runSpecificFunctionalLinesJob() {
-        log.info("📋 Requête reçue pour lancer le job Specific Functional Lines");
-
         try {
             JobExecution execution = functionalLinesScheduler.runSpecificJobManually();
 
             if (execution != null) {
-                log.info("✅ Job Specific Functional Lines lancé avec succès - ID: {}", execution.getId());
                 return ResponseEntity.ok(buildSuccessResponse("Specific Functional Lines Job", execution));
             } else {
-                log.error("❌ Échec du lancement du job Specific Functional Lines");
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(buildErrorResponse("Le job n'a pas pu démarrer. Vérifiez les logs pour plus de détails."));
             }
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors du lancement du job Specific Functional Lines", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(buildErrorResponse("Erreur: " + e.getMessage()));
         }
     }
 
-    /**
-     * Lance manuellement tous les jobs Functional Lines de manière séquentielle.
-     * POST /test/batch/functional-lines/run-all
-     */
+    @Operation(summary = "Lancer manuellement tous les jobs Functional Lines", description = "Exécution séquentielle : General puis Specific.")
+    @ApiResponse(responseCode = "500", description = "Échec du démarrage d'un job")
+    @PreAuthorize(SYSTEM_ADMIN)
     @PostMapping("/run-all")
     public ResponseEntity<Map<String, Object>> runAllFunctionalLinesJobs() {
-        log.info("📋 Requête reçue pour lancer tous les jobs Functional Lines");
-
         try {
             functionalLinesScheduler.runAllJobsManually();
 
@@ -103,11 +94,33 @@ public class FunctionalLinesBatchController {
             response.put("generalJobEnabled", functionalLinesScheduler.isGeneralJobEnabled());
             response.put("specificJobEnabled", functionalLinesScheduler.isSpecificJobEnabled());
 
-            log.info("✅ Tous les jobs Functional Lines lancés avec succès");
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ Erreur lors du lancement des jobs Functional Lines", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(buildErrorResponse("Erreur: " + e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Consulter le statut des jobs Functional Lines")
+    @PreAuthorize(SYSTEM_ADMIN)
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> getFunctionalLinesJobsStatus() {
+        try {
+            Map<String, Object> status = new HashMap<>();
+            status.put("schedulerEnabled", functionalLinesScheduler.isSchedulerEnabled());
+            status.put("cronExpression", functionalLinesScheduler.getJobsCron());
+            status.put("sequentialMode", functionalLinesScheduler.isSequentialMode());
+            status.put("abortOnGeneralFailure", functionalLinesScheduler.isAbortOnGeneralFailure());
+            status.put("generalJobEnabled", functionalLinesScheduler.isGeneralJobEnabled());
+            status.put("generalJobRunning", functionalLinesScheduler.isGeneralJobRunning());
+            status.put("specificJobEnabled", functionalLinesScheduler.isSpecificJobEnabled());
+            status.put("specificJobRunning", functionalLinesScheduler.isSpecificJobRunning());
+            status.put("timestamp", LocalDateTime.now().format(DATE_FORMATTER));
+
+            return ResponseEntity.ok(status);
+
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(buildErrorResponse("Erreur: " + e.getMessage()));
         }

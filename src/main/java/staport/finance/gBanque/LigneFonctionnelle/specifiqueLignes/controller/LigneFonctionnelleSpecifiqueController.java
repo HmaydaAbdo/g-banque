@@ -1,86 +1,109 @@
 package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.controller;
 
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.*;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueService;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.ILigneFonctionnelleSpecifiqueService;
 import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
 import staport.finance.gBanque.factoring.dtos.AgregatedSuivieFactoringLigneResponseDto;
 import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
 import staport.finance.gBanque.common.PageableUtils;
 
-
-
+/**
+ * REST controller for the LigneFonctionnelleSpecifique module.
+ * Injects {@link ILigneFonctionnelleSpecifiqueService} (DIP — jamais la classe concrète).
+ *
+ * RBAC identique à {@code LigneFonctionnelleController} (générale) : donnée financière propre au
+ * département Finance, pas un référentiel dropdown.
+ */
+@Tag(name = "Lignes fonctionnelles spécifiques", description = "Gestion des lignes fonctionnelles spécifiques (rattachées à un marché)")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/lignes-fonctionnelles-specifiques")
 public class LigneFonctionnelleSpecifiqueController {
 
-    private static final Logger logger = LoggerFactory.getLogger(LigneFonctionnelleSpecifiqueController.class);
-    private final LigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService;
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
+    private final ILigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService;
 
-    public LigneFonctionnelleSpecifiqueController(LigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService) {
+    public LigneFonctionnelleSpecifiqueController(ILigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService) {
         this.ligneFonctionnelleSpecifiqueService = ligneFonctionnelleSpecifiqueService;
     }
 
+    @Operation(summary = "Créer une ligne fonctionnelle spécifique")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Ligne créée"),
+            @ApiResponse(responseCode = "400", description = "Données invalides ou portée de nature incompatible"),
+            @ApiResponse(responseCode = "404", description = "Nature ou marché introuvable"),
+            @ApiResponse(responseCode = "409", description = "Ligne active en doublon")
+    })
     @PostMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<LigneFonctionnelleSpecifiqueResponse> createLigneFonctionnelleSpecifique(@Valid @RequestBody LigneFonctionnelleSpecifiqueRequest request) {
-        logger.info("Requête de création d'une ligne fonctionnelle spécifique reçue");
-        logger.debug("Détails de la requête: {}", request);
         LigneFonctionnelleSpecifiqueResponse createdLigne = ligneFonctionnelleSpecifiqueService.createLigneFonctionnelleSpecifique(request);
-        logger.info("Ligne fonctionnelle spécifique créée avec succès - ID: {}", createdLigne.getId());
         return new ResponseEntity<>(createdLigne, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Détail d'une ligne fonctionnelle spécifique par ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Ligne introuvable")
+    })
     @GetMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<LigneFonctionnelleSpecifiqueResponse> getLigneFonctionnelleSpecifiqueById(@PathVariable Long id) {
-        logger.info("Requête de récupération de la ligne fonctionnelle spécifique - ID: {}", id);
-        LigneFonctionnelleSpecifiqueResponse ligne = ligneFonctionnelleSpecifiqueService.getLigneFonctionnelleSpecifiqueById(id);
-        logger.debug("Ligne fonctionnelle spécifique récupérée: {}", ligne);
-        return ResponseEntity.ok(ligne);
+        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.getLigneFonctionnelleSpecifiqueById(id));
     }
 
+    @Operation(summary = "Liste paginée des lignes fonctionnelles spécifiques")
     @GetMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Page<LigneFonctionnelleSpecifiqueResponse>> getLignesFonctionnellesSpecifiques(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort,
             @ModelAttribute LigneFonctionnelleSpecifiqueSearchCriteria searchCriteria) {
 
-        logger.info("Requête de liste des lignes fonctionnelles spécifiques - Page: {}, Size: {}", page, size);
-        logger.debug("Critères de recherche: {}", searchCriteria);
-
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
-        Page<LigneFonctionnelleSpecifiqueResponse> lignes = ligneFonctionnelleSpecifiqueService.getLignesFonctionnellesSpecifiques(searchCriteria, pageable);
-        logger.info("Récupération réussie - {} lignes trouvées sur {} au total", lignes.getNumberOfElements(), lignes.getTotalElements());
-
-        return ResponseEntity.ok(lignes);
+        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.getLignesFonctionnellesSpecifiques(searchCriteria, pageable));
     }
 
+    @Operation(summary = "Mettre à jour une ligne fonctionnelle spécifique")
+    @ApiResponses({
+            @ApiResponse(responseCode = "400", description = "Données invalides ou portée de nature incompatible"),
+            @ApiResponse(responseCode = "404", description = "Ligne, nature ou marché introuvable"),
+            @ApiResponse(responseCode = "409", description = "Ligne active en doublon")
+    })
     @PutMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<LigneFonctionnelleSpecifiqueResponse> updateLigneFonctionnelleSpecifique(
             @PathVariable Long id,
             @Valid @RequestBody LigneFonctionnelleSpecifiqueRequest request) {
-        logger.info("Requête de mise à jour de la ligne fonctionnelle spécifique - ID: {}", id);
-        logger.debug("Nouvelles données: {}", request);
-        LigneFonctionnelleSpecifiqueResponse updatedLigne = ligneFonctionnelleSpecifiqueService.updateLigneFonctionnelleSpecifique(id, request);
-        logger.info("Ligne fonctionnelle spécifique mise à jour avec succès - ID: {}", id);
-        return ResponseEntity.ok(updatedLigne);
+        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.updateLigneFonctionnelleSpecifique(id, request));
     }
 
+    @Operation(summary = "Lignes fonctionnelles spécifiques d'une banque")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Banque introuvable")
+    })
     @GetMapping("/banque/{banqueId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Page<LigneFonctionnelleSpecifiqueResponse>> getLignesFonctionnellesSpecifiquesByBanqueId(
             @PathVariable Long banqueId,
             @RequestParam(defaultValue = "0") int page,
@@ -88,121 +111,99 @@ public class LigneFonctionnelleSpecifiqueController {
             @RequestParam(defaultValue = "id,asc") String[] sort,
             @ModelAttribute LigneFonctionnelleSpecifiqueSearchCriteria searchCriteria) {
 
-        logger.info("Requête des lignes fonctionnelles spécifiques par banque - BanqueID: {}, Page: {}, Size: {}", banqueId, page, size);
-        logger.debug("Critères de recherche: {}", searchCriteria);
-
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
-        Page<LigneFonctionnelleSpecifiqueResponse> lignes = ligneFonctionnelleSpecifiqueService.getLignesFonctionnellesSpecifiquesByBanqueId(banqueId, searchCriteria, pageable);
-        logger.info("Récupération réussie pour banque {} - {} lignes trouvées", banqueId, lignes.getTotalElements());
-
-        return ResponseEntity.ok(lignes);
+        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.getLignesFonctionnellesSpecifiquesByBanqueId(banqueId, searchCriteria, pageable));
     }
 
-    /**
-     * Deactivates a specific  functional line by id
-     * PUT /lignes-fonctionnelles-specifique/deactivate/{ligneId}
-     * @param ligneId The ID of the functional line.
-     * @return HTTP status 204 No Content on success.
-     */
+    @Operation(summary = "Désactiver une ligne fonctionnelle spécifique")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Ligne désactivée"),
+            @ApiResponse(responseCode = "400", description = "Ligne déjà désactivée"),
+            @ApiResponse(responseCode = "404", description = "Ligne introuvable")
+    })
     @PutMapping("/deactivate/{ligneId}")
-    public ResponseEntity<Void> deactivateLigneFonctionnelle(
-            @PathVariable Long ligneId) throws Exception {
-        logger.info("Requête de désactivation de la ligne fonctionnelle - ID: {}", ligneId);
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<Void> deactivateLigneFonctionnelle(@PathVariable Long ligneId) throws Exception {
         ligneFonctionnelleSpecifiqueService.deactivateLigneFonctionnelleById(ligneId);
-        logger.info("Ligne fonctionnelle désactivée avec succès - ID: {}", ligneId);
         return ResponseEntity.noContent().build();
     }
 
-
+    @Operation(summary = "Supprimer une ligne fonctionnelle spécifique", description = "Réservé SYSTEM_ADMIN.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Ligne supprimée"),
+            @ApiResponse(responseCode = "404", description = "Ligne introuvable")
+    })
     @DeleteMapping("/{id}")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deleteLigneFonctionnelleSpecifique(@PathVariable Long id) {
-        logger.info("Requête de suppression de la ligne fonctionnelle spécifique - ID: {}", id);
         ligneFonctionnelleSpecifiqueService.deleteLigneFonctionnelleSpecifique(id);
-        logger.info("Ligne fonctionnelle spécifique supprimée avec succès - ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Lignes fonctionnelles spécifiques d'un marché")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Marché introuvable")
+    })
     @GetMapping("/marche/{marcheId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Page<LigneFonctionnelleSpecifiqueResponse>> getLinesByMarche(
             @PathVariable Long marcheId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        logger.info("Requête des lignes pour le marché ID: {}",marcheId);
-
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
-        Page<LigneFonctionnelleSpecifiqueResponse> lines = ligneFonctionnelleSpecifiqueService.getLinesByMarche(
-                marcheId,
-                pageable
-        );
-
-        logger.info("Lignes récupérées pour marché {} - {} résultats sur {} au total",
-                marcheId, lines.getNumberOfElements(), lines.getTotalElements());
-
-        return ResponseEntity.ok(lines);
+        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.getLinesByMarche(marcheId, pageable));
     }
 
-
+    @Operation(summary = "Suivi des préfinancements d'une ligne")
     @GetMapping("/{id}/prefinancements")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<AgregatedSuiviePrefiLigneResponseDto> getPrefinancementsByLineId(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        logger.info("Requête de suivi des préfinancements pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
-        AgregatedSuiviePrefiLigneResponseDto res = ligneFonctionnelleSpecifiqueService.getSuiviePrefiLigneResponse(id, pageable);
-        logger.info("Suivi des préfinancements récupéré avec succès pour la ligne ID: {}", id);
-
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.getSuiviePrefiLigneResponse(id, pageable));
     }
 
-
+    @Operation(summary = "Suivi des droits constatés d'une ligne")
     @GetMapping("/{id}/dc")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<AgregatedSuivieDcLigneResponseDto> getDroitConstateByLineId(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        logger.info("Requête de suivi des droits constatés pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
-
-
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
-
-        AgregatedSuivieDcLigneResponseDto res = ligneFonctionnelleSpecifiqueService.getSuivieDcLigneResponse(id, pageable);
-        logger.info("Suivi des droits constatés récupéré avec succès pour la ligne ID: {}", id);
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.getSuivieDcLigneResponse(id, pageable));
     }
 
+    @Operation(summary = "Suivi du factoring d'une ligne")
     @GetMapping("/{id}/factoring")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<AgregatedSuivieFactoringLigneResponseDto> getFactoringByLineId(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        logger.info("Requête de suivi du factoring pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
-
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
-
-        AgregatedSuivieFactoringLigneResponseDto res = ligneFonctionnelleSpecifiqueService.getSuivieFactoringLigneResponse(id, pageable);
-
-        logger.info("Suivi du factoring récupéré avec succès pour la ligne ID: {}", id);
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.getSuivieFactoringLigneResponse(id, pageable));
     }
 }

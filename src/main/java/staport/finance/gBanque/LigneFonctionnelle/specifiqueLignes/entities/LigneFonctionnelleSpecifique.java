@@ -1,6 +1,8 @@
 package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.marches.entities.Marche;
 import java.math.BigDecimal;
@@ -9,7 +11,15 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "ligne_fonctionnelle_specifique")
+@Audited
+@Table(
+    name = "ligne_fonctionnelle_specifique",
+    indexes = {
+        @Index(name = "idx_lfs_nature_id", columnList = "nature_ligne_id"),
+        @Index(name = "idx_lfs_marche_id", columnList = "marche_id"),
+        @Index(name = "idx_lfs_actif",     columnList = "actif")
+    }
+)
 public class LigneFonctionnelleSpecifique {
 
     @Id
@@ -42,6 +52,7 @@ public class LigneFonctionnelleSpecifique {
     private boolean actif = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @JoinColumn(name = "marche_id", nullable = false)
     private Marche marche;
 

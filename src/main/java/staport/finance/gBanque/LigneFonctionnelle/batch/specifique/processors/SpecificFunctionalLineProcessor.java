@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.LigneFonctionnelle.batch.specifique.dtos.ProcessedSpecificFunctionalLine;
+import staport.finance.gBanque.exception.customExceptions.ProcessingException;
 import staport.finance.gBanque.notification.entities.NotificationType;
 
 import java.time.LocalDate;
@@ -90,7 +91,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
             }
         } catch (Exception e) {
             log.error("Error processing LigneFonctionnelleSpecifique ID: {}", item.getId(), e);
-            throw new RuntimeException("Failed to process specific line " + item.getId(), e);
+            throw new ProcessingException("Failed to process specific line " + item.getId(), e);
         }
 
         return new ProcessedSpecificFunctionalLine(

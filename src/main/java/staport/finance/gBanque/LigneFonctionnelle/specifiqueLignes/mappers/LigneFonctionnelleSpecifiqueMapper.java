@@ -1,7 +1,5 @@
 package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.mappers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.EncoursCalculatorService;
@@ -15,10 +13,18 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Conversion Entity ↔ DTO pour LigneFonctionnelleSpecifique. Aucune logique métier hormis le calcul
+ * d'encours/solde, délégué à {@link EncoursCalculatorService} (service centralisé partagé avec les
+ * lignes générales).
+ *
+ * Conservé en {@code @Component} manuel plutôt que converti en interface MapStruct : la
+ * construction du DTO dépend d'un appel de service (encours/solde), comme pour
+ * {@code LigneFonctionnelleMapper} (générale) — design-patterns.md, préférer la solution la plus
+ * simple et la plus lisible.
+ */
 @Component
 public class LigneFonctionnelleSpecifiqueMapper {
-
-    private static final Logger logger = LoggerFactory.getLogger(LigneFonctionnelleSpecifiqueMapper.class);
 
     private final EncoursCalculatorService encoursCalculatorService;
 
@@ -34,10 +40,7 @@ public class LigneFonctionnelleSpecifiqueMapper {
             NatureLigneFonctionnelle natureLigneFonctionnelle,
             Marche marche) {
 
-        logger.debug("Début du mapping Request -> Entity");
-
         if (request == null) {
-            logger.warn("Tentative de mapping avec request null");
             return null;
         }
 
@@ -51,8 +54,6 @@ public class LigneFonctionnelleSpecifiqueMapper {
         entity.setActif(request.getActif() != null ? request.getActif() : true);
         entity.setMarche(marche);
 
-        logger.debug("Entity créée avec succès");
-
         return entity;
     }
 
@@ -60,14 +61,9 @@ public class LigneFonctionnelleSpecifiqueMapper {
      * Calcule automatiquement encours et solde
      */
     public LigneFonctionnelleSpecifiqueResponse toDto(LigneFonctionnelleSpecifique entity) {
-        logger.debug("Début du mapping Entity -> Response DTO avec calcul encours/solde");
-
         if (entity == null) {
-            logger.warn("Tentative de mapping avec entity null");
             return null;
         }
-
-        logger.debug("Mapping entity ID: {}", entity.getId());
 
         LigneFonctionnelleSpecifiqueResponse response = new LigneFonctionnelleSpecifiqueResponse();
 
@@ -133,11 +129,7 @@ public class LigneFonctionnelleSpecifiqueMapper {
 
             response.setEncours(encours);
             response.setSolde(solde);
-
-            logger.debug("Encours et solde calculés - Encours: {}, Solde: {}", encours, solde);
         }
-
-        logger.debug("Response DTO créé avec succès");
 
         return response;
     }

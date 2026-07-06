@@ -1,6 +1,7 @@
 package staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities;
 import jakarta.persistence.*;
 import jakarta.persistence.Index;
+import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -10,6 +11,7 @@ import java.util.Objects;
 
 @EntityListeners(AuditingEntityListener.class)
 @Entity
+@Audited
 @Table(
     name = "nature_ligne_fonctionnelle",
     indexes = {

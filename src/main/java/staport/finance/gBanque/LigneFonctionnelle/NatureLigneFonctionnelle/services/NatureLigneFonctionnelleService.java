@@ -14,9 +14,14 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleSearchCriteria;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.exceptions.NatureLFDeletionException;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.mappers.NatureLigneFonctionnelleMapper;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.specifications.NatureLigneFonctionnelleSpecification;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.ILigneFonctionnelleService;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.ILigneFonctionnelleSpecifiqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 
@@ -24,37 +29,41 @@ import java.util.List;
 
 /**
  * Business logic implementation for the NatureLigneFonctionnelle module.
-
- * IMPORTANT — class name is intentionally preserved as {@code NatureLigneFonctionnelleService}
- * (not renamed to *Impl) because the {@code NatureLigneFonctionnelleAuditAspect} targets
- * this class by its fully qualified name. Renaming it would silently break audit logging.
-
+ *
  * The controller injects {@link INatureLigneFonctionnelleService} (DIP).
+ * Audit passe par {@code @Audited} (entité) + {@code @AuditableAction} (méthodes) —
+ * {@code GenericAuditAspect}, comme le reste des modules déjà migrés (Bank, Leasing, CMT).
  */
 @Service
 @Transactional(readOnly = true)
 public class NatureLigneFonctionnelleService implements INatureLigneFonctionnelleService {
 
-    private static final Logger logger = LoggerFactory.getLogger(NatureLigneFonctionnelleService.class);
+    private static final Logger log = LoggerFactory.getLogger(NatureLigneFonctionnelleService.class);
     public static final String FC_CODE = "FC";
 
     private final NatureLigneFonctionnelleRepository repository;
     private final NatureLigneFonctionnelleMapper mapper;
+    private final ILigneFonctionnelleService ligneFonctionnelleService;
+    private final ILigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService;
 
     public NatureLigneFonctionnelleService(
             NatureLigneFonctionnelleRepository repository,
-            NatureLigneFonctionnelleMapper mapper) {
+            NatureLigneFonctionnelleMapper mapper,
+            ILigneFonctionnelleService ligneFonctionnelleService,
+            ILigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService) {
         this.repository                   = repository;
         this.mapper                       = mapper;
+        this.ligneFonctionnelleService = ligneFonctionnelleService;
+        this.ligneFonctionnelleSpecifiqueService = ligneFonctionnelleSpecifiqueService;
     }
 
     // ── Create ───────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
-
+    @AuditableAction(operation = AuditOperation.CREATE, entity = NatureLigneFonctionnelle.class)
     public NatureLigneFonctionnelleResponse createNatureLigneFonctionnelle(NatureLigneFonctionnelleRequest request) {
-        logger.info("Création NatureLigneFonctionnelle — label: {}, code: {}", request.label(), request.code());
+        log.info("Création NatureLigneFonctionnelle — label: {}, code: {}", request.label(), request.code());
 
         if (repository.existsByLabel(request.label())) {
             throw new DuplicateEntryException("Le label '" + request.label() + "' est déjà utilisé.");
@@ -103,14 +112,12 @@ public class NatureLigneFonctionnelleService implements INatureLigneFonctionnell
     /**
      * Updates label and description only. {@code code} is immutable — the mapper
      * intentionally ignores any code value present in the request.
-
-     * This method is targeted by {@link staport.finance.gBanque.logs.config.NatureLigneFonctionnelleAuditAspect};
-     * do not rename it without updating the aspect pointcut.
      */
     @Override
     @Transactional
-
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = NatureLigneFonctionnelle.class)
     public NatureLigneFonctionnelleResponse updateNatureLigneFonctionnelle(Long id, NatureLigneFonctionnelleRequest request) {
+        log.info("Mise à jour NatureLigneFonctionnelle — id: {}", id);
         NatureLigneFonctionnelle existing = findOrThrow(id);
 
         // Business Logic: Check label uniqueness only if the label has actually changed
@@ -130,16 +137,23 @@ public class NatureLigneFonctionnelleService implements INatureLigneFonctionnell
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = NatureLigneFonctionnelle.class)
     public void deleteNatureLigneFonctionnelle(Long id) {
-        // If you delete and it's used, DB throws DataIntegrityViolationException.
-        // You can catch this in your GlobalExceptionHandler to show a nice message.
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("ID introuvable: " + id);
         }
+
+        if (ligneFonctionnelleService.existsByNatureId(id) || ligneFonctionnelleSpecifiqueService.existsByNatureId(id)) {
+            throw new NatureLFDeletionException(
+                    "Impossible de supprimer cette nature : elle est référencée par au moins une ligne fonctionnelle (générale ou spécifique).");
+        }
+
+        log.info("Suppression NatureLigneFonctionnelle — id: {}", id);
         repository.deleteById(id);
     }
 
 
+    @Override
     public Long findFaciliteDeCaisseNatureId() {
         return repository.findByCode(FC_CODE)
                 .orElseThrow(() -> new ResourceNotFoundException("Code système FC introuvable."))

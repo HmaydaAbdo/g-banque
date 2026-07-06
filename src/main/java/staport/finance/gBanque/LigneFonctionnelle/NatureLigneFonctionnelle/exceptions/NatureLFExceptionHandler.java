@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
 @RestControllerAdvice(assignableTypes = NatureLigneFonctionnelleController.class)
 public class NatureLFExceptionHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(NatureLFExceptionHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(NatureLFExceptionHandler.class);
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
-        logger.warn("NatureLF not found: {}", ex.getMessage());
+        log.warn("NatureLF not found: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(404, "Not Found", ex.getMessage(), ex));
@@ -35,7 +35,7 @@ public class NatureLFExceptionHandler {
 
     @ExceptionHandler(DuplicateEntryException.class)
     public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateEntryException ex) {
-        logger.warn("Duplicate NatureLF entry: {}", ex.getMessage());
+        log.warn("Duplicate NatureLF entry: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), ex));
@@ -43,7 +43,7 @@ public class NatureLFExceptionHandler {
 
     @ExceptionHandler(NatureLFDeletionException.class)
     public ResponseEntity<ErrorResponse> handleDeletionGuard(NatureLFDeletionException ex) {
-        logger.warn("NatureLF deletion blocked: {}", ex.getMessage());
+        log.warn("NatureLF deletion blocked: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of(409, "Conflict", ex.getMessage(), ex));
@@ -55,7 +55,7 @@ public class NatureLFExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining("; "));
         String message = "Validation échouée : " + fieldErrors;
-        logger.warn("Validation error on NatureLFController: {}", message);
+        log.warn("Validation error on NatureLFController: {}", message);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(400, "Bad Request", message, null, Instant.now()));

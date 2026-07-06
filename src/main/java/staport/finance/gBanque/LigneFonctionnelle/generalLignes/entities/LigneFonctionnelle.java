@@ -1,6 +1,9 @@
     package staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities;
 
     import jakarta.persistence.*;
+    import jakarta.persistence.Index;
+    import org.hibernate.envers.Audited;
+    import org.hibernate.envers.RelationTargetAuditMode;
     import staport.finance.gBanque.Bank.entities.Banque;
     import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
     import staport.finance.gBanque.marches.entities.Marche;
@@ -14,7 +17,17 @@ import java.time.OffsetDateTime;
     import java.util.Objects;
 
     @Entity
-    @Table( name = "ligne_fonctionnelle")
+    @Audited
+    @Table(
+        name = "ligne_fonctionnelle",
+        indexes = {
+            @Index(name = "idx_lf_banque_id",  columnList = "banque_id"),
+            @Index(name = "idx_lf_nature_id",  columnList = "nature_ligne_id"),
+            @Index(name = "idx_lf_actif",      columnList = "actif"),
+            @Index(name = "idx_lf_date_depart", columnList = "date_depart"),
+            @Index(name = "idx_lf_ligne_mere_id", columnList = "ligne_mere_id")
+        }
+    )
     public class LigneFonctionnelle {
 
         @Id
@@ -30,6 +43,7 @@ import java.time.OffsetDateTime;
         private NatureLigneFonctionnelle natureLigneFonctionnelle;
 
         @ManyToMany(fetch = FetchType.LAZY)
+        @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
         @JoinTable(
                 name = "ligne_fonctionnelle_marche",
                 joinColumns = @JoinColumn(name = "ligne_id"),
@@ -68,6 +82,7 @@ import java.time.OffsetDateTime;
         private List<LigneFonctionnelle> sousLignes;
 
         @OneToMany(mappedBy = "ligneFonctionnelle", cascade = CascadeType.ALL)
+        @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
         private List<Lcn> lcns;
 
         // --- Constructors ---

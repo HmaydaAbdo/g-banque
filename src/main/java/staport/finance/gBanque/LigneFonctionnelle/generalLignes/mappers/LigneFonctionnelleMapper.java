@@ -1,7 +1,5 @@
 package staport.finance.gBanque.LigneFonctionnelle.generalLignes.mappers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
@@ -20,10 +18,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Conversion Entity ↔ DTO pour LigneFonctionnelle. Aucune logique métier hormis le calcul
+ * d'encours/solde, délégué à {@link EncoursCalculatorService} (service centralisé partagé
+ * avec les lignes spécifiques).
+ *
+ * Conservé en {@code @Component} manuel plutôt que converti en interface MapStruct : la
+ * construction du DTO dépend d'un appel de service (encours/solde) et d'une logique
+ * conditionnelle de hiérarchie (ligne mère / sous-ligne) que MapStruct exprimerait moins
+ * clairement qu'une méthode Java explicite (design-patterns.md — préférer la solution la plus
+ * simple et la plus lisible).
+ */
 @Component
 public class LigneFonctionnelleMapper {
-
-    private static final Logger logger = LoggerFactory.getLogger(LigneFonctionnelleMapper.class);
 
     private final EncoursCalculatorService encoursCalculatorService;
 
@@ -39,11 +46,8 @@ public class LigneFonctionnelleMapper {
                                        NatureLigneFonctionnelle natureLigneFonctionnelle,
                                        List<Marche> marches) {
         if (request == null) {
-            logger.warn("Attempted to convert null LigneFonctionnelleRequest to Entity");
             return null;
         }
-
-        logger.debug("Converting LigneFonctionnelleRequest to Entity - request : {}", request);
 
         LigneFonctionnelle ligneFonctionnelle = new LigneFonctionnelle();
 
@@ -56,8 +60,6 @@ public class LigneFonctionnelleMapper {
         ligneFonctionnelle.setDateFin(request.getDateFin());
         ligneFonctionnelle.setSousLignes(new ArrayList<>());
 
-        logger.debug("Successfully converted LigneFonctionnelleRequest to Entity");
-
         return ligneFonctionnelle;
     }
 
@@ -68,17 +70,9 @@ public class LigneFonctionnelleMapper {
                                                 LigneFonctionnelle ligneMere,
                                                 NatureLigneFonctionnelle natureSousLigne) {
 
-        if (request == null) {
-            logger.warn("Attempted to convert null SousLigneRequestDto to Entity");
+        if (request == null || ligneMere == null) {
             return null;
         }
-
-        if (ligneMere == null) {
-            logger.error("Cannot convert SousLigneRequestDto to Entity - ligne mère is null");
-            return null;
-        }
-
-        logger.debug("Converting SousLigneRequestDto to Entity - request : {}", request);
 
         LigneFonctionnelle sousLigne = new LigneFonctionnelle();
 
@@ -92,8 +86,6 @@ public class LigneFonctionnelleMapper {
         sousLigne.setDateFin(ligneMere.getDateFin());
         sousLigne.setLigneMere(ligneMere);
 
-        logger.debug("Successfully converted SousLigneRequestDto to Entity");
-
         return sousLigne;
     }
 
@@ -103,11 +95,8 @@ public class LigneFonctionnelleMapper {
     public LigneFonctionnelleResponse toDto(LigneFonctionnelle ligneFonctionnelle) {
 
         if (ligneFonctionnelle == null) {
-            logger.warn("Attempted to convert null LigneFonctionnelle Entity to DTO");
             return null;
         }
-
-        logger.debug("Converting LigneFonctionnelle Entity to DTO - ID: {}", ligneFonctionnelle.getId());
 
         LigneFonctionnelleResponse response = new LigneFonctionnelleResponse();
         response.setId(ligneFonctionnelle.getId());
@@ -139,7 +128,6 @@ public class LigneFonctionnelleMapper {
         response.setActif(ligneFonctionnelle.isActif());
         response.setExpired(isExpired(ligneFonctionnelle.getDateFin()));
 
-        // ✅ UTILISATION DU SERVICE CENTRALISÉ
         mapEncoursAndSolde(ligneFonctionnelle, response);
 
         // GESTION HIÉRARCHIQUE
@@ -162,8 +150,6 @@ public class LigneFonctionnelleMapper {
             response.setSousLignes(new ArrayList<>());
         }
 
-        logger.debug("Successfully converted LigneFonctionnelle Entity to DTO - ID: {}", ligneFonctionnelle.getId());
-
         return response;
     }
 
@@ -172,11 +158,8 @@ public class LigneFonctionnelleMapper {
      */
     private SousLigneResponseDto toSousLigneDto(LigneFonctionnelle sousLigne) {
         if (sousLigne == null) {
-            logger.warn("Attempted to convert null sous-ligne Entity to DTO");
             return null;
         }
-
-        logger.debug("Converting sous-ligne Entity to DTO - ID: {}", sousLigne.getId());
 
         SousLigneResponseDto dto = new SousLigneResponseDto();
         dto.setId(sousLigne.getId());
@@ -201,11 +184,8 @@ public class LigneFonctionnelleMapper {
                                                 NatureLigneFonctionnelle newNature,
                                                 List<Marche> newMarches) {
         if (request == null || ligneFonctionnelle == null) {
-            logger.warn("Attempted to update with null request or entity");
             return;
         }
-
-        logger.debug("Updating LigneFonctionnelle Entity ID: {}", ligneFonctionnelle.getId());
 
         ligneFonctionnelle.setPlafond(request.getPlafond());
 
@@ -230,8 +210,6 @@ public class LigneFonctionnelleMapper {
         }
 
         ligneFonctionnelle.setMarches(newMarches != null ? new ArrayList<>(newMarches) : new ArrayList<>());
-
-        logger.debug("Successfully updated LigneFonctionnelle Entity ID: {}", ligneFonctionnelle.getId());
     }
 
     private boolean isExpired(LocalDate dateFin) {
@@ -243,11 +221,10 @@ public class LigneFonctionnelleMapper {
     }
 
     /**
-     *Utilise EncoursCalculatorService de manière centralisée
+     * Utilise EncoursCalculatorService de manière centralisée.
      */
     private void mapEncoursAndSolde(LigneFonctionnelle ligneFonctionnelle, LigneFonctionnelleResponse response) {
         if (ligneFonctionnelle.getNatureLigneFonctionnelle() == null) {
-            logger.warn("No nature found for ligne ID: {} - Encours and Solde set to null", ligneFonctionnelle.getId());
             response.setEncours(null);
             response.setSolde(null);
             return;
@@ -258,9 +235,6 @@ public class LigneFonctionnelleMapper {
         List<Marche> marches = ligneFonctionnelle.getMarches();
         BigDecimal plafond = ligneFonctionnelle.getPlafond();
 
-        logger.debug("Calculating encours and solde for ligne ID: {}, nature ID: {}", ligneId, natureId);
-
-        // Calcul de l'encours via le service centralisé
         BigDecimal encours = encoursCalculatorService.calculateEncours(
                 ligneId,
                 natureId,
@@ -269,7 +243,6 @@ public class LigneFonctionnelleMapper {
                 plafond
         );
 
-        // Calcul du solde via le service centralisé
         BigDecimal solde = encoursCalculatorService.calculateSolde(
                 ligneId,
                 natureId,
@@ -280,7 +253,5 @@ public class LigneFonctionnelleMapper {
 
         response.setEncours(encours);
         response.setSolde(solde);
-
-        logger.debug("Mapped encours: {}, solde: {} for ligne ID: {}", encours, solde, ligneId);
     }
 }

@@ -11,13 +11,9 @@ import java.util.List;
 
 /**
  * Service contract for the NatureLigneFonctionnelle module.
-
+ *
  * Controllers must inject this interface (DIP), never the concrete class.
  * The concrete implementation is {@link NatureLigneFonctionnelleService}.
-
- * Note: the concrete class name is intentionally preserved so that the
- * {@code NatureLigneFonctionnelleAuditAspect} pointcut (which targets the FQCN)
- * continues to fire on {@code updateNatureLigneFonctionnelle}.
  */
 public interface INatureLigneFonctionnelleService {
 

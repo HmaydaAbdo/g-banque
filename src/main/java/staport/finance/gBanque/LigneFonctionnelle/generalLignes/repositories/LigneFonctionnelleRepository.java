@@ -71,4 +71,10 @@ public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctio
 
     /** Vérifie l'existence d'au moins une ligne fonctionnelle active pour une banque donnée. */
     boolean existsByBanqueIdAndActifTrue(Long banqueId);
+
+    /**
+     * Vérifie l'existence d'au moins une ligne fonctionnelle générale référençant cette nature.
+     * Utilisé comme guard de suppression par {@code NatureLigneFonctionnelleService}.
+     */
+    boolean existsByNatureLigneFonctionnelleId(Long natureLigneFonctionnelleId);
 }

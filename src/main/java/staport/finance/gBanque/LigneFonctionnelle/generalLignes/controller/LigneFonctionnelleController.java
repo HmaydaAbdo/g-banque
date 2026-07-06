@@ -1,16 +1,20 @@
 package staport.finance.gBanque.LigneFonctionnelle.generalLignes.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.*;
-import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleService;
-import org.springframework.beans.factory.annotation.Autowired;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.ILigneFonctionnelleService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
@@ -21,85 +25,90 @@ import staport.finance.gBanque.common.PageableUtils;
 
 import java.util.List;
 
+/**
+ * REST controller for the LigneFonctionnelle (générale) module.
+ * Injects {@link ILigneFonctionnelleService} (DIP — never the concrete class).
+ *
+ * <p>RBAC au niveau classe : ce module expose des données financières propres au département
+ * Finance (plafonds, encours, suivi des opérations) — pas un référentiel de dropdown inter-modules
+ * comme {@code Nature}. Mirroring {@code CreditMoyenTermeController}/{@code ContratLeasingController}.
+ */
+@Tag(name = "Lignes fonctionnelles", description = "Gestion des lignes fonctionnelles générales (autorisations de financement par banque)")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/lignes-fonctionnelles")
 public class LigneFonctionnelleController {
 
-    private static final Logger logger = LoggerFactory.getLogger(LigneFonctionnelleController.class);
-    private final LigneFonctionnelleService ligneFonctionnelleService;
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
-    @Autowired
-    public LigneFonctionnelleController(LigneFonctionnelleService ligneFonctionnelleService) {
+    private final ILigneFonctionnelleService ligneFonctionnelleService;
+
+    public LigneFonctionnelleController(ILigneFonctionnelleService ligneFonctionnelleService) {
         this.ligneFonctionnelleService = ligneFonctionnelleService;
     }
 
+    @Operation(summary = "Créer une ligne fonctionnelle générale")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Ligne créée"),
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
+            @ApiResponse(responseCode = "404", description = "Banque, nature ou marché introuvable"),
+            @ApiResponse(responseCode = "409", description = "Ligne active en doublon")
+    })
     @PostMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<LigneFonctionnelleResponse> createLigneFonctionnelle(@Valid @RequestBody LigneFonctionnelleRequest request) {
-        logger.info("Creating new ligne fonctionnelle for banque ID: {} with request : {}", request.getBanqueId(), request);
         LigneFonctionnelleResponse createdLigne = ligneFonctionnelleService.createLigneFonctionnelle(request);
-        logger.info("Successfully created ligne fonctionnelle with ID: {}", createdLigne.getId());
         return new ResponseEntity<>(createdLigne, HttpStatus.CREATED);
     }
 
-
+    @Operation(summary = "Mettre à jour une ligne fonctionnelle générale")
+    @ApiResponses({
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
+            @ApiResponse(responseCode = "404", description = "Ligne, banque, nature ou marché introuvable"),
+            @ApiResponse(responseCode = "409", description = "Ligne active en doublon")
+    })
     @PutMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<LigneFonctionnelleResponse> updateLigneFonctionnelle(
             @PathVariable Long id,
             @Valid @RequestBody LigneFonctionnelleRequest request) {
-        logger.info("Updating ligne fonctionnelle with ID: {}", id);
-        logger.debug("Update request details: {}", request);
-        LigneFonctionnelleResponse updatedLigne = ligneFonctionnelleService.updateLigneFonctionnelle(id, request);
-        logger.info("Successfully updated ligne fonctionnelle ID: {}", id);
-        return ResponseEntity.ok(updatedLigne);
+        return ResponseEntity.ok(ligneFonctionnelleService.updateLigneFonctionnelle(id, request));
     }
 
-
-
+    @Operation(summary = "Détail d'une ligne fonctionnelle par ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Ligne introuvable")
+    })
     @GetMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<LigneFonctionnelleResponse> getLigneFonctionnelleById(@PathVariable Long id) {
-        logger.info("Fetching ligne fonctionnelle by ID: {}", id);
-        LigneFonctionnelleResponse ligne = ligneFonctionnelleService.getLigneFonctionnelleById(id);
-        logger.debug("Successfully retrieved ligne fonctionnelle ID: {}", id);
-        return ResponseEntity.ok(ligne);
+        return ResponseEntity.ok(ligneFonctionnelleService.getLigneFonctionnelleById(id));
     }
 
-
+    @Operation(summary = "Liste paginée des lignes fonctionnelles (mères/indépendantes)")
     @GetMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Page<LigneFonctionnelleResponse>> getPaginatedLigneFonctionnelles(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-                @RequestParam(defaultValue = "id,asc") String[] sort,
+            @RequestParam(defaultValue = "id,asc") String[] sort,
             @ModelAttribute LigneFonctionnelleSearchCriteria searchCriteria) {
 
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
-        logger.info("Fetching paginated lignes fonctionnelles - Page: {}, Size: {}, Sort: {} {}", page, size, sort[0], sort[1]);
-        logger.debug("Search criteria: {}", searchCriteria);
-        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getPaginatedLigneFonctionnelles(searchCriteria, pageable);
-
-        logger.info("Successfully retrieved {} ligne(s) fonctionnelle(s) out of {} total (Page {}/{})",
-                lignes.getNumberOfElements(),
-                lignes.getTotalElements(),
-                lignes.getNumber() + 1,
-                lignes.getTotalPages());
-
-        return ResponseEntity.ok(lignes);
+        return ResponseEntity.ok(ligneFonctionnelleService.getPaginatedLigneFonctionnelles(searchCriteria, pageable));
     }
 
-    /**
-     * Get functional lines associated with a specific marche ID, with pagination, sorting,
-     * and search by nature ligne fonctionnelle, year of dateDepart, and 'actif' status.
-     * GET /lignes-fonctionnelles/marche/{marcheId}
-     * @param marcheId The ID of the marche.
-     * @param page Page number (0-indexed, default 0).
-     * @param size Page size (default 10).
-     * @param sort Sort criteria (e.g., "dateDepart,desc", "plafond,asc").
-     * @param searchCriteria DTO for search filters (natureLigneFonctionnelleId, yearDepart, actif).
-     * @return A paginated list of functional lines as DTOs with HTTP status 200 OK.
-     */
+    @Operation(summary = "Lignes fonctionnelles d'un marché")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Marché introuvable")
+    })
     @GetMapping("/marche/{marcheId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Page<LigneFonctionnelleResponse>> getPaginatedLignesFonctionnellesByMarcheId(
             @PathVariable Long marcheId,
             @RequestParam(defaultValue = "0") int page,
@@ -111,80 +120,53 @@ public class LigneFonctionnelleController {
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
-        logger.info("Fetching paginated lignes fonctionnelles for marche ID: {} - Page: {}, Size: {}, Sort: {} {}",
-                marcheId, page, size, sort[0], sort[1]);
-        logger.debug("Search criteria for marche {}: {}", marcheId, searchCriteria);
-
-        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getPaginatedLignesFonctionnellesByMarcheId(marcheId, searchCriteria, pageable);
-
-        logger.info("Successfully retrieved {} ligne(s) fonctionnelle(s) for marche ID: {} out of {} total (Page {}/{})",
-                lignes.getNumberOfElements(),
-                marcheId,
-                lignes.getTotalElements(),
-                lignes.getNumber() + 1,
-                lignes.getTotalPages());
-
-        return ResponseEntity.ok(lignes);
+        return ResponseEntity.ok(ligneFonctionnelleService.getPaginatedLignesFonctionnellesByMarcheId(marcheId, searchCriteria, pageable));
     }
 
-    /**
-     * Deactivates a specific  functional line by id
-     * PUT /lignes-fonctionnelles/deactivate/{ligneId}
-     * @param ligneId The ID of the functional line.
-     * @return HTTP status 204 No Content on success.
-     */
+    @Operation(summary = "Désactiver une ligne fonctionnelle")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Ligne désactivée"),
+            @ApiResponse(responseCode = "404", description = "Ligne introuvable")
+    })
     @PutMapping("/deactivate/{ligneId}")
-    public ResponseEntity<Void> deactivateLigneFonctionnelle(
-            @PathVariable Long ligneId)
-    {
-        logger.info("Attempting to deactivate ligne fonctionnelle with ID: {}", ligneId);
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<Void> deactivateLigneFonctionnelle(@PathVariable Long ligneId) {
         ligneFonctionnelleService.deactivateLigneFonctionnelle(ligneId);
-        logger.info("Successfully deactivated ligne fonctionnelle ID: {}", ligneId);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Supprimer une ligne fonctionnelle", description = "Réservé SYSTEM_ADMIN. Interdit directement sur une sous-ligne — passer par la ligne mère.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Ligne supprimée"),
+            @ApiResponse(responseCode = "400", description = "Suppression directe d'une sous-ligne interdite"),
+            @ApiResponse(responseCode = "404", description = "Ligne introuvable")
+    })
     @DeleteMapping("/{id}")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deleteLigneFonctionnelle(@PathVariable Long id) {
-        logger.info("Attempting to delete ligne fonctionnelle with ID: {}", id);
         ligneFonctionnelleService.deleteLigneFonctionnelle(id);
-        logger.info("Successfully deleted ligne fonctionnelle ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Endpoint dédié pour la gestion (création, mise à jour, suppression) des Sous-lignes
-     * d'une Ligne Mère spécifique.
-     * PUT /lignes-fonctionnelles/{ligneMereId}/sous-lignes
-     * @param ligneMereId L'ID de la Ligne Mère.
-     * @param sousLignesRequests La liste complète des Sous-lignes désirées.
-     * @return La Ligne Mère mise à jour (incluant les nouvelles Sous-lignes).
-     */
+    @Operation(summary = "Gérer les sous-lignes d'une ligne mère", description = "Remplace l'intégralité des sous-lignes par la liste fournie (création/mise à jour/suppression).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "400", description = "ID de sous-ligne fourni à la création, ou nature non autorisée pour une ligne mère"),
+            @ApiResponse(responseCode = "404", description = "Ligne mère ou nature introuvable")
+    })
     @PutMapping("/{ligneMereId}/sous-lignes")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<LigneFonctionnelleResponse> manageSousLignes(
             @PathVariable Long ligneMereId,
             @Valid @RequestBody List<SousLigneRequestDto> sousLignesRequests) {
-        logger.info("Managing sous-lignes for ligne mère ID: {}", ligneMereId);
-        logger.debug("Number of sous-lignes requests: {}", sousLignesRequests.size());
-        logger.debug("Sous-lignes requests details: {}", sousLignesRequests);
-
-        LigneFonctionnelleResponse updatedLigneMere = ligneFonctionnelleService.manageSousLignes(ligneMereId, sousLignesRequests);
-        logger.info("Successfully managed sous-lignes for ligne mère ID: {}", ligneMereId);
-
-        return ResponseEntity.ok(updatedLigneMere);
+        return ResponseEntity.ok(ligneFonctionnelleService.manageSousLignes(ligneMereId, sousLignesRequests));
     }
 
-    /**
-     * Get functional lines associated with a specific bank ID, with pagination, sorting,
-     * and search by nature ligne fonctionnelle, year of dateDepart, and 'actif' status.
-     * GET /lignes-fonctionnelles/banque/{banqueId}
-     * @param banqueId The ID of the bank.
-     * @param page Page number (0-indexed, default 0).
-     * @param size Page size (default 10).
-     * @param sort Sort criteria (e.g., "dateDepart,desc", "plafond,asc").
-     * @param searchCriteria DTO for search filters (natureLigneFonctionnelleId, yearDepart, actif).
-     * @return A paginated list of functional lines as DTOs with HTTP status 200 OK.
-     */
+    @Operation(summary = "Lignes fonctionnelles d'une banque")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Banque introuvable")
+    })
     @GetMapping("/banque/{banqueId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Page<LigneFonctionnelleResponse>> getPaginatedLignesFonctionnellesByBanqueId(
             @PathVariable Long banqueId,
             @RequestParam(defaultValue = "0") int page,
@@ -196,119 +178,79 @@ public class LigneFonctionnelleController {
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
-        logger.info("Fetching paginated lignes fonctionnelles for banque ID: {} - Page: {}, Size: {}, Sort: {} {}",
-                banqueId, page, size, sort[0], sort[1]);
-        logger.debug("Search criteria for banque {}: {}", banqueId, searchCriteria);
-
-        Page<LigneFonctionnelleResponse> lignes = ligneFonctionnelleService.getPaginatedLignesFonctionnellesByBanqueId(banqueId, searchCriteria, pageable);
-
-        logger.info("Successfully retrieved {} ligne(s) fonctionnelle(s) for banque ID: {} out of {} total (Page {}/{})",
-                lignes.getNumberOfElements(),
-                banqueId,
-                lignes.getTotalElements(),
-                lignes.getNumber() + 1,
-                lignes.getTotalPages());
-
-        return ResponseEntity.ok(lignes);
+        return ResponseEntity.ok(ligneFonctionnelleService.getPaginatedLignesFonctionnellesByBanqueId(banqueId, searchCriteria, pageable));
     }
 
-
-
-
+    @Operation(summary = "Suivi des préfinancements d'une ligne")
     @GetMapping("/{id}/prefinancements")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<AgregatedSuiviePrefiLigneResponseDto> getPrefinancementsByLineId(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        logger.info("Requête de suivi des préfinancements pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
-        AgregatedSuiviePrefiLigneResponseDto res = ligneFonctionnelleService.getSuiviePrefiLigneResponse(id, pageable);
-        logger.info("Suivi des préfinancements récupéré avec succès pour la ligne ID: {}", id);
-
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(ligneFonctionnelleService.getSuiviePrefiLigneResponse(id, pageable));
     }
 
-
+    @Operation(summary = "Suivi des droits constatés d'une ligne")
     @GetMapping("/{id}/dc")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<AgregatedSuivieDcLigneResponseDto> getDroitConstateByLineId(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        logger.info("Requête de suivi des droits constatés pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
-
-
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
-
-        AgregatedSuivieDcLigneResponseDto res = ligneFonctionnelleService.getSuivieDcLigneResponse(id, pageable);
-        logger.info("Suivi des droits constatés récupéré avec succès pour la ligne ID: {}", id);
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(ligneFonctionnelleService.getSuivieDcLigneResponse(id, pageable));
     }
 
+    @Operation(summary = "Suivi du factoring d'une ligne")
     @GetMapping("/{id}/factoring")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<AgregatedSuivieFactoringLigneResponseDto> getFactoringByLineId(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        logger.info("Requête de suivi du factoring pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
-
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
-
-        AgregatedSuivieFactoringLigneResponseDto res = ligneFonctionnelleService.getSuivieFactoringLigneResponse(id, pageable);
-
-        logger.info("Suivi du factoring récupéré avec succès pour la ligne ID: {}", id);
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(ligneFonctionnelleService.getSuivieFactoringLigneResponse(id, pageable));
     }
 
-
-
+    @Operation(summary = "Suivi LCN d'une ligne")
     @GetMapping("/{id}/lcn")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<AgregatedSuivieLcnLigneResponseDto> getLcnByLineId(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        logger.info("Requête de suivi LCN pour la ligne - ID: {}, Page: {}, Size: {}", id, page, size);
-
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
-
-        AgregatedSuivieLcnLigneResponseDto res = ligneFonctionnelleService.getSuivieLcnLigneResponse(id, pageable);
-
-        logger.info("Suivi LCN récupéré avec succès pour la ligne ID: {}", id);
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(ligneFonctionnelleService.getSuivieLcnLigneResponse(id, pageable));
     }
 
-    /**
-     * Retrieves historical plafond and taux data for a specific bank and nature of functional line,
-     * formatted for a PrimeNG line chart.
-     * GET /lignes-fonctionnelles/history
-     *
-     * @return A LigneFonctionnelleChartData object with HTTP status 200 OK.
-     */
+    @Operation(
+            summary = "Historique taux/plafond pour un graphique",
+            description = "Formaté pour un graphique PrimeNG, par banque et nature de ligne fonctionnelle."
+    )
     @GetMapping("/history")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<LigneFonctionnelleChartData> getLigneFonctionnelleChartHistory(
-            @RequestParam("banqueId") Long banqueId,
-            @RequestParam("natureLigneFonctionnelleId") Long natureLigneFonctionnelleId) {
+            @Parameter(description = "ID de la banque") @RequestParam("banqueId") Long banqueId,
+            @Parameter(description = "ID de la nature de ligne fonctionnelle") @RequestParam("natureLigneFonctionnelleId") Long natureLigneFonctionnelleId) {
 
-        logger.info("Fetching historical chart data for banque ID: {}, nature ligne fonctionnelle ID: {}",
-                banqueId, natureLigneFonctionnelleId);
-        LigneFonctionnelleChartData chartData = ligneFonctionnelleService.getHistoricalChartData(banqueId, natureLigneFonctionnelleId);
-        logger.info("Successfully retrieved historical chart data - {} data points", chartData.getLabels() != null ? chartData.getLabels().size() : 0);
-        logger.debug("Chart data details: {}", chartData);
-        return ResponseEntity.ok(chartData);
+        return ResponseEntity.ok(ligneFonctionnelleService.getHistoricalChartData(banqueId, natureLigneFonctionnelleId));
     }
 }

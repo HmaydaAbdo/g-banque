@@ -18,6 +18,8 @@ import staport.finance.gBanque.droitConstate.dtos.SuivieDcLigneResponseDto;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +62,7 @@ import staport.finance.gBanque.prefinancement.repository.PrefinancementRepositor
 @Service
 public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
-    private static final Logger logger = LoggerFactory.getLogger(LigneFonctionnelleService.class);
+    private static final Logger log = LoggerFactory.getLogger(LigneFonctionnelleService.class);
     // Constante de Règle Métier : Seule cette nature peut être une Ligne Mère
     private static final String CAUTION_ADMINISTRATIVE_LABEL = "Caution Administrative";
 
@@ -99,10 +101,12 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     }
 
 
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = LigneFonctionnelle.class)
     public LigneFonctionnelleResponse createLigneFonctionnelle(LigneFonctionnelleRequest request) {
 
-        logger.debug("Creating ligne fonctionnelle, Full creation request: {}", request);
+        log.debug("Creating ligne fonctionnelle, Full creation request: {}", request);
 
         // 1. Validation de la plage de dates
         validateDateRange(request.getDateDepart(), request.getDateFin());
@@ -110,20 +114,20 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         // 2. Récupération et validation de la Banque
         Banque banque = banqueRepository.findById(request.getBanqueId())
                 .orElseThrow(() -> {
-                    logger.error("Banque not found with ID: {}", request.getBanqueId());
+                    log.error("Banque not found with ID: {}", request.getBanqueId());
                     return new ResourceNotFoundException("Banque non trouvée avec l'ID: " + request.getBanqueId());
                 });
 
-        logger.debug("Found banque: {} (ID: {})", banque.getNom(), banque.getId());
+        log.debug("Found banque: {} (ID: {})", banque.getNom(), banque.getId());
 
         // 3. Récupération et validation de la Nature
         NatureLigneFonctionnelle natureLigneFonctionnelle = natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId())
                 .orElseThrow(() -> {
-                    logger.error("NatureLigneFonctionnelle not found with ID: {}", request.getNatureLigneFonctionnelleId());
+                    log.error("NatureLigneFonctionnelle not found with ID: {}", request.getNatureLigneFonctionnelleId());
                     return new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId());
                 });
 
-        logger.debug("Found nature: {} (ID: {})", natureLigneFonctionnelle.getLabel(), natureLigneFonctionnelle.getId());
+        log.debug("Found nature: {} (ID: {})", natureLigneFonctionnelle.getLabel(), natureLigneFonctionnelle.getId());
 
         // Validation portée : une ligne générale n'accepte que GENERALE ou GENERALE_ET_SPECIFIQUE
         validatePorteeForLigneGenerale(natureLigneFonctionnelle);
@@ -132,11 +136,11 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         List<Marche> marches = validateAndGetMarches(request.getMarcheIds(), request.getBanqueId());
 
         if (!marches.isEmpty()) {
-            logger.debug("Found {} marché(s): {}",
+            log.debug("Found {} marché(s): {}",
                     marches.size(),
                     marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
         } else {
-            logger.debug("No marche specified - creating general ligne fonctionnelle");
+            log.debug("No marche specified - creating general ligne fonctionnelle");
         }
 
         // 5 : Vérification des doublons avec les marchés
@@ -149,24 +153,24 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         // 7. Gestion des sous-lignes (inchangé)
         if (request.getSousLignes() != null && !request.getSousLignes().isEmpty()) {
-            logger.info("Processing {} sous-ligne(s) for creation", request.getSousLignes().size());
+            log.info("Processing {} sous-ligne(s) for creation", request.getSousLignes().size());
 
             validateNatureForMere(natureLigneFonctionnelle);
 
             List<LigneFonctionnelle> sousLignesEntities = new ArrayList<>();
 
             for (SousLigneRequestDto sousLigneRequest : request.getSousLignes()) {
-                logger.debug("Processing sous-ligne - Nature ID: {}, Plafond: {}",
+                log.debug("Processing sous-ligne - Nature ID: {}, Plafond: {}",
                         sousLigneRequest.getNatureLigneFonctionnelleId(), sousLigneRequest.getPlafond());
 
                 if (sousLigneRequest.getId() != null) {
-                    logger.error("Sous-ligne ID must be NULL during cascade creation, but got: {}", sousLigneRequest.getId());
+                    log.error("Sous-ligne ID must be NULL during cascade creation, but got: {}", sousLigneRequest.getId());
                     throw new IllegalArgumentException("L'ID de la sous-ligne doit être NULL lors de la création en cascade.");
                 }
 
                 NatureLigneFonctionnelle natureSousLigne = natureLigneFonctionnelleRepository.findById(sousLigneRequest.getNatureLigneFonctionnelleId())
                         .orElseThrow(() -> {
-                            logger.error("NatureLigneFonctionnelle for sous-ligne not found with ID: {}", sousLigneRequest.getNatureLigneFonctionnelleId());
+                            log.error("NatureLigneFonctionnelle for sous-ligne not found with ID: {}", sousLigneRequest.getNatureLigneFonctionnelleId());
                             return new ResourceNotFoundException("NatureLigneFonctionnelle pour Sous-ligne non trouvée avec l'ID: " + sousLigneRequest.getNatureLigneFonctionnelleId());
                         });
 
@@ -180,12 +184,12 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
             }
 
             ligneFonctionnelle.setSousLignes(sousLignesEntities);
-            logger.debug("Successfully prepared {} sous-ligne(s) for cascade creation", sousLignesEntities.size());
+            log.debug("Successfully prepared {} sous-ligne(s) for cascade creation", sousLignesEntities.size());
         }
 
         // 8. Sauvegarde
         LigneFonctionnelle savedLigneFonctionnelle = ligneFonctionnelleRepository.save(ligneFonctionnelle);
-        logger.info("Successfully created ligne fonctionnelle with ID: {}, Marchés: [{}], Has {} sous-ligne(s)",
+        log.info("Successfully created ligne fonctionnelle with ID: {}, Marchés: [{}], Has {} sous-ligne(s)",
                 savedLigneFonctionnelle.getId(),
                 marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")),
                 savedLigneFonctionnelle.getSousLignes() != null ? savedLigneFonctionnelle.getSousLignes().size() : 0);
@@ -194,17 +198,18 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     }
 
 
+    @Override
     @Transactional(readOnly = true)
     public LigneFonctionnelleResponse getLigneFonctionnelleById(Long id) {
-        logger.info("Fetching ligne fonctionnelle by ID: {}", id);
+        log.info("Fetching ligne fonctionnelle by ID: {}", id);
 
         LigneFonctionnelle ligneFonctionnelle = ligneFonctionnelleRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.error("Ligne Fonctionnelle not found with ID: {}", id);
+                    log.error("Ligne Fonctionnelle not found with ID: {}", id);
                     return new ResourceNotFoundException("Ligne Fonctionnelle non trouvée avec l'ID: " + id);
                 });
 
-        logger.debug("Successfully retrieved ligne fonctionnelle ID: {}, Nature: {}, Plafond: {}",
+        log.debug("Successfully retrieved ligne fonctionnelle ID: {}, Nature: {}, Plafond: {}",
                 ligneFonctionnelle.getId(),
                 ligneFonctionnelle.getNatureLigneFonctionnelle().getLabel(),
                 ligneFonctionnelle.getPlafond());
@@ -216,10 +221,11 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     // 3. READ (PAGINATION FILTRÉE - MÈRES/INDÉPENDANTES UNIQUEMENT)
     // =========================================================================================
 
+    @Override
     @Transactional(readOnly = true)
     public Page<LigneFonctionnelleResponse> getPaginatedLigneFonctionnelles(LigneFonctionnelleSearchCriteria criteria, Pageable pageable) {
-        logger.info("Fetching paginated lignes fonctionnelles (Mère/Indépendante only) - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
-        logger.debug("Search criteria: {}", criteria);
+        log.info("Fetching paginated lignes fonctionnelles (Mère/Indépendante only) - Page: {}, Size: {}", pageable.getPageNumber(), pageable.getPageSize());
+        log.debug("Search criteria: {}", criteria);
 
         Specification<LigneFonctionnelle> spec = LigneFonctionnelleSpecification.searchByCriteria(criteria);
         Specification<LigneFonctionnelle> onlyParentsSpec = LigneFonctionnelleSpecification.isLigneMereOrIndependante();
@@ -227,7 +233,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         Page<LigneFonctionnelle> ligneFonctionnellesPage = ligneFonctionnelleRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
-        logger.info("Retrieved {} ligne(s) fonctionnelle(s) Mère/Indépendante out of {} total (Page {}/{})",
+        log.info("Retrieved {} ligne(s) fonctionnelle(s) Mère/Indépendante out of {} total (Page {}/{})",
                 ligneFonctionnellesPage.getNumberOfElements(),
                 ligneFonctionnellesPage.getTotalElements(),
                 ligneFonctionnellesPage.getNumber() + 1,
@@ -239,14 +245,15 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     // 4. READ (PAGINATION FILTRÉE PAR BANQUE - MÈRES/INDÉPENDANTES UNIQUEMENT)
     // =========================================================================================
 
+    @Override
     @Transactional(readOnly = true)
     public Page<LigneFonctionnelleResponse> getPaginatedLignesFonctionnellesByBanqueId(Long banqueId, LigneFonctionnelleSearchCriteria criteria, Pageable pageable) {
-        logger.info("Fetching paginated lignes fonctionnelles for banque ID: {} - Page: {}, Size: {}",
+        log.info("Fetching paginated lignes fonctionnelles for banque ID: {} - Page: {}, Size: {}",
                 banqueId, pageable.getPageNumber(), pageable.getPageSize());
-        logger.debug("Search criteria for banque {}: {}", banqueId, criteria);
+        log.debug("Search criteria for banque {}: {}", banqueId, criteria);
 
         if (!banqueRepository.existsById(banqueId)) {
-            logger.error("Banque not found with ID: {} while fetching lignes fonctionnelles", banqueId);
+            log.error("Banque not found with ID: {} while fetching lignes fonctionnelles", banqueId);
             throw new ResourceNotFoundException("Banque non trouvée avec l'ID: " + banqueId + ". Impossible de récupérer les lignes fonctionnelles.");
         }
 
@@ -258,7 +265,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         Page<LigneFonctionnelle> ligneFonctionnellesPage = ligneFonctionnelleRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
-        logger.info("Retrieved {} ligne(s) Mère/Indépendante for banque ID: {} out of {} total (Page {}/{})",
+        log.info("Retrieved {} ligne(s) Mère/Indépendante for banque ID: {} out of {} total (Page {}/{})",
                 ligneFonctionnellesPage.getNumberOfElements(),
                 banqueId,
                 ligneFonctionnellesPage.getTotalElements(),
@@ -268,19 +275,20 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         return ligneFonctionnellesPage.map(ligneFonctionnelleMapper::toDto);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Page<LigneFonctionnelleResponse> getPaginatedLignesFonctionnellesByMarcheId(
             Long marcheId,
             LigneFonctionnelleSearchCriteria criteria,
             Pageable pageable) {
 
-        logger.info("Fetching paginated lignes fonctionnelles for marche ID: {} - Page: {}, Size: {}",
+        log.info("Fetching paginated lignes fonctionnelles for marche ID: {} - Page: {}, Size: {}",
                 marcheId, pageable.getPageNumber(), pageable.getPageSize());
-        logger.debug("Search criteria for marche {}: {}", marcheId, criteria);
+        log.debug("Search criteria for marche {}: {}", marcheId, criteria);
 
         // Vérifier que le marché existe
         if (!marcheRepository.existsById(marcheId)) {
-            logger.error("Marche not found with ID: {} while fetching lignes fonctionnelles", marcheId);
+            log.error("Marche not found with ID: {} while fetching lignes fonctionnelles", marcheId);
             throw new ResourceNotFoundException("Marché non trouvé avec l'ID: " + marcheId + ". Impossible de récupérer les lignes fonctionnelles.");
         }
 
@@ -296,7 +304,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         Page<LigneFonctionnelle> ligneFonctionnellesPage = ligneFonctionnelleRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
-        logger.info("Retrieved {} ligne(s) Mère/Indépendante for marche ID: {} out of {} total (Page {}/{})",
+        log.info("Retrieved {} ligne(s) Mère/Indépendante for marche ID: {} out of {} total (Page {}/{})",
                 ligneFonctionnellesPage.getNumberOfElements(),
                 marcheId,
                 ligneFonctionnellesPage.getTotalElements(),
@@ -308,21 +316,23 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     // =========================================================================================
     // 5. UPDATE (LIGNE MÈRE/INDÉPENDANTE)
     // =========================================================================================
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = LigneFonctionnelle.class)
     public LigneFonctionnelleResponse updateLigneFonctionnelle(Long id, LigneFonctionnelleRequest request) {
 
-        logger.info("Updating ligne fonctionnelle ID: {} - New plafond: {}, New taux: {}",
+        log.info("Updating ligne fonctionnelle ID: {} - New plafond: {}, New taux: {}",
                 id, request.getPlafond(), request.getTaux());
-        logger.debug("Full update request for ID {}: {}", id, request);
+        log.debug("Full update request for ID {}: {}", id, request);
 
         // 1. Récupération de la ligne existante
         LigneFonctionnelle existingLigneFonctionnelle = ligneFonctionnelleRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.error("Ligne Fonctionnelle not found with ID: {} for update", id);
+                    log.error("Ligne Fonctionnelle not found with ID: {} for update", id);
                     return new ResourceNotFoundException("Ligne Fonctionnelle non trouvée avec l'ID: " + id);
                 });
 
-        logger.debug("Found existing ligne fonctionnelle: ID {}, Current plafond: {}, Current marchés: [{}], Has {} sous-ligne(s)",
+        log.debug("Found existing ligne fonctionnelle: ID {}, Current plafond: {}, Current marchés: [{}], Has {} sous-ligne(s)",
                 existingLigneFonctionnelle.getId(),
                 existingLigneFonctionnelle.getPlafond(),
                 existingLigneFonctionnelle.getMarches().stream().map(Marche::getNumero).collect(Collectors.joining(", ")),
@@ -334,14 +344,14 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         // 3. Récupération et validation de la banque cible
         Banque targetBanque = banqueRepository.findById(request.getBanqueId())
                 .orElseThrow(() -> {
-                    logger.error("Target banque not found with ID: {}", request.getBanqueId());
+                    log.error("Target banque not found with ID: {}", request.getBanqueId());
                     return new ResourceNotFoundException("Banque non trouvée avec l'ID: " + request.getBanqueId());
                 });
 
         // 4. Récupération et validation de la nature cible
         NatureLigneFonctionnelle targetNature = natureLigneFonctionnelleRepository.findById(request.getNatureLigneFonctionnelleId())
                 .orElseThrow(() -> {
-                    logger.error("Target nature not found with ID: {}", request.getNatureLigneFonctionnelleId());
+                    log.error("Target nature not found with ID: {}", request.getNatureLigneFonctionnelleId());
                     return new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + request.getNatureLigneFonctionnelleId());
                 });
 
@@ -352,22 +362,22 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         List<Marche> targetMarches = validateAndGetMarches(request.getMarcheIds(), request.getBanqueId());
 
         if (!targetMarches.isEmpty()) {
-            logger.debug("Target marchés: [{}]",
+            log.debug("Target marchés: [{}]",
                     targetMarches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
         } else {
-            logger.debug("No target marche - ligne will be/remain general");
+            log.debug("No target marche - ligne will be/remain general");
         }
 
         // 6. Validation pour les lignes mères
         if (existingLigneFonctionnelle.getSousLignes() != null && !existingLigneFonctionnelle.getSousLignes().isEmpty()) {
-            logger.debug("Ligne mère has {} sous-ligne(s), validating nature",
+            log.debug("Ligne mère has {} sous-ligne(s), validating nature",
                     existingLigneFonctionnelle.getSousLignes().size());
             validateNatureForMere(targetNature);
         }
 
         // 7. Vérification des doublons si clé modifiée (banque, nature OU marchés)
         if (existingLigneFonctionnelle.isActif() && hasKeyChanged(existingLigneFonctionnelle, targetBanque, targetNature, targetMarches)) {
-            logger.debug("Key changed (banque, nature, or marchés), checking for duplicate active lines");
+            log.debug("Key changed (banque, nature, or marchés), checking for duplicate active lines");
             avoidDuplicateActifLinesForUpdate(id, targetBanque, targetNature, targetMarches);
         }
 
@@ -382,7 +392,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         // 9. Propagation des propriétés héritées aux sous-lignes
         if (existingLigneFonctionnelle.getSousLignes() != null && !existingLigneFonctionnelle.getSousLignes().isEmpty()) {
-            logger.debug("Propagating inherited properties to {} sous-ligne(s)",
+            log.debug("Propagating inherited properties to {} sous-ligne(s)",
                     existingLigneFonctionnelle.getSousLignes().size());
             for (LigneFonctionnelle sousLigne : existingLigneFonctionnelle.getSousLignes()) {
                 sousLigne.setTaux(existingLigneFonctionnelle.getTaux());
@@ -395,7 +405,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         // 10. Sauvegarde
         LigneFonctionnelle updatedLigneFonctionnelle = ligneFonctionnelleRepository.save(existingLigneFonctionnelle);
-        logger.info("Successfully updated ligne fonctionnelle ID: {}", id);
+        log.info("Successfully updated ligne fonctionnelle ID: {}", id);
 
         return ligneFonctionnelleMapper.toDto(updatedLigneFonctionnelle);
     }
@@ -405,20 +415,22 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     // 6. MANAGE SOUS-LIGNES (CRUD sur la collection d'enfants)
     // =========================================================================================
 
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = LigneFonctionnelle.class)
     public LigneFonctionnelleResponse manageSousLignes(Long ligneMereId, List<SousLigneRequestDto> sousLignesRequests) {
-        logger.info("Managing sous-lignes for ligne mère ID: {} - {} sous-ligne(s) in request",
+        log.info("Managing sous-lignes for ligne mère ID: {} - {} sous-ligne(s) in request",
                 ligneMereId, sousLignesRequests.size());
-        logger.debug("Sous-lignes requests: {}", sousLignesRequests);
+        log.debug("Sous-lignes requests: {}", sousLignesRequests);
 
         LigneFonctionnelle ligneMere = ligneFonctionnelleRepository.findById(ligneMereId)
                 .orElseThrow(() -> {
-                    logger.error("Ligne Mère not found with ID: {}", ligneMereId);
+                    log.error("Ligne Mère not found with ID: {}", ligneMereId);
                     return new ResourceNotFoundException("Ligne Mère non trouvée avec l'ID: " + ligneMereId);
                 });
 
         if (ligneMere.getLigneMere() != null) {
-            logger.error("ID {} corresponds to a sous-ligne, cannot manage children", ligneMereId);
+            log.error("ID {} corresponds to a sous-ligne, cannot manage children", ligneMereId);
             throw new IllegalArgumentException("L'ID fourni correspond à une Sous-ligne. Seule une Ligne Mère peut gérer ses enfants.");
         }
 
@@ -427,7 +439,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         Map<Long, LigneFonctionnelle> existingSousLignesMap = ligneMere.getSousLignes().stream()
                 .collect(Collectors.toMap(LigneFonctionnelle::getId, Function.identity()));
 
-        logger.debug("Existing sous-lignes count: {}", existingSousLignesMap.size());
+        log.debug("Existing sous-lignes count: {}", existingSousLignesMap.size());
 
         List<LigneFonctionnelle> updatedSousLignes = new ArrayList<>();
 
@@ -446,15 +458,15 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
             NatureLigneFonctionnelle natureSousLigne = natureLigneFonctionnelleRepository.findById(sousLigneRequest.getNatureLigneFonctionnelleId())
                     .orElseThrow(() -> {
-                        logger.error("Nature for sous-ligne not found with ID: {}", sousLigneRequest.getNatureLigneFonctionnelleId());
+                        log.error("Nature for sous-ligne not found with ID: {}", sousLigneRequest.getNatureLigneFonctionnelleId());
                         return new ResourceNotFoundException("NatureLigneFonctionnelle pour Sous-ligne non trouvée avec l'ID: " + sousLigneRequest.getNatureLigneFonctionnelleId());
                     });
 
             if (sousLigneRequest.getId() != null) {
-                logger.debug("Updating existing sous-ligne ID: {}", sousLigneRequest.getId());
+                log.debug("Updating existing sous-ligne ID: {}", sousLigneRequest.getId());
                 currentSousLigne = existingSousLignesMap.get(sousLigneRequest.getId());
                 if (currentSousLigne == null) {
-                    logger.error("Sous-ligne ID {} not found or doesn't belong to ligne mère {}", sousLigneRequest.getId(), ligneMereId);
+                    log.error("Sous-ligne ID {} not found or doesn't belong to ligne mère {}", sousLigneRequest.getId(), ligneMereId);
                     throw new ResourceNotFoundException("Sous-ligne non trouvée ou n'appartient pas à la ligne Mère: " + sousLigneRequest.getId());
                 }
 
@@ -464,7 +476,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                 );
                 updateCount++;
             } else {
-                logger.debug("Creating new sous-ligne with nature ID: {}, plafond: {}",
+                log.debug("Creating new sous-ligne with nature ID: {}, plafond: {}",
                         sousLigneRequest.getNatureLigneFonctionnelleId(), sousLigneRequest.getPlafond());
                 currentSousLigne = ligneFonctionnelleMapper.toSousLigneEntity(
                         sousLigneRequest,
@@ -478,32 +490,34 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         }
 
         int deleteCount = existingSousLignesMap.size() - updateCount;
-        logger.debug("Sous-lignes management summary - Creating: {}, Updating: {}, Deleting: {}",
+        log.debug("Sous-lignes management summary - Creating: {}, Updating: {}, Deleting: {}",
                 createCount, updateCount, deleteCount);
 
         ligneMere.getSousLignes().clear();
         ligneMere.getSousLignes().addAll(updatedSousLignes);
 
         LigneFonctionnelle updatedLigneMere = ligneFonctionnelleRepository.save(ligneMere);
-        logger.info("Successfully managed sous-lignes for ligne mère ID: {} - Total persisted: {}",
+        log.info("Successfully managed sous-lignes for ligne mère ID: {} - Total persisted: {}",
                 ligneMereId, updatedSousLignes.size());
 
         return ligneFonctionnelleMapper.toDto(updatedLigneMere);
     }
 
 
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = LigneFonctionnelle.class)
     public void deactivateLigneFonctionnelle(Long ligneId) {
-        logger.info("Attempting to deactivate ligne fonctionnelle ID: {}", ligneId);
+        log.info("Attempting to deactivate ligne fonctionnelle ID: {}", ligneId);
 
         LigneFonctionnelle ligneToDeactivate = ligneFonctionnelleRepository.findById(ligneId)
                 .orElseThrow(() -> {
-                    logger.error("Ligne Fonctionnelle not found with ID: {} for deactivation", ligneId);
+                    log.error("Ligne Fonctionnelle not found with ID: {} for deactivation", ligneId);
                     return new ResourceNotFoundException("Aucune Ligne Fonctionnelle avec l'ID: " + ligneId);
                 });
 
         if (ligneToDeactivate.getLigneMere() != null) {
-            logger.error("Cannot deactivate sous-ligne directly - ID: {}, Ligne mère ID: {}",
+            log.error("Cannot deactivate sous-ligne directly - ID: {}, Ligne mère ID: {}",
                     ligneId, ligneToDeactivate.getLigneMere().getId());
             throw new IllegalArgumentException(
                     "La désactivation directe des Sous-lignes n'est pas autorisée. Veuillez désactiver la Ligne Mère (ID: " + ligneToDeactivate.getLigneMere().getId() + ") pour affecter tous les enfants."
@@ -511,12 +525,12 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         }
 
         if (!ligneToDeactivate.isActif()) {
-            logger.info("Ligne fonctionnelle ID: {} is already inactive, no action needed", ligneId);
+            log.info("Ligne fonctionnelle ID: {} is already inactive, no action needed", ligneId);
             return;
         }
 
         ligneToDeactivate.setActif(false);
-        logger.debug("Deactivated ligne Mère/Indépendante ID: {}", ligneId);
+        log.debug("Deactivated ligne Mère/Indépendante ID: {}", ligneId);
 
         if (ligneToDeactivate.getSousLignes() != null && !ligneToDeactivate.getSousLignes().isEmpty()) {
             int deactivatedCount = 0;
@@ -526,25 +540,27 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                     deactivatedCount++;
                 }
             }
-            logger.debug("Deactivated {} sous-ligne(s) in cascade", deactivatedCount);
+            log.debug("Deactivated {} sous-ligne(s) in cascade", deactivatedCount);
         }
 
         ligneFonctionnelleRepository.save(ligneToDeactivate);
-        logger.info("Successfully deactivated ligne fonctionnelle ID: {} and its sous-lignes", ligneId);
+        log.info("Successfully deactivated ligne fonctionnelle ID: {} and its sous-lignes", ligneId);
     }
 
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = LigneFonctionnelle.class)
     public void deleteLigneFonctionnelle(Long id) {
-        logger.info("Attempting to delete ligne fonctionnelle ID: {}", id);
+        log.info("Attempting to delete ligne fonctionnelle ID: {}", id);
 
         LigneFonctionnelle ligneToDelete = ligneFonctionnelleRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.error("Ligne Fonctionnelle not found with ID: {} for deletion", id);
+                    log.error("Ligne Fonctionnelle not found with ID: {} for deletion", id);
                     return new ResourceNotFoundException("Ligne Fonctionnelle non trouvée avec l'ID: " + id);
                 });
 
         if (ligneToDelete.getLigneMere() != null) {
-            logger.error("Cannot delete sous-ligne directly - ID: {}, Ligne mère ID: {}",
+            log.error("Cannot delete sous-ligne directly - ID: {}, Ligne mère ID: {}",
                     id, ligneToDelete.getLigneMere().getId());
             throw new IllegalArgumentException(
                     "La suppression directe des Sous-lignes n'est pas autorisée. Veuillez supprimer la Ligne Mère (ID: " + ligneToDelete.getLigneMere().getId() + ") pour supprimer tous les enfants en cascade."
@@ -552,13 +568,13 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         }
 
         int sousLignesCount = ligneToDelete.getSousLignes() != null ? ligneToDelete.getSousLignes().size() : 0;
-        logger.debug("Deleting ligne mère with {} sous-ligne(s)", sousLignesCount);
+        log.debug("Deleting ligne mère with {} sous-ligne(s)", sousLignesCount);
 
         try {
             ligneFonctionnelleRepository.delete(ligneToDelete);
-            logger.info("Successfully deleted ligne fonctionnelle ID: {} and {} sous-ligne(s)", id, sousLignesCount);
+            log.info("Successfully deleted ligne fonctionnelle ID: {} and {} sous-ligne(s)", id, sousLignesCount);
         } catch (Exception e) {
-            logger.error("Failed to delete ligne fonctionnelle ID: {}", id, e);
+            log.error("Failed to delete ligne fonctionnelle ID: {}", id, e);
             throw new RuntimeException("Échec de la suppression de la ligne fonctionnelle et de ses dépendances.", e);
         }
     }
@@ -568,29 +584,30 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     // 9. CHART HISTORY
     // =========================================================================================
 
+    @Override
     @Transactional(readOnly = true)
     public LigneFonctionnelleChartData getHistoricalChartData(Long banqueId, Long natureLigneFonctionnelleId) {
-        logger.info("Fetching historical chart data - Banque ID: {}, Nature ID: {}", banqueId, natureLigneFonctionnelleId);
+        log.info("Fetching historical chart data - Banque ID: {}, Nature ID: {}", banqueId, natureLigneFonctionnelleId);
 
         if (!banqueRepository.existsById(banqueId)) {
-            logger.error("Banque not found with ID: {} for historical chart data", banqueId);
+            log.error("Banque not found with ID: {} for historical chart data", banqueId);
             throw new ResourceNotFoundException("Banque non trouvée avec l'ID: " + banqueId);
         }
 
         natureLigneFonctionnelleRepository.findById(natureLigneFonctionnelleId)
                 .orElseThrow(() -> {
-                    logger.error("NatureLigneFonctionnelle not found with ID: {} for historical chart data", natureLigneFonctionnelleId);
+                    log.error("NatureLigneFonctionnelle not found with ID: {} for historical chart data", natureLigneFonctionnelleId);
                     return new ResourceNotFoundException("NatureLigneFonctionnelle non trouvée avec l'ID: " + natureLigneFonctionnelleId);
                 });
 
         List<LigneFonctionnelle> historicalLines = ligneFonctionnelleRepository.findByBanqueIdAndNatureLigneFonctionnelleIdOrderByDateDepartAsc(banqueId, natureLigneFonctionnelleId);
 
         if (historicalLines.isEmpty()) {
-            logger.info("No historical lines found for banque ID: {} and nature ID: {}", banqueId, natureLigneFonctionnelleId);
+            log.info("No historical lines found for banque ID: {} and nature ID: {}", banqueId, natureLigneFonctionnelleId);
             return new LigneFonctionnelleChartData(new ArrayList<>(), new ArrayList<>());
         }
 
-        logger.debug("Found {} historical ligne(s) for chart", historicalLines.size());
+        log.debug("Found {} historical ligne(s) for chart", historicalLines.size());
 
         List<String> labels = historicalLines.stream()
                 .map(line -> String.valueOf(line.getDateDepart().getYear()))
@@ -618,7 +635,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         datasets.add(tauxDataset);
         datasets.add(plafondDataset);
 
-        logger.info("Successfully prepared historical chart data - {} labels, {} taux data points, {} plafond data points",
+        log.info("Successfully prepared historical chart data - {} labels, {} taux data points, {} plafond data points",
                 labels.size(), tauxData.size(), plafondData.size());
 
         return new LigneFonctionnelleChartData(labels, datasets);
@@ -637,7 +654,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
      */
     private void validatePorteeForLigneGenerale(NatureLigneFonctionnelle nature) {
         if (nature.getPortee() == PorteeNature.SPECIFIQUE) {
-            logger.warn("Portée invalide pour ligne générale — nature '{}' a portée SPECIFIQUE", nature.getLabel());
+            log.warn("Portée invalide pour ligne générale — nature '{}' a portée SPECIFIQUE", nature.getLabel());
             throw new IllegalArgumentException(
                     "La nature '" + nature.getLabel() + "' est réservée aux lignes spécifiques et ne peut pas être utilisée dans une ligne générale."
             );
@@ -646,7 +663,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
     private void validateNatureForMere(NatureLigneFonctionnelle nature) {
         if (!CAUTION_ADMINISTRATIVE_LABEL.equals(nature.getLabel())) {
-            logger.warn("Validation de nature échouée: La nature '{}' ne peut pas être une ligne mère.", nature.getLabel());
+            log.warn("Validation de nature échouée: La nature '{}' ne peut pas être une ligne mère.", nature.getLabel());
             throw new IllegalArgumentException(
                     "Seule la nature ayant le label '" + CAUTION_ADMINISTRATIVE_LABEL + "' est autorisée à être une Ligne Mère (contenir des sous-lignes)."
             );
@@ -681,30 +698,31 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
 
 
+    @Override
     @Transactional(readOnly = true)
     public AgregatedSuiviePrefiLigneResponseDto getSuiviePrefiLigneResponse(Long lineId, Pageable pageable) {
-        logger.info("Récupération du suivi de préfinancement pour la ligne ID: {}", lineId);
+        log.info("Récupération du suivi de préfinancement pour la ligne ID: {}", lineId);
 
         LigneFonctionnelle Line = ligneFonctionnelleRepository.findById(lineId)
                 .orElseThrow(() -> {
-                    logger.error("Ligne fonctionnelle générale non trouvée avec l'ID: {}", lineId);
+                    log.error("Ligne fonctionnelle générale non trouvée avec l'ID: {}", lineId);
                     return new ResourceNotFoundException("Ligne Fonctionnelle générale non trouvée avec l'ID: " + lineId);
                 });
 
         List<Marche> marches = Line.getMarches();
 
         if (marches == null || marches.isEmpty()) {
-            logger.error("Aucun marché associé à la ligne ID: {}", lineId);
+            log.error("Aucun marché associé à la ligne ID: {}", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle générale avec l'ID: " + lineId);
         }
 
-        logger.debug("{} marché(s) associé(s): [{}]", marches.size(),
+        log.debug("{} marché(s) associé(s): [{}]", marches.size(),
                 marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
 
         List<Prefinancement> allPrefi = marches.stream()
                 .flatMap(m -> prefinancementRepository.findByMarche(m).stream())
                 .collect(Collectors.toList());
-        logger.debug("{} préfinancements trouvés", allPrefi.size());
+        log.debug("{} préfinancements trouvés", allPrefi.size());
 
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
@@ -715,13 +733,13 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         }
         BigDecimal reste = totalCredit.subtract(totalDebit);
 
-        logger.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
+        log.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
         List<Long> marcheIds = marches.stream().map(Marche::getId).collect(Collectors.toList());
         Specification<Prefinancement> spec = (root, query, cb) -> root.get("marche").get("id").in(marcheIds);
 
         Page<Prefinancement> prefiPage = prefinancementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-        logger.debug("{} préfinancements récupérés pour la page courante", prefiPage.getNumberOfElements());
+        log.debug("{} préfinancements récupérés pour la page courante", prefiPage.getNumberOfElements());
 
         Page<SuiviePrefiLigneResponseDto> pageOfDtos = prefiPage.map(prefinancementMapper::toSuiviePrefiLigneResponseDto);
 
@@ -737,33 +755,34 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         aggregatedDto.setReste(reste);
         aggregatedDto.setPage(pageOfDtos);
 
-        logger.info("Suivi de préfinancement récupéré avec succès pour la ligne ID: {}", lineId);
+        log.info("Suivi de préfinancement récupéré avec succès pour la ligne ID: {}", lineId);
         return aggregatedDto;
     }
 
+    @Override
     @Transactional(readOnly = true)
     public AgregatedSuivieDcLigneResponseDto getSuivieDcLigneResponse(Long lineId, Pageable pageable) {
-        logger.info("Récupération du suivi de droit constaté pour la ligne ID: {}", lineId);
+        log.info("Récupération du suivi de droit constaté pour la ligne ID: {}", lineId);
 
         LigneFonctionnelle line = ligneFonctionnelleRepository.findById(lineId)
                 .orElseThrow(() -> {
-                    logger.error("Ligne fonctionnelle général non trouvée avec l'ID: {}", lineId);
+                    log.error("Ligne fonctionnelle général non trouvée avec l'ID: {}", lineId);
                     return new ResourceNotFoundException("Ligne Fonctionnelle général non trouvée avec l'ID: " + lineId);
                 });
 
         List<Marche> marches = line.getMarches();
         if (marches == null || marches.isEmpty()) {
-            logger.error("Aucun marché associé à la ligne ID: {}", lineId);
+            log.error("Aucun marché associé à la ligne ID: {}", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
         }
 
-        logger.debug("{} marché(s) associé(s): [{}]", marches.size(),
+        log.debug("{} marché(s) associé(s): [{}]", marches.size(),
                 marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
 
         List<DroitConstate> allDc = marches.stream()
                 .flatMap(m -> droitConstateRepository.findByMarche(m).stream())
                 .collect(Collectors.toList());
-        logger.debug("{} droits constatés trouvés", allDc.size());
+        log.debug("{} droits constatés trouvés", allDc.size());
 
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
@@ -775,13 +794,13 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         BigDecimal reste = totalCredit.subtract(totalDebit);
 
-        logger.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
+        log.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
         List<Long> marcheIds = marches.stream().map(Marche::getId).collect(Collectors.toList());
         Specification<DroitConstate> spec = (root, query, cb) -> root.get("marche").get("id").in(marcheIds);
         Page<DroitConstate> dcPage = droitConstateRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
-        logger.debug("{} droits constatés récupérés pour la page courante", dcPage.getNumberOfElements());
+        log.debug("{} droits constatés récupérés pour la page courante", dcPage.getNumberOfElements());
 
         Page<SuivieDcLigneResponseDto> pageOfDtos = dcPage.map(droitConstateMapper::toSuivieDcLigneResponseDto);
 
@@ -797,33 +816,34 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         aggregatedDto.setReste(reste);
         aggregatedDto.setPage(pageOfDtos);
 
-        logger.info("Suivi de droit constaté récupéré avec succès pour la ligne ID: {}", lineId);
+        log.info("Suivi de droit constaté récupéré avec succès pour la ligne ID: {}", lineId);
         return aggregatedDto;
     }
 
+    @Override
     @Transactional(readOnly = true)
     public AgregatedSuivieFactoringLigneResponseDto getSuivieFactoringLigneResponse(Long lineId, Pageable pageable) {
-        logger.info("Récupération du suivi de factoring pour la ligne ID: {}", lineId);
+        log.info("Récupération du suivi de factoring pour la ligne ID: {}", lineId);
 
         LigneFonctionnelle line = ligneFonctionnelleRepository.findById(lineId)
                 .orElseThrow(() -> {
-                    logger.error("Ligne fonctionnelle général non trouvée avec l'ID: {}", lineId);
+                    log.error("Ligne fonctionnelle général non trouvée avec l'ID: {}", lineId);
                     return new ResourceNotFoundException("Ligne Fonctionnelle général non trouvée avec l'ID: " + lineId);
                 });
 
         List<Marche> marches = line.getMarches();
         if (marches == null || marches.isEmpty()) {
-            logger.error("Aucun marché associé à la ligne ID: {}", lineId);
+            log.error("Aucun marché associé à la ligne ID: {}", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
         }
 
-        logger.debug("{} marché(s) associé(s): [{}]", marches.size(),
+        log.debug("{} marché(s) associé(s): [{}]", marches.size(),
                 marches.stream().map(Marche::getNumero).collect(Collectors.joining(", ")));
 
         List<Factoring> allPaidFactoring = marches.stream()
                 .flatMap(m -> factoringRepository.findByMarche(m).stream())
                 .collect(Collectors.toList());
-        logger.debug("{} factorings trouvés", allPaidFactoring.size());
+        log.debug("{} factorings trouvés", allPaidFactoring.size());
 
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
@@ -833,13 +853,13 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         }
         BigDecimal reste = totalCredit.subtract(totalDebit);
 
-        logger.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
+        log.debug("Totaux calculés - Débit: {}, Crédit: {}, Reste: {}", totalDebit, totalCredit, reste);
 
         List<Long> marcheIds = marches.stream().map(Marche::getId).collect(Collectors.toList());
         Specification<Factoring> spec = (root, query, cb) -> root.get("marche").get("id").in(marcheIds);
         Page<Factoring> factoringPage = factoringRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
-        logger.debug("{} factorings récupérés pour la page courante", factoringPage.getNumberOfElements());
+        log.debug("{} factorings récupérés pour la page courante", factoringPage.getNumberOfElements());
 
         Page<SuivieFactoringLineResponseDto> pageOfDtos = factoringPage.map(factoringMapper::toSuivieFactoringLigneResponseDto);
 
@@ -855,17 +875,18 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         aggregatedDto.setReste(reste);
         aggregatedDto.setPage(pageOfDtos);
 
-        logger.info("Suivi de factoring récupéré avec succès pour la ligne ID: {}", lineId);
+        log.info("Suivi de factoring récupéré avec succès pour la ligne ID: {}", lineId);
         return aggregatedDto;
     }
 
+    @Override
     @Transactional(readOnly = true)
     public AgregatedSuivieLcnLigneResponseDto getSuivieLcnLigneResponse(Long lineId, Pageable pageable) {
-        logger.info("Récupération du suivi LCN pour la ligne ID: {}", lineId);
+        log.info("Récupération du suivi LCN pour la ligne ID: {}", lineId);
 
         LigneFonctionnelle line = ligneFonctionnelleRepository.findById(lineId)
                 .orElseThrow(() -> {
-                    logger.error("Ligne fonctionnelle générale non trouvée avec l'ID: {}", lineId);
+                    log.error("Ligne fonctionnelle générale non trouvée avec l'ID: {}", lineId);
                     return new ResourceNotFoundException("Ligne Fonctionnelle générale non trouvée avec l'ID: " + lineId);
                 });
 
@@ -873,12 +894,12 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         Specification<Lcn> spec = Specification.where(LcnSpecification.hasLigneFonctionnelle(lineId));
 
         List<Lcn> allLcn = lcnRepository.findAll(spec);
-        logger.debug("{} LCN trouvés", allLcn.size());
+        log.debug("{} LCN trouvés", allLcn.size());
 
 
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
-        logger.debug("{} LCN récupérés pour la page courante", lcnPage.getNumberOfElements());
+        log.debug("{} LCN récupérés pour la page courante", lcnPage.getNumberOfElements());
 
         Page<LcnResponseDTO> pageOfDtos = lcnPage.map(LcnMapper::toDto);
 
@@ -887,13 +908,13 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         aggregatedDto.setTotal(allLcn.stream().map(Lcn::getMontant).reduce(BigDecimal.ZERO,BigDecimal::add));
         aggregatedDto.setPage(pageOfDtos);
 
-        logger.info("Suivi LCN récupéré avec succès pour la ligne ID: {}", lineId);
+        log.info("Suivi LCN récupéré avec succès pour la ligne ID: {}", lineId);
         return aggregatedDto;
     }
 
     private void validateDateRange(LocalDate dateDepart, LocalDate dateFin) {
         if (dateDepart != null && dateFin != null && dateFin.isBefore(dateDepart)) {
-            logger.warn("Validation de date échouée: dateFin ({}) est antérieure à dateDepart ({}).", dateFin, dateDepart);
+            log.warn("Validation de date échouée: dateFin ({}) est antérieure à dateDepart ({}).", dateFin, dateDepart);
             throw new IllegalArgumentException("La date de fin ne peut pas être antérieure à la date de départ.");
         }
     }
@@ -910,7 +931,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
             // Ligne générale sans marché
             ligneFonctionnelleRepository.findActiveGeneralLine(banque.getId(), nature.getId())
                     .ifPresent(existing -> {
-                        logger.warn("Duplicate active ligne générale - Banque: '{}', Nature: '{}'",
+                        log.warn("Duplicate active ligne générale - Banque: '{}', Nature: '{}'",
                                 banque.getNom(), nature.getLabel());
                         throw new DuplicateEntryException(
                                 "Une ligne fonctionnelle générale ACTIVE de type '" + nature.getLabel() +
@@ -923,7 +944,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                 checkNoConflictWithSpecificLine(marche, nature);
                 ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), nature.getId())
                         .ifPresent(existing -> {
-                            logger.warn("Duplicate active ligne pour le marché '{}', Nature: '{}'",
+                            log.warn("Duplicate active ligne pour le marché '{}', Nature: '{}'",
                                     marche.getNumero(), nature.getLabel());
                             throw new DuplicateEntryException(
                                     "Une ligne fonctionnelle ACTIVE de type '" + nature.getLabel() +
@@ -933,7 +954,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
             }
         }
 
-        logger.debug("No duplicate active ligne found - validation passed");
+        log.debug("No duplicate active ligne found - validation passed");
     }
 
     /**
@@ -946,20 +967,20 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
      */
     private List<Marche> validateAndGetMarches(List<Long> marcheIds, Long banqueId) {
         if (marcheIds == null || marcheIds.isEmpty()) {
-            logger.debug("Aucun marcheId fourni - ligne générale sans marché");
+            log.debug("Aucun marcheId fourni - ligne générale sans marché");
             return new ArrayList<>();
         }
 
         List<Marche> result = new ArrayList<>();
         for (Long marcheId : marcheIds) {
-            logger.debug("Validating marche ID: {} for banque ID: {}", marcheId, banqueId);
+            log.debug("Validating marche ID: {} for banque ID: {}", marcheId, banqueId);
             Marche marche = marcheRepository.findById(marcheId)
                     .orElseThrow(() -> {
-                        logger.error("Marche not found with ID: {}", marcheId);
+                        log.error("Marche not found with ID: {}", marcheId);
                         return new ResourceNotFoundException("Marché non trouvé avec l'ID: " + marcheId);
                     });
             if (!marche.getBanque().getId().equals(banqueId)) {
-                logger.error("Marche ID: {} appartient à la banque {}, pas à la banque {}",
+                log.error("Marche ID: {} appartient à la banque {}, pas à la banque {}",
                         marcheId, marche.getBanque().getId(), banqueId);
                 throw new IllegalArgumentException(
                         "Le marché '" + marche.getNumero() + "' n'appartient pas à la banque spécifiée. " +
@@ -968,7 +989,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
             }
             result.add(marche);
         }
-        logger.debug("{} marché(s) validé(s)", result.size());
+        log.debug("{} marché(s) validé(s)", result.size());
         return result;
     }
 
@@ -990,9 +1011,9 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                 .collect(Collectors.toSet());
         boolean marchesChanged = !existingMarcheIds.equals(newMarcheIds);
 
-        if (banqueChanged) logger.debug("Banque changed from ID {} to ID {}", existing.getBanque().getId(), newBanque.getId());
-        if (natureChanged) logger.debug("Nature changed from ID {} to ID {}", existing.getNatureLigneFonctionnelle().getId(), newNature.getId());
-        if (marchesChanged) logger.debug("Marchés changed from {} to {}", existingMarcheIds, newMarcheIds);
+        if (banqueChanged) log.debug("Banque changed from ID {} to ID {}", existing.getBanque().getId(), newBanque.getId());
+        if (natureChanged) log.debug("Nature changed from ID {} to ID {}", existing.getNatureLigneFonctionnelle().getId(), newNature.getId());
+        if (marchesChanged) log.debug("Marchés changed from {} to {}", existingMarcheIds, newMarcheIds);
 
         return banqueChanged || natureChanged || marchesChanged;
     }
@@ -1007,7 +1028,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
             ligneFonctionnelleRepository.findActiveGeneralLine(banque.getId(), nature.getId())
                     .ifPresent(existing -> {
                         if (!existing.getId().equals(currentId)) {
-                            logger.warn("Duplicate general active ligne during update - Banque: '{}', Nature: '{}', Existing ID: {}",
+                            log.warn("Duplicate general active ligne during update - Banque: '{}', Nature: '{}', Existing ID: {}",
                                     banque.getNom(), nature.getLabel(), existing.getId());
                             throw new DuplicateEntryException(
                                     "Une autre ligne fonctionnelle générale ACTIVE de type '" + nature.getLabel() +
@@ -1021,7 +1042,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                 ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), nature.getId())
                         .ifPresent(existing -> {
                             if (!existing.getId().equals(currentId)) {
-                                logger.warn("Duplicate marche-specific active ligne during update - Marche: '{}', Nature: '{}', Existing ID: {}",
+                                log.warn("Duplicate marche-specific active ligne during update - Marche: '{}', Nature: '{}', Existing ID: {}",
                                         marche.getNumero(), nature.getLabel(), existing.getId());
                                 throw new DuplicateEntryException(
                                         "Une autre ligne fonctionnelle ACTIVE de type '" + nature.getLabel() +
@@ -1032,7 +1053,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
             }
         }
 
-        logger.debug("No duplicate active ligne found for update - validation passed");
+        log.debug("No duplicate active ligne found for update - validation passed");
     }
 
     /**
@@ -1054,7 +1075,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
                 );
 
         existingSpecificLine.ifPresent(existing -> {
-            logger.error("Conflit détecté - Une LigneFonctionnelleSpecifique active existe déjà - Marché: '{}', Nature: '{}', ID: {}",
+            log.error("Conflit détecté - Une LigneFonctionnelleSpecifique active existe déjà - Marché: '{}', Nature: '{}', ID: {}",
                     marche.getNumero(), nature.getLabel(), existing.getId());
 
             throw new DuplicateEntryException(
@@ -1065,7 +1086,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
             );
         });
 
-        logger.debug("Aucun conflit avec les lignes spécifiques - validation réussie");
+        log.debug("Aucun conflit avec les lignes spécifiques - validation réussie");
     }
 
     @Override
@@ -1096,6 +1117,11 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     @Override
     public boolean hasActiveLignesForBanque(Long banqueId) {
         return ligneFonctionnelleRepository.existsByBanqueIdAndActifTrue(banqueId);
+    }
+
+    @Override
+    public boolean existsByNatureId(Long natureId) {
+        return ligneFonctionnelleRepository.existsByNatureLigneFonctionnelleId(natureId);
     }
 
 }

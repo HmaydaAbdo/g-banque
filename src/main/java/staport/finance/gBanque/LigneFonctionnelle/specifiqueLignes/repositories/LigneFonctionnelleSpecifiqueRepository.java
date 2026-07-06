@@ -29,4 +29,10 @@ public interface LigneFonctionnelleSpecifiqueRepository extends JpaRepository<Li
 
 
     Page<LigneFonctionnelleSpecifique> findAll(Specification<LigneFonctionnelleSpecifique> spec, Pageable pageable);
+
+    /**
+     * Vérifie l'existence d'au moins une ligne fonctionnelle spécifique référençant cette nature.
+     * Utilisé comme guard de suppression par {@code NatureLigneFonctionnelleService}.
+     */
+    boolean existsByNatureLigneFonctionnelleId(Long natureLigneFonctionnelleId);
 }

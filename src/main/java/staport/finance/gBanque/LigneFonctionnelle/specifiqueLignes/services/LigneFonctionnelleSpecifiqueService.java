@@ -20,6 +20,8 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.Lign
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.mappers.LigneFonctionnelleSpecifiqueMapper;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.specifications.LigneFonctionnelleSpecifiqueSpecification;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
 import staport.finance.gBanque.droitConstate.dtos.SuivieDcLigneResponseDto;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
@@ -50,7 +52,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class LigneFonctionnelleSpecifiqueService {
+public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleSpecifiqueService {
 
     private static final Logger log = LoggerFactory.getLogger(LigneFonctionnelleSpecifiqueService.class);
 
@@ -90,7 +92,9 @@ public class LigneFonctionnelleSpecifiqueService {
         this.factoringRepository = factoringRepository;
         this.factoringMapper = factoringMapper;
     }
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = LigneFonctionnelleSpecifique.class)
     public LigneFonctionnelleSpecifiqueResponse createLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifiqueRequest request) {
         log.info("Début de création d'une ligne fonctionnelle spécifique");
         log.debug("Détails de la requête: {}", request);
@@ -150,6 +154,7 @@ public class LigneFonctionnelleSpecifiqueService {
         return ligneFonctionnelleSpecifiqueMapper.toDto(savedEntity);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public LigneFonctionnelleSpecifiqueResponse getLigneFonctionnelleSpecifiqueById(Long id) {
         log.info("Récupération de la ligne fonctionnelle spécifique avec ID: {}", id);
@@ -168,6 +173,7 @@ public class LigneFonctionnelleSpecifiqueService {
         return ligneFonctionnelleSpecifiqueMapper.toDto(entity);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Page<LigneFonctionnelleSpecifiqueResponse> getLignesFonctionnellesSpecifiques(
             LigneFonctionnelleSpecifiqueSearchCriteria criteria, Pageable pageable) {
@@ -184,6 +190,7 @@ public class LigneFonctionnelleSpecifiqueService {
         return page.map(ligneFonctionnelleSpecifiqueMapper::toDto);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Page<LigneFonctionnelleSpecifiqueResponse> getLignesFonctionnellesSpecifiquesByBanqueId(
             Long banqueId, LigneFonctionnelleSpecifiqueSearchCriteria criteria, Pageable pageable) {
@@ -213,7 +220,9 @@ public class LigneFonctionnelleSpecifiqueService {
         return page.map(ligneFonctionnelleSpecifiqueMapper::toDto);
     }
 
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = LigneFonctionnelleSpecifique.class)
     public LigneFonctionnelleSpecifiqueResponse updateLigneFonctionnelleSpecifique(Long id, LigneFonctionnelleSpecifiqueRequest request) {
         log.info("Mise à jour de la ligne fonctionnelle spécifique ID: {}", id);
         log.debug("Nouvelles données: {}", request);
@@ -293,7 +302,9 @@ public class LigneFonctionnelleSpecifiqueService {
         return ligneFonctionnelleSpecifiqueMapper.toDto(updatedEntity);
     }
 
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = LigneFonctionnelleSpecifique.class)
     public void deactivateLigneFonctionnelleById(Long ligneId) throws Exception {
         log.info("Désactivation de la ligne fonctionnelle spécifique ID: {}", ligneId);
 
@@ -315,7 +326,9 @@ public class LigneFonctionnelleSpecifiqueService {
         log.info("Ligne fonctionnelle spécifique ID {} désactivée avec succès", ligneId);
     }
 
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = LigneFonctionnelleSpecifique.class)
     public void deleteLigneFonctionnelleSpecifique(Long id) {
         log.info("Suppression de la ligne fonctionnelle spécifique ID: {}", id);
 
@@ -339,6 +352,7 @@ public class LigneFonctionnelleSpecifiqueService {
         log.debug("Plage de dates valide");
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Page<LigneFonctionnelleSpecifiqueResponse> getLinesByMarche(Long marcheId, Pageable pageable) {
 
@@ -369,6 +383,7 @@ public class LigneFonctionnelleSpecifiqueService {
     }
 
 
+    @Override
     @Transactional(readOnly = true)
     public AgregatedSuiviePrefiLigneResponseDto getSuiviePrefiLigneResponse(Long lineId, Pageable pageable) {
         log.info("Récupération du suivi de préfinancement pour la ligne ID: {}", lineId);
@@ -422,6 +437,7 @@ public class LigneFonctionnelleSpecifiqueService {
         return aggregatedDto;
     }
 
+    @Override
     @Transactional(readOnly = true)
     public AgregatedSuivieDcLigneResponseDto getSuivieDcLigneResponse(Long lineId, Pageable pageable) {
         log.info("Récupération du suivi de droit constaté pour la ligne ID: {}", lineId);
@@ -475,6 +491,7 @@ public class LigneFonctionnelleSpecifiqueService {
         return aggregatedDto;
     }
 
+    @Override
     @Transactional(readOnly = true)
     public AgregatedSuivieFactoringLigneResponseDto getSuivieFactoringLigneResponse(Long lineId, Pageable pageable) {
         log.info("Récupération du suivi de factoring pour la ligne ID: {}", lineId);
@@ -545,6 +562,12 @@ public class LigneFonctionnelleSpecifiqueService {
                     "La nature '" + nature.getLabel() + "' est réservée aux lignes générales et ne peut pas être utilisée dans une ligne spécifique."
             );
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByNatureId(Long natureId) {
+        return ligneFonctionnelleSpecifiqueRepository.existsByNatureLigneFonctionnelleId(natureId);
     }
 
     private void checkNoConflictWithGeneralLine(Marche marche, NatureLigneFonctionnelle nature) {
