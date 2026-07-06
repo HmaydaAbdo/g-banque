@@ -1,6 +1,11 @@
 package staport.finance.gBanque.LigneFonctionnelle.generalLignes.mappers;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.AfterMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.springframework.beans.factory.annotation.Autowired;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleRequest;
@@ -19,215 +24,190 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Conversion Entity ↔ DTO pour LigneFonctionnelle. Aucune logique métier hormis le calcul
- * d'encours/solde, délégué à {@link EncoursCalculatorService} (service centralisé partagé
- * avec les lignes spécifiques).
- *
- * Conservé en {@code @Component} manuel plutôt que converti en interface MapStruct : la
- * construction du DTO dépend d'un appel de service (encours/solde) et d'une logique
- * conditionnelle de hiérarchie (ligne mère / sous-ligne) que MapStruct exprimerait moins
- * clairement qu'une méthode Java explicite (design-patterns.md — préférer la solution la plus
- * simple et la plus lisible).
+ * Mapper MapStruct pour LigneFonctionnelle. Classe abstraite nécessaire pour injecter
+ * {@link EncoursCalculatorService} (calcul encours/solde, service centralisé partagé avec les
+ * lignes spécifiques) et exprimer la logique de hiérarchie (ligne mère / sous-ligne) via des
+ * méthodes protégées, mirroring {@code EcheanceLeasingMapper}/{@code ContratLeasingMapper}
+ * (architecture.md — "Mapper : MapStruct abstract class").
+ * <p>
+ * {@code encours}/{@code solde} sont calculés une seule fois par {@link #toDto} puis transmis
+ * en paramètres à {@link #buildDto} — jamais recalculés deux fois pour la même conversion
+ * (performance.md, "ne jamais recalculer une valeur identique plusieurs fois").
  */
-@Component
-public class LigneFonctionnelleMapper {
+@Mapper(componentModel = "spring")
+public abstract class LigneFonctionnelleMapper {
 
-    private final EncoursCalculatorService encoursCalculatorService;
+    @Autowired
+    protected EncoursCalculatorService encoursCalculatorService;
 
-    public LigneFonctionnelleMapper(EncoursCalculatorService encoursCalculatorService) {
-        this.encoursCalculatorService = encoursCalculatorService;
-    }
+    // ── toEntity ─────────────────────────────────────────────────────────────
 
     /**
      * Converts a LigneFonctionnelleRequest DTO to a LigneFonctionnelle entity for creation (Mother or Independent).
      */
-    public LigneFonctionnelle toEntity(LigneFonctionnelleRequest request,
-                                       Banque banque,
-                                       NatureLigneFonctionnelle natureLigneFonctionnelle,
-                                       List<Marche> marches) {
-        if (request == null) {
-            return null;
-        }
+    @Mapping(source = "banque",                    target = "banque")
+    @Mapping(source = "natureLigneFonctionnelle",  target = "natureLigneFonctionnelle")
+    @Mapping(source = "request.plafond",           target = "plafond")
+    @Mapping(source = "request.taux",              target = "taux")
+    @Mapping(source = "request.dateDepart",        target = "dateDepart")
+    @Mapping(source = "request.dateFin",           target = "dateFin")
+    @Mapping(target = "marches",           ignore = true)
+    @Mapping(target = "sousLignes",        ignore = true)
+    @Mapping(target = "id",                ignore = true)
+    @Mapping(target = "dateCreation",      ignore = true)
+    @Mapping(target = "dateModification",  ignore = true)
+    @Mapping(target = "actif",             ignore = true)
+    @Mapping(target = "ligneMere",         ignore = true)
+    @Mapping(target = "lcns",              ignore = true)
+    public abstract LigneFonctionnelle toEntity(LigneFonctionnelleRequest request,
+                                                Banque banque,
+                                                NatureLigneFonctionnelle natureLigneFonctionnelle,
+                                                List<Marche> marches);
 
-        LigneFonctionnelle ligneFonctionnelle = new LigneFonctionnelle();
-
-        ligneFonctionnelle.setBanque(banque);
-        ligneFonctionnelle.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
+    @AfterMapping
+    protected void afterToEntity(List<Marche> marches, @MappingTarget LigneFonctionnelle ligneFonctionnelle) {
         ligneFonctionnelle.setMarches(marches != null ? new ArrayList<>(marches) : new ArrayList<>());
-        ligneFonctionnelle.setPlafond(request.plafond());
-        ligneFonctionnelle.setTaux(request.taux());
-        ligneFonctionnelle.setDateDepart(request.dateDepart());
-        ligneFonctionnelle.setDateFin(request.dateFin());
         ligneFonctionnelle.setSousLignes(new ArrayList<>());
-
-        return ligneFonctionnelle;
     }
+
+    // ── toSousLigneEntity ────────────────────────────────────────────────────
 
     /**
      * Helper : Converts a SousLigneRequestDto to a LigneFonctionnelle entity (Sub-line).
+     * Hérite banque/taux/dateDepart/dateFin de la ligne mère.
      */
-    public LigneFonctionnelle toSousLigneEntity(SousLigneRequestDto request,
-                                                LigneFonctionnelle ligneMere,
-                                                NatureLigneFonctionnelle natureSousLigne) {
+    @Mapping(source = "request.id",            target = "id")
+    @Mapping(source = "request.plafond",       target = "plafond")
+    @Mapping(source = "natureSousLigne",       target = "natureLigneFonctionnelle")
+    @Mapping(source = "ligneMere.banque",      target = "banque")
+    @Mapping(source = "ligneMere.taux",        target = "taux")
+    @Mapping(source = "ligneMere.dateDepart",  target = "dateDepart")
+    @Mapping(source = "ligneMere.dateFin",     target = "dateFin")
+    @Mapping(source = "ligneMere",             target = "ligneMere")
+    @Mapping(target = "marches",           ignore = true)
+    @Mapping(target = "sousLignes",        ignore = true)
+    @Mapping(target = "dateCreation",      ignore = true)
+    @Mapping(target = "dateModification",  ignore = true)
+    @Mapping(target = "actif",             ignore = true)
+    @Mapping(target = "lcns",              ignore = true)
+    public abstract LigneFonctionnelle toSousLigneEntity(SousLigneRequestDto request,
+                                                          LigneFonctionnelle ligneMere,
+                                                          NatureLigneFonctionnelle natureSousLigne);
 
-        if (request == null || ligneMere == null) {
-            return null;
-        }
-
-        LigneFonctionnelle sousLigne = new LigneFonctionnelle();
-
-        sousLigne.setId(request.id());
-        sousLigne.setPlafond(request.plafond());
-        sousLigne.setNatureLigneFonctionnelle(natureSousLigne);
-        sousLigne.setBanque(ligneMere.getBanque());
+    @AfterMapping
+    protected void afterToSousLigneEntity(LigneFonctionnelle ligneMere, @MappingTarget LigneFonctionnelle sousLigne) {
         sousLigne.setMarches(new ArrayList<>(ligneMere.getMarches()));
-        sousLigne.setTaux(ligneMere.getTaux());
-        sousLigne.setDateDepart(ligneMere.getDateDepart());
-        sousLigne.setDateFin(ligneMere.getDateFin());
-        sousLigne.setLigneMere(ligneMere);
-
-        return sousLigne;
     }
+
+    // ── toDto ────────────────────────────────────────────────────────────────
 
     /**
      * Converts a LigneFonctionnelle entity to a LigneFonctionnelleResponse DTO.
+     * Calcule encours/solde une seule fois puis délègue l'assemblage du DTO (record immuable)
+     * à {@link #buildDto}.
      */
     public LigneFonctionnelleResponse toDto(LigneFonctionnelle ligneFonctionnelle) {
-
         if (ligneFonctionnelle == null) {
             return null;
         }
-
-        Long banqueId = null;
-        String banqueNom = null;
-        if (ligneFonctionnelle.getBanque() != null) {
-            banqueId = ligneFonctionnelle.getBanque().getId();
-            banqueNom = ligneFonctionnelle.getBanque().getNom();
-        }
-
-        List<MarcheRefDto> marcheRefs = new ArrayList<>();
-        if (ligneFonctionnelle.getMarches() != null && !ligneFonctionnelle.getMarches().isEmpty()) {
-            marcheRefs = ligneFonctionnelle.getMarches().stream()
-                    .map(m -> new MarcheRefDto(m.getId(), m.getNumero(), m.getNom()))
-                    .collect(Collectors.toList());
-        }
-
-        Long natureId = null;
-        String natureLabel = null;
-        String natureDescription = null;
-        if (ligneFonctionnelle.getNatureLigneFonctionnelle() != null) {
-            natureId = ligneFonctionnelle.getNatureLigneFonctionnelle().getId();
-            natureLabel = ligneFonctionnelle.getNatureLigneFonctionnelle().getLabel();
-            natureDescription = ligneFonctionnelle.getNatureLigneFonctionnelle().getDescription();
-        }
-
         BigDecimal[] encoursSolde = computeEncoursAndSolde(ligneFonctionnelle);
-
-        // GESTION HIÉRARCHIQUE
-        final boolean estSousLigne = ligneFonctionnelle.getLigneMere() != null;
-        final boolean estLigneMere = ligneFonctionnelle.getSousLignes() != null && !ligneFonctionnelle.getSousLignes().isEmpty();
-
-        Long ligneMereId = estSousLigne ? ligneFonctionnelle.getLigneMere().getId() : null;
-
-        List<SousLigneResponseDto> sousLignesDto = new ArrayList<>();
-        if (estLigneMere) {
-            sousLignesDto = ligneFonctionnelle.getSousLignes().stream()
-                    .map(this::toSousLigneDto)
-                    .collect(Collectors.toList());
-        }
-
-        return new LigneFonctionnelleResponse(
-                ligneFonctionnelle.getId(),
-                banqueId,
-                banqueNom,
-                natureId,
-                natureLabel,
-                natureDescription,
-                marcheRefs,
-                ligneFonctionnelle.getPlafond(),
-                encoursSolde[0],
-                encoursSolde[1],
-                ligneFonctionnelle.getTaux(),
-                ligneFonctionnelle.getDateDepart(),
-                ligneFonctionnelle.getDateFin(),
-                ligneFonctionnelle.getDateCreation(),
-                ligneFonctionnelle.getDateModification(),
-                ligneFonctionnelle.isActif(),
-                isExpired(ligneFonctionnelle.getDateFin()),
-                ligneMereId,
-                sousLignesDto,
-                estSousLigne,
-                estLigneMere
-        );
+        return buildDto(ligneFonctionnelle, encoursSolde[0], encoursSolde[1]);
     }
+
+    @Mapping(source = "entity.banque.id",                                 target = "banqueId")
+    @Mapping(source = "entity.banque.nom",                                target = "banqueNom")
+    @Mapping(source = "entity.natureLigneFonctionnelle.id",               target = "natureLigneFonctionnelleId")
+    @Mapping(source = "entity.natureLigneFonctionnelle.label",            target = "natureLigneFonctionnelleLabel")
+    @Mapping(source = "entity.natureLigneFonctionnelle.description",      target = "natureLigneFonctionnelleDescription")
+    @Mapping(target = "marches",       expression = "java(computeMarcheRefs(entity))")
+    @Mapping(source = "encours",       target = "encours")
+    @Mapping(source = "solde",         target = "solde")
+    @Mapping(source = "entity.taux",           target = "taux")
+    @Mapping(source = "entity.dateDepart",     target = "dateDepart")
+    @Mapping(source = "entity.dateFin",        target = "dateFin")
+    @Mapping(source = "entity.dateCreation",     target = "dateCreation")
+    @Mapping(source = "entity.dateModification", target = "dateModification")
+    @Mapping(source = "entity.actif",          target = "actif")
+    @Mapping(target = "expired",       expression = "java(isExpired(entity.getDateFin()))")
+    @Mapping(target = "ligneMereId",   expression = "java(computeLigneMereId(entity))")
+    @Mapping(target = "sousLignes",    expression = "java(computeSousLignesDto(entity))")
+    @Mapping(target = "estSousLigne",  expression = "java(entity.getLigneMere() != null)")
+    @Mapping(target = "estLigneMere",  expression = "java(entity.getSousLignes() != null && !entity.getSousLignes().isEmpty())")
+    protected abstract LigneFonctionnelleResponse buildDto(LigneFonctionnelle entity, BigDecimal encours, BigDecimal solde);
 
     /**
      * Private helper method to convert a LigneFonctionnelle entity into the lightweight SousLigneResponseDto.
      */
-    private SousLigneResponseDto toSousLigneDto(LigneFonctionnelle sousLigne) {
-        if (sousLigne == null) {
-            return null;
-        }
+    @Mapping(source = "natureLigneFonctionnelle.id",    target = "natureLigneFonctionnelleId")
+    @Mapping(source = "natureLigneFonctionnelle.label", target = "natureLigneFonctionnelleLabel")
+    protected abstract SousLigneResponseDto toSousLigneDto(LigneFonctionnelle sousLigne);
 
-        Long natureId = null;
-        String natureLabel = null;
-        if (sousLigne.getNatureLigneFonctionnelle() != null) {
-            natureId = sousLigne.getNatureLigneFonctionnelle().getId();
-            natureLabel = sousLigne.getNatureLigneFonctionnelle().getLabel();
+    protected List<MarcheRefDto> computeMarcheRefs(LigneFonctionnelle ligneFonctionnelle) {
+        if (ligneFonctionnelle.getMarches() == null || ligneFonctionnelle.getMarches().isEmpty()) {
+            return new ArrayList<>();
         }
-
-        return new SousLigneResponseDto(
-                sousLigne.getId(),
-                sousLigne.getPlafond(),
-                natureId,
-                natureLabel,
-                sousLigne.isActif()
-        );
+        return ligneFonctionnelle.getMarches().stream()
+                .map(m -> new MarcheRefDto(m.getId(), m.getNumero(), m.getNom()))
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Updates an existing LigneFonctionnelle entity.
-     */
-    public void updateLigneFonctionnelleFromDto(LigneFonctionnelleRequest request,
-                                                LigneFonctionnelle ligneFonctionnelle,
-                                                Banque newBanque,
-                                                NatureLigneFonctionnelle newNature,
-                                                List<Marche> newMarches) {
-        if (request == null || ligneFonctionnelle == null) {
-            return;
-        }
-
-        ligneFonctionnelle.setPlafond(request.plafond());
-
-        if (request.taux() != null) {
-            ligneFonctionnelle.setTaux(request.taux());
-        }
-
-        if (request.dateDepart() != null) {
-            ligneFonctionnelle.setDateDepart(request.dateDepart());
-        }
-
-        if (request.dateFin() != null) {
-            ligneFonctionnelle.setDateFin(request.dateFin());
-        }
-
-        if (newBanque != null) {
-            ligneFonctionnelle.setBanque(newBanque);
-        }
-
-        if (newNature != null) {
-            ligneFonctionnelle.setNatureLigneFonctionnelle(newNature);
-        }
-
-        ligneFonctionnelle.setMarches(newMarches != null ? new ArrayList<>(newMarches) : new ArrayList<>());
+    protected Long computeLigneMereId(LigneFonctionnelle ligneFonctionnelle) {
+        return ligneFonctionnelle.getLigneMere() != null ? ligneFonctionnelle.getLigneMere().getId() : null;
     }
 
-    private boolean isExpired(LocalDate dateFin) {
+    protected List<SousLigneResponseDto> computeSousLignesDto(LigneFonctionnelle ligneFonctionnelle) {
+        boolean estLigneMere = ligneFonctionnelle.getSousLignes() != null && !ligneFonctionnelle.getSousLignes().isEmpty();
+        if (!estLigneMere) {
+            return new ArrayList<>();
+        }
+        return ligneFonctionnelle.getSousLignes().stream()
+                .map(this::toSousLigneDto)
+                .collect(Collectors.toList());
+    }
+
+    protected boolean isExpired(LocalDate dateFin) {
         if (dateFin == null) {
             return false;
         }
-        LocalDate now = LocalDate.now();
-        return now.isAfter(dateFin);
+        return LocalDate.now().isAfter(dateFin);
+    }
+
+    // ── updateEntityFromDto ──────────────────────────────────────────────────
+
+    /**
+     * Updates an existing LigneFonctionnelle entity. {@code taux}/{@code dateDepart}/{@code dateFin}
+     * ne sont mis à jour que si non-null dans la requête (mise à jour partielle) ; {@code banque}/
+     * {@code natureLigneFonctionnelle} ne sont mis à jour que si les entités résolues sont non-null.
+     * {@code plafond} est toujours écrasé (comportement d'origine).
+     */
+    @Mapping(source = "request.plafond",  target = "plafond")
+    @Mapping(source = "request.taux",             target = "taux",
+             nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(source = "request.dateDepart",       target = "dateDepart",
+             nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(source = "request.dateFin",          target = "dateFin",
+             nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(source = "newBanque",                target = "banque",
+             nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(source = "newNature",                target = "natureLigneFonctionnelle",
+             nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "marches",           ignore = true)
+    @Mapping(target = "id",                ignore = true)
+    @Mapping(target = "dateCreation",      ignore = true)
+    @Mapping(target = "dateModification",  ignore = true)
+    @Mapping(target = "actif",             ignore = true)
+    @Mapping(target = "ligneMere",         ignore = true)
+    @Mapping(target = "sousLignes",        ignore = true)
+    @Mapping(target = "lcns",              ignore = true)
+    public abstract void updateLigneFonctionnelleFromDto(LigneFonctionnelleRequest request,
+                                                          @MappingTarget LigneFonctionnelle ligneFonctionnelle,
+                                                          Banque newBanque,
+                                                          NatureLigneFonctionnelle newNature,
+                                                          List<Marche> newMarches);
+
+    @AfterMapping
+    protected void afterUpdateEntityFromDto(List<Marche> newMarches, @MappingTarget LigneFonctionnelle ligneFonctionnelle) {
+        ligneFonctionnelle.setMarches(newMarches != null ? new ArrayList<>(newMarches) : new ArrayList<>());
     }
 
     /**

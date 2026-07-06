@@ -3,8 +3,8 @@ package staport.finance.gBanque.LigneFonctionnelle.batch.specifique.processors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.LigneFonctionnelle.config.services.interfaces.ILigneFonctionnelleConfigService;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.LigneFonctionnelle.batch.specifique.dtos.ProcessedSpecificFunctionalLine;
 import staport.finance.gBanque.exception.customExceptions.ProcessingException;
@@ -25,11 +25,11 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
 
     private static final Logger log = LoggerFactory.getLogger(SpecificFunctionalLineProcessor.class);
 
-    @Value("${functional.line.expiration.alert.threshold.months}")
-    private long alertThresholdMonths;
+    private final ILigneFonctionnelleConfigService configService;
 
-    @Value("${functional.line.expiration.warning.threshold.months}")
-    private long warningThresholdMonths;
+    public SpecificFunctionalLineProcessor(ILigneFonctionnelleConfigService configService) {
+        this.configService = configService;
+    }
 
     @Override
     public ProcessedSpecificFunctionalLine process(LigneFonctionnelleSpecifique item) {
@@ -70,7 +70,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
             else {
                 long remainingMonths = ChronoUnit.MONTHS.between(currentProcessingTime, endDate);
 
-                if (remainingMonths <= alertThresholdMonths) {
+                if (remainingMonths <= configService.getAlertThresholdMonths()) {
                     notificationTitle = String.format("Ligne Spécifique %s - Expiration Imminente - Marché %s",
                             natureLabel, marcheNom);
                     notificationContent = buildUrgentNotification(item, marcheNom, banqueNom, endDate, remainingMonths);
@@ -79,7 +79,7 @@ public class SpecificFunctionalLineProcessor implements ItemProcessor<LigneFonct
                     log.warn("ALERT: LigneFonctionnelleSpecifique ID: {} expires in {} months",
                             item.getId(), remainingMonths);
                 }
-                else if (remainingMonths <= warningThresholdMonths) {
+                else if (remainingMonths <= configService.getWarningThresholdMonths()) {
                     notificationTitle = String.format("Ligne Spécifique %s - Expiration Prochaine - Marché %s",
                             natureLabel, marcheNom);
                     notificationContent = buildWarningNotification(item, marcheNom, banqueNom, endDate, remainingMonths);

@@ -4,8 +4,8 @@ package staport.finance.gBanque.LigneFonctionnelle.batch.general.processors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.LigneFonctionnelle.config.services.interfaces.ILigneFonctionnelleConfigService;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.batch.general.dtos.ProcessedFunctionalLine;
 import staport.finance.gBanque.exception.customExceptions.ProcessingException;
@@ -30,11 +30,11 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
 
     private static final Logger log = LoggerFactory.getLogger(FunctionalLineProcessor.class);
 
-    @Value("${functional.line.expiration.alert.threshold.months}")
-    private long alertThresholdMonths;
+    private final ILigneFonctionnelleConfigService configService;
 
-    @Value("${functional.line.expiration.warning.threshold.months}")
-    private long warningThresholdMonths;
+    public FunctionalLineProcessor(ILigneFonctionnelleConfigService configService) {
+        this.configService = configService;
+    }
 
     @Override
     public ProcessedFunctionalLine process(LigneFonctionnelle item) {
@@ -67,14 +67,14 @@ public class FunctionalLineProcessor implements ItemProcessor<LigneFonctionnelle
             else {
                 long remainingMonths = ChronoUnit.MONTHS.between(currentProcessingTime, endDate);
 
-                if (remainingMonths <= alertThresholdMonths) {
+                if (remainingMonths <= configService.getAlertThresholdMonths()) {
                     notificationTitle = "Ligne Fonctionnelle - Expiration Imminente";
                     notificationContent = buildUrgentNotification(item, endDate, remainingMonths);
                     notificationType = NotificationType.ALERT;
                     log.warn("ALERT: LigneFonctionnelle ID: {} expires in {} months",
                             item.getId(), remainingMonths);
                 }
-                else if (remainingMonths <= warningThresholdMonths) {
+                else if (remainingMonths <= configService.getWarningThresholdMonths()) {
                     notificationTitle = "Ligne Fonctionnelle - Expiration Prochaine";
                     notificationContent = buildWarningNotification(item, endDate, remainingMonths);
                     notificationType = NotificationType.WARNING;

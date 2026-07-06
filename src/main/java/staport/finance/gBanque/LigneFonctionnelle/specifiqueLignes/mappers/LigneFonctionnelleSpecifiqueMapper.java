@@ -1,6 +1,8 @@
 package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.mappers;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.EncoursCalculatorService;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueRequest;
@@ -14,137 +16,107 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Conversion Entity ↔ DTO pour LigneFonctionnelleSpecifique. Aucune logique métier hormis le calcul
- * d'encours/solde, délégué à {@link EncoursCalculatorService} (service centralisé partagé avec les
- * lignes générales).
- *
- * Conservé en {@code @Component} manuel plutôt que converti en interface MapStruct : la
- * construction du DTO dépend d'un appel de service (encours/solde), comme pour
- * {@code LigneFonctionnelleMapper} (générale) — design-patterns.md, préférer la solution la plus
- * simple et la plus lisible.
+ * Mapper MapStruct pour LigneFonctionnelleSpecifique. Classe abstraite nécessaire pour injecter
+ * {@link EncoursCalculatorService} (calcul encours/solde, service centralisé partagé avec les
+ * lignes générales), mirroring {@code LigneFonctionnelleMapper} (générale) et
+ * {@code EcheanceLeasingMapper}/{@code ContratLeasingMapper} (architecture.md — "Mapper : MapStruct
+ * abstract class").
+ * <p>
+ * {@code encours}/{@code solde} sont calculés une seule fois par {@link #toDto} puis transmis en
+ * paramètres à {@link #buildDto} — jamais recalculés deux fois pour la même conversion
+ * (performance.md, "ne jamais recalculer une valeur identique plusieurs fois").
  */
-@Component
-public class LigneFonctionnelleSpecifiqueMapper {
+@Mapper(componentModel = "spring")
+public abstract class LigneFonctionnelleSpecifiqueMapper {
 
-    private final EncoursCalculatorService encoursCalculatorService;
+    @Autowired
+    protected EncoursCalculatorService encoursCalculatorService;
 
-    public LigneFonctionnelleSpecifiqueMapper(EncoursCalculatorService encoursCalculatorService) {
-        this.encoursCalculatorService = encoursCalculatorService;
-    }
+    // ── toEntity ─────────────────────────────────────────────────────────────
 
     /**
      * Converts a LigneFonctionnelleSpecifiqueRequest DTO to a LigneFonctionnelleSpecifique entity.
      */
-    public LigneFonctionnelleSpecifique toEntity(
+    @Mapping(source = "nature",             target = "natureLigneFonctionnelle")
+    @Mapping(source = "request.plafond",    target = "plafond")
+    @Mapping(source = "request.taux",       target = "taux")
+    @Mapping(source = "request.dateDepart", target = "dateDepart")
+    @Mapping(source = "request.dateFin",    target = "dateFin")
+    @Mapping(target = "actif", expression = "java(request.actif() != null ? request.actif() : true)")
+    @Mapping(source = "marche",             target = "marche")
+    @Mapping(target = "id",                 ignore = true)
+    @Mapping(target = "dateCreation",       ignore = true)
+    @Mapping(target = "dateModification",   ignore = true)
+    public abstract LigneFonctionnelleSpecifique toEntity(
             LigneFonctionnelleSpecifiqueRequest request,
-            NatureLigneFonctionnelle natureLigneFonctionnelle,
-            Marche marche) {
+            NatureLigneFonctionnelle nature,
+            Marche marche);
 
-        if (request == null) {
-            return null;
-        }
-
-        LigneFonctionnelleSpecifique entity = new LigneFonctionnelleSpecifique();
-
-        entity.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
-        entity.setPlafond(request.plafond());
-        entity.setTaux(request.taux());
-        entity.setDateDepart(request.dateDepart());
-        entity.setDateFin(request.dateFin());
-        entity.setActif(request.actif() != null ? request.actif() : true);
-        entity.setMarche(marche);
-
-        return entity;
-    }
+    // ── toDto ────────────────────────────────────────────────────────────────
 
     /**
-     * Calcule automatiquement encours et solde
+     * Calcule automatiquement encours et solde.
      */
     public LigneFonctionnelleSpecifiqueResponse toDto(LigneFonctionnelleSpecifique entity) {
         if (entity == null) {
             return null;
         }
-
-        Long natureId = null;
-        String natureCode = null;
-        String natureLabel = null;
-        String natureDescription = null;
-        if (entity.getNatureLigneFonctionnelle() != null) {
-            natureId = entity.getNatureLigneFonctionnelle().getId();
-            natureCode = entity.getNatureLigneFonctionnelle().getCode();
-            natureLabel = entity.getNatureLigneFonctionnelle().getLabel();
-            natureDescription = entity.getNatureLigneFonctionnelle().getDescription();
-        }
-
-        Long marcheId = null;
-        String marcheNom = null;
-        String marcheNumero = null;
-        Long banqueId = null;
-        String banqueNom = null;
-        if (entity.getMarche() != null) {
-            marcheId = entity.getMarche().getId();
-            marcheNom = entity.getMarche().getNom();
-            marcheNumero = entity.getMarche().getNumero();
-            banqueId = entity.getMarche().getBanque().getId();
-            banqueNom = entity.getMarche().getBanque().getNom();
-        }
-
-        // CALCUL AUTOMATIQUE de l'encours et du solde
-        BigDecimal encours = null;
-        BigDecimal solde = null;
-        if (entity.getNatureLigneFonctionnelle() != null) {
-            List<Marche> marcheList = entity.getMarche() != null
-                    ? List.of(entity.getMarche())
-                    : Collections.emptyList();
-
-            encours = encoursCalculatorService.calculateEncours(
-                    entity.getId(),
-                    natureCode,
-                    marcheList,
-                    entity.getMarche() != null ? entity.getMarche().getBanque() : null,
-                    entity.getPlafond()
-            );
-
-            solde = encoursCalculatorService.calculateSolde(
-                    entity.getId(),
-                    natureCode,
-                    marcheList,
-                    entity.getPlafond(),
-                    encours
-            );
-        }
-
-        return new LigneFonctionnelleSpecifiqueResponse(
-                entity.getId(),
-                banqueId,
-                banqueNom,
-                natureId,
-                natureLabel,
-                natureDescription,
-                entity.getPlafond(),
-                encours,
-                solde,
-                entity.getTaux(),
-                entity.getDateDepart(),
-                entity.getDateFin(),
-                entity.getDateCreation(),
-                entity.getDateModification(),
-                entity.isActif(),
-                isExpired(entity.getDateFin()),
-                marcheId,
-                marcheNom,
-                marcheNumero
-        );
+        BigDecimal[] encoursSolde = computeEncoursAndSolde(entity);
+        return buildDto(entity, encoursSolde[0], encoursSolde[1]);
     }
 
+    @Mapping(source = "entity.natureLigneFonctionnelle.id",          target = "natureLigneFonctionnelleId")
+    @Mapping(source = "entity.natureLigneFonctionnelle.label",       target = "natureLigneFonctionnelleLabel")
+    @Mapping(source = "entity.natureLigneFonctionnelle.description", target = "natureLigneFonctionnelleDescription")
+    @Mapping(source = "entity.marche.banque.id",  target = "banqueId")
+    @Mapping(source = "entity.marche.banque.nom", target = "banqueNom")
+    @Mapping(source = "entity.marche.id",         target = "marcheId")
+    @Mapping(source = "entity.marche.nom",        target = "marcheNom")
+    @Mapping(source = "entity.marche.numero",     target = "marcheNumero")
+    @Mapping(source = "encours", target = "encours")
+    @Mapping(source = "solde",   target = "solde")
+    @Mapping(target = "expired", expression = "java(isExpired(entity.getDateFin()))")
+    protected abstract LigneFonctionnelleSpecifiqueResponse buildDto(
+            LigneFonctionnelleSpecifique entity, BigDecimal encours, BigDecimal solde);
 
-
-
-    private boolean isExpired(LocalDate dateFin) {
+    protected boolean isExpired(LocalDate dateFin) {
         if (dateFin == null) {
             return false;
         }
-        LocalDate now = LocalDate.now();
-        return now.isAfter(dateFin);
+        return LocalDate.now().isAfter(dateFin);
+    }
+
+    /**
+     * Utilise EncoursCalculatorService de manière centralisée.
+     *
+     * @return un tableau à deux éléments {@code [encours, solde]} (peuvent être {@code null}).
+     */
+    private BigDecimal[] computeEncoursAndSolde(LigneFonctionnelleSpecifique entity) {
+        if (entity.getNatureLigneFonctionnelle() == null) {
+            return new BigDecimal[] { null, null };
+        }
+
+        String natureCode = entity.getNatureLigneFonctionnelle().getCode();
+        List<Marche> marcheList = entity.getMarche() != null
+                ? List.of(entity.getMarche())
+                : Collections.emptyList();
+
+        BigDecimal encours = encoursCalculatorService.calculateEncours(
+                entity.getId(),
+                natureCode,
+                marcheList,
+                entity.getMarche() != null ? entity.getMarche().getBanque() : null,
+                entity.getPlafond()
+        );
+
+        BigDecimal solde = encoursCalculatorService.calculateSolde(
+                entity.getId(),
+                natureCode,
+                marcheList,
+                entity.getPlafond(),
+                encours
+        );
+
+        return new BigDecimal[] { encours, solde };
     }
 }
