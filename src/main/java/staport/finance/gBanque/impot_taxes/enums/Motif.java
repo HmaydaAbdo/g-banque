@@ -10,7 +10,8 @@ public enum Motif {
     ADII("Administration des Douanes et Impôts Indirects"),
     IS("Impôts sur les sociétés"),
     COMMUNAL("COMMUNAL"),
-    TVA_COMMISSION_CAUTION("TVA sur commission sur caution");
+    TVA_COMMISSION_CAUTION("TVA sur commission sur caution"),
+    TAXE_PROFESSIONNELLE("Taxe Professionnelle");
 
 
     private  final String motif;
