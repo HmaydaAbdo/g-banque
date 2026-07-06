@@ -22,39 +22,39 @@
                 List<Predicate> predicates = new ArrayList<>();
                 LocalDate now = LocalDate.now();
                 // Search by Banque ID
-                if (criteria.getBanqueId() != null) {
-                    predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), criteria.getBanqueId()));
+                if (criteria.banqueId() != null) {
+                    predicates.add(criteriaBuilder.equal(root.get("banque").get("id"), criteria.banqueId()));
                 }
 
                 // Search by NatureLigneFonctionnelle ID
-                if (criteria.getNatureLigneFonctionnelleId() != null) {
-                    predicates.add(criteriaBuilder.equal(root.get("natureLigneFonctionnelle").get("id"), criteria.getNatureLigneFonctionnelleId()));
+                if (criteria.natureLigneFonctionnelleId() != null) {
+                    predicates.add(criteriaBuilder.equal(root.get("natureLigneFonctionnelle").get("id"), criteria.natureLigneFonctionnelleId()));
                 }
 
-                if (criteria.getMarcheId() != null) {
+                if (criteria.marcheId() != null) {
                     // JOIN sur la collection @ManyToMany marches
                     Join<LigneFonctionnelle, Marche> marcheJoin = root.join("marches", JoinType.INNER);
-                    predicates.add(criteriaBuilder.equal(marcheJoin.get("id"), criteria.getMarcheId()));
+                    predicates.add(criteriaBuilder.equal(marcheJoin.get("id"), criteria.marcheId()));
                     query.distinct(true);
                 }
 
                 // Search by Year of dateDepart
-                if (criteria.getYearDepart() != null) {
+                if (criteria.yearDepart() != null) {
                     predicates.add(criteriaBuilder.equal(
                             criteriaBuilder.function("YEAR", Integer.class, root.get("dateDepart")),
-                            criteria.getYearDepart()
+                            criteria.yearDepart()
                     ));
                 }
 
                 // If actif is null, it means we don't care about the active status, so don't add a predicate for it.
                 // If actif is true/false, filter by that value.
-                if (criteria.getActif() != null) {
-                    predicates.add(criteriaBuilder.equal(root.get("actif"), criteria.getActif()));
+                if (criteria.actif() != null) {
+                    predicates.add(criteriaBuilder.equal(root.get("actif"), criteria.actif()));
                 }
 
                 // 5. Filter by 'isExpired' status
-                if (criteria.getIsExpired() != null) {
-                    if (criteria.getIsExpired()) {
+                if (criteria.isExpired() != null) {
+                    if (criteria.isExpired()) {
                         predicates.add(criteriaBuilder.lessThan(root.get("dateFin"), now));
                     } else {
                         predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateFin"), now));

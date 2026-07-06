@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleReader;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.factoring.dtos.*;
 import staport.finance.gBanque.factoring.entities.Factoring;
@@ -37,22 +37,22 @@ public class FactoringService {
     private final FactoringRepository factoringRepository;
     private final MarcheRepository marcheRepository;
     private final FactoringMapper factoringMapper;
-    private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
+    private final LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader;
+    private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public FactoringService(FactoringRepository factoringRepository,
                             MarcheRepository marcheRepository,
                             FactoringMapper factoringMapper,
-                            LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
-                            LigneFonctionnelleRepository ligneFonctionnelleRepository,
+                            LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader,
+                            LigneFonctionnelleReader ligneFonctionnelleReader,
                             NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository) {
         this.factoringRepository = factoringRepository;
         this.marcheRepository = marcheRepository;
         this.factoringMapper = factoringMapper;
-        this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
+        this.ligneFonctionnelleSpecifiqueReader = ligneFonctionnelleSpecifiqueReader;
+        this.ligneFonctionnelleReader = ligneFonctionnelleReader;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
         log.info("FactoringService initialisé avec succès");
     }
@@ -291,7 +291,7 @@ public class FactoringService {
 
         // ÉTAPE 1 : Ligne spécifique (prioritaire)
         Optional<LigneFonctionnelleSpecifique> ligneSpecifique =
-                ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, factoringNature);
+                ligneFonctionnelleSpecifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, factoringNature);
         if (ligneSpecifique.isPresent()) {
             log.info("Ligne spécifique Factoring active trouvée pour le marché '{}' (ID: {})",
                     marche.getNom(), ligneSpecifique.get().getId());
@@ -300,7 +300,7 @@ public class FactoringService {
 
         // ÉTAPE 2 : Ligne générale liée au marché
         Optional<LigneFonctionnelle> ligneGenerale =
-                ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), factoringNature.getId());
+                ligneFonctionnelleReader.findActiveLineForMarche(marche.getId(), factoringNature.getId());
         if (ligneGenerale.isPresent()) {
             log.info("Ligne générale Factoring active trouvée pour le marché '{}' (ID: {})",
                     marche.getNom(), ligneGenerale.get().getId());

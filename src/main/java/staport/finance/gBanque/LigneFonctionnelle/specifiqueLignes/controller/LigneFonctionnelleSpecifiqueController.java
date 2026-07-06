@@ -14,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.ILigneFonctionnelleSpecifiqueService;
 import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
@@ -27,6 +30,11 @@ import staport.finance.gBanque.common.PageableUtils;
  *
  * RBAC identique à {@code LigneFonctionnelleController} (générale) : donnée financière propre au
  * département Finance, pas un référentiel dropdown.
+ *
+ * <p>Injecte également {@link INatureLigneFonctionnelleService} et {@link IBanqueService} pour
+ * résoudre les entités ici, au niveau Controller — mêmes raisons que
+ * {@code LigneFonctionnelleController} (générale) : évite le cycle de beans avec
+ * {@code NatureLigneFonctionnelleService} (qui injecte déjà {@code ILigneFonctionnelleSpecifiqueService}).
  */
 @Tag(name = "Lignes fonctionnelles spécifiques", description = "Gestion des lignes fonctionnelles spécifiques (rattachées à un marché)")
 @SecurityRequirement(name = "bearerAuth")
@@ -39,9 +47,15 @@ public class LigneFonctionnelleSpecifiqueController {
     private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
     private final ILigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService;
+    private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
+    private final IBanqueService banqueService;
 
-    public LigneFonctionnelleSpecifiqueController(ILigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService) {
+    public LigneFonctionnelleSpecifiqueController(ILigneFonctionnelleSpecifiqueService ligneFonctionnelleSpecifiqueService,
+                                                   INatureLigneFonctionnelleService natureLigneFonctionnelleService,
+                                                   IBanqueService banqueService) {
         this.ligneFonctionnelleSpecifiqueService = ligneFonctionnelleSpecifiqueService;
+        this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
+        this.banqueService = banqueService;
     }
 
     @Operation(summary = "Créer une ligne fonctionnelle spécifique")
@@ -54,7 +68,8 @@ public class LigneFonctionnelleSpecifiqueController {
     @PostMapping
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<LigneFonctionnelleSpecifiqueResponse> createLigneFonctionnelleSpecifique(@Valid @RequestBody LigneFonctionnelleSpecifiqueRequest request) {
-        LigneFonctionnelleSpecifiqueResponse createdLigne = ligneFonctionnelleSpecifiqueService.createLigneFonctionnelleSpecifique(request);
+        NatureLigneFonctionnelle nature = natureLigneFonctionnelleService.findOrThrow(request.natureLigneFonctionnelleId());
+        LigneFonctionnelleSpecifiqueResponse createdLigne = ligneFonctionnelleSpecifiqueService.createLigneFonctionnelleSpecifique(request, nature);
         return new ResponseEntity<>(createdLigne, HttpStatus.CREATED);
     }
 
@@ -95,7 +110,10 @@ public class LigneFonctionnelleSpecifiqueController {
     public ResponseEntity<LigneFonctionnelleSpecifiqueResponse> updateLigneFonctionnelleSpecifique(
             @PathVariable Long id,
             @Valid @RequestBody LigneFonctionnelleSpecifiqueRequest request) {
-        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.updateLigneFonctionnelleSpecifique(id, request));
+        NatureLigneFonctionnelle nature = request.natureLigneFonctionnelleId() != null
+                ? natureLigneFonctionnelleService.findOrThrow(request.natureLigneFonctionnelleId())
+                : null;
+        return ResponseEntity.ok(ligneFonctionnelleSpecifiqueService.updateLigneFonctionnelleSpecifique(id, request, nature));
     }
 
     @Operation(summary = "Lignes fonctionnelles spécifiques d'une banque")
@@ -110,6 +128,8 @@ public class LigneFonctionnelleSpecifiqueController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort,
             @ModelAttribute LigneFonctionnelleSpecifiqueSearchCriteria searchCriteria) {
+
+        banqueService.findOrThrow(banqueId);
 
         Sort.Direction direction = Sort.Direction.fromString(sort[1]);
         Sort sortOrder = Sort.by(direction, sort[0]);

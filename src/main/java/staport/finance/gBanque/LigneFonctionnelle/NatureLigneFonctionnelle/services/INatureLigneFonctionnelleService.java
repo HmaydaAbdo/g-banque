@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleRequest;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleResponse;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.dtos.NatureLigneFonctionnelleSearchCriteria;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 
 import java.util.List;
@@ -57,4 +58,14 @@ public interface INatureLigneFonctionnelleService {
 
 
      Long findFaciliteDeCaisseNatureId();
+
+    /**
+     * Résout une NatureLigneFonctionnelle par ID pour les domaines qui ont besoin de l'entité
+     * JPA elle-même (ex. relation côté {@code LigneFonctionnelle}) — jamais via
+     * {@code NatureLigneFonctionnelleRepository} directement (encapsulation des domaines,
+     * architecture.md). Résolu au niveau Controller pour LigneFonctionnelle (générale/spécifique)
+     * afin d'éviter le cycle de beans : {@code NatureLigneFonctionnelleService} injecte déjà
+     * {@code ILigneFonctionnelleService}/{@code ILigneFonctionnelleSpecifiqueService}.
+     */
+    NatureLigneFonctionnelle findOrThrow(Long id);
 }

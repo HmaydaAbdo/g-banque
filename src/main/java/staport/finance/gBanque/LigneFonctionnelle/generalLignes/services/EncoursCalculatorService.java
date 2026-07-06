@@ -8,8 +8,8 @@ import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
-import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.moyensDePaiements.lcn.specs.LcnSpecification;
+import staport.finance.gBanque.moyensDePaiements.lcn.services.LcnReader;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.transactions.service.ITransactionService;
@@ -30,12 +30,12 @@ import java.util.List;
 public class EncoursCalculatorService {
 
     private static final Logger log = LoggerFactory.getLogger(EncoursCalculatorService.class);
-    private final LcnRepository lcnRepository;
+    private final LcnReader lcnReader;
     private final ITransactionService transactionService;
 
-    public EncoursCalculatorService(LcnRepository lcnRepository,
+    public EncoursCalculatorService(LcnReader lcnReader,
                                     ITransactionService transactionService) {
-        this.lcnRepository = lcnRepository;
+        this.lcnReader = lcnReader;
         this.transactionService = transactionService;
     }
 
@@ -157,7 +157,7 @@ public class EncoursCalculatorService {
     private BigDecimal calculateEncoursEscompteCommercial(Long ligneId) {
         log.debug("Calculating encours for Escompte Commercial (ligne ID: {})", ligneId);
 
-        List<Lcn> lcnList = lcnRepository.findAll(LcnSpecification.hasLigneFonctionnelle(ligneId));
+        List<Lcn> lcnList = lcnReader.findAll(LcnSpecification.hasLigneFonctionnelle(ligneId));
 
         log.debug("Found {} LCN(s) for ligne fonctionnelle ID: {}", lcnList.size(), ligneId);
 

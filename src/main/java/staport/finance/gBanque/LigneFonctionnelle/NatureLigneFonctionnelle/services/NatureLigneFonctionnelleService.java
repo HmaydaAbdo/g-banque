@@ -160,9 +160,9 @@ public class NatureLigneFonctionnelleService implements INatureLigneFonctionnell
                 .getId();
     }
 
-    // ── Private helpers ──────────────────────────────────────────────────────
-
-    private NatureLigneFonctionnelle findOrThrow(Long id) {
+    @Override
+    @Transactional(readOnly = true)
+    public NatureLigneFonctionnelle findOrThrow(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Nature de ligne fonctionnelle non trouvée avec l'ID : " + id));

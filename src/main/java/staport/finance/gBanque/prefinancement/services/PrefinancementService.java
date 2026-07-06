@@ -12,9 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleReader;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
@@ -38,23 +38,23 @@ public class PrefinancementService {
     private final PrefinancementRepository prefinancementRepository;
     private final MarcheRepository marcheRepository;
     private final PrefinancementMapper prefinancementMapper;
-    private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
+    private final LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader;
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
+    private final LigneFonctionnelleReader ligneFonctionnelleReader;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public PrefinancementService(
             PrefinancementRepository prefinancementRepository,
             MarcheRepository marcheRepository,
             PrefinancementMapper prefinancementMapper,
-            LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
-            NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, LigneFonctionnelleRepository ligneFonctionnelleRepository) {
+            LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader,
+            NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository, LigneFonctionnelleReader ligneFonctionnelleReader) {
         this.prefinancementRepository = prefinancementRepository;
         this.marcheRepository = marcheRepository;
         this.prefinancementMapper = prefinancementMapper;
-        this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
+        this.ligneFonctionnelleSpecifiqueReader = ligneFonctionnelleSpecifiqueReader;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
+        this.ligneFonctionnelleReader = ligneFonctionnelleReader;
         log.info("PrefinancementService initialisé avec succès");
     }
 
@@ -317,7 +317,7 @@ public class PrefinancementService {
 
         // ÉTAPE 1 : LigneFonctionnelleSpecifique (PRIORITAIRE)
         Optional<LigneFonctionnelleSpecifique> ligneSpecifique =
-                ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, prefiNature);
+                ligneFonctionnelleSpecifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, prefiNature);
         if (ligneSpecifique.isPresent()) {
             log.info("Ligne spécifique Préfinancement active trouvée pour le marché '{}' (ID: {})",
                     marche.getNom(), ligneSpecifique.get().getId());
@@ -326,7 +326,7 @@ public class PrefinancementService {
 
         // ÉTAPE 2 : LigneFonctionnelle générale liée au marché
         Optional<LigneFonctionnelle> ligneGenerale =
-                ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), prefiNature.getId());
+                ligneFonctionnelleReader.findActiveLineForMarche(marche.getId(), prefiNature.getId());
         if (ligneGenerale.isPresent()) {
             log.info("Ligne générale Préfinancement active trouvée pour le marché '{}' (ID: {})",
                     marche.getNom(), ligneGenerale.get().getId());

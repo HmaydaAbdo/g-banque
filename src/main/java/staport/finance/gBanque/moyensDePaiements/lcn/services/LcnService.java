@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleReader;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.moyensDePaiements.lcn.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
@@ -34,13 +34,13 @@ public class LcnService {
     private static final Logger log = LoggerFactory.getLogger(LcnService.class);
     private final LcnRepository lcnRepository;
     private final BanqueRepository banqueRepository;
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
+    private final LigneFonctionnelleReader ligneFonctionnelleReader;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-    public LcnService(LcnRepository lcnRepository, BanqueRepository banqueRepository, LigneFonctionnelleRepository ligneFonctionnelleRepository) {
+    public LcnService(LcnRepository lcnRepository, BanqueRepository banqueRepository, LigneFonctionnelleReader ligneFonctionnelleReader) {
         this.lcnRepository = lcnRepository;
         this.banqueRepository = banqueRepository;
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
+        this.ligneFonctionnelleReader = ligneFonctionnelleReader;
     }
 
 
@@ -64,7 +64,7 @@ public class LcnService {
             log.debug("LCN de type ESCOMPTE détecté - recherche de la ligne fonctionnelle escompte commerciale pour la banque ID: {}",
                     banque.getId());
 
-            ligneFonctionnelle = ligneFonctionnelleRepository
+            ligneFonctionnelle = ligneFonctionnelleReader
                     .findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(banque.getId(), 2L)
                     .orElseThrow(() -> {
                         log.error("Ligne fonctionnelle escompte commerciale active introuvable pour la banque ID: {}",
@@ -143,7 +143,7 @@ public class LcnService {
                     existingLcn.getNatureLcn() != NatureLcn.ESCOMPTE) {
 
                 log.debug("Changement de nature vers ESCOMPTE - recherche de la ligne fonctionnelle");
-                LigneFonctionnelle ligneFonctionnelle = ligneFonctionnelleRepository
+                LigneFonctionnelle ligneFonctionnelle = ligneFonctionnelleReader
                         .findByBanqueIdAndNatureLigneFonctionnelleIdAndActifTrue(
                                 existingLcn.getBanque().getId(), 2L)
                         .orElseThrow(() -> {

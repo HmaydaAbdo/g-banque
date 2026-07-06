@@ -47,11 +47,11 @@ public class LigneFonctionnelleSpecifiqueMapper {
         LigneFonctionnelleSpecifique entity = new LigneFonctionnelleSpecifique();
 
         entity.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
-        entity.setPlafond(request.getPlafond());
-        entity.setTaux(request.getTaux());
-        entity.setDateDepart(request.getDateDepart());
-        entity.setDateFin(request.getDateFin());
-        entity.setActif(request.getActif() != null ? request.getActif() : true);
+        entity.setPlafond(request.plafond());
+        entity.setTaux(request.taux());
+        entity.setDateDepart(request.dateDepart());
+        entity.setDateFin(request.dateFin());
+        entity.setActif(request.actif() != null ? request.actif() : true);
         entity.setMarche(marche);
 
         return entity;
@@ -65,53 +65,37 @@ public class LigneFonctionnelleSpecifiqueMapper {
             return null;
         }
 
-        LigneFonctionnelleSpecifiqueResponse response = new LigneFonctionnelleSpecifiqueResponse();
+        Long natureId = null;
+        String natureLabel = null;
+        String natureDescription = null;
+        if (entity.getNatureLigneFonctionnelle() != null) {
+            natureId = entity.getNatureLigneFonctionnelle().getId();
+            natureLabel = entity.getNatureLigneFonctionnelle().getLabel();
+            natureDescription = entity.getNatureLigneFonctionnelle().getDescription();
+        }
 
-        // Mapping des champs de base
-        response.setId(entity.getId());
-
-        response.setNatureLigneFonctionnelleId(entity.getNatureLigneFonctionnelle() != null ?
-                entity.getNatureLigneFonctionnelle().getId() : null);
-
-        response.setNatureLigneFonctionnelleLabel(entity.getNatureLigneFonctionnelle() != null ?
-                entity.getNatureLigneFonctionnelle().getLabel() : null);
-
-        response.setNatureLigneFonctionnelleDescription(entity.getNatureLigneFonctionnelle() != null ?
-                entity.getNatureLigneFonctionnelle().getDescription() : null);
-
-        response.setPlafond(entity.getPlafond());
-
-        response.setTaux(entity.getTaux());
-
-        response.setDateDepart(entity.getDateDepart());
-
-        response.setDateFin(entity.getDateFin());
-
-        response.setDateCreation(entity.getDateCreation());
-
-        response.setDateModification(entity.getDateModification());
-
-        response.setActif(entity.isActif());
-
-        response.setExpired(isExpired(entity.getDateFin()));
-
+        Long marcheId = null;
+        String marcheNom = null;
+        String marcheNumero = null;
+        Long banqueId = null;
+        String banqueNom = null;
         if (entity.getMarche() != null) {
-            response.setMarcheId(entity.getMarche().getId());
-            response.setMarcheNom(entity.getMarche().getNom());
-            response.setMarcheNumero(entity.getMarche().getNumero());
-            response.setBanqueId(entity.getMarche().getBanque().getId());
-            response.setBanqueNom(entity.getMarche().getBanque().getNom());
+            marcheId = entity.getMarche().getId();
+            marcheNom = entity.getMarche().getNom();
+            marcheNumero = entity.getMarche().getNumero();
+            banqueId = entity.getMarche().getBanque().getId();
+            banqueNom = entity.getMarche().getBanque().getNom();
         }
 
         // CALCUL AUTOMATIQUE de l'encours et du solde
+        BigDecimal encours = null;
+        BigDecimal solde = null;
         if (entity.getNatureLigneFonctionnelle() != null) {
-            Long natureId = entity.getNatureLigneFonctionnelle().getId();
-
             List<Marche> marcheList = entity.getMarche() != null
                     ? List.of(entity.getMarche())
                     : Collections.emptyList();
 
-            BigDecimal encours = encoursCalculatorService.calculateEncours(
+            encours = encoursCalculatorService.calculateEncours(
                     entity.getId(),
                     natureId,
                     marcheList,
@@ -119,19 +103,36 @@ public class LigneFonctionnelleSpecifiqueMapper {
                     entity.getPlafond()
             );
 
-            BigDecimal solde = encoursCalculatorService.calculateSolde(
+            solde = encoursCalculatorService.calculateSolde(
                     entity.getId(),
                     natureId,
                     marcheList,
                     entity.getPlafond(),
                     encours
             );
-
-            response.setEncours(encours);
-            response.setSolde(solde);
         }
 
-        return response;
+        return new LigneFonctionnelleSpecifiqueResponse(
+                entity.getId(),
+                banqueId,
+                banqueNom,
+                natureId,
+                natureLabel,
+                natureDescription,
+                entity.getPlafond(),
+                encours,
+                solde,
+                entity.getTaux(),
+                entity.getDateDepart(),
+                entity.getDateFin(),
+                entity.getDateCreation(),
+                entity.getDateModification(),
+                entity.isActif(),
+                isExpired(entity.getDateFin()),
+                marcheId,
+                marcheNom,
+                marcheNumero
+        );
     }
 
 

@@ -9,6 +9,7 @@ import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.mapper.MarcheMapper;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.marches.specs.MarcheSpecification;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,26 @@ public class MarcheService {
         this.marcheRepository = marcheRepository;
         this.banqueRepository = banqueRepository;
         this.marcheMapper = marcheMapper;
+    }
+
+    /**
+     * Résout un Marche par ID pour les domaines qui ont besoin de l'entité JPA elle-même
+     * (ex. relation ManyToMany côté {@code LigneFonctionnelle}) — jamais via
+     * {@code MarcheRepository} directement (encapsulation des domaines, architecture.md).
+     */
+    @Transactional(readOnly = true)
+    public Marche findOrThrow(Long id) {
+        return marcheRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Marché non trouvé avec l'ID: " + id));
+    }
+
+    /**
+     * Vérifie l'existence d'un Marche par ID, pour les domaines qui n'ont besoin que d'une
+     * validation (pas de l'entité elle-même).
+     */
+    @Transactional(readOnly = true)
+    public boolean existsById(Long id) {
+        return marcheRepository.existsById(id);
     }
 
     /**

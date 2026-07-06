@@ -3,7 +3,6 @@ package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.specificatio
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueSearchCriteria;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.SpecifiqueLineSearchDto;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -19,39 +18,39 @@ public class LigneFonctionnelleSpecifiqueSpecification {
             // Add predicates for the common fields
 
             // --- Accessing Banque ID through Marche entity ---
-            if (criteria.getBanqueId() != null) {
+            if (criteria.banqueId() != null) {
                 // Path: LigneFonctionnelleSpecifique -> Marche -> Banque -> id
                 predicates.add(criteriaBuilder.equal(
                         root.get("marche").get("banque").get("id"),
-                        criteria.getBanqueId()
+                        criteria.banqueId()
                 ));
             }
 
 
             // --- NatureLigneFonctionnelle ID ---
-            if (criteria.getNatureLigneFonctionnelleId() != null) {
+            if (criteria.natureLigneFonctionnelleId() != null) {
                 // Path: LigneFonctionnelleSpecifique -> NatureLigneFonctionnelle -> id
                 predicates.add(criteriaBuilder.equal(
                         root.get("natureLigneFonctionnelle").get("id"),
-                        criteria.getNatureLigneFonctionnelleId()
+                        criteria.natureLigneFonctionnelleId()
                 ));
             }
 
             // --- Date Depart Year ---
-            if (criteria.getYearDepart() != null) {
+            if (criteria.yearDepart() != null) {
                 predicates.add(criteriaBuilder.equal(
                         criteriaBuilder.function("YEAR", Integer.class, root.get("dateDepart")),
-                        criteria.getYearDepart()
+                        criteria.yearDepart()
                 ));
             }
 
             // --- Actif Status ---
-            if (criteria.getActif() != null) {
-                predicates.add(criteriaBuilder.equal(root.get("actif"), criteria.getActif()));
+            if (criteria.actif() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("actif"), criteria.actif()));
             }
             // --- Expiration Status ---
-            if (criteria.getIsExpired() != null) {
-                if (criteria.getIsExpired()) {
+            if (criteria.isExpired() != null) {
+                if (criteria.isExpired()) {
                     predicates.add(criteriaBuilder.lessThan(root.get("dateFin"), now));
                 } else {
                     predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("dateFin"), now));
@@ -59,39 +58,13 @@ public class LigneFonctionnelleSpecifiqueSpecification {
             }
 
             // --- Marche ID ---
-            if (criteria.getMarcheId() != null) {
+            if (criteria.marcheId() != null) {
                 // Path: LigneFonctionnelleSpecifique -> Marche -> id
                 predicates.add(criteriaBuilder.equal(
                         root.get("marche").get("id"),
-                        criteria.getMarcheId()
+                        criteria.marcheId()
                 ));
             }
-
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
-    }
-
-    public static Specification<LigneFonctionnelleSpecifique> searchForPrefi(SpecifiqueLineSearchDto criteria) {
-        return (root, query, criteriaBuilder) -> {
-
-            List<Predicate> predicates = new ArrayList<>();
-
-            // --- Accessing Banque ID through Marche entity ---
-            if (criteria.getBanqueId() != null) {
-                // Path: LigneFonctionnelleSpecifique -> Marche -> Banque -> id
-                predicates.add(criteriaBuilder.equal(
-                        root.get("marche").get("banque").get("id"),
-                        criteria.getBanqueId()
-                ));
-            }
-            // --- Marche ID ---
-            if (criteria.getMarcheId() != null) {
-                predicates.add(criteriaBuilder.equal(
-                        root.get("marche").get("id"),
-                        criteria.getMarcheId()
-                ));
-            }
-
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

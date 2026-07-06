@@ -2,6 +2,7 @@ package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueRequest;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueResponse;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueSearchCriteria;
@@ -16,7 +17,14 @@ import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResp
  */
 public interface ILigneFonctionnelleSpecifiqueService {
 
-    LigneFonctionnelleSpecifiqueResponse createLigneFonctionnelleSpecifique(LigneFonctionnelleSpecifiqueRequest request);
+    /**
+     * @param nature résolue par le Controller ({@code INatureLigneFonctionnelleService.findOrThrow}) —
+     *               évite d'injecter {@code NatureLigneFonctionnelleRepository} ici et le cycle de
+     *               beans avec {@code NatureLigneFonctionnelleService} (qui injecte déjà
+     *               {@code ILigneFonctionnelleSpecifiqueService}).
+     */
+    LigneFonctionnelleSpecifiqueResponse createLigneFonctionnelleSpecifique(
+            LigneFonctionnelleSpecifiqueRequest request, NatureLigneFonctionnelle nature);
 
     LigneFonctionnelleSpecifiqueResponse getLigneFonctionnelleSpecifiqueById(Long id);
 
@@ -26,7 +34,13 @@ public interface ILigneFonctionnelleSpecifiqueService {
     Page<LigneFonctionnelleSpecifiqueResponse> getLignesFonctionnellesSpecifiquesByBanqueId(
             Long banqueId, LigneFonctionnelleSpecifiqueSearchCriteria criteria, Pageable pageable);
 
-    LigneFonctionnelleSpecifiqueResponse updateLigneFonctionnelleSpecifique(Long id, LigneFonctionnelleSpecifiqueRequest request);
+    /**
+     * @param nature résolue par le Controller si {@code request.natureLigneFonctionnelleId()} est
+     *               fourni, {@code null} sinon (conserve la nature existante) — voir
+     *               {@link #createLigneFonctionnelleSpecifique}.
+     */
+    LigneFonctionnelleSpecifiqueResponse updateLigneFonctionnelleSpecifique(
+            Long id, LigneFonctionnelleSpecifiqueRequest request, NatureLigneFonctionnelle nature);
 
     void deactivateLigneFonctionnelleById(Long ligneId) throws Exception;
 

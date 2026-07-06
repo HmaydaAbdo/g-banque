@@ -2,6 +2,8 @@ package staport.finance.gBanque.LigneFonctionnelle.generalLignes.services;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleChartData;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleRequest;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.LigneFonctionnelleResponse;
@@ -24,7 +26,19 @@ import java.util.Map;
  */
 public interface ILigneFonctionnelleService {
 
-    LigneFonctionnelleResponse createLigneFonctionnelle(LigneFonctionnelleRequest request);
+    /**
+     * @param banque             résolue par le Controller ({@code IBanqueService.findOrThrow}) —
+     *                           évite d'injecter {@code BanqueRepository} ici et le cycle de beans
+     *                           avec {@code IBanqueService} (qui injecte déjà {@code ILigneFonctionnelleService}).
+     * @param nature             résolue par le Controller ({@code INatureLigneFonctionnelleService.findOrThrow}),
+     *                           même raison.
+     * @param sousLigneNatures   natures des sous-lignes de {@code request.sousLignes()}, résolues par
+     *                           le Controller et indexées par {@code natureLigneFonctionnelleId} ; vide
+     *                           si la requête ne contient pas de sous-lignes.
+     */
+    LigneFonctionnelleResponse createLigneFonctionnelle(
+            LigneFonctionnelleRequest request, Banque banque, NatureLigneFonctionnelle nature,
+            Map<Long, NatureLigneFonctionnelle> sousLigneNatures);
 
     LigneFonctionnelleResponse getLigneFonctionnelleById(Long id);
 
@@ -37,9 +51,20 @@ public interface ILigneFonctionnelleService {
     Page<LigneFonctionnelleResponse> getPaginatedLignesFonctionnellesByMarcheId(
             Long marcheId, LigneFonctionnelleSearchCriteria criteria, Pageable pageable);
 
-    LigneFonctionnelleResponse updateLigneFonctionnelle(Long id, LigneFonctionnelleRequest request);
+    /**
+     * @param banque  résolue par le Controller — voir {@link #createLigneFonctionnelle}.
+     * @param nature  résolue par le Controller — voir {@link #createLigneFonctionnelle}.
+     */
+    LigneFonctionnelleResponse updateLigneFonctionnelle(
+            Long id, LigneFonctionnelleRequest request, Banque banque, NatureLigneFonctionnelle nature);
 
-    LigneFonctionnelleResponse manageSousLignes(Long ligneMereId, List<SousLigneRequestDto> sousLignesRequests);
+    /**
+     * @param sousLigneNatures natures des sous-lignes résolues par le Controller, indexées par
+     *                         {@code natureLigneFonctionnelleId} — voir {@link #createLigneFonctionnelle}.
+     */
+    LigneFonctionnelleResponse manageSousLignes(
+            Long ligneMereId, List<SousLigneRequestDto> sousLignesRequests,
+            Map<Long, NatureLigneFonctionnelle> sousLigneNatures);
 
     void deactivateLigneFonctionnelle(Long ligneId);
 

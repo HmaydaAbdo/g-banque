@@ -54,10 +54,10 @@ public class LigneFonctionnelleMapper {
         ligneFonctionnelle.setBanque(banque);
         ligneFonctionnelle.setNatureLigneFonctionnelle(natureLigneFonctionnelle);
         ligneFonctionnelle.setMarches(marches != null ? new ArrayList<>(marches) : new ArrayList<>());
-        ligneFonctionnelle.setPlafond(request.getPlafond());
-        ligneFonctionnelle.setTaux(request.getTaux());
-        ligneFonctionnelle.setDateDepart(request.getDateDepart());
-        ligneFonctionnelle.setDateFin(request.getDateFin());
+        ligneFonctionnelle.setPlafond(request.plafond());
+        ligneFonctionnelle.setTaux(request.taux());
+        ligneFonctionnelle.setDateDepart(request.dateDepart());
+        ligneFonctionnelle.setDateFin(request.dateFin());
         ligneFonctionnelle.setSousLignes(new ArrayList<>());
 
         return ligneFonctionnelle;
@@ -76,8 +76,8 @@ public class LigneFonctionnelleMapper {
 
         LigneFonctionnelle sousLigne = new LigneFonctionnelle();
 
-        sousLigne.setId(request.getId());
-        sousLigne.setPlafond(request.getPlafond());
+        sousLigne.setId(request.id());
+        sousLigne.setPlafond(request.plafond());
         sousLigne.setNatureLigneFonctionnelle(natureSousLigne);
         sousLigne.setBanque(ligneMere.getBanque());
         sousLigne.setMarches(new ArrayList<>(ligneMere.getMarches()));
@@ -98,59 +98,67 @@ public class LigneFonctionnelleMapper {
             return null;
         }
 
-        LigneFonctionnelleResponse response = new LigneFonctionnelleResponse();
-        response.setId(ligneFonctionnelle.getId());
-
+        Long banqueId = null;
+        String banqueNom = null;
         if (ligneFonctionnelle.getBanque() != null) {
-            response.setBanqueId(ligneFonctionnelle.getBanque().getId());
-            response.setBanqueNom(ligneFonctionnelle.getBanque().getNom());
+            banqueId = ligneFonctionnelle.getBanque().getId();
+            banqueNom = ligneFonctionnelle.getBanque().getNom();
         }
 
+        List<MarcheRefDto> marcheRefs = new ArrayList<>();
         if (ligneFonctionnelle.getMarches() != null && !ligneFonctionnelle.getMarches().isEmpty()) {
-            List<MarcheRefDto> marcheRefs = ligneFonctionnelle.getMarches().stream()
+            marcheRefs = ligneFonctionnelle.getMarches().stream()
                     .map(m -> new MarcheRefDto(m.getId(), m.getNumero(), m.getNom()))
                     .collect(Collectors.toList());
-            response.setMarches(marcheRefs);
         }
 
+        Long natureId = null;
+        String natureLabel = null;
+        String natureDescription = null;
         if (ligneFonctionnelle.getNatureLigneFonctionnelle() != null) {
-            response.setNatureLigneFonctionnelleId(ligneFonctionnelle.getNatureLigneFonctionnelle().getId());
-            response.setNatureLigneFonctionnelleLabel(ligneFonctionnelle.getNatureLigneFonctionnelle().getLabel());
-            response.setNatureLigneFonctionnelleDescription(ligneFonctionnelle.getNatureLigneFonctionnelle().getDescription());
+            natureId = ligneFonctionnelle.getNatureLigneFonctionnelle().getId();
+            natureLabel = ligneFonctionnelle.getNatureLigneFonctionnelle().getLabel();
+            natureDescription = ligneFonctionnelle.getNatureLigneFonctionnelle().getDescription();
         }
 
-        response.setPlafond(ligneFonctionnelle.getPlafond());
-        response.setTaux(ligneFonctionnelle.getTaux());
-        response.setDateDepart(ligneFonctionnelle.getDateDepart());
-        response.setDateFin(ligneFonctionnelle.getDateFin());
-        response.setDateCreation(ligneFonctionnelle.getDateCreation());
-        response.setDateModification(ligneFonctionnelle.getDateModification());
-        response.setActif(ligneFonctionnelle.isActif());
-        response.setExpired(isExpired(ligneFonctionnelle.getDateFin()));
-
-        mapEncoursAndSolde(ligneFonctionnelle, response);
+        BigDecimal[] encoursSolde = computeEncoursAndSolde(ligneFonctionnelle);
 
         // GESTION HIÉRARCHIQUE
         final boolean estSousLigne = ligneFonctionnelle.getLigneMere() != null;
         final boolean estLigneMere = ligneFonctionnelle.getSousLignes() != null && !ligneFonctionnelle.getSousLignes().isEmpty();
 
-        response.setEstSousLigne(estSousLigne);
-        response.setEstLigneMere(estLigneMere);
+        Long ligneMereId = estSousLigne ? ligneFonctionnelle.getLigneMere().getId() : null;
 
-        if (estSousLigne) {
-            response.setLigneMereId(ligneFonctionnelle.getLigneMere().getId());
-        }
-
+        List<SousLigneResponseDto> sousLignesDto = new ArrayList<>();
         if (estLigneMere) {
-            List<SousLigneResponseDto> sousLignesDto = ligneFonctionnelle.getSousLignes().stream()
+            sousLignesDto = ligneFonctionnelle.getSousLignes().stream()
                     .map(this::toSousLigneDto)
                     .collect(Collectors.toList());
-            response.setSousLignes(sousLignesDto);
-        } else {
-            response.setSousLignes(new ArrayList<>());
         }
 
-        return response;
+        return new LigneFonctionnelleResponse(
+                ligneFonctionnelle.getId(),
+                banqueId,
+                banqueNom,
+                natureId,
+                natureLabel,
+                natureDescription,
+                marcheRefs,
+                ligneFonctionnelle.getPlafond(),
+                encoursSolde[0],
+                encoursSolde[1],
+                ligneFonctionnelle.getTaux(),
+                ligneFonctionnelle.getDateDepart(),
+                ligneFonctionnelle.getDateFin(),
+                ligneFonctionnelle.getDateCreation(),
+                ligneFonctionnelle.getDateModification(),
+                ligneFonctionnelle.isActif(),
+                isExpired(ligneFonctionnelle.getDateFin()),
+                ligneMereId,
+                sousLignesDto,
+                estSousLigne,
+                estLigneMere
+        );
     }
 
     /**
@@ -161,18 +169,20 @@ public class LigneFonctionnelleMapper {
             return null;
         }
 
-        SousLigneResponseDto dto = new SousLigneResponseDto();
-        dto.setId(sousLigne.getId());
-        dto.setPlafond(sousLigne.getPlafond());
-
+        Long natureId = null;
+        String natureLabel = null;
         if (sousLigne.getNatureLigneFonctionnelle() != null) {
-            dto.setNatureLigneFonctionnelleId(sousLigne.getNatureLigneFonctionnelle().getId());
-            dto.setNatureLigneFonctionnelleLabel(sousLigne.getNatureLigneFonctionnelle().getLabel());
+            natureId = sousLigne.getNatureLigneFonctionnelle().getId();
+            natureLabel = sousLigne.getNatureLigneFonctionnelle().getLabel();
         }
 
-        dto.setActif(sousLigne.isActif());
-
-        return dto;
+        return new SousLigneResponseDto(
+                sousLigne.getId(),
+                sousLigne.getPlafond(),
+                natureId,
+                natureLabel,
+                sousLigne.isActif()
+        );
     }
 
     /**
@@ -187,18 +197,18 @@ public class LigneFonctionnelleMapper {
             return;
         }
 
-        ligneFonctionnelle.setPlafond(request.getPlafond());
+        ligneFonctionnelle.setPlafond(request.plafond());
 
-        if (request.getTaux() != null) {
-            ligneFonctionnelle.setTaux(request.getTaux());
+        if (request.taux() != null) {
+            ligneFonctionnelle.setTaux(request.taux());
         }
 
-        if (request.getDateDepart() != null) {
-            ligneFonctionnelle.setDateDepart(request.getDateDepart());
+        if (request.dateDepart() != null) {
+            ligneFonctionnelle.setDateDepart(request.dateDepart());
         }
 
-        if (request.getDateFin() != null) {
-            ligneFonctionnelle.setDateFin(request.getDateFin());
+        if (request.dateFin() != null) {
+            ligneFonctionnelle.setDateFin(request.dateFin());
         }
 
         if (newBanque != null) {
@@ -222,12 +232,12 @@ public class LigneFonctionnelleMapper {
 
     /**
      * Utilise EncoursCalculatorService de manière centralisée.
+     *
+     * @return un tableau à deux éléments {@code [encours, solde]} (peuvent être {@code null}).
      */
-    private void mapEncoursAndSolde(LigneFonctionnelle ligneFonctionnelle, LigneFonctionnelleResponse response) {
+    private BigDecimal[] computeEncoursAndSolde(LigneFonctionnelle ligneFonctionnelle) {
         if (ligneFonctionnelle.getNatureLigneFonctionnelle() == null) {
-            response.setEncours(null);
-            response.setSolde(null);
-            return;
+            return new BigDecimal[] { null, null };
         }
 
         Long natureId = ligneFonctionnelle.getNatureLigneFonctionnelle().getId();
@@ -251,7 +261,6 @@ public class LigneFonctionnelleMapper {
                 encours
         );
 
-        response.setEncours(encours);
-        response.setSolde(solde);
+        return new BigDecimal[] { encours, solde };
     }
 }

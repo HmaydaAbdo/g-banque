@@ -14,9 +14,9 @@ import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleReader;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
 import staport.finance.gBanque.droitConstate.dtos.*;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;
@@ -42,8 +42,8 @@ public class DroitConstateService {
     private final MarcheRepository marcheRepository;
     private final BanqueRepository banqueRepository;
     private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
-    private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
+    private final LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader;
+    private final LigneFonctionnelleReader ligneFonctionnelleReader;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
 
@@ -52,15 +52,15 @@ public class DroitConstateService {
                                 MarcheRepository marcheRepository,
                                 BanqueRepository banqueRepository,
                                 NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository,
-                                LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository,
-                                LigneFonctionnelleRepository ligneFonctionnelleRepository) {
+                                LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader,
+                                LigneFonctionnelleReader ligneFonctionnelleReader) {
         this.droitConstateRepository = droitConstateRepository;
         this.droitConstateMapper = droitConstateMapper;
         this.marcheRepository = marcheRepository;
         this.banqueRepository = banqueRepository;
         this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
-        this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
+        this.ligneFonctionnelleSpecifiqueReader = ligneFonctionnelleSpecifiqueReader;
+        this.ligneFonctionnelleReader = ligneFonctionnelleReader;
     }
 
     /**
@@ -332,7 +332,7 @@ public class DroitConstateService {
 
         // ÉTAPE 1 : Ligne spécifique (prioritaire)
         Optional<LigneFonctionnelleSpecifique> ligneSpecifique =
-                ligneFonctionnelleSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, dcNature);
+                ligneFonctionnelleSpecifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(marche, dcNature);
         if (ligneSpecifique.isPresent()) {
             log.info("Ligne spécifique 'Droit constaté' active trouvée pour le marché '{}' (ID: {})",
                     marche.getNom(), ligneSpecifique.get().getId());
@@ -341,7 +341,7 @@ public class DroitConstateService {
 
         // ÉTAPE 2 : Ligne générale liée au marché
         Optional<LigneFonctionnelle> ligneGenerale =
-                ligneFonctionnelleRepository.findActiveLineForMarche(marche.getId(), dcNature.getId());
+                ligneFonctionnelleReader.findActiveLineForMarche(marche.getId(), dcNature.getId());
         if (ligneGenerale.isPresent()) {
             log.info("Ligne générale 'Droit constaté' active trouvée pour le marché '{}' (ID: {})",
                     marche.getNom(), ligneGenerale.get().getId());
