@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -21,7 +21,6 @@ import { SpecificFunctionalLigneService } from "../../service/SpecificFunctional
 import { MarcheService } from "../../../Marches/service/marche-service.service";
 import { NatureLigneFonctionnelleService } from "../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service";
 import { PorteeNature } from "../../../lignes-fonctionnelles/dtos/nature-ligne-fonctionnelle/PorteeNature";
-import { AuthService } from "../../../../auth/services/auth.service";
 import { parseLocalDate, toLocalDateString } from "../../../global/types/date.utils";
 
 @Component({
@@ -57,17 +56,14 @@ export class SpeficLigneEditComponent implements OnInit {
     onLazyLoad: this.onLazyLoadMarches.bind(this)
   };
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router,
-    private specificLigneService: SpecificFunctionalLigneService,
-    private marcheService: MarcheService,
-    private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private authService: AuthService
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly specificLigneService = inject(SpecificFunctionalLigneService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly natureLigneFonctionnelleService = inject(NatureLigneFonctionnelleService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   ngOnInit(): void {
     this.items = [
@@ -222,9 +218,7 @@ export class SpeficLigneEditComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Enregistrement réussi' });
         this.router.navigate(['/portail/lignes-fonctionnelles-specifiques-encours']);
       },
-      error: (err) => {
-        console.error('Erreur lors de l\'enregistrement de la ligne spécifique:', err);
-      }
+      error: () => {}
     });
   }
 

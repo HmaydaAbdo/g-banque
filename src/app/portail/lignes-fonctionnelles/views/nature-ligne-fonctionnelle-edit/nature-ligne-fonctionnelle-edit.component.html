@@ -12,15 +12,14 @@
     <p-breadcrumb [model]="items" styleClass="border-none p-0"
                   [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
+        @if (item.route) {
           <a [routerLink]="item.route" class="p-menuitem-link">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
             <span class="text-400 text-xs ml-1">{{ item.label }}</span>
           </a>
-        </ng-container>
-        <ng-template #elseBlock>
+        } @else {
           <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
-        </ng-template>
+        }
       </ng-template>
     </p-breadcrumb>
   </div>
@@ -36,15 +35,19 @@
         <div class="field col-12">
           <label for="code" class="font-semibold block mb-2 text-700 text-sm">
             Code <span class="text-red-500">*</span>
-            <span *ngIf="isEditMode" class="text-400 font-normal text-xs ml-2">(immuable)</span>
+            @if (isEditMode) {
+              <span class="text-400 font-normal text-xs ml-2">(immuable)</span>
+            }
           </label>
           <input id="code" type="text" pInputText formControlName="code"
                  placeholder="Ex : FC01"
                  [ngClass]="{'ng-invalid ng-dirty': f['code'].invalid && f['code'].touched}"/>
-          <small class="p-error" *ngIf="f['code'].invalid && f['code'].touched">
-            <span *ngIf="f['code'].errors?.['required']">Obligatoire.</span>
-            <span *ngIf="f['code'].errors?.['maxlength']">20 caractères maximum.</span>
-          </small>
+          @if (f['code'].invalid && f['code'].touched) {
+            <small class="p-error">
+              @if (f['code'].errors?.['required']) { <span>Obligatoire.</span> }
+              @if (f['code'].errors?.['maxlength']) { <span>20 caractères maximum.</span> }
+            </small>
+          }
         </div>
 
         <!-- Libellé -->
@@ -54,10 +57,12 @@
           </label>
           <input id="label" type="text" pInputText formControlName="label"
                  [ngClass]="{'ng-invalid ng-dirty': f['label'].invalid && f['label'].touched}"/>
-          <small class="p-error" *ngIf="f['label'].invalid && f['label'].touched">
-            <span *ngIf="f['label'].errors?.['required']">Obligatoire.</span>
-            <span *ngIf="f['label'].errors?.['pattern']">Lettres et espaces uniquement.</span>
-          </small>
+          @if (f['label'].invalid && f['label'].touched) {
+            <small class="p-error">
+              @if (f['label'].errors?.['required']) { <span>Obligatoire.</span> }
+              @if (f['label'].errors?.['pattern']) { <span>Lettres et espaces uniquement.</span> }
+            </small>
+          }
         </div>
 
         <!-- Description -->
@@ -67,9 +72,11 @@
           </label>
           <input id="description" type="text" pInputText formControlName="description"
                  [ngClass]="{'ng-invalid ng-dirty': f['description'].invalid && f['description'].touched}"/>
-          <small class="p-error" *ngIf="f['description'].invalid && f['description'].touched">
-            <span *ngIf="f['description'].errors?.['required']">Obligatoire.</span>
-          </small>
+          @if (f['description'].invalid && f['description'].touched) {
+            <small class="p-error">
+              @if (f['description'].errors?.['required']) { <span>Obligatoire.</span> }
+            </small>
+          }
         </div>
 
         <!-- Portée -->
@@ -87,9 +94,11 @@
             appendTo="body"
             [ngClass]="{'ng-invalid ng-dirty': f['portee'].invalid && f['portee'].touched}">
           </p-dropdown>
-          <small class="p-error" *ngIf="f['portee'].invalid && f['portee'].touched">
-            <span *ngIf="f['portee'].errors?.['required']">Obligatoire.</span>
-          </small>
+          @if (f['portee'].invalid && f['portee'].touched) {
+            <small class="p-error">
+              @if (f['portee'].errors?.['required']) { <span>Obligatoire.</span> }
+            </small>
+          }
         </div>
 
       </div>

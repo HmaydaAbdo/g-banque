@@ -27,9 +27,11 @@
           styleClass="w-full"
           [ngClass]="{'ng-invalid ng-dirty': sousLigneForm.get('natureLigneFonctionnelleId')?.invalid && sousLigneForm.get('natureLigneFonctionnelleId')?.touched}">
         </p-dropdown>
-        <small class="p-error" *ngIf="sousLigneForm.get('natureLigneFonctionnelleId')?.invalid && sousLigneForm.get('natureLigneFonctionnelleId')?.touched">
-          La nature de la sous-ligne est obligatoire.
-        </small>
+        @if (sousLigneForm.get('natureLigneFonctionnelleId')?.invalid && sousLigneForm.get('natureLigneFonctionnelleId')?.touched) {
+          <small class="p-error">
+            La nature de la sous-ligne est obligatoire.
+          </small>
+        }
       </div>
 
       <div class="field col-12">
@@ -44,9 +46,11 @@
           styleClass="w-full"
           [ngClass]="{'ng-invalid ng-dirty': sousLigneForm.get('plafond')?.invalid && sousLigneForm.get('plafond')?.touched}">
         </p-inputNumber>
-        <small class="p-error" *ngIf="sousLigneForm.get('plafond')?.invalid && sousLigneForm.get('plafond')?.touched">
-          Le plafond doit être supérieur ou égal à 0.01 s'il est renseigné.
-        </small>
+        @if (sousLigneForm.get('plafond')?.invalid && sousLigneForm.get('plafond')?.touched) {
+          <small class="p-error">
+            Le plafond doit être supérieur ou égal à 0.01 s'il est renseigné.
+          </small>
+        }
       </div>
 
     </div>
@@ -80,7 +84,7 @@
       [model]="items"
       [style]="{'background-color': 'transparent', 'border': 'none'}">
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
+        @if (item.route) {
           <a
             [routerLink]="item.route"
             class="p-menuitem-link"
@@ -89,12 +93,11 @@
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
             <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
           </a>
-        </ng-container>
-        <ng-template #elseBlock>
+        } @else {
           <a [href]="item.url">
             <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
           </a>
-        </ng-template>
+        }
       </ng-template>
     </p-breadcrumb>
   </div>
@@ -129,9 +132,13 @@
               styleClass="w-full"
               [ngClass]="{'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched}">
             </p-dropdown>
-            <small class="p-error" *ngIf="f['banqueId'].invalid && f['banqueId'].touched">
-              <span *ngIf="f['banqueId'].errors?.['required']">La banque est obligatoire.</span>
-            </small>
+            @if (f['banqueId'].invalid && f['banqueId'].touched) {
+              <small class="p-error">
+                @if (f['banqueId'].errors?.['required']) {
+                  <span>La banque est obligatoire.</span>
+                }
+              </small>
+            }
           </div>
 
           <!-- ========== NATURE ========== -->
@@ -150,9 +157,13 @@
               styleClass="w-full"
               [ngClass]="{'ng-invalid ng-dirty': f['natureLigneFonctionnelleId'].invalid && f['natureLigneFonctionnelleId'].touched}">
             </p-dropdown>
-            <small class="p-error" *ngIf="f['natureLigneFonctionnelleId'].invalid && f['natureLigneFonctionnelleId'].touched">
-              <span *ngIf="f['natureLigneFonctionnelleId'].errors?.['required']">La nature est obligatoire.</span>
-            </small>
+            @if (f['natureLigneFonctionnelleId'].invalid && f['natureLigneFonctionnelleId'].touched) {
+              <small class="p-error">
+                @if (f['natureLigneFonctionnelleId'].errors?.['required']) {
+                  <span>La nature est obligatoire.</span>
+                }
+              </small>
+            }
           </div>
 
           <!-- ========== MARCHÉS (OPTIONNEL — ManyToMany) ========== -->
@@ -200,11 +211,19 @@
               styleClass="w-full"
               [ngClass]="{'ng-invalid ng-dirty': f['plafond'].invalid && f['plafond'].touched}">
             </p-inputNumber>
-            <small class="p-error" *ngIf="f['plafond'].invalid && f['plafond'].touched">
-              <span *ngIf="f['plafond'].errors?.['required']">Le plafond est obligatoire.</span>
-              <span *ngIf="f['plafond'].errors?.['min']">Le plafond doit être supérieur à zéro.</span>
-              <span *ngIf="f['plafond'].errors?.['pattern']">Format invalide (ex: 123.45).</span>
-            </small>
+            @if (f['plafond'].invalid && f['plafond'].touched) {
+              <small class="p-error">
+                @if (f['plafond'].errors?.['required']) {
+                  <span>Le plafond est obligatoire.</span>
+                }
+                @if (f['plafond'].errors?.['min']) {
+                  <span>Le plafond doit être supérieur à zéro.</span>
+                }
+                @if (f['plafond'].errors?.['pattern']) {
+                  <span>Format invalide (ex: 123.45).</span>
+                }
+              </small>
+            }
           </div>
 
           <!-- ========== TAUX ========== -->
@@ -224,11 +243,19 @@
               styleClass="w-full"
               [ngClass]="{'ng-invalid ng-dirty': f['taux'].invalid && f['taux'].touched}">
             </p-inputNumber>
-            <small class="p-error" *ngIf="f['taux'].invalid && f['taux'].touched">
-              <span *ngIf="f['taux'].errors?.['required']">Le taux est obligatoire.</span>
-              <span *ngIf="f['taux'].errors?.['min'] || f['taux'].errors?.['max']">Le taux doit être entre 0 et 100.</span>
-              <span *ngIf="f['taux'].errors?.['pattern']">Format invalide (ex: 5.75).</span>
-            </small>
+            @if (f['taux'].invalid && f['taux'].touched) {
+              <small class="p-error">
+                @if (f['taux'].errors?.['required']) {
+                  <span>Le taux est obligatoire.</span>
+                }
+                @if (f['taux'].errors?.['min'] || f['taux'].errors?.['max']) {
+                  <span>Le taux doit être entre 0 et 100.</span>
+                }
+                @if (f['taux'].errors?.['pattern']) {
+                  <span>Format invalide (ex: 5.75).</span>
+                }
+              </small>
+            }
           </div>
 
           <!-- ========== DATE DÉPART ========== -->
@@ -244,9 +271,13 @@
               appendTo="body"
               [ngClass]="{'ng-invalid ng-dirty': f['dateDepart'].invalid && f['dateDepart'].touched}">
             </p-calendar>
-            <small class="p-error" *ngIf="f['dateDepart'].invalid && f['dateDepart'].touched">
-              <span *ngIf="f['dateDepart'].errors?.['required']">La date de départ est obligatoire.</span>
-            </small>
+            @if (f['dateDepart'].invalid && f['dateDepart'].touched) {
+              <small class="p-error">
+                @if (f['dateDepart'].errors?.['required']) {
+                  <span>La date de départ est obligatoire.</span>
+                }
+              </small>
+            }
           </div>
 
           <!-- ========== DATE FIN ========== -->
@@ -262,18 +293,23 @@
               appendTo="body"
               [ngClass]="{'ng-invalid ng-dirty': f['dateFin'].invalid && f['dateFin'].touched}">
             </p-calendar>
-            <small class="p-error" *ngIf="f['dateFin'].invalid && f['dateFin'].touched">
-              <span *ngIf="f['dateFin'].errors?.['required']">La date de fin est obligatoire.</span>
-              <span *ngIf="f['dateFin'].errors?.['minDate']">La date de fin ne peut pas être antérieure à la date de départ.</span>
-            </small>
+            @if (f['dateFin'].invalid && f['dateFin'].touched) {
+              <small class="p-error">
+                @if (f['dateFin'].errors?.['required']) {
+                  <span>La date de fin est obligatoire.</span>
+                }
+                @if (f['dateFin'].errors?.['minDate']) {
+                  <span>La date de fin ne peut pas être antérieure à la date de départ.</span>
+                }
+              </small>
+            }
           </div>
 
         </div>
 
         <!-- ========== SECTION SOUS-LIGNES (Caution Administrative uniquement) ========== -->
-        <div
-          *ngIf="isCautionAdministrativeSelected && !isEditMode"
-          class="mt-5 p-3 border-1 border-round surface-hover">
+        @if (isCautionAdministrativeSelected && !isEditMode) {
+        <div class="mt-5 p-3 border-1 border-round surface-hover">
 
           <!-- Header -->
           <div class="flex gap-2 justify-content-between align-items-center">
@@ -290,17 +326,21 @@
           </div>
 
           <!-- Error Messages -->
-          <p class="p-error font-bold mt-2" *ngIf="sousLignesArray.hasError('duplicateSousLigneNature')">
-            <i class="pi pi-exclamation-circle mr-2"></i>
-            <strong>Erreur Unicité :</strong> Une nature de sous-ligne ne peut être ajoutée qu'une seule fois.
-          </p>
+          @if (sousLignesArray.hasError('duplicateSousLigneNature')) {
+            <p class="p-error font-bold mt-2">
+              <i class="pi pi-exclamation-circle mr-2"></i>
+              <strong>Erreur Unicité :</strong> Une nature de sous-ligne ne peut être ajoutée qu'une seule fois.
+            </p>
+          }
 
-          <p class="p-error font-bold mt-2" *ngIf="ligneFonctionnelleForm.hasError('totalPlafondExceeded')">
-            <i class="pi pi-exclamation-circle mr-2"></i>
-            <strong>Erreur Plafond :</strong>
-            La somme des plafonds des sous-lignes ({{ totalSousLignesPlafond | number:'1.2-2' }})
-            dépasse le plafond de la Ligne Mère ({{ f['plafond'].value | number:'1.2-2' }}).
-          </p>
+          @if (ligneFonctionnelleForm.hasError('totalPlafondExceeded')) {
+            <p class="p-error font-bold mt-2">
+              <i class="pi pi-exclamation-circle mr-2"></i>
+              <strong>Erreur Plafond :</strong>
+              La somme des plafonds des sous-lignes ({{ totalSousLignesPlafond | number:'1.2-2' }})
+              dépasse le plafond de la Ligne Mère ({{ f['plafond'].value | number:'1.2-2' }}).
+            </p>
+          }
 
           <!-- Table Sous-lignes -->
           <p-table
@@ -321,9 +361,11 @@
               <tr [class.ng-invalid]="control.get('natureLigneFonctionnelleId')?.hasError('duplicateNature')">
                 <td>
                   {{ getNatureLabel(control.get('natureLigneFonctionnelleId')?.value) }}
-                  <small class="p-error block" *ngIf="control.get('natureLigneFonctionnelleId')?.hasError('duplicateNature')">
-                    <i class="pi pi-exclamation-triangle mr-1"></i>(Nature dupliquée)
-                  </small>
+                  @if (control.get('natureLigneFonctionnelleId')?.hasError('duplicateNature')) {
+                    <small class="p-error block">
+                      <i class="pi pi-exclamation-triangle mr-1"></i>(Nature dupliquée)
+                    </small>
+                  }
                 </td>
                 <td>{{ control.get('plafond')?.value | number:'1.2-2' }}</td>
                 <td class="text-center">
@@ -368,6 +410,7 @@
             </ng-template>
           </p-table>
         </div>
+        }
 
         <!-- ========== FORM ACTIONS ========== -->
         <div class="flex justify-content-end mt-4 gap-2">

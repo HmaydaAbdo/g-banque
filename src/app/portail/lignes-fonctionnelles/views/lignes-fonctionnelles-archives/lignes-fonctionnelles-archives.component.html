@@ -11,7 +11,7 @@
         [model]="items"
         [style]="{'background-color': 'transparent', 'border': 'none'}">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a
               [routerLink]="item.route"
               class="p-menuitem-link"
@@ -20,12 +20,11 @@
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-xl']"></span>
               <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <a [href]="item.url">
               <span class="text-color text-sm text-xl text-center">{{ item.label }}</span>
             </a>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -91,24 +90,28 @@
 
         <!-- Template pour l'élément sélectionné -->
         <ng-template pTemplate="selectedItem" let-selectedOption>
-          <div class="flex align-items-center gap-2" *ngIf="selectedOption">
-            <i class="pi pi-file"></i>
-            <div>{{ selectedOption.label }}</div>
-          </div>
+          @if (selectedOption) {
+            <div class="flex align-items-center gap-2">
+              <i class="pi pi-file"></i>
+              <div>{{ selectedOption.label }}</div>
+            </div>
+          }
         </ng-template>
 
         <!-- Template pour les items -->
         <ng-template let-marche pTemplate="item">
           <div class="flex align-items-center gap-2" style="height: 38px">
-            <ng-container *ngIf="marche && marche.value !== undefined">
-              <i class="pi pi-file" *ngIf="marche.value !== null"></i>
-              <i class="pi pi-filter" *ngIf="marche.value === null"></i>
+            @if (marche && marche.value !== undefined) {
+              @if (marche.value !== null) {
+                <i class="pi pi-file"></i>
+              } @else {
+                <i class="pi pi-filter"></i>
+              }
               <div>{{ marche.label }}</div>
-            </ng-container>
-            <ng-container *ngIf="!marche || marche.value === undefined">
+            } @else {
               <i class="pi pi-spin pi-spinner text-secondary"></i>
               <span class="text-secondary">Chargement...</span>
-            </ng-container>
+            }
           </div>
         </ng-template>
       </p-dropdown>
@@ -173,15 +176,16 @@
         <tr [pSelectableRow]="ligne">
           <!-- Expand button -->
           <td>
-            <button
-              *ngIf="ligne.estLigneMere"
-              type="button"
-              pButton
-              pRipple
-              [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-              class="p-button-text p-button-rounded p-button-plain"
-              (click)="dt.toggleRow(ligne)">
-            </button>
+            @if (ligne.estLigneMere) {
+              <button
+                type="button"
+                pButton
+                pRipple
+                [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+                class="p-button-text p-button-rounded p-button-plain"
+                (click)="dt.toggleRow(ligne)">
+              </button>
+            }
           </td>
 
           <td>{{ ligne.id }}</td>
@@ -245,8 +249,11 @@
                     <td>{{ sousLigne.id }}</td>
                     <td>{{ sousLigne.natureLigneFonctionnelleLabel }}</td>
                     <td>
-                      <span *ngIf="sousLigne.plafond">{{ sousLigne.plafond | number:'1.2-2' }} MAD</span>
-                      <span *ngIf="!sousLigne.plafond">-</span>
+                      @if (sousLigne.plafond) {
+                        <span>{{ sousLigne.plafond | number:'1.2-2' }} MAD</span>
+                      } @else {
+                        <span>-</span>
+                      }
                     </td>
                   </tr>
                 </ng-template>

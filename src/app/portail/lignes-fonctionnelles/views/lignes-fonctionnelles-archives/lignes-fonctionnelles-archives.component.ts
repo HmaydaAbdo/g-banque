@@ -1,14 +1,14 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, inject } from '@angular/core';
 import { BreadcrumbModule } from "primeng/breadcrumb";
 import { ButtonDirective } from "primeng/button";
 import { ConfirmDialogModule } from "primeng/confirmdialog";
-import { DatePipe, DecimalPipe, NgClass, NgIf } from "@angular/common";
+import { DatePipe, DecimalPipe, NgClass } from "@angular/common";
 import { DropdownModule } from "primeng/dropdown";
 import { PaginatorModule } from "primeng/paginator";
 import { ConfirmationService, MenuItem, MessageService, PrimeTemplate, ScrollerOptions } from "primeng/api";
 import { FormBuilder, FormGroup, ReactiveFormsModule } from "@angular/forms";
 import { Ripple } from "primeng/ripple";
-import {Router, RouterLinkActive} from "@angular/router";
+import {RouterLinkActive} from "@angular/router";
 import { Table, TableLazyLoadEvent, TableModule } from "primeng/table";
 import { TagModule } from "primeng/tag";
 import { ToastModule } from "primeng/toast";
@@ -38,7 +38,6 @@ const DEBOUNCE_TIME = 300;
     DatePipe,
     DecimalPipe,
     DropdownModule,
-    NgIf,
     PaginatorModule,
     PrimeTemplate,
     ReactiveFormsModule,
@@ -87,17 +86,15 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
   // ========== UI ==========
   items: MenuItem[] = [];
 
-  constructor(
-    private ligneFonctionnelleService: LigneFonctionnelleService,
-    private banqueService: BanqueService,
-    private marcheService: MarcheService,
-    private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private fb: FormBuilder,
-    private messageService: MessageService,
-    private router: Router,
-    private readonly lineNavigationService: LineNavigationService
+  private readonly ligneFonctionnelleService = inject(LigneFonctionnelleService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly natureLigneFonctionnelleService = inject(NatureLigneFonctionnelleService);
+  private readonly fb = inject(FormBuilder);
+  private readonly messageService = inject(MessageService);
+  private readonly lineNavigationService = inject(LineNavigationService);
 
-  ) {
+  constructor() {
     this.marchesScrollerOptions = {
       delay: 250,
       showLoader: true,
@@ -154,9 +151,6 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
       next: ([banques, natures]) => {
         this.banquesOptions = banques;
         this.natureLigneOptions = natures;
-      },
-      error: (err) => {
-        console.error('Error loading dropdowns:', err);
       }
     });
   }
@@ -164,10 +158,7 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
   private loadBanques() {
     return this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc').pipe(
       takeUntil(this.destroy$),
-      catchError(err => {
-        console.error('Error loading banques:', err);
-        return of({ content: [] });
-      }),
+      catchError(() => of({ content: [] })),
       switchMap(response => {
         const options = [{ label: 'Toutes les banques', value: null }];
         response.content.forEach((banque: any) => {
@@ -181,10 +172,7 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
   private loadNatureLignes() {
     return this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().pipe(
       takeUntil(this.destroy$),
-      catchError(err => {
-        console.error('Error loading natures:', err);
-        return of([]);
-      }),
+      catchError(() => of([])),
       switchMap(natures => {
         const options = [{ label: 'Toutes les natures', value: null }];
         natures.forEach((nature: any) => {
@@ -221,8 +209,7 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
       next: (response) => {
         this.initializeMarchesOptions(response);
       },
-      error: (err) => {
-        console.error('Error loading marchés:', err);
+      error: () => {
         this.marchesOptions = [];
       }
     });
@@ -248,9 +235,6 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
     ).subscribe({
       next: (response) => {
         this.initializeMarchesOptions(response);
-      },
-      error: (err) => {
-        console.error('Error filtering marchés:', err);
       }
     });
   }
@@ -274,10 +258,7 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
       MARCHE_PAGE_SIZE,
       'numero,asc'
     ).pipe(
-      catchError(err => {
-        console.error('Error loading marchés:', err);
-        return of({ content: [], page: { totalElements: 0 } });
-      })
+      catchError(() => of({ content: [], page: { totalElements: 0 } }))
     );
   }
 
@@ -352,8 +333,7 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
           this.totalRecords = data.page.totalElements;
           this.loading = false;
         },
-        error: (err) => {
-          console.error('Error fetching functional lignes:', err);
+        error: () => {
           this.loading = false;
         }
       });

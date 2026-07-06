@@ -1,7 +1,7 @@
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
@@ -90,19 +90,17 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
   // ========== UI ==========
   items: MenuItem[] = [];
 
-  constructor(
-    private readonly ligneFonctionnelleService: LigneFonctionnelleService,
-    private readonly banqueService: BanqueService,
-    private readonly marcheService: MarcheService,
-    private readonly natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private readonly fb: FormBuilder,
-    private readonly router: Router,
-    private readonly messageService: MessageService,
-    private readonly confirmationService: ConfirmationService,
-    private readonly authService: AuthService,
-    private readonly lineNavigationService: LineNavigationService
+  private readonly ligneFonctionnelleService = inject(LigneFonctionnelleService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly natureLigneFonctionnelleService = inject(NatureLigneFonctionnelleService);
+  private readonly fb = inject(FormBuilder);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly authService = inject(AuthService);
+  private readonly lineNavigationService = inject(LineNavigationService);
 
-  ) {
+  constructor() {
     this.marchesScrollerOptions = {
       delay: 250,
       showLoader: true,
@@ -160,9 +158,6 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
       next: ([banques, natures]) => {
         this.banquesOptions = banques;
         this.natureLigneOptions = natures;
-      },
-      error: (err) => {
-        console.error('Error loading dropdowns:', err);
       }
     });
   }
@@ -170,10 +165,7 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
   private loadBanques() {
     return this.banqueService.getAllBanques({}, 0, 1000, 'nom,asc').pipe(
       takeUntil(this.destroy$),
-      catchError(err => {
-        console.error('Error loading banques:', err);
-        return of({ content: [] });
-      }),
+      catchError(() => of({ content: [] })),
       switchMap(response => {
         const options = [{ label: 'Toutes les banques', value: null }];
         response.content.forEach((banque: any) => {
@@ -187,10 +179,7 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
   private loadNatureLignes() {
     return this.natureLigneFonctionnelleService.getAllNatureLigneFonctionnellesList().pipe(
       takeUntil(this.destroy$),
-      catchError(err => {
-        console.error('Error loading natures:', err);
-        return of([]);
-      }),
+      catchError(() => of([])),
       switchMap(natures => {
         const options = [{ label: 'Toutes les natures', value: null }];
         natures.forEach((nature: any) => {
@@ -227,8 +216,7 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.initializeMarchesOptions(response);
       },
-      error: (err) => {
-        console.error('Error loading marchés:', err);
+      error: () => {
         this.marchesOptions = [];
       }
     });
@@ -256,9 +244,6 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (response) => {
         this.initializeMarchesOptions(response);
-      },
-      error: (err) => {
-        console.error('Error filtering marchés:', err);
       }
     });
   }
@@ -288,10 +273,7 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
       MARCHE_PAGE_SIZE,
       'numero,asc'
     ).pipe(
-      catchError(err => {
-        console.error('Error loading marchés:', err);
-        return of({ content: [], page: { totalElements: 0 } });
-      })
+      catchError(() => of({ content: [], page: { totalElements: 0 } }))
     );
   }
 
@@ -368,8 +350,7 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
           this.totalRecords = data.page.totalElements;
           this.loading = false;
         },
-        error: (err) => {
-          console.error('Error fetching lignes:', err);
+        error: () => {
           this.loading = false;
         }
       });
@@ -405,7 +386,6 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
 
   desactiver(ligne: LigneFonctionnelleResponse): void {
     if (!ligne) {
-      console.error('Ligne is null');
       return;
     }
 
@@ -429,8 +409,7 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
               });
               this.reloadTableAfterAction();
             },
-            error: (error) => {
-              console.error('Error deactivating ligne:', error);
+            error: () => {
               this.loading = false;
             }
           });
@@ -457,8 +436,7 @@ export class LignesFonctionnellesComponent implements OnInit, OnDestroy {
               });
               this.reloadTableAfterAction();
             },
-            error: (error) => {
-              console.error('Error deleting ligne:', error);
+            error: () => {
               this.loading = false;
             }
           });

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {ActivatedRoute, Router, ParamMap, RouterLinkActive} from '@angular/router';
@@ -52,14 +52,14 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
     value
   }));
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router,
-    private natureService: NatureLigneFonctionnelleService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) {
+  private fb = inject(FormBuilder);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private natureService = inject(NatureLigneFonctionnelleService);
+  private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService);
+
+  constructor() {
     this.natureLigneForm = this.fb.group({
       code: ['', [Validators.required, Validators.maxLength(20)]],
       label: ['', [Validators.required]],
@@ -97,8 +97,7 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
         this.natureLigneForm.get('code')?.disable();
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Erreur lors du chargement de la nature de ligne fonctionnelle:', error);
+      error: () => {
         this.loading = false;
         this.router.navigate(['/portail/natures-fonctionnelles']);
       }
@@ -142,8 +141,7 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
             this.loading = false;
             this.router.navigate(['/portail/natures-fonctionnelles']);
           },
-          error: (error) => {
-            console.error('Erreur lors de la mise à jour de la nature de ligne fonctionnelle:', error);
+          error: () => {
             this.loading = false;
           }
         });
@@ -155,8 +153,7 @@ export class NatureLigneFonctionnelleEditComponent implements OnInit {
             this.loading = false;
             this.router.navigate(['/portail/natures-fonctionnelles']);
           },
-          error: (error) => {
-            console.error('Erreur lors de la création de la nature de ligne fonctionnelle:', error);
+          error: () => {
             this.loading = false;
           }
         });

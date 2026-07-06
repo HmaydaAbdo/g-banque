@@ -5,17 +5,16 @@
   <div class="flex justify-content-center">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
+        @if (item.route) {
           <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
             <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
           </a>
-        </ng-container>
-        <ng-template #elseBlock>
+        } @else {
           <a [href]="item.url">
             <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
           </a>
-        </ng-template>
+        }
       </ng-template>
     </p-breadcrumb>
   </div>
@@ -53,22 +52,23 @@
               [loading]="loadingMarches">
 
               <ng-template pTemplate="selectedItem" let-selectedOption>
-                <div class="flex align-items-center gap-2" *ngIf="selectedOption">
-                  <i class="pi pi-file p-text-secondary"></i>
-                  <div>{{ selectedOption.label }}</div>
-                </div>
+                @if (selectedOption) {
+                  <div class="flex align-items-center gap-2">
+                    <i class="pi pi-file p-text-secondary"></i>
+                    <div>{{ selectedOption.label }}</div>
+                  </div>
+                }
               </ng-template>
 
               <ng-template let-marche pTemplate="item">
                 <div class="flex align-items-center gap-2" style="height: 38px">
-                  <ng-container *ngIf="marche">
+                  @if (marche) {
                     <i class="pi pi-file"></i>
                     <div>{{ marche.label }}</div>
-                  </ng-container>
-                  <ng-container *ngIf="!marche">
+                  } @else {
                     <i class="pi pi-spin pi-spinner text-secondary"></i>
                     <span class="text-secondary">Chargement...</span>
-                  </ng-container>
+                  }
                 </div>
               </ng-template>
             </p-dropdown>
@@ -92,7 +92,9 @@
           <div class="field col-12 md:col-6">
             <label >Date de Fin *</label>
             <p-calendar formControlName="dateFin" appendTo="body" [showIcon]="true" dateFormat="dd/mm/yy"></p-calendar>
-            <small class="p-error" *ngIf="f['dateFin'].hasError('minDate')">La date de fin doit être après le départ.</small>
+            @if (f['dateFin'].hasError('minDate')) {
+              <small class="p-error">La date de fin doit être après le départ.</small>
+            }
           </div>
         </div>
 

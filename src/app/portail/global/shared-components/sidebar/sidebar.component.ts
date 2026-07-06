@@ -65,22 +65,25 @@ export class SidebarComponent implements OnInit {
     {
       label: 'Les Lignes Fonctionnelles',
       icon: 'pi pi-receipt',
+      requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
       items: [
         {
           label: 'Les Lignes ponctuelles', icon: 'pi pi-list',
+          requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
           items: [
-            { label: 'Les Lignes encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-encours' },
-            { label: 'Les Lignes archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-archived' },
+            { label: 'Les Lignes encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-encours', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+            { label: 'Les Lignes archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-archived', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
           ]
         },
         {
           label: 'Les Lignes spécifiques', icon: 'pi pi-list',
+          requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
           items: [
-            { label: 'Les lignes encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-encours' },
-            { label: 'Les lignes archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-archived' },
+            { label: 'Les lignes encours', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-encours', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+            { label: 'Les lignes archivées', icon: 'pi pi-list', routerLink: '/portail/lignes-fonctionnelles-specifiques-archived', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
           ]
         },
-        { label: 'Les Natures des lignes Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles' }
+        { label: 'Les Natures des lignes Fonctionnelles', icon: 'pi pi-tag', routerLink: '/portail/natures-fonctionnelles', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] }
       ]
     },
     {

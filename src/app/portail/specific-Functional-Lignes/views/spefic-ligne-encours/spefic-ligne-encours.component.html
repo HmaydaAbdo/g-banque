@@ -6,15 +6,14 @@
     <div class="flex align-items-center">
       <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-xl']"></span>
               <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <span class=" text-black-alpha-90 font-bold p-2">{{ item.label }}</span>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -48,10 +47,11 @@
                     [virtualScrollOptions]="marchesScrollerOptions" [loading]="marchesLoading" styleClass="w-full">
           <ng-template let-marche pTemplate="item">
             <div class="flex align-items-center gap-2" style="height: 38px">
-              <ng-container *ngIf="marche && marche.label; else loadingTmpl">
+              @if (marche && marche.label) {
                 <i class="pi pi-file"></i> <span>{{ marche.label }}</span>
-              </ng-container>
-              <ng-template #loadingTmpl><i class="pi pi-spin pi-spinner"></i> Chargement...</ng-template>
+              } @else {
+                <i class="pi pi-spin pi-spinner"></i> Chargement...
+              }
             </div>
           </ng-template>
         </p-dropdown>
@@ -127,8 +127,10 @@
               <button pButton icon="pi pi-ban" class="p-button-rounded p-button-outlined p-button-warning"
                       (click)="desactiver(ligne)" [disabled]="!ligne.actif" pTooltip="Désactiver"></button>
 
-              <button *ngIf="isAdmin()" pButton icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
-                      (click)="deleteLigneFonctionnelleSpecifique(ligne)" pTooltip="Supprimer"></button>
+              @if (isAdmin()) {
+                <button pButton icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger"
+                        (click)="deleteLigneFonctionnelleSpecifique(ligne)" pTooltip="Supprimer"></button>
+              }
             </div>
           </td>
         </tr>

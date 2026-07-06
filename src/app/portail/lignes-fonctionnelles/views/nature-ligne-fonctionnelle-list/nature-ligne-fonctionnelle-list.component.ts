@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
@@ -67,14 +67,12 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
   /** Expose les labels de portée au template */
   porteeLabel = PORTEE_NATURE_LABELS;
 
-  constructor(
-    private natureService: NatureLigneFonctionnelleService,
-    private router: Router,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder,
-    private authService: AuthService,
-  ) {}
+  private natureService = inject(NatureLigneFonctionnelleService);
+  private router = inject(Router);
+  private messageService = inject(MessageService);
+  private confirmationService = inject(ConfirmationService);
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
 
   ngOnInit(): void {
     this.items = [
@@ -127,8 +125,7 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
           this.totalRecords = pageResponse.page.totalElements;
           this.loading = false;
         },
-        error: (err) => {
-          console.error('Erreur lors du chargement des natures:', err);
+        error: () => {
           this.loading = false;
         }
       });
@@ -184,9 +181,7 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
               this.loadNatures();
             }
           },
-          error: (error) => {
-            console.error('Erreur lors de la suppression de la nature de ligne fonctionnelle:', error);
-          }
+          error: () => {}
         });
       },
       reject: () => {

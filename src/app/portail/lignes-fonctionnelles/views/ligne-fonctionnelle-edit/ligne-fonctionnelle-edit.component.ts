@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, NgIf } from '@angular/common';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   FormGroup,
@@ -70,7 +70,7 @@ const DEBOUNCE_TIME = 300;
   styleUrls: ['./ligne-fonctionnelle-edit.component.scss'],
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, NgIf, InputTextModule, DropdownModule,
+    CommonModule, ReactiveFormsModule, InputTextModule, DropdownModule,
     MultiSelectModule, InputNumberModule, ButtonModule, RippleModule, ToastModule,
     ConfirmDialogModule, CalendarModule, BreadcrumbModule, RouterLink, RouterLinkActive,
     TooltipModule, DialogModule, TableModule
@@ -108,17 +108,15 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
   // ========== MARCHÉ LOADING ==========
   loadingMarches = false;
 
-  constructor(
-    private readonly fb: FormBuilder,
-    private readonly route: ActivatedRoute,
-    private readonly router: Router,
-    private readonly ligneFonctionnelleService: LigneFonctionnelleService,
-    private readonly banqueService: BanqueService,
-    private readonly natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private readonly messageService: MessageService,
-    private readonly confirmationService: ConfirmationService,
-    private readonly marcheService: MarcheService
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly ligneFonctionnelleService = inject(LigneFonctionnelleService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly natureLigneFonctionnelleService = inject(NatureLigneFonctionnelleService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly marcheService = inject(MarcheService);
 
   // ========== LIFECYCLE HOOKS ==========
 
@@ -186,10 +184,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
         label: banque.nom,
         value: banque.id!
       }))),
-      catchError(err => {
-        console.error('Error loading banques:', err);
-        return of([]);
-      })
+      catchError(() => of([]))
     );
   }
 
@@ -199,10 +194,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
         label: nature.label,
         value: nature.id!
       }))),
-      catchError(err => {
-        console.error('Error loading natures:', err);
-        return of([]);
-      })
+      catchError(() => of([]))
     );
   }
 
@@ -323,8 +315,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
     return this.ligneFonctionnelleService.getLigneFonctionnelleById(id).pipe(
       takeUntil(this.destroy$),
       tap(ligne => this.patchFormWithLigne(ligne)),
-      catchError(error => {
-        console.error('Error loading ligne:', error);
+      catchError(() => {
         this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
         return EMPTY;
       }),
@@ -529,8 +520,7 @@ export class LigneFonctionnelleEditComponent implements OnInit, OnDestroy {
         });
         this.router.navigate(['/portail/lignes-fonctionnelles-encours']);
       },
-      error: (error) => {
-        console.error('Save error:', error);
+      error: () => {
         this.loading = false;
       }
     });

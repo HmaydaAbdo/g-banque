@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink, RouterLinkActive} from '@angular/router';
@@ -7,7 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import { MenuItem, MessageService, ConfirmationService, ScrollerOptions } from 'primeng/api';
+import { MenuItem, ScrollerOptions } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TagModule } from 'primeng/tag';
@@ -45,8 +45,7 @@ const DEBOUNCE_TIME = 300;
     ToastModule, ConfirmDialogModule, ToolbarModule, TagModule, TooltipModule,
     DropdownModule, InputNumberModule, CalendarModule, InputSwitchModule,
     BreadcrumbModule, RouterLinkActive
-  ],
-  providers: [ ConfirmationService]
+  ]
 })
 export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
 
@@ -78,16 +77,14 @@ export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
 
   items: MenuItem[] = [];
 
-  constructor(
-    private specificLigneService: SpecificFunctionalLigneService,
-    private banqueService: BanqueService,
-    private marcheService: MarcheService,
-    private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-    private fb: FormBuilder,
-    private messageService: MessageService,
-    private readonly lineNavigationService: LineNavigationService
+  private readonly specificLigneService = inject(SpecificFunctionalLigneService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly natureLigneFonctionnelleService = inject(NatureLigneFonctionnelleService);
+  private readonly fb = inject(FormBuilder);
+  private readonly lineNavigationService = inject(LineNavigationService);
 
-  ) {
+  constructor() {
     this.marchesScrollerOptions = {
       delay: 250,
       showLoader: true,

@@ -1,15 +1,23 @@
 import { Routes } from '@angular/router';
-import {NatureLigneFonctionnelleListComponent} from "./views/nature-ligne-fonctionnelle-list/nature-ligne-fonctionnelle-list.component";
-import {NatureLigneFonctionnelleEditComponent} from "./views/nature-ligne-fonctionnelle-edit/nature-ligne-fonctionnelle-edit.component";
-
+import { departmentGuard } from '../../auth/guards/department.guard';
 
 export const NATURES_ROUTES: Routes = [
   {
     path: '',
+    canActivate: [departmentGuard('Finance')],
     children: [
-      { path: '', component: NatureLigneFonctionnelleListComponent },
-      { path: 'new', component: NatureLigneFonctionnelleEditComponent },
-      { path: 'edit/:id', component: NatureLigneFonctionnelleEditComponent },
+      {
+        path: '',
+        loadComponent: () => import('./views/nature-ligne-fonctionnelle-list/nature-ligne-fonctionnelle-list.component').then(m => m.NatureLigneFonctionnelleListComponent)
+      },
+      {
+        path: 'new',
+        loadComponent: () => import('./views/nature-ligne-fonctionnelle-edit/nature-ligne-fonctionnelle-edit.component').then(m => m.NatureLigneFonctionnelleEditComponent)
+      },
+      {
+        path: 'edit/:id',
+        loadComponent: () => import('./views/nature-ligne-fonctionnelle-edit/nature-ligne-fonctionnelle-edit.component').then(m => m.NatureLigneFonctionnelleEditComponent)
+      }
     ]
   }
 ];

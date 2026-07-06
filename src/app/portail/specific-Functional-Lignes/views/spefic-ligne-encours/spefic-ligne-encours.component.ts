@@ -1,7 +1,7 @@
-  import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+  import { Component, ViewChild, OnInit, OnDestroy, inject } from '@angular/core';
   import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
   import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-  import {Router, RouterLink, RouterLinkActive} from '@angular/router';
+  import {RouterLink, RouterLinkActive} from '@angular/router';
   import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
   import { InputTextModule } from 'primeng/inputtext';
   import { ButtonModule } from 'primeng/button';
@@ -84,18 +84,17 @@
 
     items: MenuItem[] = [];
 
-    constructor(
-      private specificLigneService: SpecificFunctionalLigneService,
-      private banqueService: BanqueService,
-      private marcheService: MarcheService,
-      private natureLigneFonctionnelleService: NatureLigneFonctionnelleService,
-      private fb: FormBuilder,
-      private messageService: MessageService,
-      private confirmationService: ConfirmationService,
-      private authService: AuthService,
-      private readonly lineNavigationService: LineNavigationService
+    private readonly specificLigneService = inject(SpecificFunctionalLigneService);
+    private readonly banqueService = inject(BanqueService);
+    private readonly marcheService = inject(MarcheService);
+    private readonly natureLigneFonctionnelleService = inject(NatureLigneFonctionnelleService);
+    private readonly fb = inject(FormBuilder);
+    private readonly messageService = inject(MessageService);
+    private readonly confirmationService = inject(ConfirmationService);
+    private readonly authService = inject(AuthService);
+    private readonly lineNavigationService = inject(LineNavigationService);
 
-    ) {
+    constructor() {
       this.marchesScrollerOptions = {
         delay: 250,
         showLoader: true,
