@@ -7,14 +7,15 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleReader;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
-import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
+import staport.finance.gBanque.droitConstate.service.DroitConstateReader;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.marches.repositories.MarcheRepository;
+import staport.finance.gBanque.marches.service.MarcheService;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
@@ -45,24 +46,29 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ol>
  *
  * <p>La TVA (10 %) et le TTC sont calculés par l'orchestrateur.</p>
+ *
+ * <p>Résolution des lignes/marché/encours via les façades de lecture cross-domaine
+ * ({@link LigneFonctionnelleReader}, {@link LigneFonctionnelleSpecifiqueReader},
+ * {@link INatureLigneFonctionnelleService}, {@link MarcheService}, {@link DroitConstateReader})
+ * — jamais via leurs Repository respectifs directement (encapsulation des domaines,
+ * architecture.md).</p>
  */
 @Component
 public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarche {
 
     private static final Logger log = LoggerFactory.getLogger(DroitConstateAgiosCalculateur.class);
 
-    private static final String NATURE_DC_CODE  = "DROIT_CONSTATE";
     private static final String NATURE_DC_LABEL = "Droit constaté";
     private static final BigDecimal DIVISEUR_360 = new BigDecimal("360");
     private static final int SCALE = 8;
     private static final int SCALE_FINAL = 2;
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
-    private final MarcheRepository marcheRepository;
-    private final LigneFonctionnelleSpecifiqueRepository ligneSpecifiqueRepository;
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
-    private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
-    private final DroitConstateRepository droitConstateRepository;
+    private final MarcheService marcheService;
+    private final LigneFonctionnelleSpecifiqueReader ligneSpecifiqueReader;
+    private final LigneFonctionnelleReader ligneFonctionnelleReader;
+    private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
+    private final DroitConstateReader droitConstateReader;
 
     /** Cache du taux résolu par marché — valide pour toute la durée d'un recalcul trimestriel. */
     private final Map<Long, Optional<BigDecimal>> cacheTauxParMarche = new ConcurrentHashMap<>();
@@ -71,16 +77,16 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
     private volatile NatureLigneFonctionnelle natureDC = null;
 
     public DroitConstateAgiosCalculateur(
-            MarcheRepository marcheRepository,
-            LigneFonctionnelleSpecifiqueRepository ligneSpecifiqueRepository,
-            LigneFonctionnelleRepository ligneFonctionnelleRepository,
-            NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository,
-            DroitConstateRepository droitConstateRepository) {
-        this.marcheRepository = marcheRepository;
-        this.ligneSpecifiqueRepository = ligneSpecifiqueRepository;
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
-        this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
-        this.droitConstateRepository = droitConstateRepository;
+            MarcheService marcheService,
+            LigneFonctionnelleSpecifiqueReader ligneSpecifiqueReader,
+            LigneFonctionnelleReader ligneFonctionnelleReader,
+            INatureLigneFonctionnelleService natureLigneFonctionnelleService,
+            DroitConstateReader droitConstateReader) {
+        this.marcheService = marcheService;
+        this.ligneSpecifiqueReader = ligneSpecifiqueReader;
+        this.ligneFonctionnelleReader = ligneFonctionnelleReader;
+        this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
+        this.droitConstateReader = droitConstateReader;
     }
 
     @Override
@@ -98,10 +104,10 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
     public boolean estEligible(Banque banque) {
         if (resolveNatureDC().isEmpty()) {
             log.warn("DC — {} : nature '{}' (code={}) introuvable en base → banque ignorée",
-                    banque.getNom(), NATURE_DC_LABEL, NATURE_DC_CODE);
+                    banque.getNom(), NATURE_DC_LABEL, NatureLigneFonctionnelleService.DROIT_CONSTATE_CODE);
             return false;
         }
-        List<Marche> marches = marcheRepository.findByBanqueId(banque.getId());
+        List<Marche> marches = marcheService.findByBanqueId(banque.getId());
         if (marches.isEmpty()) {
             log.info("DC — {} : aucun marché rattaché → banque ignorée", banque.getNom());
             return false;
@@ -135,7 +141,7 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
     @Override
     @Transactional(readOnly = true)
     public List<ResultatParMarche> calculerJourParMarche(Banque banque, LocalDate jour) {
-        List<Marche> marches = marcheRepository.findByBanqueId(banque.getId());
+        List<Marche> marches = marcheService.findByBanqueId(banque.getId());
         List<ResultatParMarche> resultats = new ArrayList<>();
 
         for (Marche marche : marches) {
@@ -191,10 +197,10 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
         if (natureDC != null) return Optional.of(natureDC);
 
         Optional<NatureLigneFonctionnelle> found =
-                natureLigneFonctionnelleRepository.findByCode(NATURE_DC_CODE);
+                natureLigneFonctionnelleService.findByCode(NatureLigneFonctionnelleService.DROIT_CONSTATE_CODE);
 
         if (found.isEmpty()) {
-            found = natureLigneFonctionnelleRepository.findByLabel(NATURE_DC_LABEL);
+            found = natureLigneFonctionnelleService.findByLabel(NATURE_DC_LABEL);
         }
 
         found.ifPresent(n -> {
@@ -204,7 +210,8 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
         });
 
         if (found.isEmpty()) {
-            log.error("Nature '{}' (code={}) introuvable en base", NATURE_DC_LABEL, NATURE_DC_CODE);
+            log.error("Nature '{}' (code={}) introuvable en base",
+                    NATURE_DC_LABEL, NatureLigneFonctionnelleService.DROIT_CONSTATE_CODE);
         }
 
         return found;
@@ -224,7 +231,7 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
 
             // 1. Ligne spécifique
             Optional<LigneFonctionnelleSpecifique> specifique =
-                    ligneSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
+                    ligneSpecifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
                             marche, nature);
 
             if (specifique.isPresent()) {
@@ -235,7 +242,7 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
 
             // 2. Ligne générale
             Optional<LigneFonctionnelle> generale =
-                    ligneFonctionnelleRepository.findActiveLineForMarche(id, nature.getId());
+                    ligneFonctionnelleReader.findActiveLineForMarche(id, nature.getId());
 
             if (generale.isPresent()) {
                 log.debug("Marché {} — ligne générale DC id={} taux={}",
@@ -257,13 +264,8 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
      * {@code Encours_j = Σ(DEBLOCAGE PAYE, dateValeur ≤ j) − Σ(REMBOURSEMENT PAYE, dateValeur ≤ j)}
      */
     private BigDecimal calculerEncours(Marche marche, LocalDate jour) {
-        BigDecimal totalDeblocages = droitConstateRepository
-                .sumMontantPaye(marche, Type.DEBLOCAGE, jour);
-        BigDecimal totalRemboursements = droitConstateRepository
-                .sumMontantPaye(marche, Type.REMBOURSEMENT, jour);
-
-        if (totalDeblocages == null) totalDeblocages = BigDecimal.ZERO;
-        if (totalRemboursements == null) totalRemboursements = BigDecimal.ZERO;
+        BigDecimal totalDeblocages = droitConstateReader.sumMontantPaye(marche, Type.DEBLOCAGE, jour);
+        BigDecimal totalRemboursements = droitConstateReader.sumMontantPaye(marche, Type.REMBOURSEMENT, jour);
 
         return totalDeblocages.subtract(totalRemboursements);
     }

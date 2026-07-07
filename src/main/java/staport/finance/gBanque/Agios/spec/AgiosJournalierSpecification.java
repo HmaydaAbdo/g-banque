@@ -32,7 +32,8 @@ public class AgiosJournalierSpecification {
                 cb.lessThanOrEqualTo(root.get("dateValeur"), dateLimite);
     }
 
-    public static Specification<AgiosJournalier> buildSpec(Long banqueId, TypeAgios type,
+    /** Convention repo : {@code XSpecification.searchByCriteria(...)} (architecture.md). */
+    public static Specification<AgiosJournalier> searchByCriteria(Long banqueId, TypeAgios type,
                                                            LocalDate debut, LocalDate fin,
                                                            LocalDate dateLimite) {
         LocalDate finEffective = (dateLimite != null && dateLimite.isBefore(fin)) ? dateLimite : fin;

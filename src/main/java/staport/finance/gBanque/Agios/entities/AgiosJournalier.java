@@ -11,7 +11,13 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "agios_journalier")
+@Table(name = "agios_journalier",
+        indexes = {
+                @Index(name = "idx_agios_jour_banque_id",   columnList = "banque_id"),
+                @Index(name = "idx_agios_jour_type_agios",  columnList = "type_agios"),
+                @Index(name = "idx_agios_jour_marche_id",   columnList = "marche_id"),
+                @Index(name = "idx_agios_jour_trimestre_id",columnList = "trimestre_id")
+        })
 // Contrainte d'unicité gérée via deux index partiels MySQL (migration SQL manuelle) :
 //   uk_agios_jour_banque_type_nomarche : (date_valeur, banque_id, type_agios) WHERE marche_id IS NULL
 //   uk_agios_jour_banque_type_marche   : (date_valeur, banque_id, type_agios, marche_id) WHERE marche_id IS NOT NULL

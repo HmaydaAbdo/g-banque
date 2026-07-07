@@ -32,7 +32,9 @@ import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.Agios.spec.AgiosJournalierSpecification;
 import staport.finance.gBanque.Agios.spec.AgiosTrimestrielSpecification;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
@@ -66,7 +68,7 @@ public class AgiosOrchestrateurService {
 
     private final List<AgiosCalculateur> calculateurs;
     private final TransactionRepository transactionRepository;
-    private final BanqueRepository banqueRepository;
+    private final IBanqueService banqueService;
     private final AgiosJournalierRepository agiosJournalierRepository;
     private final AgiosTrimestrielRepository agiosTrimestrielRepository;
     private final AgiosService agiosService;
@@ -74,14 +76,14 @@ public class AgiosOrchestrateurService {
 
     public AgiosOrchestrateurService(List<AgiosCalculateur> calculateurs,
                                      TransactionRepository transactionRepository,
-                                     BanqueRepository banqueRepository,
+                                     IBanqueService banqueService,
                                      AgiosJournalierRepository agiosJournalierRepository,
                                      AgiosTrimestrielRepository agiosTrimestrielRepository,
                                      AgiosService agiosService,
                                      RapprochementRepository rapprochementRepository) {
         this.calculateurs = calculateurs;
         this.transactionRepository = transactionRepository;
-        this.banqueRepository = banqueRepository;
+        this.banqueService = banqueService;
         this.agiosJournalierRepository = agiosJournalierRepository;
         this.agiosTrimestrielRepository = agiosTrimestrielRepository;
         this.agiosService = agiosService;
@@ -104,7 +106,7 @@ public class AgiosOrchestrateurService {
         log.info("══════ Calcul quotidien des agios — {} — {} type(s) actif(s) ══════",
                 aujourdhui, calculateurs.size());
 
-        List<Banque> banques = banqueRepository.findAll();
+        List<Banque> banques = banqueService.getAllBanqueEntities();
 
         for (AgiosCalculateur calculateur : calculateurs) {
             log.info("── Type : {} ──", calculateur.getType().getLibelle());
@@ -192,8 +194,7 @@ public class AgiosOrchestrateurService {
                     "Impossible de calculer une année future : " + annee);
         }
 
-        Banque banque = banqueRepository.findById(banqueId)
-                .orElseThrow(() -> new ResourceNotFoundException("Banque non trouvée : " + banqueId));
+        Banque banque = banqueService.findOrThrow(banqueId);
 
         log.info("══════ Recalcul manuel période {}/{} — Banque {} ══════", trimNum, annee, banque.getNom());
 
@@ -434,6 +435,7 @@ public class AgiosOrchestrateurService {
     //  CLÔTURE TRIMESTRIELLE
     // ═══════════════════════════════════════════════════════════════
 
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = AgiosTrimestriel.class)
     @Transactional
     public AgiosTrimestriel cloturerTrimestre(Long banqueId, TypeAgios type, int trimNum, int annee) {
         log.info("Clôture {} T{}/{} banque ID:{}", type, trimNum, annee, banqueId);
@@ -476,7 +478,7 @@ public class AgiosOrchestrateurService {
 
     @Transactional(readOnly = true)
     public Page<AgiosTrimestriel> searchTrimestres(AgiosTrimestrielSearchDto dto, Pageable pageable) {
-        Specification<AgiosTrimestriel> spec = AgiosTrimestrielSpecification.buildSpec(
+        Specification<AgiosTrimestriel> spec = AgiosTrimestrielSpecification.searchByCriteria(
                 dto.banqueId(), dto.type(), dto.annee(),
                 dto.trimestre(), dto.statut(), dto.search());
         return agiosTrimestrielRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
@@ -487,7 +489,7 @@ public class AgiosOrchestrateurService {
         PeriodeCalculAgios periodeDto = dto.type() != null ? dto.type().getPeriodeCalcul() : PeriodeCalculAgios.TRIMESTRIEL;
         LocalDate debut = debutDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         LocalDate fin   = finDePeriode(dto.trimestre(), dto.annee(), periodeDto);
-        Specification<AgiosJournalier> spec = AgiosJournalierSpecification.buildSpec(
+        Specification<AgiosJournalier> spec = AgiosJournalierSpecification.searchByCriteria(
                 dto.banqueId(), dto.type(), debut, fin, dto.dateLimite());
         return agiosJournalierRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
     }
@@ -497,7 +499,7 @@ public class AgiosOrchestrateurService {
         PeriodeCalculAgios periodeDto = dto.type() != null ? dto.type().getPeriodeCalcul() : PeriodeCalculAgios.TRIMESTRIEL;
         LocalDate debut = debutDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         LocalDate fin   = finDePeriode(dto.trimestre(), dto.annee(), periodeDto);
-        Specification<AgiosJournalier> spec = AgiosJournalierSpecification.buildSpec(
+        Specification<AgiosJournalier> spec = AgiosJournalierSpecification.searchByCriteria(
                 dto.banqueId(), dto.type(), debut, fin, dto.dateLimite());
 
         List<AgiosJournalier> jours = agiosJournalierRepository.findAll(spec);

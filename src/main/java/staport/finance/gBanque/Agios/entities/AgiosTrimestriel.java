@@ -2,6 +2,7 @@ package staport.finance.gBanque.Agios.entities;
 
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Agios.enums.StatutTrimestre;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 import staport.finance.gBanque.Bank.entities.Banque;
@@ -12,8 +13,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Auditée : la clôture d'un trimestre ({@code AgiosOrchestrateurService.cloturerTrimestre}) est
+ * une action métier manuelle et irréversible — {@code Audit.md} exige une trace ({@code @Audited}
+ * + {@code @AuditableAction}) pour toute opération sensible de ce type. Le recalcul quotidien/
+ * manuel n'est volontairement pas annoté ({@code @AuditableAction}) : c'est un recompute
+ * idempotent, pas une décision métier.
+ */
+@Audited
 @Entity
 @Table(name = "agios_trimestriel",
+        indexes = {
+                @Index(name = "idx_agios_trim_banque_id",   columnList = "banque_id"),
+                @Index(name = "idx_agios_trim_statut",      columnList = "statut"),
+                @Index(name = "idx_agios_trim_type_agios",  columnList = "type_agios")
+        },
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_trim_banque_type",
                 columnNames = {"trimestre", "annee", "banque_id", "type_agios"}
@@ -72,6 +86,13 @@ public class AgiosTrimestriel {
     @Column(name = "agios_definitif_id")
     private Long agiosDefinitifId;
 
+    /**
+     * {@code @NotAudited} : {@code AgiosJournalier} n'est pas {@code @Audited} (données
+     * recalculées chaque nuit, jamais éditées manuellement) — sur un {@code @OneToMany(mappedBy)}
+     * sans table de jointure, {@code @Audited(targetAuditMode = NOT_AUDITED)} lèverait une
+     * {@code EnversMappingException} au démarrage (voir mémoire feedback-envers-audit-relations).
+     */
+    @org.hibernate.envers.NotAudited
     @OneToMany(mappedBy = "trimestre", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<AgiosJournalier> agiosJournaliers = new ArrayList<>();
 

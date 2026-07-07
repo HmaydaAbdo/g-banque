@@ -41,7 +41,8 @@ public class AgiosTrimestrielSpecification {
                         "%" + search.toLowerCase() + "%");
     }
 
-    public static Specification<AgiosTrimestriel> buildSpec(Long banqueId, TypeAgios type,
+    /** Convention repo : {@code XSpecification.searchByCriteria(...)} (architecture.md). */
+    public static Specification<AgiosTrimestriel> searchByCriteria(Long banqueId, TypeAgios type,
                                                             Integer annee, Integer trimestre,
                                                             StatutTrimestre statut, String search) {
         return Specification.where(banqueId(banqueId))

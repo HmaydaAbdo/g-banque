@@ -6,15 +6,16 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleReader;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.marches.repositories.MarcheRepository;
+import staport.finance.gBanque.marches.service.MarcheService;
 import staport.finance.gBanque.prefinancement.enums.Type;
-import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
+import staport.finance.gBanque.prefinancement.services.PrefinancementReader;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,24 +47,29 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ol>
  *
  * <p>La TVA (10 %) et le TTC sont calculés par l'orchestrateur.</p>
+ *
+ * <p>Résolution des lignes/marché/encours via les façades de lecture cross-domaine
+ * ({@link LigneFonctionnelleReader}, {@link LigneFonctionnelleSpecifiqueReader},
+ * {@link INatureLigneFonctionnelleService}, {@link MarcheService}, {@link PrefinancementReader})
+ * — jamais via leurs Repository respectifs directement (encapsulation des domaines,
+ * architecture.md).</p>
  */
 @Component
 public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarche {
 
     private static final Logger log = LoggerFactory.getLogger(PrefinancementAgiosCalculateur.class);
 
-    private static final String NATURE_PREFI_CODE  = "PREFINANCEMENT";  // code immuable en base
     private static final String NATURE_PREFI_LABEL = "Préfinancement";  // fallback label
     private static final BigDecimal DIVISEUR_360 = new BigDecimal("360");
     private static final int SCALE = 8;
     private static final int SCALE_FINAL = 2;
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
-    private final MarcheRepository marcheRepository;
-    private final LigneFonctionnelleSpecifiqueRepository ligneSpecifiqueRepository;
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
-    private final NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository;
-    private final PrefinancementRepository prefinancementRepository;
+    private final MarcheService marcheService;
+    private final LigneFonctionnelleSpecifiqueReader ligneSpecifiqueReader;
+    private final LigneFonctionnelleReader ligneFonctionnelleReader;
+    private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
+    private final PrefinancementReader prefinancementReader;
 
     /**
      * Cache du taux résolu par marché (valable pour toute la durée d'un recalcul trimestriel).
@@ -78,16 +84,16 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
     private volatile NatureLigneFonctionnelle naturePrefi = null;
 
     public PrefinancementAgiosCalculateur(
-            MarcheRepository marcheRepository,
-            LigneFonctionnelleSpecifiqueRepository ligneSpecifiqueRepository,
-            LigneFonctionnelleRepository ligneFonctionnelleRepository,
-            NatureLigneFonctionnelleRepository natureLigneFonctionnelleRepository,
-            PrefinancementRepository prefinancementRepository) {
-        this.marcheRepository = marcheRepository;
-        this.ligneSpecifiqueRepository = ligneSpecifiqueRepository;
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
-        this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
-        this.prefinancementRepository = prefinancementRepository;
+            MarcheService marcheService,
+            LigneFonctionnelleSpecifiqueReader ligneSpecifiqueReader,
+            LigneFonctionnelleReader ligneFonctionnelleReader,
+            INatureLigneFonctionnelleService natureLigneFonctionnelleService,
+            PrefinancementReader prefinancementReader) {
+        this.marcheService = marcheService;
+        this.ligneSpecifiqueReader = ligneSpecifiqueReader;
+        this.ligneFonctionnelleReader = ligneFonctionnelleReader;
+        this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
+        this.prefinancementReader = prefinancementReader;
     }
 
     @Override
@@ -105,10 +111,10 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
     public boolean estEligible(Banque banque) {
         if (resolveNaturePrefi().isEmpty()) {
             log.warn("PREFI — {} : nature '{}' (code={}) introuvable en base → banque ignorée",
-                    banque.getNom(), NATURE_PREFI_LABEL, NATURE_PREFI_CODE);
+                    banque.getNom(), NATURE_PREFI_LABEL, NatureLigneFonctionnelleService.PREFINANCEMENT_CODE);
             return false;
         }
-        List<Marche> marches = marcheRepository.findByBanqueId(banque.getId());
+        List<Marche> marches = marcheService.findByBanqueId(banque.getId());
         if (marches.isEmpty()) {
             log.info("PREFI — {} : aucun marché rattaché → banque ignorée", banque.getNom());
             return false;
@@ -144,7 +150,7 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
     @Override
     @Transactional(readOnly = true)
     public List<ResultatParMarche> calculerJourParMarche(Banque banque, LocalDate jour) {
-        List<Marche> marches = marcheRepository.findByBanqueId(banque.getId());
+        List<Marche> marches = marcheService.findByBanqueId(banque.getId());
         List<ResultatParMarche> resultats = new ArrayList<>();
 
         for (Marche marche : marches) {
@@ -207,11 +213,11 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
 
         // Priorité : code immuable (champ updatable=false en base)
         Optional<NatureLigneFonctionnelle> found =
-                natureLigneFonctionnelleRepository.findByCode(NATURE_PREFI_CODE);
+                natureLigneFonctionnelleService.findByCode(NatureLigneFonctionnelleService.PREFINANCEMENT_CODE);
 
         // Fallback : label exact
         if (found.isEmpty()) {
-            found = natureLigneFonctionnelleRepository.findByLabel(NATURE_PREFI_LABEL);
+            found = natureLigneFonctionnelleService.findByLabel(NATURE_PREFI_LABEL);
         }
 
         found.ifPresent(n -> {
@@ -221,7 +227,8 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
         });
 
         if (found.isEmpty()) {
-            log.error("Nature '{}' (code={}) introuvable en base", NATURE_PREFI_LABEL, NATURE_PREFI_CODE);
+            log.error("Nature '{}' (code={}) introuvable en base",
+                    NATURE_PREFI_LABEL, NatureLigneFonctionnelleService.PREFINANCEMENT_CODE);
         }
 
         return found;
@@ -249,9 +256,9 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
             }
             NatureLigneFonctionnelle nature = natureOpt.get();
 
-            // 1. Ligne spécifique — utilise la méthode dédiée du repository (pas de Specification)
+            // 1. Ligne spécifique — via la façade de lecture cross-domaine
             Optional<LigneFonctionnelleSpecifique> specifique =
-                    ligneSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
+                    ligneSpecifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
                             marche, nature);
 
             if (specifique.isPresent()) {
@@ -260,9 +267,9 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
                 return Optional.of(specifique.get().getTaux());
             }
 
-            // 2. Ligne générale — utilise la query JPQL dédiée du repository
+            // 2. Ligne générale — via la façade de lecture cross-domaine
             Optional<LigneFonctionnelle> generale =
-                    ligneFonctionnelleRepository.findActiveLineForMarche(id, nature.getId());
+                    ligneFonctionnelleReader.findActiveLineForMarche(id, nature.getId());
 
             if (generale.isPresent()) {
                 log.debug("Marché {} — ligne générale PREFI id={} taux={}",
@@ -287,13 +294,8 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
      * Les {@code Status.PREVU} représentent des opérations futures non encore réalisées.</p>
      */
     private BigDecimal calculerEncours(Marche marche, LocalDate jour) {
-        BigDecimal totalDeblocages = prefinancementRepository
-                .sumMontantPaye(marche, Type.DEBLOCAGE, jour);
-        BigDecimal totalRemboursements = prefinancementRepository
-                .sumMontantPaye(marche, Type.REMBOURSEMENT, jour);
-
-        if (totalDeblocages == null) totalDeblocages = BigDecimal.ZERO;
-        if (totalRemboursements == null) totalRemboursements = BigDecimal.ZERO;
+        BigDecimal totalDeblocages = prefinancementReader.sumMontantPaye(marche, Type.DEBLOCAGE, jour);
+        BigDecimal totalRemboursements = prefinancementReader.sumMontantPaye(marche, Type.REMBOURSEMENT, jour);
 
         return totalDeblocages.subtract(totalRemboursements);
     }

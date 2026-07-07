@@ -7,8 +7,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
+import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -37,5 +40,15 @@ public class PrefinancementReader {
     @Transactional(readOnly = true)
     public Page<Prefinancement> findAll(Specification<Prefinancement> spec, Pageable pageable) {
         return prefinancementRepository.findAll(spec, pageable);
+    }
+
+    /**
+     * Somme des montants payés d'un type donné pour un marché, jusqu'à une date incluse.
+     * Utilisé par les calculateurs d'agios pour reconstituer l'encours de préfinancement.
+     */
+    @Transactional(readOnly = true)
+    public BigDecimal sumMontantPaye(Marche marche, Type type, LocalDate jour) {
+        BigDecimal total = prefinancementRepository.sumMontantPaye(marche, type, jour);
+        return total != null ? total : BigDecimal.ZERO;
     }
 }

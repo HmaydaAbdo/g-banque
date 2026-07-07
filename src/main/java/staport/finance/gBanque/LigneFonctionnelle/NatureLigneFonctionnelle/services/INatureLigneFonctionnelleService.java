@@ -9,6 +9,7 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entit
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service contract for the NatureLigneFonctionnelle module.
@@ -68,4 +69,18 @@ public interface INatureLigneFonctionnelleService {
      * {@code ILigneFonctionnelleService}/{@code ILigneFonctionnelleSpecifiqueService}.
      */
     NatureLigneFonctionnelle findOrThrow(Long id);
+
+    /**
+     * Résout une nature par son code système (immuable). Façade pour les domaines qui doivent
+     * résoudre une nature par code (ex. {@code Agios}) sans jamais injecter
+     * {@code NatureLigneFonctionnelleRepository} directement (encapsulation des domaines,
+     * architecture.md).
+     */
+    Optional<NatureLigneFonctionnelle> findByCode(String code);
+
+    /**
+     * Résout une nature par son label, utilisé en fallback lorsque le code n'est pas (encore)
+     * seedé en base. Même rationale que {@link #findByCode(String)}.
+     */
+    Optional<NatureLigneFonctionnelle> findByLabel(String label);
 }

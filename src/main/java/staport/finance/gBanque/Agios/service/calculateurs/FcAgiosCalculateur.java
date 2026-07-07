@@ -2,30 +2,34 @@ package staport.finance.gBanque.Agios.service.calculateurs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleReader;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Résolution de la ligne Facilité de Caisse via {@link LigneFonctionnelleReader} — jamais via
+ * {@code LigneFonctionnelleRepository} directement (encapsulation des domaines, architecture.md).
+ * Le code système immuable {@link NatureLigneFonctionnelleService#FC_CODE} est utilisé au lieu
+ * d'une recherche par libellé (LIKE), alignée sur le pattern déjà établi pour PREFI/FACTORING/DC.
+ */
 @Component
 public class FcAgiosCalculateur implements AgiosCalculateur {
 
     private static final Logger log = LoggerFactory.getLogger(FcAgiosCalculateur.class);
-    private static final String NATURE_FC_LABEL = "Facilité de Caisse";
     private static final BigDecimal DIVISEUR_360 = new BigDecimal("360");
     private static final int SCALE = 2;
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
-    private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
+    private final LigneFonctionnelleReader ligneFonctionnelleReader;
 
     /**
      * Cache des lignes FC par banque — évite de requêter la base N fois
@@ -33,8 +37,8 @@ public class FcAgiosCalculateur implements AgiosCalculateur {
      */
     private final Map<Long, LigneFonctionnelle> cacheLignesFC = new ConcurrentHashMap<>();
 
-    public FcAgiosCalculateur(LigneFonctionnelleRepository ligneFonctionnelleRepository) {
-        this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
+    public FcAgiosCalculateur(LigneFonctionnelleReader ligneFonctionnelleReader) {
+        this.ligneFonctionnelleReader = ligneFonctionnelleReader;
     }
 
     @Override
@@ -88,20 +92,14 @@ public class FcAgiosCalculateur implements AgiosCalculateur {
 
     private LigneFonctionnelle trouverLigneFC(Long banqueId) {
         return cacheLignesFC.computeIfAbsent(banqueId, id -> {
-            Specification<LigneFonctionnelle> spec = (root, query, cb) ->
-                    cb.and(
-                            cb.equal(root.get("banque").get("id"), id),
-                            cb.isTrue(root.get("actif")),
-                            cb.like(cb.lower(root.get("natureLigneFonctionnelle").get("label")),
-                                    "%" + NATURE_FC_LABEL.toLowerCase() + "%")
-                    );
+            LigneFonctionnelle ligne = ligneFonctionnelleReader
+                    .findByBanqueIdAndNatureLigneFonctionnelleCodeAndActifTrue(id, NatureLigneFonctionnelleService.FC_CODE)
+                    .orElse(null);
 
-            Optional<LigneFonctionnelle> ligne = ligneFonctionnelleRepository.findOne(spec);
-            if (ligne.isEmpty()) {
+            if (ligne == null) {
                 log.debug("Banque {} : aucune ligne FC active", id);
-                return null;
             }
-            return ligne.get();
+            return ligne;
         });
     }
 }

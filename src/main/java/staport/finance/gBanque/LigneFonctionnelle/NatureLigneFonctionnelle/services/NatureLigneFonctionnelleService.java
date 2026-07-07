@@ -24,8 +24,8 @@ import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Business logic implementation for the NatureLigneFonctionnelle module.
@@ -178,5 +178,16 @@ public class NatureLigneFonctionnelleService implements INatureLigneFonctionnell
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Nature de ligne fonctionnelle non trouvée avec l'ID : " + id));
+    }
+
+
+    @Override
+    public Optional<NatureLigneFonctionnelle> findByCode(String code) {
+        return repository.findByCode(code);
+    }
+
+    @Override
+    public Optional<NatureLigneFonctionnelle> findByLabel(String label) {
+        return repository.findByLabel(label);
     }
 }

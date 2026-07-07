@@ -7,14 +7,15 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.NatureLigneFonctionnelleService;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFonctionnelleReader;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
-import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.LigneFonctionnelleSpecifiqueRepository;
-import staport.finance.gBanque.factoring.repository.FactoringRepository;
+import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
+import staport.finance.gBanque.factoring.service.FactoringReader;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.marches.repositories.MarcheRepository;
+import staport.finance.gBanque.marches.service.MarcheService;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
@@ -48,24 +49,29 @@ import java.util.concurrent.ConcurrentHashMap;
  * </ol>
  *
  * <p>La TVA (10 %) et le TTC sont calculés par l'orchestrateur.</p>
+ *
+ * <p>Résolution des lignes/marché/encours via les façades de lecture cross-domaine
+ * ({@link LigneFonctionnelleReader}, {@link LigneFonctionnelleSpecifiqueReader},
+ * {@link INatureLigneFonctionnelleService}, {@link MarcheService}, {@link FactoringReader})
+ * — jamais via leurs Repository respectifs directement (encapsulation des domaines,
+ * architecture.md).</p>
  */
 @Component
 public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
 
     private static final Logger log = LoggerFactory.getLogger(FactoringAgiosCalculateur.class);
 
-    private static final String NATURE_FACTORING_CODE  = "FACTORING";
     private static final String NATURE_FACTORING_LABEL = "Factoring";
     private static final BigDecimal DIVISEUR_360 = new BigDecimal("360");
     private static final int SCALE       = 8;
     private static final int SCALE_FINAL = 2;
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
-    private final MarcheRepository                     marcheRepository;
-    private final LigneFonctionnelleSpecifiqueRepository ligneSpecifiqueRepository;
-    private final LigneFonctionnelleRepository           ligneFonctionnelleRepository;
-    private final NatureLigneFonctionnelleRepository     natureLigneFonctionnelleRepository;
-    private final FactoringRepository                    factoringRepository;
+    private final MarcheService                        marcheService;
+    private final LigneFonctionnelleSpecifiqueReader    ligneSpecifiqueReader;
+    private final LigneFonctionnelleReader              ligneFonctionnelleReader;
+    private final INatureLigneFonctionnelleService      natureLigneFonctionnelleService;
+    private final FactoringReader                       factoringReader;
 
     /** Cache du taux résolu par marché — valide pour toute la durée d'un recalcul mensuel. */
     private final Map<Long, Optional<BigDecimal>> cacheTauxParMarche = new ConcurrentHashMap<>();
@@ -74,16 +80,16 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
     private volatile NatureLigneFonctionnelle natureFactoring = null;
 
     public FactoringAgiosCalculateur(
-            MarcheRepository                     marcheRepository,
-            LigneFonctionnelleSpecifiqueRepository ligneSpecifiqueRepository,
-            LigneFonctionnelleRepository           ligneFonctionnelleRepository,
-            NatureLigneFonctionnelleRepository     natureLigneFonctionnelleRepository,
-            FactoringRepository                    factoringRepository) {
-        this.marcheRepository               = marcheRepository;
-        this.ligneSpecifiqueRepository      = ligneSpecifiqueRepository;
-        this.ligneFonctionnelleRepository   = ligneFonctionnelleRepository;
-        this.natureLigneFonctionnelleRepository = natureLigneFonctionnelleRepository;
-        this.factoringRepository            = factoringRepository;
+            MarcheService                        marcheService,
+            LigneFonctionnelleSpecifiqueReader    ligneSpecifiqueReader,
+            LigneFonctionnelleReader              ligneFonctionnelleReader,
+            INatureLigneFonctionnelleService      natureLigneFonctionnelleService,
+            FactoringReader                       factoringReader) {
+        this.marcheService               = marcheService;
+        this.ligneSpecifiqueReader        = ligneSpecifiqueReader;
+        this.ligneFonctionnelleReader     = ligneFonctionnelleReader;
+        this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
+        this.factoringReader              = factoringReader;
     }
 
     @Override
@@ -101,10 +107,10 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
     public boolean estEligible(Banque banque) {
         if (resolveNatureFactoring().isEmpty()) {
             log.warn("FACTORING — {} : nature '{}' (code={}) introuvable en base → banque ignorée",
-                    banque.getNom(), NATURE_FACTORING_LABEL, NATURE_FACTORING_CODE);
+                    banque.getNom(), NATURE_FACTORING_LABEL, NatureLigneFonctionnelleService.FACTORING_CODE);
             return false;
         }
-        List<Marche> marches = marcheRepository.findByBanqueId(banque.getId());
+        List<Marche> marches = marcheService.findByBanqueId(banque.getId());
         if (marches.isEmpty()) {
             log.info("FACTORING — {} : aucun marché rattaché → banque ignorée", banque.getNom());
             return false;
@@ -138,7 +144,7 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
     @Override
     @Transactional(readOnly = true)
     public List<ResultatParMarche> calculerJourParMarche(Banque banque, LocalDate jour) {
-        List<Marche> marches = marcheRepository.findByBanqueId(banque.getId());
+        List<Marche> marches = marcheService.findByBanqueId(banque.getId());
         List<ResultatParMarche> resultats = new ArrayList<>();
 
         for (Marche marche : marches) {
@@ -194,9 +200,9 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
         if (natureFactoring != null) return Optional.of(natureFactoring);
 
         Optional<NatureLigneFonctionnelle> found =
-                natureLigneFonctionnelleRepository.findByCode(NATURE_FACTORING_CODE);
+                natureLigneFonctionnelleService.findByCode(NatureLigneFonctionnelleService.FACTORING_CODE);
         if (found.isEmpty()) {
-            found = natureLigneFonctionnelleRepository.findByLabel(NATURE_FACTORING_LABEL);
+            found = natureLigneFonctionnelleService.findByLabel(NATURE_FACTORING_LABEL);
         }
 
         found.ifPresent(n -> {
@@ -207,7 +213,7 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
 
         if (found.isEmpty()) {
             log.error("Nature '{}' (code={}) introuvable en base",
-                    NATURE_FACTORING_LABEL, NATURE_FACTORING_CODE);
+                    NATURE_FACTORING_LABEL, NatureLigneFonctionnelleService.FACTORING_CODE);
         }
         return found;
     }
@@ -225,7 +231,7 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
 
             // 1. Ligne spécifique
             Optional<LigneFonctionnelleSpecifique> specifique =
-                    ligneSpecifiqueRepository.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
+                    ligneSpecifiqueReader.findByMarcheAndNatureLigneFonctionnelleAndActifTrue(
                             marche, nature);
             if (specifique.isPresent()) {
                 log.debug("Marché {} — ligne spécifique FACTORING id={} taux={}",
@@ -235,7 +241,7 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
 
             // 2. Ligne générale
             Optional<LigneFonctionnelle> generale =
-                    ligneFonctionnelleRepository.findActiveLineForMarche(id, nature.getId());
+                    ligneFonctionnelleReader.findActiveLineForMarche(id, nature.getId());
             if (generale.isPresent()) {
                 log.debug("Marché {} — ligne générale FACTORING id={} taux={}",
                         id, generale.get().getId(), generale.get().getTaux());
@@ -256,11 +262,8 @@ public class FactoringAgiosCalculateur implements AgiosCalculateurMultiMarche {
      * {@code Encours_j = Σ(DEBLOCAGE PAYE, dateValeur ≤ j) − Σ(REMBOURSEMENT PAYE, dateValeur ≤ j)}
      */
     private BigDecimal calculerEncours(Marche marche, LocalDate jour) {
-        BigDecimal totalDeblocages    = factoringRepository.sumMontantPaye(marche, Type.DEBLOCAGE,     jour);
-        BigDecimal totalRemboursements = factoringRepository.sumMontantPaye(marche, Type.REMBOURSEMENT, jour);
-
-        if (totalDeblocages     == null) totalDeblocages     = BigDecimal.ZERO;
-        if (totalRemboursements == null) totalRemboursements = BigDecimal.ZERO;
+        BigDecimal totalDeblocages    = factoringReader.sumMontantPaye(marche, Type.DEBLOCAGE,     jour);
+        BigDecimal totalRemboursements = factoringReader.sumMontantPaye(marche, Type.REMBOURSEMENT, jour);
 
         return totalDeblocages.subtract(totalRemboursements);
     }

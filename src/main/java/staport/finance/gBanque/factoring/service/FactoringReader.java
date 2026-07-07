@@ -8,7 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.marches.entities.Marche;
+import staport.finance.gBanque.prefinancement.enums.Type;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -32,5 +35,15 @@ public class FactoringReader {
     @Transactional(readOnly = true)
     public Page<Factoring> findAll(Specification<Factoring> spec, Pageable pageable) {
         return factoringRepository.findAll(spec, pageable);
+    }
+
+    /**
+     * Somme des montants payés d'un type donné pour un marché, jusqu'à une date incluse.
+     * Utilisé par les calculateurs d'agios pour reconstituer l'encours de factoring.
+     */
+    @Transactional(readOnly = true)
+    public BigDecimal sumMontantPaye(Marche marche, Type type, LocalDate jour) {
+        BigDecimal total = factoringRepository.sumMontantPaye(marche, type, jour);
+        return total != null ? total : BigDecimal.ZERO;
     }
 }

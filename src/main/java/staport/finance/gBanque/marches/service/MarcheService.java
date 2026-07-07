@@ -21,6 +21,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @Transactional
 public class MarcheService {
@@ -55,6 +57,16 @@ public class MarcheService {
     @Transactional(readOnly = true)
     public boolean existsById(Long id) {
         return marcheRepository.existsById(id);
+    }
+
+    /**
+     * Retourne tous les marchés rattachés à une banque, pour les domaines qui ont besoin de
+     * parcourir les marchés de la banque (ex. calculateurs d'agios) — jamais via
+     * {@code MarcheRepository} directement (encapsulation des domaines, architecture.md).
+     */
+    @Transactional(readOnly = true)
+    public List<Marche> findByBanqueId(Long banqueId) {
+        return marcheRepository.findByBanqueId(banqueId);
     }
 
     /**
