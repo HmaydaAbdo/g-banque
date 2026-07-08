@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.marches.entities.Marche;
@@ -43,6 +44,12 @@ public class FactoringTransactionMapper {
 
         if(marche==null){
             throw new ResourceNotFoundException("Marche null for factoring  with id "+requestDto.getFactoringId());
+        }
+
+        if (marche.getBanque() == null || !marche.getBanque().getId().equals(requestDto.getBanqueId())) {
+            throw new ValidationException("Le banqueId fourni (" + requestDto.getBanqueId()
+                    + ") ne correspond pas à la banque du marché associé au factoring "
+                    + requestDto.getFactoringId() + ".");
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));

@@ -52,6 +52,9 @@ import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementIn
 import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
+import staport.finance.gBanque.validation.dtos.lot.BatchValidationRequestDto;
+import staport.finance.gBanque.validation.dtos.lot.BatchValidationResponseDto;
+import staport.finance.gBanque.validation.services.BatchValidationService;
 import staport.finance.gBanque.validation.services.ReverseTransactionService;
 import staport.finance.gBanque.validation.services.ValidationService;
 
@@ -71,6 +74,7 @@ public class ValidationController {
     private final ContratLeasingService contratLeasingService;
     private final ICmtValidationService cmtValidationService;
     private final CreditMoyenTermeService creditMoyenTermeService;
+    private final BatchValidationService batchValidationService;
 
     public ValidationController(ValidationService validationService,
                                 ReverseTransactionService reverseTransactionService,
@@ -78,7 +82,8 @@ public class ValidationController {
                                 IAgiosValidationService agiosValidationService,
                                 ContratLeasingService contratLeasingService,
                                 ICmtValidationService cmtValidationService,
-                                CreditMoyenTermeService creditMoyenTermeService) {
+                                CreditMoyenTermeService creditMoyenTermeService,
+                                BatchValidationService batchValidationService) {
         this.validationService      = validationService;
         this.reverseTransactionService = reverseTransactionService;
         this.leasingValidationService  = leasingValidationService;
@@ -86,6 +91,7 @@ public class ValidationController {
         this.contratLeasingService    = contratLeasingService;
         this.cmtValidationService     = cmtValidationService;
         this.creditMoyenTermeService   = creditMoyenTermeService;
+        this.batchValidationService    = batchValidationService;
     }
 
 
@@ -308,11 +314,23 @@ public class ValidationController {
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    /**
+     * Valide en une seule fois plusieurs opérations de même type (et même sens pour les types qui
+     * distinguent décaissement/encaissement), en appliquant les mêmes champs communs à toutes.
+     * Délègue à {@code BatchValidationService}, qui réutilise les méthodes unitaires ci-dessus —
+     * voir sa Javadoc pour le détail du dispatch et le comportement tout-ou-rien.
+     */
+    @PostMapping("/process/lot")
+    public ResponseEntity<BatchValidationResponseDto> processBatch(
+            @Valid @RequestBody BatchValidationRequestDto requestDto) throws Exception {
+        BatchValidationResponseDto responseDto = batchValidationService.processBatch(requestDto);
+        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    }
+
     @DeleteMapping("/annuler/{transactionId}")
     public void annulerTransaction(@PathVariable Long transactionId) throws  Exception{
          reverseTransactionService.annulerTransaction(transactionId);
     }
-
 
 
 

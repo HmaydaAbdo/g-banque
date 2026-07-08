@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
@@ -48,6 +49,12 @@ public class PrefinancementTransactionMapper {
 
         if(marche==null){
             throw new IllegalStateException("Marche null for prefinancement with id "+requestDto.getPrefinancementId());
+        }
+
+        if (marche.getBanque() == null || !marche.getBanque().getId().equals(requestDto.getBanqueId())) {
+            throw new ValidationException("Le banqueId fourni (" + requestDto.getBanqueId()
+                    + ") ne correspond pas à la banque du marché associé au préfinancement "
+                    + requestDto.getPrefinancementId() + ".");
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));

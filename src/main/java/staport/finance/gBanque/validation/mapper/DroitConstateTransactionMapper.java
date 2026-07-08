@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.validation.dtos.droitConstate.DroitConstateTransactionRequest;
 import staport.finance.gBanque.validation.dtos.droitConstate.DroitConstateTransactionResponse;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
@@ -49,6 +50,13 @@ public class DroitConstateTransactionMapper {
 
         if(marche==null){
             throw new ResourceNotFoundException("Marche null for droit constaté with id "+requestDto.getDroitConstateId());
+        }
+
+        if (droitConstate.getBanque() == null
+                || !droitConstate.getBanque().getId().equals(requestDto.getBanqueId())) {
+            throw new ValidationException("Le banqueId fourni (" + requestDto.getBanqueId()
+                    + ") ne correspond pas à la banque du droit constaté "
+                    + requestDto.getDroitConstateId() + ".");
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));

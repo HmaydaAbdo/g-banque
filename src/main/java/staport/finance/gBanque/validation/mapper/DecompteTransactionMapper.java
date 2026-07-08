@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionRequestDto;
 import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionResponseDto;
 import staport.finance.gBanque.decomptes.entities.Decompte;
@@ -43,6 +44,13 @@ public class DecompteTransactionMapper {
 
         Decompte decompte=this.decompteRepository.findById(requestDto.getDecompteId())
                 .orElseThrow(()->new ResourceNotFoundException("décompte  with id "+requestDto.getDecompteId()+" not found"));
+
+        if (decompte.getBanqueEncaissement() == null
+                || !decompte.getBanqueEncaissement().getId().equals(requestDto.getBanqueId())) {
+            throw new ValidationException("Le banqueId fourni (" + requestDto.getBanqueId()
+                    + ") ne correspond pas à la banque d'encaissement du décompte "
+                    + requestDto.getDecompteId() + ".");
+        }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
