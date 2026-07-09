@@ -36,6 +36,10 @@ import {
   EncoursVirementInternationalResponseDto
 } from "../../../../../virementInternational/dtos/EncoursVirementInternationalResponseDto";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
+import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
+import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TableSelectionState} from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-virement-international-encours-decaissement',
@@ -60,6 +64,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     InputNumberModule,
     ConfirmDialogModule,
     RouterLink,
+    ValidationLotModalComponent,
   ],
   templateUrl: './virement-international-encours-decaissement.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe],
@@ -89,6 +94,43 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
   ];
 
   isSubmitting: boolean = false;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<VirementInternationalResponseDto>(v => v.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+  readonly SensOperation = SensOperation;
+
+  get pageSelection(): VirementInternationalResponseDto[] {
+    return this.selectionState.getPageSelection(this.virements);
+  }
+
+  onSelectionChange(selection: VirementInternationalResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.virements, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(v => v.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.loadOutstandingVirements();
+    this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private virementInternationalService: VirementInternationalService,

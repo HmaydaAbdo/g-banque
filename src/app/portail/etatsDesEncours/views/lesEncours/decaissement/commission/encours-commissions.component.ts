@@ -28,6 +28,9 @@ import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 import {AuthService} from "../../../../../../auth/services/auth.service";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { BatchValidationResponseDto } from '../../../../dtos/lot/BatchValidationResponseDto';
+import { ValidationLotModalComponent } from '../../shared/validation-lot-modal/validation-lot-modal.component';
+import { TableSelectionState } from '../../shared/table-selection.state';
 
 @Component({
   selector: 'app-encours-commissions',
@@ -51,7 +54,8 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     ReactiveFormsModule,
     CalendarModule,
     InputTextareaModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    ValidationLotModalComponent
   ],
   templateUrl: './encours-commissions.component.html',
   providers: [MessageService,ConfirmationService,DecimalPipe]
@@ -83,6 +87,42 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
   ];
 
   isSubmitting: boolean = false;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<CommissionResponseDto>(c => c.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): CommissionResponseDto[] {
+    return this.selectionState.getPageSelection(this.commissions);
+  }
+
+  onSelectionChange(selection: CommissionResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.commissions, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(c => c.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.table.reset();
+    this.bankStateService.refreshBankInfo(this.banqueId as number);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private commissionService: CommissionService,

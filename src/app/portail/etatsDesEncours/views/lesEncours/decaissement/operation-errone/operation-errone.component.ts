@@ -27,6 +27,10 @@ import { OperationErroneResponseDto } from "../../../../../operationErronées/dt
 import {OperationErroneValidationRequest} from "../../../../dtos/operation-erronés/OperationErroneValidationRequest";
 import {TagModule} from "primeng/tag";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-encours-operation-errone',
@@ -51,7 +55,8 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     CalendarModule,
     InputTextareaModule,
     ConfirmDialogModule,
-    TagModule
+    TagModule,
+    ValidationLotModalComponent
   ],
   templateUrl: './operation-errone.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe]
@@ -82,6 +87,42 @@ export class EncoursOperationErroneComponent implements OnInit {
   isSubmitting: boolean = false;
 
   searchFormSubscription!: Subscription;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<OperationErroneResponseDto>(o => o.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): OperationErroneResponseDto[] {
+    return this.selectionState.getPageSelection(this.operations);
+  }
+
+  onSelectionChange(selection: OperationErroneResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.operations, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(o => o.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.table.reset();
+    this.bankStateService.refreshBankInfo(this.banqueId as number);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private operationErroneService: OperationErroneService,

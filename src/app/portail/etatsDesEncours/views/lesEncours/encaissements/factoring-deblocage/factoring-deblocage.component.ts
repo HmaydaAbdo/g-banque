@@ -24,6 +24,10 @@ import {EncoursFactoringDto} from "../../../../../factoring/dtos/EncoursFactorin
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-factoring-deblocage',
@@ -45,6 +49,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     InputTextareaModule,
     ConfirmDialogModule,
     RouterLink,
+    ValidationLotModalComponent,
   ],
   templateUrl: './factoring-deblocage.component.html',
   providers: [MessageService,DecimalPipe,ConfirmationService]
@@ -75,6 +80,42 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
   ];
 
   isSubmitting: boolean = false;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<FactoringResponseDto>(f => f.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): FactoringResponseDto[] {
+    return this.selectionState.getPageSelection(this.factoringList);
+  }
+
+  onSelectionChange(selection: FactoringResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.factoringList, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(f => f.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.dt?.reset();
+    this.bankStateService.refreshBankInfo(this.banqueId);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private factoringService: FactoringService,

@@ -44,6 +44,8 @@
   } from "../../dtos/virementsInternationaux/VirementInternationalTransactionResponseDto";
   import {ImpayeeValidationRequest} from "../../dtos/impayee/Impayeevalidationrequest";
   import {ImpayeeTransactionResponse} from "../../dtos/impayee/Impayeetransactionresponse";
+  import {BatchValidationRequestDto} from "../../dtos/lot/BatchValidationRequestDto";
+  import {BatchValidationResponseDto} from "../../dtos/lot/BatchValidationResponseDto";
 
   @Injectable({
     providedIn: 'root'
@@ -252,6 +254,18 @@
 
     rollBackTransaction(id: number): Observable<void> {
       return this.http.delete<void>(`${this.baseUrl}/annuler/${id}`);
+    }
+
+    /**
+     * Valide en une seule fois plusieurs opérations de même type (et même sens le cas échéant),
+     * en appliquant les mêmes champs communs à toutes. Traitement tout-ou-rien côté backend.
+     * POST /rapprochement/process/lot
+     */
+    validerEnLot(request: BatchValidationRequestDto): Observable<BatchValidationResponseDto> {
+      return this.http.post<BatchValidationResponseDto>(
+        `${this.baseUrl}/process/lot`,
+        request
+      );
     }
 
   }

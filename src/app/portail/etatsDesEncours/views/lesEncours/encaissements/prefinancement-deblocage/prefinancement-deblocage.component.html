@@ -50,10 +50,19 @@
 
   </div>
 
+  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+            class="p-button-success" (click)="displayLotModal = true"></button>
+  </div>
+
   <div class="pb-8">
     <p-table
       #dt
       [value]="prefinancements"
+      [selection]="pageSelection"
+      (selectionChange)="onSelectionChange($event)"
       [paginator]="true"
       [rows]="10"
       [totalRecords]="totalRecords"
@@ -72,7 +81,9 @@
     >
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
-
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
           <th pSortableColumn="marcheNumero">
             N° Marché <p-sortIcon field="marcheNumero"></p-sortIcon>
           </th>
@@ -94,6 +105,9 @@
 
       <ng-template pTemplate="body" let-p>
         <tr>
+          <td>
+            <p-tableCheckbox [value]="p"></p-tableCheckbox>
+          </td>
           <td>{{ p.marcheNumero }}</td>
           <td>{{ p.banqueName }}</td>
           <td>{{ p.dateEmission | date: 'dd/MM/yyyy' }}</td>
@@ -233,3 +247,13 @@
     </form>
   </ng-container>
 </p-dialog>
+
+<app-validation-lot-modal
+  [(visible)]="displayLotModal"
+  [transactionSource]="TransactionSource.PREFINANCEMENT"
+  [banqueId]="banqueId"
+  [selectedIds]="selectedIds"
+  [montantTotal]="montantTotalSelection"
+  libelleType="préfinancements"
+  (validated)="onLotValidated($event)"
+></app-validation-lot-modal>

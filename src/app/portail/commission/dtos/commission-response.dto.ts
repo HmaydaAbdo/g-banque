@@ -14,4 +14,9 @@ export interface CommissionResponseDto {
   dateValeur?: string;
   dateOperation?: string;
 
+  /** Caution d'origine — absente pour les commissions non générées depuis une caution. */
+  cautionId?: number;
+  cautionMontant?: number;
+  natureId?: number;
+  natureLabel?: string;
 }

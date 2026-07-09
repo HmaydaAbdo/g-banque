@@ -26,6 +26,10 @@ import { AgiosValidationRequest } from '../../../../dtos/agios/agios-validation-
 import { ValidationService } from '../../../../services/validation/validation.service';
 import { BankStateService } from '../../../../../comptes-bancaire/services/bank-state.service';
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from '../../../../../transactions/dtos/TransactionSource';
+import { BatchValidationResponseDto } from '../../../../dtos/lot/BatchValidationResponseDto';
+import { ValidationLotModalComponent } from '../../shared/validation-lot-modal/validation-lot-modal.component';
+import { TableSelectionState } from '../../shared/table-selection.state';
 
 @Component({
   selector: 'app-encours-agios',
@@ -47,7 +51,8 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     CalendarModule,
     InputTextareaModule,
     ConfirmDialogModule,
-    RouterLink
+    RouterLink,
+    ValidationLotModalComponent
   ],
   templateUrl: './encours-agios.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe, DatePipe]
@@ -97,6 +102,42 @@ export class EncoursAgiosComponent implements OnInit, OnDestroy {
 
   isSubmitting = false;
   private searchSubscription!: Subscription;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<AgiosResponseDto>(a => a.id);
+  displayLotModal = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): AgiosResponseDto[] {
+    return this.selectionState.getPageSelection(this.agios);
+  }
+
+  onSelectionChange(selection: AgiosResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.agios, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(a => a.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.table.reset();
+    this.bankStateService.refreshBankInfo(this.banqueId as number);
+    this.bankStateService.notifyValidation();
+  }
 
   ngOnInit(): void {
     this.items = [

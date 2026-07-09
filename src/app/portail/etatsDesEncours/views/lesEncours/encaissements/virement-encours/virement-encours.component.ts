@@ -29,6 +29,10 @@ import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
+import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
+import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TableSelectionState} from "../../shared/table-selection.state";
 
 
 @Component({
@@ -54,6 +58,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     InputNumberModule,
     ConfirmDialogModule,
     RouterLink,
+    ValidationLotModalComponent,
   ],
   templateUrl: './virement-encours.component.html',
   providers: [MessageService,ConfirmationService,DecimalPipe],
@@ -83,6 +88,43 @@ export class VirementEncaissementEncoursComponent implements OnInit {
   ];
 
   isSubmitting: boolean = false;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<VirementResponseDto>(v => v.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+  readonly SensOperation = SensOperation;
+
+  get pageSelection(): VirementResponseDto[] {
+    return this.selectionState.getPageSelection(this.virements);
+  }
+
+  onSelectionChange(selection: VirementResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.virements, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(v => v.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.loadOutstandingVirements();
+    this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private virementService: VirementService,

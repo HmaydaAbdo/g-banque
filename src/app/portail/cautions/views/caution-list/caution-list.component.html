@@ -101,6 +101,13 @@
 
     <div class="flex align-items-center gap-2 flex-shrink-0" >
       <button pButton pRipple
+              label="Exporter PDF"
+              icon="pi pi-file-pdf"
+              [loading]="exporting"
+              class="p-button-outlined p-button-danger h-fit p-button-sm"
+              (click)="exportPdf()">
+      </button>
+      <button pButton pRipple
               label="Nouvelle caution"
               icon="pi pi-plus"
               size="small"

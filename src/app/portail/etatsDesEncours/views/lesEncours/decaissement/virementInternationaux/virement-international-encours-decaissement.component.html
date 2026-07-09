@@ -44,10 +44,19 @@
     <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
   </div>
 
+  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+            class="p-button-success" (click)="displayLotModal = true"></button>
+  </div>
+
   <div class="pb-8">
     <p-table
       #dt
       [value]="virements"
+      [selection]="pageSelection"
+      (selectionChange)="onSelectionChange($event)"
       [paginator]="true"
       [rows]="10"
       [totalRecords]="totalRecords"
@@ -67,7 +76,9 @@
     >
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
-
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
           <th pSortableColumn="dateEmission">
             Date d'émission <p-sortIcon field="dateEmission"></p-sortIcon>
           </th>
@@ -89,6 +100,9 @@
       </ng-template>
       <ng-template pTemplate="body" let-virement>
         <tr>
+          <td>
+            <p-tableCheckbox [value]="virement"></p-tableCheckbox>
+          </td>
           <td>{{ virement.dateEmission | date : 'dd/MM/yyyy' }}</td>
           <td>{{ virement.emetteur ? virement.emetteur : 'N/A' }}</td>
           <td>{{ virement.beneficiaire ? virement.beneficiaire : 'N/A' }}</td>
@@ -257,3 +271,13 @@
     </form>
   </ng-container>
 </p-dialog>
+
+<app-validation-lot-modal
+  [(visible)]="displayLotModal"
+  [transactionSource]="TransactionSource.VIREMENT_INTERNATIONAL"
+  [sens]="SensOperation.DECAISSEMENT"
+  [selectedIds]="selectedIds"
+  [montantTotal]="montantTotalSelection"
+  libelleType="virements internationaux"
+  (validated)="onLotValidated($event)"
+></app-validation-lot-modal>

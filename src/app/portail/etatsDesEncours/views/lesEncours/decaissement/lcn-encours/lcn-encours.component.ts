@@ -29,6 +29,9 @@ import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
+import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TableSelectionState} from "../../shared/table-selection.state";
 
 
 @Component({
@@ -53,6 +56,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     DropdownModule,
     InputNumberModule,
     ConfirmDialogModule,
+    ValidationLotModalComponent,
   ],
   templateUrl: './lcn-encours.component.html',
   styleUrl: './lcn-encours.component.scss',
@@ -85,6 +89,41 @@ export class LcnEncoursComponent implements OnInit {
 
   isSubmitting: boolean = false;
 
+  // Validation en lot
+  selectionState = new TableSelectionState<LcnResponseDTO>(l => l.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): LcnResponseDTO[] {
+    return this.selectionState.getPageSelection(this.lcns);
+  }
+
+  onSelectionChange(selection: LcnResponseDTO[]): void {
+    this.selectionState.onPageSelectionChange(this.lcns, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(l => l.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.loadOutstandingLcns();
+    this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private lcnService: LcnService,

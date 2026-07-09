@@ -76,6 +76,9 @@ export class CautionListComponent implements OnInit {
   readonly isAdmin = this.authService.isAdmin();
   readonly today   = new Date();
 
+  /** Indicateur de chargement du bouton "Exporter PDF". */
+  exporting = false;
+
   // ── Reactive filter form ──────────────────────────────────────────────────
   filterForm: FormGroup = this.fb.group({
     numeroCaution: [null],
@@ -232,18 +235,10 @@ export class CautionListComponent implements OnInit {
   loadCautions(event: TableLazyLoadEvent): void {
     this.cautionService.setLoading(true);
 
-    const page    = event.first ? Math.floor(event.first / (event.rows ?? 10)) : 0;
-    const formVal = this.filterForm.value;
+    const page = event.first ? Math.floor(event.first / (event.rows ?? 10)) : 0;
 
     const criteres: CautionSearchDto = {
-      numeroCaution: formVal.numeroCaution  || undefined,
-      organisme:     formVal.organisme      || undefined,
-      montant:       formVal.montant        || undefined,
-      dateDePrise:   formVal.dateDePrise    ? toLocalDateString(formVal.dateDePrise) : undefined,
-      banqueId:      formVal.banque?.id,
-      natureId:      formVal.nature?.id,
-      marcheId:      formVal.marcheId       || undefined,
-      actif:         formVal.actif !== null ? formVal.actif : undefined,
+      ...this.buildFilterCriteres(),
       page,
       size:  event.rows ?? 10,
       sort: `${event.sortField ?? 'dateDePrise'},${event.sortOrder === 1 ? 'asc' : 'desc'}`,
@@ -259,6 +254,47 @@ export class CautionListComponent implements OnInit {
         },
         error: () => {
           this.cautionService.setLoading(false);
+        },
+      });
+  }
+
+  /** Critères de filtrage courants (sans pagination) — partagés entre la recherche et l'export PDF. */
+  private buildFilterCriteres(): CautionSearchDto {
+    const formVal = this.filterForm.value;
+    return {
+      numeroCaution: formVal.numeroCaution  || undefined,
+      organisme:     formVal.organisme      || undefined,
+      montant:       formVal.montant        || undefined,
+      dateDePrise:   formVal.dateDePrise    ? toLocalDateString(formVal.dateDePrise) : undefined,
+      banqueId:      formVal.banque?.id,
+      natureId:      formVal.nature?.id,
+      marcheId:      formVal.marcheId       || undefined,
+      actif:         formVal.actif !== null ? formVal.actif : undefined,
+    };
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des cautions correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    this.cautionService.exportPdf(this.buildFilterCriteres())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `cautions_${new Date().toISOString().slice(0, 10)}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.exporting = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.exporting = false;
+          this.cdr.markForCheck();
         },
       });
   }

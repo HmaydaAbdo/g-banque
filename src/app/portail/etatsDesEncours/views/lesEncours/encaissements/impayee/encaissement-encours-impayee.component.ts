@@ -27,6 +27,10 @@ import {ImpayeeService} from "../../../../../impayees/service/ImpayeeService";
 import {ImpayeeValidationRequest} from "../../../../dtos/impayee/Impayeevalidationrequest";
 import {Type} from "../../../../../Virements/Type";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-encaissement-encours-impaye',
@@ -35,7 +39,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     CommonModule, FormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
     BreadcrumbModule, ToastModule, TooltipModule, DatePipe, DecimalPipe, NgFor,
     InputTextModule, CardModule, DialogModule, ReactiveFormsModule, CalendarModule,
-    InputTextareaModule, ConfirmDialogModule
+    InputTextareaModule, ConfirmDialogModule, ValidationLotModalComponent
   ],
   templateUrl: './encaissement-encours-impayee.html',
   providers: [MessageService, ConfirmationService, DecimalPipe]
@@ -64,6 +68,42 @@ export class EncaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
 
   isSubmitting: boolean = false;
   private searchSubscription!: Subscription;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<ImpayeeResponseDto>(i => i.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): ImpayeeResponseDto[] {
+    return this.selectionState.getPageSelection(this.impayees);
+  }
+
+  onSelectionChange(selection: ImpayeeResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.impayees, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(i => i.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.table.reset();
+    this.bankStateService.refreshBankInfo(this.banqueId as number);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private impayeeService: ImpayeeService,

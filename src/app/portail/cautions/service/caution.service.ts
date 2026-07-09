@@ -121,9 +121,20 @@ export class CautionService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  /**
+   * Exporte en PDF l'intégralité des cautions correspondant aux filtres actifs
+   * (mêmes critères que {@link rechercher}, sans pagination — le PDF contient tous
+   * les résultats filtrés, pas seulement la page actuellement affichée).
+   */
+  exportPdf(criteres: CautionSearchDto): Observable<Blob> {
+    const params = this.buildFilterParams(criteres);
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
   // ── Helpers privés ────────────────────────────────────────────────────────
 
-  private buildParams(criteres: CautionSearchDto): HttpParams {
+  /** Construit les query params communs aux filtres (sans pagination). */
+  private buildFilterParams(criteres: CautionSearchDto): HttpParams {
     let params = new HttpParams();
 
     if (criteres.numeroCaution)     params = params.set('numeroCaution', criteres.numeroCaution);
@@ -134,6 +145,12 @@ export class CautionService {
     if (criteres.dateDePrise)       params = params.set('dateDePrise',   criteres.dateDePrise);
     if (criteres.montant   != null) params = params.set('montant',       criteres.montant.toString());
     if (criteres.actif     != null) params = params.set('actif',         criteres.actif.toString());
+
+    return params;
+  }
+
+  private buildParams(criteres: CautionSearchDto): HttpParams {
+    let params = this.buildFilterParams(criteres);
 
     params = params.set('page', (criteres.page ?? 0).toString());
     params = params.set('size', (criteres.size ?? 10).toString());

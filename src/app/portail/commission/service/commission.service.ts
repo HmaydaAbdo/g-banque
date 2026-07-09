@@ -93,4 +93,22 @@ export class CommissionService {
   fusionner(request: CommissionFusionRequest): Observable<CommissionFusionResponse> {
     return this.http.post<CommissionFusionResponse>(`${this.apiUrl}/fusionner`, request);
   }
+
+  /**
+   * Exporte en PDF l'intégralité des commissions correspondant aux filtres fournis
+   * (mêmes critères que {@link searchCommissions}, sans pagination — le PDF contient
+   * tous les résultats filtrés, pas seulement la page actuellement affichée).
+   */
+  exportPdf(searchDto: CommissionSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.banqueId != null) params = params.set('banqueId', searchDto.banqueId.toString());
+    if (searchDto.libelle)          params = params.set('libelle', searchDto.libelle);
+    if (searchDto.operation)        params = params.set('operation', searchDto.operation);
+    if (searchDto.montant != null)  params = params.set('montant', searchDto.montant.toString());
+    if (searchDto.status)           params = params.set('status', searchDto.status);
+    if (searchDto.natureId != null) params = params.set('natureId', searchDto.natureId.toString());
+
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

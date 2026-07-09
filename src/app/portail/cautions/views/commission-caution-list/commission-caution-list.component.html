@@ -80,6 +80,18 @@
         [showClear]="true"
         styleClass="w-12rem" />
 
+      <p-dropdown
+        formControlName="natureId"
+        [options]="natures"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Nature"
+        [filter]="true"
+        filterBy="label"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-12rem" />
+
       <input
         pInputText
         formControlName="libelle"
@@ -103,6 +115,14 @@
         [outlined]="true"
         pTooltip="Réinitialiser les filtres"
         (onClick)="clearFilters()" />
+
+      <button pButton pRipple
+              label="Exporter PDF"
+              icon="pi pi-file-pdf"
+              [loading]="exporting"
+              class="p-button-outlined p-button-danger h-fit p-button-sm ml-auto"
+              (click)="exportPdf()">
+      </button>
 
     </form>
   </div>
@@ -202,7 +222,9 @@
           </th>
           <th pSortableColumn="libelle"      style="min-width:16rem">Libellé          <p-sortIcon field="libelle"      /></th>
           <th pSortableColumn="banqueNom"    style="min-width:10rem">Banque           <p-sortIcon field="banqueNom"    /></th>
-          <th pSortableColumn="montant"      style="min-width:9rem" class="text-right">Montant <p-sortIcon field="montant" /></th>
+          <th                                style="min-width:9rem">Nature</th>
+          <th pSortableColumn="montant"      style="min-width:9rem" class="text-right">Montant commission <p-sortIcon field="montant" /></th>
+          <th                                style="min-width:9rem" class="text-right">Montant caution</th>
           <th pSortableColumn="dateEmission" style="min-width:10rem">Date émission    <p-sortIcon field="dateEmission" /></th>
           <th                                style="min-width:8rem">Statut</th>
           <th                                style="min-width:9rem" class="text-center">Actions</th>
@@ -216,7 +238,9 @@
           </td>
           <td>{{ commission.libelle }}</td>
           <td>{{ commission.banqueNom }}</td>
+          <td>{{ commission.natureLabel ?? '—' }}</td>
           <td class="text-right font-medium">{{ commission.montant | number:'1.2-2' }}</td>
+          <td class="text-right">{{ commission.cautionMontant != null ? (commission.cautionMontant | number:'1.2-2') : '—' }}</td>
           <td>{{ commission.dateEmission | date:'dd/MM/yyyy' }}</td>
           <td>
             <p-tag
@@ -251,7 +275,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="7" class="text-center py-5 text-color-secondary">
+          <td colspan="9" class="text-center py-5 text-color-secondary">
             <i class="pi pi-inbox text-4xl mb-3 block"></i>
             Aucune commission sur caution trouvée.
           </td>

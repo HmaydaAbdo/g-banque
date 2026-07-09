@@ -27,6 +27,10 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 
 @Component({
@@ -50,6 +54,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     InputTextareaModule,
     ConfirmDialogModule,
     RouterLink,
+    ValidationLotModalComponent,
   ],
   templateUrl: './droit-constate-remboursements.component.html',
   styleUrl: './droit-constate-remboursements.component.scss',
@@ -82,6 +87,41 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
 
   isSubmitting: boolean = false;
 
+  // Validation en lot
+  selectionState = new TableSelectionState<DroitConstateResponseDto>(d => d.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): DroitConstateResponseDto[] {
+    return this.selectionState.getPageSelection(this.droitConstates);
+  }
+
+  onSelectionChange(selection: DroitConstateResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.droitConstates, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(d => d.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.dt?.reset();
+    this.bankStateService.refreshBankInfo(this.banqueId);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private droitConstateService: DroitConstateService,

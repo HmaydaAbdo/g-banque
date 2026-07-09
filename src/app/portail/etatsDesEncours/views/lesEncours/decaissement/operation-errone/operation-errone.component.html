@@ -47,10 +47,20 @@
 
   </div>
 
+  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+            class="p-button-success" (click)="displayLotModal = true"></button>
+  </div>
+
   <div class="pb-8">
     <p-table
       #dt
       [value]="operations"
+      [selection]="pageSelection"
+      (selectionChange)="onSelectionChange($event)"
+      dataKey="id"
       [paginator]="true"
       [rows]="10"
       [totalRecords]="totalRecords"
@@ -75,6 +85,9 @@
 
       <ng-template pTemplate="header" let-columns>
         <tr>
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
           <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
@@ -87,6 +100,9 @@
 
       <ng-template pTemplate="body" let-operation>
         <tr>
+          <td>
+            <p-tableCheckbox [value]="operation"></p-tableCheckbox>
+          </td>
           <td>{{ operation.libelle }}</td>
           <td>{{ operation.banqueNom }}</td>
           <td>{{ operation.motif }}</td>
@@ -304,3 +320,12 @@
     </div>
   </form>
 </p-dialog>
+
+<app-validation-lot-modal
+  [(visible)]="displayLotModal"
+  [transactionSource]="TransactionSource.OPERATION_ERRONE"
+  [selectedIds]="selectedIds"
+  [montantTotal]="montantTotalSelection"
+  libelleType="opérations erronées"
+  (validated)="onLotValidated($event)"
+></app-validation-lot-modal>

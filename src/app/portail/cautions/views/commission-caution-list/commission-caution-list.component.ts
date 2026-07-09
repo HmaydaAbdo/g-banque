@@ -34,6 +34,7 @@ import { CommissionSearchDto } from '../../../commission/dtos/CommissionSearchDt
 import { CommissionFusionRequest } from '../../../commission/dtos/CommissionFusionRequest';
 import { TransactionSource } from '../../../transactions/dtos/TransactionSource';
 import { Status } from '../../../prefinancements/enums/Status';
+import { NatureLigneFonctionnelleService } from '../../../lignes-fonctionnelles/services/nature-ligne-fonctionnelle.service';
 import {extractErrorMessage} from "../../../global/types/error.utils";
 
 @Component({
@@ -58,6 +59,7 @@ export class CommissionCautionListComponent implements OnInit {
   private readonly router              = inject(Router);
   private readonly commissionService   = inject(CommissionService);
   private readonly banqueService       = inject(BanqueService);
+  private readonly natureService       = inject(NatureLigneFonctionnelleService);
   private readonly authService         = inject(AuthService);
   private readonly messageService      = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
@@ -68,6 +70,8 @@ export class CommissionCautionListComponent implements OnInit {
   totalMontant  = 0;
   loading          = false;
   selectAllLoading = false;
+  /** Indicateur de chargement du bouton "Exporter PDF". */
+  exporting        = false;
 
   readonly isAdmin = this.authService.isAdmin();
 
@@ -85,12 +89,14 @@ export class CommissionCautionListComponent implements OnInit {
 
   // ── Options dropdowns ─────────────────────────────────────────────────────
   banques: any[] = [];
+  natures: any[] = [];
 
   // ── Reactive filter form ──────────────────────────────────────────────────
   filterForm: FormGroup = this.fb.group({
     banqueId: [null],
     libelle:  [null],
     montant:  [null as number | null],
+    natureId: [null],
   });
 
   // ── Fusion dialog ─────────────────────────────────────────────────────────
@@ -144,6 +150,7 @@ export class CommissionCautionListComponent implements OnInit {
     ];
 
     this.loadBanques();
+    this.loadNatures();
 
     this.filterForm.valueChanges.pipe(
       debounceTime(400),
@@ -164,6 +171,18 @@ export class CommissionCautionListComponent implements OnInit {
       });
   }
 
+  // ── Chargement des natures (filtre par nature de la caution d'origine) ────
+  private loadNatures(): void {
+    this.natureService.getAllNatureLigneFonctionnellesList()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: res => {
+          this.natures = res.map((n: any) => ({ label: n.label, value: n.id }));
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
   // ── Table lazy load ───────────────────────────────────────────────────────
   loadCommissions(event: TableLazyLoadEvent): void {
     this.loading = true;
@@ -175,15 +194,7 @@ export class CommissionCautionListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort      = `${sortField},${sortOrder}`;
 
-    const { banqueId, libelle, montant } = this.filterForm.value;
-
-    const searchDto: CommissionSearchDto = {
-      operation: TransactionSource.CAUTION,
-      status: Status.PREVU,
-      ...(banqueId && { banqueId }),
-      ...(libelle  && { libelle  }),
-      ...(montant  && { montant  }),
-    };
+    const searchDto = this.buildSearchDto();
 
     this.commissionService.searchCommissions(searchDto, page, size, sort)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -226,6 +237,51 @@ export class CommissionCautionListComponent implements OnInit {
    */
   private syncSelectionToCurrentPage(): void {
     this.currentPageSelection = this.commissions.filter(c => this.selectionMap.has(c.id));
+  }
+
+  /**
+   * Critères de recherche courants (banque, libellé, montant, nature) — partagés entre
+   * le chargement paginé, la sélection "toutes les pages" et l'export PDF.
+   * {@code operation = CAUTION} et {@code status = PREVU} sont fixes sur cet écran.
+   */
+  private buildSearchDto(): CommissionSearchDto {
+    const { banqueId, libelle, montant, natureId } = this.filterForm.value;
+    return {
+      operation: TransactionSource.CAUTION,
+      status: Status.PREVU,
+      ...(banqueId && { banqueId }),
+      ...(libelle  && { libelle  }),
+      ...(montant  && { montant  }),
+      ...(natureId && { natureId }),
+    };
+  }
+
+  // ── Export PDF ────────────────────────────────────────────────────────────
+
+  /**
+   * Exporte en PDF l'intégralité des commissions correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    this.commissionService.exportPdf(this.buildSearchDto())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `commissions_cautions_${new Date().toISOString().slice(0, 10)}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.exporting = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.exporting = false;
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   // ── Filtres ───────────────────────────────────────────────────────────────
@@ -272,14 +328,7 @@ export class CommissionCautionListComponent implements OnInit {
     this.selectAllLoading = true;
     this.cdr.markForCheck();
 
-    const { banqueId, libelle, montant } = this.filterForm.value;
-    const searchDto: CommissionSearchDto = {
-      operation: TransactionSource.CAUTION,
-      status:    Status.PREVU,
-      ...(banqueId && { banqueId }),
-      ...(libelle  && { libelle  }),
-      ...(montant  && { montant  }),
-    };
+    const searchDto = this.buildSearchDto();
 
     this.commissionService.searchCommissions(searchDto, 0, this.totalRecords, 'dateEmission,desc')
       .pipe(takeUntilDestroyed(this.destroyRef))

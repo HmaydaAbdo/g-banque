@@ -26,6 +26,10 @@ import { RestitutionValidationRequest } from "../../../../dtos/restitution/Resti
 import { ConfirmDialogModule } from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-encours-restitution',
@@ -34,7 +38,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     CommonModule, FormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
     BreadcrumbModule, ToastModule, TooltipModule, DatePipe, DecimalPipe, NgFor,
     InputTextModule, CardModule, DialogModule, ReactiveFormsModule, CalendarModule,
-    InputTextareaModule, ConfirmDialogModule
+    InputTextareaModule, ConfirmDialogModule, ValidationLotModalComponent
   ],
   templateUrl: './encours-restitution.component.html',
   providers: [MessageService, ConfirmationService, DecimalPipe]
@@ -63,6 +67,42 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
 
   isSubmitting: boolean = false;
   private searchSubscription!: Subscription;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<RestitutionResponseDto>(r => r.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): RestitutionResponseDto[] {
+    return this.selectionState.getPageSelection(this.restitutions);
+  }
+
+  onSelectionChange(selection: RestitutionResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.restitutions, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(r => r.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.table.reset();
+    this.bankStateService.refreshBankInfo(this.banqueId as number);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private restitutionService: RestitutionService,

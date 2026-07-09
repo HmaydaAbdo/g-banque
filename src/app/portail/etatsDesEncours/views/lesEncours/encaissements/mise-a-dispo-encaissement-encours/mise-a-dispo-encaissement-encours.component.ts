@@ -30,6 +30,10 @@ import {ToastModule} from "primeng/toast";
 import {TooltipModule} from "primeng/tooltip";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
+import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
+import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TableSelectionState} from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-mise-a-dispo-encaissement-encours',
@@ -53,7 +57,8 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     TableModule,
     ToastModule,
     TooltipModule,
-    RouterLink
+    RouterLink,
+    ValidationLotModalComponent,
   ],
   templateUrl: './mise-a-dispo-encaissement-encours.component.html',
   styleUrl: './mise-a-dispo-encaissement-encours.component.scss',
@@ -85,6 +90,42 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
 
   isSubmitting: boolean = false;
 
+  // Validation en lot
+  selectionState = new TableSelectionState<MiseADispositionResponseDto>(m => m.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+  readonly SensOperation = SensOperation;
+
+  get pageSelection(): MiseADispositionResponseDto[] {
+    return this.selectionState.getPageSelection(this.misesADisposition);
+  }
+
+  onSelectionChange(selection: MiseADispositionResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.misesADisposition, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(m => m.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.loadOutstandingMisesADisposition();
+    this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private miseADispositionService: MiseADispositionService,

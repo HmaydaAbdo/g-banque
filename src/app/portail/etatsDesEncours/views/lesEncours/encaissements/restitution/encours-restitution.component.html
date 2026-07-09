@@ -53,10 +53,20 @@
     <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
   </div>
 
+  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+            class="p-button-success" (click)="displayLotModal = true"></button>
+  </div>
+
   <div class="pb-8">
     <p-table
       #dt
       [value]="restitutions"
+      [selection]="pageSelection"
+      (selectionChange)="onSelectionChange($event)"
+      dataKey="id"
       [paginator]="true"
       [rows]="10"
       [totalRecords]="totalRecords"
@@ -82,6 +92,9 @@
       <!-- TABLE HEADER -->
       <ng-template pTemplate="header" let-columns>
         <tr class="white-space-nowrap">
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
           <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
@@ -95,6 +108,9 @@
       <!-- TABLE BODY -->
       <ng-template pTemplate="body" let-restitution>
         <tr>
+          <td>
+            <p-tableCheckbox [value]="restitution"></p-tableCheckbox>
+          </td>
           <td>{{ restitution.libelle }}</td>
           <td>{{ restitution.banqueNom }}</td>
           <td><span class="amount-badge credit-badge">{{ restitution.montant | number:'1.2-2' }}</span></td>
@@ -296,3 +312,12 @@
 
   </form>
 </p-dialog>
+
+<app-validation-lot-modal
+  [(visible)]="displayLotModal"
+  [transactionSource]="TransactionSource.RESTITUTION"
+  [selectedIds]="selectedIds"
+  [montantTotal]="montantTotalSelection"
+  libelleType="restitutions"
+  (validated)="onLotValidated($event)"
+></app-validation-lot-modal>

@@ -37,10 +37,19 @@
       <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
     </div>
 
+    <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+      <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+              class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+      <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+              class="p-button-success" (click)="displayLotModal = true"></button>
+    </div>
+
     <div class="pb-8">
     <p-table
       #dt
       [value]="cheques"
+      [selection]="pageSelection"
+      (selectionChange)="onSelectionChange($event)"
       [paginator]="true"
       [rows]="10"
       [totalRecords]="totalRecords"
@@ -53,7 +62,7 @@
       scrollHeight="flex"
       columnResizeMode="expand"
       [rowHover]="true"
-      dataKey="numero"
+      dataKey="id"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} chèques"
       [showCurrentPageReport]="true"
       styleClass="p-datatable-gridlines text-xs"
@@ -61,6 +70,9 @@
     >
       <ng-template pTemplate="header">
         <tr class="white-space-nowrap">
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
           <th pSortableColumn="numero">
             N° Chèque <p-sortIcon field="numero"></p-sortIcon>
           </th>
@@ -81,6 +93,9 @@
       </ng-template>
       <ng-template pTemplate="body" let-cheque>
         <tr>
+          <td>
+            <p-tableCheckbox [value]="cheque"></p-tableCheckbox>
+          </td>
           <td>{{ cheque.numero }}</td>
           <td>{{ cheque.dateEmission | date : 'dd/MM/yyyy' }}</td>
           <td>{{ cheque.dateEcheance ? (cheque.dateEcheance | date : 'dd/MM/yyyy') : 'N/A' }}</td>
@@ -197,3 +212,13 @@
     </form>
   </ng-container>
 </p-dialog>
+
+<app-validation-lot-modal
+  [(visible)]="displayLotModal"
+  [transactionSource]="TransactionSource.CHEQUE"
+  [sens]="SensOperation.DECAISSEMENT"
+  [selectedIds]="selectedIds"
+  [montantTotal]="montantTotalSelection"
+  libelleType="chèques"
+  (validated)="onLotValidated($event)"
+></app-validation-lot-modal>

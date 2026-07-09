@@ -26,6 +26,10 @@ import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {debounceTime, distinctUntilChanged, Subscription} from "rxjs";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-encours-fraisBancaire',
@@ -49,7 +53,8 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     ReactiveFormsModule,
     CalendarModule,
     InputTextareaModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    ValidationLotModalComponent
   ],
   templateUrl: './encours-fraisBancaire.component.html',
   providers: [MessageService,ConfirmationService,DecimalPipe]
@@ -80,6 +85,42 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
   ];
 
   isSubmitting: boolean = false;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<FraisBancaireResponseDto>(f => f.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): FraisBancaireResponseDto[] {
+    return this.selectionState.getPageSelection(this.fraisBancaires);
+  }
+
+  onSelectionChange(selection: FraisBancaireResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.fraisBancaires, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(f => f.montant as unknown as number);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.table.reset();
+    this.bankStateService.refreshBankInfo(this.banqueId as number);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private fraisBancaireService: FraisBancaireService,

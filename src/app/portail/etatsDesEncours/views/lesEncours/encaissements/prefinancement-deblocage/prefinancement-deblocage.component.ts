@@ -27,6 +27,10 @@ import {InputTextareaModule} from "primeng/inputtextarea";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-prefinancement-deblocage',
@@ -49,6 +53,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     InputTextareaModule,
     ConfirmDialogModule,
     RouterLink,
+    ValidationLotModalComponent,
   ],
   templateUrl: './prefinancement-deblocage.component.html',
   styleUrl: './prefinancement-deblocage.component.scss',
@@ -80,6 +85,42 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
   ];
 
   isSubmitting: boolean = false;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<PrefinancementResponseDTO>(p => p.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): PrefinancementResponseDTO[] {
+    return this.selectionState.getPageSelection(this.prefinancements);
+  }
+
+  onSelectionChange(selection: PrefinancementResponseDTO[]): void {
+    this.selectionState.onPageSelectionChange(this.prefinancements, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(p => p.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.loadEncoursDeblocages();
+    this.bankStateService.refreshBankInfo(this.banqueId);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private prefinancementService: PrefinancementService,

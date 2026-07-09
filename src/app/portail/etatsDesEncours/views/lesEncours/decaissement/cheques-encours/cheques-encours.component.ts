@@ -29,6 +29,10 @@ import {InputNumberModule} from "primeng/inputnumber";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import {SensOperation} from "../../../../../transactions/dtos/SensOperation";
+import {BatchValidationResponseDto} from "../../../../dtos/lot/BatchValidationResponseDto";
+import {ValidationLotModalComponent} from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import {TableSelectionState} from "../../shared/table-selection.state";
 
 @Component({
   selector: 'app-cheques-encours',
@@ -52,6 +56,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     DropdownModule,
     InputNumberModule,
     ConfirmDialogModule,
+    ValidationLotModalComponent,
   ],
   templateUrl: './cheques-encours.component.html',
   styleUrl: './cheques-encours.component.scss',
@@ -84,6 +89,43 @@ export class ChequesEncoursComponent implements OnInit {
   ];
 
   isSubmitting: boolean = false;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<ChequeResponseDto>(c => c.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+  readonly SensOperation = SensOperation;
+
+  get pageSelection(): ChequeResponseDto[] {
+    return this.selectionState.getPageSelection(this.cheques);
+  }
+
+  onSelectionChange(selection: ChequeResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.cheques, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(c => c.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.loadOutstandingCheques();
+    this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private chequeService: ChequeService,

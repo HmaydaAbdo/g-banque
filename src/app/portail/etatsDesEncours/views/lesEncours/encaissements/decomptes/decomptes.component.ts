@@ -26,6 +26,10 @@ import numbers = _default.defaults.animations.numbers;
 import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 
 @Component({
@@ -48,6 +52,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     InputTextareaModule,
     ConfirmDialogModule,
     RouterLink,
+    ValidationLotModalComponent,
   ],
   templateUrl: './decomptes.component.html',
   styleUrl: './decomptes.component.scss',
@@ -78,6 +83,42 @@ export class DecomptesComponent implements OnInit, OnDestroy {
   selectedDecompte: DecompteResponseDto | null = null;
 
   isSubmitting: boolean = false;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<DecompteResponseDto>(d => d.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): DecompteResponseDto[] {
+    return this.selectionState.getPageSelection(this.decomptes);
+  }
+
+  onSelectionChange(selection: DecompteResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.decomptes, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(d => d.montant);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.loadEncoursDecomptes();
+    this.bankStateService.refreshBankInfo(this.banqueId);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private decompteService: DecompteService,

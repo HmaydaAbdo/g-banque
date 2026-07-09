@@ -36,8 +36,15 @@
     <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
   </div>
 
+  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+            class="p-button-success" (click)="displayLotModal = true"></button>
+  </div>
+
   <div class="pb-8">
-    <p-table #dt [value]="fraisBancaires" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
+    <p-table #dt [value]="fraisBancaires" [selection]="pageSelection" (selectionChange)="onSelectionChange($event)" dataKey="id" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"
              [loading]="loading" [rowsPerPageOptions]="[10, 25, 50]" [lazy]="true"
              responsiveLayout="scroll" [scrollable]="true" scrollHeight="flex" (onLazyLoad)="loadFraisBancaire($event)"
              [columns]="[
@@ -52,6 +59,9 @@
              currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}">
       <ng-template pTemplate="header" let-columns>
         <tr class="white-space-nowrap">
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
           <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
@@ -64,6 +74,9 @@
 
       <ng-template pTemplate="body" let-fraisBancaire>
         <tr>
+          <td>
+            <p-tableCheckbox [value]="fraisBancaire"></p-tableCheckbox>
+          </td>
           <td>{{ fraisBancaire.libelle }}</td>
           <td>{{ fraisBancaire.banqueNom }}</td>
           <td><span class="amount-badge debit-badge">{{ fraisBancaire.montant | number:'1.2-2' }}</span> </td>
@@ -193,4 +206,13 @@
     </div>
   </form>
 </p-dialog>
+
+<app-validation-lot-modal
+  [(visible)]="displayLotModal"
+  [transactionSource]="TransactionSource.FRAIS_BANCAIRE"
+  [selectedIds]="selectedIds"
+  [montantTotal]="montantTotalSelection"
+  libelleType="frais bancaires"
+  (validated)="onLotValidated($event)"
+></app-validation-lot-modal>
 

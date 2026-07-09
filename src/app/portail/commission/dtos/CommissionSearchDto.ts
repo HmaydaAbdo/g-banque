@@ -8,4 +8,6 @@ export interface CommissionSearchDto {
   operation?: TransactionSource;
   montant?: Decimal;
   status?: Status;
+  /** Filtre sur la nature de la ligne fonctionnelle de la caution d'origine. */
+  natureId?: number;
 }
