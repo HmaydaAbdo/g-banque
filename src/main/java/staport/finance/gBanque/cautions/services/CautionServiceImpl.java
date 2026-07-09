@@ -37,9 +37,21 @@ import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
+
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+
+import java.awt.Color;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.NumberFormat;
+import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Implémentation du service Caution.
@@ -74,8 +86,10 @@ public class CautionServiceImpl implements ICautionService {
     private final CommissionMapper                   commissionMapper;
     private final ImpotEtTaxeRepository              impotEtTaxeRepository;
     private final CommissionCautionStrategieFactory  strategieFactory;
+    private final StaportPdfReportService            staportPdfReportService;
 
     private static final BigDecimal TAUX_TVA = new BigDecimal("0.10");
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public CautionServiceImpl(
             CautionRepository cautionRepository,
@@ -86,7 +100,8 @@ public class CautionServiceImpl implements ICautionService {
             CommisionRepository commissionRepository,
             CommissionMapper commissionMapper,
             ImpotEtTaxeRepository impotEtTaxeRepository,
-            CommissionCautionStrategieFactory strategieFactory) {
+            CommissionCautionStrategieFactory strategieFactory,
+            StaportPdfReportService staportPdfReportService) {
         this.cautionRepository    = cautionRepository;
         this.cautionMapper        = cautionMapper;
         this.banqueRepository     = banqueRepository;
@@ -96,6 +111,7 @@ public class CautionServiceImpl implements ICautionService {
         this.commissionMapper     = commissionMapper;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
         this.strategieFactory     = strategieFactory;
+        this.staportPdfReportService = staportPdfReportService;
     }
 
     // ── Création ──────────────────────────────────────────────────────────────
@@ -229,6 +245,188 @@ public class CautionServiceImpl implements ICautionService {
 
         // Mapping vers DTOs — les associations sont déjà chargées par l'EntityGraph
         return page.map(cautionMapper::toDto);
+    }
+
+    // ── Export PDF ────────────────────────────────────────────────────────────
+
+    @Override
+    public byte[] exporterPdf(CautionSearchCriteria criteres) {
+        logger.debug("Export PDF cautions — critères: {}", criteres);
+
+        List<Caution> cautions = cautionRepository.findAll(
+            CautionSpecification.parCriteres(criteres),
+            Sort.by(Sort.Direction.DESC, "dateDePrise")
+        );
+
+        BigDecimal totalMontant = cautions.stream()
+            .map(Caution::getMontant)
+            .filter(java.util.Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<String> filterLines = buildFilterSummary(criteres);
+
+        try {
+            return staportPdfReportService.generateReport(
+                "État des Cautions",
+                PageSize.A4.rotate(),
+                (doc, writer) -> {
+                    try {
+                        doc.add(Chunk.NEWLINE);
+                        doc.add(Chunk.NEWLINE);
+
+                        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                        Font subFont   = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                        Font hdrFont   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                        Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                        Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                        Paragraph title = new Paragraph("État des Cautions", titleFont);
+                        title.setAlignment(Element.ALIGN_CENTER);
+                        doc.add(title);
+
+                        String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                                + "  •  " + cautions.size() + " caution(s)";
+                        if (!filterLines.isEmpty()) {
+                            exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                        }
+                        Paragraph sub = new Paragraph(exportInfo, subFont);
+                        sub.setAlignment(Element.ALIGN_CENTER);
+                        sub.setSpacingAfter(8f);
+                        doc.add(sub);
+
+                        Color medBlue    = Color.decode("#2563eb");
+                        Color lightBlue  = Color.decode("#dbeafe");
+                        Color rowAlt     = Color.decode("#f8fafc");
+                        Color green      = Color.decode("#16a34a");
+                        Color orange     = Color.decode("#ea580c");
+                        Color borderGray = Color.decode("#e5e7eb");
+
+                        float[] colWidths = {8f, 11f, 10f, 9f, 14f, 15f, 8f, 8f, 9f, 6f, 7f};
+                        PdfPTable table = new PdfPTable(colWidths);
+                        table.setWidthPercentage(100f);
+                        table.setSpacingBefore(8f);
+                        table.setHeaderRows(1);
+
+                        for (String h : new String[]{
+                                "N° Caution", "Banque", "Nature", "N° Marché", "Organisme", "Désignation",
+                                "Date de prise", "Main levée", "Montant (MAD)", "Taux (%)", "Statut"}) {
+                            PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                            c.setBackgroundColor(medBlue);
+                            c.setPadding(5f);
+                            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            c.setBorderColor(Color.WHITE);
+                            c.setBorderWidth(0.5f);
+                            table.addCell(c);
+                        }
+
+                        for (int i = 0; i < cautions.size(); i++) {
+                            Caution c = cautions.get(i);
+                            Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
+
+                            addPdfCell(table, c.getNumeroCaution(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                            addPdfCell(table, c.getBanque() != null ? c.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                            addPdfCell(table, c.getNature() != null ? c.getNature().getLabel() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                            addPdfCell(table, c.getMarche() != null ? c.getMarche().getNumero() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                            addPdfCell(table, c.getOrganisme(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                            addPdfCell(table, c.getDesignation(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                            addPdfCell(table, c.getDateDePrise() != null ? c.getDateDePrise().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                            addPdfCell(table, c.getDateDeMainLevee() != null ? c.getDateDeMainLevee().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                            addPdfCell(table, formatMontantPdf(c.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                            addPdfCell(table, c.getTaux() != null ? c.getTaux().toPlainString() : "—", cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+
+                            boolean actif = Boolean.TRUE.equals(c.getActif());
+                            PdfPCell statusCell = new PdfPCell(new Phrase(
+                                    actif ? "ACTIVE" : "INACTIVE",
+                                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                            statusCell.setBackgroundColor(actif ? green : orange);
+                            statusCell.setPadding(4f);
+                            statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            statusCell.setBorderColor(borderGray);
+                            statusCell.setBorderWidth(0.5f);
+                            table.addCell(statusCell);
+                        }
+
+                        // Ligne total
+                        PdfPCell totalLabel = new PdfPCell(
+                                new Phrase("TOTAL — " + cautions.size() + " caution(s)", totalFont));
+                        totalLabel.setColspan(8);
+                        totalLabel.setBackgroundColor(lightBlue);
+                        totalLabel.setPadding(5f);
+                        totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                        totalLabel.setBorderColor(medBlue);
+                        table.addCell(totalLabel);
+
+                        PdfPCell totalVal = new PdfPCell(
+                                new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                        totalVal.setBackgroundColor(lightBlue);
+                        totalVal.setPadding(5f);
+                        totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                        totalVal.setBorderColor(medBlue);
+                        table.addCell(totalVal);
+
+                        for (int j = 0; j < 2; j++) {
+                            PdfPCell empty = new PdfPCell(new Phrase(""));
+                            empty.setBackgroundColor(lightBlue);
+                            empty.setBorderColor(medBlue);
+                            table.addCell(empty);
+                        }
+
+                        doc.add(table);
+
+                    } catch (DocumentException e) {
+                        throw new RuntimeException("Erreur génération contenu PDF cautions", e);
+                    }
+                }
+            );
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des cautions", e);
+        }
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font,
+                             Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantPdf(BigDecimal montant) {
+        if (montant == null) return "—";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf.format(montant);
+    }
+
+    private List<String> buildFilterSummary(CautionSearchCriteria criteres) {
+        List<String> lines = new ArrayList<>();
+        if (criteres == null) return lines;
+
+        if (criteres.numeroCaution() != null && !criteres.numeroCaution().isBlank())
+            lines.add("N° Caution : " + criteres.numeroCaution());
+        if (criteres.organisme() != null && !criteres.organisme().isBlank())
+            lines.add("Organisme : " + criteres.organisme());
+        if (criteres.banqueId() != null)
+            banqueRepository.findById(criteres.banqueId())
+                .ifPresent(b -> lines.add("Banque : " + b.getNom()));
+        if (criteres.natureId() != null)
+            natureRepository.findById(criteres.natureId())
+                .ifPresent(n -> lines.add("Nature : " + n.getLabel()));
+        if (criteres.marcheId() != null)
+            marcheRepository.findById(criteres.marcheId())
+                .ifPresent(m -> lines.add("Marché : " + m.getNumero()));
+        if (criteres.dateDePrise() != null)
+            lines.add("Date de prise : " + criteres.dateDePrise().format(DATE_FMT));
+        if (criteres.montant() != null)
+            lines.add("Montant : " + formatMontantPdf(criteres.montant()) + " MAD");
+        if (criteres.actif() != null)
+            lines.add("Statut : " + (criteres.actif() ? "Active" : "Inactive"));
+
+        return lines;
     }
 
     // ── Suppression (hard delete) ─────────────────────────────────────────────

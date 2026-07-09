@@ -96,4 +96,16 @@ public interface ICautionService {
      * @return entité {@link Caution}
      */
     Caution trouverOuLeverException(Long id);
+
+    /**
+     * Génère un export PDF de l'intégralité des cautions correspondant aux critères fournis.
+     *
+     * <p>Contrairement à {@link #rechercher}, cette méthode ignore toute pagination — elle
+     * imprime la totalité des résultats filtrés, pas seulement la page actuellement affichée
+     * à l'écran.
+     *
+     * @param criteres critères de filtrage (tous optionnels — mêmes filtres que la recherche paginée)
+     * @return contenu binaire du PDF généré
+     */
+    byte[] exporterPdf(CautionSearchCriteria criteres);
 }

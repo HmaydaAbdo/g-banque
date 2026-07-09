@@ -2,6 +2,7 @@ package staport.finance.gBanque.cautions.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -41,6 +42,14 @@ public interface CautionRepository extends JpaRepository<Caution, Long>,
      */
     @EntityGraph(value = "Caution.avecAssociations")
     Page<Caution> findAll(Specification<Caution> spec, Pageable pageable);
+
+    /**
+     * Recherche non paginée avec critères dynamiques — utilisée exclusivement par l'export PDF
+     * afin d'imprimer l'intégralité des cautions correspondant aux filtres (pas seulement la
+     * page affichée à l'écran). L'EntityGraph garantit zéro requête N+1 lors du mapping.
+     */
+    @EntityGraph(value = "Caution.avecAssociations")
+    List<Caution> findAll(Specification<Caution> spec, Sort sort);
 
     /**
      * Charge toutes les cautions actives avec leurs associations (banque + nature + marche)

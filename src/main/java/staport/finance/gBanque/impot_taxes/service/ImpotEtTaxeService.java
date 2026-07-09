@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.commision.entities.Commission;
+import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.impot_taxes.dtos.*;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.enums.Motif;
@@ -24,6 +26,7 @@ import staport.finance.gBanque.impot_taxes.mapper.ImpotEtTaxeMapper;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.impot_taxes.specs.ImpotEtTaxeSpecifications;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -37,17 +40,29 @@ public class ImpotEtTaxeService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * Nom de banque déclenchant la commission automatique sur impôt/taxe (règle métier SAHAM BANK).
+     * Comparaison insensible à la casse — voir {@link #genereCommissionAutomatique(Banque)}.
+     */
+    private static final String NOM_BANQUE_SAHAM = "SAHAM BANK";
+
+    /** Montant fixe de la commission générée automatiquement sur chaque impôt/taxe SAHAM BANK. */
+    private static final BigDecimal MONTANT_COMMISSION_IMPOT_TAXE = new BigDecimal("5.50");
+
     private final ImpotEtTaxeRepository impotEtTaxeRepository;
     private final BanqueRepository banqueRepository;
     private final ImpotEtTaxeMapper impotEtTaxeMapper;
+    private final CommisionRepository commisionRepository;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public ImpotEtTaxeService(ImpotEtTaxeRepository impotEtTaxeRepository,
                               BanqueRepository banqueRepository,
-                              ImpotEtTaxeMapper impotEtTaxeMapper) {
+                              ImpotEtTaxeMapper impotEtTaxeMapper,
+                              CommisionRepository commisionRepository) {
         this.impotEtTaxeRepository = impotEtTaxeRepository;
         this.banqueRepository = banqueRepository;
         this.impotEtTaxeMapper = impotEtTaxeMapper;
+        this.commisionRepository = commisionRepository;
     }
 
     @Transactional
@@ -64,7 +79,49 @@ public class ImpotEtTaxeService {
         impotEtTaxeRepository.save(impotEtTaxe);
 
         log.info("Impôt/taxe créé avec succès: id={}", impotEtTaxe.getId());
+
+        // Règle métier SAHAM BANK : tout impôt/taxe émis par SAHAM BANK génère automatiquement
+        // une commission fixe de 5,50 DH, quel que soit le motif.
+        if (genereCommissionAutomatique(banque)) {
+            genererCommissionSurImpotEtTaxe(impotEtTaxe);
+        }
+
         return impotEtTaxeMapper.toResponseDto(impotEtTaxe);
+    }
+
+    /**
+     * Indique si la banque déclenche la commission automatique sur impôt/taxe (SAHAM BANK).
+     */
+    private boolean genereCommissionAutomatique(Banque banque) {
+        return banque.getNom() != null
+                && banque.getNom().trim().equalsIgnoreCase(NOM_BANQUE_SAHAM);
+    }
+
+    /**
+     * Génère et persiste la commission de 5,50 DH liée à l'impôt/taxe SAHAM BANK nouvellement créé.
+     *
+     * <p>Règle métier : {@code dateEmission} de la commission = {@code dateEmission} de l'impôt/taxe.
+     * Le libellé et l'observation reprennent le motif de l'impôt/taxe pour la traçabilité.
+     * Déclenchée uniquement à la création (pas de synchronisation lors d'une modification ou
+     * suppression ultérieure de l'impôt/taxe).
+     */
+    private void genererCommissionSurImpotEtTaxe(ImpotEtTaxe impotEtTaxe) {
+        String suffixeMotif = impotEtTaxe.getMotif() != null ? impotEtTaxe.getMotif().getMotif() : "";
+        String libelleObservation = "Commission sur impôt et taxe — " + suffixeMotif;
+
+        Commission commission = new Commission();
+        commission.setBanque(impotEtTaxe.getBanque());
+        commission.setMontant(MONTANT_COMMISSION_IMPOT_TAXE);
+        commission.setOperation(TransactionSource.IMPOT_TAXE);
+        commission.setDateEmission(impotEtTaxe.getDateEmission());
+        commission.setLibelle(libelleObservation);
+        commission.setObservation(libelleObservation);
+        commission.setStatus(Status.PREVU);
+        commission.setImpotEtTaxe(impotEtTaxe);
+
+        Commission sauvegardee = commisionRepository.save(commission);
+        log.info("Commission auto-générée sur impôt/taxe SAHAM BANK — impotEtTaxe id={}, commission id={}, montant={}",
+                impotEtTaxe.getId(), sauvegardee.getId(), sauvegardee.getMontant());
     }
 
     @Transactional(readOnly = true)
@@ -118,6 +175,7 @@ public class ImpotEtTaxeService {
     }
 
     @Transactional
+
     public void deleteImpotEtTaxe(Long id) {
         log.info("Suppression de l'impôt/taxe id={}", id);
         if (!impotEtTaxeRepository.existsById(id)) {

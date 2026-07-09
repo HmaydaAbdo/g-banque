@@ -7,7 +7,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.cautions.commissions.service.IGenerationCommissionCautionService;
@@ -22,6 +24,7 @@ import staport.finance.gBanque.cautions.exceptions.CautionExceptionHandler;
 import staport.finance.gBanque.cautions.services.ICautionService;
 import staport.finance.gBanque.common.PageableUtils;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 
 /**
@@ -94,6 +97,26 @@ public class CautionController {
                 page, size, sortField, direction, criteres);
 
         return ResponseEntity.ok(cautionService.rechercher(criteres, pageable));
+    }
+
+    // ── Export PDF ────────────────────────────────────────────────────────────
+
+    /**
+     * Exporte en PDF l'intégralité des cautions correspondant aux critères fournis
+     * (mêmes filtres que {@code GET /cautions}) — sans pagination : le fichier contient
+     * tous les résultats filtrés, pas seulement la page actuellement affichée à l'écran.
+     */
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exporterPdf(@ModelAttribute CautionSearchCriteria criteres) {
+        logger.info("GET /cautions/export/pdf — critères: {}", criteres);
+
+        byte[] pdf = cautionService.exporterPdf(criteres);
+        String filename = "cautions_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     // ── Modification ──────────────────────────────────────────────────────────

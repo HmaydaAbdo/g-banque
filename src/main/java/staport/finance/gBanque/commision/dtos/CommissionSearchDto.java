@@ -13,6 +13,13 @@ public class CommissionSearchDto {
     private BigDecimal montant;
     private Status status;
 
+    /**
+     * Filtre sur la nature de la ligne fonctionnelle de la caution d'origine
+     * (commission.caution.nature.id). Sans effet pour les commissions sans caution associée
+     * (ex : commissions sur virements).
+     */
+    private Long natureId;
+
     public CommissionSearchDto() {
     }
 
@@ -22,6 +29,14 @@ public class CommissionSearchDto {
 
     public void setBanqueId(Long banqueId) {
         this.banqueId = banqueId;
+    }
+
+    public Long getNatureId() {
+        return natureId;
+    }
+
+    public void setNatureId(Long natureId) {
+        this.natureId = natureId;
     }
 
 
@@ -65,6 +80,7 @@ public class CommissionSearchDto {
                 ", operation=" + operation +
                 ", montant=" + montant +
                 ", status=" + status +
+                ", natureId=" + natureId +
                 '}';
     }
 }

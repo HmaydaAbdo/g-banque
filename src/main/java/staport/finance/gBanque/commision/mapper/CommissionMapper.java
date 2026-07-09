@@ -82,6 +82,17 @@ public class CommissionMapper {
         dto.setDateValeur(entity.getDateValeur() != null ? entity.getDateValeur() : null);
         dto.setObservation(entity.getObservation() != null ? entity.getObservation() : null);
 
+        // Caution d'origine — nullable (absente pour les commissions saisies manuellement
+        // ou générées hors caution, ex : virements)
+        if (entity.getCaution() != null) {
+            dto.setCautionId(entity.getCaution().getId());
+            dto.setCautionMontant(entity.getCaution().getMontant());
+            if (entity.getCaution().getNature() != null) {
+                dto.setNatureId(entity.getCaution().getNature().getId());
+                dto.setNatureLabel(entity.getCaution().getNature().getLabel());
+            }
+        }
+
         log.debug("DTO de réponse créé avec succès pour Commission ID: {}, Statut: {}",
                 entity.getId(), entity.getStatus());
 

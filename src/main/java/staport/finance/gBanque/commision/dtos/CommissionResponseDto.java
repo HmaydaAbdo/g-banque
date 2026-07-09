@@ -20,6 +20,12 @@ public class CommissionResponseDto {
     private LocalDate dateOperation ;
     private Status status;
 
+    // ── Caution d'origine (nullable — absente pour les commissions non générées depuis une caution) ──
+    private Long cautionId;
+    private BigDecimal cautionMontant;
+    private Long natureId;
+    private String natureLabel;
+
     // Getters & Setters
     public Long getId() {
         return id;
@@ -108,5 +114,37 @@ public class CommissionResponseDto {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public Long getCautionId() {
+        return cautionId;
+    }
+
+    public void setCautionId(Long cautionId) {
+        this.cautionId = cautionId;
+    }
+
+    public BigDecimal getCautionMontant() {
+        return cautionMontant;
+    }
+
+    public void setCautionMontant(BigDecimal cautionMontant) {
+        this.cautionMontant = cautionMontant;
+    }
+
+    public Long getNatureId() {
+        return natureId;
+    }
+
+    public void setNatureId(Long natureId) {
+        this.natureId = natureId;
+    }
+
+    public String getNatureLabel() {
+        return natureLabel;
+    }
+
+    public void setNatureLabel(String natureLabel) {
+        this.natureLabel = natureLabel;
     }
 }

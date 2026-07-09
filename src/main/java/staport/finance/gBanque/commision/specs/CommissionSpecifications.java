@@ -57,13 +57,29 @@ public class CommissionSpecifications {
         };
     }
 
+    /**
+     * Filtre par nature de ligne fonctionnelle — via la caution d'origine de la commission
+     * (commission.caution.nature.id). Les commissions sans caution associée (ex : virements)
+     * sont exclues dès qu'un {@code natureId} est fourni, la jointure vers {@code caution}
+     * n'ayant alors pas de correspondance.
+     */
+    public static Specification<Commission> hasNature(Long natureId) {
+        return (root, query, cb) -> {
+            if (natureId == null) {
+                return null;
+            }
+            return cb.equal(root.get("caution").get("nature").get("id"), natureId);
+        };
+    }
+
     public static Specification<Commission> buildSpecification(CommissionSearchDto dto) {
         return Specification
                 .where(hasBanque(dto.getBanqueId()))
                 .and(hasLibelle(dto.getLibelle()))
                 .and(hasOperation(dto.getOperation()))
                 .and(hasStatus(dto.getStatus()))
-                .and(hasMontant(dto.getMontant()));
+                .and(hasMontant(dto.getMontant()))
+                .and(hasNature(dto.getNatureId()));
     }
 
     public static Specification<Commission> outstandingUntil(LocalDate until) {

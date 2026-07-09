@@ -1,5 +1,10 @@
 package staport.finance.gBanque.commision.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -13,6 +18,22 @@ import java.util.List;
 @Repository
 public interface CommisionRepository extends JpaRepository<Commission, Long>, JpaSpecificationExecutor<Commission> {
 
+    /**
+     * Recherche paginée avec chargement anticipé de la caution d'origine et de sa nature
+     * (LEFT JOIN FETCH — {@code caution} est nullable) afin d'éviter tout N+1 lors du
+     * mapping vers {@code CommissionResponseDto} (cautionMontant, natureLabel).
+     */
+    @Override
+    @EntityGraph(attributePaths = {"caution", "caution.nature"})
+    Page<Commission> findAll(Specification<Commission> spec, Pageable pageable);
+
+    /**
+     * Recherche non paginée — utilisée exclusivement par l'export PDF afin d'imprimer
+     * l'intégralité des commissions correspondant aux filtres (pas seulement la page
+     * affichée à l'écran).
+     */
+    @EntityGraph(attributePaths = {"caution", "caution.nature"})
+    List<Commission> findAll(Specification<Commission> spec, Sort sort);
 
     List<Commission> findByLibelleLike(String libellePattern);
 

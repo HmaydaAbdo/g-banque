@@ -3,6 +3,7 @@ package staport.finance.gBanque.commision.entities;
 import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cautions.entities.Caution;
+import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
@@ -49,6 +50,16 @@ public class Commission {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "caution_id")
     private Caution caution;
+
+    /**
+     * Impôt/taxe à l'origine de cette commission — nullable.
+     * Renseigné uniquement pour les commissions générées automatiquement à la création
+     * d'un impôt/taxe SAHAM BANK (5,50 DH, quel que soit le motif).
+     * Les commissions saisies manuellement ou générées depuis une caution laissent ce champ null.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "impot_et_taxe_id", unique = true)
+    private ImpotEtTaxe impotEtTaxe;
 
     public Commission() {}
 
@@ -137,6 +148,14 @@ public class Commission {
 
     public void setCaution(Caution caution) {
         this.caution = caution;
+    }
+
+    public ImpotEtTaxe getImpotEtTaxe() {
+        return impotEtTaxe;
+    }
+
+    public void setImpotEtTaxe(ImpotEtTaxe impotEtTaxe) {
+        this.impotEtTaxe = impotEtTaxe;
     }
 
     @Override

@@ -5,11 +5,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.commision.dtos.*;
 import staport.finance.gBanque.commision.service.CommissionService;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/commissions")
@@ -85,6 +89,25 @@ public class CommissionController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Exporte en PDF l'intégralité des commissions correspondant aux critères fournis
+     * (mêmes filtres que {@code POST /commissions/search}, {@code natureId} inclus) — sans
+     * pagination : le fichier contient tous les résultats filtrés, pas seulement la page
+     * actuellement affichée à l'écran.
+     */
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exporterPdf(@ModelAttribute CommissionSearchDto searchDto) {
+        log.info("GET /commissions/export/pdf — critères: {}", searchDto);
+
+        byte[] pdf = commissionService.exporterPdf(searchDto);
+        String filename = "commissions_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
     @PatchMapping("/{id}/toggle-status")
     public ResponseEntity<Void> toggleCommissionStatus(@PathVariable Long id) {
         log.info("REST request pour basculer le statut de la commission avec l'id={}", id);
@@ -107,4 +130,3 @@ public class CommissionController {
     }
 
 }
-
