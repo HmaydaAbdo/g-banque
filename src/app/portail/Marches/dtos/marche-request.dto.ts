@@ -8,5 +8,4 @@ export interface MarcheRequestDTO {
   dateDebutDesTravaux?: string;
   dateDAchievementDesTravaux?: string;
   banqueId: number;
-  isNanti: boolean;
 }

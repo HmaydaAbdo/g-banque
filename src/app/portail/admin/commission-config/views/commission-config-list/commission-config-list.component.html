@@ -21,18 +21,64 @@
     </div>
   </div>
 
+  <!-- ═══ FILTRES ══════════════════════════════════════════════════════════ -->
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h"></i>Filtres</span>
+
+    <form [formGroup]="filterForm" class="flex flex-wrap align-items-center gap-2">
+
+      <span class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input pInputText type="text"
+               formControlName="search"
+               placeholder="Rechercher banque / organisme…"/>
+      </span>
+
+      <p-dropdown formControlName="banqueId"
+                  [options]="banqueOptions"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Toutes les banques" [filter]="true"
+                  [showClear]="true" appendTo="body">
+      </p-dropdown>
+
+      <p-dropdown formControlName="type"
+                  [options]="typeOptions"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Tous les types" [filter]="true"
+                  [showClear]="true" appendTo="body">
+      </p-dropdown>
+
+      <p-dropdown formControlName="condition"
+                  [options]="conditionOptions"
+                  optionLabel="label" optionValue="value"
+                  placeholder="Toutes conditions"
+                  [showClear]="true" appendTo="body">
+      </p-dropdown>
+
+      <button pButton pRipple icon="pi pi-times"
+              class="p-button-text p-button-secondary p-button-sm"
+              type="button"
+              (click)="clearFilters()"
+              pTooltip="Réinitialiser" tooltipPosition="bottom">
+      </button>
+    </form>
+  </div>
+
   <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->
   <div class="pg-table">
-    <p-table [value]="configs" [loading]="loading" dataKey="id"
+    <p-table [value]="filteredConfigs" [loading]="loading" dataKey="id"
+             [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10,25,50]"
+             [showCurrentPageReport]="true"
+             currentPageReportTemplate="{first}–{last} sur {totalRecords}"
              styleClass="p-datatable-sm" rowHover>
 
       <ng-template pTemplate="header">
         <tr>
-          <th>Banque</th>
-          <th>Référence (organisme / bénéficiaire)</th>
-          <th>Type transaction</th>
-          <th>Condition</th>
-          <th class="text-right">Montant (MAD)</th>
+          <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
+          <th pSortableColumn="organismeNom">Référence (organisme / bénéficiaire) <p-sortIcon field="organismeNom"></p-sortIcon></th>
+          <th pSortableColumn="type">Type transaction <p-sortIcon field="type"></p-sortIcon></th>
+          <th pSortableColumn="condition">Condition <p-sortIcon field="condition"></p-sortIcon></th>
+          <th class="text-right" pSortableColumn="montant">Montant (MAD) <p-sortIcon field="montant"></p-sortIcon></th>
           <th class="text-center" style="width:8rem">Actions</th>
         </tr>
       </ng-template>

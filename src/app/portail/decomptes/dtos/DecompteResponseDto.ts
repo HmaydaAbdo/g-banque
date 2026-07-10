@@ -6,7 +6,6 @@ export interface DecompteResponseDto {
   marcheId: number;
   marcheName: string;
   marcheNumero: string;
-  marcheNanti: boolean;
   marcheBanqueId: number;
   marcheBanqueName: string;
 

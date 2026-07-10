@@ -10,8 +10,6 @@
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
   <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center ">
 
-      <span class="text-lg font-medium ">Total = <strong>{{ totalEncours | number:'1.2-2'}} MAD</strong></span>
-
       <span class="p-float-label">
             <input
               id="marcheNumero"
@@ -45,6 +43,13 @@
 </div>
 
 
+  </div>
+
+  <!-- Total band -->
+  <div class="total-band total-band--credit">
+    <i class="pi pi-arrow-up-right"></i>
+    <span class="total-band__label">Total encaissements</span>
+    <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
   </div>
 
   <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
@@ -266,6 +271,7 @@
   [banqueId]="banqueId"
   [selectedIds]="selectedIds"
   [montantTotal]="montantTotalSelection"
+  tvaLabel="TVA collectée"
   libelleType="droits constatés"
   (validated)="onLotValidated($event)"
 ></app-validation-lot-modal>

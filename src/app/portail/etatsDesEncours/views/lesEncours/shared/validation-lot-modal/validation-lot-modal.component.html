@@ -16,20 +16,10 @@
     <div class="grid p-fluid mt-1">
       <div class="col-12 md:col-6 mb-3">
         <span class="p-float-label">
-          <p-calendar id="lotDateEmission" formControlName="dateEmission" [showOnFocus]="false"
-                      dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
-          <label for="lotDateEmission">Date d'émission</label>
-        </span>
-        <small class="p-error" *ngIf="isInvalid('dateEmission')">
-          La date d'émission est obligatoire
-        </small>
-      </div>
-      <div class="col-12 md:col-6 mb-3">
-        <span class="p-float-label">
           <p-dropdown id="lotTva" [options]="tvaOptions" formControlName="tvaDeductible"
                       optionLabel="label" optionValue="value"
-                      placeholder="Sélectionner un taux" appendTo="body"></p-dropdown>
-          <label for="lotTva">TVA Déductible</label>
+                      [placeholder]="tvaLabel" appendTo="body"></p-dropdown>
+          <label for="lotTva">{{ tvaLabel }}</label>
         </span>
         <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
           La TVA est obligatoire
@@ -55,25 +45,10 @@
           La date de l'opération est obligatoire
         </small>
       </div>
-      <div class="col-12 md:col-6 mb-3">
-        <span class="p-float-label">
-          <textarea id="lotObservation" pInputTextarea formControlName="observation" rows="3"></textarea>
-          <label for="lotObservation">Observation</label>
-        </span>
-        <small class="p-error" *ngIf="isInvalid('observation')">
-          Observation est obligatoire
-        </small>
-      </div>
-      <div class="col-12 md:col-6 mb-3">
-        <span class="p-float-label">
-          <textarea id="lotLibelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
-          <label for="lotLibelle">Libellé</label>
-        </span>
-        <small class="p-error" *ngIf="isInvalid('libelle')">
-          Libellé est obligatoire
-        </small>
-      </div>
     </div>
+    <p class="text-500 text-sm mt-1 mb-3">
+      Le libellé, l'observation et la date d'émission d'origine de chaque opération sont conservés automatiquement.
+    </p>
     <p-divider></p-divider>
     <div class="flex justify-content-end gap-2">
       <p-button label="Annuler" icon="pi pi-times" [outlined]="true" (onClick)="close()"></p-button>

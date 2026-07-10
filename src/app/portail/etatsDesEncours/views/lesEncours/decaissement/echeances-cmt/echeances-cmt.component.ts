@@ -30,6 +30,10 @@ import {EcheanceCMTResponseDto} from "../../../../../cmt/dtos/EcheanceCMTRespons
 import { InputTextModule } from 'primeng/inputtext';
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { TransactionSource } from "../../../../../transactions/dtos/TransactionSource";
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 
 @Component({
@@ -54,7 +58,8 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     CalendarModule,
     DialogModule,
     InputTextareaModule,
-    InputTextModule
+    InputTextModule,
+    ValidationLotModalComponent
   ],
   templateUrl: './echeances-cmt.component.html',
   styleUrl: './echeances-cmt.component.scss',
@@ -87,6 +92,42 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
   isSubmitting: boolean = false;
+
+  // Validation en lot
+  selectionState = new TableSelectionState<EcheanceCMTResponseDto>(e => e.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): EcheanceCMTResponseDto[] {
+    return this.selectionState.getPageSelection(this.echeances);
+  }
+
+  onSelectionChange(selection: EcheanceCMTResponseDto[]): void {
+    this.selectionState.onPageSelectionChange(this.echeances, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(e => e.montantTtc);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.onSearch();
+    this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+    this.bankStateService.notifyValidation();
+  }
 
   private readonly echeanceCmtService = inject(EcheanceCmtService);
   private readonly route = inject(ActivatedRoute);

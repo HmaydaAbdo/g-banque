@@ -1,10 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { TagModule } from 'primeng/tag';
 import { MessageService, MenuItem } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { finalize } from 'rxjs/operators';
@@ -22,10 +22,10 @@ import { CmtConfigResponse } from '../../dtos/CmtConfigResponse';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    CardModule,
     ButtonModule,
     InputNumberModule,
     BreadcrumbModule,
+    TagModule,
     ToastModule
   ],
   providers: [MessageService],
@@ -42,7 +42,6 @@ export class CmtConfigComponent implements OnInit {
     { label: 'Administration' },
     { label: 'Configuration CMT' }
   ];
-  home: MenuItem = { icon: 'pi pi-home', route: '/portail/accueil' };
 
   form!: FormGroup;
   loading = false;

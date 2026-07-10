@@ -70,8 +70,8 @@ export class MarcheService {
       params = params.set('banqueId', criteria.banqueId);
     }
 
-    if (criteria.isNanti !== undefined && criteria.isNanti !== null) {
-      params = params.set('isNanti', criteria.isNanti.toString());
+    if (criteria.actif !== undefined && criteria.actif !== null) {
+      params = params.set('actif', criteria.actif);
     }
 
     return this.http.get<PageResponse<MarcheResponseDTO>>(this.apiUrl, {params});
@@ -114,5 +114,22 @@ export class MarcheService {
    */
   deleteMarche(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Archive un marché : il reste consultable mais sort définitivement des calculs futurs
+   * (agios, encours des lignes fonctionnelles).
+   * @param id L'ID du marché à archiver.
+   */
+  archiverMarche(id: number): Observable<MarcheResponseDTO> {
+    return this.http.patch<MarcheResponseDTO>(`${this.apiUrl}/${id}/archiver`, {});
+  }
+
+  /**
+   * Désarchive un marché : il redevient pris en compte dans les calculs futurs.
+   * @param id L'ID du marché à désarchiver.
+   */
+  desarchiverMarche(id: number): Observable<MarcheResponseDTO> {
+    return this.http.patch<MarcheResponseDTO>(`${this.apiUrl}/${id}/desarchiver`, {});
   }
 }

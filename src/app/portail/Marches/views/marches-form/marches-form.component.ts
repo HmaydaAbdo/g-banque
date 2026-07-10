@@ -18,7 +18,6 @@ import { MarcheResponseDTO } from '../../dtos/marche-response.dto';
 import {MarcheService} from "../../service/marche-service.service";
 import {DropdownModule} from "primeng/dropdown";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
-import {InputSwitchModule} from "primeng/inputswitch";
 import { toLocalDateString, parseLocalDate } from '../../../global/types/date.utils';
 
 
@@ -37,8 +36,7 @@ import { toLocalDateString, parseLocalDate } from '../../../global/types/date.ut
     ConfirmDialogModule,
     BreadcrumbModule,
     InputNumberModule,
-    DropdownModule,
-    InputSwitchModule
+    DropdownModule
   ],
   templateUrl: './marches-form.component.html',
   styleUrl: './marches-form.component.scss',
@@ -93,9 +91,7 @@ export class MarchesFormComponent implements OnInit {
       maitreDouvrage: ['', Validators.required],
       dateDebutDesTravaux: [''],
       dateDAchievementDesTravaux: [''],
-      banqueId: [null, Validators.required],
-      isNanti: [false, Validators.required]
-
+      banqueId: [null, Validators.required]
     });
   }
 
@@ -112,8 +108,7 @@ export class MarchesFormComponent implements OnInit {
           maitreDouvrage: data.maitreDouvrage,
           dateDebutDesTravaux: data.dateDebutDesTravaux ? parseLocalDate(data.dateDebutDesTravaux) : null,
           dateDAchievementDesTravaux: data.dateDAchievementDesTravaux ? parseLocalDate(data.dateDAchievementDesTravaux) : null,
-          banqueId: data.banqueId,
-          isNanti: data.nanti
+          banqueId: data.banqueId
         });
 
         this.loading = false;
@@ -181,8 +176,7 @@ export class MarchesFormComponent implements OnInit {
       maitreDouvrage: formValue.maitreDouvrage,
       dateDebutDesTravaux: toLocalDateString(formValue.dateDebutDesTravaux) ?? undefined,
       dateDAchievementDesTravaux: toLocalDateString(formValue.dateDAchievementDesTravaux) ?? undefined,
-      banqueId: formValue.banqueId,
-      isNanti: formValue.isNanti
+      banqueId: formValue.banqueId
     };
 
 

@@ -3,5 +3,6 @@ export interface MarcheSearchDTO {
   numero?: string;
   maitreDouvrage?: string;
   banqueId?: number;
-  isNanti?: boolean;
+  /** undefined/null = tous statuts, true = actifs uniquement, false = archivés uniquement. */
+  actif?: boolean | null;
 }

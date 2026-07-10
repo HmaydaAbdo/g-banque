@@ -18,10 +18,16 @@ import {ValidationService} from '../../../../services/validation/validation.serv
 import {BankStateService} from '../../../../../comptes-bancaire/services/bank-state.service';
 
 /**
- * Modale de validation (rapprochement) en lot, partagée par les 17 écrans "Encours".
- * Applique les mêmes champs communs (dates, TVA, libellé, observation) à toutes les opérations
+ * Modale de validation (rapprochement) en lot, partagée par tous les écrans "Encours".
+ * Applique les mêmes champs communs (TVA, date opération, date valeur) à toutes les opérations
  * sélectionnées, en un seul appel à POST /rapprochement/process/lot (voir BatchValidationService
  * côté backend pour le détail du dispatch et le comportement tout-ou-rien).
+ *
+ * Volontairement absent de ce formulaire : libellé, observation, date d'émission. Propres à
+ * chaque opération, ils ne sont jamais saisis en lot — chaque opération conserve automatiquement
+ * les siens côté backend (fallback sur l'entité source dans chaque mapper si le DTO unitaire ne
+ * les porte pas). Seuls TVA, date opération et date valeur — qui proviennent du relevé bancaire
+ * traité — sont légitimement communs à tout le lot.
  *
  * Le composant parent (chaque *-encours.component.ts) reste responsable de :
  * - la sélection multiple dans son p-table (dataKey + [(selection)]) ;
@@ -60,6 +66,13 @@ export class ValidationLotModalComponent {
   @Input() montantTotal = 0;
   /** Utilisé dans les messages ("3 virements validés avec succès"). */
   @Input() libelleType = 'opérations';
+  /**
+   * Libellé du champ TVA, à faire correspondre à celui du modal unitaire du même écran
+   * ("TVA Déductible" pour un décaissement, "TVA Collectée"/"TVA collectée" pour un
+   * encaissement — voir le composant parent pour la valeur exacte déjà utilisée ailleurs
+   * sur cet écran).
+   */
+  @Input() tvaLabel = 'TVA Déductible';
 
   @Output() validated = new EventEmitter<BatchValidationResponseDto>();
 
@@ -86,12 +99,9 @@ export class ValidationLotModalComponent {
 
   private initForm(): void {
     this.rapprochementForm = this.fb.group({
-      dateEmission: [null, Validators.required],
       dateValeur: [null, Validators.required],
       dateOperation: [null, Validators.required],
-      observation: ['', Validators.required],
       tvaDeductible: [0, Validators.required],
-      libelle: ['', Validators.required],
     });
   }
 
@@ -122,7 +132,6 @@ export class ValidationLotModalComponent {
     }
 
     const formValue = this.rapprochementForm.getRawValue();
-    const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
     const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
     const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
 
@@ -135,13 +144,12 @@ export class ValidationLotModalComponent {
           <br><br>
           <strong>Détails du rapprochement (appliqués à toutes les opérations sélectionnées) :</strong>
           <ul>
-              <li><strong>Date d'émission :</strong> ${dateEmissionFormatted}</li>
               <li><strong>Date de valeur :</strong> ${dateValeurFormatted || '-'}</li>
               <li><strong>Date d'opération :</strong> ${dateOperationFormatted || '-'}</li>
-              <li><strong>Libellé :</strong> ${formValue.libelle}</li>
-              <li><strong>Observation :</strong> ${formValue.observation}</li>
-              <li><strong>TVA Déductible :</strong> ${formValue.tvaDeductible}%</li>
+              <li><strong>${this.tvaLabel} :</strong> ${formValue.tvaDeductible}%</li>
           </ul>
+          <br>
+          Le libellé et l'observation d'origine de chaque opération sont conservés.
     `;
 
     this.confirmationService.confirm({
@@ -163,11 +171,8 @@ export class ValidationLotModalComponent {
       sens: this.sens,
       banqueId: this.banqueId,
       ids: this.selectedIds,
-      dateEmission: this.datePipe.transform(formValue.dateEmission, 'yyyy-MM-dd') as string,
       dateValeur: this.datePipe.transform(formValue.dateValeur, 'yyyy-MM-dd') as string,
       dateOperation: this.datePipe.transform(formValue.dateOperation, 'yyyy-MM-dd') as string,
-      observation: formValue.observation,
-      libelle: formValue.libelle,
       tvaDeductible: formValue.tvaDeductible,
       rapprochementId: rapprochementId!,
     };

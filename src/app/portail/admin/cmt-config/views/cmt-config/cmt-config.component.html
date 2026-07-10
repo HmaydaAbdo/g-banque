@@ -1,48 +1,64 @@
 <p-toast position="center"></p-toast>
 
-<div class="card flex flex-column gap-3 p-2">
+<div class="pg-wrap">
 
-  <p-breadcrumb [model]="items" [home]="home"></p-breadcrumb>
+  <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
+  <div class="pg-header">
+    <div class="pg-header__left">
+      <h2 class="pg-header__title">Configuration CMT</h2>
+      <p-breadcrumb [model]="items" styleClass="border-none p-0"
+                    [style]="{'background':'transparent','padding':'0','font-size':'var(--text-breadcrumb)'}">
+      </p-breadcrumb>
+    </div>
+    @if (dateModification) {
+      <div class="pg-header__actions">
+        <p-tag icon="pi pi-clock" severity="secondary"
+               [value]="'Dernière modification : ' + (dateModification | date:'dd/MM/yyyy HH:mm')">
+        </p-tag>
+      </div>
+    }
+  </div>
 
-  <h3 class="m-0">Configuration CMT</h3>
+  <!-- ═══ SEUILS D'ALERTE ══════════════════════════════════════════════════ -->
+  <div class="surface-card border-round-xl border-1 surface-border p-3" style="box-shadow:var(--shadow-sm)">
+    <h3 class="text-900 font-bold m-0 mb-3" style="font-size:var(--text-section)">
+      <i class="pi pi-bell mr-2 text-500"></i>Seuils d'alerte échéances
+    </h3>
 
-  <p-card styleClass="w-full md:w-30rem">
     @if (loading) {
-      <p>Chargement de la configuration...</p>
+      <div class="text-500 text-sm py-3"><i class="pi pi-spin pi-spinner mr-2"></i>Chargement de la configuration…</div>
     } @else {
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
 
-        <div class="field">
-          <label for="alerteEcheanceJoursCourtTerme">Seuil d'alerte court terme (jours)</label>
-          <p-inputNumber id="alerteEcheanceJoursCourtTerme" formControlName="alerteEcheanceJoursCourtTerme"
-                         mode="decimal" [useGrouping]="false" [min]="1"
-                         [ngClass]="{'ng-dirty': f['alerteEcheanceJoursCourtTerme'].invalid && f['alerteEcheanceJoursCourtTerme'].touched}">
-          </p-inputNumber>
-          @if (f['alerteEcheanceJoursCourtTerme'].invalid && f['alerteEcheanceJoursCourtTerme'].touched) {
-            <small class="p-error">Valeur requise, d'au moins 1 jour.</small>
-          }
-          <small class="block text-color-secondary mt-1">
-            Fenêtre (en jours) utilisée pour la métrique "échéances CMT à venir à court terme".
-          </small>
-        </div>
+        <div class="grid">
+          <div class="col-12 md:col-6 field mb-0">
+            <label for="alerteEcheanceJoursCourtTerme" class="block text-sm font-medium text-700 mb-1">Seuil d'alerte court terme (jours)</label>
+            <p-inputNumber id="alerteEcheanceJoursCourtTerme" formControlName="alerteEcheanceJoursCourtTerme"
+                           mode="decimal" [useGrouping]="false" [min]="1" styleClass="w-full" inputStyleClass="w-full"
+                           [ngClass]="{'ng-dirty': f['alerteEcheanceJoursCourtTerme'].invalid && f['alerteEcheanceJoursCourtTerme'].touched}">
+            </p-inputNumber>
+            @if (f['alerteEcheanceJoursCourtTerme'].invalid && f['alerteEcheanceJoursCourtTerme'].touched) {
+              <small class="p-error">Valeur requise, d'au moins 1 jour.</small>
+            }
+            <small class="block text-color-secondary mt-1">
+              Fenêtre utilisée pour la métrique "échéances CMT à venir à court terme".
+            </small>
+          </div>
 
-        <div class="field">
-          <label for="alerteEcheanceJoursLongTerme">Seuil d'alerte long terme (jours)</label>
-          <p-inputNumber id="alerteEcheanceJoursLongTerme" formControlName="alerteEcheanceJoursLongTerme"
-                         mode="decimal" [useGrouping]="false" [min]="1"
-                         [ngClass]="{'ng-dirty': f['alerteEcheanceJoursLongTerme'].invalid && f['alerteEcheanceJoursLongTerme'].touched}">
-          </p-inputNumber>
-          @if (f['alerteEcheanceJoursLongTerme'].invalid && f['alerteEcheanceJoursLongTerme'].touched) {
-            <small class="p-error">Valeur requise, d'au moins 1 jour.</small>
-          }
-          <small class="block text-color-secondary mt-1">
-            Fenêtre (en jours) utilisée pour la métrique "échéances CMT à venir à long terme".
-          </small>
+          <div class="col-12 md:col-6 field mb-0">
+            <label for="alerteEcheanceJoursLongTerme" class="block text-sm font-medium text-700 mb-1">Seuil d'alerte long terme (jours)</label>
+            <p-inputNumber id="alerteEcheanceJoursLongTerme" formControlName="alerteEcheanceJoursLongTerme"
+                           mode="decimal" [useGrouping]="false" [min]="1" styleClass="w-full" inputStyleClass="w-full"
+                           [ngClass]="{'ng-dirty': f['alerteEcheanceJoursLongTerme'].invalid && f['alerteEcheanceJoursLongTerme'].touched}">
+            </p-inputNumber>
+            @if (f['alerteEcheanceJoursLongTerme'].invalid && f['alerteEcheanceJoursLongTerme'].touched) {
+              <small class="p-error">Valeur requise, d'au moins 1 jour.</small>
+            }
+            <small class="block text-color-secondary mt-1">
+              Fenêtre utilisée pour la métrique "échéances CMT à venir à long terme".
+            </small>
+          </div>
         </div>
-
-        @if (dateModification) {
-          <small class="text-color-secondary">Dernière modification : {{ dateModification | date:'dd/MM/yyyy HH:mm' }}</small>
-        }
 
         <div class="flex justify-content-end">
           <button pButton type="submit" label="Enregistrer" icon="pi pi-check"
@@ -50,5 +66,5 @@
         </div>
       </form>
     }
-  </p-card>
+  </div>
 </div>

@@ -61,17 +61,14 @@
         </p-dropdown>
       </div>
 
-      <div class="p-input-icon-left">
-        <i class="pi pi-filter"></i>
-        <p-dropdown
-          formControlName="isNanti"
-          [options]="nantiOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Statut nanti"
-          [showClear]="true">
-        </p-dropdown>
-      </div>
+      <p-dropdown
+        formControlName="actif"
+        [options]="statutOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Statut">
+      </p-dropdown>
+
     </form>
 </div>
     <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()" pTooltip="Effacer la recherche"></button>
@@ -88,9 +85,9 @@
                 {field: 'montant', header: 'Montant', sortable: true},
                 {field: 'maitreDouvrage', header: 'Maître d ouvrage', sortable: true},
                 {field: 'banqueNom', header: 'Banque', sortable: true},
-                {field: 'Nanti', header: 'Nanti', sortable: false},
                 {field: 'dateDebutDesTravaux', header: 'Date début travaux', sortable: true},
-                {field: 'dateDAchievementDesTravaux', header: 'Date achèvement travaux', sortable: true}
+                {field: 'dateDAchievementDesTravaux', header: 'Date achèvement travaux', sortable: true},
+                {field: 'actif', header: 'Statut', sortable: true}
              ]"
              styleClass="p-datatable-gridlines text-xs"
              [showCurrentPageReport]="true"
@@ -114,24 +111,32 @@
           <td>{{ marche.montant  | number:'1.2-2' }} </td>
           <td>{{ marche.maitreDouvrage }}</td>
           <td>{{ marche.banqueNom }}</td>
-          <td class="text-center">
-            <p-tag
-              [value]="marche.nanti ? 'Oui' : 'Non'"
-              [severity]="marche.nanti ? 'success' : 'warning'">
-            </p-tag>
-          </td>
           <td>{{ marche.dateDebutDesTravaux ? (marche.dateDebutDesTravaux | date:'dd/MM/yyyy') : '—' }}</td>
           <td>{{ marche.dateDAchievementDesTravaux ? (marche.dateDAchievementDesTravaux | date:'dd/MM/yyyy') : '—' }}</td>
+          <td>
+            <p-tag [value]="marche.actif ? 'Actif' : 'Archivé'" [severity]="marche.actif ? 'success' : 'warning'"></p-tag>
+          </td>
           <td class="flex flex-row gap-2">
             <button pButton pRipple icon="pi pi-eye"
                     class="p-button-rounded p-button-outlined p-button-info"
                     (click)="viewSpecificLines(marche.id)"
                     pTooltip="Voir les lignes spécifiques"
                     tooltipPosition="top"></button>
-            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary mr-2"
-                    [routerLink]="['/portail/marches/edit', marche.id]"></button>
+            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
+                    [routerLink]="['/portail/marches/edit', marche.id]"
+                    pTooltip="Modifier" tooltipPosition="top"></button>
+            @if (marche.actif) {
+              <button pButton pRipple icon="pi pi-inbox" class="p-button-rounded p-button-outlined p-button-warning"
+                      (click)="archiverMarche(marche)"
+                      pTooltip="Archiver" tooltipPosition="top"></button>
+            } @else {
+              <button pButton pRipple icon="pi pi-replay" class="p-button-rounded p-button-outlined p-button-success"
+                      (click)="desarchiverMarche(marche)"
+                      pTooltip="Désarchiver" tooltipPosition="top"></button>
+            }
             @if (isAdmin()){
-              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteMarche(marche)"></button>
+              <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-outlined p-button-danger" (click)="deleteMarche(marche)"
+                      pTooltip="Supprimer définitivement" tooltipPosition="top"></button>
             }
 
           </td>
@@ -139,12 +144,12 @@
       </ng-template>
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td [attr.colspan]="7">Aucun marché trouvé.</td>
+          <td [attr.colspan]="10">Aucun marché trouvé.</td>
         </tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td [attr.colspan]="7">Chargement des marchés. Veuillez patienter...</td>
+          <td [attr.colspan]="10">Chargement des marchés. Veuillez patienter...</td>
         </tr>
       </ng-template>
 

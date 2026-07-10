@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -31,7 +32,7 @@ import {OrganismeLeasingResponse} from "../../../../leasing/organismesLeasing/dt
   imports: [
     CommonModule, ReactiveFormsModule,
     TableModule, ButtonModule, RippleModule, DialogModule,
-    InputNumberModule, DropdownModule,
+    InputNumberModule, InputTextModule, DropdownModule,
     ToastModule, ConfirmDialogModule, TooltipModule, BreadcrumbModule, TagModule
   ],
   providers: [MessageService, ConfirmationService],
@@ -52,7 +53,8 @@ export class CommissionConfigListComponent implements OnInit {
     { icon: 'pi pi-sliders-h', route: '/portail/admin/commission-config',  label: 'Commissions config.' }
   ];
 
-  configs: CommissionConfigResponse[]    = [];
+  configs: CommissionConfigResponse[]         = [];
+  filteredConfigs: CommissionConfigResponse[] = [];
   banques: BanqueResponse[]              = [];
   organismes: OrganismeLeasingResponse[] = [];
 
@@ -61,6 +63,7 @@ export class CommissionConfigListComponent implements OnInit {
   editingId: number | null = null;
 
   form!: FormGroup;
+  filterForm!: FormGroup;
 
   typeOptions = Object.values(TransactionSource).map(v => ({
     label: TransactionSourceLabels[v], value: v
@@ -73,6 +76,7 @@ export class CommissionConfigListComponent implements OnInit {
 
   ngOnInit(): void {
     this.buildForm();
+    this.buildFilterForm();
     this.loadAll();
 
     // Reset du champ référence quand le type change
@@ -80,6 +84,37 @@ export class CommissionConfigListComponent implements OnInit {
     this.form.get('type')?.valueChanges.subscribe(() => {
       this.form.get('organismeNom')?.reset(null);
     });
+  }
+
+  private buildFilterForm(): void {
+    this.filterForm = this.fb.group({
+      search:    [''],
+      banqueId:  [null],
+      type:      [null],
+      condition: [null]
+    });
+    this.filterForm.valueChanges.subscribe(() => this.applyFilters());
+  }
+
+  /** Filtre côté client — la table des règles de commission reste de taille modeste. */
+  applyFilters(): void {
+    const { search, banqueId, type, condition } = this.filterForm.value;
+    const term = (search || '').trim().toLowerCase();
+
+    this.filteredConfigs = this.configs.filter(c => {
+      if (banqueId && c.banqueId !== banqueId) return false;
+      if (type && c.type !== type) return false;
+      if (condition && c.condition !== condition) return false;
+      if (term) {
+        const haystack = `${c.banqueNom} ${c.organismeNom ?? ''}`.toLowerCase();
+        if (!haystack.includes(term)) return false;
+      }
+      return true;
+    });
+  }
+
+  clearFilters(): void {
+    this.filterForm.reset({ search: '', banqueId: null, type: null, condition: null });
   }
 
   private buildForm(): void {
@@ -105,6 +140,7 @@ export class CommissionConfigListComponent implements OnInit {
         this.banques    = banques.content;
         this.organismes = organismes.content;
         this.loading    = false;
+        this.applyFilters();
       },
       error: () => { this.loading = false; }
     });
@@ -114,7 +150,7 @@ export class CommissionConfigListComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.svc.findAll().subscribe({
-      next: data => { this.configs = data; this.loading = false; },
+      next: data => { this.configs = data; this.loading = false; this.applyFilters(); },
       error: ()   => { this.loading = false; }
     });
   }

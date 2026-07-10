@@ -13,17 +13,18 @@ import {SensOperation} from "../../../transactions/dtos/SensOperation";
  *   enregistrements en base et n'est pas utilisé pour la validation).
  * - banqueId : obligatoire pour DECOMPTES, DROIT_CONSTATE, FACTORING, PREFINANCEMENT ;
  *   ignoré pour les autres types.
+ * - Volontairement absent : libellé, observation, date d'émission. Propres à chaque opération,
+ *   ils ne sont jamais saisis en lot — chaque opération conserve automatiquement les siens côté
+ *   backend. Seuls TVA, date opération et date valeur (issus du relevé bancaire traité) sont
+ *   communs à tout le lot.
  */
 export interface BatchValidationRequestDto {
   transactionSource: TransactionSource;
   sens?: SensOperation;
   banqueId?: number;
   ids: number[];
-  dateEmission: string;
   dateValeur: string;
   dateOperation: string;
-  observation: string;
-  libelle: string;
   tvaDeductible: number;
   rapprochementId: number;
 }

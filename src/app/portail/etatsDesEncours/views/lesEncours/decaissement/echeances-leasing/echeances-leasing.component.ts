@@ -34,6 +34,9 @@ import {LeasingTransactionRequest} from "../../../../dtos/leasing/LeasingTransac
 import {TransactionSource} from "../../../../../transactions/dtos/TransactionSource";
 import {BankStateService} from "../../../../../comptes-bancaire/services/bank-state.service";
 import { parseLocalDate } from '../../../../../global/types/date.utils';
+import { BatchValidationResponseDto } from "../../../../dtos/lot/BatchValidationResponseDto";
+import { ValidationLotModalComponent } from "../../shared/validation-lot-modal/validation-lot-modal.component";
+import { TableSelectionState } from "../../shared/table-selection.state";
 
 
 @Component({
@@ -60,6 +63,7 @@ import { parseLocalDate } from '../../../../../global/types/date.utils';
     InputTextareaModule,
     InputTextModule,
     TableModule,
+    ValidationLotModalComponent,
   ],
   templateUrl: './echeances-leasing.component.html',
   styleUrl: './echeances-leasing.component.scss',
@@ -96,6 +100,41 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
 
   isSubmitting: boolean = false;
 
+  // Validation en lot
+  selectionState = new TableSelectionState<EcheanceLeasingResponse>(e => e.id);
+  displayLotModal: boolean = false;
+  readonly TransactionSource = TransactionSource;
+
+  get pageSelection(): EcheanceLeasingResponse[] {
+    return this.selectionState.getPageSelection(this.echeances);
+  }
+
+  onSelectionChange(selection: EcheanceLeasingResponse[]): void {
+    this.selectionState.onPageSelectionChange(this.echeances, selection);
+  }
+
+  get selectedCount(): number {
+    return this.selectionState.count;
+  }
+
+  get selectedIds(): number[] {
+    return this.selectionState.selectedIds;
+  }
+
+  get montantTotalSelection(): number {
+    return this.selectionState.sumBy(e => e.montantTTC);
+  }
+
+  clearSelection(): void {
+    this.selectionState.clear();
+  }
+
+  onLotValidated(response: BatchValidationResponseDto): void {
+    this.selectionState.clear();
+    this.onSearch();
+    this.bankStateService.refreshBankInfo(this.banqueIdFromRoute);
+    this.bankStateService.notifyValidation();
+  }
 
   constructor(
     private echeanceLeasingService: EcheanceLeasingService,

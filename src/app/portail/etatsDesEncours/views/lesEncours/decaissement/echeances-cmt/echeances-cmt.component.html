@@ -8,8 +8,6 @@
     <div class="pg-filters">
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
   <form [formGroup]="searchForm" class="flex  flex-row justify-content-between align-items-center gap-3 ">
-      <span class="text-lg font-medium">Total = <span class="text-lg font-bold"> {{ encoursResponse?.totalEncours | number: '1.2-2' }} MAD</span></span>
-
       <input type="text" pInputText formControlName="designation" placeholder="Désignation du crédit" class="p-inputtext-sm" />
 
       <span class="p-float-label">
@@ -22,16 +20,32 @@
 
   </div>
 
+  <!-- Total band -->
+  <div class="total-band total-band--debit">
+    <i class="pi pi-arrow-down-left"></i>
+    <span class="total-band__label">Total décaissements</span>
+    <span class="total-band__amount">{{ encoursResponse?.totalEncours | number:'1.2-2' }} MAD</span>
+  </div>
+
   @if (!encoursResponse && !loading) {
     <div class="p-card shadow-2 px-4 py-1 flex flex-column align-items-center justify-content-center">
       <span class="text-lg font-medium">On n'arrive pas à récupérer les encours, contactez l'équipe support.</span>
     </div>
   }
 
+  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+    <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
+            class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
+    <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
+            class="p-button-success" (click)="displayLotModal = true"></button>
+  </div>
+
   <div class="pb-8">
     <p-table
       #dt
       [value]="echeances"
+      [selection]="pageSelection"
+      (selectionChange)="onSelectionChange($event)"
       [paginator]="true"
       [rows]="5"
       [totalRecords]="totalRecords"
@@ -52,6 +66,9 @@
       [tableStyle]="{'min-width': '60rem'}" >
       <ng-template pTemplate="header">
         <tr>
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
           <th pSortableColumn="credit.designation">Désignation CMT <p-sortIcon field="credit.designation"></p-sortIcon></th>
           <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
           <th pSortableColumn="dateEcheance">Date d'Échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
@@ -61,6 +78,9 @@
       </ng-template>
       <ng-template pTemplate="body" let-echeance>
         <tr>
+          <td>
+            <p-tableCheckbox [value]="echeance"></p-tableCheckbox>
+          </td>
           <td>{{ echeance.credit.designation }}</td>
           <td>{{ echeance.numeroEcheance }}</td>
           <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
@@ -77,12 +97,12 @@
       </ng-template>
       <ng-template pTemplate="emptyMessage">
         <tr>
-          <td colspan="5">Aucun encours trouvé selon les critères de recherche.</td>
+          <td colspan="6">Aucun encours trouvé selon les critères de recherche.</td>
         </tr>
       </ng-template>
       <ng-template pTemplate="loadingbody">
         <tr>
-          <td colspan="5">Chargement des encours. Veuillez patienter...</td>
+          <td colspan="6">Chargement des encours. Veuillez patienter...</td>
         </tr>
       </ng-template>
     </p-table>
@@ -177,3 +197,12 @@
     </form>
   }
 </p-dialog>
+
+<app-validation-lot-modal
+  [(visible)]="displayLotModal"
+  [transactionSource]="TransactionSource.CMT"
+  [selectedIds]="selectedIds"
+  [montantTotal]="montantTotalSelection"
+  libelleType="échéances CMT"
+  (validated)="onLotValidated($event)"
+></app-validation-lot-modal>

@@ -10,7 +10,6 @@ import {ToastModule} from 'primeng/toast';
 import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {ToolbarModule} from 'primeng/toolbar';
-import {TagModule} from 'primeng/tag';
 import {TooltipModule} from 'primeng/tooltip';
 import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
 import {Router, RouterLink, RouterLinkActive} from '@angular/router';
@@ -22,6 +21,7 @@ import {MarcheSearchDTO} from '../../dtos/marche-search.dto';
 import {MarcheService} from "../../service/marche-service.service";
 import {PageResponse} from "../../../global/types/PageResponse";
 import {DropdownModule} from "primeng/dropdown";
+import {TagModule} from "primeng/tag";
 import {BanqueService} from "../../../comptes-bancaire/services/BanqueService";
 import {AuthService} from "../../../../auth/services/auth.service";
 
@@ -40,12 +40,12 @@ import {AuthService} from "../../../../auth/services/auth.service";
     ToastModule,
     ConfirmDialogModule,
     ToolbarModule,
-    TagModule,
     TooltipModule,
     RouterLink,
     BreadcrumbModule,
     RouterLinkActive,
-    DropdownModule
+    DropdownModule,
+    TagModule
   ],
   templateUrl: './marches-list.component.html',
   styleUrls: ['./marches-list.component.scss'],
@@ -67,12 +67,12 @@ export class MarchesListComponent implements OnInit {
 
   banques: { id: number; nom: string }[] = [];
   loadingBanques: boolean = false;
-  nantiOptions = [
-    { label: 'Tous', value: null },
-    { label: 'Nanti', value: true },
-    { label: 'Non Nanti', value: false }
-  ];
 
+  statutOptions: { label: string; value: boolean | null }[] = [
+    { label: 'Actifs', value: true },
+    { label: 'Archivés', value: false },
+    { label: 'Tous', value: null }
+  ];
 
   constructor(
     private marcheService: MarcheService,
@@ -103,7 +103,7 @@ export class MarchesListComponent implements OnInit {
       numero: [''],
       maitreDouvrage: [''],
       banqueId: [null],
-      isNanti: [null]
+      actif: [true]
     });
   }
 
@@ -220,6 +220,54 @@ export class MarchesListComponent implements OnInit {
               this.loading = false;
             }
           });
+      }
+    });
+  }
+
+  archiverMarche(marche: MarcheResponseDTO): void {
+    this.confirmationService.confirm({
+      message: `Êtes-vous sûr de vouloir archiver le marché "<strong>${marche.nom}</strong>" ? Il ne sera plus pris en compte dans les calculs d'agios et d'encours.`,
+      header: 'Confirmation d\'archivage',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Archiver',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.marcheService.archiverMarche(marche.id!).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le marché a été archivé.', life: 3000 });
+            this.dt ? this.loadMarches(this.dt.createLazyLoadMetadata()) : this.loadMarches();
+            this.loading = false;
+          },
+          error: (error) => {
+            console.error('Erreur lors de l\'archivage du marché:', error);
+            this.loading = false;
+          }
+        });
+      }
+    });
+  }
+
+  desarchiverMarche(marche: MarcheResponseDTO): void {
+    this.confirmationService.confirm({
+      message: `Êtes-vous sûr de vouloir désarchiver le marché "<strong>${marche.nom}</strong>" ? Il sera de nouveau pris en compte dans les calculs d'agios et d'encours.`,
+      header: 'Confirmation de désarchivage',
+      icon: 'pi pi-info-circle',
+      acceptLabel: 'Désarchiver',
+      rejectLabel: 'Annuler',
+      accept: () => {
+        this.loading = true;
+        this.marcheService.desarchiverMarche(marche.id!).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Le marché a été désarchivé.', life: 3000 });
+            this.dt ? this.loadMarches(this.dt.createLazyLoadMetadata()) : this.loadMarches();
+            this.loading = false;
+          },
+          error: (error) => {
+            console.error('Erreur lors du désarchivage du marché:', error);
+            this.loading = false;
+          }
+        });
       }
     });
   }

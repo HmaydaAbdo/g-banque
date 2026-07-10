@@ -1,10 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { TagModule } from 'primeng/tag';
 import { MessageService, MenuItem } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { finalize } from 'rxjs/operators';
@@ -23,10 +23,10 @@ import { LigneFonctionnelleConfigResponse } from '../../dtos/LigneFonctionnelleC
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    CardModule,
     ButtonModule,
     InputNumberModule,
     BreadcrumbModule,
+    TagModule,
     ToastModule
   ],
   providers: [MessageService],
@@ -43,7 +43,6 @@ export class LigneFonctionnelleConfigComponent implements OnInit {
     { label: 'Administration' },
     { label: 'Configuration Lignes Fonctionnelles' }
   ];
-  home: MenuItem = { icon: 'pi pi-home', route: '/portail/accueil' };
 
   form!: FormGroup;
   loading = false;

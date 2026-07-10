@@ -113,6 +113,7 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'marches',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../Marches/marches.routes').then(m => m.MARCHES_ROUTES)
   },
 
