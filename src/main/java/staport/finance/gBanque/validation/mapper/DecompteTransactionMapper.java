@@ -54,10 +54,11 @@ public class DecompteTransactionMapper {
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
+        // libelle/observation/dateEmission : fallback sur le décompte d'origine si non fournis (lot).
         transaction.setReferent(decompte.getId());
-        transaction.setLibelle(requestDto.getLibelle());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : decompte.getLibelle());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : decompte.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : decompte.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setTransactionSource(TransactionSource.DECOMPTES);

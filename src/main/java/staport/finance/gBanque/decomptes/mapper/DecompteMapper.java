@@ -85,7 +85,6 @@ public class DecompteMapper {
             dto.setMarcheId(marche.getId());
             dto.setMarcheName(marche.getNom());
             dto.setMarcheNumero(marche.getNumero());
-            dto.setMarcheNanti(marche.isNanti());
 
             // Mapper la banque du marché
             Banque marcheBanque = marche.getBanque();
@@ -110,9 +109,8 @@ public class DecompteMapper {
             dto.setBanqueEncaissementName(banqueEncaissement.getNom());
         }
 
-        log.info("Conversion vers DecompteResponseDto terminée avec succès pour l'ID: {} - Marché nanti: {}, Banque marché: {}, Banque encaissement: {}",
+        log.info("Conversion vers DecompteResponseDto terminée avec succès pour l'ID: {} - Banque marché: {}, Banque encaissement: {}",
                 decompte.getId(),
-                marche != null ? marche.isNanti() : "N/A",
                 marche != null && marche.getBanque() != null ? marche.getBanque().getNom() : "null",
                 banqueEncaissement != null ? banqueEncaissement.getNom() : "null");
 

@@ -97,7 +97,8 @@ public abstract class LigneFonctionnelleSpecifiqueMapper {
         }
 
         String natureCode = entity.getNatureLigneFonctionnelle().getCode();
-        List<Marche> marcheList = entity.getMarche() != null
+        // Un marché archivé est exclu définitivement du calcul d'encours (cf. Marche.actif).
+        List<Marche> marcheList = (entity.getMarche() != null && entity.getMarche().isActif())
                 ? List.of(entity.getMarche())
                 : Collections.emptyList();
 

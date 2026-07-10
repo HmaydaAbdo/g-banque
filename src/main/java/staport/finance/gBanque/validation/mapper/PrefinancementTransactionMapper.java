@@ -59,13 +59,14 @@ public class PrefinancementTransactionMapper {
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
 
+        // libelle/observation/dateEmission : fallback sur le préfinancement d'origine si non fournis (lot).
         transaction.setReferent(prefinancement.getId());
-        transaction.setLibelle(requestDto.getLibelle());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : prefinancement.getLibelle());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : prefinancement.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setBanqueDePrelevement(banque);
-        transaction.setObservation(requestDto.getObservation());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : prefinancement.getObservation());
         transaction.setTransactionSource(TransactionSource.PREFINANCEMENT);
 
         if(prefinancement.getType()== Type.REMBOURSEMENT){

@@ -43,7 +43,6 @@ import java.util.Optional;
 public class ChargesFixesScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(ChargesFixesScheduler.class);
-    private static final String OBS = "Charge fixe générée automatiquement";
 
     private final ChargesFixesRegistry registry;
     private final BanqueRepository banqueRepository;
@@ -135,7 +134,7 @@ public class ChargesFixesScheduler {
 
         FraisBancaireRequestDto dto = new FraisBancaireRequestDto();
         dto.setLibelle(libelle);
-        dto.setObservation(OBS);
+        dto.setObservation(libelle);
         dto.setMontant(charge.montant());
         dto.setBanqueId(banque.getId());
         dto.setDateEmission(dateEmission);
@@ -155,7 +154,7 @@ public class ChargesFixesScheduler {
 
         ImpotEtTaxeRequestDto dto = new ImpotEtTaxeRequestDto();
         dto.setLibelle(libelle);
-        dto.setObservation(OBS);
+        dto.setObservation(libelle);
         dto.setMontant(charge.montant());
         dto.setBanqueId(banque.getId());
         dto.setMotif(charge.motif());
@@ -174,7 +173,7 @@ public class ChargesFixesScheduler {
         if (dejaPresent(agiosRepository::existsByBanqueIdAndLibelleAndDateEmissionBetween,
                         banque.getId(), libelle, charge.jourEmission())) return;
 
-        AgiosRequestDto dto = new AgiosRequestDto(libelle, OBS, charge.montant(), banque.getId(), dateEmission);
+        AgiosRequestDto dto = new AgiosRequestDto(libelle, libelle, charge.montant(), banque.getId(), dateEmission);
 
         agiosService.createAgios(dto);
         log.info("[ChargesFixes] Agios '{}' créé (PREVU) pour {}.", libelle, banque.getNom());
@@ -191,7 +190,7 @@ public class ChargesFixesScheduler {
 
         PrelevementRequestDto dto = new PrelevementRequestDto();
         dto.setLibelle(libelle);
-        dto.setObservation(OBS);
+        dto.setObservation(libelle);
         dto.setMontant(charge.montant());
         dto.setBanqueId(banque.getId());
         dto.setDateEmission(dateEmission);

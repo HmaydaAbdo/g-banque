@@ -60,11 +60,12 @@ public class DroitConstateTransactionMapper {
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+        // libelle/observation/dateEmission : fallback sur le droit constaté d'origine si non fournis (lot).
         transaction.setReferent(droitConstate.getId());
-        transaction.setLibelle(requestDto.getLibelle());
-        transaction.setObservation(requestDto.getObservation());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : droitConstate.getLibelle());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : droitConstate.getObservation());
         transaction.setTransactionSource(TransactionSource.DROIT_CONSTATE);
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : droitConstate.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setBanqueDePrelevement(banque);

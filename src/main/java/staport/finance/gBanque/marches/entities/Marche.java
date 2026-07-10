@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Table(name = "marches")
+@Table(name = "marches", indexes = {
+        @Index(name = "idx_marche_actif", columnList = "actif")
+})
 public class Marche  {
 
     @Id
@@ -49,8 +51,15 @@ public class Marche  {
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 
-    @Column(name = "is_nanti", nullable = false)
-    private boolean isNanti = true;
+    /**
+     * Archivage du marché — n'a aucun effet rétroactif sur l'historique déjà généré, mais
+     * exclut définitivement le marché de tout calcul futur (agios, encours des lignes
+     * fonctionnelles) dès qu'il est mis à {@code false}. Cf. {@code MarcheService},
+     * {@code PrefinancementAgiosCalculateur}/{@code DroitConstateAgiosCalculateur}/
+     * {@code FactoringAgiosCalculateur}, {@code EncoursCalculatorService}.
+     */
+    @Column(name = "actif", nullable = false)
+    private boolean actif = true;
 
     @ManyToMany(mappedBy = "marches", fetch = FetchType.LAZY)
     private List<LigneFonctionnelle> lignesFonctionnelles = new ArrayList<>();
@@ -143,6 +152,14 @@ public class Marche  {
 
     public void setBanque(Banque banque) {
         this.banque = banque;
+    }
+
+    public boolean isActif() {
+        return actif;
+    }
+
+    public void setActif(boolean actif) {
+        this.actif = actif;
     }
 
     public List<LigneFonctionnelle> getLignesFonctionnelles() {
@@ -247,14 +264,6 @@ public class Marche  {
         return modifiedAt;
     }
 
-    public boolean isNanti() {
-        return isNanti;
-    }
-
-    public void setNanti(boolean nanti) {
-        isNanti = nanti;
-    }
-
     // --- Object Methods ---
 
     @Override
@@ -281,7 +290,7 @@ public class Marche  {
                 ", dateDebutDesTravaux=" + dateDebutDesTravaux +
                 ", dateDAchievementDesTravaux=" + dateDAchievementDesTravaux +
                 ", banque=" + banque +
-                ", isNanti=" + isNanti +
+                ", actif=" + actif +
                 ", lignesFonctionnelles=" + lignesFonctionnelles +
                 ", lignesFonctionnellesSpecifiques=" + lignesFonctionnellesSpecifiques +
                 ", prefinancements=" + prefinancements +

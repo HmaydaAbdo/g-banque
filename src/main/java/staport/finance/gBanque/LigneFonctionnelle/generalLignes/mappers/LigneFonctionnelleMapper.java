@@ -222,7 +222,10 @@ public abstract class LigneFonctionnelleMapper {
 
         String natureCode = ligneFonctionnelle.getNatureLigneFonctionnelle().getCode();
         Long ligneId = ligneFonctionnelle.getId();
-        List<Marche> marches = ligneFonctionnelle.getMarches();
+        // Un marché archivé est exclu définitivement du calcul d'encours (cf. Marche.actif).
+        List<Marche> marches = ligneFonctionnelle.getMarches().stream()
+                .filter(Marche::isActif)
+                .collect(Collectors.toList());
         BigDecimal plafond = ligneFonctionnelle.getPlafond();
 
         BigDecimal encours = encoursCalculatorService.calculateEncours(

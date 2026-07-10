@@ -60,13 +60,16 @@ public class MarcheService {
     }
 
     /**
-     * Retourne tous les marchés rattachés à une banque, pour les domaines qui ont besoin de
-     * parcourir les marchés de la banque (ex. calculateurs d'agios) — jamais via
+     * Retourne les marchés <b>actifs</b> rattachés à une banque, pour les domaines qui ont
+     * besoin de parcourir les marchés de la banque (ex. calculateurs d'agios) — jamais via
      * {@code MarcheRepository} directement (encapsulation des domaines, architecture.md).
+     *
+     * <p>Un marché archivé est exclu définitivement de ce résultat : il ne pèse plus dans le
+     * calcul des agios ni dans l'encours des lignes fonctionnelles.</p>
      */
     @Transactional(readOnly = true)
     public List<Marche> findByBanqueId(Long banqueId) {
-        return marcheRepository.findByBanqueId(banqueId);
+        return marcheRepository.findByBanqueIdAndActifTrue(banqueId);
     }
 
     /**
@@ -148,7 +151,6 @@ public class MarcheService {
         existingMarche.setMaitreDouvrage(requestDTO.getMaitreDouvrage());
         existingMarche.setDateDebutDesTravaux(requestDTO.getDateDebutDesTravaux());
         existingMarche.setDateDAchievementDesTravaux(requestDTO.getDateDAchievementDesTravaux());
-        existingMarche.setNanti(requestDTO.getIsNanti() != null ? requestDTO.getIsNanti() : false);
 
         if (requestDTO.getBanqueId() != null) {
             Banque banque = banqueRepository.findById(requestDTO.getBanqueId())
@@ -166,18 +168,80 @@ public class MarcheService {
 
     /**
      * Deletes a Marche contract by its ID.
+     * Suppression définitive interdite si le marché a des données liées (décomptes,
+     * préfinancements, droits constatés, factorings, lignes fonctionnelles spécifiques) — ces
+     * enfants seraient sinon supprimés en cascade ({@code cascade = ALL, orphanRemoval = true}
+     * sur {@code Marche}), détruisant un historique financier réel. Dans ce cas, utiliser
+     * {@link #archiverMarche(Long)} à la place.
      * @param id The ID of the contract to delete.
      */
     public void deleteMarche(Long id) {
         logger.info("Suppression du marché avec l'id: {}", id);
 
-        if (!marcheRepository.existsById(id)) {
-            logger.error("Tentative de suppression d'un marché inexistant avec l'id {}", id);
-            throw new EntityNotFoundException("Marche not found with id " + id);
+        Marche marche = marcheRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Tentative de suppression d'un marché inexistant avec l'id {}", id);
+                    return new EntityNotFoundException("Marche not found with id " + id);
+                });
+
+        boolean aDesDonneesLiees =
+                !marche.getDecomptes().isEmpty()
+                        || !marche.getPrefinancements().isEmpty()
+                        || !marche.getDroitConstates().isEmpty()
+                        || !marche.getFactorings().isEmpty()
+                        || !marche.getLignesFonctionnellesSpecifiques().isEmpty();
+
+        if (aDesDonneesLiees) {
+            logger.warn("Tentative de suppression du marché {} refusée: des données financières y sont rattachées", id);
+            throw new IllegalArgumentException(
+                    "Suppression interdite: ce marché a des décomptes, préfinancements, droits constatés, "
+                            + "factorings ou lignes spécifiques rattachés. Utilisez l'archivage à la place.");
         }
 
         marcheRepository.deleteById(id);
         logger.info("Marché supprimé avec succès avec l'id: {}", id);
+    }
+
+    /**
+     * Archive un marché : il devient invisible pour les calculs futurs (agios, encours des
+     * lignes fonctionnelles) mais reste consultable et son historique n'est pas modifié.
+     * @param id The ID of the Marche to archive.
+     * @return The response DTO of the archived Marche.
+     */
+    public MarcheResponseDTO archiverMarche(Long id) {
+        logger.info("Archivage du marché avec l'id: {}", id);
+
+        Marche marche = marcheRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Marché non trouvé avec l'id {}", id);
+                    return new EntityNotFoundException("Marche not found with id " + id);
+                });
+
+        marche.setActif(false);
+        Marche saved = marcheRepository.save(marche);
+        logger.info("Marché archivé avec succès avec l'id: {}", id);
+        return marcheMapper.toResponseDTO(saved);
+    }
+
+    /**
+     * Désarchive un marché : il redevient pris en compte dans les calculs futurs (agios,
+     * encours des lignes fonctionnelles).
+     * @param id The ID of the Marche to reactivate.
+     * @return The response DTO of the reactivated Marche.
+     */
+    public MarcheResponseDTO desarchiverMarche(Long id) {
+        logger.info("Désarchivage du marché avec l'id: {}", id);
+
+        Marche marche = marcheRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Marché non trouvé avec l'id {}", id);
+                    return new EntityNotFoundException("Marche not found with id " + id);
+                });
+
+        marche.setActif(true);
+        Marche saved = marcheRepository.save(marche);
+        logger.info("Marché désarchivé avec succès avec l'id: {}", id);
+        return marcheMapper.toResponseDTO(saved);
     }
 
     /**
@@ -194,7 +258,7 @@ public class MarcheService {
                 .and(MarcheSpecification.hasNumero(searchDTO.getNumero()))
                 .and(MarcheSpecification.hasMaitreDouvrage(searchDTO.getMaitreDouvrage()))
                 .and(MarcheSpecification.hasBanqueId(searchDTO.getBanqueId()))
-                .and(MarcheSpecification.isNanti(searchDTO.getIsNanti()));
+                .and(MarcheSpecification.actif(searchDTO.getActif()));
 
 
         Page<Marche> marchePage = marcheRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));

@@ -38,12 +38,13 @@ public class ImpayeeTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        // observation/dateEmission/libelle : fallback sur l'impayé d'origine si non fournis (lot).
         transaction.setReferent(impayee.getId());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : impayee.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : impayee.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setLibelle(requestDto.getLibelle());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : impayee.getLibelle());
         transaction.setTransactionSource(TransactionSource.IMPAYEE);
         transaction.setBanqueDePrelevement(impayee.getBanque());
         BigDecimal ttc = impayee.getMontant();

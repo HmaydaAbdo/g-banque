@@ -37,12 +37,13 @@ public class VirementInternationalTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        // observation/dateEmission/libelle : fallback sur le virement international d'origine si non fournis (lot).
         transaction.setReferent(virementInternational.getId());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : virementInternational.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : virementInternational.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setLibelle(requestDto.getLibelle());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : virementInternational.getLibelle());
         transaction.setTransactionSource(TransactionSource.VIREMENT_INTERNATIONAL);
         BigDecimal ttc = virementInternational.getMontant();
         BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());

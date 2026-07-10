@@ -53,11 +53,12 @@ public class FactoringTransactionMapper {
         }
 
         Banque banque=this.banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
+        // libelle/observation/dateEmission : fallback sur le factoring d'origine si non fournis (lot).
         transaction.setReferent(factoring.getId());
-        transaction.setLibelle(requestDto.getLibelle());
-        transaction.setObservation(requestDto.getObservation());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : factoring.getLibelle());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : factoring.getObservation());
         transaction.setTransactionSource(TransactionSource.FACTORING);
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : factoring.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setBanqueDePrelevement(banque);

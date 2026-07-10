@@ -34,12 +34,13 @@ public class ImpotEtTaxeTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        // observation/dateEmission/libelle : fallback sur l'impôt/taxe d'origine si non fournis (lot).
         transaction.setReferent(impotEtTaxe.getId());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : impotEtTaxe.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : impotEtTaxe.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setLibelle(requestDto.getLibelle());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : impotEtTaxe.getLibelle());
         transaction.setTransactionSource(TransactionSource.IMPOT_TAXE);
         transaction.setDebit(impotEtTaxe.getMontant());
         transaction.setCredit(BigDecimal.ZERO);

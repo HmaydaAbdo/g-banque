@@ -30,7 +30,8 @@ public class ChargesFixesRegistry {
                 "BMCI", chargesBmci(),
                 "CDM",  chargesCdm(),
                 "BP",   chargesBp(),
-                "SGMB", chargesSgmb()
+                "SGMB", chargesSgmb(),
+                "SAHAM BANK", chargesSahamBank()
         );
     }
 
@@ -101,7 +102,7 @@ public class ChargesFixesRegistry {
     private List<ChargeFixeDefinition> chargesCdm() {
         return List.of(
                 new ChargeFixeDefinition("FRAIS PACK CDM ENTREPRISE",
-                        new BigDecimal("440.00"), 1)
+                        new BigDecimal("440.00"), -1)
         );
     }
 
@@ -160,6 +161,17 @@ public class ChargesFixesRegistry {
 
                 new ChargeFixeDefinition("RETENUE A LA SOURCE SUR LES LOYERS",
                         new BigDecimal("1100.00"), Motif.RETENUE_A_LA_SOURCE, -1)
+        );
+    }
+
+    // ------------------------------------------------------------ SAHAM BANK
+    private List<ChargeFixeDefinition> chargesSahamBank() {
+        return List.of(
+                new ChargeFixeDefinition("ABONNEMENT MY BUSINESS",
+                        new BigDecimal("330.00"), -1),
+
+                new ChargeFixeDefinition("FRAIS DE TENUE DE COMPTE",
+                        new BigDecimal("82.50"), 1)
         );
     }
 }

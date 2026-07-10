@@ -13,9 +13,8 @@ public class DecompteResponseDto {
     private Long marcheId;
     private String marcheName;
     private String marcheNumero;
-    private boolean marcheNanti;  // ← AJOUTER pour savoir si le marché est nanti
 
-    // Banque du marché (celle associée au nantissement)
+    // Banque du marché
     private Long marcheBanqueId;
     private String marcheBanqueName;
 
@@ -66,14 +65,6 @@ public class DecompteResponseDto {
 
     public void setMarcheNumero(String marcheNumero) {
         this.marcheNumero = marcheNumero;
-    }
-
-    public boolean isMarcheNanti() {
-        return marcheNanti;
-    }
-
-    public void setMarcheNanti(boolean marcheNanti) {
-        this.marcheNanti = marcheNanti;
     }
 
     public Long getMarcheBanqueId() {

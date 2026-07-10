@@ -29,12 +29,13 @@ public class RestitutionTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping des champs simples
+        // observation/dateEmission/libelle : fallback sur la restitution d'origine si non fournis (lot).
         transaction.setReferent(restitution.getId());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : restitution.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : restitution.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setLibelle(requestDto.getLibelle());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : restitution.getLibelle());
         transaction.setTransactionSource(TransactionSource.RESTITUTION);
 
         // Les restitutions sont des ENCAISSEMENTS (crédit)

@@ -36,12 +36,14 @@ public class VirementTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        // observation/dateEmission/libelle : si non fournis (validation en lot), on conserve
+        // ceux du virement d'origine plutôt que de les écraser (voir BatchValidationRequestDto).
         transaction.setReferent(virement.getId());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : virement.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : virement.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setLibelle(requestDto.getLibelle());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : virement.getLibelle());
         transaction.setTransactionSource(TransactionSource.Virement);
 
         BigDecimal ttc = virement.getMontant();

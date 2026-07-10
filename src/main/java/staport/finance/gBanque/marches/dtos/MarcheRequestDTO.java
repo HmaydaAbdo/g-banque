@@ -30,9 +30,6 @@ public class MarcheRequestDTO {
     @Size(max = 255, message = "Le maitre d'ouvrage doit avoir au maximum 255 caracteres")
     private String maitreDouvrage;
 
-    @NotNull(message = "Le statut nanti doit etre specifie")
-    private Boolean isNanti = false;
-
     private LocalDate dateDebutDesTravaux ;
 
 
@@ -98,14 +95,6 @@ public class MarcheRequestDTO {
         this.dateDAchievementDesTravaux = dateDAchievementDesTravaux;
     }
 
-    public Boolean getIsNanti() {
-        return isNanti;
-    }
-
-    public void setIsNanti(Boolean isNanti) {
-        this.isNanti = isNanti;
-    }
-
     @Override
     public String toString() {
         return "MarcheRequestDTO{" +
@@ -116,7 +105,6 @@ public class MarcheRequestDTO {
                 ", maitreDouvrage='" + maitreDouvrage + '\'' +
                 ", dateDebutDesTravaux=" + dateDebutDesTravaux +
                 ", dateDAchievementDesTravaux=" + dateDAchievementDesTravaux +
-                ", isNanti=" + isNanti +
                 '}';
     }
 }

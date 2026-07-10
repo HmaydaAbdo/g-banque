@@ -82,18 +82,17 @@ public final class MarcheSpecification {
     }
 
     /**
-     * Creates a Specification to filter by 'isNanti' status.
-     * This allows filtering markets that are nanti (true) or non-nanti (false).
+     * Filtre par statut d'archivage. {@code null} = pas de filtre (tous statuts confondus).
      *
-     * @param isNanti The nanti status to filter by (true for nanti, false for non-nanti).
-     * @return A Specification for isNanti.
+     * @param actif true = marchés actifs uniquement, false = marchés archivés uniquement.
+     * @return A Specification for actif.
      */
-    public static Specification<Marche> isNanti(Boolean isNanti) {
+    public static Specification<Marche> actif(Boolean actif) {
         return (root, query, cb) -> {
-            if (isNanti == null) {
-                return cb.conjunction(); // Return an "always true" predicate if null
+            if (actif == null) {
+                return cb.conjunction();
             }
-            return cb.equal(root.get("isNanti"), isNanti);
+            return cb.equal(root.get("actif"), actif);
         };
     }
 }

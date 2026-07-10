@@ -13,6 +13,10 @@ public interface MarcheRepository  extends JpaRepository <Marche, Long>, JpaSpec
 
     boolean existsByNumero(String numero);
 
-    /** Tous les marchés d'une banque — utilisé par les calculateurs d'agios multi-marché. */
-    List<Marche> findByBanqueId(Long banqueId);
+    /**
+     * Marchés actifs d'une banque — utilisé par les calculateurs d'agios multi-marché et le
+     * calcul d'encours des lignes fonctionnelles. Un marché archivé ({@code actif = false})
+     * est exclu définitivement de ces calculs (cf. {@code MarcheService.findByBanqueId}).
+     */
+    List<Marche> findByBanqueIdAndActifTrue(Long banqueId);
 }

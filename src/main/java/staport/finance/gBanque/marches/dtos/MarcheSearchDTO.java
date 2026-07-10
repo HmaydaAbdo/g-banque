@@ -18,7 +18,9 @@ public class MarcheSearchDTO {
     private String maitreDouvrage;
 
     private Long banqueId;
-    private Boolean isNanti;
+
+    /** null = tous statuts, true = actifs uniquement, false = archivés uniquement. */
+    private Boolean actif;
 
 
 
@@ -58,12 +60,12 @@ public class MarcheSearchDTO {
         this.banqueId = banqueId;
     }
 
-    public Boolean getIsNanti() {
-        return isNanti;
+    public Boolean getActif() {
+        return actif;
     }
 
-    public void setIsNanti(Boolean isNanti) {
-        this.isNanti = isNanti;
+    public void setActif(Boolean actif) {
+        this.actif = actif;
     }
 
     @Override
@@ -73,7 +75,7 @@ public class MarcheSearchDTO {
                 ", numero='" + numero + '\'' +
                 ", maitreDouvrage='" + maitreDouvrage + '\'' +
                 ", banqueId=" + banqueId +
-                ", isNanti=" + isNanti +
+                ", actif=" + actif +
                 '}';
     }
 }

@@ -33,7 +33,6 @@ public class MarcheMapper {
         marche.setMontant(dto.getMontant());
         marche.setMaitreDouvrage(dto.getMaitreDouvrage());
         marche.setBanque(banque);
-        marche.setNanti(dto.getIsNanti() != null ? dto.getIsNanti() : false);
 
         // Null-safety for optional dates
         if (dto.getDateDebutDesTravaux() != null) {
@@ -71,7 +70,6 @@ public class MarcheMapper {
         dto.setMaitreDouvrage(entity.getMaitreDouvrage());
         dto.setDateDebutDesTravaux(entity.getDateDebutDesTravaux() != null ? entity.getDateDebutDesTravaux() : null);
         dto.setDateDAchievementDesTravaux(entity.getDateDAchievementDesTravaux() != null ? entity.getDateDAchievementDesTravaux() : null);
-        dto.setNanti(entity.isNanti());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setModifiedAt(entity.getModifiedAt());
 
@@ -79,6 +77,8 @@ public class MarcheMapper {
             dto.setBanqueNom(entity.getBanque().getNom());
             dto.setBanqueId(entity.getBanque().getId());
         }
+
+        dto.setActif(entity.isActif());
 
         log.debug("Conversion Marche entity vers MarcheResponseDTO réussie - ID: {}, Numéro: {}",
                 dto.getId(), dto.getNumero());

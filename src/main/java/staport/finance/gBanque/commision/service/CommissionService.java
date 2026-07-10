@@ -28,8 +28,11 @@ import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
+import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -674,6 +677,126 @@ public class CommissionService implements ICommissionService {
 
     private String buildLibelle(Virement virement) {
         return "Commission virement N° " + virement.getNumero();
+    }
+
+    /**
+     * Génère une commission pour un LCN de décaissement, si une règle est configurée
+     * pour sa banque. Les LCN d'encaissement (ESCOMPTE, créés manuellement) ne génèrent
+     * jamais de commission via ce mécanisme.
+     */
+    @Transactional
+    public void generateCommissionIfNeeded(Lcn lcn) {
+
+        // Guard 1 : banque obligatoire
+        if (lcn.getBanque() == null || lcn.getBanque().getNom() == null) {
+            return;
+        }
+
+        // Guard 2 : uniquement les LCN de décaissement
+        if (lcn.getType() != Type.DECAISSEMENT) {
+            log.debug("Lcn {} de type {} — commission réservée aux décaissements, ignoré", lcn.getNumero(), lcn.getType());
+            return;
+        }
+
+        // Guard 3 : uniquement les LCN ENCOURS
+        if (lcn.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            return;
+        }
+
+        String nomBanque = lcn.getBanque().getNom().trim();
+
+        // Guard 4 : au moins une règle configurée pour cette banque + LCN_DECAISSEMENT
+        if (!commissionConfigService.hasCommission(nomBanque, TransactionSource.LCN_DECAISSEMENT)) {
+            log.debug("Aucune règle commission pour banque='{}' type=LCN_DECAISSEMENT — ignoré", nomBanque);
+            return;
+        }
+
+        BigDecimal montant = commissionConfigService
+                .resolveCommission(nomBanque, null, TransactionSource.LCN_DECAISSEMENT)
+                .orElse(null);
+
+        if (montant == null) {
+            log.warn("Aucun montant résolu pour banque='{}', type=LCN_DECAISSEMENT — commission non générée", nomBanque);
+            return;
+        }
+
+        // Idempotence : une seule commission par numéro de LCN
+        String libelle = "Commission LCN N° " + lcn.getNumero();
+        if (commissionRepository.existsByOperationAndLibelle(TransactionSource.LCN_DECAISSEMENT, libelle)) {
+            log.debug("Commission déjà existante pour LCN {} — ignoré", lcn.getNumero());
+            return;
+        }
+
+        Commission commission = new Commission();
+        commission.setMontant(montant);
+        commission.setBanque(lcn.getBanque());
+        commission.setOperation(TransactionSource.LCN_DECAISSEMENT);
+        commission.setDateEmission(lcn.getDateEmission());
+        commission.setLibelle(libelle);
+        commission.setStatus(Status.PREVU);
+
+        commissionRepository.save(commission);
+        log.info("Commission créée — LCN N°{}, banque='{}', montant={}", lcn.getNumero(), nomBanque, montant);
+    }
+
+    /**
+     * Génère une commission pour une mise à disposition de décaissement, si une règle
+     * est configurée pour sa banque. Les mises à disposition d'encaissement (créées
+     * manuellement) ne génèrent jamais de commission via ce mécanisme.
+     */
+    @Transactional
+    public void generateCommissionIfNeeded(MiseADisposition mad) {
+
+        // Guard 1 : banque obligatoire
+        if (mad.getBanque() == null || mad.getBanque().getNom() == null) {
+            return;
+        }
+
+        // Guard 2 : uniquement les mises à disposition de décaissement
+        if (mad.getType() != Type.DECAISSEMENT) {
+            log.debug("MiseADisposition {} de type {} — commission réservée aux décaissements, ignoré", mad.getNumero(), mad.getType());
+            return;
+        }
+
+        // Guard 3 : uniquement les mises à disposition ENCOURS
+        if (mad.getStatut() != StatutMoyenPaiement.ENCOURS) {
+            return;
+        }
+
+        String nomBanque = mad.getBanque().getNom().trim();
+
+        // Guard 4 : au moins une règle configurée pour cette banque + MiseADisposition
+        if (!commissionConfigService.hasCommission(nomBanque, TransactionSource.MiseADisposition)) {
+            log.debug("Aucune règle commission pour banque='{}' type=MiseADisposition — ignoré", nomBanque);
+            return;
+        }
+
+        BigDecimal montant = commissionConfigService
+                .resolveCommission(nomBanque, null, TransactionSource.MiseADisposition)
+                .orElse(null);
+
+        if (montant == null) {
+            log.warn("Aucun montant résolu pour banque='{}', type=MiseADisposition — commission non générée", nomBanque);
+            return;
+        }
+
+        // Idempotence : une seule commission par numéro de mise à disposition
+        String libelle = "Commission Mise à disposition N° " + mad.getNumero();
+        if (commissionRepository.existsByOperationAndLibelle(TransactionSource.MiseADisposition, libelle)) {
+            log.debug("Commission déjà existante pour MiseADisposition {} — ignoré", mad.getNumero());
+            return;
+        }
+
+        Commission commission = new Commission();
+        commission.setMontant(montant);
+        commission.setBanque(mad.getBanque());
+        commission.setOperation(TransactionSource.MiseADisposition);
+        commission.setDateEmission(mad.getDateEmission());
+        commission.setLibelle(libelle);
+        commission.setStatus(Status.PREVU);
+
+        commissionRepository.save(commission);
+        log.info("Commission créée — MiseADisposition N°{}, banque='{}', montant={}", mad.getNumero(), nomBanque, montant);
     }
 
 }

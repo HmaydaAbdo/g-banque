@@ -1,6 +1,5 @@
 package staport.finance.gBanque.validation.dtos.lot;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import staport.finance.gBanque.transactions.enums.SensOperation;
@@ -11,8 +10,17 @@ import java.util.List;
 
 /**
  * Requête de validation (rapprochement) en lot : applique les mêmes champs communs
- * (dates, TVA, libellé, observation, rapprochement cible) à un ensemble d'opérations
+ * (TVA, date opération, date valeur, rapprochement cible) à un ensemble d'opérations
  * de même type et même sens, en une seule opération atomique.
+ * <p>
+ * Volontairement absent de ce DTO : libellé, observation et date d'émission. Ces champs sont
+ * propres à chaque opération (saisis à sa création) et ne doivent jamais être écrasés par une
+ * valeur unique appliquée à tout le lot — contrairement à la TVA et aux dates d'opération/valeur,
+ * qui proviennent du relevé bancaire traité et sont légitimement communes aux opérations d'un même
+ * lot. Chaque opération du lot conserve donc automatiquement son propre libellé/observation/date
+ * d'émission d'origine (voir les mappers de {@code validation.mapper}, {@code ICmtValidationService}
+ * et {@code ILeasingValidationService} : fallback sur l'entité source si le DTO unitaire ne porte
+ * pas ces champs).
  * <p>
  * {@code sens} n'est obligatoire que pour les types qui distinguent décaissement et encaissement
  * (Virement, Cheque, Lcn, MiseADisposition, VirementInternational) ; ignoré pour les autres types.
@@ -32,20 +40,11 @@ public class BatchValidationRequestDto {
     @NotEmpty(message = "La liste des identifiants à valider est obligatoire et ne peut être vide")
     private List<Long> ids;
 
-    @NotNull(message = "La date d'émission est obligatoire")
-    private LocalDate dateEmission;
-
     @NotNull(message = "La date de valeur est obligatoire")
     private LocalDate dateValeur;
 
     @NotNull(message = "La date d'opération est obligatoire")
     private LocalDate dateOperation;
-
-    @NotBlank(message = "L'observation est obligatoire")
-    private String observation;
-
-    @NotBlank(message = "Le libellé est obligatoire")
-    private String libelle;
 
     @NotNull(message = "La TVA déductible est obligatoire")
     private Double tvaDeductible;
@@ -88,14 +87,6 @@ public class BatchValidationRequestDto {
         this.ids = ids;
     }
 
-    public LocalDate getDateEmission() {
-        return dateEmission;
-    }
-
-    public void setDateEmission(LocalDate dateEmission) {
-        this.dateEmission = dateEmission;
-    }
-
     public LocalDate getDateValeur() {
         return dateValeur;
     }
@@ -110,22 +101,6 @@ public class BatchValidationRequestDto {
 
     public void setDateOperation(LocalDate dateOperation) {
         this.dateOperation = dateOperation;
-    }
-
-    public String getObservation() {
-        return observation;
-    }
-
-    public void setObservation(String observation) {
-        this.observation = observation;
-    }
-
-    public String getLibelle() {
-        return libelle;
-    }
-
-    public void setLibelle(String libelle) {
-        this.libelle = libelle;
     }
 
     public Double getTvaDeductible() {
@@ -151,11 +126,8 @@ public class BatchValidationRequestDto {
                 ", sens=" + sens +
                 ", banqueId=" + banqueId +
                 ", ids=" + ids +
-                ", dateEmission=" + dateEmission +
                 ", dateValeur=" + dateValeur +
                 ", dateOperation=" + dateOperation +
-                ", observation='" + observation + '\'' +
-                ", libelle='" + libelle + '\'' +
                 ", tvaDeductible=" + tvaDeductible +
                 ", rapprochementId=" + rapprochementId +
                 '}';

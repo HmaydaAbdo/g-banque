@@ -20,12 +20,13 @@ public class AgiosTransactionMapper {
         }
 
         Transaction transaction = new Transaction();
+        // observation/dateEmission/libelle : fallback sur l'agios d'origine si non fournis (lot).
         transaction.setReferent(agios.getId());
-        transaction.setObservation(dto.observation());
-        transaction.setDateEmission(dto.dateEmission());
+        transaction.setObservation(dto.observation() != null ? dto.observation() : agios.getObservation());
+        transaction.setDateEmission(dto.dateEmission() != null ? dto.dateEmission() : agios.getDateEmission());
         transaction.setDateValeur(dto.dateValeur());
         transaction.setDateOperations(dto.dateOperation());
-        transaction.setLibelle(dto.libelle());
+        transaction.setLibelle(dto.libelle() != null ? dto.libelle() : agios.getLibelle());
         transaction.setTransactionSource(TransactionSource.AGIOS);
         transaction.setDebit(agios.getMontant());
         transaction.setCredit(BigDecimal.ZERO);

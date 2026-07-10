@@ -88,7 +88,7 @@ public class DecompteService {
                     return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
                 });
 
-        log.debug("Marché récupéré: {} (Numéro: {}, Nanti: {})", marche.getNom(), marche.getNumero(), marche.isNanti());
+        log.debug("Marché récupéré: {} (Numéro: {})", marche.getNom(), marche.getNumero());
 
 
         Banque banqueDEncaissement = banqueRepository.findById(requestDTO.getBanqueEncaissementId())
@@ -103,9 +103,9 @@ public class DecompteService {
 
         decompte = decompteRepository.save(decompte);
 
-        log.info("Décompte créé avec succès - ID: {}, Montant: {}, Libellé: {}, Banque encaissement: {}, Marché nanti: {}",
+        log.info("Décompte créé avec succès - ID: {}, Montant: {}, Libellé: {}, Banque encaissement: {}",
                 decompte.getId(), decompte.getMontant(), decompte.getLibelle(),
-                banqueDEncaissement.getNom(), marche.isNanti());
+                banqueDEncaissement.getNom());
 
         return decompteMapper.toDto(decompte);
     }
@@ -130,9 +130,8 @@ public class DecompteService {
                     return new ResourceNotFoundException("Marche not found with ID: " + requestDTO.getMarcheId());
                 });
 
-        log.debug("Marché récupéré pour la mise à jour: {} (Nanti: {})", marche.getNom(), marche.isNanti());
+        log.debug("Marché récupéré pour la mise à jour: {}", marche.getNom());
 
-        // Déterminer la banque d'encaissement selon le statut du marché
         Banque banqueDEncaissement = banqueRepository.findById(requestDTO.getBanqueEncaissementId())
                 .orElseThrow(() -> {
                     log.error("Banque d'encaissement non trouvée avec l'ID: {}", requestDTO.getBanqueEncaissementId());
@@ -150,8 +149,8 @@ public class DecompteService {
 
         Decompte updatedDecompte = decompteRepository.save(existingDecompte);
 
-        log.info("Décompte modifié avec succès - ID: {}, Nouveau montant: {}, Banque encaissement: {}, Marché nanti: {}",
-                id, updatedDecompte.getMontant(), banqueDEncaissement.getNom(), marche.isNanti());
+        log.info("Décompte modifié avec succès - ID: {}, Nouveau montant: {}, Banque encaissement: {}",
+                id, updatedDecompte.getMontant(), banqueDEncaissement.getNom());
 
         return decompteMapper.toDto(updatedDecompte);
     }

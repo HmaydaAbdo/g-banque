@@ -36,12 +36,13 @@ public class MiseAdispositionTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        // observation/dateEmission/libelle : fallback sur la mise à disposition d'origine si non fournis (lot).
         transaction.setReferent(miseADispo.getId());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : miseADispo.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : miseADispo.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setLibelle(requestDto.getLibelle());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : miseADispo.getLibelle());
         transaction.setTransactionSource(TransactionSource.MiseADisposition);
         transaction.setBanqueDePrelevement(miseADispo.getBanque());
 

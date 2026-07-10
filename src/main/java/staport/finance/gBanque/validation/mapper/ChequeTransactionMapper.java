@@ -28,9 +28,10 @@ public  class  ChequeTransactionMapper {
 
         Transaction transaction = new Transaction();
         transaction.setReferent(cheque.getId());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setLibelle(requestDto.getLibelle());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        // observation/dateEmission/libelle : fallback sur le chèque d'origine si non fournis (lot).
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : cheque.getObservation());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : cheque.getLibelle());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : cheque.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
         transaction.setTransactionSource(TransactionSource.CHEQUE);

@@ -15,7 +15,7 @@ public class MarcheResponseDTO {
     private LocalDate dateDAchievementDesTravaux ;
     private Long banqueId;
     private String banqueNom;
-    private boolean isNanti;
+    private boolean actif;
 
     private OffsetDateTime createdAt;
     private LocalDate modifiedAt ;
@@ -93,12 +93,12 @@ public class MarcheResponseDTO {
         this.banqueNom = banqueNom;
     }
 
-    public boolean isNanti() {
-        return isNanti;
+    public boolean isActif() {
+        return actif;
     }
 
-    public void setNanti(boolean nanti) {
-        isNanti = nanti;
+    public void setActif(boolean actif) {
+        this.actif = actif;
     }
 
     public OffsetDateTime getCreatedAt() {

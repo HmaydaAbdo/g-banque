@@ -23,11 +23,11 @@ public abstract class LeasingTransactionMapper {
      * Construit une {@link Transaction} à partir du DTO de requête et des entités associées.
      * Le champ {@code credit} et {@code tvaDeductible} sont calculés dans {@link #computeFinancials}.
      */
-    @Mapping(source = "requestDTO.observation",   target = "observation")
-    @Mapping(source = "requestDTO.dateEmission",  target = "dateEmission")
+    @Mapping(target = "observation",  ignore = true)
+    @Mapping(target = "dateEmission", ignore = true)
     @Mapping(source = "requestDTO.dateValeur",    target = "dateValeur")
     @Mapping(source = "requestDTO.dateOperation", target = "dateOperations")
-    @Mapping(source = "requestDTO.libelle",       target = "libelle")
+    @Mapping(target = "libelle",      ignore = true)
     @Mapping(source = "echeanceLeasing.id",       target = "referent")
     @Mapping(source = "echeanceLeasing.montantTTC", target = "debit")
     @Mapping(source = "contratLeasing.banqueDePrelevement", target = "banqueDePrelevement")
@@ -45,13 +45,21 @@ public abstract class LeasingTransactionMapper {
             EcheanceLeasing echeanceLeasing);
 
     /**
-     * Calcule {@code credit} (zéro) et {@code tvaDeductible} après le mapping principal.
+     * Calcule {@code credit} et {@code tvaDeductible}, et applique le fallback observation/libelle/
+     * dateEmission sur l'échéance d'origine quand ces champs ne sont pas fournis par le DTO (cas de
+     * la validation en lot — voir {@code BatchValidationRequestDto}). Pour dateEmission, l'équivalent
+     * sur l'échéance leasing est sa propre date d'échéance ({@code dateEcheance}), qui n'a pas de
+     * champ "dateEmission" dédié.
      */
     @AfterMapping
     protected void computeFinancials(
             LeasingTransactionRequestDTO requestDTO,
             EcheanceLeasing echeanceLeasing,
             @MappingTarget Transaction transaction) {
+        transaction.setObservation(requestDTO.observation() != null ? requestDTO.observation() : echeanceLeasing.getObservation());
+        transaction.setLibelle(requestDTO.libelle() != null ? requestDTO.libelle() : echeanceLeasing.getLibelle());
+        transaction.setDateEmission(requestDTO.dateEmission() != null ? requestDTO.dateEmission() : echeanceLeasing.getDateEcheance());
+
         transaction.setCredit(BigDecimal.ZERO);
         BigDecimal tauxTva = requestDTO.tvaDeductible() != null
                 ? BigDecimal.valueOf(requestDTO.tvaDeductible())

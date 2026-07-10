@@ -48,7 +48,7 @@ public class PaymentWriterConfig {
 
     @Bean
     public LcnItemWriter lcnItemWriter() {
-        return new LcnItemWriter(lcnRepository);
+        return new LcnItemWriter(lcnRepository, commissionService);
     }
 
     @Bean
@@ -58,7 +58,7 @@ public class PaymentWriterConfig {
 
     @Bean
     public MiseADispositionItemWriter miseADispositionItemWriter() {
-        return new MiseADispositionItemWriter(miseADispositionRepository);
+        return new MiseADispositionItemWriter(miseADispositionRepository, commissionService);
     }
 
     /**

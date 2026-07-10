@@ -27,12 +27,13 @@ public class PrelevementTransactionMapper {
         Transaction transaction = new Transaction();
 
         // Mapping simple fields
+        // observation/dateEmission/libelle : fallback sur le prélèvement d'origine si non fournis (lot).
         transaction.setReferent(prelevement.getId());
-        transaction.setObservation(requestDto.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission());
+        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : prelevement.getObservation());
+        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : prelevement.getDateEmission());
         transaction.setDateValeur(requestDto.getDateValeur());
         transaction.setDateOperations(requestDto.getDateOperation());
-        transaction.setLibelle(requestDto.getLibelle());
+        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : prelevement.getLibelle());
         transaction.setTransactionSource(TransactionSource.PRELEVEMENT);
         transaction.setDebit(prelevement.getMontant());
         transaction.setCredit(BigDecimal.ZERO);
