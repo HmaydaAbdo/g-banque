@@ -15,6 +15,9 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.services.EtasDe
 /**
  * REST Controller to expose endpoints for managing and triggering
  * the batch jobs related to "Etats des Encours" (e.g., payment import job).
+ *
+ * <p>⚠️ {@code /funPayment/synchronisation} n'a aucun {@code @PreAuthorize} (gap préexistant,
+ * non corrigé ici).</p>
  */
 @RestController
 @RequestMapping("/funPayment") // Base path for this controller's endpoints
@@ -53,6 +56,4 @@ public class EtatsDesEncoursController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage); // HTTP 500 Internal Server Error
         }
     }
-
-
 }

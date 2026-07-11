@@ -17,6 +17,9 @@ public interface LcnRepository extends JpaRepository<Lcn, Long>, JpaSpecificatio
 
     Optional<Lcn> findByNumero(String numero);
 
+    /** Clé de matching exclusive de la synchro FunPaiement (cf. AbstractPaymentProcessor). */
+    Optional<Lcn> findByIdPaiement(String idPaiement);
+
     @Modifying
     @Query("UPDATE Lcn l SET l.statut = 'REGLE' WHERE l.dateEcheance < :cutoffDate AND l.statut = 'ENCOURS'")
     int deactivateByDateEcheanceBefore(@Param("cutoffDate") LocalDate cutoffDate);

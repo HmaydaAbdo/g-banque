@@ -35,28 +35,28 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) {
         StatutMoyenPaiement statutFun = item.getStatutMoyenPaiement();
-        Optional<Cheque> existing = chequeRepository.findByNumero(item.getNumero());
+        Optional<Cheque> existing = chequeRepository.findByIdPaiement(item.getIdPaiement());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {
                 Cheque cheque = existing.get();
                 if (cheque.getStatut() == StatutMoyenPaiement.ENCOURS) {
                     cheque.setStatut(StatutMoyenPaiement.ANNULE);
-                    log.info("Cheque {} marqué ANNULE (was ENCOURS)", item.getNumero());
+                    log.info("Cheque {} (id_paiement={}) marqué ANNULE (was ENCOURS)", item.getNumero(), item.getIdPaiement());
                     return cheque;
                 } else {
-                    log.info("Cheque {} déjà {} — annulation ignorée", item.getNumero(), cheque.getStatut());
+                    log.info("Cheque {} (id_paiement={}) déjà {} — annulation ignorée", item.getNumero(), item.getIdPaiement(), cheque.getStatut());
                     return null;
                 }
             } else {
                 // Absent localement → créer directement comme ANNULE
-                log.info("Cheque {} absent localement, création en ANNULE", item.getNumero());
+                log.info("Cheque {} (id_paiement={}) absent localement, création en ANNULE", item.getNumero(), item.getIdPaiement());
                 return buildCheque(item, banque, StatutMoyenPaiement.ANNULE);
             }
         } else {
             // ENCOURS
             if (existing.isPresent()) {
-                log.warn("Cheque {} déjà présent, skip", item.getNumero());
+                log.warn("Cheque {} (id_paiement={}) déjà présent, skip", item.getNumero(), item.getIdPaiement());
                 return null;
             }
             return buildCheque(item, banque, StatutMoyenPaiement.ENCOURS);
@@ -65,6 +65,7 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
 
     private Cheque buildCheque(FunPaymentDto item, Banque banque, StatutMoyenPaiement statut) {
         Cheque cheque = new Cheque();
+        cheque.setIdPaiement(item.getIdPaiement());
         cheque.setNumero(item.getNumero());
         cheque.setType(Type.DECAISSEMENT);
         cheque.setDateEmission(item.getDateCreation());

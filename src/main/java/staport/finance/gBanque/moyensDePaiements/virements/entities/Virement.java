@@ -20,6 +20,15 @@ public class Virement {
     @Column(name = "numero")
     private String numero;
 
+    /**
+     * Identifiant technique unique côté FunPaiement — clé de matching exclusive de la synchro
+     * (remplace le matching par numéro, non fiable — cf. AbstractPaymentProcessor). Pour un
+     * virement interne (bénéficiaire STAPORT, dédoublé en deux entrées), suffixé "-EN"/"-DE"
+     * comme le numéro, afin de rester unique par ligne.
+     */
+    @Column(name = "id_paiement", unique = true, length = 50)
+    private String idPaiement;
+
     @Column(name = "date_emission", nullable = false)
     private LocalDate dateEmission ;
 
@@ -72,6 +81,8 @@ public class Virement {
 
     public String getNumero() { return numero; }
     public void setNumero(String numero) { this.numero = numero; }
+    public String getIdPaiement() { return idPaiement; }
+    public void setIdPaiement(String idPaiement) { this.idPaiement = idPaiement; }
     public LocalDate getDateEmission() { return dateEmission; }
     public void setDateEmission(LocalDate dateEmission) { this.dateEmission = dateEmission; }
     public String getBeneficiaire() { return beneficiaire; }
@@ -168,6 +179,7 @@ public class Virement {
     public String toString() {
         return "Virement{" +
                 "id=" + id +
+                ", idPaiement='" + idPaiement + '\'' +
                 ", numero='" + numero + '\'' +
                 ", dateEmission=" + dateEmission +
                 ", dateOperation=" + dateOperation +

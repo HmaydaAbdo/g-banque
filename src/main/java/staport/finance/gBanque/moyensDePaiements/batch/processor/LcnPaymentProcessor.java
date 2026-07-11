@@ -32,28 +32,28 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
         StatutMoyenPaiement statutFun = item.getStatutMoyenPaiement();
-        Optional<Lcn> existing = lcnRepository.findByNumero(item.getNumero());
+        Optional<Lcn> existing = lcnRepository.findByIdPaiement(item.getIdPaiement());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {
                 Lcn lcn = existing.get();
                 if (lcn.getStatut() == StatutMoyenPaiement.ENCOURS) {
                     lcn.setStatut(StatutMoyenPaiement.ANNULE);
-                    log.info("Lcn {} marqué ANNULE (was ENCOURS)", item.getNumero());
+                    log.info("Lcn {} (id_paiement={}) marqué ANNULE (was ENCOURS)", item.getNumero(), item.getIdPaiement());
                     return lcn;
                 } else {
-                    log.info("Lcn {} déjà {} — annulation ignorée", item.getNumero(), lcn.getStatut());
+                    log.info("Lcn {} (id_paiement={}) déjà {} — annulation ignorée", item.getNumero(), item.getIdPaiement(), lcn.getStatut());
                     return null;
                 }
             } else {
                 // Absent localement → créer directement comme ANNULE
-                log.info("Lcn {} absent localement, création en ANNULE", item.getNumero());
+                log.info("Lcn {} (id_paiement={}) absent localement, création en ANNULE", item.getNumero(), item.getIdPaiement());
                 return buildLcn(item, banque, StatutMoyenPaiement.ANNULE);
             }
         } else {
             // ENCOURS
             if (existing.isPresent()) {
-                log.info("Lcn {} déjà présent, skip", item.getNumero());
+                log.info("Lcn {} (id_paiement={}) déjà présent, skip", item.getNumero(), item.getIdPaiement());
                 return null;
             }
 
@@ -69,6 +69,7 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
 
     private Lcn buildLcn(FunPaymentDto item, Banque banque, StatutMoyenPaiement statut) {
         Lcn lcn = new Lcn();
+        lcn.setIdPaiement(item.getIdPaiement());
         lcn.setNumero(item.getNumero());
         lcn.setDateEmission(item.getDateCreation());
         lcn.setBeneficiaire(item.getBeneficiaire());

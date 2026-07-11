@@ -21,6 +21,13 @@ public class Cheque {
     @Column(name = "numero", nullable = true)
     private String numero;
 
+    /**
+     * Identifiant technique unique côté FunPaiement — clé de matching exclusive de la synchro
+     * (remplace le matching par numéro, non fiable — cf. AbstractPaymentProcessor).
+     */
+    @Column(name = "id_paiement", unique = true, length = 50)
+    private String idPaiement;
+
     @Column(name = "date_emission", nullable = false)
     private LocalDate dateEmission ;
 
@@ -80,6 +87,14 @@ public class Cheque {
 
     public void setNumero(String numero) {
         this.numero = numero;
+    }
+
+    public String getIdPaiement() {
+        return idPaiement;
+    }
+
+    public void setIdPaiement(String idPaiement) {
+        this.idPaiement = idPaiement;
     }
 
     public LocalDate getDateEmission() {
@@ -194,6 +209,7 @@ public class Cheque {
     public String toString() {
         return "Cheque{" +
                 "id=" + id +
+                ", idPaiement='" + idPaiement + '\'' +
                 ", numero='" + numero + '\'' +
                 ", dateEmission=" + dateEmission +
                 ", beneficiaire='" + beneficiaire + '\'' +

@@ -21,6 +21,9 @@ public interface ChequeRepository extends JpaRepository<Cheque, Long>, JpaSpecif
      */
     Optional<Cheque> findByNumero(String numero);
 
+    /** Clé de matching exclusive de la synchro FunPaiement (cf. AbstractPaymentProcessor). */
+    Optional<Cheque> findByIdPaiement(String idPaiement);
+
     /**
      * Règle tous les chèques dont la date d'émission est strictement antérieure à la date donnée.
      * @param cutoffDate La date limite (exclusive)

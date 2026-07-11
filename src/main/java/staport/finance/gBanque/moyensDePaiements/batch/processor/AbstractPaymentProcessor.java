@@ -58,6 +58,9 @@ public abstract class AbstractPaymentProcessor implements ItemProcessor<FunPayme
      * @throws InvalidChequeDataException if any common field is invalid.
      */
     protected void validateCommonFields(FunPaymentDto item) {
+        if (item.getIdPaiement() == null || item.getIdPaiement().trim().isEmpty()) {
+            throw new InvalidChequeDataException("id_paiement is null or empty for payment numero " + item.getNumero());
+        }
         if (item.getNumero() == null || item.getNumero().trim().isEmpty()) {
             throw new InvalidChequeDataException("Payment numero is null or empty.");
         }

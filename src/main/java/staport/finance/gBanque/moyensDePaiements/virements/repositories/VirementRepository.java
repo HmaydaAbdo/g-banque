@@ -19,6 +19,9 @@ public interface VirementRepository extends JpaRepository<Virement, Long>, JpaSp
 
     Optional<Virement> findByNumero(String numero);
 
+    /** Clé de matching exclusive de la synchro FunPaiement (cf. AbstractPaymentProcessor). */
+    Optional<Virement> findByIdPaiement(String idPaiement);
+
     @Modifying
     @Query("UPDATE Virement v SET v.statut = 'REGLE' WHERE v.dateEmission < :cutoffDate AND v.statut = 'ENCOURS'")
     int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);

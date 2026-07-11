@@ -41,16 +41,18 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
                         item.getBeneficiaire().trim().equalsIgnoreCase("STAPORT");
 
         if (!isStaport) {
-            Virement v = upsertVirement(item, banque, Type.DECAISSEMENT, item.getNumero(), statutFun);
+            Virement v = upsertVirement(item, banque, Type.DECAISSEMENT, item.getNumero(), item.getIdPaiement(), statutFun);
             return v == null ? List.of() : List.of(v);
         }
 
-        // STAPORT → deux entrées avec numéros uniques
+        // STAPORT → deux entrées avec numéros/id_paiement uniques (suffixés -EN/-DE)
         String numeroEncaissement = item.getNumero() + "-EN";
         String numeroDecaissement = item.getNumero() + "-DE";
+        String idPaiementEncaissement = item.getIdPaiement() + "-EN";
+        String idPaiementDecaissement = item.getIdPaiement() + "-DE";
 
-        Virement encaissement = upsertVirement(item, banque, Type.ENCAISSEMENT, numeroEncaissement, statutFun);
-        Virement decaissement = upsertVirement(item, banque, Type.DECAISSEMENT, numeroDecaissement, statutFun);
+        Virement encaissement = upsertVirement(item, banque, Type.ENCAISSEMENT, numeroEncaissement, idPaiementEncaissement, statutFun);
+        Virement decaissement = upsertVirement(item, banque, Type.DECAISSEMENT, numeroDecaissement, idPaiementDecaissement, statutFun);
 
         return Stream.of(encaissement, decaissement)
                 .filter(Objects::nonNull)
@@ -61,36 +63,37 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
      * Logique upsert pour un virement individuel.
      * Retourne l'entité à sauvegarder, ou null si skip.
      */
-    private Virement upsertVirement(FunPaymentDto item, Banque banque, Type type, String numero, StatutMoyenPaiement statutFun) {
-        Optional<Virement> existing = virementRepository.findByNumero(numero);
+    private Virement upsertVirement(FunPaymentDto item, Banque banque, Type type, String numero, String idPaiement, StatutMoyenPaiement statutFun) {
+        Optional<Virement> existing = virementRepository.findByIdPaiement(idPaiement);
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {
                 Virement v = existing.get();
                 if (v.getStatut() == StatutMoyenPaiement.ENCOURS) {
                     v.setStatut(StatutMoyenPaiement.ANNULE);
-                    log.info("Virement {} marqué ANNULE (was ENCOURS)", numero);
+                    log.info("Virement {} (id_paiement={}) marqué ANNULE (was ENCOURS)", numero, idPaiement);
                     return v;
                 } else {
-                    log.info("Virement {} déjà {} — annulation ignorée", numero, v.getStatut());
+                    log.info("Virement {} (id_paiement={}) déjà {} — annulation ignorée", numero, idPaiement, v.getStatut());
                     return null;
                 }
             } else {
-                log.info("Virement {} absent localement, création en ANNULE", numero);
-                return buildVirement(item, banque, type, numero, StatutMoyenPaiement.ANNULE);
+                log.info("Virement {} (id_paiement={}) absent localement, création en ANNULE", numero, idPaiement);
+                return buildVirement(item, banque, type, numero, idPaiement, StatutMoyenPaiement.ANNULE);
             }
         } else {
             // ENCOURS
             if (existing.isPresent()) {
-                log.warn("Virement {} déjà présent, skip", numero);
+                log.warn("Virement {} (id_paiement={}) déjà présent, skip", numero, idPaiement);
                 return null;
             }
-            return buildVirement(item, banque, type, numero, StatutMoyenPaiement.ENCOURS);
+            return buildVirement(item, banque, type, numero, idPaiement, StatutMoyenPaiement.ENCOURS);
         }
     }
 
-    private Virement buildVirement(FunPaymentDto item, Banque banque, Type type, String numero, StatutMoyenPaiement statut) {
+    private Virement buildVirement(FunPaymentDto item, Banque banque, Type type, String numero, String idPaiement, StatutMoyenPaiement statut) {
         Virement v = new Virement();
+        v.setIdPaiement(idPaiement);
         v.setNumero(numero);
         v.setType(type);
         v.setDateEmission(item.getDateCreation());

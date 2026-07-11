@@ -16,6 +16,9 @@ public interface MiseADispositionRepository extends JpaRepository<MiseADispositi
 
     Optional<MiseADisposition> findByNumero(String numero);
 
+    /** Clé de matching exclusive de la synchro FunPaiement (cf. AbstractPaymentProcessor). */
+    Optional<MiseADisposition> findByIdPaiement(String idPaiement);
+
     /**
      * Règle toutes les mises à disposition dont la date d'émission est strictement antérieure à la date donnée.
      * @param cutoffDate La date limite (exclusive)

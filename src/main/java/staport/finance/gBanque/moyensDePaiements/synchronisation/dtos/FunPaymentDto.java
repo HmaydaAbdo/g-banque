@@ -12,6 +12,15 @@ import java.time.LocalDate;
 
 public class FunPaymentDto {
 
+    /**
+     * Identifiant technique unique de l'opération côté FunPaiement (ajouté à l'API le
+     * 10/07/2026 à la demande de Staport, pour remplacer le matching fragile par numéro —
+     * le numéro seul n'est pas unique côté FunPaiement, cf. historique des bugs de synchro).
+     * Utilisé comme clé de matching exclusive dans les 4 processors de paiement.
+     */
+    @JsonProperty("id_paiement")
+    private String idPaiement;
+
     private String numero;
 
     @JsonProperty("date_chaque")
@@ -75,6 +84,9 @@ public class FunPaymentDto {
     }
 
     // --- GETTERS AND SETTERS ---
+    public String getIdPaiement() { return idPaiement; }
+    public void setIdPaiement(String idPaiement) { this.idPaiement = idPaiement; }
+
     public String getNumero() { return numero; }
     public void setNumero(String numero) { this.numero = numero; }
 
@@ -133,7 +145,8 @@ public class FunPaymentDto {
     @Override
     public String toString() {
         return "FunPaymentDto{" +
-                "numero='" + numero + '\'' +
+                "idPaiement='" + idPaiement + '\'' +
+                ", numero='" + numero + '\'' +
                 ", dateCheque=" + dateCheque +
                 ", dateEcheance=" + dateEcheance +
                 ", montant=" + montant +

@@ -33,27 +33,27 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
         StatutMoyenPaiement statutFun = item.getStatutMoyenPaiement();
-        Optional<MiseADisposition> existing = miseADispositionRepository.findByNumero(item.getNumero());
+        Optional<MiseADisposition> existing = miseADispositionRepository.findByIdPaiement(item.getIdPaiement());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {
                 MiseADisposition mad = existing.get();
                 if (mad.getStatut() == StatutMoyenPaiement.ENCOURS) {
                     mad.setStatut(StatutMoyenPaiement.ANNULE);
-                    log.info("MiseADisposition {} marquée ANNULE (was ENCOURS)", item.getNumero());
+                    log.info("MiseADisposition {} (id_paiement={}) marquée ANNULE (was ENCOURS)", item.getNumero(), item.getIdPaiement());
                     return mad;
                 } else {
-                    log.info("MiseADisposition {} déjà {} — annulation ignorée", item.getNumero(), mad.getStatut());
+                    log.info("MiseADisposition {} (id_paiement={}) déjà {} — annulation ignorée", item.getNumero(), item.getIdPaiement(), mad.getStatut());
                     return null;
                 }
             } else {
-                log.info("MiseADisposition {} absente localement, création en ANNULE", item.getNumero());
+                log.info("MiseADisposition {} (id_paiement={}) absente localement, création en ANNULE", item.getNumero(), item.getIdPaiement());
                 return buildMad(item, banque, StatutMoyenPaiement.ANNULE);
             }
         } else {
             // ENCOURS
             if (existing.isPresent()) {
-                log.info("MiseADisposition {} déjà présente, skip", item.getNumero());
+                log.info("MiseADisposition {} (id_paiement={}) déjà présente, skip", item.getNumero(), item.getIdPaiement());
                 return null;
             }
 
@@ -69,6 +69,7 @@ public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
 
     private MiseADisposition buildMad(FunPaymentDto item, Banque banque, StatutMoyenPaiement statut) {
         MiseADisposition mad = new MiseADisposition();
+        mad.setIdPaiement(item.getIdPaiement());
         mad.setNumero(item.getNumero());
         mad.setDateEmission(item.getDateCreation());
         mad.setBeneficiaire(item.getBeneficiaire());
