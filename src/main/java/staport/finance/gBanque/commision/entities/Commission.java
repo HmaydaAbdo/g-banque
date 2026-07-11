@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
+import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.math.BigDecimal;
@@ -60,6 +61,18 @@ public class Commission {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "impot_et_taxe_id", unique = true)
     private ImpotEtTaxe impotEtTaxe;
+
+    /**
+     * Virement à l'origine de cette commission — nullable.
+     * Renseigné uniquement pour les commissions générées automatiquement à la synchronisation
+     * d'un virement (via {@code CommissionService.generateCommissionIfNeeded(Virement)}).
+     * Sert de clé d'idempotence ({@code existsByVirement_Id}) — le numéro du virement n'est plus
+     * inclus dans {@code libelle}/{@code observation}, cette FK le remplace pour la déduplication,
+     * mirroring le pattern déjà utilisé pour {@code caution}/{@code impotEtTaxe}.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "virement_id", unique = true)
+    private Virement virement;
 
     public Commission() {}
 
@@ -156,6 +169,14 @@ public class Commission {
 
     public void setImpotEtTaxe(ImpotEtTaxe impotEtTaxe) {
         this.impotEtTaxe = impotEtTaxe;
+    }
+
+    public Virement getVirement() {
+        return virement;
+    }
+
+    public void setVirement(Virement virement) {
+        this.virement = virement;
     }
 
     @Override

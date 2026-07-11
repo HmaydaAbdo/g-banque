@@ -71,4 +71,11 @@ public interface CommisionRepository extends JpaRepository<Commission, Long>, Jp
      */
     java.util.Optional<Commission> findByCaution_IdAndDateEmissionAndStatus(
             Long cautionId, LocalDate dateEmission, Status status);
+
+    /**
+     * Garde d'idempotence pour les commissions virement : une seule commission par virement.
+     * Remplace l'ancienne déduplication par libellé (le numéro de virement n'apparaît plus dans
+     * {@code libelle}/{@code observation}) — mirroring {@code existsByCaution_IdAndStatus}.
+     */
+    boolean existsByVirement_Id(Long virementId);
 }

@@ -605,10 +605,26 @@ public class CommissionService implements ICommissionService {
         // Guard 2 : virement interne (bénéficiaire STAPORT, dédoublé encaissement/décaissement
         // par VirementPaymentProcessor) — opération entre banques Staport, aucune commission
         // n'est générée, ni côté encaissement ni côté décaissement.
+        // Exception BMCI (confirmée par HMAYDA le 10/07/2026) : côté décaissement uniquement
+        // (banqueEmettrice = BMCI), une commission est générée normalement — résolue comme un
+        // virement classique via CommissionConfig (aucun montant codé en dur ici). Le côté
+        // encaissement (même virement interne, entrée "-EN") reste exclu pour éviter de facturer
+        // deux fois la même opération.
         if (virement.getBeneficiaire() != null
                 && virement.getBeneficiaire().trim().equalsIgnoreCase("STAPORT")) {
-            log.debug("Virement {} interne (bénéficiaire STAPORT, {}) — commission non générée", virement.getNumero(), virement.getType());
-            return;
+
+            boolean exceptionBmciDecaissement =
+                    virement.getType() == Type.DECAISSEMENT
+                            && virement.getBanqueEmettrice() != null
+                            && virement.getBanqueEmettrice().getNom() != null
+                            && virement.getBanqueEmettrice().getNom().trim().equalsIgnoreCase("BMCI");
+
+            if (!exceptionBmciDecaissement) {
+                log.debug("Virement {} interne (bénéficiaire STAPORT, {}) — commission non générée", virement.getNumero(), virement.getType());
+                return;
+            }
+
+            log.debug("Virement {} interne BMCI (décaissement) — exception : commission générée normalement", virement.getNumero());
         }
 
         // Guard 3 : uniquement les virements ENCOURS
@@ -640,9 +656,8 @@ public class CommissionService implements ICommissionService {
             return;
         }
 
-        // Idempotence : une seule commission par numéro de virement
-        String libelle = buildLibelle(virement);
-        if (commissionRepository.existsByOperationAndLibelle(TransactionSource.Virement, libelle)) {
+        // Idempotence : une seule commission par virement (FK, pas le libellé — cf. Commission.virement)
+        if (commissionRepository.existsByVirement_Id(virement.getId())) {
             log.debug("Commission déjà existante pour virement {} — ignoré", virement.getNumero());
             return;
         }
@@ -652,8 +667,9 @@ public class CommissionService implements ICommissionService {
         commission.setBanque(virement.getBanqueEmettrice());
         commission.setOperation(TransactionSource.Virement);
         commission.setDateEmission(virement.getDateEmission());
-        commission.setLibelle(libelle);
+        commission.setLibelle(buildLibelle());
         commission.setStatus(Status.PREVU);
+        commission.setVirement(virement);
 
         commissionRepository.save(commission);
         log.info("Commission créée — virement N°{}, émettrice='{}', bénéficiaire='{}', montant={}",
@@ -675,8 +691,12 @@ public class CommissionService implements ICommissionService {
                 : null;
     }
 
-    private String buildLibelle(Virement virement) {
-        return "Commission virement N° " + virement.getNumero();
+    /**
+     * Libellé générique, sans numéro de virement (celui-ci n'est plus utilisé qu'en interne,
+     * via {@code Commission.virement}, pour l'idempotence — cf. {@code existsByVirement_Id}).
+     */
+    private String buildLibelle() {
+        return "Commission virement";
     }
 
     /**
