@@ -73,7 +73,7 @@ export class CautionListComponent implements OnInit {
   readonly totalElements$ = this.cautionService.totalElements$;
   readonly loading$       = this.cautionService.loading$;
 
-  readonly isAdmin = this.authService.isAdmin();
+  readonly isSystemAdmin = this.authService.isSystemAdmin();
   readonly today   = new Date();
 
   /** Indicateur de chargement du bouton "Exporter PDF". */

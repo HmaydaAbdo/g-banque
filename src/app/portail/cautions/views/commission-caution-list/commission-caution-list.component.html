@@ -39,8 +39,9 @@
         formControlName="libelle"
         placeholder="Ex. : Commission caution STAPORT — Septembre 2025"
         class="w-full" />
-      <small *ngIf="fusionForm.get('libelle')?.invalid && fusionForm.get('libelle')?.touched"
-             class="text-red-500">Le libellé est obligatoire.</small>
+      @if (fusionForm.get('libelle')?.invalid && fusionForm.get('libelle')?.touched) {
+        <small class="text-red-500">Le libellé est obligatoire.</small>
+      }
     </div>
 
     <!-- Les TVA liées aux commissions sources sont supprimées automatiquement lors de la fusion. Aucune TVA n'est créée. -->
@@ -176,15 +177,16 @@
           (onClick)="clearSelection()" />
 
         <!-- Fusion désactivée si BMCI (TVA séparée) -->
-        <p-button
-          *ngIf="selectionCount >= 2"
-          label="Fusionner"
-          icon="pi pi-code"
-          severity="warning"
-          size="small"
-          [disabled]="selectionIsBmci"
-          [pTooltip]="selectionIsBmci ? 'Fusion non autorisée pour la BMCI (TVA séparée)' : ''"
-          (onClick)="openFusionDialog()" />
+        @if (selectionCount >= 2) {
+          <p-button
+            label="Fusionner"
+            icon="pi pi-code"
+            severity="warning"
+            size="small"
+            [disabled]="selectionIsBmci"
+            [pTooltip]="selectionIsBmci ? 'Fusion non autorisée pour la BMCI (TVA séparée)' : ''"
+            (onClick)="openFusionDialog()" />
+        }
       </ng-container>
 
 

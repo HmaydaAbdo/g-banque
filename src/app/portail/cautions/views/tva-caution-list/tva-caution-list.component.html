@@ -35,8 +35,9 @@
         formControlName="libelle"
         placeholder="Ex. : TVA commissions caution STAPORT — Septembre 2025"
         class="w-full" />
-      <small *ngIf="fusionForm.get('libelle')?.invalid && fusionForm.get('libelle')?.touched"
-             class="text-red-500">Le libellé est obligatoire.</small>
+      @if (fusionForm.get('libelle')?.invalid && fusionForm.get('libelle')?.touched) {
+        <small class="text-red-500">Le libellé est obligatoire.</small>
+      }
     </div>
 
   </form>
@@ -108,41 +109,43 @@
 
     <ng-template pTemplate="end">
       <!-- Bandeau sélection — visible dès qu'au moins 1 ligne est cochée -->
-      <div *ngIf="isAdmin && selectionCount > 0"
-           class="flex align-items-center gap-2">
+      @if (isAdmin && selectionCount > 0) {
+        <div class="flex align-items-center gap-2">
 
-        <!-- Résumé -->
-        <div class="surface-ground border-round px-3 py-2 flex align-items-center gap-2">
-          <i class="pi pi-check-square text-warning"></i>
-          <span class="font-medium text-sm">
-            {{ selectionCount }} sélectionnée(s)
-          </span>
-          <span class="text-color-secondary">·</span>
-          <span class="font-bold text-sm text-warning">
-            {{ fusionMontantTotal | number:'1.2-2' }} MAD
-          </span>
+          <!-- Résumé -->
+          <div class="surface-ground border-round px-3 py-2 flex align-items-center gap-2">
+            <i class="pi pi-check-square text-warning"></i>
+            <span class="font-medium text-sm">
+              {{ selectionCount }} sélectionnée(s)
+            </span>
+            <span class="text-color-secondary">·</span>
+            <span class="font-bold text-sm text-warning">
+              {{ fusionMontantTotal | number:'1.2-2' }} MAD
+            </span>
+          </div>
+
+          <!-- Vider la sélection -->
+          <p-button
+            icon="pi pi-times"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            pTooltip="Vider la sélection"
+            (onClick)="clearSelection()" />
+
+          <!-- Fusionner -->
+          @if (canFusionner) {
+            <p-button
+              label="Fusionner"
+              icon="pi pi-code"
+              severity="warning"
+              size="small"
+              pTooltip="Fusionner les {{ selectionCount }} TVA sélectionnées"
+              (onClick)="openFusionDialog()" />
+          }
+
         </div>
-
-        <!-- Vider la sélection -->
-        <p-button
-          icon="pi pi-times"
-          severity="secondary"
-          [outlined]="true"
-          size="small"
-          pTooltip="Vider la sélection"
-          (onClick)="clearSelection()" />
-
-        <!-- Fusionner -->
-        <p-button
-          *ngIf="canFusionner"
-          label="Fusionner"
-          icon="pi pi-code"
-          severity="warning"
-          size="small"
-          pTooltip="Fusionner les {{ selectionCount }} TVA sélectionnées"
-          (onClick)="openFusionDialog()" />
-
-      </div>
+      }
     </ng-template>
   </p-toolbar>
 
@@ -187,7 +190,9 @@
       <ng-template pTemplate="header">
         <tr>
           <th style="width:3rem">
-            <p-tableHeaderCheckbox *ngIf="isAdmin" />
+            @if (isAdmin) {
+            <p-tableHeaderCheckbox />
+          }
           </th>
           <th pSortableColumn="libelle"      style="min-width:16rem">Libellé          <p-sortIcon field="libelle"      /></th>
           <th pSortableColumn="banqueNom"    style="min-width:10rem">Banque           <p-sortIcon field="banqueNom"    /></th>
@@ -201,7 +206,9 @@
       <ng-template pTemplate="body" let-tva>
         <tr [pSelectableRow]="tva">
           <td>
-            <p-tableCheckbox *ngIf="isAdmin" [value]="tva" />
+            @if (isAdmin) {
+              <p-tableCheckbox [value]="tva" />
+            }
           </td>
           <td>{{ tva.libelle }}</td>
           <td>{{ tva.banqueNom }}</td>
@@ -216,24 +223,26 @@
             <div class="flex justify-content-center gap-1">
 
               <!-- Toggle statut -->
-              <p-button
-                *ngIf="isAdmin"
-                [icon]="tva.status === Status.PREVU ? 'pi pi-check-circle' : 'pi pi-replay'"
-                [severity]="tva.status === Status.PREVU ? 'success' : 'warning'"
-                [outlined]="true"
-                size="small"
-                [pTooltip]="tva.status === Status.PREVU ? 'Marquer payée' : 'Repasser en prévu'"
-                (onClick)="toggleStatut(tva)" />
+              @if (isAdmin) {
+                <p-button
+                  [icon]="tva.status === Status.PREVU ? 'pi pi-check-circle' : 'pi pi-replay'"
+                  [severity]="tva.status === Status.PREVU ? 'success' : 'warning'"
+                  [outlined]="true"
+                  size="small"
+                  [pTooltip]="tva.status === Status.PREVU ? 'Marquer payée' : 'Repasser en prévu'"
+                  (onClick)="toggleStatut(tva)" />
+              }
 
               <!-- Supprimer -->
-              <p-button
-                *ngIf="isAdmin"
-                icon="pi pi-trash"
-                severity="danger"
-                [outlined]="true"
-                size="small"
-                pTooltip="Supprimer"
-                (onClick)="supprimer(tva)" />
+              @if (isAdmin) {
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [outlined]="true"
+                  size="small"
+                  pTooltip="Supprimer"
+                  (onClick)="supprimer(tva)" />
+              }
 
             </div>
           </td>

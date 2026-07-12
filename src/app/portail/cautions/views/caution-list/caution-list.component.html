@@ -10,29 +10,31 @@
   [draggable]="false"
   [resizable]="false">
 
-  <div class="surface-ground border-round p-3 mb-4" *ngIf="cloturerTarget">
-    <div class="grid" style="row-gap:0.5rem">
+  @if (cloturerTarget) {
+    <div class="surface-ground border-round p-3 mb-4">
+      <div class="grid" style="row-gap:0.5rem">
 
-      <div class="col-5 text-xs text-color-secondary font-medium uppercase">N° Caution</div>
-      <div class="col-7 text-sm font-semibold">{{ cloturerTarget.numeroCaution }}</div>
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">N° Caution</div>
+        <div class="col-7 text-sm font-semibold">{{ cloturerTarget.numeroCaution }}</div>
 
-      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Banque</div>
-      <div class="col-7 text-sm">{{ cloturerTarget.banqueNom }}</div>
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Banque</div>
+        <div class="col-7 text-sm">{{ cloturerTarget.banqueNom }}</div>
 
-      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Organisme</div>
-      <div class="col-7 text-sm">{{ cloturerTarget.organisme }}</div>
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Organisme</div>
+        <div class="col-7 text-sm">{{ cloturerTarget.organisme }}</div>
 
-      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Montant</div>
-      <div class="col-7 text-sm font-semibold text-primary">{{ cloturerTarget.montant | number:'1.2-2' }} MAD</div>
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Montant</div>
+        <div class="col-7 text-sm font-semibold text-primary">{{ cloturerTarget.montant | number:'1.2-2' }} MAD</div>
 
-      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Taux</div>
-      <div class="col-7 text-sm">{{ cloturerTarget.taux | number:'1.6-6' }} %</div>
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Taux</div>
+        <div class="col-7 text-sm">{{ cloturerTarget.taux | number:'1.6-6' }} %</div>
 
-      <div class="col-5 text-xs text-color-secondary font-medium uppercase">Date de prise</div>
-      <div class="col-7 text-sm">{{ cloturerTarget.dateDePrise | date:'dd/MM/yyyy' }}</div>
+        <div class="col-5 text-xs text-color-secondary font-medium uppercase">Date de prise</div>
+        <div class="col-7 text-sm">{{ cloturerTarget.dateDePrise | date:'dd/MM/yyyy' }}</div>
 
+      </div>
     </div>
-  </div>
+  }
 
   <form [formGroup]="cloturerForm" class="flex flex-column gap-3">
     <div class="flex flex-column gap-1">
@@ -47,8 +49,9 @@
         appendTo="body"
         placeholder="jj/mm/aaaa">
       </p-calendar>
-      <small *ngIf="cloturerForm.get('dateDeMainLevee')?.invalid && cloturerForm.get('dateDeMainLevee')?.touched"
-             class="text-red-500">La date de main levée est obligatoire.</small>
+      @if (cloturerForm.get('dateDeMainLevee')?.invalid && cloturerForm.get('dateDeMainLevee')?.touched) {
+        <small class="text-red-500">La date de main levée est obligatoire.</small>
+      }
     </div>
     <div class="flex align-items-center gap-2 p-3 border-round surface-100 text-sm text-color-secondary">
       <i class="pi pi-info-circle text-primary"></i>
@@ -86,15 +89,14 @@
       <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none p-0"
                     [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
               <span class="text-400 text-xs ml-1">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -166,14 +168,13 @@
         [style]="{'min-width':'165px'}">
         <ng-template let-marche pTemplate="item">
           <div class="flex align-items-center gap-2" style="height:38px">
-            <ng-container *ngIf="marche?.label; else loadingTmpl">
+            @if (marche?.label) {
               <i class="pi pi-file text-400 text-xs"></i>
               <span class="text-sm">{{ marche.label }}</span>
-            </ng-container>
-            <ng-template #loadingTmpl>
+            } @else {
               <i class="pi pi-spin pi-spinner text-400 text-xs"></i>
               <span class="text-400 text-xs italic">Chargement…</span>
-            </ng-template>
+            }
           </div>
         </ng-template>
       </p-dropdown>
@@ -288,12 +289,11 @@
           <td class="text-right">{{ caution.montant | number:'1.2-2' }}</td>
           <td class="text-600 text-sm">{{ caution.dateDePrise | date:'dd/MM/yyyy' }}</td>
           <td class="text-600 text-sm">
-            <ng-container *ngIf="caution.dateDeMainLevee; else pasDeDate">
+            @if (caution.dateDeMainLevee) {
               {{ caution.dateDeMainLevee | date:'dd/MM/yyyy' }}
-            </ng-container>
-            <ng-template #pasDeDate>
+            } @else {
               <span class="text-400">—</span>
-            </ng-template>
+            }
           </td>
           <td class="text-right">{{ caution.taux | number:'1.2-2' }} %</td>
           <td class="text-center">
@@ -305,24 +305,25 @@
           </td>
           <td>
             <div class="flex align-items-center justify-content-center gap-1">
-              <button *ngIf="caution.actif"
-                      pButton pRipple icon="pi pi-pencil"
-                      class="p-button-rounded p-button-text p-button-info p-button-sm"
-                      [routerLink]="['/portail/cautions/edit', caution.id]"
-                      pTooltip="Modifier" tooltipPosition="top">
-              </button>
-              <button *ngIf="caution.actif"
-                      pButton pRipple icon="pi pi-lock"
-                      class="p-button-rounded p-button-text p-button-warning p-button-sm"
-                      (click)="ouvrirCloturerDialog(caution)"
-                      pTooltip="Clôturer" tooltipPosition="top">
-              </button>
-              <button *ngIf="caution.actif"
-                      pButton pRipple icon="pi pi-trash"
-                      class="p-button-rounded p-button-text p-button-danger p-button-sm"
-                      (click)="supprimer(caution)"
-                      pTooltip="Supprimer" tooltipPosition="top">
-              </button>
+              @if (caution.actif) {
+                <button pButton pRipple icon="pi pi-pencil"
+                        class="p-button-rounded p-button-text p-button-info p-button-sm"
+                        [routerLink]="['/portail/cautions/edit', caution.id]"
+                        pTooltip="Modifier" tooltipPosition="top">
+                </button>
+                <button pButton pRipple icon="pi pi-lock"
+                        class="p-button-rounded p-button-text p-button-warning p-button-sm"
+                        (click)="ouvrirCloturerDialog(caution)"
+                        pTooltip="Clôturer" tooltipPosition="top">
+                </button>
+                @if (isSystemAdmin) {
+                  <button pButton pRipple icon="pi pi-trash"
+                          class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                          (click)="supprimer(caution)"
+                          pTooltip="Supprimer" tooltipPosition="top">
+                  </button>
+                }
+              }
             </div>
           </td>
         </tr>

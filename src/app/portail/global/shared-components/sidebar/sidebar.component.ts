@@ -170,10 +170,11 @@ export class SidebarComponent implements OnInit {
     {
       label: 'Les Cautions',
       icon: 'pi pi-shield',
+      requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
       items: [
-        { label: 'Liste des cautions',       icon: 'pi pi-list',        routerLink: '/portail/cautions'              },
-        { label: 'Commissions sur cautions', icon: 'pi pi-percentage',  routerLink: '/portail/cautions/commissions'  },
-        { label: 'TVA sur cautions',         icon: 'pi pi-receipt',     routerLink: '/portail/cautions/tva'          },
+        { label: 'Liste des cautions',       icon: 'pi pi-list',        routerLink: '/portail/cautions',              requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'Commissions sur cautions', icon: 'pi pi-percentage',  routerLink: '/portail/cautions/commissions',  requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: 'TVA sur cautions',         icon: 'pi pi-receipt',     routerLink: '/portail/cautions/tva',          requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
       ],
     },
     { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions' },
@@ -201,6 +202,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Configuration leasing', icon: 'pi pi-sliders-h', routerLink: '/portail/admin/leasing-config'    },
         { label: 'Configuration CMT',     icon: 'pi pi-sliders-h', routerLink: '/portail/admin/cmt-config'        },
         { label: 'Configuration Lignes Fonctionnelles', icon: 'pi pi-sliders-h', routerLink: '/portail/admin/lignes-fonctionnelles-config' },
+        { label: 'Commissions sur cautions', icon: 'pi pi-percentage', routerLink: '/portail/admin/caution-commission-config' },
       ]
     },
     {

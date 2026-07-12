@@ -12,15 +12,14 @@
     <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none p-0"
                   [style]="{'background':'transparent','padding':'0','font-size':'0.78rem'}">
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
+        @if (item.route) {
           <a [routerLink]="item.route" class="p-menuitem-link">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-400', 'text-xs']"></span>
             <span class="text-400 text-xs ml-1">{{ item.label }}</span>
           </a>
-        </ng-container>
-        <ng-template #elseBlock>
+        } @else {
           <span class="text-500 text-xs font-semibold">{{ item.label }}</span>
-        </ng-template>
+        }
       </ng-template>
     </p-breadcrumb>
   </div>
@@ -47,10 +46,11 @@
             placeholder="Choisir une banque"
             appendTo="body">
           </p-dropdown>
-          <small class="p-error"
-                 *ngIf="f['banqueId'].touched && f['banqueId'].errors?.['required']">
-            Obligatoire.
-          </small>
+          @if (f['banqueId'].touched && f['banqueId'].errors?.['required']) {
+            <small class="p-error">
+              Obligatoire.
+            </small>
+          }
         </div>
 
         <!-- Nature -->
@@ -68,16 +68,17 @@
             placeholder="Choisir une nature"
             appendTo="body">
           </p-dropdown>
-          <small class="p-error"
-                 *ngIf="f['natureId'].touched && f['natureId'].errors?.['required']">
-            Obligatoire.
-          </small>
+          @if (f['natureId'].touched && f['natureId'].errors?.['required']) {
+            <small class="p-error">
+              Obligatoire.
+            </small>
+          }
         </div>
 
         <!-- Marché (virtual scroll + lazy) -->
         <div class="col-12 md:col-6 lg:col-4">
           <label class="font-semibold block mb-2 text-700 text-sm">
-            Marché <span class="text-red-500" *ngIf="marcheRequired">*</span>
+            Marché @if (marcheRequired) { <span class="text-red-500">*</span> }
           </label>
           <p-dropdown
             formControlName="marcheId"
@@ -96,21 +97,21 @@
             appendTo="body">
             <ng-template pTemplate="item" let-marche>
               <div class="flex align-items-center gap-2" style="height:38px">
-                <ng-container *ngIf="marche?.label; else loadingTmpl">
+                @if (marche?.label) {
                   <i class="pi pi-file text-400 text-xs"></i>
                   <span class="text-sm">{{ marche.label }}</span>
-                </ng-container>
-                <ng-template #loadingTmpl>
+                } @else {
                   <i class="pi pi-spin pi-spinner text-400 text-xs"></i>
                   <span class="text-400 text-xs italic">Chargement…</span>
-                </ng-template>
+                }
               </div>
             </ng-template>
           </p-dropdown>
-          <small class="p-error"
-                 *ngIf="f['marcheId'].touched && f['marcheId'].errors?.['required']">
-            Obligatoire.
-          </small>
+          @if (f['marcheId'].touched && f['marcheId'].errors?.['required']) {
+            <small class="p-error">
+              Obligatoire.
+            </small>
+          }
         </div>
 
         <!-- N° Caution -->
@@ -120,14 +121,16 @@
           </label>
           <input pInputText formControlName="numeroCaution"
                  placeholder="Ex: CAU-2024-001" />
-          <small class="p-error"
-                 *ngIf="f['numeroCaution'].touched && f['numeroCaution'].errors?.['required']">
-            Obligatoire.
-          </small>
-          <small class="p-error"
-                 *ngIf="f['numeroCaution'].touched && f['numeroCaution'].errors?.['maxlength']">
-            100 caractères maximum.
-          </small>
+          @if (f['numeroCaution'].touched && f['numeroCaution'].errors?.['required']) {
+            <small class="p-error">
+              Obligatoire.
+            </small>
+          }
+          @if (f['numeroCaution'].touched && f['numeroCaution'].errors?.['maxlength']) {
+            <small class="p-error">
+              100 caractères maximum.
+            </small>
+          }
         </div>
 
         <!-- Date de prise -->
@@ -142,10 +145,11 @@
             [showIcon]="true"
             appendTo="body">
           </p-calendar>
-          <small class="p-error"
-                 *ngIf="f['dateDePrise'].touched && f['dateDePrise'].errors?.['required']">
-            Obligatoire.
-          </small>
+          @if (f['dateDePrise'].touched && f['dateDePrise'].errors?.['required']) {
+            <small class="p-error">
+              Obligatoire.
+            </small>
+          }
         </div>
 
         <!-- Date de main levée -->
@@ -169,10 +173,11 @@
             Organisme <span class="text-red-500">*</span>
           </label>
           <input pInputText formControlName="organisme" placeholder="Bénéficiaire" />
-          <small class="p-error"
-                 *ngIf="f['organisme'].touched && f['organisme'].errors?.['required']">
-            Obligatoire.
-          </small>
+          @if (f['organisme'].touched && f['organisme'].errors?.['required']) {
+            <small class="p-error">
+              Obligatoire.
+            </small>
+          }
         </div>
 
         <!-- Montant -->
@@ -186,14 +191,16 @@
             [minFractionDigits]="2"
             placeholder="0.00">
           </p-inputNumber>
-          <small class="p-error"
-                 *ngIf="f['montant'].touched && f['montant'].errors?.['required']">
-            Obligatoire.
-          </small>
-          <small class="p-error"
-                 *ngIf="f['montant'].touched && f['montant'].errors?.['min']">
-            Le montant doit être supérieur à 0.
-          </small>
+          @if (f['montant'].touched && f['montant'].errors?.['required']) {
+            <small class="p-error">
+              Obligatoire.
+            </small>
+          }
+          @if (f['montant'].touched && f['montant'].errors?.['min']) {
+            <small class="p-error">
+              Le montant doit être supérieur à 0.
+            </small>
+          }
         </div>
 
         <!-- Taux -->
@@ -208,18 +215,21 @@
             suffix=" %"
             placeholder="0.000000">
           </p-inputNumber>
-          <small class="p-error"
-                 *ngIf="f['taux'].touched && f['taux'].errors?.['required']">
-            Obligatoire.
-          </small>
-          <small class="p-error"
-                 *ngIf="f['taux'].touched && f['taux'].errors?.['min']">
-            Le taux doit être ≥ 0.
-          </small>
-          <small class="p-error"
-                 *ngIf="f['taux'].touched && f['taux'].errors?.['max']">
-            Le taux doit être ≤ 100.
-          </small>
+          @if (f['taux'].touched && f['taux'].errors?.['required']) {
+            <small class="p-error">
+              Obligatoire.
+            </small>
+          }
+          @if (f['taux'].touched && f['taux'].errors?.['min']) {
+            <small class="p-error">
+              Le taux doit être ≥ 0.
+            </small>
+          }
+          @if (f['taux'].touched && f['taux'].errors?.['max']) {
+            <small class="p-error">
+              Le taux doit être ≤ 100.
+            </small>
+          }
         </div>
 
         <!-- Désignation -->
@@ -229,10 +239,11 @@
           </label>
           <textarea pInputTextarea formControlName="designation" rows="3"
                     placeholder="Description de la caution…"></textarea>
-          <small class="p-error"
-                 *ngIf="f['designation'].touched && f['designation'].errors?.['required']">
-            Obligatoire.
-          </small>
+          @if (f['designation'].touched && f['designation'].errors?.['required']) {
+            <small class="p-error">
+              Obligatoire.
+            </small>
+          }
         </div>
 
       </div><!-- /grid -->

@@ -37,9 +37,11 @@
           filterPlaceholder="Rechercher..."
           styleClass="w-full"
           [ngClass]="{ 'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched }" />
-        <small *ngIf="f['banqueId'].invalid && f['banqueId'].touched" class="p-error">
-          La banque est requise.
-        </small>
+        @if (f['banqueId'].invalid && f['banqueId'].touched) {
+          <small class="p-error">
+            La banque est requise.
+          </small>
+        }
       </div>
 
       <!-- Date d'émission -->
@@ -53,9 +55,11 @@
           [showIcon]="true"
           styleClass="w-full"
           [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }" />
-        <small *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched" class="p-error">
-          La date d'émission est requise.
-        </small>
+        @if (f['dateEmission'].invalid && f['dateEmission'].touched) {
+          <small class="p-error">
+            La date d'émission est requise.
+          </small>
+        }
       </div>
 
 
@@ -73,9 +77,11 @@
           placeholder="0.00"
           styleClass="w-full"
           [ngClass]="{ 'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched }" />
-        <small *ngIf="f['montant'].invalid && f['montant'].touched" class="p-error">
-          Le montant est requis et doit être supérieur à 0.
-        </small>
+        @if (f['montant'].invalid && f['montant'].touched) {
+          <small class="p-error">
+            Le montant est requis et doit être supérieur à 0.
+          </small>
+        }
       </div>
 
       <!-- Libellé -->
@@ -92,9 +98,11 @@
           [ngClass]="{ 'ng-invalid ng-dirty': f['libelle'].invalid && f['libelle'].touched }" >
         </textarea>
 
-        <small *ngIf="f['libelle'].invalid && f['libelle'].touched" class="p-error">
-          Le libellé est requis.
-        </small>
+        @if (f['libelle'].invalid && f['libelle'].touched) {
+          <small class="p-error">
+            Le libellé est requis.
+          </small>
+        }
       </div>
 
 

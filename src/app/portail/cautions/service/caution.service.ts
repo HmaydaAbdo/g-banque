@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -21,9 +21,9 @@ import { PageResponse }            from '../../global/types/PageResponse';
 @Injectable({ providedIn: 'root' })
 export class CautionService {
 
-  private readonly apiUrl = `${environment.apiUrl}cautions`;
+  private readonly http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  private readonly apiUrl = `${environment.apiUrl}cautions`;
 
   // ── État réactif ──────────────────────────────────────────────────────────
 

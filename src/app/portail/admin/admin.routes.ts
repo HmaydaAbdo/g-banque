@@ -41,5 +41,10 @@ export const ADMIN_ROUTES: Routes = [
     path: 'lignes-fonctionnelles-config',
     loadComponent: () => import('./lignes-fonctionnelles-config/views/ligne-fonctionnelle-config/ligne-fonctionnelle-config.component')
       .then(m => m.LigneFonctionnelleConfigComponent)
+  },
+  {
+    path: 'caution-commission-config',
+    loadComponent: () => import('./caution-commission-config/views/caution-commission-config-list/caution-commission-config-list.component')
+      .then(m => m.CautionCommissionConfigListComponent)
   }
 ];

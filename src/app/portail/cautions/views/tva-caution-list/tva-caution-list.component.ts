@@ -67,7 +67,7 @@ export class TvaCautionListComponent implements OnInit {
   loading          = false;
   selectAllLoading = false;
 
-  readonly isAdmin = this.authService.isAdmin();
+  readonly isAdmin = this.authService.isSystemAdmin();
 
   /**
    * Sélection persistante cross-pages.

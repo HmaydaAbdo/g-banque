@@ -73,7 +73,7 @@ export class CommissionCautionListComponent implements OnInit {
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting        = false;
 
-  readonly isAdmin = this.authService.isAdmin();
+  readonly isAdmin = this.authService.isSystemAdmin();
 
   /**
    * Sélection persistante cross-pages.
