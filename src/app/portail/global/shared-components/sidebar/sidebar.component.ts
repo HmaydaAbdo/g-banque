@@ -111,35 +111,40 @@ export class SidebarComponent implements OnInit {
     {
       label: 'Les moyens de paiement',
       icon: 'pi pi-credit-card',
+      requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
       items: [
         {
           label: 'Chèques', icon: 'pi pi-arrow-right-arrow-left',
+          requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
           items: [
-            { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/Cheques/encaissements' },
-            { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/Cheques/decaissements' },
+            { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/Cheques/encaissements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+            { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/Cheques/decaissements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
           ]
         },
         {
           label: 'LCN', icon: 'pi pi-file-o',
+          requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
           items: [
-            { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/LCN/encaissements' },
-            { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/LCN/decaissements' },
+            { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/LCN/encaissements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+            { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/LCN/decaissements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
           ]
         },
         {
           label: 'Virements nationaux', icon: 'pi pi-arrow-right-arrow-left',
+          requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
           items: [
-            { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/Virements/encaissement' },
-            { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/Virements/decaissement' },
+            { label: "Encaissements", icon: 'pi pi-plus-circle', routerLink: '/portail/Virements/encaissement', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+            { label: "Décaissements", icon: 'pi pi-minus-circle', routerLink: '/portail/Virements/decaissement', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
           ]
         },
         {
           label: 'Virements internationaux',
           icon: 'pi pi-globe',
           routerLink: '/portail/virements-internationaux',
+          requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
         },
 
-        { label: 'Mises à disposition (Décaissements)', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Mise-a-disposition/decaissement' }
+        { label: 'Mises à disposition (Décaissements)', icon: 'pi pi-arrow-right-arrow-left', routerLink: '/portail/Mise-a-disposition/decaissement', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] }
       ]
     },
     {
@@ -172,7 +177,7 @@ export class SidebarComponent implements OnInit {
       ],
     },
     { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions' },
-    { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements' },
+    { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire' },
     { label: "Les Restitutions", icon: "pi pi-list", routerLink: '/portail/restitutions' },
     { label: "Impôts et Taxes", icon: "pi pi-list", routerLink: '/portail/impots-taxes' },

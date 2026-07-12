@@ -7,17 +7,16 @@
     <div class="flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
               <span class="text-black-alpha-90 p-2 font-bold text-sm">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <a [href]="item.url">
               <span class="text-color text-sm text-center">{{ item.label }}</span>
             </a>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -132,17 +131,17 @@
             </p-tag>
           </td>
           <td class="flex flex-row align-items-center gap-2">
-            <p-inputSwitch
-              [ngModel]="mad.statut === StatutMoyenPaiement.ENCOURS"
-              [disabled]="mad.statut === StatutMoyenPaiement.ANNULE"
-              (onChange)="confirmToggleStatus(mad)">
-            </p-inputSwitch>
             <button pButton pRipple icon="pi pi-pencil"
                     class="p-button-rounded p-button-outlined p-button-secondary"
                     [disabled]="mad.statut === StatutMoyenPaiement.REGLE"
                     [routerLink]="['/portail/Mise-a-disposition/edit', mad.id]">
             </button>
             @if (isAdmin) {
+              <p-inputSwitch
+                [ngModel]="mad.statut === StatutMoyenPaiement.ENCOURS"
+                [disabled]="mad.statut === StatutMoyenPaiement.ANNULE"
+                (onChange)="confirmToggleStatus(mad)">
+              </p-inputSwitch>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
                       [disabled]="mad.statut === StatutMoyenPaiement.REGLE"

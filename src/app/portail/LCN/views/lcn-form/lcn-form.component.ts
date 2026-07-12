@@ -6,7 +6,7 @@ import {ConfirmDialogModule} from "primeng/confirmdialog";
 import {DropdownModule} from "primeng/dropdown";
 import {InputNumberModule} from "primeng/inputnumber";
 import {InputTextModule} from "primeng/inputtext";
-import {NgClass, NgIf,Location} from "@angular/common";
+import {NgClass, Location} from "@angular/common";
 import {PaginatorModule} from "primeng/paginator";
 import {MenuItem, MessageService, PrimeTemplate} from "primeng/api";
 import {ProgressSpinnerModule} from "primeng/progressspinner";
@@ -35,7 +35,6 @@ import { toLocalDateString, parseLocalDate } from '../../../global/types/date.ut
     DropdownModule,
     InputNumberModule,
     InputTextModule,
-    NgIf,
     PaginatorModule,
     PrimeTemplate,
     ProgressSpinnerModule,

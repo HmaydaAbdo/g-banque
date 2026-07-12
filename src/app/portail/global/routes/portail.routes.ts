@@ -74,7 +74,7 @@ export const PORTAIL_ROUTES: Routes = [
   { path: "factoring-encours/:lineId", loadComponent: () => import('../../factoring/LignesFactoring/SuivieDesLignes/views/validated-factoring.component').then(m => m.ValidatedFactoringComponent) },
   { path: "prefi-encours/:lineId", loadComponent: () => import('../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component').then(m => m.ValidatedPrefiComponent) },
   { path: "dc-encours/:lineId", loadComponent: () => import('../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component').then(m => m.ValidatedDcComponent) },
-  { path: "lcn-encours/:lineId", loadComponent: () => import('../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component').then(m => m.LcnEscompteByLineComponent) },
+  { path: "lcn-encours/:lineId", canActivate: [departmentGuard('Finance')], loadComponent: () => import('../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component').then(m => m.LcnEscompteByLineComponent) },
   { path: 'leasing',
     loadChildren: () => import('../../leasing/route/leasing-routing.module').then(m => m.LEASING_FEATURE_ROUTES) },
 

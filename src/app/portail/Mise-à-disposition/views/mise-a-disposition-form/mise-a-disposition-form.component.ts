@@ -59,7 +59,7 @@ export class MiseADispositionFormComponent implements OnInit {
 
   items: MenuItem[] = [
     { label: 'Accueil', routerLink: '/portail' },
-    { label: 'Mise à dispositions  ( Encaissements )', routerLink: '/portail/Mise-a-disposition/encaissement' },
+    { label: 'Mise à dispositions  ( Encaissements )', routerLink: '/portail/Mise-a-disposition/decaissement' },
   ];
 
   constructor(
@@ -150,7 +150,7 @@ export class MiseADispositionFormComponent implements OnInit {
         console.error('Erreur lors du chargement de la mise à disposition:', err);
         this.loading = false;
         // Redirection en cas d'erreur de chargement
-        this.router.navigate(['/portail/Mise-a-disposition/encaissement']);
+        this.router.navigate(['/portail/Mise-a-disposition/decaissement']);
       }
     });
   }
@@ -200,12 +200,16 @@ export class MiseADispositionFormComponent implements OnInit {
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: successMessage });
         // Rediriger après un petit délai
-        this.router.navigate(['/portail/Mise-a-disposition/encaissement'])
+        this.router.navigate(['/portail/Mise-a-disposition/decaissement'])
       },
       error: (err) => {
         console.error('Erreur lors de l\'enregistrement de la mise à disposition:', err);
         this.loading = false;
       }
     });
+  }
+
+  cancel(): void {
+    this.router.navigate(['/portail/Mise-a-disposition/decaissement']);
   }
 }

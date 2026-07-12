@@ -7,18 +7,17 @@
     <div class="flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
                #rla="routerLinkActive">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
               <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <a [href]="item.url">
               <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
             </a>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -107,12 +106,14 @@
 
       <ng-template pTemplate="header" let-columns>
         <tr class="white-space-nowrap">
-          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
-            {{ col.header }}
-            @if (col.sortable) {
-              <p-sortIcon [field]="col.field"></p-sortIcon>
-            }
-          </th>
+          @for (col of columns; track col.field) {
+            <th [pSortableColumn]="col.sortable ? col.field : null">
+              {{ col.header }}
+              @if (col.sortable) {
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+              }
+            </th>
+          }
           <th style="width: 8rem;">Actions</th>
         </tr>
       </ng-template>
@@ -132,6 +133,7 @@
           <td class="flex flex-row align-items-center gap-2">
             <button pButton pRipple icon="pi pi-pencil"
                     class="p-button-rounded p-button-outlined p-button-secondary mr-2"
+                    [disabled]="prelevement.status === Status.PAYE"
                     [routerLink]="['/portail/prelevements/edit', prelevement.id]"></button>
 
             @if (isAdmin()) {
@@ -142,6 +144,7 @@
               ></p-inputSwitch>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="prelevement.status === Status.PAYE"
                       (click)="deletePrelevement(prelevement)"></button>
             }
           </td>

@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
-import { CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
@@ -44,8 +44,6 @@ import { AuthService } from "../../../../auth/services/auth.service";
     DatePipe,
     DecimalPipe,
     NgClass,
-    NgFor,
-    NgIf,
     InputTextModule,
     TagModule,
     ToolbarModule,

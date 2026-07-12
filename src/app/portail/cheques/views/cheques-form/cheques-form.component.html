@@ -18,86 +18,112 @@
 
   <p class="text-center font-bold">{{ isEditMode ? 'Modifier un Chèque' : 'Ajouter un Chèque' }}</p>
 
-  <div *ngIf="loading" class="flex justify-content-center my-5">
-    <p-progressSpinner></p-progressSpinner>
-  </div>
-
-  <form [formGroup]="chequeForm" (ngSubmit)="saveCheque()" *ngIf="!loading && chequeForm">
-    <div class="p-fluid formgrid grid">
-
-      <div class="col-12 md:col-6 field">
-        <label for="numero">numero <span class="p-text-danger">*</span></label>
-        <input type="text" pInputText id="numero" formControlName="numero" />
-        <small class="p-error" *ngIf="f['numero'].invalid && f['numero'].touched">
-          <span *ngIf="f['numero'].errors?.['numero']">numero est obligatoire.</span>
-        </small>
-      </div>
-
-      <div class="col-12 md:col-6 field">
-        <label for="banqueId">Banque d'encaissement <span class="p-text-danger">*</span></label>
-        <p-dropdown
-          formControlName="banqueId"
-          [options]="banques"
-          optionLabel="nom"
-          optionValue="id"
-          placeholder="Sélectionner une banque"
-          [filter]="true"
-          filterBy="nom"
-          [virtualScroll]="true"
-          [lazy]="true"
-          [virtualScrollItemSize]="38"
-          (onLazyLoad)="loadBanques($event)"/>
-        <small class="p-error" *ngIf="f['banqueId'].invalid && f['banqueId'].touched">
-          <span *ngIf="f['banqueId'].errors?.['required']">La banque  est obligatoire.</span>
-        </small>
-      </div>
-
-      <div class="col-12 md:col-6 field">
-        <label for="dateEmission">Date d'Émission <span class="p-text-danger">*</span></label>
-        <p-calendar id="dateEmission"  formControlName="dateEmission"  dateFormat="dd/mm/yy"
-                    [showOnFocus]="false"  appendTo="body"  [showIcon]="true" placeholder="JJ/MM/YYYY"></p-calendar>
-        <small class="p-error" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">
-          <span *ngIf="f['dateEmission'].errors?.['required']">La date d'émission est obligatoire.</span>
-        </small>
-      </div>
-
-      <div class="col-12 md:col-6 field">
-        <label for="dateEcheance">Date d'Échéance</label>
-        <p-calendar id="dateEcheance" formControlName="dateEcheance"  dateFormat="dd/mm/yy"   appendTo="body"  [showIcon]="true"  [showOnFocus]="false" placeholder="JJ/MM/YYYY"></p-calendar>
-      </div>
-
-      <div class="col-12 md:col-6 field">
-        <label for="montant">Montant <span class="p-text-danger">*</span></label>
-        <p-inputNumber id="montant" formControlName="montant" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" inputId="decimal" suffix=" MAD"></p-inputNumber>
-        <small class="p-error" *ngIf="f['montant'].invalid && f['montant'].touched">
-          <span *ngIf="f['montant'].errors?.['required']">Le montant est obligatoire.</span>
-          <span *ngIf="f['montant'].errors?.['min']">Le montant doit être supérieur à zéro.</span>
-        </small>
-      </div>
-
-      <div class="col-12 md:col-6 field">
-        <label for="emetteur">Émetteur <span class="p-text-danger">*</span></label>
-        <input type="text" pInputText id="emetteur" formControlName="emetteur" />
-        <small class="p-error" *ngIf="f['emetteur'].invalid && f['emetteur'].touched">
-          <span *ngIf="f['emetteur'].errors?.['required']">L'émetteur est obligatoire.</span>
-        </small>
-      </div>
-
-      <div class="col-12 md:col-6 field">
-        <label for="beneficiaire">Bénéficiaire</label>
-        <input type="text" pInputText id="beneficiaire" formControlName="beneficiaire" />
-      </div>
-
-      <div class="col-12 md:col-6 field">
-        <label for="type">Type de Chèque</label>
-        <input type="text" pInputText id="type" formControlName="type" />
-      </div>
-
+  @if (loading) {
+    <div class="flex justify-content-center my-5">
+      <p-progressSpinner></p-progressSpinner>
     </div>
+  }
 
-    <div class="col-12 flex justify-content-end gap-2 mt-4">
-      <button pButton pRipple label="Annuler" size="small" icon="pi pi-times" [routerLink]="['/portail/Cheques/encaissements']" type="button" severity="secondary"></button>
-      <button pButton pRipple label="Enregistrer" size="small" icon="pi pi-check" type="submit" [disabled]="loading || chequeForm.invalid"></button>
-    </div>
-  </form>
+  @if (!loading && chequeForm) {
+    <form [formGroup]="chequeForm" (ngSubmit)="saveCheque()">
+      <div class="p-fluid formgrid grid">
+
+        <div class="col-12 md:col-6 field">
+          <label for="numero">numero <span class="p-text-danger">*</span></label>
+          <input type="text" pInputText id="numero" formControlName="numero" />
+          @if (f['numero'].invalid && f['numero'].touched) {
+            <small class="p-error">
+              @if (f['numero'].errors?.['numero']) {
+                <span>numero est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="banqueId">Banque d'encaissement <span class="p-text-danger">*</span></label>
+          <p-dropdown
+            formControlName="banqueId"
+            [options]="banques"
+            optionLabel="nom"
+            optionValue="id"
+            placeholder="Sélectionner une banque"
+            [filter]="true"
+            filterBy="nom"
+            [virtualScroll]="true"
+            [lazy]="true"
+            [virtualScrollItemSize]="38"
+            (onLazyLoad)="loadBanques($event)"/>
+          @if (f['banqueId'].invalid && f['banqueId'].touched) {
+            <small class="p-error">
+              @if (f['banqueId'].errors?.['required']) {
+                <span>La banque  est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="dateEmission">Date d'Émission <span class="p-text-danger">*</span></label>
+          <p-calendar id="dateEmission"  formControlName="dateEmission"  dateFormat="dd/mm/yy"
+                      [showOnFocus]="false"  appendTo="body"  [showIcon]="true" placeholder="JJ/MM/YYYY"></p-calendar>
+          @if (f['dateEmission'].invalid && f['dateEmission'].touched) {
+            <small class="p-error">
+              @if (f['dateEmission'].errors?.['required']) {
+                <span>La date d'émission est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="dateEcheance">Date d'Échéance</label>
+          <p-calendar id="dateEcheance" formControlName="dateEcheance"  dateFormat="dd/mm/yy"   appendTo="body"  [showIcon]="true"  [showOnFocus]="false" placeholder="JJ/MM/YYYY"></p-calendar>
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="montant">Montant <span class="p-text-danger">*</span></label>
+          <p-inputNumber id="montant" formControlName="montant" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" inputId="decimal" suffix=" MAD"></p-inputNumber>
+          @if (f['montant'].invalid && f['montant'].touched) {
+            <small class="p-error">
+              @if (f['montant'].errors?.['required']) {
+                <span>Le montant est obligatoire.</span>
+              }
+              @if (f['montant'].errors?.['min']) {
+                <span>Le montant doit être supérieur à zéro.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="emetteur">Émetteur <span class="p-text-danger">*</span></label>
+          <input type="text" pInputText id="emetteur" formControlName="emetteur" />
+          @if (f['emetteur'].invalid && f['emetteur'].touched) {
+            <small class="p-error">
+              @if (f['emetteur'].errors?.['required']) {
+                <span>L'émetteur est obligatoire.</span>
+              }
+            </small>
+          }
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="beneficiaire">Bénéficiaire</label>
+          <input type="text" pInputText id="beneficiaire" formControlName="beneficiaire" />
+        </div>
+
+        <div class="col-12 md:col-6 field">
+          <label for="type">Type de Chèque</label>
+          <input type="text" pInputText id="type" formControlName="type" />
+        </div>
+
+      </div>
+
+      <div class="col-12 flex justify-content-end gap-2 mt-4">
+        <button pButton pRipple label="Annuler" size="small" icon="pi pi-times" [routerLink]="['/portail/Cheques/encaissements']" type="button" severity="secondary"></button>
+        <button pButton pRipple label="Enregistrer" size="small" icon="pi pi-check" type="submit" [disabled]="loading || chequeForm.invalid"></button>
+      </div>
+    </form>
+  }
 </div>
