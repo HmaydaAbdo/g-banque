@@ -1,6 +1,8 @@
 package staport.finance.gBanque.cautions.commissions.strategy.impl;
 
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.cautions.commissions.config.dtos.response.CautionCommissionConfigResponseDTO;
+import staport.finance.gBanque.cautions.commissions.config.services.interfaces.ICautionCommissionConfigService;
 import staport.finance.gBanque.cautions.commissions.strategy.CommissionCautionStrategie;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.entities.Commission;
@@ -22,11 +24,14 @@ import java.time.temporal.ChronoUnit;
  *   <li>Date d'émission = dernier jour du mois de référence</li>
  *   <li>Libellé = {@code "caution " + nature.code + " N° " + numeroCaution}</li>
  *   <li>Motif = {@code "CAUTION"} (stocké dans {@code observation})</li>
- *   <li>Montant HT = {@code (montant × taux × nombreJours) / 36000}
- *       où {@code taux} est en pourcentage (ex : 1.25 pour 1,25 %)
- *       et {@code nombreJours} = nombre de jours calendaires du mois de référence</li>
+ *   <li>Montant HT = {@code (montant × taux × nombreJours) / diviseur}
+ *       où {@code taux} est en pourcentage (ex : 1.25 pour 1,25 %), {@code nombreJours} = nombre
+ *       de jours calendaires du mois de référence, et {@code diviseur} est résolu via
+ *       {@link ICautionCommissionConfigService} (base conventionnelle bancaire habituelle :
+ *       36000)</li>
  *   <li>Arrondi : HALF_UP, 2 décimales</li>
- *   <li>Minimum : 20,00 MAD</li>
+ *   <li>Minimum : résolu via {@link ICautionCommissionConfigService} (paramétrable par banque,
+ *       administrable via l'UI — {@code conventions/configuration.md})</li>
  *   <li>TVA non générée séparément (default genererTva = false)</li>
  *   <li>Prorata d'entrée géré par le <strong>batch</strong> (pas à la création) —
  *       {@code supporteProrataEntree() = false}</li>
@@ -38,14 +43,11 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
 
     private static final String NOM_BANQUE = "AWB";
 
-    /** Minimum applicable sur le montant HT. */
-    private static final BigDecimal MIN_COMMISSION_HT = new BigDecimal("20");
+    private final ICautionCommissionConfigService commissionConfigService;
 
-    /**
-     * Diviseur = 360 × 100 — le facteur 360 est la base conventionnelle bancaire,
-     * le facteur 100 convertit le taux de pourcentage vers décimal.
-     */
-    private static final BigDecimal DIVISEUR = new BigDecimal("36000");
+    public AwbCommissionCautionStrategie(ICautionCommissionConfigService commissionConfigService) {
+        this.commissionConfigService = commissionConfigService;
+    }
 
     @Override
     public String nomBanque() {
@@ -118,19 +120,23 @@ public class AwbCommissionCautionStrategie implements CommissionCautionStrategie
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
-     * Formule commune : (montant × taux × jours) / 36000, minimum 20 MAD.
+     * Formule commune : (montant × taux × jours) / diviseur, avec seuil minimum —
+     * les deux paramètres sont résolus via {@link ICautionCommissionConfigService}.
      * Le suffixe précise le mode de calcul dans le libellé
      * (ex. " — Prorata entrée : 17 j", " — Mois entier : 31 j").
      */
     private Commission buildCommission(Caution caution, long nombreJours,
                                        LocalDate dateEmission, String suffixeLibelle) {
+        CautionCommissionConfigResponseDTO config =
+                commissionConfigService.resolveOuLeverException(caution.getBanque().getNom());
+
         BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
-                .divide(DIVISEUR, 2, RoundingMode.HALF_UP);
+                .divide(config.diviseur(), 2, RoundingMode.HALF_UP);
 
-        if (montantCommission.compareTo(MIN_COMMISSION_HT) < 0) {
-            montantCommission = MIN_COMMISSION_HT;
+        if (montantCommission.compareTo(config.montantMinimum()) < 0) {
+            montantCommission = config.montantMinimum();
         }
 
         String libelle = "caution " + caution.getNature().getCode()

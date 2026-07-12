@@ -25,7 +25,7 @@ import java.util.List;
 
 @Service
 @Transactional
-public class MarcheService {
+public class MarcheService implements IMarcheService {
 
     private static final Logger logger = LoggerFactory.getLogger(MarcheService.class);
 

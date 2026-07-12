@@ -3,10 +3,15 @@ package staport.finance.gBanque.commision.service;
 import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Optional;
+
 /**
  * Interface publique du module commission.
- * Exposée aux modules tiers (ex : leasing) pour éviter toute dépendance directe
- * sur la classe concrète {@link CommissionService}.
+ * Exposée aux modules tiers (ex : leasing, cautions) pour éviter toute dépendance directe
+ * sur la classe concrète {@link CommissionService} ou sur {@code CommisionRepository}
+ * (encapsulation des domaines, architecture.md).
  */
 public interface ICommissionService {
 
@@ -26,4 +31,32 @@ public interface ICommissionService {
      * @param numeroContrat Le numéro du contrat de leasing
      */
     void deleteCommissionsByContratLeasing(String numeroContrat);
+
+    // ── Façade dédiée aux commissions générées automatiquement sur caution ─────
+
+    /**
+     * Crée et persiste une commission rattachée à une caution (prorata d'entrée, mensuelle,
+     * ou de clôture) — façade pour le module {@code cautions}, qui ne doit jamais injecter
+     * {@code CommisionRepository} directement.
+     */
+    CommissionResponseDto creerCommissionCaution(Long cautionId, Long banqueId, BigDecimal montant,
+            LocalDate dateEmission, String libelle, String observation);
+
+    /** Garde d'idempotence : une commission existe déjà pour cette caution à cette date exacte. */
+    boolean existsByCautionAndDateEmission(Long cautionId, LocalDate dateEmission);
+
+    /** Garde d'idempotence : une commission existe déjà pour cette caution dans cette période. */
+    boolean existsByCautionAndDateEmissionBetween(Long cautionId, LocalDate debutPeriode, LocalDate finPeriode);
+
+    /**
+     * Récupère la commission {@code PREVU} d'une caution à une date d'émission exacte —
+     * utilisé à la clôture pour retrouver le prorata d'entrée non encore validé.
+     */
+    Optional<CommissionResponseDto> findPrevuByCautionAndDateEmission(Long cautionId, LocalDate dateEmission);
+
+    /**
+     * Supprime une commission par ID. Si la commission est liée à une caution
+     * ({@code operation = CAUTION}), la TVA éventuellement rattachée est supprimée en cascade.
+     */
+    void deleteCommission(Long id);
 }

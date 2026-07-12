@@ -2,7 +2,7 @@ package staport.finance.gBanque.cautions.specifications;
 
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
-import staport.finance.gBanque.cautions.dtos.CautionSearchCriteria;
+import staport.finance.gBanque.cautions.dtos.request.CautionSearchCriteria;
 import staport.finance.gBanque.cautions.entities.Caution;
 
 import java.util.ArrayList;

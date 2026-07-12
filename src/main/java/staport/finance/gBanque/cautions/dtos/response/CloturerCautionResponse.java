@@ -1,4 +1,4 @@
-package staport.finance.gBanque.cautions.dtos;
+package staport.finance.gBanque.cautions.dtos.response;
 
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 

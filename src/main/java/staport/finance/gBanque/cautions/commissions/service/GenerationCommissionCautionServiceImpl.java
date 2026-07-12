@@ -9,11 +9,11 @@ import staport.finance.gBanque.cautions.commissions.factory.CommissionCautionStr
 import staport.finance.gBanque.cautions.commissions.strategy.CommissionCautionStrategie;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.cautions.repository.CautionRepository;
+import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 import staport.finance.gBanque.commision.entities.Commission;
-import staport.finance.gBanque.commision.repository.CommisionRepository;
-import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
+import staport.finance.gBanque.commision.service.ICommissionService;
 import staport.finance.gBanque.impot_taxes.enums.Motif;
-import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
+import staport.finance.gBanque.impot_taxes.service.IImpotEtTaxeService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,6 +24,13 @@ import java.util.Optional;
 
 /**
  * Implémentation du service de génération mensuelle des commissions sur cautions.
+ *
+ * <p>Encapsulation des domaines (architecture.md) : toute création de commission ou de TVA
+ * passe par la façade publique du module concerné ({@link ICommissionService},
+ * {@link IImpotEtTaxeService}) — jamais par injection directe de leurs {@code Repository}.
+ * Conséquence assumée : les commissions et TVA du batch sont persistées une à une (et non
+ * via {@code saveAll} en lot) — le volume mensuel de cautions actives reste modeste et ce
+ * traitement s'exécute une fois par mois, hors period de forte charge.
  *
  * <p>Stratégie transactionnelle :
  * <ul>
@@ -38,31 +45,30 @@ import java.util.Optional;
  *       avec leur {@code banque} et leur {@code nature} — aucune requête lazy supplémentaire
  *       lors du parcours de la liste.</li>
  * </ul>
- *
  */
 @Service
 @Transactional(readOnly = true)
 public class GenerationCommissionCautionServiceImpl implements IGenerationCommissionCautionService {
 
-    private static final Logger logger =
+    private static final Logger log =
             LoggerFactory.getLogger(GenerationCommissionCautionServiceImpl.class);
 
-    /** Taux TVA légal applicable aux commissions sur cautions bancaires (10%). */
+    /** Taux de TVA légal applicable aux commissions sur cautions bancaires (statutaire, non configurable). */
     private static final BigDecimal TAUX_TVA_COMMISSION_CAUTION = new BigDecimal("0.10");
 
     private final CautionRepository                  cautionRepository;
-    private final CommisionRepository                commissionRepository;
-    private final ImpotEtTaxeRepository              impotEtTaxeRepository;
+    private final ICommissionService                 commissionService;
+    private final IImpotEtTaxeService                impotEtTaxeService;
     private final CommissionCautionStrategieFactory  strategieFactory;
 
     public GenerationCommissionCautionServiceImpl(
             CautionRepository cautionRepository,
-            CommisionRepository commissionRepository,
-            ImpotEtTaxeRepository impotEtTaxeRepository,
+            ICommissionService commissionService,
+            IImpotEtTaxeService impotEtTaxeService,
             CommissionCautionStrategieFactory strategieFactory) {
         this.cautionRepository    = cautionRepository;
-        this.commissionRepository = commissionRepository;
-        this.impotEtTaxeRepository = impotEtTaxeRepository;
+        this.commissionService    = commissionService;
+        this.impotEtTaxeService   = impotEtTaxeService;
         this.strategieFactory     = strategieFactory;
     }
 
@@ -71,14 +77,14 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public ResultatGenerationCommissionDto generer(YearMonth moisReference, boolean debutMois) {
-        logger.info("Début génération commissions cautions — mois référence : {}, débutMois : {}",
+        log.info("Début génération commissions cautions — mois référence : {}, débutMois : {}",
                 moisReference, debutMois);
 
         // 1. Chargement en une seule requête (EntityGraph banque + nature + marche)
         List<Caution> cautions = cautionRepository.findActivesAvecBanqueEtNature();
-        logger.debug("{} caution(s) active(s) chargée(s)", cautions.size());
+        log.debug("{} caution(s) active(s) chargée(s)", cautions.size());
 
-        List<Commission> aCreer = new ArrayList<>();
+        List<CommissionResponseDto> commissionsCreees = new ArrayList<>();
         int ignorees = 0;
 
         for (Caution caution : cautions) {
@@ -87,7 +93,7 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
             // 2. Résolution de la stratégie par nom de banque
             Optional<CommissionCautionStrategie> strategieOpt = strategieFactory.trouver(nomBanque);
             if (strategieOpt.isEmpty()) {
-                logger.warn("Aucune stratégie de commission enregistrée pour la banque '{}'"
+                log.warn("Aucune stratégie de commission enregistrée pour la banque '{}'"
                         + " — caution {} ignorée", nomBanque, caution.getNumeroCaution());
                 ignorees++;
                 continue;
@@ -96,7 +102,7 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
             // 3. Filtrer selon le moment d'exécution (début ou fin de mois)
             CommissionCautionStrategie strategie = strategieOpt.get();
             if (strategie.executerEnDebutMois() != debutMois) {
-                logger.debug("Stratégie {} ignorée — moment d'exécution incompatible (attendu debutMois={})",
+                log.debug("Stratégie {} ignorée — moment d'exécution incompatible (attendu debutMois={})",
                         nomBanque, debutMois);
                 ignorees++;
                 continue;
@@ -109,74 +115,58 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
             //     Pour les banques M+1 (BMCI, SAHAM BANK) cette garde n'est pas appliquée :
             //     prorata dateEmission=dateDePrise ≠ dateEmission batch=31/M → pas de conflit.
             if (!strategie.facturerMoisSuivant()
-                    && commissionRepository.existsByCaution_IdAndDateEmissionBetween(
+                    && commissionService.existsByCautionAndDateEmissionBetween(
                             caution.getId(),
                             moisReference.atDay(1),
                             moisReference.atEndOfMonth())) {
-                logger.debug("Prorata d'entrée déjà présent pour la caution {} (banque={}) "
+                log.debug("Prorata d'entrée déjà présent pour la caution {} (banque={}) "
                         + "dans le mois {} — mois courant skippé",
                         caution.getNumeroCaution(), nomBanque, moisReference);
                 ignorees++;
                 continue;
             }
 
-            // 4b. Calcul de la commission (délégué à la stratégie) + liaison caution
-            Commission commission = strategie.calculer(caution, moisReference);
+            // 4b. Calcul de la commission (délégué à la stratégie) — objet transitoire, jamais
+            //     persisté directement (encapsulation du module commission).
+            Commission commissionCalculee = strategie.calculer(caution, moisReference);
 
             // 4c. Garde idempotence exacte : une seule commission par caution par date d'émission
-            if (commissionRepository.existsByCaution_IdAndDateEmission(
-                    caution.getId(), commission.getDateEmission())) {
-                logger.warn("Commission déjà existante pour la caution {} (banque={}) à la date {} — ignorée",
-                        caution.getNumeroCaution(), nomBanque, commission.getDateEmission());
+            if (commissionService.existsByCautionAndDateEmission(
+                    caution.getId(), commissionCalculee.getDateEmission())) {
+                log.warn("Commission déjà existante pour la caution {} (banque={}) à la date {} — ignorée",
+                        caution.getNumeroCaution(), nomBanque, commissionCalculee.getDateEmission());
                 ignorees++;
                 continue;
             }
 
-            commission.setCaution(caution);
-            aCreer.add(commission);
-        }
+            CommissionResponseDto commissionPersistee = commissionService.creerCommissionCaution(
+                    caution.getId(), caution.getBanque().getId(), commissionCalculee.getMontant(),
+                    commissionCalculee.getDateEmission(), commissionCalculee.getLibelle(),
+                    commissionCalculee.getObservation());
+            commissionsCreees.add(commissionPersistee);
 
-        // 4. Persistance des commissions en lot — les IDs sont générés après ce saveAll
-        List<Commission> commissionsCreees = commissionRepository.saveAll(aCreer);
+            // 4d. TVA — uniquement pour les banques dont la stratégie l'autorise. CDM (et toute
+            //     banque future avec genererTva()=false) est exclue : son montant de commission
+            //     inclut déjà la TVA.
+            if (strategie.genererTva()) {
+                BigDecimal montantTva = commissionPersistee.getMontant()
+                        .multiply(TAUX_TVA_COMMISSION_CAUTION)
+                        .setScale(2, RoundingMode.HALF_UP);
 
-        // 5. Génération des TVA — uniquement pour les banques dont la stratégie l'autorise.
-        //    CDM (et toute banque future avec genererTva()=false) est exclue :
-        //    son montant de commission inclut déjà la TVA.
-        List<ImpotEtTaxe> tvasACreer = new ArrayList<>();
-        for (Commission commission : commissionsCreees) {
-            String nomBanque = commission.getBanque().getNom();
-            boolean doitGenererTva = strategieFactory.trouver(nomBanque)
-                    .map(CommissionCautionStrategie::genererTva)
-                    .orElse(true); // par sécurité : générer si stratégie inconnue
-
-            if (!doitGenererTva) {
-                logger.debug("TVA non générée pour la commission id={} (banque={} : montant TTC inclus)",
-                        commission.getId(), nomBanque);
-                continue;
+                impotEtTaxeService.creerTvaSurCommission(
+                        caution.getBanque().getId(), montantTva, Motif.TVA_COMMISSION_CAUTION,
+                        commissionPersistee.getDateEmission(), "TVA " + commissionPersistee.getLibelle(),
+                        "TVA/commission/caution", commissionPersistee.getId(), caution.getId());
+                log.debug("TVA créée — commission id={}, montant TVA={}",
+                        commissionPersistee.getId(), montantTva);
+            } else {
+                log.debug("TVA non générée pour la commission id={} (banque={} : montant TTC inclus)",
+                        commissionPersistee.getId(), nomBanque);
             }
-
-            BigDecimal montantTva = commission.getMontant()
-                    .multiply(TAUX_TVA_COMMISSION_CAUTION)
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            ImpotEtTaxe tva = new ImpotEtTaxe();
-            tva.setBanque(commission.getBanque());
-            tva.setMontant(montantTva);
-            tva.setMotif(Motif.TVA_COMMISSION_CAUTION);
-            tva.setDateEmission(commission.getDateEmission());
-            tva.setLibelle("TVA " + commission.getLibelle());
-            tva.setObservation("TVA/commission/caution");
-            tva.setCommission(commission);
-            tva.setCaution(commission.getCaution());
-
-            tvasACreer.add(tva);
-            logger.debug("TVA préparée — commission id={}, montant TVA={}", commission.getId(), montantTva);
         }
 
-        impotEtTaxeRepository.saveAll(tvasACreer);
-
-        logger.info("Génération terminée — {} commission(s) + {} TVA créée(s), {} ignorée(s) — mois cible : {}",
-                commissionsCreees.size(), tvasACreer.size(), ignorees, moisReference.plusMonths(1));
+        log.info("Génération terminée — {} commission(s) créée(s), {} ignorée(s) — mois cible : {}",
+                commissionsCreees.size(), ignorees, moisReference.plusMonths(1));
 
         return new ResultatGenerationCommissionDto(commissionsCreees.size(), ignorees, moisReference);
     }

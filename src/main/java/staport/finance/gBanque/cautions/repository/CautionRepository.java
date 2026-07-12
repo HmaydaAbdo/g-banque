@@ -71,4 +71,10 @@ public interface CautionRepository extends JpaRepository<Caution, Long>,
      * Vérifie l'unicité en excluant la caution courante — utilisé lors de la modification.
      */
     boolean existsByNumeroCautionAndIdNot(String numeroCaution, Long id);
+
+    /**
+     * Compte les cautions par statut — utilisé par {@code CautionMetrics}
+     * ({@code gbanque.caution.active.count} / {@code gbanque.caution.expired.count}).
+     */
+    long countByActif(boolean actif);
 }

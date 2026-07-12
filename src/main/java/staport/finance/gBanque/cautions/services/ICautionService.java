@@ -2,12 +2,12 @@ package staport.finance.gBanque.cautions.services;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import staport.finance.gBanque.cautions.dtos.CautionCreateDto;
-import staport.finance.gBanque.cautions.dtos.CautionResponseDto;
-import staport.finance.gBanque.cautions.dtos.CautionSearchCriteria;
-import staport.finance.gBanque.cautions.dtos.CautionUpdateDto;
-import staport.finance.gBanque.cautions.dtos.CloturerCautionRequest;
-import staport.finance.gBanque.cautions.dtos.CloturerCautionResponse;
+import staport.finance.gBanque.cautions.dtos.request.CautionCreateDto;
+import staport.finance.gBanque.cautions.dtos.response.CautionResponseDto;
+import staport.finance.gBanque.cautions.dtos.request.CautionSearchCriteria;
+import staport.finance.gBanque.cautions.dtos.request.CautionUpdateDto;
+import staport.finance.gBanque.cautions.dtos.request.CloturerCautionRequest;
+import staport.finance.gBanque.cautions.dtos.response.CloturerCautionResponse;
 import staport.finance.gBanque.cautions.entities.Caution;
 
 /**

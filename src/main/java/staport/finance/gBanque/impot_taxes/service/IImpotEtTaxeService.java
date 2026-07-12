@@ -1,0 +1,60 @@
+package staport.finance.gBanque.impot_taxes.service;
+
+import org.springframework.data.domain.Pageable;
+import staport.finance.gBanque.impot_taxes.dtos.EncoursImpotEtTaxeDto;
+import staport.finance.gBanque.impot_taxes.dtos.ImpotEtTaxeFusionRequest;
+import staport.finance.gBanque.impot_taxes.dtos.ImpotEtTaxeRequestDto;
+import staport.finance.gBanque.impot_taxes.dtos.ImpotEtTaxeResponseDto;
+import staport.finance.gBanque.impot_taxes.dtos.ImpotEtTaxeSearchDto;
+import staport.finance.gBanque.impot_taxes.enums.Motif;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+/**
+ * Contrat de service pour le module Impôts et Taxes.
+ *
+ * <p>Le contrôleur, et tout autre module consommateur, injectent uniquement cette interface
+ * (DIP). La classe concrète {@link ImpotEtTaxeService} n'est jamais référencée depuis
+ * l'extérieur du module — voir {@code architecture.md}, "Encapsulation des domaines".
+ */
+public interface IImpotEtTaxeService {
+
+    ImpotEtTaxeResponseDto createImpotEtTaxe(ImpotEtTaxeRequestDto requestDto);
+
+    ImpotEtTaxeResponseDto getById(Long id);
+
+    EncoursImpotEtTaxeDto searchImpotEtTaxes(ImpotEtTaxeSearchDto searchDto, Pageable pageable);
+
+    ImpotEtTaxeResponseDto updateImpotEtTaxe(Long id, ImpotEtTaxeRequestDto requestDto);
+
+    void deleteImpotEtTaxe(Long id);
+
+    ImpotEtTaxeResponseDto toggleStatus(Long id);
+
+    ImpotEtTaxeResponseDto fusionner(ImpotEtTaxeFusionRequest request);
+
+    EncoursImpotEtTaxeDto getOutstandingImpotEtTaxes(ImpotEtTaxeSearchDto searchDto, Pageable pageable);
+
+    /**
+     * Crée et persiste une TVA rattachée à une commission — façade pour les modules qui génèrent
+     * une TVA sur une commission produite en dehors du module impôts/taxes (ex. commissions sur
+     * cautions). Jamais via {@code ImpotEtTaxeRepository} directement (encapsulation des
+     * domaines, architecture.md). Les associations sont résolues en interne à partir de leurs
+     * identifiants — aucune entité d'un autre domaine ne transite par cette interface.
+     *
+     * @param cautionId optionnel — renseigné uniquement lorsque la TVA provient d'une commission
+     *                  sur caution
+     */
+    ImpotEtTaxeResponseDto creerTvaSurCommission(Long banqueId, BigDecimal montant, Motif motif,
+            LocalDate dateEmission, String libelle, String observation,
+            Long commissionId, Long cautionId);
+
+    /**
+     * Supprime la TVA rattachée à une commission, si elle existe — utilisé lorsqu'une commission
+     * de prorata est supprimée (ex. clôture d'une caution le même mois que sa prise).
+     *
+     * @return {@code true} si une TVA a été trouvée et supprimée, {@code false} sinon
+     */
+    boolean deleteByCommissionIdIfExists(Long commissionId);
+}

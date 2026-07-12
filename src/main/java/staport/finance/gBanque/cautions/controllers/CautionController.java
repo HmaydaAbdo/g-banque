@@ -1,5 +1,8 @@
 package staport.finance.gBanque.cautions.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,15 +14,16 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.cautions.commissions.service.IGenerationCommissionCautionService;
 import staport.finance.gBanque.cautions.commissions.service.ResultatGenerationCommissionDto;
-import staport.finance.gBanque.cautions.dtos.CautionCreateDto;
-import staport.finance.gBanque.cautions.dtos.CautionResponseDto;
-import staport.finance.gBanque.cautions.dtos.CautionSearchCriteria;
-import staport.finance.gBanque.cautions.dtos.CautionUpdateDto;
-import staport.finance.gBanque.cautions.dtos.CloturerCautionRequest;
-import staport.finance.gBanque.cautions.dtos.CloturerCautionResponse;
+import staport.finance.gBanque.cautions.dtos.request.CautionCreateDto;
+import staport.finance.gBanque.cautions.dtos.response.CautionResponseDto;
+import staport.finance.gBanque.cautions.dtos.request.CautionSearchCriteria;
+import staport.finance.gBanque.cautions.dtos.request.CautionUpdateDto;
+import staport.finance.gBanque.cautions.dtos.request.CloturerCautionRequest;
+import staport.finance.gBanque.cautions.dtos.response.CloturerCautionResponse;
 import staport.finance.gBanque.cautions.exceptions.CautionExceptionHandler;
 import staport.finance.gBanque.cautions.services.ICautionService;
 import staport.finance.gBanque.common.PageableUtils;
@@ -36,6 +40,14 @@ import java.time.YearMonth;
  *
  * <p>La gestion des exceptions est déléguée à {@link CautionExceptionHandler}.
  *
+ * <p>Autorisations (cf. {@code docs/rbac/caution.md}) :
+ * <ul>
+ *   <li>Lecture, création, modification, clôture, export, génération manuelle des
+ *       commissions — Finance (membre ou directeur) ou {@code SYSTEM_ADMIN}.</li>
+ *   <li>Suppression définitive — {@code SYSTEM_ADMIN} uniquement (règle transverse,
+ *       {@code conventions/security.md}).</li>
+ * </ul>
+ *
  * <p>Endpoints :
  * <ul>
  *   <li>POST   /cautions             — créer une caution</li>
@@ -46,11 +58,18 @@ import java.time.YearMonth;
  *   <li>DELETE /cautions/{id}        — soft-delete (actif = false)</li>
  * </ul>
  */
+@Tag(name = "Cautions", description = "Gestion des cautions bancaires")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/cautions")
 public class CautionController {
 
-    private static final Logger logger = LoggerFactory.getLogger(CautionController.class);
+    private static final Logger log = LoggerFactory.getLogger(CautionController.class);
+
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
+
     private final IGenerationCommissionCautionService generationService;
     private final ICautionService cautionService;
 
@@ -61,25 +80,31 @@ public class CautionController {
 
     // ── Création ──────────────────────────────────────────────────────────────
 
+    @Operation(summary = "Créer une caution")
     @PostMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<CautionResponseDto> creer(@Valid @RequestBody CautionCreateDto dto) {
-        logger.info("POST /cautions — numeroCaution: {}", dto.numeroCaution());
+        log.info("POST /cautions — numeroCaution: {}", dto.numeroCaution());
         CautionResponseDto created = cautionService.creer(dto);
-        logger.info("Caution créée — id: {}", created.id());
+        log.info("Caution créée — id: {}", created.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     // ── Lecture par ID ────────────────────────────────────────────────────────
 
+    @Operation(summary = "Récupérer une caution par ID")
     @GetMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<CautionResponseDto> getById(@PathVariable Long id) {
-        logger.debug("GET /cautions/{}", id);
+        log.debug("GET /cautions/{}", id);
         return ResponseEntity.ok(cautionService.getById(id));
     }
 
     // ── Recherche paginée ─────────────────────────────────────────────────────
 
+    @Operation(summary = "Recherche paginée des cautions")
     @GetMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Page<CautionResponseDto>> rechercher(
             @RequestParam(defaultValue = "0")              int page,
             @RequestParam(defaultValue = "10")             int size,
@@ -93,7 +118,7 @@ public class CautionController {
 
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), Sort.by(direction, sortField));
 
-        logger.debug("GET /cautions — page={}, size={}, sort={} {}, critères={}",
+        log.debug("GET /cautions — page={}, size={}, sort={} {}, critères={}",
                 page, size, sortField, direction, criteres);
 
         return ResponseEntity.ok(cautionService.rechercher(criteres, pageable));
@@ -106,9 +131,12 @@ public class CautionController {
      * (mêmes filtres que {@code GET /cautions}) — sans pagination : le fichier contient
      * tous les résultats filtrés, pas seulement la page actuellement affichée à l'écran.
      */
+    @Operation(summary = "Exporter les cautions en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
     @GetMapping("/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<byte[]> exporterPdf(@ModelAttribute CautionSearchCriteria criteres) {
-        logger.info("GET /cautions/export/pdf — critères: {}", criteres);
+        log.info("GET /cautions/export/pdf — critères: {}", criteres);
 
         byte[] pdf = cautionService.exporterPdf(criteres);
         String filename = "cautions_" + LocalDate.now() + ".pdf";
@@ -121,32 +149,40 @@ public class CautionController {
 
     // ── Modification ──────────────────────────────────────────────────────────
 
+    @Operation(summary = "Modifier une caution")
     @PutMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<CautionResponseDto> modifier(
             @PathVariable Long id,
             @Valid @RequestBody CautionUpdateDto dto) {
 
-        logger.info("PUT /cautions/{}", id);
+        log.info("PUT /cautions/{}", id);
         return ResponseEntity.ok(cautionService.modifier(id, dto));
     }
 
     // ── Suppression (soft-delete) ─────────────────────────────────────────────
 
+    @Operation(summary = "Supprimer définitivement une caution",
+            description = "Réservé SYSTEM_ADMIN. Bloqué si la caution est archivée (actif = false).")
     @DeleteMapping("/{id}")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> supprimer(@PathVariable Long id) {
-        logger.info("DELETE /cautions/{}", id);
+        log.info("DELETE /cautions/{}", id);
         cautionService.supprimer(id);
         return ResponseEntity.noContent().build();
     }
 
     // ── Clôture (main levée) ──────────────────────────────────────────────────
 
+    @Operation(summary = "Clôturer une caution (main levée)",
+            description = "Génère la commission de clôture (et la TVA si la stratégie de la banque l'exige) puis marque la caution inactive.")
     @PostMapping("/{id}/cloturer")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<CloturerCautionResponse> cloturer(
             @PathVariable Long id,
             @Valid @RequestBody CloturerCautionRequest request) {
 
-        logger.info("POST /cautions/{}/cloturer — dateDeMainLevee: {}", id, request.dateDeMainLevee());
+        log.info("POST /cautions/{}/cloturer — dateDeMainLevee: {}", id, request.dateDeMainLevee());
         return ResponseEntity.ok(cautionService.cloturer(id, request));
     }
 
@@ -167,13 +203,16 @@ public class CautionController {
      *   POST /cautions/generer-commissions?annee=2026&amp;mois=6&amp;debutMois=true  → début de mois uniquement (CDM)
      * </pre>
      */
+    @Operation(summary = "Générer manuellement les commissions du mois",
+            description = "debutMois absent = les deux lots ; false = fin de mois (AWB, BMCI, SAHAM) ; true = début de mois (CDM).")
     @PostMapping("/generer-commissions")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<ResultatGenerationCommissionDto> genererCommissions(
             @RequestParam int annee,
             @RequestParam int mois,
             @RequestParam(required = false) Boolean debutMois) {
 
-        logger.info("POST /cautions/generer-commissions — {}-{}, debutMois={}",
+        log.info("POST /cautions/generer-commissions — {}-{}, debutMois={}",
                 annee, mois, debutMois == null ? "both" : debutMois);
 
         YearMonth moisReference = YearMonth.of(annee, mois);
@@ -181,7 +220,7 @@ public class CautionController {
         if (debutMois != null) {
             // Lot ciblé : uniquement fin de mois OU début de mois
             ResultatGenerationCommissionDto result = generationService.generer(moisReference, debutMois);
-            logger.info("Génération ciblée ({}) terminée — {} créée(s), {} ignorée(s)",
+            log.info("Génération ciblée ({}) terminée — {} créée(s), {} ignorée(s)",
                     debutMois ? "début de mois" : "fin de mois",
                     result.generees(), result.ignorees());
             return ResponseEntity.ok(result);
@@ -197,7 +236,7 @@ public class CautionController {
                 moisReference
         );
 
-        logger.info("Génération complète terminée — {} créée(s), {} ignorée(s)",
+        log.info("Génération complète terminée — {} créée(s), {} ignorée(s)",
                 result.generees(), result.ignorees());
         return ResponseEntity.ok(result);
     }

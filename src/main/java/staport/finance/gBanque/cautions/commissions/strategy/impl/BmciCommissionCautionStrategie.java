@@ -1,6 +1,8 @@
 package staport.finance.gBanque.cautions.commissions.strategy.impl;
 
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.cautions.commissions.config.dtos.response.CautionCommissionConfigResponseDTO;
+import staport.finance.gBanque.cautions.commissions.config.services.interfaces.ICautionCommissionConfigService;
 import staport.finance.gBanque.cautions.commissions.strategy.CommissionCautionStrategie;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.entities.Commission;
@@ -32,13 +34,12 @@ import java.time.temporal.ChronoUnit;
 public class BmciCommissionCautionStrategie implements CommissionCautionStrategie {
 
     private static final String NOM_BANQUE = "BMCI";
-    private static final BigDecimal MIN_COMMISSION = new BigDecimal("70");
 
-    /**
-     * Diviseur = 360 × 100 — le facteur 360 est la base conventionnelle bancaire,
-     * le facteur 100 convertit le taux de pourcentage vers décimal.
-     */
-    private static final BigDecimal DIVISEUR = new BigDecimal("36000");
+    private final ICautionCommissionConfigService commissionConfigService;
+
+    public BmciCommissionCautionStrategie(ICautionCommissionConfigService commissionConfigService) {
+        this.commissionConfigService = commissionConfigService;
+    }
 
     @Override
     public String nomBanque() {
@@ -97,13 +98,16 @@ public class BmciCommissionCautionStrategie implements CommissionCautionStrategi
 
     private Commission buildCommission(Caution caution, long nombreJours,
                                        LocalDate dateEmission, String suffixeLibelle) {
+        CautionCommissionConfigResponseDTO config =
+                commissionConfigService.resolveOuLeverException(caution.getBanque().getNom());
+
         BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
-                .divide(DIVISEUR, 2, RoundingMode.HALF_UP);
+                .divide(config.diviseur(), 2, RoundingMode.HALF_UP);
 
-        if (montantCommission.compareTo(MIN_COMMISSION) < 0) {
-            montantCommission = MIN_COMMISSION;
+        if (montantCommission.compareTo(config.montantMinimum()) < 0) {
+            montantCommission = config.montantMinimum();
         }
 
         String libelle = "caution " + caution.getNature().getCode()

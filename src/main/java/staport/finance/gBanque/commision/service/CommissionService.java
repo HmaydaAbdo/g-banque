@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.dtos.*;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.mapper.CommissionMapper;
@@ -50,6 +51,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 
 @Service
@@ -817,6 +819,57 @@ public class CommissionService implements ICommissionService {
 
         commissionRepository.save(commission);
         log.info("Commission créée — MiseADisposition N°{}, banque='{}', montant={}", mad.getNumero(), nomBanque, montant);
+    }
+
+    // ── Façade dédiée aux commissions générées automatiquement sur caution ─────
+
+    @Override
+    @Transactional
+    public CommissionResponseDto creerCommissionCaution(Long cautionId, Long banqueId, BigDecimal montant,
+            LocalDate dateEmission, String libelle, String observation) {
+
+        Banque banque = banqueRepository.findById(banqueId)
+                .orElseThrow(() -> {
+                    log.error("Banque introuvable avec l'id={}", banqueId);
+                    return new IllegalArgumentException("Banque introuvable");
+                });
+
+        Commission commission = new Commission();
+        commission.setBanque(banque);
+        commission.setMontant(montant);
+        commission.setOperation(TransactionSource.CAUTION);
+        commission.setDateEmission(dateEmission);
+        commission.setLibelle(libelle);
+        commission.setObservation(observation);
+        commission.setStatus(Status.PREVU);
+        // Référence par proxy — évite de charger l'entité Caution complète pour ce seul FK.
+        commission.setCaution(entityManager.getReference(Caution.class, cautionId));
+
+        Commission sauvegardee = commissionRepository.save(commission);
+        log.info("Commission caution créée — id={}, cautionId={}, montant={}",
+                sauvegardee.getId(), cautionId, montant);
+
+        return commissionMapper.toResponseDto(sauvegardee);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByCautionAndDateEmission(Long cautionId, LocalDate dateEmission) {
+        return commissionRepository.existsByCaution_IdAndDateEmission(cautionId, dateEmission);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByCautionAndDateEmissionBetween(Long cautionId, LocalDate debutPeriode, LocalDate finPeriode) {
+        return commissionRepository.existsByCaution_IdAndDateEmissionBetween(cautionId, debutPeriode, finPeriode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<CommissionResponseDto> findPrevuByCautionAndDateEmission(Long cautionId, LocalDate dateEmission) {
+        return commissionRepository
+                .findByCaution_IdAndDateEmissionAndStatus(cautionId, dateEmission, Status.PREVU)
+                .map(commissionMapper::toResponseDto);
     }
 
 }

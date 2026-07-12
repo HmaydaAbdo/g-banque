@@ -1,20 +1,17 @@
-package staport.finance.gBanque.cautions.dtos;
+package staport.finance.gBanque.cautions.dtos.request;
 
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * DTO de modification d'une caution.
+ * DTO de création d'une caution.
  *
- * <p>Tous les champs sont modifiables — y compris {@code numeroCaution},
- * {@code dateDePrise} et {@code banqueId}.
- *
- * <p>Règle métier : la modification est interdite lorsque la caution est inactive
- * ({@code actif = false}). Cette garde est appliquée au niveau service,
- * pas au niveau DTO.
+ * <p>Les identifiants des associations ({@code banqueId}, {@code natureId}, {@code marcheId})
+ * sont transmis par ID uniquement — jamais d'objets imbriqués.
+ * {@code marcheId} est optionnel.
  */
-public record CautionUpdateDto(
+public record CautionCreateDto(
 
     @NotNull(message = "L'identifiant de la banque est obligatoire")
     Long banqueId,
@@ -22,14 +19,14 @@ public record CautionUpdateDto(
     @NotNull(message = "L'identifiant de la nature est obligatoire")
     Long natureId,
 
-    /* Optionnel — peut être null pour dissocier la caution d'un marché. */
+    /* Optionnel — la caution peut exister sans marché associé. */
     Long marcheId,
 
     @NotNull(message = "La date de prise est obligatoire")
     @PastOrPresent(message = "La date de prise ne peut pas être dans le futur")
     LocalDate dateDePrise,
 
-    /* Optionnel — null si la caution est encore active. */
+    /* Optionnel à la création — renseigné lors de la levée de la caution. */
     LocalDate dateDeMainLevee,
 
     @NotBlank(message = "Le numéro de caution est obligatoire")

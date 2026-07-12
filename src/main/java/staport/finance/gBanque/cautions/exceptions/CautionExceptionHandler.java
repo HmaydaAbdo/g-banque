@@ -36,13 +36,13 @@ import java.util.stream.Collectors;
 @RestControllerAdvice(assignableTypes = CautionController.class)
 public class CautionExceptionHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(CautionExceptionHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(CautionExceptionHandler.class);
 
     // ── 404 Not Found ─────────────────────────────────────────────────────────
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
-        logger.warn("Ressource introuvable [Caution module]: {}", ex.getMessage());
+        log.warn("Ressource introuvable [Caution module]: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(404, "Non trouvé", ex.getMessage(), ex));
@@ -52,7 +52,7 @@ public class CautionExceptionHandler {
 
     @ExceptionHandler(DuplicateEntryException.class)
     public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateEntryException ex) {
-        logger.warn("Doublon détecté [Caution module]: {}", ex.getMessage());
+        log.warn("Doublon détecté [Caution module]: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.of(409, "Conflit", ex.getMessage(), ex));
@@ -62,7 +62,7 @@ public class CautionExceptionHandler {
 
     @ExceptionHandler(CautionBusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessRule(CautionBusinessException ex) {
-        logger.warn("Violation règle métier [Caution module]: {}", ex.getMessage());
+        log.warn("Violation règle métier [Caution module]: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ErrorResponse.of(422, "Règle métier violée", ex.getMessage(), ex));
@@ -77,7 +77,7 @@ public class CautionExceptionHandler {
                 .collect(Collectors.joining("; "));
 
         String message = "Validation échouée : " + fieldErrors;
-        logger.warn("Erreur de validation [Caution module]: {}", message);
+        log.warn("Erreur de validation [Caution module]: {}", message);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

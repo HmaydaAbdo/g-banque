@@ -1,140 +1,60 @@
 package staport.finance.gBanque.cautions.mappers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
-import staport.finance.gBanque.cautions.dtos.CautionCreateDto;
-import staport.finance.gBanque.cautions.dtos.CautionResponseDto;
-import staport.finance.gBanque.cautions.dtos.CautionUpdateDto;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import staport.finance.gBanque.cautions.dtos.request.CautionCreateDto;
+import staport.finance.gBanque.cautions.dtos.request.CautionUpdateDto;
+import staport.finance.gBanque.cautions.dtos.response.CautionResponseDto;
 import staport.finance.gBanque.cautions.entities.Caution;
-import staport.finance.gBanque.marches.entities.Marche;
 
 /**
- * Mapper manuel pour le module Caution.
+ * Mapper MapStruct pour le module Caution — cohérent avec la convention du projet
+ * ({@code @Mapper(componentModel = "spring")}, voir {@code conventions/architecture.md}).
  *
- * <p>Cohérent avec la convention du projet : {@code @Component} Spring, pas de MapStruct.
- * Toutes les associations sont mappées à partir des entités déjà chargées par l'EntityGraph
- * — aucun appel lazy supplémentaire ici.
- *
- * <p>Responsabilités :
- * <ul>
- *   <li>{@code toEntity}  — {@link CautionCreateDto} → {@link Caution} (sans les associations)</li>
- *   <li>{@code toDto}     — {@link Caution} → {@link CautionResponseDto}</li>
- *   <li>{@code applyUpdate} — applique les champs modifiables du DTO sur l'entité existante</li>
- * </ul>
- *
- * <p>Note : les associations ({@link Banque}, {@link NatureLigneFonctionnelle}, {@link Marche})
- * sont settées par le service après résolution des IDs — pas par le mapper.
+ * <p>Les associations ({@code banque}, {@code nature}, {@code marche}) sont résolues et
+ * settées par le service après résolution des IDs — jamais par le mapper (le mapper ne
+ * connaît aucun Repository, conformément à {@code conventions/architecture.md}).
  */
-@Component
-public class CautionMapper {
-
-    private static final Logger logger = LoggerFactory.getLogger(CautionMapper.class);
+@Mapper(componentModel = "spring")
+public interface CautionMapper {
 
     // ── Create DTO → Entity ───────────────────────────────────────────────────
 
-    /**
-     * Crée une nouvelle entité {@link Caution} à partir du DTO de création.
-     * Les associations (banque, nature, marche) sont laissées null — le service
-     * les résout et les injecte après appel de cette méthode.
-     */
-    public Caution toEntity(CautionCreateDto dto) {
-        if (dto == null) {
-            logger.warn("Tentative de conversion d'un CautionCreateDto null");
-            return null;
-        }
-
-        Caution caution = new Caution();
-        caution.setDateDePrise(dto.dateDePrise());
-        caution.setDateDeMainLevee(dto.dateDeMainLevee());
-        caution.setNumeroCaution(dto.numeroCaution());
-        caution.setDesignation(dto.designation());
-        caution.setOrganisme(dto.organisme());
-        caution.setMontant(dto.montant());
-        caution.setTaux(dto.taux());
-        caution.setActif(true); // Toute nouvelle caution est active par défaut
-
-        logger.debug("Entité Caution créée depuis DTO — numeroCaution: {}", dto.numeroCaution());
-        return caution;
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "banque", ignore = true)
+    @Mapping(target = "nature", ignore = true)
+    @Mapping(target = "marche", ignore = true)
+    @Mapping(target = "actif", constant = "true")
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    Caution toEntity(CautionCreateDto dto);
 
     // ── Entity → Response DTO ─────────────────────────────────────────────────
 
-    /**
-     * Mappe une entité {@link Caution} vers le DTO de réponse.
-     * Appelé uniquement après chargement complet des associations via EntityGraph.
-     */
-    public CautionResponseDto toDto(Caution caution) {
-        if (caution == null) {
-            logger.warn("Tentative de conversion d'une entité Caution null");
-            return null;
-        }
-
-        Banque banque = caution.getBanque();
-        NatureLigneFonctionnelle nature = caution.getNature();
-        Marche marche = caution.getMarche(); // nullable
-
-        return new CautionResponseDto(
-            caution.getId(),
-
-            // Banque — toujours présent (nullable = false sur l'entité)
-            banque  != null ? banque.getId()  : null,
-            banque  != null ? banque.getNom() : null,
-
-            // Nature — toujours présent
-            nature  != null ? nature.getId()    : null,
-            nature  != null ? nature.getLabel() : null,
-            nature  != null ? nature.getCode()  : null,
-
-            // Marché — optionnel
-            marche  != null ? marche.getId()     : null,
-            marche  != null ? marche.getNumero() : null,
-            marche  != null ? marche.getNom()    : null,
-
-            // Données caution
-            caution.getDateDePrise(),
-            caution.getDateDeMainLevee(),
-            caution.getNumeroCaution(),
-            caution.getDesignation(),
-            caution.getOrganisme(),
-            caution.getMontant(),
-            caution.getTaux(),
-            caution.getActif(),
-
-            // Audit
-            caution.getCreatedAt(),
-            caution.getUpdatedAt()
-        );
-    }
+    @Mapping(source = "banque.id",     target = "banqueId")
+    @Mapping(source = "banque.nom",    target = "banqueNom")
+    @Mapping(source = "nature.id",     target = "natureId")
+    @Mapping(source = "nature.label",  target = "natureLabel")
+    @Mapping(source = "nature.code",   target = "natureCode")
+    @Mapping(source = "marche.id",     target = "marcheId")
+    @Mapping(source = "marche.numero", target = "marcheNumero")
+    @Mapping(source = "marche.nom",    target = "marcheNom")
+    CautionResponseDto toDto(Caution caution);
 
     // ── Apply Update ──────────────────────────────────────────────────────────
 
     /**
      * Applique tous les champs modifiables sur une entité existante.
-     *
-     * <p>Tous les champs sont modifiables : {@code numeroCaution}, {@code dateDePrise},
+     * Tous les champs sont modifiables : {@code numeroCaution}, {@code dateDePrise},
      * {@code designation}, {@code organisme}, {@code montant}, {@code taux}.
-     *
-     * <p>Les associations ({@code banque}, {@code nature}, {@code marche}) sont settées
-     * directement par le service après résolution des IDs — pas par le mapper.
      */
-    public void applyUpdate(CautionUpdateDto dto, Caution caution) {
-        if (dto == null || caution == null) {
-            logger.warn("applyUpdate appelé avec dto ou caution null — opération ignorée");
-            return;
-        }
-
-        caution.setNumeroCaution(dto.numeroCaution());
-        caution.setDateDePrise(dto.dateDePrise());
-        caution.setDateDeMainLevee(dto.dateDeMainLevee());
-        caution.setDesignation(dto.designation());
-        caution.setOrganisme(dto.organisme());
-        caution.setMontant(dto.montant());
-        caution.setTaux(dto.taux());
-        // banque, nature et marche sont settés par le service après résolution des IDs
-
-        logger.debug("Mise à jour complète appliquée sur Caution id: {}", caution.getId());
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "banque", ignore = true)
+    @Mapping(target = "nature", ignore = true)
+    @Mapping(target = "marche", ignore = true)
+    @Mapping(target = "actif", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    void applyUpdate(CautionUpdateDto dto, @MappingTarget Caution caution);
 }

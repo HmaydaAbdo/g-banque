@@ -10,33 +10,33 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
 import staport.finance.gBanque.cautions.commissions.factory.CommissionCautionStrategieFactory;
 import staport.finance.gBanque.cautions.commissions.strategy.CommissionCautionStrategie;
-import staport.finance.gBanque.cautions.dtos.CautionCreateDto;
-import staport.finance.gBanque.cautions.dtos.CautionResponseDto;
-import staport.finance.gBanque.cautions.dtos.CautionSearchCriteria;
-import staport.finance.gBanque.cautions.dtos.CautionUpdateDto;
-import staport.finance.gBanque.cautions.dtos.CloturerCautionRequest;
-import staport.finance.gBanque.cautions.dtos.CloturerCautionResponse;
+import staport.finance.gBanque.cautions.dtos.request.CautionCreateDto;
+import staport.finance.gBanque.cautions.dtos.response.CautionResponseDto;
+import staport.finance.gBanque.cautions.dtos.request.CautionSearchCriteria;
+import staport.finance.gBanque.cautions.dtos.request.CautionUpdateDto;
+import staport.finance.gBanque.cautions.dtos.request.CloturerCautionRequest;
+import staport.finance.gBanque.cautions.dtos.response.CloturerCautionResponse;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.cautions.exceptions.CautionBusinessException;
 import staport.finance.gBanque.cautions.mappers.CautionMapper;
 import staport.finance.gBanque.cautions.repository.CautionRepository;
 import staport.finance.gBanque.cautions.specifications.CautionSpecification;
+import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 import staport.finance.gBanque.commision.entities.Commission;
-import staport.finance.gBanque.commision.mapper.CommissionMapper;
-import staport.finance.gBanque.commision.repository.CommisionRepository;
+import staport.finance.gBanque.commision.service.ICommissionService;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.enums.Motif;
-import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
+import staport.finance.gBanque.impot_taxes.service.IImpotEtTaxeService;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.marches.repositories.MarcheRepository;
-import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.marches.service.IMarcheService;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 
 import com.lowagie.text.*;
@@ -55,6 +55,12 @@ import java.util.Locale;
 
 /**
  * Implémentation du service Caution.
+ *
+ * <p>Encapsulation des domaines (architecture.md) : toute résolution d'une association
+ * appartenant à un autre module passe exclusivement par la façade publique de ce module
+ * ({@link IBanqueService}, {@link INatureLigneFonctionnelleService}, {@link IMarcheService},
+ * {@link ICommissionService}, {@link IImpotEtTaxeService}) — jamais par injection directe
+ * d'un {@code Repository} étranger.
  *
  * <p>Stratégie transactionnelle :
  * <ul>
@@ -75,41 +81,39 @@ import java.util.Locale;
 @Transactional(readOnly = true)
 public class CautionServiceImpl implements ICautionService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CautionServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(CautionServiceImpl.class);
 
     private final CautionRepository                  cautionRepository;
     private final CautionMapper                      cautionMapper;
-    private final BanqueRepository                   banqueRepository;
-    private final NatureLigneFonctionnelleRepository natureRepository;
-    private final MarcheRepository                   marcheRepository;
-    private final CommisionRepository                commissionRepository;
-    private final CommissionMapper                   commissionMapper;
-    private final ImpotEtTaxeRepository              impotEtTaxeRepository;
+    private final IBanqueService                     banqueService;
+    private final INatureLigneFonctionnelleService    natureService;
+    private final IMarcheService                     marcheService;
+    private final ICommissionService                 commissionService;
+    private final IImpotEtTaxeService                impotEtTaxeService;
     private final CommissionCautionStrategieFactory  strategieFactory;
     private final StaportPdfReportService            staportPdfReportService;
 
+    /** Taux de TVA légal applicable aux commissions sur cautions bancaires (statutaire, non configurable). */
     private static final BigDecimal TAUX_TVA = new BigDecimal("0.10");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public CautionServiceImpl(
             CautionRepository cautionRepository,
             CautionMapper cautionMapper,
-            BanqueRepository banqueRepository,
-            NatureLigneFonctionnelleRepository natureRepository,
-            MarcheRepository marcheRepository,
-            CommisionRepository commissionRepository,
-            CommissionMapper commissionMapper,
-            ImpotEtTaxeRepository impotEtTaxeRepository,
+            IBanqueService banqueService,
+            INatureLigneFonctionnelleService natureService,
+            IMarcheService marcheService,
+            ICommissionService commissionService,
+            IImpotEtTaxeService impotEtTaxeService,
             CommissionCautionStrategieFactory strategieFactory,
             StaportPdfReportService staportPdfReportService) {
         this.cautionRepository    = cautionRepository;
         this.cautionMapper        = cautionMapper;
-        this.banqueRepository     = banqueRepository;
-        this.natureRepository     = natureRepository;
-        this.marcheRepository     = marcheRepository;
-        this.commissionRepository = commissionRepository;
-        this.commissionMapper     = commissionMapper;
-        this.impotEtTaxeRepository = impotEtTaxeRepository;
+        this.banqueService        = banqueService;
+        this.natureService        = natureService;
+        this.marcheService        = marcheService;
+        this.commissionService    = commissionService;
+        this.impotEtTaxeService   = impotEtTaxeService;
         this.strategieFactory     = strategieFactory;
         this.staportPdfReportService = staportPdfReportService;
     }
@@ -118,8 +122,9 @@ public class CautionServiceImpl implements ICautionService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Caution.class)
     public CautionResponseDto creer(CautionCreateDto dto) {
-        logger.info("Création caution — numeroCaution: {}", dto.numeroCaution());
+        log.info("Création caution — numeroCaution: {}", dto.numeroCaution());
 
         // 1. Unicité du numéro de caution
         if (cautionRepository.existsByNumeroCaution(dto.numeroCaution())) {
@@ -128,11 +133,10 @@ public class CautionServiceImpl implements ICautionService {
             );
         }
 
-        // 2. Résolution des associations
-        Banque banque = trouverBanqueOuLeverException(dto.banqueId());
-        NatureLigneFonctionnelle nature = trouverNatureOuLeverException(dto.natureId());
-
-        Marche marche = dto.marcheId() != null ? trouverMarcheOuLeverException(dto.marcheId()) : null;
+        // 2. Résolution des associations — jamais via un Repository étranger
+        Banque banque = banqueService.findOrThrow(dto.banqueId());
+        NatureLigneFonctionnelle nature = natureService.findOrThrow(dto.natureId());
+        Marche marche = dto.marcheId() != null ? marcheService.findOrThrow(dto.marcheId()) : null;
 
         // 3. Mapping + injection des associations
         Caution caution = cautionMapper.toEntity(dto);
@@ -142,35 +146,34 @@ public class CautionServiceImpl implements ICautionService {
 
         // 4. Persistance
         Caution sauvegardee = cautionRepository.save(caution);
-        logger.info("Caution créée — id: {}, numeroCaution: {}", sauvegardee.getId(), sauvegardee.getNumeroCaution());
+        log.info("Caution créée — id: {}, numeroCaution: {}", sauvegardee.getId(), sauvegardee.getNumeroCaution());
 
         // 5. Prorata d'entrée — généré immédiatement à la création si la stratégie le supporte.
         //    dateEmission = dateDePrise (≠ fin de mois du batch) pour éviter tout conflit d'idempotence.
         strategieFactory.trouver(banque.getNom()).ifPresent(strategie -> {
             if (strategie.supporteProrataEntree()) {
-                Commission prorata = strategie.calculerProrataEntree(sauvegardee);
-                prorata.setCaution(sauvegardee);
-                Commission prorataPersisteé = commissionRepository.save(prorata);
-                logger.info("Prorata d'entrée créé — caution id: {}, dateEmission: {}, montant: {}",
-                        sauvegardee.getId(), prorataPersisteé.getDateEmission(), prorataPersisteé.getMontant());
+                // Objet transitoire — ses champs portent le calcul métier de la stratégie ;
+                // il n'est jamais persisté directement (encapsulation du module commission).
+                Commission prorataCalcule = strategie.calculerProrataEntree(sauvegardee);
+
+                CommissionResponseDto prorataPersiste = commissionService.creerCommissionCaution(
+                        sauvegardee.getId(), banque.getId(), prorataCalcule.getMontant(),
+                        prorataCalcule.getDateEmission(), prorataCalcule.getLibelle(),
+                        prorataCalcule.getObservation());
+                log.info("Prorata d'entrée créé — caution id: {}, dateEmission: {}, montant: {}",
+                        sauvegardee.getId(), prorataPersiste.getDateEmission(), prorataPersiste.getMontant());
 
                 // TVA sur prorata — uniquement pour les banques dont la stratégie l'exige (ex. BMCI)
                 if (strategie.genererTva()) {
-                    BigDecimal montantTva = prorataPersisteé.getMontant()
+                    BigDecimal montantTva = prorataPersiste.getMontant()
                             .multiply(TAUX_TVA)
-                            .setScale(2, java.math.RoundingMode.HALF_UP);
+                            .setScale(2, RoundingMode.HALF_UP);
 
-                    ImpotEtTaxe tva = new ImpotEtTaxe();
-                    tva.setBanque(sauvegardee.getBanque());
-                    tva.setMontant(montantTva);
-                    tva.setMotif(Motif.TVA_COMMISSION_CAUTION);
-                    tva.setDateEmission(prorataPersisteé.getDateEmission());
-                    tva.setLibelle("TVA " + prorataPersisteé.getLibelle());
-                    tva.setObservation("TVA/prorata/caution/creation");
-                    tva.setCommission(prorataPersisteé);
-                    tva.setCaution(sauvegardee);
-                    impotEtTaxeRepository.save(tva);
-                    logger.info("TVA prorata créée — montant: {}", montantTva);
+                    impotEtTaxeService.creerTvaSurCommission(
+                            banque.getId(), montantTva, Motif.TVA_COMMISSION_CAUTION,
+                            prorataPersiste.getDateEmission(), "TVA " + prorataPersiste.getLibelle(),
+                            "TVA/prorata/caution/creation", prorataPersiste.getId(), sauvegardee.getId());
+                    log.info("TVA prorata créée — montant: {}", montantTva);
                 }
             }
         });
@@ -183,8 +186,9 @@ public class CautionServiceImpl implements ICautionService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Caution.class)
     public CautionResponseDto modifier(Long id, CautionUpdateDto dto) {
-        logger.info("Modification caution — id: {}", id);
+        log.info("Modification caution — id: {}", id);
 
         Caution caution = trouverOuLeverException(id);
 
@@ -204,10 +208,9 @@ public class CautionServiceImpl implements ICautionService {
         }
 
         // Résolution de toutes les associations (banque, nature, marche sont tous modifiables)
-        Banque banque = trouverBanqueOuLeverException(dto.banqueId());
-        NatureLigneFonctionnelle nature = trouverNatureOuLeverException(dto.natureId());
-
-        Marche marche = dto.marcheId() != null ? trouverMarcheOuLeverException(dto.marcheId()) : null;
+        Banque banque = banqueService.findOrThrow(dto.banqueId());
+        NatureLigneFonctionnelle nature = natureService.findOrThrow(dto.natureId());
+        Marche marche = dto.marcheId() != null ? marcheService.findOrThrow(dto.marcheId()) : null;
 
         // Application de tous les champs modifiables
         cautionMapper.applyUpdate(dto, caution);
@@ -216,7 +219,7 @@ public class CautionServiceImpl implements ICautionService {
         caution.setMarche(marche);
 
         Caution modifiee = cautionRepository.save(caution);
-        logger.info("Caution modifiée — id: {}", modifiee.getId());
+        log.info("Caution modifiée — id: {}", modifiee.getId());
 
         return toDto(modifiee.getId());
     }
@@ -225,13 +228,13 @@ public class CautionServiceImpl implements ICautionService {
 
     @Override
     public CautionResponseDto getById(Long id) {
-        logger.debug("Récupération caution — id: {}", id);
+        log.debug("Récupération caution — id: {}", id);
         return toDto(id);
     }
 
     @Override
     public Page<CautionResponseDto> rechercher(CautionSearchCriteria criteres, Pageable pageable) {
-        logger.debug("Recherche cautions — critères: {}", criteres);
+        log.debug("Recherche cautions — critères: {}", criteres);
 
         Pageable stablePageable = pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
         Page<Caution> page = cautionRepository.findAll(
@@ -251,7 +254,7 @@ public class CautionServiceImpl implements ICautionService {
 
     @Override
     public byte[] exporterPdf(CautionSearchCriteria criteres) {
-        logger.debug("Export PDF cautions — critères: {}", criteres);
+        log.debug("Export PDF cautions — critères: {}", criteres);
 
         List<Caution> cautions = cautionRepository.findAll(
             CautionSpecification.parCriteres(criteres),
@@ -410,15 +413,21 @@ public class CautionServiceImpl implements ICautionService {
             lines.add("N° Caution : " + criteres.numeroCaution());
         if (criteres.organisme() != null && !criteres.organisme().isBlank())
             lines.add("Organisme : " + criteres.organisme());
-        if (criteres.banqueId() != null)
-            banqueRepository.findById(criteres.banqueId())
-                .ifPresent(b -> lines.add("Banque : " + b.getNom()));
-        if (criteres.natureId() != null)
-            natureRepository.findById(criteres.natureId())
-                .ifPresent(n -> lines.add("Nature : " + n.getLabel()));
-        if (criteres.marcheId() != null)
-            marcheRepository.findById(criteres.marcheId())
-                .ifPresent(m -> lines.add("Marché : " + m.getNumero()));
+        if (criteres.banqueId() != null) {
+            try {
+                lines.add("Banque : " + banqueService.findOrThrow(criteres.banqueId()).getNom());
+            } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
+        }
+        if (criteres.natureId() != null) {
+            try {
+                lines.add("Nature : " + natureService.findOrThrow(criteres.natureId()).getLabel());
+            } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
+        }
+        if (criteres.marcheId() != null) {
+            try {
+                lines.add("Marché : " + marcheService.findOrThrow(criteres.marcheId()).getNumero());
+            } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
+        }
         if (criteres.dateDePrise() != null)
             lines.add("Date de prise : " + criteres.dateDePrise().format(DATE_FMT));
         if (criteres.montant() != null)
@@ -433,8 +442,9 @@ public class CautionServiceImpl implements ICautionService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
+    @AuditableAction(operation = AuditOperation.DELETE, entity = Caution.class)
     public void supprimer(Long id) {
-        logger.info("Suppression caution — id: {}", id);
+        log.info("Suppression caution — id: {}", id);
 
         Caution caution = trouverOuLeverException(id);
 
@@ -446,15 +456,16 @@ public class CautionServiceImpl implements ICautionService {
         }
 
         cautionRepository.delete(caution);
-        logger.info("Caution id: {} supprimée définitivement", id);
+        log.info("Caution id: {} supprimée définitivement", id);
     }
 
     // ── Clôture (main levée) ──────────────────────────────────────────────────
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Caution.class)
     public CloturerCautionResponse cloturer(Long id, CloturerCautionRequest request) {
-        logger.info("Clôture caution — id: {}, dateDeMainLevee: {}", id, request.dateDeMainLevee());
+        log.info("Clôture caution — id: {}, dateDeMainLevee: {}", id, request.dateDeMainLevee());
 
         // 1. Chargement avec associations (banque + nature nécessaires pour la stratégie)
         Caution caution = cautionRepository.findByIdAvecAssociations(id)
@@ -464,7 +475,6 @@ public class CautionServiceImpl implements ICautionService {
         if (Boolean.FALSE.equals(caution.getActif())) {
             throw new CautionBusinessException("La caution id: " + id + " est déjà clôturée.");
         }
-
 
         // 3. Résolution de la stratégie
         String nomBanque = caution.getBanque().getNom();
@@ -482,54 +492,50 @@ public class CautionServiceImpl implements ICautionService {
                 && YearMonth.from(caution.getDateDePrise())
                             .equals(YearMonth.from(request.dateDeMainLevee()))) {
 
-            commissionRepository.findByCaution_IdAndDateEmissionAndStatus(
-                    caution.getId(), caution.getDateDePrise(), Status.PREVU)
+            commissionService.findPrevuByCautionAndDateEmission(caution.getId(), caution.getDateDePrise())
                 .ifPresent(prorata -> {
-                    // Supprimer la TVA liée au prorata si elle existe (cas BMCI qui génère une TVA
-                    // sur le prorata d'entrée — la TVA doit disparaître avec la commission)
-                    impotEtTaxeRepository.findByCommission_Id(prorata.getId())
-                            .ifPresent(impotEtTaxeRepository::delete);
-                    commissionRepository.delete(prorata);
-                    logger.info("Prorata d'entrée PREVU supprimé (même mois clôture) — "
+                    // deleteCommission supprime aussi, en cascade, la TVA liée si elle existe
+                    // (cas BMCI qui génère une TVA sur le prorata d'entrée).
+                    commissionService.deleteCommission(prorata.getId());
+                    log.info("Prorata d'entrée PREVU supprimé (même mois clôture) — "
                             + "caution id: {}, banque: {}, dateEmission prorata: {}",
                             caution.getId(), nomBanque, caution.getDateDePrise());
                 });
         }
 
         // 5. Calcul et persistance de la commission de clôture
-        Commission commission = strategie.calculerMainLevee(caution, request.dateDeMainLevee());
-        commission.setCaution(caution);
-        commission = commissionRepository.save(commission);
-        logger.info("Commission de clôture générée — id: {}, montant: {}", commission.getId(), commission.getMontant());
+        // Objet transitoire — ses champs portent le calcul métier de la stratégie ; il n'est
+        // jamais persisté directement (encapsulation du module commission).
+        Commission commissionCalculee = strategie.calculerMainLevee(caution, request.dateDeMainLevee());
+        CommissionResponseDto commissionPersistee = commissionService.creerCommissionCaution(
+                caution.getId(), caution.getBanque().getId(), commissionCalculee.getMontant(),
+                commissionCalculee.getDateEmission(), commissionCalculee.getLibelle(),
+                commissionCalculee.getObservation());
+        log.info("Commission de clôture générée — id: {}, montant: {}",
+                commissionPersistee.getId(), commissionPersistee.getMontant());
 
-        // 5. TVA si la stratégie l'exige (ex. BMCI)
+        // 5b. TVA si la stratégie l'exige (ex. BMCI)
         if (strategie.genererTva()) {
-            BigDecimal montantTva = commission.getMontant()
+            BigDecimal montantTva = commissionPersistee.getMontant()
                     .multiply(TAUX_TVA)
                     .setScale(2, RoundingMode.HALF_UP);
 
-            ImpotEtTaxe tva = new ImpotEtTaxe();
-            tva.setBanque(caution.getBanque());
-            tva.setMontant(montantTva);
-            tva.setMotif(Motif.TVA_COMMISSION_CAUTION);
-            tva.setDateEmission(commission.getDateEmission());
-            tva.setLibelle("TVA " + commission.getLibelle());
-            tva.setObservation("TVA/commission/caution/cloture");
-            tva.setCommission(commission);
-            tva.setCaution(caution);
-            impotEtTaxeRepository.save(tva);
-            logger.info("TVA de clôture générée — montant: {}", montantTva);
+            impotEtTaxeService.creerTvaSurCommission(
+                    caution.getBanque().getId(), montantTva, Motif.TVA_COMMISSION_CAUTION,
+                    commissionPersistee.getDateEmission(), "TVA " + commissionPersistee.getLibelle(),
+                    "TVA/commission/caution/cloture", commissionPersistee.getId(), caution.getId());
+            log.info("TVA de clôture générée — montant: {}", montantTva);
         }
 
         // 6. Clôture de la caution
         caution.setDateDeMainLevee(request.dateDeMainLevee());
         caution.setActif(false);
         cautionRepository.save(caution);
-        logger.info("Caution id: {} clôturée avec succès", id);
+        log.info("Caution id: {} clôturée avec succès", id);
 
         return new CloturerCautionResponse(
                 cautionMapper.toDto(caution),
-                commissionMapper.toResponseDto(commission)
+                commissionPersistee
         );
     }
 
@@ -553,26 +559,5 @@ public class CautionServiceImpl implements ICautionService {
                 "Caution introuvable après persistance — id: " + id
             ));
         return cautionMapper.toDto(caution);
-    }
-
-    private Banque trouverBanqueOuLeverException(Long banqueId) {
-        return banqueRepository.findById(banqueId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "Banque introuvable — id: " + banqueId
-            ));
-    }
-
-    private NatureLigneFonctionnelle trouverNatureOuLeverException(Long natureId) {
-        return natureRepository.findById(natureId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "Nature de ligne fonctionnelle introuvable — id: " + natureId
-            ));
-    }
-
-    private Marche trouverMarcheOuLeverException(Long marcheId) {
-        return marcheRepository.findById(marcheId)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                "Marché introuvable — id: " + marcheId
-            ));
     }
 }

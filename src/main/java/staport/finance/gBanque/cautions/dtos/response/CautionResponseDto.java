@@ -1,4 +1,4 @@
-package staport.finance.gBanque.cautions.dtos;
+package staport.finance.gBanque.cautions.dtos.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

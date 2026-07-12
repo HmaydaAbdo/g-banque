@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.impot_taxes.dtos.*;
@@ -34,7 +35,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 @Service
-public class ImpotEtTaxeService {
+public class ImpotEtTaxeService implements IImpotEtTaxeService {
 
     private static final Logger log = LogManager.getLogger(ImpotEtTaxeService.class);
     @PersistenceContext
@@ -333,5 +334,52 @@ public class ImpotEtTaxeService {
 
         log.info("Encours récupérés: {} éléments, Total: {}", pageDto.getTotalElements(), totalDesEncours);
         return result;
+    }
+
+    // ── Façade cross-domaine (ex. cautions) ────────────────────────────────────
+
+    @Override
+    @Transactional
+    public ImpotEtTaxeResponseDto creerTvaSurCommission(Long banqueId, BigDecimal montant, Motif motif,
+            LocalDate dateEmission, String libelle, String observation,
+            Long commissionId, Long cautionId) {
+
+        Banque banque = banqueRepository.findById(banqueId)
+                .orElseThrow(() -> {
+                    log.error("Banque introuvable avec l'id={}", banqueId);
+                    return new IllegalArgumentException("Banque introuvable");
+                });
+
+        ImpotEtTaxe tva = new ImpotEtTaxe();
+        tva.setBanque(banque);
+        tva.setMontant(montant);
+        tva.setMotif(motif);
+        tva.setDateEmission(dateEmission);
+        tva.setLibelle(libelle);
+        tva.setObservation(observation);
+        tva.setStatus(Status.PREVU);
+        // Références par proxy — évite de charger les entités complètes pour ces seuls FK.
+        tva.setCommission(entityManager.getReference(Commission.class, commissionId));
+        if (cautionId != null) {
+            tva.setCaution(entityManager.getReference(Caution.class, cautionId));
+        }
+
+        ImpotEtTaxe sauvegardee = impotEtTaxeRepository.save(tva);
+        log.info("TVA créée sur commission externe — id={}, montant={}, motif={}",
+                sauvegardee.getId(), montant, motif);
+
+        return impotEtTaxeMapper.toResponseDto(sauvegardee);
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteByCommissionIdIfExists(Long commissionId) {
+        return impotEtTaxeRepository.findByCommission_Id(commissionId)
+                .map(tva -> {
+                    impotEtTaxeRepository.delete(tva);
+                    log.info("TVA supprimée — liée à la commission id={}", commissionId);
+                    return true;
+                })
+                .orElse(false);
     }
 }

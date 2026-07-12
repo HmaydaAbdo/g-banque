@@ -1,6 +1,8 @@
 package staport.finance.gBanque.cautions.commissions.strategy.impl;
 
 import org.springframework.stereotype.Component;
+import staport.finance.gBanque.cautions.commissions.config.dtos.response.CautionCommissionConfigResponseDTO;
+import staport.finance.gBanque.cautions.commissions.config.services.interfaces.ICautionCommissionConfigService;
 import staport.finance.gBanque.cautions.commissions.strategy.CommissionCautionStrategie;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.entities.Commission;
@@ -35,8 +37,11 @@ public class SahamBankCommissionCautionStrategie implements CommissionCautionStr
 
     private static final String NOM_BANQUE = "SAHAM BANK";
 
-    private static final BigDecimal MIN_COMMISSION = new BigDecimal("55");
-    private static final BigDecimal DIVISEUR       = new BigDecimal("36000");
+    private final ICautionCommissionConfigService commissionConfigService;
+
+    public SahamBankCommissionCautionStrategie(ICautionCommissionConfigService commissionConfigService) {
+        this.commissionConfigService = commissionConfigService;
+    }
 
     @Override
     public String nomBanque() {
@@ -93,13 +98,16 @@ public class SahamBankCommissionCautionStrategie implements CommissionCautionStr
 
     private Commission buildCommission(Caution caution, long nombreJours,
                                        LocalDate dateEmission, String suffixeLibelle) {
+        CautionCommissionConfigResponseDTO config =
+                commissionConfigService.resolveOuLeverException(caution.getBanque().getNom());
+
         BigDecimal montantCommission = caution.getMontant()
                 .multiply(caution.getTaux())
                 .multiply(BigDecimal.valueOf(nombreJours))
-                .divide(DIVISEUR, 2, RoundingMode.HALF_UP);
+                .divide(config.diviseur(), 2, RoundingMode.HALF_UP);
 
-        if (montantCommission.compareTo(MIN_COMMISSION) < 0) {
-            montantCommission = MIN_COMMISSION;
+        if (montantCommission.compareTo(config.montantMinimum()) < 0) {
+            montantCommission = config.montantMinimum();
         }
 
         String libelle = "caution " + caution.getNature().getCode()

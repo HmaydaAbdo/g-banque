@@ -1,4 +1,4 @@
-package staport.finance.gBanque.cautions.dtos;
+package staport.finance.gBanque.cautions.dtos.request;
 
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
