@@ -10,127 +10,115 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.exceptions.MiseADispositionBusinessException;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.mapper.MiseADispositionMapper;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.metrics.MiseADispositionMetrics;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.specs.MiseADispositionSpec;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
-import java.util.NoSuchElementException;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
+/**
+ * Service métier du module Mise à Disposition.
+ *
+ * <p>Façade publique du domaine {@code miseADisposition} (architecture.md — Encapsulation des
+ * domaines) : les autres modules doivent passer par ce service, jamais par
+ * {@code MiseADispositionRepository} directement.
+ */
 @Service
 public class MiseADispositionService {
 
     private static final Logger log = LoggerFactory.getLogger(MiseADispositionService.class);
     private final MiseADispositionRepository miseADispositionRepository;
-    private final BanqueRepository banqueRepository;
-    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+    private final IBanqueService banqueService;
+    private final MiseADispositionMapper miseADispositionMapper;
+    private final MiseADispositionMetrics miseADispositionMetrics;
 
-
-    public MiseADispositionService(MiseADispositionRepository miseADispositionRepository, BanqueRepository banqueRepository) {
+    public MiseADispositionService(MiseADispositionRepository miseADispositionRepository, IBanqueService banqueService,
+                                    MiseADispositionMapper miseADispositionMapper, MiseADispositionMetrics miseADispositionMetrics) {
         this.miseADispositionRepository = miseADispositionRepository;
-        this.banqueRepository = banqueRepository;
-    }
-
-    @Transactional()
-    public MiseADispositionResponseDto createEncaissementMiseAdisposition(MiseAdispositionRequestDto dto) {
-        log.info("Création d'une nouvelle mise à disposition d'encaissement: {}", dto);
-
-        Banque banque = banqueRepository.findById(dto.getBanqueId()).orElseThrow(() -> {
-            log.error("Banque avec l'ID {} introuvable", dto.getBanqueId());
-            return new ResourceNotFoundException("Bank with id " + dto.getBanqueId() + " not found.");
-        });
-
-        MiseADisposition miseADisposition = MiseADispositionMapper.toEntity(dto, banque);
-
-        log.debug("Enregistrement de l'entité mise à disposition: {}", miseADisposition);
-        miseADisposition = miseADispositionRepository.save(miseADisposition);
-
-        log.info("Mise à disposition créée avec succès avec l'ID: {}", miseADisposition.getId());
-        return MiseADispositionMapper.toDto(miseADisposition);
+        this.banqueService = banqueService;
+        this.miseADispositionMapper = miseADispositionMapper;
+        this.miseADispositionMetrics = miseADispositionMetrics;
     }
 
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = MiseADisposition.class)
+    public MiseADispositionResponseDto createEncaissementMiseAdisposition(MiseAdispositionRequestDto dto) {
+        log.info("Création d'une nouvelle mise à disposition d'encaissement: {}", dto);
+
+        Banque banque = banqueService.findOrThrow(dto.getBanqueId());
+        MiseADisposition miseADisposition = miseADispositionMapper.toEntity(dto, banque);
+
+        log.debug("Enregistrement de l'entité mise à disposition: {}", miseADisposition);
+        miseADisposition = miseADispositionRepository.save(miseADisposition);
+        miseADispositionMetrics.incrementerCreation();
+
+        log.info("Mise à disposition créée avec succès avec l'ID: {}", miseADisposition.getId());
+        return toDto(miseADisposition);
+    }
+
+    @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = MiseADisposition.class)
     public MiseADispositionResponseDto editEncaissementMiseAdisposition(Long id, MiseAdispositionRequestDto dto) {
         log.info("Modification de la mise à disposition d'encaissement ID={} avec les données={}", id, dto);
 
-        MiseADisposition existingMiseAdisposition = miseADispositionRepository.findById(id).orElseThrow(() -> {
-            log.error("Mise à disposition avec l'ID {} introuvable", id);
-            return new ResourceNotFoundException("MiseAdisposition with id " + id + " not found.");
-        });
+        MiseADisposition existingMiseAdisposition = trouverOuLeverException(id);
 
         if (existingMiseAdisposition.getType() != Type.ENCAISSEMENT) {
             log.warn("Tentative de modification d'une mise à disposition qui n'est pas de type ENCAISSEMENT, ID={}", id);
-            throw new IllegalArgumentException("Modification interdite: la MiseADisposition with id " + id + " n'est pas de type ENCAISSEMENT.");
+            throw new MiseADispositionBusinessException("Modification interdite: la MiseADisposition with id " + id + " n'est pas de type ENCAISSEMENT.");
         }
 
         if (existingMiseAdisposition.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de modification d'une mise à disposition déjà réglée, ID={}", id);
-            throw new IllegalArgumentException("Modification interdite: la MiseADisposition with id " + id + " est déjà réglée.");
+            throw new MiseADispositionBusinessException("Modification interdite: la MiseADisposition with id " + id + " est déjà réglée.");
         }
 
         if (dto.getDateEmission() != null) {
-            log.debug("Mise à jour de la date d'émission pour la mise à disposition ID={}", id);
             existingMiseAdisposition.setDateEmission(dto.getDateEmission());
         }
-
         if (dto.getBanqueId() != null) {
-            log.debug("Mise à jour de la banque pour la mise à disposition ID={}", id);
-            Banque banque = banqueRepository.findById(dto.getBanqueId())
-                    .orElseThrow(() -> {
-                        log.error("Banque avec l'ID {} introuvable", dto.getBanqueId());
-                        return new ResourceNotFoundException("Bank with id " + dto.getBanqueId() + " not found.");
-                    });
-            existingMiseAdisposition.setBanque(banque);
+            existingMiseAdisposition.setBanque(banqueService.findOrThrow(dto.getBanqueId()));
         }
-
         if (dto.getMontant() != null) {
-            log.debug("Mise à jour du montant pour la mise à disposition ID={}", id);
             existingMiseAdisposition.setMontant(dto.getMontant());
         }
-
         if (dto.getEmetteur() != null) {
-            log.debug("Mise à jour de l'émetteur pour la mise à disposition ID={}", id);
             existingMiseAdisposition.setEmetteur(dto.getEmetteur());
         }
 
         existingMiseAdisposition = miseADispositionRepository.save(existingMiseAdisposition);
         log.info("Mise à disposition ID={} mise à jour avec succès", id);
-        return MiseADispositionMapper.toDto(existingMiseAdisposition);
+        return toDto(existingMiseAdisposition);
     }
 
     @Transactional(readOnly = true)
     public MiseADispositionResponseDto getMiseAdispositionById(Long id) {
-        log.info("Récupération de la mise à disposition avec l'ID={}", id);
-        MiseADisposition miseADisposition = miseADispositionRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Mise à disposition avec l'ID {} introuvable", id);
-                    return new ResourceNotFoundException("Mise à disposition with id " + id + " not found.");
-                });
-        log.debug("Mise à disposition trouvée: {}", miseADisposition);
-        return MiseADispositionMapper.toDto(miseADisposition);
+        log.debug("Récupération de la mise à disposition avec l'ID={}", id);
+        return toDto(trouverOuLeverException(id));
     }
 
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = MiseADisposition.class)
     public void deleteMiseAdispositionById(Long id) {
         log.info("Suppression de la mise à disposition avec l'ID={}", id);
 
-        MiseADisposition miseADisposition = miseADispositionRepository.findById(id).orElseThrow(() -> {
-            log.error("Mise à disposition avec l'ID {} introuvable", id);
-            return new ResourceNotFoundException("Mise à disposition  with id " + id + " not found.");
-        });
-
-
+        MiseADisposition miseADisposition = trouverOuLeverException(id);
 
         if (miseADisposition.getStatut() == StatutMoyenPaiement.REGLE) {
             log.warn("Tentative de suppression d'une mise à disposition déjà réglée, ID={}", id);
-            throw new IllegalArgumentException("Suppression interdite: la mise à dispo with id " + id + " est déjà réglée.");
+            throw new MiseADispositionBusinessException("Suppression interdite: la mise à dispo with id " + id + " est déjà réglée.");
         }
 
         miseADispositionRepository.deleteById(id);
@@ -139,93 +127,71 @@ public class MiseADispositionService {
 
     @Transactional(readOnly = true)
     public Page<MiseADispositionResponseDto> getDecaissementForMiseAdisposition(MiseADispositionSearchDto searchDto, Pageable pageable) {
-        log.info("Recherche des mises à disposition de décaissement avec les filtres={} et pagination={}", searchDto, pageable);
+        log.debug("Recherche des mises à disposition de décaissement avec les filtres={} et pagination={}", searchDto, pageable);
 
-        // Build the combined specification using the static methods from MiseADispositionSpec.
         Specification<MiseADisposition> spec = MiseADispositionSpec.bySearchDto(searchDto)
                 .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, stablePageable(pageable));
 
-        // Execute the search with the combined specification and pagination.
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        log.info("{} mise(s) à disposition de décaissement trouvée(s)", miseADispositionPage.getTotalElements());
-
-        // Map the resulting Page<MiseADisposition> to Page<MiseADispositionResponseDto>.
-        return miseADispositionPage.map(MiseADispositionMapper::toDto);
+        log.debug("{} mise(s) à disposition de décaissement trouvée(s)", miseADispositionPage.getTotalElements());
+        return miseADispositionPage.map(this::toDto);
     }
 
     @Transactional(readOnly = true)
     public Page<MiseADispositionResponseDto> getEncaissementForMiseAdisposition(MiseADispositionSearchDto searchDto, Pageable pageable) {
-        log.info("Recherche des mises à disposition d'encaissement avec les filtres={} et pagination={}", searchDto, pageable);
+        log.debug("Recherche des mises à disposition d'encaissement avec les filtres={} et pagination={}", searchDto, pageable);
 
-        // Build the combined specification using the static methods from MiseADispositionSpec.
         Specification<MiseADisposition> spec = MiseADispositionSpec.bySearchDto(searchDto)
                 .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT));
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, stablePageable(pageable));
 
-        // Execute the search with the combined specification and pagination.
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-
-        log.info("{} mise(s) à disposition d'encaissement trouvée(s)", miseADispositionPage.getTotalElements());
-
-        // Map the resulting Page<MiseADisposition> to Page<MiseADispositionResponseDto>.
-        return miseADispositionPage.map(MiseADispositionMapper::toDto);
+        log.debug("{} mise(s) à disposition d'encaissement trouvée(s)", miseADispositionPage.getTotalElements());
+        return miseADispositionPage.map(this::toDto);
     }
 
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = MiseADisposition.class)
     public MiseADispositionResponseDto toggleMiseADispositionStatus(Long id) {
         log.info("Basculement du statut pour la mise à disposition ID={}", id);
 
-        MiseADisposition miseADisposition = miseADispositionRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Mise à disposition avec l'ID {} introuvable", id);
-                    return new NoSuchElementException("MiseADisposition with id " + id + " not found.");
-                });
+        MiseADisposition miseADisposition = trouverOuLeverException(id);
 
         if (miseADisposition.getStatut() == StatutMoyenPaiement.ANNULE) {
             log.warn("Tentative de basculement du statut d'une mise à disposition annulée, ID={}", id);
-            throw new IllegalStateException("Impossible de basculer le statut d'une mise à disposition annulée (ID=" + id + ").");
+            throw new MiseADispositionBusinessException("Impossible de basculer le statut d'une mise à disposition annulée (ID=" + id + ").");
         }
-        // Toggle the 'active' status.
         miseADisposition.setStatut(miseADisposition.getStatut() == StatutMoyenPaiement.ENCOURS ? StatutMoyenPaiement.REGLE : StatutMoyenPaiement.ENCOURS);
-        log.debug("Nouveau statut pour la mise à disposition ID={}: actif={}", id, miseADisposition.getStatut() == StatutMoyenPaiement.ENCOURS);
-
-        // Save the updated entity.
         miseADisposition = miseADispositionRepository.save(miseADisposition);
+        if (miseADisposition.getStatut() == StatutMoyenPaiement.REGLE) {
+            miseADispositionMetrics.incrementerPassageRegle();
+        }
 
         log.info("Statut basculé avec succès pour la mise à disposition ID={}", id);
-
-        // Map and return the updated DTO.
-        return MiseADispositionMapper.toDto(miseADisposition);
+        return toDto(miseADisposition);
     }
 
     @Transactional(readOnly = true)
     public EncoursMiseAdisposition getEncoursDecaissementsForMiseADispositionByBank(EncoursMiseAdispositionSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours de décaissement pour les mises à disposition de la banque ID={} avec les filtres={}", banqueId, searchDto);
+        log.debug("Récupération des encours de décaissement pour les mises à disposition de la banque ID={} avec les filtres={}", banqueId, searchDto);
 
-        // Build the specification for active mise à disposition for the specified bank in the current month
-        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursDecaissement(banqueId,endOfMonth)
+        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursDecaissement(banqueId, finDuMoisCourant())
                 .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
                 .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
                 .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
 
-        // Execute the search with the specification and pagination
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, stablePageable(pageable));
         BigDecimal totalDesEncours = miseADispositionRepository.findAll(spec).stream().map(MiseADisposition::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-        Page<MiseADispositionResponseDto> result = miseADispositionPage.map(MiseADispositionMapper::toDto);
 
-        log.info("Total des encours de décaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
-
-        // Map the result to DTOs and return
-        return new EncoursMiseAdisposition(totalDesEncours, result);
+        log.debug("Total des encours de décaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
+        return new EncoursMiseAdisposition(totalDesEncours, miseADispositionPage.map(this::toDto));
     }
 
     @Transactional(readOnly = true)
     public EncoursMiseAdisposition getEncoursEncaissementsForMiseADispositionByBank(EncoursMiseAdispositionSearchDto searchDto, Long banqueId, Pageable pageable) {
-        log.info("Récupération des encours d'encaissement pour les mises à disposition de la banque ID={} avec les filtres={}", banqueId, searchDto);
+        log.debug("Récupération des encours d'encaissement pour les mises à disposition de la banque ID={} avec les filtres={}", banqueId, searchDto);
 
-        // Build the specification for active mise à disposition for the specified bank in the current month
-        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursEncaissement(banqueId,endOfMonth)
+        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursEncaissement(banqueId, finDuMoisCourant())
                 .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
                 .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
                 .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
@@ -233,14 +199,43 @@ public class MiseADispositionService {
                 .and(MiseADispositionSpec.hasEmetteur(searchDto.getEmetteur()))
                 .and(MiseADispositionSpec.hasDateEmission(searchDto.getDateEmission()));
 
-        // Execute the search with the specification and pagination
-        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        Page<MiseADisposition> miseADispositionPage = miseADispositionRepository.findAll(spec, stablePageable(pageable));
         BigDecimal totalDesEncours = miseADispositionRepository.findAll(spec).stream().map(MiseADisposition::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
-        Page<MiseADispositionResponseDto> result = miseADispositionPage.map(MiseADispositionMapper::toDto);
 
-        log.info("Total des encours d'encaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
+        log.debug("Total des encours d'encaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
+        return new EncoursMiseAdisposition(totalDesEncours, miseADispositionPage.map(this::toDto));
+    }
 
-        // Map the result to DTOs and return
-        return new EncoursMiseAdisposition(totalDesEncours, result);
+    // ── Helpers internes ──────────────────────────────────────────────────────
+
+    private MiseADisposition trouverOuLeverException(Long id) {
+        return miseADispositionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Mise à disposition with id " + id + " not found."));
+    }
+
+    /**
+     * Fin du mois courant — recalculée à chaque appel (et non mise en cache) pour que
+     * les calculs d'encours restent corrects après le premier jour suivant le déploiement.
+     */
+    private LocalDate finDuMoisCourant() {
+        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+    }
+
+    private Pageable stablePageable(Pageable pageable) {
+        return pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+    }
+
+    /**
+     * Mappe l'entité vers le DTO puis applique les champs d'affichage calculés (règle métier
+     * propre au service — jamais dans le Mapper, cf. architecture.md) : observation (" MAD " +
+     * numéro) et libellé (bénéficiaire) — comportement identique à l'ancien mapper statique.
+     */
+    private MiseADispositionResponseDto toDto(MiseADisposition miseADisposition) {
+        MiseADispositionResponseDto dto = miseADispositionMapper.toDto(miseADisposition);
+        dto.setObservation(" MAD " + miseADisposition.getNumero());
+        dto.setLibelle(miseADisposition.getBeneficiaire());
+        return dto;
     }
 }

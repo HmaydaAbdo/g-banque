@@ -10,14 +10,19 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prelevements.dtos.EncoursPrelevement;
 import staport.finance.gBanque.prelevements.dtos.PrelevementRequestDto;
 import staport.finance.gBanque.prelevements.dtos.PrelevementResponseDto;
 import staport.finance.gBanque.prelevements.dtos.PrelevementSearchDto;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
+import staport.finance.gBanque.prelevements.exceptions.PrelevementBusinessException;
 import staport.finance.gBanque.prelevements.mapper.PrelevementMapper;
+import staport.finance.gBanque.prelevements.metrics.PrelevementMetrics;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.prelevements.spec.PrelevementSpec;
 
@@ -30,16 +35,21 @@ public class PrelevementService {
 
     private static final Logger log = LoggerFactory.getLogger(PrelevementService.class);
     private final PrelevementRepository prelevementRepository;
-    private final BanqueRepository banqueRepository;
+    private final IBanqueService banqueService;
     private final PrelevementMapper prelevementMapper;
-    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+    private final PrelevementMetrics prelevementMetrics;
 
-
-    public PrelevementService(PrelevementRepository prelevementRepository, BanqueRepository banqueRepository, PrelevementMapper prelevementMapper) {
+    public PrelevementService(PrelevementRepository prelevementRepository, IBanqueService banqueService, PrelevementMapper prelevementMapper, PrelevementMetrics prelevementMetrics) {
         this.prelevementRepository = prelevementRepository;
-        this.banqueRepository = banqueRepository;
+        this.banqueService = banqueService;
         this.prelevementMapper = prelevementMapper;
+        this.prelevementMetrics = prelevementMetrics;
         log.info("Initialisation du service Prelevement");
+    }
+
+    /** Fin du mois courant, recalculée à chaque appel (jamais figée sur une valeur de démarrage du bean). */
+    private static LocalDate finDuMoisCourant() {
+        return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
     }
 
     /**
@@ -49,20 +59,18 @@ public class PrelevementService {
      * @return Le prélèvement créé
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Prelevement.class, idAccessor = "id")
     public PrelevementResponseDto createPrelevement(PrelevementRequestDto requestDto) {
         log.info("Création d'un prélèvement - Banque ID: {}, Libellé: '{}', Montant: {}",
                 requestDto.getBanqueId(), requestDto.getLibelle(), requestDto.getMontant());
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         log.debug("Banque trouvée: {} (ID: {})", banque.getNom(), banque.getId());
 
         Prelevement prelevement = prelevementMapper.toEntity(requestDto, banque);
         Prelevement savedPrelevement = prelevementRepository.save(prelevement);
+        prelevementMetrics.incrementerCreation();
 
         log.info("Prélèvement créé avec succès - ID: {}, Statut: {}", savedPrelevement.getId(), savedPrelevement.getStatus());
         return prelevementMapper.toResponseDto(savedPrelevement);
@@ -81,7 +89,7 @@ public class PrelevementService {
         Prelevement prelevement = prelevementRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Prélèvement non trouvé avec l'ID: {}", id);
-                    return new IllegalArgumentException("Prélèvement non trouvé avec l'ID: " + id);
+                    return new ResourceNotFoundException("Prélèvement non trouvé avec l'ID: " + id);
                 });
 
         log.debug("Prélèvement trouvé - Libellé: '{}', Montant: {}, Statut: {}",
@@ -120,6 +128,7 @@ public class PrelevementService {
      * @return Le prélèvement mis à jour
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Prelevement.class, idAccessor = "id")
     public PrelevementResponseDto updatePrelevement(Long id, PrelevementRequestDto requestDto) {
         log.info("Mise à jour du prélèvement ID: {} - Nouveau libellé: '{}', Nouveau montant: {}",
                 id, requestDto.getLibelle(), requestDto.getMontant());
@@ -127,17 +136,18 @@ public class PrelevementService {
         Prelevement prelevement = prelevementRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Prélèvement non trouvé avec l'ID: {}", id);
-                    return new IllegalArgumentException("Prélèvement non trouvé avec l'ID: " + id);
+                    return new ResourceNotFoundException("Prélèvement non trouvé avec l'ID: " + id);
                 });
 
         log.debug("Prélèvement actuel avant modification - Libellé: '{}', Montant: {}, Statut: {}",
                 prelevement.getLibelle(), prelevement.getMontant(), prelevement.getStatus());
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
-                });
+        if (prelevement.getStatus() == Status.PAYE) {
+            log.warn("Tentative de modification d'un prélèvement déjà payé — id: {}", id);
+            throw new PrelevementBusinessException("Modification interdite : le prélèvement id " + id + " est déjà payé.");
+        }
+
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         prelevement.setLibelle(requestDto.getLibelle());
         prelevement.setMontant(requestDto.getMontant());
@@ -155,12 +165,19 @@ public class PrelevementService {
      * @param id Identifiant du prélèvement à supprimer
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = Prelevement.class)
     public void deletePrelevement(Long id) {
         log.info("Suppression du prélèvement avec l'ID: {}", id);
 
-        if (!prelevementRepository.existsById(id)) {
-            log.error("Prélèvement non trouvé avec l'ID: {}", id);
-            throw new IllegalArgumentException("Prélèvement non trouvé avec l'ID: " + id);
+        Prelevement prelevement = prelevementRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Prélèvement non trouvé avec l'ID: {}", id);
+                    return new ResourceNotFoundException("Prélèvement non trouvé avec l'ID: " + id);
+                });
+
+        if (prelevement.getStatus() == Status.PAYE) {
+            log.warn("Tentative de suppression d'un prélèvement déjà payé — id: {}", id);
+            throw new PrelevementBusinessException("Suppression interdite : le prélèvement id " + id + " est déjà payé.");
         }
 
         prelevementRepository.deleteById(id);
@@ -180,7 +197,7 @@ public class PrelevementService {
         log.info("Récupération des prélèvements en cours - Critères: {}", searchDto);
 
         // Construction de la spécification pour filtrer les enregistrements
-        Specification<Prelevement> spec = Specification.where(PrelevementSpec.outstandingUntil(endOfMonth))
+        Specification<Prelevement> spec = Specification.where(PrelevementSpec.outstandingUntil(finDuMoisCourant()))
                 .and(PrelevementSpec.hasBanque(searchDto.getBanqueId()))
                 .and(PrelevementSpec.hasLibelle(searchDto.getLibelle()))
                 .and(PrelevementSpec.hasMontant(searchDto.getMontant()));
@@ -212,13 +229,14 @@ public class PrelevementService {
 
 
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Prelevement.class, idAccessor = "id")
     public PrelevementResponseDto toggleStatus(Long id) {
         log.info("Basculement du statut du prélèvement ID: {}", id);
 
         Prelevement prelevement = prelevementRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Prélèvement non trouvé avec l'ID: {}", id);
-                    return new IllegalArgumentException("Prélèvement non trouvé avec l'ID: " + id);
+                    return new ResourceNotFoundException("Prélèvement non trouvé avec l'ID: " + id);
                 });
 
         Status oldStatus = prelevement.getStatus();
@@ -226,6 +244,9 @@ public class PrelevementService {
 
         prelevement.setStatus(newStatus);
         Prelevement updatedPrelevement = prelevementRepository.save(prelevement);
+        if (newStatus == Status.PAYE) {
+            prelevementMetrics.incrementerPassagePaye();
+        }
 
         log.info("Statut du prélèvement ID: {} basculé avec succès de {} vers {}",
                 id, oldStatus, newStatus);

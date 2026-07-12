@@ -20,10 +20,11 @@ import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionRe
 import staport.finance.gBanque.leasing.echeancesLeasing.entities.EcheanceLeasing;
 import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
+import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionRequest;
+import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
 import staport.finance.gBanque.transactions.enums.SensOperation;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionRequest;
-import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionResponseDto;
 import staport.finance.gBanque.validation.dtos.commision.CommissionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.commision.CommissionValidationDto;
 import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionRequestDto;
@@ -38,25 +39,30 @@ import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionRespons
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
-import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
-import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
+import staport.finance.gBanque.moyensDePaiements.lcn.validation.dto.LcnTransactionRequest;
+import staport.finance.gBanque.moyensDePaiements.lcn.validation.dto.LcnTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.lcn.validation.services.interfaces.ILcnValidationService;
 import staport.finance.gBanque.validation.dtos.lot.BatchValidationRequestDto;
 import staport.finance.gBanque.validation.dtos.lot.BatchValidationResponseDto;
 import staport.finance.gBanque.validation.dtos.lot.OperationValideeDto;
-import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.dto.MiseAdispositionTransactionRequestDto;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.dto.MiseAdispositionTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.services.interfaces.IMiseADispositionValidationService;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
-import staport.finance.gBanque.validation.dtos.prelevements.PrelevementTransactionResponse;
-import staport.finance.gBanque.validation.dtos.prelevements.PrelevementValidationRequest;
+import staport.finance.gBanque.prelevements.validation.dto.PrelevementTransactionResponse;
+import staport.finance.gBanque.prelevements.validation.dto.PrelevementValidationRequest;
+import staport.finance.gBanque.prelevements.validation.services.interfaces.IPrelevementValidationService;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneTransactionResponse;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneValidationRequest;
-import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionRequestDto;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.services.interfaces.IVirementInternationalValidationService;
+import staport.finance.gBanque.moyensDePaiements.virements.validation.dto.VirementTransactionRequestDto;
+import staport.finance.gBanque.moyensDePaiements.virements.validation.dto.VirementTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.virements.validation.services.interfaces.IVirementValidationService;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -103,19 +109,37 @@ public class BatchValidationService {
     private final ICmtValidationService cmtValidationService;
     private final EcheanceLeasingRepository echeanceLeasingRepository;
     private final ILeasingValidationService leasingValidationService;
+    private final IChequeValidationService chequeValidationService;
+    private final ILcnValidationService lcnValidationService;
+    private final IVirementValidationService virementValidationService;
+    private final IVirementInternationalValidationService virementInternationalValidationService;
+    private final IMiseADispositionValidationService miseADispositionValidationService;
+    private final IPrelevementValidationService prelevementValidationService;
 
     public BatchValidationService(ValidationService validationService,
                                    IAgiosValidationService agiosValidationService,
                                    EcheanceCMTRepository echeanceCMTRepository,
                                    ICmtValidationService cmtValidationService,
                                    EcheanceLeasingRepository echeanceLeasingRepository,
-                                   ILeasingValidationService leasingValidationService) {
+                                   ILeasingValidationService leasingValidationService,
+                                   IChequeValidationService chequeValidationService,
+                                   ILcnValidationService lcnValidationService,
+                                   IVirementValidationService virementValidationService,
+                                   IVirementInternationalValidationService virementInternationalValidationService,
+                                   IMiseADispositionValidationService miseADispositionValidationService,
+                                   IPrelevementValidationService prelevementValidationService) {
         this.validationService = validationService;
         this.agiosValidationService = agiosValidationService;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.cmtValidationService = cmtValidationService;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.leasingValidationService = leasingValidationService;
+        this.chequeValidationService = chequeValidationService;
+        this.lcnValidationService = lcnValidationService;
+        this.virementValidationService = virementValidationService;
+        this.virementInternationalValidationService = virementInternationalValidationService;
+        this.miseADispositionValidationService = miseADispositionValidationService;
+        this.prelevementValidationService = prelevementValidationService;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -144,8 +168,8 @@ public class BatchValidationService {
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
                         dto::setTvaDeductible, dto::setRapprochementId);
                 VirementTransactionResponseDto r = requestDto.getSens() == SensOperation.DECAISSEMENT
-                        ? validationService.processVirementDecaissementTransaction(dto)
-                        : validationService.processVirementEncaissementTransaction(dto);
+                        ? virementValidationService.processVirementDecaissementTransaction(dto)
+                        : virementValidationService.processVirementEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case CHEQUE -> {
@@ -154,8 +178,8 @@ public class BatchValidationService {
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
                         dto::setTvaDeductible, dto::setRapprochementId);
                 ChequeTransactionResponseDto r = requestDto.getSens() == SensOperation.DECAISSEMENT
-                        ? validationService.processChequeDecaissementTransaction(dto)
-                        : validationService.processChequeEncaissementTransaction(dto);
+                        ? chequeValidationService.processChequeDecaissementTransaction(dto)
+                        : chequeValidationService.processChequeEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case LCN_DECAISSEMENT -> {
@@ -163,7 +187,7 @@ public class BatchValidationService {
                 dto.setId(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
                         dto::setTvaDeductible, dto::setRapprochementId);
-                LcnTransactionResponse r = validationService.processDecaissementLcnTransaction(dto);
+                LcnTransactionResponseDto r = lcnValidationService.processLcnDecaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case LCN_ENCAISSEMENT -> {
@@ -171,7 +195,7 @@ public class BatchValidationService {
                 dto.setId(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
                         dto::setTvaDeductible, dto::setRapprochementId);
-                LcnTransactionResponse r = validationService.processEncaissementLcnTransaction(dto);
+                LcnTransactionResponseDto r = lcnValidationService.processLcnEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case MiseADisposition -> {
@@ -180,8 +204,8 @@ public class BatchValidationService {
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
                         dto::setTvaDeductible, dto::setRapprochementId);
                 MiseAdispositionTransactionResponseDto r = requestDto.getSens() == SensOperation.DECAISSEMENT
-                        ? validationService.processMiseAdispositionDecaissementTransaction(dto)
-                        : validationService.processMiseAdispositionEncaissementTransaction(dto);
+                        ? miseADispositionValidationService.processMiseAdispositionDecaissementTransaction(dto)
+                        : miseADispositionValidationService.processMiseAdispositionEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case VIREMENT_INTERNATIONAL -> {
@@ -192,8 +216,8 @@ public class BatchValidationService {
                 dto.setTva(requestDto.getTvaDeductible());
                 dto.setRapprochementId(requestDto.getRapprochementId());
                 VirementInternationalTransactionResponseDto r = requestDto.getSens() == SensOperation.DECAISSEMENT
-                        ? validationService.processVirementInternationalDecaissementTransaction(dto)
-                        : validationService.processVirementInternationalEncaissementTransaction(dto);
+                        ? virementInternationalValidationService.processVirementInternationalDecaissementTransaction(dto)
+                        : virementInternationalValidationService.processVirementInternationalEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case COMMISSION -> {
@@ -226,7 +250,7 @@ public class BatchValidationService {
                 dto.setDateOperation(requestDto.getDateOperation());
                 dto.setTva(requestDto.getTvaDeductible());
                 dto.setRapprochementId(requestDto.getRapprochementId());
-                PrelevementTransactionResponse r = validationService.processPrelevementToTransaction(dto);
+                PrelevementTransactionResponse r = prelevementValidationService.processPrelevementToTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case FRAIS_BANCAIRE -> {

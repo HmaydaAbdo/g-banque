@@ -1,108 +1,101 @@
 package staport.finance.gBanque.moyensDePaiements.virements.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.moyensDePaiements.virements.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.virements.service.VirementService;
 
+@Tag(name = "Virements", description = "Gestion des virements nationaux — encaissements et décaissements")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/virements")
+@PreAuthorize(VirementController.FINANCE_OR_ADMIN)
 public class VirementController {
 
+    static final String FINANCE_OR_ADMIN =
+            "hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
-    private static final Logger log = LoggerFactory.getLogger(VirementController.class);
     private final VirementService virementService;
 
     public VirementController(VirementService virementService) {
         this.virementService = virementService;
     }
 
-
+    @Operation(summary = "Créer un virement d'encaissement")
     @PostMapping
     public ResponseEntity<VirementResponseDto> createVirement(@Valid @RequestBody VirementRequestDto dto) {
-        log.info("Réception d'une demande de création de virement ,  le dto est le suivant : {}", dto);
         VirementResponseDto response = virementService.createEncaissementVirement(dto);
-        log.info("Virement créé avec succès. ID: {}", response.getId());
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Modifier un virement d'encaissement")
     @PutMapping("/{id}")
     public ResponseEntity<VirementResponseDto> updateVirement(@PathVariable Long id, @Valid @RequestBody VirementRequestDto dto) {
-        log.info("Réception d'une demande de modification du virement ID  {} avec le dto suivant : {}", id,dto);
         VirementResponseDto response = virementService.editEncaissementVirement(id, dto);
-        log.info("Virement ID: {} modifié avec succès", id);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Consulter un virement par ID")
     @GetMapping("/{id}")
     public ResponseEntity<VirementResponseDto> getVirementByid(@PathVariable Long id) {
-        log.debug("Récupération du virement ID: {}", id);
         VirementResponseDto response = virementService.getVirementById(id);
-        log.debug("Virement ID: {} récupéré avec succès", id);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Supprimer un virement")
+    @PreAuthorize(SYSTEM_ADMIN)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVirement(@PathVariable Long id) {
-        log.info("Réception d'une demande de suppression du virement ID: {}", id);
         virementService.deleteVirement(id);
-        log.info("Virement ID: {} supprimé avec succès", id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Lister les virements d'encaissement")
     @GetMapping("/encaissements")
     public ResponseEntity<Page<VirementResponseDto>> getEncaissementVirements(VirementSearchDto searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Récupération des virements d'encaissement - Page: {}, Taille: {},searchDto : {}", pageable.getPageNumber(), pageable.getPageSize(),searchDto);
         Page<VirementResponseDto> result = virementService.getEncaissementVirements(searchDto, pageable);
-        log.info("Nombre de virements d'encaissement récupérés: {} sur un total de {}", result.getNumberOfElements(), result.getTotalElements());
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Lister les virements de décaissement")
     @GetMapping("/decaissements")
     public ResponseEntity<Page<VirementResponseDto>> getDecaissementVirements(VirementSearchDto searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Récupération des virements de décaissement - Page: {}, Taille: {},search Dto {}", pageable.getPageNumber(), pageable.getPageSize(),searchDto);
         Page<VirementResponseDto> result = virementService.getDecaissementVirements(searchDto, pageable);
-        log.info("Nombre de virements de décaissement récupérés: {} sur un total de {}", result.getNumberOfElements(), result.getTotalElements());
         return ResponseEntity.ok(result);
     }
 
-
+    @Operation(summary = "Basculer le statut d'un virement (ENCOURS ↔ REGLE)")
+    @PreAuthorize(SYSTEM_ADMIN)
     @PatchMapping("/toggle/{id}")
     public ResponseEntity<VirementResponseDto> toggleVirementStatus(@PathVariable Long id) {
-        log.info("Demande de changement du statut du virement ID: {}", id);
         VirementResponseDto updatedVirement = virementService.toggleVirementStatus(id);
-        log.info("Statut du virement ID: {} basculé avec succès", id);
         return ResponseEntity.ok(updatedVirement);
-
     }
 
-
+    @Operation(summary = "Encours de décaissement virement pour une banque")
     @GetMapping("/decaissement/encours/{banqueId}")
     public ResponseEntity<EncoursVirementResponseDto> getEncoursDecaissementForVirements(@PathVariable Long banqueId, EncoursVirementsSearchDto searchDto,
                                                                                          @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Récupération des encours de décaissement pour la banque ID: {} , searchDto : {}", banqueId,searchDto);
         EncoursVirementResponseDto result = virementService.getEncoursDecaissementForVirements(searchDto, banqueId, pageable);
-        log.info("Encours de décaissement récupérés pour la banque ID: {} - Montant total: {}, Nombre: {}",
-                banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
         return ResponseEntity.ok(result);
     }
 
-
+    @Operation(summary = "Encours d'encaissement virement pour une banque")
     @GetMapping("/encaissement/encours/{banqueId}")
     public ResponseEntity<EncoursVirementResponseDto> getEncoursEncaissementForVirements(
             @PathVariable Long banqueId,
             EncoursVirementsSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("Récupération des encours d'encaissement pour la banque ID: {} , searchDto : {}", banqueId,searchDto);
         EncoursVirementResponseDto result = virementService.getEncoursEncaissementForVirements(searchDto, banqueId, pageable);
-        log.info("Encours d'encaissement récupérés pour la banque ID: {} - Montant total: {}, Nombre: {}",
-                banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
         return ResponseEntity.ok(result);
     }
 }

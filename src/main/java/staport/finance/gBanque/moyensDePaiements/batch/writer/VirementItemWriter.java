@@ -5,8 +5,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
-import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
+import staport.finance.gBanque.moyensDePaiements.virements.service.VirementBatchGateway;
 import staport.finance.gBanque.commision.service.CommissionService;
+import java.util.ArrayList;
 import java.util.List;
 
 public class VirementItemWriter implements ItemWriter<Virement> {
@@ -14,13 +15,13 @@ public class VirementItemWriter implements ItemWriter<Virement> {
     private static final Logger log = LoggerFactory.getLogger(VirementItemWriter.class);
 
 
-    private final VirementRepository virementRepository;
+    private final VirementBatchGateway virementBatchGateway;
     private final CommissionService commissionService;
 
     public VirementItemWriter(
-            VirementRepository virementRepository,
+            VirementBatchGateway virementBatchGateway,
             CommissionService commissionService) {
-        this.virementRepository = virementRepository;
+        this.virementBatchGateway = virementBatchGateway;
         this.commissionService = commissionService;
     }
 
@@ -34,8 +35,8 @@ public class VirementItemWriter implements ItemWriter<Virement> {
 
         log.info("Processing {} virement(s)", chunk.size());
 
-        List<? extends Virement> saved =
-                virementRepository.saveAll(chunk.getItems());
+        List<Virement> saved =
+                virementBatchGateway.saveAll(new ArrayList<>(chunk.getItems()));
 
         for (Virement virement : saved) {
             commissionService.generateCommissionIfNeeded(virement);

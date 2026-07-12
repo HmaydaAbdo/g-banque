@@ -49,10 +49,10 @@ import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.mapper.LcnMapper;
 import staport.finance.gBanque.moyensDePaiements.lcn.services.LcnReader;
 import staport.finance.gBanque.moyensDePaiements.lcn.specs.LcnSpecification;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
 import staport.finance.gBanque.prefinancement.dtos.SuiviePrefiLigneResponseDto;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
-import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.mapper.PrefinancementMapper;
 import staport.finance.gBanque.prefinancement.services.PrefinancementReader;
 
@@ -73,13 +73,14 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     private final DroitConstateReader droitConstateReader;
     private final PrefinancementMapper prefinancementMapper;
     private final LcnReader lcnReader;
+    private final LcnMapper lcnMapper;
     private final FactoringMapper factoringMapper;
     private final DroitConstateMapper droitConstateMapper;
 
     @Autowired
     public LigneFonctionnelleService(LigneFonctionnelleRepository ligneFonctionnelleRepository,
                                      LigneFonctionnelleMapper ligneFonctionnelleMapper,
-                                     MarcheService marcheService, LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader, PrefinancementReader prefinancementReader, FactoringReader factoringReader, DroitConstateReader droitConstateReader, PrefinancementMapper prefinancementMapper, LcnReader lcnReader, FactoringMapper factoringMapper, DroitConstateMapper droitConstateMapper) {
+                                     MarcheService marcheService, LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader, PrefinancementReader prefinancementReader, FactoringReader factoringReader, DroitConstateReader droitConstateReader, PrefinancementMapper prefinancementMapper, LcnReader lcnReader, LcnMapper lcnMapper, FactoringMapper factoringMapper, DroitConstateMapper droitConstateMapper) {
         this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
         this.ligneFonctionnelleMapper = ligneFonctionnelleMapper;
         this.marcheService = marcheService;
@@ -89,6 +90,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         this.droitConstateReader = droitConstateReader;
         this.prefinancementMapper = prefinancementMapper;
         this.lcnReader = lcnReader;
+        this.lcnMapper = lcnMapper;
         this.factoringMapper = factoringMapper;
         this.droitConstateMapper = droitConstateMapper;
     }
@@ -683,8 +685,8 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         BigDecimal totalCredit = BigDecimal.ZERO;
 
         for (Prefinancement prefi : allPrefi) {
-            if (prefi.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(prefi.getMontant());
-            else if (prefi.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(prefi.getMontant());
+            if (prefi.getType() == staport.finance.gBanque.prefinancement.enums.Type.REMBOURSEMENT) totalDebit = totalDebit.add(prefi.getMontant());
+            else if (prefi.getType() == staport.finance.gBanque.prefinancement.enums.Type.DEBLOCAGE) totalCredit = totalCredit.add(prefi.getMontant());
         }
         BigDecimal reste = totalCredit.subtract(totalDebit);
 
@@ -743,8 +745,8 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         BigDecimal totalCredit = BigDecimal.ZERO;
 
         for (DroitConstate dc : allDc) {
-            if (dc.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(dc.getMontant());
-            else if (dc.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(dc.getMontant());
+            if (dc.getType() == staport.finance.gBanque.prefinancement.enums.Type.REMBOURSEMENT) totalDebit = totalDebit.add(dc.getMontant());
+            else if (dc.getType() == staport.finance.gBanque.prefinancement.enums.Type.DEBLOCAGE) totalCredit = totalCredit.add(dc.getMontant());
         }
 
         BigDecimal reste = totalCredit.subtract(totalDebit);
@@ -803,8 +805,8 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         BigDecimal totalDebit = BigDecimal.ZERO;
         BigDecimal totalCredit = BigDecimal.ZERO;
         for (Factoring f : allPaidFactoring) {
-            if (f.getType() == Type.REMBOURSEMENT) totalDebit = totalDebit.add(f.getMontant());
-            else if (f.getType() == Type.DEBLOCAGE) totalCredit = totalCredit.add(f.getMontant());
+            if (f.getType() == staport.finance.gBanque.prefinancement.enums.Type.REMBOURSEMENT) totalDebit = totalDebit.add(f.getMontant());
+            else if (f.getType() == staport.finance.gBanque.prefinancement.enums.Type.DEBLOCAGE) totalCredit = totalCredit.add(f.getMontant());
         }
         BigDecimal reste = totalCredit.subtract(totalDebit);
 
@@ -856,7 +858,15 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
 
         log.debug("{} LCN récupérés pour la page courante", lcnPage.getNumberOfElements());
 
-        Page<LcnResponseDTO> pageOfDtos = lcnPage.map(LcnMapper::toDto);
+        // Libellé/observation sont des champs d'affichage calculés (pas portés par le Mapper,
+        // cf. architecture.md) — même règle que LcnService.toDto, dupliquée ici car ce service
+        // ne doit pas dépendre de LcnService (domaines distincts).
+        Page<LcnResponseDTO> pageOfDtos = lcnPage.map(lcn -> {
+            LcnResponseDTO dto = lcnMapper.toDto(lcn);
+            dto.setObservation(" LCN N° " + lcn.getNumero());
+            dto.setLibelle(lcn.getType() == Type.DECAISSEMENT ? lcn.getBeneficiaire() : lcn.getEmetteur());
+            return dto;
+        });
 
         AgregatedSuivieLcnLigneResponseDto aggregatedDto = new AgregatedSuivieLcnLigneResponseDto();
         aggregatedDto.setBanqueName(line.getBanque().getNom());

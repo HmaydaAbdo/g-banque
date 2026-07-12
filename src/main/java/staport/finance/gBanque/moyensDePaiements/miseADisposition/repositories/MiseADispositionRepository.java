@@ -1,30 +1,30 @@
 package staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 
-import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface MiseADispositionRepository extends JpaRepository<MiseADisposition, Long>, JpaSpecificationExecutor<MiseADisposition> {
 
+    @Override
+    @EntityGraph(attributePaths = {"banque"})
+    Page<MiseADisposition> findAll(Specification<MiseADisposition> spec, Pageable pageable);
+
+    @Override
+    @EntityGraph(attributePaths = {"banque"})
+    List<MiseADisposition> findAll(Specification<MiseADisposition> spec);
+
     Optional<MiseADisposition> findByNumero(String numero);
 
     /** Clé de matching exclusive de la synchro FunPaiement (cf. AbstractPaymentProcessor). */
     Optional<MiseADisposition> findByIdPaiement(String idPaiement);
-
-    /**
-     * Règle toutes les mises à disposition dont la date d'émission est strictement antérieure à la date donnée.
-     * @param cutoffDate La date limite (exclusive)
-     * @return Le nombre de mises à disposition réglées
-     */
-    @Modifying
-    @Query("UPDATE MiseADisposition m SET m.statut = 'REGLE' WHERE m.dateEmission < :cutoffDate AND m.statut = 'ENCOURS'")
-    int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
 }

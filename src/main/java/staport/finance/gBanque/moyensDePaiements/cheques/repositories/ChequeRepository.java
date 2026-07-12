@@ -1,14 +1,15 @@
 package staport.finance.gBanque.moyensDePaiements.cheques.repositories;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 
-import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -25,11 +26,17 @@ public interface ChequeRepository extends JpaRepository<Cheque, Long>, JpaSpecif
     Optional<Cheque> findByIdPaiement(String idPaiement);
 
     /**
-     * Règle tous les chèques dont la date d'émission est strictement antérieure à la date donnée.
-     * @param cutoffDate La date limite (exclusive)
-     * @return Le nombre de chèques réglés
+     * Recherche paginée avec critères dynamiques — charge {@code banque} en une seule requête
+     * (anti-N+1, nécessaire depuis le passage de {@code banque} en {@code FetchType.LAZY}).
      */
-    @Modifying
-    @Query("UPDATE Cheque c SET c.statut = 'REGLE' WHERE c.dateEmission < :cutoffDate AND c.statut = 'ENCOURS'")
-    int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
+    @Override
+    @EntityGraph(attributePaths = "banque")
+    Page<Cheque> findAll(Specification<Cheque> spec, Pageable pageable);
+
+    /**
+     * Recherche non paginée avec critères dynamiques — utilisée pour les totaux d'encours.
+     */
+    @Override
+    @EntityGraph(attributePaths = "banque")
+    List<Cheque> findAll(Specification<Cheque> spec);
 }

@@ -1,6 +1,7 @@
 package staport.finance.gBanque.moyensDePaiements.miseADisposition.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
@@ -10,7 +11,14 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
-@Table(name = "MISES_A_DISPOSITION")
+@Audited
+@Table(name = "MISES_A_DISPOSITION", indexes = {
+        @Index(name = "idx_mise_a_dispo_numero", columnList = "numero"),
+        @Index(name = "idx_mise_a_dispo_banque_id", columnList = "banque_id"),
+        @Index(name = "idx_mise_a_dispo_statut", columnList = "statut"),
+        @Index(name = "idx_mise_a_dispo_date_emission", columnList = "date_emission"),
+        @Index(name = "idx_mise_a_dispo_type", columnList = "type")
+})
 public class MiseADisposition {
 
     @Id
@@ -40,7 +48,7 @@ public class MiseADisposition {
     @Column(name = "montant", nullable = false, precision = 19, scale = 2)
     private BigDecimal montant;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 

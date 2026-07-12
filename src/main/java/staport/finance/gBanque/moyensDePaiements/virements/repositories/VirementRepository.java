@@ -1,8 +1,11 @@
 package staport.finance.gBanque.moyensDePaiements.virements.repositories;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -22,9 +25,15 @@ public interface VirementRepository extends JpaRepository<Virement, Long>, JpaSp
     /** Clé de matching exclusive de la synchro FunPaiement (cf. AbstractPaymentProcessor). */
     Optional<Virement> findByIdPaiement(String idPaiement);
 
-    @Modifying
-    @Query("UPDATE Virement v SET v.statut = 'REGLE' WHERE v.dateEmission < :cutoffDate AND v.statut = 'ENCOURS'")
-    int deactivateByDateEmissionBefore(@Param("cutoffDate") LocalDate cutoffDate);
+    /** {@code banqueEmettrice}/{@code banqueBeneficiare} sont LAZY — évite le N+1 sur les listes
+     *  paginées (jpa.md). */
+    @Override
+    @EntityGraph(attributePaths = {"banqueEmettrice", "banqueBeneficiare"})
+    Page<Virement> findAll(Specification<Virement> spec, Pageable pageable);
+
+    @Override
+    @EntityGraph(attributePaths = {"banqueEmettrice", "banqueBeneficiare"})
+    List<Virement> findAll(Specification<Virement> spec);
 
     /**
      * Retourne (banqueId, count) des virements échus (ENCOURS et dateEmission < today),

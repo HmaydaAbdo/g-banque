@@ -8,10 +8,10 @@ import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
-import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepository;
-import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
-import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
-import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
+import staport.finance.gBanque.moyensDePaiements.cheques.services.ChequeBatchGateway;
+import staport.finance.gBanque.moyensDePaiements.lcn.services.LcnBatchGateway;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.services.MiseADispositionBatchGateway;
+import staport.finance.gBanque.moyensDePaiements.virements.service.VirementBatchGateway;
 import java.util.Map;
 
 /**
@@ -21,44 +21,44 @@ import java.util.Map;
 @Configuration
 public class PaymentWriterConfig {
 
-    private final ChequeRepository chequeRepository;
-    private final LcnRepository lcnRepository;
-    private final MiseADispositionRepository miseADispositionRepository;
-    private final VirementRepository virementRepository;
+    private final ChequeBatchGateway chequeBatchGateway;
+    private final LcnBatchGateway lcnBatchGateway;
+    private final MiseADispositionBatchGateway miseADispositionBatchGateway;
+    private final VirementBatchGateway virementBatchGateway;
     private final CommissionService commissionService;
 
 
 
     public PaymentWriterConfig(
-            ChequeRepository chequeRepository,
-            LcnRepository lcnRepository,
-            MiseADispositionRepository miseADispositionRepository,
-            VirementRepository virementRepository, CommissionService commissionService) {
-        this.chequeRepository = chequeRepository;
-        this.lcnRepository = lcnRepository;
-        this.miseADispositionRepository = miseADispositionRepository;
-        this.virementRepository = virementRepository;
+            ChequeBatchGateway chequeBatchGateway,
+            LcnBatchGateway lcnBatchGateway,
+            MiseADispositionBatchGateway miseADispositionBatchGateway,
+            VirementBatchGateway virementBatchGateway, CommissionService commissionService) {
+        this.chequeBatchGateway = chequeBatchGateway;
+        this.lcnBatchGateway = lcnBatchGateway;
+        this.miseADispositionBatchGateway = miseADispositionBatchGateway;
+        this.virementBatchGateway = virementBatchGateway;
         this.commissionService = commissionService;
     }
 
     @Bean
     public ChequeItemWriter chequeItemWriter() {
-        return new ChequeItemWriter(chequeRepository);
+        return new ChequeItemWriter(chequeBatchGateway);
     }
 
     @Bean
     public LcnItemWriter lcnItemWriter() {
-        return new LcnItemWriter(lcnRepository, commissionService);
+        return new LcnItemWriter(lcnBatchGateway, commissionService);
     }
 
     @Bean
     public VirementItemWriter virementItemWriter() {
-        return new VirementItemWriter(virementRepository, commissionService);
+        return new VirementItemWriter(virementBatchGateway, commissionService);
     }
 
     @Bean
     public MiseADispositionItemWriter miseADispositionItemWriter() {
-        return new MiseADispositionItemWriter(miseADispositionRepository, commissionService);
+        return new MiseADispositionItemWriter(miseADispositionBatchGateway, commissionService);
     }
 
     /**

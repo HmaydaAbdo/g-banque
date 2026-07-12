@@ -1,6 +1,7 @@
 package staport.finance.gBanque.moyensDePaiements.lcn.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.moyensDePaiements.lcn.dtos.NatureLcn;
@@ -12,7 +13,15 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
-@Table(name = "LCNS")
+@Audited
+@Table(name = "LCNS", indexes = {
+        @Index(name = "idx_lcn_numero", columnList = "numero"),
+        @Index(name = "idx_lcn_banque_id", columnList = "banque_id"),
+        @Index(name = "idx_lcn_statut", columnList = "statut"),
+        @Index(name = "idx_lcn_date_echeance", columnList = "date_echeance"),
+        @Index(name = "idx_lcn_type", columnList = "type"),
+        @Index(name = "idx_lcn_nature_lcn", columnList = "nature_lcn")
+})
 public class Lcn {
 
     @Id
@@ -44,7 +53,7 @@ public class Lcn {
     @Column(name = "montant", nullable = false, precision = 19, scale = 2)
     private BigDecimal montant;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 

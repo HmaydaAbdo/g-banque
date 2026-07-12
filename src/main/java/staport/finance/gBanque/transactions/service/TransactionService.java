@@ -13,6 +13,12 @@ import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundExcept
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
+import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
+import staport.finance.gBanque.moyensDePaiements.lcn.validation.services.interfaces.ILcnValidationService;
+import staport.finance.gBanque.moyensDePaiements.virements.validation.services.interfaces.IVirementValidationService;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.services.interfaces.IVirementInternationalValidationService;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.services.interfaces.IMiseADispositionValidationService;
+import staport.finance.gBanque.prelevements.validation.services.interfaces.IPrelevementValidationService;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
@@ -37,13 +43,31 @@ public class TransactionService implements ITransactionService{
     private final TransactionRepository transactionRepository;
     private final ILeasingValidationService leasingValidationService;
     private final ICmtValidationService cmtValidationService;
+    private final IChequeValidationService chequeValidationService;
+    private final ILcnValidationService lcnValidationService;
+    private final IVirementValidationService virementValidationService;
+    private final IVirementInternationalValidationService virementInternationalValidationService;
+    private final IMiseADispositionValidationService miseADispositionValidationService;
+    private final IPrelevementValidationService prelevementValidationService;
 
     public TransactionService(TransactionRepository transactionRepository,
                               ILeasingValidationService leasingValidationService,
-                              ICmtValidationService cmtValidationService) {
+                              ICmtValidationService cmtValidationService,
+                              IChequeValidationService chequeValidationService,
+                              ILcnValidationService lcnValidationService,
+                              IVirementValidationService virementValidationService,
+                              IVirementInternationalValidationService virementInternationalValidationService,
+                              IMiseADispositionValidationService miseADispositionValidationService,
+                              IPrelevementValidationService prelevementValidationService) {
         this.transactionRepository = transactionRepository;
         this.leasingValidationService = leasingValidationService;
         this.cmtValidationService = cmtValidationService;
+        this.chequeValidationService = chequeValidationService;
+        this.virementValidationService = virementValidationService;
+        this.lcnValidationService = lcnValidationService;
+        this.virementInternationalValidationService = virementInternationalValidationService;
+        this.miseADispositionValidationService = miseADispositionValidationService;
+        this.prelevementValidationService = prelevementValidationService;
     }
 
     @Transactional(readOnly = true)
@@ -231,6 +255,77 @@ public class TransactionService implements ITransactionService{
             log.info("Transaction CMT ID: {} mise à jour — synchronisation de l'échéance ID: {}",
                     saved.getId(), saved.getReferent());
             cmtValidationService.syncEcheanceFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation chèque : si la transaction provient d'un chèque, on propage
+        // dateValeur et dateOperation vers le chèque source (referent = chequeId).
+        if (TransactionSource.CHEQUE == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction CHEQUE ID: {} mise à jour — synchronisation du chèque ID: {}",
+                    saved.getId(), saved.getReferent());
+            chequeValidationService.syncChequeFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation LCN : si la transaction provient d'un LCN (décaissement, encaissement ou
+        // escompte), on propage dateValeur et dateOperation vers le LCN source (referent = lcnId).
+        if ((TransactionSource.LCN_DECAISSEMENT == saved.getTransactionSource()
+                || TransactionSource.LCN_ENCAISSEMENT == saved.getTransactionSource()
+                || TransactionSource.LCN_ESCOMPTE == saved.getTransactionSource())
+                && saved.getReferent() != null) {
+            log.info("Transaction LCN ID: {} mise à jour — synchronisation du LCN ID: {}",
+                    saved.getId(), saved.getReferent());
+            lcnValidationService.syncLcnFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation virement : si la transaction provient d'un virement, on propage
+        // dateValeur et dateOperation vers le virement source (referent = virementId).
+        if (TransactionSource.Virement == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction VIREMENT ID: {} mise à jour — synchronisation du virement ID: {}",
+                    saved.getId(), saved.getReferent());
+            virementValidationService.syncVirementFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation virement international : si la transaction provient d'un virement
+        // international, on propage dateValeur et dateOperation vers le virement international
+        // source (referent = virementInternationalId).
+        if (TransactionSource.VIREMENT_INTERNATIONAL == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction VIREMENT INTERNATIONAL ID: {} mise à jour — synchronisation du virement international ID: {}",
+                    saved.getId(), saved.getReferent());
+            virementInternationalValidationService.syncVirementInternationalFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation mise à disposition : si la transaction provient d'une mise à disposition,
+        // on propage dateValeur et dateOperation vers la mise à disposition source
+        // (referent = miseADispositionId).
+        if (TransactionSource.MiseADisposition == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction MISE A DISPOSITION ID: {} mise à jour — synchronisation de la mise à disposition ID: {}",
+                    saved.getId(), saved.getReferent());
+            miseADispositionValidationService.syncMiseADispositionFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation prélèvement : si la transaction provient d'un prélèvement, on propage
+        // dateValeur et dateOperation vers le prélèvement source (referent = prelevementId).
+        if (TransactionSource.PRELEVEMENT == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction PRELEVEMENT ID: {} mise à jour — synchronisation du prélèvement ID: {}",
+                    saved.getId(), saved.getReferent());
+            prelevementValidationService.syncPrelevementFromTransaction(
                     saved.getReferent(),
                     saved.getDateValeur(),
                     saved.getDateOperations());

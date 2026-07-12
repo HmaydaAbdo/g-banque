@@ -1,6 +1,7 @@
 package staport.finance.gBanque.moyensDePaiements.virementInternational.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
@@ -10,14 +11,20 @@ import java.util.Objects;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 @Entity
-@Table(name = "VIREMENTS_INTERNATIONAUX")
+@Audited
+@Table(name = "VIREMENTS_INTERNATIONAUX", indexes = {
+        @Index(name = "idx_virement_intl_banque_id", columnList = "banque_id"),
+        @Index(name = "idx_virement_intl_statut", columnList = "statut"),
+        @Index(name = "idx_virement_intl_date_emission", columnList = "date_emission"),
+        @Index(name = "idx_virement_intl_type", columnList = "type")
+})
 public class VirementInternational {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "banque_id", nullable = false)
     private Banque banque;
 

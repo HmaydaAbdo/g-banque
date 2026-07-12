@@ -1,18 +1,29 @@
 package staport.finance.gBanque.moyensDePaiements.miseADisposition.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.services.MiseADispositionService;
 
+@Tag(name = "Mises à Disposition", description = "Gestion des mises à disposition — encaissements (saisis manuellement) et décaissements (synchronisation FunPaiement)")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/misesADisposition")
+@PreAuthorize(MiseADispositionController.FINANCE_OR_ADMIN)
 public class MiseADispositionController {
+
+    static final String FINANCE_OR_ADMIN =
+            "hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
     private static final Logger log = LoggerFactory.getLogger(MiseADispositionController.class);
     private final MiseADispositionService miseADispositionService;
@@ -21,6 +32,7 @@ public class MiseADispositionController {
         this.miseADispositionService = miseADispositionService;
     }
 
+    @Operation(summary = "Créer une mise à disposition d'encaissement")
     @PostMapping
     public ResponseEntity<MiseADispositionResponseDto> createMiseAdisposition(@RequestBody MiseAdispositionRequestDto requestDto) {
         log.info("Réception d'une demande de création de mise à disposition : {}", requestDto);
@@ -29,6 +41,7 @@ public class MiseADispositionController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Modifier une mise à disposition d'encaissement")
     @PutMapping("/{id}")
     public ResponseEntity<MiseADispositionResponseDto> updateMiseAdisposition(@PathVariable Long id, @RequestBody MiseAdispositionRequestDto requestDto) {
         log.info("Réception d'une demande de modification de la mise à disposition ID: {} , dto : {}", id,requestDto);
@@ -37,6 +50,7 @@ public class MiseADispositionController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Consulter une mise à disposition par ID")
     @GetMapping("/{id}")
     public ResponseEntity<MiseADispositionResponseDto> getById(@PathVariable Long id) {
         log.debug("Récupération de la mise à disposition ID: {}", id);
@@ -45,6 +59,8 @@ public class MiseADispositionController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Supprimer une mise à disposition")
+    @PreAuthorize(SYSTEM_ADMIN)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMiseAdisposition(@PathVariable Long id) {
         log.info("Réception d'une demande de suppression de la mise à disposition ID: {}", id);
@@ -53,6 +69,7 @@ public class MiseADispositionController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Lister les mises à disposition de décaissement")
     @GetMapping("/decaissements")
     public ResponseEntity<Page<MiseADispositionResponseDto>> getDecaissementMisesADisposition(
             MiseADispositionSearchDto searchDto,
@@ -63,6 +80,7 @@ public class MiseADispositionController {
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Lister les mises à disposition d'encaissement")
     @GetMapping("/encaissements")
     public ResponseEntity<Page<MiseADispositionResponseDto>> getEncaissementMisesADisposition(
             MiseADispositionSearchDto searchDto,
@@ -73,6 +91,8 @@ public class MiseADispositionController {
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Basculer le statut d'une mise à disposition (ENCOURS ↔ REGLE)")
+    @PreAuthorize(SYSTEM_ADMIN)
     @PatchMapping("/toggle/{id}")
     public ResponseEntity<MiseADispositionResponseDto> toggleMiseADispositionStatus(@PathVariable Long id) {
         log.info("Demande de basculement du statut de la mise à disposition ID: {}", id);
@@ -82,6 +102,7 @@ public class MiseADispositionController {
 
     }
 
+    @Operation(summary = "Encours de décaissement mise à disposition pour une banque")
     @GetMapping("/encours/decaissements/{banqueId}")
     public ResponseEntity<EncoursMiseAdisposition> getEncoursDecaissementsForMiseADispositionByBank(
             @PathVariable Long banqueId,
@@ -94,6 +115,7 @@ public class MiseADispositionController {
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Encours d'encaissement mise à disposition pour une banque")
     @GetMapping("/encours/encaissements/{banqueId}")
     public ResponseEntity<EncoursMiseAdisposition> getEncoursEncaissementsForMiseADispositionByBank(
             @PathVariable Long banqueId,

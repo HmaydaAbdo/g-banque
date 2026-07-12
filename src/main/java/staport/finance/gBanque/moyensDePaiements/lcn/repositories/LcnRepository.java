@@ -1,8 +1,11 @@
 package staport.finance.gBanque.moyensDePaiements.lcn.repositories;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,9 +23,14 @@ public interface LcnRepository extends JpaRepository<Lcn, Long>, JpaSpecificatio
     /** Clé de matching exclusive de la synchro FunPaiement (cf. AbstractPaymentProcessor). */
     Optional<Lcn> findByIdPaiement(String idPaiement);
 
-    @Modifying
-    @Query("UPDATE Lcn l SET l.statut = 'REGLE' WHERE l.dateEcheance < :cutoffDate AND l.statut = 'ENCOURS'")
-    int deactivateByDateEcheanceBefore(@Param("cutoffDate") LocalDate cutoffDate);
+    /** {@code banque} est LAZY — évite le N+1 sur les listes paginées (jpa.md). */
+    @Override
+    @EntityGraph(attributePaths = "banque")
+    Page<Lcn> findAll(Specification<Lcn> spec, Pageable pageable);
+
+    @Override
+    @EntityGraph(attributePaths = "banque")
+    List<Lcn> findAll(Specification<Lcn> spec);
 
     /**
      * Retourne (banqueId, count) des LCN échus (ENCOURS et dateEcheance < today),

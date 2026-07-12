@@ -2,12 +2,12 @@ package staport.finance.gBanque.moyensDePaiements.batch.processor;
 
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataException;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.dtos.FunPaymentDto;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
-import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.services.MiseADispositionBatchGateway;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.util.Optional;
@@ -23,17 +23,17 @@ import java.util.Optional;
 @Component
 public class MiseADispositionPaymentProcessor extends AbstractPaymentProcessor {
 
-    private final MiseADispositionRepository miseADispositionRepository;
+    private final MiseADispositionBatchGateway miseADispositionBatchGateway;
 
-    public MiseADispositionPaymentProcessor(BanqueRepository banqueRepository, MiseADispositionRepository miseADispositionRepository) {
-        super(banqueRepository);
-        this.miseADispositionRepository = miseADispositionRepository;
+    public MiseADispositionPaymentProcessor(IBanqueService banqueService, MiseADispositionBatchGateway miseADispositionBatchGateway) {
+        super(banqueService);
+        this.miseADispositionBatchGateway = miseADispositionBatchGateway;
     }
 
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
         StatutMoyenPaiement statutFun = item.getStatutMoyenPaiement();
-        Optional<MiseADisposition> existing = miseADispositionRepository.findByIdPaiement(item.getIdPaiement());
+        Optional<MiseADisposition> existing = miseADispositionBatchGateway.findByIdPaiement(item.getIdPaiement());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {

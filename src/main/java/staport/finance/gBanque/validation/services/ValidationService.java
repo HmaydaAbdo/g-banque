@@ -12,8 +12,6 @@ import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
-import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
-import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.factoring.entities.Factoring;
@@ -21,12 +19,8 @@ import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
-import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
-import staport.finance.gBanque.moyensDePaiements.virementInternational.repositories.VirementInternationalRepository;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.operationErrone.repositories.OperationErroneRepository;
-import staport.finance.gBanque.prelevements.entitie.Prelevement;
-import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
@@ -45,10 +39,6 @@ import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepositor
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
-import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
-import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
-import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
-import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionRequest;
 import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
@@ -62,27 +52,13 @@ import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTra
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
-import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionRequest;
-import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
-import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
-import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.prelevements.PrelevementTransactionResponse;
-import staport.finance.gBanque.validation.dtos.prelevements.PrelevementValidationRequest;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneTransactionResponse;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneValidationRequest;
-import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
 import staport.finance.gBanque.validation.mapper.*;
 import staport.finance.gBanque.transactions.entities.Transaction;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
-import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
-import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
 
 
 @Service
@@ -90,18 +66,6 @@ public class ValidationService {
 
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
-
-    private final ChequeRepository chequeRepository;
-    private final ChequeTransactionMapper chequeTransactionMapper;
-
-    private final LcnRepository lcnRepository;
-    private final LcnTransactionMapper lcnTransactionMapper;
-
-    private final VirementTransactionMapper virementTransactionMapper;
-    private final VirementRepository virementRepository;
-
-    private final MiseADispositionRepository miseADispositionRepository;
-    private final MiseAdispositionTransactionMapper miseAdispositionTransactionMapper;
 
     private final PrefinancementRepository prefinancementRepository;
     private final PrefinancementTransactionMapper prefinancementTransactionMapper;
@@ -114,9 +78,6 @@ public class ValidationService {
 
     private final CommisionRepository commisionRepository;
     private final CommisionTransactionMapper commisionTransactionMapper;
-
-    private final PrelevementRepository prelevementRepository;
-    private final PrelevementTransactionMapper prelevementTransactionMapper;
 
     private final FraisBancaireRepository fraisBancaireRepository;
     private final FraisBancaireTransactionMapper fraisBancaireTransactionMapper;
@@ -136,9 +97,6 @@ public class ValidationService {
     private final OperationErroneRepository operationErroneRepository;
     private final OperationErroneTransactionMapper operationErroneTransactionMapper;
 
-    private final VirementInternationalTransactionMapper virementInternationalTransactionMapper;
-    private final VirementInternationalRepository virementInternationalRepository;
-
     private final ImpayeeRepository impayeeRepository;
     private final ImpayeeTransactionMapper impayeeTransactionMapper;
 
@@ -146,17 +104,9 @@ public class ValidationService {
     private final SoldeCascadeService soldeCascadeService;
 
 
-    public ValidationService(TransactionRepository transactionRepository, BanqueRepository banqueRepository, ChequeRepository chequeRepository, ChequeTransactionMapper chequeTransactionMapper, LcnRepository lcnRepository, LcnTransactionMapper lcnTransactionMapper, VirementTransactionMapper virementTransactionMapper, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, MiseAdispositionTransactionMapper miseAdispositionTransactionMapper, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, PrelevementRepository prelevementRepository, PrelevementTransactionMapper prelevementTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, VirementInternationalTransactionMapper virementInternationalTransactionMapper, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
+    public ValidationService(TransactionRepository transactionRepository, BanqueRepository banqueRepository, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
-        this.chequeRepository = chequeRepository;
-        this.chequeTransactionMapper = chequeTransactionMapper;
-        this.lcnRepository = lcnRepository;
-        this.lcnTransactionMapper = lcnTransactionMapper;
-        this.virementTransactionMapper = virementTransactionMapper;
-        this.virementRepository = virementRepository;
-        this.miseADispositionRepository = miseADispositionRepository;
-        this.miseAdispositionTransactionMapper = miseAdispositionTransactionMapper;
         this.prefinancementRepository = prefinancementRepository;
         this.prefinancementTransactionMapper = prefinancementTransactionMapper;
         this.droitConstateRepository = droitConstateRepository;
@@ -165,8 +115,6 @@ public class ValidationService {
         this.decompteTransactionMapper = decompteTransactionMapper;
         this.commisionRepository = commisionRepository;
         this.commisionTransactionMapper = commisionTransactionMapper;
-        this.prelevementRepository = prelevementRepository;
-        this.prelevementTransactionMapper = prelevementTransactionMapper;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.fraisBancaireTransactionMapper = fraisBancaireTransactionMapper;
         this.factoringRepository = factoringRepository;
@@ -177,304 +125,28 @@ public class ValidationService {
         this.restitutionTransactionMapper = restitutionTransactionMapper;
         this.operationErroneRepository = operationErroneRepository;
         this.operationErroneTransactionMapper = operationErroneTransactionMapper;
-        this.virementInternationalTransactionMapper = virementInternationalTransactionMapper;
-        this.virementInternationalRepository = virementInternationalRepository;
         this.impayeeRepository = impayeeRepository;
         this.impayeeTransactionMapper = impayeeTransactionMapper;
         this.rapprochementRepository = rapprochementRepository;
         this.soldeCascadeService = soldeCascadeService;
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto)  {
-            // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
-            // If the Chèque does not exist, throw a ResourceNotFoundException.
-            Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Cheque with id " + requestDto.getIdCheque() + " not found"));
-    
-            // Step 2: Check if the chèque is paid.
-            // If the Chèque is already paid, throw an exception.
-            if (cheque.getStatut() != StatutMoyenPaiement.ENCOURS) {
-                throw new RuntimeException("The cheque is not active, it has already been paid");
-            }
-    
-            // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
-            Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque);
-    
-            // Step 4: Attacher au rapprochement  puis sauvegarder.
-            Banque banque = cheque.getBanque();
-            Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
+    // processChequeDecaissementTransaction / processChequeEncaissementTransaction extraits vers
+    // staport.finance.gBanque.moyensDePaiements.cheques.validation.services.ChequeValidationService
+    // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
+    // processDecaissementLcnTransaction / processEncaissementLcnTransaction extraits vers
+    // staport.finance.gBanque.moyensDePaiements.lcn.validation.services.LcnValidationService
+    // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
-    
-            // Step 6: Mark the Chèque as  (paid) and save the updated Chèque entity.
-            cheque.setStatut(StatutMoyenPaiement.REGLE);
-            cheque.setDateOperation(savedTransaction.getDateOperations());
-            cheque.setDateValeur(savedTransaction.getDateValeur());
-            cheque.setLibelle(savedTransaction.getLibelle());
-            cheque.setObservation(savedTransaction.getObservation());
-            chequeRepository.save(cheque);
-    
-            // Step 7: Convert the saved Transaction entity into a ChequeTransactionResponseDto
-            // using the mapper and return it as the response.
-            return chequeTransactionMapper.toResponseDto(savedTransaction);
-        }
+    // processVirementDecaissementTransaction / processVirementEncaissementTransaction extraits vers
+    // staport.finance.gBanque.moyensDePaiements.virements.validation.services.VirementValidationService
+    // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public ChequeTransactionResponseDto processChequeEncaissementTransaction(ChequeTransactionRequest requestDto)  {
-        // Step 1: Fetch the Chèque entity from the database using the Chèque number from the request.
-        // If the Chèque does not exist, throw a ResourceNotFoundException.
-        Cheque cheque = chequeRepository.findById(requestDto.getIdCheque())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Cheque with id " + requestDto.getIdCheque() + " not found"));
-
-        // Step 2: Check if the chèque is paid.
-        // If the Chèque is already paid , throw an exception.
-        if (cheque.getStatut() != StatutMoyenPaiement.ENCOURS) {
-            throw new RuntimeException("The cheque has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched Chèque entity into a Transaction entity.
-        Transaction transactionEntity = chequeTransactionMapper.toEntity(requestDto, cheque);
-
-        Banque banque = cheque.getBanque();
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the Chèque as inactive (paid) and save the updated Chèque entity.
-        cheque.setStatut(StatutMoyenPaiement.REGLE);
-        cheque.setDateOperation(savedTransaction.getDateOperations());
-        cheque.setDateValeur(savedTransaction.getDateValeur());
-        cheque.setLibelle(savedTransaction.getLibelle());
-        cheque.setObservation(savedTransaction.getObservation());
-        chequeRepository.save(cheque);
-
-        // Step 7: Convert the saved Transaction entity into a ChequeTransactionResponseDto
-        // using the mapper and return it as the response.
-        return chequeTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public LcnTransactionResponse processDecaissementLcnTransaction(LcnTransactionRequest requestDto)  {
-        // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
-        // If the Lcn does not exist, throw a ResourceNotFoundException.
-        Lcn lcn = lcnRepository.findById(requestDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Lcn with id " + requestDto.getId() + " not found"));
-
-        // Step 2: Check if the Lcn is paid.
-        // If the Lcn is already paid , throw an exception.
-        if (lcn.getStatut() != StatutMoyenPaiement.ENCOURS) {
-            throw new RuntimeException("The lcn  has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched lcn entity into a Transaction entity.
-        Transaction transactionEntity = lcnTransactionMapper.toEntity(requestDto, lcn);
-
-        Banque banque = lcn.getBanque();
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
-        lcn.setStatut(StatutMoyenPaiement.REGLE);
-        lcn.setDateOperation(savedTransaction.getDateOperations());
-        lcn.setDateValeur(savedTransaction.getDateValeur());
-        lcn.setLibelle(savedTransaction.getLibelle());
-        lcn.setObservation(savedTransaction.getObservation());
-        lcnRepository.save(lcn);
-
-        // Step 7: Convert the saved Transaction entity into a LcnTransactionResponse
-        // using the mapper and return it as the response.
-        return lcnTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public LcnTransactionResponse processEncaissementLcnTransaction(LcnTransactionRequest requestDto)  {
-        // Step 1: Fetch the Lcn entity from the database using the Lcn number from the request.
-        // If the Lcn does not exist, throw a ResourceNotFoundException.
-        Lcn lcn = lcnRepository.findById(requestDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Lcn with id " + requestDto.getId() + " not found"));
-
-        // Step 2: Check if the Lcn is paid.
-        // If the Lcn is already paid , throw an exception.
-        if (lcn.getStatut() != StatutMoyenPaiement.ENCOURS) {
-            throw new RuntimeException("The lcn  has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched lcn entity into a Transaction entity.
-        Transaction transactionEntity = lcnTransactionMapper.toEntity(requestDto, lcn);
-        Banque banque = lcn.getBanque();
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-        // Step 6: Mark the lcn as inactive (paid) and save the updated lcn entity.
-        lcn.setStatut(StatutMoyenPaiement.REGLE);
-        lcn.setDateOperation(savedTransaction.getDateOperations());
-        lcn.setDateValeur(savedTransaction.getDateValeur());
-        lcn.setLibelle(savedTransaction.getLibelle());
-        lcn.setObservation(savedTransaction.getObservation());
-        lcnRepository.save(lcn);
-
-        // Step 7: Convert the saved Transaction entity into a LcnTransactionResponse
-        // using the mapper and return it as the response.
-        return lcnTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public VirementTransactionResponseDto processVirementDecaissementTransaction(VirementTransactionRequestDto requestDto) {
-        // Step 1: Fetch virement entity from the database using it's number from the request.
-        // If the virement does not exist, throw a ResourceNotFoundException.
-        Virement virement = virementRepository.findById(requestDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "virement with id " + requestDto.getId() + " not found"));
-
-        // Step 2: Check if the virement is paid.
-        // If the virement is already paid  throw an exception.
-        if (virement.getStatut() != StatutMoyenPaiement.ENCOURS) {
-            throw new RuntimeException("The virement has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
-        Transaction transactionEntity = virementTransactionMapper.toEntity(requestDto, virement);
-
-        Banque banque = virement.getBanqueEmettrice();
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
-        virement.setStatut(StatutMoyenPaiement.REGLE);
-        virement.setDateOperation(savedTransaction.getDateOperations());
-        virement.setDateValeur(savedTransaction.getDateValeur());
-        virement.setLibelle(savedTransaction.getLibelle());
-        virement.setObservation(savedTransaction.getObservation());
-        virementRepository.save(virement);
-
-        // Step 7: Convert the saved Transaction entity into a VirementTransactionResponseDto
-        // using the mapper and return it as the response.
-        return virementTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public VirementTransactionResponseDto processVirementEncaissementTransaction(VirementTransactionRequestDto requestDto) {
-        // Step 1: Fetch virement entity from the database using it's number from the request.
-        // If the virement does not exist, throw a ResourceNotFoundException.
-        Virement virement = virementRepository.findById(requestDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "virement with id " + requestDto.getId() + " not found"));
-
-        // Step 2: Check if the virement is active.
-        // If the virement is already used/paid (active = false), throw an exception.
-        if (virement.getStatut() != StatutMoyenPaiement.ENCOURS) {
-            throw new RuntimeException("The virement  has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched virement entity into a Transaction entity.
-        Transaction transactionEntity = virementTransactionMapper.toEntity(requestDto, virement);
-
-        Banque banque = virement.getBanqueBeneficiare();
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-
-        // Step 6: Mark the virement as inactive (paid) and save the updated virement entity.
-        virement.setStatut(StatutMoyenPaiement.REGLE);
-        virement.setDateOperation(savedTransaction.getDateOperations());
-        virement.setDateValeur(savedTransaction.getDateValeur());
-        virement.setLibelle(savedTransaction.getLibelle());
-        virement.setObservation(savedTransaction.getObservation());
-        virementRepository.save(virement);
-
-        // Step 7: Convert the saved Transaction entity into a VirementTransactionResponseDto
-        // using the mapper and return it as the response.
-        return virementTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public MiseAdispositionTransactionResponseDto processMiseAdispositionDecaissementTransaction(MiseAdispositionTransactionRequestDto requestDto)  {
-        // Step 1: Fetch the MiseAdispo entity from the database.
-        // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
-        MiseADisposition miseADisposition = miseADispositionRepository.findById(requestDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Mise à disposition  with id " + requestDto.getId() + " not found"));
-
-        // Step 2: Check if the MiseAdispo is paid.
-        // If the MiseAdispo is already paid  throw an exception.
-        if (miseADisposition.getStatut() != StatutMoyenPaiement.ENCOURS) {
-            throw new RuntimeException("The miseADisposition  has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched miseADisposition entity into a Transaction entity.
-        Transaction transactionEntity = miseAdispositionTransactionMapper.toEntity(requestDto, miseADisposition);
-
-        Banque banque = miseADisposition.getBanque();
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-
-        // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
-        miseADisposition.setStatut(StatutMoyenPaiement.REGLE);
-        miseADisposition.setDateOperation(savedTransaction.getDateOperations());
-        miseADisposition.setDateValeur(savedTransaction.getDateValeur());
-        miseADisposition.setLibelle(savedTransaction.getLibelle());
-        miseADisposition.setObservation(savedTransaction.getObservation());
-        miseADispositionRepository.save(miseADisposition);
-
-        // Step 7: Convert the saved Transaction entity into a MiseAdispositionTransactionResponseDto
-        // using the mapper and return it as the response.
-        return miseAdispositionTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public MiseAdispositionTransactionResponseDto processMiseAdispositionEncaissementTransaction(MiseAdispositionTransactionRequestDto requestDto)  {
-        // Step 1: Fetch the MiseAdispo entity from the database.
-        // If the MiseAdispo does not exist, throw a ResourceNotFoundException.
-        MiseADisposition miseADisposition = miseADispositionRepository.findById(requestDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Mise à disposition  with id " + requestDto.getId() + " not found"));
-
-        // Step 2: Check if the MiseAdispo is paid.
-        // If the MiseAdispo is already paid , throw an exception.
-        if (miseADisposition.getStatut() != StatutMoyenPaiement.ENCOURS) {
-            throw new RuntimeException("The miseADisposition  has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched miseADisposition entity into a Transaction entity.
-        Transaction transactionEntity = miseAdispositionTransactionMapper.toEntity(requestDto, miseADisposition);
-
-        Banque banque = miseADisposition.getBanque();
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-
-        // Step 6: Mark the miseADisposition as inactive (paid) and save the updated miseADisposition entity.
-        miseADisposition.setStatut(StatutMoyenPaiement.REGLE);
-        miseADisposition.setDateOperation(savedTransaction.getDateOperations());
-        miseADisposition.setDateValeur(savedTransaction.getDateValeur());
-        miseADisposition.setLibelle(savedTransaction.getLibelle());
-        miseADisposition.setObservation(savedTransaction.getObservation());
-        miseADispositionRepository.save(miseADisposition);
-
-        // Step 7: Convert the saved Transaction entity into a MiseAdispositionTransactionResponseDto
-        // using the mapper and return it as the response.
-        return miseAdispositionTransactionMapper.toResponseDto(savedTransaction);
-    }
-
+    // processMiseAdispositionDecaissementTransaction / processMiseAdispositionEncaissementTransaction
+    // extraits vers staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.services.
+    // MiseADispositionValidationService (architecture.md, Règle 1 — la logique de validation d'un
+    // module lui appartient).
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public PrefinancementTransactionResponse processPrefinancementTransaction(PrefinancementTransactionRequest requestDto)  {
@@ -651,41 +323,10 @@ public class ValidationService {
         return commisionTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public PrelevementTransactionResponse processPrelevementToTransaction(PrelevementValidationRequest requestDto)  {
-        // Step 1: Fetch prelevement from the database using it's id from the request.
-        Prelevement prelevement=this.prelevementRepository.findById(requestDto.getIdPrelevement())
-                .orElseThrow(()->new ResourceNotFoundException("Prelevement with id "+requestDto.getIdPrelevement()+" not found"));
-
-        // Step 2: Check if the prelevement is not already paid.
-        // If it's already paid , throw an exception.
-        if (prelevement.getStatus()== Status.PAYE) {
-            throw new RuntimeException(" prelevement is already paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
-        Transaction transactionEntity = prelevementTransactionMapper.toEntity(requestDto,prelevement);
-
-        Banque banque = banqueRepository.findById(prelevement.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+prelevement.getBanque().getId()+" not found"));
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        this.banqueRepository.save(banque);
-
-        // Step 6: Mark the prelevement as * (paid) and save the updated prelevement entity.
-        prelevement.setStatus(Status.PAYE);
-        prelevement.setObservation(savedTransaction.getObservation());
-        prelevement.setLibelle(savedTransaction.getLibelle());
-        prelevement.setDateValeur(savedTransaction.getDateValeur());
-        prelevement.setDateOperation(savedTransaction.getDateOperations());
-        prelevementRepository.save(prelevement);
-
-        // Step 7: Convert the saved Transaction entity into a PrelevementTransactionResponse
-        // using the mapper and return it as the response.
-        return prelevementTransactionMapper.toResponseDto(savedTransaction);
-    }
+    // Logique de validation des prélèvements extraite vers
+    // staport.finance.gBanque.prelevements.validation.services.PrelevementValidationService
+    // (architecture.md, Règle 1 — un ValidationService générique ne doit contenir aucune logique
+    // métier propre à un module).
 
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -840,80 +481,10 @@ public class ValidationService {
         return operationErroneTransactionMapper.toResponseDto(savedTransaction);
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public VirementInternationalTransactionResponseDto processVirementInternationalDecaissementTransaction(
-            VirementInternationalTransactionRequestDto requestDto)  {
-
-        // Step 1: Fetch virement international entity from the database using its id from the request.
-        // If the virement international does not exist, throw a ResourceNotFoundException.
-        VirementInternational virementInternational = virementInternationalRepository.findById(requestDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Virement international with id " + requestDto.getId() + " not found"));
-
-        // Step 2: Check if the virement international is paid.
-        // If the virement international is already paid, throw an exception.
-        if (virementInternational.getStatut() != StatutMoyenPaiement.ENCOURS) {
-            throw new RuntimeException("The virement international  has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
-        Transaction transactionEntity = virementInternationalTransactionMapper.toEntity(requestDto, virementInternational);
-        Banque banque = virementInternational.getBanque();
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
-        virementInternational.setStatut(StatutMoyenPaiement.REGLE);
-        virementInternational.setDateOperation(savedTransaction.getDateOperations());
-        virementInternational.setDateValeur(savedTransaction.getDateValeur());
-        virementInternational.setLibelle(savedTransaction.getLibelle());
-        virementInternational.setObservation(savedTransaction.getObservation());
-        virementInternationalRepository.save(virementInternational);
-
-        // Step 7: Convert the saved Transaction entity into a VirementInternationalTransactionResponseDto
-        // using the mapper and return it as the response.
-        return virementInternationalTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public VirementInternationalTransactionResponseDto processVirementInternationalEncaissementTransaction(
-            VirementInternationalTransactionRequestDto requestDto) {
-
-        // Step 1: Fetch virement international entity from the database using its id from the request.
-        // If the virement international does not exist, throw a ResourceNotFoundException.
-        VirementInternational virementInternational = virementInternationalRepository.findById(requestDto.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Virement international with id " + requestDto.getId() + " not found"));
-
-        // Step 2: Check if the virement international is paid.
-        // If the virement international is already paid , throw an exception.
-        if (virementInternational.getStatut() != StatutMoyenPaiement.ENCOURS) {
-            throw new RuntimeException("The virement international  has already been paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched virement international entity into a Transaction entity.
-        Transaction transactionEntity = virementInternationalTransactionMapper.toEntity(requestDto, virementInternational);
-
-        Banque banque = virementInternational.getBanque();
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the virement international as inactive (paid) and save the updated virement international entity.
-        virementInternational.setStatut(StatutMoyenPaiement.REGLE);
-        virementInternational.setDateOperation(savedTransaction.getDateOperations());
-        virementInternational.setDateValeur(savedTransaction.getDateValeur());
-        virementInternational.setLibelle(savedTransaction.getLibelle());
-        virementInternational.setObservation(savedTransaction.getObservation());
-        virementInternationalRepository.save(virementInternational);
-
-        // Step 7: Convert the saved Transaction entity into a VirementInternationalTransactionResponseDto
-        // using the mapper and return it as the response.
-        return virementInternationalTransactionMapper.toResponseDto(savedTransaction);
-    }
+    // processVirementInternationalDecaissementTransaction / processVirementInternationalEncaissementTransaction
+    // extraits vers staport.finance.gBanque.moyensDePaiements.virementInternational.validation.services.
+    // VirementInternationalValidationService (architecture.md, Règle 1 — la logique de validation d'un
+    // module lui appartient).
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public ImpayeeTransactionResponse processImpayeeToTransaction(ImpayeeValidationRequest requestDto)  {

@@ -2,11 +2,11 @@ package staport.finance.gBanque.moyensDePaiements.batch.processor;
 
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.dtos.FunPaymentDto;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
-import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepository;
+import staport.finance.gBanque.moyensDePaiements.cheques.services.ChequeBatchGateway;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.util.Optional;
@@ -25,17 +25,17 @@ import java.util.Optional;
 @Component
 public class ChequePaymentProcessor extends AbstractPaymentProcessor {
 
-    private final ChequeRepository chequeRepository;
+    private final ChequeBatchGateway chequeBatchGateway;
 
-    public ChequePaymentProcessor(BanqueRepository banqueRepository, ChequeRepository chequeRepository) {
-        super(banqueRepository);
-        this.chequeRepository = chequeRepository;
+    public ChequePaymentProcessor(IBanqueService banqueService, ChequeBatchGateway chequeBatchGateway) {
+        super(banqueService);
+        this.chequeBatchGateway = chequeBatchGateway;
     }
 
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) {
         StatutMoyenPaiement statutFun = item.getStatutMoyenPaiement();
-        Optional<Cheque> existing = chequeRepository.findByIdPaiement(item.getIdPaiement());
+        Optional<Cheque> existing = chequeBatchGateway.findByIdPaiement(item.getIdPaiement());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {

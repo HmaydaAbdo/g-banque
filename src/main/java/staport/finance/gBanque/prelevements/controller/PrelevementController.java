@@ -1,11 +1,15 @@
 package staport.finance.gBanque.prelevements.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.prelevements.dtos.EncoursPrelevement;
@@ -14,9 +18,16 @@ import staport.finance.gBanque.prelevements.dtos.PrelevementResponseDto;
 import staport.finance.gBanque.prelevements.dtos.PrelevementSearchDto;
 import staport.finance.gBanque.prelevements.service.PrelevementService;
 
+@Tag(name = "Prélèvements", description = "Gestion des prélèvements bancaires")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/prelevements")
+@PreAuthorize(PrelevementController.FINANCE_OR_ADMIN)
 public class PrelevementController {
+
+    static final String FINANCE_OR_ADMIN =
+            "hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
     private static final Logger log = LoggerFactory.getLogger(PrelevementController.class);
     private final PrelevementService prelevementService;
@@ -32,6 +43,7 @@ public class PrelevementController {
      * @param requestDto Données du prélèvement à créer
      * @return Le prélèvement créé
      */
+    @Operation(summary = "Créer un prélèvement")
     @PostMapping
     public ResponseEntity<PrelevementResponseDto> createPrelevement(
             @Validated @RequestBody PrelevementRequestDto requestDto) {
@@ -51,6 +63,7 @@ public class PrelevementController {
      * @param id Identifiant du prélèvement
      * @return Le prélèvement demandé
      */
+    @Operation(summary = "Consulter un prélèvement par ID")
     @GetMapping("/{id}")
     public ResponseEntity<PrelevementResponseDto> getById(@PathVariable Long id) {
         log.info("Requête REST pour récupérer le prélèvement avec ID: {}", id);
@@ -69,6 +82,7 @@ public class PrelevementController {
      * @param pageable Informations de pagination
      * @return Page de prélèvements correspondant aux critères
      */
+    @Operation(summary = "Rechercher des prélèvements avec pagination")
     @PostMapping("/search")
     public ResponseEntity<Page<PrelevementResponseDto>> searchPrelevements(
             @RequestBody PrelevementSearchDto searchDto,
@@ -90,6 +104,7 @@ public class PrelevementController {
      * @param requestDto Nouvelles données du prélèvement
      * @return Le prélèvement mis à jour
      */
+    @Operation(summary = "Modifier un prélèvement")
     @PutMapping("/{id}")
     public ResponseEntity<PrelevementResponseDto> updatePrelevement(
             @PathVariable Long id,
@@ -109,6 +124,8 @@ public class PrelevementController {
      * @param id Identifiant du prélèvement à supprimer
      * @return Réponse vide avec statut 204
      */
+    @Operation(summary = "Supprimer un prélèvement")
+    @PreAuthorize(SYSTEM_ADMIN)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePrelevement(@PathVariable Long id) {
         log.info("Requête REST pour supprimer le prélèvement ID: {}", id);
@@ -128,6 +145,7 @@ public class PrelevementController {
      * @param pageable Informations de pagination et de tri
      * @return Un EncoursPrelevement contenant la page de prélèvements et le montant total en cours
      */
+    @Operation(summary = "Encours de prélèvements pour une banque")
     @GetMapping("/encours/{banqueId}")
     public ResponseEntity<EncoursPrelevement> getOutstandingPrelevements(
             @PathVariable Long banqueId,
@@ -151,6 +169,8 @@ public class PrelevementController {
     }
 
 
+    @Operation(summary = "Basculer le statut d'un prélèvement")
+    @PreAuthorize(SYSTEM_ADMIN)
     @PatchMapping("/{id}/toggle-status")
     public ResponseEntity<PrelevementResponseDto> toggleStatus(@PathVariable Long id) {
         log.info("Requête REST pour basculer le statut du prélèvement ID: {}", id);

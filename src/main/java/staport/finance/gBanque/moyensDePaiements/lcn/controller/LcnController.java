@@ -1,111 +1,101 @@
 package staport.finance.gBanque.moyensDePaiements.lcn.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.moyensDePaiements.lcn.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.lcn.services.LcnService;
 
+@Tag(name = "LCN", description = "Gestion des LCN (lettres de change normalisées) — encaissements et décaissements")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/lcns")
+@PreAuthorize(LcnController.FINANCE_OR_ADMIN)
 public class LcnController {
 
-    private static final Logger log = LoggerFactory.getLogger(LcnController.class);
+    static final String FINANCE_OR_ADMIN =
+            "hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
+
     private final LcnService lcnService;
 
     public LcnController(LcnService lcnService) {
         this.lcnService = lcnService;
     }
 
+    @Operation(summary = "Créer un LCN d'encaissement")
     @PostMapping()
     public ResponseEntity<LcnResponseDTO> createLcn(@RequestBody LcnRequestDto requestDto) {
-        log.info("Réception d'une demande de création de LCN avec les données suivantes : {}", requestDto);
         LcnResponseDTO createdLcn = lcnService.createLcn(requestDto);
-        log.info("LCN créé avec succès. ID: {}, Numéro: {}", createdLcn.getId(), createdLcn.getNumero());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdLcn);
     }
 
+    @Operation(summary = "Modifier un LCN d'encaissement")
     @PutMapping("/{id}")
     public ResponseEntity<LcnResponseDTO> updateLcn(@PathVariable Long id, @RequestBody LcnRequestDto requestDto) {
-        log.info("Réception d'une demande de modification du LCN ID: {}", id);
         LcnResponseDTO response = lcnService.editEncaissementLcn(id, requestDto);
-        log.info("LCN ID: {} modifié avec succès", id);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Consulter un LCN par ID")
     @GetMapping("/{id}")
     public ResponseEntity<LcnResponseDTO> getLcnById(@PathVariable Long id) {
-        log.debug("Récupération du LCN ID: {}", id);
         LcnResponseDTO response = lcnService.getLcnById(id);
-        log.debug("LCN ID: {} récupéré avec succès", id);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Supprimer un LCN")
+    @PreAuthorize(SYSTEM_ADMIN)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteLcn(@PathVariable Long id) {
-        log.info("Réception d'une demande de suppression du LCN ID: {}", id);
         lcnService.deleteLcn(id);
-        log.info("LCN ID: {} supprimé avec succès", id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Lister les LCN de décaissement")
     @GetMapping("/decaissements")
     public ResponseEntity<Page<LcnResponseDTO>> getAllDecaissements(LcnSearchDTO searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-
-        log.info("Récupération des LCN de décaissement - Page: {}, Taille: {}, searchDto:{}",
-                pageable.getPageNumber(), pageable.getPageSize(),searchDto);
-
         Page<LcnResponseDTO> result = lcnService.getDecaissements(searchDto, pageable);
-        log.info("Nombre de LCN de décaissement récupérés: {} sur un total de {}", result.getNumberOfElements(), result.getTotalElements());
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Lister les LCN d'encaissement")
     @GetMapping("/encaissements")
     public ResponseEntity<Page<LcnResponseDTO>> getAllEncaissements(LcnSearchDTO searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-
-        log.info("Récupération des LCN d'encaissement - Page: {}, Taille: {},searchDto:{}",
-                pageable.getPageNumber(), pageable.getPageSize(),searchDto);
-
         Page<LcnResponseDTO> result = lcnService.getEncaissements(searchDto, pageable);
-
-        log.info("Nombre de LCN d'encaissement récupérés: {} sur un total de {}", result.getNumberOfElements(), result.getTotalElements());
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Basculer le statut d'un LCN (ENCOURS ↔ REGLE)")
+    @PreAuthorize(SYSTEM_ADMIN)
     @PatchMapping("/toggle/{id}")
     public ResponseEntity<LcnResponseDTO> toggleLcnStatus(@PathVariable Long id) {
-
-        log.info("Demande de basculement du statut du LCN ID: {}", id);
         LcnResponseDTO updatedLcn = lcnService.toggleLcnStatus(id);
-        log.info("Statut du LCN ID: {} basculé avec succès vers: {}", id, updatedLcn.getStatut());
         return ResponseEntity.ok(updatedLcn);
     }
 
+    @Operation(summary = "Encours de décaissement LCN pour une banque")
     @GetMapping("/decaissements/encours/{banqueId}")
     public ResponseEntity<EncoursLcnResponse> getEncoursDecaissementsForLcn(@PathVariable Long banqueId, EncoursLcnSearchDto searchDto,
                                                                             @PageableDefault(size = 10, sort = "dateEcheance") Pageable pageable) {
-
-        log.info("Récupération des encours de décaissement pour les LCN de la banque ID: {} , et searchDto :", banqueId);
         EncoursLcnResponse result = lcnService.getEncoursDecaissementsForLcn(searchDto, banqueId, pageable);
-        log.info("Encours de décaissement récupérés pour la banque ID: {} - Montant total: {}, Nombre: {}",
-                banqueId, result.getTotalEncours(), result.getPage().getTotalElements());
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Encours d'encaissement LCN pour une banque")
     @GetMapping("/encaissements/encours/{banqueId}")
     public ResponseEntity<EncoursLcnResponse> getEncoursEncaissementsForLcn(
             @PathVariable Long banqueId,
             EncoursLcnSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEcheance") Pageable pageable) {
-        log.info("Récupération des encours d'encaissement pour les LCN de la banque ID: {}", banqueId);
         EncoursLcnResponse result = lcnService.getEncoursEncaissementsForLcn(searchDto, banqueId, pageable);
-        log.info("Encours d'encaissement récupérés pour la banque ID: {} - Montant total: {}, Nombre: {}",
-                banqueId, result.getTotalEncours(), result.getPage().getTotalElements());
         return ResponseEntity.ok(result);
     }
 }

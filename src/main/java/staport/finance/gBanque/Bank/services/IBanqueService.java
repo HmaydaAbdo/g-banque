@@ -64,6 +64,15 @@ public interface IBanqueService {
     Banque findOrThrow(Long id);
 
     /**
+     * Recherche une banque par son nom, insensible à la casse.
+     *
+     * <p>Façade dédiée au module {@code moyensDePaiements.batch} (synchronisation FunPaiement) —
+     * le nom de banque est la seule clé disponible côté système externe, contrairement aux autres
+     * consommateurs cross-domaine qui résolvent toujours une banque par ID.
+     */
+    java.util.Optional<Banque> findByNomIgnoreCase(String nom);
+
+    /**
      * Returns every Banque entity. Façade pour les domaines qui ont besoin de la liste
      * complète des entités (ex. {@code BankAccueilAggregatorService}) — jamais via
      * {@code BanqueRepository} directement (Backend/CLAUDE.md, "Encapsulation des domaines").

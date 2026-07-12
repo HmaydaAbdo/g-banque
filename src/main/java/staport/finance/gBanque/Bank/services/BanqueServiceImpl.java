@@ -220,6 +220,11 @@ public class BanqueServiceImpl implements IBanqueService {
         return banqueRepository.findAll();
     }
 
+    @Override
+    public java.util.Optional<Banque> findByNomIgnoreCase(String nom) {
+        return banqueRepository.findByNomIgnoreCase(nom);
+    }
+
     // ── Helpers privés ────────────────────────────────────────────────────────
 
     private BigDecimal computeLiveBalance(Long banqueId) {

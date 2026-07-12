@@ -25,33 +25,39 @@ import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransact
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
 import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
-import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionRequest;
-import staport.finance.gBanque.validation.dtos.cheques.ChequeTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionRequest;
+import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
 import staport.finance.gBanque.cmt.echeances.dtos.CmtTransactionRequestDto;
 import staport.finance.gBanque.cmt.echeances.dtos.CmtTransactionResponseDto;
 import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationService;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.services.CreditMoyenTermeService;
-import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionRequest;
-import staport.finance.gBanque.validation.dtos.lcn.LcnTransactionResponse;
+import staport.finance.gBanque.moyensDePaiements.lcn.validation.dto.LcnTransactionRequest;
+import staport.finance.gBanque.moyensDePaiements.lcn.validation.dto.LcnTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.lcn.validation.services.interfaces.ILcnValidationService;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionRequestDTO;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.LeasingTransactionResponseDTO;
 import staport.finance.gBanque.Agios.service.interfaces.IAgiosValidationService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
-import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.miseAdispo.MiseAdispositionTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.prelevements.PrelevementTransactionResponse;
-import staport.finance.gBanque.validation.dtos.prelevements.PrelevementValidationRequest;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.dto.MiseAdispositionTransactionRequestDto;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.dto.MiseAdispositionTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.services.interfaces.IMiseADispositionValidationService;
+import staport.finance.gBanque.prelevements.validation.dto.PrelevementTransactionResponse;
+import staport.finance.gBanque.prelevements.validation.dto.PrelevementValidationRequest;
+import staport.finance.gBanque.prelevements.validation.services.interfaces.IPrelevementValidationService;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneTransactionResponse;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneValidationRequest;
-import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.virementInternationaux.VirementInternationalTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.virements.VirementTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.virements.VirementTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionRequestDto;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.services.interfaces.IVirementInternationalValidationService;
+import staport.finance.gBanque.moyensDePaiements.virements.validation.dto.VirementTransactionRequestDto;
+import staport.finance.gBanque.moyensDePaiements.virements.validation.dto.VirementTransactionResponseDto;
+import staport.finance.gBanque.moyensDePaiements.virements.validation.services.interfaces.IVirementValidationService;
 import staport.finance.gBanque.validation.dtos.lot.BatchValidationRequestDto;
 import staport.finance.gBanque.validation.dtos.lot.BatchValidationResponseDto;
 import staport.finance.gBanque.validation.services.BatchValidationService;
@@ -75,6 +81,12 @@ public class ValidationController {
     private final ICmtValidationService cmtValidationService;
     private final CreditMoyenTermeService creditMoyenTermeService;
     private final BatchValidationService batchValidationService;
+    private final IChequeValidationService chequeValidationService;
+    private final ILcnValidationService lcnValidationService;
+    private final IVirementValidationService virementValidationService;
+    private final IVirementInternationalValidationService virementInternationalValidationService;
+    private final IMiseADispositionValidationService miseADispositionValidationService;
+    private final IPrelevementValidationService prelevementValidationService;
 
     public ValidationController(ValidationService validationService,
                                 ReverseTransactionService reverseTransactionService,
@@ -83,7 +95,13 @@ public class ValidationController {
                                 ContratLeasingService contratLeasingService,
                                 ICmtValidationService cmtValidationService,
                                 CreditMoyenTermeService creditMoyenTermeService,
-                                BatchValidationService batchValidationService) {
+                                BatchValidationService batchValidationService,
+                                IChequeValidationService chequeValidationService,
+                                ILcnValidationService lcnValidationService,
+                                IVirementValidationService virementValidationService,
+                                IVirementInternationalValidationService virementInternationalValidationService,
+                                IMiseADispositionValidationService miseADispositionValidationService,
+                                IPrelevementValidationService prelevementValidationService) {
         this.validationService      = validationService;
         this.reverseTransactionService = reverseTransactionService;
         this.leasingValidationService  = leasingValidationService;
@@ -92,6 +110,12 @@ public class ValidationController {
         this.cmtValidationService     = cmtValidationService;
         this.creditMoyenTermeService   = creditMoyenTermeService;
         this.batchValidationService    = batchValidationService;
+        this.chequeValidationService   = chequeValidationService;
+        this.lcnValidationService      = lcnValidationService;
+        this.virementValidationService = virementValidationService;
+        this.virementInternationalValidationService = virementInternationalValidationService;
+        this.miseADispositionValidationService = miseADispositionValidationService;
+        this.prelevementValidationService = prelevementValidationService;
     }
 
 
@@ -132,56 +156,88 @@ public class ValidationController {
     }
 
 
+    /**
+     * Valide une mise à disposition de décaissement : crée la transaction bancaire et marque la
+     * mise à disposition REGLE. Délègue au {@code MiseADispositionValidationService} du module
+     * miseADisposition (architecture.md, Règle 1).
+     */
     @PostMapping("/process/decaissement/mise-a-disposition")
-    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionDecaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) throws Exception {
-        MiseAdispositionTransactionResponseDto responseDto = validationService.processMiseAdispositionDecaissementTransaction(requestDto);
+    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionDecaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) {
+        MiseAdispositionTransactionResponseDto responseDto = miseADispositionValidationService.processMiseAdispositionDecaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
-
+    /**
+     * Valide une mise à disposition d'encaissement : crée la transaction bancaire et marque la
+     * mise à disposition REGLE. Délègue au {@code MiseADispositionValidationService} du module
+     * miseADisposition (architecture.md, Règle 1).
+     */
     @PostMapping("/process/encaissement/mise-a-disposition")
-    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionEncaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) throws Exception {
-        MiseAdispositionTransactionResponseDto responseDto = validationService.processMiseAdispositionEncaissementTransaction(requestDto);
+    public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionEncaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) {
+        MiseAdispositionTransactionResponseDto responseDto = miseADispositionValidationService.processMiseAdispositionEncaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
 
 
+    /**
+     * Valide un virement de décaissement : crée la transaction bancaire et marque le virement REGLE.
+     * Délègue au {@code VirementValidationService} du module virements (architecture.md, Règle 1).
+     */
     @PostMapping("/process/decaissement/virement")
-    public ResponseEntity<VirementTransactionResponseDto> processVirementDecaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) throws Exception {
-        VirementTransactionResponseDto responseDto = validationService.processVirementDecaissementTransaction(requestDto);
+    public ResponseEntity<VirementTransactionResponseDto> processVirementDecaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) {
+        VirementTransactionResponseDto responseDto = virementValidationService.processVirementDecaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
-
+    /**
+     * Valide un virement d'encaissement : crée la transaction bancaire et marque le virement REGLE.
+     * Délègue au {@code VirementValidationService} du module virements (architecture.md, Règle 1).
+     */
     @PostMapping("/process/encaissement/virement")
-    public ResponseEntity<VirementTransactionResponseDto> processVirementEncaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) throws Exception {
-        VirementTransactionResponseDto responseDto = validationService.processVirementEncaissementTransaction(requestDto);
+    public ResponseEntity<VirementTransactionResponseDto> processVirementEncaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) {
+        VirementTransactionResponseDto responseDto = virementValidationService.processVirementEncaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
 
+    /**
+     * Valide un chèque de décaissement : crée la transaction bancaire et marque le chèque REGLE.
+     * Délègue au {@code ChequeValidationService} du module cheques (architecture.md, Règle 1).
+     */
     @PostMapping("/process/decaissement/cheque")
-    public ResponseEntity<ChequeTransactionResponseDto> processDecaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) throws Exception {
-        ChequeTransactionResponseDto responseDto = validationService.processChequeDecaissementTransaction(requestDto);
+    public ResponseEntity<ChequeTransactionResponseDto> processDecaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) {
+        ChequeTransactionResponseDto responseDto = chequeValidationService.processChequeDecaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    /**
+     * Valide un chèque d'encaissement : crée la transaction bancaire et marque le chèque REGLE.
+     * Délègue au {@code ChequeValidationService} du module cheques (architecture.md, Règle 1).
+     */
     @PostMapping("/process/encaissement/cheque")
-    public ResponseEntity<ChequeTransactionResponseDto> processEncaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) throws Exception {
-        ChequeTransactionResponseDto responseDto = validationService.processChequeEncaissementTransaction(requestDto);
+    public ResponseEntity<ChequeTransactionResponseDto> processEncaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) {
+        ChequeTransactionResponseDto responseDto = chequeValidationService.processChequeEncaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    /**
+     * Valide un LCN de décaissement : crée la transaction bancaire et marque le LCN REGLE.
+     * Délègue au {@code LcnValidationService} du module lcn (architecture.md, Règle 1).
+     */
     @PostMapping("/process/decaissement/lcn")
-    public ResponseEntity<LcnTransactionResponse> processDecaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) throws Exception {
-        LcnTransactionResponse responseDto = validationService.processDecaissementLcnTransaction(requestDto);
+    public ResponseEntity<LcnTransactionResponseDto> processDecaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) {
+        LcnTransactionResponseDto responseDto = lcnValidationService.processLcnDecaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    /**
+     * Valide un LCN d'encaissement : crée la transaction bancaire et marque le LCN REGLE.
+     * Délègue au {@code LcnValidationService} du module lcn (architecture.md, Règle 1).
+     */
     @PostMapping("/process/encaissement/lcn")
-    public ResponseEntity<LcnTransactionResponse> processEncaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) throws Exception {
-        LcnTransactionResponse responseDto = validationService.processEncaissementLcnTransaction(requestDto);
+    public ResponseEntity<LcnTransactionResponseDto> processEncaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) {
+        LcnTransactionResponseDto responseDto = lcnValidationService.processLcnEncaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
@@ -249,8 +305,8 @@ public class ValidationController {
     }
 
     @PostMapping("/process/prelevement")
-    public ResponseEntity<PrelevementTransactionResponse> processPrelevementToTransaction(@Valid @RequestBody PrelevementValidationRequest requestDto) throws Exception {
-        PrelevementTransactionResponse responseDto = validationService.processPrelevementToTransaction(requestDto);
+    public ResponseEntity<PrelevementTransactionResponse> processPrelevementToTransaction(@Valid @RequestBody PrelevementValidationRequest requestDto) {
+        PrelevementTransactionResponse responseDto = prelevementValidationService.processPrelevementToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
@@ -285,25 +341,28 @@ public class ValidationController {
     }
 
     /**
-     * Endpoint pour traiter une transaction de rapprochement de virement international (DECAISSEMENT).
-     *
-     * @param requestDto Le DTO de la requête de transaction de virement international.
-     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     * Valide un virement international de décaissement : crée la transaction bancaire et marque le
+     * virement international REGLE. Délègue au {@code VirementInternationalValidationService} du
+     * module virementInternational (architecture.md, Règle 1).
      */
     @PostMapping("/process/decaissement/virement-international")
     public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalDecaissementTransaction(
-            @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) throws Exception {
+            @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) {
         VirementInternationalTransactionResponseDto responseDto =
-                validationService.processVirementInternationalDecaissementTransaction(requestDto);
+                virementInternationalValidationService.processVirementInternationalDecaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
-
+    /**
+     * Valide un virement international d'encaissement : crée la transaction bancaire et marque le
+     * virement international REGLE. Délègue au {@code VirementInternationalValidationService} du
+     * module virementInternational (architecture.md, Règle 1).
+     */
     @PostMapping("/process/encaissement/virement-international")
     public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalEncaissementTransaction(
-            @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) throws Exception {
+            @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) {
         VirementInternationalTransactionResponseDto responseDto =
-                validationService.processVirementInternationalEncaissementTransaction(requestDto);
+                virementInternationalValidationService.processVirementInternationalEncaissementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

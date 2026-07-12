@@ -2,13 +2,13 @@ package staport.finance.gBanque.moyensDePaiements.batch.processor;
 
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataException;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.dtos.FunPaymentDto;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
-import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
+import staport.finance.gBanque.moyensDePaiements.virements.service.VirementBatchGateway;
 
 import java.util.List;
 import java.util.Objects;
@@ -25,11 +25,11 @@ import java.util.stream.Stream;
 @Component
 public class VirementPaymentProcessor extends AbstractPaymentProcessor {
 
-    private final VirementRepository virementRepository;
+    private final VirementBatchGateway virementBatchGateway;
 
-    public VirementPaymentProcessor(BanqueRepository banqueRepository, VirementRepository virementRepository) {
-        super(banqueRepository);
-        this.virementRepository = virementRepository;
+    public VirementPaymentProcessor(IBanqueService banqueService, VirementBatchGateway virementBatchGateway) {
+        super(banqueService);
+        this.virementBatchGateway = virementBatchGateway;
     }
 
     @Override
@@ -64,7 +64,7 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
      * Retourne l'entité à sauvegarder, ou null si skip.
      */
     private Virement upsertVirement(FunPaymentDto item, Banque banque, Type type, String numero, String idPaiement, StatutMoyenPaiement statutFun) {
-        Optional<Virement> existing = virementRepository.findByIdPaiement(idPaiement);
+        Optional<Virement> existing = virementBatchGateway.findByIdPaiement(idPaiement);
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {
@@ -100,7 +100,7 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
         v.setBeneficiaire(item.getBeneficiaire());
         v.setMontant(item.getMontant());
         v.setBanqueEmettrice(banque);
-        Optional<Banque> banqueBeneficiaire = this.banqueRepository.findByNomIgnoreCase(item.getBanqueBeneficiaire());
+        Optional<Banque> banqueBeneficiaire = this.banqueService.findByNomIgnoreCase(item.getBanqueBeneficiaire());
         banqueBeneficiaire.ifPresent(v::setBanqueBeneficiare);
         v.setNomBanqueBeneficiaireLibre(item.getBanqueBeneficiaire());
         v.setRibBeneficiaire(item.getRibBeneficiaire());

@@ -1,6 +1,7 @@
 package staport.finance.gBanque.prelevements.entitie;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
@@ -9,6 +10,12 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
+@Audited
+@Table(indexes = {
+        @Index(name = "idx_prelevement_banque_id", columnList = "banque_id"),
+        @Index(name = "idx_prelevement_status", columnList = "status"),
+        @Index(name = "idx_prelevement_date_emission", columnList = "dateEmission")
+})
 public class Prelevement {
 
     @Id

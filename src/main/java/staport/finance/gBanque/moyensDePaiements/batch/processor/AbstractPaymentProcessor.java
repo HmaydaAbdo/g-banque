@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.dtos.FunPaymentDto;
 import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataException;
@@ -21,10 +21,10 @@ public abstract class AbstractPaymentProcessor implements ItemProcessor<FunPayme
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
     protected final ZoneId systemZone = ZoneId.of("Africa/Casablanca");
-    protected final BanqueRepository banqueRepository;
+    protected final IBanqueService banqueService;
 
-    public AbstractPaymentProcessor(BanqueRepository banqueRepository) {
-        this.banqueRepository = banqueRepository;
+    public AbstractPaymentProcessor(IBanqueService banqueService) {
+        this.banqueService = banqueService;
     }
 
     @Override
@@ -40,7 +40,7 @@ public abstract class AbstractPaymentProcessor implements ItemProcessor<FunPayme
         validateCommonFields(item);
         log.debug("Common validation passed for item: {}", item.getNumero());
 
-        Optional<Banque> optionalBanque = banqueRepository.findByNomIgnoreCase(item.getBanque());
+        Optional<Banque> optionalBanque = banqueService.findByNomIgnoreCase(item.getBanque());
         Banque banque = optionalBanque.orElseThrow(() -> new ResourceNotFoundException(
                 String.format("Bank with name '%s' not found for item with numero '%s'", item.getBanque(), item.getNumero())
         ));

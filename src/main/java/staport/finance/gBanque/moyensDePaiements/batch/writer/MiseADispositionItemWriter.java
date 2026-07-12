@@ -6,8 +6,9 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import staport.finance.gBanque.commision.service.CommissionService;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
-import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
+import staport.finance.gBanque.moyensDePaiements.miseADisposition.services.MiseADispositionBatchGateway;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,18 +19,18 @@ import java.util.List;
 public class MiseADispositionItemWriter implements ItemWriter<MiseADisposition> {
 
     private static final Logger log = LoggerFactory.getLogger(MiseADispositionItemWriter.class);
-    private final MiseADispositionRepository miseADispositionRepository;
+    private final MiseADispositionBatchGateway miseADispositionBatchGateway;
     private final CommissionService commissionService;
 
-    public MiseADispositionItemWriter(MiseADispositionRepository miseADispositionRepository, CommissionService commissionService) {
-        this.miseADispositionRepository = miseADispositionRepository;
+    public MiseADispositionItemWriter(MiseADispositionBatchGateway miseADispositionBatchGateway, CommissionService commissionService) {
+        this.miseADispositionBatchGateway = miseADispositionBatchGateway;
         this.commissionService = commissionService;
     }
 
     @Override
     public void write(Chunk<? extends MiseADisposition> chunk) throws Exception {
         log.info("Saving {} MiseADisposition entities.", chunk.size());
-        List<? extends MiseADisposition> saved = miseADispositionRepository.saveAll(chunk.getItems());
+        List<MiseADisposition> saved = miseADispositionBatchGateway.saveAll(new ArrayList<>(chunk.getItems()));
 
         for (MiseADisposition mad : saved) {
             commissionService.generateCommissionIfNeeded(mad);

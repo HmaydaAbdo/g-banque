@@ -1,6 +1,7 @@
 package staport.finance.gBanque.moyensDePaiements.virements.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
@@ -10,7 +11,15 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
-@Table(name = "VIREMENTS")
+@Audited
+@Table(name = "VIREMENTS", indexes = {
+        @Index(name = "idx_virement_numero", columnList = "numero"),
+        @Index(name = "idx_virement_banque_emettrice_id", columnList = "banque_emettrice_id"),
+        @Index(name = "idx_virement_banque_beneficiare_id", columnList = "banque_beneficiare_id"),
+        @Index(name = "idx_virement_statut", columnList = "statut"),
+        @Index(name = "idx_virement_date_emission", columnList = "date_emission"),
+        @Index(name = "idx_virement_type", columnList = "type")
+})
 public class Virement {
 
     @Id
@@ -41,12 +50,12 @@ public class Virement {
     @Column(name = "montant", nullable = false, precision = 19, scale = 2)
     private BigDecimal montant;
 
-    @ManyToOne(optional = true)
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "banque_emettrice_id", nullable = true)
     private Banque banqueEmettrice;
     private String emetteur;
 
-    @ManyToOne(optional = true)
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "banque_beneficiare_id",  nullable =true)
     private Banque banqueBeneficiare;
 

@@ -2,12 +2,12 @@ package staport.finance.gBanque.moyensDePaiements.batch.processor;
 
 import org.springframework.stereotype.Component;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.exception.customExceptions.InvalidChequeDataException;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.dtos.FunPaymentDto;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
-import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
+import staport.finance.gBanque.moyensDePaiements.lcn.services.LcnBatchGateway;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.util.Optional;
@@ -22,17 +22,17 @@ import java.util.Optional;
 @Component
 public class LcnPaymentProcessor extends AbstractPaymentProcessor {
 
-    private final LcnRepository lcnRepository;
+    private final LcnBatchGateway lcnBatchGateway;
 
-    public LcnPaymentProcessor(BanqueRepository banqueRepository, LcnRepository lcnRepository) {
-        super(banqueRepository);
-        this.lcnRepository = lcnRepository;
+    public LcnPaymentProcessor(IBanqueService banqueService, LcnBatchGateway lcnBatchGateway) {
+        super(banqueService);
+        this.lcnBatchGateway = lcnBatchGateway;
     }
 
     @Override
     protected Object processSpecific(FunPaymentDto item, Banque banque) throws InvalidChequeDataException {
         StatutMoyenPaiement statutFun = item.getStatutMoyenPaiement();
-        Optional<Lcn> existing = lcnRepository.findByIdPaiement(item.getIdPaiement());
+        Optional<Lcn> existing = lcnBatchGateway.findByIdPaiement(item.getIdPaiement());
 
         if (statutFun == StatutMoyenPaiement.ANNULE) {
             if (existing.isPresent()) {

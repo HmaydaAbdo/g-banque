@@ -1,6 +1,7 @@
 package staport.finance.gBanque.moyensDePaiements.cheques.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
@@ -10,8 +11,18 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
+@Audited
 @Entity
-@Table(name = "CHEQUES")
+@Table(
+    name = "CHEQUES",
+    indexes = {
+        @Index(name = "idx_cheque_numero",        columnList = "numero"),
+        @Index(name = "idx_cheque_banque_id",      columnList = "banque_id"),
+        @Index(name = "idx_cheque_statut",         columnList = "statut"),
+        @Index(name = "idx_cheque_date_emission",  columnList = "date_emission"),
+        @Index(name = "idx_cheque_type",           columnList = "type")
+    }
+)
 public class Cheque {
 
     @Id
@@ -46,7 +57,7 @@ public class Cheque {
 
 
     // Many cheques can come from one bank. This is a mandatory (not nullable) relationship.
-    @ManyToOne(optional = false) // 'optional = false' makes the foreign key non-nullable
+    @ManyToOne(optional = false, fetch = FetchType.LAZY) // 'optional = false' makes the foreign key non-nullable
     @JoinColumn(name = "banque_id", nullable = false) // Defines the foreign key column in the CHEQUES table
     private Banque banque;
 

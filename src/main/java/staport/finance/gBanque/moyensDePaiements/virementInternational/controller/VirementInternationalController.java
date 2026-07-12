@@ -1,6 +1,9 @@
 package staport.finance.gBanque.moyensDePaiements.virementInternational.controller;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,13 +11,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.service.VirementInternationalService;
 
+@Tag(name = "Virements Internationaux", description = "Gestion des virements internationaux — encaissements et décaissements, saisis manuellement (aucune synchronisation FunPaiement pour ce module)")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/virements-internationaux")
+@PreAuthorize(VirementInternationalController.FINANCE_OR_ADMIN)
 public class VirementInternationalController {
+
+    static final String FINANCE_OR_ADMIN =
+            "hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
     private static final Logger log = LoggerFactory.getLogger(VirementInternationalController.class);
 
@@ -26,6 +37,7 @@ public class VirementInternationalController {
 
     /* ===================== CREATE ===================== */
 
+    @Operation(summary = "Créer un virement international (encaissement ou décaissement)")
     @PostMapping
     public ResponseEntity<VirementInternationalResponseDto> createVirementInternational(
             @Valid @RequestBody VirementInternationalRequestDto dto) {
@@ -41,6 +53,7 @@ public class VirementInternationalController {
 
     /* ===================== UPDATE ===================== */
 
+    @Operation(summary = "Modifier un virement international")
     @PutMapping("/{id}")
     public ResponseEntity<VirementInternationalResponseDto> updateVirementInternational(
             @PathVariable Long id,
@@ -55,6 +68,7 @@ public class VirementInternationalController {
 
     /* ===================== GET BY ID ===================== */
 
+    @Operation(summary = "Consulter un virement international par ID")
     @GetMapping("/{id}")
     public ResponseEntity<VirementInternationalResponseDto> getVirementInternationalById(
             @PathVariable Long id) {
@@ -67,6 +81,7 @@ public class VirementInternationalController {
 
     /* ===================== LIST / SEARCH ===================== */
 
+    @Operation(summary = "Lister/rechercher les virements internationaux")
     @GetMapping
     public ResponseEntity<Page<VirementInternationalResponseDto>> getVirementsInternationaux(
             VirementInternationalSearchDto searchDto,
@@ -78,6 +93,7 @@ public class VirementInternationalController {
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Lister les virements internationaux d'encaissement")
     @GetMapping("/encaissements")
     public ResponseEntity<Page<VirementInternationalResponseDto>> getEncaissementVirementsInternationaux(
             VirementInternationalSearchDto searchDto,
@@ -89,6 +105,7 @@ public class VirementInternationalController {
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Lister les virements internationaux de décaissement")
     @GetMapping("/decaissements")
     public ResponseEntity<Page<VirementInternationalResponseDto>> getDecaissementVirementsInternationaux(
             VirementInternationalSearchDto searchDto,
@@ -102,6 +119,8 @@ public class VirementInternationalController {
 
     /* ===================== TOGGLE STATUS ===================== */
 
+    @Operation(summary = "Basculer le statut d'un virement international (ENCOURS ↔ REGLE)")
+    @PreAuthorize(SYSTEM_ADMIN)
     @PatchMapping("/toggle/{id}")
     public ResponseEntity<VirementInternationalResponseDto> toggleVirementInternationalStatus(
             @PathVariable Long id) {
@@ -114,6 +133,7 @@ public class VirementInternationalController {
 
     /* ===================== ENCOURS ===================== */
 
+    @Operation(summary = "Encours de décaissement virement international pour une banque")
     @GetMapping("/decaissement/encours/{banqueId}")
     public ResponseEntity<EncoursVirementInternationalResponseDto> getEncoursDecaissement(
             @PathVariable Long banqueId,
@@ -129,6 +149,7 @@ public class VirementInternationalController {
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Encours d'encaissement virement international pour une banque")
     @GetMapping("/encaissement/encours/{banqueId}")
     public ResponseEntity<EncoursVirementInternationalResponseDto> getEncoursEncaissement(
             @PathVariable Long banqueId,
@@ -146,6 +167,8 @@ public class VirementInternationalController {
 
     /* ===================== DELETE ===================== */
 
+    @Operation(summary = "Supprimer un virement international")
+    @PreAuthorize(SYSTEM_ADMIN)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteVirementInternational(@PathVariable Long id) {
 

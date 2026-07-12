@@ -1,93 +1,36 @@
 package staport.finance.gBanque.moyensDePaiements.virementInternational.mapper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
-import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.dtos.VirementInternationalRequestDto;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.dtos.VirementInternationalResponseDto;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.VirementInternational;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
-import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
-@Component
-public class VirementInternationalMapper {
+/**
+ * Mapper MapStruct du module Virement International.
+ *
+ * <p>{@code toEntity}/{@code updateEntity} restent des méthodes par défaut : la résolution de la
+ * banque est une opération métier (via {@code IBanqueService}) qui reste dans le Service — le
+ * mapper ne fait que construire/mettre à jour l'entité à partir d'une {@link Banque} déjà résolue
+ * (architecture.md — un Mapper ne fait pas d'accès base de données).
+ */
+@Mapper(componentModel = "spring")
+public interface VirementInternationalMapper {
 
-    private static final Logger log = LoggerFactory.getLogger(VirementInternationalMapper.class);
-    private final BanqueRepository banqueRepository;
-
-    public VirementInternationalMapper(BanqueRepository banqueRepository) {
-        this.banqueRepository = banqueRepository;
-    }
-
-    /**
-     * Converts a VirementInternational entity to a VirementInternationalResponseDto.
-     *
-     * @param virement The VirementInternational entity to convert.
-     * @return The corresponding VirementInternationalResponseDto.
-     */
-    public VirementInternationalResponseDto toDto(VirementInternational virement) {
-        if (virement == null) {
-            log.warn("Tentative de conversion d'un virement international null en DTO");
-            return null;
-        }
-
-        log.debug("Conversion du virement international ID: {} en DTO", virement.getId());
-
-        VirementInternationalResponseDto response = new VirementInternationalResponseDto();
-        response.setId(virement.getId());
-        response.setBanqueId(virement.getBanque().getId());
-        response.setBanqueNom(virement.getBanque().getNom());
-        response.setBeneficiaire(virement.getBeneficiaire());
-        response.setEmetteur(virement.getEmetteur());
-        response.setMontant(virement.getMontant());
-        response.setDateEmission(virement.getDateEmission());
-        response.setDateOperation(virement.getDateOperation());
-        response.setDateValeur(virement.getDateValeur());
-        response.setLibelle(virement.getLibelle());
-        response.setObservation(virement.getObservation());
-        response.setStatut(virement.getStatut());
-        response.setType(virement.getType());
-
-        log.debug("Conversion réussie du virement international ID: {} (Type: {}, Montant: {})",
-                virement.getId(), virement.getType(), virement.getMontant());
-
-        return response;
-    }
+    @Mapping(target = "banqueId", source = "banque.id")
+    @Mapping(target = "banqueNom", source = "banque.nom")
+    VirementInternationalResponseDto toDto(VirementInternational virementInternational);
 
     /**
-     * Converts a VirementInternationalRequestDto to a VirementInternational entity.
-     * Sets libelle and observation based on the type:
-     * - If ENCAISSEMENT: libelle = "emetteur montant", observation avec détails émetteur
-     * - If DECAISSEMENT: libelle = "beneficiaire montant", observation avec détails bénéficiaire
-     *
-     * @param dto The VirementInternationalRequestDto to convert.
-     * @return The corresponding VirementInternational entity.
+     * Construit une nouvelle entité à l'état ENCOURS. Libellé et observation sont générés
+     * automatiquement selon le type (ENCAISSEMENT/DECAISSEMENT) — comportement identique à
+     * l'ancien mapper manuel.
      */
-    public VirementInternational toEntity(VirementInternationalRequestDto dto) {
-        if (dto == null) {
-            log.warn("Tentative de conversion d'un DTO null en entité virement international");
-            return null;
-        }
-
-        log.debug("Conversion du DTO en entité virement international - Banque ID: {}, Montant: {}",
-                dto.getBanqueId(), dto.getMontant());
-
+    default VirementInternational toEntity(VirementInternationalRequestDto dto, Banque banque) {
         VirementInternational virement = new VirementInternational();
-
-        // Récupération de la banque
-        log.debug("Recherche de la banque ID: {}", dto.getBanqueId());
-        Banque banque = this.banqueRepository.findById(dto.getBanqueId()).orElseThrow(
-                () -> {
-                    log.error("Banque introuvable avec l'ID: {}", dto.getBanqueId());
-                    return new ResourceNotFoundException("Banque with id: " + dto.getBanqueId() + " not found");
-                }
-        );
-
-        log.debug("Banque trouvée: {} (ID: {})", banque.getNom(), banque.getId());
-
         virement.setBanque(banque);
         virement.setBeneficiaire(dto.getBeneficiaire());
         virement.setEmetteur(dto.getEmetteur());
@@ -95,79 +38,36 @@ public class VirementInternationalMapper {
         virement.setDateEmission(dto.getDateEmission());
         virement.setType(dto.getType());
 
-        // Génération automatique du libellé et observation selon le type
-        String libelle;
-        String observation;
-
-        if (dto.getType() == Type.ENCAISSEMENT) {
-            observation = "Encaissement de " + dto.getEmetteur() + " - Montant: " + dto.getMontant();
-            libelle=observation;
-        } else {
-            observation = "Décaissement vers " + dto.getBeneficiaire() + " - Montant: " + dto.getMontant();
-            libelle=observation;
-        }
-
-        virement.setLibelle(libelle);
-        virement.setObservation(observation);
+        String libelleEtObservation = genererLibelleEtObservation(dto.getType(), dto.getEmetteur(), dto.getBeneficiaire(), dto.getMontant());
+        virement.setLibelle(libelleEtObservation);
+        virement.setObservation(libelleEtObservation);
         virement.setStatut(StatutMoyenPaiement.ENCOURS);
-
-        log.debug("Entité virement international créée avec succès - Type: {}, Libellé: {}, Montant: {}",
-                dto.getType(), libelle, dto.getMontant());
 
         return virement;
     }
 
     /**
-     * Updates an existing VirementInternational entity with data from a VirementInternationalRequestDto.
-     * Updates libelle and observation based on the type.
-     *
-     * @param virement The existing VirementInternational entity to update.
-     * @param dto The VirementInternationalRequestDto containing the new data.
-     * @return The updated VirementInternational entity.
+     * Met à jour une entité existante. {@code banque} est la banque déjà résolue par le Service
+     * (nouvelle banque si {@code dto.getBanqueId()} a changé, sinon la banque actuelle).
      */
-    public VirementInternational updateEntity(VirementInternational virement, VirementInternationalRequestDto dto) {
-        if (virement == null || dto == null) {
-            log.warn("Tentative de mise à jour avec virement ou DTO null");
-            return null;
-        }
-
-        log.debug("Mise à jour du virement international ID: {}", virement.getId());
-
-        // Mise à jour de la banque si changée
-        if (dto.getBanqueId() != null && !dto.getBanqueId().equals(virement.getBanque().getId())) {
-            log.debug("Changement de banque détecté - Nouvelle banque ID: {}", dto.getBanqueId());
-            Banque banque = this.banqueRepository.findById(dto.getBanqueId()).orElseThrow(
-                    () -> {
-                        log.error("Banque introuvable avec l'ID: {}", dto.getBanqueId());
-                        return new ResourceNotFoundException("Banque with id: " + dto.getBanqueId() + " not found");
-                    }
-            );
-            virement.setBanque(banque);
-        }
-
+    default VirementInternational updateEntity(VirementInternational virement, VirementInternationalRequestDto dto, Banque banque) {
+        virement.setBanque(banque);
         virement.setBeneficiaire(dto.getBeneficiaire());
         virement.setEmetteur(dto.getEmetteur());
         virement.setMontant(dto.getMontant());
         virement.setDateEmission(dto.getDateEmission());
         virement.setType(dto.getType());
 
-        // Régénération du libellé et observation selon le type
-        String libelle;
-        String observation;
-
-        if (dto.getType() == Type.ENCAISSEMENT) {
-            observation = "Encaissement de " + dto.getEmetteur() + " - Montant: " + dto.getMontant();
-            libelle=observation;
-        } else {
-            observation = "Décaissement vers " + dto.getBeneficiaire() + " - Montant: " + dto.getMontant();
-            libelle=observation;
-        }
-
-        virement.setLibelle(libelle);
-        virement.setObservation(observation);
-
-        log.debug("Virement international ID: {} mis à jour avec succès", virement.getId());
+        String libelleEtObservation = genererLibelleEtObservation(dto.getType(), dto.getEmetteur(), dto.getBeneficiaire(), dto.getMontant());
+        virement.setLibelle(libelleEtObservation);
+        virement.setObservation(libelleEtObservation);
 
         return virement;
+    }
+
+    private String genererLibelleEtObservation(Type type, String emetteur, String beneficiaire, java.math.BigDecimal montant) {
+        return type == Type.ENCAISSEMENT
+                ? "Encaissement de " + emetteur + " - Montant: " + montant
+                : "Décaissement vers " + beneficiaire + " - Montant: " + montant;
     }
 }

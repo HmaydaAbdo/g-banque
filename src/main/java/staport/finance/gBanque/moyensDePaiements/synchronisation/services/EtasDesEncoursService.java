@@ -10,14 +10,9 @@ import org.springframework.batch.core.JobExecutionException;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepository;
-import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
-import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
-import staport.finance.gBanque.moyensDePaiements.synchronisation.dtos.DeactivationResult;
-import staport.finance.gBanque.moyensDePaiements.virements.repositories.VirementRepository;
+import staport.finance.gBanque.moyensDePaiements.batch.metrics.FunPaiementSyncMetrics;
 
-import java.time.LocalDate;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -26,22 +21,16 @@ public class EtasDesEncoursService {
 
     private static final Logger log = LoggerFactory.getLogger(EtasDesEncoursService.class);
     private static final DateTimeFormatter JOB_PARAM_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-    private final ChequeRepository chequeRepository;
-    private final VirementRepository virementRepository;
-    private final MiseADispositionRepository miseADispositionRepository;
-    private final LcnRepository lcnRepository;
 
     private final JobLauncher jobLauncher;
+    private final FunPaiementSyncMetrics funPaiementSyncMetrics;
 
 
     private final Job importPaymentsJob;
 
-    public EtasDesEncoursService(ChequeRepository chequeRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, LcnRepository lcnRepository, JobLauncher jobLauncher, @Qualifier("importPaymentsJob") Job importPaymentsJob) {
-        this.chequeRepository = chequeRepository;
-        this.virementRepository = virementRepository;
-        this.miseADispositionRepository = miseADispositionRepository;
-        this.lcnRepository = lcnRepository;
+    public EtasDesEncoursService(JobLauncher jobLauncher, FunPaiementSyncMetrics funPaiementSyncMetrics, @Qualifier("importPaymentsJob") Job importPaymentsJob) {
         this.jobLauncher = jobLauncher;
+        this.funPaiementSyncMetrics = funPaiementSyncMetrics;
         this.importPaymentsJob = importPaymentsJob;
     }
 
@@ -60,13 +49,22 @@ public class EtasDesEncoursService {
 
         log.info("Attempting to launch importPaymentsJob with parameters: {}", jobParameters);
 
+        long debut = System.nanoTime();
         JobExecution jobExecution = null;
         try {
             jobExecution = jobLauncher.run(importPaymentsJob, jobParameters);
             log.info("Job importPaymentsJob launched successfully. JobExecution ID: {}", jobExecution.getId());
             log.info("Job Status: {}", jobExecution.getStatus());
+
+            Duration duree = Duration.ofNanos(System.nanoTime() - debut);
+            if (jobExecution.getStatus().isUnsuccessful()) {
+                funPaiementSyncMetrics.enregistrerEchec(duree);
+            } else {
+                funPaiementSyncMetrics.enregistrerSucces(duree);
+            }
         } catch (JobExecutionException e) {
             log.error("Failed to launch importPaymentsJob: {}", e.getMessage(), e);
+            funPaiementSyncMetrics.enregistrerEchec(Duration.ofNanos(System.nanoTime() - debut));
             throw e; // Re-throw the exception for upstream handling
         }
         return jobExecution;
