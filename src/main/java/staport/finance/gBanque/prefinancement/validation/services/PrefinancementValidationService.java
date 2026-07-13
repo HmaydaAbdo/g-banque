@@ -49,12 +49,12 @@ public class PrefinancementValidationService implements IPrefinancementValidatio
     private final SoldeCascadeService soldeCascadeService;
 
     /**
-     * {@code @Lazy} obligatoire — même précaution que {@code PrelevementValidationService} (cf.
-     * TODO.md, correctif du 12/07/2026) : sans lui, cycle de bean Spring au démarrage
-     * ({@code BanqueServiceImpl} → {@code ITransactionService} → {@code IPrefinancementValidationService}
-     * → {@code IBanqueService} → {@code BanqueServiceImpl}). Le proxy lazy ne résout la dépendance
-     * réelle qu'au premier appel de {@link #processPrefinancementTransaction}, après la fin du
-     * démarrage du contexte.
+     * {@code @Lazy} obligatoire — même précaution que {@code PrelevementValidationService} (voir
+     * historique des correctifs, entrée du 12/07/2026) : sans lui, cycle de bean Spring au
+     * démarrage ({@code BanqueServiceImpl} → {@code ITransactionService} →
+     * {@code IPrefinancementValidationService} → {@code IBanqueService} → {@code BanqueServiceImpl}).
+     * Le proxy lazy ne résout la dépendance réelle qu'au premier appel de
+     * {@link #processPrefinancementTransaction}, après la fin du démarrage du contexte.
      */
     private final IBanqueService banqueService;
 

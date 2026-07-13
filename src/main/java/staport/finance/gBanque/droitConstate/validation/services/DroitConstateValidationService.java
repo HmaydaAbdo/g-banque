@@ -52,10 +52,10 @@ public class DroitConstateValidationService implements IDroitConstateValidationS
     private final SoldeCascadeService soldeCascadeService;
 
     /**
-     * {@code @Lazy} obligatoire — même précaution que {@code PrelevementValidationService} (cf.
-     * TODO.md, correctif du 12/07/2026) : sans lui, cycle de bean Spring au démarrage
-     * ({@code BanqueServiceImpl} → {@code ITransactionService} → {@code IDroitConstateValidationService}
-     * → {@code IBanqueService} → {@code BanqueServiceImpl}).
+     * {@code @Lazy} obligatoire — même précaution que {@code PrelevementValidationService} (voir
+     * historique des correctifs, entrée du 12/07/2026) : sans lui, cycle de bean Spring au
+     * démarrage ({@code BanqueServiceImpl} → {@code ITransactionService} →
+     * {@code IDroitConstateValidationService} → {@code IBanqueService} → {@code BanqueServiceImpl}).
      */
     private final IBanqueService banqueService;
 
