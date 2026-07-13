@@ -7,18 +7,17 @@
     <div class="flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb"
                #rla="routerLinkActive">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
               <span class="text-black-alpha-90 p-2 text-sm font-bold">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <a [href]="item.url">
               <span class="text-color text-sm md:text-xl  text-center">{{ item.label }}</span>
             </a>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -94,12 +93,14 @@
              currentPageReportTemplate="{first}-{last} sur {totalRecords} | Page {currentPage} sur {totalPages}"  >
       <ng-template pTemplate="header" let-columns>
         <tr class="white-space-nowrap">
-          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
-            {{ col.header }}
-            @if (col.sortable) {
-              <p-sortIcon [field]="col.field"></p-sortIcon>
-            }
-          </th>
+          @for (col of columns; track col.field) {
+            <th [pSortableColumn]="col.sortable ? col.field : null">
+              {{ col.header }}
+              @if (col.sortable) {
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+              }
+            </th>
+          }
           <th style="width: 8rem;">Actions</th>
         </tr>
       </ng-template>

@@ -7,23 +7,24 @@
     <div class="flex align-items-center">
       <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-xl']"></span>
               <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <span class="text-black-alpha-90 font-bold p-2">{{ item.label }}</span>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
 
-    <div *ngIf="marche" class="flex gap-3 px-3 py-2 border-round bg-primary-reverse shadow-1 border-1 border-primary-100">
-      <span class="text-sm"><i class="pi pi-bookmark mr-1"></i> {{ marche.numero }}</span>
-      <span class="text-sm"><i class="pi pi-building mr-1"></i> {{ marche.banqueNom }}</span>
-    </div>
+    @if (marche) {
+      <div class="flex gap-3 px-3 py-2 border-round bg-primary-reverse shadow-1 border-1 border-primary-100">
+        <span class="text-sm"><i class="pi pi-bookmark mr-1"></i> {{ marche.numero }}</span>
+        <span class="text-sm"><i class="pi pi-building mr-1"></i> {{ marche.banqueNom }}</span>
+      </div>
+    }
   </div>
 
   <!-- TABS -->
@@ -165,15 +166,17 @@
                      [severity]="line.expired ? 'danger' : 'success'"></p-tag>
             </td>
             <td class="text-center">
-              <p-tag
-                *ngIf="line.sousLignes && line.sousLignes.length > 0"
-                [value]="line.sousLignes.length + ' sous-ligne' + (line.sousLignes.length > 1 ? 's' : '')"
-                severity="info"
-                icon="pi pi-sitemap">
-              </p-tag>
-              <span *ngIf="!line.sousLignes || line.sousLignes.length === 0" class="text-gray-400">
-                <i class="pi pi-minus"></i>
-              </span>
+              @if (line.sousLignes && line.sousLignes.length > 0) {
+                <p-tag
+                  [value]="line.sousLignes.length + ' sous-ligne' + (line.sousLignes.length > 1 ? 's' : '')"
+                  severity="info"
+                  icon="pi pi-sitemap">
+                </p-tag>
+              } @else {
+                <span class="text-gray-400">
+                  <i class="pi pi-minus"></i>
+                </span>
+              }
             </td>
             <td>
               <button

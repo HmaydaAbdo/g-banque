@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgIf,Location } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, ParamMap, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, ParamMap, RouterLink, RouterLinkActive } from '@angular/router';
 
 // PrimeNG
 import { InputTextModule } from 'primeng/inputtext';
@@ -29,7 +29,7 @@ import { toLocalDateString, parseLocalDate } from '../../../global/types/date.ut
   selector: 'app-factoring-form',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, NgIf, InputTextModule, DropdownModule,
+    CommonModule, ReactiveFormsModule, InputTextModule, DropdownModule,
     InputNumberModule, ButtonModule, RippleModule, ToastModule, ConfirmDialogModule,
     CalendarModule, BreadcrumbModule, RouterLink, RouterLinkActive, TooltipModule,
   ],
@@ -58,15 +58,13 @@ export class FactoringFormComponent implements OnInit {
   typeOptions: any[] = [];
   items: MenuItem[] | undefined;
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private location:Location,
-    private factoringService: FactoringService,
-    private marcheService: MarcheService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
+  private readonly factoringService = inject(FactoringService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   ngOnInit(): void {
     this.setupBreadcrumbs();
@@ -164,8 +162,7 @@ export class FactoringFormComponent implements OnInit {
         });
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Erreur lors du chargement du factoring:', err);
+      error: () => {
         this.location.back();
       }
     });
@@ -209,8 +206,7 @@ export class FactoringFormComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Opération réussie.' });
         this.location.back();
       },
-      error: (err) => {
-        console.error('Erreur lors de l\'enregistrement du factoring:', err);
+      error: () => {
         this.loading = false;
       }
     });

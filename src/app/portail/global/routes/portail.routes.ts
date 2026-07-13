@@ -70,10 +70,10 @@ export const PORTAIL_ROUTES: Routes = [
     path: 'lignes-fonctionnelles-specifiques-archived',
     loadChildren: () => import('../../specific-Functional-Lignes/lignes-specifiques.routes').then(m => m.LIGNES_SPECIFIQUES_ARCHIVED_ROUTES)
   },
-  { path: 'lignes-fonctionnelles-specifiques/marche/:id', loadComponent: () => import('../../Marches/views/specific-lines-by-marche/functionalLines-by-marche.component').then(m => m.FunctionalLinesByMarcheComponent) },
-  { path: "factoring-encours/:lineId", loadComponent: () => import('../../factoring/LignesFactoring/SuivieDesLignes/views/validated-factoring.component').then(m => m.ValidatedFactoringComponent) },
-  { path: "prefi-encours/:lineId", loadComponent: () => import('../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component').then(m => m.ValidatedPrefiComponent) },
-  { path: "dc-encours/:lineId", loadComponent: () => import('../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component').then(m => m.ValidatedDcComponent) },
+  { path: 'lignes-fonctionnelles-specifiques/marche/:id', canActivate: [departmentGuard('Finance')], loadComponent: () => import('../../Marches/views/specific-lines-by-marche/functionalLines-by-marche.component').then(m => m.FunctionalLinesByMarcheComponent) },
+  { path: "factoring-encours/:lineId", canActivate: [departmentGuard('Finance')], loadComponent: () => import('../../factoring/LignesFactoring/SuivieDesLignes/views/validated-factoring.component').then(m => m.ValidatedFactoringComponent) },
+  { path: "prefi-encours/:lineId", canActivate: [departmentGuard('Finance')], loadComponent: () => import('../../prefinancements/lignesPrefi/suivieDesLignes/views/validated-prefi/validated-prefi.component').then(m => m.ValidatedPrefiComponent) },
+  { path: "dc-encours/:lineId", canActivate: [departmentGuard('Finance')], loadComponent: () => import('../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component').then(m => m.ValidatedDcComponent) },
   { path: "lcn-encours/:lineId", canActivate: [departmentGuard('Finance')], loadComponent: () => import('../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component').then(m => m.LcnEscompteByLineComponent) },
   { path: 'leasing',
     loadChildren: () => import('../../leasing/route/leasing-routing.module').then(m => m.LEASING_FEATURE_ROUTES) },
@@ -119,21 +119,25 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'préfinancements',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../prefinancements/prefinancements.routes').then(m => m.PREFINANCEMENTS_ROUTES)
   },
 
   {
     path: 'droits-constate',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../droitsConstate/droits-constate.routes').then(m => m.DROITS_CONSTATE_ROUTES)
   },
 
   {
     path: 'factoring',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../factoring/factoring.routes').then(m => m.FACTORING_ROUTES)
   },
 
   {
     path: 'decomptes',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../decomptes/decomptes.routes').then(m => m.DECOMPTES_ROUTES)
   },
 

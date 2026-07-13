@@ -395,10 +395,26 @@ export class CommissionCautionListComponent implements OnInit {
     this.router.navigate(['/portail/cautions/commissions/edit', commission.id]);
   }
 
+  /**
+   * Échappe les caractères HTML spéciaux avant interpolation dans un message de confirmation
+   * PrimeNG (rendu via `[innerHTML]` par `p-confirmDialog`) — `libelle` est une donnée libre
+   * saisie par un utilisateur Finance et ne doit jamais être insérée telle quelle dans du HTML
+   * (frontend.md, section Sécurité).
+   */
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   // ── Suppression ───────────────────────────────────────────────────────────
   supprimer(commission: CommissionResponseDto): void {
+    const libelleEchappe = this.escapeHtml(commission.libelle);
     this.confirmationService.confirm({
-      message: `Supprimer définitivement la commission <strong>${commission.libelle}</strong> ?`,
+      message: `Supprimer définitivement la commission <strong>${libelleEchappe}</strong> ?`,
       header: 'Confirmer la suppression',
       icon: 'pi pi-trash',
       acceptLabel: 'Supprimer',

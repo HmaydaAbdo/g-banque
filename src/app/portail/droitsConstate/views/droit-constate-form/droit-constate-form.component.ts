@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule ,Location} from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -62,16 +62,14 @@ export class DroitConstateFormComponent implements OnInit {
   loadingBanques = false;
   items: MenuItem[] | undefined;
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private droitConstateService: DroitConstateService,
-    private marcheService: MarcheService,
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private location: Location,
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly droitConstateService = inject(DroitConstateService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly location = inject(Location);
 
   ngOnInit(): void {
     this.setupBreadcrumbs();
@@ -180,8 +178,7 @@ export class DroitConstateFormComponent implements OnInit {
         });
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Erreur lors du chargement du droit constaté:', err);
+      error: () => {
         this.location.back();
       }
     });
@@ -281,8 +278,7 @@ export class DroitConstateFormComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Opération réussie.' });
         this.location.back();
       },
-      error: (err) => {
-        console.error('Erreur lors de l\'enregistrement du droit constaté:', err);
+      error: () => {
         this.loading = false;
       }
     });

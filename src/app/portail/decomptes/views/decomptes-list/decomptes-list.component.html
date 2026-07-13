@@ -42,26 +42,28 @@
 
         <!-- Chips des filtres actifs -->
         <div class="flex flex-wrap gap-1 align-items-center">
-          <span *ngFor="let f of activeFilters"
-                class="flex align-items-center gap-1 border-1 border-round-3xl border-300 px-2 py-1 text-xs bg-white white-space-nowrap">
-            {{ f.label }}
-            <i class="pi pi-times text-xs cursor-pointer text-400 hover:text-900"
-               (click)="removeFilter(f.field)"></i>
-          </span>
+          @for (f of activeFilters; track f.field) {
+            <span class="flex align-items-center gap-1 border-1 border-round-3xl border-300 px-2 py-1 text-xs bg-white white-space-nowrap">
+              {{ f.label }}
+              <i class="pi pi-times text-xs cursor-pointer text-400 hover:text-900"
+                 (click)="removeFilter(f.field)"></i>
+            </span>
+          }
         </div>
 
-        <button *ngIf="activeFilterCount > 0"
-                pButton pRipple
-                type="button"
-                label="Effacer tout"
-                class="p-button-sm p-button-text p-button-danger ml-auto"
-                (click)="clearFilters()">
-        </button>
+        @if (activeFilterCount > 0) {
+          <button pButton pRipple
+                  type="button"
+                  label="Effacer tout"
+                  class="p-button-sm p-button-text p-button-danger ml-auto"
+                  (click)="clearFilters()">
+          </button>
+        }
       </div>
 
       <!-- Panel filtres dépliable -->
-      <div *ngIf="showFilterPanel"
-           class="border-top-1 border-300 bg-gray-50 px-3 py-3">
+      @if (showFilterPanel) {
+      <div class="border-top-1 border-300 bg-gray-50 px-3 py-3">
         <div class="grid">
 
           <!-- Marché -->
@@ -85,8 +87,11 @@
               styleClass="w-full">
               <ng-template let-item pTemplate="item">
                 <div class="flex align-items-center gap-2" style="height: 38px">
-                  <span *ngIf="item.label">{{ item.label }}</span>
-                  <i *ngIf="!item.label" class="pi pi-spin pi-spinner text-gray-400"></i>
+                  @if (item.label) {
+                    <span>{{ item.label }}</span>
+                  } @else {
+                    <i class="pi pi-spin pi-spinner text-gray-400"></i>
+                  }
                 </div>
               </ng-template>
             </p-dropdown>
@@ -181,6 +186,7 @@
 
         </div>
       </div>
+      }
 
     </form>
   </div>
@@ -224,14 +230,18 @@
           </td>
           <td>
             <div class="flex gap-2 align-items-center justify-content-center">
-              <p-inputSwitch [ngModel]="d.status === Status.PAYE"
-                             (onChange)="toggleStatus(d)"
-                             pTooltip="Changer statut"></p-inputSwitch>
+              @if (isAdmin) {
+                <p-inputSwitch [ngModel]="d.status === Status.PAYE"
+                               (onChange)="toggleStatus(d)"
+                               pTooltip="Changer statut"></p-inputSwitch>
+              }
               <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
                       [routerLink]="['/portail/decomptes/edit', d.id]"></button>
-              <button pButton icon="pi pi-trash"
+              @if (isAdmin) {
+                <button pButton icon="pi pi-trash"
                         class="p-button-rounded p-button-outlined p-button-danger"
                         (click)="deleteDecompte(d)"></button>
+              }
             </div>
           </td>
         </tr>

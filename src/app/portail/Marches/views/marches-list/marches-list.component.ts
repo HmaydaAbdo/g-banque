@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild, inject} from '@angular/core';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
@@ -74,15 +74,13 @@ export class MarchesListComponent implements OnInit {
     { label: 'Tous', value: null }
   ];
 
-  constructor(
-    private marcheService: MarcheService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private banqueService: BanqueService,
-    private authService: AuthService,
-    private router:Router,
-    private fb: FormBuilder
-  ) { }
+  private readonly marcheService = inject(MarcheService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
   ngOnInit(): void {
     this.items = [{ icon: 'pi pi-home', route: '/portail/accueil', label: 'Accueil' }, { icon: 'pi pi-file-o', route: '/portail/marches',label: 'Liste des marchés' }];
@@ -128,8 +126,7 @@ export class MarchesListComponent implements OnInit {
           this.totalRecords = response.page.totalElements;
           this.loading = false;
         },
-        error: (error) => {
-          console.error('Erreur lors du chargement des marchés:', error);
+        error: () => {
           this.loading = false;
         }
       });
@@ -187,11 +184,27 @@ export class MarchesListComponent implements OnInit {
     }
   }
 
+  /**
+   * Échappe les caractères HTML spéciaux avant interpolation dans un message de confirmation
+   * PrimeNG (rendu via `[innerHTML]` par `p-confirmDialog`) — `marche.nom` est une donnée libre
+   * saisie par un utilisateur Finance et ne doit jamais être insérée telle quelle dans du HTML
+   * (frontend.md, section Sécurité).
+   */
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   deleteMarche(marche: MarcheResponseDTO): void {
+    const nomEchappe = this.escapeHtml(marche.nom);
     const confirmationMessageHtml = `
     <div class="text-center">
         <i class="pi pi-exclamation-triangle" style="margin-right: 5px;"></i>
-        <p>Êtes-vous sûr de vouloir supprimer le marché "<strong>${marche.nom}</strong>" ?</p>
+        <p>Êtes-vous sûr de vouloir supprimer le marché "<strong>${nomEchappe}</strong>" ?</p>
         <p style="color: #ef4444; font-weight: bold;">Cette action est irréversible.</p>
     </div>
     `;
@@ -215,8 +228,7 @@ export class MarchesListComponent implements OnInit {
               }
               this.loading = false;
             },
-            error: (error) => {
-              console.error('Erreur lors de la suppression du marché:', error);
+            error: () => {
               this.loading = false;
             }
           });
@@ -225,8 +237,9 @@ export class MarchesListComponent implements OnInit {
   }
 
   archiverMarche(marche: MarcheResponseDTO): void {
+    const nomEchappe = this.escapeHtml(marche.nom);
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir archiver le marché "<strong>${marche.nom}</strong>" ? Il ne sera plus pris en compte dans les calculs d'agios et d'encours.`,
+      message: `Êtes-vous sûr de vouloir archiver le marché "<strong>${nomEchappe}</strong>" ? Il ne sera plus pris en compte dans les calculs d'agios et d'encours.`,
       header: 'Confirmation d\'archivage',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Archiver',
@@ -239,8 +252,7 @@ export class MarchesListComponent implements OnInit {
             this.dt ? this.loadMarches(this.dt.createLazyLoadMetadata()) : this.loadMarches();
             this.loading = false;
           },
-          error: (error) => {
-            console.error('Erreur lors de l\'archivage du marché:', error);
+          error: () => {
             this.loading = false;
           }
         });
@@ -249,8 +261,9 @@ export class MarchesListComponent implements OnInit {
   }
 
   desarchiverMarche(marche: MarcheResponseDTO): void {
+    const nomEchappe = this.escapeHtml(marche.nom);
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir désarchiver le marché "<strong>${marche.nom}</strong>" ? Il sera de nouveau pris en compte dans les calculs d'agios et d'encours.`,
+      message: `Êtes-vous sûr de vouloir désarchiver le marché "<strong>${nomEchappe}</strong>" ? Il sera de nouveau pris en compte dans les calculs d'agios et d'encours.`,
       header: 'Confirmation de désarchivage',
       icon: 'pi pi-info-circle',
       acceptLabel: 'Désarchiver',
@@ -263,8 +276,7 @@ export class MarchesListComponent implements OnInit {
             this.dt ? this.loadMarches(this.dt.createLazyLoadMetadata()) : this.loadMarches();
             this.loading = false;
           },
-          error: (error) => {
-            console.error('Erreur lors du désarchivage du marché:', error);
+          error: () => {
             this.loading = false;
           }
         });

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule , Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -54,15 +54,13 @@ export class DecompteFormComponent implements OnInit {
     onLazyLoad: this.onLazyLoadMarches.bind(this)
   };
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private location:Location,
-    private decompteService: DecompteService,
-    private marcheService: MarcheService,
-    private banqueService: BanqueService,
-    private confirmationService: ConfirmationService
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
+  private readonly decompteService = inject(DecompteService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   ngOnInit(): void {
     this.initForm();

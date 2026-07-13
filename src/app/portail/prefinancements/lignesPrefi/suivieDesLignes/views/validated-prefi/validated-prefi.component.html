@@ -5,28 +5,31 @@
     <div class="flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items">
         <ng-template pTemplate="item" let-item>
-          <a [routerLink]="item.route" class="p-menuitem-link" *ngIf="item.route; else elseBlock">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
-            <span class="text-black-alpha-90 p-2  text-sm font-bold">{{ item.label }}</span>
-          </a>
-          <ng-template #elseBlock>
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link">
+              <span [ngClass]="[item.icon ? item.icon : '', 'text-color']"></span>
+              <span class="text-black-alpha-90 p-2  text-sm font-bold">{{ item.label }}</span>
+            </a>
+          } @else {
             <span class="text-color text-sm   text-center">{{ item.label }}</span>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
   </div>
 
-  <div *ngIf="aggregatedData" class="p-card p-2">
-    <div class="flex flex-wrap text-sm justify-content-between items-center">
-        <p >Banque :  <strong> {{ aggregatedData.banqueName  }}</strong></p>
-        <p >Marché :  <strong> {{ aggregatedData.marcheName  }}</strong></p>
-        <p >Numéro de Marché: :  <strong> {{ aggregatedData.marcheNumero  }}</strong></p>
-        <p  >Total Déblocage: :  <strong class="num num-credit"> {{ aggregatedData.totalCredit | number: '1.2-2' }}</strong></p>
-        <p  >Total Remboursements: :  <strong class="num num-debit"> {{ aggregatedData.totalDebit | number: '1.2-2' }}</strong></p>
-        <p  >Reste: :  <strong class="text-blue-700"> {{ aggregatedData.reste | number: '1.2-2' }}</strong></p>
+  @if (aggregatedData) {
+    <div class="p-card p-2">
+      <div class="flex flex-wrap text-sm justify-content-between items-center">
+          <p >Banque :  <strong> {{ aggregatedData.banqueName  }}</strong></p>
+          <p >Marché :  <strong> {{ aggregatedData.marcheName  }}</strong></p>
+          <p >Numéro de Marché: :  <strong> {{ aggregatedData.marcheNumero  }}</strong></p>
+          <p  >Total Déblocage: :  <strong class="num num-credit"> {{ aggregatedData.totalCredit | number: '1.2-2' }}</strong></p>
+          <p  >Total Remboursements: :  <strong class="num num-debit"> {{ aggregatedData.totalDebit | number: '1.2-2' }}</strong></p>
+          <p  >Reste: :  <strong class="text-blue-700"> {{ aggregatedData.reste | number: '1.2-2' }}</strong></p>
+      </div>
     </div>
-  </div>
+  }
 
 
   <div class="pb-8">
@@ -58,13 +61,14 @@
     >
       <ng-template pTemplate="header" let-columns>
         <tr class="white-space-nowrap">
-          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
-            {{ col.header }}
-            @if (col.sortable) {
-              <p-sortIcon [field]="col.field"></p-sortIcon>
-            }
-          </th>
-
+          @for (col of columns; track col.field) {
+            <th [pSortableColumn]="col.sortable ? col.field : null">
+              {{ col.header }}
+              @if (col.sortable) {
+                <p-sortIcon [field]="col.field"></p-sortIcon>
+              }
+            </th>
+          }
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-line>

@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule, NgIf,Location } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap, RouterLink, RouterLinkActive } from '@angular/router';
 
@@ -31,7 +31,6 @@ import { toLocalDateString, parseLocalDate } from '../../../global/types/date.ut
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    NgIf,
     InputTextModule,
     DropdownModule,
     InputNumberModule,
@@ -72,16 +71,14 @@ export class PrefinancementFormComponent implements OnInit {
   typeOptions: any[] = [];
   items: MenuItem[] | undefined;
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private prefinancementService: PrefinancementService,
-    private marcheService: MarcheService,
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private location: Location,
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly prefinancementService = inject(PrefinancementService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly location = inject(Location);
 
   ngOnInit(): void {
     this.setupBreadcrumbs();
@@ -202,8 +199,7 @@ export class PrefinancementFormComponent implements OnInit {
 
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Erreur lors du chargement du préfinancement:', err);
+      error: () => {
         this.location.back();
       }
     });
@@ -249,8 +245,7 @@ export class PrefinancementFormComponent implements OnInit {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Enregistré avec succès.' });
         this.location.back();
       },
-      error: (err) => {
-        console.error('Erreur lors de l\'enregistrement du préfinancement:', err);
+      error: () => {
         this.loading = false;
       }
     });

@@ -152,10 +152,10 @@ export class SidebarComponent implements OnInit {
       icon: "pi pi-sliders-h",
       items: [
         { label: "La liste des marchés", icon: "pi pi-list", routerLink: "/portail/marches", requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
-        { label: "Les préfinancements", icon: "pi pi-list", routerLink: "/portail/préfinancements" },
-        { label: "Les droits constatés", icon: "pi pi-list", routerLink: "/portail/droits-constate" },
-        { label: "Factoring", icon: "pi pi-list", routerLink: "/portail/factoring" },
-        { label: "Les décomptes", icon: "pi pi-list", routerLink: "/portail/decomptes" },
+        { label: "Les préfinancements", icon: "pi pi-list", routerLink: "/portail/préfinancements", requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: "Les droits constatés", icon: "pi pi-list", routerLink: "/portail/droits-constate", requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: "Factoring", icon: "pi pi-list", routerLink: "/portail/factoring", requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
+        { label: "Les décomptes", icon: "pi pi-list", routerLink: "/portail/decomptes", requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
       ]
     },
     {

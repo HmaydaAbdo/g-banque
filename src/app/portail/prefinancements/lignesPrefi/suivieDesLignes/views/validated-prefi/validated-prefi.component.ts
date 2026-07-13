@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild, inject} from '@angular/core';
 import {CommonModule, DecimalPipe} from '@angular/common';
 import {ActivatedRoute} from '@angular/router';
 import {TableLazyLoadEvent, TableModule} from 'primeng/table';
@@ -53,14 +53,10 @@ export class ValidatedPrefiComponent implements OnInit {
 
   items: MenuItem[] | undefined;
 
-  constructor(
-    private specificLigneService: SpecificFunctionalLigneService,
-    private messageService: MessageService,
-    private route: ActivatedRoute,
-    private generalLigneService: LigneFonctionnelleService,
-
-  ) {
-  }
+  private readonly specificLigneService = inject(SpecificFunctionalLigneService);
+  private readonly messageService = inject(MessageService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly generalLigneService = inject(LigneFonctionnelleService);
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -126,8 +122,7 @@ export class ValidatedPrefiComponent implements OnInit {
         this.totalRecords = response.page.page.totalElements;
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Erreur lors du chargement des préfinancements:', error);
+      error: () => {
         this.loading = false;
       }
     });

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -56,15 +56,13 @@ export class MarchesFormComponent implements OnInit {
   banques: { id: number; nom: string }[] = [];
   loadingBanques: boolean = false;
 
-  constructor(
-    private fb: FormBuilder,
-    private marcheService: MarcheService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private route: ActivatedRoute,
-    private banqueService: BanqueService,
-    private router: Router
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly marcheService = inject(MarcheService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly banqueService = inject(BanqueService);
+  private readonly router = inject(Router);
 
   ngOnInit(): void {
     this.initializeForm();
@@ -114,8 +112,7 @@ export class MarchesFormComponent implements OnInit {
         this.loading = false;
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Marché chargé avec succès.', life: 1000 });
       },
-      error: (error) => {
-        console.error('Erreur lors du chargement du marché:', error);
+      error: () => {
         this.loading = false;
         this.router.navigate(['/portail/marches']);
       }
@@ -188,8 +185,7 @@ export class MarchesFormComponent implements OnInit {
             this.loading = false;
             this.router.navigate(['/portail/marches']);
           },
-          error: (error) => {
-            console.error('Erreur lors de la mise à jour du marché:', error);
+          error: () => {
             this.loading = false;
           }
         });
@@ -201,8 +197,7 @@ export class MarchesFormComponent implements OnInit {
             this.loading = false;
             this.router.navigate(['/portail/marches']);
           },
-          error: (error) => {
-            console.error('Erreur lors de la création du marché:', error);
+          error: () => {
             this.loading = false;
           }
         });

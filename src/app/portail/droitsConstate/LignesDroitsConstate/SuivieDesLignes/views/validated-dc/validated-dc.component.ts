@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild, inject} from '@angular/core';
 import {CommonModule, DecimalPipe} from '@angular/common';
 import {ActivatedRoute} from '@angular/router';
 import {TableLazyLoadEvent, TableModule} from 'primeng/table';
@@ -55,13 +55,10 @@ export class ValidatedDcComponent implements OnInit {
   lineType: 'general' | 'specific' = 'specific';
   items: MenuItem[] | undefined;
 
-  constructor(
-    private specificLigneService: SpecificFunctionalLigneService,
-    private generalLigneService: LigneFonctionnelleService,
-    private messageService: MessageService,
-    private route: ActivatedRoute
-  ) {
-  }
+  private readonly specificLigneService = inject(SpecificFunctionalLigneService);
+  private readonly generalLigneService = inject(LigneFonctionnelleService);
+  private readonly messageService = inject(MessageService);
+  private readonly route = inject(ActivatedRoute);
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -130,8 +127,7 @@ export class ValidatedDcComponent implements OnInit {
         this.totalRecords = response.page.page.totalElements;
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Erreur lors du chargement des droits constatés:', error);
+      error: () => {
         this.loading = false;
       }
     });

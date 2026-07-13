@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -69,15 +69,13 @@ export class DecomptesListComponent implements OnInit {
   showFilterPanel = true;
   exporting = false;
 
-  constructor(
-    private fb: FormBuilder,
-    private decompteService: DecompteService,
-    private banqueService: BanqueService,
-    private marcheService: MarcheService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private authService: AuthService,
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly decompteService = inject(DecompteService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly authService = inject(AuthService);
 
   ngOnInit(): void {
     this.items = [

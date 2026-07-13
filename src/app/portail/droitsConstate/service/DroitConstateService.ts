@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from "../../../../environments/environment";
@@ -16,7 +16,7 @@ export class DroitConstateService {
 
   private apiUrl = `${environment.apiUrl}droitsConstate`;
 
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
 
   /**
    * Creates a new DroitConstate record.

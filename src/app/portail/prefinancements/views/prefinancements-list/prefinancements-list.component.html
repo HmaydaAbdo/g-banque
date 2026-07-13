@@ -43,8 +43,11 @@
         styleClass="w-full md:w-15rem">
         <ng-template let-item pTemplate="item">
           <div class="flex align-items-center gap-2" style="height: 38px">
-            <span *ngIf="item.label">{{ item.label }}</span>
-            <i *ngIf="!item.label" class="pi pi-spin pi-spinner text-gray-400"></i>
+            @if (item.label) {
+              <span>{{ item.label }}</span>
+            } @else {
+              <i class="pi pi-spin pi-spinner text-gray-400"></i>
+            }
           </div>
         </ng-template>
       </p-dropdown>
@@ -132,15 +135,19 @@
             <p-tag [value]="pref.status" [severity]="pref.status === 'PAYE' ? 'success' : 'danger'"></p-tag>
           </td>
           <td class="flex gap-2 justify-content-center align-items-center">
-            <p-inputSwitch [ngModel]="pref.status === Status.PAYE"
-                           (ngModelChange)="confirmToggleStatus(pref)"></p-inputSwitch>
+            @if (authService.isAdmin()) {
+              <p-inputSwitch [ngModel]="pref.status === Status.PAYE"
+                             (ngModelChange)="confirmToggleStatus(pref)"></p-inputSwitch>
+            }
 
             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
                     [routerLink]="['/portail/préfinancements/edit', pref.id]"></button>
 
-            <button *ngIf="authService.isAdmin()" pButton icon="pi pi-trash"
-                    class="p-button-rounded p-button-outlined p-button-danger"
-                    (click)="deletePrefinancement(pref)"></button>
+            @if (authService.isAdmin()) {
+              <button pButton icon="pi pi-trash"
+                      class="p-button-rounded p-button-outlined p-button-danger"
+                      (click)="deletePrefinancement(pref)"></button>
+            }
           </td>
         </tr>
       </ng-template>

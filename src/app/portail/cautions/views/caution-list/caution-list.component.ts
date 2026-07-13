@@ -356,9 +356,25 @@ export class CautionListComponent implements OnInit {
       });
   }
 
+  /**
+   * Échappe les caractères HTML spéciaux avant interpolation dans un message de confirmation
+   * PrimeNG (rendu via `[innerHTML]` par `p-confirmDialog`) — `numeroCaution` est une donnée
+   * libre saisie par un utilisateur Finance et ne doit jamais être insérée telle quelle dans du
+   * HTML (frontend.md, section Sécurité).
+   */
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   supprimer(caution: CautionResponseDto): void {
+    const numeroEchappe = this.escapeHtml(caution.numeroCaution);
     this.confirmationService.confirm({
-      message: `Supprimer définitivement la caution <strong>${caution.numeroCaution}</strong> ? Cette action est irréversible.`,
+      message: `Supprimer définitivement la caution <strong>${numeroEchappe}</strong> ? Cette action est irréversible.`,
       header: 'Confirmer la suppression',
       icon: 'pi pi-trash',
       acceptLabel: 'Supprimer',

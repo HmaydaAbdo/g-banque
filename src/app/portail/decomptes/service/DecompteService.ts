@@ -1,12 +1,8 @@
-import {Injectable} from "@angular/core";
+import {Injectable, inject} from "@angular/core";
 import {environment} from "../../../../environments/environment";
 import {HttpClient, HttpParams} from "@angular/common/http";
-import {DroitConstateRequestDto} from "../../droitsConstate/dtos/DroitConstateRequestDto";
 import {Observable} from "rxjs";
-import {DroitConstateResponseDto} from "../../droitsConstate/dtos/DroitConstateResponseDto";
-import {DroitConstateSearchDto} from "../../droitsConstate/dtos/DroitConstateSearchDto";
 import {PageResponse} from "../../global/types/PageResponse";
-import {EncoursDroitConstateDto} from "../../droitsConstate/dtos/EncoursDroitConstateDto";
 import {DecompteRequestDto} from "../dtos/DecompteRequestDto";
 import {DecompteResponseDto} from "../dtos/DecompteResponseDto";
 import {DecompteSearchDto} from "../dtos/DecompteSearchDto";
@@ -19,10 +15,9 @@ import {EncoursDecompteSearchDto} from "../dtos/EncoursDecompteSearchDto";
 
 export class DecompteService {
 
+  private readonly http = inject(HttpClient);
 
   private apiUrl = `${environment.apiUrl}decomptes`;
-
-  constructor(private http: HttpClient) {}
 
 
   /**

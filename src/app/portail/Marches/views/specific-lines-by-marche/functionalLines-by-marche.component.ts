@@ -1,11 +1,11 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { TabViewModule } from 'primeng/tabview';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
-import { MenuItem, MessageService } from 'primeng/api';
+import { MenuItem } from 'primeng/api';
 import { ToastModule } from "primeng/toast";
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
@@ -14,7 +14,6 @@ import { SpecificFunctionalLigneService } from "../../../specific-Functional-Lig
 import { MarcheService } from "../../service/marche-service.service";
 import { MarcheResponseDTO } from "../../dtos/marche-response.dto";
 import { LigneFonctionnelleSpecifiqueResponse } from "../../../specific-Functional-Lignes/dtos/LigneFonctionnelleSpecifiqueResponse";
-import { AuthService } from "../../../../auth/services/auth.service";
 import { LigneFonctionnelleResponse } from "../../../lignes-fonctionnelles/dtos/LigneFonctionnelleResponse";
 import { LigneFonctionnelleService } from "../../../lignes-fonctionnelles/services/LigneFonctionnelleService";
 import {LineNavigationService, LineType} from "../../../lignes-fonctionnelles/services/LineNavigationService";
@@ -53,16 +52,11 @@ export class FunctionalLinesByMarcheComponent implements OnInit {
   // Exposer LineType pour le template
   readonly LineType = LineType;
 
-  constructor(
-    private route: ActivatedRoute,
-    private specificFunctionalLigneService: SpecificFunctionalLigneService,
-    private ligneFonctionnelleService: LigneFonctionnelleService,
-    private marcheService: MarcheService,
-    private messageService: MessageService,
-    private authService: AuthService,
-    private lineNavigationService: LineNavigationService,
-    private router: Router
-  ) {}
+  private readonly route = inject(ActivatedRoute);
+  private readonly specificFunctionalLigneService = inject(SpecificFunctionalLigneService);
+  private readonly ligneFonctionnelleService = inject(LigneFonctionnelleService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly lineNavigationService = inject(LineNavigationService);
 
   ngOnInit(): void {
     this.marcheId = Number(this.route.snapshot.paramMap.get('id'));
@@ -80,8 +74,7 @@ export class FunctionalLinesByMarcheComponent implements OnInit {
 
   loadMarcheInfo(): void {
     this.marcheService.getMarcheById(this.marcheId).subscribe({
-      next: (marche) => this.marche = marche,
-      error: (err) => console.error('Erreur lors du chargement du marché:', err)
+      next: (marche) => this.marche = marche
     });
   }
 

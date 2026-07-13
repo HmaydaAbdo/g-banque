@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from "@angular/forms";
 import { RouterLink } from '@angular/router';
@@ -64,15 +64,13 @@ export class DroitConstateListComponent implements OnInit {
 
   banquesOptions: any[] = [];
 
-  constructor(
-    private fb: FormBuilder,
-    private droitConstateService: DroitConstateService,
-    private banqueService: BanqueService,
-    private marcheService: MarcheService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    public authService: AuthService,
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly droitConstateService = inject(DroitConstateService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  public readonly authService = inject(AuthService);
 
   ngOnInit(): void {
     this.items = [
@@ -201,9 +199,7 @@ export class DroitConstateListComponent implements OnInit {
           this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.'});
           this.loadDroitsConstates(this.table.createLazyLoadMetadata());
         },
-        error: (err) => {
-          console.error('Erreur lors de la mise à jour du statut:', err);
-        }
+        error: () => {}
       });
     }
 
@@ -217,9 +213,7 @@ export class DroitConstateListComponent implements OnInit {
             this.messageService.add({severity: 'success', summary: 'Succès', detail: 'Droit constaté supprimé.'});
             this.loadDroitsConstates(this.table.createLazyLoadMetadata());
           },
-          error: (err) => {
-            console.error('Erreur lors de la suppression du droit constaté:', err);
-          }
+          error: () => {}
         });
       }
     });

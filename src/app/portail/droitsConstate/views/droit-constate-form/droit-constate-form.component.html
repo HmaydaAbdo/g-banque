@@ -42,28 +42,31 @@
             [ngClass]="{ 'ng-invalid ng-dirty': f['marcheId'].invalid && f['marcheId'].touched }">
 
             <ng-template pTemplate="selectedItem" let-selectedOption>
-              <div class="flex align-items-center gap-2" *ngIf="selectedOption">
-                <i class="pi pi-file p-text-secondary"></i>
-                <div>{{ selectedOption.label }}</div>
-              </div>
+              @if (selectedOption) {
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-file p-text-secondary"></i>
+                  <div>{{ selectedOption.label }}</div>
+                </div>
+              }
             </ng-template>
 
             <ng-template let-marche pTemplate="item">
               <div class="flex align-items-center gap-2" style="height: 38px">
-                <ng-container *ngIf="marche && marche.label; else loadingTmpl">
+                @if (marche && marche.label) {
                   <i class="pi pi-file"></i>
                   <div>{{ marche.label }}</div>
-                </ng-container>
-                <ng-template #loadingTmpl>
+                } @else {
                   <i class="pi pi-spin pi-spinner text-secondary"></i>
                   <span class="text-secondary pl-2">Chargement...</span>
-                </ng-template>
+                }
               </div>
             </ng-template>
           </p-dropdown>
-          <small class="p-error" *ngIf="f['marcheId'].invalid && f['marcheId'].touched">
-            Le marché est requis.
-          </small>
+          @if (f['marcheId'].invalid && f['marcheId'].touched) {
+            <small class="p-error">
+              Le marché est requis.
+            </small>
+          }
         </div>
 
 
@@ -83,10 +86,12 @@
             [showClear]="false"
             [ngClass]="{ 'ng-invalid ng-dirty': f['banqueId'].invalid && f['banqueId'].touched }">
             <ng-template pTemplate="selectedItem" let-selected>
-              <div class="flex align-items-center gap-2" *ngIf="selected">
-                <i class="pi pi-building"></i>
-                <span>{{ selected.label }}</span>
-              </div>
+              @if (selected) {
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-building"></i>
+                  <span>{{ selected.label }}</span>
+                </div>
+              }
             </ng-template>
             <ng-template let-b pTemplate="item">
               <div class="flex align-items-center gap-2">
@@ -98,9 +103,11 @@
           <small class="text-color-secondary block mt-1">
             <i class="pi pi-info-circle mr-1"></i>{{ banqueHelperText }}
           </small>
-          <small class="p-error" *ngIf="f['banqueId'].invalid && f['banqueId'].touched">
-            La banque est requise.
-          </small>
+          @if (f['banqueId'].invalid && f['banqueId'].touched) {
+            <small class="p-error">
+              La banque est requise.
+            </small>
+          }
         </div>
 
         <!-- ─── Montant ────────────────────────────────────────────────────────── -->
@@ -115,9 +122,11 @@
             placeholder="0.00"
             [ngClass]="{ 'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched }"
           ></p-inputNumber>
-          <small class="p-error" *ngIf="f['montant'].invalid && f['montant'].touched">
-            Le montant est requis et doit être positif.
-          </small>
+          @if (f['montant'].invalid && f['montant'].touched) {
+            <small class="p-error">
+              Le montant est requis et doit être positif.
+            </small>
+          }
         </div>
 
         <div class="field col-12 md:col-6">
@@ -131,10 +140,12 @@
             optionValue="value"
             [ngClass]="{ 'ng-invalid ng-dirty': f['type'].invalid && f['type'].touched }">
             <ng-template pTemplate="selectedItem" let-selected>
-              <div class="flex align-items-center gap-2" *ngIf="selected">
-                <i [class]="selected.value === 'DEBLOCAGE' ? 'pi pi-arrow-down text-green-500' : 'pi pi-arrow-up text-red-500'"></i>
-                <span>{{ selected.label }}</span>
-              </div>
+              @if (selected) {
+                <div class="flex align-items-center gap-2">
+                  <i [class]="selected.value === 'DEBLOCAGE' ? 'pi pi-arrow-down text-green-500' : 'pi pi-arrow-up text-red-500'"></i>
+                  <span>{{ selected.label }}</span>
+                </div>
+              }
             </ng-template>
             <ng-template let-opt pTemplate="item">
               <div class="flex align-items-center gap-2">
@@ -143,9 +154,11 @@
               </div>
             </ng-template>
           </p-dropdown>
-          <small class="p-error" *ngIf="f['type'].invalid && f['type'].touched">
-            Le type est requis.
-          </small>
+          @if (f['type'].invalid && f['type'].touched) {
+            <small class="p-error">
+              Le type est requis.
+            </small>
+          }
         </div>
 
         <div class="field col-12 md:col-6">
@@ -160,9 +173,11 @@
             appendTo="body"
             [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }"
           ></p-calendar>
-          <small class="p-error" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">
-            La date d'émission est requise.
-          </small>
+          @if (f['dateEmission'].invalid && f['dateEmission'].touched) {
+            <small class="p-error">
+              La date d'émission est requise.
+            </small>
+          }
         </div>
 
         <div class="col-12 mt-4 flex flex-row gap-2">

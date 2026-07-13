@@ -5,17 +5,16 @@
   <div class="portail-section flex justify-content-center align-items-center">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
+        @if (item.route) {
           <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
             <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
           </a>
-        </ng-container>
-        <ng-template #elseBlock>
+        } @else {
           <a [href]="item.url">
             <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
           </a>
-        </ng-template>
+        }
       </ng-template>
     </p-breadcrumb>
   </div>
@@ -49,26 +48,29 @@
             [ngClass]="{ 'ng-invalid ng-dirty': f['marcheId'].invalid && f['marcheId'].touched }">
 
             <ng-template pTemplate="selectedItem" let-selectedOption>
-              <div class="flex align-items-center gap-2" *ngIf="selectedOption">
-                <i class="pi pi-file p-text-secondary"></i>
-                <div>{{ selectedOption.label }}</div>
-              </div>
+              @if (selectedOption) {
+                <div class="flex align-items-center gap-2">
+                  <i class="pi pi-file p-text-secondary"></i>
+                  <div>{{ selectedOption.label }}</div>
+                </div>
+              }
             </ng-template>
 
             <ng-template let-marche pTemplate="item">
               <div class="flex align-items-center gap-2" style="height: 38px">
-                <ng-container *ngIf="marche && marche.label; else loadingTmpl">
+                @if (marche && marche.label) {
                   <i class="pi pi-file"></i>
                   <div>{{ marche.label }}</div>
-                </ng-container>
-                <ng-template #loadingTmpl>
+                } @else {
                   <i class="pi pi-spin pi-spinner text-secondary"></i>
                   <span class="text-secondary">Chargement...</span>
-                </ng-template>
+                }
               </div>
             </ng-template>
           </p-dropdown>
-          <small class="p-error" *ngIf="f['marcheId'].invalid && f['marcheId'].touched">Le marché est requis.</small>
+          @if (f['marcheId'].invalid && f['marcheId'].touched) {
+            <small class="p-error">Le marché est requis.</small>
+          }
         </div>
 
         <div class="field col-12 md:col-6">
@@ -81,7 +83,9 @@
             [maxFractionDigits]="2"
             [ngClass]="{ 'ng-invalid ng-dirty': f['montant'].invalid && f['montant'].touched }"
           ></p-inputNumber>
-          <small class="p-error" *ngIf="f['montant'].invalid && f['montant'].touched">Le montant est requis.</small>
+          @if (f['montant'].invalid && f['montant'].touched) {
+            <small class="p-error">Le montant est requis.</small>
+          }
         </div>
 
         <div class="field col-12 md:col-6">
@@ -95,7 +99,9 @@
             optionValue="value"
             [ngClass]="{ 'ng-invalid ng-dirty': f['type'].invalid && f['type'].touched }"
           ></p-dropdown>
-          <small class="p-error" *ngIf="f['type'].invalid && f['type'].touched">Le type est requis.</small>
+          @if (f['type'].invalid && f['type'].touched) {
+            <small class="p-error">Le type est requis.</small>
+          }
         </div>
 
         <div class="field col-12 md:col-6">
@@ -109,7 +115,9 @@
             appendTo="body"
             [ngClass]="{ 'ng-invalid ng-dirty': f['dateEmission'].invalid && f['dateEmission'].touched }"
           ></p-calendar>
-          <small class="p-error" *ngIf="f['dateEmission'].invalid && f['dateEmission'].touched">La date d'émission est requise.</small>
+          @if (f['dateEmission'].invalid && f['dateEmission'].touched) {
+            <small class="p-error">La date d'émission est requise.</small>
+          }
         </div>
 
         <div class="col-12 mt-4 flex flex-row gap-2">

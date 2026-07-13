@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
+import { Component, OnInit, ViewChild, inject } from "@angular/core";
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from "@angular/forms";
 import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
 import { RouterLink } from "@angular/router";
@@ -63,15 +63,13 @@ export class FactoringListComponent implements OnInit {
 
   banquesOptions: any[] = [];
 
-  constructor(
-    private fb: FormBuilder,
-    private factoringService: FactoringService,
-    private banqueService: BanqueService,
-    private marcheService: MarcheService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    public authService: AuthService,
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly factoringService = inject(FactoringService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  readonly authService = inject(AuthService);
 
   ngOnInit(): void {
     this.items = [

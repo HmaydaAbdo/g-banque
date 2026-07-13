@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -79,15 +79,13 @@ export class PrefinancementsListComponent implements OnInit {
   statusOptions: any[] = [];
   items: MenuItem[] = [];
 
-  constructor(
-    private fb: FormBuilder,
-    private prefinancementService: PrefinancementService,
-    private banqueService: BanqueService,
-    private marcheService: MarcheService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    public authService: AuthService,
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly prefinancementService = inject(PrefinancementService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly marcheService = inject(MarcheService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  readonly authService = inject(AuthService);
 
   ngOnInit(): void {
     this.items = [
@@ -228,8 +226,7 @@ export class PrefinancementsListComponent implements OnInit {
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Statut mis à jour.' });
             this.table.reset();
-          },
-          error: (err) => console.error('Erreur lors de la mise à jour du statut:', err)
+          }
         });
       }
     });

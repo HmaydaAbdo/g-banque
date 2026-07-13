@@ -308,13 +308,29 @@ export class TvaCautionListComponent implements OnInit {
       });
   }
 
+  /**
+   * Échappe les caractères HTML spéciaux avant interpolation dans un message de confirmation
+   * PrimeNG (rendu via `[innerHTML]` par `p-confirmDialog`) — `libelle` est une donnée libre
+   * saisie par un utilisateur Finance et ne doit jamais être insérée telle quelle dans du HTML
+   * (frontend.md, section Sécurité).
+   */
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   // ── Toggle statut ─────────────────────────────────────────────────────────
   toggleStatut(tva: ImpotEtTaxeResponseDto): void {
     const versPaye = tva.status === Status.PREVU;
+    const libelleEchappe = this.escapeHtml(tva.libelle);
     this.confirmationService.confirm({
       message: versPaye
-        ? `Marquer la TVA <strong>${tva.libelle}</strong> comme payée ?`
-        : `Repasser la TVA <strong>${tva.libelle}</strong> en prévu ?`,
+        ? `Marquer la TVA <strong>${libelleEchappe}</strong> comme payée ?`
+        : `Repasser la TVA <strong>${libelleEchappe}</strong> en prévu ?`,
       header: 'Confirmer',
       icon: 'pi pi-info-circle',
       acceptLabel: versPaye ? 'Marquer payée' : 'Repasser en prévu',
@@ -339,8 +355,9 @@ export class TvaCautionListComponent implements OnInit {
 
   // ── Suppression ───────────────────────────────────────────────────────────
   supprimer(tva: ImpotEtTaxeResponseDto): void {
+    const libelleEchappe = this.escapeHtml(tva.libelle);
     this.confirmationService.confirm({
-      message: `Supprimer définitivement la TVA <strong>${tva.libelle}</strong> ?`,
+      message: `Supprimer définitivement la TVA <strong>${libelleEchappe}</strong> ?`,
       header: 'Confirmer la suppression',
       icon: 'pi pi-trash',
       acceptLabel: 'Supprimer',

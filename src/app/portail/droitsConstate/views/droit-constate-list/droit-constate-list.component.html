@@ -40,8 +40,11 @@
         styleClass="w-full md:w-18rem">
         <ng-template let-item pTemplate="item">
           <div class="flex align-items-center gap-2" style="height: 38px">
-            <span *ngIf="item.label">{{ item.label }}</span>
-            <i *ngIf="!item.label" class="pi pi-spin pi-spinner text-gray-400"></i>
+            @if (item.label) {
+              <span>{{ item.label }}</span>
+            } @else {
+              <i class="pi pi-spin pi-spinner text-gray-400"></i>
+            }
           </div>
         </ng-template>
       </p-dropdown>
@@ -123,16 +126,20 @@
           </td>
           <td>
             <div class="flex gap-2 align-items-center">
-              <p-inputSwitch [ngModel]="dc.status === Status.PAYE"
-                             (onChange)="confirmToggleStatus(dc)"
-                             pTooltip="Changer statut"></p-inputSwitch>
+              @if (authService.isAdmin()) {
+                <p-inputSwitch [ngModel]="dc.status === Status.PAYE"
+                               (onChange)="confirmToggleStatus(dc)"
+                               pTooltip="Changer statut"></p-inputSwitch>
+              }
 
               <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-outlined p-button-secondary"
                       [routerLink]="['/portail/droits-constate/edit', dc.id]"></button>
 
-              <button  pButton icon="pi pi-trash"
-                      class="p-button-rounded p-button-outlined p-button-danger"
-                      (click)="deleteDroitConstate(dc)"></button>
+              @if (authService.isAdmin()) {
+                <button pButton icon="pi pi-trash"
+                        class="p-button-rounded p-button-outlined p-button-danger"
+                        (click)="deleteDroitConstate(dc)"></button>
+              }
             </div>
           </td>
         </tr>

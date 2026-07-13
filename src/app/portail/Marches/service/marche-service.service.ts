@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, inject} from '@angular/core';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from "../../../../environments/environment";
@@ -15,8 +15,7 @@ export class MarcheService {
 
   private apiUrl = `${environment.apiUrl}marches`;
 
-  constructor(private http: HttpClient) {
-  }
+  private readonly http = inject(HttpClient);
 
   /**
    * Crée un nouveau marché.
