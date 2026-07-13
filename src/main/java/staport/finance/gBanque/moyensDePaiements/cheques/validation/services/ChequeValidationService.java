@@ -58,7 +58,7 @@ public class ChequeValidationService implements IChequeValidationService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Cheque.class, idAccessor = "idCheque")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Cheque.class, idAccessor = "getChequeId")
     public ChequeTransactionResponseDto processChequeDecaissementTransaction(ChequeTransactionRequest requestDto) {
         log.info("Validation chèque décaissement — id: {}", requestDto.getIdCheque());
         return processTransaction(requestDto);
@@ -66,7 +66,7 @@ public class ChequeValidationService implements IChequeValidationService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Cheque.class, idAccessor = "idCheque")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Cheque.class, idAccessor = "getChequeId")
     public ChequeTransactionResponseDto processChequeEncaissementTransaction(ChequeTransactionRequest requestDto) {
         log.info("Validation chèque encaissement — id: {}", requestDto.getIdCheque());
         return processTransaction(requestDto);

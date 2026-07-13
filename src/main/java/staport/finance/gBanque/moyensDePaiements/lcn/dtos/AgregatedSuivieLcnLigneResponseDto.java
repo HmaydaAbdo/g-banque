@@ -1,10 +1,16 @@
-package staport.finance.gBanque.droitConstate.dtos;
+package staport.finance.gBanque.moyensDePaiements.lcn.dtos;
 
 import org.springframework.data.domain.Page;
-import staport.finance.gBanque.moyensDePaiements.lcn.dtos.LcnResponseDTO;
 
 import java.math.BigDecimal;
 
+/**
+ * Réponse agrégée du suivi des LCN pour une ligne fonctionnelle (nom de banque, total, page de
+ * résultats). Déplacé depuis {@code droitConstate.dtos} (13/07/2026) — DTO du module LCN, mal
+ * rangé dans un package sans rapport lors d'un ajout antérieur ; consommé par
+ * {@code LigneFonctionnelleService}/{@code ILigneFonctionnelleService}/
+ * {@code LigneFonctionnelleController} (suivi de ligne générale), aucun changement de comportement.
+ */
 public class AgregatedSuivieLcnLigneResponseDto {
 
     private String banqueName;

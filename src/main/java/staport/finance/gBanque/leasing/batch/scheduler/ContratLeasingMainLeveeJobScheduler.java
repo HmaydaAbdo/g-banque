@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import staport.finance.gBanque.audit.BatchAuditContext;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -132,6 +133,7 @@ public class ContratLeasingMainLeveeJobScheduler {
 
         JobExecution jobExecution = null;
         long startTime = System.currentTimeMillis();
+        BatchAuditContext.setCurrentJobName("LeasingMainLevee");
 
         try {
             log.info("▶ Starting Contrat Leasing Main Levée Job (Trigger: {})...", triggerType);
@@ -196,6 +198,7 @@ public class ContratLeasingMainLeveeJobScheduler {
         } finally {
             // Always release the lock, even if an exception occurred
             isJobRunning.set(false);
+            BatchAuditContext.clearCurrentJobName();
 
             long totalDuration = System.currentTimeMillis() - startTime;
 

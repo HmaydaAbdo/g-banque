@@ -68,6 +68,7 @@ public class VirementTransactionMapper {
         VirementTransactionResponseDto responseDto = new VirementTransactionResponseDto();
 
         responseDto.setId(transaction.getId());
+        responseDto.setVirementId(transaction.getReferent());
         Banque banque = transaction.getBanqueDePrelevement();
         if (banque != null) {
             responseDto.setBanqueName(banque.getNom());

@@ -15,6 +15,9 @@ import java.util.Objects;
 public class ChequeTransactionResponseDto {
 
     private Long id;
+    /** ID du chèque source — distinct de {@code id} (celui de la transaction créée). Nécessaire
+     * pour {@code @AuditableAction(idAccessor = "getChequeId")} sur {@code ChequeValidationService}. */
+    private Long chequeId;
     private String banqueName;
     private String chequeNumber;
     private String libelle;
@@ -60,6 +63,14 @@ public class ChequeTransactionResponseDto {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getChequeId() {
+        return chequeId;
+    }
+
+    public void setChequeId(Long chequeId) {
+        this.chequeId = chequeId;
     }
 
     public String getChequeNumber() {

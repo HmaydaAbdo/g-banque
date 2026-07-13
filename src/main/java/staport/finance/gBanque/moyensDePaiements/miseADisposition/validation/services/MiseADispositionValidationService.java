@@ -59,7 +59,7 @@ public class MiseADispositionValidationService implements IMiseADispositionValid
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = MiseADisposition.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = MiseADisposition.class, idAccessor = "getMiseADispositionId")
     public MiseAdispositionTransactionResponseDto processMiseAdispositionDecaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) {
         log.info("Validation mise à disposition décaissement — id: {}", requestDto.getId());
         return processTransaction(requestDto);
@@ -67,7 +67,7 @@ public class MiseADispositionValidationService implements IMiseADispositionValid
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = MiseADisposition.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = MiseADisposition.class, idAccessor = "getMiseADispositionId")
     public MiseAdispositionTransactionResponseDto processMiseAdispositionEncaissementTransaction(MiseAdispositionTransactionRequestDto requestDto) {
         log.info("Validation mise à disposition encaissement — id: {}", requestDto.getId());
         return processTransaction(requestDto);

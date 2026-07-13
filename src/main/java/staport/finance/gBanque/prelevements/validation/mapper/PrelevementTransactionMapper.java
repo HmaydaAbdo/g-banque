@@ -63,6 +63,7 @@ public class PrelevementTransactionMapper {
 
         // Mapping fields from the entity to the DTO
         responseDto.setId(transaction.getId());
+        responseDto.setPrelevementId(transaction.getReferent());
         // Lazy loading might require calling getBanqueDePrelevement() before getName()
         Banque banque = transaction.getBanqueDePrelevement();
         if (banque != null) {

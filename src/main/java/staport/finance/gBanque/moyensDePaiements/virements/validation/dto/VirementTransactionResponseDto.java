@@ -15,6 +15,9 @@ import java.util.Objects;
 public class VirementTransactionResponseDto {
 
     private Long id;
+    /** ID du virement source — distinct de {@code id} (celui de la transaction créée). Nécessaire
+     * pour {@code @AuditableAction(idAccessor = "getVirementId")} sur {@code VirementValidationService}. */
+    private Long virementId;
     private String banqueName;
     private String virementNumber;
     private String libelle;
@@ -51,6 +54,9 @@ public class VirementTransactionResponseDto {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getVirementId() { return virementId; }
+    public void setVirementId(Long virementId) { this.virementId = virementId; }
 
     public String getBanqueName() { return banqueName; }
     public void setBanqueName(String banqueName) { this.banqueName = banqueName; }

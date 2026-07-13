@@ -8,6 +8,10 @@ import java.time.LocalDate;
 public class PrelevementTransactionResponse {
 
     private Long id;
+    /** ID du prélèvement source — distinct de {@code id} (celui de la transaction créée).
+     * Nécessaire pour {@code @AuditableAction(idAccessor = "getPrelevementId")} sur
+     * {@code PrelevementValidationService}. */
+    private Long prelevementId;
     private String banqueName;
     private String libelle;
     private String observation;
@@ -29,6 +33,14 @@ public class PrelevementTransactionResponse {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getPrelevementId() {
+        return prelevementId;
+    }
+
+    public void setPrelevementId(Long prelevementId) {
+        this.prelevementId = prelevementId;
     }
 
     public String getBanqueName() {

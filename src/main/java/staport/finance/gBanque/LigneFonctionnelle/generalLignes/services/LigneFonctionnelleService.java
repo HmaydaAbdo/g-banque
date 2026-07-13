@@ -11,7 +11,7 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
 import staport.finance.gBanque.droitConstate.dtos.response.AgregatedSuivieDcLigneResponseDto;
-import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieLcnLigneResponseDto;
+import staport.finance.gBanque.moyensDePaiements.lcn.dtos.AgregatedSuivieLcnLigneResponseDto;
 import staport.finance.gBanque.droitConstate.dtos.response.SuivieDcLigneResponseDto;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;

@@ -74,7 +74,7 @@ public class PrelevementValidationService implements IPrelevementValidationServi
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Prelevement.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Prelevement.class, idAccessor = "getPrelevementId")
     public PrelevementTransactionResponse processPrelevementToTransaction(PrelevementValidationRequest requestDto) {
         log.info("Validation prélèvement — id: {}", requestDto.getIdPrelevement());
 

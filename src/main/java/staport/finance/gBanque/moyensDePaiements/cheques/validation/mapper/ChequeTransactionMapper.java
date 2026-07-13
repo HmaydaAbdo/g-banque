@@ -73,6 +73,7 @@ public class ChequeTransactionMapper {
         ChequeTransactionResponseDto responseDto = new ChequeTransactionResponseDto();
 
         responseDto.setId(transaction.getId());
+        responseDto.setChequeId(transaction.getReferent());
         Banque banque = transaction.getBanqueDePrelevement();
         if (banque != null) {
             responseDto.setBanqueName(banque.getNom());

@@ -58,7 +58,7 @@ public class LcnValidationService implements ILcnValidationService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Lcn.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Lcn.class, idAccessor = "getLcnId")
     public LcnTransactionResponseDto processLcnDecaissementTransaction(LcnTransactionRequest requestDto) {
         log.info("Validation LCN décaissement — id: {}", requestDto.getId());
         return processTransaction(requestDto);
@@ -66,7 +66,7 @@ public class LcnValidationService implements ILcnValidationService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Lcn.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Lcn.class, idAccessor = "getLcnId")
     public LcnTransactionResponseDto processLcnEncaissementTransaction(LcnTransactionRequest requestDto) {
         log.info("Validation LCN encaissement — id: {}", requestDto.getId());
         return processTransaction(requestDto);

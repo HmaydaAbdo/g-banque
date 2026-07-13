@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import staport.finance.gBanque.audit.BatchAuditContext;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -139,6 +140,7 @@ public class CreditMoyenTermeMainLeveeJobScheduler {
 
         JobExecution jobExecution = null;
         long startTime = System.currentTimeMillis();
+        BatchAuditContext.setCurrentJobName("CmtMainLevee");
 
         try {
             log.info(" Démarrage du job CMT Main Levée (Déclenchement : {})...", triggerType);
@@ -204,6 +206,7 @@ public class CreditMoyenTermeMainLeveeJobScheduler {
         } finally {
             // Toujours libérer le verrou, même si une exception s'est produite
             isJobRunning.set(false);
+            BatchAuditContext.clearCurrentJobName();
 
             long totalDuration = System.currentTimeMillis() - startTime;
 

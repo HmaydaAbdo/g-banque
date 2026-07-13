@@ -60,7 +60,7 @@ public class VirementValidationService implements IVirementValidationService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Virement.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Virement.class, idAccessor = "getVirementId")
     public VirementTransactionResponseDto processVirementDecaissementTransaction(VirementTransactionRequestDto requestDto) {
         log.info("Validation virement décaissement — id: {}", requestDto.getId());
         return processTransaction(requestDto);
@@ -68,7 +68,7 @@ public class VirementValidationService implements IVirementValidationService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Virement.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Virement.class, idAccessor = "getVirementId")
     public VirementTransactionResponseDto processVirementEncaissementTransaction(VirementTransactionRequestDto requestDto) {
         log.info("Validation virement encaissement — id: {}", requestDto.getId());
         return processTransaction(requestDto);

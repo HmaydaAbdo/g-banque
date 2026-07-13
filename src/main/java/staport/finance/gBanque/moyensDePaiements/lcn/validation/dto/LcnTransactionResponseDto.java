@@ -15,6 +15,9 @@ import java.util.Objects;
 public class LcnTransactionResponseDto {
 
     private Long id;
+    /** ID du LCN source — distinct de {@code id} (celui de la transaction créée). Nécessaire pour
+     * {@code @AuditableAction(idAccessor = "getLcnId")} sur {@code LcnValidationService}. */
+    private Long lcnId;
     private String banqueName;
     private String lcnNumber;
     private String libelle;
@@ -54,6 +57,14 @@ public class LcnTransactionResponseDto {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getLcnId() {
+        return lcnId;
+    }
+
+    public void setLcnId(Long lcnId) {
+        this.lcnId = lcnId;
     }
 
     public String getBanqueName() {

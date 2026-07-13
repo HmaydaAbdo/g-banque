@@ -79,6 +79,7 @@ public class MiseAdispositionTransactionMapper {
         MiseAdispositionTransactionResponseDto responseDto = new MiseAdispositionTransactionResponseDto();
 
         responseDto.setId(transaction.getId());
+        responseDto.setMiseADispositionId(transaction.getReferent());
         Banque banque = transaction.getBanqueDePrelevement();
         if (banque != null) {
             responseDto.setBanqueName(banque.getNom());

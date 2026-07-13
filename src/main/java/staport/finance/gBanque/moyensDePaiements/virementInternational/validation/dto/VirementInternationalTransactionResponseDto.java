@@ -15,6 +15,10 @@ import java.util.Objects;
 public class VirementInternationalTransactionResponseDto {
 
     private Long id;
+    /** ID du virement international source — distinct de {@code id} (celui de la transaction
+     * créée). Nécessaire pour {@code @AuditableAction(idAccessor = "getVirementInternationalId")}
+     * sur {@code VirementInternationalValidationService}. */
+    private Long virementInternationalId;
     private String banqueName;
     private String libelle;
     private String observation;
@@ -50,6 +54,9 @@ public class VirementInternationalTransactionResponseDto {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getVirementInternationalId() { return virementInternationalId; }
+    public void setVirementInternationalId(Long virementInternationalId) { this.virementInternationalId = virementInternationalId; }
 
     public String getBanqueName() { return banqueName; }
     public void setBanqueName(String banqueName) { this.banqueName = banqueName; }

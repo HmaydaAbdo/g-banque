@@ -78,6 +78,7 @@ public class LcnTransactionMapper {
         LcnTransactionResponseDto responseDto = new LcnTransactionResponseDto();
 
         responseDto.setId(transaction.getId());
+        responseDto.setLcnId(transaction.getReferent());
         Banque banque = transaction.getBanqueDePrelevement();
         if (banque != null) {
             responseDto.setBanqueName(banque.getNom());

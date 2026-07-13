@@ -59,7 +59,7 @@ public class VirementInternationalValidationService implements IVirementInternat
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = VirementInternational.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = VirementInternational.class, idAccessor = "getVirementInternationalId")
     public VirementInternationalTransactionResponseDto processVirementInternationalDecaissementTransaction(VirementInternationalTransactionRequestDto requestDto) {
         log.info("Validation virement international décaissement — id: {}", requestDto.getId());
         return processTransaction(requestDto);
@@ -67,7 +67,7 @@ public class VirementInternationalValidationService implements IVirementInternat
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = VirementInternational.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = VirementInternational.class, idAccessor = "getVirementInternationalId")
     public VirementInternationalTransactionResponseDto processVirementInternationalEncaissementTransaction(VirementInternationalTransactionRequestDto requestDto) {
         log.info("Validation virement international encaissement — id: {}", requestDto.getId());
         return processTransaction(requestDto);

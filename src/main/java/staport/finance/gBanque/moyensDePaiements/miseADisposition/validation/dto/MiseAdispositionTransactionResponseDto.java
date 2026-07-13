@@ -20,6 +20,10 @@ import java.util.Objects;
 public class MiseAdispositionTransactionResponseDto {
 
     private Long id;
+    /** ID de la mise à disposition source — distinct de {@code id} (celui de la transaction créée).
+     * Nécessaire pour {@code @AuditableAction(idAccessor = "getMiseADispositionId")} sur
+     * {@code MiseADispositionValidationService}. */
+    private Long miseADispositionId;
     private String banqueName;
     private String miseADispositionNumber;
     private String libelle;
@@ -60,6 +64,14 @@ public class MiseAdispositionTransactionResponseDto {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getMiseADispositionId() {
+        return miseADispositionId;
+    }
+
+    public void setMiseADispositionId(Long miseADispositionId) {
+        this.miseADispositionId = miseADispositionId;
     }
 
     public String getBanqueName() {

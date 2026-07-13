@@ -82,6 +82,7 @@ public class VirementInternationalTransactionMapper {
         VirementInternationalTransactionResponseDto responseDto = new VirementInternationalTransactionResponseDto();
 
         responseDto.setId(transaction.getId());
+        responseDto.setVirementInternationalId(transaction.getReferent());
 
         Banque banque = transaction.getBanqueDePrelevement();
         if (banque != null) {

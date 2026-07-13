@@ -10,6 +10,7 @@ import org.springframework.batch.core.JobExecutionException;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import staport.finance.gBanque.audit.BatchAuditContext;
 import staport.finance.gBanque.moyensDePaiements.batch.metrics.FunPaiementSyncMetrics;
 
 import java.time.Duration;
@@ -51,6 +52,7 @@ public class EtasDesEncoursService {
 
         long debut = System.nanoTime();
         JobExecution jobExecution = null;
+        BatchAuditContext.setCurrentJobName("SynchronisationFunPaiement");
         try {
             jobExecution = jobLauncher.run(importPaymentsJob, jobParameters);
             log.info("Job importPaymentsJob launched successfully. JobExecution ID: {}", jobExecution.getId());
@@ -66,6 +68,8 @@ public class EtasDesEncoursService {
             log.error("Failed to launch importPaymentsJob: {}", e.getMessage(), e);
             funPaiementSyncMetrics.enregistrerEchec(Duration.ofNanos(System.nanoTime() - debut));
             throw e; // Re-throw the exception for upstream handling
+        } finally {
+            BatchAuditContext.clearCurrentJobName();
         }
         return jobExecution;
     }
