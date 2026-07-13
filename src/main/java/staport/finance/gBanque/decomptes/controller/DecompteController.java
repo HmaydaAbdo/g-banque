@@ -1,8 +1,9 @@
 package staport.finance.gBanque.decomptes.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -10,137 +11,97 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import staport.finance.gBanque.decomptes.dto.*;
-import staport.finance.gBanque.decomptes.service.DecompteService;
-
+import staport.finance.gBanque.decomptes.dtos.request.DecompteRequestDto;
+import staport.finance.gBanque.decomptes.dtos.request.DecompteSearchDto;
+import staport.finance.gBanque.decomptes.dtos.request.EncoursDecompteSearchDto;
+import staport.finance.gBanque.decomptes.dtos.response.DecompteResponseDto;
+import staport.finance.gBanque.decomptes.dtos.response.EncoursDecompteDto;
+import staport.finance.gBanque.decomptes.service.IDecompteService;
 
 /**
  * REST controller for managing décomptes records.
  * Provides a complete CRUD and search API.
+ *
+ * <p>Injecte {@link IDecompteService} (DIP — jamais la classe concrète).
+ *
+ * <p>Autorisations (cf. {@code docs/rbac/decomptes.md}) : réservé Finance/SYSTEM_ADMIN sur
+ * toutes les actions (donnée financière propre au département Finance, mirroring
+ * {@code CautionController}), suppression et changement de statut (PREVU/PAYE) réservés
+ * SYSTEM_ADMIN.
  */
+@Tag(name = "Décomptes", description = "Gestion des décomptes de travaux rattachés aux marchés")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/decomptes")
 public class DecompteController {
 
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
-    private static final Logger log = LoggerFactory.getLogger(DecompteController.class);
-    private final DecompteService decompteService;
+    private final IDecompteService decompteService;
 
-
-    public DecompteController(DecompteService decompteService) {
+    public DecompteController(IDecompteService decompteService) {
         this.decompteService = decompteService;
-        log.info("DecompteController initialisé");
     }
 
-    /**
-     * Creates a new Décompte record.
-     *
-     * @param requestDTO The DTO containing the data for the new record.
-     * @return A ResponseEntity with the newly created record and HTTP status 201.
-     */
+    @Operation(summary = "Créer un décompte")
     @PostMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<DecompteResponseDto> createDecompte(@Valid @RequestBody DecompteRequestDto requestDTO) {
-        log.info("POST /decomptes - Réception d'une demande de création de décompte");
-        log.debug("Données de la requête: {}", requestDTO);
-
         DecompteResponseDto responseDTO = decompteService.createDecompte(requestDTO);
-
-        log.info("POST /decomptes - Décompte créé avec succès, ID: {}", responseDTO.getId());
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 
-    /**
-     * Updates an existing Décompte record.
-     *
-     * @param id The ID of the record to update.
-     * @param requestDTO The DTO containing the updated data.
-     * @return A ResponseEntity with the updated record and HTTP status 200.
-     */
+    @Operation(summary = "Modifier un décompte")
     @PutMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<DecompteResponseDto> updateDecompte(@PathVariable Long id, @Valid @RequestBody DecompteRequestDto requestDTO) {
-        log.info("PUT /decomptes/{} - Réception d'une demande de modification", id);
-        log.debug("Nouvelles données: {}", requestDTO);
-
         DecompteResponseDto responseDTO = decompteService.updateDecompte(id, requestDTO);
-
-        log.info("PUT /decomptes/{} - Décompte modifié avec succès", id);
         return ResponseEntity.ok(responseDTO);
     }
 
-    /**
-     * Deletes a Décompte record by its ID.
-     *
-     * @param id The ID of the record to delete.
-     * @return A ResponseEntity with HTTP status 204.
-     */
+    @Operation(summary = "Supprimer un décompte", description = "Réservé SYSTEM_ADMIN.")
     @DeleteMapping("/{id}")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deleteDecompte(@PathVariable Long id) {
-        log.info("DELETE /decomptes/{} - Réception d'une demande de suppression", id);
-
         decompteService.deleteDecompte(id);
-
-        log.info("DELETE /decomptes/{} - Décompte supprimé avec succès", id);
         return ResponseEntity.noContent().build();
     }
 
-
-    /**
-     * Retrieves a Décompte record by its ID.
-     *
-     * @param id The ID of the record to retrieve.
-     * @return A ResponseEntity with the found record and HTTP status 200.
-     */
+    @Operation(summary = "Récupérer un décompte par ID")
     @GetMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<DecompteResponseDto> getDecompteById(@PathVariable Long id) {
-        log.info("GET /decomptes/{} - Réception d'une demande de consultation", id);
-
         DecompteResponseDto responseDTO = decompteService.findById(id);
-
-        log.debug("GET /decomptes/{} - Décompte trouvé: Marché {}, Montant {}",
-                id, responseDTO.getMarcheName(), responseDTO.getMontant());
         return ResponseEntity.ok(responseDTO);
     }
 
-
-
-    /**
-     * Searches for décomptes records based on criteria.
-     *
-     * @param searchDTO The DTO containing the search criteria.
-     * @param pageable Pagination and sorting information.
-     * @return A Page of DecompteResponseDto matching the criteria.
-     */
+    @Operation(summary = "Recherche paginée des décomptes")
     @GetMapping
-    public ResponseEntity<Page<DecompteResponseDto>> searchDecomptes(DecompteSearchDto searchDTO, @PageableDefault Pageable pageable) {
-        log.info("GET /decomptes - Réception d'une demande de recherche");
-        log.debug("Critères de recherche: {}, Page: {}, Taille: {}",
-                searchDTO, pageable.getPageNumber(), pageable.getPageSize());
-
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<Page<DecompteResponseDto>> searchDecomptes(@ModelAttribute DecompteSearchDto searchDTO, @PageableDefault Pageable pageable) {
         Page<DecompteResponseDto> page = decompteService.findAll(searchDTO, pageable);
-
-        log.info("GET /decomptes - Recherche terminée: {} résultat(s) trouvé(s)", page.getTotalElements());
         return ResponseEntity.ok(page);
     }
 
-
+    @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")
     @PatchMapping("/{id}/toggle")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<DecompteResponseDto> toggleStatus(@PathVariable Long id) {
-        log.info("PATCH /decomptes/{}/toggle - Réception d'une demande de changement de statut", id);
-
-        DecompteResponseDto responseDTO = decompteService.toglleStatus(id);
-
-        log.info("PATCH /decomptes/{}/toggle - Statut changé avec succès vers: {}",
-                id, responseDTO.getStatus());
+        DecompteResponseDto responseDTO = decompteService.toggleStatus(id);
         return ResponseEntity.ok(responseDTO);
     }
 
-
+    @Operation(summary = "Exporter les décomptes en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
     @GetMapping("/export/pdf")
-    public ResponseEntity<byte[]> exportPdf(DecompteSearchDto searchDTO) {
-        log.info("GET /decomptes/export/pdf - Génération export PDF");
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportPdf(@ModelAttribute DecompteSearchDto searchDTO) {
         byte[] pdf = decompteService.exportToPdf(searchDTO);
         String filename = "decomptes_" + LocalDate.now() + ".pdf";
         return ResponseEntity.ok()
@@ -149,18 +110,14 @@ public class DecompteController {
                 .body(pdf);
     }
 
+    @Operation(summary = "Consulter les encours de décomptes d'une banque")
     @GetMapping("/encours/{banqueId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursDecompteDto> getEncoursForDecomptes(
             @PathVariable Long banqueId,
-            EncoursDecompteSearchDto searchDTO,
+            @ModelAttribute EncoursDecompteSearchDto searchDTO,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        log.info("GET /decomptes/encours/{} - Consultation des encours de décomptes", banqueId);
-        log.debug("Critères de recherche encours: {}", searchDTO);
-
         EncoursDecompteDto result = decompteService.getDecomptesEncoursForBanque(searchDTO, banqueId, pageable);
-
-        log.info("GET /decomptes/encours/{} - Total encours: {}, Nombre d'éléments: {}",
-                banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
         return ResponseEntity.ok(result);
     }
 }

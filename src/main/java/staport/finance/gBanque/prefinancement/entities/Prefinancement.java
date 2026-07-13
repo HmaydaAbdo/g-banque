@@ -1,6 +1,8 @@
 package staport.finance.gBanque.prefinancement.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.marches.entities.Marche;
@@ -11,7 +13,34 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Préfinancement (déblocage/remboursement) rattaché à un marché, couvert par une ligne
+ * fonctionnelle (spécifique ou générale).
+ *
+ * <p>{@code marche} est déjà {@code @Audited} (sweep Marchés) — pas de traitement particulier.
+ * {@code ligneFonctionnelleSpecifique}/{@code ligneFonctionnelle} ne sont pas auditées :
+ * {@code @Audited(targetAuditMode = NOT_AUDITED)} (cf. feedback_envers_audit_relations —
+ * {@code @ManyToOne} avec FK propre, pas un {@code @OneToMany(mappedBy)}).
+ */
 @Entity
+@Audited
+@Table(
+        indexes = {
+                @Index(name = "idx_prefinancement_marche_id", columnList = "marche_id"),
+                @Index(name = "idx_prefinancement_status", columnList = "status"),
+                @Index(name = "idx_prefinancement_type", columnList = "type"),
+                @Index(name = "idx_prefinancement_date_valeur", columnList = "dateValeur")
+        }
+)
+@NamedEntityGraph(
+        name = "Prefinancement.avecAssociations",
+        attributeNodes = {
+                @NamedAttributeNode(value = "marche", subgraph = "marche-banque")
+        },
+        subgraphs = {
+                @NamedSubgraph(name = "marche-banque", attributeNodes = @NamedAttributeNode("banque"))
+        }
+)
 public class Prefinancement {
 
     @Id
@@ -23,11 +52,13 @@ public class Prefinancement {
     private Marche marche;
 
     /** Ligne spécifique active au moment de la création (null si couverte par une ligne générale). */
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ligne_fonctionnelle_specifique_id")
     private LigneFonctionnelleSpecifique ligneFonctionnelleSpecifique;
 
     /** Ligne générale active au moment de la création (null si couverte par une ligne spécifique). */
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ligne_fonctionnelle_id")
     private LigneFonctionnelle ligneFonctionnelle;

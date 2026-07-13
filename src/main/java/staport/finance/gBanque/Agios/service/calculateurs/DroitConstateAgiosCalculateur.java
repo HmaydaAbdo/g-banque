@@ -15,7 +15,7 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.Lign
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
 import staport.finance.gBanque.droitConstate.service.DroitConstateReader;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.marches.service.MarcheService;
+import staport.finance.gBanque.marches.service.IMarcheService;
 import staport.finance.gBanque.prefinancement.enums.Type;
 
 import java.math.BigDecimal;
@@ -49,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Résolution des lignes/marché/encours via les façades de lecture cross-domaine
  * ({@link LigneFonctionnelleReader}, {@link LigneFonctionnelleSpecifiqueReader},
- * {@link INatureLigneFonctionnelleService}, {@link MarcheService}, {@link DroitConstateReader})
+ * {@link INatureLigneFonctionnelleService}, {@link IMarcheService}, {@link DroitConstateReader})
  * — jamais via leurs Repository respectifs directement (encapsulation des domaines,
  * architecture.md).</p>
  */
@@ -64,7 +64,7 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
     private static final int SCALE_FINAL = 2;
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
-    private final MarcheService marcheService;
+    private final IMarcheService marcheService;
     private final LigneFonctionnelleSpecifiqueReader ligneSpecifiqueReader;
     private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
@@ -77,7 +77,7 @@ public class DroitConstateAgiosCalculateur implements AgiosCalculateurMultiMarch
     private volatile NatureLigneFonctionnelle natureDC = null;
 
     public DroitConstateAgiosCalculateur(
-            MarcheService marcheService,
+            IMarcheService marcheService,
             LigneFonctionnelleSpecifiqueReader ligneSpecifiqueReader,
             LigneFonctionnelleReader ligneFonctionnelleReader,
             INatureLigneFonctionnelleService natureLigneFonctionnelleService,

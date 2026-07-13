@@ -1,6 +1,8 @@
 package staport.finance.gBanque.droitConstate.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
@@ -12,7 +14,36 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Droit constaté (déblocage/remboursement) rattaché à un marché, couvert par une ligne
+ * fonctionnelle (spécifique ou générale). Contrairement à Préfinancement/Factoring, la banque est
+ * un champ direct (indépendant de {@code marche.banque}) : pré-remplie depuis {@code marche.banque}
+ * à la création côté UI, mais modifiable indépendamment.
+ *
+ * <p>{@code marche} et {@code banque} sont déjà {@code @Audited} (sweep Marchés/Bank) — pas de
+ * traitement particulier. {@code ligneFonctionnelleSpecifique}/{@code ligneFonctionnelle} ne sont
+ * pas auditées : {@code @Audited(targetAuditMode = NOT_AUDITED)} (cf.
+ * feedback_envers_audit_relations — {@code @ManyToOne} avec FK propre, pas un
+ * {@code @OneToMany(mappedBy)}).
+ */
 @Entity
+@Audited
+@Table(
+        indexes = {
+                @Index(name = "idx_droit_constate_marche_id", columnList = "marche_id"),
+                @Index(name = "idx_droit_constate_banque_id", columnList = "banque_id"),
+                @Index(name = "idx_droit_constate_status", columnList = "status"),
+                @Index(name = "idx_droit_constate_type", columnList = "type"),
+                @Index(name = "idx_droit_constate_date_valeur", columnList = "dateValeur")
+        }
+)
+@NamedEntityGraph(
+        name = "DroitConstate.avecAssociations",
+        attributeNodes = {
+                @NamedAttributeNode("marche"),
+                @NamedAttributeNode("banque")
+        }
+)
 public class DroitConstate {
 
     @Id
@@ -35,11 +66,13 @@ public class DroitConstate {
     private Banque banque;
 
     /** Ligne spécifique active au moment de la création (null si couverte par une ligne générale). */
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ligne_fonctionnelle_specifique_id")
     private LigneFonctionnelleSpecifique ligneFonctionnelleSpecifique;
 
     /** Ligne générale active au moment de la création (null si couverte par une ligne spécifique). */
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ligne_fonctionnelle_id")
     private LigneFonctionnelle ligneFonctionnelle;

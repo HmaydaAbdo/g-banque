@@ -1,98 +1,54 @@
 package staport.finance.gBanque.marches.specs;
 
-
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import staport.finance.gBanque.marches.dtos.request.MarcheSearchDTO;
 import staport.finance.gBanque.marches.entities.Marche;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class MarcheSpecification {
 
-    /**
-     * Private constructor to prevent instantiation.
-     * All methods are static.
-     */
+    private static final String FIELD_NOM             = "nom";
+    private static final String FIELD_NUMERO           = "numero";
+    private static final String FIELD_MAITRE_DOUVRAGE  = "maitreDouvrage";
+    private static final String FIELD_BANQUE           = "banque";
+    private static final String FIELD_ACTIF            = "actif";
+
     private MarcheSpecification() {
     }
 
-    // --- Specifications for each field ---
-
-    /**
-     * Creates a Specification to filter by 'nom' (name).
-     * The search is case-insensitive and uses 'like' for partial matches.
-     *
-     * @param nom The name to search for.
-     * @return A Specification for the name.
-     */
-    public static Specification<Marche> hasNom(String nom) {
+    public static Specification<Marche> searchByCriteria(MarcheSearchDTO criteria) {
         return (root, query, cb) -> {
-            if (nom == null || nom.trim().isEmpty()) {
-                return cb.conjunction(); // Return an "always true" predicate
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (criteria.nom() != null && !criteria.nom().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get(FIELD_NOM)),
+                        "%" + criteria.nom().toLowerCase() + "%"));
             }
-            return cb.like(cb.lower(root.get("nom")), "%" + nom.toLowerCase() + "%");
-        };
-    }
 
-    /**
-     * Creates a Specification to filter by 'numero' (number) using LIKE.
-     *
-     * @param numero The contract number (supports partial match).
-     * @return A Specification for the number.
-     */
-    public static Specification<Marche> hasNumero(String numero) {
-        return (root, query, cb) -> {
-            if (numero == null || numero.trim().isEmpty()) {
-                return cb.conjunction();
+            if (criteria.numero() != null && !criteria.numero().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get(FIELD_NUMERO)),
+                        "%" + criteria.numero().toLowerCase() + "%"));
             }
-            return cb.like(cb.lower(root.get("numero")), "%" + numero.toLowerCase() + "%");
-        };
-    }
 
-
-
-
-    /**
-     * Creates a Specification to filter by 'maitreDouvrage' (client).
-     * The search is case-insensitive and uses 'like' for partial matches.
-     *
-     * @param maitreDouvrage The client name to search for.
-     * @return A Specification for the client.
-     */
-    public static Specification<Marche> hasMaitreDouvrage(String maitreDouvrage) {
-        return (root, query, cb) -> {
-            if (maitreDouvrage == null || maitreDouvrage.trim().isEmpty()) {
-                return cb.conjunction();
+            if (criteria.maitreDouvrage() != null && !criteria.maitreDouvrage().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get(FIELD_MAITRE_DOUVRAGE)),
+                        "%" + criteria.maitreDouvrage().toLowerCase() + "%"));
             }
-            return cb.like(cb.lower(root.get("maitreDouvrage")), "%" + maitreDouvrage.toLowerCase() + "%");
-        };
-    }
 
-
-    /**
-     * Creates a Specification to filter by banqueId.
-     *
-     * @param banqueId The id of the bank.
-     * @return A Specification for banqueId.
-     */
-    public static Specification<Marche> hasBanqueId(Long banqueId) {
-        return (root, query, cb) -> {
-            if (banqueId == null) {
-                return cb.conjunction();
+            if (criteria.banqueId() != null) {
+                predicates.add(cb.equal(root.get(FIELD_BANQUE).get("id"), criteria.banqueId()));
             }
-            return cb.equal(root.get("banque").get("id"), banqueId);
-        };
-    }
 
-    /**
-     * Filtre par statut d'archivage. {@code null} = pas de filtre (tous statuts confondus).
-     *
-     * @param actif true = marchés actifs uniquement, false = marchés archivés uniquement.
-     * @return A Specification for actif.
-     */
-    public static Specification<Marche> actif(Boolean actif) {
-        return (root, query, cb) -> {
-            if (actif == null) {
-                return cb.conjunction();
+            if (criteria.actif() != null) {
+                predicates.add(cb.equal(root.get(FIELD_ACTIF), criteria.actif()));
             }
-            return cb.equal(root.get("actif"), actif);
+
+            return predicates.isEmpty()
+                    ? cb.conjunction()
+                    : cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 }

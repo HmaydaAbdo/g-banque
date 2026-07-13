@@ -2,7 +2,6 @@ package staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities;
 
 import jakarta.persistence.*;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.RelationTargetAuditMode;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.marches.entities.Marche;
 import java.math.BigDecimal;
@@ -51,8 +50,12 @@ public class LigneFonctionnelleSpecifique {
     @Column(nullable = false)
     private boolean actif = true;
 
+    /**
+     * {@code Marche} est {@code @Audited} depuis le sweep de conformité du module Marchés —
+     * les changements de rattachement de cette ligne à un marché apparaissent donc aussi dans
+     * l'historique Envers de {@code LigneFonctionnelleSpecifique}.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
-    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @JoinColumn(name = "marche_id", nullable = false)
     private Marche marche;
 

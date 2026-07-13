@@ -20,24 +20,24 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.repositories.
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.specifications.LigneFonctionnelleSpecifiqueSpecification;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
-import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
-import staport.finance.gBanque.droitConstate.dtos.SuivieDcLigneResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.response.AgregatedSuivieDcLigneResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.response.SuivieDcLigneResponseDto;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;
 import staport.finance.gBanque.droitConstate.service.DroitConstateReader;
 import staport.finance.gBanque.droitConstate.spec.DroitConstateSpec;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.factoring.dtos.AgregatedSuivieFactoringLigneResponseDto;
-import staport.finance.gBanque.factoring.dtos.SuivieFactoringLineResponseDto;
+import staport.finance.gBanque.factoring.dtos.response.AgregatedSuivieFactoringLigneResponseDto;
+import staport.finance.gBanque.factoring.dtos.response.SuivieFactoringLineResponseDto;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.mapper.FactoringMapper;
 import staport.finance.gBanque.factoring.service.FactoringReader;
 import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.marches.service.MarcheService;
-import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
-import staport.finance.gBanque.prefinancement.dtos.SuiviePrefiLigneResponseDto;
+import staport.finance.gBanque.marches.service.IMarcheService;
+import staport.finance.gBanque.prefinancement.dtos.response.AgregatedSuiviePrefiLigneResponseDto;
+import staport.finance.gBanque.prefinancement.dtos.response.SuiviePrefiLigneResponseDto;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.mapper.PrefinancementMapper;
@@ -57,7 +57,7 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
     private final LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository;
     private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final LigneFonctionnelleSpecifiqueMapper ligneFonctionnelleSpecifiqueMapper;
-    private final MarcheService marcheService;
+    private final IMarcheService marcheService;
 
     private final PrefinancementReader prefinancementReader;
     private final PrefinancementMapper prefinancementMapper;
@@ -72,7 +72,7 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
     public LigneFonctionnelleSpecifiqueService(
             LigneFonctionnelleSpecifiqueRepository ligneFonctionnelleSpecifiqueRepository, LigneFonctionnelleReader ligneFonctionnelleReader,
             LigneFonctionnelleSpecifiqueMapper ligneFonctionnelleSpecifiqueMapper,
-            MarcheService marcheService, PrefinancementReader prefinancementReader, PrefinancementMapper prefinancementMapper, DroitConstateReader droitConstateReader, DroitConstateMapper droitConstateMapper, FactoringReader factoringReader, FactoringMapper factoringMapper) {
+            IMarcheService marcheService, PrefinancementReader prefinancementReader, PrefinancementMapper prefinancementMapper, DroitConstateReader droitConstateReader, DroitConstateMapper droitConstateMapper, FactoringReader factoringReader, FactoringMapper factoringMapper) {
         this.ligneFonctionnelleSpecifiqueRepository = ligneFonctionnelleSpecifiqueRepository;
         this.ligneFonctionnelleReader = ligneFonctionnelleReader;
         this.ligneFonctionnelleSpecifiqueMapper = ligneFonctionnelleSpecifiqueMapper;
@@ -368,6 +368,12 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
             log.error("Aucun marché associé à la ligne ID: {}", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
         }
+        // Un marché archivé est exclu définitivement du suivi (cf. Marche.actif), même règle que
+        // le calcul d'encours (LigneFonctionnelleSpecifiqueMapper.computeEncoursAndSolde).
+        if (!marche.isActif()) {
+            log.error("Le marché associé à la ligne ID {} est archivé", lineId);
+            throw new ResourceNotFoundException("Le marché associé à la ligne fonctionnelle avec l'ID " + lineId + " est archivé.");
+        }
 
         log.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
 
@@ -392,14 +398,9 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
 
         Page<SuiviePrefiLigneResponseDto> pageOfDtos = prefiPage.map(prefinancementMapper::toSuiviePrefiLigneResponseDto);
 
-        AgregatedSuiviePrefiLigneResponseDto aggregatedDto = new AgregatedSuiviePrefiLigneResponseDto();
-        aggregatedDto.setBanqueName(specificLine.getMarche().getBanque().getNom());
-        aggregatedDto.setMarcheName(marche.getNom());
-        aggregatedDto.setMarcheNumero(marche.getNumero());
-        aggregatedDto.setTotalDebit(totalDebit);
-        aggregatedDto.setTotalCredit(totalCredit);
-        aggregatedDto.setReste(reste);
-        aggregatedDto.setPage(pageOfDtos);
+        AgregatedSuiviePrefiLigneResponseDto aggregatedDto = new AgregatedSuiviePrefiLigneResponseDto(
+                specificLine.getMarche().getBanque().getNom(), marche.getNom(), marche.getNumero(),
+                totalDebit, totalCredit, reste, pageOfDtos);
 
         log.info("Suivi de préfinancement récupéré avec succès pour la ligne ID: {}", lineId);
         return aggregatedDto;
@@ -420,6 +421,12 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
         if (marche == null) {
             log.error("Aucun marché associé à la ligne ID: {}", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
+        }
+        // Un marché archivé est exclu définitivement du suivi (cf. Marche.actif), même règle que
+        // le calcul d'encours (LigneFonctionnelleSpecifiqueMapper.computeEncoursAndSolde).
+        if (!marche.isActif()) {
+            log.error("Le marché associé à la ligne ID {} est archivé", lineId);
+            throw new ResourceNotFoundException("Le marché associé à la ligne fonctionnelle avec l'ID " + lineId + " est archivé.");
         }
 
         log.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
@@ -446,14 +453,9 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
 
         Page<SuivieDcLigneResponseDto> pageOfDtos = dcPage.map(droitConstateMapper::toSuivieDcLigneResponseDto);
 
-        AgregatedSuivieDcLigneResponseDto aggregatedDto = new AgregatedSuivieDcLigneResponseDto();
-        aggregatedDto.setBanqueName(specificLine.getMarche().getBanque().getNom());
-        aggregatedDto.setMarcheName(marche.getNom());
-        aggregatedDto.setMarcheNumero(marche.getNumero());
-        aggregatedDto.setTotalDebit(totalDebit);
-        aggregatedDto.setTotalCredit(totalCredit);
-        aggregatedDto.setReste(reste);
-        aggregatedDto.setPage(pageOfDtos);
+        AgregatedSuivieDcLigneResponseDto aggregatedDto = new AgregatedSuivieDcLigneResponseDto(
+                specificLine.getMarche().getBanque().getNom(), marche.getNom(), marche.getNumero(),
+                totalDebit, totalCredit, reste, pageOfDtos);
 
         log.info("Suivi de droit constaté récupéré avec succès pour la ligne ID: {}", lineId);
         return aggregatedDto;
@@ -474,6 +476,12 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
         if (marche == null) {
             log.error("Aucun marché associé à la ligne ID: {}", lineId);
             throw new ResourceNotFoundException("Aucun marché associé à la ligne fonctionnelle avec l'ID: " + lineId);
+        }
+        // Un marché archivé est exclu définitivement du suivi (cf. Marche.actif), même règle que
+        // le calcul d'encours (LigneFonctionnelleSpecifiqueMapper.computeEncoursAndSolde).
+        if (!marche.isActif()) {
+            log.error("Le marché associé à la ligne ID {} est archivé", lineId);
+            throw new ResourceNotFoundException("Le marché associé à la ligne fonctionnelle avec l'ID " + lineId + " est archivé.");
         }
 
         log.debug("Marché associé: {} (ID: {})", marche.getNom(), marche.getId());
@@ -498,14 +506,9 @@ public class LigneFonctionnelleSpecifiqueService implements ILigneFonctionnelleS
 
         Page<SuivieFactoringLineResponseDto> pageOfDtos = factoringPage.map(factoringMapper::toSuivieFactoringLigneResponseDto);
 
-        AgregatedSuivieFactoringLigneResponseDto aggregatedDto = new AgregatedSuivieFactoringLigneResponseDto();
-        aggregatedDto.setBanqueName(specificLine.getMarche().getBanque().getNom());
-        aggregatedDto.setMarcheName(marche.getNom());
-        aggregatedDto.setMarcheNumero(marche.getNumero());
-        aggregatedDto.setTotalDebit(totalDebit);
-        aggregatedDto.setTotalCredit(totalCredit);
-        aggregatedDto.setReste(reste);
-        aggregatedDto.setPage(pageOfDtos);
+        AgregatedSuivieFactoringLigneResponseDto aggregatedDto = new AgregatedSuivieFactoringLigneResponseDto(
+                specificLine.getMarche().getBanque().getNom(), marche.getNom(), marche.getNumero(),
+                totalDebit, totalCredit, reste, pageOfDtos);
 
         log.info("Suivi de factoring récupéré avec succès pour la ligne ID: {}", lineId);
         return aggregatedDto;

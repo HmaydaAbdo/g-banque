@@ -12,12 +12,16 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationService;
+import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
+import staport.finance.gBanque.droitConstate.validation.services.interfaces.IDroitConstateValidationService;
+import staport.finance.gBanque.factoring.validation.services.interfaces.IFactoringValidationService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
 import staport.finance.gBanque.moyensDePaiements.lcn.validation.services.interfaces.ILcnValidationService;
 import staport.finance.gBanque.moyensDePaiements.virements.validation.services.interfaces.IVirementValidationService;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.services.interfaces.IVirementInternationalValidationService;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.services.interfaces.IMiseADispositionValidationService;
+import staport.finance.gBanque.prefinancement.validation.services.interfaces.IPrefinancementValidationService;
 import staport.finance.gBanque.prelevements.validation.services.interfaces.IPrelevementValidationService;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
@@ -49,6 +53,10 @@ public class TransactionService implements ITransactionService{
     private final IVirementInternationalValidationService virementInternationalValidationService;
     private final IMiseADispositionValidationService miseADispositionValidationService;
     private final IPrelevementValidationService prelevementValidationService;
+    private final IPrefinancementValidationService prefinancementValidationService;
+    private final IFactoringValidationService factoringValidationService;
+    private final IDroitConstateValidationService droitConstateValidationService;
+    private final IDecompteValidationService decompteValidationService;
 
     public TransactionService(TransactionRepository transactionRepository,
                               ILeasingValidationService leasingValidationService,
@@ -58,7 +66,11 @@ public class TransactionService implements ITransactionService{
                               IVirementValidationService virementValidationService,
                               IVirementInternationalValidationService virementInternationalValidationService,
                               IMiseADispositionValidationService miseADispositionValidationService,
-                              IPrelevementValidationService prelevementValidationService) {
+                              IPrelevementValidationService prelevementValidationService,
+                              IPrefinancementValidationService prefinancementValidationService,
+                              IFactoringValidationService factoringValidationService,
+                              IDroitConstateValidationService droitConstateValidationService,
+                              IDecompteValidationService decompteValidationService) {
         this.transactionRepository = transactionRepository;
         this.leasingValidationService = leasingValidationService;
         this.cmtValidationService = cmtValidationService;
@@ -68,6 +80,10 @@ public class TransactionService implements ITransactionService{
         this.virementInternationalValidationService = virementInternationalValidationService;
         this.miseADispositionValidationService = miseADispositionValidationService;
         this.prelevementValidationService = prelevementValidationService;
+        this.prefinancementValidationService = prefinancementValidationService;
+        this.factoringValidationService = factoringValidationService;
+        this.droitConstateValidationService = droitConstateValidationService;
+        this.decompteValidationService = decompteValidationService;
     }
 
     @Transactional(readOnly = true)
@@ -326,6 +342,50 @@ public class TransactionService implements ITransactionService{
             log.info("Transaction PRELEVEMENT ID: {} mise à jour — synchronisation du prélèvement ID: {}",
                     saved.getId(), saved.getReferent());
             prelevementValidationService.syncPrelevementFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation préfinancement : si la transaction provient d'un préfinancement, on
+        // propage dateValeur et dateOperation vers le préfinancement source (referent = prefinancementId).
+        if (TransactionSource.PREFINANCEMENT == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction PREFINANCEMENT ID: {} mise à jour — synchronisation du préfinancement ID: {}",
+                    saved.getId(), saved.getReferent());
+            prefinancementValidationService.syncPrefinancementFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation factoring : si la transaction provient d'un factoring, on propage
+        // dateValeur et dateOperation vers le factoring source (referent = factoringId).
+        if (TransactionSource.FACTORING == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction FACTORING ID: {} mise à jour — synchronisation du factoring ID: {}",
+                    saved.getId(), saved.getReferent());
+            factoringValidationService.syncFactoringFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation droit constaté : si la transaction provient d'un droit constaté, on
+        // propage dateValeur et dateOperation vers le droit constaté source (referent = droitConstateId).
+        if (TransactionSource.DROIT_CONSTATE == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction DROIT_CONSTATE ID: {} mise à jour — synchronisation du droit constaté ID: {}",
+                    saved.getId(), saved.getReferent());
+            droitConstateValidationService.syncDroitConstateFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation décompte : si la transaction provient d'un décompte, on propage
+        // dateValeur et dateOperation vers le décompte source (referent = decompteId).
+        if (TransactionSource.DECOMPTES == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction DECOMPTES ID: {} mise à jour — synchronisation du décompte ID: {}",
+                    saved.getId(), saved.getReferent());
+            decompteValidationService.syncDecompteFromTransaction(
                     saved.getReferent(),
                     saved.getDateValeur(),
                     saved.getDateOperations());

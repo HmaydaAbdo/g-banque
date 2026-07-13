@@ -5,18 +5,21 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.decomptes.dto.DecompteSearchDto;
+import staport.finance.gBanque.decomptes.dtos.request.DecompteSearchDto;
 import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DecompteSpec {
+public final class DecompteSpec {
+
+    private DecompteSpec() {
+        // Classe utilitaire — pas d'instanciation
+    }
 
     /**
      * Filter by Marche ID.
@@ -43,9 +46,7 @@ public class DecompteSpec {
             if (marcheNumero == null || marcheNumero.trim().isEmpty()) {
                 return cb.conjunction();
             }
-            // Join the Prefinancement entity with the Marche entity
             Join<Decompte, Marche> marcheJoin = root.join("marche", JoinType.INNER);
-            // Apply a case-insensitive 'like' predicate on the 'numero' property
             return cb.like(cb.lower(marcheJoin.get("numero")), "%" + marcheNumero.toLowerCase() + "%");
         };
     }
@@ -63,16 +64,13 @@ public class DecompteSpec {
             if (marcheName == null || marcheName.trim().isEmpty()) {
                 return cb.conjunction();
             }
-            // Join the Decompte entity with the Marche entity
             Join<Decompte, Marche> marcheJoin = root.join("marche", JoinType.INNER);
-            // Apply a case-insensitive 'like' predicate on the 'nom' property
             return cb.like(cb.lower(marcheJoin.get("nom")), "%" + marcheName.toLowerCase() + "%");
         };
     }
 
-    /*
+    /**
      * Filter by Banque d'encaissement ID.
-     * @return A Specification for filtering by banque d'encaissement
      */
     public static Specification<Decompte> byBanqueId(Long banqueId) {
         return (root, query, cb) -> {
@@ -95,7 +93,6 @@ public class DecompteSpec {
             return cb.equal(root.get("status"), status);
         };
     }
-
 
     public static Specification<Decompte> hasMontant(BigDecimal montant) {
         return (root, query, cb) -> montant == null ? cb.conjunction() : cb.equal(root.get("montant"), montant);
@@ -131,24 +128,23 @@ public class DecompteSpec {
     /**
      * Combine tous les critères de recherche.
      */
-    public static Specification<Decompte> bySearchCriteria(DecompteSearchDto searchDto) {
+    public static Specification<Decompte> searchByCriteria(DecompteSearchDto searchDto) {
         if (searchDto == null) return Specification.where(null);
 
         Specification<Decompte> spec = Specification.where(null);
 
-        if (searchDto.getMarcheId() != null)
-            spec = spec.and(byMarcheId(searchDto.getMarcheId()));
-        if (searchDto.getBanqueId() != null)
-            spec = spec.and(byBanqueId(searchDto.getBanqueId()));
-        if (searchDto.getStatus() != null)
-            spec = spec.and(byStatus(searchDto.getStatus()));
+        if (searchDto.marcheId() != null)
+            spec = spec.and(byMarcheId(searchDto.marcheId()));
+        if (searchDto.banqueId() != null)
+            spec = spec.and(byBanqueId(searchDto.banqueId()));
+        if (searchDto.status() != null)
+            spec = spec.and(byStatus(searchDto.status()));
 
-        spec = spec.and(byDateValeurRange(searchDto.getDateValeurFrom(), searchDto.getDateValeurTo()));
-        spec = spec.and(byMontantRange(searchDto.getMontantMin(), searchDto.getMontantMax()));
+        spec = spec.and(byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()));
+        spec = spec.and(byMontantRange(searchDto.montantMin(), searchDto.montantMax()));
 
         return spec;
     }
-
 
     public static Specification<Decompte> outstandingUntil(LocalDate until) {
         return (root, query, builder) -> {
@@ -158,7 +154,6 @@ public class DecompteSpec {
             return builder.and(predicates.toArray(new Predicate[0]));
         };
     }
-
 
     public static Specification<Decompte> outstandingBetween(LocalDate from, LocalDate until) {
         return (root, query, builder) -> {

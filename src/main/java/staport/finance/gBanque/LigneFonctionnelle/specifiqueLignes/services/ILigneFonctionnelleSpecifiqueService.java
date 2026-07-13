@@ -6,9 +6,9 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entit
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueRequest;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueResponse;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.dtos.LigneFonctionnelleSpecifiqueSearchCriteria;
-import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
-import staport.finance.gBanque.factoring.dtos.AgregatedSuivieFactoringLigneResponseDto;
-import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.response.AgregatedSuivieDcLigneResponseDto;
+import staport.finance.gBanque.factoring.dtos.response.AgregatedSuivieFactoringLigneResponseDto;
+import staport.finance.gBanque.prefinancement.dtos.response.AgregatedSuiviePrefiLigneResponseDto;
 
 /**
  * Façade publique du domaine LigneFonctionnelleSpecifique.

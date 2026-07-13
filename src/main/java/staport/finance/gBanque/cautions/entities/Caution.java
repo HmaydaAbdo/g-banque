@@ -2,7 +2,6 @@ package staport.finance.gBanque.cautions.entities;
 
 import jakarta.persistence.*;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.RelationTargetAuditMode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -69,16 +68,12 @@ public class Caution {
      * Marché associé à la caution — optionnel.
      * Une caution peut exister sans être rattachée à un marché.
      *
-     * <p>{@code Marche} n'est pas encore {@code @Audited} (module non sweepé) — sur un
-     * {@code @ManyToOne} avec colonne de jointure propre, Envers exige explicitement
-     * {@code @Audited(targetAuditMode = NOT_AUDITED)} sur la relation elle-même, sinon
-     * échec au démarrage ("audited relation ... to a not audited entity"). Ne pas
-     * confondre avec {@code @NotAudited}, réservé aux {@code @OneToMany(mappedBy)} sans
-     * table de jointure (cf. mémoire "Envers — NOT_AUDITED vs @NotAudited").
+     * <p>{@code Marche} est {@code @Audited} depuis le sweep de conformité du module Marchés —
+     * les changements de rattachement d'une caution à un marché apparaissent donc aussi dans
+     * l'historique Envers de {@code Caution}.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "marche_id")
-    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Marche marche;
 
     @Column(nullable = false)

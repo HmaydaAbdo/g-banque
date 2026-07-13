@@ -14,8 +14,6 @@ import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
-import staport.finance.gBanque.factoring.entities.Factoring;
-import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
@@ -28,30 +26,16 @@ import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.restitution.repository.RestitutionRepository;
 import staport.finance.gBanque.validation.dtos.commision.CommissionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.commision.CommissionValidationDto;
-import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionResponseDto;
-import staport.finance.gBanque.decomptes.entities.Decompte;
-import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
-import staport.finance.gBanque.validation.dtos.droitConstate.DroitConstateTransactionRequest;
-import staport.finance.gBanque.validation.dtos.droitConstate.DroitConstateTransactionResponse;
-import staport.finance.gBanque.droitConstate.entities.DroitConstate;
-import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
-import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionRequest;
-import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
-import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
-import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
-import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
-import staport.finance.gBanque.prefinancement.repository.PrefinancementRepository;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
 import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneTransactionResponse;
@@ -67,23 +51,11 @@ public class ValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
-    private final PrefinancementRepository prefinancementRepository;
-    private final PrefinancementTransactionMapper prefinancementTransactionMapper;
-
-    private final DroitConstateRepository droitConstateRepository;
-    private final DroitConstateTransactionMapper droitConstateTransactionMapper;
-
-    private final DecompteRepository decompteRepository;
-    private final DecompteTransactionMapper decompteTransactionMapper;
-
     private final CommisionRepository commisionRepository;
     private final CommisionTransactionMapper commisionTransactionMapper;
 
     private final FraisBancaireRepository fraisBancaireRepository;
     private final FraisBancaireTransactionMapper fraisBancaireTransactionMapper;
-
-    private  final FactoringRepository factoringRepository;
-    private final FactoringTransactionMapper factoringTransactionMapper;
 
     private final TransactionRepository transactionRepository;
     private final BanqueRepository banqueRepository;
@@ -104,21 +76,13 @@ public class ValidationService {
     private final SoldeCascadeService soldeCascadeService;
 
 
-    public ValidationService(TransactionRepository transactionRepository, BanqueRepository banqueRepository, PrefinancementRepository prefinancementRepository, PrefinancementTransactionMapper prefinancementTransactionMapper, DroitConstateRepository droitConstateRepository, DroitConstateTransactionMapper droitConstateTransactionMapper, DecompteRepository decompteRepository, DecompteTransactionMapper decompteTransactionMapper, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, FactoringRepository factoringRepository, FactoringTransactionMapper factoringTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
+    public ValidationService(TransactionRepository transactionRepository, BanqueRepository banqueRepository, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
-        this.prefinancementRepository = prefinancementRepository;
-        this.prefinancementTransactionMapper = prefinancementTransactionMapper;
-        this.droitConstateRepository = droitConstateRepository;
-        this.droitConstateTransactionMapper = droitConstateTransactionMapper;
-        this.decompteRepository = decompteRepository;
-        this.decompteTransactionMapper = decompteTransactionMapper;
         this.commisionRepository = commisionRepository;
         this.commisionTransactionMapper = commisionTransactionMapper;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.fraisBancaireTransactionMapper = fraisBancaireTransactionMapper;
-        this.factoringRepository = factoringRepository;
-        this.factoringTransactionMapper = factoringTransactionMapper;
         this.impotEtTaxeRepository = impotEtTaxeRepository;
         this.impotEtTaxeTransactionMapper = impotEtTaxeTransactionMapper;
         this.restitutionRepository = restitutionRepository;
@@ -148,146 +112,21 @@ public class ValidationService {
     // MiseADispositionValidationService (architecture.md, Règle 1 — la logique de validation d'un
     // module lui appartient).
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public PrefinancementTransactionResponse processPrefinancementTransaction(PrefinancementTransactionRequest requestDto)  {
-        // Step 1: Fetch prefi  from the database using it's id from the request.
-        Prefinancement prefinancement=this.prefinancementRepository.findById(requestDto.getPrefinancementId())
-                .orElseThrow(()->new ResourceNotFoundException("Prefinancement with id "+requestDto.getPrefinancementId()+" not found"));
+    // processPrefinancementTransaction extrait vers
+    // staport.finance.gBanque.prefinancement.validation.services.PrefinancementValidationService
+    // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
-        // Step 2: Check if the prefi is not already paid.
-        // If it's already paid , throw an exception.
-        if (prefinancement.getStatus()== Status.PAYE) {
-            throw new RuntimeException(" préfinancement is already paid");
-        }
+    // processDroitConstateTransaction extrait vers
+    // staport.finance.gBanque.droitConstate.validation.services.DroitConstateValidationService
+    // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
-        // Step 3: Use the mapper to convert the DTO and the fetched prefi entity into a Transaction entity.
-        Transaction transactionEntity = prefinancementTransactionMapper.toEntity(requestDto);
+    // processFactoringTransaction extrait vers
+    // staport.finance.gBanque.factoring.validation.services.FactoringValidationService
+    // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-
-        this.banqueRepository.save(banque);
-
-        // Step 6: Mark the prefi as * (paid) and save the updated prefi entity.
-        prefinancement.setStatus(Status.PAYE);
-        prefinancement.setDateOperation(savedTransaction.getDateOperations());
-        prefinancement.setDateValeur(savedTransaction.getDateValeur());
-        prefinancement.setObservation(savedTransaction.getObservation());
-        prefinancement.setLibelle(savedTransaction.getLibelle());
-        prefinancementRepository.save(prefinancement);
-
-        // Step 7: Convert the saved Transaction entity into a PrefinancementTransactionResponse
-        // using the mapper and return it as the response.
-        return prefinancementTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public DroitConstateTransactionResponse processDroitConstateTransaction(DroitConstateTransactionRequest requestDto) {
-        // Step 1: Fetch dc  from the database using it's id from the request.
-        DroitConstate droitConstate=this.droitConstateRepository.findById(requestDto.getDroitConstateId())
-                .orElseThrow(()->new ResourceNotFoundException("Droit constate with id "+requestDto.getDroitConstateId()+" not found"));
-
-        // Step 2: Check if the dc is not already paid.
-        // If it's already paid , throw an exception.
-        if (droitConstate.getStatus()== Status.PAYE) {
-            throw new RuntimeException(" droit constate is already paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
-        Transaction transactionEntity = droitConstateTransactionMapper.toEntity(requestDto);
-
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the prefi as * (paid) and save the updated prefi entity.
-        droitConstate.setStatus(Status.PAYE);
-        droitConstate.setDateOperation(savedTransaction.getDateOperations());
-        droitConstate.setDateValeur(savedTransaction.getDateValeur());
-        droitConstate.setObservation(savedTransaction.getObservation());
-        droitConstate.setLibelle(savedTransaction.getLibelle());
-
-        droitConstateRepository.save(droitConstate);
-
-        // Step 7: Convert the saved Transaction entity into a DroitConstateTransactionResponse
-        // using the mapper and return it as the response.
-        return droitConstateTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public FactoringTransactionResponse processFactoringTransaction(FactoringTransactionRequest requestDto)  {
-        // Step 1: Fetch factoring  from the database using it's id from the request.
-        Factoring factoring=this.factoringRepository.findById(requestDto.getFactoringId())
-                .orElseThrow(()->new ResourceNotFoundException("Factoring with id "+requestDto.getFactoringId()+" not found"));
-
-        // Step 2: Check if the factoring is not already paid.
-        // If it's already paid , throw an exception.
-        if (factoring.getStatus()== Status.PAYE) {
-            throw new RuntimeException(" factoring is already paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
-        Transaction transactionEntity = factoringTransactionMapper.toEntity(requestDto);
-
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the factoring as paid and save the updated factoring entity.
-        factoring.setStatus(Status.PAYE);
-        factoring.setDateOperation(savedTransaction.getDateOperations());
-        factoring.setDateValeur(savedTransaction.getDateValeur());
-        factoring.setObservation(savedTransaction.getObservation());
-        factoring.setLibelle(savedTransaction.getLibelle());
-
-        factoringRepository.save(factoring);
-
-        // Step 7: Convert the saved Transaction entity into a FactoringTransactionResponse
-        // using the mapper and return it as the response.
-        return factoringTransactionMapper.toResponseDto(savedTransaction);
-    }
-
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public DecompteTransactionResponseDto processDecompteToTransaction(DecompteTransactionRequestDto requestDto)  {
-        // Step 1: Fetch decompte  from the database using it's id from the request.
-        Decompte decompte=this.decompteRepository.findById(requestDto.getDecompteId())
-                .orElseThrow(()->new ResourceNotFoundException("Décompte with id "+requestDto.getDecompteId()+" not found"));
-
-        // Step 2: Check if the decompte is not already paid.
-        // If it's already paid , throw an exception.
-        if (decompte.getStatus()== Status.PAYE) {
-            throw new RuntimeException(" décompte is already paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
-        Transaction transactionEntity = decompteTransactionMapper.toEntity(requestDto);
-
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+requestDto.getBanqueId()+" not found"));
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the decompte as * (paid) and save the updated decompte entity.
-        decompte.setStatus(Status.PAYE);
-        decompte.setDateOperation(savedTransaction.getDateOperations());
-        decompte.setDateValeur(savedTransaction.getDateValeur());
-        decompte.setObservation(savedTransaction.getObservation());
-        decompte.setLibelle(savedTransaction.getLibelle());
-        decompteRepository.save(decompte);
-
-        // Step 7: Convert the saved Transaction entity into a DroitConstateTransactionResponse
-        // using the mapper and return it as the response.
-        return decompteTransactionMapper.toResponseDto(savedTransaction);
-    }
+    // processDecompteToTransaction extrait vers
+    // staport.finance.gBanque.decomptes.validation.services.DecompteValidationService
+    // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public CommissionTransactionResponse processCommissionToTransaction(CommissionValidationDto requestDto)  {

@@ -4,7 +4,6 @@
     import jakarta.persistence.Index;
     import org.hibernate.envers.Audited;
     import org.hibernate.envers.NotAudited;
-    import org.hibernate.envers.RelationTargetAuditMode;
     import staport.finance.gBanque.Bank.entities.Banque;
     import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
     import staport.finance.gBanque.marches.entities.Marche;
@@ -43,8 +42,12 @@ import java.time.OffsetDateTime;
         @JoinColumn(name = "nature_ligne_id", nullable = false)
         private NatureLigneFonctionnelle natureLigneFonctionnelle;
 
+        /**
+         * {@code Marche} est {@code @Audited} depuis le sweep de conformité du module Marchés —
+         * les changements de rattachement d'un marché à cette ligne apparaissent donc aussi dans
+         * l'historique Envers de {@code LigneFonctionnelle} (table de jointure incluse).
+         */
         @ManyToMany(fetch = FetchType.LAZY)
-        @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
         @JoinTable(
                 name = "ligne_fonctionnelle_marche",
                 joinColumns = @JoinColumn(name = "ligne_id"),

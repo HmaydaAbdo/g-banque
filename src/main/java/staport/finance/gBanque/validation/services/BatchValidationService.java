@@ -27,12 +27,15 @@ import staport.finance.gBanque.transactions.enums.SensOperation;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.validation.dtos.commision.CommissionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.commision.CommissionValidationDto;
-import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.droitConstate.DroitConstateTransactionRequest;
-import staport.finance.gBanque.validation.dtos.droitConstate.DroitConstateTransactionResponse;
-import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionRequest;
-import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionResponse;
+import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionRequestDto;
+import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionResponseDto;
+import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
+import staport.finance.gBanque.droitConstate.validation.dto.DroitConstateTransactionRequest;
+import staport.finance.gBanque.droitConstate.validation.dto.DroitConstateTransactionResponse;
+import staport.finance.gBanque.droitConstate.validation.services.interfaces.IDroitConstateValidationService;
+import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionRequest;
+import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionResponse;
+import staport.finance.gBanque.factoring.validation.services.interfaces.IFactoringValidationService;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
@@ -48,8 +51,9 @@ import staport.finance.gBanque.validation.dtos.lot.OperationValideeDto;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.dto.MiseAdispositionTransactionRequestDto;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.dto.MiseAdispositionTransactionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.services.interfaces.IMiseADispositionValidationService;
-import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
-import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
+import staport.finance.gBanque.prefinancement.validation.dto.PrefinancementTransactionRequest;
+import staport.finance.gBanque.prefinancement.validation.dto.PrefinancementTransactionResponse;
+import staport.finance.gBanque.prefinancement.validation.services.interfaces.IPrefinancementValidationService;
 import staport.finance.gBanque.prelevements.validation.dto.PrelevementTransactionResponse;
 import staport.finance.gBanque.prelevements.validation.dto.PrelevementValidationRequest;
 import staport.finance.gBanque.prelevements.validation.services.interfaces.IPrelevementValidationService;
@@ -115,6 +119,10 @@ public class BatchValidationService {
     private final IVirementInternationalValidationService virementInternationalValidationService;
     private final IMiseADispositionValidationService miseADispositionValidationService;
     private final IPrelevementValidationService prelevementValidationService;
+    private final IPrefinancementValidationService prefinancementValidationService;
+    private final IFactoringValidationService factoringValidationService;
+    private final IDroitConstateValidationService droitConstateValidationService;
+    private final IDecompteValidationService decompteValidationService;
 
     public BatchValidationService(ValidationService validationService,
                                    IAgiosValidationService agiosValidationService,
@@ -127,7 +135,11 @@ public class BatchValidationService {
                                    IVirementValidationService virementValidationService,
                                    IVirementInternationalValidationService virementInternationalValidationService,
                                    IMiseADispositionValidationService miseADispositionValidationService,
-                                   IPrelevementValidationService prelevementValidationService) {
+                                   IPrelevementValidationService prelevementValidationService,
+                                   IPrefinancementValidationService prefinancementValidationService,
+                                   IFactoringValidationService factoringValidationService,
+                                   IDroitConstateValidationService droitConstateValidationService,
+                                   IDecompteValidationService decompteValidationService) {
         this.validationService = validationService;
         this.agiosValidationService = agiosValidationService;
         this.echeanceCMTRepository = echeanceCMTRepository;
@@ -140,6 +152,10 @@ public class BatchValidationService {
         this.virementInternationalValidationService = virementInternationalValidationService;
         this.miseADispositionValidationService = miseADispositionValidationService;
         this.prelevementValidationService = prelevementValidationService;
+        this.prefinancementValidationService = prefinancementValidationService;
+        this.factoringValidationService = factoringValidationService;
+        this.droitConstateValidationService = droitConstateValidationService;
+        this.decompteValidationService = decompteValidationService;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -301,7 +317,7 @@ public class BatchValidationService {
                 dto.setDateOperation(requestDto.getDateOperation());
                 dto.setTva(requestDto.getTvaDeductible());
                 dto.setRapprochementId(requestDto.getRapprochementId());
-                FactoringTransactionResponse r = validationService.processFactoringTransaction(dto);
+                FactoringTransactionResponse r = factoringValidationService.processFactoringTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case PREFINANCEMENT -> {
@@ -312,7 +328,7 @@ public class BatchValidationService {
                 dto.setDateOperation(requestDto.getDateOperation());
                 dto.setTva(requestDto.getTvaDeductible());
                 dto.setRapprochementId(requestDto.getRapprochementId());
-                PrefinancementTransactionResponse r = validationService.processPrefinancementTransaction(dto);
+                PrefinancementTransactionResponse r = prefinancementValidationService.processPrefinancementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case DROIT_CONSTATE -> {
@@ -323,7 +339,7 @@ public class BatchValidationService {
                 dto.setDateOperation(requestDto.getDateOperation());
                 dto.setTva(requestDto.getTvaDeductible());
                 dto.setRapprochementId(requestDto.getRapprochementId());
-                DroitConstateTransactionResponse r = validationService.processDroitConstateTransaction(dto);
+                DroitConstateTransactionResponse r = droitConstateValidationService.processDroitConstateTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case DECOMPTES -> {
@@ -334,7 +350,7 @@ public class BatchValidationService {
                 dto.setDateOperation(requestDto.getDateOperation());
                 dto.setTva(requestDto.getTvaDeductible());
                 dto.setRapprochementId(requestDto.getRapprochementId());
-                DecompteTransactionResponseDto r = validationService.processDecompteToTransaction(dto);
+                DecompteTransactionResponseDto r = decompteValidationService.processDecompteTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case IMPAYEE -> {

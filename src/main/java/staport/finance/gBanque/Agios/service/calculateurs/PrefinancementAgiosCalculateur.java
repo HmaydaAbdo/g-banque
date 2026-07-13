@@ -13,7 +13,7 @@ import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.LigneFo
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.LigneFonctionnelleSpecifiqueReader;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.marches.service.MarcheService;
+import staport.finance.gBanque.marches.service.IMarcheService;
 import staport.finance.gBanque.prefinancement.enums.Type;
 import staport.finance.gBanque.prefinancement.services.PrefinancementReader;
 
@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Résolution des lignes/marché/encours via les façades de lecture cross-domaine
  * ({@link LigneFonctionnelleReader}, {@link LigneFonctionnelleSpecifiqueReader},
- * {@link INatureLigneFonctionnelleService}, {@link MarcheService}, {@link PrefinancementReader})
+ * {@link INatureLigneFonctionnelleService}, {@link IMarcheService}, {@link PrefinancementReader})
  * — jamais via leurs Repository respectifs directement (encapsulation des domaines,
  * architecture.md).</p>
  */
@@ -65,7 +65,7 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
     private static final int SCALE_FINAL = 2;
     private static final RoundingMode ROUNDING = RoundingMode.HALF_UP;
 
-    private final MarcheService marcheService;
+    private final IMarcheService marcheService;
     private final LigneFonctionnelleSpecifiqueReader ligneSpecifiqueReader;
     private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
@@ -84,7 +84,7 @@ public class PrefinancementAgiosCalculateur implements AgiosCalculateurMultiMarc
     private volatile NatureLigneFonctionnelle naturePrefi = null;
 
     public PrefinancementAgiosCalculateur(
-            MarcheService marcheService,
+            IMarcheService marcheService,
             LigneFonctionnelleSpecifiqueReader ligneSpecifiqueReader,
             LigneFonctionnelleReader ligneFonctionnelleReader,
             INatureLigneFonctionnelleService natureLigneFonctionnelleService,

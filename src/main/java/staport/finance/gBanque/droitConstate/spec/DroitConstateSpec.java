@@ -6,7 +6,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.droitConstate.dtos.DroitConstateSearchDto;
+import staport.finance.gBanque.droitConstate.dtos.request.DroitConstateSearchDto;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
@@ -146,15 +146,15 @@ public class DroitConstateSpec {
      * @param searchDTO The DTO containing the search criteria.
      * @return A combined Specification.
      */
-    public static Specification<DroitConstate> bySearchCriteria(DroitConstateSearchDto searchDTO) {
+    public static Specification<DroitConstate> searchByCriteria(DroitConstateSearchDto searchDTO) {
         if (searchDTO == null) {
             return Specification.where(null);
         }
 
-        return Specification.where(byMarcheId(searchDTO.getMarcheId()))
-                .and(byBanqueId(searchDTO.getBanqueId()))
-                .and(byType(searchDTO.getType()))
-                .and(byStatus(searchDTO.getStatus()));
+        return Specification.where(byMarcheId(searchDTO.marcheId()))
+                .and(byBanqueId(searchDTO.banqueId()))
+                .and(byType(searchDTO.type()))
+                .and(byStatus(searchDTO.status()));
     }
 
     public static Specification<DroitConstate> outstandingRemboursementUntil(LocalDate until) {

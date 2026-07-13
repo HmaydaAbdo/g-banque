@@ -3,6 +3,8 @@ package staport.finance.gBanque.marches.entities;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
@@ -13,15 +15,34 @@ import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Entité représentant un marché (contrat BTP) rattaché à une banque.
+ *
+ * <p>{@code prefinancements}/{@code droitConstates}/{@code factorings}/{@code decomptes} sont
+ * des {@code @OneToMany(mappedBy = "marche")} <b>sans table de jointure</b> vers des entités qui
+ * ne sont pas encore {@code @Audited} (modules non sweepés). Sur ce type de relation, Envers ne
+ * peut pas reconstruire l'historique de la collection via une table de jointure inexistante — il
+ * faut donc exclure complètement le champ avec {@code @NotAudited} (pas
+ * {@code @Audited(targetAuditMode = NOT_AUDITED)}, réservé aux {@code @ManyToOne}/{@code @ManyToMany}/
+ * relations avec table de jointure), sinon échec au démarrage Envers
+ * ("audited relation ... to a not audited entity"). Cf. mémoire "Envers — NOT_AUDITED vs
+ * @NotAudited". {@code banque} et {@code lignesFonctionnellesSpecifiques} pointent vers des
+ * entités déjà auditées et n'ont besoin d'aucune annotation particulière.
+ */
 @Entity
+@Audited
 @Table(name = "marches", indexes = {
-        @Index(name = "idx_marche_actif", columnList = "actif")
+        @Index(name = "idx_marche_actif", columnList = "actif"),
+        @Index(name = "idx_marche_banque_id", columnList = "banque_id")
 })
+@NamedEntityGraph(
+        name = "Marche.avecBanque",
+        attributeNodes = @NamedAttributeNode("banque")
+)
 public class Marche  {
 
     @Id
@@ -69,20 +90,24 @@ public class Marche  {
     private List<LigneFonctionnelleSpecifique> lignesFonctionnellesSpecifiques = new ArrayList<>();
 
     @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Prefinancement> prefinancements = new ArrayList<>();
 
     @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<DroitConstate> droitConstates = new ArrayList<>();
 
     @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Factoring> factorings = new ArrayList<>();
 
     @OneToMany(mappedBy = "marche", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotAudited
     private List<Decompte> decomptes = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private LocalDate createdAt;
 
     @UpdateTimestamp
     @Column(name = "modified_at", nullable = false)
@@ -256,7 +281,7 @@ public class Marche  {
         this.factorings.remove(factoring);
     }
 
-    public OffsetDateTime getCreatedAt() {
+    public LocalDate getCreatedAt() {
         return createdAt;
     }
 

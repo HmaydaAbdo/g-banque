@@ -5,7 +5,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.factoring.dtos.FactoringSearchDto;
+import staport.finance.gBanque.factoring.dtos.request.FactoringSearchDto;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
@@ -140,15 +140,15 @@ public class FactoringSpec {
      * @param searchDTO The DTO containing the search criteria.
      * @return A combined Specification.
      */
-    public static Specification<Factoring> bySearchCriteria(FactoringSearchDto searchDTO) {
+    public static Specification<Factoring> searchByCriteria(FactoringSearchDto searchDTO) {
         if (searchDTO == null) {
             return Specification.where(null);
         }
 
-        return Specification.where(byMarcheId(searchDTO.getMarcheId()))
-                .and(byBanqueId(searchDTO.getBanqueId()))
-                .and(byType(searchDTO.getType()))
-                .and(byStatus(searchDTO.getStatus()));
+        return Specification.where(byMarcheId(searchDTO.marcheId()))
+                .and(byBanqueId(searchDTO.banqueId()))
+                .and(byType(searchDTO.type()))
+                .and(byStatus(searchDTO.status()));
     }
 
     public static Specification<Factoring> outstandingRemboursementUntil(LocalDate until) {

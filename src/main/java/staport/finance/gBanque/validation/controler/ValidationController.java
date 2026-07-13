@@ -11,20 +11,24 @@ import staport.finance.gBanque.Agios.dtos.AgiosTransactionResponse;
 import staport.finance.gBanque.Agios.dtos.AgiosValidationRequest;
 import staport.finance.gBanque.validation.dtos.commision.CommissionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.commision.CommissionValidationDto;
-import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionRequestDto;
-import staport.finance.gBanque.validation.dtos.decomptes.DecompteTransactionResponseDto;
-import staport.finance.gBanque.validation.dtos.droitConstate.DroitConstateTransactionRequest;
-import staport.finance.gBanque.validation.dtos.droitConstate.DroitConstateTransactionResponse;
-import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionRequest;
-import staport.finance.gBanque.validation.dtos.factoring.FactoringTransactionResponse;
+import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionRequestDto;
+import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionResponseDto;
+import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
+import staport.finance.gBanque.droitConstate.validation.dto.DroitConstateTransactionRequest;
+import staport.finance.gBanque.droitConstate.validation.dto.DroitConstateTransactionResponse;
+import staport.finance.gBanque.droitConstate.validation.services.interfaces.IDroitConstateValidationService;
+import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionRequest;
+import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionResponse;
+import staport.finance.gBanque.factoring.validation.services.interfaces.IFactoringValidationService;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
-import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionRequest;
-import staport.finance.gBanque.validation.dtos.prefinancements.PrefinancementTransactionResponse;
+import staport.finance.gBanque.prefinancement.validation.dto.PrefinancementTransactionRequest;
+import staport.finance.gBanque.prefinancement.validation.dto.PrefinancementTransactionResponse;
+import staport.finance.gBanque.prefinancement.validation.services.interfaces.IPrefinancementValidationService;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionRequest;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTransactionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
@@ -87,6 +91,10 @@ public class ValidationController {
     private final IVirementInternationalValidationService virementInternationalValidationService;
     private final IMiseADispositionValidationService miseADispositionValidationService;
     private final IPrelevementValidationService prelevementValidationService;
+    private final IPrefinancementValidationService prefinancementValidationService;
+    private final IFactoringValidationService factoringValidationService;
+    private final IDroitConstateValidationService droitConstateValidationService;
+    private final IDecompteValidationService decompteValidationService;
 
     public ValidationController(ValidationService validationService,
                                 ReverseTransactionService reverseTransactionService,
@@ -101,7 +109,11 @@ public class ValidationController {
                                 IVirementValidationService virementValidationService,
                                 IVirementInternationalValidationService virementInternationalValidationService,
                                 IMiseADispositionValidationService miseADispositionValidationService,
-                                IPrelevementValidationService prelevementValidationService) {
+                                IPrelevementValidationService prelevementValidationService,
+                                IPrefinancementValidationService prefinancementValidationService,
+                                IFactoringValidationService factoringValidationService,
+                                IDroitConstateValidationService droitConstateValidationService,
+                                IDecompteValidationService decompteValidationService) {
         this.validationService      = validationService;
         this.reverseTransactionService = reverseTransactionService;
         this.leasingValidationService  = leasingValidationService;
@@ -116,6 +128,10 @@ public class ValidationController {
         this.virementInternationalValidationService = virementInternationalValidationService;
         this.miseADispositionValidationService = miseADispositionValidationService;
         this.prelevementValidationService = prelevementValidationService;
+        this.prefinancementValidationService = prefinancementValidationService;
+        this.factoringValidationService = factoringValidationService;
+        this.droitConstateValidationService = droitConstateValidationService;
+        this.decompteValidationService = decompteValidationService;
     }
 
 
@@ -249,8 +265,8 @@ public class ValidationController {
      * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
      */
     @PostMapping("/process/prefinancement")
-    public ResponseEntity<PrefinancementTransactionResponse> processPrefiTransaction(@Valid @RequestBody PrefinancementTransactionRequest requestDto) throws Exception {
-        PrefinancementTransactionResponse responseDto = validationService.processPrefinancementTransaction(requestDto);
+    public ResponseEntity<PrefinancementTransactionResponse> processPrefiTransaction(@Valid @RequestBody PrefinancementTransactionRequest requestDto) {
+        PrefinancementTransactionResponse responseDto = prefinancementValidationService.processPrefinancementTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
@@ -262,14 +278,14 @@ public class ValidationController {
      * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
      */
     @PostMapping("/process/droit-constate")
-    public ResponseEntity<DroitConstateTransactionResponse> processDroitConstqteTransaction(@Valid @RequestBody DroitConstateTransactionRequest requestDto) throws Exception {
-        DroitConstateTransactionResponse responseDto = validationService.processDroitConstateTransaction(requestDto);
+    public ResponseEntity<DroitConstateTransactionResponse> processDroitConstqteTransaction(@Valid @RequestBody DroitConstateTransactionRequest requestDto) {
+        DroitConstateTransactionResponse responseDto = droitConstateValidationService.processDroitConstateTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
     @PostMapping("/process/factoring")
-    public ResponseEntity<FactoringTransactionResponse> processFactoringTransaction(@Valid @RequestBody FactoringTransactionRequest requestDto) throws Exception {
-        FactoringTransactionResponse responseDto = validationService.processFactoringTransaction(requestDto);
+    public ResponseEntity<FactoringTransactionResponse> processFactoringTransaction(@Valid @RequestBody FactoringTransactionRequest requestDto) {
+        FactoringTransactionResponse responseDto = factoringValidationService.processFactoringTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
@@ -281,8 +297,8 @@ public class ValidationController {
      * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
      */
     @PostMapping("/process/decompte")
-    public ResponseEntity<DecompteTransactionResponseDto> processDecompteToTransaction(@Valid @RequestBody DecompteTransactionRequestDto requestDto) throws Exception {
-        DecompteTransactionResponseDto responseDto = validationService.processDecompteToTransaction(requestDto);
+    public ResponseEntity<DecompteTransactionResponseDto> processDecompteToTransaction(@Valid @RequestBody DecompteTransactionRequestDto requestDto) {
+        DecompteTransactionResponseDto responseDto = decompteValidationService.processDecompteTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

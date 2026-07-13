@@ -1,132 +1,118 @@
 package staport.finance.gBanque.droitConstate.controller;
 
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.droitConstate.dtos.*;
-import staport.finance.gBanque.droitConstate.service.DroitConstateService;
-
+import staport.finance.gBanque.droitConstate.dtos.request.DroitConstateRequestDto;
+import staport.finance.gBanque.droitConstate.dtos.request.DroitConstateSearchDto;
+import staport.finance.gBanque.droitConstate.dtos.request.EncoursDroitConstateSearchDto;
+import staport.finance.gBanque.droitConstate.dtos.response.DroitConstateResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.response.EncoursDroitConstateDto;
+import staport.finance.gBanque.droitConstate.service.IDroitConstateService;
 
 /**
- * REST controller for managing Prefinancement records.
+ * REST controller for managing Droit Constaté records.
  * Provides a complete CRUD and search API.
+ *
+ * <p>Injecte {@link IDroitConstateService} (DIP — jamais la classe concrète).
+ *
+ * <p>Autorisations (cf. {@code docs/rbac/droits-constate.md}) : réservé Finance/SYSTEM_ADMIN sur
+ * toutes les actions (donnée financière propre au département Finance, mirroring
+ * {@code CautionController}), suppression et changement de statut (PREVU/PAYE) réservés
+ * SYSTEM_ADMIN.
  */
+@Tag(name = "Droits Constatés", description = "Gestion des droits constatés (déblocages/remboursements) rattachés aux marchés")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/droitsConstate")
 public class DroitConstateController {
 
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
-    private static final Logger log = LoggerFactory.getLogger(DroitConstateController.class);
-    private final DroitConstateService droitConstateService;
+    private final IDroitConstateService droitConstateService;
 
-    public DroitConstateController(DroitConstateService droitConstateService) {
+    public DroitConstateController(IDroitConstateService droitConstateService) {
         this.droitConstateService = droitConstateService;
     }
 
-
+    @Operation(summary = "Créer un droit constaté")
     @PostMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<DroitConstateResponseDto> createDroitConstate(@Valid @RequestBody DroitConstateRequestDto requestDTO) throws Exception {
-        log.info("POST /droitsConstate - Réception d'une demande de création de droit constaté");
-        log.debug("Données de la requête: {}", requestDTO);
         DroitConstateResponseDto responseDTO = droitConstateService.createDroitConstate(requestDTO);
-        log.info("POST /droitsConstate - Droit constaté créé avec succès, ID: {}", responseDTO.getId());
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 
-
+    @Operation(summary = "Modifier un droit constaté")
     @PutMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<DroitConstateResponseDto> updateDroitConstate(@PathVariable Long id, @Valid @RequestBody DroitConstateRequestDto requestDTO) throws Exception {
-        log.info("PUT /droitsConstate/{} - Réception d'une demande de modification", id);
-        log.debug("Nouvelles données: {}", requestDTO);
-
         DroitConstateResponseDto responseDTO = droitConstateService.updateDroitConstate(id, requestDTO);
-
-        log.info("PUT /droitsConstate/{} - Droit constaté modifié avec succès", id);
         return ResponseEntity.ok(responseDTO);
     }
 
-
+    @Operation(summary = "Supprimer un droit constaté", description = "Réservé SYSTEM_ADMIN.")
     @DeleteMapping("/{id}")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deleteDroitConstate(@PathVariable Long id) {
-        log.info("DELETE /droitsConstate/{} - Réception d'une demande de suppression", id);
-
         droitConstateService.deleteDroitConstate(id);
-
-        log.info("DELETE /droitsConstate/{} - Droit constaté supprimé avec succès", id);
         return ResponseEntity.noContent().build();
     }
 
-
+    @Operation(summary = "Récupérer un droit constaté par ID")
     @GetMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<DroitConstateResponseDto> getDroitConstateById(@PathVariable Long id) {
-        log.info("GET /droitsConstate/{} - Réception d'une demande de consultation", id);
-
         DroitConstateResponseDto responseDTO = droitConstateService.findById(id);
-
-        log.debug("GET /droitsConstate/{} - Droit constaté trouvé: Marché {}, Montant {}",
-                id, responseDTO.getMarcheName(), responseDTO.getMontant());
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(summary = "Recherche paginée des droits constatés")
     @GetMapping
-    public ResponseEntity<Page<DroitConstateResponseDto>> searchDroitConstates(DroitConstateSearchDto searchDTO, @PageableDefault Pageable pageable) {
-        log.info("GET /droitsConstate - Réception d'une demande de recherche");
-        log.debug("Critères de recherche: {}, Page: {}, Taille: {}",
-                searchDTO, pageable.getPageNumber(), pageable.getPageSize());
-
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<Page<DroitConstateResponseDto>> searchDroitConstates(@ModelAttribute DroitConstateSearchDto searchDTO, @PageableDefault Pageable pageable) {
         Page<DroitConstateResponseDto> page = droitConstateService.findAll(searchDTO, pageable);
-
-        log.info("GET /droitsConstate - Recherche terminée: {} résultat(s) trouvé(s)", page.getTotalElements());
         return ResponseEntity.ok(page);
     }
 
+    @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN — cohérent avec la " +
+            "correction déjà appliquée aux modules Moyens de paiement/CMT sur ce type d'action.")
     @PatchMapping("/{id}/status/toggle")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<DroitConstateResponseDto> toggleStatus(@PathVariable Long id) {
-        log.info("PATCH /droitsConstate/{}/status/toggle - Réception d'une demande de changement de statut", id);
-
         DroitConstateResponseDto responseDTO = droitConstateService.toggleStatus(id);
-
-        log.info("PATCH /droitsConstate/{}/status/toggle - Statut changé avec succès vers: {}",
-                id, responseDTO.getStatus());
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(summary = "Consulter les encours de remboursement de droit constaté d'une banque")
     @GetMapping("/remboursement/encours/{banqueId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursDroitConstateDto> getEncoursForRemboursement(
-            @PathVariable Long banqueId, EncoursDroitConstateSearchDto searchDTO,
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursDroitConstateSearchDto searchDTO,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-
-        log.info("GET /droitsConstate/remboursement/encours/{} - Consultation des encours de remboursement", banqueId);
-        log.debug("Critères de recherche encours remboursement: {}", searchDTO);
-
         EncoursDroitConstateDto result = droitConstateService.getRemboursementEncoursForBanque(searchDTO, banqueId, pageable);
-
-        log.info("GET /droitsConstate/remboursement/encours/{} - Total encours: {}, Nombre d'éléments: {}", banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
-
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Consulter les encours de déblocage de droit constaté d'une banque")
     @GetMapping("/deblocage/encours/{banqueId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursDroitConstateDto> getEncoursForDeblocage(
-            @PathVariable Long banqueId, EncoursDroitConstateSearchDto searchDTO,
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursDroitConstateSearchDto searchDTO,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-
-        log.info("GET /droitsConstate/deblocage/encours/{} - Consultation des encours de déblocage", banqueId);
-        log.debug("Critères de recherche encours déblocage: {}", searchDTO);
-
         EncoursDroitConstateDto result = droitConstateService.getDeblocageEncoursForBanque(searchDTO, banqueId, pageable);
-
-        log.info("GET /droitsConstate/deblocage/encours/{} - Total encours: {}, Nombre d'éléments: {}", banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
-
         return ResponseEntity.ok(result);
     }
-
-
 }

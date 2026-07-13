@@ -7,7 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.entities.LigneFonctionnelleSpecifique;
 import staport.finance.gBanque.marches.entities.Marche;
-import staport.finance.gBanque.prefinancement.dtos.PrefinancementSearchDTO;
+import staport.finance.gBanque.prefinancement.dtos.request.PrefinancementSearchDTO;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.prefinancement.enums.Type;
@@ -110,15 +110,15 @@ public final class PrefinancementSpecification {
         };
     }
 
-    public static Specification<Prefinancement> bySearchCriteria(PrefinancementSearchDTO searchDTO) {
+    public static Specification<Prefinancement> searchByCriteria(PrefinancementSearchDTO searchDTO) {
         if (searchDTO == null) {
             return Specification.where(null);
         }
 
-        return Specification.where(byMarcheId(searchDTO.getMarcheId()))
-                .and(byBanqueId(searchDTO.getBanqueId()))
-                .and(byType(searchDTO.getType()))
-                .and(byStatus(searchDTO.getStatus()));
+        return Specification.where(byMarcheId(searchDTO.marcheId()))
+                .and(byBanqueId(searchDTO.banqueId()))
+                .and(byType(searchDTO.type()))
+                .and(byStatus(searchDTO.status()));
     }
 
     public static Specification<Prefinancement> outstandingRemboursementUntil(LocalDate until) {

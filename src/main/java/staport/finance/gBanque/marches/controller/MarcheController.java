@@ -1,23 +1,34 @@
 package staport.finance.gBanque.marches.controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
-import staport.finance.gBanque.marches.dtos.MarcheRequestDTO;
-import staport.finance.gBanque.marches.dtos.MarcheResponseDTO;
-import staport.finance.gBanque.marches.dtos.MarcheSearchDTO;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.marches.service.MarcheService;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.marches.dtos.request.MarcheRequestDTO;
+import staport.finance.gBanque.marches.dtos.request.MarcheSearchDTO;
+import staport.finance.gBanque.marches.dtos.response.MarcheResponseDTO;
+import staport.finance.gBanque.marches.exceptions.MarcheExceptionHandler;
+import staport.finance.gBanque.marches.service.IMarcheService;
 
 /**
- * Contrôleur du module Marches.
+ * Contrôleur REST du module Marches.
+ *
+ * <p>Injecte {@link IMarcheService} (DIP — jamais l'implémentation concrète). La gestion des
+ * exceptions est déléguée à {@link MarcheExceptionHandler}. Aucune logique métier ici.
+ *
+ * <p>Résout la {@link Banque} via {@link IBanqueService} avant d'appeler le Service — voir la
+ * javadoc de {@code MarcheService} pour la raison (évite un cycle de bean Spring).
  *
  * <p>Autorisations (cf. {@code docs/rbac/marches.md}) :</p>
  * <ul>
@@ -27,152 +38,114 @@ import staport.finance.gBanque.marches.service.MarcheService;
  *       aucune donnée liée, cf. {@code MarcheService.deleteMarche}).</li>
  * </ul>
  */
-@Controller
+@Tag(name = "Marchés", description = "Gestion des marchés (contrats BTP) rattachés à une banque")
+@SecurityRequirement(name = "bearerAuth")
+@RestController
 @RequestMapping("/marches")
 public class MarcheController {
-
-    private static final Logger log = LoggerFactory.getLogger(MarcheController.class);
 
     private static final String FINANCE_OR_ADMIN =
             "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
     private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
     private static final String AUTHENTICATED = "isAuthenticated()";
 
-    private final MarcheService marcheService;
+    private final IMarcheService marcheService;
+    private final IBanqueService banqueService;
 
-    public MarcheController(MarcheService marcheService) {
+    public MarcheController(IMarcheService marcheService, IBanqueService banqueService) {
         this.marcheService = marcheService;
+        this.banqueService = banqueService;
     }
 
-    /**
-     * Endpoint to create a new Marche.
-     * HTTP Method: POST
-     * URI: /api/marches
-     *
-     * @param requestDTO The DTO containing the Marche data.
-     * @return A ResponseEntity with the created Marche and HTTP status 201.
-     */
+    @Operation(summary = "Créer un marché", description = "Réservé Finance / SYSTEM_ADMIN.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Marché créé"),
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
+            @ApiResponse(responseCode = "404", description = "Banque introuvable"),
+            @ApiResponse(responseCode = "409", description = "Numéro de marché déjà existant")
+    })
     @PostMapping
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<MarcheResponseDTO> createMarche(@Valid @RequestBody MarcheRequestDTO requestDTO) {
-        log.info("Début de la création d'un nouveau marché avec ls données suivants : {}", requestDTO);
-        MarcheResponseDTO responseDTO = marcheService.createMarche(requestDTO);
-        log.info("Marché créé avec succès - ID: {}, Numéro: {}", responseDTO.getId(), responseDTO.getNumero());
+        Banque banque = banqueService.findOrThrow(requestDTO.banqueId());
+        MarcheResponseDTO responseDTO = marcheService.createMarche(requestDTO, banque);
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 
-    /**
-     * Endpoint to get a single Marche by its ID.
-     * HTTP Method: GET
-     * URI: /api/marches/{id}
-     *
-     * @param id The ID of the Marche.
-     * @return A ResponseEntity with the Marche response DTO and HTTP status 200.
-     */
+    @Operation(summary = "Détail d'un marché par ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Marché introuvable")
+    })
     @GetMapping("/{id}")
     @PreAuthorize(AUTHENTICATED)
     public ResponseEntity<MarcheResponseDTO> getMarcheById(@PathVariable Long id) {
-        log.info("Récupération du marché par ID: {}", id);
-        MarcheResponseDTO responseDTO = marcheService.getMarcheById(id);
-        log.info("Marché récupéré avec succès - ID: {}, Numéro: {}", responseDTO.getId(), responseDTO.getNumero());
-        return ResponseEntity.ok(responseDTO);
+        return ResponseEntity.ok(marcheService.getMarcheById(id));
     }
 
-    /**
-     * Endpoint to get all Marches with search, pagination, and sorting.
-     * HTTP Method: GET
-     * URI: /api/marches
-     *
-     * @param searchDTO The DTO for search criteria (e.g., ?nom=test&numero=123).
-     * @param pageable  The pagination and sorting information (e.g., ?page=0&size=10&sort=nom,asc).
-     * @return A paginated list of Marche response DTOs.
-     */
+    @Operation(summary = "Liste paginée des marchés")
+    @Parameter(name = "nom",            description = "Filtre LIKE sur le nom")
+    @Parameter(name = "numero",         description = "Filtre LIKE sur le numéro")
+    @Parameter(name = "maitreDouvrage", description = "Filtre LIKE sur le maître d'ouvrage")
+    @Parameter(name = "banqueId",       description = "Filtre exact sur la banque")
+    @Parameter(name = "actif",          description = "true = actifs uniquement, false = archivés uniquement, absent = tous")
     @GetMapping
     @PreAuthorize(AUTHENTICATED)
     public ResponseEntity<Page<MarcheResponseDTO>> getAllMarches(
-            MarcheSearchDTO searchDTO,
+            @ModelAttribute MarcheSearchDTO searchDTO,
             Pageable pageable) {
-        log.info("Recherche de marchés - Critères: {}, Page: {}, Taille: {}",
-                searchDTO, pageable.getPageNumber(), pageable.getPageSize());
-
         Page<MarcheResponseDTO> marches = marcheService.findAllMarches(searchDTO, pageable);
-
-        log.info("Marchés récupérés avec succès - Nombre total: {}, Éléments de la page: {}",
-                marches.getTotalElements(), marches.getNumberOfElements());
         return ResponseEntity.ok(marches);
     }
 
-    /**
-     * Endpoint to update an existing Marche.
-     * HTTP Method: PUT
-     * URI: /api/marches/{id}
-     *
-     * @param id The ID of the Marche to update.
-     * @param requestDTO The DTO with the updated data.
-     * @return A ResponseEntity with the updated Marche and HTTP status 200.
-     */
+    @Operation(summary = "Modifier un marché", description = "Réservé Finance / SYSTEM_ADMIN. La banque n'est modifiée que si banqueId est fourni.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "400", description = "Données invalides"),
+            @ApiResponse(responseCode = "404", description = "Marché ou banque introuvable"),
+            @ApiResponse(responseCode = "409", description = "Numéro de marché déjà existant")
+    })
     @PutMapping("/{id}")
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<MarcheResponseDTO> updateMarche(@PathVariable Long id,
                                                           @Valid @RequestBody MarcheRequestDTO requestDTO) {
-        log.info("Début de la mise à jour du marché - ID: {}, Nouveau données: {}",
-                id, requestDTO);
-        MarcheResponseDTO responseDTO = marcheService.updateMarche(id, requestDTO);
-        log.info("Marché mis à jour avec succès - ID: {}, Numéro: {}",
-                responseDTO.getId(), responseDTO.getNumero());
+        Banque banque = requestDTO.banqueId() != null ? banqueService.findOrThrow(requestDTO.banqueId()) : null;
+        MarcheResponseDTO responseDTO = marcheService.updateMarche(id, requestDTO, banque);
         return ResponseEntity.ok(responseDTO);
     }
 
-    /**
-     * Endpoint to delete a Marche by its ID.
-     * HTTP Method: DELETE
-     * URI: /api/marches/{id}
-     * Réservé SYSTEM_ADMIN. Refusé si le marché a des données liées (cf. {@code MarcheService}).
-     *
-     * @param id The ID of the Marche to delete.
-     * @return A ResponseEntity with a status of 204 (No Content).
-     */
+    @Operation(summary = "Supprimer définitivement un marché",
+            description = "Réservé SYSTEM_ADMIN. Refusé si le marché a des données liées (décomptes, "
+                    + "préfinancements, droits constatés, factorings, lignes spécifiques) — utiliser l'archivage.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Marché supprimé"),
+            @ApiResponse(responseCode = "404", description = "Marché introuvable"),
+            @ApiResponse(responseCode = "422", description = "Marché ayant des données liées")
+    })
     @DeleteMapping("/{id}")
     @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deleteMarche(@PathVariable Long id) {
-        log.info("Début de la suppression du marché - ID: {}", id);
         marcheService.deleteMarche(id);
-        log.info("Marché supprimé avec succès - ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Endpoint to archive a Marche by its ID.
-     * HTTP Method: PATCH
-     * URI: /api/marches/{id}/archiver
-     * Le marché reste consultable mais sort définitivement des calculs futurs (agios, encours).
-     *
-     * @param id The ID of the Marche to archive.
-     * @return A ResponseEntity with the archived Marche and HTTP status 200.
-     */
+    @Operation(summary = "Archiver un marché",
+            description = "Réservé Finance / SYSTEM_ADMIN. Le marché reste consultable mais sort "
+                    + "définitivement des calculs futurs (agios, encours).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Marché introuvable")
+    })
     @PatchMapping("/{id}/archiver")
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<MarcheResponseDTO> archiverMarche(@PathVariable Long id) {
-        log.info("Début de l'archivage du marché - ID: {}", id);
-        MarcheResponseDTO responseDTO = marcheService.archiverMarche(id);
-        log.info("Marché archivé avec succès - ID: {}", id);
-        return ResponseEntity.ok(responseDTO);
+        return ResponseEntity.ok(marcheService.archiverMarche(id));
     }
 
-    /**
-     * Endpoint to reactivate an archived Marche by its ID.
-     * HTTP Method: PATCH
-     * URI: /api/marches/{id}/desarchiver
-     *
-     * @param id The ID of the Marche to reactivate.
-     * @return A ResponseEntity with the reactivated Marche and HTTP status 200.
-     */
+    @Operation(summary = "Désarchiver un marché", description = "Réservé Finance / SYSTEM_ADMIN.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "404", description = "Marché introuvable")
+    })
     @PatchMapping("/{id}/desarchiver")
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<MarcheResponseDTO> desarchiverMarche(@PathVariable Long id) {
-        log.info("Début du désarchivage du marché - ID: {}", id);
-        MarcheResponseDTO responseDTO = marcheService.desarchiverMarche(id);
-        log.info("Marché désarchivé avec succès - ID: {}", id);
-        return ResponseEntity.ok(responseDTO);
+        return ResponseEntity.ok(marcheService.desarchiverMarche(id));
     }
 }

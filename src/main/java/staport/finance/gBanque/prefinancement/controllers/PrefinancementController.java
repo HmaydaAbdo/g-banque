@@ -1,123 +1,118 @@
 package staport.finance.gBanque.prefinancement.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.prefinancement.dtos.*;
-import staport.finance.gBanque.prefinancement.services.PrefinancementService;
+import staport.finance.gBanque.prefinancement.dtos.request.EncoursPrefinancementSearchDto;
+import staport.finance.gBanque.prefinancement.dtos.request.PrefinancementRequestDTO;
+import staport.finance.gBanque.prefinancement.dtos.request.PrefinancementSearchDTO;
+import staport.finance.gBanque.prefinancement.dtos.response.EncoursPrefinancementDto;
+import staport.finance.gBanque.prefinancement.dtos.response.PrefinancementResponseDTO;
+import staport.finance.gBanque.prefinancement.services.IPrefinancementService;
 
 /**
  * REST controller for managing Prefinancement records.
  * Provides a complete CRUD and search API.
+ *
+ * <p>Injecte {@link IPrefinancementService} (DIP — jamais la classe concrète).
+ *
+ * <p>Autorisations (cf. {@code docs/rbac/prefinancements.md}) : réservé Finance/SYSTEM_ADMIN sur
+ * toutes les actions (donnée financière propre au département Finance, mirroring
+ * {@code CautionController}), suppression et changement de statut (PREVU/PAYE) réservés
+ * SYSTEM_ADMIN.
  */
+@Tag(name = "Préfinancements", description = "Gestion des préfinancements (déblocages/remboursements) rattachés aux marchés")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/prefinancements")
 public class PrefinancementController {
 
-    private static final Logger log = LoggerFactory.getLogger(PrefinancementController.class);
-    private final PrefinancementService prefinancementService;
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
-    public PrefinancementController(PrefinancementService prefinancementService) {
+    private final IPrefinancementService prefinancementService;
+
+    public PrefinancementController(IPrefinancementService prefinancementService) {
         this.prefinancementService = prefinancementService;
     }
 
-    /**
-     * Creates a new Prefinancement record.
-     *
-     * @param requestDTO The DTO containing the data for the new record.
-     * @return A ResponseEntity with the newly created record and HTTP status 201.
-     */
+    @Operation(summary = "Créer un préfinancement")
     @PostMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<PrefinancementResponseDTO> createPrefinancement(@Valid @RequestBody PrefinancementRequestDTO requestDTO) throws Exception {
         PrefinancementResponseDTO responseDTO = prefinancementService.createPrefinancement(requestDTO);
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED);
     }
 
-    /**
-     * Updates an existing Prefinancement record.
-     *
-     * @param id The ID of the record to update.
-     * @param requestDTO The DTO containing the updated data.
-     * @return A ResponseEntity with the updated record and HTTP status 200.
-     */
+    @Operation(summary = "Modifier un préfinancement")
     @PutMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<PrefinancementResponseDTO> updatePrefinancement(@PathVariable Long id, @Valid @RequestBody PrefinancementRequestDTO requestDTO) throws Exception {
         PrefinancementResponseDTO responseDTO = prefinancementService.updatePrefinancement(id, requestDTO);
         return ResponseEntity.ok(responseDTO);
     }
 
-    /**
-     * Deletes a Prefinancement record by its ID.
-     *
-     * @param id The ID of the record to delete.
-     * @return A ResponseEntity with HTTP status 204.
-     */
+    @Operation(summary = "Supprimer un préfinancement", description = "Réservé SYSTEM_ADMIN.")
     @DeleteMapping("/{id}")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deletePrefinancement(@PathVariable Long id) {
         prefinancementService.deletePrefinancement(id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Retrieves a Prefinancement record by its ID.
-     *
-     * @param id The ID of the record to retrieve.
-     * @return A ResponseEntity with the found record and HTTP status 200.
-     */
+    @Operation(summary = "Récupérer un préfinancement par ID")
     @GetMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<PrefinancementResponseDTO> getPrefinancementById(@PathVariable Long id) {
         PrefinancementResponseDTO responseDTO = prefinancementService.findById(id);
         return ResponseEntity.ok(responseDTO);
     }
 
-
-
-    /**
-     * Searches for Prefinancement records based on criteria.
-     *
-     * @param searchDTO The DTO containing the search criteria.
-     * @param pageable Pagination and sorting information.
-     * @return A Page of PrefinancementResponseDTOs matching the criteria.
-     */
+    @Operation(summary = "Recherche paginée des préfinancements")
     @GetMapping
-    public ResponseEntity<Page<PrefinancementResponseDTO>> searchPrefinancements(PrefinancementSearchDTO searchDTO, @PageableDefault Pageable pageable) {
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<Page<PrefinancementResponseDTO>> searchPrefinancements(@ModelAttribute PrefinancementSearchDTO searchDTO, @PageableDefault Pageable pageable) {
         Page<PrefinancementResponseDTO> page = prefinancementService.findAll(searchDTO, pageable);
         return ResponseEntity.ok(page);
     }
 
-    /**
-     * Changes the status of a Prefinancement record to "PAID".
-     *
-     * @param id The ID of the record.
-     * @return A ResponseEntity with the updated record and HTTP status 200.
-     */
+    @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN — cohérent avec la " +
+            "correction déjà appliquée aux modules Moyens de paiement/CMT sur ce type d'action.")
     @PatchMapping("/{id}/status/toggle")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<PrefinancementResponseDTO> toggleStatus(@PathVariable Long id) {
         PrefinancementResponseDTO responseDTO = prefinancementService.toggleStatus(id);
         return ResponseEntity.ok(responseDTO);
     }
 
+    @Operation(summary = "Consulter les encours de remboursement de préfinancement d'une banque")
     @GetMapping("/remboursement/encours/{banqueId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursPrefinancementDto> getEncoursForRemboursement(
             @PathVariable Long banqueId,
-            EncoursPrefinancementSearchDto searchDto,
+            @ModelAttribute EncoursPrefinancementSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursPrefinancementDto result = prefinancementService.getRemboursementEncoursForBanque(searchDto,banqueId, pageable);
+        EncoursPrefinancementDto result = prefinancementService.getRemboursementEncoursForBanque(searchDto, banqueId, pageable);
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Consulter les encours de déblocage de préfinancement d'une banque")
     @GetMapping("/deblocage/encours/{banqueId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursPrefinancementDto> getEncoursForDeblocage(
             @PathVariable Long banqueId,
-            EncoursPrefinancementSearchDto searchDto,
+            @ModelAttribute EncoursPrefinancementSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
-        EncoursPrefinancementDto result = prefinancementService.getDeblocageEncoursForBanque(searchDto,banqueId, pageable);
+        EncoursPrefinancementDto result = prefinancementService.getDeblocageEncoursForBanque(searchDto, banqueId, pageable);
         return ResponseEntity.ok(result);
     }
 }

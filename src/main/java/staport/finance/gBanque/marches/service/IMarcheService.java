@@ -2,9 +2,10 @@ package staport.finance.gBanque.marches.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import staport.finance.gBanque.marches.dtos.MarcheRequestDTO;
-import staport.finance.gBanque.marches.dtos.MarcheResponseDTO;
-import staport.finance.gBanque.marches.dtos.MarcheSearchDTO;
+import staport.finance.gBanque.Bank.entities.Banque;
+import staport.finance.gBanque.marches.dtos.request.MarcheRequestDTO;
+import staport.finance.gBanque.marches.dtos.request.MarcheSearchDTO;
+import staport.finance.gBanque.marches.dtos.response.MarcheResponseDTO;
 import staport.finance.gBanque.marches.entities.Marche;
 
 import java.util.List;
@@ -20,11 +21,22 @@ import java.util.List;
  */
 public interface IMarcheService {
 
-    MarcheResponseDTO createMarche(MarcheRequestDTO requestDTO);
+    /**
+     * Crée un marché. La {@link Banque} est résolue par l'appelant (le Controller, via
+     * {@code IBanqueService}) et passée déjà chargée — {@code MarcheService} n'injecte
+     * volontairement aucune dépendance vers le module Bank pour éviter un cycle de bean Spring
+     * (voir javadoc de {@link MarcheService}).
+     */
+    MarcheResponseDTO createMarche(MarcheRequestDTO requestDTO, Banque banque);
 
     MarcheResponseDTO getMarcheById(Long id);
 
-    MarcheResponseDTO updateMarche(Long id, MarcheRequestDTO requestDTO);
+    /**
+     * Met à jour un marché. {@code banque} est {@code null} si le marché ne change pas de
+     * banque (champ optionnel à la mise à jour) — voir {@link #createMarche} pour la raison de
+     * cette résolution en amont.
+     */
+    MarcheResponseDTO updateMarche(Long id, MarcheRequestDTO requestDTO, Banque banque);
 
     void deleteMarche(Long id);
 

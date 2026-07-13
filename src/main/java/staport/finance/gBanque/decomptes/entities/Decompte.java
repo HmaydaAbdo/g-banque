@@ -1,6 +1,7 @@
 package staport.finance.gBanque.decomptes.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.prefinancement.enums.Status;
@@ -9,8 +10,35 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Décompte de travaux rattaché à un marché, encaissé par une banque.
+ *
+ * <p>Relations auditées : {@code marche} (déjà {@code @Audited} depuis le sweep Marchés) et
+ * {@code banqueEncaissement} (déjà {@code @Audited}) — aucune annotation
+ * {@code targetAuditMode=NOT_AUDITED} nécessaire, contrairement aux modules qui référencent des
+ * lignes fonctionnelles non auditées (cf. {@code feedback_envers_audit_relations}).
+ */
 @Entity
-@Table(name = "decompte")
+@Audited
+@Table(
+        name = "decompte",
+        indexes = {
+                @Index(name = "idx_decompte_marche_id", columnList = "marche_id"),
+                @Index(name = "idx_decompte_banque_encaissement_id", columnList = "banque_encaissement_id"),
+                @Index(name = "idx_decompte_status", columnList = "status"),
+                @Index(name = "idx_decompte_date_valeur", columnList = "date_valeur")
+        }
+)
+@NamedEntityGraph(
+        name = "Decompte.avecAssociations",
+        attributeNodes = {
+                @NamedAttributeNode(value = "marche", subgraph = "marche-banque"),
+                @NamedAttributeNode("banqueEncaissement")
+        },
+        subgraphs = {
+                @NamedSubgraph(name = "marche-banque", attributeNodes = @NamedAttributeNode("banque"))
+        }
+)
 public class Decompte {
 
     @Id

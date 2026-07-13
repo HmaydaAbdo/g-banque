@@ -21,10 +21,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
-import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieDcLigneResponseDto;
+import staport.finance.gBanque.droitConstate.dtos.response.AgregatedSuivieDcLigneResponseDto;
 import staport.finance.gBanque.droitConstate.dtos.AgregatedSuivieLcnLigneResponseDto;
-import staport.finance.gBanque.factoring.dtos.AgregatedSuivieFactoringLigneResponseDto;
-import staport.finance.gBanque.prefinancement.dtos.AgregatedSuiviePrefiLigneResponseDto;
+import staport.finance.gBanque.factoring.dtos.response.AgregatedSuivieFactoringLigneResponseDto;
+import staport.finance.gBanque.prefinancement.dtos.response.AgregatedSuiviePrefiLigneResponseDto;
 import staport.finance.gBanque.common.PageableUtils;
 
 import java.util.HashMap;
