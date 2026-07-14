@@ -10,11 +10,8 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
-import staport.finance.gBanque.commision.entities.Commission;
-import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
-import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.operationErrone.repositories.OperationErroneRepository;
 import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
@@ -22,8 +19,6 @@ import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
 import staport.finance.gBanque.rapprochement.services.SoldeCascadeService;
 import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.restitution.repository.RestitutionRepository;
-import staport.finance.gBanque.validation.dtos.commision.CommissionTransactionResponse;
-import staport.finance.gBanque.validation.dtos.commision.CommissionValidationDto;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
@@ -47,9 +42,6 @@ public class ValidationService {
 
     private static final Logger log = LoggerFactory.getLogger(ValidationService.class);
 
-    private final CommisionRepository commisionRepository;
-    private final CommisionTransactionMapper commisionTransactionMapper;
-
     private final FraisBancaireRepository fraisBancaireRepository;
     private final FraisBancaireTransactionMapper fraisBancaireTransactionMapper;
 
@@ -69,11 +61,9 @@ public class ValidationService {
     private final SoldeCascadeService soldeCascadeService;
 
 
-    public ValidationService(TransactionRepository transactionRepository, BanqueRepository banqueRepository, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
+    public ValidationService(TransactionRepository transactionRepository, BanqueRepository banqueRepository, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
-        this.commisionRepository = commisionRepository;
-        this.commisionTransactionMapper = commisionTransactionMapper;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.fraisBancaireTransactionMapper = fraisBancaireTransactionMapper;
         this.restitutionRepository = restitutionRepository;
@@ -119,39 +109,9 @@ public class ValidationService {
     // staport.finance.gBanque.decomptes.validation.services.DecompteValidationService
     // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public CommissionTransactionResponse processCommissionToTransaction(CommissionValidationDto requestDto)  {
-        // Step 1: Fetch commission from the database using it's id from the request.
-        Commission commission=this.commisionRepository.findById(requestDto.getIdCommission())
-                .orElseThrow(()->new ResourceNotFoundException("Commission with id "+requestDto.getIdCommission()+" not found"));
-
-        // Step 2: Check if the commission is not already paid.
-        // If it's already paid , throw an exception.
-        if (commission.getStatus()== Status.PAYE) {
-            throw new RuntimeException(" commission is already paid");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched dc entity into a Transaction entity.
-        Transaction transactionEntity = commisionTransactionMapper.toEntity(requestDto,commission);
-
-        Banque banque = banqueRepository.findById(commission.getBanque().getId()).orElseThrow(()->new ResourceNotFoundException("Banque with id "+commission.getBanque().getId()+" not found"));
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the commission as * (paid) and save the updated commission entity.
-        commission.setStatus(Status.PAYE);
-        commission.setObservation(savedTransaction.getObservation());
-        commission.setLibelle(savedTransaction.getLibelle());
-        commission.setDateValeur(savedTransaction.getDateValeur());
-        commission.setDateOperation(savedTransaction.getDateOperations());
-        commisionRepository.save(commission);
-
-        // Step 7: Convert the saved Transaction entity into a CommissionTransactionResponse
-        // using the mapper and return it as the response.
-        return commisionTransactionMapper.toResponseDto(savedTransaction);
-    }
+    // processCommissionToTransaction extrait vers
+    // staport.finance.gBanque.commision.validation.services.CommissionValidationService
+    // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
     // Logique de validation des prélèvements extraite vers
     // staport.finance.gBanque.prelevements.validation.services.PrelevementValidationService

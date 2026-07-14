@@ -10,8 +10,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationService;
+import staport.finance.gBanque.commision.validation.services.interfaces.ICommissionValidationService;
 import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
 import staport.finance.gBanque.droitConstate.validation.services.interfaces.IDroitConstateValidationService;
 import staport.finance.gBanque.factoring.validation.services.interfaces.IFactoringValidationService;
@@ -59,6 +59,7 @@ public class TransactionService implements ITransactionService{
     private final IDroitConstateValidationService droitConstateValidationService;
     private final IDecompteValidationService decompteValidationService;
     private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
+    private final ICommissionValidationService commissionValidationService;
 
     public TransactionService(TransactionRepository transactionRepository,
                               ILeasingValidationService leasingValidationService,
@@ -73,7 +74,8 @@ public class TransactionService implements ITransactionService{
                               IFactoringValidationService factoringValidationService,
                               IDroitConstateValidationService droitConstateValidationService,
                               IDecompteValidationService decompteValidationService,
-                              IImpotEtTaxeValidationService impotEtTaxeValidationService) {
+                              IImpotEtTaxeValidationService impotEtTaxeValidationService,
+                              ICommissionValidationService commissionValidationService) {
         this.transactionRepository = transactionRepository;
         this.leasingValidationService = leasingValidationService;
         this.cmtValidationService = cmtValidationService;
@@ -88,6 +90,7 @@ public class TransactionService implements ITransactionService{
         this.droitConstateValidationService = droitConstateValidationService;
         this.decompteValidationService = decompteValidationService;
         this.impotEtTaxeValidationService = impotEtTaxeValidationService;
+        this.commissionValidationService = commissionValidationService;
     }
 
     @Transactional(readOnly = true)
@@ -401,6 +404,17 @@ public class TransactionService implements ITransactionService{
             log.info("Transaction IMPOT_TAXE ID: {} mise à jour — synchronisation de l'impôt/taxe ID: {}",
                     saved.getId(), saved.getReferent());
             impotEtTaxeValidationService.syncImpotEtTaxeFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation commission : si la transaction provient d'une commission, on propage
+        // dateValeur et dateOperation vers la commission source (referent = commissionId).
+        if (TransactionSource.COMMISSION == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction COMMISSION ID: {} mise à jour — synchronisation de la commission ID: {}",
+                    saved.getId(), saved.getReferent());
+            commissionValidationService.syncCommissionFromTransaction(
                     saved.getReferent(),
                     saved.getDateValeur(),
                     saved.getDateOperations());

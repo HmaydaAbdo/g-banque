@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.dtos.*;
 import staport.finance.gBanque.commision.entities.Commission;
@@ -95,6 +97,7 @@ public class CommissionService implements ICommissionService {
 
     // --- Create ---
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Commission.class)
     public CommissionResponseDto createCommission(CommissionRequestDto requestDto) {
         log.info("Creating commission for banqueId={} libelle={}", requestDto.getBanqueId(), requestDto.getLibelle());
 
@@ -146,6 +149,7 @@ public class CommissionService implements ICommissionService {
 
     // --- Update ---
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Commission.class)
     public CommissionResponseDto updateCommission(Long id, CommissionRequestDto requestDto) {
         log.info("Updating commission id={} with libelle={}", id, requestDto.getLibelle());
 
@@ -180,6 +184,7 @@ public class CommissionService implements ICommissionService {
 
     // --- Delete ---
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = Commission.class)
     public void deleteCommission(Long id) {
         log.info("Deleting commission with id={}", id);
 
@@ -473,6 +478,7 @@ public class CommissionService implements ICommissionService {
      * </ol>
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Commission.class, idAccessor = "commissionId")
     public CommissionFusionResponse fusionner(CommissionFusionRequest request) {
         List<Long> ids = request.getIds();
         log.info("Fusion demandée — {} commission(s), libellé='{}'", ids.size(), request.getLibelle());
@@ -568,6 +574,7 @@ public class CommissionService implements ICommissionService {
     }
 
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Commission.class)
     public void toggleCommisionStatus(Long commissionId) {
 
         Commission commission = commissionRepository.findById(commissionId)

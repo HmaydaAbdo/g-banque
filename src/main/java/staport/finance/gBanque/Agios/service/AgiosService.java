@@ -22,7 +22,6 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.audit.AuditOperation;
-import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;

@@ -1,6 +1,7 @@
 package staport.finance.gBanque.commision.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
@@ -11,7 +12,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Commission bancaire — donnée financière, entièrement auditée (Envers).
+ *
+ * <p>Relations auditées : {@code banque}, {@code caution}, {@code impotEtTaxe} et
+ * {@code virement} sont toutes {@code @Audited} — aucune annotation
+ * {@code targetAuditMode=NOT_AUDITED} nécessaire (cf. {@code feedback_envers_audit_relations}).
+ */
 @Entity
+@Audited
 @Table(name = "commission")
 public class Commission {
 

@@ -13,4 +13,10 @@ public class CommissionFusionResponse {
     }
 
     public CommissionResponseDto getCommission() { return commission; }
+
+    /**
+     * Accesseur dédié à l'audit ({@code AuditableAction#idAccessor}) — la commission fusionnée
+     * n'est pas directement accessible comme {@code Long} depuis la racine de la réponse.
+     */
+    public Long getCommissionId() { return commission != null ? commission.getId() : null; }
 }

@@ -9,8 +9,9 @@ import org.springframework.web.bind.annotation.*;
 
 import staport.finance.gBanque.Agios.dtos.AgiosTransactionResponse;
 import staport.finance.gBanque.Agios.dtos.AgiosValidationRequest;
-import staport.finance.gBanque.validation.dtos.commision.CommissionTransactionResponse;
-import staport.finance.gBanque.validation.dtos.commision.CommissionValidationDto;
+import staport.finance.gBanque.commision.validation.dto.CommissionTransactionRequestDto;
+import staport.finance.gBanque.commision.validation.dto.CommissionTransactionResponseDto;
+import staport.finance.gBanque.commision.validation.services.interfaces.ICommissionValidationService;
 import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionRequestDto;
 import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionResponseDto;
 import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
@@ -97,6 +98,7 @@ public class ValidationController {
     private final IDroitConstateValidationService droitConstateValidationService;
     private final IDecompteValidationService decompteValidationService;
     private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
+    private final ICommissionValidationService commissionValidationService;
 
     public ValidationController(ValidationService validationService,
                                 ReverseTransactionService reverseTransactionService,
@@ -116,7 +118,8 @@ public class ValidationController {
                                 IFactoringValidationService factoringValidationService,
                                 IDroitConstateValidationService droitConstateValidationService,
                                 IDecompteValidationService decompteValidationService,
-                                IImpotEtTaxeValidationService impotEtTaxeValidationService) {
+                                IImpotEtTaxeValidationService impotEtTaxeValidationService,
+                                ICommissionValidationService commissionValidationService) {
         this.validationService      = validationService;
         this.reverseTransactionService = reverseTransactionService;
         this.leasingValidationService  = leasingValidationService;
@@ -136,6 +139,7 @@ public class ValidationController {
         this.droitConstateValidationService = droitConstateValidationService;
         this.decompteValidationService = decompteValidationService;
         this.impotEtTaxeValidationService = impotEtTaxeValidationService;
+        this.commissionValidationService = commissionValidationService;
     }
 
 
@@ -307,15 +311,12 @@ public class ValidationController {
     }
 
     /**
-     * Endpoint pour traiter une transaction de rapprochement de commission.
-     * Prend en charge un DTO de requête et retourne un DTO de réponse avec les détails de la transaction créée.
-     *
-     * @param requestDto Le DTO de la requête de transaction de décompte.
-     * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
+     * Valide une commission : crée la transaction bancaire et marque la commission PAYE.
+     * Délègue au {@code CommissionValidationService} du module commision.
      */
     @PostMapping("/process/commission")
-    public ResponseEntity<CommissionTransactionResponse> processCommissionToTransaction(@Valid @RequestBody CommissionValidationDto requestDto) throws Exception {
-        CommissionTransactionResponse responseDto = validationService.processCommissionToTransaction(requestDto);
+    public ResponseEntity<CommissionTransactionResponseDto> processCommissionToTransaction(@Valid @RequestBody CommissionTransactionRequestDto requestDto) {
+        CommissionTransactionResponseDto responseDto = commissionValidationService.processCommissionTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

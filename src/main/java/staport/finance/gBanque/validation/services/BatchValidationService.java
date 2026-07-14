@@ -25,8 +25,9 @@ import staport.finance.gBanque.moyensDePaiements.cheques.validation.dto.ChequeTr
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
 import staport.finance.gBanque.transactions.enums.SensOperation;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
-import staport.finance.gBanque.validation.dtos.commision.CommissionTransactionResponse;
-import staport.finance.gBanque.validation.dtos.commision.CommissionValidationDto;
+import staport.finance.gBanque.commision.validation.dto.CommissionTransactionRequestDto;
+import staport.finance.gBanque.commision.validation.dto.CommissionTransactionResponseDto;
+import staport.finance.gBanque.commision.validation.services.interfaces.ICommissionValidationService;
 import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionRequestDto;
 import staport.finance.gBanque.decomptes.validation.dto.DecompteTransactionResponseDto;
 import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
@@ -125,6 +126,7 @@ public class BatchValidationService {
     private final IDroitConstateValidationService droitConstateValidationService;
     private final IDecompteValidationService decompteValidationService;
     private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
+    private final ICommissionValidationService commissionValidationService;
 
     public BatchValidationService(ValidationService validationService,
                                    IAgiosValidationService agiosValidationService,
@@ -142,7 +144,8 @@ public class BatchValidationService {
                                    IFactoringValidationService factoringValidationService,
                                    IDroitConstateValidationService droitConstateValidationService,
                                    IDecompteValidationService decompteValidationService,
-                                   IImpotEtTaxeValidationService impotEtTaxeValidationService) {
+                                   IImpotEtTaxeValidationService impotEtTaxeValidationService,
+                                   ICommissionValidationService commissionValidationService) {
         this.validationService = validationService;
         this.agiosValidationService = agiosValidationService;
         this.echeanceCMTRepository = echeanceCMTRepository;
@@ -160,6 +163,7 @@ public class BatchValidationService {
         this.droitConstateValidationService = droitConstateValidationService;
         this.decompteValidationService = decompteValidationService;
         this.impotEtTaxeValidationService = impotEtTaxeValidationService;
+        this.commissionValidationService = commissionValidationService;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -241,14 +245,12 @@ public class BatchValidationService {
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case COMMISSION -> {
-                CommissionValidationDto dto = new CommissionValidationDto();
-                dto.setIdCommission(id);
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
-                CommissionTransactionResponse r = validationService.processCommissionToTransaction(dto);
-                return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
+                CommissionTransactionRequestDto dto = new CommissionTransactionRequestDto(
+                        id, requestDto.getTvaDeductible(), null,
+                        requestDto.getDateValeur(), requestDto.getDateOperation(),
+                        null, null, requestDto.getRapprochementId());
+                CommissionTransactionResponseDto r = commissionValidationService.processCommissionTransaction(dto);
+                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case AGIOS -> {
                 AgiosValidationRequest dto = new AgiosValidationRequest(
