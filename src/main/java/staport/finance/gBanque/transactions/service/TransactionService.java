@@ -15,7 +15,11 @@ import staport.finance.gBanque.commision.validation.services.interfaces.ICommiss
 import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
 import staport.finance.gBanque.droitConstate.validation.services.interfaces.IDroitConstateValidationService;
 import staport.finance.gBanque.factoring.validation.services.interfaces.IFactoringValidationService;
+import staport.finance.gBanque.fraisBancaires.validation.services.interfaces.IFraisBancaireValidationService;
+import staport.finance.gBanque.impayees.validation.services.interfaces.IImpayeeValidationService;
 import staport.finance.gBanque.impot_taxes.validation.services.interfaces.IImpotEtTaxeValidationService;
+import staport.finance.gBanque.operationErrone.validation.services.interfaces.IOperationErroneValidationService;
+import staport.finance.gBanque.restitution.validation.services.interfaces.IRestitutionValidationService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
 import staport.finance.gBanque.moyensDePaiements.lcn.validation.services.interfaces.ILcnValidationService;
@@ -60,6 +64,10 @@ public class TransactionService implements ITransactionService{
     private final IDecompteValidationService decompteValidationService;
     private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
     private final ICommissionValidationService commissionValidationService;
+    private final IFraisBancaireValidationService fraisBancaireValidationService;
+    private final IRestitutionValidationService restitutionValidationService;
+    private final IOperationErroneValidationService operationErroneValidationService;
+    private final IImpayeeValidationService impayeeValidationService;
 
     public TransactionService(TransactionRepository transactionRepository,
                               ILeasingValidationService leasingValidationService,
@@ -75,7 +83,11 @@ public class TransactionService implements ITransactionService{
                               IDroitConstateValidationService droitConstateValidationService,
                               IDecompteValidationService decompteValidationService,
                               IImpotEtTaxeValidationService impotEtTaxeValidationService,
-                              ICommissionValidationService commissionValidationService) {
+                              ICommissionValidationService commissionValidationService,
+                              IFraisBancaireValidationService fraisBancaireValidationService,
+                              IRestitutionValidationService restitutionValidationService,
+                              IOperationErroneValidationService operationErroneValidationService,
+                              IImpayeeValidationService impayeeValidationService) {
         this.transactionRepository = transactionRepository;
         this.leasingValidationService = leasingValidationService;
         this.cmtValidationService = cmtValidationService;
@@ -91,6 +103,10 @@ public class TransactionService implements ITransactionService{
         this.decompteValidationService = decompteValidationService;
         this.impotEtTaxeValidationService = impotEtTaxeValidationService;
         this.commissionValidationService = commissionValidationService;
+        this.fraisBancaireValidationService = fraisBancaireValidationService;
+        this.restitutionValidationService = restitutionValidationService;
+        this.operationErroneValidationService = operationErroneValidationService;
+        this.impayeeValidationService = impayeeValidationService;
     }
 
     @Transactional(readOnly = true)
@@ -415,6 +431,50 @@ public class TransactionService implements ITransactionService{
             log.info("Transaction COMMISSION ID: {} mise à jour — synchronisation de la commission ID: {}",
                     saved.getId(), saved.getReferent());
             commissionValidationService.syncCommissionFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation frais bancaire : si la transaction provient d'un frais bancaire, on
+        // propage dateValeur et dateOperation vers le frais bancaire source (referent = fraisBancaireId).
+        if (TransactionSource.FRAIS_BANCAIRE == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction FRAIS_BANCAIRE ID: {} mise à jour — synchronisation du frais bancaire ID: {}",
+                    saved.getId(), saved.getReferent());
+            fraisBancaireValidationService.syncFraisBancaireFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation restitution : si la transaction provient d'une restitution, on propage
+        // dateValeur et dateOperation vers la restitution source (referent = restitutionId).
+        if (TransactionSource.RESTITUTION == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction RESTITUTION ID: {} mise à jour — synchronisation de la restitution ID: {}",
+                    saved.getId(), saved.getReferent());
+            restitutionValidationService.syncRestitutionFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation opération erronée : si la transaction provient d'une opération erronée, on
+        // propage dateValeur et dateOperation vers l'opération erronée source (referent = operationErroneId).
+        if (TransactionSource.OPERATION_ERRONE == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction OPERATION_ERRONE ID: {} mise à jour — synchronisation de l'opération erronée ID: {}",
+                    saved.getId(), saved.getReferent());
+            operationErroneValidationService.syncOperationErroneFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation impayée : si la transaction provient d'une impayée, on propage dateValeur
+        // et dateOperation vers l'impayée source (referent = impayeeId).
+        if (TransactionSource.IMPAYEE == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction IMPAYEE ID: {} mise à jour — synchronisation de l'impayée ID: {}",
+                    saved.getId(), saved.getReferent());
+            impayeeValidationService.syncImpayeeFromTransaction(
                     saved.getReferent(),
                     saved.getDateValeur(),
                     saved.getDateOperations());

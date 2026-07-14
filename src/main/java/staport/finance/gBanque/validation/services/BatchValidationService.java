@@ -37,10 +37,12 @@ import staport.finance.gBanque.droitConstate.validation.services.interfaces.IDro
 import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionRequest;
 import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionResponse;
 import staport.finance.gBanque.factoring.validation.services.interfaces.IFactoringValidationService;
-import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
-import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
-import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
-import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
+import staport.finance.gBanque.fraisBancaires.validation.dto.FraisBancaireTransactionRequestDto;
+import staport.finance.gBanque.fraisBancaires.validation.dto.FraisBancaireTransactionResponseDto;
+import staport.finance.gBanque.fraisBancaires.validation.services.interfaces.IFraisBancaireValidationService;
+import staport.finance.gBanque.impayees.validation.dto.ImpayeeTransactionRequestDto;
+import staport.finance.gBanque.impayees.validation.dto.ImpayeeTransactionResponseDto;
+import staport.finance.gBanque.impayees.validation.services.interfaces.IImpayeeValidationService;
 import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionRequestDto;
 import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionResponseDto;
 import staport.finance.gBanque.impot_taxes.validation.services.interfaces.IImpotEtTaxeValidationService;
@@ -59,10 +61,12 @@ import staport.finance.gBanque.prefinancement.validation.services.interfaces.IPr
 import staport.finance.gBanque.prelevements.validation.dto.PrelevementTransactionResponse;
 import staport.finance.gBanque.prelevements.validation.dto.PrelevementValidationRequest;
 import staport.finance.gBanque.prelevements.validation.services.interfaces.IPrelevementValidationService;
-import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
-import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
-import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneTransactionResponse;
-import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneValidationRequest;
+import staport.finance.gBanque.restitution.validation.dto.RestitutionTransactionRequestDto;
+import staport.finance.gBanque.restitution.validation.dto.RestitutionTransactionResponseDto;
+import staport.finance.gBanque.restitution.validation.services.interfaces.IRestitutionValidationService;
+import staport.finance.gBanque.operationErrone.validation.dto.OperationErroneTransactionRequestDto;
+import staport.finance.gBanque.operationErrone.validation.dto.OperationErroneTransactionResponseDto;
+import staport.finance.gBanque.operationErrone.validation.services.interfaces.IOperationErroneValidationService;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionRequestDto;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.services.interfaces.IVirementInternationalValidationService;
@@ -80,8 +84,8 @@ import java.util.List;
  * Applique les mêmes champs communs (TVA, date opération, date valeur, rapprochement cible) à un
  * ensemble d'opérations de même {@link TransactionSource} (et même {@link SensOperation} pour les
  * types qui distinguent décaissement/encaissement), en réutilisant telles quelles les méthodes
- * unitaires existantes de {@link ValidationService} / {@link IAgiosValidationService} / {@link ICmtValidationService}
- * / {@link ILeasingValidationService} — aucune logique métier n'est dupliquée ici, seul le dispatch
+ * unitaires existantes de chaque {@code XxxValidationService} de module / {@link IAgiosValidationService} /
+ * {@link ICmtValidationService} / {@link ILeasingValidationService} — aucune logique métier n'est dupliquée ici, seul le dispatch
  * et l'agrégation du résultat le sont.
  * <p>
  * Volontairement absents du DTO de lot : libellé, observation, date d'émission. Propres à chaque
@@ -109,7 +113,10 @@ import java.util.List;
 @Service
 public class BatchValidationService {
 
-    private final ValidationService validationService;
+    private final IFraisBancaireValidationService fraisBancaireValidationService;
+    private final IRestitutionValidationService restitutionValidationService;
+    private final IOperationErroneValidationService operationErroneValidationService;
+    private final IImpayeeValidationService impayeeValidationService;
     private final IAgiosValidationService agiosValidationService;
     private final EcheanceCMTRepository echeanceCMTRepository;
     private final ICmtValidationService cmtValidationService;
@@ -128,7 +135,10 @@ public class BatchValidationService {
     private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
     private final ICommissionValidationService commissionValidationService;
 
-    public BatchValidationService(ValidationService validationService,
+    public BatchValidationService(IFraisBancaireValidationService fraisBancaireValidationService,
+                                   IRestitutionValidationService restitutionValidationService,
+                                   IOperationErroneValidationService operationErroneValidationService,
+                                   IImpayeeValidationService impayeeValidationService,
                                    IAgiosValidationService agiosValidationService,
                                    EcheanceCMTRepository echeanceCMTRepository,
                                    ICmtValidationService cmtValidationService,
@@ -146,7 +156,10 @@ public class BatchValidationService {
                                    IDecompteValidationService decompteValidationService,
                                    IImpotEtTaxeValidationService impotEtTaxeValidationService,
                                    ICommissionValidationService commissionValidationService) {
-        this.validationService = validationService;
+        this.fraisBancaireValidationService = fraisBancaireValidationService;
+        this.restitutionValidationService = restitutionValidationService;
+        this.operationErroneValidationService = operationErroneValidationService;
+        this.impayeeValidationService = impayeeValidationService;
         this.agiosValidationService = agiosValidationService;
         this.echeanceCMTRepository = echeanceCMTRepository;
         this.cmtValidationService = cmtValidationService;
@@ -276,14 +289,12 @@ public class BatchValidationService {
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case FRAIS_BANCAIRE -> {
-                FraisBanciareValidationRequest dto = new FraisBanciareValidationRequest();
-                dto.setIdFraisBancaire(id);
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
-                FraisBancaireTransactionResponse r = validationService.processFraisBancaireToTransaction(dto);
-                return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
+                FraisBancaireTransactionRequestDto dto = new FraisBancaireTransactionRequestDto(
+                        id, requestDto.getTvaDeductible(), null,
+                        requestDto.getDateValeur(), requestDto.getDateOperation(),
+                        null, null, requestDto.getRapprochementId());
+                FraisBancaireTransactionResponseDto r = fraisBancaireValidationService.processFraisBancaireTransaction(dto);
+                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case IMPOT_TAXE -> {
                 ImpotEtTaxeTransactionRequestDto dto = new ImpotEtTaxeTransactionRequestDto(
@@ -294,24 +305,20 @@ public class BatchValidationService {
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case RESTITUTION -> {
-                RestitutionValidationRequest dto = new RestitutionValidationRequest();
-                dto.setIdRestitution(id);
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
-                RestitutionTransactionResponse r = validationService.processRestitutionToTransaction(dto);
-                return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
+                RestitutionTransactionRequestDto dto = new RestitutionTransactionRequestDto(
+                        id, requestDto.getTvaDeductible(), null,
+                        requestDto.getDateValeur(), requestDto.getDateOperation(),
+                        null, null, requestDto.getRapprochementId());
+                RestitutionTransactionResponseDto r = restitutionValidationService.processRestitutionTransaction(dto);
+                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case OPERATION_ERRONE -> {
-                OperationErroneValidationRequest dto = new OperationErroneValidationRequest();
-                dto.setIdOperationErrone(id);
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
-                OperationErroneTransactionResponse r = validationService.processOperationErroneToTransaction(dto);
-                return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
+                OperationErroneTransactionRequestDto dto = new OperationErroneTransactionRequestDto(
+                        id, requestDto.getTvaDeductible(), null,
+                        requestDto.getDateValeur(), requestDto.getDateOperation(),
+                        null, null, requestDto.getRapprochementId());
+                OperationErroneTransactionResponseDto r = operationErroneValidationService.processOperationErroneTransaction(dto);
+                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case FACTORING -> {
                 FactoringTransactionRequest dto = new FactoringTransactionRequest();
@@ -347,25 +354,26 @@ public class BatchValidationService {
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case DECOMPTES -> {
-                DecompteTransactionRequestDto dto = new DecompteTransactionRequestDto();
-                dto.setDecompteId(id);
-                dto.setBanqueId(requestDto.getBanqueId());
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
+                DecompteTransactionRequestDto dto = new DecompteTransactionRequestDto(
+                        id,
+                        requestDto.getBanqueId(),
+                        null,
+                        requestDto.getDateValeur(),
+                        requestDto.getDateOperation(),
+                        requestDto.getTvaDeductible(),
+                        null,
+                        null,
+                        requestDto.getRapprochementId());
                 DecompteTransactionResponseDto r = decompteValidationService.processDecompteTransaction(dto);
-                return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
+                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case IMPAYEE -> {
-                ImpayeeValidationRequest dto = new ImpayeeValidationRequest();
-                dto.setIdImpayee(id);
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
-                ImpayeeTransactionResponse r = validationService.processImpayeeToTransaction(dto);
-                return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
+                ImpayeeTransactionRequestDto dto = new ImpayeeTransactionRequestDto(
+                        id, requestDto.getTvaDeductible(), null,
+                        requestDto.getDateValeur(), requestDto.getDateOperation(),
+                        null, null, requestDto.getRapprochementId());
+                ImpayeeTransactionResponseDto r = impayeeValidationService.processImpayeeTransaction(dto);
+                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case CMT -> {
                 EcheanceCMT echeance = echeanceCMTRepository.findById(id)

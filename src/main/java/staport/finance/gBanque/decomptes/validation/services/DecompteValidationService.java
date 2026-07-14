@@ -72,14 +72,14 @@ public class DecompteValidationService implements IDecompteValidationService {
 
     @Override
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Decompte.class, idAccessor = "getDecompteId")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Decompte.class, idAccessor = "decompteId")
     public DecompteTransactionResponseDto processDecompteTransaction(DecompteTransactionRequestDto requestDto) {
-        log.info("Validation décompte — id: {}", requestDto.getDecompteId());
+        log.info("Validation décompte — id: {}", requestDto.decompteId());
 
-        Decompte decompte = decompteRepository.findById(requestDto.getDecompteId())
+        Decompte decompte = decompteRepository.findById(requestDto.decompteId())
                 .orElseThrow(() -> {
-                    log.warn("Décompte introuvable — id: {}", requestDto.getDecompteId());
-                    return new ResourceNotFoundException("Décompte with id " + requestDto.getDecompteId() + " not found");
+                    log.warn("Décompte introuvable — id: {}", requestDto.decompteId());
+                    return new ResourceNotFoundException("Décompte with id " + requestDto.decompteId() + " not found");
                 });
 
         if (decompte.getStatus() == Status.PAYE) {
@@ -87,16 +87,16 @@ public class DecompteValidationService implements IDecompteValidationService {
             throw new ValidationException("Le décompte id: " + decompte.getId() + " est déjà payé.");
         }
 
-        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
+        Banque banque = banqueService.findOrThrow(requestDto.banqueId());
         if (decompte.getBanqueEncaissement() == null || !decompte.getBanqueEncaissement().getId().equals(banque.getId())) {
-            throw new ValidationException("Le banqueId fourni (" + requestDto.getBanqueId()
+            throw new ValidationException("Le banqueId fourni (" + requestDto.banqueId()
                     + ") ne correspond pas à la banque d'encaissement du décompte "
                     + decompte.getId() + ".");
         }
 
         Transaction transactionEntity = decompteTransactionMapper.toEntity(requestDto, decompte, banque);
         Transaction savedTransaction = saveTransactionWithCascade(
-                transactionEntity, banque.getId(), requestDto.getRapprochementId());
+                transactionEntity, banque.getId(), requestDto.rapprochementId());
 
         decompte.setStatus(Status.PAYE);
         decompte.setDateOperation(savedTransaction.getDateOperations());

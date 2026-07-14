@@ -15,7 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.commision.dtos.*;
-import staport.finance.gBanque.commision.service.CommissionService;
+import staport.finance.gBanque.commision.service.ICommissionService;
 
 import java.time.LocalDate;
 
@@ -36,9 +36,9 @@ public class CommissionController {
     private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
     private static final Logger log = LogManager.getLogger(CommissionController.class);
-    private final CommissionService commissionService;
+    private final ICommissionService commissionService;
 
-    public CommissionController(CommissionService commissionService) {
+    public CommissionController(ICommissionService commissionService) {
         this.commissionService = commissionService;
     }
 

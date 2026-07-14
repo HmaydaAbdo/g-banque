@@ -32,18 +32,18 @@ public class DecompteTransactionMapper {
 
         // libelle/observation/dateEmission : fallback sur le décompte d'origine si non fournis (lot).
         transaction.setReferent(decompte.getId());
-        transaction.setLibelle(requestDto.getLibelle() != null ? requestDto.getLibelle() : decompte.getLibelle());
-        transaction.setObservation(requestDto.getObservation() != null ? requestDto.getObservation() : decompte.getObservation());
-        transaction.setDateEmission(requestDto.getDateEmission() != null ? requestDto.getDateEmission() : decompte.getDateEmission());
-        transaction.setDateValeur(requestDto.getDateValeur());
-        transaction.setDateOperations(requestDto.getDateOperation());
+        transaction.setLibelle(requestDto.libelle() != null ? requestDto.libelle() : decompte.getLibelle());
+        transaction.setObservation(requestDto.observation() != null ? requestDto.observation() : decompte.getObservation());
+        transaction.setDateEmission(requestDto.dateEmission() != null ? requestDto.dateEmission() : decompte.getDateEmission());
+        transaction.setDateValeur(requestDto.dateValeur());
+        transaction.setDateOperations(requestDto.dateOperation());
         transaction.setTransactionSource(TransactionSource.DECOMPTES);
         transaction.setBanqueDePrelevement(banque);
         transaction.setDebit(BigDecimal.ZERO);
         transaction.setCredit(decompte.getMontant());
 
         BigDecimal ttc = decompte.getMontant();
-        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.getTva());
+        BigDecimal tauxTva = BigDecimal.valueOf(requestDto.tva());
         BigDecimal montantTva = TVAUtils.calculerTVA(ttc, tauxTva);
         transaction.setTvaCollectee(montantTva);
 
@@ -56,19 +56,20 @@ public class DecompteTransactionMapper {
             return null;
         }
 
-        DecompteTransactionResponseDto responseDto = new DecompteTransactionResponseDto();
+        Banque banque = transaction.getBanqueDePrelevement();
 
-        responseDto.setId(transaction.getId());
-        responseDto.setDecompteId(transaction.getReferent());
-        responseDto.setBanqueName(transaction.getBanqueDePrelevement().getNom());
-        responseDto.setLibelle(transaction.getLibelle());
-        responseDto.setObservation(transaction.getObservation());
-        responseDto.setDateEmission(transaction.getDateEmission());
-        responseDto.setDateValeur(transaction.getDateValeur());
-        responseDto.setDateOperations(transaction.getDateOperations());
-        responseDto.setDebit(transaction.getDebit());
-        responseDto.setCredit(transaction.getCredit());
-
-        return responseDto;
+        return new DecompteTransactionResponseDto(
+                transaction.getId(),
+                transaction.getReferent(),
+                banque != null ? banque.getNom() : null,
+                transaction.getLibelle(),
+                transaction.getObservation(),
+                transaction.getDateEmission(),
+                transaction.getDateValeur(),
+                transaction.getDateOperations(),
+                transaction.getDebit(),
+                transaction.getCredit(),
+                TransactionSource.DECOMPTES
+        );
     }
 }

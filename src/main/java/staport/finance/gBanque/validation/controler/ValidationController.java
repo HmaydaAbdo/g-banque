@@ -21,10 +21,12 @@ import staport.finance.gBanque.droitConstate.validation.services.interfaces.IDro
 import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionRequest;
 import staport.finance.gBanque.factoring.validation.dto.FactoringTransactionResponse;
 import staport.finance.gBanque.factoring.validation.services.interfaces.IFactoringValidationService;
-import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransactionResponse;
-import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
-import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
-import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
+import staport.finance.gBanque.fraisBancaires.validation.dto.FraisBancaireTransactionRequestDto;
+import staport.finance.gBanque.fraisBancaires.validation.dto.FraisBancaireTransactionResponseDto;
+import staport.finance.gBanque.fraisBancaires.validation.services.interfaces.IFraisBancaireValidationService;
+import staport.finance.gBanque.impayees.validation.dto.ImpayeeTransactionRequestDto;
+import staport.finance.gBanque.impayees.validation.dto.ImpayeeTransactionResponseDto;
+import staport.finance.gBanque.impayees.validation.services.interfaces.IImpayeeValidationService;
 import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionRequestDto;
 import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionResponseDto;
 import staport.finance.gBanque.impot_taxes.validation.services.interfaces.IImpotEtTaxeValidationService;
@@ -54,10 +56,12 @@ import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.ser
 import staport.finance.gBanque.prelevements.validation.dto.PrelevementTransactionResponse;
 import staport.finance.gBanque.prelevements.validation.dto.PrelevementValidationRequest;
 import staport.finance.gBanque.prelevements.validation.services.interfaces.IPrelevementValidationService;
-import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
-import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
-import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneTransactionResponse;
-import staport.finance.gBanque.validation.dtos.operationErrone.OperationErroneValidationRequest;
+import staport.finance.gBanque.restitution.validation.dto.RestitutionTransactionRequestDto;
+import staport.finance.gBanque.restitution.validation.dto.RestitutionTransactionResponseDto;
+import staport.finance.gBanque.restitution.validation.services.interfaces.IRestitutionValidationService;
+import staport.finance.gBanque.operationErrone.validation.dto.OperationErroneTransactionRequestDto;
+import staport.finance.gBanque.operationErrone.validation.dto.OperationErroneTransactionResponseDto;
+import staport.finance.gBanque.operationErrone.validation.services.interfaces.IOperationErroneValidationService;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionRequestDto;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.dto.VirementInternationalTransactionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.validation.services.interfaces.IVirementInternationalValidationService;
@@ -68,7 +72,6 @@ import staport.finance.gBanque.validation.dtos.lot.BatchValidationRequestDto;
 import staport.finance.gBanque.validation.dtos.lot.BatchValidationResponseDto;
 import staport.finance.gBanque.validation.services.BatchValidationService;
 import staport.finance.gBanque.validation.services.ReverseTransactionService;
-import staport.finance.gBanque.validation.services.ValidationService;
 
 @SecurityRequirement(name = "bearerAuth")
 @RestController
@@ -79,7 +82,10 @@ public class ValidationController {
     static final String FINANCE_OR_ADMIN =
             "hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')";
 
-    private final ValidationService validationService;
+    private final IFraisBancaireValidationService fraisBancaireValidationService;
+    private final IRestitutionValidationService restitutionValidationService;
+    private final IOperationErroneValidationService operationErroneValidationService;
+    private final IImpayeeValidationService impayeeValidationService;
     private final ReverseTransactionService reverseTransactionService;
     private final ILeasingValidationService leasingValidationService;
     private final IAgiosValidationService agiosValidationService;
@@ -100,7 +106,10 @@ public class ValidationController {
     private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
     private final ICommissionValidationService commissionValidationService;
 
-    public ValidationController(ValidationService validationService,
+    public ValidationController(IFraisBancaireValidationService fraisBancaireValidationService,
+                                IRestitutionValidationService restitutionValidationService,
+                                IOperationErroneValidationService operationErroneValidationService,
+                                IImpayeeValidationService impayeeValidationService,
                                 ReverseTransactionService reverseTransactionService,
                                 ILeasingValidationService leasingValidationService,
                                 IAgiosValidationService agiosValidationService,
@@ -120,7 +129,10 @@ public class ValidationController {
                                 IDecompteValidationService decompteValidationService,
                                 IImpotEtTaxeValidationService impotEtTaxeValidationService,
                                 ICommissionValidationService commissionValidationService) {
-        this.validationService      = validationService;
+        this.fraisBancaireValidationService = fraisBancaireValidationService;
+        this.restitutionValidationService = restitutionValidationService;
+        this.operationErroneValidationService = operationErroneValidationService;
+        this.impayeeValidationService = impayeeValidationService;
         this.reverseTransactionService = reverseTransactionService;
         this.leasingValidationService  = leasingValidationService;
         this.agiosValidationService    = agiosValidationService;
@@ -332,8 +344,8 @@ public class ValidationController {
     }
 
     @PostMapping("/process/frais-bancaire")
-    public ResponseEntity<FraisBancaireTransactionResponse> processFraisBancaireToTransaction(@Valid @RequestBody FraisBanciareValidationRequest requestDto) throws Exception {
-        FraisBancaireTransactionResponse responseDto = validationService.processFraisBancaireToTransaction(requestDto);
+    public ResponseEntity<FraisBancaireTransactionResponseDto> processFraisBancaireToTransaction(@Valid @RequestBody FraisBancaireTransactionRequestDto requestDto) {
+        FraisBancaireTransactionResponseDto responseDto = fraisBancaireValidationService.processFraisBancaireTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
@@ -348,16 +360,16 @@ public class ValidationController {
 
 
     @PostMapping("/process/restitution")
-    public ResponseEntity<RestitutionTransactionResponse> processRestitutionToTransaction(
-            @Valid @RequestBody RestitutionValidationRequest requestDto) throws Exception {
-        RestitutionTransactionResponse responseDto = validationService.processRestitutionToTransaction(requestDto);
+    public ResponseEntity<RestitutionTransactionResponseDto> processRestitutionToTransaction(
+            @Valid @RequestBody RestitutionTransactionRequestDto requestDto) {
+        RestitutionTransactionResponseDto responseDto = restitutionValidationService.processRestitutionTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
     @PostMapping("/process/operation-errone")
-    public ResponseEntity<OperationErroneTransactionResponse> processOperationErroneToTransaction(
-            @Valid @RequestBody OperationErroneValidationRequest requestDto) throws Exception {
-        OperationErroneTransactionResponse responseDto = validationService.processOperationErroneToTransaction(requestDto);
+    public ResponseEntity<OperationErroneTransactionResponseDto> processOperationErroneToTransaction(
+            @Valid @RequestBody OperationErroneTransactionRequestDto requestDto) {
+        OperationErroneTransactionResponseDto responseDto = operationErroneValidationService.processOperationErroneTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
@@ -388,9 +400,9 @@ public class ValidationController {
     }
 
     @PostMapping("/process/impayee")
-    public ResponseEntity<ImpayeeTransactionResponse> processImpayeeToTransaction(
-            @Valid @RequestBody ImpayeeValidationRequest requestDto) throws Exception {
-        ImpayeeTransactionResponse responseDto = validationService.processImpayeeToTransaction(requestDto);
+    public ResponseEntity<ImpayeeTransactionResponseDto> processImpayeeToTransaction(
+            @Valid @RequestBody ImpayeeTransactionRequestDto requestDto) {
+        ImpayeeTransactionResponseDto responseDto = impayeeValidationService.processImpayeeTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

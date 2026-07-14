@@ -175,6 +175,11 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
         ImpotEtTaxe impotEtTaxe = impotEtTaxeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Impôt/taxe introuvable avec l'id: " + id));
 
+        if (impotEtTaxe.getStatus() == Status.PAYE) {
+            log.warn("Tentative de modification d'un impôt/taxe déjà payé — id: {}", id);
+            throw new ValidationException("Modification interdite : l'impôt/taxe id " + id + " est déjà payé.");
+        }
+
         Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
         impotEtTaxe.setLibelle(requestDto.libelle());
@@ -194,9 +199,14 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
     @AuditableAction(operation = AuditOperation.DELETE, entity = ImpotEtTaxe.class)
     public void deleteImpotEtTaxe(Long id) {
         log.info("Suppression de l'impôt/taxe id={}", id);
-        if (!impotEtTaxeRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Impôt/taxe introuvable avec l'id: " + id);
+        ImpotEtTaxe impotEtTaxe = impotEtTaxeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Impôt/taxe introuvable avec l'id: " + id));
+
+        if (impotEtTaxe.getStatus() == Status.PAYE) {
+            log.warn("Tentative de suppression d'un impôt/taxe déjà payé — id: {}", id);
+            throw new ValidationException("Suppression interdite : l'impôt/taxe id " + id + " est déjà payé.");
         }
+
         impotEtTaxeRepository.deleteById(id);
         log.info("Impôt/taxe supprimé avec succès: id={}", id);
     }

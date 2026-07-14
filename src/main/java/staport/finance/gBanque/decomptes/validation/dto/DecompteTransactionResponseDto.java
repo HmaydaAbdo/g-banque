@@ -13,104 +13,22 @@ import java.time.LocalDate;
  *
  * <p>{@code decompteId} (distinct de {@code id}, qui identifie la transaction créée) porte
  * l'ID du décompte source — nécessaire pour {@code @AuditableAction(idAccessor =
- * "getDecompteId")} sur {@code DecompteValidationService}, l'entité auditée étant le décompte,
- * pas la transaction.
+ * "decompteId")} sur {@code DecompteValidationService}, l'entité auditée étant le décompte,
+ * pas la transaction. Accesseur sans préfixe {@code get} car ce DTO est un record — évite
+ * l'anomalie {@code idAccessor} constatée sur les 6 modules moyens de paiement (DTOs à getters).
  */
-public class DecompteTransactionResponseDto {
+public record DecompteTransactionResponseDto(
 
-    private Long id;
-    private Long decompteId;
-    private String banqueName;
-    private String libelle;
-    private String observation;
-    private LocalDate dateEmission;
-    private LocalDate dateValeur;
-    private LocalDate dateOperations;
-    private BigDecimal debit;
-    private BigDecimal credit;
-    private final TransactionSource transactionSource = TransactionSource.DECOMPTES;
+        Long id,
+        Long decompteId,
+        String banqueName,
+        String libelle,
+        String observation,
+        LocalDate dateEmission,
+        LocalDate dateValeur,
+        LocalDate dateOperations,
+        BigDecimal debit,
+        BigDecimal credit,
+        TransactionSource transactionSource
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getDecompteId() {
-        return decompteId;
-    }
-
-    public void setDecompteId(Long decompteId) {
-        this.decompteId = decompteId;
-    }
-
-    public TransactionSource getTransactionSource() {
-        return transactionSource;
-    }
-
-    public BigDecimal getDebit() {
-        return debit;
-    }
-
-    public void setDebit(BigDecimal debit) {
-        this.debit = debit;
-    }
-
-    public BigDecimal getCredit() {
-        return credit;
-    }
-
-    public void setCredit(BigDecimal credit) {
-        this.credit = credit;
-    }
-
-    public LocalDate getDateEmission() {
-        return dateEmission;
-    }
-
-    public void setDateEmission(LocalDate dateEmission) {
-        this.dateEmission = dateEmission;
-    }
-
-    public LocalDate getDateValeur() {
-        return dateValeur;
-    }
-
-    public void setDateValeur(LocalDate dateValeur) {
-        this.dateValeur = dateValeur;
-    }
-
-    public LocalDate getDateOperations() {
-        return dateOperations;
-    }
-
-    public void setDateOperations(LocalDate dateOperations) {
-        this.dateOperations = dateOperations;
-    }
-
-    public String getObservation() {
-        return observation;
-    }
-
-    public void setObservation(String observation) {
-        this.observation = observation;
-    }
-
-    public String getLibelle() {
-        return libelle;
-    }
-
-    public void setLibelle(String libelle) {
-        this.libelle = libelle;
-    }
-
-    public String getBanqueName() {
-        return banqueName;
-    }
-
-    public void setBanqueName(String banqueName) {
-        this.banqueName = banqueName;
-    }
-}
+) {}

@@ -1,7 +1,12 @@
 package staport.finance.gBanque.commision.service;
 
+import org.springframework.data.domain.Pageable;
+import staport.finance.gBanque.commision.dtos.CommissionFusionRequest;
+import staport.finance.gBanque.commision.dtos.CommissionFusionResponse;
 import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
+import staport.finance.gBanque.commision.dtos.CommissionSearchDto;
+import staport.finance.gBanque.commision.dtos.EncoursCommissionDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,7 +16,9 @@ import java.util.Optional;
  * Interface publique du module commission.
  * Exposée aux modules tiers (ex : leasing, cautions) pour éviter toute dépendance directe
  * sur la classe concrète {@link CommissionService} ou sur {@code CommisionRepository}
- * (encapsulation des domaines, architecture.md).
+ * (encapsulation des domaines, architecture.md). Couvre également l'intégralité du contrat
+ * utilisé par {@code CommissionController} (mirroring {@code IImpotEtTaxeService}/
+ * {@code ICautionService}) — le controller n'injecte plus la classe concrète.
  */
 public interface ICommissionService {
 
@@ -22,6 +29,27 @@ public interface ICommissionService {
      * @return Le DTO de la commission créée
      */
     CommissionResponseDto createCommission(CommissionRequestDto requestDto);
+
+    /** Récupère une commission par son ID. */
+    CommissionResponseDto getById(Long id);
+
+    /** Recherche paginée des commissions, avec le montant total agrégé correspondant aux critères. */
+    EncoursCommissionDto searchCommissions(CommissionSearchDto searchDto, Pageable pageable);
+
+    /** Met à jour une commission existante. */
+    CommissionResponseDto updateCommission(Long id, CommissionRequestDto requestDto);
+
+    /** Récupère les commissions en encours d'une banque (statut PREVU), paginées, avec le total. */
+    EncoursCommissionDto getOutstandingCommissions(CommissionSearchDto searchDto, Pageable pageable);
+
+    /** Exporte en PDF l'intégralité des commissions correspondant aux critères fournis. */
+    byte[] exporterPdf(CommissionSearchDto searchDto);
+
+    /** Bascule le statut d'une commission entre PREVU et PAYE. */
+    void toggleCommisionStatus(Long commissionId);
+
+    /** Fusionne plusieurs commissions sur cautions en une seule (voir docs/modules/commission.md, §9). */
+    CommissionFusionResponse fusionner(CommissionFusionRequest request);
 
     /**
      * Supprime toutes les commissions dont le libellé correspond au pattern
