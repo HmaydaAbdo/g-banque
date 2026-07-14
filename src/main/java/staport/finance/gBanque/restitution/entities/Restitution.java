@@ -2,6 +2,7 @@ package staport.finance.gBanque.restitution.entities;
 
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
@@ -9,6 +10,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Restitution rattachée à une banque.
+ *
+ * <p>Relation auditée : {@code banque} (déjà {@code @Audited}) — aucune annotation
+ * {@code @NotAudited} nécessaire.
+ */
+@Audited
 @Entity
 @Table(name = "restitution")
 public class Restitution {

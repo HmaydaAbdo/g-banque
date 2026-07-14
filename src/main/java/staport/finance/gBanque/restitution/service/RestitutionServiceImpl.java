@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
@@ -25,23 +28,41 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
+/**
+ * Implémentation du service Restitution.
+ *
+ * <p>Encapsulation des domaines (architecture.md) : la résolution de la {@link Banque} passe
+ * exclusivement par {@link IBanqueService} — jamais par injection directe de
+ * {@code BanqueRepository}.
+ *
+ * <p>Suppression sans garde de statut (contrairement à Impayées/Impôts et Taxes) : comportement
+ * d'origine conservé à l'identique — aucune règle métier "PAYE non supprimable" n'existait pour ce
+ * module avant ce sweep, et ce sweep de conformité (RBAC/audit) n'a pas vocation à introduire de
+ * nouvelle règle métier non demandée (CLAUDE.md, "En cas de doute").
+ *
+ * <p>Bug latent corrigé (14/07/2026) : {@code endOfMonth} était auparavant un champ calculé une
+ * seule fois à la construction du bean singleton — figé à la date de démarrage du serveur au lieu
+ * d'être recalculé à chaque appel. Recalculé maintenant localement dans
+ * {@link #getOutstandingRestitutions}, même correctif que celui appliqué à {@code ImpayeeServiceImpl}
+ * lors du sweep Impayées.
+ */
 @Service
-public class RestitutionService {
+public class RestitutionServiceImpl implements IRestitutionService {
 
-    private static final Logger log = LogManager.getLogger(RestitutionService.class);
+    private static final Logger log = LogManager.getLogger(RestitutionServiceImpl.class);
     private final RestitutionRepository restitutionRepository;
     private final IBanqueService banqueService;
     private final RestitutionMapper restitutionMapper;
-    LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-    public RestitutionService(RestitutionRepository restitutionRepository, IBanqueService banqueService, RestitutionMapper restitutionMapper) {
+    public RestitutionServiceImpl(RestitutionRepository restitutionRepository, IBanqueService banqueService, RestitutionMapper restitutionMapper) {
         this.restitutionRepository = restitutionRepository;
         this.banqueService = banqueService;
         this.restitutionMapper = restitutionMapper;
     }
 
-    // --- Create ---
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Restitution.class)
     public RestitutionResponseDto createRestitution(RestitutionRequestDto requestDto) {
         log.info("Début de création d'une restitution avec les données suivantes: {}", requestDto);
 
@@ -54,22 +75,19 @@ public class RestitutionService {
         return restitutionMapper.toResponseDto(restitution);
     }
 
-    // --- Get by ID ---
+    @Override
     @Transactional(readOnly = true)
     public RestitutionResponseDto getById(Long id) {
         log.info("Récupération de la restitution avec l'id={}", id);
 
         Restitution restitution = restitutionRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Restitution introuvable avec l'id={}", id);
-                    return new IllegalArgumentException("Restitution introuvable avec l'id: " + id);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Restitution introuvable avec l'id: " + id));
 
         log.info("Restitution récupérée avec succès: id={}", id);
         return restitutionMapper.toResponseDto(restitution);
     }
 
-    // --- Search with pagination ---
+    @Override
     @Transactional(readOnly = true)
     public Page<RestitutionResponseDto> searchRestitutions(RestitutionSearchDto searchDto, Pageable pageable) {
         log.info("Recherche de restitutions avec les critères: {}", searchDto);
@@ -84,16 +102,14 @@ public class RestitutionService {
         return result;
     }
 
-    // --- Update ---
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Restitution.class)
     public RestitutionResponseDto updateRestitution(Long id, RestitutionRequestDto requestDto) {
         log.info("Début de mise à jour de la restitution id={} avec les données: {}", id, requestDto);
 
         Restitution restitution = restitutionRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Restitution introuvable avec l'id={}", id);
-                    return new IllegalArgumentException("Restitution introuvable avec l'id: " + id);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Restitution introuvable avec l'id: " + id));
 
         Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
@@ -108,44 +124,42 @@ public class RestitutionService {
         return restitutionMapper.toResponseDto(restitution);
     }
 
-    // --- Delete ---
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = Restitution.class)
     public void deleteRestitution(Long id) {
         log.info("Début de suppression de la restitution avec l'id={}", id);
 
         if (!restitutionRepository.existsById(id)) {
-            log.error("Restitution introuvable avec l'id={}", id);
-            throw new IllegalArgumentException("Restitution introuvable avec l'id: " + id);
+            log.warn("Restitution introuvable avec l'id={}", id);
+            throw new ResourceNotFoundException("Restitution introuvable avec l'id: " + id);
         }
 
         restitutionRepository.deleteById(id);
         log.info("Restitution supprimée avec succès: id={}", id);
     }
 
-    // --- Get Outstanding Restitutions ---
+    @Override
     @Transactional(readOnly = true)
     public EncoursRestitution getOutstandingRestitutions(RestitutionSearchDto searchDto, Pageable pageable) {
         log.info("Récupération des encours de restitutions avec les critères: {}", searchDto);
 
-        // Construction de la spécification pour filtrer les enregistrements
+        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
         Specification<Restitution> spec = Specification.where(RestitutionSpec.outstandingUntil(endOfMonth))
                 .and(RestitutionSpec.hasBanque(searchDto.getBanqueId()))
                 .and(RestitutionSpec.hasLibelle(searchDto.getLibelle()))
                 .and(RestitutionSpec.hasMontant(searchDto.getMontant()))
                 .and(RestitutionSpec.hasStatus(searchDto.getStatus()));
 
-        // Récupération de la liste paginée des restitutions
         Page<Restitution> restitutionPage = restitutionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
-        // Calcul du total des montants pour les mêmes critères
         BigDecimal totalDesEncours = restitutionRepository.findAll(spec).stream()
                 .map(Restitution::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Mapping de la page d'entités vers une page de DTOs
         Page<RestitutionResponseDto> pageDto = restitutionPage.map(restitutionMapper::toResponseDto);
 
-        // Création et retour du DTO final
         EncoursRestitution result = new EncoursRestitution();
         result.setPage(pageDto);
         result.setTotalDesEncours(totalDesEncours);
@@ -156,16 +170,14 @@ public class RestitutionService {
         return result;
     }
 
-    // --- Toggle Status ---
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Restitution.class)
     public RestitutionResponseDto toggleStatus(Long id) {
         log.info("Basculement du statut de la restitution ID: {}", id);
 
         Restitution restitution = restitutionRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.error("Restitution introuvable avec l'id={}", id);
-                    return new IllegalArgumentException("Restitution introuvable avec l'id: " + id);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("Restitution introuvable avec l'id: " + id));
 
         Status oldStatus = restitution.getStatus();
         Status newStatus = oldStatus == Status.PAYE ? Status.PREVU : Status.PAYE;

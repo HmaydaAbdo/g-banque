@@ -1,32 +1,52 @@
 package staport.finance.gBanque.restitution.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionResponseDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionSearchDto;
-import staport.finance.gBanque.restitution.service.RestitutionService;
+import staport.finance.gBanque.restitution.service.IRestitutionService;
 
+/**
+ * Injecte {@link IRestitutionService} (DIP — jamais la classe concrète).
+ *
+ * <p>Autorisations (cf. {@code docs/rbac/restitution.md}) : réservé Finance/SYSTEM_ADMIN sur toutes
+ * les actions (donnée financière propre au département Finance, mirroring
+ * {@code ImpayeeController}/{@code ImpotEtTaxeController}), suppression et changement de statut
+ * (PREVU/PAYE) réservés SYSTEM_ADMIN.
+ */
+@Tag(name = "Restitutions", description = "Gestion des restitutions rattachées aux banques")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/restitutions")
 public class RestitutionController {
 
-    private static final Logger log = LogManager.getLogger(RestitutionController.class);
-    private final RestitutionService restitutionService;
+    private static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
-    public RestitutionController(RestitutionService restitutionService) {
+    private static final Logger log = LogManager.getLogger(RestitutionController.class);
+    private final IRestitutionService restitutionService;
+
+    public RestitutionController(IRestitutionService restitutionService) {
         this.restitutionService = restitutionService;
     }
 
     // --- Create ---
+    @Operation(summary = "Créer une restitution")
     @PostMapping
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<RestitutionResponseDto> createRestitution(@Validated @RequestBody RestitutionRequestDto requestDto) {
         log.info("Requête REST pour créer une restitution: {}", requestDto);
         RestitutionResponseDto responseDto = restitutionService.createRestitution(requestDto);
@@ -35,7 +55,9 @@ public class RestitutionController {
     }
 
     // --- Get by ID ---
+    @Operation(summary = "Récupérer une restitution par ID")
     @GetMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<RestitutionResponseDto> getById(@PathVariable Long id) {
         log.info("Requête REST pour récupérer la restitution avec l'id={}", id);
         RestitutionResponseDto responseDto = restitutionService.getById(id);
@@ -44,7 +66,9 @@ public class RestitutionController {
     }
 
     // --- Search with pagination ---
+    @Operation(summary = "Recherche paginée des restitutions")
     @PostMapping("/search")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<Page<RestitutionResponseDto>> searchRestitutions(
             @RequestBody RestitutionSearchDto searchDto,
             Pageable pageable) {
@@ -56,7 +80,9 @@ public class RestitutionController {
     }
 
     // --- Update ---
+    @Operation(summary = "Modifier une restitution")
     @PutMapping("/{id}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<RestitutionResponseDto> updateRestitution(
             @PathVariable Long id,
             @Validated @RequestBody RestitutionRequestDto requestDto) {
@@ -67,7 +93,9 @@ public class RestitutionController {
     }
 
     // --- Delete ---
+    @Operation(summary = "Supprimer une restitution", description = "Réservé SYSTEM_ADMIN.")
     @DeleteMapping("/{id}")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deleteRestitution(@PathVariable Long id) {
         log.info("Requête REST pour supprimer la restitution id={}", id);
         restitutionService.deleteRestitution(id);
@@ -76,7 +104,9 @@ public class RestitutionController {
     }
 
     // --- Get Outstanding Restitutions ---
+    @Operation(summary = "Consulter les encours de restitutions d'une banque")
     @GetMapping("/encours/{banqueId}")
+    @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursRestitution> getOutstandingRestitutions(
             @PathVariable Long banqueId,
             @ModelAttribute RestitutionSearchDto searchDto,
@@ -90,7 +120,9 @@ public class RestitutionController {
     }
 
     // --- Toggle Status ---
+    @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")
     @PatchMapping("/{id}/toggle-status")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<RestitutionResponseDto> toggleStatus(@PathVariable Long id) {
         log.info("Requête REST pour basculer le statut de la restitution ID: {}", id);
         RestitutionResponseDto response = restitutionService.toggleStatus(id);
