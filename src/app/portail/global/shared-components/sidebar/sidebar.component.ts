@@ -177,7 +177,7 @@ export class SidebarComponent implements OnInit {
         { label: 'TVA sur cautions',         icon: 'pi pi-receipt',     routerLink: '/portail/cautions/tva',          requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
       ],
     },
-    { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions' },
+    { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire' },
     { label: "Les Restitutions", icon: "pi pi-list", routerLink: '/portail/restitutions' },

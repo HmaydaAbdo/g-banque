@@ -201,13 +201,13 @@
                 [pTooltip]="commission.status === 'PAYE' ? 'Marquer comme prévu' : 'Marquer comme payé'"
               ></p-inputSwitch>
 
+              <button
+                pButton pRipple
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-outlined p-button-danger"
+                (click)="deleteCommission(commission)"
+              ></button>
             }
-            <button
-              pButton pRipple
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-outlined p-button-danger"
-              (click)="deleteCommission(commission)"
-            ></button>
           </td>
         </tr>
       </ng-template>
