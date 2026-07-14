@@ -19,8 +19,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
-import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.repositories.NatureLigneFonctionnelleRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.dtos.*;
 import staport.finance.gBanque.commision.entities.Commission;
@@ -28,7 +28,8 @@ import staport.finance.gBanque.commision.mapper.CommissionMapper;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
+import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
+import staport.finance.gBanque.impot_taxes.service.IImpotEtTaxeService;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.entities.MiseADisposition;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
@@ -65,11 +66,11 @@ public class CommissionService implements ICommissionService {
     private EntityManager entityManager;
 
     private final CommisionRepository       commissionRepository;
-    private final BanqueRepository          banqueRepository;
+    private final IBanqueService            banqueService;
     private final CommissionMapper          commissionMapper;
-    private final ImpotEtTaxeRepository     impotEtTaxeRepository;
+    private final IImpotEtTaxeService       impotEtTaxeService;
     private final ICommissionConfigService  commissionConfigService;
-    private final NatureLigneFonctionnelleRepository natureRepository;
+    private final INatureLigneFonctionnelleService natureService;
     private final StaportPdfReportService   staportPdfReportService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -77,18 +78,18 @@ public class CommissionService implements ICommissionService {
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public CommissionService(CommisionRepository commissionRepository,
-                             BanqueRepository banqueRepository,
+                             IBanqueService banqueService,
                              CommissionMapper commissionMapper,
-                             ImpotEtTaxeRepository impotEtTaxeRepository,
+                             IImpotEtTaxeService impotEtTaxeService,
                              ICommissionConfigService commissionConfigService,
-                             NatureLigneFonctionnelleRepository natureRepository,
+                             INatureLigneFonctionnelleService natureService,
                              StaportPdfReportService staportPdfReportService) {
         this.commissionRepository   = commissionRepository;
-        this.banqueRepository       = banqueRepository;
+        this.banqueService          = banqueService;
         this.commissionMapper       = commissionMapper;
-        this.impotEtTaxeRepository  = impotEtTaxeRepository;
+        this.impotEtTaxeService     = impotEtTaxeService;
         this.commissionConfigService = commissionConfigService;
-        this.natureRepository       = natureRepository;
+        this.natureService          = natureService;
         this.staportPdfReportService = staportPdfReportService;
     }
 
@@ -97,11 +98,7 @@ public class CommissionService implements ICommissionService {
     public CommissionResponseDto createCommission(CommissionRequestDto requestDto) {
         log.info("Creating commission for banqueId={} libelle={}", requestDto.getBanqueId(), requestDto.getLibelle());
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque not found with id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque not found");
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         Commission commission = commissionMapper.toEntity(requestDto, banque);
         commissionRepository.save(commission);
@@ -158,11 +155,7 @@ public class CommissionService implements ICommissionService {
                     return new IllegalArgumentException("Commission not found");
                 });
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque not found with id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque not found");
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         commission.setLibelle(requestDto.getLibelle());
         commission.setMontant(requestDto.getMontant());
@@ -175,15 +168,10 @@ public class CommissionService implements ICommissionService {
 
         // Cascade TVA : uniquement pour les commissions sur cautions
         if (TransactionSource.CAUTION.equals(commission.getOperation())) {
-            impotEtTaxeRepository.findByCommission_Id(id).ifPresent(tva -> {
-                BigDecimal nouveauMontantTva = requestDto.getMontant()
-                        .multiply(TAUX_TVA_COMMISSION_CAUTION)
-                        .setScale(2, RoundingMode.HALF_UP);
-                log.info("Mise à jour TVA liée — commission id={}, ancien montant TVA={}, nouveau montant TVA={}",
-                        id, tva.getMontant(), nouveauMontantTva);
-                tva.setMontant(nouveauMontantTva);
-                impotEtTaxeRepository.save(tva);
-            });
+            BigDecimal nouveauMontantTva = requestDto.getMontant()
+                    .multiply(TAUX_TVA_COMMISSION_CAUTION)
+                    .setScale(2, RoundingMode.HALF_UP);
+            impotEtTaxeService.updateMontantByCommissionId(id, nouveauMontantTva);
         }
 
         return commissionMapper.toResponseDto(commission);
@@ -203,11 +191,7 @@ public class CommissionService implements ICommissionService {
 
         // Cascade TVA : uniquement pour les commissions sur cautions
         if (TransactionSource.CAUTION.equals(commission.getOperation())) {
-            impotEtTaxeRepository.findByCommission_Id(id).ifPresent(tva -> {
-                log.info("Suppression TVA liée — commission id={}, montant TVA={}",
-                        id, tva.getMontant());
-                impotEtTaxeRepository.delete(tva);
-            });
+            impotEtTaxeService.deleteByCommissionIdIfExists(id);
         }
 
         commissionRepository.delete(commission);
@@ -404,9 +388,13 @@ public class CommissionService implements ICommissionService {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
 
-        if (dto.getBanqueId() != null)
-            banqueRepository.findById(dto.getBanqueId())
-                .ifPresent(b -> lines.add("Banque : " + b.getNom()));
+        if (dto.getBanqueId() != null) {
+            try {
+                lines.add("Banque : " + banqueService.findOrThrow(dto.getBanqueId()).getNom());
+            } catch (ResourceNotFoundException e) {
+                log.debug("Banque id={} introuvable pour le résumé de filtre export — ignorée", dto.getBanqueId());
+            }
+        }
         if (dto.getLibelle() != null && !dto.getLibelle().isBlank())
             lines.add("Libellé : " + dto.getLibelle());
         if (dto.getOperation() != null)
@@ -415,9 +403,13 @@ public class CommissionService implements ICommissionService {
             lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
         if (dto.getStatus() != null)
             lines.add("Statut : " + (dto.getStatus() == Status.PAYE ? "Payée" : "Prévue"));
-        if (dto.getNatureId() != null)
-            natureRepository.findById(dto.getNatureId())
-                .ifPresent(n -> lines.add("Nature : " + n.getLabel()));
+        if (dto.getNatureId() != null) {
+            try {
+                lines.add("Nature : " + natureService.getNatureLigneFonctionnelleById(dto.getNatureId()).label());
+            } catch (ResourceNotFoundException e) {
+                log.debug("Nature id={} introuvable pour le résumé de filtre export — ignorée", dto.getNatureId());
+            }
+        }
 
         return lines;
     }
@@ -535,7 +527,7 @@ public class CommissionService implements ICommissionService {
                 .setScale(2, RoundingMode.HALF_UP);
 
         // ── 4. Suppression des TVA liées aux sources (toujours) ──────────────
-        impotEtTaxeRepository.deleteByCommissionIdIn(ids);
+        impotEtTaxeService.deleteByCommissionIdIn(ids);
         log.info("TVA sources supprimées pour les commissions {}", ids);
 
         // ── 5. Suppression des commissions sources ───────────────────────────
@@ -828,11 +820,7 @@ public class CommissionService implements ICommissionService {
     public CommissionResponseDto creerCommissionCaution(Long cautionId, Long banqueId, BigDecimal montant,
             LocalDate dateEmission, String libelle, String observation) {
 
-        Banque banque = banqueRepository.findById(banqueId)
-                .orElseThrow(() -> {
-                    log.error("Banque introuvable avec l'id={}", banqueId);
-                    return new IllegalArgumentException("Banque introuvable");
-                });
+        Banque banque = banqueService.findOrThrow(banqueId);
 
         Commission commission = new Commission();
         commission.setBanque(banque);
@@ -848,6 +836,33 @@ public class CommissionService implements ICommissionService {
         Commission sauvegardee = commissionRepository.save(commission);
         log.info("Commission caution créée — id={}, cautionId={}, montant={}",
                 sauvegardee.getId(), cautionId, montant);
+
+        return commissionMapper.toResponseDto(sauvegardee);
+    }
+
+    // ── Façade dédiée aux commissions générées automatiquement sur impôt/taxe ──
+
+    @Override
+    @Transactional
+    public CommissionResponseDto creerCommissionSurImpotEtTaxe(Long impotEtTaxeId, Long banqueId, BigDecimal montant,
+            LocalDate dateEmission, String libelle, String observation) {
+
+        Banque banque = banqueService.findOrThrow(banqueId);
+
+        Commission commission = new Commission();
+        commission.setBanque(banque);
+        commission.setMontant(montant);
+        commission.setOperation(TransactionSource.IMPOT_TAXE);
+        commission.setDateEmission(dateEmission);
+        commission.setLibelle(libelle);
+        commission.setObservation(observation);
+        commission.setStatus(Status.PREVU);
+        // Référence par proxy — évite de charger l'entité ImpotEtTaxe complète pour ce seul FK.
+        commission.setImpotEtTaxe(entityManager.getReference(ImpotEtTaxe.class, impotEtTaxeId));
+
+        Commission sauvegardee = commissionRepository.save(commission);
+        log.info("Commission auto-générée sur impôt/taxe — id={}, impotEtTaxeId={}, montant={}",
+                sauvegardee.getId(), impotEtTaxeId, montant);
 
         return commissionMapper.toResponseDto(sauvegardee);
     }

@@ -1,6 +1,10 @@
 package staport.finance.gBanque.impot_taxes.repositories;
 
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -18,6 +22,13 @@ import java.util.Optional;
 
 @Repository
 public interface ImpotEtTaxeRepository extends JpaRepository<ImpotEtTaxe, Long>, JpaSpecificationExecutor<ImpotEtTaxe> {
+
+    /**
+     * Recherche paginée avec chargement de la banque en une seule requête JOIN — évite le N+1
+     * lors du mapping vers {@code ImpotEtTaxeResponseDto} (banqueNom).
+     */
+    @EntityGraph(value = "ImpotEtTaxe.avecBanque")
+    Page<ImpotEtTaxe> findAll(Specification<ImpotEtTaxe> spec, Pageable pageable);
 
     List<ImpotEtTaxe> findByLibelleLikeAndDateEmission(String libellePattern, LocalDate dateEmission);
 
@@ -49,4 +60,7 @@ public interface ImpotEtTaxeRepository extends JpaRepository<ImpotEtTaxe, Long>,
      */
     boolean existsByBanqueIdAndLibelleAndDateEmissionBetween(
             Long banqueId, String libelle, LocalDate start, LocalDate end);
+
+    /** Utilisé par {@code ImpotEtTaxeMetrics} pour les gauges PREVU/PAYE. */
+    long countByStatus(Status status);
 }

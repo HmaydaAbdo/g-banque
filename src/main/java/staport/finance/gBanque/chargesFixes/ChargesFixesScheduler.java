@@ -6,19 +6,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.dtos.AgiosRequestDto;
-import staport.finance.gBanque.Agios.repository.AgiosRepository;
-import staport.finance.gBanque.Agios.service.AgiosService;
+import staport.finance.gBanque.Agios.service.IAgiosService;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireRequestDto;
-import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
-import staport.finance.gBanque.fraisBancaires.service.FraisBancaireService;
-import staport.finance.gBanque.impot_taxes.dtos.ImpotEtTaxeRequestDto;
-import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
-import staport.finance.gBanque.impot_taxes.service.ImpotEtTaxeService;
+import staport.finance.gBanque.fraisBancaires.service.IFraisBancaireService;
+import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeRequestDto;
+import staport.finance.gBanque.impot_taxes.service.IImpotEtTaxeService;
 import staport.finance.gBanque.prelevements.dtos.PrelevementRequestDto;
-import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
-import staport.finance.gBanque.prelevements.service.PrelevementService;
+import staport.finance.gBanque.prelevements.service.IPrelevementService;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -45,40 +41,25 @@ public class ChargesFixesScheduler {
     private static final Logger log = LoggerFactory.getLogger(ChargesFixesScheduler.class);
 
     private final ChargesFixesRegistry registry;
-    private final BanqueRepository banqueRepository;
+    private final IBanqueService banqueService;
 
-    private final FraisBancaireService fraisBancaireService;
-    private final FraisBancaireRepository fraisBancaireRepository;
-
-    private final ImpotEtTaxeService impotEtTaxeService;
-    private final ImpotEtTaxeRepository impotEtTaxeRepository;
-
-    private final AgiosService agiosService;
-    private final AgiosRepository agiosRepository;
-
-    private final PrelevementService prelevementService;
-    private final PrelevementRepository prelevementRepository;
+    private final IFraisBancaireService fraisBancaireService;
+    private final IImpotEtTaxeService impotEtTaxeService;
+    private final IAgiosService agiosService;
+    private final IPrelevementService prelevementService;
 
     public ChargesFixesScheduler(ChargesFixesRegistry registry,
-                                  BanqueRepository banqueRepository,
-                                  FraisBancaireService fraisBancaireService,
-                                  FraisBancaireRepository fraisBancaireRepository,
-                                  ImpotEtTaxeService impotEtTaxeService,
-                                  ImpotEtTaxeRepository impotEtTaxeRepository,
-                                  AgiosService agiosService,
-                                  AgiosRepository agiosRepository,
-                                  PrelevementService prelevementService,
-                                  PrelevementRepository prelevementRepository) {
+                                  IBanqueService banqueService,
+                                  IFraisBancaireService fraisBancaireService,
+                                  IImpotEtTaxeService impotEtTaxeService,
+                                  IAgiosService agiosService,
+                                  IPrelevementService prelevementService) {
         this.registry = registry;
-        this.banqueRepository = banqueRepository;
+        this.banqueService = banqueService;
         this.fraisBancaireService = fraisBancaireService;
-        this.fraisBancaireRepository = fraisBancaireRepository;
         this.impotEtTaxeService = impotEtTaxeService;
-        this.impotEtTaxeRepository = impotEtTaxeRepository;
         this.agiosService = agiosService;
-        this.agiosRepository = agiosRepository;
         this.prelevementService = prelevementService;
-        this.prelevementRepository = prelevementRepository;
     }
 
     // -----------------------------------------------------------------------
@@ -94,7 +75,7 @@ public class ChargesFixesScheduler {
         for (Map.Entry<String, List<ChargeFixeDefinition>> entry : registry.getChargesParBanque().entrySet()) {
             String nomBanque = entry.getKey();
 
-            Optional<Banque> banqueOpt = banqueRepository.findByNomIgnoreCase(nomBanque);
+            Optional<Banque> banqueOpt = banqueService.findByNomIgnoreCase(nomBanque);
             if (banqueOpt.isEmpty()) {
                 log.warn("[ChargesFixes] Banque '{}' introuvable — ignorée.", nomBanque);
                 continue;
@@ -129,7 +110,7 @@ public class ChargesFixesScheduler {
 
     private void creerFraisBancaire(Banque banque, ChargeFixeDefinition charge, LocalDate dateEmission) {
         String libelle = construireLibelle(charge, dateEmission);
-        if (dejaPresent(fraisBancaireRepository::existsByBanqueIdAndLibelleAndDateEmissionBetween,
+        if (dejaPresent(fraisBancaireService::existsChargeFixeGeneree,
                         banque.getId(), libelle, charge.jourEmission())) return;
 
         FraisBancaireRequestDto dto = new FraisBancaireRequestDto();
@@ -149,16 +130,11 @@ public class ChargesFixesScheduler {
 
     private void creerImpotTaxe(Banque banque, ChargeFixeDefinition charge, LocalDate dateEmission) {
         String libelle = construireLibelle(charge, dateEmission);
-        if (dejaPresent(impotEtTaxeRepository::existsByBanqueIdAndLibelleAndDateEmissionBetween,
+        if (dejaPresent(impotEtTaxeService::existsImpotTaxeGenere,
                         banque.getId(), libelle, charge.jourEmission())) return;
 
-        ImpotEtTaxeRequestDto dto = new ImpotEtTaxeRequestDto();
-        dto.setLibelle(libelle);
-        dto.setObservation(libelle);
-        dto.setMontant(charge.montant());
-        dto.setBanqueId(banque.getId());
-        dto.setMotif(charge.motif());
-        dto.setDateEmission(dateEmission);
+        ImpotEtTaxeRequestDto dto = new ImpotEtTaxeRequestDto(
+                libelle, libelle, charge.montant(), banque.getId(), charge.motif(), dateEmission);
 
         impotEtTaxeService.createImpotEtTaxe(dto);
         log.info("[ChargesFixes] Impôt/taxe '{}' créé (PREVU) pour {}.", libelle, banque.getNom());
@@ -170,7 +146,7 @@ public class ChargesFixesScheduler {
 
     private void creerAgios(Banque banque, ChargeFixeDefinition charge, LocalDate dateEmission) {
         String libelle = construireLibelle(charge, dateEmission);
-        if (dejaPresent(agiosRepository::existsByBanqueIdAndLibelleAndDateEmissionBetween,
+        if (dejaPresent(agiosService::existsChargeFixeGeneree,
                         banque.getId(), libelle, charge.jourEmission())) return;
 
         AgiosRequestDto dto = new AgiosRequestDto(libelle, libelle, charge.montant(), banque.getId(), dateEmission);
@@ -185,7 +161,7 @@ public class ChargesFixesScheduler {
 
     private void creerPrelevement(Banque banque, ChargeFixeDefinition charge, LocalDate dateEmission) {
         String libelle = construireLibelle(charge, dateEmission);
-        if (dejaPresent(prelevementRepository::existsByBanqueIdAndLibelleAndDateEmissionBetween,
+        if (dejaPresent(prelevementService::existsChargeFixeGeneree,
                         banque.getId(), libelle, charge.jourEmission())) return;
 
         PrelevementRequestDto dto = new PrelevementRequestDto();

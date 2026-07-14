@@ -24,8 +24,9 @@ import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransa
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
-import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
-import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
+import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionRequestDto;
+import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionResponseDto;
+import staport.finance.gBanque.impot_taxes.validation.services.interfaces.IImpotEtTaxeValidationService;
 import staport.finance.gBanque.prefinancement.validation.dto.PrefinancementTransactionRequest;
 import staport.finance.gBanque.prefinancement.validation.dto.PrefinancementTransactionResponse;
 import staport.finance.gBanque.prefinancement.validation.services.interfaces.IPrefinancementValidationService;
@@ -95,6 +96,7 @@ public class ValidationController {
     private final IFactoringValidationService factoringValidationService;
     private final IDroitConstateValidationService droitConstateValidationService;
     private final IDecompteValidationService decompteValidationService;
+    private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
 
     public ValidationController(ValidationService validationService,
                                 ReverseTransactionService reverseTransactionService,
@@ -113,7 +115,8 @@ public class ValidationController {
                                 IPrefinancementValidationService prefinancementValidationService,
                                 IFactoringValidationService factoringValidationService,
                                 IDroitConstateValidationService droitConstateValidationService,
-                                IDecompteValidationService decompteValidationService) {
+                                IDecompteValidationService decompteValidationService,
+                                IImpotEtTaxeValidationService impotEtTaxeValidationService) {
         this.validationService      = validationService;
         this.reverseTransactionService = reverseTransactionService;
         this.leasingValidationService  = leasingValidationService;
@@ -132,6 +135,7 @@ public class ValidationController {
         this.factoringValidationService = factoringValidationService;
         this.droitConstateValidationService = droitConstateValidationService;
         this.decompteValidationService = decompteValidationService;
+        this.impotEtTaxeValidationService = impotEtTaxeValidationService;
     }
 
 
@@ -335,9 +339,9 @@ public class ValidationController {
 
 
     @PostMapping("/process/impot-taxe")
-    public ResponseEntity<ImpotEtTaxeTransactionResponse> processImpotEtTaxeToTransaction(
-            @Valid @RequestBody ImpotEtTaxeValidationRequest requestDto) throws Exception {
-        ImpotEtTaxeTransactionResponse responseDto = validationService.processImpotEtTaxeToTransaction(requestDto);
+    public ResponseEntity<ImpotEtTaxeTransactionResponseDto> processImpotEtTaxeToTransaction(
+            @Valid @RequestBody ImpotEtTaxeTransactionRequestDto requestDto) {
+        ImpotEtTaxeTransactionResponseDto responseDto = impotEtTaxeValidationService.processImpotEtTaxeTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 

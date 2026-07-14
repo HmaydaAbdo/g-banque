@@ -59,4 +59,16 @@ public interface ICommissionService {
      * ({@code operation = CAUTION}), la TVA éventuellement rattachée est supprimée en cascade.
      */
     void deleteCommission(Long id);
+
+    // ── Façade dédiée aux commissions générées automatiquement sur impôt/taxe ──
+
+    /**
+     * Crée et persiste une commission rattachée à un impôt/taxe (règle métier SAHAM BANK) —
+     * façade pour le module {@code impot_taxes}, qui ne doit jamais injecter
+     * {@code CommisionRepository} directement (encapsulation des domaines, architecture.md).
+     * L'association est résolue en interne à partir de son identifiant — aucune entité d'un
+     * autre domaine ne transite par cette interface.
+     */
+    CommissionResponseDto creerCommissionSurImpotEtTaxe(Long impotEtTaxeId, Long banqueId, BigDecimal montant,
+            LocalDate dateEmission, String libelle, String observation);
 }

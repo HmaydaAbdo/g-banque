@@ -10,8 +10,6 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.repositories.BanqueRepository;
 import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
-import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
-import staport.finance.gBanque.impot_taxes.repositories.ImpotEtTaxeRepository;
 import staport.finance.gBanque.commision.entities.Commission;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
@@ -33,8 +31,6 @@ import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransa
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
-import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
-import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionTransactionResponse;
 import staport.finance.gBanque.validation.dtos.restitutions.RestitutionValidationRequest;
@@ -60,9 +56,6 @@ public class ValidationService {
     private final TransactionRepository transactionRepository;
     private final BanqueRepository banqueRepository;
 
-    private final ImpotEtTaxeRepository impotEtTaxeRepository;
-    private final ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper;
-
     private final RestitutionRepository restitutionRepository;
     private final RestitutionTransactionMapper restitutionTransactionMapper;
 
@@ -76,15 +69,13 @@ public class ValidationService {
     private final SoldeCascadeService soldeCascadeService;
 
 
-    public ValidationService(TransactionRepository transactionRepository, BanqueRepository banqueRepository, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, ImpotEtTaxeRepository impotEtTaxeRepository, ImpotEtTaxeTransactionMapper impotEtTaxeTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
+    public ValidationService(TransactionRepository transactionRepository, BanqueRepository banqueRepository, CommisionRepository commisionRepository, CommisionTransactionMapper commisionTransactionMapper, FraisBancaireRepository fraisBancaireRepository, FraisBancaireTransactionMapper fraisBancaireTransactionMapper, RestitutionRepository restitutionRepository, RestitutionTransactionMapper restitutionTransactionMapper, OperationErroneRepository operationErroneRepository, OperationErroneTransactionMapper operationErroneTransactionMapper, ImpayeeRepository impayeeRepository, ImpayeeTransactionMapper impayeeTransactionMapper, RapprochementRepository rapprochementRepository, SoldeCascadeService soldeCascadeService) {
         this.transactionRepository = transactionRepository;
         this.banqueRepository = banqueRepository;
         this.commisionRepository = commisionRepository;
         this.commisionTransactionMapper = commisionTransactionMapper;
         this.fraisBancaireRepository = fraisBancaireRepository;
         this.fraisBancaireTransactionMapper = fraisBancaireTransactionMapper;
-        this.impotEtTaxeRepository = impotEtTaxeRepository;
-        this.impotEtTaxeTransactionMapper = impotEtTaxeTransactionMapper;
         this.restitutionRepository = restitutionRepository;
         this.restitutionTransactionMapper = restitutionTransactionMapper;
         this.operationErroneRepository = operationErroneRepository;
@@ -202,40 +193,9 @@ public class ValidationService {
     }
 
 
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public ImpotEtTaxeTransactionResponse processImpotEtTaxeToTransaction(ImpotEtTaxeValidationRequest requestDto)   {
-        // Step 1: Fetch impot et taxe from the database using its id from the request.
-        ImpotEtTaxe impotEtTaxe = this.impotEtTaxeRepository.findById(requestDto.getIdImpotEtTaxe())
-                .orElseThrow(() -> new ResourceNotFoundException("Impôt/Taxe with id " + requestDto.getIdImpotEtTaxe() + " not found"));
-
-        // Step 2: Check if the impot et taxe is not already paid.
-        // If it's already paid, throw an exception.
-        if (impotEtTaxe.getStatus() == Status.PAYE) {
-            throw new RuntimeException("L'impôt/taxe est déjà payé(e)");
-        }
-
-        // Step 3: Use the mapper to convert the DTO and the fetched entity into a Transaction entity.
-        Transaction transactionEntity = impotEtTaxeTransactionMapper.toEntity(requestDto, impotEtTaxe);
-
-        Banque banque = banqueRepository.findById(impotEtTaxe.getBanque().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Banque with id " + impotEtTaxe.getBanque().getId() + " not found"));
-
-        // Step 4: Save the Transaction entity to the database.
-        Transaction savedTransaction = this.saveTransactionWithCascade(transactionEntity, banque.getId(), requestDto.getRapprochementId());
-
-
-        // Step 6: Mark the impot et taxe as paid and save the updated entity.
-        impotEtTaxe.setStatus(Status.PAYE);
-        impotEtTaxe.setObservation(savedTransaction.getObservation());
-        impotEtTaxe.setLibelle(savedTransaction.getLibelle());
-        impotEtTaxe.setDateValeur(savedTransaction.getDateValeur());
-        impotEtTaxe.setDateOperation(savedTransaction.getDateOperations());
-        impotEtTaxeRepository.save(impotEtTaxe);
-
-        // Step 7: Convert the saved Transaction entity into an ImpotEtTaxeTransactionResponse
-        // using the mapper and return it as the response.
-        return impotEtTaxeTransactionMapper.toResponseDto(savedTransaction);
-    }
+    // processImpotEtTaxeToTransaction extrait vers
+    // staport.finance.gBanque.impot_taxes.validation.services.ImpotEtTaxeValidationService
+    // (architecture.md, Règle 1 — la logique de validation d'un module lui appartient).
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public RestitutionTransactionResponse processRestitutionToTransaction(RestitutionValidationRequest requestDto)  {

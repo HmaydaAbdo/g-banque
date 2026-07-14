@@ -1,6 +1,7 @@
 package staport.finance.gBanque.impot_taxes.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.cautions.entities.Caution;
 import staport.finance.gBanque.commision.entities.Commission;
@@ -12,7 +13,28 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
+/**
+ * Impôt ou taxe (TVA, IR, IS, pénalité, etc.) rattaché à une banque.
+ *
+ * <p>Relations auditées : {@code banque} (déjà {@code @Audited}), {@code commission} et
+ * {@code caution} (déjà {@code @Audited} toutes les deux) — aucune annotation
+ * {@code targetAuditMode=NOT_AUDITED} nécessaire (cf. {@code feedback_envers_audit_relations}).
+ */
 @Entity
+@Audited
+@Table(
+        name = "impot_et_taxe",
+        indexes = {
+                @Index(name = "idx_impot_et_taxe_banque_id", columnList = "banque_id"),
+                @Index(name = "idx_impot_et_taxe_status", columnList = "status"),
+                @Index(name = "idx_impot_et_taxe_motif", columnList = "motif"),
+                @Index(name = "idx_impot_et_taxe_date_emission", columnList = "dateEmission")
+        }
+)
+@NamedEntityGraph(
+        name = "ImpotEtTaxe.avecBanque",
+        attributeNodes = @NamedAttributeNode("banque")
+)
 public class ImpotEtTaxe {
 
     @Id

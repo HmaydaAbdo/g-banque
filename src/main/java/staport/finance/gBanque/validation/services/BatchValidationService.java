@@ -40,8 +40,9 @@ import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBancaireTransa
 import staport.finance.gBanque.validation.dtos.fraisBancaire.FraisBanciareValidationRequest;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeTransactionResponse;
 import staport.finance.gBanque.validation.dtos.impayee.ImpayeeValidationRequest;
-import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeTransactionResponse;
-import staport.finance.gBanque.validation.dtos.impotsEtTaxes.ImpotEtTaxeValidationRequest;
+import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionRequestDto;
+import staport.finance.gBanque.impot_taxes.validation.dto.ImpotEtTaxeTransactionResponseDto;
+import staport.finance.gBanque.impot_taxes.validation.services.interfaces.IImpotEtTaxeValidationService;
 import staport.finance.gBanque.moyensDePaiements.lcn.validation.dto.LcnTransactionRequest;
 import staport.finance.gBanque.moyensDePaiements.lcn.validation.dto.LcnTransactionResponseDto;
 import staport.finance.gBanque.moyensDePaiements.lcn.validation.services.interfaces.ILcnValidationService;
@@ -123,6 +124,7 @@ public class BatchValidationService {
     private final IFactoringValidationService factoringValidationService;
     private final IDroitConstateValidationService droitConstateValidationService;
     private final IDecompteValidationService decompteValidationService;
+    private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
 
     public BatchValidationService(ValidationService validationService,
                                    IAgiosValidationService agiosValidationService,
@@ -139,7 +141,8 @@ public class BatchValidationService {
                                    IPrefinancementValidationService prefinancementValidationService,
                                    IFactoringValidationService factoringValidationService,
                                    IDroitConstateValidationService droitConstateValidationService,
-                                   IDecompteValidationService decompteValidationService) {
+                                   IDecompteValidationService decompteValidationService,
+                                   IImpotEtTaxeValidationService impotEtTaxeValidationService) {
         this.validationService = validationService;
         this.agiosValidationService = agiosValidationService;
         this.echeanceCMTRepository = echeanceCMTRepository;
@@ -156,6 +159,7 @@ public class BatchValidationService {
         this.factoringValidationService = factoringValidationService;
         this.droitConstateValidationService = droitConstateValidationService;
         this.decompteValidationService = decompteValidationService;
+        this.impotEtTaxeValidationService = impotEtTaxeValidationService;
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -280,14 +284,12 @@ public class BatchValidationService {
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case IMPOT_TAXE -> {
-                ImpotEtTaxeValidationRequest dto = new ImpotEtTaxeValidationRequest();
-                dto.setIdImpotEtTaxe(id);
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
-                ImpotEtTaxeTransactionResponse r = validationService.processImpotEtTaxeToTransaction(dto);
-                return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
+                ImpotEtTaxeTransactionRequestDto dto = new ImpotEtTaxeTransactionRequestDto(
+                        id, requestDto.getTvaDeductible(), null,
+                        requestDto.getDateValeur(), requestDto.getDateOperation(),
+                        null, null, requestDto.getRapprochementId());
+                ImpotEtTaxeTransactionResponseDto r = impotEtTaxeValidationService.processImpotEtTaxeTransaction(dto);
+                return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case RESTITUTION -> {
                 RestitutionValidationRequest dto = new RestitutionValidationRequest();

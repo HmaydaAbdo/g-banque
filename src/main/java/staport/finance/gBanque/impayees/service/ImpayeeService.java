@@ -11,7 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.impayees.dtos.*;
 import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impayees.mapper.ImpayeeMapper;
@@ -27,13 +27,13 @@ public class ImpayeeService {
 
     private static final Logger log = LogManager.getLogger(ImpayeeService.class);
     private final ImpayeeRepository impayeeRepository;
-    private final BanqueRepository banqueRepository;
+    private final IBanqueService banqueService;
     private final ImpayeeMapper impayeeMapper;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-    public ImpayeeService(ImpayeeRepository impayeeRepository, BanqueRepository banqueRepository, ImpayeeMapper impayeeMapper) {
+    public ImpayeeService(ImpayeeRepository impayeeRepository, IBanqueService banqueService, ImpayeeMapper impayeeMapper) {
         this.impayeeRepository = impayeeRepository;
-        this.banqueRepository = banqueRepository;
+        this.banqueService = banqueService;
         this.impayeeMapper = impayeeMapper;
     }
 
@@ -41,11 +41,7 @@ public class ImpayeeService {
     public ImpayeeResponseDto createImpayee(ImpayeeRequestDto requestDto) {
         log.info("Début de création d'une impayée avec les données: {}", requestDto);
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque  introuvable avec l'id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque  introuvable");
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         Impayee impayee = impayeeMapper.toEntity(requestDto, banque);
         impayeeRepository.save(impayee);
@@ -77,8 +73,7 @@ public class ImpayeeService {
         Impayee impayee = impayeeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Impayée introuvable"));
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> new IllegalArgumentException("Banque  introuvable"));
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         impayee.setLibelle(requestDto.getLibelle());
         impayee.setMontant(requestDto.getMontant());

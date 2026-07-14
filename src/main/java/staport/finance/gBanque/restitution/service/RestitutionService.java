@@ -10,7 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
@@ -30,13 +30,13 @@ public class RestitutionService {
 
     private static final Logger log = LogManager.getLogger(RestitutionService.class);
     private final RestitutionRepository restitutionRepository;
-    private final BanqueRepository banqueRepository;
+    private final IBanqueService banqueService;
     private final RestitutionMapper restitutionMapper;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-    public RestitutionService(RestitutionRepository restitutionRepository, BanqueRepository banqueRepository, RestitutionMapper restitutionMapper) {
+    public RestitutionService(RestitutionRepository restitutionRepository, IBanqueService banqueService, RestitutionMapper restitutionMapper) {
         this.restitutionRepository = restitutionRepository;
-        this.banqueRepository = banqueRepository;
+        this.banqueService = banqueService;
         this.restitutionMapper = restitutionMapper;
     }
 
@@ -45,11 +45,7 @@ public class RestitutionService {
     public RestitutionResponseDto createRestitution(RestitutionRequestDto requestDto) {
         log.info("Début de création d'une restitution avec les données suivantes: {}", requestDto);
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque introuvable avec l'id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque introuvable avec l'id: " + requestDto.getBanqueId());
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         Restitution restitution = restitutionMapper.toEntity(requestDto, banque);
         restitutionRepository.save(restitution);
@@ -99,11 +95,7 @@ public class RestitutionService {
                     return new IllegalArgumentException("Restitution introuvable avec l'id: " + id);
                 });
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque introuvable avec l'id={}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque introuvable avec l'id: " + requestDto.getBanqueId());
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         restitution.setLibelle(requestDto.getLibelle());
         restitution.setObservation(requestDto.getObservation());

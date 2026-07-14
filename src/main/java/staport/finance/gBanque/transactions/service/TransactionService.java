@@ -15,6 +15,7 @@ import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationS
 import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
 import staport.finance.gBanque.droitConstate.validation.services.interfaces.IDroitConstateValidationService;
 import staport.finance.gBanque.factoring.validation.services.interfaces.IFactoringValidationService;
+import staport.finance.gBanque.impot_taxes.validation.services.interfaces.IImpotEtTaxeValidationService;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.ILeasingValidationService;
 import staport.finance.gBanque.moyensDePaiements.cheques.validation.services.interfaces.IChequeValidationService;
 import staport.finance.gBanque.moyensDePaiements.lcn.validation.services.interfaces.ILcnValidationService;
@@ -57,6 +58,7 @@ public class TransactionService implements ITransactionService{
     private final IFactoringValidationService factoringValidationService;
     private final IDroitConstateValidationService droitConstateValidationService;
     private final IDecompteValidationService decompteValidationService;
+    private final IImpotEtTaxeValidationService impotEtTaxeValidationService;
 
     public TransactionService(TransactionRepository transactionRepository,
                               ILeasingValidationService leasingValidationService,
@@ -70,7 +72,8 @@ public class TransactionService implements ITransactionService{
                               IPrefinancementValidationService prefinancementValidationService,
                               IFactoringValidationService factoringValidationService,
                               IDroitConstateValidationService droitConstateValidationService,
-                              IDecompteValidationService decompteValidationService) {
+                              IDecompteValidationService decompteValidationService,
+                              IImpotEtTaxeValidationService impotEtTaxeValidationService) {
         this.transactionRepository = transactionRepository;
         this.leasingValidationService = leasingValidationService;
         this.cmtValidationService = cmtValidationService;
@@ -84,6 +87,7 @@ public class TransactionService implements ITransactionService{
         this.factoringValidationService = factoringValidationService;
         this.droitConstateValidationService = droitConstateValidationService;
         this.decompteValidationService = decompteValidationService;
+        this.impotEtTaxeValidationService = impotEtTaxeValidationService;
     }
 
     @Transactional(readOnly = true)
@@ -386,6 +390,17 @@ public class TransactionService implements ITransactionService{
             log.info("Transaction DECOMPTES ID: {} mise à jour — synchronisation du décompte ID: {}",
                     saved.getId(), saved.getReferent());
             decompteValidationService.syncDecompteFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation impôt/taxe : si la transaction provient d'un impôt/taxe, on propage
+        // dateValeur et dateOperation vers l'impôt/taxe source (referent = impotEtTaxeId).
+        if (TransactionSource.IMPOT_TAXE == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction IMPOT_TAXE ID: {} mise à jour — synchronisation de l'impôt/taxe ID: {}",
+                    saved.getId(), saved.getReferent());
+            impotEtTaxeValidationService.syncImpotEtTaxeFromTransaction(
                     saved.getReferent(),
                     saved.getDateValeur(),
                     saved.getDateOperations());

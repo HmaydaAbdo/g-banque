@@ -30,7 +30,7 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 @Service
-public class AgiosService {
+public class AgiosService implements IAgiosService {
 
     private static final Logger log = LoggerFactory.getLogger(AgiosService.class);
 
@@ -46,8 +46,15 @@ public class AgiosService {
         this.agiosMapper     = agiosMapper;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsChargeFixeGeneree(Long banqueId, String libelle, LocalDate debut, LocalDate fin) {
+        return agiosRepository.existsByBanqueIdAndLibelleAndDateEmissionBetween(banqueId, libelle, debut, fin);
+    }
+
     // ── Création ──────────────────────────────────────────────────────────────
 
+    @Override
     @AuditableAction(operation = AuditOperation.CREATE, entity = Agios.class)
     @Transactional
     public AgiosResponseDto createAgios(AgiosRequestDto dto) {

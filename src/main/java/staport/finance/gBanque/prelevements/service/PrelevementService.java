@@ -31,7 +31,7 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 @Service
-public class PrelevementService {
+public class PrelevementService implements IPrelevementService {
 
     private static final Logger log = LoggerFactory.getLogger(PrelevementService.class);
     private final PrelevementRepository prelevementRepository;
@@ -47,6 +47,12 @@ public class PrelevementService {
         log.info("Initialisation du service Prelevement");
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsChargeFixeGeneree(Long banqueId, String libelle, LocalDate debut, LocalDate fin) {
+        return prelevementRepository.existsByBanqueIdAndLibelleAndDateEmissionBetween(banqueId, libelle, debut, fin);
+    }
+
     /** Fin du mois courant, recalculée à chaque appel (jamais figée sur une valeur de démarrage du bean). */
     private static LocalDate finDuMoisCourant() {
         return LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
@@ -58,8 +64,9 @@ public class PrelevementService {
      * @param requestDto Données du prélèvement à créer
      * @return Le prélèvement créé
      */
+    @Override
     @Transactional
-    @AuditableAction(operation = AuditOperation.CREATE, entity = Prelevement.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Prelevement.class, idAccessor = "getId")
     public PrelevementResponseDto createPrelevement(PrelevementRequestDto requestDto) {
         log.info("Création d'un prélèvement - Banque ID: {}, Libellé: '{}', Montant: {}",
                 requestDto.getBanqueId(), requestDto.getLibelle(), requestDto.getMontant());
@@ -128,7 +135,7 @@ public class PrelevementService {
      * @return Le prélèvement mis à jour
      */
     @Transactional
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Prelevement.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Prelevement.class, idAccessor = "getId")
     public PrelevementResponseDto updatePrelevement(Long id, PrelevementRequestDto requestDto) {
         log.info("Mise à jour du prélèvement ID: {} - Nouveau libellé: '{}', Nouveau montant: {}",
                 id, requestDto.getLibelle(), requestDto.getMontant());
@@ -229,7 +236,7 @@ public class PrelevementService {
 
 
     @Transactional
-    @AuditableAction(operation = AuditOperation.UPDATE, entity = Prelevement.class, idAccessor = "id")
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Prelevement.class, idAccessor = "getId")
     public PrelevementResponseDto toggleStatus(Long id) {
         log.info("Basculement du statut du prélèvement ID: {}", id);
 

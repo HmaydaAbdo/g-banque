@@ -10,7 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.fraisBancaires.dtos.*;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.mapper.FraisBancaireMapper;
@@ -23,33 +23,36 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 
 @Service
-public class FraisBancaireService {
+public class FraisBancaireService implements IFraisBancaireService {
 
     private static final Logger log = LoggerFactory.getLogger(FraisBancaireService.class);
     private final FraisBancaireRepository fraisBancaireRepository;
-    private final BanqueRepository banqueRepository;
+    private final IBanqueService banqueService;
     private final FraisBancaireMapper fraisBancaireMapper;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
     public FraisBancaireService(FraisBancaireRepository fraisBancaireRepository,
-                                BanqueRepository banqueRepository,
+                                IBanqueService banqueService,
                                 FraisBancaireMapper fraisBancaireMapper) {
         this.fraisBancaireRepository = fraisBancaireRepository;
-        this.banqueRepository = banqueRepository;
+        this.banqueService = banqueService;
         this.fraisBancaireMapper = fraisBancaireMapper;
         log.info("Initialisation du service FraisBancaire");
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsChargeFixeGeneree(Long banqueId, String libelle, LocalDate debut, LocalDate fin) {
+        return fraisBancaireRepository.existsByBanqueIdAndLibelleAndDateEmissionBetween(banqueId, libelle, debut, fin);
+    }
+
+    @Override
     @Transactional
     public FraisBancaireResposneDto createFraisBancaire(FraisBancaireRequestDto requestDto) {
         log.info("Création d'un frais bancaire - Banque ID: {}, Libellé: '{}', Montant: {}",
                 requestDto.getBanqueId(), requestDto.getLibelle(), requestDto.getMontant());
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         log.debug("Banque trouvée: {} (ID: {})", banque.getNom(), banque.getId());
         FraisBancaire fraisBancaire = fraisBancaireMapper.toEntity(requestDto, banque);
@@ -97,11 +100,7 @@ public class FraisBancaireService {
                     return new IllegalArgumentException("Frais bancaire non trouvé avec l'ID: " + id);
                 });
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         fraisBancaire.setLibelle(requestDto.getLibelle());
         fraisBancaire.setMontant(requestDto.getMontant());

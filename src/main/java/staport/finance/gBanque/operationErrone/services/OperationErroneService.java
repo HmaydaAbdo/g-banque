@@ -10,7 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
-import staport.finance.gBanque.Bank.repositories.BanqueRepository;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.operationErrone.dtos.*;
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.operationErrone.mappers.OperationErroneMapper;
@@ -27,16 +27,16 @@ public class OperationErroneService {
 
     private static final Logger log = LoggerFactory.getLogger(OperationErroneService.class);
     private final OperationErroneRepository operationErroneRepository;
-    private final BanqueRepository banqueRepository;
+    private final IBanqueService banqueService;
     private final OperationErroneMapper operationErroneMapper;
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
 
     public OperationErroneService(OperationErroneRepository operationErroneRepository,
-                                  BanqueRepository banqueRepository,
+                                  IBanqueService banqueService,
                                   OperationErroneMapper operationErroneMapper) {
         this.operationErroneRepository = operationErroneRepository;
-        this.banqueRepository = banqueRepository;
+        this.banqueService = banqueService;
         this.operationErroneMapper = operationErroneMapper;
         log.info("Initialisation du service OperationErrone");
     }
@@ -46,11 +46,7 @@ public class OperationErroneService {
         log.info("Création d'une opération erronée - Banque ID: {}, Libellé: '{}', Montant: {}, Motif: {}",
                 requestDto.getBanqueId(), requestDto.getLibelle(), requestDto.getMontant(), requestDto.getMotif());
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         log.debug("Banque trouvée: {} (ID: {})", banque.getNom(), banque.getId());
         OperationErrone operationErrone = operationErroneMapper.toEntity(requestDto, banque);
@@ -101,11 +97,7 @@ public class OperationErroneService {
                     return new IllegalArgumentException("Opération erronée non trouvée avec l'ID: " + id);
                 });
 
-        Banque banque = banqueRepository.findById(requestDto.getBanqueId())
-                .orElseThrow(() -> {
-                    log.error("Banque non trouvée avec l'ID: {}", requestDto.getBanqueId());
-                    return new IllegalArgumentException("Banque non trouvée avec l'ID: " + requestDto.getBanqueId());
-                });
+        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
 
         operationErrone.setLibelle(requestDto.getLibelle());
         operationErrone.setMontant(requestDto.getMontant());

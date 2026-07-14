@@ -1,15 +1,16 @@
 package staport.finance.gBanque.impot_taxes.specs;
 
 import org.springframework.data.jpa.domain.Specification;
-import staport.finance.gBanque.impot_taxes.dtos.ImpotEtTaxeSearchDto;
+import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeSearchDto;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 
 public class ImpotEtTaxeSpecifications {
+
+    private ImpotEtTaxeSpecifications() {}
 
     public static Specification<ImpotEtTaxe> hasBanque(Long banqueId) {
         return (root, query, cb) -> {
@@ -56,13 +57,13 @@ public class ImpotEtTaxeSpecifications {
         };
     }
 
-    public static Specification<ImpotEtTaxe> buildSpecification(ImpotEtTaxeSearchDto dto) {
+    public static Specification<ImpotEtTaxe> searchByCriteria(ImpotEtTaxeSearchDto dto) {
         return Specification
-                .where(hasBanque(dto.getBanqueId()))
-                .and(hasLibelle(dto.getLibelle()))
-                .and(hasMotif(dto.getMotif()))
-                .and(hasMontant(dto.getMontant()))
-                .and(hasStatus(dto.getStatus()));
+                .where(hasBanque(dto.banqueId()))
+                .and(hasLibelle(dto.libelle()))
+                .and(hasMotif(dto.motif()))
+                .and(hasMontant(dto.montant()))
+                .and(hasStatus(dto.status()));
     }
 
     public static Specification<ImpotEtTaxe> outstandingUntil(LocalDate until) {
