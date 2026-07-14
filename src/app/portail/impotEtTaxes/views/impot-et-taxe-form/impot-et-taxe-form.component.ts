@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule ,Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap } from '@angular/router';
@@ -56,15 +56,13 @@ export class ImpotEtTaxeFormComponent implements OnInit {
   items: MenuItem[] | undefined;
   selectedBanque?: BanqueResponse;
 
-  constructor(
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private location:Location,
-    private impotEtTaxeService: ImpotEtTaxeService,
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
+  private readonly impotEtTaxeService = inject(ImpotEtTaxeService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   ngOnInit(): void {
     this.initForm();
@@ -151,8 +149,7 @@ export class ImpotEtTaxeFormComponent implements OnInit {
 
         this.loading = false;
       },
-      error: (err) => {
-        console.error('Erreur lors du chargement de l\'impôt/taxe:', err);
+      error: () => {
         this.loading = false;
         this.location.back();
       },
@@ -198,8 +195,7 @@ export class ImpotEtTaxeFormComponent implements OnInit {
           this.loading = false;
           this.location.back();
         },
-        error: (error) => {
-          console.error('Erreur lors de la mise à jour de l\'impôt/taxe:', error);
+        error: () => {
           this.loading = false;
         },
       });
@@ -210,8 +206,7 @@ export class ImpotEtTaxeFormComponent implements OnInit {
           this.loading = false;
           this.location.back();
         },
-        error: (error) => {
-          console.error('Erreur lors de la création de l\'impôt/taxe:', error);
+        error: () => {
           this.loading = false;
         },
       });

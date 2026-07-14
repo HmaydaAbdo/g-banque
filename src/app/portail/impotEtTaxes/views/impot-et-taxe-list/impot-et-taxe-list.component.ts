@@ -1,8 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
-import { CommonModule, DatePipe, DecimalPipe, NgClass, NgIf } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { CommonModule, DatePipe, DecimalPipe, NgClass } from '@angular/common';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
@@ -19,17 +19,20 @@ import { ImpotEtTaxeSearchDto } from "../../dtos/ImpotEtTaxeSearchDto";
 import { Status } from "../../../prefinancements/enums/Status";
 import { InputTextModule } from "primeng/inputtext";
 import { AuthService } from "../../../../auth/services/auth.service";
-import {Motif, MotifLabels} from "../../dtos/Motif";
-import {ImpotEtTaxeService} from "../../service/ImpotEtTaxeService";
-import {ToolbarModule} from "primeng/toolbar";
-import {TagModule} from "primeng/tag";
-import {InputSwitchModule} from "primeng/inputswitch";
+import { Motif, MotifLabels } from "../../dtos/Motif";
+import { ImpotEtTaxeService } from "../../service/ImpotEtTaxeService";
+import { ToolbarModule } from "primeng/toolbar";
+import { TagModule } from "primeng/tag";
+import { InputSwitchModule } from "primeng/inputswitch";
 
 @Component({
   selector: 'app-impot-et-taxe-list',
   standalone: true,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
+    // FormsModule conservé uniquement pour le [ngModel] du p-inputSwitch PREVU/PAYE
+    // (exception établie, voir cmt/tableau-amortissement-cmt).
     FormsModule,
     TableModule,
     DropdownModule,
@@ -44,7 +47,6 @@ import {InputSwitchModule} from "primeng/inputswitch";
     DatePipe,
     DecimalPipe,
     NgClass,
-    NgIf,
     InputTextModule,
     ToolbarModule,
     TagModule,
@@ -56,16 +58,24 @@ import {InputSwitchModule} from "primeng/inputswitch";
 export class ImpotEtTaxeListComponent implements OnInit {
   @ViewChild('dt') table!: Table;
 
+  private readonly impotEtTaxeService = inject(ImpotEtTaxeService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly authService = inject(AuthService);
+  private readonly fb = inject(FormBuilder);
+
   impotEtTaxes: ImpotEtTaxeResponseDto[] = [];
   totalRecords = 0;
   loading = true;
 
-  // Filters
-  searchCriteria: ImpotEtTaxeSearchDto = {};
-  selectedBanque?: BanqueResponse;
-  selectedMotif?: Motif;
-  selectedStatus?: Status;
-  libelleFilter: string | null = null;
+  // Filtres (Reactive Forms)
+  filterForm: FormGroup = this.fb.group({
+    banque: [null],
+    motif: [null],
+    status: [null],
+    libelle: [null]
+  });
 
   // Dropdown data sources
   banques: BanqueResponse[] = [];
@@ -76,15 +86,6 @@ export class ImpotEtTaxeListComponent implements OnInit {
 
   // Breadcrumb items
   items: MenuItem[] = [];
-
-
-  constructor(
-    private impotEtTaxeService: ImpotEtTaxeService,
-    private banqueService: BanqueService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private authService: AuthService
-  ) {}
 
   ngOnInit(): void {
     this.items = [
@@ -103,12 +104,15 @@ export class ImpotEtTaxeListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.motif = this.selectedMotif;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+    const formValue = this.filterForm.value;
+    const searchCriteria: ImpotEtTaxeSearchDto = {
+      banqueId: formValue.banque?.id,
+      motif: formValue.motif ?? undefined,
+      status: formValue.status ?? undefined,
+      libelle: formValue.libelle ? formValue.libelle : undefined
+    };
 
-    this.impotEtTaxeService.searchImpotEtTaxes(this.searchCriteria, page, size, sort)
+    this.impotEtTaxeService.searchImpotEtTaxes(searchCriteria, page, size, sort)
       .subscribe({
         next: res => {
           this.impotEtTaxes = res.page.content;
@@ -157,30 +161,39 @@ export class ImpotEtTaxeListComponent implements OnInit {
   }
 
   clearFilters() {
-    this.selectedBanque = undefined;
-    this.selectedMotif = undefined;
-    this.selectedStatus = undefined;
-    this.libelleFilter = null;
+    this.filterForm.reset();
     this.applyFilters();
   }
 
+  /**
+   * Échappe les caractères HTML spéciaux avant interpolation dans un message de confirmation
+   * PrimeNG (rendu via [innerHTML] par p-confirmDialog) — le libellé est une donnée libre saisie
+   * par un utilisateur Finance et ne doit jamais être insérée telle quelle dans du HTML
+   * (Frontend.md, section Sécurité).
+   */
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   deleteImpotEtTaxe(impotEtTaxe: ImpotEtTaxeResponseDto) {
+    const libelleEchappe = this.escapeHtml(impotEtTaxe.libelle);
     this.confirmationService.confirm({
-      message: `Êtes-vous sûr de vouloir supprimer l'impôt/taxe "${impotEtTaxe.libelle}" ?`,
+      message: `Êtes-vous sûr de vouloir supprimer l'impôt/taxe "${libelleEchappe}" ?`,
       accept: () => {
         this.impotEtTaxeService.deleteImpotEtTaxe(impotEtTaxe.id).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Impôt/taxe supprimé(e).' });
             this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
-          },
-          error: (err) => {
-            console.error('Erreur lors de la suppression de l\'impôt/taxe:', err);
           }
         });
       }
     });
   }
-
 
   toggleStatus(impotEtTaxe: ImpotEtTaxeResponseDto) {
     const message = impotEtTaxe.status === Status.PAYE
@@ -197,8 +210,7 @@ export class ImpotEtTaxeListComponent implements OnInit {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: `Statut modifié.` });
             this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
           },
-          error: (err) => {
-            console.error('Erreur lors de la modification du statut:', err);
+          error: () => {
             this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
           }
         });
@@ -213,9 +225,9 @@ export class ImpotEtTaxeListComponent implements OnInit {
     return status === Status.PAYE ? 'success' : 'danger';
   }
 
-  protected readonly Status = Status;
   isAdmin(): boolean {
     return this.authService.isAdmin();
   }
 
+  protected readonly Status = Status;
 }

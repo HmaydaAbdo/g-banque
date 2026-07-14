@@ -7,17 +7,16 @@
     <div class="flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
               <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <a [href]="item.url">
               <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
             </a>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
@@ -30,13 +29,12 @@
 
   <p-toolbar styleClass="bg-white">
     <ng-template pTemplate="left">
-      <div class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
+      <form [formGroup]="filterForm" class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <p-dropdown
-            name="banque"
+            formControlName="banque"
             [options]="banques"
-            [(ngModel)]="selectedBanque"
             optionLabel="nom"
             placeholder="Banque"
             [virtualScroll]="true"
@@ -54,9 +52,8 @@
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <p-dropdown
-            name="motif"
+            formControlName="motif"
             [options]="motifOptions"
-            [(ngModel)]="selectedMotif"
             optionLabel="label"
             optionValue="value"
             placeholder="Motif"
@@ -70,9 +67,8 @@
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <p-dropdown
-            name="status"
+            formControlName="status"
             [options]="statusOptions"
-            [(ngModel)]="selectedStatus"
             optionLabel="label"
             optionValue="value"
             placeholder="Statut"
@@ -85,11 +81,11 @@
 
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
-          <input pInputText type="text" name="libelleFilter" placeholder="Rechercher libellé"
-                 [(ngModel)]="libelleFilter" (input)="applyFilters()"
+          <input pInputText type="text" formControlName="libelle" placeholder="Rechercher libellé"
+                 (input)="applyFilters()"
                  [style]="{'min-width': '200px'}" />
         </div>
-      </div>
+      </form>
     </ng-template>
 
     <ng-template pTemplate="right">

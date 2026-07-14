@@ -1,15 +1,15 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, MenuItem, SelectItem, ConfirmationService } from 'primeng/api';
-import { CommonModule, DatePipe, DecimalPipe, NgFor } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { InputTextModule } from "primeng/inputtext";
 import { CardModule } from 'primeng/card';
 import { DialogModule } from "primeng/dialog";
@@ -20,7 +20,6 @@ import { debounceTime, distinctUntilChanged, Subscription } from "rxjs";
 import { ImpotEtTaxeResponseDto } from "../../../../../impotEtTaxes/dtos/ImpotEtTaxeResponseDto";
 import { ImpotEtTaxeSearchDto } from "../../../../../impotEtTaxes/dtos/ImpotEtTaxeSearchDto";
 import { EncoursImpotEtTaxeDto } from "../../../../../impotEtTaxes/dtos/EncoursImpotEtTaxeDto";
-import { AuthService } from "../../../../../../auth/services/auth.service";
 import {Motif, MotifLabels} from "../../../../../impotEtTaxes/dtos/Motif";
 import {ImpotEtTaxeService} from "../../../../../impotEtTaxes/service/ImpotEtTaxeService";
 import {ValidationService} from "../../../../services/validation/validation.service";
@@ -37,7 +36,6 @@ import { TableSelectionState } from "../../shared/table-selection.state";
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
     TableModule,
     DropdownModule,
     ButtonModule,
@@ -47,7 +45,6 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     TooltipModule,
     DatePipe,
     DecimalPipe,
-    NgFor,
     InputTextModule,
     CardModule,
     DialogModule,
@@ -55,6 +52,7 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     CalendarModule,
     InputTextareaModule,
     ConfirmDialogModule,
+    RouterLink,
     ValidationLotModalComponent
   ],
   templateUrl: './encours-impots-taxes.component.html',
@@ -125,18 +123,15 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private impotEtTaxeService: ImpotEtTaxeService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private route: ActivatedRoute,
-    private authService: AuthService,
-    private fb: FormBuilder,
-    private rapprochementService: ValidationService,
-    private bankStateService: BankStateService
-  ) {}
+  private readonly impotEtTaxeService = inject(ImpotEtTaxeService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
 
@@ -226,9 +221,8 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
           this.totalEncours = res.totalDesEncours;
           this.loading = false;
         },
-        error: (err) => {
+        error: () => {
           this.loading = false;
-          console.error(err);
         }
       });
   }
@@ -262,6 +256,8 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
       const dateEmissionFormatted = this.datePipe.transform(formValue.dateEmission, 'dd/MM/yyyy');
       const dateValeurFormatted = this.datePipe.transform(formValue.dateValeur, 'dd/MM/yyyy');
       const dateOperationFormatted = this.datePipe.transform(formValue.dateOperation, 'dd/MM/yyyy');
+      const libelleEchappe = this.escapeHtml(formValue.libelle);
+      const observationEchappee = this.escapeHtml(formValue.observation);
 
       const recapMessage = `
             Êtes-vous sûr de vouloir rapprocher cet Impôt/Taxe ?
@@ -277,8 +273,8 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
                 <li><strong>Date d'émission:</strong> ${dateEmissionFormatted}</li>
                 <li><strong>Date de valeur:</strong> ${dateValeurFormatted || '-'}</li>
                 <li><strong>Date d'opération:</strong> ${dateOperationFormatted || '-'}</li>
-                <li><strong>Libellé:</strong> ${formValue.libelle}</li>
-                <li><strong>Observation:</strong> ${formValue.observation}</li>
+                <li><strong>Libellé:</strong> ${libelleEchappe}</li>
+                <li><strong>Observation:</strong> ${observationEchappee}</li>
                 <li><strong>TVA Déductible:</strong> ${formValue.tvaDeductible}%</li>
             </ul>
       `;
@@ -361,8 +357,18 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
-  isAdmin(): boolean {
-    return this.authService.isAdmin();
+  /**
+   * Échappe les caractères HTML spéciaux avant interpolation dans un message de confirmation
+   * PrimeNG (rendu via [innerHTML] par p-confirmDialog) — libellé et observation sont des
+   * données libres saisies par un utilisateur Finance (Frontend.md, section Sécurité).
+   */
+  private escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   ngOnDestroy(): void {
