@@ -1,6 +1,7 @@
 package staport.finance.gBanque.impayees.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.enums.Status;
@@ -10,6 +11,13 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
+/**
+ * Impayée (chèque/effet impayé) rattachée à une banque.
+ *
+ * <p>Relation auditée : {@code banque} (déjà {@code @Audited}) — aucune annotation
+ * {@code @NotAudited} nécessaire.
+ */
+@Audited
 @Entity
 public class Impayee {
 
