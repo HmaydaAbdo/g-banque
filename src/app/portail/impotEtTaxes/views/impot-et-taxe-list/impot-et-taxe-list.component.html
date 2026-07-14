@@ -138,6 +138,7 @@
           <td class="flex flex-row align-items-center gap-2">
             <button pButton pRipple icon="pi pi-pencil"
                     class="p-button-rounded p-button-outlined p-button-secondary mr-2"
+                    [disabled]="impotEtTaxe.status === Status.PAYE"
                     [routerLink]="['/portail/impots-taxes/edit', impotEtTaxe.id]"></button>
 
             @if (isAdmin()) {
@@ -150,6 +151,7 @@
 
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="impotEtTaxe.status === Status.PAYE"
                       (click)="deleteImpotEtTaxe(impotEtTaxe)"></button>
             }
           </td>

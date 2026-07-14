@@ -61,6 +61,7 @@ export class CommissionListComponent implements OnInit {
   commissions: CommissionResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
 
   filterForm!: FormGroup;
 
@@ -163,6 +164,24 @@ export class CommissionListComponent implements OnInit {
   clearFilters(): void {
     this.filterForm.reset();
     this.applyFilters();
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    this.commissionService.exportPdf(this.searchCriteria).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `commissions_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   deleteCommission(commission: CommissionResponseDto): void {
