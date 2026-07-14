@@ -180,7 +180,7 @@ export class SidebarComponent implements OnInit {
     { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire' },
-    { label: "Les Restitutions", icon: "pi pi-list", routerLink: '/portail/restitutions' },
+    { label: "Les Restitutions", icon: "pi pi-list", routerLink: '/portail/restitutions', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Impôts et Taxes", icon: "pi pi-list", routerLink: '/portail/impots-taxes', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Impayées", icon: "pi pi-list", routerLink: '/portail/impayees', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     {label: 'Opérations Erronées', icon: 'pi pi-exclamation-triangle', routerLink: '/portail/operations/errones'},

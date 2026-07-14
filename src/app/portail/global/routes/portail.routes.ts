@@ -158,6 +158,7 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'restitutions',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../restitution/restitution.routes').then(m => m.RESTITUTION_ROUTES)
   },
 
