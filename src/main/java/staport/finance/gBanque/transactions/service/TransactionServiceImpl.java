@@ -9,7 +9,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.cmt.echeances.services.interfaces.ICmtValidationService;
 import staport.finance.gBanque.commision.validation.services.interfaces.ICommissionValidationService;
 import staport.finance.gBanque.decomptes.validation.services.interfaces.IDecompteValidationService;
@@ -28,7 +31,9 @@ import staport.finance.gBanque.moyensDePaiements.virementInternational.validatio
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.validation.services.interfaces.IMiseADispositionValidationService;
 import staport.finance.gBanque.prefinancement.validation.services.interfaces.IPrefinancementValidationService;
 import staport.finance.gBanque.prelevements.validation.services.interfaces.IPrelevementValidationService;
+import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.dtos.AgreratedTransactionResponseDto;
+import staport.finance.gBanque.transactions.dtos.TransactionAggregatesDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
 import staport.finance.gBanque.transactions.dtos.TransactionUpdateRequestDto;
@@ -37,19 +42,24 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
 
-import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
-
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static staport.finance.gBanque.transactions.spec.TransactionSpecifications.*;
 
+/**
+ * Implémentation de la façade publique du domaine Transaction.
+ *
+ * <p>Dispatch de synchronisation ({@code updateTransactionById}) vers les
+ * {@code IXxxValidationService} des modules source (architecture.md — Règle 2).
+ */
 @Service
-public class TransactionService implements ITransactionService{
+public class TransactionServiceImpl implements ITransactionService {
 
-    private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
+    private static final Logger log = LoggerFactory.getLogger(TransactionServiceImpl.class);
     private final TransactionRepository transactionRepository;
+    private final TransactionMapper transactionMapper;
     private final ILeasingValidationService leasingValidationService;
     private final ICmtValidationService cmtValidationService;
     private final IChequeValidationService chequeValidationService;
@@ -69,7 +79,8 @@ public class TransactionService implements ITransactionService{
     private final IOperationErroneValidationService operationErroneValidationService;
     private final IImpayeeValidationService impayeeValidationService;
 
-    public TransactionService(TransactionRepository transactionRepository,
+    public TransactionServiceImpl(TransactionRepository transactionRepository,
+                              TransactionMapper transactionMapper,
                               ILeasingValidationService leasingValidationService,
                               ICmtValidationService cmtValidationService,
                               IChequeValidationService chequeValidationService,
@@ -89,6 +100,7 @@ public class TransactionService implements ITransactionService{
                               IOperationErroneValidationService operationErroneValidationService,
                               IImpayeeValidationService impayeeValidationService) {
         this.transactionRepository = transactionRepository;
+        this.transactionMapper = transactionMapper;
         this.leasingValidationService = leasingValidationService;
         this.cmtValidationService = cmtValidationService;
         this.chequeValidationService = chequeValidationService;
@@ -109,48 +121,43 @@ public class TransactionService implements ITransactionService{
         this.impayeeValidationService = impayeeValidationService;
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Page<TransactionResponseDto> getTransactionHistory(TransactionSearchDto searchDto, Pageable pageable) {
         log.info("Récupération de l'historique des transactions. Filtres: {}", searchDto);
 
         List<Specification<Transaction>> specs = new ArrayList<>();
 
-        if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
-            specs.add(libelleContains(searchDto.getLibelle()));
-            log.debug("Filtre appliqué: libellé contient '{}'", searchDto.getLibelle());
+        if (searchDto.libelle() != null && !searchDto.libelle().isEmpty()) {
+            specs.add(libelleContains(searchDto.libelle()));
         }
 
-
-
-        if (searchDto.getBanqueId() != null) {
-            specs.add(hasBanqueId(searchDto.getBanqueId()));
-            log.debug("Filtre appliqué: ID banque = {}", searchDto.getBanqueId());
+        if (searchDto.banqueId() != null) {
+            specs.add(hasBanqueId(searchDto.banqueId()));
         }
 
-        if (searchDto.getTransactionSources() != null && !searchDto.getTransactionSources().isEmpty()) {
-            specs.add(hasTransactionSources(searchDto.getTransactionSources()));
-            log.debug("Filtre appliqué: sources = {}", searchDto.getTransactionSources());
+        if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
+            specs.add(hasTransactionSources(searchDto.transactionSources()));
         }
 
-        if (searchDto.getStatutRapprochement() != null) {
-            specs.add(hasRapprochementStatut(searchDto.getStatutRapprochement()));
-            log.debug("Filtre appliqué: statut rapprochement = {}", searchDto.getStatutRapprochement());
+        if (searchDto.statutRapprochement() != null) {
+            specs.add(hasRapprochementStatut(searchDto.statutRapprochement()));
         }
 
-        if (searchDto.getMontant() != null) {
-            specs.add(hasMontant(searchDto.getMontant()));
-            log.debug("Filtre appliqué: montant = {}", searchDto.getMontant());
+        if (searchDto.montant() != null) {
+            specs.add(hasMontant(searchDto.montant()));
         }
 
         Specification<Transaction> combinedSpec = withFilters(specs);
-        Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, defaultSort(pageable));
 
         log.info("Historique récupéré: {} transactions trouvées (Page {}/{})",
                 transactions.getTotalElements(), transactions.getNumber(), transactions.getTotalPages());
 
-        return transactions.map(TransactionMapper::toDto);
+        return transactions.map(transactionMapper::toDto);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public AgreratedTransactionResponseDto getTransactionsByBanque(Long banqueId, TransactionSearchDto searchDto, Pageable pageable) {
         log.info("Calcul des agrégations et récupération des transactions pour la banque ID: {}", banqueId);
@@ -159,116 +166,98 @@ public class TransactionService implements ITransactionService{
         specs.add(hasBanqueId(banqueId));
 
         // Filtrer par rapprochement spécifique si fourni, sinon EN_COURS (compatibilité)
-        if (searchDto.getRapprochementId() != null) {
-            specs.add(hasRapprochementId(searchDto.getRapprochementId()));
+        if (searchDto.rapprochementId() != null) {
+            specs.add(hasRapprochementId(searchDto.rapprochementId()));
         } else {
             specs.add(hasRapprochementStatut(StatutRapprochement.EN_COURS));
         }
 
-        if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
-            specs.add(libelleContains(searchDto.getLibelle()));
+        if (searchDto.libelle() != null && !searchDto.libelle().isEmpty()) {
+            specs.add(libelleContains(searchDto.libelle()));
         }
 
-        if (searchDto.getObservation() != null && !searchDto.getObservation().isEmpty()) {
-            specs.add(observationContains(searchDto.getObservation()));
+        if (searchDto.observation() != null && !searchDto.observation().isEmpty()) {
+            specs.add(observationContains(searchDto.observation()));
         }
 
-        if (searchDto.getMontant() != null) {
-            specs.add(hasMontant(searchDto.getMontant()));
-            log.debug("Filtre appliqué: montant égal '{}'", searchDto.getMontant());
+        if (searchDto.montant() != null) {
+            specs.add(hasMontant(searchDto.montant()));
         }
 
-        if (searchDto.getDateOperationDebut() != null || searchDto.getDateOperationFin() != null) {
-            specs.add(hasDateOperationBetween(searchDto.getDateOperationDebut(), searchDto.getDateOperationFin()));
-            log.debug("Filtre appliqué: date opération entre '{}' et '{}'",
-                    searchDto.getDateOperationDebut(), searchDto.getDateOperationFin());
+        if (searchDto.dateOperationDebut() != null || searchDto.dateOperationFin() != null) {
+            specs.add(hasDateOperationBetween(searchDto.dateOperationDebut(), searchDto.dateOperationFin()));
         }
 
-        if (searchDto.getTransactionSources() != null && !searchDto.getTransactionSources().isEmpty()) {
-            specs.add(hasTransactionSources(searchDto.getTransactionSources()));
-            log.debug("Filtre appliqué: sources = {}", searchDto.getTransactionSources());
+        if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
+            specs.add(hasTransactionSources(searchDto.transactionSources()));
         }
 
         Specification<Transaction> combinedSpec = withFilters(specs);
 
         // 1. Agrégats via JPQL (SUM en base, pas de List<Transaction> en mémoire)
-        BigDecimal totalDebit;
-        BigDecimal totalCredit;
-        BigDecimal totalTvaDeductible;
-        BigDecimal totalTvaCollectee;
+        TransactionAggregatesDto agg;
 
-        if (searchDto.getRapprochementId() != null) {
+        if (searchDto.rapprochementId() != null) {
             // Cas nominal : agrégats pour un rapprochement précis via JPQL optimisé
-            List<Object[]> agg = transactionRepository.computeAggregatesForRapprochement(searchDto.getRapprochementId());
-            Object[] row = agg.isEmpty() ? null : agg.get(0);
-            totalDebit         = row != null && row[0] != null ? (BigDecimal) row[0] : BigDecimal.ZERO;
-            totalCredit        = row != null && row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO;
-            totalTvaDeductible = row != null && row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO;
-            totalTvaCollectee  = row != null && row[3] != null ? (BigDecimal) row[3] : BigDecimal.ZERO;
+            agg = computeAggregatesForRapprochement(searchDto.rapprochementId());
         } else {
             // Fallback : comportement d'origine (agrégats en mémoire sur EN_COURS)
             List<Transaction> allFilteredTransactions = transactionRepository.findAll(combinedSpec);
-            totalDebit = allFilteredTransactions.stream()
+            BigDecimal totalDebit = allFilteredTransactions.stream()
                     .map(t -> t.getDebit() != null ? t.getDebit() : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            totalCredit = allFilteredTransactions.stream()
+            BigDecimal totalCredit = allFilteredTransactions.stream()
                     .map(t -> t.getCredit() != null ? t.getCredit() : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            totalTvaDeductible = allFilteredTransactions.stream()
+            BigDecimal totalTvaDeductible = allFilteredTransactions.stream()
                     .map(Transaction::getTvaDeductible).filter(Objects::nonNull)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            totalTvaCollectee = allFilteredTransactions.stream()
+            BigDecimal totalTvaCollectee = allFilteredTransactions.stream()
                     .map(Transaction::getTvaCollectee).filter(Objects::nonNull)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+            agg = new TransactionAggregatesDto(totalDebit, totalCredit, totalTvaDeductible, totalTvaCollectee);
         }
 
-        BigDecimal tvaDue = totalTvaCollectee.subtract(totalTvaDeductible);
+        BigDecimal tvaDue = agg.totalTvaCollectee().subtract(agg.totalTvaDeductible());
 
         // 2. Pagination
-        Page<Transaction> paginatedTransactions = transactionRepository.findAll(combinedSpec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
-        Page<TransactionResponseDto> paginatedDtos = paginatedTransactions.map(TransactionMapper::toDto);
-
-        AgreratedTransactionResponseDto aggregatedResponse = new AgreratedTransactionResponseDto();
-        aggregatedResponse.setPage(paginatedDtos);
-        aggregatedResponse.setTotalDebit(totalDebit);
-        aggregatedResponse.setTotalCredit(totalCredit);
-        aggregatedResponse.setTotalTvaDeductible(totalTvaDeductible);
-        aggregatedResponse.setTotalTvaCollectee(totalTvaCollectee);
-        aggregatedResponse.setTvaDue(tvaDue);
+        Page<Transaction> paginatedTransactions = transactionRepository.findAll(combinedSpec, defaultSort(pageable));
+        Page<TransactionResponseDto> paginatedDtos = paginatedTransactions.map(transactionMapper::toDto);
 
         log.info("Agrégation terminée pour la banque {}. Débit total: {}, Crédit total: {}, TVA due: {}",
-                banqueId, totalDebit, totalCredit, tvaDue);
+                banqueId, agg.totalDebit(), agg.totalCredit(), tvaDue);
 
-        return aggregatedResponse;
+        return new AgreratedTransactionResponseDto(
+                agg.totalDebit(), agg.totalCredit(), agg.totalTvaDeductible(), agg.totalTvaCollectee(),
+                tvaDue, paginatedDtos
+        );
     }
 
+    @Override
     @Transactional(readOnly = true)
     public TransactionResponseDto getTransactionById(Long id) {
         log.info("Recherche de la transaction ID: {}", id);
         return transactionRepository.findById(id)
-                .map(transaction -> {
-                    log.debug("Transaction ID: {} trouvée", id);
-                    return TransactionMapper.toDto(transaction);
-                })
-                .orElseThrow(() -> {
-                    log.error("Erreur: Transaction ID: {} introuvable", id);
-                    return new ResourceNotFoundException("La transaction avec l'ID " + id + " n'a pas été trouvée");
-                });
+                .map(transactionMapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException("La transaction avec l'ID " + id + " n'a pas été trouvée"));
     }
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Transaction.class)
     public TransactionResponseDto updateTransactionById(Long id, TransactionUpdateRequestDto updateRequestDto){
 
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction with id " + id + " not found"));
 
         // Guard — rapprochement définitivement clôturé : aucune modification autorisée
-//        if (transaction.getRapprochement().getStatut() == StatutRapprochement.CLOTURE_DEFINITIVE) {
-//            throw new ValidationException(
-//                    "Impossible de modifier la transaction " + id
-//                    + " : le rapprochement est définitivement clôturé.");
-//        }
+        // (même garde que ReverseTransactionService.annulerTransaction — cohérence des deux
+        // seuls points de mutation d'une Transaction déjà rattachée à un rapprochement clos).
+        if (transaction.getRapprochement().getStatut() == StatutRapprochement.CLOTURE_DEFINITIVE) {
+            throw new ValidationException(
+                    "Impossible de modifier la transaction " + id
+                    + " : le rapprochement est définitivement clôturé.");
+        }
 
         transaction.setDateValeur(updateRequestDto.dateValeur());
         transaction.setDateOperations(updateRequestDto.dateOperation());
@@ -480,7 +469,7 @@ public class TransactionService implements ITransactionService{
                     saved.getDateOperations());
         }
 
-        return TransactionMapper.toDto(saved);
+        return transactionMapper.toDto(saved);
     }
 
 
@@ -488,6 +477,7 @@ public class TransactionService implements ITransactionService{
      * Compute live balance of a banque.
      */
     @Override
+    @Transactional(readOnly = true)
     public BigDecimal computeBalance(Long banqueId) {
         return transactionRepository
                 .computeBalance(banqueId);
@@ -497,11 +487,13 @@ public class TransactionService implements ITransactionService{
      * Count pending (unconfirmed) transactions.
      */
     @Override
+    @Transactional(readOnly = true)
     public long countPendingTransactions(Long banqueId) {
         return transactionRepository.countPendingByBanque(banqueId);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<Long, BigDecimal> computeBalancesForBanks(List<Long> bankIds) {
         if (bankIds == null || bankIds.isEmpty()) {
             return Collections.emptyMap();
@@ -516,5 +508,78 @@ public class TransactionService implements ITransactionService{
                         row -> (BigDecimal) row[1],
                         (existing, replacement) -> existing
                 ));
+    }
+
+    // ── Façade pour le domaine Rapprochement ────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TransactionResponseDto> searchTransactionsForRapprochement(Long rapprochementId, TransactionSearchDto searchDto, Pageable pageable) {
+        List<Specification<Transaction>> specs = new ArrayList<>();
+        specs.add(hasRapprochementId(rapprochementId));
+
+        if (searchDto.libelle() != null && !searchDto.libelle().isEmpty()) {
+            specs.add(libelleContains(searchDto.libelle()));
+        }
+        if (searchDto.observation() != null && !searchDto.observation().isEmpty()) {
+            specs.add(observationContains(searchDto.observation()));
+        }
+        if (searchDto.montant() != null) {
+            specs.add(hasMontant(searchDto.montant()));
+        }
+        if (searchDto.dateOperationDebut() != null || searchDto.dateOperationFin() != null) {
+            specs.add(hasDateOperationBetween(searchDto.dateOperationDebut(), searchDto.dateOperationFin()));
+        }
+        if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
+            specs.add(hasTransactionSources(searchDto.transactionSources()));
+        }
+
+        return transactionRepository
+                .findAll(withFilters(specs), pageable)
+                .map(transactionMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TransactionResponseDto> getAllTransactionsForRapprochementSortedByDate(Long rapprochementId) {
+        return transactionRepository.findAll(hasRapprochementId(rapprochementId)).stream()
+                .map(transactionMapper::toDto)
+                .sorted(Comparator.comparing(TransactionResponseDto::dateOperations))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countByRapprochementId(Long rapprochementId) {
+        return transactionRepository.countByRapprochementId(rapprochementId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TransactionAggregatesDto computeAggregatesForRapprochement(Long rapprochementId) {
+        List<Object[]> rows = transactionRepository.computeAggregatesForRapprochement(rapprochementId);
+        return rows.isEmpty() ? TransactionAggregatesDto.EMPTY : TransactionAggregatesDto.fromRow(rows.get(0));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, TransactionAggregatesDto> computeAggregatesByRapprochementIds(List<Long> rapprochementIds) {
+        if (rapprochementIds == null || rapprochementIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return transactionRepository.computeAggregatesByRapprochementIds(rapprochementIds).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> new TransactionAggregatesDto(
+                                (BigDecimal) row[1], (BigDecimal) row[2], (BigDecimal) row[3], (BigDecimal) row[4])
+                ));
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────────────────────
+
+    private Pageable defaultSort(Pageable pageable) {
+        return pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
     }
 }

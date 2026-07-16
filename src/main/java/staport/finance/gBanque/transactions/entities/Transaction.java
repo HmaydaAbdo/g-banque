@@ -3,6 +3,8 @@ package staport.finance.gBanque.transactions.entities;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -12,7 +14,23 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
+/**
+ * Entité représentant un mouvement bancaire élémentaire (débit ou crédit) rattaché à un
+ * {@link Rapprochement}. Écrite directement par les {@code XxxValidationService} des modules
+ * source (leasing, moyens de paiement, agios, etc. — voir {@code architecture.md}, Règle 1).
+ */
 @Entity
+@Audited
+@Table(
+    name = "transaction",
+    indexes = {
+        @Index(name = "idx_transaction_banque_id",         columnList = "banque_id"),
+        @Index(name = "idx_transaction_rapprochement_id",  columnList = "rapprochement_id"),
+        @Index(name = "idx_transaction_source",            columnList = "transaction_source"),
+        @Index(name = "idx_transaction_date_operations",   columnList = "date_operations"),
+        @Index(name = "idx_transaction_date_emission",     columnList = "date_emission")
+    }
+)
 public class Transaction {
 
     @Id
@@ -45,6 +63,13 @@ public class Transaction {
     @JoinColumn(name = "banque_id")
     private Banque banqueDePrelevement;
 
+    /**
+     * {@code Rapprochement} n'est pas encore {@code @Audited} (module non sweepé) — la relation
+     * est donc exclue de l'historisation du côté cible pour éviter l'{@code EnversMappingException}
+     * au démarrage (voir mémoire {@code feedback_envers_audit_relations}). L'identifiant
+     * (colonne {@code rapprochement_id}) reste bien stocké dans la table d'audit de Transaction.
+     */
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rapprochement_id", nullable = false)
     private Rapprochement rapprochement;

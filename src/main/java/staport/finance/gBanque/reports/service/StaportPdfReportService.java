@@ -230,48 +230,48 @@ public class StaportPdfReportService {
         for (TransactionResponseDto tx : transactions) {
             if (isFinance) {
                 PdfPCell dateEmCell = createCell(
-                        tx.getDateEmission() != null ? tx.getDateEmission().format(DATETIME_FORMATTER) : "-",
+                        tx.dateEmission() != null ? tx.dateEmission().format(DATETIME_FORMATTER) : "-",
                         TRANSACTION_DATA_FONT, Element.ALIGN_CENTER);
                 dateEmCell.setNoWrap(true);
                 table.addCell(dateEmCell);
             }
 
             PdfPCell dateOpCell = createCell(
-                    tx.getDateOperations() != null ? tx.getDateOperations().format(DATETIME_FORMATTER) : "-",
+                    tx.dateOperations() != null ? tx.dateOperations().format(DATETIME_FORMATTER) : "-",
                     TRANSACTION_DATA_FONT, Element.ALIGN_CENTER);
             dateOpCell.setNoWrap(true);
             table.addCell(dateOpCell);
 
             PdfPCell dateValCell = createCell(
-                    tx.getDateValeur() != null ? tx.getDateValeur().format(DATETIME_FORMATTER) : "-",
+                    tx.dateValeur() != null ? tx.dateValeur().format(DATETIME_FORMATTER) : "-",
                     TRANSACTION_DATA_FONT, Element.ALIGN_CENTER);
             dateValCell.setNoWrap(true);
             table.addCell(dateValCell);
 
-            PdfPCell libelleCell=createCell(tx.getLibelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT);
+            PdfPCell libelleCell=createCell(tx.libelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT);
             table.addCell(libelleCell);
 
-            PdfPCell debitCell = createCell(formatCurrency(tx.getDebit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+            PdfPCell debitCell = createCell(formatCurrency(tx.debit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
             debitCell.setNoWrap(true);
             table.addCell(debitCell);
 
-            PdfPCell creditCell = createCell(formatCurrency(tx.getCredit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+            PdfPCell creditCell = createCell(formatCurrency(tx.credit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
             creditCell.setNoWrap(true);
             table.addCell(creditCell);
 
             if (isFinance) {
-                PdfPCell tvaDedCell = createCell(formatCurrency(tx.getTvaDeductible()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+                PdfPCell tvaDedCell = createCell(formatCurrency(tx.tvaDeductible()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
                 tvaDedCell.setNoWrap(true);
                 table.addCell(tvaDedCell);
 
-                PdfPCell tvaCollCell = createCell(formatCurrency(tx.getTvaCollectee()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+                PdfPCell tvaCollCell = createCell(formatCurrency(tx.tvaCollectee()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
                 tvaCollCell.setNoWrap(true);
                 table.addCell(tvaCollCell);
             }
 
-            table.addCell(createCell(tx.getObservation(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
+            table.addCell(createCell(tx.observation(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
             PdfPCell sourceCell= createCell(
-                    tx.getTransactionSource() != null ? tx.getTransactionSource().name() : "-",
+                    tx.transactionSource() != null ? tx.transactionSource().name() : "-",
                     TRANSACTION_DATA_FONT,
                     Element.ALIGN_CENTER
             );

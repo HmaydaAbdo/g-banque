@@ -4,72 +4,15 @@ import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 
-public class AgreratedTransactionResponseDto {
-
-    private BigDecimal totalDebit;
-    private BigDecimal totalCredit;
-    private BigDecimal totalTvaDeductible;
-    private BigDecimal totalTvaCollectee;
-    private BigDecimal tvaDue;
-    private Page<TransactionResponseDto> page;
-
-    public BigDecimal getTotalDebit() {
-        return totalDebit;
-    }
-
-    public void setTotalDebit(BigDecimal totalDebit) {
-        this.totalDebit = totalDebit;
-    }
-
-    public BigDecimal getTotalCredit() {
-        return totalCredit;
-    }
-
-    public void setTotalCredit(BigDecimal totalCredit) {
-        this.totalCredit = totalCredit;
-    }
-
-    public BigDecimal getTotalTvaDeductible() {
-        return totalTvaDeductible;
-    }
-
-    public void setTotalTvaDeductible(BigDecimal totalTvaDeductible) {
-        this.totalTvaDeductible = totalTvaDeductible;
-    }
-
-    public BigDecimal getTotalTvaCollectee() {
-        return totalTvaCollectee;
-    }
-
-    public void setTotalTvaCollectee(BigDecimal totalTvaCollectee) {
-        this.totalTvaCollectee = totalTvaCollectee;
-    }
-
-    public Page<TransactionResponseDto> getPage() {
-        return page;
-    }
-
-    public void setPage(Page<TransactionResponseDto> page) {
-        this.page = page;
-    }
-
-    public BigDecimal getTvaDue() {
-        return tvaDue;
-    }
-
-    public void setTvaDue(BigDecimal tvaDue) {
-        this.tvaDue = tvaDue;
-    }
-
-    @Override
-    public String toString() {
-        return "AgreratedTransactionResponseDto{" +
-                "totalDebit=" + totalDebit +
-                ", totalCredit=" + totalCredit +
-                ", totalTvaDeductible=" + totalTvaDeductible +
-                ", totalTvaCollectee=" + totalTvaCollectee +
-                ", tvaDue=" + tvaDue +
-                ", page=" + page +
-                '}';
-    }
+/**
+ * Agrégats (débit/crédit/TVA) et page de transactions pour une banque donnée.
+ */
+public record AgreratedTransactionResponseDto(
+        BigDecimal totalDebit,
+        BigDecimal totalCredit,
+        BigDecimal totalTvaDeductible,
+        BigDecimal totalTvaCollectee,
+        BigDecimal tvaDue,
+        Page<TransactionResponseDto> page
+) {
 }

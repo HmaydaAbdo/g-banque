@@ -2,16 +2,17 @@ package staport.finance.gBanque.rapprochement.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementAggregates;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.rapprochement.repository.RapprochementRepository;
-import staport.finance.gBanque.transactions.repositories.TransactionRepository;
+import staport.finance.gBanque.transactions.dtos.TransactionAggregatesDto;
+import staport.finance.gBanque.transactions.service.ITransactionService;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -31,13 +32,24 @@ public class SoldeCascadeService {
     private static final Logger log = LoggerFactory.getLogger(SoldeCascadeService.class);
 
     private final RapprochementRepository rapprochementRepository;
-    private final TransactionRepository transactionRepository;
+    private final ITransactionService transactionService;
 
+    /**
+     * {@code ITransactionService} est injecté en {@code @Lazy} : {@code SoldeCascadeService} est
+     * appelé par les 18 {@code XxxValidationService} (via {@code processXxxTransaction}) et par
+     * {@code ReverseTransactionService}, tous eux-mêmes appelés par
+     * {@code TransactionServiceImpl.updateTransactionById()} (dispatch de synchronisation,
+     * architecture.md — Règle 2). Une injection directe (non {@code @Lazy}) fermerait un cycle de
+     * bean Spring transitif : {@code SoldeCascadeService → ITransactionService →
+     * TransactionServiceImpl → IXxxValidationService → XxxValidationService →
+     * SoldeCascadeService}. Voir mémoire {@code feedback_gbanque} (leçon Leasing/Prélèvements) —
+     * ne jamais revenir à l'injection directe d'un Repository pour "corriger" ce point.
+     */
     public SoldeCascadeService(
             RapprochementRepository rapprochementRepository,
-            TransactionRepository transactionRepository) {
+            @Lazy ITransactionService transactionService) {
         this.rapprochementRepository = rapprochementRepository;
-        this.transactionRepository   = transactionRepository;
+        this.transactionService      = transactionService;
     }
 
     /**
@@ -84,7 +96,8 @@ public class SoldeCascadeService {
     // ── Private helpers ──────────────────────────────────────────────────────
 
     private RapprochementAggregates fetchAggregates(Long rapprochementId) {
-        List<Object[]> rows = transactionRepository.computeAggregatesForRapprochement(rapprochementId);
-        return rows.isEmpty() ? RapprochementAggregates.EMPTY : RapprochementAggregates.fromRow(rows.get(0));
+        TransactionAggregatesDto dto = transactionService.computeAggregatesForRapprochement(rapprochementId);
+        return new RapprochementAggregates(
+                dto.totalDebit(), dto.totalCredit(), dto.totalTvaDeductible(), dto.totalTvaCollectee());
     }
 }

@@ -24,17 +24,13 @@ import staport.finance.gBanque.rapprochement.mapper.RapprochementMapper;
 import staport.finance.gBanque.rapprochement.specs.RapprochementSpecifications;
 import staport.finance.gBanque.reports.enums.ReportType;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
+import staport.finance.gBanque.transactions.dtos.TransactionAggregatesDto;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
-import staport.finance.gBanque.transactions.entities.Transaction;
-import staport.finance.gBanque.transactions.repositories.TransactionRepository;
-import staport.finance.gBanque.transactions.mapper.TransactionMapper;
-import staport.finance.gBanque.transactions.spec.TransactionSpecifications;
+import staport.finance.gBanque.transactions.service.ITransactionService;
 
 import java.math.BigDecimal;
 import java.time.YearMonth;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,20 +40,20 @@ import java.util.stream.Collectors;
 public class RapprochementService {
 
     private final RapprochementRepository rapprochementRepository;
-    private final TransactionRepository transactionRepository;
+    private final ITransactionService transactionService;
     private final IBanqueService banqueService;
     private final RapprochementMapper rapprochementMapper;
     private final StaportPdfReportService pdfReportService;
 
     public RapprochementService(
             RapprochementRepository rapprochementRepository,
-            TransactionRepository transactionRepository,
+            ITransactionService transactionService,
             IBanqueService banqueService,
             RapprochementMapper rapprochementMapper,
             StaportPdfReportService pdfReportService
     ) {
         this.rapprochementRepository = rapprochementRepository;
-        this.transactionRepository   = transactionRepository;
+        this.transactionService      = transactionService;
         this.banqueService           = banqueService;
         this.rapprochementMapper     = rapprochementMapper;
         this.pdfReportService        = pdfReportService;
@@ -95,31 +91,10 @@ public class RapprochementService {
 
         Rapprochement rapprochement = findOrThrow(id);
 
-        // Build transaction filter specs
-        List<Specification<Transaction>> specs = new ArrayList<>();
-        specs.add(TransactionSpecifications.hasRapprochementId(id));
-
-        if (searchDto.getLibelle() != null && !searchDto.getLibelle().isEmpty()) {
-            specs.add(TransactionSpecifications.libelleContains(searchDto.getLibelle()));
-        }
-        if (searchDto.getObservation() != null && !searchDto.getObservation().isEmpty()) {
-            specs.add(TransactionSpecifications.observationContains(searchDto.getObservation()));
-        }
-        if (searchDto.getMontant() != null) {
-            specs.add(TransactionSpecifications.hasMontant(searchDto.getMontant()));
-        }
-        if (searchDto.getDateOperationDebut() != null || searchDto.getDateOperationFin() != null) {
-            specs.add(TransactionSpecifications.hasDateOperationBetween(
-                    searchDto.getDateOperationDebut(), searchDto.getDateOperationFin()));
-        }
-        if (searchDto.getTransactionSources() != null && !searchDto.getTransactionSources().isEmpty()) {
-            specs.add(TransactionSpecifications.hasTransactionSources(searchDto.getTransactionSources()));
-        }
-
-        Page<Transaction> transactionPage = transactionRepository.findAll(
-                TransactionSpecifications.withFilters(specs), pageable);
-
-        Page<TransactionResponseDto> transactionDtos = transactionPage.map(TransactionMapper::toDto);
+        // Filtrage/recherche des transactions délégué à la façade du domaine Transaction
+        // (architecture.md — Encapsulation des domaines).
+        Page<TransactionResponseDto> transactionDtos =
+                transactionService.searchTransactionsForRapprochement(id, searchDto, pageable);
 
         // Single aggregate query for this rapprochement
         RapprochementAggregates agg = fetchAggregates(id);
@@ -136,13 +111,8 @@ public class RapprochementService {
 
         Rapprochement rapprochement = findOrThrow(rapprochementId);
 
-        List<Transaction> allTransactions = transactionRepository.findAll(
-                TransactionSpecifications.hasRapprochementId(rapprochementId));
-
-        List<TransactionResponseDto> transactionDtos = allTransactions.stream()
-                .map(TransactionMapper::toDto)
-                .sorted(Comparator.comparing(TransactionResponseDto::getDateOperations))
-                .toList();
+        List<TransactionResponseDto> transactionDtos =
+                transactionService.getAllTransactionsForRapprochementSortedByDate(rapprochementId);
 
         // Single aggregate query — no Java stream summation
         RapprochementAggregates agg = fetchAggregates(rapprochementId);
@@ -260,7 +230,7 @@ public class RapprochementService {
                         "Aucun rapprochement EN_COURS trouvé pour la banque id: " + banqueId));
 
         RapprochementAggregates enCoursAgg  = fetchAggregates(enCours.getId());
-        long enCoursCount = transactionRepository.countByRapprochementId(enCours.getId());
+        long enCoursCount = transactionService.countByRapprochementId(enCours.getId());
 
         Optional<Rapprochement> provisoireOpt =
                 rapprochementRepository.findByBanqueIdAndStatut(banqueId, StatutRapprochement.CLOTURE_PROVISOIRE);
@@ -281,7 +251,7 @@ public class RapprochementService {
 
         Rapprochement provisoire = provisoireOpt.get();
         RapprochementAggregates provisoireAgg = fetchAggregates(provisoire.getId());
-        long provisoireCount = transactionRepository.countByRapprochementId(provisoire.getId());
+        long provisoireCount = transactionService.countByRapprochementId(provisoire.getId());
 
         return new RapprochementActifsDto(
                 enCours.getId(),
@@ -314,8 +284,7 @@ public class RapprochementService {
      * Falls back to EMPTY as a safety net only.
      */
     private RapprochementAggregates fetchAggregates(Long rapprochementId) {
-        List<Object[]> rows = transactionRepository.computeAggregatesForRapprochement(rapprochementId);
-        return rows.isEmpty() ? RapprochementAggregates.EMPTY : RapprochementAggregates.fromRow(rows.get(0));
+        return toRapprochementAggregates(transactionService.computeAggregatesForRapprochement(rapprochementId));
     }
 
     /**
@@ -323,18 +292,13 @@ public class RapprochementService {
      * Returns a Map keyed by rapprochementId — missing entries mean zero transactions.
      */
     private Map<Long, RapprochementAggregates> buildAggregatesMap(List<Long> ids) {
-        return transactionRepository
-                .computeAggregatesByRapprochementIds(ids)
-                .stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> new RapprochementAggregates(
-                                (BigDecimal) row[1],
-                                (BigDecimal) row[2],
-                                (BigDecimal) row[3],
-                                (BigDecimal) row[4]
-                        )
-                ));
+        return transactionService.computeAggregatesByRapprochementIds(ids).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> toRapprochementAggregates(e.getValue())));
+    }
+
+    private RapprochementAggregates toRapprochementAggregates(TransactionAggregatesDto dto) {
+        return new RapprochementAggregates(
+                dto.totalDebit(), dto.totalCredit(), dto.totalTvaDeductible(), dto.totalTvaCollectee());
     }
 
     // ── Façade publique pour les autres domaines ────────────────────────────────
