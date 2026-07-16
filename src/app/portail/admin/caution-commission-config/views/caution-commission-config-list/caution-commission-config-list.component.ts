@@ -1,7 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { TableModule } from 'primeng/table';
+import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { DialogModule } from 'primeng/dialog';
@@ -13,13 +13,14 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
-import { forkJoin } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 import { CautionCommissionConfigService } from '../../service/caution-commission-config.service';
 import { CautionCommissionConfigResponse } from '../../dtos/CautionCommissionConfigResponse';
 import { CautionCommissionConfigRequest } from '../../dtos/CautionCommissionConfigRequest';
 import { BanqueService } from '../../../../comptes-bancaire/services/BanqueService';
 import { BanqueResponse } from '../../../../comptes-bancaire/dtos/BanqueResponse';
+import { PageResponse } from '../../../../global/types/PageResponse';
 
 /**
  * Écran d'administration des paramètres de commission caution (seuil minimum, diviseur
@@ -43,6 +44,8 @@ import { BanqueResponse } from '../../../../comptes-bancaire/dtos/BanqueResponse
 })
 export class CautionCommissionConfigListComponent implements OnInit {
 
+  @ViewChild('dt') dt: Table | undefined;
+
   private svc                 = inject(CautionCommissionConfigService);
   private banqueService       = inject(BanqueService);
   private messageService      = inject(MessageService);
@@ -55,9 +58,21 @@ export class CautionCommissionConfigListComponent implements OnInit {
     { icon: 'pi pi-percentage', route: '/portail/admin/caution-commission-config', label: 'Commissions cautions' }
   ];
 
-  configs: CautionCommissionConfigResponse[]         = [];
-  filteredConfigs: CautionCommissionConfigResponse[] = [];
+  configs: CautionCommissionConfigResponse[] = [];
   banques: BanqueResponse[] = [];
+
+  /**
+   * Ids de banques déjà configurées, sur l'ensemble des configurations (pas seulement la
+   * page affichée) — nécessaire pour exclure ces banques du formulaire de création
+   * (unicité banque/configuration côté backend), indépendamment de la pagination du tableau.
+   */
+  configuredBanqueIds = new Set<number>();
+
+  totalRecords = 0;
+  first = 0;
+  rows = 15;
+  sortField: string | string[] = 'banque.nom';
+  sortOrder = 1;
 
   loading = false;
   dialogVisible = false;
@@ -69,7 +84,8 @@ export class CautionCommissionConfigListComponent implements OnInit {
   ngOnInit(): void {
     this.buildForm();
     this.buildFilterForm();
-    this.loadAll();
+    this.banqueService.getAllBanques({}, 0, 1000).subscribe(res => this.banques = res.content);
+    this.refreshConfiguredBanqueIds();
   }
 
   private buildFilterForm(): void {
@@ -77,19 +93,17 @@ export class CautionCommissionConfigListComponent implements OnInit {
       search:   [''],
       banqueId: [null]
     });
-    this.filterForm.valueChanges.subscribe(() => this.applyFilters());
+    this.filterForm.valueChanges.pipe(debounceTime(400)).subscribe(() => this.reloadFromFilters());
   }
 
-  /** Filtre côté client — la table des configurations reste de taille modeste (une par banque). */
-  applyFilters(): void {
-    const { search, banqueId } = this.filterForm.value;
-    const term = (search || '').trim().toLowerCase();
-
-    this.filteredConfigs = this.configs.filter(c => {
-      if (banqueId && c.banqueId !== banqueId) return false;
-      if (term && !c.banqueNom.toLowerCase().includes(term)) return false;
-      return true;
-    });
+  /** Un changement de filtre revient toujours à la page 0. */
+  private reloadFromFilters(): void {
+    this.first = 0;
+    if (this.dt) {
+      this.load(this.dt.createLazyLoadMetadata());
+    } else {
+      this.load();
+    }
   }
 
   clearFilters(): void {
@@ -104,29 +118,37 @@ export class CautionCommissionConfigListComponent implements OnInit {
     });
   }
 
-  /** Charge les configurations et les banques en parallèle. */
-  loadAll(): void {
+  /** Chargement paginé/triable/filtrable, déclenché par le `p-table` en mode `lazy`. */
+  load(event: TableLazyLoadEvent = { first: this.first, rows: this.rows, sortField: this.sortField, sortOrder: this.sortOrder }): void {
     this.loading = true;
-    forkJoin({
-      configs: this.svc.findAll(),
-      banques: this.banqueService.getAllBanques({}, 0, 1000)
-    }).subscribe({
-      next: ({ configs, banques }) => {
-        this.configs = configs;
-        this.banques = banques.content;
+
+    const first = event.first ?? this.first;
+    const rows = event.rows ?? this.rows;
+    const sortField = event.sortField || this.sortField;
+    const sortOrder = event.sortOrder === -1 ? -1 : 1;
+    const actualSortField = Array.isArray(sortField) ? sortField[0] : sortField;
+    const page = (first as number) / (rows as number);
+    const sort = `${actualSortField},${sortOrder === 1 ? 'asc' : 'desc'}`;
+
+    const { search, banqueId } = this.filterForm.value;
+
+    this.svc.findAll({ search, banqueId }, page, rows as number, sort).subscribe({
+      next: (res: PageResponse<CautionCommissionConfigResponse>) => {
+        this.configs = res.content;
+        this.totalRecords = res.page.totalElements;
         this.loading = false;
-        this.applyFilters();
       },
       error: () => { this.loading = false; }
     });
   }
 
-  /** Recharge uniquement la liste des configurations (après create/update/delete). */
-  load(): void {
-    this.loading = true;
-    this.svc.findAll().subscribe({
-      next: data => { this.configs = data; this.loading = false; this.applyFilters(); },
-      error: ()   => { this.loading = false; }
+  /**
+   * Recharge, hors pagination, l'ensemble des ids de banques déjà configurées — utilisé
+   * uniquement pour filtrer les options du formulaire de création.
+   */
+  private refreshConfiguredBanqueIds(): void {
+    this.svc.findAll({}, 0, 1000).subscribe(res => {
+      this.configuredBanqueIds = new Set(res.content.map(c => c.banqueId));
     });
   }
 
@@ -136,9 +158,8 @@ export class CautionCommissionConfigListComponent implements OnInit {
 
   /** Banques n'ayant pas encore de configuration — seules proposées à la création. */
   get availableBanqueOptions() {
-    const configuredIds = new Set(this.configs.map(c => c.banqueId));
     return this.banques
-      .filter(b => this.editingId !== null || !configuredIds.has(b.id))
+      .filter(b => this.editingId !== null || !this.configuredBanqueIds.has(b.id))
       .map(b => ({ label: b.nom, value: b.id }));
   }
 
@@ -175,7 +196,7 @@ export class CautionCommissionConfigListComponent implements OnInit {
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Enregistré', detail: 'Configuration sauvegardée.' });
         this.dialogVisible = false;
-        this.load();
+        this.reloadCurrentPage();
       }
     });
   }
@@ -192,9 +213,19 @@ export class CautionCommissionConfigListComponent implements OnInit {
       accept: () => this.svc.delete(config.id).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Supprimé', detail: 'Configuration supprimée.' });
-          this.load();
+          this.reloadCurrentPage();
         }
       })
     });
+  }
+
+  /** Recharge la page actuellement affichée (après create/update/delete), et la liste des ids configurés. */
+  private reloadCurrentPage(): void {
+    if (this.dt) {
+      this.load(this.dt.createLazyLoadMetadata());
+    } else {
+      this.load();
+    }
+    this.refreshConfiguredBanqueIds();
   }
 }

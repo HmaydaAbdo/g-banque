@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <p-confirmDialog></p-confirmDialog>
 
-<div class="pg-wrap">
+<div class="flex flex-column w-screen h-screen overflow-y-scroll gap-3 p-3 pb-6">
 
   <!-- ═══ HEADER ═══════════════════════════════════════════════════════════ -->
   <div class="pg-header">
@@ -51,17 +51,19 @@
     </form>
   </div>
 
-  <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->
-  <div class="pg-table">
-    <p-table [value]="filteredConfigs" [loading]="loading" dataKey="id"
-             [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10,25,50]"
+  <!-- ═══ TABLE (la page entière défile) ══════════════════════════════════ -->
+  <div class="pg-table" style="flex-shrink:0; overflow:visible;">
+    <p-table #dt [value]="configs" [loading]="loading" dataKey="id"
+             [lazy]="true" (onLazyLoad)="load($event)"
+             [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
+             [rowsPerPageOptions]="[15,25,50]"
              [showCurrentPageReport]="true"
              currentPageReportTemplate="{first}–{last} sur {totalRecords}"
              styleClass="p-datatable-sm" rowHover>
 
       <ng-template pTemplate="header">
         <tr>
-          <th pSortableColumn="banqueNom">Banque <p-sortIcon field="banqueNom"></p-sortIcon></th>
+          <th pSortableColumn="banque.nom">Banque <p-sortIcon field="banque.nom"></p-sortIcon></th>
           <th class="text-right" pSortableColumn="montantMinimum">Montant minimum (MAD) <p-sortIcon field="montantMinimum"></p-sortIcon></th>
           <th class="text-right" pSortableColumn="diviseur">Diviseur (prorata journalier) <p-sortIcon field="diviseur"></p-sortIcon></th>
           <th class="text-center" style="width:8rem">Actions</th>

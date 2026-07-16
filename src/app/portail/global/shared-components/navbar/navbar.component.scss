@@ -1,8 +1,8 @@
 .nav-link {
   text-decoration : none;
   color           : var(--color-text-primary) !important;
-  padding         : 0.75rem 1rem;
-  transition      : background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  padding         : var(--space-3) var(--space-4);
+  transition      : background-color var(--duration-fast) ease-in-out, color var(--duration-fast) ease-in-out;
 }
 
 .active-nav-link {
@@ -13,8 +13,8 @@
 .active-nav-link .nav-label {
   text-decoration        : underline;
   text-decoration-color  : var(--color-primary);
-  text-underline-offset  : 0.7rem;
-  text-decoration-thickness: 3px;
+  text-underline-offset  : var(--space-navbar-underline-offset);
+  text-decoration-thickness: var(--size-navbar-underline-thickness);
 }
 
 // Bouton actions (menu, notif, logout, theme)
@@ -22,13 +22,13 @@
   display         : inline-flex;
   align-items     : center;
   justify-content : center;
-  width           : 2.5rem;
-  height          : 2.5rem;
-  border-radius   : 50%;
-  border          : 0.5px solid var(--color-border);
+  width           : var(--space-10);
+  height          : var(--space-10);
+  border-radius   : var(--radius-full);
+  border          : var(--border-width-hairline) solid var(--color-border);
   color           : var(--color-text-secondary);
   cursor          : pointer;
-  transition      : background-color 0.2s, color 0.2s, border-color 0.2s;
+  transition      : background-color var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
   background      : transparent;
 
   &:hover {

@@ -181,6 +181,7 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'frais-bancaire',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../frais-bancaire/frais-bancaire.routes').then(m => m.FRAIS_BANCAIRE_ROUTES)
   },
 

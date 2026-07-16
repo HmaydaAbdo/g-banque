@@ -6,6 +6,7 @@ import { StyleClassModule } from 'primeng/styleclass';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { AuthService } from "../../../../auth/services/auth.service";
+import { hasRequiredMenuAuthority } from "../../utils/menu-authority.util";
 
 interface SidebarItem {
   label?: string;
@@ -179,7 +180,7 @@ export class SidebarComponent implements OnInit {
     },
     { label: "Les Commissions", icon: "pi pi-list", routerLink: '/portail/commissions', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Les Prélèvements", icon: "pi pi-list", routerLink: '/portail/prelevements', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
-    { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire' },
+    { label: "Les Frais bancaires", icon: "pi pi-list", routerLink: '/portail/frais-bancaire', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Les Restitutions", icon: "pi pi-list", routerLink: '/portail/restitutions', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Impôts et Taxes", icon: "pi pi-list", routerLink: '/portail/impots-taxes', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
     { label: "Impayées", icon: "pi pi-list", routerLink: '/portail/impayees', requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'] },
@@ -203,6 +204,7 @@ export class SidebarComponent implements OnInit {
         { label: 'Configuration CMT',     icon: 'pi pi-sliders-h', routerLink: '/portail/admin/cmt-config'        },
         { label: 'Configuration Lignes Fonctionnelles', icon: 'pi pi-sliders-h', routerLink: '/portail/admin/lignes-fonctionnelles-config' },
         { label: 'Commissions sur cautions', icon: 'pi pi-percentage', routerLink: '/portail/admin/caution-commission-config' },
+        { label: 'Charges fixes bancaires', icon: 'pi pi-calendar-times', routerLink: '/portail/admin/charges-fixes-config' },
       ]
     },
     {
@@ -274,18 +276,11 @@ export class SidebarComponent implements OnInit {
   }
 
   private hasRequiredAuthority(item: SidebarItem): boolean {
-    // Si aucune authority n'est spécifiée, l'item est visible par tous les authentifiés.
-    if (!item.requiredAuthority) {
-      return true;
-    }
-    // SYSTEM_ADMIN a un accès transversal — voit toujours tout.
-    if (this.authService.isSystemAdmin()) {
-      return true;
-    }
-    const authorities = this.authService.getAuthorities();
-    return Array.isArray(item.requiredAuthority)
-        ? item.requiredAuthority.some(auth => authorities.includes(auth))
-        : authorities.includes(item.requiredAuthority);
+    return hasRequiredMenuAuthority(
+      item.requiredAuthority,
+      this.authService.isSystemAdmin(),
+      this.authService.getAuthorities()
+    );
   }
 
   private filterSidebarItems(): void {

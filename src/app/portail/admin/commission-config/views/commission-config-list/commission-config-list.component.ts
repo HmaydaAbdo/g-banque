@@ -1,7 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { TableModule } from 'primeng/table';
+import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { DialogModule } from 'primeng/dialog';
@@ -14,7 +14,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { TagModule } from 'primeng/tag';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
-import { forkJoin } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 import { CommissionConfigService } from '../../service/commission-config.service';
 import { CommissionConfigResponse } from '../../dtos/CommissionConfigResponse';
@@ -25,6 +25,7 @@ import {BanqueService} from "../../../../comptes-bancaire/services/BanqueService
 import {OrganismeLeasingService} from "../../../../leasing/organismesLeasing/services/organisme-leasing.service";
 import {BanqueResponse} from "../../../../comptes-bancaire/dtos/BanqueResponse";
 import {OrganismeLeasingResponse} from "../../../../leasing/organismesLeasing/dtos/OrganismeLeasingResponse";
+import {PageResponse} from "../../../../global/types/PageResponse";
 
 @Component({
   selector: 'app-commission-config-list',
@@ -40,6 +41,8 @@ import {OrganismeLeasingResponse} from "../../../../leasing/organismesLeasing/dt
 })
 export class CommissionConfigListComponent implements OnInit {
 
+  @ViewChild('dt') dt: Table | undefined;
+
   private svc                   = inject(CommissionConfigService);
   private banqueService         = inject(BanqueService);
   private organismeLeasingService = inject(OrganismeLeasingService);
@@ -53,10 +56,15 @@ export class CommissionConfigListComponent implements OnInit {
     { icon: 'pi pi-sliders-h', route: '/portail/admin/commission-config',  label: 'Commissions config.' }
   ];
 
-  configs: CommissionConfigResponse[]         = [];
-  filteredConfigs: CommissionConfigResponse[] = [];
+  configs: CommissionConfigResponse[] = [];
   banques: BanqueResponse[]              = [];
   organismes: OrganismeLeasingResponse[] = [];
+
+  totalRecords = 0;
+  first = 0;
+  rows = 15;
+  sortField: string | string[] = 'banque.nom';
+  sortOrder = 1;
 
   loading = false;
   dialogVisible = false;
@@ -77,7 +85,9 @@ export class CommissionConfigListComponent implements OnInit {
   ngOnInit(): void {
     this.buildForm();
     this.buildFilterForm();
-    this.loadAll();
+
+    this.banqueService.getAllBanques({}, 0, 1000).subscribe(res => this.banques = res.content);
+    this.organismeLeasingService.searchOrganismeLeasings({}, 0, 1000).subscribe(res => this.organismes = res.content);
 
     // Reset du champ référence quand le type change
     // (évite de garder un organisme leasing sélectionné en mode Virement et vice-versa)
@@ -93,24 +103,17 @@ export class CommissionConfigListComponent implements OnInit {
       type:      [null],
       condition: [null]
     });
-    this.filterForm.valueChanges.subscribe(() => this.applyFilters());
+    this.filterForm.valueChanges.pipe(debounceTime(400)).subscribe(() => this.reloadFromFilters());
   }
 
-  /** Filtre côté client — la table des règles de commission reste de taille modeste. */
-  applyFilters(): void {
-    const { search, banqueId, type, condition } = this.filterForm.value;
-    const term = (search || '').trim().toLowerCase();
-
-    this.filteredConfigs = this.configs.filter(c => {
-      if (banqueId && c.banqueId !== banqueId) return false;
-      if (type && c.type !== type) return false;
-      if (condition && c.condition !== condition) return false;
-      if (term) {
-        const haystack = `${c.banqueNom} ${c.organismeNom ?? ''}`.toLowerCase();
-        if (!haystack.includes(term)) return false;
-      }
-      return true;
-    });
+  /** Un changement de filtre revient toujours à la page 0. */
+  private reloadFromFilters(): void {
+    this.first = 0;
+    if (this.dt) {
+      this.load(this.dt.createLazyLoadMetadata());
+    } else {
+      this.load();
+    }
   }
 
   clearFilters(): void {
@@ -127,31 +130,27 @@ export class CommissionConfigListComponent implements OnInit {
     });
   }
 
-  /** Charge les règles, les banques et les organismes en parallèle. */
-  loadAll(): void {
+  /** Chargement paginé/triable/filtrable, déclenché par le `p-table` en mode `lazy`. */
+  load(event: TableLazyLoadEvent = { first: this.first, rows: this.rows, sortField: this.sortField, sortOrder: this.sortOrder }): void {
     this.loading = true;
-    forkJoin({
-      configs:    this.svc.findAll(),
-      banques:    this.banqueService.getAllBanques({}, 0, 1000),
-      organismes: this.organismeLeasingService.searchOrganismeLeasings({}, 0, 1000)
-    }).subscribe({
-      next: ({ configs, banques, organismes }) => {
-        this.configs    = configs;
-        this.banques    = banques.content;
-        this.organismes = organismes.content;
-        this.loading    = false;
-        this.applyFilters();
+
+    const first = event.first ?? this.first;
+    const rows = event.rows ?? this.rows;
+    const sortField = event.sortField || this.sortField;
+    const sortOrder = event.sortOrder === -1 ? -1 : 1;
+    const actualSortField = Array.isArray(sortField) ? sortField[0] : sortField;
+    const page = (first as number) / (rows as number);
+    const sort = `${actualSortField},${sortOrder === 1 ? 'asc' : 'desc'}`;
+
+    const { search, banqueId, type, condition } = this.filterForm.value;
+
+    this.svc.findAll({ search, banqueId, type, condition }, page, rows as number, sort).subscribe({
+      next: (res: PageResponse<CommissionConfigResponse>) => {
+        this.configs = res.content;
+        this.totalRecords = res.page.totalElements;
+        this.loading = false;
       },
       error: () => { this.loading = false; }
-    });
-  }
-
-  /** Recharge uniquement la liste des règles (après create/update/delete). */
-  load(): void {
-    this.loading = true;
-    this.svc.findAll().subscribe({
-      next: data => { this.configs = data; this.loading = false; this.applyFilters(); },
-      error: ()   => { this.loading = false; }
     });
   }
 
@@ -231,7 +230,7 @@ export class CommissionConfigListComponent implements OnInit {
       next: () => {
         this.messageService.add({ severity: 'success', summary: 'Enregistré', detail: 'Règle sauvegardée.' });
         this.dialogVisible = false;
-        this.load();
+        this.reloadCurrentPage();
       }
     });
   }
@@ -248,10 +247,19 @@ export class CommissionConfigListComponent implements OnInit {
       accept: () => this.svc.delete(config.id).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Supprimé', detail: 'Règle supprimée.' });
-          this.load();
+          this.reloadCurrentPage();
         }
       })
     });
+  }
+
+  /** Recharge la page actuellement affichée (après create/update/delete). */
+  private reloadCurrentPage(): void {
+    if (this.dt) {
+      this.load(this.dt.createLazyLoadMetadata());
+    } else {
+      this.load();
+    }
   }
 
   typeLabel(t: TransactionSource): string {

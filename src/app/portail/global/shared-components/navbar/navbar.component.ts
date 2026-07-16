@@ -13,6 +13,7 @@ import { NotificationService } from "../../../notification/service/NotificationS
 import { NotificationListComponent } from "../../../notification/views/notification-list/notification-list.component";
 import { DialogModule } from "primeng/dialog";
 import { ThemeService } from "../../services/ThemeService";
+import { hasRequiredMenuAuthority } from "../../utils/menu-authority.util";
 
 interface MenuItem {
   label: string;
@@ -99,14 +100,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   private filterMenuItems(): void {
-    this.filteredMenuItems = this.allMenuItems.filter(item => {
-      if (!item.requiredAuthority) return true;
-      if (this.authService.isSystemAdmin()) return true;
-      const authorities = this.authService.getAuthorities();
-      return Array.isArray(item.requiredAuthority)
-        ? item.requiredAuthority.some(auth => authorities.includes(auth))
-        : authorities.includes(item.requiredAuthority);
-    });
+    const isSystemAdmin = this.authService.isSystemAdmin();
+    const authorities = this.authService.getAuthorities();
+    this.filteredMenuItems = this.allMenuItems.filter(item =>
+      hasRequiredMenuAuthority(item.requiredAuthority, isSystemAdmin, authorities)
+    );
   }
 
   confirmLogout(event: Event) {

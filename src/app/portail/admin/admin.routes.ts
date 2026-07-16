@@ -46,5 +46,10 @@ export const ADMIN_ROUTES: Routes = [
     path: 'caution-commission-config',
     loadComponent: () => import('./caution-commission-config/views/caution-commission-config-list/caution-commission-config-list.component')
       .then(m => m.CautionCommissionConfigListComponent)
+  },
+  {
+    path: 'charges-fixes-config',
+    loadComponent: () => import('./charges-fixes-config/views/charge-fixe-config-list/charge-fixe-config-list.component')
+      .then(m => m.ChargeFixeConfigListComponent)
   }
 ];
