@@ -25,5 +25,10 @@ public interface INotificationService {
 
     Page<NotificationResponse> getPaginatedNotifications(User currentUser, Boolean readStatus, Pageable pageable);
 
-    boolean markNotificationAsRead(Long notificationId, User currentUser);
+    /**
+     * @return l'ID de la ligne {@code UserNotificationStatus} créée ou mise à jour, ou {@code null}
+     * si la notification n'existe pas. Retourne l'ID (et non un {@code boolean}) depuis le
+     * 16/07/2026, nécessaire à {@code @AuditableAction} maintenant que ce statut est audité.
+     */
+    Long markNotificationAsRead(Long notificationId, User currentUser);
 }

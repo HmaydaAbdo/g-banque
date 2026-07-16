@@ -1,8 +1,22 @@
 package staport.finance.gBanque.notification.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.user.entities.User;
 
+/**
+ * Statut lu/non-lu d'une {@link Notification} pour un utilisateur donné.
+ *
+ * <p>{@code @Audited} depuis le 16/07/2026 : le justificatif précédent ("mirroring
+ * {@code AgiosJournalier}, donnée recalculée") ne tenait pas à l'examen — contrairement à
+ * {@code AgiosJournalier} (reconstructible depuis les transactions sources), le fait que
+ * "l'utilisateur X a lu la notification Y" n'est dérivable d'aucune autre donnée : une fois
+ * perdue ou altérée silencieusement, cette information est irrécupérable. Décision HMAYDA :
+ * aligner sur la convention du reste du projet plutôt que de corriger uniquement la doc.
+ * {@code Notification} et {@code User} (les deux relations ci-dessous) sont déjà auditées —
+ * aucun {@code @NotAudited} de relation n'est nécessaire ici.
+ */
+@Audited
 @Entity
 @Table(name = "user_notification_status",
         uniqueConstraints = {

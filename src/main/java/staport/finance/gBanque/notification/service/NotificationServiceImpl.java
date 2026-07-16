@@ -96,29 +96,31 @@ public class NotificationServiceImpl implements INotificationService {
     /**
      * Marque une notification comme lue pour l'utilisateur courant. Crée l'enregistrement
      * {@code UserNotificationStatus} s'il n'existe pas encore (première interaction).
+     *
+     * <p>Comportement "upsert" (create ou update selon le cas) : {@code AuditOperation.UPDATE} par
+     * convention, mirroring {@code UserService.assignDepartmentRole(...)} (voir
+     * {@code audit/AuditOperation.java}). Retourne l'ID de la ligne {@code UserNotificationStatus}
+     * touchée (nécessaire à {@code @AuditableAction} — {@code GenericAuditAspect} l'utilise
+     * directement, cf. javadoc {@code extractIdFromResult}), ou {@code null} si la notification
+     * n'existe pas.
      */
     @Override
     @Transactional
-    public boolean markNotificationAsRead(Long notificationId, User currentUser) {
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = UserNotificationStatus.class)
+    public Long markNotificationAsRead(Long notificationId, User currentUser) {
         Optional<Notification> optionalNotification = notificationRepository.findById(notificationId);
 
-        if (optionalNotification.isPresent()) {
-            Notification notification = optionalNotification.get();
-
-            Optional<UserNotificationStatus> optionalStatus = userNotificationStatusRepository
-                    .findByNotificationAndUser(notification, currentUser);
-
-            UserNotificationStatus status = optionalStatus.orElseGet(() ->
-                    new UserNotificationStatus(notification, currentUser)
-            );
-
-            if (!status.isRead()) {
-                status.setRead(true);
-                userNotificationStatusRepository.save(status);
-                return true;
-            }
-            return true;
+        if (optionalNotification.isEmpty()) {
+            return null;
         }
-        return false;
+        Notification notification = optionalNotification.get();
+
+        UserNotificationStatus status = userNotificationStatusRepository
+                .findByNotificationAndUser(notification, currentUser)
+                .orElseGet(() -> new UserNotificationStatus(notification, currentUser));
+
+        status.setRead(true);
+        UserNotificationStatus saved = userNotificationStatusRepository.save(status);
+        return saved.getId();
     }
 }

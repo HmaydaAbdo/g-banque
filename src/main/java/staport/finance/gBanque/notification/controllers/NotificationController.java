@@ -88,9 +88,9 @@ public class NotificationController {
     @PreAuthorize(AUTHENTICATED)
     public ResponseEntity<String> markNotificationAsRead(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
-        boolean updated = notificationService.markNotificationAsRead(id, currentUser);
+        Long statusId = notificationService.markNotificationAsRead(id, currentUser);
 
-        if (!updated) {
+        if (statusId == null) {
             log.warn("Notification introuvable — id: {}", id);
             throw new ResourceNotFoundException("Notification introuvable avec l'ID: " + id);
         }

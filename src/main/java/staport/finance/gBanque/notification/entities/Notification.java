@@ -9,9 +9,8 @@ import java.time.format.DateTimeFormatter;
 /**
  * Notification publique diffusée à tous les utilisateurs.
  *
- * <p>{@code UserNotificationStatus} (statut lu/non-lu propre à chaque utilisateur) n'est
- * volontairement pas audité — mirroring {@code AgiosJournalier} : donnée de confort de lecture,
- * pas une donnée métier sensible au sens de {@code conventions/Audit.md}.
+ * <p>{@code UserNotificationStatus} (statut lu/non-lu propre à chaque utilisateur) est également
+ * {@code @Audited} depuis le 16/07/2026 — voir le javadoc de cette classe pour la justification.
  */
 @Audited
 @Entity
