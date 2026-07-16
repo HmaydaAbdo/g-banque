@@ -161,6 +161,7 @@
               ></p-inputSwitch>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="operation.status === Status.PAYE"
                       (click)="deleteOperation(operation)"></button>
             }
           </td>

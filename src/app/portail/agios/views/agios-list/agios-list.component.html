@@ -139,6 +139,7 @@
               </button>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="agios.status === Status.PAYE"
                       (click)="deleteAgios(agios)"></button>
             }
           </td>

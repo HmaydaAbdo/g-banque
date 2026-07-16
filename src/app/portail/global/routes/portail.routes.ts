@@ -103,6 +103,7 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'operations/errones',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../operationErronées/operation-errone.routes').then(m => m.OPERATION_ERRONE_ROUTES)
   },
 

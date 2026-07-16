@@ -121,6 +121,7 @@
 
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="restitution.status === Status.PAYE"
                       (click)="deleteRestitution(restitution)"></button>
             }
           </td>

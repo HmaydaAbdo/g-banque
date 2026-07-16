@@ -26,10 +26,10 @@
 
   </div>
 
-  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2">
-    <div class="pg-filters">
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 ">
+    <div class="pg-filters w-screen">
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
-  <form [formGroup]="searchForm" class="flex flex-column md:flex-row gap-2">
+  <form [formGroup]="searchForm" class="flex flex-column md:flex-row gap-2 ">
 
       <div class="p-input-icon-left">
         <i class="pi pi-search"></i>
@@ -53,6 +53,7 @@
           [options]="banques"
           optionLabel="nom"
           optionValue="id"
+          appendTo="body"
           placeholder="Sélectionner une banque"
           [filter]="true"                  filterBy="nom"                   [virtualScroll]="true"
           [lazy]="true"                    [virtualScrollItemSize]="38"     [loading]="loadingBanques"
@@ -65,6 +66,7 @@
         [options]="statutOptions"
         optionLabel="label"
         optionValue="value"
+        appendTo="body"
         placeholder="Statut">
       </p-dropdown>
 

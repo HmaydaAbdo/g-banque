@@ -101,7 +101,7 @@ export class MarchesListComponent implements OnInit {
       numero: [''],
       maitreDouvrage: [''],
       banqueId: [null],
-      actif: [true]
+      actif: [null]
     });
   }
 

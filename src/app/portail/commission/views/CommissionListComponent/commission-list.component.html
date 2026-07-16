@@ -212,6 +212,7 @@
                 pButton pRipple
                 icon="pi pi-trash"
                 class="p-button-rounded p-button-outlined p-button-danger"
+                [disabled]="commission.status === Status.PAYE"
                 (click)="deleteCommission(commission)"
               ></button>
             }

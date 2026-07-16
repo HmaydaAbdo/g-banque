@@ -138,6 +138,7 @@
               @if (authService.isAdmin()) {
                 <button pButton icon="pi pi-trash"
                         class="p-button-rounded p-button-outlined p-button-danger"
+                        [disabled]="dc.status === Status.PAYE"
                         (click)="deleteDroitConstate(dc)"></button>
               }
             </div>

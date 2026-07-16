@@ -140,6 +140,7 @@
               ></p-inputSwitch>
               <button pButton pRipple icon="pi pi-trash"
                       class="p-button-rounded p-button-outlined p-button-danger"
+                      [disabled]="frais.status === Status.PAYE"
                       (click)="deleteFraisBancaire(frais)"></button>
             }
           </td>

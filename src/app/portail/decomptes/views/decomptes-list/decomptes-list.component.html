@@ -240,6 +240,7 @@
               @if (isAdmin) {
                 <button pButton icon="pi pi-trash"
                         class="p-button-rounded p-button-outlined p-button-danger"
+                        [disabled]="d.status === Status.PAYE"
                         (click)="deleteDecompte(d)"></button>
               }
             </div>
