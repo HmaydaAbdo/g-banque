@@ -23,6 +23,7 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.Lign
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.service.IMarcheService;
 import staport.finance.gBanque.prefinancement.dtos.request.EncoursPrefinancementSearchDto;
@@ -160,9 +161,15 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
     public void deletePrefinancement(Long id) {
         log.info("Début de suppression du préfinancement ID: {}", id);
 
-        if (!prefinancementRepository.existsById(id)) {
-            log.error("Impossible de supprimer - Préfinancement non trouvé avec l'ID: {}", id);
-            throw new ResourceNotFoundException("Prefinancement not found with ID: " + id);
+        Prefinancement prefinancement = prefinancementRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Impossible de supprimer - Préfinancement non trouvé avec l'ID: {}", id);
+                    return new ResourceNotFoundException("Prefinancement not found with ID: " + id);
+                });
+
+        if (prefinancement.getStatus() != Status.PREVU) {
+            log.warn("Tentative de suppression d'un préfinancement déjà réglé — id: {}", id);
+            throw new ValidationException("Le préfinancement id: " + id + " est déjà réglé et ne peut plus être supprimé.");
         }
 
         prefinancementRepository.deleteById(id);

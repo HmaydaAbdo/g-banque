@@ -14,6 +14,7 @@ import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
@@ -35,10 +36,9 @@ import java.time.temporal.TemporalAdjusters;
  * exclusivement par {@link IBanqueService} — jamais par injection directe de
  * {@code BanqueRepository}.
  *
- * <p>Suppression sans garde de statut (contrairement à Impayées/Impôts et Taxes) : comportement
- * d'origine conservé à l'identique — aucune règle métier "PAYE non supprimable" n'existait pour ce
- * module avant ce sweep, et ce sweep de conformité (RBAC/audit) n'a pas vocation à introduire de
- * nouvelle règle métier non demandée (CLAUDE.md, "En cas de doute").
+ * <p>Suppression bloquée si déjà PAYE (précisé par HMAYDA le 14/07/2026 : une restitution réglée ne
+ * peut plus être supprimée, même règle qu'Impayées/Impôts et Taxes) — {@code deleteRestitution} lève
+ * {@link ValidationException} dans ce cas.
  *
  * <p>Bug latent corrigé (14/07/2026) : {@code endOfMonth} était auparavant un champ calculé une
  * seule fois à la construction du bean singleton — figé à la date de démarrage du serveur au lieu
@@ -130,9 +130,15 @@ public class RestitutionServiceImpl implements IRestitutionService {
     public void deleteRestitution(Long id) {
         log.info("Début de suppression de la restitution avec l'id={}", id);
 
-        if (!restitutionRepository.existsById(id)) {
-            log.warn("Restitution introuvable avec l'id={}", id);
-            throw new ResourceNotFoundException("Restitution introuvable avec l'id: " + id);
+        Restitution restitution = restitutionRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Restitution introuvable avec l'id={}", id);
+                    return new ResourceNotFoundException("Restitution introuvable avec l'id: " + id);
+                });
+
+        if (restitution.getStatus() != Status.PREVU) {
+            log.warn("Tentative de suppression d'une restitution déjà réglée — id={}", id);
+            throw new ValidationException("La restitution id: " + id + " est déjà réglée et ne peut plus être supprimée.");
         }
 
         restitutionRepository.deleteById(id);

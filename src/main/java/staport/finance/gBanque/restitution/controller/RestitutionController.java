@@ -93,7 +93,7 @@ public class RestitutionController {
     }
 
     // --- Delete ---
-    @Operation(summary = "Supprimer une restitution", description = "Réservé SYSTEM_ADMIN.")
+    @Operation(summary = "Supprimer une restitution", description = "Réservé SYSTEM_ADMIN. Refusé si la restitution n'est plus au statut PREVU.")
     @DeleteMapping("/{id}")
     @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deleteRestitution(@PathVariable Long id) {

@@ -1,6 +1,7 @@
 package staport.finance.gBanque.operationErrone.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -9,6 +10,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Opération erronée rattachée à une banque.
+ *
+ * <p>Relation auditée : {@code banque} (déjà {@code @Audited}) — aucune annotation
+ * {@code @NotAudited} nécessaire.
+ */
+@Audited
 @Entity
 public class OperationErrone {
 

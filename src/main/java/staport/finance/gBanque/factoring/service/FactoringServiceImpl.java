@@ -23,6 +23,7 @@ import staport.finance.gBanque.LigneFonctionnelle.specifiqueLignes.services.Lign
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.factoring.dtos.request.EncoursFactoringSearchDto;
 import staport.finance.gBanque.factoring.dtos.request.FactoringRequestDto;
 import staport.finance.gBanque.factoring.dtos.request.FactoringSearchDto;
@@ -154,9 +155,15 @@ public class FactoringServiceImpl implements IFactoringService {
     public void deleteFactoring(Long id) {
         log.info("Tentative de suppression du factoring ID: {}", id);
 
-        if (!factoringRepository.existsById(id)) {
-            log.error("Impossible de supprimer - Factoring non trouvé avec l'ID: {}", id);
-            throw new ResourceNotFoundException("Factoring not found with ID: " + id);
+        Factoring factoring = factoringRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Impossible de supprimer - Factoring non trouvé avec l'ID: {}", id);
+                    return new ResourceNotFoundException("Factoring not found with ID: " + id);
+                });
+
+        if (factoring.getStatus() != Status.PREVU) {
+            log.warn("Tentative de suppression d'un factoring déjà réglé — id: {}", id);
+            throw new ValidationException("Le factoring id: " + id + " est déjà réglé et ne peut plus être supprimé.");
         }
 
         factoringRepository.deleteById(id);

@@ -14,6 +14,7 @@ import staport.finance.gBanque.Agios.dtos.AgiosResponseDto;
 import staport.finance.gBanque.Agios.dtos.AgiosSearchDto;
 import staport.finance.gBanque.Agios.dtos.EncoursAgiosDto;
 import staport.finance.gBanque.Agios.entities.Agios;
+import staport.finance.gBanque.Agios.exceptions.AgiosBusinessException;
 import staport.finance.gBanque.Agios.exceptions.AgiosNotFoundException;
 import staport.finance.gBanque.Agios.mapper.AgiosMapper;
 import staport.finance.gBanque.Agios.repository.AgiosRepository;
@@ -140,7 +141,13 @@ public class AgiosService implements IAgiosService {
     @Transactional
     public void deleteAgios(Long id) {
         log.info("Suppression de l'agios — id: {}", id);
-        findAgiosOuLeverException(id);
+        Agios agios = findAgiosOuLeverException(id);
+
+        if (agios.getStatus() != Status.PREVU) {
+            log.warn("Tentative de suppression d'un agios déjà réglé — id: {}", id);
+            throw new AgiosBusinessException("L'agios id: " + id + " est déjà réglé et ne peut plus être supprimé.");
+        }
+
         agiosRepository.deleteById(id);
         log.info("Agios supprimé — id: {}", id);
     }

@@ -33,6 +33,7 @@ import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.mapper.DroitConstateMapper;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
 import staport.finance.gBanque.droitConstate.spec.DroitConstateSpec;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.service.IMarcheService;
@@ -166,9 +167,15 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
     public void deleteDroitConstate(Long id) {
         log.info("Tentative de suppression du droit constaté ID: {}", id);
 
-        if (!droitConstateRepository.existsById(id)) {
-            log.error("Impossible de supprimer - Droit constaté non trouvé avec l'ID: {}", id);
-            throw new ResourceNotFoundException("Droit constate not found with ID: " + id);
+        DroitConstate droitConstate = droitConstateRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Impossible de supprimer - Droit constaté non trouvé avec l'ID: {}", id);
+                    return new ResourceNotFoundException("Droit constate not found with ID: " + id);
+                });
+
+        if (droitConstate.getStatus() != Status.PREVU) {
+            log.warn("Tentative de suppression d'un droit constaté déjà réglé — id: {}", id);
+            throw new ValidationException("Le droit constaté id: " + id + " est déjà réglé et ne peut plus être supprimé.");
         }
 
         droitConstateRepository.deleteById(id);

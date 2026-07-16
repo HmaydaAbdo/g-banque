@@ -28,6 +28,7 @@ import staport.finance.gBanque.decomptes.mapper.DecompteMapper;
 import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
 import staport.finance.gBanque.decomptes.spec.DecompteSpec;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.service.IMarcheService;
 import staport.finance.gBanque.prefinancement.enums.Status;
@@ -158,9 +159,15 @@ public class DecompteServiceImpl implements IDecompteService {
     public void deleteDecompte(Long id) {
         log.info("Tentative de suppression du décompte ID: {}", id);
 
-        if (!decompteRepository.existsById(id)) {
-            log.error("Impossible de supprimer - Décompte non trouvé avec l'ID: {}", id);
-            throw new ResourceNotFoundException("Décompte non trouvé avec l'ID: " + id);
+        Decompte decompte = decompteRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Impossible de supprimer - Décompte non trouvé avec l'ID: {}", id);
+                    return new ResourceNotFoundException("Décompte non trouvé avec l'ID: " + id);
+                });
+
+        if (decompte.getStatus() != Status.PREVU) {
+            log.warn("Tentative de suppression d'un décompte déjà réglé — id: {}", id);
+            throw new ValidationException("Le décompte id: " + id + " est déjà réglé et ne peut plus être supprimé.");
         }
 
         decompteRepository.deleteById(id);

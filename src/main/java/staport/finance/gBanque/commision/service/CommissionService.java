@@ -30,6 +30,7 @@ import staport.finance.gBanque.commision.mapper.CommissionMapper;
 import staport.finance.gBanque.commision.repository.CommisionRepository;
 import staport.finance.gBanque.commision.specs.CommissionSpecifications;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.impot_taxes.entities.ImpotEtTaxe;
 import staport.finance.gBanque.impot_taxes.service.IImpotEtTaxeService;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
@@ -191,8 +192,13 @@ public class CommissionService implements ICommissionService {
         Commission commission = commissionRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Commission not found with id={}", id);
-                    return new IllegalArgumentException("Commission not found");
+                    return new ResourceNotFoundException("Commission introuvable avec l'id: " + id);
                 });
+
+        if (commission.getStatus() != Status.PREVU) {
+            log.warn("Tentative de suppression d'une commission déjà réglée — id={}", id);
+            throw new ValidationException("La commission id: " + id + " est déjà réglée et ne peut plus être supprimée.");
+        }
 
         // Cascade TVA : uniquement pour les commissions sur cautions
         if (TransactionSource.CAUTION.equals(commission.getOperation())) {

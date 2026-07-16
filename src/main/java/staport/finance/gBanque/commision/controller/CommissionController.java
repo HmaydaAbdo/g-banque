@@ -87,7 +87,7 @@ public class CommissionController {
     }
 
     // --- Delete ---
-    @Operation(summary = "Supprimer une commission", description = "Réservé SYSTEM_ADMIN.")
+    @Operation(summary = "Supprimer une commission", description = "Réservé SYSTEM_ADMIN. Refusé si la commission n'est plus au statut PREVU.")
     @DeleteMapping("/{id}")
     @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<Void> deleteCommission(@PathVariable Long id) {

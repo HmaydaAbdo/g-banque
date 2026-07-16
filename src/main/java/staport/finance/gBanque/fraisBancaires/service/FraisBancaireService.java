@@ -116,9 +116,15 @@ public class FraisBancaireService implements IFraisBancaireService {
     public void deleteFraisBancaire(Long id) {
         log.info("Suppression du frais bancaire avec l'ID: {}", id);
 
-        if (!fraisBancaireRepository.existsById(id)) {
-            log.error("Frais bancaire non trouvé avec l'ID: {}", id);
-            throw new IllegalArgumentException("Frais bancaire non trouvé avec l'ID: " + id);
+        FraisBancaire fraisBancaire = fraisBancaireRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Frais bancaire non trouvé avec l'ID: {}", id);
+                    return new IllegalArgumentException("Frais bancaire non trouvé avec l'ID: " + id);
+                });
+
+        if (fraisBancaire.getStatus() != Status.PREVU) {
+            log.warn("Tentative de suppression d'un frais bancaire déjà réglé — id: {}", id);
+            throw new IllegalArgumentException("Le frais bancaire id: " + id + " est déjà réglé et ne peut plus être supprimé.");
         }
 
         fraisBancaireRepository.deleteById(id);
