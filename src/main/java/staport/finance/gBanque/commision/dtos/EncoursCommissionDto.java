@@ -1,25 +1,16 @@
 package staport.finance.gBanque.commision.dtos;
 
 import org.springframework.data.domain.Page;
+
 import java.math.BigDecimal;
 
-public class EncoursCommissionDto {
-    private BigDecimal totalDesEncours;
-    private Page<CommissionResponseDto> page;
+/**
+ * Réponse agrégée : page de résultats + total des encours.
+ */
+public record EncoursCommissionDto(
 
-    public BigDecimal getTotalDesEncours() {
-        return totalDesEncours;
-    }
+        BigDecimal totalDesEncours,
 
-    public void setTotalDesEncours(BigDecimal totalDesEncours) {
-        this.totalDesEncours = totalDesEncours;
-    }
+        Page<CommissionResponseDto> page
 
-    public Page<CommissionResponseDto> getPage() {
-        return page;
-    }
-
-    public void setPage(Page<CommissionResponseDto> page) {
-        this.page = page;
-    }
-}
+) {}

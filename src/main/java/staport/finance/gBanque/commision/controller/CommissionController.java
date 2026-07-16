@@ -109,11 +109,10 @@ public class CommissionController {
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursCommissionDto> getOutstandingCommissions(
             @PathVariable Long banqueId,
-            @ModelAttribute CommissionSearchDto searchDto,
+            @ModelAttribute EncoursCommissionSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         log.info("REST request to get outstanding commissions for banqueId={}", banqueId);
-        searchDto.setBanqueId(banqueId); // Set the bank ID from the path variable
-        EncoursCommissionDto result = commissionService.getOutstandingCommissions(searchDto, pageable);
+        EncoursCommissionDto result = commissionService.getOutstandingCommissions(searchDto, banqueId, pageable);
         return ResponseEntity.ok(result);
     }
 

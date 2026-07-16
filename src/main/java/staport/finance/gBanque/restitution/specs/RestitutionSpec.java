@@ -7,7 +7,6 @@ import staport.finance.gBanque.restitution.entities.Restitution;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 
 public class RestitutionSpec {
 
@@ -49,9 +48,9 @@ public class RestitutionSpec {
 
     public static Specification<Restitution> buildSpecification(RestitutionSearchDto dto) {
         return Specification
-                .where(hasBanque(dto.getBanqueId()))
-                .and(hasLibelle(dto.getLibelle()))
-                .and(hasStatus(dto.getStatus()));
+                .where(hasBanque(dto.banqueId()))
+                .and(hasLibelle(dto.libelle()))
+                .and(hasStatus(dto.status()));
     }
 
     public static Specification<Restitution> outstandingUntil(LocalDate until) {

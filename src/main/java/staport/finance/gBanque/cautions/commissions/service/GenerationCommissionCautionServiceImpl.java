@@ -149,19 +149,19 @@ public class GenerationCommissionCautionServiceImpl implements IGenerationCommis
             //     banque future avec genererTva()=false) est exclue : son montant de commission
             //     inclut déjà la TVA.
             if (strategie.genererTva()) {
-                BigDecimal montantTva = commissionPersistee.getMontant()
+                BigDecimal montantTva = commissionPersistee.montant()
                         .multiply(TAUX_TVA_COMMISSION_CAUTION)
                         .setScale(2, RoundingMode.HALF_UP);
 
                 impotEtTaxeService.creerTvaSurCommission(
                         caution.getBanque().getId(), montantTva, Motif.TVA_COMMISSION_CAUTION,
-                        commissionPersistee.getDateEmission(), "TVA " + commissionPersistee.getLibelle(),
-                        "TVA/commission/caution", commissionPersistee.getId(), caution.getId());
+                        commissionPersistee.dateEmission(), "TVA " + commissionPersistee.libelle(),
+                        "TVA/commission/caution", commissionPersistee.id(), caution.getId());
                 log.debug("TVA créée — commission id={}, montant TVA={}",
-                        commissionPersistee.getId(), montantTva);
+                        commissionPersistee.id(), montantTva);
             } else {
                 log.debug("TVA non générée pour la commission id={} (banque={} : montant TTC inclus)",
-                        commissionPersistee.getId(), nomBanque);
+                        commissionPersistee.id(), nomBanque);
             }
         }
 

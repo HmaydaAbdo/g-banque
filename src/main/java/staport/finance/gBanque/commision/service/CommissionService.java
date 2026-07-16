@@ -100,9 +100,9 @@ public class CommissionService implements ICommissionService {
     @Transactional
     @AuditableAction(operation = AuditOperation.CREATE, entity = Commission.class)
     public CommissionResponseDto createCommission(CommissionRequestDto requestDto) {
-        log.info("Creating commission for banqueId={} libelle={}", requestDto.getBanqueId(), requestDto.getLibelle());
+        log.info("Creating commission for banqueId={} libelle={}", requestDto.banqueId(), requestDto.libelle());
 
-        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
+        Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
         Commission commission = commissionMapper.toEntity(requestDto, banque);
         commissionRepository.save(commission);
@@ -142,17 +142,14 @@ public class CommissionService implements ICommissionService {
 
         BigDecimal total = sumMontant(spec);
 
-        EncoursCommissionDto result = new EncoursCommissionDto();
-        result.setPage(page);
-        result.setTotalDesEncours(total);
-        return result;
+        return new EncoursCommissionDto(total, page);
     }
 
     // --- Update ---
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = Commission.class)
     public CommissionResponseDto updateCommission(Long id, CommissionRequestDto requestDto) {
-        log.info("Updating commission id={} with libelle={}", id, requestDto.getLibelle());
+        log.info("Updating commission id={} with libelle={}", id, requestDto.libelle());
 
         Commission commission = commissionRepository.findById(id)
                 .orElseThrow(() -> {
@@ -160,20 +157,20 @@ public class CommissionService implements ICommissionService {
                     return new IllegalArgumentException("Commission not found");
                 });
 
-        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
+        Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
-        commission.setLibelle(requestDto.getLibelle());
-        commission.setMontant(requestDto.getMontant());
+        commission.setLibelle(requestDto.libelle());
+        commission.setMontant(requestDto.montant());
         commission.setBanque(banque);
-        commission.setOperation(requestDto.getOperation());
-        commission.setDateEmission(requestDto.getDateEmission());
+        commission.setOperation(requestDto.operation());
+        commission.setDateEmission(requestDto.dateEmission());
 
         commissionRepository.save(commission);
         log.info("Commission updated successfully id={}", commission.getId());
 
         // Cascade TVA : uniquement pour les commissions sur cautions
         if (TransactionSource.CAUTION.equals(commission.getOperation())) {
-            BigDecimal nouveauMontantTva = requestDto.getMontant()
+            BigDecimal nouveauMontantTva = requestDto.montant()
                     .multiply(TAUX_TVA_COMMISSION_CAUTION)
                     .setScale(2, RoundingMode.HALF_UP);
             impotEtTaxeService.updateMontantByCommissionId(id, nouveauMontantTva);
@@ -217,13 +214,13 @@ public class CommissionService implements ICommissionService {
      * @return An EncoursCommissionDto containing the page of commissions and the total outstanding amount.
      */
     @Transactional(readOnly = true)
-    public EncoursCommissionDto getOutstandingCommissions(CommissionSearchDto searchDto, Pageable pageable) {
+    public EncoursCommissionDto getOutstandingCommissions(EncoursCommissionSearchDto searchDto, Long banqueId, Pageable pageable) {
         // Build the specification to filter the records
         Specification<Commission> spec = Specification.where(CommissionSpecifications.outstandingUntil(endOfMonth))
-                .and(CommissionSpecifications.hasBanque(searchDto.getBanqueId()))
-                .and(CommissionSpecifications.hasLibelle(searchDto.getLibelle()))
-                .and(CommissionSpecifications.hasOperation(searchDto.getOperation()))
-                .and(CommissionSpecifications.hasMontant(searchDto.getMontant()));
+                .and(CommissionSpecifications.hasBanque(banqueId))
+                .and(CommissionSpecifications.hasLibelle(searchDto.libelle()))
+                .and(CommissionSpecifications.hasOperation(searchDto.operation()))
+                .and(CommissionSpecifications.hasMontant(searchDto.montant()));
 
         // Garantir un tri stable par id pour éviter les doublons inter-pages
         Pageable stablePageable = pageable.getSort().isSorted()
@@ -236,11 +233,7 @@ public class CommissionService implements ICommissionService {
 
         BigDecimal totalDesEncours = sumMontant(spec);
 
-        EncoursCommissionDto result = new EncoursCommissionDto();
-        result.setPage(pageDto);
-        result.setTotalDesEncours(totalDesEncours);
-
-        return result;
+        return new EncoursCommissionDto(totalDesEncours, pageDto);
     }
 
 
@@ -399,26 +392,26 @@ public class CommissionService implements ICommissionService {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
 
-        if (dto.getBanqueId() != null) {
+        if (dto.banqueId() != null) {
             try {
-                lines.add("Banque : " + banqueService.findOrThrow(dto.getBanqueId()).getNom());
+                lines.add("Banque : " + banqueService.findOrThrow(dto.banqueId()).getNom());
             } catch (ResourceNotFoundException e) {
-                log.debug("Banque id={} introuvable pour le résumé de filtre export — ignorée", dto.getBanqueId());
+                log.debug("Banque id={} introuvable pour le résumé de filtre export — ignorée", dto.banqueId());
             }
         }
-        if (dto.getLibelle() != null && !dto.getLibelle().isBlank())
-            lines.add("Libellé : " + dto.getLibelle());
-        if (dto.getOperation() != null)
-            lines.add("Opération : " + dto.getOperation());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        if (dto.getStatus() != null)
-            lines.add("Statut : " + (dto.getStatus() == Status.PAYE ? "Payée" : "Prévue"));
-        if (dto.getNatureId() != null) {
+        if (dto.libelle() != null && !dto.libelle().isBlank())
+            lines.add("Libellé : " + dto.libelle());
+        if (dto.operation() != null)
+            lines.add("Opération : " + dto.operation());
+        if (dto.montant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+        if (dto.status() != null)
+            lines.add("Statut : " + (dto.status() == Status.PAYE ? "Payée" : "Prévue"));
+        if (dto.natureId() != null) {
             try {
-                lines.add("Nature : " + natureService.getNatureLigneFonctionnelleById(dto.getNatureId()).label());
+                lines.add("Nature : " + natureService.getNatureLigneFonctionnelleById(dto.natureId()).label());
             } catch (ResourceNotFoundException e) {
-                log.debug("Nature id={} introuvable pour le résumé de filtre export — ignorée", dto.getNatureId());
+                log.debug("Nature id={} introuvable pour le résumé de filtre export — ignorée", dto.natureId());
             }
         }
 
@@ -484,7 +477,7 @@ public class CommissionService implements ICommissionService {
      * </ol>
      */
     @Transactional
-    @AuditableAction(operation = AuditOperation.CREATE, entity = Commission.class, idAccessor = "commissionId")
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Commission.class, idAccessor = "getCommissionId")
     public CommissionFusionResponse fusionner(CommissionFusionRequest request) {
         List<Long> ids = request.getIds();
         log.info("Fusion demandée — {} commission(s), libellé='{}'", ids.size(), request.getLibelle());

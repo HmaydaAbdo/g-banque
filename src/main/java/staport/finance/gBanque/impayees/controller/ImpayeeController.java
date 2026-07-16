@@ -84,10 +84,9 @@ public class ImpayeeController {
     @Operation(summary = "Consulter les encours d'impayées d'une banque")
     @GetMapping("/encours/{banqueId}")
     @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<EncoursImpayeeDto> getOutstandingImpayees(@PathVariable Long banqueId, @ModelAttribute ImpayeeSearchDto searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
+    public ResponseEntity<EncoursImpayeeDto> getOutstandingImpayees(@PathVariable Long banqueId, @ModelAttribute EncoursImpayeeSearchDto searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         log.info("Requête REST: Récupération encours pour banqueId={}", banqueId);
-        searchDto.setBanqueId(banqueId);
-        return ResponseEntity.ok(impayeeService.getOutstandingImpayees(searchDto, pageable));
+        return ResponseEntity.ok(impayeeService.getOutstandingImpayees(searchDto, banqueId, pageable));
     }
 
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")
@@ -96,7 +95,7 @@ public class ImpayeeController {
     public ResponseEntity<ImpayeeResponseDto> toggleStatus(@PathVariable Long id) {
         log.info("Requête REST: Basculement statut pour impayée ID: {}", id);
         ImpayeeResponseDto response = impayeeService.toggleStatus(id);
-        log.info("Statut de l'ID {} mis à jour vers {}", id, response.getStatus());
+        log.info("Statut de l'ID {} mis à jour vers {}", id, response.status());
         return ResponseEntity.ok(response);
     }
 }

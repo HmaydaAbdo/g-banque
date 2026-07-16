@@ -161,18 +161,18 @@ public class CautionServiceImpl implements ICautionService {
                         prorataCalcule.getDateEmission(), prorataCalcule.getLibelle(),
                         prorataCalcule.getObservation());
                 log.info("Prorata d'entrée créé — caution id: {}, dateEmission: {}, montant: {}",
-                        sauvegardee.getId(), prorataPersiste.getDateEmission(), prorataPersiste.getMontant());
+                        sauvegardee.getId(), prorataPersiste.dateEmission(), prorataPersiste.montant());
 
                 // TVA sur prorata — uniquement pour les banques dont la stratégie l'exige (ex. BMCI)
                 if (strategie.genererTva()) {
-                    BigDecimal montantTva = prorataPersiste.getMontant()
+                    BigDecimal montantTva = prorataPersiste.montant()
                             .multiply(TAUX_TVA)
                             .setScale(2, RoundingMode.HALF_UP);
 
                     impotEtTaxeService.creerTvaSurCommission(
                             banque.getId(), montantTva, Motif.TVA_COMMISSION_CAUTION,
-                            prorataPersiste.getDateEmission(), "TVA " + prorataPersiste.getLibelle(),
-                            "TVA/prorata/caution/creation", prorataPersiste.getId(), sauvegardee.getId());
+                            prorataPersiste.dateEmission(), "TVA " + prorataPersiste.libelle(),
+                            "TVA/prorata/caution/creation", prorataPersiste.id(), sauvegardee.getId());
                     log.info("TVA prorata créée — montant: {}", montantTva);
                 }
             }
@@ -496,7 +496,7 @@ public class CautionServiceImpl implements ICautionService {
                 .ifPresent(prorata -> {
                     // deleteCommission supprime aussi, en cascade, la TVA liée si elle existe
                     // (cas BMCI qui génère une TVA sur le prorata d'entrée).
-                    commissionService.deleteCommission(prorata.getId());
+                    commissionService.deleteCommission(prorata.id());
                     log.info("Prorata d'entrée PREVU supprimé (même mois clôture) — "
                             + "caution id: {}, banque: {}, dateEmission prorata: {}",
                             caution.getId(), nomBanque, caution.getDateDePrise());
@@ -512,18 +512,18 @@ public class CautionServiceImpl implements ICautionService {
                 commissionCalculee.getDateEmission(), commissionCalculee.getLibelle(),
                 commissionCalculee.getObservation());
         log.info("Commission de clôture générée — id: {}, montant: {}",
-                commissionPersistee.getId(), commissionPersistee.getMontant());
+                commissionPersistee.id(), commissionPersistee.montant());
 
         // 5b. TVA si la stratégie l'exige (ex. BMCI)
         if (strategie.genererTva()) {
-            BigDecimal montantTva = commissionPersistee.getMontant()
+            BigDecimal montantTva = commissionPersistee.montant()
                     .multiply(TAUX_TVA)
                     .setScale(2, RoundingMode.HALF_UP);
 
             impotEtTaxeService.creerTvaSurCommission(
                     caution.getBanque().getId(), montantTva, Motif.TVA_COMMISSION_CAUTION,
-                    commissionPersistee.getDateEmission(), "TVA " + commissionPersistee.getLibelle(),
-                    "TVA/commission/caution/cloture", commissionPersistee.getId(), caution.getId());
+                    commissionPersistee.dateEmission(), "TVA " + commissionPersistee.libelle(),
+                    "TVA/commission/caution/cloture", commissionPersistee.id(), caution.getId());
             log.info("TVA de clôture générée — montant: {}", montantTva);
         }
 

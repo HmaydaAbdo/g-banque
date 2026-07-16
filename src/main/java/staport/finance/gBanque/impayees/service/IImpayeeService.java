@@ -3,6 +3,7 @@ package staport.finance.gBanque.impayees.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import staport.finance.gBanque.impayees.dtos.EncoursImpayeeDto;
+import staport.finance.gBanque.impayees.dtos.EncoursImpayeeSearchDto;
 import staport.finance.gBanque.impayees.dtos.ImpayeeRequestDto;
 import staport.finance.gBanque.impayees.dtos.ImpayeeResponseDto;
 import staport.finance.gBanque.impayees.dtos.ImpayeeSearchDto;
@@ -28,5 +29,5 @@ public interface IImpayeeService {
 
     ImpayeeResponseDto toggleStatus(Long id);
 
-    EncoursImpayeeDto getOutstandingImpayees(ImpayeeSearchDto searchDto, Pageable pageable);
+    EncoursImpayeeDto getOutstandingImpayees(EncoursImpayeeSearchDto searchDto, Long banqueId, Pageable pageable);
 }

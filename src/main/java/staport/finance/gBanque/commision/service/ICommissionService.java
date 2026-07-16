@@ -7,6 +7,7 @@ import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 import staport.finance.gBanque.commision.dtos.CommissionSearchDto;
 import staport.finance.gBanque.commision.dtos.EncoursCommissionDto;
+import staport.finance.gBanque.commision.dtos.EncoursCommissionSearchDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -40,7 +41,7 @@ public interface ICommissionService {
     CommissionResponseDto updateCommission(Long id, CommissionRequestDto requestDto);
 
     /** Récupère les commissions en encours d'une banque (statut PREVU), paginées, avec le total. */
-    EncoursCommissionDto getOutstandingCommissions(CommissionSearchDto searchDto, Pageable pageable);
+    EncoursCommissionDto getOutstandingCommissions(EncoursCommissionSearchDto searchDto, Long banqueId, Pageable pageable);
 
     /** Exporte en PDF l'intégralité des commissions correspondant aux critères fournis. */
     byte[] exporterPdf(CommissionSearchDto searchDto);

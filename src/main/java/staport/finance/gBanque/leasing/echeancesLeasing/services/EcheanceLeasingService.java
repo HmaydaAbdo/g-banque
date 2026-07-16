@@ -294,29 +294,24 @@ import java.math.BigDecimal;
                 EcheanceLeasing echeance,
                 BigDecimal montantCommission) {
 
-            CommissionRequestDto dto = new CommissionRequestDto();
-
             // Libellé et observation avec le numéro de contrat et d'échéance
             String texte = String.format(
                     "Commission Prelevement Leasing contrat N°%s",
                     contrat.getNumeroContrat()
             );
-            dto.setLibelle(texte);
-            dto.setObservation(texte);
 
-            // Montant de la commission (montant fixe depuis la config YAML)
-            dto.setMontant(montantCommission);
-
-            // Banque
-            dto.setBanqueId(contrat.getBanqueDePrelevement().getId());
-
-            // Opération
-            dto.setOperation(TransactionSource.LEASING);
-
-            // Date d'émission = date d'échéance
-            dto.setDateEmission(echeance.getDateEcheance());
-
-            return dto;
+            return new CommissionRequestDto(
+                    texte,
+                    texte,
+                    // Montant de la commission (montant fixe depuis la config YAML)
+                    montantCommission,
+                    // Banque
+                    contrat.getBanqueDePrelevement().getId(),
+                    // Opération
+                    TransactionSource.LEASING,
+                    // Date d'émission = date d'échéance
+                    echeance.getDateEcheance()
+            );
         }
 
 

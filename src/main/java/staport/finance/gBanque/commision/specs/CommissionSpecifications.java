@@ -74,12 +74,12 @@ public class CommissionSpecifications {
 
     public static Specification<Commission> buildSpecification(CommissionSearchDto dto) {
         return Specification
-                .where(hasBanque(dto.getBanqueId()))
-                .and(hasLibelle(dto.getLibelle()))
-                .and(hasOperation(dto.getOperation()))
-                .and(hasStatus(dto.getStatus()))
-                .and(hasMontant(dto.getMontant()))
-                .and(hasNature(dto.getNatureId()));
+                .where(hasBanque(dto.banqueId()))
+                .and(hasLibelle(dto.libelle()))
+                .and(hasOperation(dto.operation()))
+                .and(hasStatus(dto.status()))
+                .and(hasMontant(dto.montant()))
+                .and(hasNature(dto.natureId()));
     }
 
     public static Specification<Commission> outstandingUntil(LocalDate until) {

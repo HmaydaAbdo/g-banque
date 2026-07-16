@@ -24,23 +24,23 @@ public class OperationErroneMapper {
 
         if (banque == null) {
             log.error("Tentative de création d'une opération erronée avec une banque null pour le libellé: '{}'",
-                    dto.getLibelle());
+                    dto.libelle());
             throw new IllegalArgumentException("La banque ne peut pas être null lors de la création d'une opération erronée");
         }
 
         log.debug("Conversion du DTO vers entité OperationErrone - Libellé: '{}', Banque: '{}', Montant: {}, Motif: {}",
-                dto.getLibelle(), banque.getNom(), dto.getMontant(), dto.getMotif());
+                dto.libelle(), banque.getNom(), dto.montant(), dto.motif());
 
         OperationErrone operationErrone = new OperationErrone();
-        operationErrone.setLibelle(dto.getLibelle());
-        operationErrone.setObservation(dto.getObservation());
-        operationErrone.setMontant(dto.getMontant());
+        operationErrone.setLibelle(dto.libelle());
+        operationErrone.setObservation(dto.observation());
+        operationErrone.setMontant(dto.montant());
         operationErrone.setBanque(banque);
-        operationErrone.setDateEmission(dto.getDateEmission());
-        operationErrone.setMotif(dto.getMotif());
+        operationErrone.setDateEmission(dto.dateEmission());
+        operationErrone.setMotif(dto.motif());
 
         log.debug("Entité OperationErrone créée avec succès pour la banque ID: {} (statut par défaut: PREVU, motif: {})",
-                banque.getId(), dto.getMotif());
+                banque.getId(), dto.motif());
         return operationErrone;
     }
 
@@ -55,26 +55,30 @@ public class OperationErroneMapper {
 
         log.debug("Conversion de l'entité OperationErrone ID: {} vers DTO de réponse", entity.getId());
 
-        OperationErroneResponseDto dto = new OperationErroneResponseDto();
-        dto.setId(entity.getId());
-        dto.setLibelle(entity.getLibelle());
-        dto.setMontant(entity.getMontant());
-        dto.setMotif(entity.getMotif());
-
+        Long banqueId = null;
+        String banqueNom = null;
         if (entity.getBanque() != null) {
-            dto.setBanqueId(entity.getBanque().getId());
-            dto.setBanqueNom(entity.getBanque().getNom());
+            banqueId = entity.getBanque().getId();
+            banqueNom = entity.getBanque().getNom();
             log.trace("Banque associée à l'opération erronée: ID={}, Nom='{}'",
                     entity.getBanque().getId(), entity.getBanque().getNom());
         } else {
             log.warn("OperationErrone ID: {} n'a pas de banque associée", entity.getId());
         }
 
-        dto.setDateEmission(entity.getDateEmission());
-        dto.setStatus(entity.getStatus());
-        dto.setDateOperation(entity.getDateOperation() != null ? entity.getDateOperation() : null);
-        dto.setDateValeur(entity.getDateValeur() != null ? entity.getDateValeur() : null);
-        dto.setObservation(entity.getObservation() != null ? entity.getObservation() : null);
+        OperationErroneResponseDto dto = new OperationErroneResponseDto(
+                entity.getId(),
+                entity.getLibelle(),
+                entity.getObservation(),
+                entity.getMontant(),
+                banqueId,
+                banqueNom,
+                entity.getDateEmission(),
+                entity.getDateValeur(),
+                entity.getDateOperation(),
+                entity.getStatus(),
+                entity.getMotif()
+        );
 
         log.debug("DTO de réponse créé avec succès pour OperationErrone ID: {}, Statut: {}, Montant: {}, Motif: {}",
                 entity.getId(), entity.getStatus(), entity.getMontant(), entity.getMotif());

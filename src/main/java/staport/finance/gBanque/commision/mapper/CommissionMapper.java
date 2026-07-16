@@ -8,6 +8,8 @@ import staport.finance.gBanque.commision.dtos.CommissionRequestDto;
 import staport.finance.gBanque.commision.dtos.CommissionResponseDto;
 import staport.finance.gBanque.commision.entities.Commission;
 
+import java.math.BigDecimal;
+
 @Component
 public class CommissionMapper {
 
@@ -28,20 +30,20 @@ public class CommissionMapper {
 
         if (banque == null) {
             log.error("Tentative de création d'une commission avec une banque null pour le libellé: '{}'",
-                    dto.getLibelle());
+                    dto.libelle());
             throw new IllegalArgumentException("La banque ne peut pas être null");
         }
 
         log.debug("Conversion du DTO vers entité Commission - Libellé: '{}', Banque: '{}', Montant: {}",
-                dto.getLibelle(), banque.getNom(), dto.getMontant());
+                dto.libelle(), banque.getNom(), dto.montant());
 
         Commission commission = new Commission();
-        commission.setLibelle(dto.getLibelle());
-        commission.setObservation(dto.getObservation());
-        commission.setMontant(dto.getMontant());
+        commission.setLibelle(dto.libelle());
+        commission.setObservation(dto.observation());
+        commission.setMontant(dto.montant());
         commission.setBanque(banque);
-        commission.setOperation(dto.getOperation());
-        commission.setDateEmission(dto.getDateEmission());
+        commission.setOperation(dto.operation());
+        commission.setDateEmission(dto.dateEmission());
 
         log.debug("Entité Commission créée avec succès pour la banque ID: {}", banque.getId());
         return commission;
@@ -61,37 +63,49 @@ public class CommissionMapper {
 
         log.debug("Conversion de l'entité Commission ID: {} vers DTO de réponse", entity.getId());
 
-        CommissionResponseDto dto = new CommissionResponseDto();
-        dto.setId(entity.getId());
-        dto.setLibelle(entity.getLibelle());
-        dto.setOperation(entity.getOperation());
-        dto.setMontant(entity.getMontant());
-
+        Long banqueId = null;
+        String banqueNom = null;
         if (entity.getBanque() != null) {
-            dto.setBanqueId(entity.getBanque().getId());
-            dto.setBanqueNom(entity.getBanque().getNom());
+            banqueId = entity.getBanque().getId();
+            banqueNom = entity.getBanque().getNom();
             log.trace("Banque associée: ID={}, Nom='{}'",
                     entity.getBanque().getId(), entity.getBanque().getNom());
         } else {
             log.warn("Commission ID: {} n'a pas de banque associée", entity.getId());
         }
 
-        dto.setDateEmission(entity.getDateEmission());
-        dto.setStatus(entity.getStatus());
-        dto.setDateOperation(entity.getDateOperation() != null ? entity.getDateOperation() : null);
-        dto.setDateValeur(entity.getDateValeur() != null ? entity.getDateValeur() : null);
-        dto.setObservation(entity.getObservation() != null ? entity.getObservation() : null);
-
         // Caution d'origine — nullable (absente pour les commissions saisies manuellement
         // ou générées hors caution, ex : virements)
+        Long cautionId = null;
+        BigDecimal cautionMontant = null;
+        Long natureId = null;
+        String natureLabel = null;
         if (entity.getCaution() != null) {
-            dto.setCautionId(entity.getCaution().getId());
-            dto.setCautionMontant(entity.getCaution().getMontant());
+            cautionId = entity.getCaution().getId();
+            cautionMontant = entity.getCaution().getMontant();
             if (entity.getCaution().getNature() != null) {
-                dto.setNatureId(entity.getCaution().getNature().getId());
-                dto.setNatureLabel(entity.getCaution().getNature().getLabel());
+                natureId = entity.getCaution().getNature().getId();
+                natureLabel = entity.getCaution().getNature().getLabel();
             }
         }
+
+        CommissionResponseDto dto = new CommissionResponseDto(
+                entity.getId(),
+                entity.getLibelle(),
+                entity.getObservation() != null ? entity.getObservation() : null,
+                entity.getMontant(),
+                banqueId,
+                banqueNom,
+                entity.getOperation(),
+                entity.getDateEmission(),
+                entity.getDateValeur() != null ? entity.getDateValeur() : null,
+                entity.getDateOperation() != null ? entity.getDateOperation() : null,
+                entity.getStatus(),
+                cautionId,
+                cautionMontant,
+                natureId,
+                natureLabel
+        );
 
         log.debug("DTO de réponse créé avec succès pour Commission ID: {}, Statut: {}",
                 entity.getId(), entity.getStatus());

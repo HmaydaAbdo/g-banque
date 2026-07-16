@@ -25,23 +25,23 @@ public class RestitutionMapper {
 
         if (banque == null) {
             log.error("Tentative de création d'une restitution avec une banque null pour le libellé: '{}'",
-                    dto.getLibelle());
+                    dto.libelle());
             throw new IllegalArgumentException("La banque ne peut pas être null lors de la création d'une restitution");
         }
 
         log.debug(
                 "Conversion du DTO vers entité Restitution - Libellé: '{}', Banque: '{}', Montant: {}",
-                dto.getLibelle(),
+                dto.libelle(),
                 banque.getNom(),
-                dto.getMontant()
+                dto.montant()
         );
 
         Restitution restitution = new Restitution();
-        restitution.setLibelle(dto.getLibelle());
-        restitution.setObservation(dto.getObservation());
-        restitution.setMontant(dto.getMontant());
+        restitution.setLibelle(dto.libelle());
+        restitution.setObservation(dto.observation());
+        restitution.setMontant(dto.montant());
         restitution.setBanque(banque);
-        restitution.setDateEmission(dto.getDateEmission());
+        restitution.setDateEmission(dto.dateEmission());
 
         log.debug(
                 "Entité Restitution créée avec succès pour la banque ID: {} (statut par défaut: PREVU)",
@@ -66,14 +66,11 @@ public class RestitutionMapper {
                 entity.getId()
         );
 
-        RestitutionResponseDto dto = new RestitutionResponseDto();
-        dto.setId(entity.getId());
-        dto.setLibelle(entity.getLibelle());
-        dto.setMontant(entity.getMontant());
-
+        Long banqueId = null;
+        String banqueNom = null;
         if (entity.getBanque() != null) {
-            dto.setBanqueId(entity.getBanque().getId());
-            dto.setBanqueNom(entity.getBanque().getNom());
+            banqueId = entity.getBanque().getId();
+            banqueNom = entity.getBanque().getNom();
 
             log.trace(
                     "Banque associée à la restitution: ID={}, Nom='{}'",
@@ -84,11 +81,18 @@ public class RestitutionMapper {
             log.warn("Restitution ID: {} n'a pas de banque associée", entity.getId());
         }
 
-        dto.setDateEmission(entity.getDateEmission());
-        dto.setStatus(entity.getStatus());
-        dto.setDateOperation(entity.getDateOperation());
-        dto.setDateValeur(entity.getDateValeur());
-        dto.setObservation(entity.getObservation());
+        RestitutionResponseDto dto = new RestitutionResponseDto(
+                entity.getId(),
+                entity.getLibelle(),
+                entity.getObservation(),
+                entity.getMontant(),
+                banqueId,
+                banqueNom,
+                entity.getDateEmission(),
+                entity.getDateValeur(),
+                entity.getDateOperation(),
+                entity.getStatus()
+        );
 
         log.debug(
                 "DTO de réponse créé avec succès pour Restitution ID: {}, Statut: {}, Montant: {}",

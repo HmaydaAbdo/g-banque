@@ -22,6 +22,6 @@ public interface AgiosCalculatorMapper {
     @Mapping(target = "banqueId",  source = "banque.id")
     @Mapping(target = "banqueNom", source = "banque.nom")
     @Mapping(target = "marcheId",  source = "marche.id")
-    @Mapping(target = "marcheNom", source = "marche.nom")
+    @Mapping(target = "marcheNumero", source = "marche.numero")
     AgiosJournalierResponseDto toJourDto(AgiosJournalier entity);
 }

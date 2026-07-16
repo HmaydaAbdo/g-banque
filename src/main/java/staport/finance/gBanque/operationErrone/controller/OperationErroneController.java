@@ -45,10 +45,10 @@ public class OperationErroneController {
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<OperationErroneResponseDto> createOperationErrone(@Validated @RequestBody OperationErroneRequestDto requestDto) {
         log.info("Requête REST pour créer une opération erronée - Libellé: '{}', Montant: {}, Motif: {}",
-                requestDto.getLibelle(), requestDto.getMontant(), requestDto.getMotif());
+                requestDto.libelle(), requestDto.montant(), requestDto.motif());
 
         OperationErroneResponseDto response = operationErroneService.createOperationErrone(requestDto);
-        log.info("Opération erronée créée avec succès - ID: {}, Motif: {}", response.getId(), response.getMotif());
+        log.info("Opération erronée créée avec succès - ID: {}, Motif: {}", response.id(), response.motif());
         return ResponseEntity.ok(response);
     }
 
@@ -96,12 +96,11 @@ public class OperationErroneController {
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursOperationErroneDto> getOutstandingOperationErrone(
             @PathVariable Long banqueId,
-            @ModelAttribute OperationErroneSearchDto searchDto,
+            @ModelAttribute EncoursOperationErroneSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         log.info("Requête REST pour récupérer les opérations erronées en cours - Banque ID: {}", banqueId);
-        searchDto.setBanqueId(banqueId);
-        EncoursOperationErroneDto result = operationErroneService.getOutstandingOperationErrone(searchDto, pageable);
-        log.info("Opérations erronées en cours récupérées - Total: {}", result.getTotalDesEncours());
+        EncoursOperationErroneDto result = operationErroneService.getOutstandingOperationErrone(searchDto, banqueId, pageable);
+        log.info("Opérations erronées en cours récupérées - Total: {}", result.totalDesEncours());
         return ResponseEntity.ok(result);
     }
 
@@ -111,7 +110,7 @@ public class OperationErroneController {
     public ResponseEntity<OperationErroneResponseDto> toggleStatus(@PathVariable Long id) {
         log.info("Requête REST pour basculer le statut de l'opération erronée ID: {}", id);
         OperationErroneResponseDto response = operationErroneService.toggleStatus(id);
-        log.info("Statut de l'opération erronée ID: {} basculé vers {}", id, response.getStatus());
+        log.info("Statut de l'opération erronée ID: {} basculé vers {}", id, response.status());
         return ResponseEntity.ok(response);
     }
 }

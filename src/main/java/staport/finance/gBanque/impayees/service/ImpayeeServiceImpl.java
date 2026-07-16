@@ -59,7 +59,7 @@ public class ImpayeeServiceImpl implements IImpayeeService {
     public ImpayeeResponseDto createImpayee(ImpayeeRequestDto requestDto) {
         log.info("Début de création d'une impayée avec les données: {}", requestDto);
 
-        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
+        Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
         Impayee impayee = impayeeMapper.toEntity(requestDto, banque);
         impayeeRepository.save(impayee);
@@ -96,14 +96,14 @@ public class ImpayeeServiceImpl implements IImpayeeService {
         Impayee impayee = impayeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Impayée introuvable avec l'ID: " + id));
 
-        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
+        Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
-        impayee.setLibelle(requestDto.getLibelle());
-        impayee.setMontant(requestDto.getMontant());
+        impayee.setLibelle(requestDto.libelle());
+        impayee.setMontant(requestDto.montant());
         impayee.setBanque(banque);
-        impayee.setMotif(requestDto.getMotif());
-        impayee.setDateEmission(requestDto.getDateEmission());
-        impayee.setObservation(requestDto.getObservation());
+        impayee.setMotif(requestDto.motif());
+        impayee.setDateEmission(requestDto.dateEmission());
+        impayee.setObservation(requestDto.observation());
 
         impayeeRepository.save(impayee);
         log.info("Impayée mise à jour avec succès: id={}", id);
@@ -154,16 +154,16 @@ public class ImpayeeServiceImpl implements IImpayeeService {
 
     @Override
     @Transactional(readOnly = true)
-    public EncoursImpayeeDto getOutstandingImpayees(ImpayeeSearchDto searchDto, Pageable pageable) {
-        log.info("Récupération des encours impayées - Critères: {}", searchDto);
+    public EncoursImpayeeDto getOutstandingImpayees(EncoursImpayeeSearchDto searchDto, Long banqueId, Pageable pageable) {
+        log.info("Récupération des encours impayées - banqueId={}, Critères: {}", banqueId, searchDto);
 
         LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-        Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingUntil(endOfMonth, searchDto.getType()))
-                .and(ImpayeeSpecifications.hasBanque(searchDto.getBanqueId()))
-                .and(ImpayeeSpecifications.hasLibelle(searchDto.getLibelle()))
-                .and(ImpayeeSpecifications.hasMotif(searchDto.getMotif()))
-                .and(ImpayeeSpecifications.hasMontant(searchDto.getMontant()));
+        Specification<Impayee> spec = Specification.where(ImpayeeSpecifications.outstandingUntil(endOfMonth, searchDto.type()))
+                .and(ImpayeeSpecifications.hasBanque(banqueId))
+                .and(ImpayeeSpecifications.hasLibelle(searchDto.libelle()))
+                .and(ImpayeeSpecifications.hasMotif(searchDto.motif()))
+                .and(ImpayeeSpecifications.hasMontant(searchDto.montant()));
 
         Page<Impayee> impayeePage = impayeeRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
@@ -173,11 +173,7 @@ public class ImpayeeServiceImpl implements IImpayeeService {
 
         Page<ImpayeeResponseDto> pageDto = impayeePage.map(impayeeMapper::toResponseDto);
 
-        EncoursImpayeeDto result = new EncoursImpayeeDto();
-        result.setPage(pageDto);
-        result.setTotalDesEncours(totalDesEncours);
-
         log.info("Encours récupérés: {} éléments, Total: {}", pageDto.getTotalElements(), totalDesEncours);
-        return result;
+        return new EncoursImpayeeDto(totalDesEncours, pageDto);
     }
 }

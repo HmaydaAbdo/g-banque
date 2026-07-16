@@ -63,9 +63,9 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
     @AuditableAction(operation = AuditOperation.CREATE, entity = OperationErrone.class)
     public OperationErroneResponseDto createOperationErrone(OperationErroneRequestDto requestDto) {
         log.info("Création d'une opération erronée - Banque ID: {}, Libellé: '{}', Montant: {}, Motif: {}",
-                requestDto.getBanqueId(), requestDto.getLibelle(), requestDto.getMontant(), requestDto.getMotif());
+                requestDto.banqueId(), requestDto.libelle(), requestDto.montant(), requestDto.motif());
 
-        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
+        Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
         OperationErrone operationErrone = operationErroneMapper.toEntity(requestDto, banque);
         OperationErrone saved = operationErroneRepository.save(operationErrone);
@@ -106,18 +106,18 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
     @AuditableAction(operation = AuditOperation.UPDATE, entity = OperationErrone.class)
     public OperationErroneResponseDto updateOperationErrone(Long id, OperationErroneRequestDto requestDto) {
         log.info("Mise à jour de l'opération erronée ID: {} - Nouveau libellé: '{}', Motif: {}",
-                id, requestDto.getLibelle(), requestDto.getMotif());
+                id, requestDto.libelle(), requestDto.motif());
 
         OperationErrone operationErrone = operationErroneRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Opération erronée non trouvée avec l'ID: " + id));
 
-        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
+        Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
-        operationErrone.setLibelle(requestDto.getLibelle());
-        operationErrone.setMontant(requestDto.getMontant());
+        operationErrone.setLibelle(requestDto.libelle());
+        operationErrone.setMontant(requestDto.montant());
         operationErrone.setBanque(banque);
-        operationErrone.setDateEmission(requestDto.getDateEmission());
-        operationErrone.setMotif(requestDto.getMotif());
+        operationErrone.setDateEmission(requestDto.dateEmission());
+        operationErrone.setMotif(requestDto.motif());
 
         OperationErrone updated = operationErroneRepository.save(operationErrone);
         log.info("Opération erronée ID: {} mise à jour avec succès", id);
@@ -147,16 +147,16 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
 
     @Override
     @Transactional(readOnly = true)
-    public EncoursOperationErroneDto getOutstandingOperationErrone(OperationErroneSearchDto searchDto, Pageable pageable) {
-        log.info("Récupération des opérations erronées en cours - Critères: {}", searchDto);
+    public EncoursOperationErroneDto getOutstandingOperationErrone(EncoursOperationErroneSearchDto searchDto, Long banqueId, Pageable pageable) {
+        log.info("Récupération des opérations erronées en cours - banqueId={}, Critères: {}", banqueId, searchDto);
 
         LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
         Specification<OperationErrone> spec = Specification.where(OperationErroneSpec.outstandingUntil(endOfMonth))
-                .and(OperationErroneSpec.hasBanque(searchDto.getBanqueId()))
-                .and(OperationErroneSpec.hasLibelle(searchDto.getLibelle()))
-                .and(OperationErroneSpec.hasMontant(searchDto.getMontant()))
-                .and(OperationErroneSpec.hasMotif(searchDto.getMotif()));
+                .and(OperationErroneSpec.hasBanque(banqueId))
+                .and(OperationErroneSpec.hasLibelle(searchDto.libelle()))
+                .and(OperationErroneSpec.hasMontant(searchDto.montant()))
+                .and(OperationErroneSpec.hasMotif(searchDto.motif()));
 
         Page<OperationErrone> page = operationErroneRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         BigDecimal total = operationErroneRepository.findAll(spec).stream()
@@ -165,10 +165,7 @@ public class OperationErroneServiceImpl implements IOperationErroneService {
 
         log.info("Encours calculé: {}, Nombre d'opérations erronées: {}", total, page.getTotalElements());
 
-        EncoursOperationErroneDto result = new EncoursOperationErroneDto();
-        result.setPage(page.map(operationErroneMapper::toResponseDto));
-        result.setTotalDesEncours(total);
-        return result;
+        return new EncoursOperationErroneDto(total, page.map(operationErroneMapper::toResponseDto));
     }
 
     @Override

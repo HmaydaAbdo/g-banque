@@ -3,14 +3,12 @@ package staport.finance.gBanque.impayees.specs;
 import org.springframework.data.jpa.domain.Specification;
 import staport.finance.gBanque.impayees.dtos.ImpayeeSearchDto;
 import staport.finance.gBanque.impayees.entities.Impayee;
-import staport.finance.gBanque.impot_taxes.enums.Motif;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 
 public class ImpayeeSpecifications {
 
@@ -71,26 +69,26 @@ public class ImpayeeSpecifications {
 
     public static Specification<Impayee> buildSpecification(ImpayeeSearchDto dto) {
         return Specification
-                .where(hasBanque(dto.getBanqueId()))
-                .and(hasLibelle(dto.getLibelle()))
-                .and(hasMotif(dto.getMotif()))
-                .and(hasType(dto.getType()))
-                .and(hasStatus(dto.getStatus()));
+                .where(hasBanque(dto.banqueId()))
+                .and(hasLibelle(dto.libelle()))
+                .and(hasMotif(dto.motif()))
+                .and(hasType(dto.type()))
+                .and(hasStatus(dto.status()));
     }
 
-    public static Specification<Impayee> outstandingUntil(LocalDate until,Type type) {
+    public static Specification<Impayee> outstandingUntil(LocalDate until, Type type) {
         return (root, query, cb) -> cb.and(
                 cb.equal(root.get("status"), Status.PREVU),
-                cb.equal(root.get("type"), type) ,
+                cb.equal(root.get("type"), type),
                 cb.lessThanOrEqualTo(root.get("dateEmission"), until)
         );
     }
 
-    public static Specification<Impayee> outstandingBetween(LocalDate from, LocalDate until,Type type) {
+    public static Specification<Impayee> outstandingBetween(LocalDate from, LocalDate until, Type type) {
         return (root, query, cb) -> cb.and(
                 cb.equal(root.get("status"), Status.PREVU),
                 cb.greaterThanOrEqualTo(root.get("dateEmission"), from),
-                cb.equal(root.get("type"), type) ,
+                cb.equal(root.get("type"), type),
                 cb.lessThanOrEqualTo(root.get("dateEmission"), until)
         );
     }

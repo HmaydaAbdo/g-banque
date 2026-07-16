@@ -17,6 +17,7 @@ import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundExcept
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.prefinancement.enums.Status;
 import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
+import staport.finance.gBanque.restitution.dtos.EncoursRestitutionSearchDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionResponseDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionSearchDto;
@@ -66,7 +67,7 @@ public class RestitutionServiceImpl implements IRestitutionService {
     public RestitutionResponseDto createRestitution(RestitutionRequestDto requestDto) {
         log.info("Début de création d'une restitution avec les données suivantes: {}", requestDto);
 
-        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
+        Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
         Restitution restitution = restitutionMapper.toEntity(requestDto, banque);
         restitutionRepository.save(restitution);
@@ -111,13 +112,13 @@ public class RestitutionServiceImpl implements IRestitutionService {
         Restitution restitution = restitutionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Restitution introuvable avec l'id: " + id));
 
-        Banque banque = banqueService.findOrThrow(requestDto.getBanqueId());
+        Banque banque = banqueService.findOrThrow(requestDto.banqueId());
 
-        restitution.setLibelle(requestDto.getLibelle());
-        restitution.setObservation(requestDto.getObservation());
-        restitution.setMontant(requestDto.getMontant());
+        restitution.setLibelle(requestDto.libelle());
+        restitution.setObservation(requestDto.observation());
+        restitution.setMontant(requestDto.montant());
         restitution.setBanque(banque);
-        restitution.setDateEmission(requestDto.getDateEmission());
+        restitution.setDateEmission(requestDto.dateEmission());
 
         restitutionRepository.save(restitution);
         log.info("Restitution mise à jour avec succès: id={}", restitution.getId());
@@ -147,16 +148,16 @@ public class RestitutionServiceImpl implements IRestitutionService {
 
     @Override
     @Transactional(readOnly = true)
-    public EncoursRestitution getOutstandingRestitutions(RestitutionSearchDto searchDto, Pageable pageable) {
-        log.info("Récupération des encours de restitutions avec les critères: {}", searchDto);
+    public EncoursRestitution getOutstandingRestitutions(EncoursRestitutionSearchDto searchDto, Long banqueId, Pageable pageable) {
+        log.info("Récupération des encours de restitutions — banqueId={}, critères: {}", banqueId, searchDto);
 
         LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
         Specification<Restitution> spec = Specification.where(RestitutionSpec.outstandingUntil(endOfMonth))
-                .and(RestitutionSpec.hasBanque(searchDto.getBanqueId()))
-                .and(RestitutionSpec.hasLibelle(searchDto.getLibelle()))
-                .and(RestitutionSpec.hasMontant(searchDto.getMontant()))
-                .and(RestitutionSpec.hasStatus(searchDto.getStatus()));
+                .and(RestitutionSpec.hasBanque(banqueId))
+                .and(RestitutionSpec.hasLibelle(searchDto.libelle()))
+                .and(RestitutionSpec.hasMontant(searchDto.montant()))
+                .and(RestitutionSpec.hasStatus(searchDto.status()));
 
         Page<Restitution> restitutionPage = restitutionRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
@@ -166,14 +167,10 @@ public class RestitutionServiceImpl implements IRestitutionService {
 
         Page<RestitutionResponseDto> pageDto = restitutionPage.map(restitutionMapper::toResponseDto);
 
-        EncoursRestitution result = new EncoursRestitution();
-        result.setPage(pageDto);
-        result.setTotalDesEncours(totalDesEncours);
-
         log.info("Encours de restitutions récupérés: {} restitutions trouvées, total des encours={}",
                 pageDto.getTotalElements(), totalDesEncours);
 
-        return result;
+        return new EncoursRestitution(totalDesEncours, pageDto);
     }
 
     @Override

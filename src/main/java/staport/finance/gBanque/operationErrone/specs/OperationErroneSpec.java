@@ -8,7 +8,6 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 
 public class OperationErroneSpec {
 
@@ -59,10 +58,10 @@ public class OperationErroneSpec {
 
     public static Specification<OperationErrone> buildSpecification(OperationErroneSearchDto dto) {
         return Specification
-                .where(hasBanque(dto.getBanqueId()))
-                .and(hasLibelle(dto.getLibelle()))
-                .and(hasStatus(dto.getStatus()))
-                .and(hasMotif(dto.getMotif()));
+                .where(hasBanque(dto.banqueId()))
+                .and(hasLibelle(dto.libelle()))
+                .and(hasStatus(dto.status()))
+                .and(hasMotif(dto.motif()));
     }
 
     public static Specification<OperationErrone> outstandingUntil(LocalDate until) {

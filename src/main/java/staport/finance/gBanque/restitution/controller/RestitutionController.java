@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.restitution.dtos.EncoursRestitution;
+import staport.finance.gBanque.restitution.dtos.EncoursRestitutionSearchDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionResponseDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionSearchDto;
@@ -50,7 +51,7 @@ public class RestitutionController {
     public ResponseEntity<RestitutionResponseDto> createRestitution(@Validated @RequestBody RestitutionRequestDto requestDto) {
         log.info("Requête REST pour créer une restitution: {}", requestDto);
         RestitutionResponseDto responseDto = restitutionService.createRestitution(requestDto);
-        log.info("Restitution créée avec succès: id={}", responseDto.getId());
+        log.info("Restitution créée avec succès: id={}", responseDto.id());
         return ResponseEntity.ok(responseDto);
     }
 
@@ -109,13 +110,12 @@ public class RestitutionController {
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursRestitution> getOutstandingRestitutions(
             @PathVariable Long banqueId,
-            @ModelAttribute RestitutionSearchDto searchDto,
+            @ModelAttribute EncoursRestitutionSearchDto searchDto,
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         log.info("Requête REST pour récupérer les encours de restitutions pour la banque id={}", banqueId);
-        searchDto.setBanqueId(banqueId);
-        EncoursRestitution result = restitutionService.getOutstandingRestitutions(searchDto, pageable);
+        EncoursRestitution result = restitutionService.getOutstandingRestitutions(searchDto, banqueId, pageable);
         log.info("Encours de restitutions récupérés: {} restitutions, total des encours={}",
-                result.getPage().getTotalElements(), result.getTotalDesEncours());
+                result.page().getTotalElements(), result.totalDesEncours());
         return ResponseEntity.ok(result);
     }
 
@@ -126,7 +126,7 @@ public class RestitutionController {
     public ResponseEntity<RestitutionResponseDto> toggleStatus(@PathVariable Long id) {
         log.info("Requête REST pour basculer le statut de la restitution ID: {}", id);
         RestitutionResponseDto response = restitutionService.toggleStatus(id);
-        log.info("Statut de la restitution ID: {} basculé vers {}", id, response.getStatus());
+        log.info("Statut de la restitution ID: {} basculé vers {}", id, response.status());
         return ResponseEntity.ok(response);
     }
 }

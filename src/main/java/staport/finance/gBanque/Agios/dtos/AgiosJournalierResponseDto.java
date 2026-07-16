@@ -23,7 +23,7 @@ public record AgiosJournalierResponseDto(
         int nbRecalculs,
         /** Identifiant du marché — null pour les agios Facilité de Caisse. */
         Long marcheId,
-        /** Nom du marché — null pour les agios Facilité de Caisse. */
-        String marcheNom
+        /** Numéro du marché — null pour les agios Facilité de Caisse. */
+        String marcheNumero
 
 ) {}

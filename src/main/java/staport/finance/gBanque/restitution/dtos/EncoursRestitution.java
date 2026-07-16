@@ -4,32 +4,13 @@ import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 
-public class EncoursRestitution {
+/**
+ * Réponse agrégée : page de résultats + total des encours.
+ */
+public record EncoursRestitution(
 
-    private BigDecimal totalDesEncours;
-    private Page<RestitutionResponseDto> page;
+        BigDecimal totalDesEncours,
 
-    public BigDecimal getTotalDesEncours() {
-        return totalDesEncours;
-    }
+        Page<RestitutionResponseDto> page
 
-    public void setTotalDesEncours(BigDecimal totalDesEncours) {
-        this.totalDesEncours = totalDesEncours;
-    }
-
-    public Page<RestitutionResponseDto> getPage() {
-        return page;
-    }
-
-    public void setPage(Page<RestitutionResponseDto> page) {
-        this.page = page;
-    }
-
-    @Override
-    public String toString() {
-        return "EncoursRestitution{" +
-                "totalDesEncours=" + totalDesEncours +
-                ", page=" + page +
-                '}';
-    }
-}
+) {}
