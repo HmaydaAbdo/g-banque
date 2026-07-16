@@ -177,8 +177,8 @@
             Date <p-sortIcon field="dateValeur"></p-sortIcon>
           </th>
           @if (isMultiMarche) {
-            <th pSortableColumn="marcheNom" style="min-width:150px">
-              Marché <p-sortIcon field="marcheNom"></p-sortIcon>
+            <th pSortableColumn="marcheNumero" style="min-width:150px">
+              Marché <p-sortIcon field="marcheNumero"></p-sortIcon>
             </th>
           }
           <th pSortableColumn="soldeJournalier" class="text-right" style="min-width:120px">
@@ -206,7 +206,7 @@
           <!-- Colonne Marché — visible uniquement pour PREFI -->
           @if (isMultiMarche) {
             <td class="text-700 text-sm font-medium">
-              {{ jour.marcheNom || '—' }}
+              {{ jour.marcheNumero || '—' }}
             </td>
           }
 
