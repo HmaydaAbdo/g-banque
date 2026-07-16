@@ -25,7 +25,7 @@ import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
-import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpec;
+import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpecification;
 import staport.finance.gBanque.impayees.entities.Impayee;
 import staport.finance.gBanque.impayees.repository.ImpayeeRepository;
 import staport.finance.gBanque.impayees.specs.ImpayeeSpecifications;
@@ -247,8 +247,8 @@ public class RecapGeneralDetailleService {
 
         encoursMoins = encoursMoins.add(sum(
                 fraisBancaireRepository.findAll(
-                        FraisBancaireSpec.outstandingUntil(today)
-                                .and(FraisBancaireSpec.hasBanque(banqueId))),
+                        FraisBancaireSpecification.outstandingUntil(today)
+                                .and(FraisBancaireSpecification.hasBanque(banqueId))),
                 FraisBancaire::getMontant));
 
         encoursMoins = encoursMoins.add(sum(
@@ -434,8 +434,8 @@ public class RecapGeneralDetailleService {
 
         categories.add(categorie("Frais Bancaires", sum(
                 fraisBancaireRepository.findAll(
-                        FraisBancaireSpec.outstandingBetween(from, until)
-                                .and(FraisBancaireSpec.hasBanque(banqueId))),
+                        FraisBancaireSpecification.outstandingBetween(from, until)
+                                .and(FraisBancaireSpecification.hasBanque(banqueId))),
                 FraisBancaire::getMontant)));
 
         categories.add(categorie("Impôts & Taxes", sum(

@@ -9,17 +9,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.leasing.batch.dto.ProcessedContratLeasing;
 import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
-import staport.finance.gBanque.notification.service.NotificationService;
+import staport.finance.gBanque.notification.service.INotificationService;
 
 @Component
 public class ContratLeasingMainLeveeWriter implements ItemWriter<ProcessedContratLeasing> {
 
     private static final Logger log = LoggerFactory.getLogger(ContratLeasingMainLeveeWriter.class);
 
-    private final NotificationService notificationService;
+    private final INotificationService notificationService;
 
     @Autowired
-    public ContratLeasingMainLeveeWriter(NotificationService notificationService) {
+    public ContratLeasingMainLeveeWriter(INotificationService notificationService) {
         this.notificationService = notificationService;
         log.info("ContratLeasingMainLeveeWriter initialized with NotificationService.");
     }

@@ -6,15 +6,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.commision.dtos.CommissionConfigRequestDTO;
 import staport.finance.gBanque.commision.dtos.CommissionConfigResponseDTO;
+import staport.finance.gBanque.commision.dtos.CommissionConfigSearchCriteria;
 import staport.finance.gBanque.commision.service.ICommissionConfigService;
-
-import java.util.List;
 
 /**
  * Endpoints d'administration des règles de commission.
@@ -35,11 +37,14 @@ public class CommissionConfigController {
         this.commissionConfigService = commissionConfigService;
     }
 
-    @Operation(summary = "Lister les règles de commission")
+    @Operation(summary = "Lister les règles de commission (paginé, triable, filtrable)")
     @GetMapping
-    public ResponseEntity<List<CommissionConfigResponseDTO>> findAll() {
-        log.info("GET /commission-config");
-        return ResponseEntity.ok(commissionConfigService.findAll());
+    public ResponseEntity<Page<CommissionConfigResponseDTO>> findAll(
+            @ModelAttribute CommissionConfigSearchCriteria criteria,
+            @PageableDefault(size = 20, sort = "banque.nom") Pageable pageable) {
+        log.info("GET /commission-config — page={}, size={}, sort={}, criteria={}",
+                pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort(), criteria);
+        return ResponseEntity.ok(commissionConfigService.findAll(criteria, pageable));
     }
 
     @Operation(summary = "Créer une règle de commission")

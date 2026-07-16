@@ -1,106 +1,99 @@
 package staport.finance.gBanque.notification.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.notification.dtos.NotificationResponse;
 import staport.finance.gBanque.notification.dtos.NotificationTriggerRequest;
-import staport.finance.gBanque.notification.service.NotificationService;
+import staport.finance.gBanque.notification.service.INotificationService;
 import staport.finance.gBanque.user.entities.User;
 import staport.finance.gBanque.user.services.UserService;
 
-
-
+/**
+ * Injecte {@link INotificationService} (DIP — jamais la classe concrète).
+ *
+ * <p>Autorisations (cf. {@code docs/rbac/notifications.md}) : le déclenchement manuel d'une
+ * notification publique est réservé {@code SYSTEM_ADMIN} (action d'administration) ; la
+ * consultation et le marquage comme lue de ses propres notifications sont ouverts à tout
+ * utilisateur authentifié (donnée personnelle, pas une donnée financière Finance).
+ */
+@Tag(name = "Notifications", description = "Notifications applicatives publiques")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/notification")
 public class NotificationController {
 
-    private final NotificationService notificationService;
+    private static final String AUTHENTICATED = "isAuthenticated()";
+    private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
+
+    private static final Logger log = LoggerFactory.getLogger(NotificationController.class);
+
+    private final INotificationService notificationService;
     private final UserService userService;
 
-    public NotificationController(NotificationService notificationService, UserService userService) {
+    public NotificationController(INotificationService notificationService, UserService userService) {
         this.notificationService = notificationService;
         this.userService = userService;
     }
 
-    // --- Public Notification Trigger ---
-
+    @Operation(summary = "Déclencher une notification publique", description = "Réservé SYSTEM_ADMIN.")
     @PostMapping("/public")
+    @PreAuthorize(SYSTEM_ADMIN)
     public ResponseEntity<String> triggerPublicNotification(@Valid @RequestBody NotificationTriggerRequest request) {
-        notificationService.sendPublicNotification(request.getTitle(), request.getContent(), request.getType());
-        return ResponseEntity.ok("Public " + request.getType().name().toLowerCase() + " notification sent and persisted by System: " + request.getTitle());
+        notificationService.sendPublicNotification(request.title(), request.content(), request.type());
+        return ResponseEntity.ok("Public " + request.type().name().toLowerCase() + " notification sent and persisted by System: " + request.title());
     }
 
-    // --- Status-Dependent Endpoints (Modified to Pass User) ---
-
-    /**
-     * REST endpoint to retrieve historical public notifications (ALL status).
-     * Status is calculated for the current authenticated user.
-     */
+    @Operation(summary = "Historique de mes notifications (tous statuts)")
     @GetMapping("/history")
-    public ResponseEntity<Page<NotificationResponse>> getPublicNotificationHistory(@PageableDefault(sort = "timestamp", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-
+    @PreAuthorize(AUTHENTICATED)
+    public ResponseEntity<Page<NotificationResponse>> getPublicNotificationHistory(@PageableDefault(sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable) {
         User currentUser = userService.getCurrentUser();
-        // Pass the user and null (for all statuses) to the service
         Page<NotificationResponse> history = notificationService.getPaginatedNotifications(currentUser, null, pageable);
         return ResponseEntity.ok(history);
     }
 
-    /**
-     * REST endpoint to retrieve historical UNREAD public notifications.
-     * Filtered for the current authenticated user.
-     */
+    @Operation(summary = "Mes notifications non lues")
     @GetMapping("/unread")
-    public ResponseEntity<Page<NotificationResponse>> getUnreadNotifications(@PageableDefault(sort = "timestamp", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-
-        // Retrieve the authenticated user
+    @PreAuthorize(AUTHENTICATED)
+    public ResponseEntity<Page<NotificationResponse>> getUnreadNotifications(@PageableDefault(sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable) {
         User currentUser = userService.getCurrentUser();
-        // Pass the user and 'false' (for unread) to the service
         Page<NotificationResponse> unreadNotifications = notificationService.getPaginatedNotifications(currentUser, false, pageable);
         return ResponseEntity.ok(unreadNotifications);
-
     }
 
-    /**
-     * REST endpoint to retrieve historical READ public notifications.
-     * Filtered for the current authenticated user.
-     */
+    @Operation(summary = "Mes notifications lues")
     @GetMapping("/read")
-    public ResponseEntity<Page<NotificationResponse>> getReadNotifications(@PageableDefault(sort = "timestamp", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
-
-            // Retrieve the authenticated user
-            User currentUser = userService.getCurrentUser();
-            // Pass the user and 'true' (for read) to the service
-            Page<NotificationResponse> readNotifications = notificationService.getPaginatedNotifications(currentUser, true, pageable);
-            return ResponseEntity.ok(readNotifications);
-
+    @PreAuthorize(AUTHENTICATED)
+    public ResponseEntity<Page<NotificationResponse>> getReadNotifications(@PageableDefault(sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable) {
+        User currentUser = userService.getCurrentUser();
+        Page<NotificationResponse> readNotifications = notificationService.getPaginatedNotifications(currentUser, true, pageable);
+        return ResponseEntity.ok(readNotifications);
     }
 
-
-    /**
-     * REST endpoint to mark a specific notification as read for the current user.
-     */
+    @Operation(summary = "Marquer une notification comme lue")
     @PutMapping("/{id}/mark-as-read")
+    @PreAuthorize(AUTHENTICATED)
     public ResponseEntity<String> markNotificationAsRead(@PathVariable Long id) {
-        try {
-            // Retrieve the authenticated user
-            User currentUser = userService.getCurrentUser();
+        User currentUser = userService.getCurrentUser();
+        boolean updated = notificationService.markNotificationAsRead(id, currentUser);
 
-            // Pass the notification ID and the current user to the service
-            boolean updated = notificationService.markNotificationAsRead(id, currentUser);
-
-            if (updated) {
-                return ResponseEntity.ok("Notification with ID " + id + " marked as read for User " + currentUser.getId() + ".");
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Notification with ID " + id + " not found.");
-            }
-        } catch (Exception e) {
-            System.err.println("Error marking notification as read for ID " + id + ": " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking notification as read: " + e.getMessage());
+        if (!updated) {
+            log.warn("Notification introuvable — id: {}", id);
+            throw new ResourceNotFoundException("Notification introuvable avec l'ID: " + id);
         }
+        return ResponseEntity.ok("Notification with ID " + id + " marked as read for User " + currentUser.getId() + ".");
     }
 }

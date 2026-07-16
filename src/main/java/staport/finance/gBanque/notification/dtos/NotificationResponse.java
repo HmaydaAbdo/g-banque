@@ -5,37 +5,27 @@ import staport.finance.gBanque.notification.entities.NotificationType;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class NotificationResponse {
-    private Long id;
-    private String title;
-    private String content;
-    private NotificationType type;
-    private String timestamp;
-    private boolean readStatus;
+/**
+ * DTO de réponse pour une notification, avec son statut lu/non-lu propre à l'utilisateur courant.
+ *
+ * <p>{@code timestamp} est déjà formaté en chaîne ({@code yyyy-MM-dd HH:mm:ss}) — comportement
+ * d'origine conservé (constructeur additionnel prenant un {@link OffsetDateTime} brut, comme avant
+ * la conversion en record).
+ */
+public record NotificationResponse(
 
-    public NotificationResponse() {
+        Long id,
+        String title,
+        String content,
+        NotificationType type,
+        String timestamp,
+        boolean readStatus
+
+) {
+    public NotificationResponse(Long id, String title, String content, NotificationType type,
+                                 OffsetDateTime rawTimestamp, boolean readStatus) {
+        this(id, title, content, type,
+                rawTimestamp != null ? rawTimestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : null,
+                readStatus);
     }
-
-    public NotificationResponse(Long id, String title, String content, NotificationType type, OffsetDateTime timestamp, boolean readStatus) {
-        this.id = id;
-        this.title = title;
-        this.content = content;
-        this.type = type;
-        this.timestamp = timestamp != null ? timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : null;
-        this.readStatus = readStatus;
-    }
-
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
-    public NotificationType getType() { return type; }
-    public void setType(NotificationType type) { this.type = type; }
-    public String getTimestamp() { return timestamp; }
-    public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
-    public boolean isReadStatus() { return readStatus; }
-    public void setReadStatus(boolean readStatus) { this.readStatus = readStatus; }
 }

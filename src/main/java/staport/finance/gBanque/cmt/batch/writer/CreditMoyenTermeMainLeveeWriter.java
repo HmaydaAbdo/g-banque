@@ -9,17 +9,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.cmt.batch.dto.ProcessedCreditMoyenTerme;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
-import staport.finance.gBanque.notification.service.NotificationService;
+import staport.finance.gBanque.notification.service.INotificationService;
 
 @Component
 public class CreditMoyenTermeMainLeveeWriter implements ItemWriter<ProcessedCreditMoyenTerme> {
 
     private static final Logger log = LoggerFactory.getLogger(CreditMoyenTermeMainLeveeWriter.class);
 
-    private final NotificationService notificationService;
+    private final INotificationService notificationService;
 
     @Autowired
-    public CreditMoyenTermeMainLeveeWriter(NotificationService notificationService) {
+    public CreditMoyenTermeMainLeveeWriter(INotificationService notificationService) {
         this.notificationService = notificationService;
         log.info("Initialisation de CreditMoyenTermeMainLeveeWriter avec NotificationService");
     }

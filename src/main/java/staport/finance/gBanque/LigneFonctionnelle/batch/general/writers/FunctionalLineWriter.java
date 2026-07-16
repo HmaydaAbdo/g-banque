@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.batch.general.dtos.ProcessedFunctionalLine;
-import staport.finance.gBanque.notification.service.NotificationService;
+import staport.finance.gBanque.notification.service.INotificationService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,7 +31,7 @@ public class FunctionalLineWriter implements ItemWriter<ProcessedFunctionalLine>
 
     private static final Logger log = LoggerFactory.getLogger(FunctionalLineWriter.class);
 
-    private final NotificationService notificationService;
+    private final INotificationService notificationService;
     private final LigneFonctionnelleRepository ligneFonctionnelleRepository;
 
     /**
@@ -42,7 +42,7 @@ public class FunctionalLineWriter implements ItemWriter<ProcessedFunctionalLine>
      */
     @Autowired
     public FunctionalLineWriter(
-            NotificationService notificationService,
+            INotificationService notificationService,
             LigneFonctionnelleRepository ligneFonctionnelleRepository) {
         this.notificationService = notificationService;
         this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;

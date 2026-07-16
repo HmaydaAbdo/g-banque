@@ -37,7 +37,7 @@ import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.fraisBancaires.entities.FraisBancaire;
 import staport.finance.gBanque.fraisBancaires.repositories.FraisBancaireRepository;
-import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpec;
+import staport.finance.gBanque.fraisBancaires.spec.FraisBancaireSpecification;
 import staport.finance.gBanque.moyensDePaiements.lcn.entities.Lcn;
 import staport.finance.gBanque.moyensDePaiements.lcn.repositories.LcnRepository;
 import staport.finance.gBanque.moyensDePaiements.lcn.specs.LcnSpecification;
@@ -400,8 +400,8 @@ public class RecapitulatifService {
                 .and(PrelevementSpec.hasBanque(banqueId));
 
         // frais bancaire
-        Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingUntil(endOfMonth)
-                .and(FraisBancaireSpec.hasBanque(banqueId));
+        Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpecification.outstandingUntil(endOfMonth)
+                .and(FraisBancaireSpecification.hasBanque(banqueId));
 
         //impots et taxes
         Specification<ImpotEtTaxe> impotEtTaxeSpecification= ImpotEtTaxeSpecifications.outstandingUntil(endOfMonth)
@@ -556,8 +556,8 @@ public class RecapitulatifService {
 
 
         // frais bancaire
-        Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpec.outstandingUntil(endOfMonth)
-                .and(FraisBancaireSpec.hasBanque(banque.id()));
+        Specification<FraisBancaire> fraisBancaireSpecification= FraisBancaireSpecification.outstandingUntil(endOfMonth)
+                .and(FraisBancaireSpecification.hasBanque(banque.id()));
 
         //impot et taxes
         Specification<ImpotEtTaxe> impotEtTaxeSpecification=ImpotEtTaxeSpecifications.outstandingUntil(endOfMonth)

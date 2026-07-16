@@ -1,6 +1,7 @@
 package staport.finance.gBanque.fraisBancaires.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.prefinancement.enums.Status;
 
@@ -8,6 +9,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Frais bancaire (charge fixe ou ponctuelle) rattaché à une banque.
+ *
+ * <p>Relation auditée : {@code banque} (déjà {@code @Audited}) — aucune annotation
+ * {@code @NotAudited} nécessaire.
+ */
+@Audited
 @Entity
 public class FraisBancaire {
 

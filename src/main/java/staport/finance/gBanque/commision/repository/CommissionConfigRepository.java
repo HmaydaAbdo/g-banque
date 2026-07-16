@@ -1,6 +1,7 @@
 package staport.finance.gBanque.commision.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import staport.finance.gBanque.commision.entities.CommissionConfig;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -8,7 +9,8 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 import java.util.List;
 
 @Repository
-public interface CommissionConfigRepository extends JpaRepository<CommissionConfig, Long> {
+public interface CommissionConfigRepository extends JpaRepository<CommissionConfig, Long>,
+        JpaSpecificationExecutor<CommissionConfig> {
 
     /**
      * Récupère toutes les règles pour une banque (par nom) et un type de transaction donnés.

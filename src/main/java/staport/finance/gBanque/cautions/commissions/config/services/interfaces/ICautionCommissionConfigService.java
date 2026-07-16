@@ -1,9 +1,10 @@
 package staport.finance.gBanque.cautions.commissions.config.services.interfaces;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import staport.finance.gBanque.cautions.commissions.config.dtos.request.CautionCommissionConfigRequestDTO;
+import staport.finance.gBanque.cautions.commissions.config.dtos.request.CautionCommissionConfigSearchCriteria;
 import staport.finance.gBanque.cautions.commissions.config.dtos.response.CautionCommissionConfigResponseDTO;
-
-import java.util.List;
 
 /**
  * Contrat de service pour les paramètres de commission caution (seuil minimum, diviseur),
@@ -15,7 +16,7 @@ import java.util.List;
  */
 public interface ICautionCommissionConfigService {
 
-    List<CautionCommissionConfigResponseDTO> findAll();
+    Page<CautionCommissionConfigResponseDTO> findAll(CautionCommissionConfigSearchCriteria criteria, Pageable pageable);
 
     CautionCommissionConfigResponseDTO create(CautionCommissionConfigRequestDTO dto);
 

@@ -14,21 +14,21 @@ public class LogSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (criteria.getUserName() != null && !criteria.getUserName().isEmpty()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("userName")), "%" + criteria.getUserName().toLowerCase() + "%"));
+            if (criteria.userName() != null && !criteria.userName().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("userName")), "%" + criteria.userName().toLowerCase() + "%"));
             }
-            if (criteria.getOperationType() != null && !criteria.getOperationType().isEmpty()) {
-                predicates.add(criteriaBuilder.equal(root.get("operationType"), criteria.getOperationType()));
+            if (criteria.operationType() != null && !criteria.operationType().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("operationType"), criteria.operationType()));
             }
-            if (criteria.getEntityName() != null && !criteria.getEntityName().isEmpty()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("entityName")), "%" + criteria.getEntityName().toLowerCase() + "%"));
+            if (criteria.entityName() != null && !criteria.entityName().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("entityName")), "%" + criteria.entityName().toLowerCase() + "%"));
             }
 
-            if (criteria.getTimestampStart() != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("timestamp"), criteria.getTimestampStart()));
+            if (criteria.timestampStart() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("timestamp"), criteria.timestampStart()));
             }
-            if (criteria.getTimestampEnd() != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("timestamp"), criteria.getTimestampEnd()));
+            if (criteria.timestampEnd() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("timestamp"), criteria.timestampEnd()));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

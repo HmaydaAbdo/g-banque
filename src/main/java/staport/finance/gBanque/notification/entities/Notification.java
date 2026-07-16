@@ -1,10 +1,19 @@
 package staport.finance.gBanque.notification.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Notification publique diffusée à tous les utilisateurs.
+ *
+ * <p>{@code UserNotificationStatus} (statut lu/non-lu propre à chaque utilisateur) n'est
+ * volontairement pas audité — mirroring {@code AgiosJournalier} : donnée de confort de lecture,
+ * pas une donnée métier sensible au sens de {@code conventions/Audit.md}.
+ */
+@Audited
 @Entity
 @Table(name = "notifications")
 public class Notification {

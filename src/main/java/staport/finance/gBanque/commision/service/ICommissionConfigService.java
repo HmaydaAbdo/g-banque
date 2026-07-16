@@ -1,11 +1,13 @@
 package staport.finance.gBanque.commision.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import staport.finance.gBanque.commision.dtos.CommissionConfigRequestDTO;
 import staport.finance.gBanque.commision.dtos.CommissionConfigResponseDTO;
+import staport.finance.gBanque.commision.dtos.CommissionConfigSearchCriteria;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -41,7 +43,7 @@ public interface ICommissionConfigService {
 
     // ── CRUD admin ────────────────────────────────────────────────────────────
 
-    List<CommissionConfigResponseDTO> findAll();
+    Page<CommissionConfigResponseDTO> findAll(CommissionConfigSearchCriteria criteria, Pageable pageable);
 
     CommissionConfigResponseDTO create(CommissionConfigRequestDTO dto);
 

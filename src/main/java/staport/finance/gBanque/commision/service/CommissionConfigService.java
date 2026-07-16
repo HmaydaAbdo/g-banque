@@ -2,16 +2,20 @@ package staport.finance.gBanque.commision.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.commision.dtos.CommissionConfigRequestDTO;
 import staport.finance.gBanque.commision.dtos.CommissionConfigResponseDTO;
+import staport.finance.gBanque.commision.dtos.CommissionConfigSearchCriteria;
 import staport.finance.gBanque.commision.entities.CommissionConfig;
 import staport.finance.gBanque.commision.enums.CommissionCondition;
 import staport.finance.gBanque.commision.mapper.CommissionConfigMapper;
 import staport.finance.gBanque.commision.repository.CommissionConfigRepository;
+import staport.finance.gBanque.commision.specifications.CommissionConfigSpecification;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 
@@ -107,10 +111,9 @@ public class CommissionConfigService implements ICommissionConfigService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CommissionConfigResponseDTO> findAll() {
-        return repository.findAll().stream()
-                .map(mapper::toResponseDTO)
-                .toList();
+    public Page<CommissionConfigResponseDTO> findAll(CommissionConfigSearchCriteria criteria, Pageable pageable) {
+        return repository.findAll(CommissionConfigSpecification.searchByCriteria(criteria), pageable)
+                .map(mapper::toResponseDTO);
     }
 
     @Override

@@ -1,34 +1,16 @@
 package staport.finance.gBanque.fraisBancaires.dtos;
 
 import org.springframework.data.domain.Page;
+
 import java.math.BigDecimal;
 
-public class EncoursFraisBancaireDto {
+/**
+ * Réponse agrégée : page de résultats + total des encours.
+ */
+public record EncoursFraisBancaireDto(
 
-    private BigDecimal totalDesEncours;
-    private Page<FraisBancaireResposneDto> page;
+        BigDecimal totalDesEncours,
 
-    public BigDecimal getTotalDesEncours() {
-        return totalDesEncours;
-    }
+        Page<FraisBancaireResponseDto> page
 
-    public void setTotalDesEncours(BigDecimal totalDesEncours) {
-        this.totalDesEncours = totalDesEncours;
-    }
-
-    public Page<FraisBancaireResposneDto> getPage() {
-        return page;
-    }
-
-    public void setPage(Page<FraisBancaireResposneDto> page) {
-        this.page = page;
-    }
-
-    @Override
-    public String toString() {
-        return "EncoursFraisBancaireDto{" +
-                "totalDesEncours=" + totalDesEncours +
-                ", page=" + page +
-                '}';
-    }
-}
+) {}

@@ -2,21 +2,23 @@ package staport.finance.gBanque.cautions.commissions.config.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.cautions.commissions.config.dtos.request.CautionCommissionConfigRequestDTO;
+import staport.finance.gBanque.cautions.commissions.config.dtos.request.CautionCommissionConfigSearchCriteria;
 import staport.finance.gBanque.cautions.commissions.config.dtos.response.CautionCommissionConfigResponseDTO;
 import staport.finance.gBanque.cautions.commissions.config.entities.CautionCommissionConfig;
 import staport.finance.gBanque.cautions.commissions.config.mappers.CautionCommissionConfigMapper;
 import staport.finance.gBanque.cautions.commissions.config.repositories.CautionCommissionConfigRepository;
 import staport.finance.gBanque.cautions.commissions.config.services.interfaces.ICautionCommissionConfigService;
+import staport.finance.gBanque.cautions.commissions.config.specifications.CautionCommissionConfigSpecification;
 import staport.finance.gBanque.cautions.exceptions.CautionBusinessException;
 import staport.finance.gBanque.exception.customExceptions.DuplicateEntryException;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-
-import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -37,10 +39,9 @@ public class CautionCommissionConfigServiceImpl implements ICautionCommissionCon
     }
 
     @Override
-    public List<CautionCommissionConfigResponseDTO> findAll() {
-        return repository.findAll().stream()
-                .map(mapper::toResponseDTO)
-                .toList();
+    public Page<CautionCommissionConfigResponseDTO> findAll(CautionCommissionConfigSearchCriteria criteria, Pageable pageable) {
+        return repository.findAll(CautionCommissionConfigSpecification.searchByCriteria(criteria), pageable)
+                .map(mapper::toResponseDTO);
     }
 
     @Override

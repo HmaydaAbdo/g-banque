@@ -7,10 +7,8 @@ import staport.finance.gBanque.prefinancement.enums.Status;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 
-public class FraisBancaireSpec {
-
+public class FraisBancaireSpecification {
 
     public static Specification<FraisBancaire> hasBanque(Long banqueId) {
         return (root, query, cb) -> {
@@ -30,8 +28,7 @@ public class FraisBancaireSpec {
         };
     }
 
-
-    public static Specification<FraisBancaire> hasStatus(Enum<?> status) {
+    public static Specification<FraisBancaire> hasStatus(Status status) {
         return (root, query, cb) -> {
             if (status == null) {
                 return null;
@@ -49,14 +46,12 @@ public class FraisBancaireSpec {
         };
     }
 
-
-    public static Specification<FraisBancaire> buildSpecification(FraisBancaireSearchDto dto) {
+    public static Specification<FraisBancaire> searchByCriteria(FraisBancaireSearchDto dto) {
         return Specification
-                .where(hasBanque(dto.getBanqueId()))
-                .and(hasLibelle(dto.getLibelle()))
-                .and(hasStatus(dto.getStatus()));
+                .where(hasBanque(dto.banqueId()))
+                .and(hasLibelle(dto.libelle()))
+                .and(hasStatus(dto.status()));
     }
-
 
     public static Specification<FraisBancaire> outstandingUntil(LocalDate until) {
         return (root, query, cb) -> cb.and(
@@ -72,6 +67,4 @@ public class FraisBancaireSpec {
                 cb.lessThanOrEqualTo(root.get("dateEmission"), until)
         );
     }
-
-
 }

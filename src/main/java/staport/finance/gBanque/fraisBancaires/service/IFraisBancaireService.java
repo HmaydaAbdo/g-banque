@@ -1,20 +1,43 @@
 package staport.finance.gBanque.fraisBancaires.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import staport.finance.gBanque.fraisBancaires.dtos.EncoursFraisBancaireDto;
+import staport.finance.gBanque.fraisBancaires.dtos.EncoursFraisBancaireSearchDto;
 import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireRequestDto;
-import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireResposneDto;
+import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireResponseDto;
+import staport.finance.gBanque.fraisBancaires.dtos.FraisBancaireSearchDto;
 
 import java.time.LocalDate;
 
 /**
- * Façade minimale du module Frais bancaires exposée aux modules étrangers.
+ * Contrat de service pour le module Frais bancaires.
  *
- * <p>Périmètre volontairement réduit à ce qu'exploite {@code ChargesFixesScheduler}
- * (architecture.md, "Encapsulation des domaines") — un sweep complet du module Frais bancaires
- * exposerait une interface plus large le cas échéant.
+ * <p>Le contrôleur, et tout autre module consommateur ({@code ChargesFixesScheduler}), injectent
+ * uniquement cette interface (DIP). La classe concrète {@link FraisBancaireServiceImpl} n'est
+ * jamais référencée depuis l'extérieur du module — voir {@code architecture.md}, "Encapsulation
+ * des domaines".
+ *
+ * <p>Interface élargie lors du sweep de conformité (couvrait auparavant seulement
+ * {@code createFraisBancaire}/{@code existsChargeFixeGeneree}, le strict nécessaire pour
+ * {@code ChargesFixesScheduler}) au contrat complet du contrôleur, mirroring
+ * {@code IImpayeeService}/{@code IImpotEtTaxeService}.
  */
 public interface IFraisBancaireService {
 
-    FraisBancaireResposneDto createFraisBancaire(FraisBancaireRequestDto requestDto);
+    FraisBancaireResponseDto createFraisBancaire(FraisBancaireRequestDto requestDto);
+
+    FraisBancaireResponseDto getById(Long id);
+
+    Page<FraisBancaireResponseDto> searchFraisBancaire(FraisBancaireSearchDto searchDto, Pageable pageable);
+
+    FraisBancaireResponseDto updateFraisBancaire(Long id, FraisBancaireRequestDto requestDto);
+
+    void deleteFraisBancaire(Long id);
+
+    EncoursFraisBancaireDto getOutstandingFraisBancaire(EncoursFraisBancaireSearchDto searchDto, Long banqueId, Pageable pageable);
+
+    FraisBancaireResponseDto toggleStatus(Long id);
 
     /**
      * Vérifie si un frais bancaire portant ce libellé a déjà été généré pour cette banque dans la
