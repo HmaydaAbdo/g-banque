@@ -1,19 +1,18 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, inject } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { InputTextModule } from 'primeng/inputtext';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { MenuItem, MessageService, ConfirmationService } from 'primeng/api';
+import { MenuItem } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { TagModule } from 'primeng/tag';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
-import { RouterLinkActive, Router, RouterModule } from "@angular/router";
+import { RouterLinkActive, RouterModule } from "@angular/router";
 import { Ripple } from "primeng/ripple";
 
 // DTOs & Services
@@ -29,15 +28,19 @@ import {MultiSelectModule} from "primeng/multiselect";
   standalone: true,
   imports: [
     CommonModule, RouterModule, TableModule, ButtonModule, ToastModule,
-    ToolbarModule, InputTextModule, FormsModule, ReactiveFormsModule,
+    ToolbarModule, InputTextModule, ReactiveFormsModule,
     DropdownModule, TagModule, BreadcrumbModule, RouterLinkActive,
-    ConfirmDialogModule, TooltipModule, Ripple, MultiSelectModule
+    TooltipModule, Ripple, MultiSelectModule
   ],
   templateUrl: './transaction-history.component.html',
   styleUrl: './transaction-history.component.scss',
-  providers: [MessageService, ConfirmationService, DatePipe, CurrencyPipe, DecimalPipe]
+  providers: [DatePipe, CurrencyPipe, DecimalPipe]
 })
 export class TransactionHistoryComponent implements OnInit, OnDestroy {
+
+  private readonly transactionService = inject(TransactionService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly fb = inject(FormBuilder);
 
   @ViewChild('dt') dt!: Table;
 
@@ -75,13 +78,6 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
 
   items: MenuItem[] | undefined;
   private subscriptions: Subscription[] = [];
-
-  constructor(
-    private transactionService: TransactionService,
-    private banqueService: BanqueService,
-    private fb: FormBuilder,
-    private messageService: MessageService
-  ) { }
 
   ngOnInit(): void {
     this.items = [

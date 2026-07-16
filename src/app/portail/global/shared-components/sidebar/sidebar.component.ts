@@ -188,7 +188,7 @@ export class SidebarComponent implements OnInit {
     { label: "Historique des Rapprochements", routerLink: "/portail/rapprochement/historique", icon: "pi pi-history" },
     {
       label: "Historique des transactions",
-      requiredAuthority: 'SYSTEM_ADMIN',
+      requiredAuthority: ['DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR'],
       routerLink: "/portail/historique-des-transactions",
       icon: "pi pi-history"
     },

@@ -1,4 +1,3 @@
-import {Decimal} from "decimal.js";
 import {TransactionSource} from "./TransactionSource";
 
 /**
@@ -17,13 +16,10 @@ export interface TransactionResponseDto {
   transactionSource: TransactionSource;
   debit: number;
   credit: number;
-  traces: string;
   banqueDePrelevementId: number;
   banqueDePrelevementNom: string;
   statutRapprochement: 'EN_COURS' | 'CLOTURE_PROVISOIRE' | 'CLOTURE_DEFINITIVE';
-  referent: number;
+  referent?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
-
-

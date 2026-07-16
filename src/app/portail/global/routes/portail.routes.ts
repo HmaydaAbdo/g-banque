@@ -186,7 +186,7 @@ export const PORTAIL_ROUTES: Routes = [
   },
 
 
-  { path: "historique-des-transactions", loadComponent: () => import('../../transactions/views/transaction-history/transaction-history.component').then(m => m.TransactionHistoryComponent), canActivate: [systemAdminGuard] },
+  { path: "historique-des-transactions", loadComponent: () => import('../../transactions/views/transaction-history/transaction-history.component').then(m => m.TransactionHistoryComponent), canActivate: [departmentGuard('Finance')] },
   { path: 'logs', loadComponent: () => import('../../settings/logs/views/logs/logs.component').then(m => m.LogsComponent), canActivate: [systemAdminGuard] },
 
   // ── Module Caution ───────────────────────────────────────────────────────
