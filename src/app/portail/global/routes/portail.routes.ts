@@ -37,17 +37,20 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'rapprochement',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../rapprochement/rapprochement.routes').then(m => m.RAPPROCHEMENT_ROUTES)
   },
 
   {
     path: 'comptes-bancaires',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../comptes-bancaire/comptes-bancaire-routing.module')
       .then(m => m.COMPTES_BANCAIRES_ROUTES)
   },
 
   {
     path: 'natures-fonctionnelles',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../lignes-fonctionnelles/natures-routing.module')
       .then(m => m.NATURES_ROUTES)
   },
@@ -55,19 +58,23 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'lignes-fonctionnelles-encours',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../lignes-fonctionnelles/lignes-fonctionnelles.routes').then(m => m.LIGNES_FONCTIONNELLES_ENCOURS_ROUTES)
   },
   {
     path: 'lignes-fonctionnelles-archived',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../lignes-fonctionnelles/lignes-fonctionnelles.routes').then(m => m.LIGNES_FONCTIONNELLES_ARCHIVED_ROUTES)
   },
 
   {
     path: 'lignes-fonctionnelles-specifiques-encours',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../specific-Functional-Lignes/lignes-specifiques.routes').then(m => m.LIGNES_SPECIFIQUES_ENCOURS_ROUTES)
   },
   {
     path: 'lignes-fonctionnelles-specifiques-archived',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../specific-Functional-Lignes/lignes-specifiques.routes').then(m => m.LIGNES_SPECIFIQUES_ARCHIVED_ROUTES)
   },
   { path: 'lignes-fonctionnelles-specifiques/marche/:id', canActivate: [departmentGuard('Finance')], loadComponent: () => import('../../Marches/views/specific-lines-by-marche/functionalLines-by-marche.component').then(m => m.FunctionalLinesByMarcheComponent) },
@@ -76,28 +83,34 @@ export const PORTAIL_ROUTES: Routes = [
   { path: "dc-encours/:lineId", canActivate: [departmentGuard('Finance')], loadComponent: () => import('../../droitsConstate/LignesDroitsConstate/SuivieDesLignes/views/validated-dc/validated-dc.component').then(m => m.ValidatedDcComponent) },
   { path: "lcn-encours/:lineId", canActivate: [departmentGuard('Finance')], loadComponent: () => import('../../LCN/views/lcn-escompte-by-line/lcn-escompte-by-line.component').then(m => m.LcnEscompteByLineComponent) },
   { path: 'leasing',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../leasing/route/leasing-routing.module').then(m => m.LEASING_FEATURE_ROUTES) },
 
   { path: "cmt",
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../cmt/route/cmt-routing').then(m => m.cmtRoutes) },
 
   {
     path: 'LCN',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../LCN/lcn.routes').then(m => m.LCN_ROUTES)
   },
 
   {
     path: 'Cheques',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../cheques/cheques.routes').then(m => m.CHEQUES_ROUTES)
   },
 
   {
     path: 'Virements',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../Virements/virements.routes').then(m => m.VIREMENTS_ROUTES)
   },
 
   {
     path: 'virements-internationaux',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../virementInternational/virement-international.routes').then(m => m.VIREMENT_INTERNATIONAL_ROUTES)
   },
 
@@ -109,6 +122,7 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'Mise-a-disposition',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../Mise-à-disposition/mise-a-disposition.routes').then(m => m.MISE_A_DISPOSITION_ROUTES)
   },
 
@@ -144,16 +158,19 @@ export const PORTAIL_ROUTES: Routes = [
 
   {
     path: 'etats-des-encours/:banqueId',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../etatsDesEncours/etats-des-encours.routes').then(m => m.ETATS_DES_ENCOURS_ROUTES)
   },
 
   {
     path: 'commissions',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../commission/commission.routes').then(m => m.COMMISSION_ROUTES)
   },
 
   {
     path: 'impots-taxes',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../impotEtTaxes/impot-et-taxe.routes').then(m => m.IMPOT_ET_TAXE_ROUTES)
   },
 
@@ -176,6 +193,7 @@ export const PORTAIL_ROUTES: Routes = [
   },
   {
     path: 'prelevements',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () => import('../../prelevements/prelevements.routes').then(m => m.PRELEVEMENTS_ROUTES)
   },
 
@@ -192,6 +210,7 @@ export const PORTAIL_ROUTES: Routes = [
   // ── Module Caution ───────────────────────────────────────────────────────
   {
     path: 'cautions',
+    canActivate: [departmentGuard('Finance')],
     loadChildren: () =>
       import('../../cautions/route/caution-routing').then(m => m.CAUTION_ROUTES),
   },
