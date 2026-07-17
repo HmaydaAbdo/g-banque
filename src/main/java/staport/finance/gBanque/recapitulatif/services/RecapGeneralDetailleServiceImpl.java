@@ -60,7 +60,13 @@ import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.prelevements.spec.PrelevementSpec;
-import staport.finance.gBanque.recapitulatif.dtos.*;
+import staport.finance.gBanque.recapitulatif.dtos.response.CategorieAmountDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.DecaissementSectionDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.EncaissementSectionDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecapGeneralDetailleAllBanquesDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecapGeneralDetailleDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.ResumeSectionDto;
+import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapGeneralDetailleService;
 import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.restitution.repository.RestitutionRepository;
 import staport.finance.gBanque.restitution.specs.RestitutionSpec;
@@ -75,9 +81,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Même limite de performance assumée (documentée) que {@link RecapitulatifServiceImpl} —
+ * voir sa javadoc de classe.
+ */
 @Service
 @Transactional(readOnly = true)
-public class RecapGeneralDetailleService {
+public class RecapGeneralDetailleServiceImpl implements IRecapGeneralDetailleService {
 
     private final IBanqueService banqueService;
 
@@ -102,7 +112,7 @@ public class RecapGeneralDetailleService {
     private final ImpayeeRepository impayeeRepository;
 
 
-    public RecapGeneralDetailleService(IBanqueService banqueService, EcheanceLeasingRepository echeanceLeasingRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
+    public RecapGeneralDetailleServiceImpl(IBanqueService banqueService, EcheanceLeasingRepository echeanceLeasingRepository, EcheanceCMTRepository echeanceCMTRepository, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
         this.banqueService = banqueService;
         this.echeanceLeasingRepository = echeanceLeasingRepository;
         this.echeanceCMTRepository = echeanceCMTRepository;
@@ -125,6 +135,7 @@ public class RecapGeneralDetailleService {
         this.impayeeRepository = impayeeRepository;
     }
 
+    @Override
     public RecapGeneralDetailleDto getRecapForBanque(Long banqueId) {
         LocalDate today      = LocalDate.now();
         LocalDate tomorrow   = today.plusDays(1);
@@ -136,23 +147,23 @@ public class RecapGeneralDetailleService {
         DecaissementSectionDto decaissements = buildDecaissements(banque, tomorrow, endOfMonth);
         EncaissementSectionDto encaissements = buildEncaissements(banque, tomorrow, endOfMonth);
 
-        BigDecimal soldePrevi = resume.getSoldeProjete()
-                .subtract(decaissements.getTotal())
-                .add(encaissements.getTotal());
+        BigDecimal soldePrevi = resume.soldeProjete()
+                .subtract(decaissements.total())
+                .add(encaissements.total());
 
-        RecapGeneralDetailleDto dto = new RecapGeneralDetailleDto();
-        dto.setBanqueId(banque.id());
-        dto.setBanqueNom(banque.nom());
-        dto.setDateRecap(today);
-        dto.setResume(resume);
-        dto.setDecaissements(decaissements);
-        dto.setEncaissements(encaissements);
-        dto.setSoldePrevisionnelFinMois(soldePrevi);
-
-        return dto;
+        return new RecapGeneralDetailleDto(
+                banque.id(),
+                banque.nom(),
+                today,
+                resume,
+                decaissements,
+                encaissements,
+                soldePrevi
+        );
     }
 
 
+    @Override
     public RecapGeneralDetailleAllBanquesDto getRecapAllBanques() {
         LocalDate today = LocalDate.now();
 
@@ -161,10 +172,7 @@ public class RecapGeneralDetailleService {
                 .map(this::getRecapForBanque)
                 .collect(Collectors.toList());
 
-        RecapGeneralDetailleAllBanquesDto result = new RecapGeneralDetailleAllBanquesDto();
-        result.setDateRecap(today);
-        result.setBanques(banques);
-        return result;
+        return new RecapGeneralDetailleAllBanquesDto(today, banques);
     }
 
     private ResumeSectionDto buildResume(BanqueResponse banque, LocalDate today) {
@@ -331,14 +339,7 @@ public class RecapGeneralDetailleService {
         // ── Assemblage ────────────────────────────────────────────────────────────
         BigDecimal soldeProjete = disponibilite.add(encoursPlus).subtract(encoursMoins);
 
-        ResumeSectionDto dto = new ResumeSectionDto();
-        dto.setSoldeActuel(soldeActuel);
-        dto.setPlafondLigne(plafondLigne);
-        dto.setDisponibilite(disponibilite);
-        dto.setEncoursPlus(encoursPlus);
-        dto.setEncoursMoins(encoursMoins);
-        dto.setSoldeProjete(soldeProjete);
-        return dto;
+        return new ResumeSectionDto(soldeActuel, plafondLigne, disponibilite, encoursPlus, encoursMoins, soldeProjete);
     }
 
     private DecaissementSectionDto buildDecaissements(BanqueResponse banque, LocalDate from, LocalDate until) {
@@ -458,14 +459,11 @@ public class RecapGeneralDetailleService {
 
         // Total
         BigDecimal total = categories.stream()
-                .map(CategorieAmountDto::getMontant)
+                .map(CategorieAmountDto::montant)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        DecaissementSectionDto dto = new DecaissementSectionDto();
-        dto.setCategories(categories);
-        dto.setTotal(total);
-        return dto;
+        return new DecaissementSectionDto(categories, total);
     }
     private EncaissementSectionDto buildEncaissements(BanqueResponse banque, LocalDate from, LocalDate until) {
         Long banqueId = banque.id();
@@ -546,20 +544,15 @@ public class RecapGeneralDetailleService {
 
         // Total
         BigDecimal total = categories.stream()
-                .map(CategorieAmountDto::getMontant)
+                .map(CategorieAmountDto::montant)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        EncaissementSectionDto dto = new EncaissementSectionDto();
-        dto.setCategories(categories);
-        dto.setTotal(total);
-        return dto;
+        return new EncaissementSectionDto(categories, total);
     }
+
     private CategorieAmountDto categorie(String nom, BigDecimal montant) {
-        CategorieAmountDto dto = new CategorieAmountDto();
-        dto.setCategorie(nom);
-        dto.setMontant(montant);
-        return dto;
+        return new CategorieAmountDto(nom, montant);
     }
 
     private <T> BigDecimal sum(List<T> items, Function<T, BigDecimal> extractor) {

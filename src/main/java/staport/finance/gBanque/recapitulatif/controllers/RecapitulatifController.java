@@ -2,6 +2,11 @@ package staport.finance.gBanque.recapitulatif.controllers;
 
 
 import com.lowagie.text.DocumentException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -9,11 +14,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import staport.finance.gBanque.recapitulatif.dtos.AgregatedRecapDto;
-import staport.finance.gBanque.recapitulatif.dtos.DecaissementSearchDto;
-import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifGlobal;
-import staport.finance.gBanque.recapitulatif.services.RecapitulatifService;
+import staport.finance.gBanque.recapitulatif.dtos.request.DecaissementSearchDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
+import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifService;
 import staport.finance.gBanque.reports.service.StaportPdfReportService;
 
 import java.time.LocalDate;
@@ -25,14 +31,20 @@ import java.util.List;
  * Exposes a paginated and sortable endpoint to retrieve a consolidated view
  * of all expected payments for the current month.
  */
+@Tag(name = "Récapitulatif", description = "Vue consolidée des décaissements/encaissements prévisionnels du mois par banque")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/recapitulatif")
+@PreAuthorize(RecapitulatifController.FINANCE_OR_ADMIN)
 public class RecapitulatifController {
 
-    private final RecapitulatifService recapitulatifService;
+    static final String FINANCE_OR_ADMIN =
+            "hasAnyAuthority('DEPT_Finance:MEMBER', 'DEPT_Finance:DIRECTOR', 'SYSTEM_ADMIN')";
+
+    private final IRecapitulatifService recapitulatifService;
     private final StaportPdfReportService staportPdfReportService;
 
-    public RecapitulatifController(RecapitulatifService recapitulatifService, StaportPdfReportService staportPdfReportService) {
+    public RecapitulatifController(IRecapitulatifService recapitulatifService, StaportPdfReportService staportPdfReportService) {
         this.recapitulatifService = recapitulatifService;
         this.staportPdfReportService = staportPdfReportService;
     }
@@ -44,14 +56,14 @@ public class RecapitulatifController {
      * @param pageable Pagination and sorting information.
      * @return A paginated list of disbursement items.
      */
+    @Operation(summary = "Décaissements prévisionnels du mois")
     @GetMapping("/decaissement/banque/{banqueId}")
     public ResponseEntity<AgregatedRecapDto> getRecapitulatifDecaissement(
             @PageableDefault(sort = "dateEmission", direction = Sort.Direction.ASC) Pageable pageable,
-            @PathVariable Long banqueId,@ModelAttribute DecaissementSearchDto searchDto) {
+            @PathVariable Long banqueId, @ModelAttribute DecaissementSearchDto searchDto) {
 
-        searchDto.setBanqueId(banqueId);
         AgregatedRecapDto res =
-                recapitulatifService.getRecapitulatifDecaissementForCurrentMonthForGivenBanque(pageable,searchDto);
+                recapitulatifService.getRecapitulatifDecaissementForCurrentMonthForGivenBanque(pageable, searchDto, banqueId);
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
@@ -63,18 +75,20 @@ public class RecapitulatifController {
      * @param pageable Pagination and sorting information.
      * @return A paginated list of disbursement items.
      */
+    @Operation(summary = "Encaissements prévisionnels du mois")
     @GetMapping("/encaissement/banque/{banqueId}")
     public ResponseEntity<AgregatedRecapDto> getRecapitulatifEncaissement(
             @PageableDefault(sort = "dateEmission", direction = Sort.Direction.ASC) Pageable pageable,
-            @PathVariable Long banqueId,@ModelAttribute DecaissementSearchDto searchDto) {
+            @PathVariable Long banqueId, @ModelAttribute DecaissementSearchDto searchDto) {
 
-        searchDto.setBanqueId(banqueId);
-        AgregatedRecapDto res = recapitulatifService.getRecapitulatifEncaissementForCurrentMonthForGivenBanque(pageable,searchDto);
+        AgregatedRecapDto res = recapitulatifService.getRecapitulatifEncaissementForCurrentMonthForGivenBanque(pageable, searchDto, banqueId);
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
 
+    @Operation(summary = "Télécharger le récapitulatif global (PDF)")
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
     @GetMapping("/{banqueId}/pdf")
     public ResponseEntity<byte[]> getGlobalRecapReport(@PathVariable Long banqueId) throws DocumentException {
 
@@ -85,7 +99,7 @@ public class RecapitulatifController {
         byte[] pdfBytes = staportPdfReportService.generateRecapGlobalReport(recapGlobalDto);
 
         // 3. Préparer les en-têtes de la réponse HTTP pour le téléchargement
-        String banqueName = recapGlobalDto.getBanqueName().replaceAll("\\s+", "_");
+        String banqueName = recapGlobalDto.banqueName().replaceAll("\\s+", "_");
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String filename = "Recapitulatif_Global_" + banqueName + "_" + date + ".pdf";
 
@@ -105,6 +119,9 @@ public class RecapitulatifController {
         );
     }
 
+    @Operation(summary = "Télécharger le récapitulatif global consolidé (PDF, toutes banques)")
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
+    @ApiResponse(responseCode = "204", description = "Aucune banque à récapituler")
     @GetMapping("/global/pdf")
     public ResponseEntity<byte[]> getGlobalRecapReportForAllBanks() throws DocumentException {
 
@@ -136,4 +153,3 @@ public class RecapitulatifController {
         );
     }
 }
-

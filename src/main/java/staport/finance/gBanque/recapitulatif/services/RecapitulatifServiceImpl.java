@@ -60,12 +60,13 @@ import staport.finance.gBanque.prefinancement.spec.PrefinancementSpecification;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.prelevements.spec.PrelevementSpec;
-import staport.finance.gBanque.recapitulatif.dtos.AgregatedRecapDto;
-import staport.finance.gBanque.recapitulatif.dtos.DecaissementSearchDto;
-import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifGlobal;
-import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
+import staport.finance.gBanque.recapitulatif.dtos.request.DecaissementSearchDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.AgregatedRecapDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
 import staport.finance.gBanque.recapitulatif.mappers.RecapitulatifDecaissementMapper;
 import staport.finance.gBanque.recapitulatif.mappers.RecapitulatifEncaissementMapper;
+import staport.finance.gBanque.recapitulatif.services.interfaces.IRecapitulatifService;
 import staport.finance.gBanque.restitution.entities.Restitution;
 import staport.finance.gBanque.restitution.repository.RestitutionRepository;
 import staport.finance.gBanque.restitution.specs.RestitutionSpec;
@@ -86,12 +87,22 @@ import java.util.stream.Collectors;
 
 
 /**
- * Service to generate a consolidated summary of all expected disbursements
- * (leasing and CMT installments) for the current month.
+ * Service pour générer un récapitulatif consolidé de tous les décaissements/encaissements
+ * prévisionnels (échéances leasing/CMT, moyens de paiement, agios, commissions, etc.) pour
+ * le mois en cours.
+ *
+ * <p><b>Limite de performance assumée (documentée) :</b> ce service charge en mémoire les
+ * entités "encours" de ~17 repositories différents (chacun déjà filtré côté base par banque et
+ * par date via sa propre {@code Specification}), puis fusionne/trie/pagine le résultat en Java
+ * plutôt qu'en base — violation littérale de {@code conventions/performance.md}. C'est une
+ * limite structurelle : agréger des types d'entités hétérogènes sans table commune interdit un
+ * vrai {@code UNION} SQL paginé via {@code JpaRepository}/{@code Specification} classique. Le
+ * remplacement par une vue SQL + entité JPA en lecture seule est planifié (voir TODO.md, Phase 2
+ * du sweep États des encours / Récapitulatif) — décision validée par HMAYDA le 17/07/2026.</p>
  */
 @Service
 @Transactional(readOnly = true)
-public class RecapitulatifService {
+public class RecapitulatifServiceImpl implements IRecapitulatifService {
 
 
 
@@ -122,7 +133,7 @@ public class RecapitulatifService {
     LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
 
-    public RecapitulatifService(
+    public RecapitulatifServiceImpl(
             EcheanceLeasingRepository echeanceLeasingRepository,
             EcheanceCMTRepository echeanceCMTRepository,
             RecapitulatifDecaissementMapper mapper, RecapitulatifEncaissementMapper encaissementMapper, IBanqueService banqueService, ChequeRepository chequeRepository, LcnRepository lcnRepository, VirementRepository virementRepository, MiseADispositionRepository miseADispositionRepository, PrefinancementRepository prefinancementRepository, DroitConstateRepository droitConstateRepository, DecompteRepository decompteRepository, CommisionRepository commissionRepository, AgiosRepository agiosRepository, PrelevementRepository prelevementRepository, FraisBancaireRepository fraisBancaireRepository, FactoringRepository factoringRepository, ImpotEtTaxeRepository impotEtTaxeRepository, RestitutionRepository restitutionRepository, OperationErroneRepository operationErroneRepository, VirementInternationalRepository virementInternationalRepository, ImpayeeRepository impayeeRepository) {
@@ -153,14 +164,13 @@ public class RecapitulatifService {
 
 
 
-    public AgregatedRecapDto getRecapitulatifEncaissementForCurrentMonthForGivenBanque(Pageable pageable, DecaissementSearchDto searchDto) {
+    @Override
+    public AgregatedRecapDto getRecapitulatifEncaissementForCurrentMonthForGivenBanque(Pageable pageable, DecaissementSearchDto searchDto, Long banqueId) {
 
-        // Retrieve parameters from the DTO
-        Long banqueId = searchDto.getBanqueId();
         BanqueResponse banque = this.banqueService.getBanqueById(banqueId);
-        List<TransactionSource> transactionSources = searchDto.getTransactionSources();
-        String libelleFilter = searchDto.getLibelle();
-        String observationFilter = searchDto.getObservation();
+        List<TransactionSource> transactionSources = searchDto.transactionSources();
+        String libelleFilter = searchDto.libelle();
+        String observationFilter = searchDto.observation();
 
         // Step 1: Create specifications for each entity type, filtering by bank and current month.
 
@@ -275,14 +285,9 @@ public class RecapitulatifService {
         Page<RecaputilatifItem> pageResult = new PageImpl<>(pagedItems, pageable, combinedItems.size());
 
         // Step 7: Create and return the AgregatedRecapDto
-        AgregatedRecapDto aggregatedDto = new AgregatedRecapDto();
-        aggregatedDto.setPage(pageResult);
-        aggregatedDto.setTotalDebit(totalDebit);
-        aggregatedDto.setTotalCredit(totalCredit);
-
-        return aggregatedDto;
+        return new AgregatedRecapDto(totalDebit, totalCredit, pageResult);
     }
-    public List<RecaputilatifItem> getEncaissementByBanque(BanqueResponse banque) {
+    private List<RecaputilatifItem> getEncaissementByBanque(BanqueResponse banque) {
 
         List<RecaputilatifItem> encaissements= new ArrayList<>();
 
@@ -346,13 +351,12 @@ public class RecapitulatifService {
         return encaissements;
     }
 
-    public AgregatedRecapDto getRecapitulatifDecaissementForCurrentMonthForGivenBanque(Pageable pageable, DecaissementSearchDto searchDto) {
+    @Override
+    public AgregatedRecapDto getRecapitulatifDecaissementForCurrentMonthForGivenBanque(Pageable pageable, DecaissementSearchDto searchDto, Long banqueId) {
 
-        // Retrieve parameters from the DTO
-        Long banqueId = searchDto.getBanqueId();
-        List<TransactionSource> transactionSources = searchDto.getTransactionSources();
-        String libelleFilter = searchDto.getLibelle();
-        String observationFilter = searchDto.getObservation();
+        List<TransactionSource> transactionSources = searchDto.transactionSources();
+        String libelleFilter = searchDto.libelle();
+        String observationFilter = searchDto.observation();
 
         // Step 1: Create specifications for each entity type, filtering by bank and current month.
 
@@ -502,14 +506,9 @@ public class RecapitulatifService {
         Page<RecaputilatifItem> pageResult = new PageImpl<>(pagedItems, pageable, combinedItems.size());
 
         // Step 7: Create and return the AgregatedRecapDto
-        AgregatedRecapDto aggregatedDto = new AgregatedRecapDto();
-        aggregatedDto.setPage(pageResult);
-        aggregatedDto.setTotalDebit(totalDebit);
-        aggregatedDto.setTotalCredit(totalCredit);
-
-        return aggregatedDto;
+        return new AgregatedRecapDto(totalDebit, totalCredit, pageResult);
     }
-    public List<RecaputilatifItem> getDecaissementByBanque(BanqueResponse banque) {
+    private List<RecaputilatifItem> getDecaissementByBanque(BanqueResponse banque) {
 
         List<RecaputilatifItem> decaissementList= new ArrayList<>();
 
@@ -610,6 +609,7 @@ public class RecapitulatifService {
     }
 
 
+    @Override
     public RecaputilatifGlobal getRecapitulatifGlobal(Long banqueId) {
         // Récupérer la banque
         BanqueResponse banque = this.banqueService.getBanqueById(banqueId);
@@ -634,6 +634,7 @@ public class RecapitulatifService {
                 decaissements
         );
     }
+    @Override
     public List<RecaputilatifGlobal> getAllRecapitulatifsGlobaux() {
         // 1. Récupérer la liste de tous les IDs de banque disponibles.
         List<Long> allBankIds = this.banqueService.getAllBanqueIds();

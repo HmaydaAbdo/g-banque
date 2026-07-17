@@ -5,8 +5,8 @@ import com.lowagie.text.pdf.*;
 import com.lowagie.text.pdf.draw.LineSeparator;
 import org.springframework.stereotype.Service;
 import staport.finance.gBanque.rapprochement.dtos.ReportDto;
-import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifGlobal;
-import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifGlobal;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
 import staport.finance.gBanque.reports.enums.ReportType;
 import staport.finance.gBanque.reports.utils.StaportPdfPageEventHelper;
 import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
@@ -25,10 +25,10 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import staport.finance.gBanque.recapitulatif.dtos.CategorieAmountDto;
-import staport.finance.gBanque.recapitulatif.dtos.RecapGeneralDetailleAllBanquesDto;
-import staport.finance.gBanque.recapitulatif.dtos.RecapGeneralDetailleDto;
-import staport.finance.gBanque.recapitulatif.dtos.ResumeSectionDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.CategorieAmountDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecapGeneralDetailleAllBanquesDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecapGeneralDetailleDto;
+import staport.finance.gBanque.recapitulatif.dtos.response.ResumeSectionDto;
 
 @Service
 public class StaportPdfReportService {
@@ -333,13 +333,13 @@ public class StaportPdfReportService {
         table.addCell(createHeaderCell("Total\nDécaissements", TRANSACTION_HEADER_FONT, STAPORT_BLUE, Element.ALIGN_CENTER, 1, 1));
 
         for (RecaputilatifGlobal dto : dtos) {
-            table.addCell(createCell(dto.getBanqueName() != null ? dto.getBanqueName() : "", DATA_FONT, Element.ALIGN_LEFT));
-            table.addCell(createCell(formatCurrency(dto.getSoldeActuel()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.getTotalEncaissements()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.getTotalDecaissements()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.getSoldefin()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.getPlafondFC()), DATA_FONT, Element.ALIGN_RIGHT));
-            table.addCell(createCell(formatCurrency(dto.getReste()), DATA_FONT, Element.ALIGN_RIGHT));
+            table.addCell(createCell(dto.banqueName() != null ? dto.banqueName() : "", DATA_FONT, Element.ALIGN_LEFT));
+            table.addCell(createCell(formatCurrency(dto.soldeActuel()), DATA_FONT, Element.ALIGN_RIGHT));
+            table.addCell(createCell(formatCurrency(dto.totalEncaissements()), DATA_FONT, Element.ALIGN_RIGHT));
+            table.addCell(createCell(formatCurrency(dto.totalDecaissements()), DATA_FONT, Element.ALIGN_RIGHT));
+            table.addCell(createCell(formatCurrency(dto.soldefin()), DATA_FONT, Element.ALIGN_RIGHT));
+            table.addCell(createCell(formatCurrency(dto.plafondFC()), DATA_FONT, Element.ALIGN_RIGHT));
+            table.addCell(createCell(formatCurrency(dto.reste()), DATA_FONT, Element.ALIGN_RIGHT));
         }
 
         document.add(table);
@@ -370,10 +370,10 @@ public class StaportPdfReportService {
         }
 
         for (RecaputilatifGlobal dto : dtos) {
-            List<RecaputilatifItem> items = dto.getEncaissement();
+            List<RecaputilatifItem> items = dto.encaissement();
             if (items == null) continue;
             for (RecaputilatifItem item : items) {
-                table.addCell(createCell(dto.getBanqueName(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
+                table.addCell(createCell(dto.banqueName(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
                 table.addCell(createCell(item.getDateEmission() != null ? DATETIME_FORMATTER.format(item.getDateEmission()) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
                 table.addCell(createCell(item.getLibelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
                 PdfPCell creditCell = createCell(formatCurrency(item.getCredit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
@@ -427,7 +427,7 @@ public class StaportPdfReportService {
                 document.add(new LineSeparator(1f, 100f, STAPORT_BLUE, Element.ALIGN_CENTER, -2));
                 document.add(Chunk.NEWLINE);
 
-                Map<TransactionSource, List<RecaputilatifItem>> groupedEncaissements = groupItemsBySource(dto.getEncaissement());
+                Map<TransactionSource, List<RecaputilatifItem>> groupedEncaissements = groupItemsBySource(dto.encaissement());
                 for (Map.Entry<TransactionSource, List<RecaputilatifItem>> entry : groupedEncaissements.entrySet()) {
                     document.add(new Paragraph("Source: " + entry.getKey(), BOLD_FONT));
                     generateRecapItemTable(document, entry.getValue(), true);
@@ -438,7 +438,7 @@ public class StaportPdfReportService {
                 document.add(new LineSeparator(1f, 100f, STAPORT_BLUE, Element.ALIGN_CENTER, -2));
                 document.add(Chunk.NEWLINE);
 
-                Map<TransactionSource, List<RecaputilatifItem>> groupedDecaissements = groupItemsBySource(dto.getDecaissement());
+                Map<TransactionSource, List<RecaputilatifItem>> groupedDecaissements = groupItemsBySource(dto.decaissement());
                 for (Map.Entry<TransactionSource, List<RecaputilatifItem>> entry : groupedDecaissements.entrySet()) {
                     document.add(new Paragraph("Source: " + entry.getKey(), BOLD_FONT));
                     generateRecapItemTable(document, entry.getValue(), false);
@@ -460,22 +460,22 @@ public class StaportPdfReportService {
         addSummaryDataCell(table, "Date:", BOLD_FONT, Element.ALIGN_LEFT);
         addSummaryDataCell(table, DATETIME_FORMATTER.format(java.time.OffsetDateTime.now()), DATA_FONT, Element.ALIGN_RIGHT);
         addSummaryDataCell(table, "Banque:", BOLD_FONT, Element.ALIGN_LEFT);
-        addSummaryDataCell(table, dto.getBanqueName(), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, dto.banqueName(), DATA_FONT, Element.ALIGN_RIGHT);
 
         addSummaryDataCell(table, "Solde Actuel:", BOLD_FONT, Element.ALIGN_LEFT);
-        addSummaryDataCell(table, formatCurrency(dto.getSoldeActuel()), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, formatCurrency(dto.soldeActuel()), DATA_FONT, Element.ALIGN_RIGHT);
         addSummaryDataCell(table, "Solde Fin du mois:", BOLD_FONT, Element.ALIGN_LEFT);
-        addSummaryDataCell(table, formatCurrency(dto.getSoldefin()), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, formatCurrency(dto.soldefin()), DATA_FONT, Element.ALIGN_RIGHT);
 
         addSummaryDataCell(table, "Plafond FC:", BOLD_FONT, Element.ALIGN_LEFT);
-        addSummaryDataCell(table, formatCurrency(dto.getPlafondFC()), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, formatCurrency(dto.plafondFC()), DATA_FONT, Element.ALIGN_RIGHT);
         addSummaryDataCell(table, "Reste fin du mois:", BOLD_FONT, Element.ALIGN_LEFT);
-        addSummaryDataCell(table, formatCurrency(dto.getReste()), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, formatCurrency(dto.reste()), DATA_FONT, Element.ALIGN_RIGHT);
 
         addSummaryDataCell(table, "Total Décaissements:", BOLD_FONT, Element.ALIGN_LEFT);
-        addSummaryDataCell(table, formatCurrency(dto.getTotalDecaissements()), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, formatCurrency(dto.totalDecaissements()), DATA_FONT, Element.ALIGN_RIGHT);
         addSummaryDataCell(table, "Total Encaissements:", BOLD_FONT, Element.ALIGN_LEFT);
-        addSummaryDataCell(table, formatCurrency(dto.getTotalEncaissements()), DATA_FONT, Element.ALIGN_RIGHT);
+        addSummaryDataCell(table, formatCurrency(dto.totalEncaissements()), DATA_FONT, Element.ALIGN_RIGHT);
 
         document.add(table);
     }
@@ -547,8 +547,8 @@ public class StaportPdfReportService {
      * PDF mono-banque : même format que le multi-banques, mais avec une seule colonne banque.
      */
     public byte[] generateRecapGeneralDetailleReport(RecapGeneralDetailleDto dto) throws DocumentException {
-        String today = dto.getDateRecap().format(DATETIME_FORMATTER);
-        String reportTitle = "Récapitulation Générale Détaillée — " + dto.getBanqueNom() + " — " + today;
+        String today = dto.dateRecap().format(DATETIME_FORMATTER);
+        String reportTitle = "Récapitulation Générale Détaillée — " + dto.banqueNom() + " — " + today;
 
         List<RecapGeneralDetailleDto> banques = List.of(dto);
 
@@ -572,9 +572,9 @@ public class StaportPdfReportService {
      * PDF toutes banques : tableau consolidé multi-colonnes.
      */
     public byte[] generateRecapGeneralDetailleAllBanquesReport(RecapGeneralDetailleAllBanquesDto dto) throws DocumentException {
-        String today = dto.getDateRecap().format(DATETIME_FORMATTER);
+        String today = dto.dateRecap().format(DATETIME_FORMATTER);
         String reportTitle = "Récapitulation Générale Détaillée — Toutes Banques — " + today;
-        List<RecapGeneralDetailleDto> banques = dto.getBanques();
+        List<RecapGeneralDetailleDto> banques = dto.banques();
         int nbBanques = banques.size();
         Rectangle pageSize = nbBanques > 3 ? PageSize.A4.rotate() : PageSize.A4;
 
@@ -613,51 +613,51 @@ public class StaportPdfReportService {
         // ── Résumé du Jour J ─────────────────────────────────────────────────
         addRgdSectionHeader(table, "Résumé du Jour J", totalCols, STAPORT_BLUE);
         addRgdLabelCell(table, "");
-        for (RecapGeneralDetailleDto b : banques) addRgdBankNameCell(table, b.getBanqueNom());
+        for (RecapGeneralDetailleDto b : banques) addRgdBankNameCell(table, b.banqueNom());
 
-        addRgdDataRow(table, "Solde actuel",  banques, b -> b.getResume().getSoldeActuel(),   false);
-        addRgdDataRow(table, "Plafond ligne", banques, b -> b.getResume().getPlafondLigne(),  false);
-        addRgdDataRow(table, "Disponibilité", banques, b -> b.getResume().getDisponibilite(), false);
-        addRgdDataRow(table, "Encours +",     banques, b -> b.getResume().getEncoursPlus(),   false);
-        addRgdDataRow(table, "Encours -",     banques, b -> b.getResume().getEncoursMoins(),  false);
-        addRgdDataRow(table, "Solde Projeté", banques, b -> b.getResume().getSoldeProjete(),  true);
+        addRgdDataRow(table, "Solde actuel",  banques, b -> b.resume().soldeActuel(),   false);
+        addRgdDataRow(table, "Plafond ligne", banques, b -> b.resume().plafondLigne(),  false);
+        addRgdDataRow(table, "Disponibilité", banques, b -> b.resume().disponibilite(), false);
+        addRgdDataRow(table, "Encours +",     banques, b -> b.resume().encoursPlus(),   false);
+        addRgdDataRow(table, "Encours -",     banques, b -> b.resume().encoursMoins(),  false);
+        addRgdDataRow(table, "Solde Projeté", banques, b -> b.resume().soldeProjete(),  true);
 
         // ── Récapitulatif Mensuel (J+1 → Fin de mois) ────────────────────────
         addRgdSectionHeader(table, "Récapitulatif Mensuel (J+1 → Fin de mois)", totalCols, STAPORT_BLUE);
 
         // Décaissements
         addRgdSectionHeader(table, "Décaissements", totalCols, Color.decode("#2e6da4"));
-        addRgdDataRow(table, "Total", banques, b -> b.getDecaissements().getTotal(), true);
-        if (!banques.isEmpty() && banques.get(0).getDecaissements().getCategories() != null) {
-            List<String> decLabels = banques.get(0).getDecaissements().getCategories()
-                    .stream().map(CategorieAmountDto::getCategorie).collect(Collectors.toList());
+        addRgdDataRow(table, "Total", banques, b -> b.decaissements().total(), true);
+        if (!banques.isEmpty() && banques.get(0).decaissements().categories() != null) {
+            List<String> decLabels = banques.get(0).decaissements().categories()
+                    .stream().map(CategorieAmountDto::categorie).collect(Collectors.toList());
             for (int i = 0; i < decLabels.size(); i++) {
                 final int idx = i;
                 addRgdDataRow(table, decLabels.get(i), banques, b -> {
-                    List<CategorieAmountDto> cats = b.getDecaissements().getCategories();
-                    return idx < cats.size() ? cats.get(idx).getMontant() : BigDecimal.ZERO;
+                    List<CategorieAmountDto> cats = b.decaissements().categories();
+                    return idx < cats.size() ? cats.get(idx).montant() : BigDecimal.ZERO;
                 }, false);
             }
         }
 
         // Encaissements
         addRgdSectionHeader(table, "Encaissements", totalCols, Color.decode("#2e6da4"));
-        addRgdDataRow(table, "Total", banques, b -> b.getEncaissements().getTotal(), true);
-        if (!banques.isEmpty() && banques.get(0).getEncaissements().getCategories() != null) {
-            List<String> encLabels = banques.get(0).getEncaissements().getCategories()
-                    .stream().map(CategorieAmountDto::getCategorie).collect(Collectors.toList());
+        addRgdDataRow(table, "Total", banques, b -> b.encaissements().total(), true);
+        if (!banques.isEmpty() && banques.get(0).encaissements().categories() != null) {
+            List<String> encLabels = banques.get(0).encaissements().categories()
+                    .stream().map(CategorieAmountDto::categorie).collect(Collectors.toList());
             for (int i = 0; i < encLabels.size(); i++) {
                 final int idx = i;
                 addRgdDataRow(table, encLabels.get(i), banques, b -> {
-                    List<CategorieAmountDto> cats = b.getEncaissements().getCategories();
-                    return idx < cats.size() ? cats.get(idx).getMontant() : BigDecimal.ZERO;
+                    List<CategorieAmountDto> cats = b.encaissements().categories();
+                    return idx < cats.size() ? cats.get(idx).montant() : BigDecimal.ZERO;
                 }, false);
             }
         }
 
         // Solde fin du mois
         addRgdDataRow(table, "Solde fin du mois", banques,
-                RecapGeneralDetailleDto::getSoldePrevisionnelFinMois, true);
+                RecapGeneralDetailleDto::soldePrevisionnelFinMois, true);
 
         return table;
     }

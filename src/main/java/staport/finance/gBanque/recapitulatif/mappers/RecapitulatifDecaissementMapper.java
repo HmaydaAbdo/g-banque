@@ -18,7 +18,7 @@ import staport.finance.gBanque.moyensDePaiements.virementInternational.entities.
 import staport.finance.gBanque.operationErrone.entities.OperationErrone;
 import staport.finance.gBanque.prefinancement.entities.Prefinancement;
 import staport.finance.gBanque.prelevements.entitie.Prelevement;
-import staport.finance.gBanque.recapitulatif.dtos.RecaputilatifItem;
+import staport.finance.gBanque.recapitulatif.dtos.response.RecaputilatifItem;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.moyensDePaiements.virements.entities.Virement;
 
