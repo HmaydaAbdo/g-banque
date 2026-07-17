@@ -9,6 +9,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.Agios.service.interfaces.IAgiosValidationService;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
@@ -78,6 +79,7 @@ public class TransactionServiceImpl implements ITransactionService {
     private final IRestitutionValidationService restitutionValidationService;
     private final IOperationErroneValidationService operationErroneValidationService;
     private final IImpayeeValidationService impayeeValidationService;
+    private final IAgiosValidationService agiosValidationService;
 
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                               TransactionMapper transactionMapper,
@@ -98,7 +100,8 @@ public class TransactionServiceImpl implements ITransactionService {
                               IFraisBancaireValidationService fraisBancaireValidationService,
                               IRestitutionValidationService restitutionValidationService,
                               IOperationErroneValidationService operationErroneValidationService,
-                              IImpayeeValidationService impayeeValidationService) {
+                              IImpayeeValidationService impayeeValidationService,
+                              IAgiosValidationService agiosValidationService) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.leasingValidationService = leasingValidationService;
@@ -119,6 +122,7 @@ public class TransactionServiceImpl implements ITransactionService {
         this.restitutionValidationService = restitutionValidationService;
         this.operationErroneValidationService = operationErroneValidationService;
         this.impayeeValidationService = impayeeValidationService;
+        this.agiosValidationService = agiosValidationService;
     }
 
     @Override
@@ -464,6 +468,17 @@ public class TransactionServiceImpl implements ITransactionService {
             log.info("Transaction IMPAYEE ID: {} mise à jour — synchronisation de l'impayée ID: {}",
                     saved.getId(), saved.getReferent());
             impayeeValidationService.syncImpayeeFromTransaction(
+                    saved.getReferent(),
+                    saved.getDateValeur(),
+                    saved.getDateOperations());
+        }
+
+        // Synchronisation agios : si la transaction provient d'un agios, on propage dateValeur
+        // et dateOperation vers l'agios source (referent = agiosId).
+        if (TransactionSource.AGIOS == saved.getTransactionSource() && saved.getReferent() != null) {
+            log.info("Transaction AGIOS ID: {} mise à jour — synchronisation de l'agios ID: {}",
+                    saved.getId(), saved.getReferent());
+            agiosValidationService.syncAgiosFromTransaction(
                     saved.getReferent(),
                     saved.getDateValeur(),
                     saved.getDateOperations());
