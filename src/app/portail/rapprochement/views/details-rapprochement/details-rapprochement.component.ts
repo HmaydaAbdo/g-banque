@@ -1,8 +1,8 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { SourceBadgeComponent } from '../../../global/shared-components/source-badge/source-badge.component';
 import { ActivatedRoute } from '@angular/router';
-import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
+import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -46,7 +46,6 @@ import { StatutRapprochement } from '../../enums/StatutRapprochement';
     CalendarModule,
     MultiSelectModule,
     DialogModule,
-    FormsModule,
     Ripple,
     ToolbarModule,
     TooltipModule,
@@ -82,13 +81,11 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
 
-  constructor(
-    private route: ActivatedRoute,
-    private rapprochementService: RapprochementService,
-    private transactionService: TransactionService,
-    private messageService: MessageService,
-    private fb: FormBuilder
-  ) { }
+  private readonly route = inject(ActivatedRoute);
+  private readonly rapprochementService = inject(RapprochementService);
+  private readonly transactionService = inject(TransactionService);
+  private readonly messageService = inject(MessageService);
+  private readonly fb = inject(FormBuilder);
 
   ngOnInit(): void {
     this.populateTransactionSourceOptions();
@@ -180,8 +177,7 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
           this.loadingTransactions = false;
           this.updateBreadcrumb();
         },
-        error: (err) => {
-          console.error('Erreur lors du chargement des détails du rapprochement:', err);
+        error: () => {
           this.loadingTransactions = false;
         }
       });

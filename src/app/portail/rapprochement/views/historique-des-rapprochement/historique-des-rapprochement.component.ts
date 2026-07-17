@@ -1,6 +1,6 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild, inject} from '@angular/core';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
-import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
 import {InputTextModule} from 'primeng/inputtext';
 import {ButtonModule} from 'primeng/button';
@@ -45,8 +45,7 @@ import {StatutRapprochement} from "../../enums/StatutRapprochement";
     DropdownModule,
     ToolbarModule,
     DialogModule,
-    SelectButtonModule,
-    FormsModule
+    SelectButtonModule
   ],
   templateUrl: './historique-des-rapprochement.component.html',
   styleUrls: ['./historique-des-rapprochement.component.scss'],
@@ -78,7 +77,7 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
   loadingReport: { [key: number]: boolean } = {};
 
   showReportTypeModal: boolean = false;
-  selectedReportType: 'FINANCE' | 'COMPTABILITE' | null = null;
+  reportTypeControl = new FormControl<'FINANCE' | 'COMPTABILITE' | null>(null);
   pendingRapprochement: RapprochementResponse | null = null;
   reportTypeOptions = [
     {
@@ -95,13 +94,11 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
     }
   ];
 
-  constructor(
-    private rapprochementService: RapprochementService,
-    private messageService: MessageService,
-    private banqueService: BanqueService,
-    private fb: FormBuilder,
-    private router: Router
-  ) { }
+  private readonly rapprochementService = inject(RapprochementService);
+  private readonly messageService = inject(MessageService);
+  private readonly banqueService = inject(BanqueService);
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   ngOnInit(): void {
     this.items = [
@@ -151,8 +148,7 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
           this.totalRecords = response.page.totalElements;
           this.loading = false;
         },
-        error: (error) => {
-          console.error('Erreur lors du chargement des rapprochements:', error);
+        error: () => {
           this.loading = false;
         }
       });
@@ -223,30 +219,29 @@ export class HistoriqueDesRapprochementComponent implements OnInit {
     }
     // Ouvre la modal et mémorise le rapprochement en attente
     this.pendingRapprochement = rapprochement;
-    this.selectedReportType = 'FINANCE'; // Finance par défaut
+    this.reportTypeControl.setValue('FINANCE'); // Finance par défaut
     this.showReportTypeModal = true;
   }
 
 // Ajouter cette méthode
   confirmDownload(): void {
-    if (!this.pendingRapprochement || !this.selectedReportType) return;
+    if (!this.pendingRapprochement || !this.reportTypeControl.value) return;
 
     const rapprochement = this.pendingRapprochement;
-    const reportType = this.selectedReportType;
+    const reportType = this.reportTypeControl.value;
 
     this.showReportTypeModal = false;
     this.loadingReport[rapprochement.id] = true;
 
     this.rapprochementService.downloadReport(rapprochement.id, reportType)
       .pipe(
-        catchError(error => {
-          console.error('Erreur lors du téléchargement du rapport:', error);
+        catchError(() => {
           return throwError(() => new Error('Download failed'));
         }),
         finalize(() => {
           this.loadingReport[rapprochement.id] = false;
           this.pendingRapprochement = null;
-          this.selectedReportType = null;
+          this.reportTypeControl.setValue(null);
         })
       )
       .subscribe((response: Blob) => {
