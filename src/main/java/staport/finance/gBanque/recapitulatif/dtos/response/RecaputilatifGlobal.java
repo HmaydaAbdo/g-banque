@@ -27,14 +27,14 @@ public record RecaputilatifGlobal(
      * Total des encaissements (somme des crédits).
      */
     public BigDecimal totalEncaissements() {
-        return sum(encaissement, RecaputilatifItem::getCredit);
+        return sum(encaissement, RecaputilatifItem::credit);
     }
 
     /**
      * Total des décaissements (somme des débits).
      */
     public BigDecimal totalDecaissements() {
-        return sum(decaissement, RecaputilatifItem::getDebit);
+        return sum(decaissement, RecaputilatifItem::debit);
     }
 
     /**

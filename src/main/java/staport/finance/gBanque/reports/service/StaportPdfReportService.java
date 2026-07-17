@@ -302,7 +302,7 @@ public class StaportPdfReportService {
     private Map<TransactionSource, List<RecaputilatifItem>> groupItemsBySource(List<RecaputilatifItem> items) {
         if (items == null) return Map.of();
         return items.stream()
-                .collect(Collectors.groupingBy(RecaputilatifItem::getSource));
+                .collect(Collectors.groupingBy(RecaputilatifItem::source));
     }
 
     private PdfPCell createHeaderCell(String text, Font font, Color bgColor, int alignment, int colspan, int rowspan) {
@@ -374,13 +374,13 @@ public class StaportPdfReportService {
             if (items == null) continue;
             for (RecaputilatifItem item : items) {
                 table.addCell(createCell(dto.banqueName(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
-                table.addCell(createCell(item.getDateEmission() != null ? DATETIME_FORMATTER.format(item.getDateEmission()) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
-                table.addCell(createCell(item.getLibelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
-                PdfPCell creditCell = createCell(formatCurrency(item.getCredit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+                table.addCell(createCell(item.dateEmission() != null ? DATETIME_FORMATTER.format(item.dateEmission()) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
+                table.addCell(createCell(item.libelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
+                PdfPCell creditCell = createCell(formatCurrency(item.credit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
                 creditCell.setNoWrap(true);
                 table.addCell(creditCell);
-                table.addCell(createCell(item.getObservations(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
-                table.addCell(createCell(item.getSource().name(), TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
+                table.addCell(createCell(item.observations(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
+                table.addCell(createCell(item.source().name(), TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
             }
         }
 
@@ -507,20 +507,20 @@ public class StaportPdfReportService {
         }
 
         for (RecaputilatifItem item : items) {
-            table.addCell(createCell(item.getDateEmission() != null ? DATETIME_FORMATTER.format(item.getDateEmission()) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
-            table.addCell(createCell(item.getDateEcheance() != null ? DATETIME_FORMATTER.format(item.getDateEcheance()) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
-            table.addCell(createCell(item.getLibelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
+            table.addCell(createCell(item.dateEmission() != null ? DATETIME_FORMATTER.format(item.dateEmission()) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
+            table.addCell(createCell(item.dateEcheance() != null ? DATETIME_FORMATTER.format(item.dateEcheance()) : "-", TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
+            table.addCell(createCell(item.libelle(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
 
-            PdfPCell debitCell = createCell(formatCurrency(item.getDebit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+            PdfPCell debitCell = createCell(formatCurrency(item.debit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
             debitCell.setNoWrap(true);
             table.addCell(debitCell);
 
-            PdfPCell creditCell = createCell(formatCurrency(item.getCredit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
+            PdfPCell creditCell = createCell(formatCurrency(item.credit()), TRANSACTION_DATA_FONT, Element.ALIGN_RIGHT);
             creditCell.setNoWrap(true);
             table.addCell(creditCell);
 
-            table.addCell(createCell(item.getObservations(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
-            table.addCell(createCell(item.getSource().name(), TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
+            table.addCell(createCell(item.observations(), TRANSACTION_DATA_FONT, Element.ALIGN_LEFT));
+            table.addCell(createCell(item.source().name(), TRANSACTION_DATA_FONT, Element.ALIGN_CENTER));
         }
 
         document.add(table);
