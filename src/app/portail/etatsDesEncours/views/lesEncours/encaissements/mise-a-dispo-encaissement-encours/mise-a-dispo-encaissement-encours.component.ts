@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, inject, OnInit, ViewChild} from '@angular/core';
 import {MiseADispositionResponseDto} from "../../../../../Mise-à-disposition/dtos/MiseADispositionResponseDto";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
@@ -6,7 +6,7 @@ import {MiseADispositionSearchDto} from "../../../../../Mise-à-disposition/dtos
 import {MiseADispositionService} from "../../../../../Mise-à-disposition/service/MiseADispositionService";
 import {ActivatedRoute, RouterLink} from "@angular/router";
 import {ConfirmationService, MessageService, PrimeTemplate} from "primeng/api";
-import {DatePipe, DecimalPipe, NgIf} from "@angular/common";
+import {DatePipe, DecimalPipe} from "@angular/common";
 import {ValidationService} from "../../../../services/validation/validation.service";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {
@@ -50,7 +50,6 @@ import {TableSelectionState} from "../../shared/table-selection.state";
     FormsModule,
     InputTextModule,
     InputTextareaModule,
-    NgIf,
     PrimeTemplate,
     ReactiveFormsModule,
     Ripple,
@@ -127,18 +126,15 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private miseADispositionService: MiseADispositionService,
-    private route: ActivatedRoute,
-    private messageService: MessageService,
-    private datePipe: DatePipe,
-    private rapprochementService: ValidationService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder,
-    private decimalPipe: DecimalPipe,
-    private bankStateService: BankStateService
-  ) {
-  }
+  private readonly miseADispositionService = inject(MiseADispositionService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Get the bank ID from the route's parent parameter
@@ -275,7 +271,6 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
       this.rapprochementService.miseAdispoEncaissementToRapprochement(miseADispositionTransactionRequest)
         .subscribe({
           next: (response) => {
-            console.log(response);
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
@@ -288,7 +283,6 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
             this.bankStateService.notifyValidation();
           },
           error: (error) => {
-            console.error('Erreur lors du validation de la mise à disposition:', error);
             this.isSubmitting = false;
           }
         });
@@ -325,10 +319,6 @@ export class MiseADispoEncaissementEncoursComponent implements OnInit {
         },
         error: (error: Error) => {
           this.loading = false;
-          console.error(
-            'Erreur lors du chargement des mises à disposition en cours:',
-            error
-          );
         },
       });
   }

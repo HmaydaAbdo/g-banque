@@ -1,21 +1,21 @@
-<div *ngIf="!loading && actifs" class="surface-card border-round-xl shadow-2 px-4 py-3">
+@if (!loading && actifs) {
+<div class="surface-card border-round-xl shadow-2 px-4 py-3">
 
   <!-- Ligne 1 : Bank header + soldes -->
   <div class="flex align-items-center justify-content-between flex-wrap gap-3">
 
     <!-- Logo + Nom + Statut + Période -->
     <div class="flex align-items-center gap-2 flex-shrink-0">
-      <ng-container *ngIf="bankInfo; else logoFallback">
+      @if (bankInfo) {
         <img [src]="'data:image/png;base64,' + bankInfo.logoBase64"
              alt="Logo banque" class="border-round"
              style="width:48px;height:48px;object-fit:contain;" />
-      </ng-container>
-      <ng-template #logoFallback>
+      } @else {
         <div class="flex align-items-center justify-content-center border-round"
              style="width:48px;height:48px;background:var(--surface-200);">
           <i class="pi pi-building text-xl text-400"></i>
         </div>
-      </ng-template>
+      }
       <div>
         <div class="font-bold text-base text-900">{{ bankInfo?.nom }}</div>
         <div class="flex align-items-center gap-2 mt-1">
@@ -128,12 +128,15 @@
   </div>
 
 </div>
+}
 
 <!-- Skeleton pendant le chargement -->
-<div *ngIf="loading" class="surface-card border-round-xl shadow-2 px-4 py-3 flex align-items-center gap-3">
+@if (loading) {
+<div class="surface-card border-round-xl shadow-2 px-4 py-3 flex align-items-center gap-3">
   <div style="width:48px;height:48px;border-radius:8px;background:var(--surface-200);"></div>
   <div class="flex flex-column gap-2" style="flex:1;">
     <div style="height:12px;width:140px;border-radius:4px;background:var(--surface-200);"></div>
     <div style="height:10px;width:100px;border-radius:4px;background:var(--surface-200);"></div>
   </div>
 </div>
+}

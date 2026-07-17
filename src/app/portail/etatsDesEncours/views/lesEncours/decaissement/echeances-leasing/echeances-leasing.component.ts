@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -136,19 +136,16 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private echeanceLeasingService: EcheanceLeasingService,
-    private organismeLeasingService: OrganismeLeasingService,
-    private rapprochementService: ValidationService,
-    private route: ActivatedRoute,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private bankStateService: BankStateService
-
-  ) { }
+  private readonly echeanceLeasingService = inject(EcheanceLeasingService);
+  private readonly organismeLeasingService = inject(OrganismeLeasingService);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Récupérer l'ID de la banque depuis la route parent
@@ -211,7 +208,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
           }));
         },
         error: (error) => {
-          console.error('Error loading organisme leasing options:', error);
         }
       });
   }
@@ -241,7 +237,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading = false;
-        console.error('Erreur lors du chargement des encours:', error);
       }
     });
   }
@@ -371,7 +366,6 @@ export class EcheancesLeasingComponent implements OnInit, OnDestroy {
       this.rapprochementService.echeanceLeasingToRapprochemnt(leasingTransactionRequest)
         .subscribe({
           next: (response) => {
-            console.log(response)
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',

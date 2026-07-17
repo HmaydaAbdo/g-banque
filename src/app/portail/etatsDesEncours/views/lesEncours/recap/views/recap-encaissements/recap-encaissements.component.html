@@ -104,16 +104,24 @@
             <span class="text-700">{{ item.dateEcheance ? (item.dateEcheance | date:'dd/MM/yyyy') : '-' }}</span>
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="item.debit" class="amount-badge debit-badge">
+            @if (item.debit) {
+            <span class="amount-badge debit-badge">
               {{ item.debit | number:'1.2-2' }} MAD
             </span>
-            <span *ngIf="!item.debit" class="text-500">-</span>
+            }
+            @if (!item.debit) {
+            <span class="text-500">-</span>
+            }
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="item.credit" class="amount-badge credit-badge">
+            @if (item.credit) {
+            <span class="amount-badge credit-badge">
               {{ item.credit | number:'1.2-2' }} MAD
             </span>
-            <span *ngIf="!item.credit" class="text-500">-</span>
+            }
+            @if (!item.credit) {
+            <span class="text-500">-</span>
+            }
           </td>
           <td> {{item.source}}</td>
           <td>

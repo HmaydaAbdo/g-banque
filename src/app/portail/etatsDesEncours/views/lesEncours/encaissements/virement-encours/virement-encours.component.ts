@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, inject, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, RouterLink} from '@angular/router';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
@@ -126,19 +126,15 @@ export class VirementEncaissementEncoursComponent implements OnInit {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private virementService: VirementService,
-    private route: ActivatedRoute,
-    private messageService: MessageService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private rapprochementService: ValidationService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder,
-    private bankStateService: BankStateService,
-  ) {
-
-  }
+  private readonly virementService = inject(VirementService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Get the bank ID from the route's parent parameter
@@ -279,7 +275,6 @@ export class VirementEncaissementEncoursComponent implements OnInit {
       this.rapprochementService.virementEncaissementToRapprochement(virementTransactionRequest)
         .subscribe({
           next: (response) => {
-            console.log(response);
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
@@ -292,7 +287,6 @@ export class VirementEncaissementEncoursComponent implements OnInit {
             this.bankStateService.notifyValidation();
           },
           error: (error) => {
-            console.error('Erreur lors du validation du virement:', error);
             this.isSubmitting = false;
           }
         });
@@ -328,10 +322,6 @@ export class VirementEncaissementEncoursComponent implements OnInit {
         },
         error: (error: Error) => {
           this.loading = false;
-          console.error(
-            'Erreur lors du chargement des virements en cours:',
-            error
-          );
         },
       });
   }

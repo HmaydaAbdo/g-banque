@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { SourceBadgeComponent } from '../../../../global/shared-components/source-badge/source-badge.component';
 import { TransactionResponseDto } from '../../../../transactions/dtos/TransactionResponseDto';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -82,17 +82,14 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
 
-  constructor(
-    private transactionService: TransactionService,
-    private rapprochementService: RapprochementService,
-    private fb: FormBuilder,
-    private validationService: ValidationService,
-    private messageService: MessageService,
-    private route: ActivatedRoute,
-    private datePipe: DatePipe,
-    private bankStateService: BankStateService
-  ) {
-  }
+  private readonly transactionService = inject(TransactionService);
+  private readonly rapprochementService = inject(RapprochementService);
+  private readonly fb = inject(FormBuilder);
+  private readonly validationService = inject(ValidationService);
+  private readonly messageService = inject(MessageService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly datePipe = inject(DatePipe);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     this.populateTransactionSourceOptions();
@@ -203,7 +200,6 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.loading = false;
-          console.error('Erreur lors du chargement des dtos:', error);
         }
       });
   }

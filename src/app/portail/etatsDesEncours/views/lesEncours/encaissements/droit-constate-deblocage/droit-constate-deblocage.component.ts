@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
+import {Component, inject, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import {ActivatedRoute, RouterLink} from '@angular/router';
 import {Decimal} from "decimal.js";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
@@ -11,7 +11,7 @@ import {DroitConstateService} from "../../../../../droitsConstate/service/DroitC
 import {EncoursDroitConstateDto} from "../../../../../droitsConstate/dtos/EncoursDroitConstateDto";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
-import {DatePipe, NgIf, CommonModule, DecimalPipe} from "@angular/common";
+import {DatePipe, CommonModule, DecimalPipe} from "@angular/common";
 import {DialogModule} from "primeng/dialog";
 import {RippleModule} from "primeng/ripple";
 import {ToastModule} from "primeng/toast";
@@ -39,7 +39,6 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     CalendarModule,
     DatePipe,
     DialogModule,
-    NgIf,
     ReactiveFormsModule,
     RippleModule,
     TableModule,
@@ -121,17 +120,15 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private droitConstateService: DroitConstateService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private rapprochementService: ValidationService,
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private bankStateService: BankStateService
-  ) {}
+  private readonly droitConstateService = inject(DroitConstateService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Subscribe to parent route parameters to get banqueId
@@ -308,7 +305,6 @@ export class DroitConstateDeblocageComponent implements OnInit, OnDestroy {
           this.bankStateService.notifyValidation();
         },
         error: (error) => {
-          console.error('Erreur lors du validation du droit constaté:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',

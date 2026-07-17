@@ -21,9 +21,11 @@
                       [placeholder]="tvaLabel" appendTo="body"></p-dropdown>
           <label for="lotTva">{{ tvaLabel }}</label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
+        @if (isInvalid('tvaDeductible')) {
+        <small class="p-error">
           La TVA est obligatoire
         </small>
+        }
       </div>
       <div class="col-12 md:col-6 mb-3">
         <span class="p-float-label">
@@ -31,9 +33,11 @@
                       dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
           <label for="lotDateValeur">Date de valeur</label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('dateValeur')">
+        @if (isInvalid('dateValeur')) {
+        <small class="p-error">
           La date de valeur est obligatoire
         </small>
+        }
       </div>
       <div class="col-12 md:col-6 mb-3">
         <span class="p-float-label">
@@ -41,9 +45,11 @@
                       dateFormat="dd/mm/yy" [iconDisplay]="'input'" [showIcon]="true" appendTo="body"></p-calendar>
           <label for="lotDateOperation">Date de l'opération</label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('dateOperation')">
+        @if (isInvalid('dateOperation')) {
+        <small class="p-error">
           La date de l'opération est obligatoire
         </small>
+        }
       </div>
     </div>
     <p class="text-500 text-sm mt-1 mb-3">

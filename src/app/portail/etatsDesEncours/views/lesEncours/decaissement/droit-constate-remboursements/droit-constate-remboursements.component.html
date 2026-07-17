@@ -49,12 +49,14 @@
     <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
   </div>
 
-  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+  @if (selectedCount > 0) {
+  <div class="flex justify-content-end align-items-center gap-2 mb-2">
     <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
             class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
     <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
             class="p-button-success" (click)="displayLotModal = true"></button>
   </div>
+  }
 
   <div class="pb-8">
     <p-table
@@ -153,7 +155,7 @@
   [draggable]="false"
   [resizable]="false"
 >
-  <ng-container *ngIf="selectedDroitConstate">
+  @if (selectedDroitConstate) {
     <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
       <div class="grid p-fluid mt-3">
 
@@ -168,9 +170,11 @@
             ></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('dateEmission')">
+          @if (isInvalid('dateEmission')) {
+          <small class="p-error">
             La date d'émission est obligatoire.
           </small>
+          }
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
@@ -185,9 +189,11 @@
             ></p-dropdown>
             <label for="tva">TVA déductible</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('tva')">
+          @if (isInvalid('tva')) {
+          <small class="p-error">
             La TVA déductible est obligatoire.
           </small>
+          }
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
@@ -200,9 +206,11 @@
             ></p-calendar>
             <label for="dateOperation">Date d'opération</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('dateOperation')">
+          @if (isInvalid('dateOperation')) {
+          <small class="p-error">
             La date d'opération est obligatoire.
           </small>
+          }
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
@@ -215,27 +223,33 @@
             ></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('dateValeur')">
+          @if (isInvalid('dateValeur')) {
+          <small class="p-error">
             La date de valeur est obligatoire.
           </small>
+          }
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
             <label for="observation">Observation</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('observation')">
+          @if (isInvalid('observation')) {
+          <small class="p-error">
             Observation est obligatoire
           </small>
+          }
         </div>
         <div class="col-12 md:col-6 mb-3">
           <span class="p-float-label">
             <textarea id="libelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
             <label for="libelle">Libellé</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('observation')">
+          @if (isInvalid('observation')) {
+          <small class="p-error">
             Libellé est obligatoire
           </small>
+          }
         </div>
 
       </div>
@@ -256,7 +270,7 @@
         ></p-button>
       </div>
     </form>
-  </ng-container>
+  }
 </p-dialog>
 
 <app-validation-lot-modal

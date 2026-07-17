@@ -10,26 +10,33 @@
     <ul class="sidebar-nav__scroll list-none p-2 m-0">
       @for (item of items; track item.url) {
         <!-- Items sans sous-menu -->
-        <li *ngIf="item.routerLink && !item.items" class="mb-1">
+        @if (item.routerLink && !item.items) {
+        <li class="mb-1">
           <a pRipple
              [routerLink]="item.routerLink"
              routerLinkActive="active-sidebar-link"
              [pTooltip]="item.label"
              tooltipPosition="right"
              class="flex align-items-center cursor-pointer p-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:surface-hover">
-            <i *ngIf="item.icon" [class]="item.icon" class="nav-icon"></i>
+            @if (item.icon) {
+            <i [class]="item.icon" class="nav-icon"></i>
+            }
             <span class="nav-label">{{ item.label }}</span>
           </a>
         </li>
+        }
 
         <!-- Items avec sous-menu -->
-        <li *ngIf="item.items" class="mb-1">
+        @if (item.items) {
+        <li class="mb-1">
           <div pRipple (click)="toggleMenuItem(item)"
                class="flex align-items-center justify-content-between p-2 cursor-pointer border-round-lg hover:surface-hover transition-all transition-duration-150 p-ripple"
                [pTooltip]="item.label"
                tooltipPosition="right">
             <div class="flex align-items-center min-w-0">
-              <i *ngIf="item.icon" [class]="item.icon" class="nav-icon"></i>
+              @if (item.icon) {
+              <i [class]="item.icon" class="nav-icon"></i>
+              }
               <span class="nav-label">{{ item.label }}</span>
             </div>
             <i [class]="item.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="nav-chevron text-xs flex-shrink-0"></i>
@@ -37,21 +44,26 @@
 
           <!-- Sous-menu -->
           <ul class="nav-submenu list-none pl-0 mt-1" [ngClass]="{'hidden': !item.expanded}">
-            <ng-container *ngFor="let subItem of item.items">
-              <li *ngIf="subItem.routerLink && !subItem.items" class="mb-1">
+            @for (subItem of item.items; track subItem.url) {
+              @if (subItem.routerLink && !subItem.items) {
+              <li class="mb-1">
                 <a pRipple
                    [routerLink]="subItem.routerLink"
                    routerLinkActive="active-sidebar-link"
                    [pTooltip]="subItem.label"
                    tooltipPosition="right"
                    class="flex align-items-center cursor-pointer m-0 px-2 py-2 border-round-lg transition-all transition-duration-150 p-ripple sidebar-link hover:surface-hover">
-                  <i *ngIf="subItem.icon" [class]="subItem.icon" class="nav-icon nav-icon--sub"></i>
+                  @if (subItem.icon) {
+                  <i [class]="subItem.icon" class="nav-icon nav-icon--sub"></i>
+                  }
                   <span class="nav-label font-medium">{{ subItem.label }}</span>
                 </a>
               </li>
-            </ng-container>
+              }
+            }
           </ul>
         </li>
+        }
       }
     </ul>
   </div>
@@ -63,16 +75,15 @@
     <div class="flex align-items-center justify-content-between">
       <p-breadcrumb [model]="breadcrumbItems" [style]="{'background-color': 'transparent', 'border': 'none'}">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
+          @if (item.route) {
             <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
               <span class="text-700 font-medium ml-2">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <a [href]="item.url">
               <span class="text-700 font-medium">{{ item.label }}</span>
             </a>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
 
@@ -104,13 +115,17 @@
     </div>
     <div class="text-center">
       <p class="text-900 font-semibold text-lg m-0">{{ isProvisoire ? 'Confirmer la clôture définitive' : 'Confirmer la clôture provisoire' }}</p>
-      <p class="text-500 text-sm mt-2 mb-0" *ngIf="!isProvisoire">
+      @if (!isProvisoire) {
+      <p class="text-500 text-sm mt-2 mb-0">
         Le système clôturera provisoirement le rapprochement en cours.<br>
         Vous pourrez encore ajuster les opérations avant la clôture définitive.
       </p>
-      <p class="text-500 text-sm mt-2 mb-0" *ngIf="isProvisoire">
+      }
+      @if (isProvisoire) {
+      <p class="text-500 text-sm mt-2 mb-0">
         Cette action est <strong>irréversible</strong>. Le rapprochement sera définitivement clôturé.
       </p>
+      }
     </div>
   </div>
 

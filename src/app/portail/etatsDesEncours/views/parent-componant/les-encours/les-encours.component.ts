@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterOutlet, NavigationEnd } from "@angular/router";
 import { PanelMenuModule } from "primeng/panelmenu";
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -97,14 +97,12 @@ export class LesEncoursComponent implements OnInit {
 
   };
 
-  constructor(
-    private route: ActivatedRoute,
-    private rapprochementService: RapprochementService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private router: Router,
-    private bankStateService: BankStateService
-  ) {}
+  private readonly route = inject(ActivatedRoute);
+  private readonly rapprochementService = inject(RapprochementService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly router = inject(Router);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit() {
     this.breadcrumbItems = [

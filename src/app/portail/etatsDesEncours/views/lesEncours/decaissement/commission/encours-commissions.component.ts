@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, inject, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import {MessageService, MenuItem, SelectItem, ConfirmationService} from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgFor } from '@angular/common';
@@ -124,19 +124,16 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private commissionService: CommissionService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private route: ActivatedRoute,
-    private authService:AuthService,
-    private fb: FormBuilder,
-    private rapprochementService: ValidationService,
-    private bankStateService: BankStateService
-
-  ) {}
+  private readonly commissionService = inject(CommissionService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly route = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
+  private readonly fb = inject(FormBuilder);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly bankStateService = inject(BankStateService);
 
 
   ngOnInit(): void {
@@ -232,7 +229,6 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
         },
         error: (err) => {
           this.loading = false;
-          console.error(err);
         }
       });
   }

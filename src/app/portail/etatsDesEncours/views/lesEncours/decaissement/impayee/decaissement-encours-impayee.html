@@ -51,12 +51,14 @@
     <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
   </div>
 
-  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+  @if (selectedCount > 0) {
+  <div class="flex justify-content-end align-items-center gap-2 mb-2">
     <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
             class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
     <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
             class="p-button-success" (click)="displayLotModal = true"></button>
   </div>
+  }
 
   <div class="pb-8">
     <p-table
@@ -94,12 +96,14 @@
           <th style="width: 3rem">
             <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
           </th>
-          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
+          @for (col of columns; track col.field) {
+          <th [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
               <p-sortIcon [field]="col.field"></p-sortIcon>
             }
           </th>
+          }
           <th style="width: 8rem">Actions</th>
         </tr>
       </ng-template>
@@ -193,9 +197,11 @@
           ></p-calendar>
           <label for="dateEmission">Date d'émission</label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('dateEmission')">
+        @if (isInvalid('dateEmission')) {
+        <small class="p-error">
           La date d'émission est obligatoire
         </small>
+        }
       </div>
 
       <!-- TVA COLLECTÉE -->
@@ -213,9 +219,11 @@
           ></p-dropdown>
           <label for="tvaCollectee">TVA Collectée</label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('tvaCollectee')">
+        @if (isInvalid('tvaCollectee')) {
+        <small class="p-error">
           La TVA collectée est obligatoire
         </small>
+        }
       </div>
 
       <!-- DATE VALEUR -->
@@ -233,9 +241,11 @@
           ></p-calendar>
           <label for="dateValeur">Date de valeur</label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('dateValeur')">
+        @if (isInvalid('dateValeur')) {
+        <small class="p-error">
           La date de valeur est obligatoire
         </small>
+        }
       </div>
 
       <!-- DATE OPERATION -->
@@ -253,9 +263,11 @@
           ></p-calendar>
           <label for="dateOperation">Date de l'opération</label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('dateOperation')">
+        @if (isInvalid('dateOperation')) {
+        <small class="p-error">
           La date de l'opération est obligatoire
         </small>
+        }
       </div>
 
       <!-- LIBELLE -->
@@ -269,9 +281,11 @@
           ></textarea>
           <label for="libelle">Libellé</label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('libelle')">
+        @if (isInvalid('libelle')) {
+        <small class="p-error">
           Le libellé est obligatoire
         </small>
+        }
       </div>
 
       <!-- OBSERVATION -->
@@ -285,9 +299,11 @@
           ></textarea>
           <label for="observation">Observation</label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('observation')">
+        @if (isInvalid('observation')) {
+        <small class="p-error">
           L'observation est obligatoire
         </small>
+        }
       </div>
 
     </div>

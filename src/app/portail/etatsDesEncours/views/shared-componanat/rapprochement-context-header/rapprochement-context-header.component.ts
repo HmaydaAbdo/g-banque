@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, debounceTime } from 'rxjs';
 import { CommonModule, DecimalPipe } from '@angular/common';
@@ -36,12 +36,10 @@ export class RapprochementContextHeaderComponent implements OnInit, OnDestroy {
 
   private subs: Subscription[] = [];
 
-  constructor(
-    private route: ActivatedRoute,
-    private bankStateService: BankStateService,
-    private rapprochementService: RapprochementService,
-    private transactionService: TransactionService
-  ) {}
+  private readonly route = inject(ActivatedRoute);
+  private readonly bankStateService = inject(BankStateService);
+  private readonly rapprochementService = inject(RapprochementService);
+  private readonly transactionService = inject(TransactionService);
 
   ngOnInit(): void {
     // banqueId et rapprochementId sont tous les deux des path params (paramsInheritanceStrategy: 'always')

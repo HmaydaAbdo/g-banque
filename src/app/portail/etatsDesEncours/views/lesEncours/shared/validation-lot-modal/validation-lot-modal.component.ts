@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, inject, Input, Output} from '@angular/core';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ConfirmationService, MessageService} from 'primeng/api';
@@ -85,15 +85,15 @@ export class ValidationLotModalComponent {
     {label: '20%', value: 20},
   ];
 
-  constructor(
-    private fb: FormBuilder,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private validationService: ValidationService,
-    private bankStateService: BankStateService
-  ) {
+  private readonly fb = inject(FormBuilder);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly validationService = inject(ValidationService);
+  private readonly bankStateService = inject(BankStateService);
+
+  constructor() {
     this.initForm();
   }
 
@@ -190,7 +190,6 @@ export class ValidationLotModalComponent {
         this.close();
       },
       error: (error) => {
-        console.error('Erreur lors de la validation en lot:', error);
         this.isSubmitting = false;
       },
     });

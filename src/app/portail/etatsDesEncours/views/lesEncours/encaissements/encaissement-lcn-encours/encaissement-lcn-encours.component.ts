@@ -1,8 +1,8 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, inject, OnInit, ViewChild} from '@angular/core';
 import {Button} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
 import {ConfirmDialogModule} from "primeng/confirmdialog";
-import {DatePipe, DecimalPipe, NgIf} from "@angular/common";
+import {DatePipe, DecimalPipe} from "@angular/common";
 import {DialogModule} from "primeng/dialog";
 import {DividerModule} from "primeng/divider";
 import {DropdownModule} from "primeng/dropdown";
@@ -47,7 +47,6 @@ import {TableSelectionState} from "../../shared/table-selection.state";
     DropdownModule,
     InputTextModule,
     InputTextareaModule,
-    NgIf,
     PaginatorModule,
     PrimeTemplate,
     ReactiveFormsModule,
@@ -126,18 +125,15 @@ export class EncaissementLcnEncoursComponent implements OnInit {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private lcnService: LcnService,
-    private route: ActivatedRoute,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private fb: FormBuilder,
-    private rapprochementService: ValidationService,
-    private bankStateService: BankStateService
-  ) {
-  }
+  private readonly lcnService = inject(LcnService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly fb = inject(FormBuilder);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Get the bank ID from the route's parent parameter
@@ -280,7 +276,6 @@ export class EncaissementLcnEncoursComponent implements OnInit {
       this.rapprochementService.lcnEncaissementToRapprochement(lcnTransactionRequest)
         .subscribe({
           next: (response) => {
-            console.log(response);
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
@@ -293,7 +288,6 @@ export class EncaissementLcnEncoursComponent implements OnInit {
             this.bankStateService.notifyValidation();
           },
           error: (error) => {
-            console.error('Erreur lors du validation du LCN:', error);
             this.isSubmitting = false;
           }
         });
@@ -329,10 +323,6 @@ export class EncaissementLcnEncoursComponent implements OnInit {
         },
         error: (error: Error) => {
           this.loading = false;
-          console.error(
-            'Erreur lors du chargement des LCNs en cours:',
-            error
-          );
         },
       });
   }

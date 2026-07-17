@@ -52,12 +52,14 @@
     <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
   </div>
 
-  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+  @if (selectedCount > 0) {
+  <div class="flex justify-content-end align-items-center gap-2 mb-2">
     <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
             class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
     <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
             class="p-button-success" (click)="displayLotModal = true"></button>
   </div>
+  }
 
   <div class="pb-8">
     <p-table
@@ -93,12 +95,14 @@
           <th style="width: 3rem">
             <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
           </th>
-          <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : null">
+          @for (col of columns; track col.field) {
+          <th [pSortableColumn]="col.sortable ? col.field : null">
             {{ col.header }}
             @if (col.sortable) {
               <p-sortIcon [field]="col.field"></p-sortIcon>
             }
           </th>
+          }
           <th style="width: 8rem">Actions</th>
         </tr>
       </ng-template>
@@ -162,7 +166,8 @@
   <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
 
     <!-- Informations sur l'opération sélectionnée -->
-    <div class="mb-4 p-3 surface-100 border-round" *ngIf="selectedOperation">
+    @if (selectedOperation) {
+    <div class="mb-4 p-3 surface-100 border-round">
       <div class="grid">
         <div class="col-12 md:col-6">
           <div class="text-sm text-500">Opération ID</div>
@@ -184,6 +189,7 @@
         </div>
       </div>
     </div>
+    }
 
     <div class="grid p-fluid mt-3">
 
@@ -204,9 +210,11 @@
           </p-calendar>
           <label for="dateEmission">Date d'émission <span class="text-red-500">*</span></label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('dateEmission')">
+        @if (isInvalid('dateEmission')) {
+        <small class="p-error">
           La date d'émission est obligatoire
         </small>
+        }
       </div>
 
       <!-- TVA Déductible -->
@@ -224,9 +232,11 @@
           </p-dropdown>
           <label for="tvaDeductible">TVA Déductible <span class="text-red-500">*</span></label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
+        @if (isInvalid('tvaDeductible')) {
+        <small class="p-error">
           La TVA déductible est obligatoire
         </small>
+        }
       </div>
 
       <!-- Date de valeur -->
@@ -244,9 +254,11 @@
           </p-calendar>
           <label for="dateValeur">Date de valeur <span class="text-red-500">*</span></label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('dateValeur')">
+        @if (isInvalid('dateValeur')) {
+        <small class="p-error">
           La date de valeur est obligatoire
         </small>
+        }
       </div>
 
       <!-- Date de l'opération -->
@@ -264,9 +276,11 @@
           </p-calendar>
           <label for="dateOperation">Date de l'opération <span class="text-red-500">*</span></label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('dateOperation')">
+        @if (isInvalid('dateOperation')) {
+        <small class="p-error">
           La date de l'opération est obligatoire
         </small>
+        }
       </div>
 
       <!-- Libellé -->
@@ -281,9 +295,11 @@
           </textarea>
           <label for="libelle">Libellé <span class="text-red-500">*</span></label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('libelle')">
+        @if (isInvalid('libelle')) {
+        <small class="p-error">
           Le libellé est obligatoire
         </small>
+        }
       </div>
 
       <!-- Observation -->
@@ -298,9 +314,11 @@
           </textarea>
           <label for="observation">Observation <span class="text-red-500">*</span></label>
         </span>
-        <small class="p-error" *ngIf="isInvalid('observation')">
+        @if (isInvalid('observation')) {
+        <small class="p-error">
           L'observation est obligatoire
         </small>
+        }
       </div>
 
     </div>

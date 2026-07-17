@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -123,18 +123,15 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private prefinancementService: PrefinancementService,
-    private messageService: MessageService,
-    private rapprochementService: ValidationService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private bankStateService: BankStateService
-
-  ) {}
+  private readonly prefinancementService = inject(PrefinancementService);
+  private readonly messageService = inject(MessageService);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Subscribe to parent route parameters to get banqueId
@@ -315,7 +312,6 @@ export class PrefinancementRemboursementsComponent implements OnInit, OnDestroy 
 
           },
           error: (error) => {
-            console.error('Erreur lors du validation du préfinancement:', error);
             this.isSubmitting = false;
           },
         });

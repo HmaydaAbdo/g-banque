@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, inject, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
@@ -125,18 +125,15 @@ export class LcnEncoursComponent implements OnInit {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private lcnService: LcnService,
-    private route: ActivatedRoute,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private fb: FormBuilder,
-    private rapprochementService: ValidationService,
-    private bankStateService: BankStateService
-  ) {
-  }
+  private readonly lcnService = inject(LcnService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly fb = inject(FormBuilder);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Get the bank ID from the route's parent parameter
@@ -273,7 +270,6 @@ export class LcnEncoursComponent implements OnInit {
       this.rapprochementService.lcnDecaissementToRapprochement(lcnTransactionRequest)
         .subscribe({
           next: (response) => {
-            console.log(response);
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
@@ -287,7 +283,6 @@ export class LcnEncoursComponent implements OnInit {
 
           },
           error: (error) => {
-            console.error('Erreur lors du validation du LCN:', error);
             this.isSubmitting = false;
           }
         });
@@ -323,10 +318,6 @@ export class LcnEncoursComponent implements OnInit {
         },
         error: (error: Error) => {
           this.loading = false;
-          console.error(
-            'Erreur lors du chargement des LCNs en cours:',
-            error
-          );
         },
       });
   }

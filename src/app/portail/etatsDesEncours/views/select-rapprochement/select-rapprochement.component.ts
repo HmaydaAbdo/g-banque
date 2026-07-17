@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -27,11 +27,9 @@ export class SelectRapprochementComponent implements OnInit {
   loading = true;
   error: string | null = null;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private rapprochementService: RapprochementService
-  ) {}
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly rapprochementService = inject(RapprochementService);
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {

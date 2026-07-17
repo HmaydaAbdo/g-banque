@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
+import {Component, inject, OnDestroy, OnInit, ViewChild} from "@angular/core";
 import {CommonModule, DatePipe, DecimalPipe} from "@angular/common";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {CardModule} from "primeng/card";
@@ -122,18 +122,15 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private factoringService: FactoringService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private rapprochementService: ValidationService,
-    private fb: FormBuilder,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private route: ActivatedRoute ,
-    private bankStateService: BankStateService
-
-  ) {}
+  private readonly factoringService = inject(FactoringService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly route = inject(ActivatedRoute);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Subscribe to parent route parameters to get banqueId
@@ -300,7 +297,6 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
 
           },
           error: (error) => {
-            console.error('Erreur lors du validation du factoring:', error);
             this.isSubmitting = false;
           },
         });

@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, inject, OnInit, ViewChild} from '@angular/core';
 import {ChequeResponseDto} from "../../../../../cheques/dtos/ChequeResponseDto";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
@@ -7,7 +7,7 @@ import {ChequeService} from "../../../../../cheques/services/ChequeService";
 import {ValidationService} from "../../../../services/validation/validation.service";
 import {ActivatedRoute, RouterLink} from "@angular/router";
 import {ConfirmationService, MessageService, PrimeTemplate} from "primeng/api";
-import {DatePipe, DecimalPipe, NgIf} from "@angular/common";
+import {DatePipe, DecimalPipe} from "@angular/common";
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
 import {DonneesComplementairesRapprochementDTO} from "../../../../dtos/DonneesComplementairesRapprochementDTO";
 import {ChequeTransactionRequest} from "../../../../dtos/cheques/ChequeTransactionRequest";
@@ -46,7 +46,6 @@ import {TableSelectionState} from "../../shared/table-selection.state";
     DropdownModule,
     InputTextModule,
     InputTextareaModule,
-    NgIf,
     PaginatorModule,
     PrimeTemplate,
     ReactiveFormsModule,
@@ -127,17 +126,15 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private chequeService: ChequeService,
-    private rapprochementService: ValidationService,
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private messageService: MessageService,
-    private ConfirmationService:ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private bankStateService: BankStateService
-  ) {}
+  private readonly chequeService = inject(ChequeService);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly ConfirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     this.route.parent!.paramMap.subscribe((params) => {
@@ -277,7 +274,6 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
       this.rapprochementService.chequeEncaissementToRapprochement(chequeTransactionRequest)
         .subscribe({
           next: (response) => {
-            console.log(response);
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
@@ -291,7 +287,6 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
 
           },
           error: (error) => {
-            console.error('Erreur lors du validation du chèque:', error);
             this.isSubmitting = false;
           }
         });
@@ -324,10 +319,6 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
         },
         error: (error: Error) => {
           this.loading = false;
-          console.error(
-            'Erreur lors du chargement des chèques en cours:',
-            error
-          );
         },
       });
   }

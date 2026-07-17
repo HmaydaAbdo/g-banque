@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
+import {Component, inject, OnDestroy, OnInit, ViewChild} from "@angular/core";
 import {CommonModule, DatePipe, DecimalPipe, NgFor} from "@angular/common";
 import {FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
 import {Table, TableLazyLoadEvent, TableModule} from "primeng/table";
@@ -122,18 +122,15 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private fraisBancaireService: FraisBancaireService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private route: ActivatedRoute,
-    private fb: FormBuilder,
-    private decimalPipe: DecimalPipe,
-    private rapprochementService: ValidationService,
-    private bankStateService: BankStateService
-
-  ) {}
+  private readonly fraisBancaireService = inject(FraisBancaireService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly bankStateService = inject(BankStateService);
 
 
 
@@ -224,7 +221,6 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
         },
         error: (err) => {
           this.loading = false;
-          console.error(err);
         }
       });
   }

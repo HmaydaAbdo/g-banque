@@ -40,12 +40,14 @@
     <span class="total-band__amount">{{ totalEncours | number:'1.2-2' }} MAD</span>
   </div>
 
-  <div class="flex justify-content-end align-items-center gap-2 mb-2" *ngIf="selectedCount > 0">
+  @if (selectedCount > 0) {
+  <div class="flex justify-content-end align-items-center gap-2 mb-2">
     <button type="button" pButton pRipple icon="pi pi-times" label="Effacer la sélection"
             class="p-button-text p-button-secondary" (click)="clearSelection()"></button>
     <button type="button" pButton pRipple icon="pi pi-check-square" label="Valider en lot ({{ selectedCount }})"
             class="p-button-success" (click)="displayLotModal = true"></button>
   </div>
+  }
 
   <div class="pb-8">
     <p-table
@@ -150,7 +152,7 @@
 <p-dialog header="Passage au rapprochement bancaire" [(visible)]="displayModal"
           [modal]="true" [style]="{width: '50vw'}"
           [draggable]="false" [resizable]="false"  [closable]="!isSubmitting">
-  <ng-container *ngIf="selectedLcn">
+  @if (selectedLcn) {
     <form [formGroup]="rapprochementForm" (ngSubmit)="confirmRapprochement()">
       <div class="grid p-fluid mt-3">
 
@@ -160,9 +162,11 @@
                         [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"></p-calendar>
             <label for="dateEmission">Date d'émission</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('dateEmission')">
+          @if (isInvalid('dateEmission')) {
+          <small class="p-error">
             La date d'émission est obligatoire
           </small>
+          }
         </div>
 
         <div class="col-12 md:col-6 mb-3">
@@ -172,9 +176,11 @@
                         placeholder="Sélectionner un taux" appendTo="body"></p-dropdown>
             <label for="tvaDeductible">TVA Collectée</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('tvaDeductible')">
+          @if (isInvalid('tvaDeductible')) {
+          <small class="p-error">
             La TVA est obligatoire
           </small>
+          }
         </div>
 
         <div class="col-12 md:col-6 mb-3">
@@ -182,9 +188,11 @@
             <p-calendar id="dateValeur" formControlName="dateValeur"  [showOnFocus]="false" [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body" dateFormat="dd/mm/yy" ></p-calendar>
             <label for="dateValeur">Date de valeur</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('dateValeur')">
+          @if (isInvalid('dateValeur')) {
+          <small class="p-error">
             La date de valeur est obligatoire
           </small>
+          }
         </div>
 
         <div class="col-12 md:col-6 mb-3">
@@ -193,9 +201,11 @@
                         [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay" appendTo="body"></p-calendar>
             <label for="dateOperation">Date de l'opération</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('dateOperation')">
+          @if (isInvalid('dateOperation')) {
+          <small class="p-error">
             La date de l'opération est obligatoire
           </small>
+          }
         </div>
 
         <div class="col-12 md:col-6 mb-3">
@@ -203,9 +213,11 @@
             <textarea id="observation" pInputTextarea formControlName="observation" rows="3"></textarea>
             <label for="observation">Observation</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('observation')">
+          @if (isInvalid('observation')) {
+          <small class="p-error">
             Observation est obligatoire
           </small>
+          }
         </div>
 
         <div class="col-12 md:col-6 mb-3">
@@ -213,9 +225,11 @@
             <textarea id="libelle" pInputTextarea formControlName="libelle" rows="3"></textarea>
             <label for="libelle">Libelle</label>
           </span>
-          <small class="p-error" *ngIf="isInvalid('libelle')">
+          @if (isInvalid('libelle')) {
+          <small class="p-error">
             Libelle est obligatoire
           </small>
+          }
         </div>
       </div>
       <p-divider></p-divider>
@@ -226,7 +240,7 @@
                   [loading]="isSubmitting"></p-button>
       </div>
     </form>
-  </ng-container>
+  }
 </p-dialog>
 
 <app-validation-lot-modal

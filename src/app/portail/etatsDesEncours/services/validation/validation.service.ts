@@ -1,4 +1,4 @@
-  import { Injectable } from '@angular/core';
+  import { inject, Injectable } from '@angular/core';
   import {LeasingTransactionRequest} from "../../dtos/leasing/LeasingTransactionRequest";
   import {HttpClient} from "@angular/common/http";
   import {environment} from "../../../../../environments/environment";
@@ -55,7 +55,7 @@
 
     private readonly baseUrl =  `${environment.apiUrl}rapprochement`
 
-    constructor(private http: HttpClient) { }
+    private readonly http = inject(HttpClient);
 
     /**
      * Envoie une transaction d'échéance leasing au backend pour validation

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -123,18 +123,15 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private droitConstateService: DroitConstateService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private rapprochementService: ValidationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private bankStateService: BankStateService
-
-  ) {}
+  private readonly droitConstateService = inject(DroitConstateService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Subscribe to parent route parameters to get banqueId
@@ -313,7 +310,6 @@ export class DroitConstateRemboursementsComponent implements OnInit, OnDestroy {
 
           },
           error: (error) => {
-            console.error('Erreur lors du validation du droit constaté:', error);
             this.isSubmitting = false;
           },
         });

@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewChild } from "@angular/core";
-import { CommonModule, DatePipe, DecimalPipe, NgFor } from "@angular/common";
+import { Component, inject, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Table, TableLazyLoadEvent, TableModule } from "primeng/table";
 import { DropdownModule } from "primeng/dropdown";
@@ -36,7 +36,7 @@ import { TableSelectionState } from "../../shared/table-selection.state";
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
-    BreadcrumbModule, ToastModule, TooltipModule, DatePipe, DecimalPipe, NgFor,
+    BreadcrumbModule, ToastModule, TooltipModule, DatePipe, DecimalPipe,
     InputTextModule, CardModule, DialogModule, ReactiveFormsModule, CalendarModule,
     InputTextareaModule, ConfirmDialogModule, ValidationLotModalComponent
   ],
@@ -104,17 +104,15 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private restitutionService: RestitutionService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private route: ActivatedRoute,
-    private fb: FormBuilder,
-    private rapprochementService: ValidationService,
-    private bankStateService: BankStateService
-  ) { }
+  private readonly restitutionService = inject(RestitutionService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     this.items = [
@@ -198,7 +196,6 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           this.loading = false;
-          console.error(err);
         }
       });
   }

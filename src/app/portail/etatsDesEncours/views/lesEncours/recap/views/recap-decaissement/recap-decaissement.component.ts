@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -62,12 +62,10 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
 
-  constructor(
-    private recapitulatifDecaissementService: RecapService,
-    private messageService: MessageService,
-    private route: ActivatedRoute,
-    private fb: FormBuilder
-  ) { }
+  private readonly recapitulatifDecaissementService = inject(RecapService);
+  private readonly messageService = inject(MessageService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
 
   ngOnInit(): void {
     this.initSearchForm();
@@ -144,7 +142,6 @@ export class RecapDecaissementComponent implements OnInit, OnDestroy {
             this.totalDebit = response.totalDebit;
           },
           error: (error) => {
-            console.error('Error fetching disbursements:', error);
             this.loading = false;
           }
         })

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {environment} from "../../../../../../../environments/environment";
 import {HttpClient, HttpParams} from "@angular/common/http";
 import {Observable} from "rxjs";
@@ -11,7 +11,7 @@ import {AgregatedRecapDto} from "../dtos/AgregatedRecapDto";
 export class RecapService {
   private readonly baseUrl = `${environment.apiUrl}recapitulatif`;
 
-  constructor(private http: HttpClient) { }
+  private readonly http = inject(HttpClient);
 
   /**
    * Retrieves a paginated and sortable list of outstanding disbursements for a specific bank.

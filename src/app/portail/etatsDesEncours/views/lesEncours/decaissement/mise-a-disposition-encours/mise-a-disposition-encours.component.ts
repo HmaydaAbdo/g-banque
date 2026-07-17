@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, inject, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {CommonModule, DatePipe, DecimalPipe} from '@angular/common';
 import {Table, TableLazyLoadEvent, TableModule} from 'primeng/table';
@@ -130,19 +130,15 @@ export class MiseADispositionEncoursComponent implements OnInit {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private miseADispositionService: MiseADispositionService,
-    private route: ActivatedRoute,
-    private messageService: MessageService,
-    private datePipe: DatePipe,
-    private rapprochementService: ValidationService,
-    private confirmationService: ConfirmationService,
-    private fb: FormBuilder,
-    private decimalPipe: DecimalPipe,
-    private bankStateService: BankStateService
-
-  ) {
-  }
+  private readonly miseADispositionService = inject(MiseADispositionService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly messageService = inject(MessageService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Get the bank ID from the route's parent parameter
@@ -277,7 +273,6 @@ export class MiseADispositionEncoursComponent implements OnInit {
       this.rapprochementService.miseAdispoDecaissementToRapprochement(miseADispositionTransactionRequest)
         .subscribe({
           next: (response) => {
-            console.log(response);
             this.messageService.add({
               severity: 'success',
               summary: 'Succès',
@@ -291,7 +286,6 @@ export class MiseADispositionEncoursComponent implements OnInit {
 
           },
           error: (error) => {
-            console.error('Erreur lors du validation de la mise à disposition:', error);
             this.isSubmitting = false;
           }
         });
@@ -328,10 +322,6 @@ export class MiseADispositionEncoursComponent implements OnInit {
         },
         error: (error: Error) => {
           this.loading = false;
-          console.error(
-            'Erreur lors du chargement des mises à disposition en cours:',
-            error
-          );
         },
       });
   }

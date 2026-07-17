@@ -3,30 +3,40 @@
 
 
   <!-- Loading -->
-  <div *ngIf="loading" class="select-rap-loading">
+  @if (loading) {
+  <div class="select-rap-loading">
     <p-progressSpinner strokeWidth="3" styleClass="w-2rem h-2rem"></p-progressSpinner>
     <span>Chargement…</span>
   </div>
+  }
 
   <!-- Error -->
-  <div *ngIf="!loading && error" class="select-rap-error">
+  @if (!loading && error) {
+  <div class="select-rap-error">
     <i class="pi pi-exclamation-circle"></i>
     <span>{{ error }}</span>
   </div>
+  }
 
   <!-- Cards container -->
-  <div *ngIf="!loading && !error && actifs" class="select-rap-body">
+  @if (!loading && !error && actifs) {
+  <div class="select-rap-body">
 
     <div class="select-rap-title">
       <span class="select-rap-title__label">Période de travail</span>
-      <span class="select-rap-title__sub" *ngIf="actifs!.provisoireId">2 périodes actives</span>
-      <span class="select-rap-title__sub" *ngIf="!actifs!.provisoireId">1 période active</span>
+      @if (actifs!.provisoireId) {
+      <span class="select-rap-title__sub">2 périodes actives</span>
+      }
+      @if (!actifs!.provisoireId) {
+      <span class="select-rap-title__sub">1 période active</span>
+      }
     </div>
 
     <div class="select-rap-cards">
 
       <!-- ─── Card CLOTURE_PROVISOIRE ─── -->
-      <div *ngIf="actifs!.provisoireId"
+      @if (actifs!.provisoireId) {
+      <div
            class="rap-card rap-card--provisoire"
            (click)="selectRapprochement(actifs!.provisoireId!)">
 
@@ -84,6 +94,7 @@
           </button>
         </div>
       </div>
+      }
 
       <!-- ─── Card EN_COURS ─── -->
       <div class="rap-card rap-card--encours"
@@ -146,5 +157,6 @@
 
     </div>
   </div>
+  }
 
 </div>

@@ -140,28 +140,44 @@
             <span class="font-medium text-900">{{ transaction.libelle }}</span>
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="transaction.debit !== 0" class="amount-badge debit-badge">
+            @if (transaction.debit !== 0) {
+            <span class="amount-badge debit-badge">
               {{ transaction.debit | number:'1.2-2' }}
             </span>
-            <span *ngIf="transaction.debit === 0" class="text-500">—</span>
+            }
+            @if (transaction.debit === 0) {
+            <span class="text-500">—</span>
+            }
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="transaction.credit !== 0" class="amount-badge credit-badge">
+            @if (transaction.credit !== 0) {
+            <span class="amount-badge credit-badge">
               {{ transaction.credit | number:'1.2-2' }}
             </span>
-            <span *ngIf="transaction.credit === 0" class="text-500">—</span>
+            }
+            @if (transaction.credit === 0) {
+            <span class="text-500">—</span>
+            }
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="transaction.tvaDeductible !== null" class="amount-badge credit-badge">
+            @if (transaction.tvaDeductible !== null) {
+            <span class="amount-badge credit-badge">
               {{ transaction.tvaDeductible | number:'1.2-2' }}
             </span>
-            <span *ngIf="transaction.tvaDeductible === null" class="text-500">—</span>
+            }
+            @if (transaction.tvaDeductible === null) {
+            <span class="text-500">—</span>
+            }
           </td>
           <td class="text-right white-space-nowrap">
-            <span *ngIf="transaction.tvaCollectee !== null" class="amount-badge debit-badge">
+            @if (transaction.tvaCollectee !== null) {
+            <span class="amount-badge debit-badge">
               {{ transaction.tvaCollectee | number:'1.2-2' }}
             </span>
-            <span *ngIf="transaction.tvaCollectee === null" class="text-500">—</span>
+            }
+            @if (transaction.tvaCollectee === null) {
+            <span class="text-500">—</span>
+            }
           </td>
           <td>
             <span class="text-700">{{ transaction.observation }}</span>
@@ -209,7 +225,8 @@
       </ng-template>
 
       <ng-template pTemplate="loadingbody">
-        <tr *ngFor="let i of [1,2,3,4,5,6]">
+        @for (i of [1,2,3,4,5,6]; track i) {
+        <tr>
           <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
           <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
           <td><p-skeleton width="5.5rem" height="1rem"></p-skeleton></td>
@@ -222,6 +239,7 @@
           <td><p-skeleton width="5rem" height="1.5rem" borderRadius="1rem"></p-skeleton></td>
           <td><p-skeleton width="4rem" height="1.75rem" borderRadius="var(--radius-md)"></p-skeleton></td>
         </tr>
+        }
       </ng-template>
 
     </p-table>
@@ -246,9 +264,11 @@
           [showOnFocus]="false"
           [inputStyle]="{'cursor':'pointer'}">
         </p-calendar>
-        <small *ngIf="editDateForm.get('dateOperation')?.invalid && editDateForm.get('dateOperation')?.touched" class="text-red-500">
+        @if (editDateForm.get('dateOperation')?.invalid && editDateForm.get('dateOperation')?.touched) {
+        <small class="text-red-500">
           La date d'opération est obligatoire
         </small>
+        }
       </div>
 
       <!-- Date de valeur -->
@@ -263,9 +283,11 @@
           [readonlyInput]="true"
           [inputStyle]="{'cursor':'pointer'}">
         </p-calendar>
-        <small *ngIf="editDateForm.get('dateValeur')?.invalid && editDateForm.get('dateValeur')?.touched" class="text-red-500">
+        @if (editDateForm.get('dateValeur')?.invalid && editDateForm.get('dateValeur')?.touched) {
+        <small class="text-red-500">
           La date de valeur est obligatoire
         </small>
+        }
       </div>
 
       <!-- TVA Déductible -->
@@ -275,9 +297,11 @@
                pInputText
                formControlName="tvaDeductible"
                class="w-full"/>
-        <small *ngIf="editDateForm.get('tvaDeductible')?.invalid && editDateForm.get('tvaDeductible')?.touched" class="text-red-500">
+        @if (editDateForm.get('tvaDeductible')?.invalid && editDateForm.get('tvaDeductible')?.touched) {
+        <small class="text-red-500">
           Ce champ est obligatoire
         </small>
+        }
       </div>
 
       <!-- TVA Collectée -->
@@ -287,9 +311,11 @@
                pInputText
                formControlName="tvaCollecte"
                class="w-full"/>
-        <small *ngIf="editDateForm.get('tvaCollecte')?.invalid && editDateForm.get('tvaCollecte')?.touched" class="text-red-500">
+        @if (editDateForm.get('tvaCollecte')?.invalid && editDateForm.get('tvaCollecte')?.touched) {
+        <small class="text-red-500">
           Ce champ est obligatoire
         </small>
+        }
       </div>
     </form>
 

@@ -1,7 +1,7 @@
-import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
+import {Component, inject, OnDestroy, OnInit, ViewChild} from "@angular/core";
 import {ButtonModule} from "primeng/button";
 import {CalendarModule} from "primeng/calendar";
-import {CommonModule, DatePipe, DecimalPipe, NgIf} from "@angular/common";
+import {CommonModule, DatePipe, DecimalPipe} from "@angular/common";
 import {DialogModule} from "primeng/dialog";
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
 import {RippleModule} from "primeng/ripple";
@@ -37,7 +37,6 @@ import { TableSelectionState } from "../../shared/table-selection.state";
     CalendarModule,
     DatePipe,
     DialogModule,
-    NgIf,
     ReactiveFormsModule,
     RippleModule,
     TableModule,
@@ -117,17 +116,15 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
     this.bankStateService.notifyValidation();
   }
 
-  constructor(
-    private factoringService: FactoringService,
-    private messageService: MessageService,
-    private confirmationService: ConfirmationService,
-    private datePipe: DatePipe,
-    private decimalPipe: DecimalPipe,
-    private rapprochementService: ValidationService,
-    private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private bankStateService: BankStateService
-  ) {}
+  private readonly factoringService = inject(FactoringService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly datePipe = inject(DatePipe);
+  private readonly decimalPipe = inject(DecimalPipe);
+  private readonly rapprochementService = inject(ValidationService);
+  private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly bankStateService = inject(BankStateService);
 
   ngOnInit(): void {
     // Subscribe to parent route parameters to get banqueId
@@ -299,7 +296,6 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
           this.bankStateService.notifyValidation();
         },
         error: (error) => {
-          console.error('Erreur lors du validation du factoring:', error);
           this.isSubmitting = false;
         },
       });
