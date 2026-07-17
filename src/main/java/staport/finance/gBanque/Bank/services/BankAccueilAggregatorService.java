@@ -12,7 +12,7 @@ import staport.finance.gBanque.LigneFonctionnelle.generalLignes.services.ILigneF
 import staport.finance.gBanque.moyensDePaiements.lcn.services.LcnService;
 import staport.finance.gBanque.moyensDePaiements.virements.service.VirementService;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
-import staport.finance.gBanque.rapprochement.services.RapprochementService;
+import staport.finance.gBanque.rapprochement.services.IRapprochementService;
 import staport.finance.gBanque.transactions.service.ITransactionService;
 
 import java.math.BigDecimal;
@@ -30,9 +30,9 @@ import static staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnell
  *
  * <p>Cette agrégation traverse 5 domaines (Bank, LigneFonctionnelle, Rapprochement, Lcn,
  * Virement). Elle est volontairement séparée de {@link BanqueServiceImpl} (qui ne porte que
- * le CRUD pur de Banque) pour éviter une dépendance circulaire : {@code RapprochementService}
+ * le CRUD pur de Banque) pour éviter une dépendance circulaire : {@code RapprochementServiceImpl}
  * dépend déjà de {@link IBanqueService}, donc {@code BanqueServiceImpl} ne peut jamais
- * dépendre de {@code RapprochementService} en retour. Cette classe est un consommateur
+ * dépendre de {@code IRapprochementService} en retour. Cette classe est un consommateur
  * terminal — rien ne dépend d'elle — donc aucun cycle.
  *
  * <p>Dépend exclusivement des Services des autres domaines, jamais de leurs Repository
@@ -50,7 +50,7 @@ public class BankAccueilAggregatorService {
     private final ITransactionService transactionService;
     private final ILigneFonctionnelleService ligneFonctionnelleService;
     private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
-    private final RapprochementService rapprochementService;
+    private final IRapprochementService rapprochementService;
     private final LcnService lcnService;
     private final VirementService virementService;
     private final BanqueMapper banqueMapper;
@@ -59,7 +59,7 @@ public class BankAccueilAggregatorService {
                                         ITransactionService transactionService,
                                         ILigneFonctionnelleService ligneFonctionnelleService,
                                         INatureLigneFonctionnelleService natureLigneFonctionnelleService,
-                                        RapprochementService rapprochementService,
+                                        IRapprochementService rapprochementService,
                                         LcnService lcnService,
                                         VirementService virementService,
                                         BanqueMapper banqueMapper) {

@@ -90,7 +90,7 @@ public class BanqueServiceImpl implements IBanqueService {
         Banque saved = banqueRepository.save(banque);
 
         // Le domaine Rapprochement crée son premier rapprochement EN_COURS en réaction à
-        // cet event — Bank ne dépend jamais de RapprochementService directement (celui-ci
+        // cet event — Bank ne dépend jamais de RapprochementServiceImpl directement (celui-ci
         // dépend déjà de IBanqueService, une dépendance dans l'autre sens créerait un cycle).
         // Le solde initial saisi à la création devient le soldeDebut de ce premier rapprochement.
         eventPublisher.publishEvent(new BanqueCreatedEvent(saved.getId(), request.soldeInitial()));

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.RelationTargetAuditMode;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -64,12 +63,9 @@ public class Transaction {
     private Banque banqueDePrelevement;
 
     /**
-     * {@code Rapprochement} n'est pas encore {@code @Audited} (module non sweepé) — la relation
-     * est donc exclue de l'historisation du côté cible pour éviter l'{@code EnversMappingException}
-     * au démarrage (voir mémoire {@code feedback_envers_audit_relations}). L'identifiant
-     * (colonne {@code rapprochement_id}) reste bien stocké dans la table d'audit de Transaction.
+     * {@code Rapprochement} est désormais {@code @Audited} (sweep Rapprochement) — aucune exclusion
+     * Envers nécessaire sur cette relation.
      */
-    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rapprochement_id", nullable = false)
     private Rapprochement rapprochement;

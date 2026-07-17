@@ -28,108 +28,28 @@ import java.util.List;
  * {@code banqueId} n'est obligatoire que pour les types dont l'endpoint unitaire l'exige
  * (Decompte, DroitConstate, Factoring, Prefinancement) ; ignoré pour les autres types.
  */
-public class BatchValidationRequestDto {
+public record BatchValidationRequestDto(
 
-    @NotNull(message = "La source de transaction est obligatoire")
-    private TransactionSource transactionSource;
+        @NotNull(message = "La source de transaction est obligatoire")
+        TransactionSource transactionSource,
 
-    private SensOperation sens;
+        SensOperation sens,
 
-    private Long banqueId;
+        Long banqueId,
 
-    @NotEmpty(message = "La liste des identifiants à valider est obligatoire et ne peut être vide")
-    private List<Long> ids;
+        @NotEmpty(message = "La liste des identifiants à valider est obligatoire et ne peut être vide")
+        List<Long> ids,
 
-    @NotNull(message = "La date de valeur est obligatoire")
-    private LocalDate dateValeur;
+        @NotNull(message = "La date de valeur est obligatoire")
+        LocalDate dateValeur,
 
-    @NotNull(message = "La date d'opération est obligatoire")
-    private LocalDate dateOperation;
+        @NotNull(message = "La date d'opération est obligatoire")
+        LocalDate dateOperation,
 
-    @NotNull(message = "La TVA déductible est obligatoire")
-    private Double tvaDeductible;
+        @NotNull(message = "La TVA déductible est obligatoire")
+        Double tvaDeductible,
 
-    @NotNull(message = "rapprochementId est obligatoire")
-    private Long rapprochementId;
+        @NotNull(message = "rapprochementId est obligatoire")
+        Long rapprochementId
 
-    public BatchValidationRequestDto() {
-    }
-
-    public TransactionSource getTransactionSource() {
-        return transactionSource;
-    }
-
-    public void setTransactionSource(TransactionSource transactionSource) {
-        this.transactionSource = transactionSource;
-    }
-
-    public SensOperation getSens() {
-        return sens;
-    }
-
-    public void setSens(SensOperation sens) {
-        this.sens = sens;
-    }
-
-    public Long getBanqueId() {
-        return banqueId;
-    }
-
-    public void setBanqueId(Long banqueId) {
-        this.banqueId = banqueId;
-    }
-
-    public List<Long> getIds() {
-        return ids;
-    }
-
-    public void setIds(List<Long> ids) {
-        this.ids = ids;
-    }
-
-    public LocalDate getDateValeur() {
-        return dateValeur;
-    }
-
-    public void setDateValeur(LocalDate dateValeur) {
-        this.dateValeur = dateValeur;
-    }
-
-    public LocalDate getDateOperation() {
-        return dateOperation;
-    }
-
-    public void setDateOperation(LocalDate dateOperation) {
-        this.dateOperation = dateOperation;
-    }
-
-    public Double getTvaDeductible() {
-        return tvaDeductible;
-    }
-
-    public void setTvaDeductible(Double tvaDeductible) {
-        this.tvaDeductible = tvaDeductible;
-    }
-
-    public Long getRapprochementId() {
-        return rapprochementId;
-    }
-
-    public void setRapprochementId(Long rapprochementId) {
-        this.rapprochementId = rapprochementId;
-    }
-
-    @Override
-    public String toString() {
-        return "BatchValidationRequestDto{" +
-                "transactionSource=" + transactionSource +
-                ", sens=" + sens +
-                ", banqueId=" + banqueId +
-                ", ids=" + ids +
-                ", dateValeur=" + dateValeur +
-                ", dateOperation=" + dateOperation +
-                ", tvaDeductible=" + tvaDeductible +
-                ", rapprochementId=" + rapprochementId +
-                '}';
-    }
-}
+) {}

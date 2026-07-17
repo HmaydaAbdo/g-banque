@@ -1,62 +1,88 @@
 package staport.finance.gBanque.rapprochement.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementActifsDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementRequestDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementSearchDto;
-import staport.finance.gBanque.rapprochement.services.RapprochementService;
+import staport.finance.gBanque.rapprochement.services.IRapprochementService;
 import staport.finance.gBanque.reports.enums.ReportType;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
 
+/**
+ * Contrôleur REST pour le module Rapprochement.
+ *
+ * <p>Injecte {@link IRapprochementService} (DIP — jamais la classe concrète). Aucune logique
+ * métier ni journalisation ici — les logs métier vivent exclusivement dans le Service
+ * (voir {@code conventions/logging.md}).
+ *
+ * <p>Autorisations (cf. {@code docs/rbac/rapprochement.md}) : lecture et actions de clôture
+ * réservées à Finance (membre ou directeur) ou {@code SYSTEM_ADMIN} — y compris la clôture
+ * définitive, qui verrouille irréversiblement la période : le garde-fou métier réel est le statut
+ * (transitions strictement ordonnées, voir le Service), pas une restriction de rôle supplémentaire.
+ */
+@Tag(name = "Rapprochement", description = "Gestion des périodes de rapprochement bancaire mensuel")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/rapprochement")
+@PreAuthorize(RapprochementController.FINANCE_OR_ADMIN)
 public class RapprochementController {
 
-    private final RapprochementService rapprochementService;
+    static final String FINANCE_OR_ADMIN =
+            "hasAuthority('SYSTEM_ADMIN') or hasAuthority('DEPT_Finance:MEMBER') or hasAuthority('DEPT_Finance:DIRECTOR')";
 
-    public RapprochementController(RapprochementService rapprochementService) {
+    private final IRapprochementService rapprochementService;
+
+    public RapprochementController(IRapprochementService rapprochementService) {
         this.rapprochementService = rapprochementService;
     }
 
-
-
-    // --- 0. GET actifs — snapshot EN_COURS + CLOTURE_PROVISOIRE pour une banque ---
+    @Operation(summary = "Snapshot des rapprochements actifs d'une banque")
     @GetMapping("/banque/{banqueId}/actifs")
     public ResponseEntity<RapprochementActifsDto> getActifs(@PathVariable Long banqueId) {
         return ResponseEntity.ok(rapprochementService.getActifs(banqueId));
     }
 
-    // --- 1. POST clôture provisoire — EN_COURS → CLOTURE_PROVISOIRE ---
+    @Operation(summary = "Clôturer provisoirement le rapprochement en cours")
+    @ApiResponse(responseCode = "400", description = "Une clôture provisoire existe déjà pour cette banque")
     @PostMapping("/cloturer")
     public ResponseEntity<RapprochementResponseDto> cloturerProvisoire(@RequestBody RapprochementRequestDto requestDto) {
-        return ResponseEntity.ok(rapprochementService.cloturerProvisoire(requestDto.getBanqueId()));
+        return ResponseEntity.ok(rapprochementService.cloturerProvisoire(requestDto.banqueId()));
     }
 
-    // --- 2. POST clôture définitive — CLOTURE_PROVISOIRE → CLOTURE_DEFINITIVE ---
+    @Operation(summary = "Clôturer définitivement un rapprochement provisoire")
+    @ApiResponse(responseCode = "400", description = "Le rapprochement n'est pas en clôture provisoire")
+    @ApiResponse(responseCode = "404", description = "Rapprochement introuvable")
     @PostMapping("/{id}/cloturer-definitivement")
     public ResponseEntity<RapprochementResponseDto> cloturerDefinitivement(@PathVariable Long id) {
         return ResponseEntity.ok(rapprochementService.cloturerDefinitivement(id));
     }
 
-    // --- 2. GET by ID (Récupération avec transactions paginées) ---
+    @Operation(summary = "Détail d'un rapprochement (transactions paginées)")
+    @ApiResponse(responseCode = "404", description = "Rapprochement introuvable")
     @GetMapping("/{id}")
     public ResponseEntity<RapprochementResponseDto> getRapprochementById(
             @PathVariable Long id,
             @ModelAttribute TransactionSearchDto searchDto,
             Pageable pageable) {
 
-        RapprochementResponseDto dto = rapprochementService.getRapprochementById(id,searchDto, pageable);
+        RapprochementResponseDto dto = rapprochementService.getRapprochementById(id, searchDto, pageable);
 
         return ResponseEntity.ok(dto);
     }
 
+    @Operation(summary = "Rechercher des rapprochements")
     @GetMapping
     public ResponseEntity<Page<RapprochementResponseDto>> searchRapprochements(
             RapprochementSearchDto searchDto,
@@ -68,13 +94,15 @@ public class RapprochementController {
         return ResponseEntity.ok(rapprochementPage);
     }
 
+    @Operation(summary = "Télécharger le rapport PDF d'un rapprochement")
+    @ApiResponse(responseCode = "404", description = "Rapprochement introuvable")
     @GetMapping("/{id}/report/pdf")
     public ResponseEntity<byte[]> downloadRapprochementReport(
             @PathVariable Long id,
             @RequestParam(defaultValue = "FINANCE") ReportType reportType) {
 
         // 1. Générer le contenu du rapport (byte[])
-        byte[] pdfContent = rapprochementService.generateRapprochementPdf(id,reportType);
+        byte[] pdfContent = rapprochementService.generateRapprochementPdf(id, reportType);
 
         // 2. Définir le nom du fichier pour le téléchargement
         String filename = "Rapport_Rapprochement_" + id + ".pdf";

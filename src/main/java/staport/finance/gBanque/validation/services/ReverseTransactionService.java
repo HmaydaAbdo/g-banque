@@ -15,7 +15,10 @@ import staport.finance.gBanque.decomptes.entities.Decompte;
 import staport.finance.gBanque.decomptes.repositories.DecompteRepository;
 import staport.finance.gBanque.droitConstate.entities.DroitConstate;
 import staport.finance.gBanque.droitConstate.repositories.DroitConstateRepository;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
+import staport.finance.gBanque.exception.customExceptions.ReversalException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.factoring.entities.Factoring;
 import staport.finance.gBanque.factoring.repository.FactoringRepository;
@@ -130,10 +133,11 @@ public class ReverseTransactionService {
      * Annule une transaction en inversant ses effets
      *
      * @param transactionId ID de la transaction à annuler
-     * @throws Exception si l'annulation échoue
+     * @throws ReversalException si le type de transaction n'est pas supporté pour l'annulation
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public void annulerTransaction(Long transactionId) throws Exception {
+    @AuditableAction(operation = AuditOperation.DELETE, entity = Transaction.class)
+    public void annulerTransaction(Long transactionId) {
         log.info("Début de l'annulation de la transaction ID: {}", transactionId);
 
         // 1. Récupérer la transaction
@@ -172,7 +176,7 @@ public class ReverseTransactionService {
      * Remet l'entité source à son état initial selon le type de transaction
      */
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    private void resetEntiteSource(Transaction transaction) throws Exception {
+    private void resetEntiteSource(Transaction transaction) {
         Long referentId = transaction.getReferent();
         TransactionSource source = transaction.getTransactionSource();
 
@@ -237,13 +241,13 @@ public class ReverseTransactionService {
                 resetImpayee(referentId);
                 break;
             default:
-                throw new Exception("Type de transaction non supporté pour l'annulation: " + source);
+                throw new ReversalException("Type de transaction non supporté pour l'annulation: " + source);
         }
     }
 
     // ========== Méthodes de reset pour chaque type d'entité ==========
 
-    private void resetLeasing(Long echeanceId) throws Exception {
+    private void resetLeasing(Long echeanceId) {
         EcheanceLeasing echeance = echeanceLeasingRepository.findById(echeanceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Echeance leasing introuvable: " + echeanceId));
 
@@ -254,7 +258,7 @@ public class ReverseTransactionService {
         log.debug("Échéance leasing {} remise à NON_PAYE", echeanceId);
     }
 
-    private void resetCMT(Long echeanceId) throws Exception {
+    private void resetCMT(Long echeanceId) {
         EcheanceCMT echeance = echeanceCMTRepository.findById(echeanceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Echeance CMT introuvable: " + echeanceId));
 
@@ -265,7 +269,7 @@ public class ReverseTransactionService {
         log.debug("Échéance CMT {} remise à NON_PAYE", echeanceId);
     }
 
-    private void resetCheque(Long chequeId) throws Exception {
+    private void resetCheque(Long chequeId) {
         Cheque cheque = chequeRepository.findById(chequeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cheque introuvable: " + chequeId));
 
@@ -276,7 +280,7 @@ public class ReverseTransactionService {
         log.debug("Chèque {} remis à actif", chequeId);
     }
 
-    private void resetLcn(Long lcnId) throws Exception {
+    private void resetLcn(Long lcnId) {
         Lcn lcn = lcnRepository.findById(lcnId)
                 .orElseThrow(() -> new ResourceNotFoundException("LCN introuvable: " + lcnId));
 
@@ -287,7 +291,7 @@ public class ReverseTransactionService {
         log.debug("LCN {} remis à actif", lcnId);
     }
 
-    private void resetVirement(Long virementId) throws Exception {
+    private void resetVirement(Long virementId) {
         Virement virement = virementRepository.findById(virementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Virement introuvable: " + virementId));
 
@@ -298,7 +302,7 @@ public class ReverseTransactionService {
         log.debug("Virement {} remis à actif", virementId);
     }
 
-    private void resetMiseADisposition(Long miseADispoId) throws Exception {
+    private void resetMiseADisposition(Long miseADispoId) {
         MiseADisposition miseADispo = miseADispositionRepository.findById(miseADispoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mise à disposition introuvable: " + miseADispoId));
 
@@ -309,7 +313,7 @@ public class ReverseTransactionService {
         log.debug("Mise à disposition {} remise à actif", miseADispoId);
     }
 
-    private void resetPrefinancement(Long prefinancementId) throws Exception {
+    private void resetPrefinancement(Long prefinancementId) {
         Prefinancement prefinancement = prefinancementRepository.findById(prefinancementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Préfinancement introuvable: " + prefinancementId));
 
@@ -320,7 +324,7 @@ public class ReverseTransactionService {
         log.debug("Préfinancement {} remis à NON_PAYE", prefinancementId);
     }
 
-    private void resetDroitConstate(Long droitConstateId) throws Exception {
+    private void resetDroitConstate(Long droitConstateId) {
         DroitConstate droitConstate = droitConstateRepository.findById(droitConstateId)
                 .orElseThrow(() -> new ResourceNotFoundException("Droit constaté introuvable: " + droitConstateId));
 
@@ -331,7 +335,7 @@ public class ReverseTransactionService {
         log.debug("Droit constaté {} remis à NON_PAYE", droitConstateId);
     }
 
-    private void resetDecompte(Long decompteId) throws Exception {
+    private void resetDecompte(Long decompteId) {
         Decompte decompte = decompteRepository.findById(decompteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Décompte introuvable: " + decompteId));
 
@@ -342,7 +346,7 @@ public class ReverseTransactionService {
         log.debug("Décompte {} remis à NON_PAYE", decompteId);
     }
 
-    private void resetCommission(Long commissionId) throws Exception {
+    private void resetCommission(Long commissionId) {
         Commission commission = commisionRepository.findById(commissionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commission introuvable: " + commissionId));
 
@@ -353,7 +357,7 @@ public class ReverseTransactionService {
         log.debug("Commission {} remise à NON_PAYE", commissionId);
     }
 
-    private void resetPrelevement(Long prelevementId) throws Exception {
+    private void resetPrelevement(Long prelevementId) {
         Prelevement prelevement = prelevementRepository.findById(prelevementId)
                 .orElseThrow(() -> new ResourceNotFoundException("Prélèvement introuvable: " + prelevementId));
 
@@ -365,7 +369,7 @@ public class ReverseTransactionService {
     }
 
 
-    private void resetFraisBancaire(Long fraisBancaireId) throws Exception {
+    private void resetFraisBancaire(Long fraisBancaireId) {
         FraisBancaire fraisBancaire = fraisBancaireRepository.findById(fraisBancaireId)
                 .orElseThrow(() -> new ResourceNotFoundException("Frais bancaire introuvable: " + fraisBancaireId));
 
@@ -376,7 +380,7 @@ public class ReverseTransactionService {
         log.debug("Frais bancaire {} remis à NON_PAYE", fraisBancaireId);
     }
 
-    private void resetFactoring(Long factoringId) throws Exception {
+    private void resetFactoring(Long factoringId) {
         Factoring factoring = factoringRepository.findById(factoringId)
                 .orElseThrow(() -> new ResourceNotFoundException("Factoring introuvable: " + factoringId));
 
@@ -387,7 +391,7 @@ public class ReverseTransactionService {
         log.debug("Factoring {} remis à NON_PAYE", factoringId);
     }
 
-    private void resetImpotEtTaxe(Long impotEtTaxeId) throws Exception {
+    private void resetImpotEtTaxe(Long impotEtTaxeId) {
         ImpotEtTaxe impotEtTaxe = impotEtTaxeRepository.findById(impotEtTaxeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Impôt/Taxe introuvable: " + impotEtTaxeId));
 
@@ -398,7 +402,7 @@ public class ReverseTransactionService {
         log.debug("Impôt/Taxe {} remis(e) à PREVU", impotEtTaxeId);
     }
 
-    private void resetRestitution(Long restitutionId) throws Exception {
+    private void resetRestitution(Long restitutionId) {
         Restitution restitution = restitutionRepository.findById(restitutionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Restitution introuvable: " + restitutionId));
 
@@ -409,7 +413,7 @@ public class ReverseTransactionService {
         log.debug("Restitution {} remise à PREVU", restitutionId);
     }
 
-    private void resetImpayee(Long impayeeId) throws Exception {
+    private void resetImpayee(Long impayeeId) {
         Impayee impayee = impayeeRepository.findById(impayeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Impayée introuvable: " + impayeeId));
 
@@ -420,7 +424,7 @@ public class ReverseTransactionService {
         log.debug("Impayée {} remise à PREVU", impayeeId);
     }
 
-    private void resetOperationErrone(Long operationErroneId) throws Exception {
+    private void resetOperationErrone(Long operationErroneId) {
         OperationErrone operationErrone = operationErroneRepository.findById(operationErroneId)
                 .orElseThrow(() -> new ResourceNotFoundException("Operation erroné introuvable: " + operationErroneId));
 
@@ -431,7 +435,7 @@ public class ReverseTransactionService {
         log.debug("Operation erroné {} remis à PREVU", operationErroneId);
     }
 
-    private void resetVirementInternational(Long virementInternationalId) throws Exception {
+    private void resetVirementInternational(Long virementInternationalId) {
         VirementInternational virementInternational = virementInternationalRepository.findById(virementInternationalId)
                 .orElseThrow(() -> new ResourceNotFoundException("Virement international introuvable: " + virementInternationalId));
 

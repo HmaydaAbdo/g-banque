@@ -18,7 +18,7 @@ import java.util.Map;
  * <p>Toute communication inter-domaines avec Transaction passe exclusivement par cette interface
  * (jamais {@code TransactionRepository} injecté directement — voir {@code architecture.md},
  * section "Encapsulation des domaines"). La section dédiée au domaine Rapprochement expose les
- * agrégats et recherches dont {@code RapprochementService}/{@code SoldeCascadeService} ont besoin.
+ * agrégats et recherches dont {@code RapprochementServiceImpl}/{@code SoldeCascadeService} ont besoin.
  */
 public interface ITransactionService {
 

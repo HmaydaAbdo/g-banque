@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.events.BanqueCreatedEvent;
 import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.exception.customExceptions.ValidationException;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementActifsDto;
@@ -37,7 +39,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class RapprochementService {
+public class RapprochementServiceImpl implements IRapprochementService {
 
     private final RapprochementRepository rapprochementRepository;
     private final ITransactionService transactionService;
@@ -45,7 +47,7 @@ public class RapprochementService {
     private final RapprochementMapper rapprochementMapper;
     private final StaportPdfReportService pdfReportService;
 
-    public RapprochementService(
+    public RapprochementServiceImpl(
             RapprochementRepository rapprochementRepository,
             ITransactionService transactionService,
             IBanqueService banqueService,
@@ -65,10 +67,11 @@ public class RapprochementService {
      * Paginated search. Aggregates are batch-fetched in a single extra query
      * to avoid N+1 — one DB call for the page, one for all aggregates on that page.
      */
+    @Override
     @Transactional(readOnly = true)
     public Page<RapprochementResponseDto> searchRapprochements(RapprochementSearchDto searchDto, Pageable pageable) {
 
-        Specification<Rapprochement> spec = RapprochementSpecifications.bySearchDto(searchDto);
+        Specification<Rapprochement> spec = RapprochementSpecifications.searchByCriteria(searchDto);
         Page<Rapprochement> page = rapprochementRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         if (page.isEmpty()) {
@@ -86,6 +89,7 @@ public class RapprochementService {
 
     // ── Detail ───────────────────────────────────────────────────────────────
 
+    @Override
     @Transactional(readOnly = true)
     public RapprochementResponseDto getRapprochementById(Long id, TransactionSearchDto searchDto, Pageable pageable) {
 
@@ -100,8 +104,7 @@ public class RapprochementService {
         RapprochementAggregates agg = fetchAggregates(id);
 
         RapprochementResponseDto dto = rapprochementMapper.toResponseDto(rapprochement, agg);
-        dto.setTransactions(transactionDtos);
-        return dto;
+        return dto.withTransactions(transactionDtos);
     }
 
     // ── Report data (PDF) ────────────────────────────────────────────────────
@@ -118,8 +121,7 @@ public class RapprochementService {
         RapprochementAggregates agg = fetchAggregates(rapprochementId);
 
         ReportDto dto = rapprochementMapper.toReportDto(rapprochement, agg);
-        dto.setTransactions(transactionDtos);
-        return dto;
+        return dto.withTransactions(transactionDtos);
     }
 
     // ── Clôture provisoire ────────────────────────────────────────────────────
@@ -131,7 +133,9 @@ public class RapprochementService {
      *   1. EN_COURS must exist for this bank          → 404 otherwise
      *   2. No CLOTURE_PROVISOIRE may exist already    → 400 (business rule: max 1 per bank)
      */
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Rapprochement.class)
     public RapprochementResponseDto cloturerProvisoire(Long banqueId) {
 
         // Guard 1 — EN_COURS must exist
@@ -176,7 +180,9 @@ public class RapprochementService {
      *   1. Rapprochement must exist by ID             → 404 otherwise
      *   2. Its statut must be CLOTURE_PROVISOIRE       → 400 otherwise
      */
+    @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = Rapprochement.class)
     public RapprochementResponseDto cloturerDefinitivement(Long rapprochementId) {
 
         // Guard 1 — must exist
@@ -199,6 +205,7 @@ public class RapprochementService {
 
     // ── PDF generation ───────────────────────────────────────────────────────
 
+    @Override
     @Transactional(readOnly = true)
     public byte[] generateRapprochementPdf(Long rapprochementId, ReportType reportType) {
         ReportDto reportDto = getReportDataById(rapprochementId);
@@ -221,6 +228,7 @@ public class RapprochementService {
      * @return DTO with mandatory EN_COURS data and optional provisoire data
      * @throws ResourceNotFoundException if no EN_COURS rapprochement exists
      */
+    @Override
     @Transactional(readOnly = true)
     public RapprochementActifsDto getActifs(Long banqueId) {
 
@@ -309,7 +317,7 @@ public class RapprochementService {
      * Réagit à la création d'une banque pour lui ouvrir son premier rapprochement.
      * Découple totalement Bank de Rapprochement : {@code BanqueServiceImpl} publie
      * l'event via {@code ApplicationEventPublisher} (bean du framework), il n'a jamais
-     * besoin d'injecter {@code RapprochementService} — qui dépend déjà de
+     * besoin d'injecter {@code IRapprochementService} — qui dépend déjà de
      * {@code IBanqueService}, une dépendance dans l'autre sens créerait un cycle Spring.
      */
     @EventListener
@@ -322,6 +330,7 @@ public class RapprochementService {
      * solde initial saisi à la création de la banque comme solde de début.
      */
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = Rapprochement.class)
     public Rapprochement createInitialRapprochement(Long banqueId, BigDecimal soldeInitial) {
         Rapprochement initial = new Rapprochement();
         initial.setBanque(banqueService.findOrThrow(banqueId));
@@ -332,12 +341,14 @@ public class RapprochementService {
     }
 
     /** Tous les rapprochements actuellement EN_COURS, toutes banques confondues. */
+    @Override
     @Transactional(readOnly = true)
     public List<Rapprochement> findAllEnCours() {
         return rapprochementRepository.findAllByStatut(StatutRapprochement.EN_COURS);
     }
 
     /** Le rapprochement EN_COURS d'une banque donnée, s'il existe. */
+    @Override
     @Transactional(readOnly = true)
     public Optional<Rapprochement> findEnCoursByBanqueId(Long banqueId) {
         return rapprochementRepository.findByBanqueIdAndStatut(banqueId, StatutRapprochement.EN_COURS);

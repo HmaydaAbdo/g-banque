@@ -115,17 +115,17 @@ public class StaportPdfReportService {
                         headerTable.setWidths(new float[]{3f, 2f, 3f});
                         headerTable.setSpacingAfter(10);
 
-                        PdfPCell bankCell = new PdfPCell(new Phrase("Banque: " + dto.getBanqueNom(), BOLD_FONT));
+                        PdfPCell bankCell = new PdfPCell(new Phrase("Banque: " + dto.banqueNom(), BOLD_FONT));
                         bankCell.setBorder(Rectangle.NO_BORDER);
                         bankCell.setPadding(3);
                         headerTable.addCell(bankCell);
 
-                        PdfPCell dateCell = new PdfPCell(new Phrase("Date: " + dto.getDateRapprochement().format(DATE_FORMATTER), BOLD_FONT));
+                        PdfPCell dateCell = new PdfPCell(new Phrase("Date: " + dto.dateRapprochement().format(DATE_FORMATTER), BOLD_FONT));
                         dateCell.setBorder(Rectangle.NO_BORDER);
                         dateCell.setPadding(3);
                         headerTable.addCell(dateCell);
 
-                        PdfPCell soldeDebutCell = new PdfPCell(new Phrase("Solde Initial: " + formatCurrency(dto.getSoldeDebut()), BOLD_FONT));
+                        PdfPCell soldeDebutCell = new PdfPCell(new Phrase("Solde Initial: " + formatCurrency(dto.soldeDebut()), BOLD_FONT));
                         soldeDebutCell.setBorder(Rectangle.NO_BORDER);
                         soldeDebutCell.setPadding(3);
                         soldeDebutCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -133,8 +133,8 @@ public class StaportPdfReportService {
 
                         document.add(headerTable);
 
-                        if (dto.getTransactions() != null && !dto.getTransactions().isEmpty()) {
-                            generateTransactionsTable(document, dto.getTransactions(), isFinance);
+                        if (dto.transactions() != null && !dto.transactions().isEmpty()) {
+                            generateTransactionsTable(document, dto.transactions(), isFinance);
                         } else {
                             document.add(new Paragraph("Aucune transaction trouvée pour cette période.", SUBTITLE_FONT));
                         }
@@ -145,10 +145,10 @@ public class StaportPdfReportService {
                             totalsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
                             totalsTable.setWidths(new float[]{3f, 2f, 3f, 2f});
 
-                            addTotalCell(totalsTable, "TOTAL DÉBIT :", formatCurrency(dto.getTotalDebit()));
-                            addTotalCell(totalsTable, "TOTAL CRÉDIT :", formatCurrency(dto.getTotalCredit()));
-                            addTotalCell(totalsTable, "TOTAL TVA DÉDUCTIBLE :", formatCurrency(dto.getTvaDeductible()));
-                            addTotalCell(totalsTable, "TOTAL TVA COLLECTÉE :", formatCurrency(dto.getTvaCollectee()));
+                            addTotalCell(totalsTable, "TOTAL DÉBIT :", formatCurrency(dto.totalDebit()));
+                            addTotalCell(totalsTable, "TOTAL CRÉDIT :", formatCurrency(dto.totalCredit()));
+                            addTotalCell(totalsTable, "TOTAL TVA DÉDUCTIBLE :", formatCurrency(dto.tvaDeductible()));
+                            addTotalCell(totalsTable, "TOTAL TVA COLLECTÉE :", formatCurrency(dto.tvaCollectee()));
 
                             document.add(totalsTable);
                         } else {
@@ -157,8 +157,8 @@ public class StaportPdfReportService {
                             totalsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
                             totalsTable.setWidths(new float[]{3f, 2f});
 
-                            addTotalCell(totalsTable, "TOTAL DÉBIT :", formatCurrency(dto.getTotalDebit()));
-                            addTotalCell(totalsTable, "TOTAL CRÉDIT :", formatCurrency(dto.getTotalCredit()));
+                            addTotalCell(totalsTable, "TOTAL DÉBIT :", formatCurrency(dto.totalDebit()));
+                            addTotalCell(totalsTable, "TOTAL CRÉDIT :", formatCurrency(dto.totalCredit()));
 
                             document.add(totalsTable);
                         }
@@ -169,8 +169,8 @@ public class StaportPdfReportService {
                             finalTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
                             finalTable.setWidths(new float[]{3f, 2f, 3f, 2f});
 
-                            addTotalCell(finalTable, "SOLDE FINAL :", formatCurrency(dto.getSoldeFin()));
-                            addTotalCell(finalTable, "TVA DUE :", formatCurrency(dto.getTvaDue()));
+                            addTotalCell(finalTable, "SOLDE FINAL :", formatCurrency(dto.soldeFin()));
+                            addTotalCell(finalTable, "TVA DUE :", formatCurrency(dto.tvaDue()));
 
                             document.add(finalTable);
                         } else {
@@ -179,7 +179,7 @@ public class StaportPdfReportService {
                             finalTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
                             finalTable.setWidths(new float[]{3f, 2f});
 
-                            addTotalCell(finalTable, "SOLDE FINAL :", formatCurrency(dto.getSoldeFin()));
+                            addTotalCell(finalTable, "SOLDE FINAL :", formatCurrency(dto.soldeFin()));
 
                             document.add(finalTable);
                         }

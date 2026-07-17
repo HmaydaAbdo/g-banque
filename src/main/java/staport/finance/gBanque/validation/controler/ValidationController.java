@@ -1,6 +1,8 @@
 package staport.finance.gBanque.validation.controler;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -73,6 +75,7 @@ import staport.finance.gBanque.validation.dtos.lot.BatchValidationResponseDto;
 import staport.finance.gBanque.validation.services.BatchValidationService;
 import staport.finance.gBanque.validation.services.ReverseTransactionService;
 
+@Tag(name = "Validation", description = "Validation (rapprochement) des opérations de tous les modules source")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/rapprochement")
@@ -166,6 +169,7 @@ public class ValidationController {
      * → ... → TransactionService → LeasingValidationService, ce dernier étant déjà appelé par
      * TransactionService pour {@code syncEcheanceFromTransaction}).
      */
+    @Operation(summary = "Valider une échéance de leasing")
     @PostMapping("/process/echeance-leasing")
     public ResponseEntity<LeasingTransactionResponseDTO> processLeasingTransaction(
             @Valid @RequestBody LeasingTransactionRequestDTO requestDto) {
@@ -184,6 +188,7 @@ public class ValidationController {
      * que ce dernier n'ait besoin d'injecter {@code CreditMoyenTermeService} — même précaution que pour
      * le Leasing (cf. Javadoc de {@code processLeasingTransaction} ci-dessus).
      */
+    @Operation(summary = "Valider une échéance CMT")
     @PostMapping("/process/echeance-cmt")
     public ResponseEntity<CmtTransactionResponseDto> processCmtTransaction(@Valid @RequestBody CmtTransactionRequestDto requestDto) {
         CreditMoyenTerme creditMoyenTerme = creditMoyenTermeService.findOrThrow(requestDto.creditMoyenTermeId());
@@ -197,6 +202,7 @@ public class ValidationController {
      * mise à disposition REGLE. Délègue au {@code MiseADispositionValidationService} du module
      * miseADisposition (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider une mise à disposition (décaissement)")
     @PostMapping("/process/decaissement/mise-a-disposition")
     public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionDecaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) {
         MiseAdispositionTransactionResponseDto responseDto = miseADispositionValidationService.processMiseAdispositionDecaissementTransaction(requestDto);
@@ -208,6 +214,7 @@ public class ValidationController {
      * mise à disposition REGLE. Délègue au {@code MiseADispositionValidationService} du module
      * miseADisposition (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider une mise à disposition (encaissement)")
     @PostMapping("/process/encaissement/mise-a-disposition")
     public ResponseEntity<MiseAdispositionTransactionResponseDto> processMiseAdispositionEncaissementTransaction(@Valid @RequestBody MiseAdispositionTransactionRequestDto requestDto) {
         MiseAdispositionTransactionResponseDto responseDto = miseADispositionValidationService.processMiseAdispositionEncaissementTransaction(requestDto);
@@ -220,6 +227,7 @@ public class ValidationController {
      * Valide un virement de décaissement : crée la transaction bancaire et marque le virement REGLE.
      * Délègue au {@code VirementValidationService} du module virements (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider un virement (décaissement)")
     @PostMapping("/process/decaissement/virement")
     public ResponseEntity<VirementTransactionResponseDto> processVirementDecaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) {
         VirementTransactionResponseDto responseDto = virementValidationService.processVirementDecaissementTransaction(requestDto);
@@ -230,6 +238,7 @@ public class ValidationController {
      * Valide un virement d'encaissement : crée la transaction bancaire et marque le virement REGLE.
      * Délègue au {@code VirementValidationService} du module virements (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider un virement (encaissement)")
     @PostMapping("/process/encaissement/virement")
     public ResponseEntity<VirementTransactionResponseDto> processVirementEncaissementTransaction(@Valid @RequestBody VirementTransactionRequestDto requestDto) {
         VirementTransactionResponseDto responseDto = virementValidationService.processVirementEncaissementTransaction(requestDto);
@@ -241,6 +250,7 @@ public class ValidationController {
      * Valide un chèque de décaissement : crée la transaction bancaire et marque le chèque REGLE.
      * Délègue au {@code ChequeValidationService} du module cheques (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider un chèque (décaissement)")
     @PostMapping("/process/decaissement/cheque")
     public ResponseEntity<ChequeTransactionResponseDto> processDecaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) {
         ChequeTransactionResponseDto responseDto = chequeValidationService.processChequeDecaissementTransaction(requestDto);
@@ -251,6 +261,7 @@ public class ValidationController {
      * Valide un chèque d'encaissement : crée la transaction bancaire et marque le chèque REGLE.
      * Délègue au {@code ChequeValidationService} du module cheques (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider un chèque (encaissement)")
     @PostMapping("/process/encaissement/cheque")
     public ResponseEntity<ChequeTransactionResponseDto> processEncaissementChequeTransaction(@Valid @RequestBody ChequeTransactionRequest requestDto) {
         ChequeTransactionResponseDto responseDto = chequeValidationService.processChequeEncaissementTransaction(requestDto);
@@ -261,6 +272,7 @@ public class ValidationController {
      * Valide un LCN de décaissement : crée la transaction bancaire et marque le LCN REGLE.
      * Délègue au {@code LcnValidationService} du module lcn (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider un LCN (décaissement)")
     @PostMapping("/process/decaissement/lcn")
     public ResponseEntity<LcnTransactionResponseDto> processDecaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) {
         LcnTransactionResponseDto responseDto = lcnValidationService.processLcnDecaissementTransaction(requestDto);
@@ -271,6 +283,7 @@ public class ValidationController {
      * Valide un LCN d'encaissement : crée la transaction bancaire et marque le LCN REGLE.
      * Délègue au {@code LcnValidationService} du module lcn (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider un LCN (encaissement)")
     @PostMapping("/process/encaissement/lcn")
     public ResponseEntity<LcnTransactionResponseDto> processEncaissementLcnTransaction(@Valid @RequestBody LcnTransactionRequest requestDto) {
         LcnTransactionResponseDto responseDto = lcnValidationService.processLcnEncaissementTransaction(requestDto);
@@ -284,6 +297,7 @@ public class ValidationController {
      * @param requestDto Le DTO de la requête de transaction de prefinancement.
      * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
      */
+    @Operation(summary = "Valider un préfinancement")
     @PostMapping("/process/prefinancement")
     public ResponseEntity<PrefinancementTransactionResponse> processPrefiTransaction(@Valid @RequestBody PrefinancementTransactionRequest requestDto) {
         PrefinancementTransactionResponse responseDto = prefinancementValidationService.processPrefinancementTransaction(requestDto);
@@ -297,12 +311,14 @@ public class ValidationController {
      * @param requestDto Le DTO de la requête de transaction de droit constate.
      * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
      */
+    @Operation(summary = "Valider un droit constaté")
     @PostMapping("/process/droit-constate")
     public ResponseEntity<DroitConstateTransactionResponse> processDroitConstqteTransaction(@Valid @RequestBody DroitConstateTransactionRequest requestDto) {
         DroitConstateTransactionResponse responseDto = droitConstateValidationService.processDroitConstateTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Valider un factoring")
     @PostMapping("/process/factoring")
     public ResponseEntity<FactoringTransactionResponse> processFactoringTransaction(@Valid @RequestBody FactoringTransactionRequest requestDto) {
         FactoringTransactionResponse responseDto = factoringValidationService.processFactoringTransaction(requestDto);
@@ -316,6 +332,7 @@ public class ValidationController {
      * @param requestDto Le DTO de la requête de transaction de décompte.
      * @return Une ResponseEntity contenant le DTO de réponse de la transaction et un statut HTTP 201 Created.
      */
+    @Operation(summary = "Valider un décompte")
     @PostMapping("/process/decompte")
     public ResponseEntity<DecompteTransactionResponseDto> processDecompteToTransaction(@Valid @RequestBody DecompteTransactionRequestDto requestDto) {
         DecompteTransactionResponseDto responseDto = decompteValidationService.processDecompteTransaction(requestDto);
@@ -326,23 +343,27 @@ public class ValidationController {
      * Valide une commission : crée la transaction bancaire et marque la commission PAYE.
      * Délègue au {@code CommissionValidationService} du module commision.
      */
+    @Operation(summary = "Valider une commission")
     @PostMapping("/process/commission")
     public ResponseEntity<CommissionTransactionResponseDto> processCommissionToTransaction(@Valid @RequestBody CommissionTransactionRequestDto requestDto) {
         CommissionTransactionResponseDto responseDto = commissionValidationService.processCommissionTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Valider un agios")
     @PostMapping("/process/agios")
-    public ResponseEntity<AgiosTransactionResponse> processAgiosToTransaction(@Valid @RequestBody AgiosValidationRequest requestDto) throws Exception {
+    public ResponseEntity<AgiosTransactionResponse> processAgiosToTransaction(@Valid @RequestBody AgiosValidationRequest requestDto) {
         return new ResponseEntity<>(agiosValidationService.processAgiosToTransaction(requestDto), HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Valider un prélèvement")
     @PostMapping("/process/prelevement")
     public ResponseEntity<PrelevementTransactionResponse> processPrelevementToTransaction(@Valid @RequestBody PrelevementValidationRequest requestDto) {
         PrelevementTransactionResponse responseDto = prelevementValidationService.processPrelevementToTransaction(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Valider un frais bancaire")
     @PostMapping("/process/frais-bancaire")
     public ResponseEntity<FraisBancaireTransactionResponseDto> processFraisBancaireToTransaction(@Valid @RequestBody FraisBancaireTransactionRequestDto requestDto) {
         FraisBancaireTransactionResponseDto responseDto = fraisBancaireValidationService.processFraisBancaireTransaction(requestDto);
@@ -351,6 +372,7 @@ public class ValidationController {
 
 
 
+    @Operation(summary = "Valider un impôt ou une taxe")
     @PostMapping("/process/impot-taxe")
     public ResponseEntity<ImpotEtTaxeTransactionResponseDto> processImpotEtTaxeToTransaction(
             @Valid @RequestBody ImpotEtTaxeTransactionRequestDto requestDto) {
@@ -359,6 +381,7 @@ public class ValidationController {
     }
 
 
+    @Operation(summary = "Valider une restitution")
     @PostMapping("/process/restitution")
     public ResponseEntity<RestitutionTransactionResponseDto> processRestitutionToTransaction(
             @Valid @RequestBody RestitutionTransactionRequestDto requestDto) {
@@ -366,6 +389,7 @@ public class ValidationController {
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Valider une opération erronée")
     @PostMapping("/process/operation-errone")
     public ResponseEntity<OperationErroneTransactionResponseDto> processOperationErroneToTransaction(
             @Valid @RequestBody OperationErroneTransactionRequestDto requestDto) {
@@ -378,6 +402,7 @@ public class ValidationController {
      * virement international REGLE. Délègue au {@code VirementInternationalValidationService} du
      * module virementInternational (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider un virement international (décaissement)")
     @PostMapping("/process/decaissement/virement-international")
     public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalDecaissementTransaction(
             @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) {
@@ -391,6 +416,7 @@ public class ValidationController {
      * virement international REGLE. Délègue au {@code VirementInternationalValidationService} du
      * module virementInternational (architecture.md, Règle 1).
      */
+    @Operation(summary = "Valider un virement international (encaissement)")
     @PostMapping("/process/encaissement/virement-international")
     public ResponseEntity<VirementInternationalTransactionResponseDto> processVirementInternationalEncaissementTransaction(
             @Valid @RequestBody VirementInternationalTransactionRequestDto requestDto) {
@@ -399,6 +425,7 @@ public class ValidationController {
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Valider une impayée")
     @PostMapping("/process/impayee")
     public ResponseEntity<ImpayeeTransactionResponseDto> processImpayeeToTransaction(
             @Valid @RequestBody ImpayeeTransactionRequestDto requestDto) {
@@ -412,15 +439,17 @@ public class ValidationController {
      * Délègue à {@code BatchValidationService}, qui réutilise les méthodes unitaires ci-dessus —
      * voir sa Javadoc pour le détail du dispatch et le comportement tout-ou-rien.
      */
+    @Operation(summary = "Valider un lot d'opérations de même type")
     @PostMapping("/process/lot")
     public ResponseEntity<BatchValidationResponseDto> processBatch(
-            @Valid @RequestBody BatchValidationRequestDto requestDto) throws Exception {
+            @Valid @RequestBody BatchValidationRequestDto requestDto) {
         BatchValidationResponseDto responseDto = batchValidationService.processBatch(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Annuler une transaction (rapprochement non clôturé définitivement)")
     @DeleteMapping("/annuler/{transactionId}")
-    public void annulerTransaction(@PathVariable Long transactionId) throws  Exception{
+    public void annulerTransaction(@PathVariable Long transactionId) {
          reverseTransactionService.annulerTransaction(transactionId);
     }
 

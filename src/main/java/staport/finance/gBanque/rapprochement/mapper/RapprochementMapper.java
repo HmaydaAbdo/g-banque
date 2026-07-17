@@ -1,69 +1,45 @@
 package staport.finance.gBanque.rapprochement.mapper;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementAggregates;
 import staport.finance.gBanque.rapprochement.dtos.RapprochementResponseDto;
 import staport.finance.gBanque.rapprochement.dtos.ReportDto;
 import staport.finance.gBanque.rapprochement.entities.Rapprochement;
 
-@Component
-public class RapprochementMapper {
+/**
+ * Les agrégats (totalDebit, totalCredit, TVA, soldeFin) sont toujours calculés à la volée via
+ * {@link RapprochementAggregates} et jamais lus depuis des champs stockés sur l'entité — voir
+ * {@code RapprochementServiceImpl}. {@code transactions} n'est jamais mappé ici : attaché après
+ * coup via {@code RapprochementResponseDto.withTransactions(...)}/{@code ReportDto.withTransactions(...)}.
+ */
+@Mapper(componentModel = "spring")
+public interface RapprochementMapper {
 
-    /**
-     * Maps a Rapprochement entity to its response DTO.
-     * Aggregates (totalDebit, totalCredit, TVA) are computed on-the-fly and
-     * passed in — never read from stored entity fields.
-     */
-    public RapprochementResponseDto toResponseDto(Rapprochement entity, RapprochementAggregates agg) {
-        if (entity == null) return null;
+    @Mapping(target = "banqueId", source = "entity.banque.id")
+    @Mapping(target = "banqueNom", source = "entity.banque.nom")
+    @Mapping(target = "dateRapprochement", source = "entity.dateRapprochement")
+    @Mapping(target = "soldeDebut", source = "entity.soldeDebut")
+    @Mapping(target = "statutRapprochement", source = "entity.statut")
+    @Mapping(target = "totalDebit", source = "agg.totalDebit")
+    @Mapping(target = "totalCredit", source = "agg.totalCredit")
+    @Mapping(target = "tvaDeductible", source = "agg.tvaDeductible")
+    @Mapping(target = "tvaCollectee", source = "agg.tvaCollectee")
+    @Mapping(target = "tvaDue", expression = "java(agg.tvaDue())")
+    @Mapping(target = "soldeFin", expression = "java(agg.soldeFin(entity.getSoldeDebut()))")
+    @Mapping(target = "transactions", ignore = true)
+    RapprochementResponseDto toResponseDto(Rapprochement entity, RapprochementAggregates agg);
 
-        RapprochementResponseDto dto = new RapprochementResponseDto();
-
-        dto.setId(entity.getId());
-        dto.setBanqueId(entity.getBanque() != null ? entity.getBanque().getId() : null);
-        dto.setBanqueNom(entity.getBanque() != null ? entity.getBanque().getNom() : null);
-        dto.setDateRapprochement(entity.getDateRapprochement());
-        dto.setSoldeDebut(entity.getSoldeDebut());
-        dto.setStatutRapprochement(entity.getStatut());
-        dto.setCreatedAt(entity.getCreatedAt());
-        dto.setUpdatedAt(entity.getUpdatedAt());
-
-        // Computed fields — derived from transactions, never stored on entity
-        dto.setTotalDebit(agg.totalDebit());
-        dto.setTotalCredit(agg.totalCredit());
-        dto.setTvaDeductible(agg.tvaDeductible());
-        dto.setTvaCollectee(agg.tvaCollectee());
-        dto.setTvaDue(agg.tvaDue());
-        dto.setSoldeFin(agg.soldeFin(entity.getSoldeDebut()));
-
-        return dto;
-    }
-
-    /**
-     * Maps a Rapprochement entity to a report DTO (used for PDF generation).
-     * Same aggregate injection pattern as toResponseDto.
-     */
-    public ReportDto toReportDto(Rapprochement entity, RapprochementAggregates agg) {
-        if (entity == null) return null;
-
-        ReportDto dto = new ReportDto();
-
-        dto.setId(entity.getId());
-        dto.setBanqueId(entity.getBanque() != null ? entity.getBanque().getId() : null);
-        dto.setBanqueNom(entity.getBanque() != null ? entity.getBanque().getNom() : null);
-        dto.setDateRapprochement(entity.getDateRapprochement());
-        dto.setSoldeDebut(entity.getSoldeDebut());
-        dto.setCreatedAt(entity.getCreatedAt());
-        dto.setUpdatedAt(entity.getUpdatedAt());
-
-        // Computed fields
-        dto.setTotalDebit(agg.totalDebit());
-        dto.setTotalCredit(agg.totalCredit());
-        dto.setTvaDeductible(agg.tvaDeductible());
-        dto.setTvaCollectee(agg.tvaCollectee());
-        dto.setTvaDue(agg.tvaDue());
-        dto.setSoldeFin(agg.soldeFin(entity.getSoldeDebut()));
-
-        return dto;
-    }
+    @Mapping(target = "banqueId", source = "entity.banque.id")
+    @Mapping(target = "banqueNom", source = "entity.banque.nom")
+    @Mapping(target = "dateRapprochement", source = "entity.dateRapprochement")
+    @Mapping(target = "soldeDebut", source = "entity.soldeDebut")
+    @Mapping(target = "totalDebit", source = "agg.totalDebit")
+    @Mapping(target = "totalCredit", source = "agg.totalCredit")
+    @Mapping(target = "tvaDeductible", source = "agg.tvaDeductible")
+    @Mapping(target = "tvaCollectee", source = "agg.tvaCollectee")
+    @Mapping(target = "tvaDue", expression = "java(agg.tvaDue())")
+    @Mapping(target = "soldeFin", expression = "java(agg.soldeFin(entity.getSoldeDebut()))")
+    @Mapping(target = "transactions", ignore = true)
+    ReportDto toReportDto(Rapprochement entity, RapprochementAggregates agg);
 }

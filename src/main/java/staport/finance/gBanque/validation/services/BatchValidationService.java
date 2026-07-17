@@ -180,31 +180,31 @@ public class BatchValidationService {
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public BatchValidationResponseDto processBatch(BatchValidationRequestDto requestDto) throws Exception {
+    public BatchValidationResponseDto processBatch(BatchValidationRequestDto requestDto) {
         requireSensIfNeeded(requestDto);
         requireBanqueIdIfNeeded(requestDto);
 
         List<OperationValideeDto> resultats = new ArrayList<>();
-        for (Long id : requestDto.getIds()) {
+        for (Long id : requestDto.ids()) {
             resultats.add(processOne(id, requestDto));
         }
 
-        BigDecimal totalDebit = resultats.stream().map(OperationValideeDto::getDebit)
+        BigDecimal totalDebit = resultats.stream().map(OperationValideeDto::debit)
                 .filter(java.util.Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalCredit = resultats.stream().map(OperationValideeDto::getCredit)
+        BigDecimal totalCredit = resultats.stream().map(OperationValideeDto::credit)
                 .filter(java.util.Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new BatchValidationResponseDto(resultats, totalDebit, totalCredit);
     }
 
-    private OperationValideeDto processOne(Long id, BatchValidationRequestDto requestDto) throws Exception {
-        switch (requestDto.getTransactionSource()) {
+    private OperationValideeDto processOne(Long id, BatchValidationRequestDto requestDto) {
+        switch (requestDto.transactionSource()) {
             case Virement -> {
                 VirementTransactionRequestDto dto = new VirementTransactionRequestDto();
                 dto.setId(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
                         dto::setTvaDeductible, dto::setRapprochementId);
-                VirementTransactionResponseDto r = requestDto.getSens() == SensOperation.DECAISSEMENT
+                VirementTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
                         ? virementValidationService.processVirementDecaissementTransaction(dto)
                         : virementValidationService.processVirementEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
@@ -214,7 +214,7 @@ public class BatchValidationService {
                 dto.setIdCheque(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
                         dto::setTvaDeductible, dto::setRapprochementId);
-                ChequeTransactionResponseDto r = requestDto.getSens() == SensOperation.DECAISSEMENT
+                ChequeTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
                         ? chequeValidationService.processChequeDecaissementTransaction(dto)
                         : chequeValidationService.processChequeEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
@@ -240,7 +240,7 @@ public class BatchValidationService {
                 dto.setId(id);
                 copyChampsCommuns(requestDto, dto::setDateValeur, dto::setDateOperation,
                         dto::setTvaDeductible, dto::setRapprochementId);
-                MiseAdispositionTransactionResponseDto r = requestDto.getSens() == SensOperation.DECAISSEMENT
+                MiseAdispositionTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
                         ? miseADispositionValidationService.processMiseAdispositionDecaissementTransaction(dto)
                         : miseADispositionValidationService.processMiseAdispositionEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
@@ -248,130 +248,130 @@ public class BatchValidationService {
             case VIREMENT_INTERNATIONAL -> {
                 VirementInternationalTransactionRequestDto dto = new VirementInternationalTransactionRequestDto();
                 dto.setId(id);
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
-                VirementInternationalTransactionResponseDto r = requestDto.getSens() == SensOperation.DECAISSEMENT
+                dto.setDateValeur(requestDto.dateValeur());
+                dto.setDateOperation(requestDto.dateOperation());
+                dto.setTva(requestDto.tvaDeductible());
+                dto.setRapprochementId(requestDto.rapprochementId());
+                VirementInternationalTransactionResponseDto r = requestDto.sens() == SensOperation.DECAISSEMENT
                         ? virementInternationalValidationService.processVirementInternationalDecaissementTransaction(dto)
                         : virementInternationalValidationService.processVirementInternationalEncaissementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case COMMISSION -> {
                 CommissionTransactionRequestDto dto = new CommissionTransactionRequestDto(
-                        id, requestDto.getTvaDeductible(), null,
-                        requestDto.getDateValeur(), requestDto.getDateOperation(),
-                        null, null, requestDto.getRapprochementId());
+                        id, requestDto.tvaDeductible(), null,
+                        requestDto.dateValeur(), requestDto.dateOperation(),
+                        null, null, requestDto.rapprochementId());
                 CommissionTransactionResponseDto r = commissionValidationService.processCommissionTransaction(dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case AGIOS -> {
                 AgiosValidationRequest dto = new AgiosValidationRequest(
                         id,
-                        BigDecimal.valueOf(requestDto.getTvaDeductible()),
+                        BigDecimal.valueOf(requestDto.tvaDeductible()),
                         null,
-                        requestDto.getDateValeur(),
-                        requestDto.getDateOperation(),
+                        requestDto.dateValeur(),
+                        requestDto.dateOperation(),
                         null,
                         null,
-                        requestDto.getRapprochementId());
+                        requestDto.rapprochementId());
                 AgiosTransactionResponse r = agiosValidationService.processAgiosToTransaction(dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case PRELEVEMENT -> {
                 PrelevementValidationRequest dto = new PrelevementValidationRequest();
                 dto.setIdPrelevement(id);
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
+                dto.setDateValeur(requestDto.dateValeur());
+                dto.setDateOperation(requestDto.dateOperation());
+                dto.setTva(requestDto.tvaDeductible());
+                dto.setRapprochementId(requestDto.rapprochementId());
                 PrelevementTransactionResponse r = prelevementValidationService.processPrelevementToTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case FRAIS_BANCAIRE -> {
                 FraisBancaireTransactionRequestDto dto = new FraisBancaireTransactionRequestDto(
-                        id, requestDto.getTvaDeductible(), null,
-                        requestDto.getDateValeur(), requestDto.getDateOperation(),
-                        null, null, requestDto.getRapprochementId());
+                        id, requestDto.tvaDeductible(), null,
+                        requestDto.dateValeur(), requestDto.dateOperation(),
+                        null, null, requestDto.rapprochementId());
                 FraisBancaireTransactionResponseDto r = fraisBancaireValidationService.processFraisBancaireTransaction(dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case IMPOT_TAXE -> {
                 ImpotEtTaxeTransactionRequestDto dto = new ImpotEtTaxeTransactionRequestDto(
-                        id, requestDto.getTvaDeductible(), null,
-                        requestDto.getDateValeur(), requestDto.getDateOperation(),
-                        null, null, requestDto.getRapprochementId());
+                        id, requestDto.tvaDeductible(), null,
+                        requestDto.dateValeur(), requestDto.dateOperation(),
+                        null, null, requestDto.rapprochementId());
                 ImpotEtTaxeTransactionResponseDto r = impotEtTaxeValidationService.processImpotEtTaxeTransaction(dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case RESTITUTION -> {
                 RestitutionTransactionRequestDto dto = new RestitutionTransactionRequestDto(
-                        id, requestDto.getTvaDeductible(), null,
-                        requestDto.getDateValeur(), requestDto.getDateOperation(),
-                        null, null, requestDto.getRapprochementId());
+                        id, requestDto.tvaDeductible(), null,
+                        requestDto.dateValeur(), requestDto.dateOperation(),
+                        null, null, requestDto.rapprochementId());
                 RestitutionTransactionResponseDto r = restitutionValidationService.processRestitutionTransaction(dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case OPERATION_ERRONE -> {
                 OperationErroneTransactionRequestDto dto = new OperationErroneTransactionRequestDto(
-                        id, requestDto.getTvaDeductible(), null,
-                        requestDto.getDateValeur(), requestDto.getDateOperation(),
-                        null, null, requestDto.getRapprochementId());
+                        id, requestDto.tvaDeductible(), null,
+                        requestDto.dateValeur(), requestDto.dateOperation(),
+                        null, null, requestDto.rapprochementId());
                 OperationErroneTransactionResponseDto r = operationErroneValidationService.processOperationErroneTransaction(dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case FACTORING -> {
                 FactoringTransactionRequest dto = new FactoringTransactionRequest();
                 dto.setFactoringId(id);
-                dto.setBanqueId(requestDto.getBanqueId());
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
+                dto.setBanqueId(requestDto.banqueId());
+                dto.setDateValeur(requestDto.dateValeur());
+                dto.setDateOperation(requestDto.dateOperation());
+                dto.setTva(requestDto.tvaDeductible());
+                dto.setRapprochementId(requestDto.rapprochementId());
                 FactoringTransactionResponse r = factoringValidationService.processFactoringTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case PREFINANCEMENT -> {
                 PrefinancementTransactionRequest dto = new PrefinancementTransactionRequest();
                 dto.setPrefinancementId(id);
-                dto.setBanqueId(requestDto.getBanqueId());
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
+                dto.setBanqueId(requestDto.banqueId());
+                dto.setDateValeur(requestDto.dateValeur());
+                dto.setDateOperation(requestDto.dateOperation());
+                dto.setTva(requestDto.tvaDeductible());
+                dto.setRapprochementId(requestDto.rapprochementId());
                 PrefinancementTransactionResponse r = prefinancementValidationService.processPrefinancementTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case DROIT_CONSTATE -> {
                 DroitConstateTransactionRequest dto = new DroitConstateTransactionRequest();
                 dto.setDroitConstateId(id);
-                dto.setBanqueId(requestDto.getBanqueId());
-                dto.setDateValeur(requestDto.getDateValeur());
-                dto.setDateOperation(requestDto.getDateOperation());
-                dto.setTva(requestDto.getTvaDeductible());
-                dto.setRapprochementId(requestDto.getRapprochementId());
+                dto.setBanqueId(requestDto.banqueId());
+                dto.setDateValeur(requestDto.dateValeur());
+                dto.setDateOperation(requestDto.dateOperation());
+                dto.setTva(requestDto.tvaDeductible());
+                dto.setRapprochementId(requestDto.rapprochementId());
                 DroitConstateTransactionResponse r = droitConstateValidationService.processDroitConstateTransaction(dto);
                 return new OperationValideeDto(id, r.getId(), r.getLibelle(), r.getDebit(), r.getCredit());
             }
             case DECOMPTES -> {
                 DecompteTransactionRequestDto dto = new DecompteTransactionRequestDto(
                         id,
-                        requestDto.getBanqueId(),
+                        requestDto.banqueId(),
                         null,
-                        requestDto.getDateValeur(),
-                        requestDto.getDateOperation(),
-                        requestDto.getTvaDeductible(),
+                        requestDto.dateValeur(),
+                        requestDto.dateOperation(),
+                        requestDto.tvaDeductible(),
                         null,
                         null,
-                        requestDto.getRapprochementId());
+                        requestDto.rapprochementId());
                 DecompteTransactionResponseDto r = decompteValidationService.processDecompteTransaction(dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             case IMPAYEE -> {
                 ImpayeeTransactionRequestDto dto = new ImpayeeTransactionRequestDto(
-                        id, requestDto.getTvaDeductible(), null,
-                        requestDto.getDateValeur(), requestDto.getDateOperation(),
-                        null, null, requestDto.getRapprochementId());
+                        id, requestDto.tvaDeductible(), null,
+                        requestDto.dateValeur(), requestDto.dateOperation(),
+                        null, null, requestDto.rapprochementId());
                 ImpayeeTransactionResponseDto r = impayeeValidationService.processImpayeeTransaction(dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
@@ -384,12 +384,12 @@ public class BatchValidationService {
                         creditMoyenTerme.getId(),
                         id,
                         null,
-                        requestDto.getDateValeur(),
-                        requestDto.getDateOperation(),
+                        requestDto.dateValeur(),
+                        requestDto.dateOperation(),
                         null,
-                        requestDto.getTvaDeductible(),
+                        requestDto.tvaDeductible(),
                         null,
-                        requestDto.getRapprochementId());
+                        requestDto.rapprochementId());
                 CmtTransactionResponseDto r = cmtValidationService.processCmtTransaction(creditMoyenTerme, dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
@@ -402,18 +402,18 @@ public class BatchValidationService {
                         contratLeasing.getId(),
                         id,
                         null,
-                        requestDto.getDateValeur(),
-                        requestDto.getDateOperation(),
+                        requestDto.dateValeur(),
+                        requestDto.dateOperation(),
                         null,
-                        requestDto.getTvaDeductible(),
+                        requestDto.tvaDeductible(),
                         null,
-                        requestDto.getRapprochementId());
+                        requestDto.rapprochementId());
                 LeasingTransactionResponseDTO r = leasingValidationService.processLeasingTransaction(contratLeasing, dto);
                 return new OperationValideeDto(id, r.id(), r.libelle(), r.debit(), r.credit());
             }
             default -> throw new ValidationException(
                     "La validation en lot n'est pas prise en charge pour le type d'opération: "
-                            + requestDto.getTransactionSource());
+                            + requestDto.transactionSource());
         }
     }
 
@@ -421,14 +421,14 @@ public class BatchValidationService {
      * Types qui distinguent décaissement/encaissement : {@code sens} est obligatoire pour eux.
      */
     private void requireSensIfNeeded(BatchValidationRequestDto requestDto) {
-        boolean sensRequis = switch (requestDto.getTransactionSource()) {
+        boolean sensRequis = switch (requestDto.transactionSource()) {
             case Virement, CHEQUE, MiseADisposition, VIREMENT_INTERNATIONAL -> true;
             default -> false;
         };
-        if (sensRequis && requestDto.getSens() == null) {
+        if (sensRequis && requestDto.sens() == null) {
             throw new ValidationException(
                     "Le sens (DECAISSEMENT/ENCAISSEMENT) est obligatoire pour le type d'opération: "
-                            + requestDto.getTransactionSource());
+                            + requestDto.transactionSource());
         }
     }
 
@@ -436,13 +436,13 @@ public class BatchValidationService {
      * Types dont l'endpoint unitaire exige explicitement un banqueId (non déduit de l'entité).
      */
     private void requireBanqueIdIfNeeded(BatchValidationRequestDto requestDto) {
-        boolean banqueIdRequis = switch (requestDto.getTransactionSource()) {
+        boolean banqueIdRequis = switch (requestDto.transactionSource()) {
             case DECOMPTES, DROIT_CONSTATE, FACTORING, PREFINANCEMENT -> true;
             default -> false;
         };
-        if (banqueIdRequis && requestDto.getBanqueId() == null) {
+        if (banqueIdRequis && requestDto.banqueId() == null) {
             throw new ValidationException(
-                    "banqueId est obligatoire pour le type d'opération: " + requestDto.getTransactionSource());
+                    "banqueId est obligatoire pour le type d'opération: " + requestDto.transactionSource());
         }
     }
 
@@ -460,9 +460,9 @@ public class BatchValidationService {
                                     java.util.function.Consumer<java.time.LocalDate> setDateOperation,
                                     java.util.function.Consumer<Double> setTvaDeductible,
                                     java.util.function.Consumer<Long> setRapprochementId) {
-        setDateValeur.accept(source.getDateValeur());
-        setDateOperation.accept(source.getDateOperation());
-        setTvaDeductible.accept(source.getTvaDeductible());
-        setRapprochementId.accept(source.getRapprochementId());
+        setDateValeur.accept(source.dateValeur());
+        setDateOperation.accept(source.dateOperation());
+        setTvaDeductible.accept(source.tvaDeductible());
+        setRapprochementId.accept(source.rapprochementId());
     }
 }

@@ -9,6 +9,8 @@ import java.time.YearMonth;
 
 public class RapprochementSpecifications {
 
+    private RapprochementSpecifications() {}
+
     /**
      * Crée une Specification pour filtrer par l'ID de la Banque.
      */
@@ -35,30 +37,24 @@ public class RapprochementSpecifications {
     }
 
     public static Specification<Rapprochement> hasStatut(StatutRapprochement statut) {
-        return (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("statut"), statut);
+        return (root, query, criteriaBuilder) -> {
+            if (statut == null) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("statut"), statut);
+        };
     }
 
     /**
      * Combine toutes les spécifications du DTO de recherche.
      */
-    public static Specification<Rapprochement> bySearchDto(RapprochementSearchDto searchDto) {
+    public static Specification<Rapprochement> searchByCriteria(RapprochementSearchDto searchDto) {
         Specification<Rapprochement> spec = Specification.where(null); // Point de départ neutre
 
         if (searchDto != null) {
-            // Filtrer par BanqueId
-            if (searchDto.getBanqueId() != null) {
-                spec = spec.and(hasBanqueId(searchDto.getBanqueId()));
-            }
-
-            // Filtrer par DateRapprochement
-            if (searchDto.getDateRapprochement() != null) {
-                spec = spec.and(hasDateRapprochement(searchDto.getDateRapprochement()));
-            }
-
-            if(searchDto.getStatutRapprochement()!=null){
-                spec=spec.and(hasStatut(searchDto.getStatutRapprochement()));
-            }
+            spec = spec.and(hasBanqueId(searchDto.banqueId()));
+            spec = spec.and(hasDateRapprochement(searchDto.parsedDateRapprochement()));
+            spec = spec.and(hasStatut(searchDto.statutRapprochement()));
         }
 
         return spec;

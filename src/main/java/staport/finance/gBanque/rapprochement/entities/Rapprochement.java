@@ -3,6 +3,7 @@ package staport.finance.gBanque.rapprochement.entities;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.rapprochement.enums.StatutRapprochement;
 import staport.finance.gBanque.transactions.entities.Transaction;
@@ -14,7 +15,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Représente la période de rapprochement bancaire mensuel d'une banque (statut EN_COURS →
+ * CLOTURE_PROVISOIRE → CLOTURE_DEFINITIVE). {@code banque} (déjà auditée) et {@code transactions}
+ * (désormais auditée depuis le sweep Transactions) ne nécessitent aucune exclusion Envers — voir
+ * mémoire {@code feedback_envers_audit_relations}.
+ */
 @Entity(name = "rapprochement")
+@Audited
+@Table(
+        name = "rapprochement",
+        indexes = {
+                @Index(name = "idx_rapprochement_banque_id",     columnList = "banque_id"),
+                @Index(name = "idx_rapprochement_statut",        columnList = "statut"),
+                @Index(name = "idx_rapprochement_date",          columnList = "date_rapprochement"),
+                @Index(name = "idx_rapprochement_banque_statut", columnList = "banque_id, statut")
+        }
+)
 public class Rapprochement {
 
     @Id
