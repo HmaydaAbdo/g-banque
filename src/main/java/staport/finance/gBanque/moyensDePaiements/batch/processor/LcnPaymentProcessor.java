@@ -78,6 +78,7 @@ public class LcnPaymentProcessor extends AbstractPaymentProcessor {
         lcn.setBanque(banque);
         lcn.setType(Type.DECAISSEMENT);
         lcn.setStatut(statut);
+        lcn.setObservation(" LCN N° " + item.getNumero());
         return lcn;
     }
 }

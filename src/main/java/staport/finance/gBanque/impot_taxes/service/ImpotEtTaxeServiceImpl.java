@@ -322,6 +322,7 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
         // ── 5. Création de la TVA fusionnée ──────────────────────────────────
         ImpotEtTaxe fusionnee = new ImpotEtTaxe();
         fusionnee.setLibelle(request.libelle());
+        fusionnee.setObservation(request.libelle());
         fusionnee.setMontant(montantFusionne);
         fusionnee.setBanque(banque);
         fusionnee.setMotif(motif);

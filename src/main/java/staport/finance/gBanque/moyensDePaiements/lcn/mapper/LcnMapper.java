@@ -16,6 +16,10 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoy
  * (différents des champs {@code libelle}/{@code observation} de l'entité, alimentés par la
  * validation/rapprochement) — cette règle d'affichage est appliquée par {@code LcnService}
  * après le mapping, pas ici.
+ *
+ * <p>{@code observation} de l'entité est en revanche renseigné dès {@link #toEntity} avec la même
+ * convention (" LCN N° ...") que celle utilisée pour l'affichage, afin que le champ ne soit jamais
+ * {@code null} lors d'une validation en lot (voir {@code BatchValidationService}).
  */
 @Mapper(componentModel = "spring")
 public interface LcnMapper {
@@ -46,6 +50,7 @@ public interface LcnMapper {
         lcn.setType(dto.getType());
         lcn.setEmetteur(dto.getEmetteur());
         lcn.setNatureLcn(dto.getNatureLcn());
+        lcn.setObservation(" LCN N° " + dto.getNumero());
         return lcn;
     }
 }

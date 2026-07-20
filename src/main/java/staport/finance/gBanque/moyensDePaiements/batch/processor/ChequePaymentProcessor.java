@@ -74,6 +74,7 @@ public class ChequePaymentProcessor extends AbstractPaymentProcessor {
         cheque.setMontant(item.getMontant());
         cheque.setBanque(banque);
         cheque.setStatut(statut);
+        cheque.setObservation("CHQ N°" + item.getNumero());
         return cheque;
     }
 }

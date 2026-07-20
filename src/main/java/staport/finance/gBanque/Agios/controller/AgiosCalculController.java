@@ -9,10 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.Agios.dtos.*;
-import staport.finance.gBanque.Agios.entities.AgiosJournalier;
-import staport.finance.gBanque.Agios.entities.AgiosTrimestriel;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
-import staport.finance.gBanque.Agios.mapper.AgiosCalculatorMapper;
 import staport.finance.gBanque.Agios.service.AgiosOrchestrateurService;
 
 import java.util.List;
@@ -29,12 +26,9 @@ public class AgiosCalculController {
     private static final String SYSTEM_ADMIN = "hasAuthority('SYSTEM_ADMIN')";
 
     private final AgiosOrchestrateurService orchestrateur;
-    private final AgiosCalculatorMapper agiosCalculatorMapper;
 
-    public AgiosCalculController(AgiosOrchestrateurService orchestrateur,
-                                 AgiosCalculatorMapper agiosCalculatorMapper) {
+    public AgiosCalculController(AgiosOrchestrateurService orchestrateur) {
         this.orchestrateur = orchestrateur;
-        this.agiosCalculatorMapper = agiosCalculatorMapper;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -61,8 +55,7 @@ public class AgiosCalculController {
     public ResponseEntity<Page<AgiosTrimestrielResponseDto>> searchTrimestres(
             AgiosTrimestrielSearchDto searchDto, Pageable pageable) {
 
-        Page<AgiosTrimestriel> page = orchestrateur.searchTrimestres(searchDto, pageable);
-        return ResponseEntity.ok(page.map(agiosCalculatorMapper::toTrimDto));
+        return ResponseEntity.ok(orchestrateur.searchTrimestres(searchDto, pageable));
     }
 
     @GetMapping("/detail")
@@ -71,8 +64,7 @@ public class AgiosCalculController {
     public ResponseEntity<Page<AgiosJournalierResponseDto>> searchDetail(
             AgiosJournalierSearchDto searchDto, Pageable pageable) {
 
-        Page<AgiosJournalier> page = orchestrateur.searchJournaliers(searchDto, pageable);
-        return ResponseEntity.ok(page.map(agiosCalculatorMapper::toJourDto));
+        return ResponseEntity.ok(orchestrateur.searchJournaliers(searchDto, pageable));
     }
 
     @GetMapping("/detail/aggregates")
@@ -113,7 +105,6 @@ public class AgiosCalculController {
     public ResponseEntity<AgiosTrimestrielResponseDto> cloturer(
             @PathVariable Long banqueId, @PathVariable TypeAgios type,
             @PathVariable int trim, @PathVariable int annee) {
-        AgiosTrimestriel result = orchestrateur.cloturerTrimestre(banqueId, type, trim, annee);
-        return ResponseEntity.ok(agiosCalculatorMapper.toTrimDto(result));
+        return ResponseEntity.ok(orchestrateur.cloturerTrimestre(banqueId, type, trim, annee));
     }
 }

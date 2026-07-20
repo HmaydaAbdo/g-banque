@@ -187,6 +187,7 @@ import java.math.BigDecimal;
                             mensualiteTTCDuMois,
                             statut
                     );
+                    echeance.setObservation("Prélèvement leasing");
                     echeances.add(echeance);
                 }
             }
@@ -212,6 +213,7 @@ import java.math.BigDecimal;
                     contrat.getValeurResiduelle().setScale(SCALE, RoundingMode.HALF_UP),
                     statut
             );
+            echeanceValeurResiduelle.setObservation("Prélèvement leasing");
 
             echeances.add(echeanceValeurResiduelle);
 

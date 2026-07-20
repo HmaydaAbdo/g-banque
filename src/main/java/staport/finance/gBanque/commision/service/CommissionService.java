@@ -542,6 +542,7 @@ public class CommissionService implements ICommissionService {
         // ── 6. Création de la commission fusionnée ────────────────────────────
         Commission fusionnee = new Commission();
         fusionnee.setLibelle(request.getLibelle());
+        fusionnee.setObservation(request.getLibelle());
         fusionnee.setMontant(montantFusionne);
         fusionnee.setBanque(banque);
         fusionnee.setOperation(TransactionSource.CAUTION);
@@ -668,6 +669,7 @@ public class CommissionService implements ICommissionService {
         commission.setOperation(TransactionSource.Virement);
         commission.setDateEmission(virement.getDateEmission());
         commission.setLibelle(buildLibelle());
+        commission.setObservation(buildLibelle());
         commission.setStatus(Status.PREVU);
         commission.setVirement(virement);
 
@@ -753,6 +755,7 @@ public class CommissionService implements ICommissionService {
         commission.setOperation(TransactionSource.LCN_DECAISSEMENT);
         commission.setDateEmission(lcn.getDateEmission());
         commission.setLibelle(libelle);
+        commission.setObservation(libelle);
         commission.setStatus(Status.PREVU);
 
         commissionRepository.save(commission);
@@ -813,6 +816,7 @@ public class CommissionService implements ICommissionService {
         commission.setOperation(TransactionSource.MiseADisposition);
         commission.setDateEmission(mad.getDateEmission());
         commission.setLibelle(libelle);
+        commission.setObservation(libelle);
         commission.setStatus(Status.PREVU);
 
         commissionRepository.save(commission);

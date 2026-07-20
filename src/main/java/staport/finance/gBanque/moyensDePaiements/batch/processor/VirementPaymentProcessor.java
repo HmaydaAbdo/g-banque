@@ -108,6 +108,7 @@ public class VirementPaymentProcessor extends AbstractPaymentProcessor {
         if (type == Type.ENCAISSEMENT) {
             v.setEmetteur("STAPORT");
         }
+        v.setObservation(" VIREMENT N° " + numero);
         return v;
     }
 }

@@ -67,6 +67,7 @@ public class EcheanceCMTService {
             echeance.setDateEcheance(dateEcheanceCourante);
             echeance.setMontant(credit.getEcheance());
             echeance.setStatutPaiement(StatutEcheanceCMT.PREVU);
+            echeance.setObservation("Prélèvement CMT");
             echeances.add(echeance);
         }
 

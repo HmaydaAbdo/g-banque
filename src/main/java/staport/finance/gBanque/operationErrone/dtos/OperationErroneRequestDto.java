@@ -1,5 +1,6 @@
 package staport.finance.gBanque.operationErrone.dtos;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -27,6 +28,7 @@ public record OperationErroneRequestDto(
 
         String libelle,
 
+        @NotBlank(message = "L'observation est obligatoire")
         String observation
 
 ) {}

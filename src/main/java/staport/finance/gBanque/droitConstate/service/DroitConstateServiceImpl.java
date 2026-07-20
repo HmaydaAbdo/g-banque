@@ -114,6 +114,7 @@ public class DroitConstateServiceImpl implements IDroitConstateService {
         DroitConstate droitConstate = droitConstateMapper.toEntity(requestDTO, marche, banque);
         droitConstate.setLigneFonctionnelleSpecifique(ligneResult.specifique());
         droitConstate.setLigneFonctionnelle(ligneResult.generale());
+        droitConstate.setObservation(marche.getNumero());
 
         droitConstate = droitConstateRepository.save(droitConstate);
         log.info("Droit constaté créé avec succès - ID: {}", droitConstate.getId());

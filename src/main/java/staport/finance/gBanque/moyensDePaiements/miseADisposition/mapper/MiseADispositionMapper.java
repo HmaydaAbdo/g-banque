@@ -15,6 +15,10 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoy
  * d'affichage recalculés à chaque lecture (jamais les valeurs persistées sur l'entité), donc une
  * règle métier de Service et non du Mapper — cf. architecture.md, même règle que
  * Cheque/LCN/Virement.
+ *
+ * <p>{@code observation} de l'entité est en revanche renseigné dès {@code toEntity} avec la même
+ * convention (" MAD ...") que celle utilisée pour l'affichage, afin que le champ ne soit jamais
+ * {@code null} lors d'une validation en lot (voir {@code BatchValidationService}).
  */
 @Mapper(componentModel = "spring")
 public interface MiseADispositionMapper {
@@ -34,6 +38,7 @@ public interface MiseADispositionMapper {
         miseADisposition.setStatut(StatutMoyenPaiement.ENCOURS);
         miseADisposition.setType(dto.getType());
         miseADisposition.setEmetteur(dto.getEmetteur());
+        miseADisposition.setObservation(" MAD " + miseADisposition.getNumero());
         return miseADisposition;
     }
 }

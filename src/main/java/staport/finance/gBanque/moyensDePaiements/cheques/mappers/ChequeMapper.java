@@ -16,6 +16,11 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoy
  * (différents des champs {@code libelle}/{@code observation} de l'entité, alimentés par la
  * validation/rapprochement) — cette règle d'affichage est appliquée par {@code ChequeService}
  * après le mapping, pas ici.
+ *
+ * <p>{@code observation} de l'entité est en revanche renseigné dès {@link #toEntity} avec la même
+ * convention ("CHQ N°...") que celle utilisée pour l'affichage, afin que le champ ne soit jamais
+ * {@code null} lors d'une validation en lot (la validation en lot ne fournit pas d'observation
+ * unitaire et retombe sur celle de l'entité — voir {@code BatchValidationService}).
  */
 @Mapper(componentModel = "spring")
 public interface ChequeMapper {
@@ -46,6 +51,7 @@ public interface ChequeMapper {
         cheque.setStatut(StatutMoyenPaiement.ENCOURS);
         cheque.setType(dto.getType());
         cheque.setEmetteur(dto.getEmetteur());
+        cheque.setObservation("CHQ N°" + dto.getNumero());
         return cheque;
     }
 }

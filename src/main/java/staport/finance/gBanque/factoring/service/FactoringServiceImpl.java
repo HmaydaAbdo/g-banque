@@ -105,6 +105,7 @@ public class FactoringServiceImpl implements IFactoringService {
         Factoring factoring = factoringMapper.toEntity(requestDTO, marche);
         factoring.setLigneFonctionnelleSpecifique(ligneResult.specifique());
         factoring.setLigneFonctionnelle(ligneResult.generale());
+        factoring.setObservation(marche.getNumero());
         factoring = factoringRepository.save(factoring);
 
         log.info("Factoring créé avec succès - ID: {}", factoring.getId());

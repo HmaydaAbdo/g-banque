@@ -116,6 +116,7 @@ public class DecompteServiceImpl implements IDecompteService {
         Banque banqueEncaissement = banqueService.findOrThrow(requestDTO.banqueEncaissementId());
 
         Decompte decompte = decompteMapper.toEntity(requestDTO, marche, banqueEncaissement);
+        decompte.setObservation("Marche: " + marche.getNumero());
         decompte = decompteRepository.save(decompte);
 
         log.info("Décompte créé avec succès - ID: {}, banque encaissement ID: {}",

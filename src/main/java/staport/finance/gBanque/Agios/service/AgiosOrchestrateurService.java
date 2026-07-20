@@ -12,13 +12,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.dtos.AgiosDetailAggregateDto;
+import staport.finance.gBanque.Agios.dtos.AgiosJournalierResponseDto;
 import staport.finance.gBanque.Agios.dtos.AgiosJournalierSearchDto;
 import staport.finance.gBanque.Agios.dtos.AgiosRequestDto;
+import staport.finance.gBanque.Agios.dtos.AgiosTrimestrielResponseDto;
 import staport.finance.gBanque.Agios.dtos.AgiosTrimestrielSearchDto;
 import staport.finance.gBanque.Agios.entities.AgiosJournalier;
 import staport.finance.gBanque.Agios.entities.AgiosTrimestriel;
 import staport.finance.gBanque.Agios.enums.StatutTrimestre;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
+import staport.finance.gBanque.Agios.mapper.AgiosCalculatorMapper;
 import staport.finance.gBanque.Agios.repository.AgiosJournalierRepository;
 import staport.finance.gBanque.Agios.repository.AgiosTrimestrielRepository;
 import staport.finance.gBanque.Agios.enums.PeriodeCalculAgios;
@@ -73,6 +76,7 @@ public class AgiosOrchestrateurService {
     private final AgiosTrimestrielRepository agiosTrimestrielRepository;
     private final AgiosService agiosService;
     private final RapprochementRepository rapprochementRepository;
+    private final AgiosCalculatorMapper agiosCalculatorMapper;
 
     public AgiosOrchestrateurService(List<AgiosCalculateur> calculateurs,
                                      TransactionRepository transactionRepository,
@@ -80,7 +84,8 @@ public class AgiosOrchestrateurService {
                                      AgiosJournalierRepository agiosJournalierRepository,
                                      AgiosTrimestrielRepository agiosTrimestrielRepository,
                                      AgiosService agiosService,
-                                     RapprochementRepository rapprochementRepository) {
+                                     RapprochementRepository rapprochementRepository,
+                                     AgiosCalculatorMapper agiosCalculatorMapper) {
         this.calculateurs = calculateurs;
         this.transactionRepository = transactionRepository;
         this.banqueService = banqueService;
@@ -88,6 +93,7 @@ public class AgiosOrchestrateurService {
         this.agiosTrimestrielRepository = agiosTrimestrielRepository;
         this.agiosService = agiosService;
         this.rapprochementRepository = rapprochementRepository;
+        this.agiosCalculatorMapper = agiosCalculatorMapper;
 
         log.info("Orchestrateur agios initialisé avec {} calculateur(s) : {}",
                 calculateurs.size(),
@@ -147,15 +153,27 @@ public class AgiosOrchestrateurService {
                     boolean courantPresent = ouverts.stream()
                             .anyMatch(t -> t.getTrimestre() == periodeActuelleCalc && t.getAnnee() == anneeActuelle);
 
+                    // Chaque période est isolée : un échec (ex. rapprochement manquant pour le
+                    // mois courant) ne doit jamais empêcher le recalcul des autres périodes
+                    // ouvertes de la même banque — ni pour le scheduler nocturne, ni pour le
+                    // bouton "Recalculer tout" de l'UI qui réutilise ce flux.
+                    int erreursPeriodes = 0;
+
                     if (!courantPresent) {
-                        recalculerTrimestre(banque, calculateur, periodeActuelleCalc, anneeActuelle);
+                        erreursPeriodes += recalculerPeriodeSansInterrompre(
+                                banque, calculateur, periodeActuelleCalc, anneeActuelle) ? 0 : 1;
                     }
 
                     for (AgiosTrimestriel t : ouverts) {
-                        recalculerTrimestre(banque, calculateur, t.getTrimestre(), t.getAnnee());
+                        erreursPeriodes += recalculerPeriodeSansInterrompre(
+                                banque, calculateur, t.getTrimestre(), t.getAnnee()) ? 0 : 1;
                     }
 
-                    succes++;
+                    if (erreursPeriodes == 0) {
+                        succes++;
+                    } else {
+                        erreurs++;
+                    }
 
                 } catch (Exception e) {
                     erreurs++;
@@ -169,6 +187,24 @@ public class AgiosOrchestrateurService {
         }
 
         log.info("══════ Fin du calcul quotidien ══════");
+    }
+
+    /**
+     * Recalcule une période en isolant tout échec : l'erreur est loguée avec la
+     * période exacte en cause, et le traitement des autres périodes continue.
+     *
+     * @return {@code true} si le recalcul a abouti, {@code false} en cas d'erreur
+     */
+    private boolean recalculerPeriodeSansInterrompre(Banque banque, AgiosCalculateur calculateur,
+                                                     int num, int annee) {
+        try {
+            recalculerTrimestre(banque, calculateur, num, annee);
+            return true;
+        } catch (Exception e) {
+            log.error("{} — Banque {} (ID:{}) période {}/{} : {}",
+                    calculateur.getType(), banque.getNom(), banque.getId(), num, annee, e.getMessage(), e);
+            return false;
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -437,7 +473,7 @@ public class AgiosOrchestrateurService {
 
     @AuditableAction(operation = AuditOperation.UPDATE, entity = AgiosTrimestriel.class)
     @Transactional
-    public AgiosTrimestriel cloturerTrimestre(Long banqueId, TypeAgios type, int trimNum, int annee) {
+    public AgiosTrimestrielResponseDto cloturerTrimestre(Long banqueId, TypeAgios type, int trimNum, int annee) {
         log.info("Clôture {} T{}/{} banque ID:{}", type, trimNum, annee, banqueId);
 
         AgiosTrimestriel trimestre = agiosTrimestrielRepository
@@ -469,7 +505,9 @@ public class AgiosOrchestrateurService {
         agiosTrimestrielRepository.save(trimestre);
 
         log.info("{} T{}/{} clôturé — TTC={}", type, trimNum, annee, trimestre.getTotalAgiosTTC());
-        return trimestre;
+        // Mappé ici, dans la transaction — la relation banque (LAZY) ne doit pas être touchée
+        // après le retour de cette méthode (spring.jpa.open-in-view: false, voir jpa.md).
+        return agiosCalculatorMapper.toTrimDto(trimestre);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -477,21 +515,26 @@ public class AgiosOrchestrateurService {
     // ═══════════════════════════════════════════════════════════════
 
     @Transactional(readOnly = true)
-    public Page<AgiosTrimestriel> searchTrimestres(AgiosTrimestrielSearchDto dto, Pageable pageable) {
+    public Page<AgiosTrimestrielResponseDto> searchTrimestres(AgiosTrimestrielSearchDto dto, Pageable pageable) {
         Specification<AgiosTrimestriel> spec = AgiosTrimestrielSpecification.searchByCriteria(
                 dto.banqueId(), dto.type(), dto.annee(),
                 dto.trimestre(), dto.statut(), dto.search());
-        return agiosTrimestrielRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        Page<AgiosTrimestriel> page = agiosTrimestrielRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        // Mappé ici, dans la transaction — banque (LAZY) ne doit pas être touchée hors session
+        // (spring.jpa.open-in-view: false, voir jpa.md) ; avant, le mapping se faisait dans le
+        // controller, masqué jusqu'ici par open-in-view=true.
+        return page.map(agiosCalculatorMapper::toTrimDto);
     }
 
     @Transactional(readOnly = true)
-    public Page<AgiosJournalier> searchJournaliers(AgiosJournalierSearchDto dto, Pageable pageable) {
+    public Page<AgiosJournalierResponseDto> searchJournaliers(AgiosJournalierSearchDto dto, Pageable pageable) {
         PeriodeCalculAgios periodeDto = dto.type() != null ? dto.type().getPeriodeCalcul() : PeriodeCalculAgios.TRIMESTRIEL;
         LocalDate debut = debutDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         LocalDate fin   = finDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         Specification<AgiosJournalier> spec = AgiosJournalierSpecification.searchByCriteria(
                 dto.banqueId(), dto.type(), debut, fin, dto.dateLimite());
-        return agiosJournalierRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        Page<AgiosJournalier> page = agiosJournalierRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
+        return page.map(agiosCalculatorMapper::toJourDto);
     }
 
     @Transactional(readOnly = true)

@@ -15,6 +15,10 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoy
  * <p>{@code libelle}/{@code observation} du DTO sont des libellés d'affichage calculés, et
  * {@code banqueBeneficiaire} dépend d'un choix entre banque référencée et nom libre — ces trois
  * champs sont appliqués par {@code VirementService} après le mapping, pas ici.
+ *
+ * <p>{@code observation} de l'entité est en revanche renseigné dès {@link #toEntity} avec la même
+ * convention (" VIREMENT N° ...") que celle utilisée pour l'affichage, afin que le champ ne soit
+ * jamais {@code null} lors d'une validation en lot (voir {@code BatchValidationService}).
  */
 @Mapper(componentModel = "spring")
 public interface VirementMapper {
@@ -43,6 +47,7 @@ public interface VirementMapper {
         virement.setEmetteur(dto.getEmetteur());
         virement.setType(dto.getType());
         virement.setStatut(StatutMoyenPaiement.ENCOURS);
+        virement.setObservation(" VIREMENT N° " + virement.getNumero());
         return virement;
     }
 }

@@ -111,6 +111,7 @@ public class PrefinancementServiceImpl implements IPrefinancementService {
         Prefinancement prefinancement = prefinancementMapper.toEntity(requestDTO, marche);
         prefinancement.setLigneFonctionnelleSpecifique(ligneResult.specifique());
         prefinancement.setLigneFonctionnelle(ligneResult.generale());
+        prefinancement.setObservation(marche.getNumero());
 
         prefinancement = prefinancementRepository.save(prefinancement);
         log.info("Préfinancement créé avec succès - ID: {}", prefinancement.getId());
