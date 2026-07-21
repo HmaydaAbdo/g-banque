@@ -15,9 +15,12 @@ public record EcheanceCMTSearchDto(
         StatutEcheanceCMT statutPaiement
 ) {
 
-    public EcheanceCMTSearchDto() {
-        this(null, null, null, null, null);
-    }
+    // Pas de constructeur sans argument ici : Spring MVC lie ce record aux query params GET
+    // via son constructeur canonique (binding implicite @ModelAttribute, cf. EcheanceCMTController).
+    // Un constructeur sans argument supplémentaire fait basculer le DataBinder sur celui-ci —
+    // il instancie alors le DTO avec tous les champs à null, quels que soient les paramètres
+    // envoyés : c'était la cause du bug "les filtres du tableau d'amortissement n'ont aucun effet"
+    // (corrigé le 2026-07-21). Ne jamais réintroduire de constructeur sans argument sur ce DTO.
 
     /**
      * Retourne une copie de ce DTO avec l'ID du crédit renseigné.

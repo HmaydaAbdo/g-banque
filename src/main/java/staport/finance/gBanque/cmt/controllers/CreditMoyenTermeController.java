@@ -7,19 +7,19 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.cmt.dtos.DeleteResponseDto;
-import staport.finance.gBanque.cmt.echeances.dtos.EcheanceCMTSearchDto;
-import staport.finance.gBanque.cmt.echeances.dtos.TableauAmortissementCMTResponseDto;
-import staport.finance.gBanque.cmt.echeances.services.EcheanceCMTService;
 import staport.finance.gBanque.cmt.dtos.CreditMoyenTermeRequestDto;
 import staport.finance.gBanque.cmt.dtos.CreditMoyenTermeResponseDto;
 import staport.finance.gBanque.cmt.dtos.CreditMoyenTermeSearchDto;
-import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.services.CreditMoyenTermeService;
+
+import java.time.LocalDate;
 
 /**
  * Contrôleur REST pour la gestion des crédits à moyen terme (CMT).
@@ -35,11 +35,9 @@ public class CreditMoyenTermeController {
     private static final String ADMIN_ONLY = "hasAuthority('SYSTEM_ADMIN')";
 
     private final CreditMoyenTermeService creditMoyenTermeService;
-    private final EcheanceCMTService echeanceCmtService;
 
-    public CreditMoyenTermeController(CreditMoyenTermeService creditMoyenTermeService, EcheanceCMTService echeanceCmtService) {
+    public CreditMoyenTermeController(CreditMoyenTermeService creditMoyenTermeService) {
         this.creditMoyenTermeService = creditMoyenTermeService;
-        this.echeanceCmtService = echeanceCmtService;
     }
 
     @Operation(summary = "Créer un crédit à moyen terme")
@@ -100,13 +98,39 @@ public class CreditMoyenTermeController {
         return ResponseEntity.ok(creditMoyenTermeService.update(id, requestDto));
     }
 
-    @Operation(summary = "Récupérer le tableau d'amortissement d'un crédit")
-    @ApiResponse(responseCode = "404", description = "Crédit introuvable")
+    @Operation(summary = "Exporter en PDF les crédits actifs filtrés",
+            description = "Mêmes critères que GET /credits-cmt/actifs — sans pagination, le fichier contient tous les résultats filtrés")
     @PreAuthorize(FINANCE_OR_ADMIN)
-    @GetMapping("/{creditId}/tableau-amortissement")
-    public ResponseEntity<TableauAmortissementCMTResponseDto> getTableauAmortissementForCredit(@PathVariable Long creditId, EcheanceCMTSearchDto searchDto, Pageable pageable) {
-        CreditMoyenTerme credit = creditMoyenTermeService.findOrThrow(creditId);
-        return ResponseEntity.ok(echeanceCmtService.getTableauAmortissementForCMT(credit, searchDto, pageable));
+    @GetMapping("/actifs/export/pdf")
+    public ResponseEntity<byte[]> exportActiveCreditsPdf(@ModelAttribute CreditMoyenTermeSearchDto searchDto) {
+        byte[] pdf = creditMoyenTermeService.exportActiveCreditsPdf(searchDto);
+        return pdfResponse(pdf, "credits_cmt_actifs");
+    }
+
+    @Operation(summary = "Exporter en PDF les crédits en attente de main levée filtrés",
+            description = "Mêmes critères que GET /credits-cmt/en-attente-de-main-levees — sans pagination")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/en-attente-de-main-levees/export/pdf")
+    public ResponseEntity<byte[]> exportPendingClosureCreditsPdf(@ModelAttribute CreditMoyenTermeSearchDto searchDto) {
+        byte[] pdf = creditMoyenTermeService.exportPendingClosureCreditsPdf(searchDto);
+        return pdfResponse(pdf, "credits_cmt_en_attente_de_main_levee");
+    }
+
+    @Operation(summary = "Exporter en PDF les crédits archivés filtrés",
+            description = "Mêmes critères que GET /credits-cmt/archives — sans pagination")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/archives/export/pdf")
+    public ResponseEntity<byte[]> exportArchivedCreditsPdf(@ModelAttribute CreditMoyenTermeSearchDto searchDto) {
+        byte[] pdf = creditMoyenTermeService.exportArchivedCreditsPdf(searchDto);
+        return pdfResponse(pdf, "credits_cmt_archives");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Supprimer un crédit à moyen terme",

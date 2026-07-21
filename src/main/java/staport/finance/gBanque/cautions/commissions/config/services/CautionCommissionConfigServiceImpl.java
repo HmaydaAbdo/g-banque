@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.cautions.commissions.config.dtos.request.CautionCommissionConfigRequestDTO;
 import staport.finance.gBanque.cautions.commissions.config.dtos.request.CautionCommissionConfigSearchCriteria;
 import staport.finance.gBanque.cautions.commissions.config.dtos.response.CautionCommissionConfigResponseDTO;
@@ -46,6 +48,7 @@ public class CautionCommissionConfigServiceImpl implements ICautionCommissionCon
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = CautionCommissionConfig.class)
     public CautionCommissionConfigResponseDTO create(CautionCommissionConfigRequestDTO dto) {
         if (repository.existsByBanque_Id(dto.banqueId())) {
             throw new DuplicateEntryException(
@@ -63,6 +66,7 @@ public class CautionCommissionConfigServiceImpl implements ICautionCommissionCon
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = CautionCommissionConfig.class)
     public CautionCommissionConfigResponseDTO update(Long id, CautionCommissionConfigRequestDTO dto) {
         CautionCommissionConfig entity = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -84,6 +88,7 @@ public class CautionCommissionConfigServiceImpl implements ICautionCommissionCon
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = CautionCommissionConfig.class)
     public void delete(Long id) {
         CautionCommissionConfig entity = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(

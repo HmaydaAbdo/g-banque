@@ -21,9 +21,27 @@
             </encoder>
         </appender>
 
-        <root level="DEBUG">
+        <!--
+            Racine à INFO, code applicatif à DEBUG.
+
+            Auparavant la racine était à DEBUG : au démarrage, Spring Data JPA
+            teste l'existence d'une @NamedQuery pour CHAQUE méthode de repository.
+            Hibernate lève alors une exception interne — dont le message est
+            littéralement "exception just for purpose of providing stack trace" —
+            la logue en DEBUG avec sa pile complète, puis Spring bascule sur la
+            dérivation du nom de méthode. Comportement normal, mais des centaines
+            de fausses piles d'exception au démarrage, qui masquent les vrais
+            problèmes.
+
+            Les niveaux restent modifiables à chaud via l'endpoint Actuator
+            /actuator/loggers, sans redémarrage.
+        -->
+        <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
+
+        <!-- Code applicatif : tout le détail -->
+        <logger name="staport.finance.gBanque"                  level="DEBUG"/>
 
         <!-- Réduire le bruit Hibernate/Spring en dev -->
         <logger name="org.hibernate.SQL"                        level="WARN"/>

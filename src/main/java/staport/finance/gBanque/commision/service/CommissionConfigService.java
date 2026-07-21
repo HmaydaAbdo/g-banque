@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.services.IBanqueService;
+import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.commision.dtos.CommissionConfigRequestDTO;
 import staport.finance.gBanque.commision.dtos.CommissionConfigResponseDTO;
 import staport.finance.gBanque.commision.dtos.CommissionConfigSearchCriteria;
@@ -118,6 +120,7 @@ public class CommissionConfigService implements ICommissionConfigService {
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.CREATE, entity = CommissionConfig.class)
     public CommissionConfigResponseDTO create(CommissionConfigRequestDTO dto) {
         Banque banque = banqueService.findOrThrow(dto.banqueId());
         log.info("Création règle commission : banque='{}' (id={}), type={}, condition={}",
@@ -129,6 +132,7 @@ public class CommissionConfigService implements ICommissionConfigService {
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.UPDATE, entity = CommissionConfig.class)
     public CommissionConfigResponseDTO update(Long id, CommissionConfigRequestDTO dto) {
         CommissionConfig entity = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -143,6 +147,7 @@ public class CommissionConfigService implements ICommissionConfigService {
 
     @Override
     @Transactional
+    @AuditableAction(operation = AuditOperation.DELETE, entity = CommissionConfig.class)
     public void delete(Long id) {
         CommissionConfig entity = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(

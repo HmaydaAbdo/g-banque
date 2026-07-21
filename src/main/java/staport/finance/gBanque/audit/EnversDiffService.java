@@ -26,9 +26,11 @@ import java.util.Objects;
 public class EnversDiffService {
 
     private final EntityManager entityManager;
+    private final AuditLabelResolver labelResolver;
 
-    public EnversDiffService(EntityManager entityManager) {
+    public EnversDiffService(EntityManager entityManager, AuditLabelResolver labelResolver) {
         this.entityManager = entityManager;
+        this.labelResolver = labelResolver;
     }
 
     /**
@@ -49,7 +51,7 @@ public class EnversDiffService {
     private List<LogEntryDetailResponse> compareFields(Class<?> entityClass, Object previous, Object current) {
         List<LogEntryDetailResponse> details = new ArrayList<>();
         for (Field field : entityClass.getDeclaredFields()) {
-            if (isRelationOrCollection(field)) {
+            if (isCollection(field)) {
                 continue;
             }
             String oldValue = readField(field, previous);
@@ -61,11 +63,25 @@ public class EnversDiffService {
         return details;
     }
 
-    private boolean isRelationOrCollection(Field field) {
+    /**
+     * Les collections ({@code @OneToMany}, {@code @ManyToMany}) restent exclues :
+     * leur comparaison élément par élément n'a pas de représentation simple dans un
+     * tableau "avant / après", et le changement est déjà journalisé du côté de
+     * l'entité propriétaire de la clé étrangère.
+     */
+    private boolean isCollection(Field field) {
         return Collection.class.isAssignableFrom(field.getType())
                 || field.isAnnotationPresent(OneToMany.class)
-                || field.isAnnotationPresent(ManyToMany.class)
-                || field.isAnnotationPresent(ManyToOne.class)
+                || field.isAnnotationPresent(ManyToMany.class);
+    }
+
+    /**
+     * Rendue via {@link AuditLabelResolver} (identifiant + libellé) et jamais via
+     * {@code toString()}, qui déclencherait le chargement complet de l'entité liée
+     * et produirait une valeur illisible.
+     */
+    private boolean isSingleValuedRelation(Field field) {
+        return field.isAnnotationPresent(ManyToOne.class)
                 || field.isAnnotationPresent(OneToOne.class);
     }
 
@@ -76,9 +92,15 @@ public class EnversDiffService {
         try {
             field.setAccessible(true);
             Object value = field.get(target);
-            return value == null ? null : String.valueOf(value);
-        } catch (IllegalAccessException e) {
+            if (value == null) {
+                return null;
+            }
+            return isSingleValuedRelation(field) ? labelResolver.describe(value) : String.valueOf(value);
+        } catch (Exception e) {
+            // L'audit ne doit jamais faire échouer la consultation du journal :
+            // un champ illisible est rendu comme absent plutôt que propagé.
             return null;
         }
     }
+
 }

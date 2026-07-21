@@ -1,6 +1,7 @@
 package staport.finance.gBanque.commision.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.commision.enums.CommissionCondition;
 import staport.finance.gBanque.transactions.enums.TransactionSource;
@@ -21,8 +22,14 @@ import java.util.Objects;
  *       → chercher {@code SI_NON_MATCH} pour la même banque.</li>
  *   <li>Sinon → chercher {@code DEFAULT} pour la banque.</li>
  * </ol>
+ *
+ * <p>{@code @Audited} : cette table ne porte pas un résultat de calcul mais la
+ * <em>règle</em> qui le produit. Une modification de montant change tout ce qui sera
+ * commissionné ensuite, sans qu'aucune commission existante ne bouge — sans historique
+ * ici, un écart constaté après coup serait inexplicable.
  */
 @Entity
+@Audited
 @Table(
     name = "commission_config",
     indexes = {

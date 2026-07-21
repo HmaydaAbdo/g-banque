@@ -16,7 +16,6 @@ import staport.finance.gBanque.logs.dtos.LogEntryDetailResponse;
 import staport.finance.gBanque.logs.dtos.LogResponse;
 import staport.finance.gBanque.logs.dtos.LogSearchCriteria;
 import staport.finance.gBanque.logs.entities.Log;
-import staport.finance.gBanque.logs.entities.LogEntryDetail;
 import staport.finance.gBanque.logs.mappers.LogMapper;
 import staport.finance.gBanque.logs.repositories.LogRepository;
 import staport.finance.gBanque.logs.services.LogService;
@@ -39,12 +38,6 @@ public class LogServiceImpl implements LogService {
         this.logMapper = logMapper;
         this.auditedEntityRegistry = auditedEntityRegistry;
         this.enversDiffService = enversDiffService;
-    }
-
-    @Override
-    @Transactional
-    public void saveLogWithDetails(Log log, List<LogEntryDetail> details) {
-        logRepository.save(log);
     }
 
     @Override

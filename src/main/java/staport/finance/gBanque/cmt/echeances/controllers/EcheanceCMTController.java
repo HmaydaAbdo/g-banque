@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +16,8 @@ import staport.finance.gBanque.cmt.echeances.dtos.*;
 import staport.finance.gBanque.cmt.echeances.services.EcheanceCMTService;
 import staport.finance.gBanque.cmt.entities.CreditMoyenTerme;
 import staport.finance.gBanque.cmt.services.CreditMoyenTermeService;
+
+import java.time.LocalDate;
 
 
 /**
@@ -46,6 +51,24 @@ public class EcheanceCMTController {
             Pageable pageable) {
         CreditMoyenTerme credit = creditMoyenTermeService.findOrThrow(creditId);
         return ResponseEntity.ok(echeanceCmtService.getTableauAmortissementForCMT(credit, searchDto, pageable));
+    }
+
+    @Operation(summary = "Exporter en PDF le tableau d'amortissement d'un crédit",
+            description = "Mêmes critères que GET /echeances-cmt/tableau-amortissement/{creditId} — sans pagination, avec les totaux Endettement/Payé/Restant")
+    @ApiResponse(responseCode = "404", description = "Crédit introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/tableau-amortissement/{creditId}/export/pdf")
+    public ResponseEntity<byte[]> exportTableauAmortissementPdf(
+            @PathVariable Long creditId,
+            @ModelAttribute EcheanceCMTSearchDto searchDto) {
+        CreditMoyenTerme credit = creditMoyenTermeService.findOrThrow(creditId);
+        byte[] pdf = echeanceCmtService.exportTableauAmortissementPdf(credit, searchDto);
+
+        String filename = "tableau_amortissement_cmt_" + creditId + "_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Basculer le statut d'une échéance (PREVU ↔ PAYE)",

@@ -1,6 +1,7 @@
 package staport.finance.gBanque.cautions.commissions.config.entities;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import staport.finance.gBanque.Bank.entities.Banque;
 
 import java.math.BigDecimal;
@@ -17,8 +18,14 @@ import java.util.Objects;
  * entrée/sortie) reste porté par chaque {@code CommissionCautionStrategie} : il s'agit d'une
  * logique métier propre à chaque banque, pas d'un paramètre configurable — seuls le seuil
  * minimum et le diviseur le sont.
+ *
+ * <p>{@code @Audited} : le seuil minimum et le diviseur entrent directement dans le calcul
+ * de chaque commission sur caution. Les modifier change tous les calculs ultérieurs sans
+ * toucher aux commissions déjà émises — sans historique ici, un écart constaté après coup
+ * serait inexplicable.
  */
 @Entity
+@Audited
 @Table(
     name = "caution_commission_config",
     indexes = {
