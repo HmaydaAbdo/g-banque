@@ -70,6 +70,7 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   echeances: EcheanceCMTResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = true;
+  exporting: boolean = false;
   errorMessage: string | null = null;
 
   searchForm!: FormGroup;
@@ -219,6 +220,34 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
     } else {
       this.loadEcheances(this.lastLazyLoadEvent);
     }
+  }
+
+  exportPdf(): void {
+    if (!this.creditId) return;
+    this.exporting = true;
+
+    const searchCriteria: EcheanceCMTSearchDto = {
+      numeroEcheance: this.searchForm.get('numeroEcheance')?.value,
+      month: this.searchForm.get('month')?.value,
+      year: this.searchForm.get('year')?.value,
+      statutPaiement: this.searchForm.get('statutPaiement')?.value,
+    };
+
+    this.echeanceCmtService.exportTableauAmortissementPdf(this.creditId, searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tableau_amortissement_cmt_${this.creditId}_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
   getStatusSeverity(statut: StatutEcheanceCMT): "success" | "warning" | "info" | "danger" | "secondary" | "contrast" | undefined {

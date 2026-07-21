@@ -187,6 +187,11 @@ export class LogsComponent implements OnInit {
 
   /**
    * Ouvre un popup pour afficher les détails du log sélectionné.
+   *
+   * Seul l'identifiant est transmis : le détail champ-par-champ n'est pas porté
+   * par la liste, il est reconstruit à la demande côté serveur depuis la révision
+   * Envers et chargé par le popup lui-même.
+   *
    * @param log Le log dont les détails doivent être affichés.
    */
   showLogDetails(log: LogResponse) {
@@ -195,7 +200,7 @@ export class LogsComponent implements OnInit {
       width: '70%',
       modal: true,
       data: {
-        logDetails: log.logDetails // Passe les détails au composant du popup
+        logId: log.id
       }
     });
   }

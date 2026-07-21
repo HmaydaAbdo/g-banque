@@ -1,6 +1,7 @@
 <div class="p-fluid">
   <p-table
     [value]="logDetails"
+    [loading]="loadingDetails"
     [paginator]="true"
     [rows]="rows"
     [first]="first"
@@ -22,20 +23,34 @@
       <tr>
         <td>{{ detail.fieldName }}</td>
         <td>
-          <span [pTooltip]="detail.oldValue" tooltipPosition="bottom">
-            {{ detail.oldValue }}{{ detail.oldValue.length > 50 ? '...' : '' }}
-          </span>
+          @if (detail.oldValue) {
+            <span [pTooltip]="detail.oldValue" tooltipPosition="bottom">
+              {{ detail.oldValue.slice(0, 50) }}{{ detail.oldValue.length > 50 ? '…' : '' }}
+            </span>
+          } @else {
+            <span class="text-color-secondary">—</span>
+          }
         </td>
         <td>
-          <span [pTooltip]="detail.newValue" tooltipPosition="bottom">
-            {{ detail.newValue }}{{ detail.newValue.length > 50 ? '...' : '' }}
-          </span>
+          @if (detail.newValue) {
+            <span [pTooltip]="detail.newValue" tooltipPosition="bottom">
+              {{ detail.newValue.slice(0, 50) }}{{ detail.newValue.length > 50 ? '…' : '' }}
+            </span>
+          } @else {
+            <span class="text-color-secondary">—</span>
+          }
         </td>
       </tr>
     </ng-template>
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="3" class="text-center">Aucun détail de log trouvé.</td>
+        <td colspan="3" class="text-center">
+          @if (loadFailed) {
+            Impossible de charger le détail de ce log.
+          } @else {
+            Aucun détail de log trouvé.
+          }
+        </td>
       </tr>
     </ng-template>
   </p-table>

@@ -38,6 +38,7 @@
       </ng-template>
     </p-breadcrumb>
       <p class="text-sm font-bold">Désignation CMT : "{{tableauDetails?.designationCredit}}"</p>
+      <button pButton pRipple label="Exporter PDF" class="p-button-outlined p-button-danger h-fit" size="small" icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
   </div>
 
     @if (tableauDetails) {

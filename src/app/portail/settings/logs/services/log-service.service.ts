@@ -4,6 +4,7 @@ import {HttpClient, HttpParams} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {LogSearchCriteria} from "../dtos/LogSearchCriteria";
 import { LogResponse } from '../dtos/LogResponse';
+import { LogEntryDetailResponse } from '../dtos/LogEntryDetailResponse';
 import {PageResponse} from "../../../global/types/PageResponse";
 
 @Injectable({
@@ -52,6 +53,20 @@ export class LogService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+
+  /**
+   * Récupère le détail champ-par-champ (avant/après) d'un log.
+   *
+   * Ce détail n'est jamais présent dans la réponse de {@link getLogs} : il est
+   * reconstruit à la demande côté serveur à partir de la révision Envers, et
+   * doit donc être demandé explicitement à l'ouverture du popup.
+   *
+   * @param id L'ID du log.
+   * @returns Un Observable de liste de détails.
+   */
+  getLogDetails(id: number): Observable<LogEntryDetailResponse[]> {
+    return this.http.get<LogEntryDetailResponse[]>(`${this.apiUrl}/${id}/details`);
+  }
 
   /**
    * Récupère les noms distincts des entités loggées.

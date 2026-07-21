@@ -49,6 +49,30 @@ export class CmtService {
   }
 
   /**
+   * Exporte en PDF l'intégralité des crédits actifs correspondant aux filtres fournis
+   * (mêmes critères que {@link searchActiveCredits}, sans pagination).
+   */
+  exportActiveCreditsPdf(searchDto: CreditMoyenTermeSearchDto): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/actifs/export/pdf`, { params: this.buildFilterParams(searchDto), responseType: 'blob' });
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des crédits en attente de main levée correspondant aux
+   * filtres fournis (mêmes critères que {@link searchPendingClosureCredits}, sans pagination).
+   */
+  exportPendingClosureCreditsPdf(searchDto: CreditMoyenTermeSearchDto): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/en-attente-de-main-levees/export/pdf`, { params: this.buildFilterParams(searchDto), responseType: 'blob' });
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des crédits archivés correspondant aux filtres fournis
+   * (mêmes critères que {@link searchArchivedCredits}, sans pagination).
+   */
+  exportArchivedCreditsPdf(searchDto: CreditMoyenTermeSearchDto): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/archives/export/pdf`, { params: this.buildFilterParams(searchDto), responseType: 'blob' });
+  }
+
+  /**
    * Creates a new credit.
    */
   createCredit(request: CreditMoyenTermeRequestDto): Observable<CreditMoyenTermeResponseDto> {
@@ -91,6 +115,21 @@ export class CmtService {
     params = params.set('page', searchDto.page?.toString() || '0');
     params = params.set('size', searchDto.size?.toString() || '10');
     params = params.set('sort', searchDto.sort || 'id,asc');
+    return params;
+  }
+
+  /**
+   * Construit les paramètres de filtre seuls (sans pagination), utilisés par les exports PDF
+   * qui impriment l'intégralité des résultats filtrés.
+   */
+  private buildFilterParams(searchDto: CreditMoyenTermeSearchDto): HttpParams {
+    let params = new HttpParams();
+    if (searchDto.designation) {
+      params = params.set('designation', searchDto.designation);
+    }
+    if (searchDto.banqueId) {
+      params = params.set('banqueId', searchDto.banqueId);
+    }
     return params;
   }
 }

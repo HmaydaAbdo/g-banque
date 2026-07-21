@@ -55,6 +55,29 @@ export class EcheanceCmtService {
   }
 
   /**
+   * Exporte en PDF l'échéancier complet (filtré, sans pagination) d'un crédit à moyen terme,
+   * avec les mêmes critères que {@link getTableauAmortissementForCredit}.
+   */
+  exportTableauAmortissementPdf(creditId: number, searchDto: EcheanceCMTSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.statutPaiement) {
+      params = params.set('statutPaiement', searchDto.statutPaiement);
+    }
+    if (searchDto.year) {
+      params = params.set('year', searchDto.year.toString());
+    }
+    if (searchDto.month) {
+      params = params.set('month', searchDto.month.toString());
+    }
+    if (searchDto.numeroEcheance) {
+      params = params.set('numeroEcheance', searchDto.numeroEcheance.toString());
+    }
+
+    return this.http.get(`${this.apiUrl}/tableau-amortissement/${creditId}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /**
    * Marks a specific installment as paid.
    */
   toggleStatus(id: number): Observable<EcheanceCMTResponseDto> {

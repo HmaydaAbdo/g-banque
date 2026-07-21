@@ -51,6 +51,7 @@ export class CmtListComponent implements OnInit, OnDestroy {
   credits: CreditMoyenTermeResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
 
   searchForm!: FormGroup;
 
@@ -184,6 +185,30 @@ export class CmtListComponent implements OnInit, OnDestroy {
   createNewCredit(): void {
     // Navigate to the creation form. The route should be defined in cmt.routes.ts.
     this.router.navigate(['portail/cmt/new']);
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const searchCriteria: CreditMoyenTermeSearchDto = {
+      designation: this.searchForm.get('designation')?.value,
+      banqueId: this.searchForm.get('banqueId')?.value
+    };
+
+    this.cmtService.exportActiveCreditsPdf(searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `credits_cmt_actifs_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
   viewAmortizationTable(creditId: number): void {
