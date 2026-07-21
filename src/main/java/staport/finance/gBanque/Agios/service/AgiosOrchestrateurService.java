@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import staport.finance.gBanque.Agios.dtos.AgiosDetailAggregateDto;
 import staport.finance.gBanque.Agios.dtos.AgiosJournalierResponseDto;
 import staport.finance.gBanque.Agios.dtos.AgiosJournalierSearchDto;
+import staport.finance.gBanque.Agios.dtos.MarcheRefDto;
 import staport.finance.gBanque.Agios.dtos.AgiosRequestDto;
 import staport.finance.gBanque.Agios.dtos.AgiosTrimestrielResponseDto;
 import staport.finance.gBanque.Agios.dtos.AgiosTrimestrielSearchDto;
@@ -532,7 +533,7 @@ public class AgiosOrchestrateurService {
         LocalDate debut = debutDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         LocalDate fin   = finDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         Specification<AgiosJournalier> spec = AgiosJournalierSpecification.searchByCriteria(
-                dto.banqueId(), dto.type(), debut, fin, dto.dateLimite());
+                dto.banqueId(), dto.type(), debut, fin, dto.dateLimite(), dto.marcheId());
         Page<AgiosJournalier> page = agiosJournalierRepository.findAll(spec, pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
         return page.map(agiosCalculatorMapper::toJourDto);
     }
@@ -543,7 +544,7 @@ public class AgiosOrchestrateurService {
         LocalDate debut = debutDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         LocalDate fin   = finDePeriode(dto.trimestre(), dto.annee(), periodeDto);
         Specification<AgiosJournalier> spec = AgiosJournalierSpecification.searchByCriteria(
-                dto.banqueId(), dto.type(), debut, fin, dto.dateLimite());
+                dto.banqueId(), dto.type(), debut, fin, dto.dateLimite(), dto.marcheId());
 
         List<AgiosJournalier> jours = agiosJournalierRepository.findAll(spec);
 
@@ -576,6 +577,23 @@ public class AgiosOrchestrateurService {
 
     public List<TypeAgios> getTypesActifs() {
         return calculateurs.stream().map(AgiosCalculateur::getType).collect(Collectors.toList());
+    }
+
+    /**
+     * Marchés disponibles pour le filtre de l'écran de détail : uniquement ceux effectivement
+     * présents dans le détail journalier de la banque/type/période consultée (jamais le
+     * référentiel marché complet). Toujours vide pour les types sans marché (ex. Facilité de Caisse).
+     */
+    @Transactional(readOnly = true)
+    public List<MarcheRefDto> getMarchesDisponibles(AgiosJournalierSearchDto dto) {
+        PeriodeCalculAgios periodeDto = dto.type() != null ? dto.type().getPeriodeCalcul() : PeriodeCalculAgios.TRIMESTRIEL;
+        LocalDate debut = debutDePeriode(dto.trimestre(), dto.annee(), periodeDto);
+        LocalDate fin   = finDePeriode(dto.trimestre(), dto.annee(), periodeDto);
+        return agiosJournalierRepository
+                .findDistinctMarchesByCriteria(dto.banqueId(), dto.type(), debut, fin)
+                .stream()
+                .map(m -> new MarcheRefDto(m.getId(), m.getNumero(), m.getNom()))
+                .collect(Collectors.toList());
     }
 
     // ═══════════════════════════════════════════════════════════════

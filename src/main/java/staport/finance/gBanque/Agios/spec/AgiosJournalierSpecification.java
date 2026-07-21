@@ -32,13 +32,19 @@ public class AgiosJournalierSpecification {
                 cb.lessThanOrEqualTo(root.get("dateValeur"), dateLimite);
     }
 
+    public static Specification<AgiosJournalier> marcheId(Long marcheId) {
+        return (root, query, cb) -> marcheId == null ? null :
+                cb.equal(root.get("marche").get("id"), marcheId);
+    }
+
     /** Convention repo : {@code XSpecification.searchByCriteria(...)} (architecture.md). */
     public static Specification<AgiosJournalier> searchByCriteria(Long banqueId, TypeAgios type,
                                                            LocalDate debut, LocalDate fin,
-                                                           LocalDate dateLimite) {
+                                                           LocalDate dateLimite, Long marcheId) {
         LocalDate finEffective = (dateLimite != null && dateLimite.isBefore(fin)) ? dateLimite : fin;
         return Specification.where(banqueId(banqueId))
                 .and(typeAgios(type))
-                .and(dateValeurBetween(debut, finEffective));
+                .and(dateValeurBetween(debut, finEffective))
+                .and(marcheId(marcheId));
     }
 }

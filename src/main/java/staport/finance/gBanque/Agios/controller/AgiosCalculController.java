@@ -75,6 +75,14 @@ public class AgiosCalculController {
         return ResponseEntity.ok(orchestrateur.getAggregates(searchDto));
     }
 
+    @GetMapping("/detail/marches")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @Operation(summary = "Marchés disponibles pour le filtre du détail (types multi-marchés uniquement)")
+    public ResponseEntity<List<MarcheRefDto>> getMarchesDisponibles(
+            AgiosJournalierSearchDto searchDto) {
+        return ResponseEntity.ok(orchestrateur.getMarchesDisponibles(searchDto));
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  ACTIONS
     // ═══════════════════════════════════════════════════════════════

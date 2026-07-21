@@ -10,6 +10,8 @@ public record AgiosJournalierSearchDto(
         TypeAgios type,
         Integer trimestre,
         Integer annee,
-        LocalDate dateLimite
+        LocalDate dateLimite,
+        /** Filtre optionnel par marché — pertinent uniquement pour les types multi-marchés. */
+        Long marcheId
 
 ) {}
