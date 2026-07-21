@@ -1,6 +1,9 @@
 package staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories;
 
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -17,6 +20,15 @@ import java.util.List;
  */
 @Repository
 public interface LigneFonctionnelleRepository extends JpaRepository<LigneFonctionnelle, Long>, JpaSpecificationExecutor<LigneFonctionnelle> {
+
+    /**
+     * Surcharge de {@code JpaSpecificationExecutor.findAll(Specification, Sort)} avec fetch
+     * anticipé des relations affichées à l'export PDF (banque, nature, marchés) — évite le
+     * N+1/LazyInitializationException hors transaction. Utilisée uniquement par l'export PDF
+     * (non paginé, contrairement à {@code findAll(Specification, Pageable)} utilisé par les écrans).
+     */
+    @EntityGraph(attributePaths = {"banque", "natureLigneFonctionnelle", "marches"})
+    List<LigneFonctionnelle> findAll(Specification<LigneFonctionnelle> spec, Sort sort);
 
     /**
      * Finds an active functional line by bank ID and functional line nature ID.

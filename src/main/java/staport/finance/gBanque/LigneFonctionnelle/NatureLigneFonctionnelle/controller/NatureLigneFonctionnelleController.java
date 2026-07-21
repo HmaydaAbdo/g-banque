@@ -9,7 +9,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.exceptions.NatureLFExceptionHandler;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.services.INatureLigneFonctionnelleService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -104,6 +107,19 @@ public class NatureLigneFonctionnelleController {
     public ResponseEntity<List<NatureLigneFonctionnelleResponse>> getAllNatureLigneFonctionnellesList(
             @RequestParam(required = false) PorteeNature portee) {
         return ResponseEntity.ok(service.getAllNatureLigneFonctionnellesList(portee));
+    }
+
+    @Operation(summary = "Exporter en PDF les natures filtrées",
+            description = "Mêmes critères que GET /natures-lignes-fonctionnelles — sans pagination, le fichier contient tous les résultats filtrés")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(AUTHENTICATED)
+    public ResponseEntity<byte[]> exportNaturesPdf(@ModelAttribute NatureLigneFonctionnelleSearchCriteria searchCriteria) {
+        byte[] pdf = service.exportNaturesPdf(searchCriteria);
+        String filename = "natures_lignes_fonctionnelles_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     // ── Update ───────────────────────────────────────────────────────────────

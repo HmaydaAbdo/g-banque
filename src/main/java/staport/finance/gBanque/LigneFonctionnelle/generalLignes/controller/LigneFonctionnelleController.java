@@ -16,7 +16,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +29,7 @@ import staport.finance.gBanque.factoring.dtos.response.AgregatedSuivieFactoringL
 import staport.finance.gBanque.prefinancement.dtos.response.AgregatedSuiviePrefiLigneResponseDto;
 import staport.finance.gBanque.common.PageableUtils;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,6 +142,20 @@ public class LigneFonctionnelleController {
         Pageable pageable = PageRequest.of(page, PageableUtils.clampSize(size), sortOrder);
 
         return ResponseEntity.ok(ligneFonctionnelleService.getPaginatedLigneFonctionnelles(searchCriteria, pageable));
+    }
+
+    @Operation(summary = "Exporter en PDF les lignes fonctionnelles générales filtrées",
+            description = "Mêmes critères que GET /lignes-fonctionnelles — sans pagination, réutilisé par les écrans encours (actif=true) et archivées (actif=false)")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(@ModelAttribute LigneFonctionnelleSearchCriteria searchCriteria) {
+        byte[] pdf = ligneFonctionnelleService.exportPdf(searchCriteria);
+        String suffix = Boolean.FALSE.equals(searchCriteria.actif()) ? "_archivees" : "_encours";
+        String filename = "lignes_fonctionnelles" + suffix + "_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Lignes fonctionnelles d'un marché")

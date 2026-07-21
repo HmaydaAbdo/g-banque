@@ -95,4 +95,12 @@ public interface ILigneFonctionnelleService {
      * Utilisé comme guard de suppression dans {@code NatureLigneFonctionnelleService}.
      */
     boolean existsByNatureId(Long natureId);
+
+    /**
+     * Exporte en PDF l'intégralité des lignes fonctionnelles générales (mères/indépendantes)
+     * correspondant aux filtres fournis (mêmes critères que {@link #getPaginatedLigneFonctionnelles})
+     * — sans pagination. Réutilisé par les écrans encours ({@code criteria.actif() == true}) et
+     * archivées ({@code criteria.actif() == false}).
+     */
+    byte[] exportPdf(LigneFonctionnelleSearchCriteria criteria);
 }

@@ -59,4 +59,12 @@ public interface ILigneFonctionnelleSpecifiqueService {
      * Utilisé comme guard de suppression dans {@code NatureLigneFonctionnelleService}.
      */
     boolean existsByNatureId(Long natureId);
+
+    /**
+     * Exporte en PDF l'intégralité des lignes fonctionnelles spécifiques correspondant aux filtres
+     * fournis (mêmes critères que {@link #getLignesFonctionnellesSpecifiques}) — sans pagination.
+     * Réutilisé par les écrans encours ({@code criteria.actif() == true}) et archivées
+     * ({@code criteria.actif() == false}).
+     */
+    byte[] exportPdf(LigneFonctionnelleSpecifiqueSearchCriteria criteria);
 }

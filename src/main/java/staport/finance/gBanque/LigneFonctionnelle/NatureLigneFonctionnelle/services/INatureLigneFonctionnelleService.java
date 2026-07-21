@@ -83,4 +83,10 @@ public interface INatureLigneFonctionnelleService {
      * seedé en base. Même rationale que {@link #findByCode(String)}.
      */
     Optional<NatureLigneFonctionnelle> findByLabel(String label);
+
+    /**
+     * Exporte en PDF l'intégralité des natures correspondant aux filtres fournis (mêmes critères
+     * que {@link #getAllNatureLigneFonctionnelles}) — sans pagination.
+     */
+    byte[] exportNaturesPdf(NatureLigneFonctionnelleSearchCriteria criteria);
 }

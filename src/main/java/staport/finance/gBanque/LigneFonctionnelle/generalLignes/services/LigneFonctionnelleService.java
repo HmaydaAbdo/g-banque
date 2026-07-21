@@ -1,10 +1,21 @@
 package staport.finance.gBanque.LigneFonctionnelle.generalLignes.services;
 
+import com.lowagie.text.Chunk;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.dtos.*;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.entities.LigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.mappers.LigneFonctionnelleMapper;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.repositories.LigneFonctionnelleRepository;
 import staport.finance.gBanque.LigneFonctionnelle.generalLignes.specifications.LigneFonctionnelleSpecification;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.entities.NatureLigneFonctionnelle;
 import staport.finance.gBanque.LigneFonctionnelle.NatureLigneFonctionnelle.enums.PorteeNature;
@@ -29,8 +40,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.Color;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -76,11 +92,12 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     private final LcnMapper lcnMapper;
     private final FactoringMapper factoringMapper;
     private final DroitConstateMapper droitConstateMapper;
+    private final StaportPdfReportService staportPdfReportService;
 
     @Autowired
     public LigneFonctionnelleService(LigneFonctionnelleRepository ligneFonctionnelleRepository,
                                      LigneFonctionnelleMapper ligneFonctionnelleMapper,
-                                     IMarcheService marcheService, LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader, PrefinancementReader prefinancementReader, FactoringReader factoringReader, DroitConstateReader droitConstateReader, PrefinancementMapper prefinancementMapper, LcnReader lcnReader, LcnMapper lcnMapper, FactoringMapper factoringMapper, DroitConstateMapper droitConstateMapper) {
+                                     IMarcheService marcheService, LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader, PrefinancementReader prefinancementReader, FactoringReader factoringReader, DroitConstateReader droitConstateReader, PrefinancementMapper prefinancementMapper, LcnReader lcnReader, LcnMapper lcnMapper, FactoringMapper factoringMapper, DroitConstateMapper droitConstateMapper, StaportPdfReportService staportPdfReportService) {
         this.ligneFonctionnelleRepository = ligneFonctionnelleRepository;
         this.ligneFonctionnelleMapper = ligneFonctionnelleMapper;
         this.marcheService = marcheService;
@@ -93,6 +110,7 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
         this.lcnMapper = lcnMapper;
         this.factoringMapper = factoringMapper;
         this.droitConstateMapper = droitConstateMapper;
+        this.staportPdfReportService = staportPdfReportService;
     }
 
 
@@ -1077,6 +1095,174 @@ public class LigneFonctionnelleService implements ILigneFonctionnelleService{
     @Override
     public boolean existsByNatureId(Long natureId) {
         return ligneFonctionnelleRepository.existsByNatureLigneFonctionnelleId(natureId);
+    }
+
+    // =========================================================================================
+    // 11. EXPORT PDF
+    // =========================================================================================
+
+    /**
+     * Exporte en PDF l'intégralité des lignes fonctionnelles générales (mères/indépendantes,
+     * comme {@link #getPaginatedLigneFonctionnelles}) correspondant aux filtres fournis — sans
+     * pagination. Réutilisé par les écrans encours ({@code criteria.actif() == true}) et archivées
+     * ({@code criteria.actif() == false}) : seul le titre du rapport varie selon ce critère.
+     * <p>
+     * Passe par {@link LigneFonctionnelleMapper#toDto} (comme les écrans) pour le calcul
+     * encours/solde/expired — jamais recalculé ici (pas de duplication de logique métier,
+     * cf. CLAUDE.md).
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportPdf(LigneFonctionnelleSearchCriteria criteria) {
+        log.info("Export PDF des lignes fonctionnelles générales — critères: {}", criteria);
+
+        Specification<LigneFonctionnelle> spec = LigneFonctionnelleSpecification.searchByCriteria(criteria)
+                .and(LigneFonctionnelleSpecification.isLigneMereOrIndependante());
+        List<LigneFonctionnelle> entities = ligneFonctionnelleRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "id"));
+        List<LigneFonctionnelleResponse> lignes = entities.stream().map(ligneFonctionnelleMapper::toDto).collect(Collectors.toList());
+
+        String title = "Lignes Fonctionnelles Générales" + statusSuffix(criteria);
+        BigDecimal totalPlafond = lignes.stream()
+                .map(LigneFonctionnelleResponse::plafond)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        Color medBlue = Color.decode("#2563eb");
+        Color lightBlue = Color.decode("#dbeafe");
+        Color rowAlt = Color.decode("#f8fafc");
+        Color green = Color.decode("#16a34a");
+        Color red = Color.decode("#dc2626");
+        Color borderGray = Color.decode("#e5e7eb");
+        DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        try {
+            return staportPdfReportService.generateReport(title, PageSize.A4.rotate(), (doc, writer) -> {
+                try {
+                    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                    Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                    Font hdrFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                    Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                    Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                    doc.add(Chunk.NEWLINE);
+                    doc.add(Chunk.NEWLINE);
+
+                    Paragraph titleParagraph = new Paragraph(title, titleFont);
+                    titleParagraph.setAlignment(Element.ALIGN_CENTER);
+                    doc.add(titleParagraph);
+
+                    Paragraph sub = new Paragraph(
+                            "Exporté le " + LocalDate.now().format(dateFmt) + "  •  " + lignes.size() + " ligne(s)",
+                            subFont);
+                    sub.setAlignment(Element.ALIGN_CENTER);
+                    sub.setSpacingAfter(8f);
+                    doc.add(sub);
+
+                    float[] colWidths = {14f, 12f, 16f, 10f, 10f, 10f, 8f, 10f, 10f, 8f};
+                    PdfPTable table = new PdfPTable(colWidths);
+                    table.setWidthPercentage(100f);
+                    table.setSpacingBefore(8f);
+                    table.setHeaderRows(1);
+
+                    for (String h : new String[]{
+                            "Banque", "Nature", "Marché(s)", "Plafond (MAD)", "Encours (MAD)",
+                            "Solde (MAD)", "Taux (%)", "Date Départ", "Date Fin", "Statut"}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                        c.setBackgroundColor(medBlue);
+                        c.setPadding(5f);
+                        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        c.setBorderColor(Color.WHITE);
+                        c.setBorderWidth(0.5f);
+                        table.addCell(c);
+                    }
+
+                    for (int i = 0; i < lignes.size(); i++) {
+                        LigneFonctionnelleResponse l = lignes.get(i);
+                        Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
+
+                        String marchesStr = (l.marches() == null || l.marches().isEmpty())
+                                ? "Général"
+                                : l.marches().stream().map(MarcheRefDto::numero).collect(Collectors.joining(", "));
+
+                        addPdfCell(table, l.banqueNom(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                        addPdfCell(table, l.natureLigneFonctionnelleLabel(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                        addPdfCell(table, marchesStr, cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                        addPdfCell(table, formatMontantPdf(l.plafond()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                        addPdfCell(table, formatMontantPdf(l.encours()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                        addPdfCell(table, formatMontantPdf(l.solde()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                        addPdfCell(table, formatMontantPdf(l.taux()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                        addPdfCell(table, l.dateDepart() != null ? l.dateDepart().format(dateFmt) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                        addPdfCell(table, l.dateFin() != null ? l.dateFin().format(dateFmt) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+
+                        boolean expired = l.expired();
+                        PdfPCell statusCell = new PdfPCell(new Phrase(
+                                expired ? "EXPIRÉE" : "EN COURS",
+                                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                        statusCell.setBackgroundColor(expired ? red : green);
+                        statusCell.setPadding(4f);
+                        statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        statusCell.setBorderColor(borderGray);
+                        statusCell.setBorderWidth(0.5f);
+                        table.addCell(statusCell);
+                    }
+
+                    PdfPCell totalLabel = new PdfPCell(
+                            new Phrase("TOTAL — " + lignes.size() + " ligne(s)", totalFont));
+                    totalLabel.setColspan(3);
+                    totalLabel.setBackgroundColor(lightBlue);
+                    totalLabel.setPadding(5f);
+                    totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totalLabel.setBorderColor(medBlue);
+                    table.addCell(totalLabel);
+
+                    PdfPCell totalVal = new PdfPCell(
+                            new Phrase(formatMontantPdf(totalPlafond), totalFont));
+                    totalVal.setBackgroundColor(lightBlue);
+                    totalVal.setPadding(5f);
+                    totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totalVal.setBorderColor(medBlue);
+                    table.addCell(totalVal);
+
+                    for (int j = 0; j < 6; j++) {
+                        PdfPCell empty = new PdfPCell(new Phrase(""));
+                        empty.setBackgroundColor(lightBlue);
+                        empty.setBorderColor(medBlue);
+                        table.addCell(empty);
+                    }
+
+                    doc.add(table);
+                } catch (DocumentException e) {
+                    throw new RuntimeException("Erreur lors de la génération du contenu du PDF des lignes fonctionnelles.", e);
+                }
+            });
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des lignes fonctionnelles.", e);
+        }
+    }
+
+    private String statusSuffix(LigneFonctionnelleSearchCriteria criteria) {
+        if (criteria == null || criteria.actif() == null) return "";
+        return criteria.actif() ? " — En Cours" : " — Archivées";
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font, Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantPdf(BigDecimal montant) {
+        if (montant == null) return "—";
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
+        symbols.setGroupingSeparator(' ');
+        symbols.setDecimalSeparator(',');
+        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
+        return formatter.format(montant);
     }
 
 }
