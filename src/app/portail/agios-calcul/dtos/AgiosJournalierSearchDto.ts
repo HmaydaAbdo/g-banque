@@ -6,6 +6,7 @@ export interface AgiosJournalierSearchDto {
   trimestre?: number;
   annee?: number;
   dateLimite?: string;
+  marcheId?: number;
 }
 
 

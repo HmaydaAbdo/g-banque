@@ -13,6 +13,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { CalendarModule } from 'primeng/calendar';
+import { DropdownModule } from 'primeng/dropdown';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService, MenuItem } from 'primeng/api';
 
@@ -22,6 +23,7 @@ import { AgiosTrimestrielSearchDto } from '../../dtos/AgiosTrimestrielSearchDto'
 import { AgiosJournalierSearchDto } from '../../dtos/AgiosJournalierSearchDto';
 import { AgiosTrimestrielResponseDto } from '../../dtos/AgiosTrimestrielResponseDto';
 import { AgiosJournalierResponseDto } from '../../dtos/AgiosJournalierResponseDto';
+import { MarcheRefDto } from '../../dtos/MarcheRefDto';
 import { TypeAgios, TypeAgiosLabels } from '../../enums/TypeAgios';
 import { StatutTrimestre } from '../../enums/StatutTrimestre';
 import { AuthService } from '../../../../auth/services/auth.service';
@@ -33,7 +35,7 @@ import { AgiosDetailAggregateDto } from '../../dtos/Agiosdetailaggregatedto';
   imports: [
     CommonModule, ReactiveFormsModule, RouterLink, DatePipe, DecimalPipe,
     TableModule, ButtonModule, RippleModule, BreadcrumbModule,
-    ToastModule, TooltipModule, TagModule, CalendarModule, ConfirmDialogModule
+    ToastModule, TooltipModule, TagModule, CalendarModule, DropdownModule, ConfirmDialogModule
   ],
   templateUrl: './agios-calcul-detail.component.html',
   providers: [MessageService, ConfirmationService]
@@ -70,6 +72,10 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   dateLimiteControl = new FormControl<Date | null>(null);
   minDate!: Date;
   maxDate!: Date;
+
+  // Marché filter (Reactive Forms) — pertinent uniquement pour les types multi-marchés
+  marcheIdControl = new FormControl<number | null>(null);
+  marcheOptions: MarcheRefDto[] = [];
 
   // Search DTO (réutilisé pour table + agrégats)
   private journalierDto!: AgiosJournalierSearchDto;
@@ -121,6 +127,9 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
 
         this.loadTrimestreInfo();
         this.loadAggregates();
+        if (this.isMultiMarche) {
+          this.loadMarchesDisponibles();
+        }
       });
   }
 
@@ -158,6 +167,15 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: agg => this.aggregates = agg
+      });
+  }
+
+  loadMarchesDisponibles(): void {
+    this.agiosCalculService.getMarchesDisponibles(this.journalierDto)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: marches => this.marcheOptions = marches,
+        error: () => {}
       });
   }
 
@@ -224,6 +242,30 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  //  MARCHÉ — FILTRE
+  // ═══════════════════════════════════════════════════════════════
+
+  onMarcheChange(dt: Table): void {
+    this.journalierDto.marcheId = this.marcheIdControl.value ?? undefined;
+
+    // Recharger table + agrégats
+    this.first = 0;
+    dt.first = 0;
+    dt.onLazyLoad.emit({
+      first: 0,
+      rows: this.rows,
+      sortField: 'dateValeur',
+      sortOrder: 1
+    });
+    this.loadAggregates();
+  }
+
+  clearMarche(dt: Table): void {
+    this.marcheIdControl.setValue(null);
+    this.onMarcheChange(dt);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   //  ACTIONS
   // ═══════════════════════════════════════════════════════════════
 
@@ -282,6 +324,10 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
 
   get hasDateFilter(): boolean {
     return !!this.journalierDto.dateLimite;
+  }
+
+  get hasMarcheFilter(): boolean {
+    return this.journalierDto.marcheId != null;
   }
 
   /**

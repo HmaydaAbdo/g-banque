@@ -9,6 +9,7 @@ import { AgiosJournalierSearchDto } from '../dtos/AgiosJournalierSearchDto';
 import { TypeAgios } from '../enums/TypeAgios';
 import {PageResponse} from "../../global/types/PageResponse";
 import {AgiosDetailAggregateDto} from "../dtos/Agiosdetailaggregatedto";
+import {MarcheRefDto} from "../dtos/MarcheRefDto";
 
 @Injectable({
   providedIn: 'root'
@@ -90,6 +91,18 @@ export class AgiosCalculService {
     );
   }
 
+  /**
+   * Marchés disponibles pour le filtre (uniquement ceux présents dans le détail journalier
+   * de la banque/type/période consultés — jamais le référentiel marché complet).
+   * GET /agios/calcul/detail/marches
+   */
+  getMarchesDisponibles(dto: AgiosJournalierSearchDto): Observable<MarcheRefDto[]> {
+    const params = this.buildJournalierParams(dto);
+    return this.http.get<MarcheRefDto[]>(
+      `${this.apiUrl}/detail/marches`, { params }
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════════
   //  ACTIONS
   // ═══════════════════════════════════════════════════════════════
@@ -145,6 +158,7 @@ export class AgiosCalculService {
     if (dto.trimestre != null) params = params.set('trimestre', dto.trimestre.toString());
     if (dto.annee != null) params = params.set('annee', dto.annee.toString());
     if (dto.dateLimite) params = params.set('dateLimite', dto.dateLimite);
+    if (dto.marcheId != null) params = params.set('marcheId', dto.marcheId.toString());
     return params;
   }
 }

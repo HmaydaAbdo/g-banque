@@ -19,7 +19,7 @@
                  styleClass="text-xs">
           </p-tag>
         }
-        @if (hasDateFilter) {
+        @if (hasDateFilter || hasMarcheFilter) {
           <span class="text-xs px-2 py-1 border-round font-semibold"
                 style="background:var(--color-info-light);color:var(--color-info-text)">
             Filtré
@@ -138,6 +138,25 @@
                       appendTo="body">
           </p-calendar>
         </div>
+
+        <!-- Filtre marché — types multi-marchés uniquement -->
+        @if (isMultiMarche) {
+          <div class="flex align-items-center gap-2">
+            <span class="text-500 text-xs" style="white-space:nowrap">Marché :</span>
+            <p-dropdown [formControl]="marcheIdControl"
+                        [options]="marcheOptions"
+                        optionLabel="numero"
+                        optionValue="id"
+                        placeholder="Tous"
+                        [showClear]="true"
+                        (onChange)="onMarcheChange(dt)"
+                        (onClear)="clearMarche(dt)"
+                        [style]="{'width':'160px'}"
+                        styleClass="text-sm"
+                        appendTo="body">
+            </p-dropdown>
+          </div>
+        }
 
       </div>
     </div>
