@@ -17,7 +17,11 @@
         </ng-template>
       </p-breadcrumb>
     </div>
-    <p-tag severity="danger" value="Archives" icon="pi pi-archive"></p-tag>
+    <div class="flex align-items-center gap-2">
+      <button pButton pRipple label="Exporter PDF" class="p-button-outlined p-button-danger h-fit"
+              icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
+      <p-tag severity="danger" value="Archives" icon="pi pi-archive"></p-tag>
+    </div>
   </div>
 
   <div class="pg-filters">

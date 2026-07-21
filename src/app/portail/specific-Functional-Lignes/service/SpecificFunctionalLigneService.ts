@@ -115,4 +115,25 @@ export class SpecificFunctionalLigneService {
     const params = this.buildParams(null, page, size, sort);
     return this.http.get<AgregatedSuivieFactoringLigneResponseDto>(`${this.apiUrl}/${id}/factoring`, { params });
   }
+
+  // --- Export PDF ---
+
+  /**
+   * Exporte en PDF les lignes fonctionnelles spécifiques correspondant aux filtres fournis (mêmes
+   * critères que {@link getLignesFonctionnellesSpecifiques}) — sans pagination. Réutilisé par les
+   * écrans encours (criteria.actif = true) et archivées (criteria.actif = false).
+   * GET /lignes-fonctionnelles-specifiques/export/pdf
+   */
+  exportPdf(criteria: LigneFonctionnelleSpecifiqueSearchCriteria): Observable<Blob> {
+    let params = new HttpParams();
+    if (criteria) {
+      Object.keys(criteria).forEach(key => {
+        const value = (criteria as any)[key];
+        if (value !== undefined && value !== null) {
+          params = params.append(key, value.toString());
+        }
+      });
+    }
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

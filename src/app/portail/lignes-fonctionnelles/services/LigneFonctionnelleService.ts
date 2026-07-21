@@ -247,4 +247,27 @@ export class LigneFonctionnelleService {
     const params = this.buildParams(null, page, size, sort);
     return this.http.get<AgregatedSuivieLcnLigneResponseDto>(`${this.apiUrl}/${id}/lcn`, { params });
   }
+
+  // ==========================================================================
+  // EXPORT PDF
+  // ==========================================================================
+
+  /**
+   * Exporte en PDF les lignes fonctionnelles générales correspondant aux filtres fournis (mêmes
+   * critères que {@link getCurrentLigneFonctionnelles}) — sans pagination. Réutilisé par les
+   * écrans encours (criteria.actif = true) et archivées (criteria.actif = false).
+   * GET /lignes-fonctionnelles/export/pdf
+   */
+  exportPdf(criteria: LigneFonctionnelleSearchCriteria): Observable<Blob> {
+    let params = new HttpParams();
+    if (criteria) {
+      Object.keys(criteria).forEach(key => {
+        const value = (criteria as any)[key];
+        if (value !== undefined && value !== null) {
+          params = params.append(key, value.toString());
+        }
+      });
+    }
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

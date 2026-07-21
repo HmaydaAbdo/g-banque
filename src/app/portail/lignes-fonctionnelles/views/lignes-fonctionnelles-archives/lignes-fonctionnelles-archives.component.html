@@ -28,6 +28,19 @@
         </ng-template>
       </p-breadcrumb>
     </div>
+
+    <!-- Actions -->
+    <div class="flex gap-2">
+      <button
+        pButton
+        pRipple
+        label="Exporter PDF"
+        class="p-button-outlined p-button-danger h-fit"
+        icon="pi pi-file-pdf"
+        [loading]="exporting"
+        (click)="exportPdf()">
+      </button>
+    </div>
   </div>
 
   <!-- ========== SEARCH FORM ========== -->

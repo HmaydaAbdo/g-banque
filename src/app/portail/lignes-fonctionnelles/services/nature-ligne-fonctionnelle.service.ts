@@ -105,4 +105,26 @@ export class NatureLigneFonctionnelleService {
   deleteNatureLigneFonctionnelle(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  /**
+   * Exporte en PDF les natures correspondant aux filtres fournis (mêmes critères que
+   * {@link getAllNatureLigneFonctionnelles}) — sans pagination.
+   * GET /natures-lignes-fonctionnelles/export/pdf
+   */
+  exportNaturesPdf(criteria: NatureLigneFonctionnelleSearchCriteria): Observable<Blob> {
+    let params = new HttpParams();
+    if (criteria?.code) {
+      params = params.append('code', criteria.code);
+    }
+    if (criteria?.label) {
+      params = params.append('label', criteria.label);
+    }
+    if (criteria?.description) {
+      params = params.append('description', criteria.description);
+    }
+    if (criteria?.portee) {
+      params = params.append('portee', criteria.portee);
+    }
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

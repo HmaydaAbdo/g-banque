@@ -62,6 +62,7 @@
     lignesFonctionnellesSpecifiques: LigneFonctionnelleSpecifiqueResponse[] = [];
     totalRecords = 0;
     loading = false;
+    exporting = false;
     first = 0;
     rows = 10;
     sortField = 'id';
@@ -294,4 +295,28 @@
     redirectToLineDetails(lineId: number, label: string): void {
       // Pour les lignes GÉNÉRALES, on utilise LineType.GENERAL
       this.lineNavigationService.redirectToLineDetails(lineId, label, LineType.SPECIFIC);
-    }  }
+    }
+
+    // ========== EXPORT PDF ==========
+
+    exportPdf(): void {
+      this.exporting = true;
+      const criteria: LigneFonctionnelleSpecifiqueSearchCriteria = this.searchForm.value;
+
+      this.specificLigneService.exportPdf(criteria).subscribe({
+        next: (blob: Blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `lignes_fonctionnelles_specifiques_encours_${new Date().toISOString().slice(0, 10)}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.exporting = false;
+        },
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+          this.exporting = false;
+        }
+      });
+    }
+  }

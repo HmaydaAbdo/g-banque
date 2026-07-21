@@ -7,7 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToastModule } from 'primeng/toast';
-import { MenuItem, ScrollerOptions } from 'primeng/api';
+import { MenuItem, MessageService, ScrollerOptions } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TagModule } from 'primeng/tag';
@@ -60,6 +60,7 @@ export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
   lignesFonctionnellesSpecifiques: LigneFonctionnelleSpecifiqueResponse[] = [];
   totalRecords = 0;
   loading = false;
+  exporting = false;
   first = 0;
   rows = 10;
   sortField = 'id';
@@ -83,6 +84,7 @@ export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
   private readonly natureLigneFonctionnelleService = inject(NatureLigneFonctionnelleService);
   private readonly fb = inject(FormBuilder);
   private readonly lineNavigationService = inject(LineNavigationService);
+  private readonly messageService = inject(MessageService);
 
   constructor() {
     this.marchesScrollerOptions = {
@@ -241,4 +243,28 @@ export class SpeficLigneArchiveesComponent implements OnInit, OnDestroy {
   redirectToLineDetails(lineId: number, label: string): void {
     // Pour les lignes GÉNÉRALES, on utilise LineType.GENERAL
     this.lineNavigationService.redirectToLineDetails(lineId, label, LineType.SPECIFIC);
-  }}
+  }
+
+  // ========== EXPORT PDF ==========
+
+  exportPdf(): void {
+    this.exporting = true;
+    const criteria: LigneFonctionnelleSpecifiqueSearchCriteria = this.searchForm.value;
+
+    this.specificLigneService.exportPdf(criteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lignes_fonctionnelles_specifiques_archivees_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
+  }
+}

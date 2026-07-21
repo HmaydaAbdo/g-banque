@@ -51,6 +51,7 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
   natures: NatureLigneFonctionnelleResponse[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
   first: number = 0;
   searchForm!: FormGroup;
   items: MenuItem[] | undefined;
@@ -192,6 +193,27 @@ export class NatureLigneFonctionnelleListComponent implements OnInit {
 
   addNewNature(): void {
     this.router.navigate(['/portail/natures-fonctionnelles/new']);
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const criteria: NatureLigneFonctionnelleSearchCriteria = this.searchForm.value;
+
+    this.natureService.exportNaturesPdf(criteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `natures_lignes_fonctionnelles_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
   isAdmin(): boolean {

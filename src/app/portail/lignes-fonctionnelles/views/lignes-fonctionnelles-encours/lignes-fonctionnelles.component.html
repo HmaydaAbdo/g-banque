@@ -29,16 +29,27 @@
       </p-breadcrumb>
     </div>
 
-    <!-- Add Button -->
-    <button
-      pButton
-      pRipple
-      class="white-space-nowrap w-full md:w-auto"
-      label="Ajouter Ligne Fonctionnelle"
-      icon="pi pi-plus"
-      severity="primary"
-      routerLink="/portail/lignes-fonctionnelles-encours/new">
-    </button>
+    <!-- Actions -->
+    <div class="flex gap-2">
+      <button
+        pButton
+        pRipple
+        label="Exporter PDF"
+        class="p-button-outlined p-button-danger h-fit"
+        icon="pi pi-file-pdf"
+        [loading]="exporting"
+        (click)="exportPdf()">
+      </button>
+      <button
+        pButton
+        pRipple
+        class="white-space-nowrap w-full md:w-auto"
+        label="Ajouter Ligne Fonctionnelle"
+        icon="pi pi-plus"
+        severity="primary"
+        routerLink="/portail/lignes-fonctionnelles-encours/new">
+      </button>
+    </div>
   </div>
 
   <!-- ========== SEARCH FORM ========== -->

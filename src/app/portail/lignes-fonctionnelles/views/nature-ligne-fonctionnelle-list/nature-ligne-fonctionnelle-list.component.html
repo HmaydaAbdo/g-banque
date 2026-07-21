@@ -28,6 +28,14 @@
 
     <div class="flex align-items-center gap-2 flex-shrink-0">
       <button pButton pRipple
+              label="Exporter PDF"
+              class="p-button-outlined p-button-danger h-fit"
+              icon="pi pi-file-pdf"
+              size="small"
+              [loading]="exporting"
+              (click)="exportPdf()">
+      </button>
+      <button pButton pRipple
               label="Ajouter une nature"
               icon="pi pi-plus"
               size="small"

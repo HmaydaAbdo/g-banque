@@ -65,6 +65,7 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
   lignesFonctionnelles: LigneFonctionnelleResponse[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
   first: number = 0;
   rows: number = 10;
   sortField: string | string[] = 'id';
@@ -367,6 +368,29 @@ export class LignesFonctionnellesArchivesComponent implements OnInit, OnDestroy 
   redirectToLineDetails(lineId: number, label: string): void {
     // Pour les lignes GÉNÉRALES, on utilise LineType.GENERAL
     this.lineNavigationService.redirectToLineDetails(lineId, label, LineType.GENERAL);
+  }
+
+  // ========== EXPORT PDF ==========
+
+  exportPdf(): void {
+    this.exporting = true;
+    const criteria: LigneFonctionnelleSearchCriteria = this.searchForm.value;
+
+    this.ligneFonctionnelleService.exportPdf(criteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lignes_fonctionnelles_archivees_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
 }
