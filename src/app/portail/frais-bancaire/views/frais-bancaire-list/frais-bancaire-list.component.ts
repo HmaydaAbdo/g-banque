@@ -60,6 +60,7 @@ export class FraisBancaireListComponent implements OnInit {
   fraisBancaires: FraisBancaireResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
 
   // Filters
   searchCriteria: FraisBancaireSearchDto = {};
@@ -150,6 +151,29 @@ export class FraisBancaireListComponent implements OnInit {
     this.selectedStatus = undefined;
     this.libelleFilter = null;
     this.applyFilters();
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    this.searchCriteria.banqueId = this.selectedBanque?.id;
+    this.searchCriteria.status = this.selectedStatus;
+    this.searchCriteria.libelle = this.libelleFilter || undefined;
+
+    this.fraisBancaireService.exportFraisBancairePdf(this.searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `frais_bancaires_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
   deleteFraisBancaire(frais: FraisBancaireResponseDto) {

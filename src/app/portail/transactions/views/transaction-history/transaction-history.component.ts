@@ -7,7 +7,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { InputTextModule } from 'primeng/inputtext';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
-import { MenuItem } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
@@ -34,19 +34,21 @@ import {MultiSelectModule} from "primeng/multiselect";
   ],
   templateUrl: './transaction-history.component.html',
   styleUrl: './transaction-history.component.scss',
-  providers: [DatePipe, CurrencyPipe, DecimalPipe]
+  providers: [DatePipe, CurrencyPipe, DecimalPipe, MessageService]
 })
 export class TransactionHistoryComponent implements OnInit, OnDestroy {
 
   private readonly transactionService = inject(TransactionService);
   private readonly banqueService = inject(BanqueService);
   private readonly fb = inject(FormBuilder);
+  private readonly messageService = inject(MessageService);
 
   @ViewChild('dt') dt!: Table;
 
   transactions: TransactionResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
 
   searchForm!: FormGroup;
   sourcesOptions: string[] = [];
@@ -154,5 +156,26 @@ export class TransactionHistoryComponent implements OnInit, OnDestroy {
   clearSearch(): void {
     this.searchForm.reset();
     this.onSearch();
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const searchDto: TransactionSearchDto = this.searchForm.value;
+
+    this.transactionService.exportTransactionHistoryPdf(searchDto).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `historique_transactions_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 }

@@ -32,6 +32,15 @@ export class TransactionService {
   }
 
   /**
+   * Exporte en PDF l'intégralité de l'historique des transactions correspondant aux filtres
+   * fournis (mêmes critères que {@link getTransactionHistory}, sans pagination).
+   */
+  exportTransactionHistoryPdf(searchDto: TransactionSearchDto): Observable<Blob> {
+    const params = this.buildFilterParams(searchDto);
+    return this.http.get(`${this.baseUrl}/history/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /**
    * Récupère une transaction spécifique par son ID.
    */
   getTransactionById(id: number): Observable<TransactionResponseDto> {
@@ -59,14 +68,24 @@ export class TransactionService {
 
 
   /**
-   * Méthode privée utilitaire pour construire les HttpParams.
+   * Méthode privée utilitaire pour construire les HttpParams paginés.
    * Elle gère les tableaux (transactionSources) et les types primitifs.
    */
   private buildParams(searchDto: TransactionSearchDto, page: number, size: number, sort: string): HttpParams {
-    let params = new HttpParams()
+    let params = this.buildFilterParams(searchDto)
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sort', sort);
+
+    return params;
+  }
+
+  /**
+   * Construit les HttpParams des seuls critères de filtrage (sans pagination) — partagée entre
+   * {@link getTransactionHistory} et {@link exportTransactionHistoryPdf}.
+   */
+  private buildFilterParams(searchDto: TransactionSearchDto): HttpParams {
+    let params = new HttpParams();
 
     if (searchDto.libelle) {
       params = params.set('libelle', searchDto.libelle);

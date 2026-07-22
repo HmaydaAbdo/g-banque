@@ -80,6 +80,16 @@
       <button
         pButton
         pRipple
+        icon="pi pi-file-pdf"
+        class="p-button-outlined p-button-danger mr-2"
+        [loading]="exporting"
+        (click)="exportPdf()"
+        pTooltip="Exporter les résultats en PDF"
+        label="Exporter PDF"
+      ></button>
+      <button
+        pButton
+        pRipple
         icon="pi pi-filter-slash"
         class="p-button-outlined p-button-secondary"
         (click)="clearFilters()"

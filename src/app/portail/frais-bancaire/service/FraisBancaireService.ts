@@ -64,6 +64,29 @@ export class FraisBancaireService {
   }
 
   /**
+   * Exporte en PDF l'intégralité des frais bancaires correspondant aux filtres fournis (mêmes
+   * critères que {@link searchFraisBancaire}, sans pagination).
+   */
+  exportFraisBancairePdf(searchDto: FraisBancaireSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.banqueId !== null && searchDto.banqueId !== undefined) {
+      params = params.set('banqueId', searchDto.banqueId.toString());
+    }
+    if (searchDto.libelle) {
+      params = params.set('libelle', searchDto.libelle);
+    }
+    if (searchDto.montant !== null && searchDto.montant !== undefined) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    if (searchDto.status) {
+      params = params.set('status', searchDto.status);
+    }
+
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /**
    * Updates an existing Frais Bancaire record.
    *
    * @param id Identifier of the Frais Bancaire to update.
