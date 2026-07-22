@@ -32,4 +32,11 @@ public interface IDecompteService {
     byte[] exportToPdf(DecompteSearchDto searchDTO);
 
     EncoursDecompteDto getDecomptesEncoursForBanque(EncoursDecompteSearchDto searchDto, Long banqueId, Pageable pageable);
+
+    /**
+     * Exporte en PDF l'intégralité de l'encours de décomptes d'une banque (mêmes filtres que
+     * {@link #getDecomptesEncoursForBanque}) — sans pagination : le fichier contient tous les
+     * résultats filtrés, pas seulement la page actuellement affichée à l'écran.
+     */
+    byte[] exportEncoursPdf(EncoursDecompteSearchDto searchDto, Long banqueId);
 }

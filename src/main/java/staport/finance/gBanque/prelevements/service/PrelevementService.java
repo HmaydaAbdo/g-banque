@@ -25,25 +25,39 @@ import staport.finance.gBanque.prelevements.mapper.PrelevementMapper;
 import staport.finance.gBanque.prelevements.metrics.PrelevementMetrics;
 import staport.finance.gBanque.prelevements.repository.PrelevementRepository;
 import staport.finance.gBanque.prelevements.spec.PrelevementSpec;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
 
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+
+import java.awt.Color;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 @Service
 public class PrelevementService implements IPrelevementService {
 
     private static final Logger log = LoggerFactory.getLogger(PrelevementService.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final PrelevementRepository prelevementRepository;
     private final IBanqueService banqueService;
     private final PrelevementMapper prelevementMapper;
     private final PrelevementMetrics prelevementMetrics;
+    private final StaportPdfReportService staportPdfReportService;
 
-    public PrelevementService(PrelevementRepository prelevementRepository, IBanqueService banqueService, PrelevementMapper prelevementMapper, PrelevementMetrics prelevementMetrics) {
+    public PrelevementService(PrelevementRepository prelevementRepository, IBanqueService banqueService, PrelevementMapper prelevementMapper,
+                               PrelevementMetrics prelevementMetrics, StaportPdfReportService staportPdfReportService) {
         this.prelevementRepository = prelevementRepository;
         this.banqueService = banqueService;
         this.prelevementMapper = prelevementMapper;
         this.prelevementMetrics = prelevementMetrics;
+        this.staportPdfReportService = staportPdfReportService;
         log.info("Initialisation du service Prelevement");
     }
 
@@ -259,5 +273,201 @@ public class PrelevementService implements IPrelevementService {
                 id, oldStatus, newStatus);
 
         return prelevementMapper.toResponseDto(updatedPrelevement);
+    }
+
+    // ── Export PDF ────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public byte[] exportPdf(PrelevementSearchDto searchDto) {
+        Specification<Prelevement> spec = PrelevementSpec.buildSpecification(searchDto);
+
+        List<Prelevement> prelevements = prelevementRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildFilterSummary(searchDto);
+
+        return generatePrelevementPdf("État des Prélèvements", prelevements, total, filterLines);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportEncoursPdf(PrelevementSearchDto searchDto) {
+        Specification<Prelevement> spec = Specification.where(PrelevementSpec.outstandingUntil(finDuMoisCourant()))
+                .and(PrelevementSpec.hasBanque(searchDto.getBanqueId()))
+                .and(PrelevementSpec.hasLibelle(searchDto.getLibelle()))
+                .and(PrelevementSpec.hasMontant(searchDto.getMontant()));
+
+        List<Prelevement> prelevements = prelevementRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto);
+
+        return generatePrelevementPdf("Encours de Prélèvements", prelevements, total, filterLines);
+    }
+
+    private BigDecimal sumMontant(Specification<Prelevement> spec) {
+        return prelevementRepository.findAll(spec).stream()
+                .map(Prelevement::getMontant)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private byte[] generatePrelevementPdf(String title, List<Prelevement> prelevements, BigDecimal totalMontant, List<String> filterLines) {
+        try {
+            return staportPdfReportService.generateReport(
+                    title,
+                    PageSize.A4.rotate(),
+                    (doc, writer) -> {
+                        try {
+                            doc.add(Chunk.NEWLINE);
+                            doc.add(Chunk.NEWLINE);
+
+                            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                            Font subFont   = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                            Font hdrFont   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                            Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                            Paragraph titlePara = new Paragraph(title, titleFont);
+                            titlePara.setAlignment(Element.ALIGN_CENTER);
+                            doc.add(titlePara);
+
+                            String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                                    + "  •  " + prelevements.size() + " prélèvement(s)";
+                            if (!filterLines.isEmpty()) {
+                                exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                            }
+                            Paragraph sub = new Paragraph(exportInfo, subFont);
+                            sub.setAlignment(Element.ALIGN_CENTER);
+                            sub.setSpacingAfter(8f);
+                            doc.add(sub);
+
+                            Color medBlue    = Color.decode("#2563eb");
+                            Color lightBlue  = Color.decode("#dbeafe");
+                            Color rowAlt     = Color.decode("#f8fafc");
+                            Color green      = Color.decode("#16a34a");
+                            Color borderGray = Color.decode("#e5e7eb");
+
+                            float[] colWidths = {24f, 16f, 16f, 14f, 12f};
+                            PdfPTable table = new PdfPTable(colWidths);
+                            table.setWidthPercentage(100f);
+                            table.setSpacingBefore(8f);
+                            table.setHeaderRows(1);
+
+                            for (String h : new String[]{
+                                    "Libellé", "Banque", "Montant (MAD)", "Date émission", "Statut"}) {
+                                PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                                c.setBackgroundColor(medBlue);
+                                c.setPadding(5f);
+                                c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                c.setBorderColor(Color.WHITE);
+                                c.setBorderWidth(0.5f);
+                                table.addCell(c);
+                            }
+
+                            for (int i = 0; i < prelevements.size(); i++) {
+                                Prelevement p = prelevements.get(i);
+                                Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
+
+                                addPdfCell(table, p.getLibelle(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, p.getBanque() != null ? p.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, formatMontantPdf(p.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, p.getDateEmission() != null ? p.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+
+                                boolean paye = p.getStatus() == Status.PAYE;
+                                PdfPCell statusCell = new PdfPCell(new Phrase(
+                                        paye ? "PAYÉ" : "PRÉVU",
+                                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                                statusCell.setBackgroundColor(paye ? green : Color.decode("#ea580c"));
+                                statusCell.setPadding(4f);
+                                statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                statusCell.setBorderColor(borderGray);
+                                statusCell.setBorderWidth(0.5f);
+                                table.addCell(statusCell);
+                            }
+
+                            PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + prelevements.size() + " prélèvement(s)", totalFont));
+                            totalLabel.setColspan(2);
+                            totalLabel.setBackgroundColor(lightBlue);
+                            totalLabel.setPadding(5f);
+                            totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalLabel.setBorderColor(medBlue);
+                            table.addCell(totalLabel);
+
+                            PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            totalVal.setBackgroundColor(lightBlue);
+                            totalVal.setPadding(5f);
+                            totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalVal.setBorderColor(medBlue);
+                            table.addCell(totalVal);
+
+                            for (int j = 0; j < 2; j++) {
+                                PdfPCell empty = new PdfPCell(new Phrase(""));
+                                empty.setBackgroundColor(lightBlue);
+                                empty.setBorderColor(medBlue);
+                                table.addCell(empty);
+                            }
+
+                            doc.add(table);
+
+                        } catch (DocumentException e) {
+                            throw new RuntimeException("Erreur génération contenu PDF prélèvements", e);
+                        }
+                    }
+            );
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des prélèvements", e);
+        }
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font, Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantPdf(BigDecimal montant) {
+        if (montant == null) return "—";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf.format(montant);
+    }
+
+    private List<String> buildFilterSummary(PrelevementSearchDto dto) {
+        List<String> lines = new ArrayList<>();
+        if (dto == null) return lines;
+        if (dto.getBanqueId() != null) {
+            try {
+                lines.add("Banque : " + banqueService.findOrThrow(dto.getBanqueId()).getNom());
+            } catch (ResourceNotFoundException ignored) {
+                // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
+            }
+        }
+        if (dto.getLibelle() != null && !dto.getLibelle().isBlank())
+            lines.add("Libellé : " + dto.getLibelle());
+        if (dto.getStatus() != null)
+            lines.add("Statut : " + dto.getStatus());
+        if (dto.getMontant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
+        return lines;
+    }
+
+    private List<String> buildEncoursFilterSummary(PrelevementSearchDto dto) {
+        List<String> lines = new ArrayList<>();
+        if (dto == null) return lines;
+        if (dto.getBanqueId() != null) {
+            try {
+                lines.add("Banque : " + banqueService.findOrThrow(dto.getBanqueId()).getNom());
+            } catch (ResourceNotFoundException ignored) {
+                // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
+            }
+        }
+        if (dto.getLibelle() != null && !dto.getLibelle().isBlank())
+            lines.add("Libellé : " + dto.getLibelle());
+        if (dto.getMontant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
+        return lines;
     }
 }

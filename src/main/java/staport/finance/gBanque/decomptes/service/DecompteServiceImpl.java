@@ -67,6 +67,8 @@ public class DecompteServiceImpl implements IDecompteService {
 
     private static final Logger log = LoggerFactory.getLogger(DecompteServiceImpl.class);
 
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     /** Tri par défaut : dateValeur DESC, les NULL en dernier */
     private static final Sort DEFAULT_SORT =
             Sort.by(Sort.Order.desc("dateValeur").nullsLast());
@@ -239,18 +241,43 @@ public class DecompteServiceImpl implements IDecompteService {
         List<Decompte> decomptes = decompteRepository.findAll(
                 DecompteSpec.searchByCriteria(searchDTO), DEFAULT_SORT);
 
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
         BigDecimal totalMontant = decomptes.stream()
                 .filter(d -> d.getMontant() != null)
                 .map(Decompte::getMontant)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        List<String> filterLines = buildFilterSummary(searchDTO, fmt);
+        List<String> filterLines = buildFilterSummary(searchDTO);
 
+        return generateDecomptePdf("État des Décomptes", decomptes, totalMontant, filterLines);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportEncoursPdf(EncoursDecompteSearchDto searchDto, Long banqueId) {
+        log.info("Export PDF encours décomptes — banque ID: {}", banqueId);
+
+        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+        Specification<Decompte> spec = DecompteSpec.byBanqueId(banqueId)
+                .and(DecompteSpec.outstandingUntil(endOfMonth))
+                .and(DecompteSpec.byMarcheName(searchDto.marcheName()))
+                .and(DecompteSpec.byMarcheNumero(searchDto.marcheNumero()))
+                .and(DecompteSpec.hasMontant(searchDto.montant()));
+
+        List<Decompte> decomptes = decompteRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal totalMontant = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return generateDecomptePdf("Encours de Décomptes", decomptes, totalMontant, filterLines);
+    }
+
+    /**
+     * Génère le contenu PDF partagé par {@link #exportToPdf} et {@link #exportEncoursPdf}.
+     */
+    private byte[] generateDecomptePdf(String title, List<Decompte> decomptes,
+                                        BigDecimal totalMontant, List<String> filterLines) {
         try {
             return staportPdfReportService.generateReport(
-                    "État des Décomptes",
+                    title,
                     PageSize.A4.rotate(),
                     (doc, writer) -> {
                         try {
@@ -263,11 +290,11 @@ public class DecompteServiceImpl implements IDecompteService {
                             Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
                             Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
 
-                            Paragraph title = new Paragraph("État des Décomptes", titleFont);
-                            title.setAlignment(Element.ALIGN_CENTER);
-                            doc.add(title);
+                            Paragraph titlePara = new Paragraph(title, titleFont);
+                            titlePara.setAlignment(Element.ALIGN_CENTER);
+                            doc.add(titlePara);
 
-                            String exportInfo = "Exporté le " + LocalDate.now().format(fmt)
+                            String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
                                     + "  •  " + decomptes.size() + " décompte(s)";
                             if (!filterLines.isEmpty()) {
                                 exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
@@ -310,9 +337,9 @@ public class DecompteServiceImpl implements IDecompteService {
                                 addPdfCell(table, d.getMarche() != null ? d.getMarche().getNumero() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, d.getBanqueEncaissement() != null ? d.getBanqueEncaissement().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
                                 addPdfCell(table, formatMontantPdf(d.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
-                                addPdfCell(table, d.getDateEmission()  != null ? d.getDateEmission().format(fmt)  : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
-                                addPdfCell(table, d.getDateOperation() != null ? d.getDateOperation().format(fmt) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
-                                addPdfCell(table, d.getDateValeur()    != null ? d.getDateValeur().format(fmt)    : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, d.getDateEmission()  != null ? d.getDateEmission().format(DATE_FMT)  : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, d.getDateOperation() != null ? d.getDateOperation().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, d.getDateValeur()    != null ? d.getDateValeur().format(DATE_FMT)    : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
 
                                 boolean paye = d.getStatus() == Status.PAYE;
                                 PdfPCell statusCell = new PdfPCell(new Phrase(
@@ -381,7 +408,7 @@ public class DecompteServiceImpl implements IDecompteService {
         return nf.format(montant);
     }
 
-    private List<String> buildFilterSummary(DecompteSearchDto dto, DateTimeFormatter fmt) {
+    private List<String> buildFilterSummary(DecompteSearchDto dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
         if (dto.marcheId() != null) {
@@ -403,8 +430,8 @@ public class DecompteServiceImpl implements IDecompteService {
         if (dto.status() != null)
             lines.add("Statut : " + (dto.status() == Status.PAYE ? "Payé" : "Prévu"));
         if (dto.dateValeurFrom() != null || dto.dateValeurTo() != null) {
-            String from = dto.dateValeurFrom() != null ? dto.dateValeurFrom().format(fmt) : "…";
-            String to   = dto.dateValeurTo()   != null ? dto.dateValeurTo().format(fmt)   : "…";
+            String from = dto.dateValeurFrom() != null ? dto.dateValeurFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateValeurTo()   != null ? dto.dateValeurTo().format(DATE_FMT)   : "…";
             lines.add("Date valeur : " + from + " → " + to);
         }
         if (dto.montantMin() != null || dto.montantMax() != null) {
@@ -412,6 +439,26 @@ public class DecompteServiceImpl implements IDecompteService {
             String max = dto.montantMax() != null ? formatMontantPdf(dto.montantMax()) : "∞";
             lines.add("Montant : " + min + " → " + max + " MAD");
         }
+        return lines;
+    }
+
+    private List<String> buildEncoursFilterSummary(EncoursDecompteSearchDto searchDto, Long banqueId) {
+        List<String> lines = new ArrayList<>();
+
+        try {
+            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
+        } catch (ResourceNotFoundException ignored) {
+            // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
+        }
+
+        if (searchDto == null) return lines;
+        if (searchDto.marcheName() != null && !searchDto.marcheName().isBlank())
+            lines.add("Nom Marché : " + searchDto.marcheName());
+        if (searchDto.marcheNumero() != null && !searchDto.marcheNumero().isBlank())
+            lines.add("N° Marché : " + searchDto.marcheNumero());
+        if (searchDto.montant() != null)
+            lines.add("Montant : " + formatMontantPdf(searchDto.montant()) + " MAD");
+
         return lines;
     }
 

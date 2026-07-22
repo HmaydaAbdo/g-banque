@@ -10,11 +10,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.service.VirementInternationalService;
+
+import java.time.LocalDate;
 
 @Tag(name = "Virements Internationaux", description = "Gestion des virements internationaux — encaissements et décaissements, saisis manuellement (aucune synchronisation FunPaiement pour ce module)")
 @SecurityRequirement(name = "bearerAuth")
@@ -177,5 +181,36 @@ public class VirementInternationalController {
         log.info("Virement international ID={} supprimé avec succès", id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /* ===================== EXPORT PDF ===================== */
+
+    @Operation(summary = "Exporter les virements internationaux en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(VirementInternationalSearchDto searchDto) {
+        return pdfResponse(virementInternationalService.exportPdf(searchDto), "virements_internationaux");
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours d'encaissement de virements internationaux d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encaissement/encours/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportEncoursEncaissementPdf(@PathVariable Long banqueId, EncoursVirementsInternationalSearchDto searchDto) {
+        return pdfResponse(virementInternationalService.exportEncoursEncaissementPdf(searchDto, banqueId), "virements_internationaux_encours_encaissement");
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours de décaissement de virements internationaux d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/decaissement/encours/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportEncoursDecaissementPdf(@PathVariable Long banqueId, EncoursVirementsInternationalSearchDto searchDto) {
+        return pdfResponse(virementInternationalService.exportEncoursDecaissementPdf(searchDto, banqueId), "virements_internationaux_encours_decaissement");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

@@ -7,11 +7,15 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.moyensDePaiements.virements.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.virements.service.VirementService;
+
+import java.time.LocalDate;
 
 @Tag(name = "Virements", description = "Gestion des virements nationaux — encaissements et décaissements")
 @SecurityRequirement(name = "bearerAuth")
@@ -97,5 +101,41 @@ public class VirementController {
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         EncoursVirementResponseDto result = virementService.getEncoursEncaissementForVirements(searchDto, banqueId, pageable);
         return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Exporter les virements d'encaissement en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encaissements/export/pdf")
+    public ResponseEntity<byte[]> exportEncaissementsPdf(VirementSearchDto searchDto) {
+        return pdfResponse(virementService.exportEncaissementsPdf(searchDto), "virements_encaissements");
+    }
+
+    @Operation(summary = "Exporter les virements de décaissement en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/decaissements/export/pdf")
+    public ResponseEntity<byte[]> exportDecaissementsPdf(VirementSearchDto searchDto) {
+        return pdfResponse(virementService.exportDecaissementsPdf(searchDto), "virements_decaissements");
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours d'encaissement de virements d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encaissement/encours/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportEncoursEncaissementPdf(@PathVariable Long banqueId, EncoursVirementsSearchDto searchDto) {
+        return pdfResponse(virementService.exportEncoursEncaissementPdf(searchDto, banqueId), "virements_encours_encaissement");
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours de décaissement de virements d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/decaissement/encours/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportEncoursDecaissementPdf(@PathVariable Long banqueId, EncoursVirementsSearchDto searchDto) {
+        return pdfResponse(virementService.exportEncoursDecaissementPdf(searchDto, banqueId), "virements_encours_decaissement");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

@@ -13,6 +13,7 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.moyensDePaiements.cheques.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.cheques.exceptions.ChequeBusinessException;
@@ -20,13 +21,22 @@ import staport.finance.gBanque.moyensDePaiements.cheques.mappers.ChequeMapper;
 import staport.finance.gBanque.moyensDePaiements.cheques.metrics.ChequeMetrics;
 import staport.finance.gBanque.moyensDePaiements.cheques.repositories.ChequeRepository;
 import staport.finance.gBanque.moyensDePaiements.cheques.specs.ChequeSpec;
-import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
-import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.temporal.TemporalAdjusters;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
+
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+
+import java.awt.Color;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Service métier du module Chèque.
@@ -38,16 +48,21 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoy
 public class ChequeService {
 
     private static final Logger log = LoggerFactory.getLogger(ChequeService.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private final ChequeRepository chequeRepository;
     private final IBanqueService banqueService;
     private final ChequeMapper chequeMapper;
     private final ChequeMetrics chequeMetrics;
+    private final StaportPdfReportService staportPdfReportService;
 
-    public ChequeService(ChequeRepository chequeRepository, IBanqueService banqueService, ChequeMapper chequeMapper, ChequeMetrics chequeMetrics) {
+    public ChequeService(ChequeRepository chequeRepository, IBanqueService banqueService, ChequeMapper chequeMapper,
+                          ChequeMetrics chequeMetrics, StaportPdfReportService staportPdfReportService) {
         this.chequeRepository = chequeRepository;
         this.banqueService = banqueService;
         this.chequeMapper = chequeMapper;
         this.chequeMetrics = chequeMetrics;
+        this.staportPdfReportService = staportPdfReportService;
     }
 
     @Transactional
@@ -217,6 +232,249 @@ public class ChequeService {
 
         log.debug("Total encours encaissement — banqueId: {}, total: {}", banqueId, total);
         return new EncoursChequeResponseDto(total, chequePage);
+    }
+
+    // ── Export PDF ────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public byte[] exportEncaissementsPdf(ChequeSearchDto searchDto) {
+        Specification<Cheque> spec = Specification.where(ChequeSpec.hasType(Type.ENCAISSEMENT))
+                .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
+                .and(ChequeSpec.hasStatut(searchDto.getStatut()))
+                .and(ChequeSpec.hasMontant(searchDto.getMontant()))
+                .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()))
+                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
+                .and(ChequeSpec.hasNumero(searchDto.getNumero()));
+
+        List<Cheque> cheques = chequeRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildFilterSummary(searchDto);
+
+        return generateChequePdf("État des Chèques d'Encaissement", cheques, total, filterLines);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportDecaissementsPdf(ChequeSearchDto searchDto) {
+        Specification<Cheque> spec = Specification.where(ChequeSpec.hasNumero(searchDto.getNumero()))
+                .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
+                .and(ChequeSpec.hasStatut(searchDto.getStatut()))
+                .and(ChequeSpec.hasType(Type.DECAISSEMENT));
+
+        List<Cheque> cheques = chequeRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildFilterSummary(searchDto);
+
+        return generateChequePdf("État des Chèques de Décaissement", cheques, total, filterLines);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportEncoursEncaissementPdf(EncoursChequeSearchDto searchDto, Long banqueId) {
+        Specification<Cheque> spec = ChequeSpec.encoursEncaissements(banqueId, finDuMoisCourant())
+                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
+                .and(ChequeSpec.hasMontant(searchDto.getMontant()))
+                .and(ChequeSpec.hasNumero(searchDto.getNumero()))
+                .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()));
+
+        List<Cheque> cheques = chequeRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return generateChequePdf("Encours d'Encaissement — Chèques", cheques, total, filterLines);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportEncoursDecaissementPdf(EncoursChequeSearchDto searchDto, Long banqueId) {
+        Specification<Cheque> spec = ChequeSpec.encoursDecaissements(banqueId, finDuMoisCourant())
+                .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(ChequeSpec.hasNumero(searchDto.getNumero()))
+                .and(ChequeSpec.hasMontant(searchDto.getMontant()));
+
+        List<Cheque> cheques = chequeRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return generateChequePdf("Encours de Décaissement — Chèques", cheques, total, filterLines);
+    }
+
+    private BigDecimal sumMontant(Specification<Cheque> spec) {
+        return chequeRepository.findAll(spec).stream()
+                .map(Cheque::getMontant)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private byte[] generateChequePdf(String title, List<Cheque> cheques, BigDecimal totalMontant, List<String> filterLines) {
+        try {
+            return staportPdfReportService.generateReport(
+                    title,
+                    PageSize.A4.rotate(),
+                    (doc, writer) -> {
+                        try {
+                            doc.add(Chunk.NEWLINE);
+                            doc.add(Chunk.NEWLINE);
+
+                            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                            Font subFont   = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                            Font hdrFont   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                            Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                            Paragraph titlePara = new Paragraph(title, titleFont);
+                            titlePara.setAlignment(Element.ALIGN_CENTER);
+                            doc.add(titlePara);
+
+                            String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                                    + "  •  " + cheques.size() + " chèque(s)";
+                            if (!filterLines.isEmpty()) {
+                                exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                            }
+                            Paragraph sub = new Paragraph(exportInfo, subFont);
+                            sub.setAlignment(Element.ALIGN_CENTER);
+                            sub.setSpacingAfter(8f);
+                            doc.add(sub);
+
+                            Color medBlue    = Color.decode("#2563eb");
+                            Color lightBlue  = Color.decode("#dbeafe");
+                            Color rowAlt     = Color.decode("#f8fafc");
+                            Color green      = Color.decode("#16a34a");
+                            Color orange     = Color.decode("#ea580c");
+                            Color borderGray = Color.decode("#e5e7eb");
+
+                            float[] colWidths = {10f, 14f, 13f, 13f, 11f, 11f, 11f, 8f};
+                            PdfPTable table = new PdfPTable(colWidths);
+                            table.setWidthPercentage(100f);
+                            table.setSpacingBefore(8f);
+                            table.setHeaderRows(1);
+
+                            for (String h : new String[]{
+                                    "N° Chèque", "Banque", "Émetteur", "Bénéficiaire",
+                                    "Montant (MAD)", "Date émission", "Date échéance", "Statut"}) {
+                                PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                                c.setBackgroundColor(medBlue);
+                                c.setPadding(5f);
+                                c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                c.setBorderColor(Color.WHITE);
+                                c.setBorderWidth(0.5f);
+                                table.addCell(c);
+                            }
+
+                            for (int i = 0; i < cheques.size(); i++) {
+                                Cheque c = cheques.get(i);
+                                Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
+
+                                addPdfCell(table, c.getNumero(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, c.getBanque() != null ? c.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, c.getEmetteur(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, c.getBeneficiaire(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, formatMontantPdf(c.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, c.getDateEmission() != null ? c.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, c.getDateEcheance() != null ? c.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+
+                                boolean regle = c.getStatut() == StatutMoyenPaiement.REGLE;
+                                boolean annule = c.getStatut() == StatutMoyenPaiement.ANNULE;
+                                PdfPCell statusCell = new PdfPCell(new Phrase(
+                                        regle ? "RÉGLÉ" : (annule ? "ANNULÉ" : "ENCOURS"),
+                                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                                statusCell.setBackgroundColor(regle ? green : (annule ? Color.GRAY : orange));
+                                statusCell.setPadding(4f);
+                                statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                statusCell.setBorderColor(borderGray);
+                                statusCell.setBorderWidth(0.5f);
+                                table.addCell(statusCell);
+                            }
+
+                            PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + cheques.size() + " chèque(s)", totalFont));
+                            totalLabel.setColspan(4);
+                            totalLabel.setBackgroundColor(lightBlue);
+                            totalLabel.setPadding(5f);
+                            totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalLabel.setBorderColor(medBlue);
+                            table.addCell(totalLabel);
+
+                            PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            totalVal.setBackgroundColor(lightBlue);
+                            totalVal.setPadding(5f);
+                            totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalVal.setBorderColor(medBlue);
+                            table.addCell(totalVal);
+
+                            for (int j = 0; j < 3; j++) {
+                                PdfPCell empty = new PdfPCell(new Phrase(""));
+                                empty.setBackgroundColor(lightBlue);
+                                empty.setBorderColor(medBlue);
+                                table.addCell(empty);
+                            }
+
+                            doc.add(table);
+
+                        } catch (DocumentException e) {
+                            throw new RuntimeException("Erreur génération contenu PDF chèques", e);
+                        }
+                    }
+            );
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des chèques", e);
+        }
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font, Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantPdf(BigDecimal montant) {
+        if (montant == null) return "—";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf.format(montant);
+    }
+
+    private List<String> buildFilterSummary(ChequeSearchDto dto) {
+        List<String> lines = new ArrayList<>();
+        if (dto == null) return lines;
+        if (dto.getNumero() != null && !dto.getNumero().isBlank())
+            lines.add("N° Chèque : " + dto.getNumero());
+        if (dto.getNomBanque() != null && !dto.getNomBanque().isBlank())
+            lines.add("Banque : " + dto.getNomBanque());
+        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
+        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
+            lines.add("Émetteur : " + dto.getEmetteur());
+        if (dto.getStatut() != null)
+            lines.add("Statut : " + dto.getStatut());
+        if (dto.getMontant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
+        if (dto.getDateEmission() != null)
+            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
+        return lines;
+    }
+
+    private List<String> buildEncoursFilterSummary(EncoursChequeSearchDto dto, Long banqueId) {
+        List<String> lines = new ArrayList<>();
+        try {
+            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
+        } catch (ResourceNotFoundException ignored) {
+            // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
+        }
+        if (dto == null) return lines;
+        if (dto.getNumero() != null && !dto.getNumero().isBlank())
+            lines.add("N° Chèque : " + dto.getNumero());
+        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
+        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
+            lines.add("Émetteur : " + dto.getEmetteur());
+        if (dto.getMontant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
+        if (dto.getDateEmission() != null)
+            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
+        return lines;
     }
 
     // ── Helpers internes ──────────────────────────────────────────────────────

@@ -22,10 +22,20 @@ import staport.finance.gBanque.moyensDePaiements.miseADisposition.metrics.MiseAD
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.repositories.MiseADispositionRepository;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.specs.MiseADispositionSpec;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
 
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+
+import java.awt.Color;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 /**
@@ -39,17 +49,21 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoy
 public class MiseADispositionService {
 
     private static final Logger log = LoggerFactory.getLogger(MiseADispositionService.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final MiseADispositionRepository miseADispositionRepository;
     private final IBanqueService banqueService;
     private final MiseADispositionMapper miseADispositionMapper;
     private final MiseADispositionMetrics miseADispositionMetrics;
+    private final StaportPdfReportService staportPdfReportService;
 
     public MiseADispositionService(MiseADispositionRepository miseADispositionRepository, IBanqueService banqueService,
-                                    MiseADispositionMapper miseADispositionMapper, MiseADispositionMetrics miseADispositionMetrics) {
+                                    MiseADispositionMapper miseADispositionMapper, MiseADispositionMetrics miseADispositionMetrics,
+                                    StaportPdfReportService staportPdfReportService) {
         this.miseADispositionRepository = miseADispositionRepository;
         this.banqueService = banqueService;
         this.miseADispositionMapper = miseADispositionMapper;
         this.miseADispositionMetrics = miseADispositionMetrics;
+        this.staportPdfReportService = staportPdfReportService;
     }
 
     @Transactional
@@ -204,6 +218,208 @@ public class MiseADispositionService {
 
         log.debug("Total des encours d'encaissement pour la banque ID={}: {}", banqueId, totalDesEncours);
         return new EncoursMiseAdisposition(totalDesEncours, miseADispositionPage.map(this::toDto));
+    }
+
+    // ── Export PDF ────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public byte[] exportDecaissementsPdf(MiseADispositionSearchDto searchDto) {
+        Specification<MiseADisposition> spec = MiseADispositionSpec.bySearchDto(searchDto)
+                .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
+
+        List<MiseADisposition> mads = miseADispositionRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildFilterSummary(searchDto);
+
+        return generateMisesADispositionPdf("État des Mises à Disposition de Décaissement", mads, total, filterLines);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportEncoursDecaissementPdf(EncoursMiseAdispositionSearchDto searchDto, Long banqueId) {
+        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursDecaissement(banqueId, finDuMoisCourant())
+                .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
+                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
+                .and(MiseADispositionSpec.hasType(Type.DECAISSEMENT));
+
+        List<MiseADisposition> mads = miseADispositionRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return generateMisesADispositionPdf("Encours de Décaissement — Mises à Disposition", mads, total, filterLines);
+    }
+
+    private BigDecimal sumMontant(Specification<MiseADisposition> spec) {
+        return miseADispositionRepository.findAll(spec).stream()
+                .map(MiseADisposition::getMontant)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private byte[] generateMisesADispositionPdf(String title, List<MiseADisposition> mads, BigDecimal totalMontant, List<String> filterLines) {
+        try {
+            return staportPdfReportService.generateReport(
+                    title,
+                    PageSize.A4.rotate(),
+                    (doc, writer) -> {
+                        try {
+                            doc.add(Chunk.NEWLINE);
+                            doc.add(Chunk.NEWLINE);
+
+                            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                            Font subFont   = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                            Font hdrFont   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                            Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                            Paragraph titlePara = new Paragraph(title, titleFont);
+                            titlePara.setAlignment(Element.ALIGN_CENTER);
+                            doc.add(titlePara);
+
+                            String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                                    + "  •  " + mads.size() + " mise(s) à disposition";
+                            if (!filterLines.isEmpty()) {
+                                exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                            }
+                            Paragraph sub = new Paragraph(exportInfo, subFont);
+                            sub.setAlignment(Element.ALIGN_CENTER);
+                            sub.setSpacingAfter(8f);
+                            doc.add(sub);
+
+                            Color medBlue    = Color.decode("#2563eb");
+                            Color lightBlue  = Color.decode("#dbeafe");
+                            Color rowAlt     = Color.decode("#f8fafc");
+                            Color green      = Color.decode("#16a34a");
+                            Color orange     = Color.decode("#ea580c");
+                            Color borderGray = Color.decode("#e5e7eb");
+
+                            float[] colWidths = {12f, 14f, 14f, 13f, 12f, 11f, 9f};
+                            PdfPTable table = new PdfPTable(colWidths);
+                            table.setWidthPercentage(100f);
+                            table.setSpacingBefore(8f);
+                            table.setHeaderRows(1);
+
+                            for (String h : new String[]{
+                                    "N° MAD", "Banque", "Bénéficiaire",
+                                    "Montant (MAD)", "Date émission", "CIN bénéficiaire", "Statut"}) {
+                                PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                                c.setBackgroundColor(medBlue);
+                                c.setPadding(5f);
+                                c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                c.setBorderColor(Color.WHITE);
+                                c.setBorderWidth(0.5f);
+                                table.addCell(c);
+                            }
+
+                            for (int i = 0; i < mads.size(); i++) {
+                                MiseADisposition m = mads.get(i);
+                                Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
+
+                                addPdfCell(table, m.getNumero(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, m.getBanque() != null ? m.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, m.getBeneficiaire(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, formatMontantPdf(m.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, m.getDateEmission() != null ? m.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, m.getCinBeneficiaire(), cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+
+                                boolean regle = m.getStatut() == StatutMoyenPaiement.REGLE;
+                                boolean annule = m.getStatut() == StatutMoyenPaiement.ANNULE;
+                                PdfPCell statusCell = new PdfPCell(new Phrase(
+                                        regle ? "RÉGLÉ" : (annule ? "ANNULÉ" : "ENCOURS"),
+                                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                                statusCell.setBackgroundColor(regle ? green : (annule ? Color.GRAY : orange));
+                                statusCell.setPadding(4f);
+                                statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                statusCell.setBorderColor(borderGray);
+                                statusCell.setBorderWidth(0.5f);
+                                table.addCell(statusCell);
+                            }
+
+                            PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + mads.size() + " mise(s) à disposition", totalFont));
+                            totalLabel.setColspan(3);
+                            totalLabel.setBackgroundColor(lightBlue);
+                            totalLabel.setPadding(5f);
+                            totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalLabel.setBorderColor(medBlue);
+                            table.addCell(totalLabel);
+
+                            PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            totalVal.setBackgroundColor(lightBlue);
+                            totalVal.setPadding(5f);
+                            totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalVal.setBorderColor(medBlue);
+                            table.addCell(totalVal);
+
+                            for (int j = 0; j < 2; j++) {
+                                PdfPCell empty = new PdfPCell(new Phrase(""));
+                                empty.setBackgroundColor(lightBlue);
+                                empty.setBorderColor(medBlue);
+                                table.addCell(empty);
+                            }
+
+                            doc.add(table);
+
+                        } catch (DocumentException e) {
+                            throw new RuntimeException("Erreur génération contenu PDF mises à disposition", e);
+                        }
+                    }
+            );
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des mises à disposition", e);
+        }
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font, Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantPdf(BigDecimal montant) {
+        if (montant == null) return "—";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf.format(montant);
+    }
+
+    private List<String> buildFilterSummary(MiseADispositionSearchDto dto) {
+        List<String> lines = new ArrayList<>();
+        if (dto == null) return lines;
+        if (dto.getNumero() != null && !dto.getNumero().isBlank())
+            lines.add("N° MAD : " + dto.getNumero());
+        if (dto.getBanqueName() != null && !dto.getBanqueName().isBlank())
+            lines.add("Banque : " + dto.getBanqueName());
+        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
+        if (dto.getCinBeneficiaire() != null && !dto.getCinBeneficiaire().isBlank())
+            lines.add("CIN bénéficiaire : " + dto.getCinBeneficiaire());
+        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
+            lines.add("Émetteur : " + dto.getEmetteur());
+        if (dto.getStatut() != null)
+            lines.add("Statut : " + dto.getStatut());
+        return lines;
+    }
+
+    private List<String> buildEncoursFilterSummary(EncoursMiseAdispositionSearchDto dto, Long banqueId) {
+        List<String> lines = new ArrayList<>();
+        try {
+            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
+        } catch (ResourceNotFoundException ignored) {
+            // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
+        }
+        if (dto == null) return lines;
+        if (dto.getNumero() != null && !dto.getNumero().isBlank())
+            lines.add("N° MAD : " + dto.getNumero());
+        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
+        if (dto.getMontant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
+        return lines;
     }
 
     // ── Helpers internes ──────────────────────────────────────────────────────

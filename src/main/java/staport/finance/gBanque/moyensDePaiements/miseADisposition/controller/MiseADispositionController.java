@@ -8,11 +8,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.dtos.*;
 import staport.finance.gBanque.moyensDePaiements.miseADisposition.services.MiseADispositionService;
+
+import java.time.LocalDate;
 
 @Tag(name = "Mises à Disposition", description = "Gestion des mises à disposition — encaissements (saisis manuellement) et décaissements (synchronisation FunPaiement)")
 @SecurityRequirement(name = "bearerAuth")
@@ -126,5 +130,27 @@ public class MiseADispositionController {
         log.info("Encours d'encaissement récupérés pour la banque ID: {} - Montant total: {}, Nombre: {}",
                 banqueId, result.getTotalDesEncours(), result.getPage().getTotalElements());
         return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Exporter les mises à disposition de décaissement en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/decaissements/export/pdf")
+    public ResponseEntity<byte[]> exportDecaissementsPdf(MiseADispositionSearchDto searchDto) {
+        return pdfResponse(miseADispositionService.exportDecaissementsPdf(searchDto), "mises_a_disposition_decaissements");
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours de décaissement de mises à disposition d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encours/decaissements/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportEncoursDecaissementPdf(@PathVariable Long banqueId, EncoursMiseAdispositionSearchDto searchDto) {
+        return pdfResponse(miseADispositionService.exportEncoursDecaissementPdf(searchDto, banqueId), "mises_a_disposition_encours_decaissement");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

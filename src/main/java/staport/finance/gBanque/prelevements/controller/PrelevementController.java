@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -17,6 +19,8 @@ import staport.finance.gBanque.prelevements.dtos.PrelevementRequestDto;
 import staport.finance.gBanque.prelevements.dtos.PrelevementResponseDto;
 import staport.finance.gBanque.prelevements.dtos.PrelevementSearchDto;
 import staport.finance.gBanque.prelevements.service.PrelevementService;
+
+import java.time.LocalDate;
 
 @Tag(name = "Prélèvements", description = "Gestion des prélèvements bancaires")
 @SecurityRequirement(name = "bearerAuth")
@@ -180,5 +184,28 @@ public class PrelevementController {
         log.info("Statut du prélèvement ID: {} basculé avec succès vers {}",
                 id, responseDto.getStatus());
         return ResponseEntity.ok(responseDto);
+    }
+
+    @Operation(summary = "Exporter les prélèvements en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(PrelevementSearchDto searchDto) {
+        return pdfResponse(prelevementService.exportPdf(searchDto), "prelevements");
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours de prélèvements d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encours/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportEncoursPdf(@PathVariable Long banqueId, PrelevementSearchDto searchDto) {
+        searchDto.setBanqueId(banqueId);
+        return pdfResponse(prelevementService.exportEncoursPdf(searchDto), "prelevements_encours");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

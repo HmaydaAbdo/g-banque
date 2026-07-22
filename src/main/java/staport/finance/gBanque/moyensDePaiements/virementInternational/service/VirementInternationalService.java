@@ -22,10 +22,20 @@ import staport.finance.gBanque.moyensDePaiements.virementInternational.metrics.V
 import staport.finance.gBanque.moyensDePaiements.virementInternational.repositories.VirementInternationalRepository;
 import staport.finance.gBanque.moyensDePaiements.virementInternational.specs.VirementInternationalSpec;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
 
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+
+import java.awt.Color;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 /**
@@ -44,20 +54,24 @@ import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoy
 public class VirementInternationalService {
 
     private static final Logger log = LoggerFactory.getLogger(VirementInternationalService.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final VirementInternationalRepository virementInternationalRepository;
     private final IBanqueService banqueService;
     private final VirementInternationalMapper virementInternationalMapper;
     private final VirementInternationalMetrics virementInternationalMetrics;
+    private final StaportPdfReportService staportPdfReportService;
 
     public VirementInternationalService(
             VirementInternationalRepository virementInternationalRepository,
             IBanqueService banqueService,
             VirementInternationalMapper virementInternationalMapper,
-            VirementInternationalMetrics virementInternationalMetrics) {
+            VirementInternationalMetrics virementInternationalMetrics,
+            StaportPdfReportService staportPdfReportService) {
         this.virementInternationalRepository = virementInternationalRepository;
         this.banqueService = banqueService;
         this.virementInternationalMapper = virementInternationalMapper;
         this.virementInternationalMetrics = virementInternationalMetrics;
+        this.staportPdfReportService = staportPdfReportService;
     }
 
     /**
@@ -248,6 +262,233 @@ public class VirementInternationalService {
 
         virementInternationalRepository.delete(virement);
         log.info("Virement international ID={} supprimé avec succès", id);
+    }
+
+    // ── Export PDF ────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public byte[] exportPdf(VirementInternationalSearchDto searchDto) {
+        Specification<VirementInternational> spec = VirementInternationalSpec.bySearchDto(searchDto);
+
+        List<VirementInternational> virements = virementInternationalRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildFilterSummary(searchDto);
+
+        return generateVirementInternationalPdf("État des Virements Internationaux", virements, total, filterLines);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportEncoursEncaissementPdf(EncoursVirementsInternationalSearchDto searchDto, Long banqueId) {
+        Banque banque = banqueService.findOrThrow(banqueId);
+
+        Specification<VirementInternational> spec = VirementInternationalSpec.encoursEncaissement(banqueId, finDuMoisCourant())
+                .and(VirementInternationalSpec.hasDateEmission(searchDto.getDateEmission()))
+                .and(VirementInternationalSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(VirementInternationalSpec.hasMontant(searchDto.getMontant()))
+                .and(VirementInternationalSpec.hasEmetteur(searchDto.getEmetteur()));
+
+        List<VirementInternational> virements = virementInternationalRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banque.getNom());
+
+        return generateVirementInternationalPdf("Encours d'Encaissement — Virements Internationaux", virements, total, filterLines);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportEncoursDecaissementPdf(EncoursVirementsInternationalSearchDto searchDto, Long banqueId) {
+        Banque banque = banqueService.findOrThrow(banqueId);
+
+        Specification<VirementInternational> spec = VirementInternationalSpec.encoursDecaissement(banqueId, finDuMoisCourant())
+                .and(VirementInternationalSpec.hasDateEmission(searchDto.getDateEmission()))
+                .and(VirementInternationalSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(VirementInternationalSpec.hasMontant(searchDto.getMontant()))
+                .and(VirementInternationalSpec.hasEmetteur(searchDto.getEmetteur()));
+
+        List<VirementInternational> virements = virementInternationalRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banque.getNom());
+
+        return generateVirementInternationalPdf("Encours de Décaissement — Virements Internationaux", virements, total, filterLines);
+    }
+
+    private BigDecimal sumMontant(Specification<VirementInternational> spec) {
+        return virementInternationalRepository.findAll(spec).stream()
+                .map(VirementInternational::getMontant)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private byte[] generateVirementInternationalPdf(String title, List<VirementInternational> virements, BigDecimal totalMontant, List<String> filterLines) {
+        try {
+            return staportPdfReportService.generateReport(
+                    title,
+                    PageSize.A4.rotate(),
+                    (doc, writer) -> {
+                        try {
+                            doc.add(Chunk.NEWLINE);
+                            doc.add(Chunk.NEWLINE);
+
+                            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                            Font subFont   = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                            Font hdrFont   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                            Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                            Paragraph titlePara = new Paragraph(title, titleFont);
+                            titlePara.setAlignment(Element.ALIGN_CENTER);
+                            doc.add(titlePara);
+
+                            String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                                    + "  •  " + virements.size() + " virement(s)";
+                            if (!filterLines.isEmpty()) {
+                                exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                            }
+                            Paragraph sub = new Paragraph(exportInfo, subFont);
+                            sub.setAlignment(Element.ALIGN_CENTER);
+                            sub.setSpacingAfter(8f);
+                            doc.add(sub);
+
+                            Color medBlue    = Color.decode("#2563eb");
+                            Color lightBlue  = Color.decode("#dbeafe");
+                            Color rowAlt     = Color.decode("#f8fafc");
+                            Color green      = Color.decode("#16a34a");
+                            Color orange     = Color.decode("#ea580c");
+                            Color borderGray = Color.decode("#e5e7eb");
+
+                            float[] colWidths = {14f, 14f, 14f, 13f, 12f, 11f, 11f};
+                            PdfPTable table = new PdfPTable(colWidths);
+                            table.setWidthPercentage(100f);
+                            table.setSpacingBefore(8f);
+                            table.setHeaderRows(1);
+
+                            for (String h : new String[]{
+                                    "Banque", "Émetteur", "Bénéficiaire",
+                                    "Montant (MAD)", "Date émission", "Type", "Statut"}) {
+                                PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                                c.setBackgroundColor(medBlue);
+                                c.setPadding(5f);
+                                c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                c.setBorderColor(Color.WHITE);
+                                c.setBorderWidth(0.5f);
+                                table.addCell(c);
+                            }
+
+                            for (int i = 0; i < virements.size(); i++) {
+                                VirementInternational v = virements.get(i);
+                                Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
+
+                                addPdfCell(table, v.getBanque() != null ? v.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, v.getEmetteur(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, v.getBeneficiaire(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, formatMontantPdf(v.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, v.getDateEmission() != null ? v.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, v.getType() != null ? v.getType().toString() : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+
+                                boolean regle = v.getStatut() == StatutMoyenPaiement.REGLE;
+                                boolean annule = v.getStatut() == StatutMoyenPaiement.ANNULE;
+                                PdfPCell statusCell = new PdfPCell(new Phrase(
+                                        regle ? "RÉGLÉ" : (annule ? "ANNULÉ" : "ENCOURS"),
+                                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                                statusCell.setBackgroundColor(regle ? green : (annule ? Color.GRAY : orange));
+                                statusCell.setPadding(4f);
+                                statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                statusCell.setBorderColor(borderGray);
+                                statusCell.setBorderWidth(0.5f);
+                                table.addCell(statusCell);
+                            }
+
+                            PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + virements.size() + " virement(s)", totalFont));
+                            totalLabel.setColspan(3);
+                            totalLabel.setBackgroundColor(lightBlue);
+                            totalLabel.setPadding(5f);
+                            totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalLabel.setBorderColor(medBlue);
+                            table.addCell(totalLabel);
+
+                            PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            totalVal.setBackgroundColor(lightBlue);
+                            totalVal.setPadding(5f);
+                            totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalVal.setBorderColor(medBlue);
+                            table.addCell(totalVal);
+
+                            for (int j = 0; j < 2; j++) {
+                                PdfPCell empty = new PdfPCell(new Phrase(""));
+                                empty.setBackgroundColor(lightBlue);
+                                empty.setBorderColor(medBlue);
+                                table.addCell(empty);
+                            }
+
+                            doc.add(table);
+
+                        } catch (DocumentException e) {
+                            throw new RuntimeException("Erreur génération contenu PDF virements internationaux", e);
+                        }
+                    }
+            );
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des virements internationaux", e);
+        }
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font, Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantPdf(BigDecimal montant) {
+        if (montant == null) return "—";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf.format(montant);
+    }
+
+    private List<String> buildFilterSummary(VirementInternationalSearchDto dto) {
+        List<String> lines = new ArrayList<>();
+        if (dto == null) return lines;
+        if (dto.getBanqueId() != null) {
+            try {
+                lines.add("Banque : " + banqueService.findOrThrow(dto.getBanqueId()).getNom());
+            } catch (ResourceNotFoundException ignored) {
+                // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
+            }
+        }
+        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
+        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
+            lines.add("Émetteur : " + dto.getEmetteur());
+        if (dto.getType() != null)
+            lines.add("Type : " + dto.getType());
+        if (dto.getStatut() != null)
+            lines.add("Statut : " + dto.getStatut());
+        if (dto.getMontant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
+        if (dto.getDateEmission() != null)
+            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
+        return lines;
+    }
+
+    private List<String> buildEncoursFilterSummary(EncoursVirementsInternationalSearchDto dto, String banqueNom) {
+        List<String> lines = new ArrayList<>();
+        if (banqueNom != null) {
+            lines.add("Banque : " + banqueNom);
+        }
+        if (dto == null) return lines;
+        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
+        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
+            lines.add("Émetteur : " + dto.getEmetteur());
+        if (dto.getMontant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
+        if (dto.getDateEmission() != null)
+            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
+        return lines;
     }
 
     // ── Helpers internes ──────────────────────────────────────────────────────

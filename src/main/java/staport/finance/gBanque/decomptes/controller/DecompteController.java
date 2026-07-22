@@ -103,11 +103,7 @@ public class DecompteController {
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<byte[]> exportPdf(@ModelAttribute DecompteSearchDto searchDTO) {
         byte[] pdf = decompteService.exportToPdf(searchDTO);
-        String filename = "decomptes_" + LocalDate.now() + ".pdf";
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
+        return pdfResponse(pdf, "decomptes");
     }
 
     @Operation(summary = "Consulter les encours de décomptes d'une banque")
@@ -119,5 +115,24 @@ public class DecompteController {
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         EncoursDecompteDto result = decompteService.getDecomptesEncoursForBanque(searchDTO, banqueId, pageable);
         return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours de décomptes d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursDecompteSearchDto searchDTO) {
+        byte[] pdf = decompteService.exportEncoursPdf(searchDTO, banqueId);
+        return pdfResponse(pdf, "decomptes_encours");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }
