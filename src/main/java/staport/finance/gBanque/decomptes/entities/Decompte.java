@@ -59,7 +59,9 @@ public class Decompte {
     @Column(name = "montant", precision = 19, scale = 2)
     private BigDecimal montant;
 
+    @Column(nullable = false)
     private String observation;
+    @Column(nullable = false)
     private String libelle;
 
     @Column(name = "date_operation")

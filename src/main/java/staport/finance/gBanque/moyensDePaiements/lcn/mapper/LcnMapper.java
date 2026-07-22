@@ -51,6 +51,9 @@ public interface LcnMapper {
         lcn.setEmetteur(dto.getEmetteur());
         lcn.setNatureLcn(dto.getNatureLcn());
         lcn.setObservation(" LCN N° " + dto.getNumero());
+        lcn.setLibelle((dto.getType() == staport.finance.gBanque.moyensDePaiements.virements.enums.Type.DECAISSEMENT ? "Décaissement" : "Encaissement")
+                + " - Bénéficiaire: " + (dto.getBeneficiaire() != null ? dto.getBeneficiaire() : "N/A")
+                + " / Émetteur: " + (dto.getEmetteur() != null ? dto.getEmetteur() : "N/A"));
         return lcn;
     }
 }

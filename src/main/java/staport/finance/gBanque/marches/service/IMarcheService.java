@@ -65,4 +65,10 @@ public interface IMarcheService {
      * {@code MarcheRepository} directement (encapsulation des domaines, architecture.md).
      */
     List<Marche> findByBanqueId(Long banqueId);
+
+    /**
+     * Exporte en PDF l'intégralité des marchés correspondant aux critères fournis (mêmes
+     * filtres que {@link #findAllMarches}) — sans pagination.
+     */
+    byte[] exportPdf(MarcheSearchDTO searchDTO);
 }

@@ -15,6 +15,8 @@ import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingResponse
 import staport.finance.gBanque.leasing.contratLeasing.dto.ContratLeasingSearchDTO;
 import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 
+import java.time.LocalDate;
+
 @Tag(name = "Contrats de leasing", description = "Gestion des contrats de leasing et de leurs échéances")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
@@ -105,5 +107,40 @@ public class ContratLeasingController {
     public ResponseEntity<Page<ContratLeasingResponseDTO>> getInactiveContrats(
             ContratLeasingSearchDTO searchDTO, Pageable pageable) {
         return ResponseEntity.ok(contratLeasingService.getInactiveContrats(searchDTO, pageable));
+    }
+
+    @Operation(summary = "Exporter en PDF les contrats actifs",
+            description = "Mêmes critères que GET /contratsLeasing/actifs — sans pagination")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/actifs/export/pdf")
+    public ResponseEntity<byte[]> exportActiveContratsPdf(@ModelAttribute ContratLeasingSearchDTO searchDTO) {
+        byte[] pdf = contratLeasingService.exportActiveContratsPdf(searchDTO);
+        return pdfResponse(pdf, "contrats_leasing_actifs");
+    }
+
+    @Operation(summary = "Exporter en PDF les contrats en attente de main levée",
+            description = "Mêmes critères que GET /contratsLeasing/en-attente-main-levee — sans pagination")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/en-attente-main-levee/export/pdf")
+    public ResponseEntity<byte[]> exportPendingLienReleaseContratsPdf(@ModelAttribute ContratLeasingSearchDTO searchDTO) {
+        byte[] pdf = contratLeasingService.exportPendingLienReleaseContratsPdf(searchDTO);
+        return pdfResponse(pdf, "contrats_leasing_en_attente_de_main_levee");
+    }
+
+    @Operation(summary = "Exporter en PDF les contrats clôturés (inactifs)",
+            description = "Mêmes critères que GET /contratsLeasing/inactifs — sans pagination")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/inactifs/export/pdf")
+    public ResponseEntity<byte[]> exportInactiveContratsPdf(@ModelAttribute ContratLeasingSearchDTO searchDTO) {
+        byte[] pdf = contratLeasingService.exportInactiveContratsPdf(searchDTO);
+        return pdfResponse(pdf, "contrats_leasing_archives");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 }

@@ -7,6 +7,7 @@ import staport.finance.gBanque.moyensDePaiements.cheques.dtos.ChequeRequestDto;
 import staport.finance.gBanque.moyensDePaiements.cheques.dtos.ChequeResponseDto;
 import staport.finance.gBanque.moyensDePaiements.cheques.entities.Cheque;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
+import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 /**
  * Mapper MapStruct pour le module Chèque — conversion uniquement, aucune logique métier
@@ -52,6 +53,9 @@ public interface ChequeMapper {
         cheque.setType(dto.getType());
         cheque.setEmetteur(dto.getEmetteur());
         cheque.setObservation("CHQ N°" + dto.getNumero());
+        cheque.setLibelle((dto.getType() == Type.DECAISSEMENT ? "Décaissement" : "Encaissement")
+                + " - Bénéficiaire: " + (dto.getBeneficiaire() != null ? dto.getBeneficiaire() : "N/A")
+                + " / Émetteur: " + (dto.getEmetteur() != null ? dto.getEmetteur() : "N/A"));
         return cheque;
     }
 }

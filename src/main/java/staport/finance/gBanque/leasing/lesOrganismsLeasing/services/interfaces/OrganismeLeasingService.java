@@ -19,6 +19,12 @@ public interface OrganismeLeasingService {
     Page<OrganismeLeasingResponseDTO> search(OrganismeLeasingSearchDTO criteria, Pageable pageable);
 
     /**
+     * Exporte en PDF l'intégralité des organismes de leasing correspondant aux filtres fournis
+     * (mêmes critères que {@link #search}) — sans pagination.
+     */
+    byte[] exportPdf(OrganismeLeasingSearchDTO criteria);
+
+    /**
      * Retourne l'entité OrganismeLeasing ou lève ResourceNotFoundException.
      * Façade pour les domaines qui ont besoin de l'entité (ex. ContratLeasingServiceImpl)
      * sans accéder directement à OrganismeLeasingRepository (CLAUDE.md — Bounded Context).

@@ -1,5 +1,14 @@
 package staport.finance.gBanque.leasing.lesOrganismsLeasing.services;
 
+import com.lowagie.text.Chunk;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -21,18 +30,31 @@ import staport.finance.gBanque.leasing.lesOrganismsLeasing.mappers.OrganismeLeas
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.repositories.OrganismeLeasingRepository;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.services.interfaces.OrganismeLeasingService;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.specifications.OrganismeLeasingSpecification;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
+
+import java.awt.Color;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 public class OrganismeLeasingServiceImpl implements OrganismeLeasingService {
 
     private static final Logger log = LoggerFactory.getLogger(OrganismeLeasingServiceImpl.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final Color MED_BLUE = Color.decode("#2563eb");
+    private static final Color ROW_ALT = Color.decode("#f8fafc");
+    private static final Color BORDER_GRAY = Color.decode("#e5e7eb");
 
     private final OrganismeLeasingRepository repository;
     private final OrganismeLeasingMapper mapper;
+    private final StaportPdfReportService staportPdfReportService;
 
-    public OrganismeLeasingServiceImpl(OrganismeLeasingRepository repository, OrganismeLeasingMapper mapper) {
+    public OrganismeLeasingServiceImpl(OrganismeLeasingRepository repository, OrganismeLeasingMapper mapper,
+                                        StaportPdfReportService staportPdfReportService) {
         this.repository = repository;
         this.mapper = mapper;
+        this.staportPdfReportService = staportPdfReportService;
     }
 
     @AuditableAction(operation = AuditOperation.CREATE, entity = OrganismeLeasing.class)
@@ -95,5 +117,90 @@ public class OrganismeLeasingServiceImpl implements OrganismeLeasingService {
                 ? pageable
                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
         return repository.findAll(spec, effective).map(mapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public byte[] exportPdf(OrganismeLeasingSearchDTO criteria) {
+        log.info("Export PDF des organismes de leasing — critères: {}", criteria);
+
+        Specification<OrganismeLeasing> spec = OrganismeLeasingSpecification.searchByCriteria(criteria);
+        List<OrganismeLeasing> organismes = repository.findAll(spec, Sort.by(Sort.Direction.ASC, "nom"));
+
+        String title = "Organismes de Leasing";
+        List<String> filterLines = (criteria != null && criteria.nom() != null && !criteria.nom().isBlank())
+                ? List.of("Nom : " + criteria.nom())
+                : List.of();
+
+        try {
+            return staportPdfReportService.generateReport(title, (doc, writer) -> {
+                try {
+                    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                    Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                    Font hdrFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                    Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+
+                    doc.add(Chunk.NEWLINE);
+                    doc.add(Chunk.NEWLINE);
+
+                    Paragraph titleParagraph = new Paragraph(title, titleFont);
+                    titleParagraph.setAlignment(Element.ALIGN_CENTER);
+                    doc.add(titleParagraph);
+
+                    String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                            + "  •  " + organismes.size() + " organisme(s)";
+                    if (!filterLines.isEmpty()) {
+                        exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                    }
+                    Paragraph sub = new Paragraph(exportInfo, subFont);
+                    sub.setAlignment(Element.ALIGN_CENTER);
+                    sub.setSpacingAfter(8f);
+                    doc.add(sub);
+
+                    float[] colWidths = {50f, 25f, 25f};
+                    PdfPTable table = new PdfPTable(colWidths);
+                    table.setWidthPercentage(100f);
+                    table.setSpacingBefore(8f);
+                    table.setHeaderRows(1);
+
+                    for (String h : new String[]{"Nom", "Date de création", "Contrats cadres"}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                        c.setBackgroundColor(MED_BLUE);
+                        c.setPadding(5f);
+                        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        c.setBorderColor(Color.WHITE);
+                        c.setBorderWidth(0.5f);
+                        table.addCell(c);
+                    }
+
+                    for (int i = 0; i < organismes.size(); i++) {
+                        OrganismeLeasing o = organismes.get(i);
+                        Color rowBg = i % 2 == 0 ? Color.WHITE : ROW_ALT;
+
+                        addPdfCell(table, o.getNom(), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_LEFT);
+                        addPdfCell(table, o.getDateCreation() != null ? o.getDateCreation().format(DATE_FMT) : "—",
+                                cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
+                        addPdfCell(table, String.valueOf(o.getContratsCadres().size()),
+                                cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
+                    }
+
+                    doc.add(table);
+                } catch (DocumentException e) {
+                    throw new RuntimeException("Erreur lors de la génération du contenu du PDF des organismes de leasing.", e);
+                }
+            });
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des organismes de leasing.", e);
+        }
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font, Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
     }
 }

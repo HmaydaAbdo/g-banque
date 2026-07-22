@@ -2,6 +2,7 @@ package staport.finance.gBanque.marches.repositories;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -47,6 +48,15 @@ public interface MarcheRepository  extends JpaRepository <Marche, Long>, JpaSpec
      */
     @EntityGraph(value = "Marche.avecBanque")
     Page<Marche> findAll(Specification<Marche> spec, Pageable pageable);
+
+    /**
+     * Recherche non paginée avec critères dynamiques et chargement de la banque en une seule
+     * requête JOIN — utilisée par l'export PDF, qui a besoin de l'intégralité des résultats
+     * filtrés (pas seulement la page affichée à l'écran) sans provoquer de N+1 sur
+     * {@code banque.nom} pendant la construction du tableau.
+     */
+    @EntityGraph(value = "Marche.avecBanque")
+    List<Marche> findAll(Specification<Marche> spec, Sort sort);
 
     /**
      * Compte les marchés par statut d'archivage — utilisé par {@code MarcheMetrics}

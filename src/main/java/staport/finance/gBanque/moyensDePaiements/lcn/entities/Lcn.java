@@ -61,7 +61,9 @@ public class Lcn {
     @Column(name = "statut", nullable = false)
     private StatutMoyenPaiement statut;
 
+    @Column(nullable = false)
     private String libelle;
+    @Column(nullable = false)
     private String observation;
 
     @Enumerated(EnumType.STRING)

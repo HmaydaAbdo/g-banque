@@ -84,7 +84,9 @@ public class DroitConstate {
     @Enumerated(EnumType.STRING)
     private Type type;
 
+    @Column(nullable = false)
     private String observation;
+    @Column(nullable = false)
     private String libelle;
 
     @Enumerated(EnumType.STRING)

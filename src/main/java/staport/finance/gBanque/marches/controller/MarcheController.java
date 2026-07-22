@@ -9,7 +9,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,8 @@ import staport.finance.gBanque.marches.dtos.request.MarcheSearchDTO;
 import staport.finance.gBanque.marches.dtos.response.MarcheResponseDTO;
 import staport.finance.gBanque.marches.exceptions.MarcheExceptionHandler;
 import staport.finance.gBanque.marches.service.IMarcheService;
+
+import java.time.LocalDate;
 
 /**
  * Contrôleur REST du module Marches.
@@ -95,6 +99,20 @@ public class MarcheController {
             Pageable pageable) {
         Page<MarcheResponseDTO> marches = marcheService.findAllMarches(searchDTO, pageable);
         return ResponseEntity.ok(marches);
+    }
+
+    @Operation(summary = "Exporter les marchés en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés. Mêmes filtres que GET /marches.")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(AUTHENTICATED)
+    public ResponseEntity<byte[]> exportPdf(@ModelAttribute MarcheSearchDTO searchDTO) {
+        byte[] pdf = marcheService.exportPdf(searchDTO);
+        String filename = "marches_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     @Operation(summary = "Modifier un marché", description = "Réservé Finance / SYSTEM_ADMIN. La banque n'est modifiée que si banqueId est fourni.")

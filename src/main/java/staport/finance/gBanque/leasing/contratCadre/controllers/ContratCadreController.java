@@ -9,7 +9,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,7 @@ import staport.finance.gBanque.leasing.contratCadre.dtos.ContratCadreUpdateDTO;
 import staport.finance.gBanque.leasing.contratCadre.enums.StatutContratCadre;
 import staport.finance.gBanque.leasing.contratCadre.services.IContratCadreService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "Contrats cadres", description = "Gestion des contrats cadres des organismes de leasing")
@@ -97,5 +100,20 @@ public class ContratCadreController {
     @PatchMapping("/{id}/archiver")
     public ResponseEntity<ContratCadreResponseDTO> archiver(@PathVariable Long id) {
         return ResponseEntity.ok(service.archiver(id));
+    }
+
+    @Operation(summary = "Exporter en PDF les contrats cadres",
+               description = "Mêmes critères que GET /contrats-cadres — sans pagination")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(
+            @RequestParam(required = false) Long organismeId,
+            @RequestParam(required = false) StatutContratCadre statut) {
+        byte[] pdf = service.exportPdf(new ContratCadreSearchDTO(organismeId, statut));
+        String filename = "contrats_cadres_leasing_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 }

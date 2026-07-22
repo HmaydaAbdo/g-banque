@@ -58,7 +58,9 @@ public class EcheanceCMT {
     @Column(name = "statut_paiement", nullable = false)
     private StatutEcheanceCMT statutPaiement;
 
+    @Column(nullable = false)
     private String observation;
+    @Column(nullable = false)
     private String libelle;
 
     @Column(name = "date_creation", nullable = false, updatable = false)

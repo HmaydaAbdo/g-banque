@@ -7,7 +7,9 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,8 @@ import staport.finance.gBanque.prefinancement.dtos.request.PrefinancementSearchD
 import staport.finance.gBanque.prefinancement.dtos.response.EncoursPrefinancementDto;
 import staport.finance.gBanque.prefinancement.dtos.response.PrefinancementResponseDTO;
 import staport.finance.gBanque.prefinancement.services.IPrefinancementService;
+
+import java.time.LocalDate;
 
 /**
  * REST controller for managing Prefinancement records.
@@ -85,6 +89,15 @@ public class PrefinancementController {
         return ResponseEntity.ok(page);
     }
 
+    @Operation(summary = "Exporter les préfinancements en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés. Mêmes filtres que GET /prefinancements.")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportPdf(@ModelAttribute PrefinancementSearchDTO searchDTO) {
+        byte[] pdf = prefinancementService.exportPdf(searchDTO);
+        return pdfResponse(pdf, "prefinancements");
+    }
+
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN — cohérent avec la " +
             "correction déjà appliquée aux modules Moyens de paiement/CMT sur ce type d'action.")
     @PatchMapping("/{id}/status/toggle")
@@ -114,5 +127,35 @@ public class PrefinancementController {
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         EncoursPrefinancementDto result = prefinancementService.getDeblocageEncoursForBanque(searchDto, banqueId, pageable);
         return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours de remboursement de préfinancement d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/remboursement/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportRemboursementEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursPrefinancementSearchDto searchDto) {
+        byte[] pdf = prefinancementService.exportRemboursementEncoursPdf(searchDto, banqueId);
+        return pdfResponse(pdf, "prefinancement_encours_remboursement");
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours de déblocage de préfinancement d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/deblocage/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportDeblocageEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursPrefinancementSearchDto searchDto) {
+        byte[] pdf = prefinancementService.exportDeblocageEncoursPdf(searchDto, banqueId);
+        return pdfResponse(pdf, "prefinancement_encours_deblocage");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

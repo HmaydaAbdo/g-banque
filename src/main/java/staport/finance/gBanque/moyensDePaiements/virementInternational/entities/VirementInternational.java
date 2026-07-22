@@ -46,10 +46,10 @@ public class VirementInternational {
     @Column(name = "date_valeur")
     private LocalDate dateValeur ;
 
-    @Column(name = "libelle")
+    @Column(name = "libelle", nullable = false)
     private String libelle;
 
-    @Column(name = "observation")
+    @Column(name = "observation", nullable = false)
     private String observation;
 
     @Enumerated(EnumType.STRING)

@@ -7,7 +7,9 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,8 @@ import staport.finance.gBanque.factoring.dtos.request.FactoringSearchDto;
 import staport.finance.gBanque.factoring.dtos.response.EncoursFactoringDto;
 import staport.finance.gBanque.factoring.dtos.response.FactoringResponseDto;
 import staport.finance.gBanque.factoring.service.IFactoringService;
+
+import java.time.LocalDate;
 
 /**
  * REST controller for managing Factoring records.
@@ -85,6 +89,15 @@ public class FactoringController {
         return ResponseEntity.ok(page);
     }
 
+    @Operation(summary = "Exporter les factorings en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés. Mêmes filtres que GET /factoring.")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportPdf(@ModelAttribute FactoringSearchDto searchDTO) {
+        byte[] pdf = factoringService.exportPdf(searchDTO);
+        return pdfResponse(pdf, "factoring");
+    }
+
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN — cohérent avec la " +
             "correction déjà appliquée aux modules Moyens de paiement/CMT sur ce type d'action.")
     @PatchMapping("/{id}/toggleStatus")
@@ -114,5 +127,35 @@ public class FactoringController {
             @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         EncoursFactoringDto result = factoringService.getDeblocageEncoursForBanque(searchDto, banqueId, pageable);
         return ResponseEntity.ok(result);
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours de remboursement de factoring d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/remboursement/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportRemboursementEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursFactoringSearchDto searchDto) {
+        byte[] pdf = factoringService.exportRemboursementEncoursPdf(searchDto, banqueId);
+        return pdfResponse(pdf, "factoring_encours_remboursement");
+    }
+
+    @Operation(summary = "Exporter en PDF l'encours de déblocage de factoring d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/deblocage/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportDeblocageEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursFactoringSearchDto searchDto) {
+        byte[] pdf = factoringService.exportDeblocageEncoursPdf(searchDto, banqueId);
+        return pdfResponse(pdf, "factoring_encours_deblocage");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
+        String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

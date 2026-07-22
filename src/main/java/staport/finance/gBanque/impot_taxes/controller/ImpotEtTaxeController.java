@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,8 @@ import staport.finance.gBanque.impot_taxes.dtos.request.ImpotEtTaxeSearchDto;
 import staport.finance.gBanque.impot_taxes.dtos.response.EncoursImpotEtTaxeDto;
 import staport.finance.gBanque.impot_taxes.dtos.response.ImpotEtTaxeResponseDto;
 import staport.finance.gBanque.impot_taxes.service.IImpotEtTaxeService;
+
+import java.time.LocalDate;
 
 /**
  * Injecte {@link IImpotEtTaxeService} (DIP — jamais la classe concrète).
@@ -60,6 +64,26 @@ public class ImpotEtTaxeController {
     @PreAuthorize(FINANCE_OR_ADMIN)
     public ResponseEntity<EncoursImpotEtTaxeDto> searchImpotEtTaxes(@RequestBody ImpotEtTaxeSearchDto searchDto, Pageable pageable) {
         return ResponseEntity.ok(impotEtTaxeService.searchImpotEtTaxes(searchDto, pageable));
+    }
+
+    /**
+     * Exporte en PDF l'intégralité des impôts/taxes correspondant aux critères fournis (mêmes
+     * filtres que {@code POST /impots-taxes/search}) — sans pagination : le fichier contient tous
+     * les résultats filtrés, pas seulement la page actuellement affichée à l'écran. Réutilisé par
+     * l'écran "TVA sur cautions" (filtre {@code motif=TVA_COMMISSION_CAUTION}).
+     */
+    @Operation(summary = "Exporter les impôts/taxes filtrés en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterPdf(@ModelAttribute ImpotEtTaxeSearchDto searchDto) {
+        byte[] pdf = impotEtTaxeService.exporterPdf(searchDto);
+        String filename = "impots_taxes_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     @Operation(summary = "Modifier un impôt/taxe")

@@ -70,7 +70,9 @@ public class Factoring {
     @Enumerated(EnumType.STRING) // Best practice for enums
     private Type type;
 
+    @Column(nullable = false)
     private String observation;
+    @Column(nullable = false)
     private String libelle;
 
     @Enumerated(EnumType.STRING) // Best practice for enums

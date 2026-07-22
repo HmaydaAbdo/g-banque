@@ -2,6 +2,7 @@ package staport.finance.gBanque.factoring.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -49,4 +50,13 @@ public interface FactoringRepository extends JpaRepository<Factoring, Long>, Jpa
     @NonNull
     @EntityGraph(value = "Factoring.avecAssociations")
     Page<Factoring> findAll(org.springframework.data.jpa.domain.Specification<Factoring> spec, @NonNull Pageable pageable);
+
+    /**
+     * Recherche non paginée avec chargement de l'association marché+banque en une seule requête
+     * JOIN — utilisée par les exports PDF (liste complète + écrans d'encours), qui ont besoin de
+     * l'intégralité des résultats filtrés sans provoquer de N+1 pendant la construction du PDF.
+     */
+    @NonNull
+    @EntityGraph(value = "Factoring.avecAssociations")
+    List<Factoring> findAll(org.springframework.data.jpa.domain.Specification<Factoring> spec, @NonNull Sort sort);
 }

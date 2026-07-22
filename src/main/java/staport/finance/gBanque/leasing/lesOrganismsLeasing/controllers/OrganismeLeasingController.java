@@ -7,7 +7,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,8 @@ import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasing
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingResponseDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.dtos.OrganismeLeasingSearchDTO;
 import staport.finance.gBanque.leasing.lesOrganismsLeasing.services.interfaces.OrganismeLeasingService;
+
+import java.time.LocalDate;
 
 @Tag(name = "Organismes de leasing", description = "Gestion des organismes de leasing")
 @SecurityRequirement(name = "bearerAuth")
@@ -80,5 +84,18 @@ public class OrganismeLeasingController {
     public ResponseEntity<Page<OrganismeLeasingResponseDTO>> searchOrganismeLeasings(
             OrganismeLeasingSearchDTO criteria, Pageable pageable) {
         return ResponseEntity.ok(organismeLeasingService.search(criteria, pageable));
+    }
+
+    @Operation(summary = "Exporter en PDF les organismes de leasing",
+            description = "Mêmes critères que GET /OrganismesLeasing — sans pagination")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(@ModelAttribute OrganismeLeasingSearchDTO criteria) {
+        byte[] pdf = organismeLeasingService.exportPdf(criteria);
+        String filename = "organismes_leasing_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 }

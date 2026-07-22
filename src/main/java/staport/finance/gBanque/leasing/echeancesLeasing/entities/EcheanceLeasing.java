@@ -55,7 +55,9 @@ public class EcheanceLeasing {
     @Column(name = "statut_paiement", nullable = false)
     private StatutEcheanceLeasing statutPaiement; // État de l'échéance (prévue, payée, en retard, etc.)
 
+    @Column(nullable = false)
     private String observation;
+    @Column(nullable = false)
     private String libelle;
 
     // Champs d'audit

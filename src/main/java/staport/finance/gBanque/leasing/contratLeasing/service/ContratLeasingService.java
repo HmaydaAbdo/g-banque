@@ -31,6 +31,24 @@ public interface ContratLeasingService {
     ContratLeasingResponseDTO markAsInactive(Long id) throws ResourceNotFoundException, ValidationException;
 
     /**
+     * Exporte en PDF l'intégralité des contrats actifs correspondant aux filtres fournis
+     * (mêmes critères que {@link #getActiveContrats}) — sans pagination.
+     */
+    byte[] exportActiveContratsPdf(ContratLeasingSearchDTO searchDTO);
+
+    /**
+     * Exporte en PDF l'intégralité des contrats en attente de main levée correspondant
+     * aux filtres fournis (mêmes critères que {@link #getPendingLienReleaseContrats}).
+     */
+    byte[] exportPendingLienReleaseContratsPdf(ContratLeasingSearchDTO searchDTO);
+
+    /**
+     * Exporte en PDF l'intégralité des contrats clôturés correspondant aux filtres fournis
+     * (mêmes critères que {@link #getInactiveContrats}).
+     */
+    byte[] exportInactiveContratsPdf(ContratLeasingSearchDTO searchDTO);
+
+    /**
      * Retourne l'entité ContratLeasing ou lève ResourceNotFoundException.
      * Façade pour les domaines qui ont besoin de l'entité (ex. LeasingValidationService)
      * sans accéder directement à ContratLeasingRepository (CLAUDE.md — Bounded Context).

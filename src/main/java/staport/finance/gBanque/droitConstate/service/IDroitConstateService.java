@@ -32,4 +32,22 @@ public interface IDroitConstateService {
     EncoursDroitConstateDto getRemboursementEncoursForBanque(EncoursDroitConstateSearchDto searchDto, Long banqueId, Pageable pageable);
 
     EncoursDroitConstateDto getDeblocageEncoursForBanque(EncoursDroitConstateSearchDto searchDto, Long banqueId, Pageable pageable);
+
+    /**
+     * Exporte en PDF l'intégralité des droits constatés correspondant aux critères fournis
+     * (mêmes filtres que {@link #findAll}) — sans pagination.
+     */
+    byte[] exportPdf(DroitConstateSearchDto searchDTO);
+
+    /**
+     * Exporte en PDF l'encours de remboursement d'une banque (mêmes filtres que
+     * {@link #getRemboursementEncoursForBanque}) — sans pagination.
+     */
+    byte[] exportRemboursementEncoursPdf(EncoursDroitConstateSearchDto searchDto, Long banqueId);
+
+    /**
+     * Exporte en PDF l'encours de déblocage d'une banque (mêmes filtres que
+     * {@link #getDeblocageEncoursForBanque}) — sans pagination.
+     */
+    byte[] exportDeblocageEncoursPdf(EncoursDroitConstateSearchDto searchDto, Long banqueId);
 }

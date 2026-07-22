@@ -30,8 +30,6 @@ public abstract class EcheanceLeasingMapper {
     @Mapping(target = "numeroContrat",    source = "contratLeasing.numeroContrat")
     @Mapping(target = "montantHT",        expression = "java(computeMontantHT(entity))")
     @Mapping(target = "montantTVA",       expression = "java(computeMontantTVA(entity))")
-    @Mapping(target = "libelle",          expression = "java(computeLibelle(entity))")
-    @Mapping(target = "observation",      constant = "Prélèvement leasing")
     public abstract EcheanceLeasingResponseDTO toDto(EcheanceLeasing entity);
 
     // ── Méthodes de calcul ────────────────────────────────────────────────────
@@ -48,7 +46,7 @@ public abstract class EcheanceLeasingMapper {
         return entity.getMontantTTC().subtract(montantHT).setScale(SCALE, RoundingMode.HALF_UP);
     }
 
-    protected String computeLibelle(EcheanceLeasing entity) {
+    public String computeLibelle(EcheanceLeasing entity) {
         ContratLeasing contrat = entity.getContratLeasing();
         if (entity.getNumeroEcheance().equals(contrat.getPeriodeEnMois() + 1)) {
             return contrat.getContratCadre().getOrganisme().getNom()

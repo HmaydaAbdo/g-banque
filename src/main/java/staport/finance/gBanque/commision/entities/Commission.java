@@ -43,9 +43,9 @@ public class Commission {
     private LocalDate dateValeur ;
     private LocalDate dateOperation ;
 
-    @Column( length = 150)
+    @Column( length = 150, nullable = false)
     private String libelle;
-    @Column(length = 500)
+    @Column(length = 500, nullable = false)
     private String observation;
 
     @Enumerated(EnumType.STRING)

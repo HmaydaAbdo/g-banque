@@ -1,5 +1,14 @@
     package staport.finance.gBanque.leasing.echeancesLeasing.services;
 
+    import com.lowagie.text.Chunk;
+    import com.lowagie.text.DocumentException;
+    import com.lowagie.text.Element;
+    import com.lowagie.text.Font;
+    import com.lowagie.text.FontFactory;
+    import com.lowagie.text.Paragraph;
+    import com.lowagie.text.Phrase;
+    import com.lowagie.text.pdf.PdfPCell;
+    import com.lowagie.text.pdf.PdfPTable;
     import jakarta.persistence.EntityManager;
     import jakarta.persistence.criteria.CriteriaBuilder;
     import jakarta.persistence.criteria.CriteriaQuery;
@@ -32,15 +41,21 @@
     import staport.finance.gBanque.leasing.echeancesLeasing.repositories.EcheanceLeasingRepository;
     import staport.finance.gBanque.leasing.echeancesLeasing.specification.EcheanceLeasingSpecification;
     import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
+    import staport.finance.gBanque.reports.service.StaportPdfReportService;
     import staport.finance.gBanque.transactions.enums.TransactionSource;
 
+    import java.awt.Color;
     import java.time.LocalDate;
 import java.math.BigDecimal;
     import java.math.RoundingMode;
+    import java.text.DecimalFormat;
+    import java.text.DecimalFormatSymbols;
+    import java.time.format.DateTimeFormatter;
     import java.time.temporal.TemporalAdjusters;
     import java.util.ArrayList;
     import java.util.Comparator;
     import java.util.List;
+    import java.util.Locale;
 
 
     /**
@@ -51,6 +66,13 @@ import java.math.BigDecimal;
     public class EcheanceLeasingService implements IEcheanceLeasingService {
 
         private static final Logger log = LoggerFactory.getLogger(EcheanceLeasingService.class);
+        private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        private static final Color MED_BLUE = Color.decode("#2563eb");
+        private static final Color LIGHT_BLUE = Color.decode("#dbeafe");
+        private static final Color ROW_ALT = Color.decode("#f8fafc");
+        private static final Color GREEN = Color.decode("#16a34a");
+        private static final Color ORANGE = Color.decode("#ea580c");
+        private static final Color BORDER_GRAY = Color.decode("#e5e7eb");
 
         private final ICommissionService commissionService;
         private final ICommissionConfigService commissionConfigService;
@@ -58,6 +80,7 @@ import java.math.BigDecimal;
         private final EcheanceLeasingMapper echeanceLeasingMapper;
         private final IBanqueService banqueService;
         private final EntityManager entityManager;
+        private final StaportPdfReportService staportPdfReportService;
         private static final int SCALE = 2;
 
         public EcheanceLeasingService(ICommissionService commissionService,
@@ -65,13 +88,15 @@ import java.math.BigDecimal;
                                       EcheanceLeasingRepository echeanceLeasingRepository,
                                       EcheanceLeasingMapper echeanceLeasingMapper,
                                       IBanqueService banqueService,
-                                      EntityManager entityManager) {
+                                      EntityManager entityManager,
+                                      StaportPdfReportService staportPdfReportService) {
             this.commissionService       = commissionService;
             this.commissionConfigService = commissionConfigService;
             this.echeanceLeasingRepository = echeanceLeasingRepository;
             this.echeanceLeasingMapper     = echeanceLeasingMapper;
             this.banqueService             = banqueService;
             this.entityManager             = entityManager;
+            this.staportPdfReportService   = staportPdfReportService;
         }
 
         /**
@@ -187,7 +212,9 @@ import java.math.BigDecimal;
                             mensualiteTTCDuMois,
                             statut
                     );
-                    echeance.setObservation("Prélèvement leasing");
+                    echeance.setLibelle(echeanceLeasingMapper.computeLibelle(echeance));
+                    echeance.setObservation("Prélèvement leasing - échéance n°" + numeroEcheanceGlobal
+                            + "/" + (contrat.getPeriodeEnMois() + 1) + " - contrat N° " + contrat.getNumeroContrat());
                     echeances.add(echeance);
                 }
             }
@@ -213,7 +240,9 @@ import java.math.BigDecimal;
                     contrat.getValeurResiduelle().setScale(SCALE, RoundingMode.HALF_UP),
                     statut
             );
-            echeanceValeurResiduelle.setObservation("Prélèvement leasing");
+            echeanceValeurResiduelle.setLibelle(echeanceLeasingMapper.computeLibelle(echeanceValeurResiduelle));
+            echeanceValeurResiduelle.setObservation("Prélèvement leasing - échéance n°" + numeroEcheanceGlobal
+                    + "/" + (contrat.getPeriodeEnMois() + 1) + " - contrat N° " + contrat.getNumeroContrat() + " (valeur résiduelle)");
 
             echeances.add(echeanceValeurResiduelle);
 
@@ -493,5 +522,162 @@ import java.math.BigDecimal;
             log.debug("Suppression des anciennes échéances pour le contrat ID : {}", contrat.getId());
             echeanceLeasingRepository.deleteByContratLeasing(contrat);
 
+        }
+
+        // ==================== EXPORT PDF ====================
+
+        @Transactional(readOnly = true)
+        @Override
+        public byte[] exportTableauAmortissementPdf(ContratLeasing contrat, EcheanceLeasingSearchDTO searchDTO) {
+            log.info("Export PDF du tableau d'amortissement — contrat leasing ID : {}", contrat.getId());
+
+            BigDecimal montantTotalAPayer = echeanceLeasingRepository
+                    .sumMontantTTCByContratLeasingId(contrat.getId())
+                    .setScale(SCALE, RoundingMode.HALF_UP);
+
+            BigDecimal montantTotalDejaPaye = echeanceLeasingRepository
+                    .sumMontantTTCByContratLeasingIdAndStatutPaiement(contrat.getId(), StatutEcheanceLeasing.PAYE)
+                    .setScale(SCALE, RoundingMode.HALF_UP);
+
+            BigDecimal montantRestantAPayer = montantTotalAPayer.subtract(montantTotalDejaPaye);
+
+            EcheanceLeasingSearchDTO effectiveSearchDto = (searchDTO == null
+                    ? new EcheanceLeasingSearchDTO(contrat.getId(), null, null, null, null)
+                    : new EcheanceLeasingSearchDTO(contrat.getId(), searchDTO.numeroEcheance(), searchDTO.month(), searchDTO.year(), searchDTO.statutPaiement()));
+            Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.searchByCriteria(effectiveSearchDto);
+            List<EcheanceLeasing> echeances = echeanceLeasingRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "numeroEcheance"));
+
+            List<String> filterLines = buildTableauFilterSummary(searchDTO);
+            String title = "Tableau d'Amortissement — Contrat N°" + contrat.getNumeroContrat();
+
+            try {
+                return staportPdfReportService.generateReport(title, (doc, writer) -> {
+                    try {
+                        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                        Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                        Font hdrFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                        Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                        Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                        doc.add(Chunk.NEWLINE);
+                        doc.add(Chunk.NEWLINE);
+
+                        Paragraph titleParagraph = new Paragraph(title, titleFont);
+                        titleParagraph.setAlignment(Element.ALIGN_CENTER);
+                        doc.add(titleParagraph);
+
+                        String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                                + "  •  " + echeances.size() + " échéance(s)";
+                        if (!filterLines.isEmpty()) {
+                            exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                        }
+                        Paragraph sub = new Paragraph(exportInfo, subFont);
+                        sub.setAlignment(Element.ALIGN_CENTER);
+                        sub.setSpacingAfter(6f);
+                        doc.add(sub);
+
+                        // Résumé Endettement / Payé / Restant, identique à l'écran
+                        PdfPTable summaryTable = new PdfPTable(3);
+                        summaryTable.setWidthPercentage(100f);
+                        summaryTable.setSpacingAfter(10f);
+                        addSummaryCell(summaryTable, "Endettement", formatMontantPdf(montantTotalAPayer), totalFont, subFont);
+                        addSummaryCell(summaryTable, "Montant déjà payé", formatMontantPdf(montantTotalDejaPaye), totalFont, subFont);
+                        addSummaryCell(summaryTable, "Montant restant à payer", formatMontantPdf(montantRestantAPayer), totalFont, subFont);
+                        doc.add(summaryTable);
+
+                        float[] colWidths = {10f, 15f, 15f, 12f};
+                        PdfPTable table = new PdfPTable(colWidths);
+                        table.setWidthPercentage(100f);
+                        table.setSpacingBefore(4f);
+                        table.setHeaderRows(1);
+
+                        for (String h : new String[]{"N° Échéance", "Date d'échéance", "Montant TTC (MAD)", "Statut"}) {
+                            PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                            c.setBackgroundColor(MED_BLUE);
+                            c.setPadding(5f);
+                            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            c.setBorderColor(Color.WHITE);
+                            c.setBorderWidth(0.5f);
+                            table.addCell(c);
+                        }
+
+                        for (int i = 0; i < echeances.size(); i++) {
+                            EcheanceLeasing e = echeances.get(i);
+                            Color rowBg = i % 2 == 0 ? Color.WHITE : ROW_ALT;
+
+                            addPdfCell(table, String.valueOf(e.getNumeroEcheance()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
+                            addPdfCell(table, e.getDateEcheance() != null ? e.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
+                            addPdfCell(table, formatMontantPdf(e.getMontantTTC()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
+
+                            boolean paye = e.getStatutPaiement() == StatutEcheanceLeasing.PAYE;
+                            PdfPCell statusCell = new PdfPCell(new Phrase(
+                                    paye ? "PAYÉ" : "PRÉVU",
+                                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                            statusCell.setBackgroundColor(paye ? GREEN : ORANGE);
+                            statusCell.setPadding(4f);
+                            statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            statusCell.setBorderColor(BORDER_GRAY);
+                            statusCell.setBorderWidth(0.5f);
+                            table.addCell(statusCell);
+                        }
+
+                        doc.add(table);
+                    } catch (DocumentException e) {
+                        throw new RuntimeException("Erreur lors de la génération du contenu du PDF du tableau d'amortissement.", e);
+                    }
+                });
+            } catch (DocumentException e) {
+                throw new RuntimeException("Erreur lors de la génération du PDF du tableau d'amortissement.", e);
+            }
+        }
+
+        private void addSummaryCell(PdfPTable table, String label, String value, Font valueFont, Font labelFont) {
+            Paragraph content = new Paragraph();
+            content.add(new Phrase(label + "\n", labelFont));
+            content.add(new Phrase(value + " MAD", valueFont));
+            PdfPCell cell = new PdfPCell(content);
+            cell.setBackgroundColor(LIGHT_BLUE);
+            cell.setPadding(6f);
+            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cell.setBorderColor(MED_BLUE);
+            table.addCell(cell);
+        }
+
+        private List<String> buildTableauFilterSummary(EcheanceLeasingSearchDTO dto) {
+            List<String> lines = new ArrayList<>();
+            if (dto == null) return lines;
+
+            if (dto.numeroEcheance() != null) {
+                lines.add("N° Échéance : " + dto.numeroEcheance());
+            }
+            if (dto.statutPaiement() != null) {
+                lines.add("Statut : " + dto.statutPaiement().name());
+            }
+            if (dto.month() != null) {
+                lines.add("Mois : " + dto.month());
+            }
+            if (dto.year() != null) {
+                lines.add("Année : " + dto.year());
+            }
+            return lines;
+        }
+
+        private void addPdfCell(PdfPTable table, String text, Font font, Color bg, Color border, int align) {
+            PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+            cell.setBackgroundColor(bg);
+            cell.setPadding(4f);
+            cell.setHorizontalAlignment(align);
+            cell.setBorderColor(border);
+            cell.setBorderWidth(0.5f);
+            table.addCell(cell);
+        }
+
+        private String formatMontantPdf(BigDecimal montant) {
+            if (montant == null) return "—";
+            DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
+            symbols.setGroupingSeparator(' ');
+            symbols.setDecimalSeparator(',');
+            DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
+            return formatter.format(montant);
         }
     }

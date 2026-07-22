@@ -48,6 +48,9 @@ public interface VirementMapper {
         virement.setType(dto.getType());
         virement.setStatut(StatutMoyenPaiement.ENCOURS);
         virement.setObservation(" VIREMENT N° " + virement.getNumero());
+        virement.setLibelle((dto.getType() == staport.finance.gBanque.moyensDePaiements.virements.enums.Type.DECAISSEMENT ? "Décaissement" : "Encaissement")
+                + " - Bénéficiaire: " + (dto.getBeneficiaire() != null ? dto.getBeneficiaire() : "N/A")
+                + " / Émetteur: " + (dto.getEmetteur() != null ? dto.getEmetteur() : "N/A"));
         return virement;
     }
 }

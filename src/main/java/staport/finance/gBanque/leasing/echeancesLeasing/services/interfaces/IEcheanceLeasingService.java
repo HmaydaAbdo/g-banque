@@ -29,6 +29,13 @@ public interface IEcheanceLeasingService {
     TableauAmortissementDTO getTableauAmortissementForContrat(Long contratId, String numeroContrat,
                                                                EcheanceLeasingSearchDTO searchDTO, Pageable pageable);
 
+    /**
+     * Exporte en PDF le tableau d'amortissement complet d'un contrat (mêmes critères que
+     * {@link #getTableauAmortissementForContrat}, sans pagination), avec les totaux
+     * Endettement / Payé / Restant.
+     */
+    byte[] exportTableauAmortissementPdf(ContratLeasing contrat, EcheanceLeasingSearchDTO searchDTO);
+
     EcheanceLeasingResponseDTO toggleStatus(Long echeanceId);
 
     EcheanceLeasingResponseDTO updateEcheance(Long id, EcheanceLeasingUpdateRequestDTO dto);

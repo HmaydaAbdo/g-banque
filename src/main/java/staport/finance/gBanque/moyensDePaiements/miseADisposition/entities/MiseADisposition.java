@@ -59,8 +59,10 @@ public class MiseADisposition {
     @Column(name = "statut", nullable = false)
     private StatutMoyenPaiement statut;
 
+    @Column(nullable = false)
     private String observation;
 
+    @Column(nullable = false)
     private String libelle;
 
     @Enumerated(EnumType.STRING)

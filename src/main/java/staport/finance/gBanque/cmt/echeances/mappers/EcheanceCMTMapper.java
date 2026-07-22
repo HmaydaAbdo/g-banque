@@ -15,8 +15,6 @@ public interface EcheanceCMTMapper {
     @Mapping(source = "creditMoyenTerme", target = "credit")
     @Mapping(source = "montant", target = "montantTtc")
     @Mapping(source = "dateValeur", target = "dateValuer")
-    @Mapping(target = "observation", constant = "Prélèvement CMT")
-    @Mapping(target = "libelle", constant = "échéance CMT")
     EcheanceCMTResponseDto toResponseDto(EcheanceCMT entity);
 
     EcheanceCMTResponseDto.CreditMoyenTermeDto toCreditDto(CreditMoyenTerme credit);

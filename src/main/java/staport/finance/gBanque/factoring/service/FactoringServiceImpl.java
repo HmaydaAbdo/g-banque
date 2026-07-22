@@ -35,11 +35,23 @@ import staport.finance.gBanque.factoring.repository.FactoringRepository;
 import staport.finance.gBanque.factoring.spec.FactoringSpec;
 import staport.finance.gBanque.marches.entities.Marche;
 import staport.finance.gBanque.marches.service.IMarcheService;
+import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.prefinancement.enums.Type;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
 
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+
+import java.awt.Color;
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -58,35 +70,46 @@ import java.util.Optional;
  * construite avec le même {@link Specification} que la recherche paginée (pas de chargement de
  * la liste complète en mémoire pour sommer côté Java — conventions/performance.md).
  * {@code endOfMonth} est recalculé à chaque appel (et non figé à la construction du bean).
+ *
+ * <p>{@link IBanqueService} est injecté uniquement pour résoudre le nom de banque affiché dans le
+ * résumé des filtres des exports PDF — sans risque de cycle de bean : {@code BanqueServiceImpl} ne
+ * dépend d'aucune classe du module Factoring (vérifié par recherche globale).
  */
 @Service
 public class FactoringServiceImpl implements IFactoringService {
 
     private static final Logger log = LoggerFactory.getLogger(FactoringServiceImpl.class);
     private static final String FACTORING_NATURE_CODE = "FACTORING";
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final FactoringRepository factoringRepository;
     private final IMarcheService marcheService;
+    private final IBanqueService banqueService;
     private final FactoringMapper factoringMapper;
     private final LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader;
     private final LigneFonctionnelleReader ligneFonctionnelleReader;
     private final INatureLigneFonctionnelleService natureLigneFonctionnelleService;
+    private final StaportPdfReportService staportPdfReportService;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     public FactoringServiceImpl(FactoringRepository factoringRepository,
                                  IMarcheService marcheService,
+                                 IBanqueService banqueService,
                                  FactoringMapper factoringMapper,
                                  LigneFonctionnelleSpecifiqueReader ligneFonctionnelleSpecifiqueReader,
                                  LigneFonctionnelleReader ligneFonctionnelleReader,
-                                 INatureLigneFonctionnelleService natureLigneFonctionnelleService) {
+                                 INatureLigneFonctionnelleService natureLigneFonctionnelleService,
+                                 StaportPdfReportService staportPdfReportService) {
         this.factoringRepository = factoringRepository;
         this.marcheService = marcheService;
+        this.banqueService = banqueService;
         this.factoringMapper = factoringMapper;
         this.ligneFonctionnelleSpecifiqueReader = ligneFonctionnelleSpecifiqueReader;
         this.ligneFonctionnelleReader = ligneFonctionnelleReader;
         this.natureLigneFonctionnelleService = natureLigneFonctionnelleService;
+        this.staportPdfReportService = staportPdfReportService;
         log.info("FactoringServiceImpl initialisé avec succès");
     }
 
@@ -106,6 +129,7 @@ public class FactoringServiceImpl implements IFactoringService {
         factoring.setLigneFonctionnelleSpecifique(ligneResult.specifique());
         factoring.setLigneFonctionnelle(ligneResult.generale());
         factoring.setObservation(marche.getNumero());
+        factoring.setLibelle(marche.getNom() + " - " + factoring.getType());
         factoring = factoringRepository.save(factoring);
 
         log.info("Factoring créé avec succès - ID: {}", factoring.getId());
@@ -143,6 +167,7 @@ public class FactoringServiceImpl implements IFactoringService {
         existingFactoring.setMontant(requestDTO.montant());
         existingFactoring.setType(requestDTO.type());
         existingFactoring.setObservation(marche.getNumero());
+        existingFactoring.setLibelle(marche.getNom() + " - " + existingFactoring.getType());
 
         Factoring updatedFactoring = factoringRepository.save(existingFactoring);
         log.info("Factoring modifié avec succès - ID: {}", id);
@@ -270,6 +295,246 @@ public class FactoringServiceImpl implements IFactoringService {
         Page<FactoringResponseDto> pageDto = factoringPage.map(factoringMapper::toDto);
 
         return new EncoursFactoringDto(totalDesEncours, pageDto);
+    }
+
+    // ── Export PDF ────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportPdf(FactoringSearchDto searchDTO) {
+        log.info("Export PDF factorings — critères: {}", searchDTO);
+
+        List<Factoring> factorings = factoringRepository.findAll(
+                FactoringSpec.searchByCriteria(searchDTO),
+                Sort.by(Sort.Direction.DESC, "dateEmission"));
+
+        BigDecimal totalMontant = factorings.stream()
+                .map(Factoring::getMontant)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<String> filterLines = buildFilterSummary(searchDTO);
+
+        return generateFactoringPdf("État des Factorings", factorings, totalMontant, filterLines);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportRemboursementEncoursPdf(EncoursFactoringSearchDto searchDto, Long banqueId) {
+        log.info("Export PDF encours remboursement factoring — banque ID: {}", banqueId);
+
+        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+        Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
+                .and(FactoringSpec.outstandingRemboursementUntil(endOfMonth))
+                .and(FactoringSpec.byMarcheName(searchDto.marcheName()))
+                .and(FactoringSpec.byMarcheNumero(searchDto.marcheNumero()))
+                .and(FactoringSpec.hasMontant(searchDto.montant()));
+
+        List<Factoring> factorings = factoringRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal totalMontant = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return generateFactoringPdf("Encours de Remboursement — Factoring", factorings, totalMontant, filterLines);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportDeblocageEncoursPdf(EncoursFactoringSearchDto searchDto, Long banqueId) {
+        log.info("Export PDF encours déblocage factoring — banque ID: {}", banqueId);
+
+        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+        Specification<Factoring> spec = FactoringSpec.byBanqueId(banqueId)
+                .and(FactoringSpec.outstandingDeblocageUntil(endOfMonth))
+                .and(FactoringSpec.byMarcheName(searchDto.marcheName()))
+                .and(FactoringSpec.byMarcheNumero(searchDto.marcheNumero()))
+                .and(FactoringSpec.hasMontant(searchDto.montant()));
+
+        List<Factoring> factorings = factoringRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal totalMontant = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return generateFactoringPdf("Encours de Déblocage — Factoring", factorings, totalMontant, filterLines);
+    }
+
+    /**
+     * Génère le contenu PDF partagé par {@link #exportPdf}, {@link #exportRemboursementEncoursPdf}
+     * et {@link #exportDeblocageEncoursPdf}.
+     */
+    private byte[] generateFactoringPdf(String title, List<Factoring> factorings,
+                                         BigDecimal totalMontant, List<String> filterLines) {
+        try {
+            return staportPdfReportService.generateReport(
+                    title,
+                    PageSize.A4.rotate(),
+                    (doc, writer) -> {
+                        try {
+                            doc.add(Chunk.NEWLINE);
+                            doc.add(Chunk.NEWLINE);
+
+                            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                            Font subFont   = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                            Font hdrFont   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                            Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                            Paragraph titlePara = new Paragraph(title, titleFont);
+                            titlePara.setAlignment(Element.ALIGN_CENTER);
+                            doc.add(titlePara);
+
+                            String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                                    + "  •  " + factorings.size() + " ligne(s)";
+                            if (!filterLines.isEmpty()) {
+                                exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                            }
+                            Paragraph sub = new Paragraph(exportInfo, subFont);
+                            sub.setAlignment(Element.ALIGN_CENTER);
+                            sub.setSpacingAfter(8f);
+                            doc.add(sub);
+
+                            Color medBlue    = Color.decode("#2563eb");
+                            Color lightBlue  = Color.decode("#dbeafe");
+                            Color rowAlt     = Color.decode("#f8fafc");
+                            Color green      = Color.decode("#16a34a");
+                            Color orange     = Color.decode("#ea580c");
+                            Color borderGray = Color.decode("#e5e7eb");
+
+                            float[] colWidths = {10f, 16f, 12f, 11f, 13f, 11f, 11f, 8f};
+                            PdfPTable table = new PdfPTable(colWidths);
+                            table.setWidthPercentage(100f);
+                            table.setSpacingBefore(8f);
+                            table.setHeaderRows(1);
+
+                            for (String h : new String[]{
+                                    "N° Marché", "Nom Marché", "Banque", "Type",
+                                    "Montant (MAD)", "Date Émission", "Date Valeur", "Statut"}) {
+                                PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                                c.setBackgroundColor(medBlue);
+                                c.setPadding(5f);
+                                c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                c.setBorderColor(Color.WHITE);
+                                c.setBorderWidth(0.5f);
+                                table.addCell(c);
+                            }
+
+                            for (int i = 0; i < factorings.size(); i++) {
+                                Factoring f = factorings.get(i);
+                                Marche marche = f.getMarche();
+                                Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
+
+                                addPdfCell(table, marche != null ? marche.getNumero() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, marche != null ? marche.getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, marche != null && marche.getBanque() != null ? marche.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, f.getType() == Type.DEBLOCAGE ? "Déblocage" : "Remboursement", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, formatMontantPdf(f.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, f.getDateEmission() != null ? f.getDateEmission().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, f.getDateValeur() != null ? f.getDateValeur().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+
+                                boolean paye = f.getStatus() == Status.PAYE;
+                                PdfPCell statusCell = new PdfPCell(new Phrase(
+                                        paye ? "PAYÉ" : "PRÉVU",
+                                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                                statusCell.setBackgroundColor(paye ? green : orange);
+                                statusCell.setPadding(4f);
+                                statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                statusCell.setBorderColor(borderGray);
+                                statusCell.setBorderWidth(0.5f);
+                                table.addCell(statusCell);
+                            }
+
+                            // Ligne total
+                            PdfPCell totalLabel = new PdfPCell(
+                                    new Phrase("TOTAL — " + factorings.size() + " ligne(s)", totalFont));
+                            totalLabel.setColspan(4);
+                            totalLabel.setBackgroundColor(lightBlue);
+                            totalLabel.setPadding(5f);
+                            totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalLabel.setBorderColor(medBlue);
+                            table.addCell(totalLabel);
+
+                            PdfPCell totalVal = new PdfPCell(
+                                    new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            totalVal.setBackgroundColor(lightBlue);
+                            totalVal.setPadding(5f);
+                            totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalVal.setBorderColor(medBlue);
+                            table.addCell(totalVal);
+
+                            for (int j = 0; j < 3; j++) {
+                                PdfPCell empty = new PdfPCell(new Phrase(""));
+                                empty.setBackgroundColor(lightBlue);
+                                empty.setBorderColor(medBlue);
+                                table.addCell(empty);
+                            }
+
+                            doc.add(table);
+
+                        } catch (DocumentException e) {
+                            throw new RuntimeException("Erreur génération contenu PDF factorings", e);
+                        }
+                    }
+            );
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des factorings", e);
+        }
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font,
+                             Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantPdf(BigDecimal montant) {
+        if (montant == null) return "—";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf.format(montant);
+    }
+
+    private List<String> buildFilterSummary(FactoringSearchDto criteria) {
+        List<String> lines = new ArrayList<>();
+        if (criteria == null) return lines;
+
+        if (criteria.marcheId() != null) {
+            try {
+                lines.add("Marché : " + marcheService.findOrThrow(criteria.marcheId()).getNumero());
+            } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
+        }
+        if (criteria.banqueId() != null) {
+            try {
+                lines.add("Banque : " + banqueService.findOrThrow(criteria.banqueId()).getNom());
+            } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
+        }
+        if (criteria.type() != null)
+            lines.add("Type : " + (criteria.type() == Type.DEBLOCAGE ? "Déblocage" : "Remboursement"));
+        if (criteria.status() != null)
+            lines.add("Statut : " + (criteria.status() == Status.PAYE ? "Payé" : "Prévu"));
+
+        return lines;
+    }
+
+    private List<String> buildEncoursFilterSummary(EncoursFactoringSearchDto searchDto, Long banqueId) {
+        List<String> lines = new ArrayList<>();
+
+        try {
+            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
+        } catch (ResourceNotFoundException ignored) { /* filtre obsolète — ignoré pour l'affichage */ }
+
+        if (searchDto == null) return lines;
+        if (searchDto.marcheName() != null && !searchDto.marcheName().isBlank())
+            lines.add("Nom Marché : " + searchDto.marcheName());
+        if (searchDto.marcheNumero() != null && !searchDto.marcheNumero().isBlank())
+            lines.add("N° Marché : " + searchDto.marcheNumero());
+        if (searchDto.montant() != null)
+            lines.add("Montant : " + formatMontantPdf(searchDto.montant()) + " MAD");
+
+        return lines;
     }
 
     /**

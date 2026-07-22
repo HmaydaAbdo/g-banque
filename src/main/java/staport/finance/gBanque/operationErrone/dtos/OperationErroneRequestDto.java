@@ -26,6 +26,7 @@ public record OperationErroneRequestDto(
         @NotNull(message = "Le motif est obligatoire")
         TransactionSource motif,
 
+        @NotBlank(message = "Le libellé est obligatoire")
         String libelle,
 
         @NotBlank(message = "L'observation est obligatoire")

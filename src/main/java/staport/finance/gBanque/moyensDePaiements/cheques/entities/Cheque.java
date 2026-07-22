@@ -69,7 +69,9 @@ public class Cheque {
     @Column(name = "type")
     private Type type;
 
+    @Column(nullable = false)
     private String libelle;
+    @Column(nullable = false)
     private String observation;
 
     private String emetteur;

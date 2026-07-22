@@ -28,6 +28,14 @@ public interface IImpotEtTaxeService {
 
     EncoursImpotEtTaxeDto searchImpotEtTaxes(ImpotEtTaxeSearchDto searchDto, Pageable pageable);
 
+    /**
+     * Exporte en PDF l'intégralité des impôts/taxes correspondant aux critères fournis (mêmes
+     * filtres que {@link #searchImpotEtTaxes}) — sans pagination : le fichier contient tous les
+     * résultats filtrés, pas seulement la page actuellement affichée à l'écran. Réutilisé par les
+     * écrans qui filtrent sur un {@code motif} donné (ex. TVA sur cautions).
+     */
+    byte[] exporterPdf(ImpotEtTaxeSearchDto searchDto);
+
     ImpotEtTaxeResponseDto updateImpotEtTaxe(Long id, ImpotEtTaxeRequestDto requestDto);
 
     void deleteImpotEtTaxe(Long id);

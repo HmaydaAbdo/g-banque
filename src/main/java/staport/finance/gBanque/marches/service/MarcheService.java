@@ -13,6 +13,7 @@ import staport.finance.gBanque.marches.exceptions.MarcheBusinessException;
 import staport.finance.gBanque.marches.mapper.MarcheMapper;
 import staport.finance.gBanque.marches.repositories.MarcheRepository;
 import staport.finance.gBanque.marches.specs.MarcheSpecification;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -23,7 +24,17 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+
+import java.awt.Color;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Façade publique du module Marches (architecture.md, "Encapsulation des domaines").
@@ -47,13 +58,17 @@ import java.util.List;
 public class MarcheService implements IMarcheService {
 
     private static final Logger log = LoggerFactory.getLogger(MarcheService.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final MarcheRepository marcheRepository;
     private final MarcheMapper marcheMapper;
+    private final StaportPdfReportService staportPdfReportService;
 
-    public MarcheService(MarcheRepository marcheRepository, MarcheMapper marcheMapper) {
+    public MarcheService(MarcheRepository marcheRepository, MarcheMapper marcheMapper,
+                          StaportPdfReportService staportPdfReportService) {
         this.marcheRepository = marcheRepository;
         this.marcheMapper = marcheMapper;
+        this.staportPdfReportService = staportPdfReportService;
     }
 
     /**
@@ -227,6 +242,178 @@ public class MarcheService implements IMarcheService {
                         : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id")));
 
         return marchePage.map(marcheMapper::toResponseDTO);
+    }
+
+    // ── Export PDF ────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public byte[] exportPdf(MarcheSearchDTO searchDTO) {
+        log.info("Export PDF marchés — critères: {}", searchDTO);
+
+        List<Marche> marches = marcheRepository.findAll(
+                MarcheSpecification.searchByCriteria(searchDTO),
+                Sort.by(Sort.Direction.ASC, "numero"));
+
+        BigDecimal totalMontant = marches.stream()
+                .map(Marche::getMontant)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<String> filterLines = buildFilterSummary(searchDTO);
+
+        try {
+            return staportPdfReportService.generateReport(
+                    "État des Marchés",
+                    PageSize.A4.rotate(),
+                    (doc, writer) -> {
+                        try {
+                            doc.add(Chunk.NEWLINE);
+                            doc.add(Chunk.NEWLINE);
+
+                            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                            Font subFont   = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                            Font hdrFont   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                            Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                            Paragraph title = new Paragraph("État des Marchés", titleFont);
+                            title.setAlignment(Element.ALIGN_CENTER);
+                            doc.add(title);
+
+                            String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                                    + "  •  " + marches.size() + " marché(s)";
+                            if (!filterLines.isEmpty()) {
+                                exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                            }
+                            Paragraph sub = new Paragraph(exportInfo, subFont);
+                            sub.setAlignment(Element.ALIGN_CENTER);
+                            sub.setSpacingAfter(8f);
+                            doc.add(sub);
+
+                            Color medBlue    = Color.decode("#2563eb");
+                            Color lightBlue  = Color.decode("#dbeafe");
+                            Color rowAlt     = Color.decode("#f8fafc");
+                            Color green      = Color.decode("#16a34a");
+                            Color orange     = Color.decode("#ea580c");
+                            Color borderGray = Color.decode("#e5e7eb");
+
+                            float[] colWidths = {10f, 18f, 18f, 12f, 12f, 10f, 10f, 10f};
+                            PdfPTable table = new PdfPTable(colWidths);
+                            table.setWidthPercentage(100f);
+                            table.setSpacingBefore(8f);
+                            table.setHeaderRows(1);
+
+                            for (String h : new String[]{
+                                    "N° Marché", "Nom", "Maître d'ouvrage", "Banque",
+                                    "Montant (MAD)", "Début travaux", "Fin travaux", "Statut"}) {
+                                PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                                c.setBackgroundColor(medBlue);
+                                c.setPadding(5f);
+                                c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                c.setBorderColor(Color.WHITE);
+                                c.setBorderWidth(0.5f);
+                                table.addCell(c);
+                            }
+
+                            for (int i = 0; i < marches.size(); i++) {
+                                Marche m = marches.get(i);
+                                Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
+
+                                addPdfCell(table, m.getNumero(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, m.getNom(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, m.getMaitreDouvrage(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, m.getBanque() != null ? m.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
+                                addPdfCell(table, formatMontantPdf(m.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
+                                addPdfCell(table, m.getDateDebutDesTravaux() != null ? m.getDateDebutDesTravaux().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+                                addPdfCell(table, m.getDateDAchievementDesTravaux() != null ? m.getDateDAchievementDesTravaux().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
+
+                                boolean actif = m.isActif();
+                                PdfPCell statusCell = new PdfPCell(new Phrase(
+                                        actif ? "ACTIF" : "ARCHIVÉ",
+                                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                                statusCell.setBackgroundColor(actif ? green : orange);
+                                statusCell.setPadding(4f);
+                                statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                statusCell.setBorderColor(borderGray);
+                                statusCell.setBorderWidth(0.5f);
+                                table.addCell(statusCell);
+                            }
+
+                            // Ligne total
+                            PdfPCell totalLabel = new PdfPCell(
+                                    new Phrase("TOTAL — " + marches.size() + " marché(s)", totalFont));
+                            totalLabel.setColspan(4);
+                            totalLabel.setBackgroundColor(lightBlue);
+                            totalLabel.setPadding(5f);
+                            totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalLabel.setBorderColor(medBlue);
+                            table.addCell(totalLabel);
+
+                            PdfPCell totalVal = new PdfPCell(
+                                    new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                            totalVal.setBackgroundColor(lightBlue);
+                            totalVal.setPadding(5f);
+                            totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                            totalVal.setBorderColor(medBlue);
+                            table.addCell(totalVal);
+
+                            for (int j = 0; j < 3; j++) {
+                                PdfPCell empty = new PdfPCell(new Phrase(""));
+                                empty.setBackgroundColor(lightBlue);
+                                empty.setBorderColor(medBlue);
+                                table.addCell(empty);
+                            }
+
+                            doc.add(table);
+
+                        } catch (DocumentException e) {
+                            throw new RuntimeException("Erreur génération contenu PDF marchés", e);
+                        }
+                    }
+            );
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des marchés", e);
+        }
+    }
+
+    private void addPdfCell(PdfPTable table, String text, Font font,
+                             Color bg, Color border, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(border);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantPdf(BigDecimal montant) {
+        if (montant == null) return "—";
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf.format(montant);
+    }
+
+    private List<String> buildFilterSummary(MarcheSearchDTO criteria) {
+        List<String> lines = new ArrayList<>();
+        if (criteria == null) return lines;
+
+        if (criteria.nom() != null && !criteria.nom().isBlank())
+            lines.add("Nom : " + criteria.nom());
+        if (criteria.numero() != null && !criteria.numero().isBlank())
+            lines.add("N° Marché : " + criteria.numero());
+        if (criteria.maitreDouvrage() != null && !criteria.maitreDouvrage().isBlank())
+            lines.add("Maître d'ouvrage : " + criteria.maitreDouvrage());
+        if (criteria.banqueId() != null) {
+            // MarcheService n'injecte volontairement pas IBanqueService (cf. javadoc de la
+            // classe — évite un cycle de bean Spring) : on affiche l'ID plutôt que le nom.
+            lines.add("Banque (ID) : " + criteria.banqueId());
+        }
+        if (criteria.actif() != null)
+            lines.add("Statut : " + (criteria.actif() ? "Actif" : "Archivé"));
+
+        return lines;
     }
 
     /**

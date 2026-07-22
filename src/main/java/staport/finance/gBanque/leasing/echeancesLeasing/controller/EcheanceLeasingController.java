@@ -6,12 +6,18 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import staport.finance.gBanque.leasing.contratLeasing.entities.ContratLeasing;
 import staport.finance.gBanque.leasing.contratLeasing.service.ContratLeasingService;
 import staport.finance.gBanque.leasing.echeancesLeasing.dto.*;
 import staport.finance.gBanque.leasing.echeancesLeasing.services.interfaces.IEcheanceLeasingService;
+
+import java.time.LocalDate;
 
 @Tag(name = "Échéances de leasing", description = "Consultation et gestion des échéances de leasing")
 @SecurityRequirement(name = "bearerAuth")
@@ -44,6 +50,24 @@ public class EcheanceLeasingController {
         String numeroContrat = contratLeasingService.getContratLeasingById(contratId).numeroContrat();
         return ResponseEntity.ok(
                 echeanceLeasingService.getTableauAmortissementForContrat(contratId, numeroContrat, searchDTO, pageable));
+    }
+
+    @Operation(summary = "Exporter en PDF le tableau d'amortissement d'un contrat",
+            description = "Mêmes critères que GET /echeances-leasing/tableau-amortissement/{contratId} — sans pagination, avec les totaux Endettement/Payé/Restant")
+    @ApiResponse(responseCode = "404", description = "Contrat introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/tableau-amortissement/{contratId}/export/pdf")
+    public ResponseEntity<byte[]> exportTableauAmortissementPdf(
+            @PathVariable Long contratId,
+            @ModelAttribute EcheanceLeasingSearchDTO searchDTO) {
+        ContratLeasing contrat = contratLeasingService.findOrThrow(contratId);
+        byte[] pdf = echeanceLeasingService.exportTableauAmortissementPdf(contrat, searchDTO);
+
+        String filename = "tableau_amortissement_leasing_" + contratId + "_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Basculer le statut d'une échéance (PREVU ↔ PAYE)",

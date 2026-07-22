@@ -39,4 +39,10 @@ public interface IContratCadreService {
      * Utilisé par ContratLeasingService lors de la création d'un contrat leasing.
      */
     ContratCadre resolveActif(Long organismeId);
+
+    /**
+     * Exporte en PDF l'intégralité des contrats cadres correspondant aux filtres fournis
+     * (mêmes critères que {@link #search}) — sans pagination.
+     */
+    byte[] exportPdf(ContratCadreSearchDTO criteria);
 }
