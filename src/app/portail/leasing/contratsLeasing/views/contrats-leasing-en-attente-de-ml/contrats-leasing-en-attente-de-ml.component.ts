@@ -68,6 +68,7 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
   contrats: ContratLeasingResponseDTO[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
 
   searchForm!: FormGroup;
 
@@ -215,6 +216,34 @@ export class ContratsLeasingEnAttenteDeMLComponent implements OnInit, OnDestroy 
     } else {
       this.loadContrats(this.lastLazyLoadEvent);
     }
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const searchCriteria: ContratLeasingSearchDTO = {
+      numeroContrat: this.searchForm.get('numeroContrat')?.value || undefined,
+      immobilisation: this.searchForm.get('immobilisation')?.value || undefined,
+      typeContrat: this.searchForm.get('typeContrat')?.value || undefined,
+      organismeLeasingId: this.searchForm.get('organismeLeasingId')?.value || undefined,
+      banqueDePrelevementId: this.searchForm.get('banqueDePrelevementId')?.value || undefined,
+      montantEcheance: this.searchForm.get('montantEcheance')?.value || undefined
+    };
+
+    this.contratLeasingService.exportPendingLienReleaseContratsPdf(searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `contrats_leasing_en_attente_de_main_levee_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
   onRowSelect(event: any): void {

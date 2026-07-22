@@ -66,6 +66,36 @@
       </div>
 
     </div>
+    <div class="pt-2 flex">
+      <div class="field col-12 md:col-3">
+        <label for="timestampStart">Date de début</label>
+        <p-calendar
+          id="timestampStart"
+          [(ngModel)]="searchCriteria.timestampStart"
+          [showTime]="true"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          placeholder="Depuis..."
+          [showClear]="true"
+          (onSelect)="onFilterChange()"
+          (onClearClick)="onFilterChange()">
+        </p-calendar>
+      </div>
+      <div class="field col-12 md:col-3">
+        <label for="timestampEnd">Date de fin</label>
+        <p-calendar
+          id="timestampEnd"
+          [(ngModel)]="searchCriteria.timestampEnd"
+          [showTime]="true"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          placeholder="Jusqu'à..."
+          [showClear]="true"
+          (onSelect)="onFilterChange()"
+          (onClearClick)="onFilterChange()">
+        </p-calendar>
+      </div>
+    </div>
 
   </div>
   <p-table
@@ -80,6 +110,8 @@
     currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} logs"
     [rowsPerPageOptions]="[10, 25, 50]"
     [resizableColumns]="true"
+    [scrollable]="true"
+    scrollHeight="600px"
     styleClass="p-datatable-gridlines"
   >
     <ng-template pTemplate="header">

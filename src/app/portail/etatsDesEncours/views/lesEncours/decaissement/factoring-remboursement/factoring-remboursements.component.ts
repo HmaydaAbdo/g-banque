@@ -86,6 +86,9 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
 
   isSubmitting: boolean = false;
 
+  /** Indicateur de chargement du bouton "Exporter PDF". */
+  exporting = false;
+
   // Validation en lot
   selectionState = new TableSelectionState<FactoringResponseDto>(f => f.id);
   displayLotModal: boolean = false;
@@ -342,5 +345,30 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
   isInvalid(controlName: string): boolean {
     const control = this.rapprochementForm.get(controlName);
     return !!(control && control.invalid && (control.dirty || control.touched));
+  }
+
+  /**
+   * Exporte en PDF l'intégralité de l'encours de remboursement correspondant aux filtres
+   * actuellement appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    if (!this.banqueId) return;
+    this.exporting = true;
+    const searchCriteria: EncoursFactoringSearchDto = this.searchForm.value;
+    this.factoringService.exportRemboursementEncoursPdf(this.banqueId, searchCriteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `factoring_encours_remboursement_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      },
+    });
   }
 }

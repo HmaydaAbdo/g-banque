@@ -35,6 +35,7 @@
             />
             <label for="marcheName">Nom du Marché</label>
           </span>
+      <button type="button" pButton pRipple label="Exporter PDF" class="h-fit p-button-outlined p-button-danger" size="small" icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
       <button type="button" pButton pRipple label="Ajouter" class=" h-fit " size="small" icon="pi pi-plus" severity="primary" routerLink="/portail/droits-constate/new" [queryParams]="{banqueId: banqueId}"></button>
     </form>
 </div>

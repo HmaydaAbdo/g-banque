@@ -31,6 +31,17 @@ export class ContratCadreService {
     return this.http.get<PageResponse<ContratCadreResponse>>(this.apiUrl, { params });
   }
 
+  /**
+   * Exporte en PDF l'intégralité des contrats cadres correspondant aux filtres fournis
+   * (mêmes critères que {@link search}, sans pagination).
+   */
+  exportPdf(criteria: ContratCadreSearch = {}): Observable<Blob> {
+    let params = new HttpParams();
+    if (criteria.organismeId) params = params.append('organismeId', criteria.organismeId.toString());
+    if (criteria.statut)      params = params.append('statut', criteria.statut);
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
   create(request: ContratCadreRequest): Observable<ContratCadreResponse> {
     return this.http.post<ContratCadreResponse>(this.apiUrl, request);
   }

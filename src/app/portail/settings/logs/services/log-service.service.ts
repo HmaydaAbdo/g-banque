@@ -40,7 +40,12 @@ export class LogService {
     if (criteria.entityName) {
       params = params.set('entityName', criteria.entityName);
     }
-
+    if (criteria.timestampStart) {
+      params = params.set('timestampStart', criteria.timestampStart as string);
+    }
+    if (criteria.timestampEnd) {
+      params = params.set('timestampEnd', criteria.timestampEnd as string);
+    }
 
     return this.http.get<PageResponse<LogResponse>>(this.apiUrl, { params });
   }

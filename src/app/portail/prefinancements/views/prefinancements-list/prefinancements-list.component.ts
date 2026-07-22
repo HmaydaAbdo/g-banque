@@ -79,6 +79,9 @@ export class PrefinancementsListComponent implements OnInit {
   statusOptions: any[] = [];
   items: MenuItem[] = [];
 
+  /** Indicateur de chargement du bouton "Exporter PDF". */
+  exporting = false;
+
   private readonly fb = inject(FormBuilder);
   private readonly prefinancementService = inject(PrefinancementService);
   private readonly banqueService = inject(BanqueService);
@@ -246,6 +249,30 @@ export class PrefinancementsListComponent implements OnInit {
           }
         });
       }
+    });
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des préfinancements correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    const searchCriteria: PrefinancementSearchDTO = { ...this.searchForm.value };
+    this.prefinancementService.exportPdf(searchCriteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `prefinancements_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      },
     });
   }
 

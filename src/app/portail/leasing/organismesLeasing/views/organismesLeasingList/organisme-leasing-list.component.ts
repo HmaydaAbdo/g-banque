@@ -56,6 +56,7 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
   organismeLeasings: OrganismeLeasingResponse[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
   first: number = 0;
   rows: number | undefined = 3;
   sortField: string | string[] = 'id';
@@ -132,6 +133,29 @@ export class OrganismeLeasingListComponent implements OnInit, OnDestroy {
         filters: {}
       });
     }
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const searchCriteria: OrganismeLeasingSearch = {
+      nom: this.searchForm.get('nom')?.value || ''
+    };
+
+    this.organismeLeasingService.exportPdf(searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `organismes_leasing_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
   openNewOrganismeLeasingPage(): void {

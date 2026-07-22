@@ -60,6 +60,32 @@ export class EcheanceLeasingService {
   }
 
   /**
+   * Exporte en PDF le tableau d'amortissement complet d'un contrat (mêmes critères que
+   * {@link getTableauAmortissementForContrat}, sans pagination).
+   */
+  exportTableauAmortissementPdf(contratId: number, searchCriteria?: EcheanceLeasingSearchDTO): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchCriteria) {
+      if (searchCriteria.numeroEcheance != null) {
+        params = params.set('numeroEcheance', searchCriteria.numeroEcheance.toString());
+      }
+      if (searchCriteria.month != null) {
+        params = params.set('month', searchCriteria.month.toString());
+      }
+      if (searchCriteria.year != null) {
+        params = params.set('year', searchCriteria.year.toString());
+      }
+      if (searchCriteria.statutPaiement != null) {
+        params = params.set('statutPaiement', searchCriteria.statutPaiement);
+      }
+    }
+
+    const url = `${this.apiUrl}/tableau-amortissement/${contratId}/export/pdf`;
+    return this.http.get(url, { params, responseType: 'blob' });
+  }
+
+  /**
    * Marks a specific EcheanceLeasing installment as paid.
    */
   toggleStatus(id: number): Observable<EcheanceLeasingResponse> {

@@ -66,6 +66,7 @@ export class ContratCadreListComponent implements OnInit, OnDestroy {
   contratsCadres: ContratCadreResponse[] = [];
   totalRecords = 0;
   loading      = false;
+  exporting    = false;
 
   private lastLazyEvent: TableLazyLoadEvent = {
     first: 0, rows: 10, sortField: 'id', sortOrder: -1, filters: {}
@@ -171,6 +172,30 @@ export class ContratCadreListComponent implements OnInit, OnDestroy {
   clearFilters(): void {
     this.searchForm.reset({ organismeId: null, statut: null });
     if (this.dt) { this.dt.clear(); this.dt.first = 0; }
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const criteria: ContratCadreSearch = {
+      organismeId: this.searchForm.get('organismeId')?.value ?? undefined,
+      statut:      this.searchForm.get('statut')?.value ?? undefined
+    };
+
+    this.contratCadreService.exportPdf(criteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `contrats_cadres_leasing_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
   // ---------------------------------------------------------------

@@ -15,6 +15,8 @@
       </p-breadcrumb>
     </div>
 
+    <button pButton pRipple label="Exporter PDF" class="h-fit p-button-outlined p-button-danger" size="small"
+            icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
     <button pButton pRipple label="Ajouter Préfinancement" class="h-fit" size="small" icon="pi pi-plus"
             severity="primary" routerLink="/portail/préfinancements/new"></button>
   </div>

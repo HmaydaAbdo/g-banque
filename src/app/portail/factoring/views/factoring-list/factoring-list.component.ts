@@ -63,6 +63,9 @@ export class FactoringListComponent implements OnInit {
 
   banquesOptions: any[] = [];
 
+  /** Indicateur de chargement du bouton "Exporter PDF". */
+  exporting = false;
+
   private readonly fb = inject(FormBuilder);
   private readonly factoringService = inject(FactoringService);
   private readonly banqueService = inject(BanqueService);
@@ -201,6 +204,30 @@ export class FactoringListComponent implements OnInit {
           this.table.reset();
         });
       }
+    });
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des factorings correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    const criteria = this.searchForm.value;
+    this.factoringService.exportPdf(criteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `factoring_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      },
     });
   }
 

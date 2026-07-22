@@ -131,4 +131,31 @@ export class MarcheService {
   desarchiverMarche(id: number): Observable<MarcheResponseDTO> {
     return this.http.patch<MarcheResponseDTO>(`${this.apiUrl}/${id}/desarchiver`, {});
   }
+
+  /**
+   * Exporte en PDF l'intégralité des marchés correspondant aux critères fournis (mêmes filtres
+   * que {@link getAllMarches}, sans pagination — le PDF contient tous les résultats filtrés, pas
+   * seulement la page actuellement affichée).
+   */
+  exportPdf(criteria: MarcheSearchDTO): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (criteria.nom) {
+      params = params.set('nom', criteria.nom);
+    }
+    if (criteria.numero) {
+      params = params.set('numero', criteria.numero);
+    }
+    if (criteria.maitreDouvrage) {
+      params = params.set('maitreDouvrage', criteria.maitreDouvrage);
+    }
+    if (criteria.banqueId) {
+      params = params.set('banqueId', criteria.banqueId);
+    }
+    if (criteria.actif !== undefined && criteria.actif !== null) {
+      params = params.set('actif', criteria.actif);
+    }
+
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

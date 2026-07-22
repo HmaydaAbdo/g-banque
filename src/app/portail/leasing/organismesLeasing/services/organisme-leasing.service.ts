@@ -36,6 +36,18 @@ export class OrganismeLeasingService {
     return this.http.get<PageResponse<OrganismeLeasingResponse>>(this.apiUrl, { params });
   }
 
+  /**
+   * Exporte en PDF l'intégralité des organismes de leasing correspondant aux filtres fournis
+   * (mêmes critères que {@link searchOrganismeLeasings}, sans pagination).
+   */
+  exportPdf(searchCriteria?: OrganismeLeasingSearch): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchCriteria?.nom) {
+      params = params.append('nom', searchCriteria.nom);
+    }
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
   getOrganismeLeasingById(id: number): Observable<OrganismeLeasingResponse> {
     return this.http.get<OrganismeLeasingResponse>(`${this.apiUrl}/${id}`);
   }

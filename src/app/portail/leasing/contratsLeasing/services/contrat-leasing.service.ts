@@ -71,6 +71,59 @@ export class ContratLeasingService {
     return params;
   }
 
+  /**
+   * Helper method to build HttpParams from search criteria only (sans pagination),
+   * utilisé par les exports PDF.
+   */
+  private buildFilterParams(searchDTO: ContratLeasingSearchDTO): HttpParams {
+    let params = new HttpParams();
+
+    if (searchDTO.numeroContrat) {
+      params = params.set('numeroContrat', searchDTO.numeroContrat);
+    }
+    if (searchDTO.immobilisation) {
+      params = params.set('immobilisation', searchDTO.immobilisation);
+    }
+    if (searchDTO.typeContrat) {
+      params = params.set('typeContrat', searchDTO.typeContrat);
+    }
+    if (searchDTO.organismeLeasingId) {
+      params = params.set('organismeLeasingId', searchDTO.organismeLeasingId.toString());
+    }
+    if (searchDTO.banqueDePrelevementId) {
+      params = params.set('banqueDePrelevementId', searchDTO.banqueDePrelevementId.toString());
+    }
+    if (searchDTO.montantEcheance !== undefined && searchDTO.montantEcheance !== null) {
+      params = params.set('montantEcheance', searchDTO.montantEcheance.toString());
+    }
+
+    return params;
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des contrats actifs correspondant aux filtres fournis
+   * (mêmes critères que {@link getActiveContrats}, sans pagination).
+   */
+  exportActiveContratsPdf(searchDTO: ContratLeasingSearchDTO): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/actifs/export/pdf`, { params: this.buildFilterParams(searchDTO), responseType: 'blob' });
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des contrats en attente de main levée correspondant
+   * aux filtres fournis (mêmes critères que {@link getPendingLienReleaseContrats}).
+   */
+  exportPendingLienReleaseContratsPdf(searchDTO: ContratLeasingSearchDTO): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/en-attente-main-levee/export/pdf`, { params: this.buildFilterParams(searchDTO), responseType: 'blob' });
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des contrats clôturés correspondant aux filtres fournis
+   * (mêmes critères que {@link getInactiveContrats}).
+   */
+  exportInactiveContratsPdf(searchDTO: ContratLeasingSearchDTO): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/inactifs/export/pdf`, { params: this.buildFilterParams(searchDTO), responseType: 'blob' });
+  }
+
   getActiveContrats(
     searchDTO: ContratLeasingSearchDTO,
     page: number = 0,

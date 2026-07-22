@@ -13,6 +13,8 @@
       </ng-template>
     </p-breadcrumb>
 
+    <button pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf" size="small"
+            class="h-fit p-button-outlined p-button-danger" [loading]="exporting" (click)="exportPdf()"></button>
     <button pButton pRipple label="Ajouter" icon="pi pi-plus" size="small"
             class="h-fit" routerLink="/portail/droits-constate/new"></button>
   </div>

@@ -68,6 +68,9 @@ export class MarchesListComponent implements OnInit {
   banques: { id: number; nom: string }[] = [];
   loadingBanques: boolean = false;
 
+  /** Indicateur de chargement du bouton "Exporter PDF". */
+  exporting = false;
+
   statutOptions: { label: string; value: boolean | null }[] = [
     { label: 'Actifs', value: true },
     { label: 'Archivés', value: false },
@@ -290,5 +293,29 @@ export class MarchesListComponent implements OnInit {
 
   isAdmin():boolean{
     return this.authService.isSystemAdmin()
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des marchés correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    const searchCriteria: MarcheSearchDTO = this.searchForm.value;
+    this.marcheService.exportPdf(searchCriteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `marches_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      },
+    });
   }
 }

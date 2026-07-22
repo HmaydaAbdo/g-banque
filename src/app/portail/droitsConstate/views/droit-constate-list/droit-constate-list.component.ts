@@ -64,6 +64,9 @@ export class DroitConstateListComponent implements OnInit {
 
   banquesOptions: any[] = [];
 
+  /** Indicateur de chargement du bouton "Exporter PDF". */
+  exporting = false;
+
   private readonly fb = inject(FormBuilder);
   private readonly droitConstateService = inject(DroitConstateService);
   private readonly banqueService = inject(BanqueService);
@@ -218,6 +221,30 @@ export class DroitConstateListComponent implements OnInit {
       }
     });
   }
+  /**
+   * Exporte en PDF l'intégralité des droits constatés correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    const criteria = this.searchForm.value;
+    this.droitConstateService.exportPdf(criteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `droits_constates_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      },
+    });
+  }
+
   protected readonly Status = Status;
   protected readonly Type = Type;
 }

@@ -51,7 +51,7 @@ export class LogsComponent implements OnInit {
 
   entityNames: string[] = [];
   usernames: string[] = [];
-  operationTypes: string[] = ['UPDATE', 'DESACTIVATE', ]; // Assurez-vous d'avoir tous les types ici si non dynamique
+  operationTypes: string[] = ['CREATE', 'UPDATE', 'DELETE'];
 
   totalRecords: number = 0;
   loading: boolean = false;
@@ -128,10 +128,10 @@ export class LogsComponent implements OnInit {
       criteriaToSend.entityName = this.searchCriteria.entityName;
     }
     if (this.searchCriteria.timestampStart) {
-      criteriaToSend.timestampStart = this.searchCriteria.timestampStart;
+      criteriaToSend.timestampStart = this.toIsoString(this.searchCriteria.timestampStart);
     }
     if (this.searchCriteria.timestampEnd) {
-      criteriaToSend.timestampEnd = this.searchCriteria.timestampEnd;
+      criteriaToSend.timestampEnd = this.toIsoString(this.searchCriteria.timestampEnd);
     }
 
 
@@ -160,6 +160,14 @@ export class LogsComponent implements OnInit {
       sortField: this.lastLazyLoadEvent.sortField,
       sortOrder: this.lastLazyLoadEvent.sortOrder
     });
+  }
+
+  /**
+   * Normalise une date (objet Date de p-calendar ou chaîne déjà ISO) en chaîne ISO 8601
+   * attendue par le backend (@DateTimeFormat ISO.DATE_TIME sur LogSearchCriteria).
+   */
+  private toIsoString(value: string | Date): string {
+    return value instanceof Date ? value.toISOString() : value;
   }
 
   /**

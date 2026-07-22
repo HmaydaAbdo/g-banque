@@ -196,4 +196,49 @@ export class FactoringService {
       { params }
     );
   }
+
+  // --- Export PDF ---
+
+  /**
+   * Exporte en PDF l'intégralité des factorings correspondant aux critères fournis (mêmes
+   * filtres que {@link searchFactoring}, sans pagination).
+   */
+  exportPdf(searchDTO: FactoringSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDTO.marcheId) params = params.set('marcheId', searchDTO.marcheId.toString());
+    if (searchDTO.banqueId) params = params.set('banqueId', searchDTO.banqueId.toString());
+    if (searchDTO.status) params = params.set('status', searchDTO.status);
+    if (searchDTO.type) params = params.set('type', searchDTO.type);
+
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /**
+   * Exporte en PDF l'encours de remboursement d'une banque (mêmes filtres que
+   * {@link getEncoursForRemboursement}, sans pagination).
+   */
+  exportRemboursementEncoursPdf(banqueId: number, searchDto: EncoursFactoringSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.marcheName) params = params.set('marcheName', searchDto.marcheName);
+    if (searchDto.marcheNumero) params = params.set('marcheNumero', searchDto.marcheNumero);
+    if (searchDto.montant) params = params.set('montant', searchDto.montant.toString());
+
+    return this.http.get(`${this.apiUrl}/remboursement/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /**
+   * Exporte en PDF l'encours de déblocage d'une banque (mêmes filtres que
+   * {@link getEncoursForDeblocage}, sans pagination).
+   */
+  exportDeblocageEncoursPdf(banqueId: number, searchDto: EncoursFactoringSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.marcheName) params = params.set('marcheName', searchDto.marcheName);
+    if (searchDto.marcheNumero) params = params.set('marcheNumero', searchDto.marcheNumero);
+    if (searchDto.montant) params = params.set('montant', searchDto.montant.toString());
+
+    return this.http.get(`${this.apiUrl}/deblocage/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

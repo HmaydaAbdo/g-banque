@@ -18,6 +18,16 @@
         }
       </ng-template>
     </p-breadcrumb>
+    <p-button
+      label="Exporter PDF"
+      icon="pi pi-file-pdf"
+      severity="danger"
+      [outlined]="true"
+      size="small"
+      [loading]="exporting"
+      (onClick)="exportPdf()"
+      class="h-fit"
+    ></p-button>
   </div>
 
   <!-- Formulaire de recherche -->
