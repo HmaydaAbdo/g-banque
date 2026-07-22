@@ -73,6 +73,7 @@ export class VirementInternationalEncoursEncaissementComponent implements OnInit
   virements: VirementInternationalResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
   banqueIdFromRoute!: number;
   totalEncours!: number;
   currentMonthYear: string | null = null;
@@ -326,5 +327,22 @@ export class VirementInternationalEncoursEncaissementComponent implements OnInit
       });
   }
 
+  exportPdf(): void {
+    this.exporting = true;
+    this.virementInternationalService.exportEncoursEncaissementPdf(this.banqueIdFromRoute, this.currentSearchDto).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `virements_internationaux_encours_encaissement_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
+  }
 
 }

@@ -25,6 +25,10 @@
           <label for="montant"> Montant</label>
         </span>
 
+      <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
+              class="h-fit" size="small" severity="secondary"
+              [loading]="exporting" (click)="exportPdf()"></button>
+
       <button type="button" pButton pRipple label="Ajouter" class=" h-fit " size="small" icon="pi pi-plus"
               severity="primary" routerLink="/portail/LCN/new" [queryParams]="{banqueId: banqueIdFromRoute}"></button>
 

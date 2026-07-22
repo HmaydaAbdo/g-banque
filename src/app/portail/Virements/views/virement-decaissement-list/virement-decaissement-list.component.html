@@ -20,6 +20,9 @@
         </ng-template>
       </p-breadcrumb>
     </div>
+    <button pButton pRipple label="Exporter PDF" class="h-fit mt-2" size="small" icon="pi pi-file-pdf"
+            severity="secondary" [loading]="exporting" (click)="exportPdf()">
+    </button>
   </div>
 
   <div class="pg-filters">

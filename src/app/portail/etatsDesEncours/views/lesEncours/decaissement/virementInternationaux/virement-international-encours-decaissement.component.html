@@ -29,6 +29,10 @@
         <label for="montant">Recherche par Montant</label>
       </span>
 
+      <button pButton pRipple label="Exporter PDF" type="button" icon="pi pi-file-pdf"
+              class="h-fit" size="small" severity="secondary"
+              [loading]="exporting" (click)="exportPdf()"></button>
+
       <button pButton pRipple label="Ajouter" type="button" class=" h-fit w-fit " size="small" icon="pi pi-plus"
               severity="primary" routerLink="/portail/virements-internationaux/new" [queryParams]="{banqueId: banqueIdFromRoute}"></button>
 

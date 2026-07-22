@@ -59,6 +59,7 @@ export class PrelevementListComponent implements OnInit {
   prelevements: PrelevementResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
 
   // Filtres
   searchCriteria: PrelevementSearchDto = {};
@@ -212,6 +213,28 @@ export class PrelevementListComponent implements OnInit {
 
   isAdmin(): boolean {
     return this.authService.isAdmin();
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    this.searchCriteria.banqueId = this.selectedBanque?.id;
+    this.searchCriteria.status = this.selectedStatus;
+    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+
+    this.prelevementService.exportPdf(this.searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `prelevements_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   protected readonly Status = Status;

@@ -166,4 +166,63 @@ export class VirementService {
     const url = `${this.apiUrl}/encaissement/encours/${banqueId}`;
     return this.http.get<EncoursVirementResponseDto>(url, {params});
   }
+
+  private buildSearchParams(searchDto: VirementSearchDto): HttpParams {
+    let params = new HttpParams();
+    Object.entries(searchDto).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        let stringValue: string;
+        if (key === 'dateEmission' && value instanceof Date) {
+          stringValue = toLocalDateString(value)!;
+        } else {
+          stringValue = value.toString();
+        }
+        params = params.set(key, stringValue);
+      }
+    });
+    return params;
+  }
+
+  exportEncaissementsPdf(searchDto: VirementSearchDto): Observable<Blob> {
+    const params = this.buildSearchParams(searchDto);
+    return this.http.get(`${this.apiUrl}/encaissements/export/pdf`, {params, responseType: 'blob'});
+  }
+
+  exportDecaissementsPdf(searchDto: VirementSearchDto): Observable<Blob> {
+    const params = this.buildSearchParams(searchDto);
+    return this.http.get(`${this.apiUrl}/decaissements/export/pdf`, {params, responseType: 'blob'});
+  }
+
+  exportEncoursEncaissementPdf(banqueId: number, searchDto: EncoursVirementsSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
+    }
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    const url = `${this.apiUrl}/encaissement/encours/${banqueId}/export/pdf`;
+    return this.http.get(url, {params, responseType: 'blob'});
+  }
+
+  exportEncoursDecaissementPdf(banqueId: number, searchDto: EncoursVirementsSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    const url = `${this.apiUrl}/decaissement/encours/${banqueId}/export/pdf`;
+    return this.http.get(url, {params, responseType: 'blob'});
+  }
 }

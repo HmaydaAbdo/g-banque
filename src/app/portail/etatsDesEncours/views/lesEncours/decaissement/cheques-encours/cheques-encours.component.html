@@ -25,6 +25,10 @@
           <label for="montant">Montant</label>
         </span>
 
+        <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
+                class="h-fit" size="small" severity="secondary"
+                [loading]="exporting" (click)="exportPdf()"></button>
+
       </form>
 </div>
 

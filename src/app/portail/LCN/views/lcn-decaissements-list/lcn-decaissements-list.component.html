@@ -3,7 +3,7 @@
 
 <div class="flex flex-column gap-2 px-2 h-screen w-screen overflow-y-scroll">
 
-  <div class="flex justify-content-start align-items-center bg-transparent">
+  <div class="flex justify-content-between align-items-center bg-transparent">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}">
       <ng-template pTemplate="item" let-item>
         @if (item.route) {
@@ -18,6 +18,9 @@
         }
       </ng-template>
     </p-breadcrumb>
+    <button pButton pRipple label="Exporter PDF" class="h-fit" size="small" icon="pi pi-file-pdf"
+            severity="secondary" [loading]="exporting" (click)="exportPdf()">
+    </button>
   </div>
 
   <div class="pg-filters">

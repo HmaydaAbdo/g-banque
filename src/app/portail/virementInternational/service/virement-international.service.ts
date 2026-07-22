@@ -173,4 +173,54 @@ export class VirementInternationalService {
 
     return params;
   }
+
+  /* ===================== EXPORT PDF ===================== */
+
+  exportPdf(searchDto: VirementInternationalSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    Object.entries(searchDto || {}).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        if (value instanceof Date) {
+          params = params.set(key, toLocalDateString(value)!);
+        } else {
+          params = params.set(key, value.toString());
+        }
+      }
+    });
+    return this.http.get(`${this.apiUrl}/export/pdf`, {params, responseType: 'blob'});
+  }
+
+  exportEncoursEncaissementPdf(banqueId: number, searchDto: EncoursVirementsInternationalSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', searchDto.dateEmission as unknown as string);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur);
+    }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    return this.http.get(`${this.apiUrl}/encaissement/encours/${banqueId}/export/pdf`, {params, responseType: 'blob'});
+  }
+
+  exportEncoursDecaissementPdf(banqueId: number, searchDto: EncoursVirementsInternationalSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', searchDto.dateEmission as unknown as string);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur);
+    }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    return this.http.get(`${this.apiUrl}/decaissement/encours/${banqueId}/export/pdf`, {params, responseType: 'blob'});
+  }
 }

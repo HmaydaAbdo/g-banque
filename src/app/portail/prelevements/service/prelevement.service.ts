@@ -126,4 +126,24 @@ export class PrelevementService {
   toggleStatus(id: number): Observable<PrelevementResponseDto> {
     return this.http.patch<PrelevementResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
+
+  exportPdf(searchDto: PrelevementSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    Object.entries(searchDto || {}).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(key, String(value));
+      }
+    });
+    return this.http.get(`${this.apiUrl}/export/pdf`, {params, responseType: 'blob'});
+  }
+
+  exportEncoursPdf(banqueId: number, searchDto: PrelevementSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    Object.entries(searchDto || {}).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(key, String(value));
+      }
+    });
+    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, {params, responseType: 'blob'});
+  }
 }

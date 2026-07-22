@@ -65,6 +65,7 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
   misesADisposition: MiseADispositionResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
   isAdmin: boolean = false;
   searchForm!: FormGroup;
   items: MenuItem[] | undefined;
@@ -226,6 +227,25 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
       },
       error: (err) => {
         console.error('Erreur lors de la mise à jour de la mise à disposition:', err);
+      }
+    });
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const searchCriteria: MiseADispositionSearchDto = this.searchForm.getRawValue();
+    this.miseADispositionService.exportDecaissementsPdf(searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mises_a_disposition_decaissements_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
       }
     });
   }

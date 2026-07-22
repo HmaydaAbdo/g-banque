@@ -21,7 +21,17 @@
         </ng-template>
       </p-breadcrumb>
     </div>
-    <div class="flex align-items-center">
+    <div class="flex align-items-center gap-2">
+      <button
+        pButton
+        pRipple
+        label="Exporter PDF"
+        icon="pi pi-file-pdf"
+        class="p-button-secondary"
+        [loading]="exporting"
+        (click)="exportPdf()"
+      >
+      </button>
       <button
         pButton
         pRipple

@@ -65,6 +65,7 @@ export class VirementInternationalListComponent implements OnInit, OnDestroy {
   virements: VirementInternationalResponseDto[] = [];
   totalRecords = 0;
   loading = false;
+  exporting = false;
   isAdmin = false;
   searchForm!: FormGroup;
   items: MenuItem[] | undefined;
@@ -229,6 +230,25 @@ export class VirementInternationalListComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Erreur lors de la mise à jour du virement:', err);
+      }
+    });
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const searchCriteria: VirementInternationalSearchDto = this.searchForm.getRawValue();
+    this.virementInternationalService.exportPdf(searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `virements_internationaux_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
       }
     });
   }

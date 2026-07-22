@@ -181,4 +181,86 @@ export class LcnService {
     const url = `${this.apiUrl}/encaissements/encours/${banqueId}`;
     return this.http.get<EncoursLcnResponse>(url, {params});
   }
+
+  exportEncaissementsPdf(searchDto: LcnSearchDTO): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
+    }
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.dateEcheance) {
+      params = params.set('dateEcheance', toLocalDateString(searchDto.dateEcheance)!);
+    }
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur);
+    }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if (searchDto.nomBanque) {
+      params = params.set('nomBanque', searchDto.nomBanque);
+    }
+    if (searchDto.statut !== undefined && searchDto.statut !== null) {
+      params = params.set('statut', searchDto.statut);
+    }
+    return this.http.get(`${this.apiUrl}/encaissements/export/pdf`, {params, responseType: 'blob'});
+  }
+
+  exportDecaissementsPdf(searchDto: LcnSearchDTO): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if (searchDto.nomBanque) {
+      params = params.set('nomBanque', searchDto.nomBanque);
+    }
+    if (searchDto.statut !== undefined && searchDto.statut !== null) {
+      params = params.set('statut', searchDto.statut);
+    }
+    return this.http.get(`${this.apiUrl}/decaissements/export/pdf`, {params, responseType: 'blob'});
+  }
+
+  exportEncoursEncaissementPdf(banqueId: number, searchDto: LcnSearchDTO): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchDto.emetteur) {
+      params = params.set('emetteur', searchDto.emetteur.toString());
+    }
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.dateEcheance) {
+      params = params.set('dateEcheance', toLocalDateString(searchDto.dateEcheance)!);
+    }
+    if (searchDto.dateEmission) {
+      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
+    }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    const url = `${this.apiUrl}/encaissements/encours/${banqueId}/export/pdf`;
+    return this.http.get(url, {params, responseType: 'blob'});
+  }
+
+  exportEncoursDecaissementPdf(banqueId: number, searchDto: LcnSearchDTO): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if (searchDto.montant) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+    const url = `${this.apiUrl}/decaissements/encours/${banqueId}/export/pdf`;
+    return this.http.get(url, {params, responseType: 'blob'});
+  }
 }

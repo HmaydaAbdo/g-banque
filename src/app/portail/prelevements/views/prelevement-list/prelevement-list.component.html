@@ -22,10 +22,16 @@
       </p-breadcrumb>
     </div>
 
-    <button pButton pRipple label="Ajouter prélèvement" class="hidden md:block h-fit mt-2" size="small"
-            icon="pi pi-plus" severity="primary" routerLink="/portail/prelevements/new"></button>
-    <button pButton pRipple pTooltip="Ajouter prélèvement" class="md:hidden h-fit mt-2" size="small"
-            icon="pi pi-plus" severity="primary" routerLink="/portail/prelevements/new"></button>
+    <div class="flex gap-2">
+      <button pButton pRipple label="Exporter PDF" class="hidden md:block h-fit mt-2" size="small"
+              icon="pi pi-file-pdf" severity="secondary" [loading]="exporting" (click)="exportPdf()"></button>
+      <button pButton pRipple pTooltip="Exporter PDF" class="md:hidden h-fit mt-2" size="small"
+              icon="pi pi-file-pdf" severity="secondary" [loading]="exporting" (click)="exportPdf()"></button>
+      <button pButton pRipple label="Ajouter prélèvement" class="hidden md:block h-fit mt-2" size="small"
+              icon="pi pi-plus" severity="primary" routerLink="/portail/prelevements/new"></button>
+      <button pButton pRipple pTooltip="Ajouter prélèvement" class="md:hidden h-fit mt-2" size="small"
+              icon="pi pi-plus" severity="primary" routerLink="/portail/prelevements/new"></button>
+    </div>
   </div>
 
   <p-toolbar styleClass="bg-white">

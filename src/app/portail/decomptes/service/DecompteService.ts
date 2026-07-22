@@ -172,5 +172,18 @@ export class DecompteService {
     );
   }
 
+  /**
+   * Exporte en PDF l'encours de décomptes d'une banque (mêmes filtres que
+   * {@link getEncoursDecomptes}, sans pagination).
+   */
+  exportEncoursPdf(banqueId: number, searchDto: EncoursDecompteSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.marcheName) params = params.set('marcheName', searchDto.marcheName);
+    if (searchDto.marcheNumero) params = params.set('marcheNumero', searchDto.marcheNumero);
+    if (searchDto.montant) params = params.set('montant', searchDto.montant.toString());
+
+    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
+  }
 
 }

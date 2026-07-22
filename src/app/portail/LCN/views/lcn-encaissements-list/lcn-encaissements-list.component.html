@@ -20,9 +20,14 @@
         </ng-template>
       </p-breadcrumb>
     </div>
-    <button pButton pRipple label="Ajouter LCN" class="h-fit mt-2" size="small" icon="pi pi-plus"
-            severity="primary" routerLink="/portail/LCN/new">
-    </button>
+    <div class="flex gap-2">
+      <button pButton pRipple label="Exporter PDF" class="h-fit mt-2" size="small" icon="pi pi-file-pdf"
+              severity="secondary" [loading]="exporting" (click)="exportPdf()">
+      </button>
+      <button pButton pRipple label="Ajouter LCN" class="h-fit mt-2" size="small" icon="pi pi-plus"
+              severity="primary" routerLink="/portail/LCN/new">
+      </button>
+    </div>
   </div>
 
   <div class="pg-filters">
