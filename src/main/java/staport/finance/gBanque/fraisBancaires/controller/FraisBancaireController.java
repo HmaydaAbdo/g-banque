@@ -8,12 +8,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.fraisBancaires.dtos.*;
 import staport.finance.gBanque.fraisBancaires.service.IFraisBancaireService;
+
+import java.time.LocalDate;
 
 /**
  * Injecte {@link IFraisBancaireService} (DIP — jamais la classe concrète).
@@ -68,6 +73,20 @@ public class FraisBancaireController {
         Page<FraisBancaireResponseDto> page = fraisBancaireService.searchFraisBancaire(searchDto, pageable);
         log.info("Recherche terminée - {} résultat(s)", page.getTotalElements());
         return ResponseEntity.ok(page);
+    }
+
+    @Operation(summary = "Exporter en PDF les frais bancaires",
+            description = "Mêmes critères que POST /frais-bancaire/search — sans pagination")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportFraisBancairePdf(FraisBancaireSearchDto searchDto) {
+        log.info("Requête REST pour exporter en PDF les frais bancaires - Critères: {}", searchDto);
+        byte[] pdf = fraisBancaireService.exportFraisBancairePdf(searchDto);
+        String filename = "frais_bancaires_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Modifier un frais bancaire")

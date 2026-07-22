@@ -31,6 +31,12 @@ public interface IFraisBancaireService {
 
     Page<FraisBancaireResponseDto> searchFraisBancaire(FraisBancaireSearchDto searchDto, Pageable pageable);
 
+    /**
+     * Exporte en PDF l'intégralité des frais bancaires correspondant aux critères fournis (mêmes
+     * critères que {@link #searchFraisBancaire}, sans pagination).
+     */
+    byte[] exportFraisBancairePdf(FraisBancaireSearchDto searchDto);
+
     FraisBancaireResponseDto updateFraisBancaire(Long id, FraisBancaireRequestDto requestDto);
 
     void deleteFraisBancaire(Long id);

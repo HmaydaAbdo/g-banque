@@ -24,6 +24,12 @@ public interface ITransactionService {
 
     Page<TransactionResponseDto> getTransactionHistory(TransactionSearchDto searchDto, Pageable pageable);
 
+    /**
+     * Exporte en PDF l'intégralité de l'historique des transactions correspondant aux critères
+     * fournis (mêmes filtres que {@link #getTransactionHistory}, sans pagination).
+     */
+    byte[] exportTransactionHistoryPdf(TransactionSearchDto searchDto);
+
     TransactionResponseDto getTransactionById(Long id);
 
     AgreratedTransactionResponseDto getTransactionsByBanque(Long banqueId, TransactionSearchDto searchDto, Pageable pageable);

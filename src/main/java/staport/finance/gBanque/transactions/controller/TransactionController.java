@@ -7,7 +7,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,8 @@ import staport.finance.gBanque.transactions.dtos.TransactionResponseDto;
 import staport.finance.gBanque.transactions.dtos.TransactionSearchDto;
 import staport.finance.gBanque.transactions.dtos.TransactionUpdateRequestDto;
 import staport.finance.gBanque.transactions.service.ITransactionService;
+
+import java.time.LocalDate;
 
 /**
  * Contrôleur REST pour le module Transactions.
@@ -49,6 +53,18 @@ public class TransactionController {
             TransactionSearchDto searchDto,
             Pageable pageable) {
         return new ResponseEntity<>(transactionService.getTransactionHistory(searchDto, pageable), HttpStatus.OK);
+    }
+
+    @Operation(summary = "Exporter en PDF l'historique des transactions",
+            description = "Mêmes critères que GET /transactions/history — sans pagination")
+    @GetMapping("/history/export/pdf")
+    public ResponseEntity<byte[]> exportTransactionHistoryPdf(TransactionSearchDto searchDto) {
+        byte[] pdf = transactionService.exportTransactionHistoryPdf(searchDto);
+        String filename = "historique_transactions_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Récupérer une transaction par ID")

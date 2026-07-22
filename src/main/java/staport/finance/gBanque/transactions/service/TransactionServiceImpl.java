@@ -1,5 +1,15 @@
 package staport.finance.gBanque.transactions.service;
 
+import com.lowagie.text.Chunk;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -9,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
 import staport.finance.gBanque.Agios.service.interfaces.IAgiosValidationService;
 import staport.finance.gBanque.audit.AuditOperation;
 import staport.finance.gBanque.audit.AuditableAction;
@@ -43,7 +54,12 @@ import staport.finance.gBanque.transactions.enums.TransactionSource;
 import staport.finance.gBanque.transactions.mapper.TransactionMapper;
 import staport.finance.gBanque.transactions.repositories.TransactionRepository;
 
+import java.awt.Color;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -59,8 +75,14 @@ import static staport.finance.gBanque.transactions.spec.TransactionSpecification
 public class TransactionServiceImpl implements ITransactionService {
 
     private static final Logger log = LoggerFactory.getLogger(TransactionServiceImpl.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final Color MED_BLUE = Color.decode("#2563eb");
+    private static final Color LIGHT_BLUE = Color.decode("#dbeafe");
+    private static final Color ROW_ALT = Color.decode("#f8fafc");
+    private static final Color BORDER_GRAY = Color.decode("#e5e7eb");
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
+    private final StaportPdfReportService staportPdfReportService;
     private final ILeasingValidationService leasingValidationService;
     private final ICmtValidationService cmtValidationService;
     private final IChequeValidationService chequeValidationService;
@@ -83,6 +105,7 @@ public class TransactionServiceImpl implements ITransactionService {
 
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                               TransactionMapper transactionMapper,
+                              StaportPdfReportService staportPdfReportService,
                               ILeasingValidationService leasingValidationService,
                               ICmtValidationService cmtValidationService,
                               IChequeValidationService chequeValidationService,
@@ -104,6 +127,7 @@ public class TransactionServiceImpl implements ITransactionService {
                               IAgiosValidationService agiosValidationService) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
+        this.staportPdfReportService = staportPdfReportService;
         this.leasingValidationService = leasingValidationService;
         this.cmtValidationService = cmtValidationService;
         this.chequeValidationService = chequeValidationService;
@@ -130,6 +154,34 @@ public class TransactionServiceImpl implements ITransactionService {
     public Page<TransactionResponseDto> getTransactionHistory(TransactionSearchDto searchDto, Pageable pageable) {
         log.info("Récupération de l'historique des transactions. Filtres: {}", searchDto);
 
+        Specification<Transaction> combinedSpec = buildHistorySpec(searchDto);
+        Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, defaultSort(pageable));
+
+        log.info("Historique récupéré: {} transactions trouvées (Page {}/{})",
+                transactions.getTotalElements(), transactions.getNumber(), transactions.getTotalPages());
+
+        return transactions.map(transactionMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportTransactionHistoryPdf(TransactionSearchDto searchDto) {
+        log.info("Export PDF de l'historique des transactions. Filtres: {}", searchDto);
+
+        Specification<Transaction> combinedSpec = buildHistorySpec(searchDto);
+        List<TransactionResponseDto> transactions = transactionRepository
+                .findAll(combinedSpec, Sort.by(Sort.Direction.DESC, "dateEmission")).stream()
+                .map(transactionMapper::toDto)
+                .toList();
+
+        return generateTransactionHistoryPdf(transactions, searchDto);
+    }
+
+    /**
+     * Construit la spécification de recherche partagée par {@link #getTransactionHistory} et
+     * {@link #exportTransactionHistoryPdf} — mêmes critères, jamais dupliqués.
+     */
+    private Specification<Transaction> buildHistorySpec(TransactionSearchDto searchDto) {
         List<Specification<Transaction>> specs = new ArrayList<>();
 
         if (searchDto.libelle() != null && !searchDto.libelle().isEmpty()) {
@@ -152,13 +204,7 @@ public class TransactionServiceImpl implements ITransactionService {
             specs.add(hasMontant(searchDto.montant()));
         }
 
-        Specification<Transaction> combinedSpec = withFilters(specs);
-        Page<Transaction> transactions = transactionRepository.findAll(combinedSpec, defaultSort(pageable));
-
-        log.info("Historique récupéré: {} transactions trouvées (Page {}/{})",
-                transactions.getTotalElements(), transactions.getNumber(), transactions.getTotalPages());
-
-        return transactions.map(transactionMapper::toDto);
+        return withFilters(specs);
     }
 
     @Override
@@ -596,5 +642,183 @@ public class TransactionServiceImpl implements ITransactionService {
         return pageable.getSort().isSorted()
                 ? pageable
                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+    }
+
+    // ── Export PDF ───────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Génère le PDF de l'historique des transactions filtré — mêmes colonnes que l'écran
+     * "Historique des transactions" (ID, Banque, dates, débit/crédit, TVA, source, statut,
+     * libellé), plus un résumé des filtres appliqués et les totaux débit/crédit.
+     */
+    private byte[] generateTransactionHistoryPdf(List<TransactionResponseDto> transactions, TransactionSearchDto searchDto) {
+        String title = "Historique des Transactions";
+
+        BigDecimal totalDebit = transactions.stream()
+                .map(TransactionResponseDto::debit)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCredit = transactions.stream()
+                .map(TransactionResponseDto::credit)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<String> filterLines = buildFilterSummary(searchDto, transactions);
+
+        try {
+            return staportPdfReportService.generateReport(title, PageSize.A4.rotate(), (doc, writer) -> {
+                try {
+                    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                    Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                    Font hdrFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7, Color.WHITE);
+                    Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 7, Color.BLACK);
+                    Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                    doc.add(Chunk.NEWLINE);
+                    doc.add(Chunk.NEWLINE);
+
+                    Paragraph titleParagraph = new Paragraph(title, titleFont);
+                    titleParagraph.setAlignment(Element.ALIGN_CENTER);
+                    doc.add(titleParagraph);
+
+                    String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                            + "  •  " + transactions.size() + " transaction(s)";
+                    if (!filterLines.isEmpty()) {
+                        exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                    }
+                    Paragraph sub = new Paragraph(exportInfo, subFont);
+                    sub.setAlignment(Element.ALIGN_CENTER);
+                    sub.setSpacingAfter(8f);
+                    doc.add(sub);
+
+                    float[] colWidths = {5f, 10f, 8f, 8f, 8f, 8f, 8f, 8f, 8f, 9f, 8f, 12f};
+                    PdfPTable table = new PdfPTable(colWidths);
+                    table.setWidthPercentage(100f);
+                    table.setSpacingBefore(8f);
+                    table.setHeaderRows(1);
+
+                    for (String h : new String[]{
+                            "ID", "Banque", "Date émission", "Date opération", "Date valeur",
+                            "Débit (MAD)", "Crédit (MAD)", "TVA Déd.", "TVA Coll.", "Source", "Statut", "Libellé"}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                        c.setBackgroundColor(MED_BLUE);
+                        c.setPadding(4f);
+                        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        c.setBorderColor(Color.WHITE);
+                        c.setBorderWidth(0.5f);
+                        table.addCell(c);
+                    }
+
+                    for (int i = 0; i < transactions.size(); i++) {
+                        TransactionResponseDto t = transactions.get(i);
+                        Color rowBg = i % 2 == 0 ? Color.WHITE : ROW_ALT;
+
+                        addTxPdfCell(table, String.valueOf(t.id()), cellFont, rowBg, Element.ALIGN_CENTER);
+                        addTxPdfCell(table, t.banqueDePrelevementNom(), cellFont, rowBg, Element.ALIGN_LEFT);
+                        addTxPdfCell(table, t.dateEmission() != null ? t.dateEmission().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
+                        addTxPdfCell(table, t.dateOperations() != null ? t.dateOperations().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
+                        addTxPdfCell(table, t.dateValeur() != null ? t.dateValeur().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
+                        addTxPdfCell(table, formatMontantTx(t.debit()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addTxPdfCell(table, formatMontantTx(t.credit()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addTxPdfCell(table, formatMontantTx(t.tvaDeductible()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addTxPdfCell(table, formatMontantTx(t.tvaCollectee()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addTxPdfCell(table, t.transactionSource() != null ? t.transactionSource().name() : "—", cellFont, rowBg, Element.ALIGN_CENTER);
+                        addTxPdfCell(table, t.statutRapprochement() != null ? t.statutRapprochement().name() : "—", cellFont, rowBg, Element.ALIGN_CENTER);
+                        addTxPdfCell(table, t.libelle(), cellFont, rowBg, Element.ALIGN_LEFT);
+                    }
+
+                    PdfPCell totalLabel = new PdfPCell(
+                            new Phrase("TOTAL — " + transactions.size() + " transaction(s)", totalFont));
+                    totalLabel.setColspan(5);
+                    totalLabel.setBackgroundColor(LIGHT_BLUE);
+                    totalLabel.setPadding(5f);
+                    totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totalLabel.setBorderColor(MED_BLUE);
+                    table.addCell(totalLabel);
+
+                    PdfPCell totalDebitVal = new PdfPCell(new Phrase(formatMontantTx(totalDebit), totalFont));
+                    totalDebitVal.setBackgroundColor(LIGHT_BLUE);
+                    totalDebitVal.setPadding(5f);
+                    totalDebitVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totalDebitVal.setBorderColor(MED_BLUE);
+                    table.addCell(totalDebitVal);
+
+                    PdfPCell totalCreditVal = new PdfPCell(new Phrase(formatMontantTx(totalCredit), totalFont));
+                    totalCreditVal.setBackgroundColor(LIGHT_BLUE);
+                    totalCreditVal.setPadding(5f);
+                    totalCreditVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totalCreditVal.setBorderColor(MED_BLUE);
+                    table.addCell(totalCreditVal);
+
+                    // colonnes restantes : TVA Déd., TVA Coll., Source, Statut, Libellé (5 colonnes)
+                    for (int j = 0; j < 5; j++) {
+                        PdfPCell empty = new PdfPCell(new Phrase(""));
+                        empty.setBackgroundColor(LIGHT_BLUE);
+                        empty.setBorderColor(MED_BLUE);
+                        table.addCell(empty);
+                    }
+
+                    doc.add(table);
+                } catch (DocumentException e) {
+                    throw new RuntimeException("Erreur lors de la génération du contenu du PDF de l'historique des transactions.", e);
+                }
+            });
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF de l'historique des transactions.", e);
+        }
+    }
+
+    /**
+     * Résumé texte des filtres appliqués. Le nom de la banque est lu depuis la première ligne du
+     * résultat (déjà dénormalisé sur {@link TransactionResponseDto}) plutôt que via une nouvelle
+     * dépendance vers le domaine Banque — {@code BanqueServiceImpl} dépend déjà de
+     * {@code ITransactionService}, une dépendance inverse créerait un cycle.
+     */
+    private List<String> buildFilterSummary(TransactionSearchDto dto, List<TransactionResponseDto> transactions) {
+        List<String> lines = new ArrayList<>();
+        if (dto == null) return lines;
+
+        if (dto.libelle() != null && !dto.libelle().isBlank()) {
+            lines.add("Libellé : " + dto.libelle());
+        }
+        if (dto.banqueId() != null) {
+            String banqueNom = transactions.stream()
+                    .map(TransactionResponseDto::banqueDePrelevementNom)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse("ID " + dto.banqueId());
+            lines.add("Banque : " + banqueNom);
+        }
+        if (dto.transactionSources() != null && !dto.transactionSources().isEmpty()) {
+            lines.add("Sources : " + dto.transactionSources().stream()
+                    .map(Enum::name)
+                    .collect(Collectors.joining(", ")));
+        }
+        if (dto.statutRapprochement() != null) {
+            lines.add("Statut rapprochement : " + dto.statutRapprochement().name());
+        }
+        if (dto.montant() != null) {
+            lines.add("Montant : " + formatMontantTx(dto.montant()));
+        }
+        return lines;
+    }
+
+    private void addTxPdfCell(PdfPTable table, String text, Font font, Color bg, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(3f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(BORDER_GRAY);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantTx(BigDecimal montant) {
+        if (montant == null) return "—";
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
+        symbols.setGroupingSeparator(' ');
+        symbols.setDecimalSeparator(',');
+        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
+        return formatter.format(montant);
     }
 }
