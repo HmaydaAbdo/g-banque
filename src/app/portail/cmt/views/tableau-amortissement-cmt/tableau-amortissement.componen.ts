@@ -10,8 +10,7 @@ import {ToastModule} from 'primeng/toast';
 import {TagModule} from 'primeng/tag';
 import {TooltipModule} from 'primeng/tooltip';
 import {DropdownModule} from 'primeng/dropdown';
-import {ConfirmDialogModule} from 'primeng/confirmdialog';
-import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
+import {MenuItem, MessageService} from 'primeng/api';
 import {ProgressSpinnerModule} from "primeng/progressspinner";
 import {DividerModule} from "primeng/divider";
 import {InputNumberModule} from "primeng/inputnumber";
@@ -38,6 +37,7 @@ import {EcheanceCMTUpdateRequest} from "../../dtos/EcheanceCMTUpdateRequest";
 @Component({
   selector: 'app-tableau-amortissement',
   templateUrl: './tableau-amortissement.componen.html',
+  styleUrls: ['./tableau-amortissement.componen.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -48,7 +48,6 @@ import {EcheanceCMTUpdateRequest} from "../../dtos/EcheanceCMTUpdateRequest";
     TooltipModule,
     DropdownModule,
     ReactiveFormsModule,
-    ConfirmDialogModule,
     ProgressSpinnerModule,
     DividerModule,
     InputNumberModule,
@@ -61,7 +60,7 @@ import {EcheanceCMTUpdateRequest} from "../../dtos/EcheanceCMTUpdateRequest";
     BreadcrumbModule,
     CalendarModule
   ],
-  providers: [MessageService, ConfirmationService]
+  providers: [MessageService]
 })
 export class TableauAmortissementComponent implements OnInit, OnDestroy {
 

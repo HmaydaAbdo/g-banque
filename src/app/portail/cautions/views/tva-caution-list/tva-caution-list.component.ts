@@ -67,6 +67,9 @@ export class TvaCautionListComponent implements OnInit {
   loading          = false;
   selectAllLoading = false;
 
+  /** Indicateur de chargement du bouton "Exporter PDF". */
+  exporting = false;
+
   readonly isAdmin = this.authService.isSystemAdmin();
 
   /**
@@ -145,6 +148,19 @@ export class TvaCautionListComponent implements OnInit {
       });
   }
 
+  /** Critères de filtrage courants (sans pagination) — partagés entre la recherche, la sélection globale et l'export PDF. */
+  private buildSearchDto(): ImpotEtTaxeSearchDto {
+    const { banqueId, libelle, montant } = this.filterForm.value;
+
+    return {
+      motif: Motif.TVA_COMMISSION_CAUTION,
+      status: Status.PREVU,
+      ...(banqueId && { banqueId }),
+      ...(libelle  && { libelle  }),
+      ...(montant  && { montant  }),
+    };
+  }
+
   // ── Table lazy load ───────────────────────────────────────────────────────
   loadTvas(event: TableLazyLoadEvent): void {
     this.loading = true;
@@ -156,15 +172,7 @@ export class TvaCautionListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort      = `${sortField},${sortOrder}`;
 
-    const { banqueId, libelle, montant } = this.filterForm.value;
-
-    const searchDto: ImpotEtTaxeSearchDto = {
-      motif: Motif.TVA_COMMISSION_CAUTION,
-      status: Status.PREVU,
-      ...(banqueId && { banqueId }),
-      ...(libelle  && { libelle  }),
-      ...(montant  && { montant  }),
-    };
+    const searchDto = this.buildSearchDto();
 
     this.tvaService.searchImpotEtTaxes(searchDto, page, size, sort)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -209,6 +217,34 @@ export class TvaCautionListComponent implements OnInit {
     this.table?.reset();
   }
 
+  // ── Export PDF ────────────────────────────────────────────────────────────
+
+  /**
+   * Exporte en PDF l'intégralité des TVA sur cautions correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    this.tvaService.exportPdf(this.buildSearchDto())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `tva_cautions_${new Date().toISOString().slice(0, 10)}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.exporting = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.exporting = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
   // ── Gestion de la sélection ───────────────────────────────────────────────
 
   /**
@@ -232,15 +268,7 @@ export class TvaCautionListComponent implements OnInit {
     this.selectAllLoading = true;
     this.cdr.markForCheck();
 
-    const { banqueId, libelle, montant } = this.filterForm.value;
-
-    const searchDto: ImpotEtTaxeSearchDto = {
-      motif: Motif.TVA_COMMISSION_CAUTION,
-      status: Status.PREVU,
-      ...(banqueId && { banqueId }),
-      ...(libelle  && { libelle  }),
-      ...(montant  && { montant  }),
-    };
+    const searchDto = this.buildSearchDto();
 
     this.tvaService.searchImpotEtTaxes(searchDto, 0, this.totalRecords, 'dateEmission,desc')
       .pipe(takeUntilDestroyed(this.destroyRef))

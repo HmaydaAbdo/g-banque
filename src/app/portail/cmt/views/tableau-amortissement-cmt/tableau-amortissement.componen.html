@@ -1,7 +1,6 @@
 <p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
 
-<div class="card px-2 h-screen w-screen overflow-y-scroll">
+<div class="card flex flex-column gap-2 p-2 w-screen h-screen ">
 
   @if (loading && !tableauDetails) {
     <div class="flex justify-content-center align-items-center h-full my-5">
@@ -20,144 +19,158 @@
   }
 
   @if (tableauDetails || !loading) {
-    <div class="flex flex-column px-2">
-
-    <div class="flex justify-content-between align-items-center">
-    <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
-      <ng-template pTemplate="item" let-item>
-        @if (item.route) {
-          <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
-            <span [ngClass]="[item.icon ? item.icon : '', 'text-color' ]"></span>
-            <span class="text-black-alpha-90  text-sm p-2 font-bold">{{ item.label }}</span>
-          </a>
-        } @else {
-          <a [href]="item.url">
-            <span class="text-color text-sm  text-center">{{ item.label }}</span>
-          </a>
-        }
-      </ng-template>
-    </p-breadcrumb>
-      <p class="text-sm font-bold">Désignation CMT : "{{tableauDetails?.designationCredit}}"</p>
-      <button pButton pRipple label="Exporter PDF" class="p-button-outlined p-button-danger h-fit" size="small" icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
-  </div>
-
-    @if (tableauDetails) {
-      <div class="flex flex-row justify-content-around gap-2 text-center text-sm  ">
-        <p>Endettement : <strong>{{ tableauDetails.montantTotalAPayer | number }} MAD</strong> </p>
-        <p>Montant Total Déjà Payé : <strong>{{ tableauDetails.montantTotalDejaPaye | number }} MAD</strong> </p>
-        <p>Montant Restant à Payer : <strong>{{ tableauDetails.montantRestantAPayer | number }} MAD</strong> </p>
+    <div class="flex flex-column  px-2 gap-2">
+      <div class="flex justify-content-between align-items-center">
+        <p-breadcrumb [model]="items" styleClass="breadcrumb-transparent">
+          <ng-template pTemplate="item" let-item>
+            @if (item.route) {
+              <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
+                <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
+                <span class="pg-text-primary p-2 font-bold">{{ item.label }}</span>
+              </a>
+            } @else {
+              <a [href]="item.url">
+                <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
+              </a>
+            }
+          </ng-template>
+        </p-breadcrumb>
+        <button pButton pRipple label="Exporter PDF" class="p-button-outlined p-button-danger h-fit" size="small" icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
       </div>
-    }
 
-    <div class="pg-filters">
-  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
-  <form [formGroup]="searchForm" class="flex flex-row gap-2 justify-content-between w-full p-2">
-      <p-inputNumber
-        id="numeroEcheance"
-        formControlName="numeroEcheance"
-        placeholder="N° Échéance"
-        mode="decimal"
-        [useGrouping]="false"
-        class="flex-1">
-      </p-inputNumber>
-      <p-inputNumber
-        id="month"
-        formControlName="month"
-        placeholder="Mois ( Ex: 1-12 )"
-        mode="decimal"
-        [useGrouping]="false"
-        [min]="1"
-        [max]="12"
-        class="flex-1">
-      </p-inputNumber>
-      <p-inputNumber
-        id="year"
-        formControlName="year"
-        placeholder="Année (Ex: 2025)"
-        mode="decimal"
-        [useGrouping]="false"
-        class="flex-1">
-      </p-inputNumber>
-      <p-dropdown
-        id="statutPaiement"
-        formControlName="statutPaiement"
-        [options]="statutOptions"
-        placeholder="Sélectionner un statut"
-        [showClear]="true"
-        appendTo="body"
-        class="flex-1">
-      </p-dropdown>
-      <p-button
-        icon="pi pi-times"
-        severity="secondary"
-        (onClick)="clearSearch()">
-      </p-button>
-    </form>
-</div>
+      @if (tableauDetails) {
+        <div class="summary-row">
+          <p>Désignation CMT : <strong>"{{tableauDetails.designationCredit}}"</strong></p>
+          <p>Endettement : <strong class="num">{{tableauDetails.montantTotalAPayer | number:'1.2-2'}}</strong></p>
+          <p>Montant Total Déjà Payé : <strong class="num">{{tableauDetails.montantTotalDejaPaye | number:'1.2-2'}}</strong></p>
+          <p>Montant Restant à Payer : <strong class="num">{{tableauDetails.montantRestantAPayer | number:'1.2-2'}}</strong></p>
+        </div>
+      }
 
-    <p-table
-        #dt
-        [value]="echeances"
-        [paginator]="true"
-        [rows]="10"
-        [totalRecords]="totalRecords"
-        [lazy]="true"
-        (onLazyLoad)="loadEcheances($event)"
-        responsiveLayout="scroll"
-        [scrollable]="true"
-        styleClass="p-datatable-sm p-datatable-gridlines text-sm pb-8"
-        [loading]="loading"
-        [rowsPerPageOptions]="[3,5,10, 25, 50, 100]"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} échéances"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
-            <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
-            <th pSortableColumn="dateEcheance">Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
-            <th>Montant TTC</th>
-            <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
-            @if (isAdmin()) {
-              <th style="width: 8rem;">Actions</th>
-            }
+      <div class="pg-filters">
+        <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+        <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center gap-2 w-full">
+          <p-inputNumber
+            id="numeroEcheance"
+            formControlName="numeroEcheance"
+            placeholder="N° Échéance"
+            mode="decimal"
+            [useGrouping]="false"
+            styleClass="w-full"
+            class="flex-1">
+          </p-inputNumber>
+          <p-inputNumber
+            id="month"
+            formControlName="month"
+            placeholder="Mois ( Ex: 1-12 )"
+            mode="decimal"
+            [useGrouping]="false"
+            [min]="1"
+            [max]="12"
+            styleClass="w-full"
+            class="flex-1">
+          </p-inputNumber>
+          <p-inputNumber
+            id="year"
+            formControlName="year"
+            placeholder="Année (Ex: 2025)"
+            mode="decimal"
+            [useGrouping]="false"
+            styleClass="w-full"
+            class="flex-1">
+          </p-inputNumber>
+          <p-dropdown
+            id="statutPaiement"
+            formControlName="statutPaiement"
+            [options]="statutOptions"
+            placeholder="Sélectionner un statut"
+            [showClear]="true"
+            appendTo="body"
+            styleClass="w-full"
+            class="flex-1">
+          </p-dropdown>
+          <p-button
+            icon="pi pi-times"
+            severity="secondary"
+            (onClick)="clearSearch()">
+          </p-button>
+        </form>
+      </div>
 
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-echeance>
-          <tr >
-            <td>{{echeance.id}}</td>
-            <td>{{ echeance.numeroEcheance }}</td>
-            <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
-            <td>{{ echeance.montantTtc | number }} MAD</td>
-            <td>
-              <p-tag [value]="echeance.statutPaiement" [severity]="getStatusSeverity(echeance.statutPaiement)"></p-tag>
-            </td>
-            @if (isAdmin()) {
-              <td class="text-center">
-                <div class="flex align-items-center justify-content-center gap-2">
-                  <p-inputSwitch [ngModel]="echeance.statutPaiement === 'PAYE'" (onChange)="onStatutChange(echeance)" pTooltip="changer le status de l'échéance" tooltipPosition="top"></p-inputSwitch>
-                  @if (echeance.statutPaiement === 'PREVU') {
-                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-secondary" pTooltip="Modifier l'échéance" tooltipPosition="top" (click)="openEditDialog(echeance)"></button>
-                  }
-                </div>
+      <div class="mb-8">
+        <p-table
+          #dt
+          [value]="echeances"
+          [paginator]="true"
+          [rows]="10"
+          [totalRecords]="totalRecords"
+          [lazy]="true"
+          (onLazyLoad)="loadEcheances($event)"
+          responsiveLayout="scroll"
+          styleClass="p-datatable-sm p-datatable-gridlines text-xs white-space-nowrap"
+          [loading]="loading"
+          [rowsPerPageOptions]="[3,5,10, 25, 50, 100]"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} échéances">
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="id">ID <p-sortIcon field="id"></p-sortIcon></th>
+              <th pSortableColumn="numeroEcheance">N° Échéance <p-sortIcon field="numeroEcheance"></p-sortIcon></th>
+              <th pSortableColumn="dateEcheance">Date d'échéance <p-sortIcon field="dateEcheance"></p-sortIcon></th>
+              <th>Montant TTC</th>
+              <th pSortableColumn="statutPaiement">Statut Paiement <p-sortIcon field="statutPaiement"></p-sortIcon></th>
+              @if (isAdmin()) {
+                <th class="col-action">Actions</th>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-echeance>
+            <tr>
+              <td>{{ echeance.id }}</td>
+              <td>{{ echeance.numeroEcheance }}</td>
+              <td>{{ echeance.dateEcheance | date:'dd/MM/yyyy' }}</td>
+              <td><span class="num">{{ echeance.montantTtc | number:'1.2-2' }}</span></td>
+              <td>
+                <p-tag [value]="echeance.statutPaiement" [severity]="getStatusSeverity(echeance.statutPaiement)"></p-tag>
               </td>
-            }
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="5">Aucune échéance trouvée pour ce crédit ou ces critères de recherche.</td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="loadingbody">
-          <tr>
-            <td colspan="5">Chargement des échéances. Veuillez patienter...</td>
-          </tr>
-        </ng-template>
-      </p-table>
-
-  </div>
+              @if (isAdmin()) {
+                <td class="col-action">
+                  <div class="cell-actions">
+                    <p-inputSwitch
+                      [ngModel]="echeance.statutPaiement === 'PAYE'"
+                      (onChange)="onStatutChange(echeance)"
+                      pTooltip="Changer le statut de l'échéance"
+                      tooltipPosition="top"
+                    ></p-inputSwitch>
+                    @if (echeance.statutPaiement === 'PREVU') {
+                      <p-button
+                        icon="pi pi-pencil"
+                        [text]="true"
+                        severity="secondary"
+                        size="small"
+                        (onClick)="openEditDialog(echeance)"
+                        pTooltip="Modifier l'échéance"
+                        tooltipPosition="top"
+                      ></p-button>
+                    }
+                  </div>
+                </td>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="isAdmin() ? 6 : 5" class="text-center p-4">Aucune échéance trouvée pour ce crédit ou ces critères de recherche.</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="loadingbody">
+            <tr>
+              <td [attr.colspan]="isAdmin() ? 6 : 5" class="text-center p-4">Chargement des échéances. Veuillez patienter...</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
   }
 
 </div>
@@ -211,4 +224,3 @@
     <p-button label="Enregistrer" icon="pi pi-check" (onClick)="saveEdit()" [disabled]="editForm.invalid || loading"></p-button>
   </ng-template>
 </p-dialog>
-

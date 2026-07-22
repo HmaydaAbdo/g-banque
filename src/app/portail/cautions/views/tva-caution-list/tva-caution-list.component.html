@@ -108,6 +108,16 @@
     </ng-template>
 
     <ng-template pTemplate="end">
+      <!-- Export PDF -->
+      <p-button
+        label="Exporter PDF"
+        icon="pi pi-file-pdf"
+        severity="danger"
+        [outlined]="true"
+        size="small"
+        [loading]="exporting"
+        (onClick)="exportPdf()" />
+
       <!-- Bandeau sélection — visible dès qu'au moins 1 ligne est cochée -->
       @if (isAdmin && selectionCount > 0) {
         <div class="flex align-items-center gap-2">

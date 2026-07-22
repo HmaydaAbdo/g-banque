@@ -22,6 +22,7 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { RippleModule } from 'primeng/ripple';
 
 import { TableauAmortissement } from '../../dtos/table-amortissement';
 import { EcheanceLeasingResponse } from '../../dtos/EcheanceLeasingResponse';
@@ -57,7 +58,8 @@ import { CalendarModule } from 'primeng/calendar';
     DialogModule,
     InputTextareaModule,
     BreadcrumbModule,
-    CalendarModule
+    CalendarModule,
+    RippleModule
   ],
   providers: [MessageService]
 })
@@ -74,6 +76,7 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
   echeances: EcheanceLeasingResponse[] = [];
   totalEcheancesRecords: number = 0;
   loading: boolean = true;
+  exporting: boolean = false;
   errorMessage: string | null = null;
 
   searchForm!: FormGroup;
@@ -194,6 +197,34 @@ export class TableauAmortissementComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.errorMessage = 'Échec du chargement du tableau d\'amortissement. Veuillez réessayer.';
+      }
+    });
+  }
+
+  exportPdf(): void {
+    if (!this.contratId) return;
+    this.exporting = true;
+
+    const searchCriteria: EcheanceLeasingSearchDTO = {
+      numeroEcheance: this.searchForm.get('numeroEcheance')?.value,
+      month: this.searchForm.get('month')?.value,
+      year: this.searchForm.get('year')?.value,
+      statutPaiement: this.searchForm.get('statutPaiement')?.value
+    };
+
+    this.echeanceLeasingService.exportTableauAmortissementPdf(this.contratId, searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tableau_amortissement_leasing_${this.contratId}_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
       }
     });
   }

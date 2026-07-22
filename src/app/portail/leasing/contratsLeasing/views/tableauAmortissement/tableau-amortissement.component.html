@@ -2,7 +2,7 @@
 
 <div class="card flex flex-column gap-2 p-2 w-screen h-screen overflow-y-scroll">
 
-  @if (loading) {
+  @if (loading && !tableauAmortissement) {
     <div class="flex justify-content-center align-items-center h-full my-5">
       <p-progressSpinner></p-progressSpinner>
     </div>
@@ -12,13 +12,13 @@
     <div class="p-message p-message-error mt-3">
       <div class="p-message-wrapper">
         <span class="p-message-icon pi pi-times-circle"></span>
-        <span class="p-message-summary">Error:</span>
+        <span class="p-message-summary">Erreur:</span>
         <span class="p-message-detail">{{ errorMessage }}</span>
       </div>
     </div>
   }
 
-  @if (tableauAmortissement) {
+  @if (tableauAmortissement || !loading) {
     <div class="flex flex-column  px-2 gap-2">
       <div class="flex justify-content-between align-items-center">
         <p-breadcrumb [model]="items" styleClass="breadcrumb-transparent">
@@ -35,14 +35,17 @@
             }
           </ng-template>
         </p-breadcrumb>
+        <button pButton pRipple label="Exporter PDF" class="p-button-outlined p-button-danger h-fit" size="small" icon="pi pi-file-pdf" [loading]="exporting" (click)="exportPdf()"></button>
       </div>
 
-      <div class="flex flex-row justify-content-around gap-2  ">
-        <p > N° Contract : <strong>{{tableauAmortissement.numeroContrat}} </strong></p>
-        <p > Endettement : <strong class="num">{{tableauAmortissement.totalIndemniteAPayer | number:'1.2-2'}} </strong></p>
-        <p > Montant Déjà Payé : <strong class="num">{{tableauAmortissement.montantTotalDejaPaye | number:'1.2-2'}} </strong></p>
-        <p > Le Reste : <strong class="num">{{tableauAmortissement.montantRestantAPayer | number:'1.2-2'}} </strong></p>
-      </div>
+      @if (tableauAmortissement) {
+        <div class="summary-row">
+          <p>N° Contract : <strong>{{tableauAmortissement.numeroContrat}}</strong></p>
+          <p>Endettement : <strong class="num">{{tableauAmortissement.totalIndemniteAPayer | number:'1.2-2'}}</strong></p>
+          <p>Montant Déjà Payé : <strong class="num">{{tableauAmortissement.montantTotalDejaPaye | number:'1.2-2'}}</strong></p>
+          <p>Le Reste : <strong class="num">{{tableauAmortissement.montantRestantAPayer | number:'1.2-2'}}</strong></p>
+        </div>
+      }
 
       <div class="pg-filters">
         <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
@@ -64,7 +67,6 @@
           [lazy]="true"
           (onLazyLoad)="loadTableauAmortissement($event)"
           responsiveLayout="scroll"
-          [scrollable]="true"
           styleClass="p-datatable-sm p-datatable-gridlines text-xs white-space-nowrap"
           [loading]="loading"
           [rowsPerPageOptions]="[3,5,10, 25, 50, 100]"
@@ -116,14 +118,14 @@
               }
             </tr>
           </ng-template>
-          <ng-template pTemplate="emptyMessage">
+          <ng-template pTemplate="emptymessage">
             <tr>
-              <td [attr.colspan]="8" class="text-center p-4">Aucune échéance trouvée pour ce contrat ou ces critères de recherche.</td>
+              <td [attr.colspan]="isAdmin() ? 7 : 6" class="text-center p-4">Aucune échéance trouvée pour ce contrat ou ces critères de recherche.</td>
             </tr>
           </ng-template>
           <ng-template pTemplate="loadingbody">
             <tr>
-              <td [attr.colspan]="8" class="text-center p-4">Chargement des échéances. Veuillez patienter...</td>
+              <td [attr.colspan]="isAdmin() ? 7 : 6" class="text-center p-4">Chargement des échéances. Veuillez patienter...</td>
             </tr>
           </ng-template>
         </p-table>
