@@ -2,6 +2,9 @@ package staport.finance.gBanque.cautions.services;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+
 import staport.finance.gBanque.cautions.dtos.request.CautionCreateDto;
 import staport.finance.gBanque.cautions.dtos.response.CautionResponseDto;
 import staport.finance.gBanque.cautions.dtos.request.CautionSearchCriteria;
@@ -105,7 +108,10 @@ public interface ICautionService {
      * à l'écran.
      *
      * @param criteres critères de filtrage (tous optionnels — mêmes filtres que la recherche paginée)
+     * @param colonnes clés des colonnes à inclure dans le PDF, dans l'ordre canonique du module
+     *                 (voir {@code CautionServiceImpl.CAUTION_EXPORT_COLUMNS}) ; {@code null} ou
+     *                 vide = toutes les colonnes (comportement par défaut, rétrocompatible)
      * @return contenu binaire du PDF généré
      */
-    byte[] exporterPdf(CautionSearchCriteria criteres);
+    byte[] exporterPdf(CautionSearchCriteria criteres, List<String> colonnes);
 }

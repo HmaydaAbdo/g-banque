@@ -1,5 +1,14 @@
 package staport.finance.gBanque.Agios.service;
 
+import com.lowagie.text.Chunk;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -23,27 +32,45 @@ import staport.finance.gBanque.Bank.entities.Banque;
 import staport.finance.gBanque.Bank.services.IBanqueService;
 import staport.finance.gBanque.audit.AuditableAction;
 import staport.finance.gBanque.audit.AuditOperation;
+import staport.finance.gBanque.exception.customExceptions.ResourceNotFoundException;
 import staport.finance.gBanque.prefinancement.enums.Status;
+import staport.finance.gBanque.reports.service.StaportPdfReportService;
 
+import java.awt.Color;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 @Service
 public class AgiosService implements IAgiosService {
 
     private static final Logger log = LoggerFactory.getLogger(AgiosService.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final Color MED_BLUE = Color.decode("#2563eb");
+    private static final Color LIGHT_BLUE = Color.decode("#dbeafe");
+    private static final Color ROW_ALT = Color.decode("#f8fafc");
+    private static final Color BORDER_GRAY = Color.decode("#e5e7eb");
 
     private final AgiosRepository agiosRepository;
     private final IBanqueService banqueService;
     private final AgiosMapper agiosMapper;
+    private final StaportPdfReportService staportPdfReportService;
 
     public AgiosService(AgiosRepository agiosRepository,
                         IBanqueService banqueService,
-                        AgiosMapper agiosMapper) {
+                        AgiosMapper agiosMapper,
+                        StaportPdfReportService staportPdfReportService) {
         this.agiosRepository = agiosRepository;
         this.banqueService   = banqueService;
         this.agiosMapper     = agiosMapper;
+        this.staportPdfReportService = staportPdfReportService;
     }
 
     @Override
@@ -87,6 +114,42 @@ public class AgiosService implements IAgiosService {
         log.info("Recherche d'agios — page: {}, taille: {}", pageable.getPageNumber(), pageable.getPageSize());
         return agiosRepository.findAll(AgiosSpec.searchByCriteria(dto), pageable)
                 .map(agiosMapper::toResponseDto);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportAgiosPdf(AgiosSearchDto dto) {
+        log.info("Export PDF des agios ponctuels - Critères: {}", dto);
+
+        List<AgiosResponseDto> agios = agiosRepository
+                .findAll(AgiosSpec.searchByCriteria(dto), Sort.by(Sort.Direction.DESC, "dateEmission"))
+                .stream()
+                .map(agiosMapper::toResponseDto)
+                .toList();
+
+        return generateAgiosListPdf("Agios", agios, buildFilterSummary(dto), null);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportOutstandingAgiosPdf(AgiosSearchDto dto, Long banqueId) {
+        log.info("Export PDF des agios en cours - banqueId: {}, Critères: {}", banqueId, dto);
+
+        LocalDate finDuMois = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
+        Specification<Agios> spec = Specification
+                .where(AgiosSpec.outstandingUntil(finDuMois))
+                .and(AgiosSpec.hasBanque(banqueId))
+                .and(AgiosSpec.hasLibelle(dto.libelle()))
+                .and(AgiosSpec.hasMontant(dto.montant()));
+
+        List<AgiosResponseDto> agios = agiosRepository
+                .findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"))
+                .stream()
+                .map(agiosMapper::toResponseDto)
+                .toList();
+
+        List<String> filterLines = buildFilterSummary(new AgiosSearchDto(banqueId, dto.libelle(), dto.montant(), null));
+
+        return generateAgiosListPdf("Encours Agios", agios, filterLines, "encours");
     }
 
     @Transactional(readOnly = true)

@@ -52,6 +52,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Implémentation du service Caution.
@@ -252,9 +254,83 @@ public class CautionServiceImpl implements ICautionService {
 
     // ── Export PDF ────────────────────────────────────────────────────────────
 
+    /** Ordre canonique des colonnes exportables — fixe l'ordre d'affichage dans le PDF. */
+    private static final List<String> CAUTION_EXPORT_COLUMNS = List.of(
+            "numeroCaution", "banque", "nature", "marche", "organisme", "designation",
+            "dateDePrise", "dateDeMainLevee", "montant", "taux", "statut"
+    );
+
+    private static final Map<String, String> CAUTION_COLUMN_LABELS = Map.ofEntries(
+            Map.entry("numeroCaution", "N° Caution"),
+            Map.entry("banque", "Banque"),
+            Map.entry("nature", "Nature"),
+            Map.entry("marche", "N° Marché"),
+            Map.entry("organisme", "Organisme"),
+            Map.entry("designation", "Désignation"),
+            Map.entry("dateDePrise", "Date de prise"),
+            Map.entry("dateDeMainLevee", "Main levée"),
+            Map.entry("montant", "Montant (MAD)"),
+            Map.entry("taux", "Taux (%)"),
+            Map.entry("statut", "Statut")
+    );
+
+    private static final Map<String, Float> CAUTION_COLUMN_WIDTHS = Map.ofEntries(
+            Map.entry("numeroCaution", 8f),
+            Map.entry("banque", 11f),
+            Map.entry("nature", 10f),
+            Map.entry("marche", 9f),
+            Map.entry("organisme", 14f),
+            Map.entry("designation", 15f),
+            Map.entry("dateDePrise", 8f),
+            Map.entry("dateDeMainLevee", 8f),
+            Map.entry("montant", 9f),
+            Map.entry("taux", 6f),
+            Map.entry("statut", 7f)
+    );
+
+    /**
+     * Résout la liste des colonnes à exporter : filtre {@link #CAUTION_EXPORT_COLUMNS} pour ne
+     * garder que celles demandées (en préservant l'ordre canonique), en ignorant toute clé
+     * inconnue. {@code null}, vide, ou ne contenant aucune clé valide ⇒ toutes les colonnes
+     * (comportement par défaut, rétrocompatible avec les appels sans sélection).
+     */
+    private List<String> resolveCautionColonnes(List<String> demandees) {
+        if (demandees == null || demandees.isEmpty()) {
+            return CAUTION_EXPORT_COLUMNS;
+        }
+        List<String> filtrees = CAUTION_EXPORT_COLUMNS.stream()
+                .filter(demandees::contains)
+                .collect(Collectors.toList());
+        return filtrees.isEmpty() ? CAUTION_EXPORT_COLUMNS : filtrees;
+    }
+
+    private String cautionColumnValue(String colonne, Caution c) {
+        return switch (colonne) {
+            case "numeroCaution" -> c.getNumeroCaution();
+            case "banque" -> c.getBanque() != null ? c.getBanque().getNom() : "—";
+            case "nature" -> c.getNature() != null ? c.getNature().getLabel() : "—";
+            case "marche" -> c.getMarche() != null ? c.getMarche().getNumero() : "—";
+            case "organisme" -> c.getOrganisme();
+            case "designation" -> c.getDesignation();
+            case "dateDePrise" -> c.getDateDePrise() != null ? c.getDateDePrise().format(DATE_FMT) : "—";
+            case "dateDeMainLevee" -> c.getDateDeMainLevee() != null ? c.getDateDeMainLevee().format(DATE_FMT) : "—";
+            case "montant" -> formatMontantPdf(c.getMontant());
+            case "taux" -> c.getTaux() != null ? c.getTaux().toPlainString() : "—";
+            default -> "—";
+        };
+    }
+
+    private int cautionColumnAlign(String colonne) {
+        return switch (colonne) {
+            case "dateDePrise", "dateDeMainLevee" -> Element.ALIGN_CENTER;
+            case "montant", "taux" -> Element.ALIGN_RIGHT;
+            default -> Element.ALIGN_LEFT;
+        };
+    }
+
     @Override
-    public byte[] exporterPdf(CautionSearchCriteria criteres) {
-        log.debug("Export PDF cautions — critères: {}", criteres);
+    public byte[] exporterPdf(CautionSearchCriteria criteres, List<String> colonnesSelectionnees) {
+        log.debug("Export PDF cautions — critères: {}, colonnes: {}", criteres, colonnesSelectionnees);
 
         List<Caution> cautions = cautionRepository.findAll(
             CautionSpecification.parCriteres(criteres),
@@ -267,6 +343,8 @@ public class CautionServiceImpl implements ICautionService {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         List<String> filterLines = buildFilterSummary(criteres);
+        List<String> colonnes = resolveCautionColonnes(colonnesSelectionnees);
+        boolean montantInclus = colonnes.contains("montant");
 
         try {
             return staportPdfReportService.generateReport(
@@ -304,16 +382,17 @@ public class CautionServiceImpl implements ICautionService {
                         Color orange     = Color.decode("#ea580c");
                         Color borderGray = Color.decode("#e5e7eb");
 
-                        float[] colWidths = {8f, 11f, 10f, 9f, 14f, 15f, 8f, 8f, 9f, 6f, 7f};
+                        float[] colWidths = new float[colonnes.size()];
+                        for (int i = 0; i < colonnes.size(); i++) {
+                            colWidths[i] = CAUTION_COLUMN_WIDTHS.get(colonnes.get(i));
+                        }
                         PdfPTable table = new PdfPTable(colWidths);
                         table.setWidthPercentage(100f);
                         table.setSpacingBefore(8f);
                         table.setHeaderRows(1);
 
-                        for (String h : new String[]{
-                                "N° Caution", "Banque", "Nature", "N° Marché", "Organisme", "Désignation",
-                                "Date de prise", "Main levée", "Montant (MAD)", "Taux (%)", "Statut"}) {
-                            PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                        for (String colonne : colonnes) {
+                            PdfPCell c = new PdfPCell(new Phrase(CAUTION_COLUMN_LABELS.get(colonne), hdrFont));
                             c.setBackgroundColor(medBlue);
                             c.setPadding(5f);
                             c.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -326,52 +405,63 @@ public class CautionServiceImpl implements ICautionService {
                             Caution c = cautions.get(i);
                             Color rowBg = i % 2 == 0 ? Color.WHITE : rowAlt;
 
-                            addPdfCell(table, c.getNumeroCaution(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, c.getBanque() != null ? c.getBanque().getNom() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, c.getNature() != null ? c.getNature().getLabel() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, c.getMarche() != null ? c.getMarche().getNumero() : "—", cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, c.getOrganisme(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, c.getDesignation(), cellFont, rowBg, borderGray, Element.ALIGN_LEFT);
-                            addPdfCell(table, c.getDateDePrise() != null ? c.getDateDePrise().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
-                            addPdfCell(table, c.getDateDeMainLevee() != null ? c.getDateDeMainLevee().format(DATE_FMT) : "—", cellFont, rowBg, borderGray, Element.ALIGN_CENTER);
-                            addPdfCell(table, formatMontantPdf(c.getMontant()), cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
-                            addPdfCell(table, c.getTaux() != null ? c.getTaux().toPlainString() : "—", cellFont, rowBg, borderGray, Element.ALIGN_RIGHT);
-
-                            boolean actif = Boolean.TRUE.equals(c.getActif());
-                            PdfPCell statusCell = new PdfPCell(new Phrase(
-                                    actif ? "ACTIVE" : "INACTIVE",
-                                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
-                            statusCell.setBackgroundColor(actif ? green : orange);
-                            statusCell.setPadding(4f);
-                            statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                            statusCell.setBorderColor(borderGray);
-                            statusCell.setBorderWidth(0.5f);
-                            table.addCell(statusCell);
+                            for (String colonne : colonnes) {
+                                if (colonne.equals("statut")) {
+                                    boolean actif = Boolean.TRUE.equals(c.getActif());
+                                    PdfPCell statusCell = new PdfPCell(new Phrase(
+                                            actif ? "ACTIVE" : "INACTIVE",
+                                            FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                                    statusCell.setBackgroundColor(actif ? green : orange);
+                                    statusCell.setPadding(4f);
+                                    statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                                    statusCell.setBorderColor(borderGray);
+                                    statusCell.setBorderWidth(0.5f);
+                                    table.addCell(statusCell);
+                                } else {
+                                    addPdfCell(table, cautionColumnValue(colonne, c), cellFont, rowBg, borderGray,
+                                            cautionColumnAlign(colonne));
+                                }
+                            }
                         }
 
-                        // Ligne total
-                        PdfPCell totalLabel = new PdfPCell(
-                                new Phrase("TOTAL — " + cautions.size() + " caution(s)", totalFont));
-                        totalLabel.setColspan(8);
-                        totalLabel.setBackgroundColor(lightBlue);
-                        totalLabel.setPadding(5f);
-                        totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        totalLabel.setBorderColor(medBlue);
-                        table.addCell(totalLabel);
+                        // Ligne total — uniquement si la colonne Montant est incluse dans l'export
+                        if (montantInclus) {
+                            int montantIndex = colonnes.indexOf("montant");
+                            String totalLabelText = "TOTAL — " + cautions.size() + " caution(s)";
 
-                        PdfPCell totalVal = new PdfPCell(
-                                new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
-                        totalVal.setBackgroundColor(lightBlue);
-                        totalVal.setPadding(5f);
-                        totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
-                        totalVal.setBorderColor(medBlue);
-                        table.addCell(totalVal);
+                            if (montantIndex > 0) {
+                                PdfPCell totalLabel = new PdfPCell(new Phrase(totalLabelText, totalFont));
+                                totalLabel.setColspan(montantIndex);
+                                totalLabel.setBackgroundColor(lightBlue);
+                                totalLabel.setPadding(5f);
+                                totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                                totalLabel.setBorderColor(medBlue);
+                                table.addCell(totalLabel);
 
-                        for (int j = 0; j < 2; j++) {
-                            PdfPCell empty = new PdfPCell(new Phrase(""));
-                            empty.setBackgroundColor(lightBlue);
-                            empty.setBorderColor(medBlue);
-                            table.addCell(empty);
+                                PdfPCell totalVal = new PdfPCell(
+                                        new Phrase(formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                totalVal.setBackgroundColor(lightBlue);
+                                totalVal.setPadding(5f);
+                                totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                                totalVal.setBorderColor(medBlue);
+                                table.addCell(totalVal);
+                            } else {
+                                PdfPCell totalVal = new PdfPCell(new Phrase(
+                                        totalLabelText + " : " + formatMontantPdf(totalMontant) + " MAD", totalFont));
+                                totalVal.setBackgroundColor(lightBlue);
+                                totalVal.setPadding(5f);
+                                totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                                totalVal.setBorderColor(medBlue);
+                                table.addCell(totalVal);
+                            }
+
+                            int remaining = colonnes.size() - montantIndex - 1;
+                            for (int j = 0; j < remaining; j++) {
+                                PdfPCell empty = new PdfPCell(new Phrase(""));
+                                empty.setBackgroundColor(lightBlue);
+                                empty.setBorderColor(medBlue);
+                                table.addCell(empty);
+                            }
                         }
 
                         doc.add(table);

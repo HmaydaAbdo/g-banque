@@ -30,6 +30,7 @@ import staport.finance.gBanque.common.PageableUtils;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.List;
 
 /**
  * Contrôleur REST pour le module Caution.
@@ -132,13 +133,20 @@ public class CautionController {
      * tous les résultats filtrés, pas seulement la page actuellement affichée à l'écran.
      */
     @Operation(summary = "Exporter les cautions en PDF",
-            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+            description = "Ignore la pagination — exporte tous les résultats filtrés. Le paramètre "
+                    + "optionnel `colonnes` permet de restreindre les colonnes incluses dans le "
+                    + "document (valeurs attendues : numeroCaution, banque, nature, marche, "
+                    + "organisme, designation, dateDePrise, dateDeMainLevee, montant, taux, statut) "
+                    + "— absent ou vide, ou ne contenant aucune valeur reconnue : toutes les "
+                    + "colonnes sont exportées.")
     @GetMapping("/export/pdf")
     @PreAuthorize(FINANCE_OR_ADMIN)
-    public ResponseEntity<byte[]> exporterPdf(@ModelAttribute CautionSearchCriteria criteres) {
-        log.info("GET /cautions/export/pdf — critères: {}", criteres);
+    public ResponseEntity<byte[]> exporterPdf(
+            @ModelAttribute CautionSearchCriteria criteres,
+            @RequestParam(required = false) List<String> colonnes) {
+        log.info("GET /cautions/export/pdf — critères: {}, colonnes: {}", criteres, colonnes);
 
-        byte[] pdf = cautionService.exporterPdf(criteres);
+        byte[] pdf = cautionService.exporterPdf(criteres, colonnes);
         String filename = "cautions_" + LocalDate.now() + ".pdf";
 
         return ResponseEntity.ok()
