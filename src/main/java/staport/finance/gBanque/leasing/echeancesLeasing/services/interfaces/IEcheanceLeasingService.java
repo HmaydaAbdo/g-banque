@@ -42,6 +42,12 @@ public interface IEcheanceLeasingService {
 
     EncoursLeasingResponseDTO getEncoursLeasingForBanque(EncoursLeasingRequestDTO requestDTO, Pageable pageable);
 
+    /**
+     * Exporte en PDF l'encours d'échéances de leasing d'une banque (mêmes critères que
+     * {@link #getEncoursLeasingForBanque}, sans pagination).
+     */
+    byte[] exportEncoursLeasingPdf(EncoursLeasingRequestDTO requestDTO);
+
     boolean hasPaidEcheances(Long contratId);
 
     void deleteEcheancesAndCommissionByContrat(ContratLeasing contrat);

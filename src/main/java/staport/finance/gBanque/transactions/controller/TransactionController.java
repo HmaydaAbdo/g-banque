@@ -82,6 +82,20 @@ public class TransactionController {
         return ResponseEntity.ok(transactionService.getTransactionsByBanque(banqueId, searchDto, pageable));
     }
 
+    @Operation(summary = "Exporter en PDF les transactions d'une banque",
+            description = "Mêmes critères que GET /transactions/{banqueId}/transactions — sans pagination")
+    @GetMapping("/{banqueId}/transactions/export/pdf")
+    public ResponseEntity<byte[]> exportBankTransactionsPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute TransactionSearchDto searchDto) {
+        byte[] pdf = transactionService.exportBankTransactionsPdf(banqueId, searchDto);
+        String filename = "rapprochement_transactions_" + banqueId + "_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
     @Operation(summary = "Modifier dates et TVA d'une transaction")
     @PatchMapping("/{transactionId}")
     public ResponseEntity<TransactionResponseDto> updateTransaction(@PathVariable Long transactionId, @Valid @RequestBody TransactionUpdateRequestDto updateRequestDto){

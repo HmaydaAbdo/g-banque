@@ -480,6 +480,133 @@ import java.math.BigDecimal;
         }
 
         @Transactional(readOnly = true)
+        @Override
+        public byte[] exportEncoursLeasingPdf(EncoursLeasingRequestDTO requestDTO) {
+            LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
+            BanqueResponse banque = banqueService.getBanqueById(requestDTO.banqueId());
+
+            Specification<EcheanceLeasing> spec = EcheanceLeasingSpecification.byContratBanqueId(requestDTO.banqueId())
+                    .and(EcheanceLeasingSpecification.outstandingUntil(endOfMonth));
+
+            if (requestDTO.organismeLeasingId() != null) {
+                spec = spec.and(EcheanceLeasingSpecification.byContratOrganismeLeasingId(requestDTO.organismeLeasingId()));
+            }
+            if (requestDTO.numeroContrat() != null && !requestDTO.numeroContrat().isEmpty()) {
+                spec = spec.and(EcheanceLeasingSpecification.byContratNumeroContrat(requestDTO.numeroContrat()));
+            }
+            if (requestDTO.montant() != null) {
+                spec = spec.and(EcheanceLeasingSpecification.byMontant(requestDTO.montant()));
+            }
+
+            List<EcheanceLeasing> echeances = echeanceLeasingRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEcheance"));
+            BigDecimal totalEncours = sumMontantTTC(spec).setScale(SCALE, RoundingMode.HALF_UP);
+
+            List<String> filterLines = new ArrayList<>();
+            filterLines.add("Banque : " + banque.nom());
+            if (requestDTO.numeroContrat() != null && !requestDTO.numeroContrat().isEmpty()) {
+                filterLines.add("N° Contrat : " + requestDTO.numeroContrat());
+            }
+            if (requestDTO.montant() != null) {
+                filterLines.add("Montant : " + formatMontantPdf(requestDTO.montant()) + " MAD");
+            }
+
+            String title = "Encours d'Échéances Leasing — " + banque.nom();
+
+            try {
+                return staportPdfReportService.generateReport(title, (doc, writer) -> {
+                    try {
+                        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                        Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                        Font hdrFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                        Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                        Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                        doc.add(Chunk.NEWLINE);
+                        doc.add(Chunk.NEWLINE);
+
+                        Paragraph titleParagraph = new Paragraph(title, titleFont);
+                        titleParagraph.setAlignment(Element.ALIGN_CENTER);
+                        doc.add(titleParagraph);
+
+                        String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                                + "  •  " + echeances.size() + " échéance(s)";
+                        if (!filterLines.isEmpty()) {
+                            exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                        }
+                        Paragraph sub = new Paragraph(exportInfo, subFont);
+                        sub.setAlignment(Element.ALIGN_CENTER);
+                        sub.setSpacingAfter(8f);
+                        doc.add(sub);
+
+                        float[] colWidths = {22f, 12f, 15f, 15f, 12f};
+                        PdfPTable table = new PdfPTable(colWidths);
+                        table.setWidthPercentage(100f);
+                        table.setSpacingBefore(8f);
+                        table.setHeaderRows(1);
+
+                        for (String h : new String[]{"Contrat N°", "N° Échéance", "Date d'échéance", "Montant TTC (MAD)", "Statut"}) {
+                            PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                            c.setBackgroundColor(MED_BLUE);
+                            c.setPadding(5f);
+                            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            c.setBorderColor(Color.WHITE);
+                            c.setBorderWidth(0.5f);
+                            table.addCell(c);
+                        }
+
+                        for (int i = 0; i < echeances.size(); i++) {
+                            EcheanceLeasing e = echeances.get(i);
+                            Color rowBg = i % 2 == 0 ? Color.WHITE : ROW_ALT;
+
+                            addPdfCell(table, e.getContratLeasing() != null ? e.getContratLeasing().getNumeroContrat() : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_LEFT);
+                            addPdfCell(table, String.valueOf(e.getNumeroEcheance()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
+                            addPdfCell(table, e.getDateEcheance() != null ? e.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
+                            addPdfCell(table, formatMontantPdf(e.getMontantTTC()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
+
+                            boolean paye = e.getStatutPaiement() == StatutEcheanceLeasing.PAYE;
+                            PdfPCell statusCell = new PdfPCell(new Phrase(
+                                    paye ? "PAYÉ" : "PRÉVU",
+                                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                            statusCell.setBackgroundColor(paye ? GREEN : ORANGE);
+                            statusCell.setPadding(4f);
+                            statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            statusCell.setBorderColor(BORDER_GRAY);
+                            statusCell.setBorderWidth(0.5f);
+                            table.addCell(statusCell);
+                        }
+
+                        PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + echeances.size() + " échéance(s)", totalFont));
+                        totalLabel.setColspan(3);
+                        totalLabel.setBackgroundColor(LIGHT_BLUE);
+                        totalLabel.setPadding(5f);
+                        totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                        totalLabel.setBorderColor(MED_BLUE);
+                        table.addCell(totalLabel);
+
+                        PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalEncours) + " MAD", totalFont));
+                        totalVal.setBackgroundColor(LIGHT_BLUE);
+                        totalVal.setPadding(5f);
+                        totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                        totalVal.setBorderColor(MED_BLUE);
+                        table.addCell(totalVal);
+
+                        PdfPCell empty = new PdfPCell(new Phrase(""));
+                        empty.setBackgroundColor(LIGHT_BLUE);
+                        empty.setBorderColor(MED_BLUE);
+                        table.addCell(empty);
+
+                        doc.add(table);
+                    } catch (DocumentException e) {
+                        throw new RuntimeException("Erreur lors de la génération du contenu du PDF de l'encours leasing.", e);
+                    }
+                });
+            } catch (DocumentException e) {
+                throw new RuntimeException("Erreur lors de la génération du PDF de l'encours leasing.", e);
+            }
+        }
+
+        @Transactional(readOnly = true)
         public boolean hasPaidEcheances(Long contratId) {
             log.debug("Vérification de l'existence d'échéances payées pour le contrat ID : {}", contratId);
 

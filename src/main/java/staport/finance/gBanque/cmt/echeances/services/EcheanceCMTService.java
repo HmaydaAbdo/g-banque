@@ -257,6 +257,131 @@ public class EcheanceCMTService {
         return pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
     }
 
+    /**
+     * Exporte en PDF l'encours d'échéances CMT d'une banque (mêmes critères que
+     * {@link #getEncoursCMTForBanque}, sans pagination).
+     */
+    @Transactional(readOnly = true)
+    public byte[] exportEncoursCMTPdf(EncoursCMTRequestDTO requestDTO) {
+        Banque banque = banqueService.findOrThrow(requestDTO.banqueId());
+
+        LocalDate finDeMoisCourant = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
+        Specification<EcheanceCMT> spec = EcheanceCMTSpecification.byCreditBanqueId(requestDTO.banqueId())
+                .and(EcheanceCMTSpecification.outstandingUntil(finDeMoisCourant))
+                .and(EcheanceCMTSpecification.byCreditDesignationLike(requestDTO.designation()))
+                .and(EcheanceCMTSpecification.byMontant(requestDTO.montant()));
+
+        List<EcheanceCMT> echeances = echeanceCmtRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEcheance"));
+        BigDecimal totalEncours = echeances.stream()
+                .map(EcheanceCMT::getMontant)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(SCALE, RoundingMode.HALF_UP);
+
+        List<String> filterLines = new ArrayList<>();
+        filterLines.add("Banque : " + banque.getNom());
+        if (requestDTO.designation() != null && !requestDTO.designation().isBlank()) {
+            filterLines.add("Désignation : " + requestDTO.designation());
+        }
+        if (requestDTO.montant() != null) {
+            filterLines.add("Montant : " + formatMontantPdf(requestDTO.montant()) + " MAD");
+        }
+
+        String title = "Encours d'Échéances CMT — " + banque.getNom();
+
+        try {
+            return staportPdfReportService.generateReport(title, (doc, writer) -> {
+                try {
+                    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                    Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                    Font hdrFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                    Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                    Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                    doc.add(Chunk.NEWLINE);
+                    doc.add(Chunk.NEWLINE);
+
+                    Paragraph titleParagraph = new Paragraph(title, titleFont);
+                    titleParagraph.setAlignment(Element.ALIGN_CENTER);
+                    doc.add(titleParagraph);
+
+                    String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                            + "  •  " + echeances.size() + " échéance(s)";
+                    if (!filterLines.isEmpty()) {
+                        exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                    }
+                    Paragraph sub = new Paragraph(exportInfo, subFont);
+                    sub.setAlignment(Element.ALIGN_CENTER);
+                    sub.setSpacingAfter(8f);
+                    doc.add(sub);
+
+                    float[] colWidths = {26f, 12f, 15f, 15f, 12f};
+                    PdfPTable table = new PdfPTable(colWidths);
+                    table.setWidthPercentage(100f);
+                    table.setSpacingBefore(8f);
+                    table.setHeaderRows(1);
+
+                    for (String h : new String[]{"Crédit", "N° Échéance", "Date d'échéance", "Montant (MAD)", "Statut"}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                        c.setBackgroundColor(MED_BLUE);
+                        c.setPadding(5f);
+                        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        c.setBorderColor(Color.WHITE);
+                        c.setBorderWidth(0.5f);
+                        table.addCell(c);
+                    }
+
+                    for (int i = 0; i < echeances.size(); i++) {
+                        EcheanceCMT e = echeances.get(i);
+                        Color rowBg = i % 2 == 0 ? Color.WHITE : ROW_ALT;
+
+                        addPdfCell(table, e.getCreditMoyenTerme() != null ? e.getCreditMoyenTerme().getDesignation() : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_LEFT);
+                        addPdfCell(table, String.valueOf(e.getNumeroEcheance()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
+                        addPdfCell(table, e.getDateEcheance() != null ? e.getDateEcheance().format(DATE_FMT) : "—", cellFont, rowBg, BORDER_GRAY, Element.ALIGN_CENTER);
+                        addPdfCell(table, formatMontantPdf(e.getMontant()), cellFont, rowBg, BORDER_GRAY, Element.ALIGN_RIGHT);
+
+                        boolean paye = e.getStatutPaiement() == StatutEcheanceCMT.PAYE;
+                        PdfPCell statusCell = new PdfPCell(new Phrase(
+                                paye ? "PAYÉ" : "PRÉVU",
+                                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                        statusCell.setBackgroundColor(paye ? GREEN : ORANGE);
+                        statusCell.setPadding(4f);
+                        statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        statusCell.setBorderColor(BORDER_GRAY);
+                        statusCell.setBorderWidth(0.5f);
+                        table.addCell(statusCell);
+                    }
+
+                    PdfPCell totalLabel = new PdfPCell(new Phrase("TOTAL — " + echeances.size() + " échéance(s)", totalFont));
+                    totalLabel.setColspan(3);
+                    totalLabel.setBackgroundColor(LIGHT_BLUE);
+                    totalLabel.setPadding(5f);
+                    totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totalLabel.setBorderColor(MED_BLUE);
+                    table.addCell(totalLabel);
+
+                    PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantPdf(totalEncours) + " MAD", totalFont));
+                    totalVal.setBackgroundColor(LIGHT_BLUE);
+                    totalVal.setPadding(5f);
+                    totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totalVal.setBorderColor(MED_BLUE);
+                    table.addCell(totalVal);
+
+                    PdfPCell empty = new PdfPCell(new Phrase(""));
+                    empty.setBackgroundColor(LIGHT_BLUE);
+                    empty.setBorderColor(MED_BLUE);
+                    table.addCell(empty);
+
+                    doc.add(table);
+                } catch (DocumentException e) {
+                    throw new RuntimeException("Erreur lors de la génération du contenu du PDF de l'encours CMT.", e);
+                }
+            });
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF de l'encours CMT.", e);
+        }
+    }
+
     // ========================== EXPORT PDF ==========================
 
     /**

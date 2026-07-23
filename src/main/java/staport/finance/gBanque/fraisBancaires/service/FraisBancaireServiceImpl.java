@@ -208,6 +208,28 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public byte[] exportOutstandingFraisBancairePdf(EncoursFraisBancaireSearchDto searchDto, Long banqueId) {
+        log.info("Export PDF de l'encours de frais bancaires - banqueId={}, Critères: {}", banqueId, searchDto);
+
+        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
+        Specification<FraisBancaire> spec = Specification.where(FraisBancaireSpecification.outstandingUntil(endOfMonth))
+                .and(FraisBancaireSpecification.hasBanque(banqueId))
+                .and(FraisBancaireSpecification.hasLibelle(searchDto.libelle()))
+                .and(FraisBancaireSpecification.hasMontant(searchDto.montant()));
+
+        List<FraisBancaireResponseDto> dtos = fraisBancaireRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"))
+                .stream()
+                .map(fraisBancaireMapper::toResponseDto)
+                .toList();
+
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return generateFraisBancairePdf("Encours de Frais Bancaires", dtos, filterLines);
+    }
+
+    @Override
     @Transactional
     @AuditableAction(operation = AuditOperation.UPDATE, entity = FraisBancaire.class)
     public FraisBancaireResponseDto toggleStatus(Long id) {
@@ -233,14 +255,14 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
      * et le total des montants.
      */
     private byte[] generateFraisBancairePdf(List<FraisBancaireResponseDto> fraisBancaires, FraisBancaireSearchDto searchDto) {
-        String title = "Frais Bancaires";
+        return generateFraisBancairePdf("Frais Bancaires", fraisBancaires, buildFilterSummary(searchDto));
+    }
 
+    private byte[] generateFraisBancairePdf(String title, List<FraisBancaireResponseDto> fraisBancaires, List<String> filterLines) {
         BigDecimal totalMontant = fraisBancaires.stream()
                 .map(FraisBancaireResponseDto::montant)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        List<String> filterLines = buildFilterSummary(searchDto);
 
         try {
             return staportPdfReportService.generateReport(title, (doc, writer) -> {
@@ -353,6 +375,23 @@ public class FraisBancaireServiceImpl implements IFraisBancaireService {
         }
         if (dto.status() != null) {
             lines.add("Statut : " + dto.status().name());
+        }
+        if (dto.montant() != null) {
+            lines.add("Montant : " + formatMontantFb(dto.montant()));
+        }
+        return lines;
+    }
+
+    private List<String> buildEncoursFilterSummary(EncoursFraisBancaireSearchDto dto, Long banqueId) {
+        List<String> lines = new ArrayList<>();
+        try {
+            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
+        } catch (ResourceNotFoundException e) {
+            log.debug("Banque id={} introuvable pour le résumé de filtre export — ignorée", banqueId);
+        }
+        if (dto == null) return lines;
+        if (dto.libelle() != null && !dto.libelle().isBlank()) {
+            lines.add("Libellé : " + dto.libelle());
         }
         if (dto.montant() != null) {
             lines.add("Montant : " + formatMontantFb(dto.montant()));

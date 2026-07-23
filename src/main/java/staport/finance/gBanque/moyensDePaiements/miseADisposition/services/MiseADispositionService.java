@@ -249,6 +249,23 @@ public class MiseADispositionService {
         return generateMisesADispositionPdf("Encours de Décaissement — Mises à Disposition", mads, total, filterLines);
     }
 
+    @Transactional(readOnly = true)
+    public byte[] exportEncoursEncaissementPdf(EncoursMiseAdispositionSearchDto searchDto, Long banqueId) {
+        Specification<MiseADisposition> spec = MiseADispositionSpec.encoursEncaissement(banqueId, finDuMoisCourant())
+                .and(MiseADispositionSpec.hasNumero(searchDto.getNumero()))
+                .and(MiseADispositionSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
+                .and(MiseADispositionSpec.hasMontant(searchDto.getMontant()))
+                .and(MiseADispositionSpec.hasType(Type.ENCAISSEMENT))
+                .and(MiseADispositionSpec.hasEmetteur(searchDto.getEmetteur()))
+                .and(MiseADispositionSpec.hasDateEmission(searchDto.getDateEmission()));
+
+        List<MiseADisposition> mads = miseADispositionRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+        BigDecimal total = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return generateMisesADispositionPdf("Encours d'Encaissement — Mises à Disposition", mads, total, filterLines);
+    }
+
     private BigDecimal sumMontant(Specification<MiseADisposition> spec) {
         return miseADispositionRepository.findAll(spec).stream()
                 .map(MiseADisposition::getMontant)

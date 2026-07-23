@@ -71,6 +71,20 @@ public class EcheanceCMTController {
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
+    @Operation(summary = "Exporter en PDF l'encours d'échéances CMT d'une banque",
+            description = "Mêmes critères que GET /echeances-cmt/encours — sans pagination")
+    @ApiResponse(responseCode = "404", description = "Banque introuvable")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @GetMapping("/encours/export/pdf")
+    public ResponseEntity<byte[]> exportEncoursCMTPdf(@Valid @ModelAttribute EncoursCMTRequestDTO requestDTO) {
+        byte[] pdf = echeanceCmtService.exportEncoursCMTPdf(requestDTO);
+        String filename = "encours_cmt_" + requestDTO.banqueId() + "_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
     @Operation(summary = "Basculer le statut d'une échéance (PREVU ↔ PAYE)",
             description = "Action sensible réservée à l'administrateur système")
     @ApiResponse(responseCode = "404", description = "Échéance introuvable")

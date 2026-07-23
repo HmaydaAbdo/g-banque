@@ -43,6 +43,12 @@ public interface IFraisBancaireService {
 
     EncoursFraisBancaireDto getOutstandingFraisBancaire(EncoursFraisBancaireSearchDto searchDto, Long banqueId, Pageable pageable);
 
+    /**
+     * Exporte en PDF l'encours de frais bancaires d'une banque (mêmes critères que
+     * {@link #getOutstandingFraisBancaire}, sans pagination).
+     */
+    byte[] exportOutstandingFraisBancairePdf(EncoursFraisBancaireSearchDto searchDto, Long banqueId);
+
     FraisBancaireResponseDto toggleStatus(Long id);
 
     /**

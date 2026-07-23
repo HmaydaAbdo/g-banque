@@ -34,6 +34,12 @@ public interface ITransactionService {
 
     AgreratedTransactionResponseDto getTransactionsByBanque(Long banqueId, TransactionSearchDto searchDto, Pageable pageable);
 
+    /**
+     * Exporte en PDF les transactions d'une banque (mêmes critères que
+     * {@link #getTransactionsByBanque}, sans pagination) — écran "Rapprochement en cours".
+     */
+    byte[] exportBankTransactionsPdf(Long banqueId, TransactionSearchDto searchDto);
+
     TransactionResponseDto updateTransactionById(Long id, TransactionUpdateRequestDto updateRequestDto);
 
     BigDecimal computeBalance(Long banqueId);

@@ -174,7 +174,7 @@ public class TransactionServiceImpl implements ITransactionService {
                 .map(transactionMapper::toDto)
                 .toList();
 
-        return generateTransactionHistoryPdf(transactions, searchDto);
+        return generateTransactionHistoryPdf("Historique des Transactions", transactions, buildFilterSummary(searchDto, transactions));
     }
 
     /**
@@ -212,37 +212,7 @@ public class TransactionServiceImpl implements ITransactionService {
     public AgreratedTransactionResponseDto getTransactionsByBanque(Long banqueId, TransactionSearchDto searchDto, Pageable pageable) {
         log.info("Calcul des agrégations et récupération des transactions pour la banque ID: {}", banqueId);
 
-        List<Specification<Transaction>> specs = new ArrayList<>();
-        specs.add(hasBanqueId(banqueId));
-
-        // Filtrer par rapprochement spécifique si fourni, sinon EN_COURS (compatibilité)
-        if (searchDto.rapprochementId() != null) {
-            specs.add(hasRapprochementId(searchDto.rapprochementId()));
-        } else {
-            specs.add(hasRapprochementStatut(StatutRapprochement.EN_COURS));
-        }
-
-        if (searchDto.libelle() != null && !searchDto.libelle().isEmpty()) {
-            specs.add(libelleContains(searchDto.libelle()));
-        }
-
-        if (searchDto.observation() != null && !searchDto.observation().isEmpty()) {
-            specs.add(observationContains(searchDto.observation()));
-        }
-
-        if (searchDto.montant() != null) {
-            specs.add(hasMontant(searchDto.montant()));
-        }
-
-        if (searchDto.dateOperationDebut() != null || searchDto.dateOperationFin() != null) {
-            specs.add(hasDateOperationBetween(searchDto.dateOperationDebut(), searchDto.dateOperationFin()));
-        }
-
-        if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
-            specs.add(hasTransactionSources(searchDto.transactionSources()));
-        }
-
-        Specification<Transaction> combinedSpec = withFilters(specs);
+        Specification<Transaction> combinedSpec = buildBankTransactionsSpec(banqueId, searchDto);
 
         // 1. Agrégats via JPQL (SUM en base, pas de List<Transaction> en mémoire)
         TransactionAggregatesDto agg;
@@ -281,6 +251,83 @@ public class TransactionServiceImpl implements ITransactionService {
                 agg.totalDebit(), agg.totalCredit(), agg.totalTvaDeductible(), agg.totalTvaCollectee(),
                 tvaDue, paginatedDtos
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportBankTransactionsPdf(Long banqueId, TransactionSearchDto searchDto) {
+        log.info("Export PDF des transactions de la banque ID: {}. Filtres: {}", banqueId, searchDto);
+
+        Specification<Transaction> combinedSpec = buildBankTransactionsSpec(banqueId, searchDto);
+        List<TransactionResponseDto> transactions = transactionRepository
+                .findAll(combinedSpec, Sort.by(Sort.Direction.DESC, "dateEmission")).stream()
+                .map(transactionMapper::toDto)
+                .toList();
+
+        return generateTransactionHistoryPdf("Rapprochement en Cours — Transactions", transactions, buildBankFilterSummary(searchDto));
+    }
+
+    /**
+     * Construit la spécification de recherche partagée par {@link #getTransactionsByBanque} et
+     * {@link #exportBankTransactionsPdf} — mêmes critères, jamais dupliqués.
+     */
+    private Specification<Transaction> buildBankTransactionsSpec(Long banqueId, TransactionSearchDto searchDto) {
+        List<Specification<Transaction>> specs = new ArrayList<>();
+        specs.add(hasBanqueId(banqueId));
+
+        // Filtrer par rapprochement spécifique si fourni, sinon EN_COURS (compatibilité)
+        if (searchDto.rapprochementId() != null) {
+            specs.add(hasRapprochementId(searchDto.rapprochementId()));
+        } else {
+            specs.add(hasRapprochementStatut(StatutRapprochement.EN_COURS));
+        }
+
+        if (searchDto.libelle() != null && !searchDto.libelle().isEmpty()) {
+            specs.add(libelleContains(searchDto.libelle()));
+        }
+
+        if (searchDto.observation() != null && !searchDto.observation().isEmpty()) {
+            specs.add(observationContains(searchDto.observation()));
+        }
+
+        if (searchDto.montant() != null) {
+            specs.add(hasMontant(searchDto.montant()));
+        }
+
+        if (searchDto.dateOperationDebut() != null || searchDto.dateOperationFin() != null) {
+            specs.add(hasDateOperationBetween(searchDto.dateOperationDebut(), searchDto.dateOperationFin()));
+        }
+
+        if (searchDto.transactionSources() != null && !searchDto.transactionSources().isEmpty()) {
+            specs.add(hasTransactionSources(searchDto.transactionSources()));
+        }
+
+        return withFilters(specs);
+    }
+
+    private List<String> buildBankFilterSummary(TransactionSearchDto dto) {
+        List<String> lines = new ArrayList<>();
+        if (dto == null) return lines;
+
+        if (dto.libelle() != null && !dto.libelle().isBlank()) {
+            lines.add("Libellé : " + dto.libelle());
+        }
+        if (dto.observation() != null && !dto.observation().isBlank()) {
+            lines.add("Observation : " + dto.observation());
+        }
+        if (dto.montant() != null) {
+            lines.add("Montant : " + formatMontantTx(dto.montant()));
+        }
+        if (dto.dateOperationDebut() != null) {
+            lines.add("Date opération min : " + dto.dateOperationDebut().format(DATE_FMT));
+        }
+        if (dto.dateOperationFin() != null) {
+            lines.add("Date opération max : " + dto.dateOperationFin().format(DATE_FMT));
+        }
+        if (dto.transactionSources() != null && !dto.transactionSources().isEmpty()) {
+            lines.add("Source : " + dto.transactionSources());
+        }
+        return lines;
     }
 
     @Override
@@ -642,9 +689,7 @@ public class TransactionServiceImpl implements ITransactionService {
      * "Historique des transactions" (ID, Banque, dates, débit/crédit, TVA, source, statut,
      * libellé), plus un résumé des filtres appliqués et les totaux débit/crédit.
      */
-    private byte[] generateTransactionHistoryPdf(List<TransactionResponseDto> transactions, TransactionSearchDto searchDto) {
-        String title = "Historique des Transactions";
-
+    private byte[] generateTransactionHistoryPdf(String title, List<TransactionResponseDto> transactions, List<String> filterLines) {
         BigDecimal totalDebit = transactions.stream()
                 .map(TransactionResponseDto::debit)
                 .filter(Objects::nonNull)
@@ -653,8 +698,6 @@ public class TransactionServiceImpl implements ITransactionService {
                 .map(TransactionResponseDto::credit)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        List<String> filterLines = buildFilterSummary(searchDto, transactions);
 
         try {
             return staportPdfReportService.generateReport(title, PageSize.A4.rotate(), (doc, writer) -> {

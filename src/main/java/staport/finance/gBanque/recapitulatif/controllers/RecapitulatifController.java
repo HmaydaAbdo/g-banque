@@ -87,6 +87,38 @@ public class RecapitulatifController {
     }
 
 
+    @Operation(summary = "Exporter en PDF le récapitulatif des décaissements prévisionnels du mois",
+            description = "Mêmes critères que GET /recapitulatif/decaissement/banque/{banqueId} — sans pagination")
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
+    @GetMapping("/decaissement/banque/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportRecapitulatifDecaissementPdf(
+            @PathVariable Long banqueId, @ModelAttribute DecaissementSearchDto searchDto) {
+
+        byte[] pdf = recapitulatifService.exportRecapitulatifDecaissementPdf(searchDto, banqueId);
+        String filename = "recapitulatif_decaissement_" + banqueId + "_" + LocalDate.now() + ".pdf";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Exporter en PDF le récapitulatif des encaissements prévisionnels du mois",
+            description = "Mêmes critères que GET /recapitulatif/encaissement/banque/{banqueId} — sans pagination")
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
+    @GetMapping("/encaissement/banque/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportRecapitulatifEncaissementPdf(
+            @PathVariable Long banqueId, @ModelAttribute DecaissementSearchDto searchDto) {
+
+        byte[] pdf = recapitulatifService.exportRecapitulatifEncaissementPdf(searchDto, banqueId);
+        String filename = "recapitulatif_encaissement_" + banqueId + "_" + LocalDate.now() + ".pdf";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
     @Operation(summary = "Télécharger le récapitulatif global (PDF)")
     @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
     @GetMapping("/{banqueId}/pdf")

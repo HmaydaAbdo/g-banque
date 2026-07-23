@@ -146,6 +146,13 @@ public class MiseADispositionController {
         return pdfResponse(miseADispositionService.exportEncoursDecaissementPdf(searchDto, banqueId), "mises_a_disposition_encours_decaissement");
     }
 
+    @Operation(summary = "Exporter en PDF l'encours d'encaissement de mises à disposition d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encours/encaissements/{banqueId}/export/pdf")
+    public ResponseEntity<byte[]> exportEncoursEncaissementPdf(@PathVariable Long banqueId, EncoursMiseAdispositionSearchDto searchDto) {
+        return pdfResponse(miseADispositionService.exportEncoursEncaissementPdf(searchDto, banqueId), "mises_a_disposition_encours_encaissement");
+    }
+
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filenamePrefix) {
         String filename = filenamePrefix + "_" + LocalDate.now() + ".pdf";
         return ResponseEntity.ok()

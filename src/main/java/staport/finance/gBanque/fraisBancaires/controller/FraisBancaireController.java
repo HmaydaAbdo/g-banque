@@ -123,6 +123,22 @@ public class FraisBancaireController {
         return ResponseEntity.ok(result);
     }
 
+    @Operation(summary = "Exporter en PDF l'encours de frais bancaires d'une banque",
+            description = "Mêmes critères que GET /frais-bancaire/encours/{banqueId} — sans pagination")
+    @GetMapping("/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportOutstandingFraisBancairePdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursFraisBancaireSearchDto searchDto) {
+        log.info("Requête REST pour exporter en PDF l'encours de frais bancaires - Banque ID: {}", banqueId);
+        byte[] pdf = fraisBancaireService.exportOutstandingFraisBancairePdf(searchDto, banqueId);
+        String filename = "frais_bancaires_encours_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")
     @PatchMapping("/{id}/toggle-status")
     @PreAuthorize(SYSTEM_ADMIN)
