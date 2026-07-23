@@ -9,11 +9,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
+import { OverlayPanel, OverlayPanelModule } from 'primeng/overlaypanel';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
@@ -47,9 +49,9 @@ const MARCHE_PAGE_SIZE = 15;
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, ReactiveFormsModule, RouterLink, TableModule, ButtonModule, DialogModule,
-    DropdownModule, InputTextModule, TagModule, ToastModule, ToolbarModule, TooltipModule,
-    BreadcrumbModule, ConfirmDialogModule, CalendarModule, InputNumberModule,
+    CommonModule, FormsModule, ReactiveFormsModule, RouterLink, TableModule, ButtonModule, CheckboxModule,
+    DialogModule, OverlayPanelModule, DropdownModule, InputTextModule, TagModule, ToastModule, ToolbarModule,
+    TooltipModule, BreadcrumbModule, ConfirmDialogModule, CalendarModule, InputNumberModule,
     DecimalPipe, DatePipe, Ripple,
   ],
   providers: [MessageService, ConfirmationService],
@@ -57,6 +59,7 @@ const MARCHE_PAGE_SIZE = 15;
 })
 export class CautionListComponent implements OnInit {
   @ViewChild('dt') table!: Table;
+  @ViewChild('exportColumnsPanel') exportColumnsPanel!: OverlayPanel;
 
   private readonly fb                  = inject(FormBuilder);
   private readonly destroyRef          = inject(DestroyRef);
@@ -78,6 +81,28 @@ export class CautionListComponent implements OnInit {
 
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting = false;
+
+  /**
+   * Colonnes exportables dans le PDF de la liste des cautions — clés et ordre alignés sur
+   * `CAUTION_EXPORT_COLUMNS` côté backend (`CautionServiceImpl`). Toutes cochées par défaut.
+   */
+  exportColumns: { key: string; label: string; checked: boolean }[] = [
+    { key: 'numeroCaution',    label: 'N° Caution',     checked: true },
+    { key: 'banque',           label: 'Banque',          checked: true },
+    { key: 'nature',           label: 'Nature',          checked: true },
+    { key: 'marche',           label: 'N° Marché',       checked: true },
+    { key: 'organisme',        label: 'Organisme',       checked: true },
+    { key: 'designation',      label: 'Désignation',     checked: true },
+    { key: 'dateDePrise',      label: 'Date de prise',   checked: true },
+    { key: 'dateDeMainLevee',  label: 'Main levée',      checked: true },
+    { key: 'montant',          label: 'Montant (MAD)',   checked: true },
+    { key: 'taux',             label: 'Taux (%)',        checked: true },
+    { key: 'statut',           label: 'Statut',          checked: true },
+  ];
+
+  get hasSelectedColumns(): boolean {
+    return this.exportColumns.some(c => c.checked);
+  }
 
   // ── Reactive filter form ──────────────────────────────────────────────────
   filterForm: FormGroup = this.fb.group({
@@ -273,13 +298,29 @@ export class CautionListComponent implements OnInit {
     };
   }
 
+  /** Ouvre/ferme le panneau de sélection des colonnes, ancré au bouton "Exporter PDF". */
+  toggleExportPanel(event: Event): void {
+    this.exportColumnsPanel.toggle(event);
+  }
+
+  toggleAllColumns(checked: boolean): void {
+    this.exportColumns.forEach(c => c.checked = checked);
+  }
+
   /**
    * Exporte en PDF l'intégralité des cautions correspondant aux filtres actuellement
-   * appliqués — pas seulement la page affichée à l'écran.
+   * appliqués — pas seulement la page affichée à l'écran — en ne retenant que les colonnes
+   * cochées dans la boîte de dialogue.
    */
-  exportPdf(): void {
+  confirmExport(): void {
+    if (!this.hasSelectedColumns) return;
+
+    this.exportColumnsPanel.hide();
     this.exporting = true;
-    this.cautionService.exportPdf(this.buildFilterCriteres())
+
+    const colonnes = this.exportColumns.filter(c => c.checked).map(c => c.key);
+
+    this.cautionService.exportPdf(this.buildFilterCriteres(), colonnes)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: blob => {

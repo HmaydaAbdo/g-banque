@@ -107,8 +107,43 @@
               icon="pi pi-file-pdf"
               [loading]="exporting"
               class="p-button-outlined p-button-danger h-fit p-button-sm"
-              (click)="exportPdf()">
+              (click)="toggleExportPanel($event)">
       </button>
+      <p-overlayPanel #exportColumnsPanel [style]="{ width: '300px' }" [showCloseIcon]="true">
+        <div class="flex flex-column gap-3">
+          <div class="flex justify-content-between align-items-center">
+            <span class="text-sm font-semibold">Colonnes à exporter</span>
+          </div>
+
+          <div class="flex justify-content-between gap-2">
+            <button pButton pRipple type="button" label="Tout" class="p-button-text p-button-sm p-0"
+                    (click)="toggleAllColumns(true)"></button>
+            <button pButton pRipple type="button" label="Aucune" class="p-button-text p-button-sm p-0"
+                    (click)="toggleAllColumns(false)"></button>
+          </div>
+
+          <div class="flex flex-column gap-2">
+            @for (col of exportColumns; track col.key) {
+              <div class="flex align-items-center gap-2">
+                <p-checkbox [binary]="true" [(ngModel)]="col.checked" [inputId]="'col-' + col.key"></p-checkbox>
+                <label [for]="'col-' + col.key" class="text-sm cursor-pointer">{{ col.label }}</label>
+              </div>
+            }
+          </div>
+
+          @if (!hasSelectedColumns) {
+            <small class="text-red-500">Sélectionnez au moins une colonne.</small>
+          }
+
+          <button pButton pRipple type="button" label="Exporter"
+                  icon="pi pi-file-pdf"
+                  [loading]="exporting"
+                  [disabled]="!hasSelectedColumns"
+                  class="w-full p-button-sm"
+                  (click)="confirmExport()">
+          </button>
+        </div>
+      </p-overlayPanel>
       <button pButton pRipple
               label="Nouvelle caution"
               icon="pi pi-plus"

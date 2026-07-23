@@ -125,9 +125,17 @@ export class CautionService {
    * Exporte en PDF l'intégralité des cautions correspondant aux filtres actifs
    * (mêmes critères que {@link rechercher}, sans pagination — le PDF contient tous
    * les résultats filtrés, pas seulement la page actuellement affichée).
+   *
+   * @param colonnes clés des colonnes à inclure dans le PDF (voir `CAUTION_EXPORT_COLUMNS`
+   *                 dans `caution-list.component.ts`) ; omis ou vide = toutes les colonnes.
    */
-  exportPdf(criteres: CautionSearchDto): Observable<Blob> {
-    const params = this.buildFilterParams(criteres);
+  exportPdf(criteres: CautionSearchDto, colonnes?: string[]): Observable<Blob> {
+    let params = this.buildFilterParams(criteres);
+    if (colonnes && colonnes.length > 0) {
+      colonnes.forEach(colonne => {
+        params = params.append('colonnes', colonne);
+      });
+    }
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
   }
 
