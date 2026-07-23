@@ -36,6 +36,13 @@ public interface IImpotEtTaxeService {
      */
     byte[] exporterPdf(ImpotEtTaxeSearchDto searchDto);
 
+    /**
+     * Exporte en PDF l'intégralité de l'encours d'impôts/taxes d'une banque (mêmes filtres que
+     * {@link #getOutstandingImpotEtTaxes}) — sans pagination : le fichier contient tous les
+     * résultats filtrés, pas seulement la page actuellement affichée à l'écran.
+     */
+    byte[] exporterEncoursPdf(EncoursImpotEtTaxeSearchDto searchDto, Long banqueId);
+
     ImpotEtTaxeResponseDto updateImpotEtTaxe(Long id, ImpotEtTaxeRequestDto requestDto);
 
     void deleteImpotEtTaxe(Long id);

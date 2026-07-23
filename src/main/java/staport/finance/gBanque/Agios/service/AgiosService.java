@@ -241,4 +241,160 @@ public class AgiosService implements IAgiosService {
     private Banque findBanqueOuLeverException(Long banqueId) {
         return banqueService.findOrThrow(banqueId);
     }
+
+    // ── Export PDF ───────────────────────────────────────────────────────────
+
+    /**
+     * Génère le PDF partagé par la liste d'agios ponctuels et l'encours d'une banque — mêmes
+     * colonnes que l'écran (Libellé, Banque, Montant, Date d'émission, Statut), plus un résumé des
+     * filtres appliqués et le montant total.
+     *
+     * @param scopeLabel {@code "encours"} pour libeller le total en conséquence, {@code null} sinon
+     */
+    private byte[] generateAgiosListPdf(String title, List<AgiosResponseDto> agios,
+                                        List<String> filterLines, String scopeLabel) {
+        BigDecimal totalMontant = agios.stream()
+                .map(AgiosResponseDto::montant)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        try {
+            return staportPdfReportService.generateReport(title, (doc, writer) -> {
+                try {
+                    Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+                    Font subFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.decode("#374151"));
+                    Font hdrFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
+                    Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
+                    Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
+
+                    doc.add(Chunk.NEWLINE);
+                    doc.add(Chunk.NEWLINE);
+
+                    Paragraph titleParagraph = new Paragraph(title, titleFont);
+                    titleParagraph.setAlignment(Element.ALIGN_CENTER);
+                    doc.add(titleParagraph);
+
+                    String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
+                            + "  •  " + agios.size() + " agios";
+                    if (!filterLines.isEmpty()) {
+                        exportInfo += "  •  Filtres : " + String.join("  |  ", filterLines);
+                    }
+                    Paragraph sub = new Paragraph(exportInfo, subFont);
+                    sub.setAlignment(Element.ALIGN_CENTER);
+                    sub.setSpacingAfter(8f);
+                    doc.add(sub);
+
+                    float[] colWidths = {26f, 20f, 16f, 16f, 14f};
+                    PdfPTable table = new PdfPTable(colWidths);
+                    table.setWidthPercentage(100f);
+                    table.setSpacingBefore(8f);
+                    table.setHeaderRows(1);
+
+                    for (String h : new String[]{"Libellé", "Banque", "Montant (MAD)", "Date d'émission", "Statut"}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, hdrFont));
+                        c.setBackgroundColor(MED_BLUE);
+                        c.setPadding(5f);
+                        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        c.setBorderColor(Color.WHITE);
+                        c.setBorderWidth(0.5f);
+                        table.addCell(c);
+                    }
+
+                    for (int i = 0; i < agios.size(); i++) {
+                        AgiosResponseDto a = agios.get(i);
+                        Color rowBg = i % 2 == 0 ? Color.WHITE : ROW_ALT;
+
+                        addAgiosPdfCell(table, a.libelle(), cellFont, rowBg, Element.ALIGN_LEFT);
+                        addAgiosPdfCell(table, a.banqueNom(), cellFont, rowBg, Element.ALIGN_LEFT);
+                        addAgiosPdfCell(table, formatMontantAgios(a.montant()), cellFont, rowBg, Element.ALIGN_RIGHT);
+                        addAgiosPdfCell(table, a.dateEmission() != null ? a.dateEmission().format(DATE_FMT) : "—", cellFont, rowBg, Element.ALIGN_CENTER);
+
+                        PdfPCell statusCell = new PdfPCell(new Phrase(
+                                a.status() != null ? a.status().name() : "—",
+                                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE)));
+                        statusCell.setBackgroundColor(a.status() == Status.PAYE ? Color.decode("#16a34a") : Color.decode("#ea580c"));
+                        statusCell.setPadding(4f);
+                        statusCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        statusCell.setBorderColor(BORDER_GRAY);
+                        statusCell.setBorderWidth(0.5f);
+                        table.addCell(statusCell);
+                    }
+
+                    String totalLabelText = "encours".equals(scopeLabel)
+                            ? "TOTAL DES ENCOURS — " + agios.size() + " agios"
+                            : "TOTAL — " + agios.size() + " agios";
+
+                    PdfPCell totalLabel = new PdfPCell(new Phrase(totalLabelText, totalFont));
+                    totalLabel.setColspan(2);
+                    totalLabel.setBackgroundColor(LIGHT_BLUE);
+                    totalLabel.setPadding(5f);
+                    totalLabel.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totalLabel.setBorderColor(MED_BLUE);
+                    table.addCell(totalLabel);
+
+                    PdfPCell totalVal = new PdfPCell(new Phrase(formatMontantAgios(totalMontant) + " MAD", totalFont));
+                    totalVal.setBackgroundColor(LIGHT_BLUE);
+                    totalVal.setPadding(5f);
+                    totalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totalVal.setBorderColor(MED_BLUE);
+                    table.addCell(totalVal);
+
+                    for (int j = 0; j < 2; j++) {
+                        PdfPCell empty = new PdfPCell(new Phrase(""));
+                        empty.setBackgroundColor(LIGHT_BLUE);
+                        empty.setBorderColor(MED_BLUE);
+                        table.addCell(empty);
+                    }
+
+                    doc.add(table);
+                } catch (DocumentException e) {
+                    throw new RuntimeException("Erreur lors de la génération du contenu du PDF des agios.", e);
+                }
+            });
+        } catch (DocumentException e) {
+            throw new RuntimeException("Erreur lors de la génération du PDF des agios.", e);
+        }
+    }
+
+    private List<String> buildFilterSummary(AgiosSearchDto dto) {
+        List<String> lines = new ArrayList<>();
+        if (dto == null) return lines;
+
+        if (dto.libelle() != null && !dto.libelle().isBlank()) {
+            lines.add("Libellé : " + dto.libelle());
+        }
+        if (dto.banqueId() != null) {
+            try {
+                lines.add("Banque : " + banqueService.findOrThrow(dto.banqueId()).getNom());
+            } catch (ResourceNotFoundException e) {
+                log.debug("Banque id={} introuvable pour le résumé de filtre export — ignorée", dto.banqueId());
+            }
+        }
+        if (dto.status() != null) {
+            lines.add("Statut : " + dto.status().name());
+        }
+        if (dto.montant() != null) {
+            lines.add("Montant : " + formatMontantAgios(dto.montant()));
+        }
+        return lines;
+    }
+
+    private void addAgiosPdfCell(PdfPTable table, String text, Font font, Color bg, int align) {
+        PdfPCell cell = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        cell.setBackgroundColor(bg);
+        cell.setPadding(4f);
+        cell.setHorizontalAlignment(align);
+        cell.setBorderColor(BORDER_GRAY);
+        cell.setBorderWidth(0.5f);
+        table.addCell(cell);
+    }
+
+    private String formatMontantAgios(BigDecimal montant) {
+        if (montant == null) return "—";
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
+        symbols.setGroupingSeparator(' ');
+        symbols.setDecimalSeparator(',');
+        DecimalFormat formatter = new DecimalFormat("#,##0.00", symbols);
+        return formatter.format(montant);
+    }
 }

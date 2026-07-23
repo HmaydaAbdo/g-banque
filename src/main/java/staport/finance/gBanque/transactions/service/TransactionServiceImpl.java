@@ -602,15 +602,6 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TransactionResponseDto> getAllTransactionsForRapprochementSortedByDate(Long rapprochementId) {
-        return transactionRepository.findAll(hasRapprochementId(rapprochementId)).stream()
-                .map(transactionMapper::toDto)
-                .sorted(Comparator.comparing(TransactionResponseDto::dateOperations))
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public long countByRapprochementId(Long rapprochementId) {
         return transactionRepository.countByRapprochementId(rapprochementId);
     }

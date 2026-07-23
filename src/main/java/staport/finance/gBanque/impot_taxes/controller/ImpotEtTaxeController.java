@@ -111,6 +111,28 @@ public class ImpotEtTaxeController {
         return ResponseEntity.ok(impotEtTaxeService.getOutstandingImpotEtTaxes(searchDto, banqueId, pageable));
     }
 
+    /**
+     * Exporte en PDF l'intégralité de l'encours d'impôts/taxes d'une banque correspondant aux
+     * critères fournis (mêmes filtres que {@code GET /impots-taxes/encours/{banqueId}}) — sans
+     * pagination : le fichier contient tous les résultats filtrés, pas seulement la page
+     * actuellement affichée à l'écran.
+     */
+    @Operation(summary = "Exporter en PDF l'encours d'impôts/taxes d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursImpotEtTaxeSearchDto searchDto) {
+        byte[] pdf = impotEtTaxeService.exporterEncoursPdf(searchDto, banqueId);
+        String filename = "impots_taxes_encours_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")
     @PatchMapping("/{id}/toggle-status")
     @PreAuthorize(SYSTEM_ADMIN)

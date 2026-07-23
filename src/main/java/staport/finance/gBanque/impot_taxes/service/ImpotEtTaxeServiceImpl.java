@@ -199,9 +199,43 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
         BigDecimal totalMontant = sumMontant(spec);
         List<String> filterLines = buildFilterSummary(searchDto);
 
+        return genererPdf("État des Impôts et Taxes", impotsEtTaxes, totalMontant, filterLines);
+    }
+
+    /**
+     * Génère un export PDF de l'encours d'impôts/taxes d'une banque (mêmes critères que
+     * {@link #getOutstandingImpotEtTaxes}) — sans pagination : le fichier imprime la totalité des
+     * résultats filtrés, pas seulement la page affichée à l'écran.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exporterEncoursPdf(EncoursImpotEtTaxeSearchDto searchDto, Long banqueId) {
+        log.info("Export PDF encours impôts/taxes — banqueId={}", banqueId);
+
+        LocalDate endOfMonth = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
+
+        Specification<ImpotEtTaxe> spec = Specification.where(ImpotEtTaxeSpecifications.outstandingUntil(endOfMonth))
+                .and(ImpotEtTaxeSpecifications.hasBanque(banqueId))
+                .and(ImpotEtTaxeSpecifications.hasLibelle(searchDto.libelle()))
+                .and(ImpotEtTaxeSpecifications.hasMotif(searchDto.motif()))
+                .and(ImpotEtTaxeSpecifications.hasMontant(searchDto.montant()));
+
+        List<ImpotEtTaxe> impotsEtTaxes = impotEtTaxeRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+
+        BigDecimal totalMontant = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return genererPdf("Encours des Impôts et Taxes", impotsEtTaxes, totalMontant, filterLines);
+    }
+
+    /**
+     * Construit le document PDF partagé par {@link #exporterPdf} et {@link #exporterEncoursPdf} —
+     * même mise en page, seuls le titre, les lignes et le résumé de filtres varient.
+     */
+    private byte[] genererPdf(String title, List<ImpotEtTaxe> impotsEtTaxes, BigDecimal totalMontant, List<String> filterLines) {
         try {
             return staportPdfReportService.generateReport(
-                "État des Impôts et Taxes",
+                title,
                 PageSize.A4.rotate(),
                 (doc, writer) -> {
                     try {
@@ -214,9 +248,9 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
                         Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
                         Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
 
-                        Paragraph title = new Paragraph("État des Impôts et Taxes", titleFont);
-                        title.setAlignment(Element.ALIGN_CENTER);
-                        doc.add(title);
+                        Paragraph titlePara = new Paragraph(title, titleFont);
+                        titlePara.setAlignment(Element.ALIGN_CENTER);
+                        doc.add(titlePara);
 
                         String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
                                 + "  •  " + impotsEtTaxes.size() + " ligne(s)";
@@ -349,6 +383,31 @@ public class ImpotEtTaxeServiceImpl implements IImpotEtTaxeService {
             lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
         if (dto.status() != null)
             lines.add("Statut : " + (dto.status() == Status.PAYE ? "Payée" : "Prévue"));
+
+        return lines;
+    }
+
+    /**
+     * Résumé des filtres pour l'export PDF de l'écran encours — {@code banqueId} vient du path
+     * variable (pas du DTO, contrairement à {@link #buildFilterSummary}).
+     */
+    private List<String> buildEncoursFilterSummary(EncoursImpotEtTaxeSearchDto dto, Long banqueId) {
+        List<String> lines = new ArrayList<>();
+
+        try {
+            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
+        } catch (ResourceNotFoundException e) {
+            log.debug("Banque id={} introuvable pour le résumé de filtre export encours — ignorée", banqueId);
+        }
+
+        if (dto == null) return lines;
+
+        if (dto.libelle() != null && !dto.libelle().isBlank())
+            lines.add("Libellé : " + dto.libelle());
+        if (dto.motif() != null)
+            lines.add("Motif : " + dto.motif().getMotif());
+        if (dto.montant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
 
         return lines;
     }

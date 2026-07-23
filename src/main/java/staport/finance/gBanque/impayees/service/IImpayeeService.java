@@ -30,4 +30,18 @@ public interface IImpayeeService {
     ImpayeeResponseDto toggleStatus(Long id);
 
     EncoursImpayeeDto getOutstandingImpayees(EncoursImpayeeSearchDto searchDto, Long banqueId, Pageable pageable);
+
+    /**
+     * Exporte en PDF l'intégralité des impayées correspondant aux critères fournis (mêmes filtres
+     * que {@link #searchImpayees}) — sans pagination : le fichier contient tous les résultats
+     * filtrés, pas seulement la page actuellement affichée à l'écran.
+     */
+    byte[] exporterPdf(ImpayeeSearchDto searchDto);
+
+    /**
+     * Exporte en PDF l'intégralité de l'encours d'impayées d'une banque (mêmes critères que
+     * {@link #getOutstandingImpayees}, {@code type} inclus) — sans pagination : le fichier
+     * contient tous les résultats filtrés, pas seulement la page actuellement affichée à l'écran.
+     */
+    byte[] exporterEncoursPdf(EncoursImpayeeSearchDto searchDto, Long banqueId);
 }

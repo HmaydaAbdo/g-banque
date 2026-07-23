@@ -8,12 +8,16 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.impayees.dtos.*;
 import staport.finance.gBanque.impayees.service.IImpayeeService;
+
+import java.time.LocalDate;
 
 /**
  * Injecte {@link IImpayeeService} (DIP — jamais la classe concrète).
@@ -87,6 +91,51 @@ public class ImpayeeController {
     public ResponseEntity<EncoursImpayeeDto> getOutstandingImpayees(@PathVariable Long banqueId, @ModelAttribute EncoursImpayeeSearchDto searchDto, @PageableDefault(size = 10, sort = "dateEmission") Pageable pageable) {
         log.info("Requête REST: Récupération encours pour banqueId={}", banqueId);
         return ResponseEntity.ok(impayeeService.getOutstandingImpayees(searchDto, banqueId, pageable));
+    }
+
+    /**
+     * Exporte en PDF l'intégralité des impayées correspondant aux critères fournis (mêmes filtres
+     * que {@code POST /impayees/search}) — sans pagination : le fichier contient tous les
+     * résultats filtrés, pas seulement la page actuellement affichée à l'écran.
+     */
+    @Operation(summary = "Exporter les impayées filtrées en PDF",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterPdf(@ModelAttribute ImpayeeSearchDto searchDto) {
+        log.info("GET /impayees/export/pdf — critères: {}", searchDto);
+
+        byte[] pdf = impayeeService.exporterPdf(searchDto);
+        String filename = "impayees_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    /**
+     * Exporte en PDF l'intégralité de l'encours d'impayées d'une banque correspondant aux
+     * critères fournis (mêmes filtres que {@code GET /impayees/encours/{banqueId}}, {@code type}
+     * inclus) — sans pagination : le fichier contient tous les résultats filtrés, pas seulement la
+     * page actuellement affichée à l'écran.
+     */
+    @Operation(summary = "Exporter en PDF l'encours d'impayées d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursImpayeeSearchDto searchDto) {
+        log.info("GET /impayees/encours/{}/export/pdf — type={}", banqueId, searchDto.type());
+
+        byte[] pdf = impayeeService.exporterEncoursPdf(searchDto, banqueId);
+        String filename = "impayees_encours_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")

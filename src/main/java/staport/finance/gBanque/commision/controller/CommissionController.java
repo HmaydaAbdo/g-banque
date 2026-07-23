@@ -137,6 +137,30 @@ public class CommissionController {
                 .body(pdf);
     }
 
+    /**
+     * Exporte en PDF l'intégralité de l'encours de commissions d'une banque correspondant aux
+     * critères fournis (mêmes filtres que {@code GET /commissions/encours/{banqueId}}) — sans
+     * pagination : le fichier contient tous les résultats filtrés, pas seulement la page
+     * actuellement affichée à l'écran.
+     */
+    @Operation(summary = "Exporter en PDF l'encours de commissions d'une banque",
+            description = "Ignore la pagination — exporte tous les résultats filtrés.")
+    @GetMapping("/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursCommissionSearchDto searchDto) {
+        log.info("GET /commissions/encours/{}/export/pdf", banqueId);
+
+        byte[] pdf = commissionService.exporterEncoursPdf(searchDto, banqueId);
+        String filename = "commissions_encours_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
     @Operation(summary = "Changer le statut PREVU/PAYE", description = "Réservé SYSTEM_ADMIN.")
     @PatchMapping("/{id}/toggle-status")
     @PreAuthorize(SYSTEM_ADMIN)

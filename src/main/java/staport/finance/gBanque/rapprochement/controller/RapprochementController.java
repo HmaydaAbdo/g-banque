@@ -94,15 +94,16 @@ public class RapprochementController {
         return ResponseEntity.ok(rapprochementPage);
     }
 
-    @Operation(summary = "Télécharger le rapport PDF d'un rapprochement")
+    @Operation(summary = "Télécharger le rapport PDF d'un rapprochement", description = "Le rapport inclut uniquement les transactions correspondant aux critères de filtre fournis (mêmes critères que l'écran détail — libellé, observation, montant, sources, dates d'opération) ; sans filtre, toutes les transactions du rapprochement sont incluses (comportement historique).")
     @ApiResponse(responseCode = "404", description = "Rapprochement introuvable")
     @GetMapping("/{id}/report/pdf")
     public ResponseEntity<byte[]> downloadRapprochementReport(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "FINANCE") ReportType reportType) {
+            @RequestParam(defaultValue = "FINANCE") ReportType reportType,
+            @ModelAttribute TransactionSearchDto searchDto) {
 
         // 1. Générer le contenu du rapport (byte[])
-        byte[] pdfContent = rapprochementService.generateRapprochementPdf(id, reportType);
+        byte[] pdfContent = rapprochementService.generateRapprochementPdf(id, reportType, searchDto);
 
         // 2. Définir le nom du fichier pour le téléchargement
         String filename = "Rapport_Rapprochement_" + id + ".pdf";

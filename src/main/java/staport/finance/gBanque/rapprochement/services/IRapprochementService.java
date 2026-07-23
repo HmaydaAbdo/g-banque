@@ -36,7 +36,13 @@ public interface IRapprochementService {
 
     Page<RapprochementResponseDto> searchRapprochements(RapprochementSearchDto searchDto, Pageable pageable);
 
-    byte[] generateRapprochementPdf(Long rapprochementId, ReportType reportType);
+    /**
+     * Génère le rapport PDF d'un rapprochement. {@code searchDto} filtre les transactions incluses
+     * dans le tableau (mêmes critères que l'écran détail — libellé, observation, montant, sources,
+     * dates d'opération) ; passer un DTO "vide" (tous champs null) reproduit le comportement
+     * historique (toutes les transactions du rapprochement, sans filtre).
+     */
+    byte[] generateRapprochementPdf(Long rapprochementId, ReportType reportType, TransactionSearchDto searchDto);
 
     /** Tous les rapprochements actuellement EN_COURS, toutes banques confondues. */
     List<Rapprochement> findAllEnCours();

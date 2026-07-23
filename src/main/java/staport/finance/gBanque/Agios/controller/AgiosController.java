@@ -9,7 +9,9 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +20,8 @@ import staport.finance.gBanque.Agios.dtos.AgiosResponseDto;
 import staport.finance.gBanque.Agios.dtos.AgiosSearchDto;
 import staport.finance.gBanque.Agios.dtos.EncoursAgiosDto;
 import staport.finance.gBanque.Agios.service.AgiosService;
+
+import java.time.LocalDate;
 
 /**
  * Contrôleur REST du module Agios.
@@ -85,6 +89,21 @@ public class AgiosController {
         return ResponseEntity.ok(agiosService.searchAgios(dto, pageable));
     }
 
+    // ── Export PDF ────────────────────────────────────────────────────────────
+
+    @Operation(summary = "Exporter en PDF les agios ponctuels",
+            description = "Mêmes critères que POST /agios/search — sans pagination")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportAgiosPdf(AgiosSearchDto dto) {
+        byte[] pdf = agiosService.exportAgiosPdf(dto);
+        String filename = "agios_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
     // ── Modification ──────────────────────────────────────────────────────────
 
     @Operation(summary = "Modifier un agios")
@@ -127,6 +146,24 @@ public class AgiosController {
 
         AgiosSearchDto criteria = new AgiosSearchDto(banqueId, libelle, montant, null);
         return ResponseEntity.ok(agiosService.getOutstandingAgios(criteria, pageable));
+    }
+
+    @Operation(summary = "Exporter en PDF les agios en cours d'une banque",
+            description = "Mêmes critères que GET /agios/encours/{banqueId} — sans pagination")
+    @GetMapping("/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exportOutstandingAgiosPdf(
+            @PathVariable Long banqueId,
+            @RequestParam(required = false) String libelle,
+            @RequestParam(required = false) java.math.BigDecimal montant) {
+
+        AgiosSearchDto criteria = new AgiosSearchDto(banqueId, libelle, montant, null);
+        byte[] pdf = agiosService.exportOutstandingAgiosPdf(criteria, banqueId);
+        String filename = "encours_agios_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     // ── Toggle statut ─────────────────────────────────────────────────────────

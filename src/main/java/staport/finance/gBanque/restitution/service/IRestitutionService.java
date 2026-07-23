@@ -30,4 +30,8 @@ public interface IRestitutionService {
     EncoursRestitution getOutstandingRestitutions(EncoursRestitutionSearchDto searchDto, Long banqueId, Pageable pageable);
 
     RestitutionResponseDto toggleStatus(Long id);
+
+    byte[] exporterPdf(RestitutionSearchDto searchDto);
+
+    byte[] exporterEncoursPdf(EncoursRestitutionSearchDto searchDto, Long banqueId);
 }

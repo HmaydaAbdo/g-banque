@@ -46,6 +46,13 @@ public interface ICommissionService {
     /** Exporte en PDF l'intégralité des commissions correspondant aux critères fournis. */
     byte[] exporterPdf(CommissionSearchDto searchDto);
 
+    /**
+     * Exporte en PDF l'intégralité de l'encours de commissions d'une banque (mêmes filtres que
+     * {@link #getOutstandingCommissions}) — sans pagination : le fichier contient tous les
+     * résultats filtrés, pas seulement la page actuellement affichée à l'écran.
+     */
+    byte[] exporterEncoursPdf(EncoursCommissionSearchDto searchDto, Long banqueId);
+
     /** Bascule le statut d'une commission entre PREVU et PAYE. */
     void toggleCommisionStatus(Long commissionId);
 

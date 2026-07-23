@@ -109,19 +109,28 @@ public class RapprochementServiceImpl implements IRapprochementService {
 
     // ── Report data (PDF) ────────────────────────────────────────────────────
 
+    /**
+     * Construit les données du rapport PDF. {@code searchDto} filtre les transactions incluses
+     * (mêmes critères et même Specification que l'écran détail, via
+     * {@link ITransactionService#searchTransactionsForRapprochement}) — un DTO "vide" reproduit le
+     * comportement historique (toutes les transactions, sans filtre). Les agrégats (soldes, totaux
+     * débit/crédit, TVA) restent ceux du rapprochement entier, non filtrés : ce sont des faits de
+     * la période, pas un résultat de recherche — même choix déjà fait par {@link #getRapprochementById}
+     * pour l'écran détail (transactions filtrées, agrégats non filtrés).
+     */
     @Transactional(readOnly = true)
-    public ReportDto getReportDataById(Long rapprochementId) {
+    public ReportDto getReportDataById(Long rapprochementId, TransactionSearchDto searchDto) {
 
         Rapprochement rapprochement = findOrThrow(rapprochementId);
 
-        List<TransactionResponseDto> transactionDtos =
-                transactionService.getAllTransactionsForRapprochementSortedByDate(rapprochementId);
+        Page<TransactionResponseDto> transactionPage = transactionService.searchTransactionsForRapprochement(
+                rapprochementId, searchDto, Pageable.unpaged(Sort.by(Sort.Direction.ASC, "dateOperations")));
 
         // Single aggregate query — no Java stream summation
         RapprochementAggregates agg = fetchAggregates(rapprochementId);
 
         ReportDto dto = rapprochementMapper.toReportDto(rapprochement, agg);
-        return dto.withTransactions(transactionDtos);
+        return dto.withTransactions(transactionPage.getContent());
     }
 
     // ── Clôture provisoire ────────────────────────────────────────────────────
@@ -207,8 +216,8 @@ public class RapprochementServiceImpl implements IRapprochementService {
 
     @Override
     @Transactional(readOnly = true)
-    public byte[] generateRapprochementPdf(Long rapprochementId, ReportType reportType) {
-        ReportDto reportDto = getReportDataById(rapprochementId);
+    public byte[] generateRapprochementPdf(Long rapprochementId, ReportType reportType, TransactionSearchDto searchDto) {
+        ReportDto reportDto = getReportDataById(rapprochementId, searchDto);
         try {
             return pdfReportService.generateRapprochementReport(reportDto, reportType);
         } catch (Exception e) {

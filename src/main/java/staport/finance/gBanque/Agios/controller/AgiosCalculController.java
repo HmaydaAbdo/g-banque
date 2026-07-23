@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +15,7 @@ import staport.finance.gBanque.Agios.dtos.*;
 import staport.finance.gBanque.Agios.enums.TypeAgios;
 import staport.finance.gBanque.Agios.service.AgiosOrchestrateurService;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,6 +85,36 @@ public class AgiosCalculController {
     public ResponseEntity<List<MarcheRefDto>> getMarchesDisponibles(
             AgiosJournalierSearchDto searchDto) {
         return ResponseEntity.ok(orchestrateur.getMarchesDisponibles(searchDto));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  EXPORT PDF
+    // ═══════════════════════════════════════════════════════════════
+
+    @GetMapping("/trimestres/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @Operation(summary = "Exporter en PDF les trimestres d'agios",
+            description = "Mêmes critères que GET /agios/calcul/trimestres — sans pagination")
+    public ResponseEntity<byte[]> exportTrimestresPdf(AgiosTrimestrielSearchDto searchDto) {
+        byte[] pdf = orchestrateur.exportTrimestresPdf(searchDto);
+        String filename = "agios_calcul_trimestres_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
+    @GetMapping("/detail/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    @Operation(summary = "Exporter en PDF le détail journalier d'un trimestre",
+            description = "Mêmes critères que GET /agios/calcul/detail — sans pagination")
+    public ResponseEntity<byte[]> exportJournalierPdf(AgiosJournalierSearchDto searchDto) {
+        byte[] pdf = orchestrateur.exportJournalierPdf(searchDto);
+        String filename = "agios_calcul_detail_" + LocalDate.now() + ".pdf";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", filename);
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     // ═══════════════════════════════════════════════════════════════

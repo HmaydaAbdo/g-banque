@@ -8,12 +8,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import staport.finance.gBanque.operationErrone.dtos.*;
 import staport.finance.gBanque.operationErrone.services.IOperationErroneService;
+
+import java.time.LocalDate;
 
 /**
  * Injecte {@link IOperationErroneService} (DIP — jamais la classe concrète).
@@ -112,5 +116,33 @@ public class OperationErroneController {
         OperationErroneResponseDto response = operationErroneService.toggleStatus(id);
         log.info("Statut de l'opération erronée ID: {} basculé vers {}", id, response.status());
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Exporter la liste des opérations erronées en PDF", description = "Mêmes critères de filtre que /search, sans pagination.")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterPdf(@ModelAttribute OperationErroneSearchDto searchDto) {
+        byte[] pdf = operationErroneService.exporterPdf(searchDto);
+        String filename = "operations_erronees_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    @Operation(summary = "Exporter l'encours d'opérations erronées d'une banque en PDF", description = "Mêmes critères de filtre que l'encours, sans pagination.")
+    @GetMapping("/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursOperationErroneSearchDto searchDto) {
+        byte[] pdf = operationErroneService.exporterEncoursPdf(searchDto, banqueId);
+        String filename = "operations_erronees_encours_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

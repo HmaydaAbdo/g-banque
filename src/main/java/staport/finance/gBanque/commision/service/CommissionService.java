@@ -254,9 +254,40 @@ public class CommissionService implements ICommissionService {
         BigDecimal totalMontant = sumMontant(spec);
         List<String> filterLines = buildFilterSummary(searchDto);
 
+        return genererPdf("État des Commissions", commissions, totalMontant, filterLines);
+    }
+
+    /**
+     * Génère un export PDF de l'encours de commissions d'une banque (mêmes critères que
+     * {@link #getOutstandingCommissions}) — sans pagination : le fichier imprime la totalité des
+     * résultats filtrés, pas seulement la page affichée à l'écran.
+     */
+    @Transactional(readOnly = true)
+    public byte[] exporterEncoursPdf(EncoursCommissionSearchDto searchDto, Long banqueId) {
+        log.info("Export PDF encours commissions — banqueId={}", banqueId);
+
+        Specification<Commission> spec = Specification.where(CommissionSpecifications.outstandingUntil(endOfMonth))
+                .and(CommissionSpecifications.hasBanque(banqueId))
+                .and(CommissionSpecifications.hasLibelle(searchDto.libelle()))
+                .and(CommissionSpecifications.hasOperation(searchDto.operation()))
+                .and(CommissionSpecifications.hasMontant(searchDto.montant()));
+
+        List<Commission> commissions = commissionRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "dateEmission"));
+
+        BigDecimal totalMontant = sumMontant(spec);
+        List<String> filterLines = buildEncoursFilterSummary(searchDto, banqueId);
+
+        return genererPdf("Encours des Commissions", commissions, totalMontant, filterLines);
+    }
+
+    /**
+     * Construit le document PDF partagé par {@link #exporterPdf} et {@link #exporterEncoursPdf} —
+     * même mise en page, seuls le titre, les lignes et le résumé de filtres varient.
+     */
+    private byte[] genererPdf(String title, List<Commission> commissions, BigDecimal totalMontant, List<String> filterLines) {
         try {
             return staportPdfReportService.generateReport(
-                "État des Commissions",
+                title,
                 PageSize.A4.rotate(),
                 (doc, writer) -> {
                     try {
@@ -269,9 +300,9 @@ public class CommissionService implements ICommissionService {
                         Font cellFont  = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
                         Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.decode("#1e3a8a"));
 
-                        Paragraph title = new Paragraph("État des Commissions", titleFont);
-                        title.setAlignment(Element.ALIGN_CENTER);
-                        doc.add(title);
+                        Paragraph titlePara = new Paragraph(title, titleFont);
+                        titlePara.setAlignment(Element.ALIGN_CENTER);
+                        doc.add(titlePara);
 
                         String exportInfo = "Exporté le " + LocalDate.now().format(DATE_FMT)
                                 + "  •  " + commissions.size() + " commission(s)";
@@ -414,6 +445,31 @@ public class CommissionService implements ICommissionService {
                 log.debug("Nature id={} introuvable pour le résumé de filtre export — ignorée", dto.natureId());
             }
         }
+
+        return lines;
+    }
+
+    /**
+     * Résumé des filtres pour l'export PDF de l'écran encours — {@code banqueId} vient du path
+     * variable (pas du DTO, contrairement à {@link #buildFilterSummary}).
+     */
+    private List<String> buildEncoursFilterSummary(EncoursCommissionSearchDto dto, Long banqueId) {
+        List<String> lines = new ArrayList<>();
+
+        try {
+            lines.add("Banque : " + banqueService.findOrThrow(banqueId).getNom());
+        } catch (ResourceNotFoundException e) {
+            log.debug("Banque id={} introuvable pour le résumé de filtre export encours — ignorée", banqueId);
+        }
+
+        if (dto == null) return lines;
+
+        if (dto.libelle() != null && !dto.libelle().isBlank())
+            lines.add("Libellé : " + dto.libelle());
+        if (dto.operation() != null)
+            lines.add("Opération : " + dto.operation());
+        if (dto.montant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
 
         return lines;
     }

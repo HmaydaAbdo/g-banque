@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -18,6 +20,8 @@ import staport.finance.gBanque.restitution.dtos.RestitutionRequestDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionResponseDto;
 import staport.finance.gBanque.restitution.dtos.RestitutionSearchDto;
 import staport.finance.gBanque.restitution.service.IRestitutionService;
+
+import java.time.LocalDate;
 
 /**
  * Injecte {@link IRestitutionService} (DIP — jamais la classe concrète).
@@ -128,5 +132,33 @@ public class RestitutionController {
         RestitutionResponseDto response = restitutionService.toggleStatus(id);
         log.info("Statut de la restitution ID: {} basculé vers {}", id, response.status());
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Exporter la liste des restitutions en PDF", description = "Mêmes critères de filtre que /search, sans pagination.")
+    @GetMapping("/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterPdf(@ModelAttribute RestitutionSearchDto searchDto) {
+        byte[] pdf = restitutionService.exporterPdf(searchDto);
+        String filename = "restitutions_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    @Operation(summary = "Exporter l'encours de restitutions d'une banque en PDF", description = "Mêmes critères de filtre que l'encours, sans pagination.")
+    @GetMapping("/encours/{banqueId}/export/pdf")
+    @PreAuthorize(FINANCE_OR_ADMIN)
+    public ResponseEntity<byte[]> exporterEncoursPdf(
+            @PathVariable Long banqueId,
+            @ModelAttribute EncoursRestitutionSearchDto searchDto) {
+        byte[] pdf = restitutionService.exporterEncoursPdf(searchDto, banqueId);
+        String filename = "restitutions_encours_" + LocalDate.now() + ".pdf";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

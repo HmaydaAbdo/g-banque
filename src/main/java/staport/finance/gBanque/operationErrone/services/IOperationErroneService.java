@@ -30,4 +30,8 @@ public interface IOperationErroneService {
     EncoursOperationErroneDto getOutstandingOperationErrone(EncoursOperationErroneSearchDto searchDto, Long banqueId, Pageable pageable);
 
     OperationErroneResponseDto toggleStatus(Long id);
+
+    byte[] exporterPdf(OperationErroneSearchDto searchDto);
+
+    byte[] exporterEncoursPdf(EncoursOperationErroneSearchDto searchDto, Long banqueId);
 }

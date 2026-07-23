@@ -44,11 +44,12 @@ public interface ITransactionService {
 
     // ── Façade pour le domaine Rapprochement ────────────────────────────────────────────────
 
-    /** Transactions d'un rapprochement, filtrées et paginées. */
+    /**
+     * Transactions d'un rapprochement, filtrées et paginées — {@code pageable} peut être
+     * {@link Pageable#unpaged()} pour récupérer l'intégralité des résultats filtrés en une page
+     * (usage : export PDF filtré du rapport de rapprochement, voir {@code RapprochementServiceImpl}).
+     */
     Page<TransactionResponseDto> searchTransactionsForRapprochement(Long rapprochementId, TransactionSearchDto searchDto, Pageable pageable);
-
-    /** Toutes les transactions d'un rapprochement, triées par date d'opération (usage : export PDF). */
-    List<TransactionResponseDto> getAllTransactionsForRapprochementSortedByDate(Long rapprochementId);
 
     /** Nombre de transactions attachées à un rapprochement. */
     long countByRapprochementId(Long rapprochementId);
