@@ -92,6 +92,16 @@
       <button
         pButton
         pRipple
+        icon="pi pi-file-pdf"
+        class="p-button-outlined mr-2"
+        severity="secondary"
+        [loading]="exporting"
+        (click)="exportPdf()"
+        label="Exporter PDF"
+      ></button>
+      <button
+        pButton
+        pRipple
         icon="pi pi-filter-slash"
         class="p-button-outlined p-button-secondary"
         (click)="clearFilters()"

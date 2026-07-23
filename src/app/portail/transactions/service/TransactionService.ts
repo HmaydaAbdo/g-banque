@@ -62,6 +62,16 @@ export class TransactionService {
   }
 
 
+  /**
+   * Exporte en PDF les transactions d'une banque (mêmes critères que {@link getTransactionsByBanque},
+   * sans pagination) — écran "Rapprochement en cours".
+   */
+  exportBankTransactionsPdf(banqueId: number, searchDto: TransactionSearchDto): Observable<Blob> {
+    const params = this.buildFilterParams(searchDto);
+    return this.http.get(`${this.baseUrl}/${banqueId}/transactions/export/pdf`, { params, responseType: 'blob' });
+  }
+
+
   updateTransactionById(id: number, updateTransactionDto: TransactionUpdateRequestDto): Observable<TransactionResponseDto> {
     return this.http.patch<TransactionResponseDto>(`${this.baseUrl}/${id}`, updateTransactionDto);
   }

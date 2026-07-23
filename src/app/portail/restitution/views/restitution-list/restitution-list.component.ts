@@ -45,6 +45,7 @@ export class RestitutionListComponent implements OnInit {
   restitutions: RestitutionResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
 
   searchCriteria: RestitutionSearchDto = {};
   selectedBanque?: BanqueResponse;
@@ -123,6 +124,32 @@ export class RestitutionListComponent implements OnInit {
     this.selectedStatus = undefined;
     this.libelleFilter = null;
     this.applyFilters();
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des restitutions correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    this.searchCriteria.banqueId = this.selectedBanque?.id;
+    this.searchCriteria.status = this.selectedStatus;
+    this.searchCriteria.libelle = this.libelleFilter || undefined;
+
+    this.restitutionService.exportPdf(this.searchCriteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `restitutions_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   deleteRestitution(restitution: RestitutionResponseDto) {

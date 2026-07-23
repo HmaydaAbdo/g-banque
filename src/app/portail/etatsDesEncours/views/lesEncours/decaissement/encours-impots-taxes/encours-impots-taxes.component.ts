@@ -64,6 +64,7 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
   impotEtTaxes: ImpotEtTaxeResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
   totalEncours!: number;
   banqueId?: number;
 
@@ -350,6 +351,38 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
       montant: null
     });
     this.applyFilters();
+  }
+
+  /**
+   * Exporte en PDF l'intégralité de l'encours d'impôts/taxes de la banque courante, filtré selon
+   * les critères actuellement appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    if (!this.banqueId) {
+      return;
+    }
+    this.exporting = true;
+    const formValues = this.searchForm.value;
+    const searchCriteria: ImpotEtTaxeSearchDto = {
+      motif: formValues.motif,
+      libelle: formValues.libelle,
+      montant: formValues.montant
+    };
+
+    this.impotEtTaxeService.exportEncoursPdf(this.banqueId, searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `impots_taxes_encours_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   isInvalid(controlName: string): boolean {

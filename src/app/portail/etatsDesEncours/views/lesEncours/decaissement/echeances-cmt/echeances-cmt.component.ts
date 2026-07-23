@@ -71,6 +71,7 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
   echeances: EcheanceCMTResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
   currentMonthYear: string | null = null;
 
 
@@ -371,5 +372,32 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
+  exportPdf(): void {
+    if (!this.banqueIdFromRoute) {
+      return;
+    }
+    this.exporting = true;
+    const searchCriteria = this.searchForm.value;
+    const request: EncoursCMTRequestDTO = {
+      banqueId: this.banqueIdFromRoute,
+      designation: searchCriteria.designation,
+      montant: searchCriteria.montant
+    };
+
+    this.echeanceCmtService.exportEncoursCMTPdf(request).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `encours_cmt_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
+  }
 
 }

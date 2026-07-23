@@ -63,6 +63,7 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
   trimestreInfo?: AgiosTrimestrielResponseDto;
   aggregates?: AgiosDetailAggregateDto;
   loading = false;
+  exporting = false;
 
   // Pagination
   rows = 31;
@@ -304,6 +305,29 @@ export class AgiosCalculDetailComponent implements OnInit, OnDestroy {
 
   retour(): void {
     this.router.navigate(['/portail/agios/calcul']);
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+
+    this.agiosCalculService.exportJournalierPdf(this.journalierDto)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.exporting = false)
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `agios_calcul_detail_${new Date().toISOString().slice(0, 10)}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        }
+      });
   }
 
   // ═══════════════════════════════════════════════════════════════

@@ -44,6 +44,7 @@ export class OperationErroneListComponent implements OnInit {
   operations: OperationErroneResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
 
   searchCriteria: OperationErroneSearchDto = {};
   selectedBanque?: BanqueResponse;
@@ -150,6 +151,33 @@ export class OperationErroneListComponent implements OnInit {
     this.selectedMotif = undefined;
     this.libelleFilter = null;
     this.applyFilters();
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des opérations erronées correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    this.searchCriteria.banqueId = this.selectedBanque?.id;
+    this.searchCriteria.status = this.selectedStatus;
+    this.searchCriteria.motif = this.selectedMotif;
+    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+
+    this.operationErroneService.exportPdf(this.searchCriteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `operations_erronees_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   deleteOperation(operation: OperationErroneResponseDto) {

@@ -72,6 +72,7 @@ export class EncoursAgiosComponent implements OnInit, OnDestroy {
   agios: AgiosResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
   totalEncours = 0;
   banqueId?: number;
 
@@ -267,6 +268,28 @@ export class EncoursAgiosComponent implements OnInit, OnDestroy {
     if (this.table) {
       setTimeout(() => this.table.reset(), 0);
     }
+  }
+
+  exportPdf(): void {
+    if (!this.banqueId) return;
+    this.exporting = true;
+    const searchCriteria: AgiosSearchDto = this.searchForm.getRawValue() as AgiosSearchDto;
+
+    this.agiosService.exportOutstandingAgiosPdf(this.banqueId, searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `encours_agios_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
   isInvalid(controlName: string): boolean {

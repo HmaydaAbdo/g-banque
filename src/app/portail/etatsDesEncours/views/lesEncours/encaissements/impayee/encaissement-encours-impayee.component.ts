@@ -50,6 +50,7 @@ export class EncaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
   impayees: ImpayeeResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
   totalEncours!: number;
   banqueId: number | undefined;
   displayModal: boolean = false;
@@ -314,6 +315,34 @@ export class EncaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
     if (this.table) {
       setTimeout(() => this.table.reset(), 0);
     }
+  }
+
+  /**
+   * Exporte en PDF l'intégralité de l'encours d'impayées d'encaissement de la banque courante,
+   * filtré selon les critères actuellement appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    if (!this.banqueId) {
+      return;
+    }
+    this.exporting = true;
+    const searchCriteria: ImpayeeSearchDto = this.searchForm.getRawValue();
+    searchCriteria.type = Type.ENCAISSEMENT;
+
+    this.impayeeService.exportEncoursPdf(this.banqueId, searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `impayees_encours_encaissement_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   isInvalid(controlName: string): boolean {

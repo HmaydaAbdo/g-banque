@@ -112,4 +112,39 @@ export class OperationErroneService {
       {}
     );
   }
+
+  /**
+   * Exporte en PDF l'intégralité des opérations erronées correspondant aux filtres fournis
+   * (mêmes critères que {@link searchOperationErrone}, sans pagination — le PDF contient tous les
+   * résultats filtrés, pas seulement la page actuellement affichée).
+   * GET /operation-errone/export/pdf
+   */
+  exportPdf(searchDto: OperationErroneSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.banqueId != null) params = params.set('banqueId', searchDto.banqueId.toString());
+    if (searchDto.libelle)          params = params.set('libelle', searchDto.libelle);
+    if (searchDto.montant != null)  params = params.set('montant', searchDto.montant.toString());
+    if (searchDto.status)           params = params.set('status', searchDto.status);
+    if (searchDto.motif)            params = params.set('motif', searchDto.motif);
+
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /**
+   * Exporte en PDF l'intégralité de l'encours d'opérations erronées d'une banque correspondant
+   * aux filtres fournis (mêmes critères que {@link getOutstandingOperationErrone}, sans
+   * pagination — le PDF contient tous les résultats filtrés, pas seulement la page actuellement
+   * affichée).
+   * GET /operation-errone/encours/{banqueId}/export/pdf
+   */
+  exportEncoursPdf(banqueId: number, searchDto: OperationErroneSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.libelle)         params = params.set('libelle', searchDto.libelle);
+    if (searchDto.montant != null) params = params.set('montant', searchDto.montant.toString());
+    if (searchDto.motif)           params = params.set('motif', searchDto.motif);
+
+    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

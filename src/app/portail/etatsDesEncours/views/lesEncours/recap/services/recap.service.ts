@@ -107,6 +107,52 @@ export class RecapService {
     return this.http.get<AgregatedRecapDto>(url, { params });
   }
 
+  /**
+   * Exporte en PDF le récapitulatif des décaissements prévisionnels du mois pour une banque
+   * (mêmes critères que {@link getRecapitulatifDecaissement}, sans pagination).
+   */
+  exportRecapitulatifDecaissementPdf(banqueId: number, searchDto: DecaissementSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.transactionSources && searchDto.transactionSources.length > 0) {
+      searchDto.transactionSources.forEach(source => {
+        params = params.append('transactionSources', source);
+      });
+    }
+    if (searchDto.libelle && searchDto.libelle.length > 0) {
+      params = params.append('libelle', searchDto.libelle);
+    }
+    if (searchDto.observation && searchDto.observation.length > 0) {
+      params = params.append('observation', searchDto.observation);
+    }
+
+    const url = `${this.baseUrl}/decaissement/banque/${banqueId}/export/pdf`;
+    return this.http.get(url, { params, responseType: 'blob' });
+  }
+
+  /**
+   * Exporte en PDF le récapitulatif des encaissements prévisionnels du mois pour une banque
+   * (mêmes critères que {@link getRecapitulatifEncaissement}, sans pagination).
+   */
+  exportRecapitulatifEncaissementPdf(banqueId: number, searchDto: DecaissementSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.transactionSources && searchDto.transactionSources.length > 0) {
+      searchDto.transactionSources.forEach(source => {
+        params = params.append('transactionSources', source);
+      });
+    }
+    if (searchDto.libelle && searchDto.libelle.length > 0) {
+      params = params.append('libelle', searchDto.libelle);
+    }
+    if (searchDto.observation && searchDto.observation.length > 0) {
+      params = params.append('observation', searchDto.observation);
+    }
+
+    const url = `${this.baseUrl}/encaissement/banque/${banqueId}/export/pdf`;
+    return this.http.get(url, { params, responseType: 'blob' });
+  }
+
 
   /**
    * Downloads the global summary report (PDF) for a specific bank.

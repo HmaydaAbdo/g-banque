@@ -104,6 +104,28 @@ export class AgiosCalculService {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  //  EXPORT PDF
+  // ═══════════════════════════════════════════════════════════════
+
+  /** GET /agios/calcul/trimestres/export/pdf */
+  exportTrimestresPdf(dto: AgiosTrimestrielSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    if (dto.banqueId != null) params = params.set('banqueId', dto.banqueId.toString());
+    if (dto.type != null) params = params.set('type', dto.type);
+    if (dto.annee != null) params = params.set('annee', dto.annee.toString());
+    if (dto.trimestre != null) params = params.set('trimestre', dto.trimestre.toString());
+    if (dto.statut != null) params = params.set('statut', dto.statut);
+
+    return this.http.get(`${this.apiUrl}/trimestres/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /** GET /agios/calcul/detail/export/pdf */
+  exportJournalierPdf(dto: AgiosJournalierSearchDto): Observable<Blob> {
+    const params = this.buildJournalierParams(dto);
+    return this.http.get(`${this.apiUrl}/detail/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   //  ACTIONS
   // ═══════════════════════════════════════════════════════════════
 

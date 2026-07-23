@@ -63,6 +63,7 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   // State
   loading = false;
   recalculEnCours = false;
+  exporting = false;
 
   // Pagination
   rows = 10;
@@ -211,6 +212,30 @@ export class AgiosCalculDashboardComponent implements OnInit, OnDestroy {
   clearFilters(dt: Table): void {
     this.searchForm.reset();
     this.onFilterChange(dt);
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const dto: AgiosTrimestrielSearchDto = this.searchForm.value;
+
+    this.agiosCalculService.exportTrimestresPdf(dto)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.exporting = false)
+      )
+      .subscribe({
+        next: (blob: Blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `agios_calcul_trimestres_${new Date().toISOString().slice(0, 10)}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        }
+      });
   }
 
   // ═══════════════════════════════════════════════════════════════

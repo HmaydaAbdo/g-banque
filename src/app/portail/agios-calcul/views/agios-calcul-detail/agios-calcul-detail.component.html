@@ -43,6 +43,12 @@
     </div>
 
     <div class="flex align-items-center gap-2 flex-shrink-0">
+      <button pButton pRipple icon="pi pi-file-pdf" label="Exporter PDF"
+              class="p-button-outlined p-button-danger" size="small"
+              [loading]="exporting"
+              (click)="exportPdf()"
+              pTooltip="Exporter les résultats en PDF" tooltipPosition="bottom">
+      </button>
       @if (isAdmin() && trimestreInfo && trimestreInfo.statut === StatutTrimestre.OUVERT) {
         <button pButton pRipple icon="pi pi-lock" label="Clôturer"
                 severity="danger" size="small"

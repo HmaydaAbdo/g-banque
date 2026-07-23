@@ -236,6 +236,8 @@
 
         <!-- RIGHT ACTION -->
         <ng-template pTemplate="right">
+          <button type="button" pButton pRipple label="Exporter PDF" class="h-fit mr-2" size="small"
+                  icon="pi pi-file-pdf" severity="secondary" [loading]="exportingReport" (click)="exportReport()"></button>
           <button
             pButton
             icon="pi pi-filter-slash"
@@ -524,4 +526,56 @@
     <p-button label="Annuler" severity="secondary" (click)="closeEditDialog()"></p-button>
     <p-button label="Enregistrer" severity="success" (click)="updateTransaction()" [disabled]="editDateForm.invalid"></p-button>
   </ng-template>
+</p-dialog>
+
+<!-- Modal choix type de rapport (export PDF filtré) -->
+<p-dialog
+  header="Choisir le type de rapport"
+  [(visible)]="showReportTypeModal"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false">
+
+  <div class="flex flex-column gap-3 p-3">
+
+    <p class="text-color-secondary m-0">
+      Sélectionnez la version du rapport à télécharger. Seules les transactions correspondant aux
+      filtres actuellement appliqués ci-dessus seront incluses.
+    </p>
+
+    <p-selectButton
+      [options]="reportTypeOptions"
+      [formControl]="reportTypeControl"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="w-full flex"
+      [style]="{ width: '100%' }">
+
+      <ng-template pTemplate="item" let-option>
+        <div class="flex flex-row align-items-center justify-content-center gap-2 px-3 py-2 w-full">
+          <div class="flex flex-column align-items-start">
+            <span class="font-semibold">{{ option.label }}</span>
+          </div>
+        </div>
+      </ng-template>
+
+    </p-selectButton>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Annuler"
+      icon="pi pi-times"
+      styleClass="p-button-text"
+      (click)="showReportTypeModal = false">
+    </p-button>
+    <p-button
+      label="Télécharger"
+      icon="pi pi-download"
+      [disabled]="!reportTypeControl.value"
+      (click)="confirmExportReport()">
+    </p-button>
+  </ng-template>
+
 </p-dialog>

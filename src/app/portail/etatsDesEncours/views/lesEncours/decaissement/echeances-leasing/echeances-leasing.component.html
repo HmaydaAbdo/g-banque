@@ -10,7 +10,7 @@
 
     <div class="pg-filters">
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
-  <form [formGroup]="searchForm" class="flex flex-row justify-content-between align-items-center  gap-2">
+  <form [formGroup]="searchForm" class="flex flex-row justify-content-around align-items-center gap-2 w-full">
       <span class="p-float-label">
           <p-dropdown id="organismeLeasingId" formControlName="organismeLeasingId" [options]="organismeLeasingOptions" optionLabel="label" optionValue="value" [showClear]="true"></p-dropdown>
           <label for="organismeLeasingId">Organisme de Leasing</label>
@@ -24,6 +24,10 @@
           <input id="montant" type="number" pInputText formControlName="montant">
           <label for="montant">Montant</label>
         </span>
+
+      <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
+              class="h-fit" size="small" severity="secondary"
+              [loading]="exporting" (click)="exportPdf()"></button>
     </form>
 </div>
 

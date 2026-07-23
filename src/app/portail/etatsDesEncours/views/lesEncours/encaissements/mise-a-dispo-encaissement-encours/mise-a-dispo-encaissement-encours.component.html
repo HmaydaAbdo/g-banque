@@ -10,7 +10,7 @@
 
     <div class="pg-filters">
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
-  <form [formGroup]="searchForm" class="flex flex-row justify-content-between ">
+  <form [formGroup]="searchForm" class="flex flex-row justify-content-around w-full">
       <span class="p-float-label">
           <input id="emetteur" type="text" pInputText formControlName="emetteur" />
           <label for="emetteur">émetteur</label>
@@ -27,6 +27,10 @@
           <input id="montant" type="number" pInputText formControlName="montant" />
           <label for="montant">Recherche par Montant</label>
         </span>
+      <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
+              class="h-fit" size="small" severity="secondary"
+              [loading]="exporting" (click)="exportPdf()"></button>
+
       <button pButton pRipple label="Ajouter Mise à disposition" class=" h-fit " size="small" icon="pi pi-plus"
               severity="primary" routerLink="/portail/Mise-a-disposition/new" [queryParams]="{banqueId: banqueIdFromRoute}"></button>
 

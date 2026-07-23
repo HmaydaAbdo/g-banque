@@ -142,6 +142,23 @@ export class FraisBancaireService {
     return this.http.get<EncoursFraisBancaireDto>(`${this.apiUrl}/encours/${banqueId}`, { params });
   }
 
+  /**
+   * Exporte en PDF l'encours de frais bancaires d'une banque (mêmes critères que
+   * {@link getOutstandingFraisBancaire}, sans pagination).
+   */
+  exportOutstandingFraisBancairePdf(banqueId: number, searchDto?: FraisBancaireSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto?.libelle) {
+      params = params.set('libelle', searchDto.libelle);
+    }
+    if (searchDto?.montant !== null && searchDto?.montant !== undefined) {
+      params = params.set('montant', searchDto.montant.toString());
+    }
+
+    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
+  }
+
 
   toggleStatus(id: number): Observable<FraisBancaireResponseDto> {
     return this.http.patch<FraisBancaireResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});

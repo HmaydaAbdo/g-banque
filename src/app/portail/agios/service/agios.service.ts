@@ -71,4 +71,28 @@ export class AgiosService {
   toggleStatus(id: number): Observable<AgiosResponseDto> {
     return this.http.patch<AgiosResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
+
+  exportAgiosPdf(dto?: AgiosSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    if (dto) {
+      Object.entries(dto).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          params = params.set(key, String(value));
+        }
+      });
+    }
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  exportOutstandingAgiosPdf(banqueId: number, dto?: AgiosSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    if (dto) {
+      Object.entries(dto).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          params = params.set(key, String(value));
+        }
+      });
+    }
+    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

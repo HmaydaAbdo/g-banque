@@ -204,4 +204,18 @@ export class MiseADispositionService {
     return this.http.get(`${this.apiUrl}/encours/decaissements/${banqueId}/export/pdf`, {params, responseType: 'blob'});
   }
 
+  exportEncoursEncaissementPdf(banqueId: number, searchDto: MiseADispositionSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+    if (searchDto.numero) {
+      params = params.set('numero', searchDto.numero);
+    }
+    if (searchDto.beneficiaire) {
+      params = params.set('beneficiaire', searchDto.beneficiaire);
+    }
+    if ((searchDto as any).montant) {
+      params = params.set('montant', (searchDto as any).montant.toString());
+    }
+    return this.http.get(`${this.apiUrl}/encours/encaissements/${banqueId}/export/pdf`, {params, responseType: 'blob'});
+  }
+
 }

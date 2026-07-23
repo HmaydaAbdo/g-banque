@@ -3,7 +3,7 @@
 <div class="flex flex-column gap-3 w-full">
 
   <!-- Section Recherche -->
-  <div class="pg-filters" [formGroup]="searchForm">
+  <div class="pg-filters justify-content-around w-full" [formGroup]="searchForm">
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
 <span class="p-input-icon-left w-full">
           <i class="pi pi-search"></i>
@@ -30,6 +30,9 @@
           appendTo="body"
           [style]="{'width':'100%'}">
         </p-multiSelect>
+<button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
+        class="h-fit" size="small" severity="secondary"
+        [loading]="exporting" (click)="exportPdf()"></button>
 </div>
 
   <!-- Section Tableau -->

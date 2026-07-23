@@ -104,4 +104,19 @@ export class ImpotEtTaxeService {
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
   }
+
+  /**
+   * Exporte en PDF l'intégralité de l'encours d'impôts/taxes d'une banque correspondant aux
+   * filtres fournis (mêmes critères que {@link getOutstandingImpotEtTaxes}, sans pagination — le
+   * PDF contient tous les résultats filtrés, pas seulement la page actuellement affichée).
+   */
+  exportEncoursPdf(banqueId: number, searchDto: ImpotEtTaxeSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.libelle)         params = params.set('libelle', searchDto.libelle);
+    if (searchDto.motif)           params = params.set('motif', searchDto.motif);
+    if (searchDto.montant != null) params = params.set('montant', searchDto.montant.toString());
+
+    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

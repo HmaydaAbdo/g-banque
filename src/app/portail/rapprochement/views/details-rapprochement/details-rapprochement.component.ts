@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, OnDestroy, inject } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { SourceBadgeComponent } from '../../../global/shared-components/source-badge/source-badge.component';
 import { ActivatedRoute } from '@angular/router';
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
@@ -14,7 +14,8 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
 import { MultiSelectModule } from 'primeng/multiselect';
-import { Subscription, debounceTime, distinctUntilChanged } from 'rxjs';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { Subscription, catchError, debounceTime, distinctUntilChanged, finalize, throwError } from 'rxjs';
 import { RapprochementResponse } from '../../dtos/RapprochementResponse';
 import { TransactionResponseDto } from '../../../transactions/dtos/TransactionResponseDto';
 import { TransactionSearchDto } from '../../../transactions/dtos/TransactionSearchDto';
@@ -50,6 +51,7 @@ import { StatutRapprochement } from '../../enums/StatutRapprochement';
     ToolbarModule,
     TooltipModule,
     SourceBadgeComponent,
+    SelectButtonModule,
   ],
   templateUrl: './details-rapprochement.component.html',
   styleUrls: ['./details-rapprochement.component.scss'],
@@ -78,6 +80,15 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
 
   displayEditDialog: boolean = false;
   editDateForm!: FormGroup;
+
+  // Export PDF filtré (mêmes filtres que le tableau des transactions ci-dessous)
+  exportingReport: boolean = false;
+  showReportTypeModal: boolean = false;
+  reportTypeControl = new FormControl<'FINANCE' | 'COMPTABILITE' | null>(null);
+  reportTypeOptions = [
+    { label: 'Finance', value: 'FINANCE', icon: 'pi pi-chart-bar', description: 'Inclut TVA et date d\'émission' },
+    { label: 'Comptabilité', value: 'COMPTABILITE', icon: 'pi pi-book', description: 'Sans TVA ni date d\'émission' }
+  ];
 
   private subscriptions: Subscription[] = [];
 
@@ -226,6 +237,58 @@ export class DetailsRapprochementComponent implements OnInit, OnDestroy {
       this.dt.first = 0;
       this.loadTransactionsLazy(this.dt.createLazyLoadMetadata());
     }
+  }
+
+  /**
+   * Ouvre la modal de choix du type de rapport (Finance/Comptabilité) pour exporter en PDF les
+   * transactions correspondant aux filtres actuellement appliqués sur cet écran.
+   */
+  exportReport(): void {
+    if (!this.rapprochementId) {
+      return;
+    }
+    this.reportTypeControl.setValue('FINANCE');
+    this.showReportTypeModal = true;
+  }
+
+  confirmExportReport(): void {
+    if (!this.rapprochementId || !this.reportTypeControl.value) return;
+
+    const reportType = this.reportTypeControl.value;
+    const searchDto: TransactionSearchDto = this.searchForm ? this.searchForm.value : {};
+
+    this.showReportTypeModal = false;
+    this.exportingReport = true;
+
+    this.rapprochementService.downloadReport(this.rapprochementId, reportType, searchDto)
+      .pipe(
+        catchError(() => {
+          return throwError(() => new Error('Download failed'));
+        }),
+        finalize(() => {
+          this.exportingReport = false;
+          this.reportTypeControl.setValue(null);
+        })
+      )
+      .subscribe((response: Blob) => {
+        const fileURL = URL.createObjectURL(response);
+        const link = document.createElement('a');
+        link.href = fileURL;
+        const banqueNom = this.rapprochementDetails?.banqueNom ?? this.rapprochementId;
+        const date = this.rapprochementDetails?.dateRapprochement ?? '';
+        link.download = `Rapport_Rapprochement_${banqueNom}_${date}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(fileURL);
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: `Rapport ${reportType} téléchargé avec succès.`,
+          life: 3000
+        });
+      });
   }
 
 

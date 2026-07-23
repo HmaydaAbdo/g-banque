@@ -92,4 +92,39 @@ export class ImpayeeService {
   toggleStatus(id: number): Observable<ImpayeeResponseDto> {
     return this.http.patch<ImpayeeResponseDto>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
+
+  /**
+   * Exporte en PDF l'intégralité des impayées correspondant aux filtres fournis (mêmes critères
+   * que {@link searchImpayees}, sans pagination — le PDF contient tous les résultats filtrés, pas
+   * seulement la page actuellement affichée).
+   */
+  exportPdf(searchDto: ImpayeeSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.banqueId != null) params = params.set('banqueId', searchDto.banqueId.toString());
+    if (searchDto.libelle)          params = params.set('libelle', searchDto.libelle);
+    if (searchDto.motif)            params = params.set('motif', searchDto.motif);
+    if (searchDto.type)             params = params.set('type', searchDto.type);
+    if (searchDto.montant != null)  params = params.set('montant', searchDto.montant.toString());
+    if (searchDto.status)           params = params.set('status', searchDto.status);
+
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
+  }
+
+  /**
+   * Exporte en PDF l'intégralité de l'encours d'impayées d'une banque correspondant aux filtres
+   * fournis (mêmes critères que {@link getOutstandingImpayees}, {@code type} inclus, sans
+   * pagination — le PDF contient tous les résultats filtrés, pas seulement la page actuellement
+   * affichée).
+   */
+  exportEncoursPdf(banqueId: number, searchDto: ImpayeeSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.libelle)         params = params.set('libelle', searchDto.libelle);
+    if (searchDto.motif)           params = params.set('motif', searchDto.motif);
+    if (searchDto.type)            params = params.set('type', searchDto.type);
+    if (searchDto.montant != null) params = params.set('montant', searchDto.montant.toString());
+
+    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

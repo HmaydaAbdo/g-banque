@@ -63,6 +63,7 @@ export class AgiosListComponent implements OnInit {
   agios: AgiosResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
 
   filterForm = this.fb.group({
     banque:  [null as BanqueResponse | null],
@@ -137,6 +138,32 @@ export class AgiosListComponent implements OnInit {
   clearFilters(): void {
     this.filterForm.reset();
     this.applyFilters();
+  }
+
+  exportPdf(): void {
+    this.exporting = true;
+    const { banque, status, libelle } = this.filterForm.getRawValue();
+    const searchCriteria: AgiosSearchDto = {
+      banqueId: banque?.id,
+      status:   status ?? undefined,
+      libelle:  libelle ?? undefined,
+    };
+
+    this.agiosService.exportAgiosPdf(searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `agios_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Échec de l'export PDF." });
+        this.exporting = false;
+      }
+    });
   }
 
   deleteAgios(agios: AgiosResponseDto): void {

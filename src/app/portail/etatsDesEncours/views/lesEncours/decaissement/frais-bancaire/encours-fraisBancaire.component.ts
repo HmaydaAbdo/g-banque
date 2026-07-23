@@ -65,6 +65,7 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
   fraisBancaires: FraisBancaireResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
   totalEncours!: number;
   banqueId?: number;
 
@@ -338,6 +339,28 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
     if (this.table) {
       this.table.reset()
     }
+  }
+
+  exportPdf(): void {
+    if (!this.banqueId) {
+      return;
+    }
+    this.exporting = true;
+    const searchCriteria: FraisBancaireSearchDto = this.searchForm.getRawValue();
+    this.fraisBancaireService.exportOutstandingFraisBancairePdf(this.banqueId, searchCriteria).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `frais_bancaires_encours_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   isInvalid(controlName: string): boolean {

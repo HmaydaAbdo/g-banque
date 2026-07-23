@@ -28,6 +28,7 @@ import {parseLocalDate, toLocalDateString} from "../../../../global/types/date.u
 import {TransactionUpdateRequestDto} from "../../../../transactions/dtos/TransactionUpdateRequestDto";
 import {TagModule} from "primeng/tag";
 import { SkeletonModule } from 'primeng/skeleton';
+import { RippleModule } from 'primeng/ripple';
 import {RapprochementService} from "../../../../rapprochement/service/rapprochement-service.service";
 
 
@@ -54,6 +55,7 @@ import {RapprochementService} from "../../../../rapprochement/service/rapprochem
     TagModule,
     SourceBadgeComponent,
     SkeletonModule,
+    RippleModule,
   ],
   templateUrl: './rapprochemnt-encours.component.html',
   styleUrls: ['./rapprochemnt-encours.component.scss'],
@@ -66,6 +68,7 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
   transactions: TransactionResponseDto[] = [];
   totalRecords: number = 0;
   loading: boolean = false;
+  exporting: boolean = false;
   banqueIdFromRoute!: number;
   currentMonthYear: string | null = null;
 
@@ -268,7 +271,30 @@ export class RapprochemntEncoursComponent implements OnInit, OnDestroy {
     this.editDateForm.reset()
   }
 
+  exportPdf(): void {
+    if (!this.banqueIdFromRoute || !this.selectedRapprochementId) {
+      return;
+    }
+    this.exporting = true;
+    const searchDto: TransactionSearchDto = {
+      ...(this.searchForm.value as TransactionSearchDto),
+      rapprochementId: this.selectedRapprochementId
+    };
 
-
+    this.transactionService.exportBankTransactionsPdf(this.banqueIdFromRoute, searchDto).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rapprochement_transactions_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
+  }
 
 }

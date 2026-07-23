@@ -111,4 +111,19 @@ export class CommissionService {
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
   }
+
+  /**
+   * Exporte en PDF l'intégralité de l'encours de commissions d'une banque correspondant aux
+   * filtres fournis (mêmes critères que {@link getOutstandingCommissions}, sans pagination — le
+   * PDF contient tous les résultats filtrés, pas seulement la page actuellement affichée).
+   */
+  exportEncoursPdf(banqueId: number, searchDto: CommissionSearchDto): Observable<Blob> {
+    let params = new HttpParams();
+
+    if (searchDto.libelle)         params = params.set('libelle', searchDto.libelle);
+    if (searchDto.operation)       params = params.set('operation', searchDto.operation);
+    if (searchDto.montant != null) params = params.set('montant', searchDto.montant.toString());
+
+    return this.http.get(`${this.apiUrl}/encours/${banqueId}/export/pdf`, { params, responseType: 'blob' });
+  }
 }

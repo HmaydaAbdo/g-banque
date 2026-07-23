@@ -61,6 +61,7 @@ export class ImpayeeListComponent implements OnInit {
   impayees: ImpayeeResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
 
   // Filters
   searchCriteria: ImpayeeSearchDto = {};
@@ -175,6 +176,34 @@ export class ImpayeeListComponent implements OnInit {
     this.selectedStatus = undefined;
     this.libelleFilter = null;
     this.applyFilters();
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des impayées correspondant aux filtres actuellement appliqués —
+   * pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    this.searchCriteria.banqueId = this.selectedBanque?.id;
+    this.searchCriteria.motif = this.selectedMotif;
+    this.searchCriteria.type = this.selectedType;
+    this.searchCriteria.status = this.selectedStatus;
+    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+
+    this.impayeeService.exportPdf(this.searchCriteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `impayees_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   deleteImpayee(impayee: ImpayeeResponseDto) {

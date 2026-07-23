@@ -13,6 +13,8 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angul
 import { ToolbarModule } from 'primeng/toolbar';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { RippleModule } from 'primeng/ripple';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Decimal } from 'decimal.js';
 
@@ -38,7 +40,9 @@ import { AgregatedRecapDto } from "../../dtos/AgregatedRecapDto";
     ReactiveFormsModule,
     ToolbarModule,
     MultiSelectModule,
-    InputTextModule
+    InputTextModule,
+    ButtonModule,
+    RippleModule,
   ],
   templateUrl: './recap-encaissements.component.html',
   styleUrl: './recap-encaissements.component.scss',
@@ -51,6 +55,7 @@ export class RecapEncaissementsComponent implements OnInit, OnDestroy {
   recapEncaissements: RecaputilatifItem[] = [];
   totalRecords: number = 0;
   loading: boolean = true;
+  exporting: boolean = false;
   banqueIdFromRoute!: number;
 
   searchForm!: FormGroup;
@@ -145,6 +150,33 @@ export class RecapEncaissementsComponent implements OnInit, OnDestroy {
           }
         })
     );
+  }
+
+  exportPdf(): void {
+    if (!this.banqueIdFromRoute) {
+      return;
+    }
+    this.exporting = true;
+    const searchDto: DecaissementSearchDto = {
+      transactionSources: this.searchForm.get('transactionSources')?.value,
+      libelle: this.searchForm.get('libelle')?.value,
+      observation: this.searchForm.get('observation')?.value
+    };
+
+    this.recapService.exportRecapitulatifEncaissementPdf(this.banqueIdFromRoute, searchDto).subscribe({
+      next: (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `recapitulatif_encaissement_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   ngOnDestroy(): void {

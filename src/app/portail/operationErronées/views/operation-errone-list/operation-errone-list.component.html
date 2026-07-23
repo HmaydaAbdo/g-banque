@@ -93,6 +93,8 @@
     </ng-template>
 
     <ng-template pTemplate="right">
+      <button type="button" pButton pRipple label="Exporter PDF" class="h-fit" size="small"
+              icon="pi pi-file-pdf" severity="secondary" [loading]="exporting" (click)="exportPdf()"></button>
       <button
         pButton
         pRipple

@@ -274,7 +274,7 @@
     &:hover  { opacity: 0.88; transform: translateY(-1px); }
     &:active { transform: scale(0.98); }
 
-    &--warning { background: var(--color-warning); color: #fff; }
-    &--info    { background: var(--color-info);    color: #fff; }
+    &--warning { background: var(--color-warning); color: var(--color-text-inverse); }
+    &--info    { background: var(--color-info);    color: var(--color-text-inverse); }
   }
 }

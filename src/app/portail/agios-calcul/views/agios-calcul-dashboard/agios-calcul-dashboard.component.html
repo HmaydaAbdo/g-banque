@@ -26,6 +26,16 @@
 
     <div class="flex align-items-center gap-2 flex-shrink-0" >
       <button pButton pRipple
+              label="Exporter PDF"
+              icon="pi pi-file-pdf"
+              class="p-button-outlined p-button-danger"
+              size="small"
+              [loading]="exporting"
+              (click)="exportPdf()"
+              pTooltip="Exporter les résultats en PDF"
+              tooltipPosition="bottom">
+      </button>
+      <button pButton pRipple
               label="Recalculer tout"
               icon="pi pi-refresh"
               severity="warning"

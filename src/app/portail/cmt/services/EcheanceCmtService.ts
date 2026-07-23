@@ -127,6 +127,23 @@ export class EcheanceCmtService {
     return this.http.get<EncoursCMTResponseDTO>(`${this.apiUrl}/encours`, { params });
   }
 
+  /**
+   * Exporte en PDF l'encours d'échéances CMT d'une banque (mêmes critères que
+   * {@link getEncoursCMT}, sans pagination).
+   */
+  exportEncoursCMTPdf(request: EncoursCMTRequestDTO): Observable<Blob> {
+    let params = new HttpParams().set('banqueId', request.banqueId.toString());
+
+    if (request.designation) {
+      params = params.set('designation', request.designation);
+    }
+    if (request.montant) {
+      params = params.set('montant', request.montant.toString());
+    }
+
+    return this.http.get(`${this.apiUrl}/encours/export/pdf`, { params, responseType: 'blob' });
+  }
+
 
 
 

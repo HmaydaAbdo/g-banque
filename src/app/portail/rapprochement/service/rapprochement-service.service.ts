@@ -70,10 +70,19 @@ export class RapprochementService {
     );
   }
 
-  downloadReport(rapprochementId: number, reportType: 'FINANCE' | 'COMPTABILITE'): Observable<Blob> {
+  /**
+   * Télécharge le rapport PDF d'un rapprochement. Si {@code searchDto} est fourni, seules les
+   * transactions correspondant aux critères (libellé, observation, montant, sources, dates
+   * d'opération — mêmes filtres que l'écran détail) sont incluses ; sans filtre, le rapport
+   * contient toutes les transactions du rapprochement (comportement historique inchangé).
+   */
+  downloadReport(rapprochementId: number, reportType: 'FINANCE' | 'COMPTABILITE', searchDto?: TransactionSearchDto): Observable<Blob> {
     const url = `${this.baseUrl}/${rapprochementId}/report/pdf`;
 
-    const params = new HttpParams().set('reportType', reportType);
+    let params = new HttpParams().set('reportType', reportType);
+    if (searchDto) {
+      params = this.appendFilterParams(params, searchDto);
+    }
 
     return this.http.get(url, {
       responseType: 'blob',
@@ -106,6 +115,15 @@ export class RapprochementService {
       .set('size', size.toString())
       .set('sort', sort);
 
+    return this.appendFilterParams(params, searchDto);
+  }
+
+  /**
+   * Ajoute les critères de filtre de {@link TransactionSearchDto} (libellé, observation, montant,
+   * sources, dates d'opération) à des `HttpParams` existants — factorisé entre la recherche
+   * paginée ({@link buildParams}) et l'export PDF filtré ({@link downloadReport}).
+   */
+  private appendFilterParams(params: HttpParams, searchDto: TransactionSearchDto): HttpParams {
     if (searchDto.libelle) {
       params = params.set('libelle', searchDto.libelle);
     }
@@ -113,7 +131,6 @@ export class RapprochementService {
     if (searchDto.observation) {
       params = params.set('observation', searchDto.observation);
     }
-
 
     // Gestion propre du tableau Enum pour le backend Spring
     if (searchDto.transactionSources && searchDto.transactionSources.length > 0) {
@@ -125,7 +142,6 @@ export class RapprochementService {
     if (searchDto.montant !== undefined && searchDto.montant !== null) {
       params = params.set('montant', searchDto.montant.toString());
     }
-
 
     if (searchDto.dateOperationDebut) {
       params = params.set(

@@ -68,6 +68,7 @@ export class ImpotEtTaxeListComponent implements OnInit {
   impotEtTaxes: ImpotEtTaxeResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
 
   // Filtres (Reactive Forms)
   filterForm: FormGroup = this.fb.group({
@@ -104,15 +105,7 @@ export class ImpotEtTaxeListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    const formValue = this.filterForm.value;
-    const searchCriteria: ImpotEtTaxeSearchDto = {
-      banqueId: formValue.banque?.id,
-      motif: formValue.motif ?? undefined,
-      status: formValue.status ?? undefined,
-      libelle: formValue.libelle ? formValue.libelle : undefined
-    };
-
-    this.impotEtTaxeService.searchImpotEtTaxes(searchCriteria, page, size, sort)
+    this.impotEtTaxeService.searchImpotEtTaxes(this.buildSearchDto(), page, size, sort)
       .subscribe({
         next: res => {
           this.impotEtTaxes = res.page.content;
@@ -163,6 +156,39 @@ export class ImpotEtTaxeListComponent implements OnInit {
   clearFilters() {
     this.filterForm.reset();
     this.applyFilters();
+  }
+
+  /** Critères de filtrage courants (sans pagination) — partagés entre la recherche et l'export PDF. */
+  private buildSearchDto(): ImpotEtTaxeSearchDto {
+    const formValue = this.filterForm.value;
+    return {
+      banqueId: formValue.banque?.id,
+      motif: formValue.motif ?? undefined,
+      status: formValue.status ?? undefined,
+      libelle: formValue.libelle ? formValue.libelle : undefined
+    };
+  }
+
+  /**
+   * Exporte en PDF l'intégralité des impôts/taxes correspondant aux filtres actuellement
+   * appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    this.exporting = true;
+    this.impotEtTaxeService.exportPdf(this.buildSearchDto()).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `impots_taxes_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   /**

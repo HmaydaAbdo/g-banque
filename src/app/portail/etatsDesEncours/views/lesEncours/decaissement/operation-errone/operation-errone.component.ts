@@ -67,6 +67,7 @@ export class EncoursOperationErroneComponent implements OnInit {
   operations: OperationErroneResponseDto[] = [];
   totalRecords = 0;
   loading = true;
+  exporting = false;
   totalEncours!: number;
   banqueId?: number;
 
@@ -330,6 +331,33 @@ export class EncoursOperationErroneComponent implements OnInit {
     if (this.table) {
       setTimeout(() => this.table.reset(), 0);
     }
+  }
+
+  /**
+   * Exporte en PDF l'intégralité de l'encours d'opérations erronées de la banque courante
+   * correspondant aux filtres actuellement appliqués — pas seulement la page affichée à l'écran.
+   */
+  exportPdf(): void {
+    if (!this.banqueId) {
+      return;
+    }
+    this.exporting = true;
+    const searchCriteria: OperationErroneSearchDto = this.searchForm.getRawValue();
+
+    this.operationErroneService.exportEncoursPdf(this.banqueId, searchCriteria).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `operations_erronees_encours_${new Date().toISOString().slice(0, 10)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.exporting = false;
+      },
+      error: () => {
+        this.exporting = false;
+      }
+    });
   }
 
   isInvalid(controlName: string): boolean {

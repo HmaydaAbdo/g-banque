@@ -130,4 +130,24 @@ export class EcheanceLeasingService {
 
     return this.http.get<EncoursLeasingResponseDTO>(`${this.apiUrl}/encours`, { params });
   }
+
+  /**
+   * Exporte en PDF l'encours d'échéances de leasing d'une banque (mêmes critères que
+   * {@link getEncoursLeasing}, sans pagination).
+   */
+  exportEncoursLeasingPdf(request: EncoursLeasingRequestDTO): Observable<Blob> {
+    let params = new HttpParams().set('banqueId', request.banqueId.toString());
+
+    if (request.organismeLeasingId) {
+      params = params.set('organismeLeasingId', request.organismeLeasingId.toString());
+    }
+    if (request.numeroContrat) {
+      params = params.set('numeroContrat', request.numeroContrat.toString());
+    }
+    if (request.montant) {
+      params = params.set('montant', request.montant.toString());
+    }
+
+    return this.http.get(`${this.apiUrl}/encours/export/pdf`, { params, responseType: 'blob' });
+  }
 }
