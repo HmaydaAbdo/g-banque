@@ -10,8 +10,18 @@ export interface MiseADispositionSearchDto {
   beneficiaire?: string;
   cinBeneficiaire?: string;
   banqueName?: string;
-  montant?: Decimal;
-  emetteur?:string
-  dateEmission?: Date;
+  emetteur?: string;
   statut?: StatutMoyenPaiement;
+
+  /** @deprecated Utilisé uniquement par les écrans d'encours (etatsDesEncours), qui partagent cette interface. */
+  montant?: Decimal;
+  /** @deprecated Utilisé uniquement par les écrans d'encours (etatsDesEncours), qui partagent cette interface. */
+  dateEmission?: Date;
+
+  dateEmissionFrom?: Date | null;
+  dateEmissionTo?: Date | null;
+  dateOperationFrom?: Date | null;
+  dateOperationTo?: Date | null;
+  dateValeurFrom?: Date | null;
+  dateValeurTo?: Date | null;
 }

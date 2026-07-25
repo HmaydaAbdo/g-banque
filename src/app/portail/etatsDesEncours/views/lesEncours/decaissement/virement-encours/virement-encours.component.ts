@@ -300,6 +300,15 @@ export class VirementEncoursComponent implements OnInit {
    * Loads the outstanding virements for the bank.
    * @param event The lazy load event from the PrimeNG table.
    */
+  clearSearch(): void {
+    this.searchForm.reset({ dateEmission: '', beneficiaire: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadOutstandingVirements(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadOutstandingVirements(event?: TableLazyLoadEvent): void {
     this.loading = true;
     const page = event ? event.first! / event.rows! : 0;

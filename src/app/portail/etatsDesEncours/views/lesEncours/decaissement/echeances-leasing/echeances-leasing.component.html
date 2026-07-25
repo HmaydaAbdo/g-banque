@@ -28,6 +28,12 @@
       <button type="button" pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
               class="h-fit" size="small" severity="secondary"
               [loading]="exporting" (click)="exportPdf()"></button>
+
+              <div class="flex-shrink-0">
+                <p-button icon="pi pi-times" severity="secondary"
+                          (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+                </p-button>
+              </div>
     </form>
 </div>
 

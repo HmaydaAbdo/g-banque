@@ -3,13 +3,19 @@ import {StatutMoyenPaiement} from "../../global/enums/StatutMoyenPaiement";
 
 export interface VirementSearchDto {
   numero?: string;
-  dateEmission?: Date;
   montant?: number;
   beneficiaire?: string;
   banqueBeneficiaire?: string;
   nomBanqueEmettrice?: string;
   ribBeneficiaire?: string;
   statut?: StatutMoyenPaiement | null;
-  type?:Type
-  emetteur?:string
+  type?: Type;
+  emetteur?: string;
+
+  dateEmissionFrom?: Date | null;
+  dateEmissionTo?: Date | null;
+  dateOperationFrom?: Date | null;
+  dateOperationTo?: Date | null;
+  dateValeurFrom?: Date | null;
+  dateValeurTo?: Date | null;
 }

@@ -87,14 +87,20 @@ export class DecompteService {
       params = params.set('banqueId', searchCriteria.banqueId.toString());
     if (searchCriteria.status)
       params = params.set('status', searchCriteria.status);
+    if (searchCriteria.dateEmissionFrom)
+      params = params.set('dateEmissionFrom', this.toIsoDate(searchCriteria.dateEmissionFrom));
+    if (searchCriteria.dateEmissionTo)
+      params = params.set('dateEmissionTo', this.toIsoDate(searchCriteria.dateEmissionTo));
+    if (searchCriteria.dateOperationFrom)
+      params = params.set('dateOperationFrom', this.toIsoDate(searchCriteria.dateOperationFrom));
+    if (searchCriteria.dateOperationTo)
+      params = params.set('dateOperationTo', this.toIsoDate(searchCriteria.dateOperationTo));
     if (searchCriteria.dateValeurFrom)
       params = params.set('dateValeurFrom', this.toIsoDate(searchCriteria.dateValeurFrom));
     if (searchCriteria.dateValeurTo)
       params = params.set('dateValeurTo', this.toIsoDate(searchCriteria.dateValeurTo));
-    if (searchCriteria.montantMin != null)
-      params = params.set('montantMin', searchCriteria.montantMin.toString());
-    if (searchCriteria.montantMax != null)
-      params = params.set('montantMax', searchCriteria.montantMax.toString());
+    if (searchCriteria.montant != null)
+      params = params.set('montant', searchCriteria.montant.toString());
 
     return this.http.get<PageResponse<DecompteResponseDto>>(this.apiUrl, { params });
   }
@@ -116,14 +122,20 @@ export class DecompteService {
       params = params.set('banqueId', searchCriteria.banqueId.toString());
     if (searchCriteria.status)
       params = params.set('status', searchCriteria.status);
+    if (searchCriteria.dateEmissionFrom)
+      params = params.set('dateEmissionFrom', this.toIsoDate(searchCriteria.dateEmissionFrom));
+    if (searchCriteria.dateEmissionTo)
+      params = params.set('dateEmissionTo', this.toIsoDate(searchCriteria.dateEmissionTo));
+    if (searchCriteria.dateOperationFrom)
+      params = params.set('dateOperationFrom', this.toIsoDate(searchCriteria.dateOperationFrom));
+    if (searchCriteria.dateOperationTo)
+      params = params.set('dateOperationTo', this.toIsoDate(searchCriteria.dateOperationTo));
     if (searchCriteria.dateValeurFrom)
       params = params.set('dateValeurFrom', this.toIsoDate(searchCriteria.dateValeurFrom));
     if (searchCriteria.dateValeurTo)
       params = params.set('dateValeurTo', this.toIsoDate(searchCriteria.dateValeurTo));
-    if (searchCriteria.montantMin != null)
-      params = params.set('montantMin', searchCriteria.montantMin.toString());
-    if (searchCriteria.montantMax != null)
-      params = params.set('montantMax', searchCriteria.montantMax.toString());
+    if (searchCriteria.montant != null)
+      params = params.set('montant', searchCriteria.montant.toString());
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
   }
 

@@ -64,6 +64,7 @@ export class ChequeService {
     if (searchDto.statut !== undefined && searchDto.statut !== null) {
       params = params.set('statut', searchDto.statut);
     }
+    params = this.appendDateRangeParams(params, searchDto);
 
     return this.http.get<PageResponse<ChequeResponseDto>>(this.apiUrl+"/decaissements", {params});
   }
@@ -83,10 +84,6 @@ export class ChequeService {
       .set('sort', sort);
 
     // Append search criteria if they are present
-    if (searchDto.dateEmission) {
-      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
-    }
-
     if(searchDto.numero){
       params = params.set('numero', searchDto.numero)
     }
@@ -104,8 +101,30 @@ export class ChequeService {
     if (searchDto.statut !== undefined && searchDto.statut !== null) {
       params = params.set('statut', searchDto.statut);
     }
+    params = this.appendDateRangeParams(params, searchDto);
 
     return this.http.get<PageResponse<ChequeResponseDto>>(this.apiUrl+"/encaissements", {params});
+  }
+
+  /** Ajoute les 4 plages de dates (émission, échéance, opération, valeur) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, criteria: ChequeSearchDto): HttpParams {
+    if (criteria.dateEmissionFrom) params = params.set('dateEmissionFrom', this.toIsoDate(criteria.dateEmissionFrom));
+    if (criteria.dateEmissionTo) params = params.set('dateEmissionTo', this.toIsoDate(criteria.dateEmissionTo));
+    if (criteria.dateEcheanceFrom) params = params.set('dateEcheanceFrom', this.toIsoDate(criteria.dateEcheanceFrom));
+    if (criteria.dateEcheanceTo) params = params.set('dateEcheanceTo', this.toIsoDate(criteria.dateEcheanceTo));
+    if (criteria.dateOperationFrom) params = params.set('dateOperationFrom', this.toIsoDate(criteria.dateOperationFrom));
+    if (criteria.dateOperationTo) params = params.set('dateOperationTo', this.toIsoDate(criteria.dateOperationTo));
+    if (criteria.dateValeurFrom) params = params.set('dateValeurFrom', this.toIsoDate(criteria.dateValeurFrom));
+    if (criteria.dateValeurTo) params = params.set('dateValeurTo', this.toIsoDate(criteria.dateValeurTo));
+    return params;
+  }
+
+  /** Formate un objet Date en chaîne ISO yyyy-MM-dd pour Spring. */
+  private toIsoDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
 
@@ -193,9 +212,6 @@ export class ChequeService {
 
   exportEncaissementsPdf(searchDto: ChequeSearchDto): Observable<Blob> {
     let params = new HttpParams();
-    if (searchDto.dateEmission) {
-      params = params.set('dateEmission', toLocalDateString(searchDto.dateEmission)!);
-    }
     if (searchDto.numero) {
       params = params.set('numero', searchDto.numero);
     }
@@ -211,6 +227,7 @@ export class ChequeService {
     if (searchDto.statut !== undefined && searchDto.statut !== null) {
       params = params.set('statut', searchDto.statut);
     }
+    params = this.appendDateRangeParams(params, searchDto);
     return this.http.get(`${this.apiUrl}/encaissements/export/pdf`, {params, responseType: 'blob'});
   }
 
@@ -228,6 +245,7 @@ export class ChequeService {
     if (searchDto.statut !== undefined && searchDto.statut !== null) {
       params = params.set('statut', searchDto.statut);
     }
+    params = this.appendDateRangeParams(params, searchDto);
     return this.http.get(`${this.apiUrl}/decaissements/export/pdf`, {params, responseType: 'blob'});
   }
 

@@ -42,6 +42,12 @@
       <button type="button" pButton pRipple label="Ajouter" class=" h-fit " size="small" icon="pi pi-plus"
               severity="primary" routerLink="/portail/decomptes/new" [queryParams]="{banqueId: banqueId}"></button>
 
+
+              <div class="flex-shrink-0">
+                <p-button icon="pi pi-times" severity="secondary"
+                          (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+                </p-button>
+              </div>
     </form>
 </div>
 

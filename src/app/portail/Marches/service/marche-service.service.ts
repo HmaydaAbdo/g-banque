@@ -73,7 +73,26 @@ export class MarcheService {
       params = params.set('actif', criteria.actif);
     }
 
+    params = this.appendDateRangeParams(params, criteria);
+
     return this.http.get<PageResponse<MarcheResponseDTO>>(this.apiUrl, {params});
+  }
+
+  /** Ajoute les 2 paires de plages de dates (début/achèvement des travaux) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, criteria: MarcheSearchDTO): HttpParams {
+    if (criteria.dateDebutDesTravauxFrom) params = params.set('dateDebutDesTravauxFrom', this.toIsoDate(criteria.dateDebutDesTravauxFrom));
+    if (criteria.dateDebutDesTravauxTo) params = params.set('dateDebutDesTravauxTo', this.toIsoDate(criteria.dateDebutDesTravauxTo));
+    if (criteria.dateDAchievementDesTravauxFrom) params = params.set('dateDAchievementDesTravauxFrom', this.toIsoDate(criteria.dateDAchievementDesTravauxFrom));
+    if (criteria.dateDAchievementDesTravauxTo) params = params.set('dateDAchievementDesTravauxTo', this.toIsoDate(criteria.dateDAchievementDesTravauxTo));
+    return params;
+  }
+
+  /** Formate un objet Date en chaîne ISO yyyy-MM-dd pour Spring. */
+  private toIsoDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
 
@@ -155,6 +174,7 @@ export class MarcheService {
     if (criteria.actif !== undefined && criteria.actif !== null) {
       params = params.set('actif', criteria.actif);
     }
+    params = this.appendDateRangeParams(params, criteria);
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
   }

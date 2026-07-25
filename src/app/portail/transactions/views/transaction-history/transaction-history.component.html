@@ -17,9 +17,8 @@
       </ng-template>
     </p-breadcrumb>
   </div>
-  <p-toolbar styleClass="bg-white py-2 px-3 border-round-sm shadow-1">
-    <ng-template pTemplate="left">
-      <div class="pg-filters">
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 p-3 bg-white border-round-sm shadow-1">
+    <div class="pg-filters">
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
   <form [formGroup]="searchForm" class="flex flex-wrap gap-2 align-items-center">
 
@@ -61,19 +60,17 @@
         </p-dropdown>
       </form>
 </div>
-    </ng-template>
 
-    <ng-template pTemplate="right">
+    <div class="flex gap-2 align-items-center flex-shrink-0">
       <button pButton pRipple label="Exporter PDF" icon="pi pi-file-pdf"
               class="p-button-outlined p-button-danger p-button-sm"
               [loading]="exporting" (click)="exportPdf()">
       </button>
-      <button pButton pRipple label="Effacer" icon="pi pi-filter-slash"
-              class="p-button-outlined p-button-secondary p-button-sm"
-              (click)="clearSearch()">
-      </button>
-    </ng-template>
-  </p-toolbar>
+      <p-button icon="pi pi-times" severity="secondary"
+                (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+      </p-button>
+    </div>
+  </div>
 
   <div class="pb-8 px-1">
     <p-table #dt

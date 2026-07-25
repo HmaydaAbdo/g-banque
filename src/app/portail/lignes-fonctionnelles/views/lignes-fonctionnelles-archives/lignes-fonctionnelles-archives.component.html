@@ -132,12 +132,8 @@
 
     <!-- Clear Button -->
     <div>
-      <p-button
-        severity="danger"
-        icon="pi pi-times"
-        (click)="clearSearch()"
-        pTooltip="Effacer la recherche"
-        [style]="{'margin-top': '1.8rem'}">
+      <p-button icon="pi pi-times" severity="secondary"
+                (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
       </p-button>
     </div>
 

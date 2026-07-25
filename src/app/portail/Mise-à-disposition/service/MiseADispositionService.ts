@@ -65,6 +65,7 @@ export class MiseADispositionService {
     if (searchDto.statut !== undefined && searchDto.statut !== null) {
       params = params.set('statut', searchDto.statut);
     }
+    params = this.appendDateRangeParams(params, searchDto);
 
     return this.http.get<PageResponse<MiseADispositionResponseDto>>(this.apiUrl+"/decaissements", {params});
   }
@@ -99,8 +100,20 @@ export class MiseADispositionService {
     if (searchDto.statut !== undefined && searchDto.statut !== null) {
       params = params.set('statut', searchDto.statut);
     }
+    params = this.appendDateRangeParams(params, searchDto);
 
     return this.http.get<PageResponse<MiseADispositionResponseDto>>(this.apiUrl+"/encaissements", {params});
+  }
+
+  /** Ajoute les 3 plages de dates (émission, opération, valeur) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, criteria: MiseADispositionSearchDto): HttpParams {
+    if (criteria.dateEmissionFrom) params = params.set('dateEmissionFrom', toLocalDateString(criteria.dateEmissionFrom)!);
+    if (criteria.dateEmissionTo) params = params.set('dateEmissionTo', toLocalDateString(criteria.dateEmissionTo)!);
+    if (criteria.dateOperationFrom) params = params.set('dateOperationFrom', toLocalDateString(criteria.dateOperationFrom)!);
+    if (criteria.dateOperationTo) params = params.set('dateOperationTo', toLocalDateString(criteria.dateOperationTo)!);
+    if (criteria.dateValeurFrom) params = params.set('dateValeurFrom', toLocalDateString(criteria.dateValeurFrom)!);
+    if (criteria.dateValeurTo) params = params.set('dateValeurTo', toLocalDateString(criteria.dateValeurTo)!);
+    return params;
   }
 
 
@@ -187,6 +200,7 @@ export class MiseADispositionService {
     if (searchDto.statut !== undefined && searchDto.statut !== null) {
       params = params.set('statut', searchDto.statut);
     }
+    params = this.appendDateRangeParams(params, searchDto);
     return this.http.get(`${this.apiUrl}/decaissements/export/pdf`, {params, responseType: 'blob'});
   }
 

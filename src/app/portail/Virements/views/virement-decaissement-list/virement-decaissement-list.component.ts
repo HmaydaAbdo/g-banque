@@ -81,6 +81,9 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
     {label: 'Annulés', value: StatutMoyenPaiement.ANNULE}
   ];
 
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
   @ViewChild('dt') dt: Table | undefined;
 
   private lastLazyLoadEvent: TableLazyLoadEvent = {
@@ -122,12 +125,30 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
       beneficiaire: [''],
       nomBanqueEmettrice: [null],
       statut: [null],
-      dateEmission: [null],
       montant: [null],
       banqueBeneficiaire: [null],
+      dateEmissionFrom: [null],
+      dateEmissionTo: [null],
+      dateOperationFrom: [null],
+      dateOperationTo: [null],
+      dateValeurFrom: [null],
+      dateValeurTo: [null]
     });
     const sub = this.searchForm.valueChanges.subscribe(() => this.onSearch());
     this.subscriptions.push(sub);
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateEmissionFrom || v.dateEmissionTo) count++;
+    if (v.dateOperationFrom || v.dateOperationTo) count++;
+    if (v.dateValeurFrom || v.dateValeurTo) count++;
+    return count;
   }
 
   loadVirements(event: TableLazyLoadEvent): void {
@@ -174,7 +195,12 @@ export class VirementDecaissementListComponent implements OnInit, OnDestroy {
   }
 
   clearSearch(): void {
-    this.searchForm.reset();
+    this.searchForm.reset({
+      beneficiaire: '', nomBanqueEmettrice: null, statut: null, montant: null, banqueBeneficiaire: null,
+      dateEmissionFrom: null, dateEmissionTo: null,
+      dateOperationFrom: null, dateOperationTo: null,
+      dateValeurFrom: null, dateValeurTo: null
+    });
     if (this.dt) {
       this.dt.clear();
       this.dt.first = 0;

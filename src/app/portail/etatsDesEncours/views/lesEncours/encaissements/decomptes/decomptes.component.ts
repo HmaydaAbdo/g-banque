@@ -320,6 +320,15 @@ export class DecomptesComponent implements OnInit, OnDestroy {
    * Loads outstanding dc disbursement records.
    * Handles pagination and sorting from the PrimeNG table.
    */
+  clearSearch(): void {
+    this.searchForm.reset({ marcheNumero: '', marcheName: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadEncoursDecomptes(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadEncoursDecomptes(event?: TableLazyLoadEvent): void {
     this.loading = true;
 

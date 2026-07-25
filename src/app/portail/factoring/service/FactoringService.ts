@@ -100,8 +100,28 @@ export class FactoringService {
     if (searchDTO.type) {
       params = params.set('type', searchDTO.type);
     }
+    params = this.appendDateRangeParams(params, searchDTO);
 
     return this.http.get<PageResponse<FactoringResponseDto>>(this.apiUrl, { params });
+  }
+
+  /** Ajoute les 3 paires de plages de dates (émission/opération/valeur) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, searchDTO: FactoringSearchDto): HttpParams {
+    if (searchDTO.dateEmissionFrom) params = params.set('dateEmissionFrom', this.toIsoDate(searchDTO.dateEmissionFrom));
+    if (searchDTO.dateEmissionTo) params = params.set('dateEmissionTo', this.toIsoDate(searchDTO.dateEmissionTo));
+    if (searchDTO.dateOperationFrom) params = params.set('dateOperationFrom', this.toIsoDate(searchDTO.dateOperationFrom));
+    if (searchDTO.dateOperationTo) params = params.set('dateOperationTo', this.toIsoDate(searchDTO.dateOperationTo));
+    if (searchDTO.dateValeurFrom) params = params.set('dateValeurFrom', this.toIsoDate(searchDTO.dateValeurFrom));
+    if (searchDTO.dateValeurTo) params = params.set('dateValeurTo', this.toIsoDate(searchDTO.dateValeurTo));
+    return params;
+  }
+
+  /** Formate un objet Date en chaîne ISO yyyy-MM-dd pour Spring. */
+  private toIsoDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   /**
@@ -210,6 +230,7 @@ export class FactoringService {
     if (searchDTO.banqueId) params = params.set('banqueId', searchDTO.banqueId.toString());
     if (searchDTO.status) params = params.set('status', searchDTO.status);
     if (searchDTO.type) params = params.set('type', searchDTO.type);
+    params = this.appendDateRangeParams(params, searchDTO);
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
   }

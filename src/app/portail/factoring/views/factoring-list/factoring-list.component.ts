@@ -16,6 +16,7 @@ import { ToastModule } from "primeng/toast";
 import { TagModule } from "primeng/tag";
 import { InputSwitchModule } from "primeng/inputswitch";
 import { TooltipModule } from "primeng/tooltip";
+import { CalendarModule } from "primeng/calendar";
 
 // Services & Enums
 import { FactoringService } from "../../service/FactoringService";
@@ -33,7 +34,7 @@ import { Type } from "../../../prefinancements/enums/Type";
     CommonModule, FormsModule, ReactiveFormsModule, RouterLink,
     TableModule, DropdownModule, BreadcrumbModule, ConfirmDialogModule,
     ToastModule, ButtonModule, RippleModule, TagModule, InputSwitchModule,
-    TooltipModule, DatePipe, DecimalPipe
+    TooltipModule, DatePipe, DecimalPipe, CalendarModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -65,6 +66,9 @@ export class FactoringListComponent implements OnInit {
 
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting = false;
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut pour ne pas surcharger la barre de filtres). */
+  showDatePanel = false;
 
   private readonly fb = inject(FormBuilder);
   private readonly factoringService = inject(FactoringService);
@@ -98,8 +102,27 @@ export class FactoringListComponent implements OnInit {
       marcheId: [null],
       banqueId: [null],
       type: [null],
-      status: [null]
+      status: [null],
+      dateEmissionFrom: [null],
+      dateEmissionTo: [null],
+      dateOperationFrom: [null],
+      dateOperationTo: [null],
+      dateValeurFrom: [null],
+      dateValeurTo: [null]
     });
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateEmissionFrom || v.dateEmissionTo) count++;
+    if (v.dateOperationFrom || v.dateOperationTo) count++;
+    if (v.dateValeurFrom || v.dateValeurTo) count++;
+    return count;
   }
 
   // --- LOGIQUE MARCHÉS ---
@@ -174,7 +197,12 @@ export class FactoringListComponent implements OnInit {
 
   clearFilters() {
     this.currentMarcheFilter = '';
-    this.searchForm.reset({ marcheId: null, banqueId: null, type: null, status: null });
+    this.searchForm.reset({
+      marcheId: null, banqueId: null, type: null, status: null,
+      dateEmissionFrom: null, dateEmissionTo: null,
+      dateOperationFrom: null, dateOperationTo: null,
+      dateValeurFrom: null, dateValeurTo: null
+    });
     this.initializeMarches();
   }
 

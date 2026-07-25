@@ -26,169 +26,121 @@
     </div>
   </div>
 
-  <div class="bg-white border-round shadow-1">
-    <form [formGroup]="searchForm">
+  <div class="flex flex-column gap-2">
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 p-3 bg-white border-round shadow-1">
+    <div class="pg-filters">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+  <form [formGroup]="searchForm" class="flex flex-wrap gap-2">
 
-      <!-- Barre principale : bouton Filtres + chips actifs + Effacer -->
-      <div class="flex align-items-center gap-2 px-3 py-2 flex-wrap">
-
-        <button pButton pRipple
-                type="button"
-                [label]="activeFilterCount > 0 ? 'Filtres (' + activeFilterCount + ')' : 'Filtres'"
-                icon="pi pi-sliders-h"
-                [class]="activeFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
-                (click)="toggleFilterPanel()">
-        </button>
-
-        <!-- Chips des filtres actifs -->
-        <div class="flex flex-wrap gap-1 align-items-center">
-          @for (f of activeFilters; track f.field) {
-            <span class="flex align-items-center gap-1 border-1 border-round-3xl border-300 px-2 py-1 text-xs bg-white white-space-nowrap">
-              {{ f.label }}
-              <i class="pi pi-times text-xs cursor-pointer text-400 hover:text-900"
-                 (click)="removeFilter(f.field)"></i>
-            </span>
-          }
-        </div>
-
-        @if (activeFilterCount > 0) {
-          <button pButton pRipple
-                  type="button"
-                  label="Effacer tout"
-                  class="p-button-sm p-button-text p-button-danger ml-auto"
-                  (click)="clearFilters()">
-          </button>
-        }
-      </div>
-
-      <!-- Panel filtres dépliable -->
-      @if (showFilterPanel) {
-      <div class="border-top-1 border-300 bg-gray-50 px-3 py-3">
-        <div class="grid">
-
-          <!-- Marché -->
-          <div class="col-12 md:col-4">
-            <label class="block text-xs text-500 mb-1">Numéro de marché</label>
-            <p-dropdown
-              formControlName="marcheId"
-              [options]="marchesOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Sélectionner un marché"
-              [filter]="true"
-              (onFilter)="onFilterMarches($event)"
-              [virtualScroll]="true"
-              [virtualScrollItemSize]="38"
-              [lazy]="true"
-              [virtualScrollOptions]="marchesScrollerOptions"
-              [loading]="marchesLoading"
-              [showClear]="true"
-              appendTo="body"
-              styleClass="w-full">
-              <ng-template let-item pTemplate="item">
-                <div class="flex align-items-center gap-2" style="height: 38px">
-                  @if (item.label) {
-                    <span>{{ item.label }}</span>
-                  } @else {
-                    <i class="pi pi-spin pi-spinner text-gray-400"></i>
-                  }
-                </div>
-              </ng-template>
-            </p-dropdown>
+      <p-dropdown
+        formControlName="marcheId"
+        [options]="marchesOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionner un marché"
+        [filter]="true"
+        (onFilter)="onFilterMarches($event)"
+        [virtualScroll]="true"
+        [virtualScrollItemSize]="38"
+        [lazy]="true"
+        [virtualScrollOptions]="marchesScrollerOptions"
+        [loading]="marchesLoading"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-full md:w-15rem">
+        <ng-template let-item pTemplate="item">
+          <div class="flex align-items-center gap-2" style="height: 38px">
+            @if (item.label) {
+              <span>{{ item.label }}</span>
+            } @else {
+              <i class="pi pi-spin pi-spinner text-gray-400"></i>
+            }
           </div>
+        </ng-template>
+      </p-dropdown>
 
-          <!-- Banque -->
-          <div class="col-12 md:col-4">
-            <label class="block text-xs text-500 mb-1">Banque d'encaissement</label>
-            <p-dropdown
-              formControlName="banqueId"
-              [options]="banquesOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Toutes les banques"
-              [showClear]="true"
-              [filter]="true"
-              appendTo="body"
-              styleClass="w-full">
-            </p-dropdown>
-          </div>
+      <p-dropdown
+        formControlName="banqueId"
+        [options]="banquesOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Banque d'encaissement"
+        [showClear]="true"
+        [filter]="true"
+        appendTo="body"
+        styleClass="w-full md:w-14rem">
+      </p-dropdown>
 
-          <!-- Statut -->
-          <div class="col-12 md:col-4">
-            <label class="block text-xs text-500 mb-1">Statut du décompte</label>
-            <p-dropdown
-              formControlName="status"
-              [options]="[{label:'Tous les statuts', value:null}, {label:'Prévu', value:Status.PREVU}, {label:'Payé', value:Status.PAYE}]"
-              placeholder="Tous les statuts"
-              [showClear]="true"
-              appendTo="body"
-              styleClass="w-full">
-            </p-dropdown>
-          </div>
+      <p-dropdown
+        formControlName="status"
+        [options]="[{label:'Tous les statuts', value:null}, {label:'Prévu', value:Status.PREVU}, {label:'Payé', value:Status.PAYE}]"
+        placeholder="Statut"
+        [showClear]="true"
+        appendTo="body"
+        styleClass="w-full md:w-10rem">
+      </p-dropdown>
 
-          <!-- Date valeur de -->
-          <div class="col-6 md:col-3">
-            <label class="block text-xs text-500 mb-1">Date valeur — à partir du</label>
-            <p-calendar
-              formControlName="dateValeurFrom"
-              placeholder="jj/mm/aaaa"
-              dateFormat="dd/mm/yy"
-              [showClear]="true"
-              [showButtonBar]="true"
-              appendTo="body"
-              styleClass="w-full">
-            </p-calendar>
-          </div>
+      <p-inputNumber
+        formControlName="montant"
+        placeholder="Montant"
+        mode="decimal"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+        [useGrouping]="true"
+        locale="fr-FR"
+        styleClass="w-full md:w-9rem">
+      </p-inputNumber>
 
-          <!-- Date valeur à -->
-          <div class="col-6 md:col-3">
-            <label class="block text-xs text-500 mb-1">Date valeur — jusqu'au</label>
-            <p-calendar
-              formControlName="dateValeurTo"
-              placeholder="jj/mm/aaaa"
-              dateFormat="dd/mm/yy"
-              [showClear]="true"
-              [showButtonBar]="true"
-              appendTo="body"
-              styleClass="w-full">
-            </p-calendar>
-          </div>
-
-          <!-- Montant min -->
-          <div class="col-6 md:col-3">
-            <label class="block text-xs text-500 mb-1">Montant minimum (MAD)</label>
-            <p-inputNumber
-              formControlName="montantMin"
-              placeholder="0"
-              mode="decimal"
-              [minFractionDigits]="2"
-              [maxFractionDigits]="2"
-              [useGrouping]="true"
-              locale="fr-FR"
-              styleClass="w-full">
-            </p-inputNumber>
-          </div>
-
-          <!-- Montant max -->
-          <div class="col-6 md:col-3">
-            <label class="block text-xs text-500 mb-1">Montant maximum (MAD)</label>
-            <p-inputNumber
-              formControlName="montantMax"
-              placeholder="∞"
-              mode="decimal"
-              [minFractionDigits]="2"
-              [maxFractionDigits]="2"
-              [useGrouping]="true"
-              locale="fr-FR"
-              styleClass="w-full">
-            </p-inputNumber>
-          </div>
-
-        </div>
-      </div>
-      }
-
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+              (click)="toggleDatePanel()">
+      </button>
     </form>
+</div>
+
+    <p-button icon="pi pi-times" severity="secondary"
+              (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+    </p-button>
+  </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
   </div>
 
   <div class="pb-8">

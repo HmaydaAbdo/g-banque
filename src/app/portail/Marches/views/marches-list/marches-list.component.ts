@@ -11,6 +11,7 @@ import {ConfirmationService, MenuItem, MessageService} from 'primeng/api';
 import {ConfirmDialogModule} from 'primeng/confirmdialog';
 import {ToolbarModule} from 'primeng/toolbar';
 import {TooltipModule} from 'primeng/tooltip';
+import {CalendarModule} from 'primeng/calendar';
 import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
 import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import {BreadcrumbModule} from 'primeng/breadcrumb';
@@ -45,7 +46,8 @@ import {AuthService} from "../../../../auth/services/auth.service";
     BreadcrumbModule,
     RouterLinkActive,
     DropdownModule,
-    TagModule
+    TagModule,
+    CalendarModule
   ],
   templateUrl: './marches-list.component.html',
   styleUrls: ['./marches-list.component.scss'],
@@ -70,6 +72,9 @@ export class MarchesListComponent implements OnInit {
 
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting = false;
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut pour ne pas surcharger la barre de filtres). */
+  showDatePanel = false;
 
   statutOptions: { label: string; value: boolean | null }[] = [
     { label: 'Actifs', value: true },
@@ -104,8 +109,24 @@ export class MarchesListComponent implements OnInit {
       numero: [''],
       maitreDouvrage: [''],
       banqueId: [null],
-      actif: [null]
+      actif: [null],
+      dateDebutDesTravauxFrom: [null],
+      dateDebutDesTravauxTo: [null],
+      dateDAchievementDesTravauxFrom: [null],
+      dateDAchievementDesTravauxTo: [null]
     });
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateDebutDesTravauxFrom || v.dateDebutDesTravauxTo) count++;
+    if (v.dateDAchievementDesTravauxFrom || v.dateDAchievementDesTravauxTo) count++;
+    return count;
   }
 
   loadMarches(event: TableLazyLoadEvent = { first: this.first, rows: this.rows, sortField: this.sortField, sortOrder: this.sortOrder, filters: {} }): void {

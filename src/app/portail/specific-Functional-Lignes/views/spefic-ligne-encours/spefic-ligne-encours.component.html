@@ -67,7 +67,9 @@
                     styleClass="w-full"></p-dropdown>
       </div>
 
-      <p-button icon="pi pi-times" severity="danger" (click)="clearSearch()" pTooltip="Réinitialiser"></p-button>
+      <p-button icon="pi pi-times" severity="secondary"
+                (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+      </p-button>
     </div>
   </form>
   </div>

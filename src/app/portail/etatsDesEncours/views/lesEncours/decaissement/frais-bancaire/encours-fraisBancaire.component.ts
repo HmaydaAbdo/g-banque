@@ -192,6 +192,15 @@ export class EncoursFraisBancaireComponent implements OnInit,OnDestroy {
     this.subscriptions.push(sub1,sub2)
   }
 
+  clearSearch(): void {
+    this.searchForm.reset({ libelle: '', montant: null });
+    if (this.table) {
+      this.table.clear();
+      this.table.first = 0;
+      this.loadFraisBancaire(this.table.createLazyLoadMetadata());
+    }
+  }
+
   loadFraisBancaire(event: TableLazyLoadEvent) {
     this.loading = true;
 

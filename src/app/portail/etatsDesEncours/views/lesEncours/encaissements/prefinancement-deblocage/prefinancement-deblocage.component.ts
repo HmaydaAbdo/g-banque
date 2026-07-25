@@ -319,6 +319,15 @@ export class PrefinancementDeblocageComponent implements OnInit, OnDestroy {
   /**
    * Loads outstanding pre-financing disbursement records.
    */
+  clearSearch(): void {
+    this.searchForm.reset({ marcheNumero: '', marcheName: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadEncoursDeblocages(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadEncoursDeblocages(event?: TableLazyLoadEvent): void {
     this.loading = true;
 

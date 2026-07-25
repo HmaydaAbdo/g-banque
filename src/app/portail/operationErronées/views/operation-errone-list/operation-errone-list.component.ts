@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgClass, NgFor, NgIf } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
@@ -30,7 +30,7 @@ import { TransactionSource } from "../../../transactions/dtos/TransactionSource"
   selector: 'app-operation-errone-list',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
+    CommonModule, FormsModule, ReactiveFormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
     BreadcrumbModule, ConfirmDialogModule, ToastModule, TooltipModule, RouterLink,
     PrimeTemplate, DatePipe, DecimalPipe, NgClass, NgFor, NgIf, InputTextModule,
     TagModule, ToolbarModule, InputSwitchModule
@@ -47,10 +47,13 @@ export class OperationErroneListComponent implements OnInit {
   exporting = false;
 
   searchCriteria: OperationErroneSearchDto = {};
-  selectedBanque?: BanqueResponse;
-  selectedStatus?: Status;
-  selectedMotif?: TransactionSource;
-  libelleFilter: string | null = null;
+
+  filterForm = this.fb.group({
+    banque: [null as BanqueResponse | null],
+    status: [null as Status | null],
+    motif: [null as TransactionSource | null],
+    libelle: [null as string | null],
+  });
 
   banques: BanqueResponse[] = [];
   banquesTotal = 0;
@@ -65,7 +68,8 @@ export class OperationErroneListComponent implements OnInit {
     private banqueService: BanqueService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fb: FormBuilder
   ) {}
 
   ngOnInit(): void {
@@ -85,10 +89,11 @@ export class OperationErroneListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.motif = this.selectedMotif;
-    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+    const { banque, status, motif, libelle } = this.filterForm.getRawValue();
+    this.searchCriteria.banqueId = banque?.id;
+    this.searchCriteria.status = status ?? undefined;
+    this.searchCriteria.motif = motif ?? undefined;
+    this.searchCriteria.libelle = libelle ? libelle : undefined;
 
     this.operationErroneService.searchOperationErrone(this.searchCriteria, page, size, sort)
       .subscribe({
@@ -145,11 +150,8 @@ export class OperationErroneListComponent implements OnInit {
     }
   }
 
-  clearFilters() {
-    this.selectedBanque = undefined;
-    this.selectedStatus = undefined;
-    this.selectedMotif = undefined;
-    this.libelleFilter = null;
+  clearFilters(): void {
+    this.filterForm.reset();
     this.applyFilters();
   }
 
@@ -159,10 +161,11 @@ export class OperationErroneListComponent implements OnInit {
    */
   exportPdf(): void {
     this.exporting = true;
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.motif = this.selectedMotif;
-    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+    const { banque, status, motif, libelle } = this.filterForm.getRawValue();
+    this.searchCriteria.banqueId = banque?.id;
+    this.searchCriteria.status = status ?? undefined;
+    this.searchCriteria.motif = motif ?? undefined;
+    this.searchCriteria.libelle = libelle ? libelle : undefined;
 
     this.operationErroneService.exportPdf(this.searchCriteria).subscribe({
       next: blob => {

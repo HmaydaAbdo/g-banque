@@ -65,8 +65,7 @@
   <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none surface-ground border-round-xl px-3 py-2" />
 
   <!-- Toolbar filtres -->
-  <p-toolbar styleClass="pg-filters">
-    <ng-template pTemplate="start">
+  <div class="pg-filters">
       <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
       <form [formGroup]="filterForm" class="flex flex-wrap align-items-center gap-2">
 
@@ -97,17 +96,11 @@
         </span>
 
         <!-- Reset -->
-        <p-button
-          icon="pi pi-filter-slash"
-          severity="secondary"
-          [outlined]="true"
-          pTooltip="Réinitialiser les filtres"
-          (onClick)="clearFilters()" />
+        <p-button icon="pi pi-times" severity="secondary"
+                  (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}" />
 
       </form>
-    </ng-template>
 
-    <ng-template pTemplate="end">
       <!-- Export PDF -->
       <p-button
         label="Exporter PDF"
@@ -156,8 +149,7 @@
 
         </div>
       }
-    </ng-template>
-  </p-toolbar>
+  </div>
 
   <!-- Carte total agrégat -->
   <div class="surface-card border-round-xl shadow-1 px-4 py-3 flex align-items-center gap-3">

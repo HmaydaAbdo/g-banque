@@ -161,10 +161,9 @@
 
     <!-- Section Filtres de Recherche -->
     <form [formGroup]="searchForm">
-      <p-toolbar styleClass="pg-filters mb-3">
+      <div class="pg-filters mb-3">
+  <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
 
-        <!-- LEFT FILTERS -->
-        <ng-template pTemplate="left">
           <div class="flex flex-wrap md:flex-nowrap gap-3 align-items-center">
 
             <!-- Libelle -->
@@ -232,21 +231,16 @@
             ></p-calendar>
 
           </div>
-        </ng-template>
 
-        <!-- RIGHT ACTION -->
-        <ng-template pTemplate="right">
           <button type="button" pButton pRipple label="Exporter PDF" class="h-fit mr-2" size="small"
                   icon="pi pi-file-pdf" severity="secondary" [loading]="exportingReport" (click)="exportReport()"></button>
-          <button
-            pButton
-            icon="pi pi-filter-slash"
-            class="p-button-rounded p-button-outlined p-button-secondary"
-            (click)="clearSearch()"
-          ></button>
-        </ng-template>
+          <div class="flex-shrink-0">
+            <p-button icon="pi pi-times" severity="secondary"
+                      (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+            </p-button>
+          </div>
 
-      </p-toolbar>
+      </div>
     </form>
     <!-- Section Tableau des Transactions -->
     <div class="pb-8">

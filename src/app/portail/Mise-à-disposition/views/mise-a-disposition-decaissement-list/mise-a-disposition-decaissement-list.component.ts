@@ -19,6 +19,7 @@ import {DropdownModule} from 'primeng/dropdown';
 import {InputSwitchModule} from "primeng/inputswitch";
 import {BreadcrumbModule} from "primeng/breadcrumb";
 import {RouterLink, RouterLinkActive} from "@angular/router";
+import {CalendarModule} from "primeng/calendar";
 
 // Project-specific imports
 import {PageResponse} from "../../../global/types/PageResponse";
@@ -52,7 +53,8 @@ import {StatutMoyenPaiement} from "../../../global/enums/StatutMoyenPaiement";
     FormsModule,
     BreadcrumbModule,
     RouterLinkActive,
-    RouterLink
+    RouterLink,
+    CalendarModule
   ],
   templateUrl: './mise-a-disposition-decaissement-list.component.html',
   styleUrl: './mise-a-disposition-decaissement-list.component.scss',
@@ -77,6 +79,9 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
     {label: 'Réglées', value: StatutMoyenPaiement.REGLE},
     {label: 'Annulées', value: StatutMoyenPaiement.ANNULE}
   ];
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -119,10 +124,29 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
       beneficiaire: [''],
       cinBeneficiaire: [''],
       banqueName: [null],
-      statut: [null]
+      statut: [null],
+      dateEmissionFrom: [null],
+      dateEmissionTo: [null],
+      dateOperationFrom: [null],
+      dateOperationTo: [null],
+      dateValeurFrom: [null],
+      dateValeurTo: [null]
     });
     const sub = this.searchForm.valueChanges.subscribe(() => this.onSearch());
     this.subscriptions.push(sub);
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateEmissionFrom || v.dateEmissionTo) count++;
+    if (v.dateOperationFrom || v.dateOperationTo) count++;
+    if (v.dateValeurFrom || v.dateValeurTo) count++;
+    return count;
   }
 
   loadMisesADisposition(event: TableLazyLoadEvent): void {
@@ -137,13 +161,7 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
       sort = `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
     }
 
-    const searchCriteria: MiseADispositionSearchDto = {
-      numero: this.searchForm.get('numero')?.value,
-      beneficiaire: this.searchForm.get('beneficiaire')?.value,
-      cinBeneficiaire: this.searchForm.get('cinBeneficiaire')?.value,
-      banqueName: this.searchForm.get('banqueName')?.value,
-      statut: this.searchForm.get('statut')?.value
-    };
+    const searchCriteria: MiseADispositionSearchDto = this.searchForm.getRawValue();
 
     this.miseADispositionService.getDecaissementsForMiseADisposition(searchCriteria, currentPage, pageSize, sort).subscribe({
       next: (page: PageResponse<MiseADispositionResponseDto>) => {
@@ -175,7 +193,12 @@ export class MiseADispositionDecaissementListComponent implements OnInit, OnDest
   }
 
   clearSearch(): void {
-    this.searchForm.reset({numero: '', beneficiaire: '', cinBeneficiaire: '', banqueName: null, statut: null});
+    this.searchForm.reset({
+      numero: '', beneficiaire: '', cinBeneficiaire: '', banqueName: null, statut: null,
+      dateEmissionFrom: null, dateEmissionTo: null,
+      dateOperationFrom: null, dateOperationTo: null,
+      dateValeurFrom: null, dateValeurTo: null
+    });
     if (this.dt) {
       this.dt.clear();
       this.dt.first = 0;

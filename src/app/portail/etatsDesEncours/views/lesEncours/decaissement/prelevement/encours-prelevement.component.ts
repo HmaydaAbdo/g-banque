@@ -173,6 +173,15 @@ export class EncoursPrelevementComponent implements OnInit, OnDestroy {
     });
   }
 
+  clearSearch(): void {
+    this.searchForm.reset({ libelle: '', montant: null });
+    if (this.table) {
+      this.table.clear();
+      this.table.first = 0;
+      this.loadPrelevements(this.table.createLazyLoadMetadata());
+    }
+  }
+
   loadPrelevements(event: TableLazyLoadEvent) {
     this.loading = true;
 

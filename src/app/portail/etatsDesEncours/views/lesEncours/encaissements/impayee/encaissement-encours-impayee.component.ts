@@ -169,6 +169,15 @@ export class EncaissementEncoursImpayeeComponent implements OnInit, OnDestroy {
     });
   }
 
+  clearSearch(): void {
+    this.searchForm.reset({ libelle: '', montant: null });
+    if (this.table) {
+      this.table.clear();
+      this.table.first = 0;
+      this.loadImpayees(this.table.createLazyLoadMetadata());
+    }
+  }
+
   loadImpayees(event: TableLazyLoadEvent) {
     this.loading = true;
 

@@ -6,11 +6,15 @@ export interface VirementInternationalSearchDto {
   beneficiaire?: string;
   emetteur?: string;
   montant?: number;
-  dateEmission?: string;
-  dateOperation?: string;
-  dateValeur?: string;
   libelle?: string;
   observation?: string;
   statut?: StatutMoyenPaiement;
   type?: Type;
+
+  dateEmissionFrom?: Date | null;
+  dateEmissionTo?: Date | null;
+  dateOperationFrom?: Date | null;
+  dateOperationTo?: Date | null;
+  dateValeurFrom?: Date | null;
+  dateValeurTo?: Date | null;
 }

@@ -71,8 +71,9 @@
   <p-breadcrumb [model]="breadcrumbItems" styleClass="border-none surface-ground border-round-xl px-3 py-2" />
 
   <!-- Ligne 1 : Filtres seuls -->
-  <div class="surface-card border-round-xl shadow-1 px-3 py-2">
-    <form [formGroup]="filterForm" class="flex flex-wrap align-items-center gap-2">
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form [formGroup]="filterForm" class="flex flex-wrap gap-3 align-items-end">
 
       <p-dropdown
         formControlName="banqueId"
@@ -110,12 +111,11 @@
           [style]="{'width':'130px'}" />
       </span>
 
-      <p-button
-        icon="pi pi-filter-slash"
-        severity="secondary"
-        [outlined]="true"
-        pTooltip="Réinitialiser les filtres"
-        (onClick)="clearFilters()" />
+      <div class="flex-shrink-0">
+        <p-button icon="pi pi-times" severity="secondary"
+                  (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+        </p-button>
+      </div>
 
       <button pButton pRipple
               label="Exporter PDF"

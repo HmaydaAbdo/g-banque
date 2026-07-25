@@ -299,6 +299,15 @@ export class LcnEncoursComponent implements OnInit {
    * Loads the outstanding LCNs for the bank.
    * @param event The lazy load event from the PrimeNG table.
    */
+  clearSearch(): void {
+    this.searchForm.reset({ numero: '', beneficiaire: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadOutstandingLcns(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadOutstandingLcns(event?: TableLazyLoadEvent): void {
     this.loading = true;
     const page = event ? event.first! / event.rows! : 0;

@@ -305,6 +305,15 @@ export class FactoringDeblocageComponent implements OnInit, OnDestroy {
   }}
 
 
+  clearSearch(): void {
+    this.searchForm.reset({ marcheNumero: '', marcheName: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadEncoursDeblocages(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadEncoursDeblocages(event?: TableLazyLoadEvent): void {
     this.loading = true;
 

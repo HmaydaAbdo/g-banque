@@ -307,6 +307,15 @@ export class FactoringRemboursementsComponent implements OnInit, OnDestroy {
     }
 
 
+  clearSearch(): void {
+    this.searchForm.reset({ marcheNumero: '', marcheName: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadEncoursRemboursements(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadEncoursRemboursements(event?: TableLazyLoadEvent): void {
     this.loading = true;
 

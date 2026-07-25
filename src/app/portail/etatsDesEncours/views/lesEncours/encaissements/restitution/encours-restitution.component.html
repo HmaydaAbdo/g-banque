@@ -44,6 +44,12 @@
               severity="primary" routerLink="/portail/restitutions/new"
               [queryParams]="{banqueId: banqueId}"
       ></button>
+
+      <div class="flex-shrink-0">
+        <p-button icon="pi pi-times" severity="secondary"
+                  (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+        </p-button>
+      </div>
     </form>
 </div>
 

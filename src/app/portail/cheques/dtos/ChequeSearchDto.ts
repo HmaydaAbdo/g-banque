@@ -5,7 +5,14 @@ export interface ChequeSearchDto {
   beneficiaire?: string;
   nomBanque?: string;
   statut?: StatutMoyenPaiement;
-  dateEmission?: Date;
+  dateEmissionFrom?: Date | null;
+  dateEmissionTo?: Date | null;
+  dateEcheanceFrom?: Date | null;
+  dateEcheanceTo?: Date | null;
+  dateOperationFrom?: Date | null;
+  dateOperationTo?: Date | null;
+  dateValeurFrom?: Date | null;
+  dateValeurTo?: Date | null;
   montant?: number;
   emetteur?: string;
 }

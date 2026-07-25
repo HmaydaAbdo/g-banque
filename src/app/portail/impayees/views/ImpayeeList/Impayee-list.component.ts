@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgClass, NgIf } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
@@ -33,6 +33,7 @@ import {Type} from "../../../Virements/Type";
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     TableModule,
     DropdownModule,
     ButtonModule,
@@ -65,11 +66,14 @@ export class ImpayeeListComponent implements OnInit {
 
   // Filters
   searchCriteria: ImpayeeSearchDto = {};
-  selectedBanque?: BanqueResponse;
-  selectedMotif?: TransactionSource;
-  selectedType?: Type;
-  selectedStatus?: Status;
-  libelleFilter: string | null = null;
+
+  filterForm = this.fb.group({
+    banque: [null as BanqueResponse | null],
+    motif: [null as TransactionSource | null],
+    type: [null as Type | null],
+    status: [null as Status | null],
+    libelle: [null as string | null],
+  });
 
   // Dropdown data sources
   banques: BanqueResponse[] = [];
@@ -87,7 +91,8 @@ export class ImpayeeListComponent implements OnInit {
     private banqueService: BanqueService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fb: FormBuilder
   ) {}
 
   ngOnInit(): void {
@@ -108,11 +113,12 @@ export class ImpayeeListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.motif = this.selectedMotif;
-    this.searchCriteria.type = this.selectedType;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+    const { banque, motif, type, status, libelle } = this.filterForm.getRawValue();
+    this.searchCriteria.banqueId = banque?.id;
+    this.searchCriteria.motif = motif ?? undefined;
+    this.searchCriteria.type = type ?? undefined;
+    this.searchCriteria.status = status ?? undefined;
+    this.searchCriteria.libelle = libelle ? libelle : undefined;
 
     this.impayeeService.searchImpayees(this.searchCriteria, page, size, sort)
       .subscribe({
@@ -169,12 +175,8 @@ export class ImpayeeListComponent implements OnInit {
     }
   }
 
-  clearFilters() {
-    this.selectedBanque = undefined;
-    this.selectedMotif = undefined;
-    this.selectedType = undefined;
-    this.selectedStatus = undefined;
-    this.libelleFilter = null;
+  clearFilters(): void {
+    this.filterForm.reset();
     this.applyFilters();
   }
 
@@ -184,11 +186,12 @@ export class ImpayeeListComponent implements OnInit {
    */
   exportPdf(): void {
     this.exporting = true;
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.motif = this.selectedMotif;
-    this.searchCriteria.type = this.selectedType;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+    const { banque, motif, type, status, libelle } = this.filterForm.getRawValue();
+    this.searchCriteria.banqueId = banque?.id;
+    this.searchCriteria.motif = motif ?? undefined;
+    this.searchCriteria.type = type ?? undefined;
+    this.searchCriteria.status = status ?? undefined;
+    this.searchCriteria.libelle = libelle ? libelle : undefined;
 
     this.impayeeService.exportPdf(this.searchCriteria).subscribe({
       next: blob => {

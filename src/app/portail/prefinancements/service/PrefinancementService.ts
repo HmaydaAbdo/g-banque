@@ -92,8 +92,28 @@ export class PrefinancementService {
     if (searchCriteria.status) {
       params = params.set('status', searchCriteria.status);
     }
+    params = this.appendDateRangeParams(params, searchCriteria);
 
     return this.http.get<PageResponse<PrefinancementResponseDTO>>(this.apiUrl, { params });
+  }
+
+  /** Ajoute les 3 paires de plages de dates (émission/opération/valeur) si renseignées. */
+  private appendDateRangeParams(params: HttpParams, searchCriteria: PrefinancementSearchDTO): HttpParams {
+    if (searchCriteria.dateEmissionFrom) params = params.set('dateEmissionFrom', this.toIsoDate(searchCriteria.dateEmissionFrom));
+    if (searchCriteria.dateEmissionTo) params = params.set('dateEmissionTo', this.toIsoDate(searchCriteria.dateEmissionTo));
+    if (searchCriteria.dateOperationFrom) params = params.set('dateOperationFrom', this.toIsoDate(searchCriteria.dateOperationFrom));
+    if (searchCriteria.dateOperationTo) params = params.set('dateOperationTo', this.toIsoDate(searchCriteria.dateOperationTo));
+    if (searchCriteria.dateValeurFrom) params = params.set('dateValeurFrom', this.toIsoDate(searchCriteria.dateValeurFrom));
+    if (searchCriteria.dateValeurTo) params = params.set('dateValeurTo', this.toIsoDate(searchCriteria.dateValeurTo));
+    return params;
+  }
+
+  /** Formate un objet Date en chaîne ISO yyyy-MM-dd pour Spring. */
+  private toIsoDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   /**
@@ -205,6 +225,7 @@ export class PrefinancementService {
     if (searchCriteria.status) {
       params = params.set('status', searchCriteria.status);
     }
+    params = this.appendDateRangeParams(params, searchCriteria);
 
     return this.http.get(`${this.apiUrl}/export/pdf`, { params, responseType: 'blob' });
   }

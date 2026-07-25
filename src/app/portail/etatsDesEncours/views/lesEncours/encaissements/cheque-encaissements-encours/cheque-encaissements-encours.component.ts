@@ -299,6 +299,15 @@ export class ChequeEncaissementsEncoursComponent implements OnInit {
     return !!(control && control.invalid && (control.dirty || control.touched));
   }
 
+  clearSearch(): void {
+    this.searchForm.reset({ numero: '', emetteur: '', dateEmission: null, beneficiaire: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadOutstandingCheques(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadOutstandingCheques(event?: TableLazyLoadEvent): void {
     this.loading = true;
     const page = event ? event.first! / event.rows! : 0;

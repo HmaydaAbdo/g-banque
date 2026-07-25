@@ -22,9 +22,8 @@
     </div>
   </div>
 
-  <p-toolbar styleClass="bg-white">
-    <ng-template pTemplate="left">
-      <div class="pg-filters">
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 p-3 bg-white border-round shadow-1">
+    <div class="pg-filters">
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
   <form [formGroup]="searchForm" class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
 
@@ -72,21 +71,11 @@
         </div>
       </form>
 </div>
-    </ng-template>
 
-    <ng-template pTemplate="right">
-      <button
-        pButton
-        pRipple
-        icon="pi pi-filter-slash"
-        class="p-button-outlined p-button-secondary"
-        (click)="clearSearch()"
-        tooltipPosition="left"
-        pTooltip="Effacer les filtres"
-        label="Effacer"
-      ></button>
-    </ng-template>
-  </p-toolbar>
+    <p-button icon="pi pi-times" severity="secondary"
+              (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+    </p-button>
+  </div>
 
   <div class="pb-8">
     <p-table #dt

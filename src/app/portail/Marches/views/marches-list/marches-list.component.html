@@ -27,10 +27,11 @@
 
   </div>
 
-  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 ">
+  <div class="flex flex-column gap-2">
+  <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-2 p-3 bg-white border-round shadow-1">
     <div class="pg-filters w-screen">
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
-  <form [formGroup]="searchForm" class="flex flex-column md:flex-row gap-2 ">
+  <form [formGroup]="searchForm" class="flex flex-wrap gap-2">
 
       <div class="p-input-icon-left">
         <i class="pi pi-search"></i>
@@ -71,9 +72,46 @@
         placeholder="Statut">
       </p-dropdown>
 
+      <button pButton pRipple type="button"
+              [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+              icon="pi pi-calendar"
+              [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+              (click)="toggleDatePanel()">
+      </button>
+
     </form>
 </div>
-    <button pButton pRipple icon="pi pi-times" class="p-button-danger ml-2" (click)="clearSearch()" pTooltip="Effacer la recherche"></button>
+    <p-button icon="pi pi-times" severity="secondary"
+              (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+    </p-button>
+  </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Début des travaux — du</label>
+        <p-calendar formControlName="dateDebutDesTravauxFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Début des travaux — au</label>
+        <p-calendar formControlName="dateDebutDesTravauxTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Achèvement des travaux — du</label>
+        <p-calendar formControlName="dateDAchievementDesTravauxFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-3">
+        <label class="block text-xs text-500 mb-1">Achèvement des travaux — au</label>
+        <p-calendar formControlName="dateDAchievementDesTravauxTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
   </div>
 
   <div class="pb-8">

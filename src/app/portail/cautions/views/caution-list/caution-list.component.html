@@ -154,9 +154,9 @@
   </div>
 
   <!-- ═══ FILTRES ══════════════════════════════════════════════════════════ -->
-  <div class="surface-card border-round-xl border-1 surface-border p-2"
-       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
-    <div class="flex flex-wrap gap-1 align-items-center" [formGroup]="filterForm">
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form [formGroup]="filterForm" class="flex flex-wrap gap-3 align-items-end">
 
       <!-- Banque -->
       <p-dropdown
@@ -259,13 +259,13 @@
       </p-calendar>
 
       <!-- Réinitialiser -->
-      <button pButton pRipple icon="pi pi-times"
-              class="p-button-text p-button-secondary p-button-sm"
-              (click)="clearFilters()"
-              pTooltip="Réinitialiser" tooltipPosition="bottom">
-      </button>
+      <div class="flex-shrink-0">
+        <p-button icon="pi pi-times" severity="secondary"
+                  (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+        </p-button>
+      </div>
 
-    </div>
+    </form>
   </div>
 
   <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->

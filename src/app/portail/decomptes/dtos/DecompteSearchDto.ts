@@ -4,8 +4,11 @@ export interface DecompteSearchDto {
   marcheId?: number;
   banqueId?: number;
   status?: Status;
+  dateEmissionFrom?: Date | null;
+  dateEmissionTo?: Date | null;
+  dateOperationFrom?: Date | null;
+  dateOperationTo?: Date | null;
   dateValeurFrom?: Date | null;
   dateValeurTo?: Date | null;
-  montantMin?: number | null;
-  montantMax?: number | null;
+  montant?: number | null;
 }

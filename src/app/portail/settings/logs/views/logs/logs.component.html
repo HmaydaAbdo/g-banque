@@ -2,29 +2,31 @@
   <div class="flex justify-content-between align-items-center">
     <p-breadcrumb [model]="items" [style]="{'background-color': 'transparent', 'border': 'none'}" >
       <ng-template pTemplate="item" let-item>
-        <ng-container *ngIf="item.route; else elseBlock">
+        @if (item.route) {
           <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
             <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
             <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
           </a>
-
-        </ng-container>
-        <ng-template #elseBlock>
+        } @else {
           <a [href]="item.url">
             <span class="text-color text-sm  md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
           </a>
-        </ng-template>
+        }
       </ng-template>
     </p-breadcrumb>
   </div>
-  <div class="p-2">
-    <div class="pt-2 flex ">
-      <div class="field col-12 md:col-3">
+
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form class="flex flex-wrap gap-3 align-items-end">
+
+      <div class="flex flex-column gap-2" style="min-width: 200px;">
         <label for="userName">Nom d'utilisateur</label>
         <p-dropdown
           id="userName"
           [options]="usernames"
           [(ngModel)]="searchCriteria.userName"
+          name="userName"
           placeholder="Sélectionner un utilisateur"
           [showClear]="true"
           (onChange)="onFilterChange()"
@@ -35,16 +37,19 @@
           </ng-template>
         </p-dropdown>
       </div>
-      <div class="field col-12 md:col-3">
+
+      <div class="flex flex-column gap-2" style="min-width: 200px;">
         <label for="operationType">Type d'Opération</label>
-        <p-dropdown id="operationType" [options]="operationTypes" [(ngModel)]="searchCriteria.operationType" placeholder="Sélectionner un type" [showClear]="true" (onChange)="onFilterChange()"></p-dropdown>
+        <p-dropdown id="operationType" [options]="operationTypes" [(ngModel)]="searchCriteria.operationType" name="operationType" placeholder="Sélectionner un type" [showClear]="true" (onChange)="onFilterChange()"></p-dropdown>
       </div>
-      <div class="field col-12 md:col-3">
+
+      <div class="flex flex-column gap-2" style="min-width: 200px;">
         <label for="entityName">Nom de l'Entité</label>
         <p-dropdown
           id="entityName"
           [options]="entityNames"
           [(ngModel)]="searchCriteria.entityName"
+          name="entityName"
           placeholder="Sélectionner une entité"
           [showClear]="true"
           (onChange)="onFilterChange()"
@@ -56,22 +61,13 @@
           </ng-template>
         </p-dropdown>
       </div>
-      <div class="field col-12 md:col-3 align-content-center pt-5">
-        <button pButton type="button"
-                icon="pi pi-filter-slash"
-                label="Réinitialiser les filtres"
-                class="p-button-secondary "
-                (click)="clearFilters()">
-        </button>
-      </div>
 
-    </div>
-    <div class="pt-2 flex">
-      <div class="field col-12 md:col-3">
+      <div class="flex flex-column gap-2" style="min-width: 170px;">
         <label for="timestampStart">Date de début</label>
         <p-calendar
           id="timestampStart"
           [(ngModel)]="searchCriteria.timestampStart"
+          name="timestampStart"
           [showTime]="true"
           dateFormat="dd/mm/yy"
           [showIcon]="true"
@@ -81,11 +77,13 @@
           (onClearClick)="onFilterChange()">
         </p-calendar>
       </div>
-      <div class="field col-12 md:col-3">
+
+      <div class="flex flex-column gap-2" style="min-width: 170px;">
         <label for="timestampEnd">Date de fin</label>
         <p-calendar
           id="timestampEnd"
           [(ngModel)]="searchCriteria.timestampEnd"
+          name="timestampEnd"
           [showTime]="true"
           dateFormat="dd/mm/yy"
           [showIcon]="true"
@@ -95,8 +93,14 @@
           (onClearClick)="onFilterChange()">
         </p-calendar>
       </div>
-    </div>
 
+      <div class="flex-shrink-0">
+        <p-button icon="pi pi-times" severity="secondary"
+                  (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+        </p-button>
+      </div>
+
+    </form>
   </div>
   <p-table
     [value]="logs"

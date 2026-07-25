@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem, PrimeTemplate } from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe, NgClass } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
@@ -31,6 +31,7 @@ import { AuthService } from "../../../../auth/services/auth.service";
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     TableModule,
     DropdownModule,
     ButtonModule,
@@ -63,9 +64,12 @@ export class PrelevementListComponent implements OnInit {
 
   // Filtres
   searchCriteria: PrelevementSearchDto = {};
-  selectedBanque?: BanqueResponse;
-  selectedStatus?: Status;
-  libelleFilter: string | null = null;
+
+  filterForm = this.fb.group({
+    banque: [null as BanqueResponse | null],
+    status: [null as Status | null],
+    libelle: [null as string | null],
+  });
 
   banques: BanqueResponse[] = [];
   banquesTotal = 0;
@@ -80,7 +84,8 @@ export class PrelevementListComponent implements OnInit {
     private banqueService: BanqueService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fb: FormBuilder
   ) {}
 
   ngOnInit(): void {
@@ -99,9 +104,10 @@ export class PrelevementListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+    const { banque, status, libelle } = this.filterForm.getRawValue();
+    this.searchCriteria.banqueId = banque?.id;
+    this.searchCriteria.status = status ?? undefined;
+    this.searchCriteria.libelle = libelle ? libelle : undefined;
 
     this.prelevementService.searchPrelevements(this.searchCriteria, page, size, sort)
       .subscribe({
@@ -144,10 +150,8 @@ export class PrelevementListComponent implements OnInit {
     }
   }
 
-  clearFilters() {
-    this.selectedBanque = undefined;
-    this.selectedStatus = undefined;
-    this.libelleFilter = null;
+  clearFilters(): void {
+    this.filterForm.reset();
     this.applyFilters();
   }
 
@@ -217,9 +221,10 @@ export class PrelevementListComponent implements OnInit {
 
   exportPdf(): void {
     this.exporting = true;
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.libelle = this.libelleFilter ? this.libelleFilter : undefined;
+    const { banque, status, libelle } = this.filterForm.getRawValue();
+    this.searchCriteria.banqueId = banque?.id;
+    this.searchCriteria.status = status ?? undefined;
+    this.searchCriteria.libelle = libelle ? libelle : undefined;
 
     this.prelevementService.exportPdf(this.searchCriteria).subscribe({
       next: (blob: Blob) => {

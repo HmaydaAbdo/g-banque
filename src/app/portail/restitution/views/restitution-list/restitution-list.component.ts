@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { MessageService, ConfirmationService, MenuItem } from 'primeng/api';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 // PrimeNG
@@ -32,7 +32,7 @@ import { AuthService } from "../../../../auth/services/auth.service";
   selector: 'app-restitution-list',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
+    CommonModule, FormsModule, ReactiveFormsModule, TableModule, DropdownModule, ButtonModule, RippleModule,
     BreadcrumbModule, ConfirmDialogModule, ToastModule, TooltipModule, RouterModule,
     DatePipe, DecimalPipe, InputTextModule, TagModule, ToolbarModule, InputSwitchModule
   ],
@@ -48,9 +48,12 @@ export class RestitutionListComponent implements OnInit {
   exporting = false;
 
   searchCriteria: RestitutionSearchDto = {};
-  selectedBanque?: BanqueResponse;
-  selectedStatus?: Status;
-  libelleFilter: string | null = null;
+
+  filterForm = this.fb.group({
+    banque: [null as BanqueResponse | null],
+    status: [null as Status | null],
+    libelle: [null as string | null],
+  });
 
   banques: BanqueResponse[] = [];
   banquesLoading = false;
@@ -63,7 +66,8 @@ export class RestitutionListComponent implements OnInit {
     private banqueService: BanqueService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fb: FormBuilder
   ) {}
 
   ngOnInit(): void {
@@ -82,9 +86,10 @@ export class RestitutionListComponent implements OnInit {
     const sortOrder = event.sortOrder === 1 ? 'asc' : 'desc';
     const sort = `${sortField},${sortOrder}`;
 
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.libelle = this.libelleFilter || undefined;
+    const { banque, status, libelle } = this.filterForm.getRawValue();
+    this.searchCriteria.banqueId = banque?.id;
+    this.searchCriteria.status = status ?? undefined;
+    this.searchCriteria.libelle = libelle || undefined;
 
     this.restitutionService.searchRestitutions(this.searchCriteria, page, size, sort)
       .subscribe({
@@ -119,10 +124,8 @@ export class RestitutionListComponent implements OnInit {
     if (this.table) setTimeout(() => this.table.reset(), 0);
   }
 
-  clearFilters() {
-    this.selectedBanque = undefined;
-    this.selectedStatus = undefined;
-    this.libelleFilter = null;
+  clearFilters(): void {
+    this.filterForm.reset();
     this.applyFilters();
   }
 
@@ -132,9 +135,10 @@ export class RestitutionListComponent implements OnInit {
    */
   exportPdf(): void {
     this.exporting = true;
-    this.searchCriteria.banqueId = this.selectedBanque?.id;
-    this.searchCriteria.status = this.selectedStatus;
-    this.searchCriteria.libelle = this.libelleFilter || undefined;
+    const { banque, status, libelle } = this.filterForm.getRawValue();
+    this.searchCriteria.banqueId = banque?.id;
+    this.searchCriteria.status = status ?? undefined;
+    this.searchCriteria.libelle = libelle || undefined;
 
     this.restitutionService.exportPdf(this.searchCriteria).subscribe({
       next: blob => {

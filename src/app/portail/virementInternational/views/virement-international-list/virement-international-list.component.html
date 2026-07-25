@@ -50,18 +50,6 @@
   <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
   <form [formGroup]="searchForm" class=" flex flex-row gap-1 align-items-end justify-content-around ">
 
-        <!-- Date d'émission -->
-        <div class="flex flex-column gap-2" >
-          <label for="dateEmission" class="text-sm">Date d'Émission</label>
-          <p-calendar id="dateEmission"
-                      formControlName="dateEmission"
-                      dateFormat="dd/mm/yy"
-                      placeholder="JJ/MM/AAAA"
-                      [styleClass]="'w-full'"
-                      [inputStyleClass]="'w-full'">
-          </p-calendar>
-        </div>
-
         <!-- Montant -->
         <div class="flex flex-column gap-2" >
           <label for="montant" class="text-sm">Montant</label>
@@ -136,16 +124,62 @@
           </p-dropdown>
         </div>
 
+        <!-- Période -->
+        <div class="flex-shrink-0">
+          <button pButton pRipple type="button"
+                  [label]="activeDateFilterCount > 0 ? 'Période (' + activeDateFilterCount + ')' : 'Période'"
+                  icon="pi pi-calendar"
+                  [class]="activeDateFilterCount > 0 ? 'p-button-sm p-button-primary' : 'p-button-sm p-button-outlined p-button-secondary'"
+                  (click)="toggleDatePanel()">
+          </button>
+        </div>
+
         <!-- Clear button -->
         <div class="flex-shrink-0">
-          <p-button icon="pi pi-filter-slash"
-                    severity="primary"
-                    (onClick)="clearSearch()">
+          <p-button icon="pi pi-times" severity="secondary"
+                    (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
           </p-button>
         </div>
 
       </form>
 </div>
+
+  @if (showDatePanel) {
+  <div class="p-3 bg-white border-round shadow-1">
+    <form [formGroup]="searchForm" class="grid">
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — du</label>
+        <p-calendar formControlName="dateEmissionFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Émission — au</label>
+        <p-calendar formControlName="dateEmissionTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — du</label>
+        <p-calendar formControlName="dateOperationFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Opération — au</label>
+        <p-calendar formControlName="dateOperationTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — du</label>
+        <p-calendar formControlName="dateValeurFrom" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+      <div class="col-6 md:col-2">
+        <label class="block text-xs text-500 mb-1">Valeur — au</label>
+        <p-calendar formControlName="dateValeurTo" placeholder="jj/mm/aaaa" dateFormat="dd/mm/yy"
+                    [showClear]="true" [showButtonBar]="true" appendTo="body" styleClass="w-full"></p-calendar>
+      </div>
+    </form>
+  </div>
+  }
 
   <!-- Table -->
   <div class="pb-8">

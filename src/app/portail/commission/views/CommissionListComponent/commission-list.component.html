@@ -56,14 +56,9 @@
   </div>
 
   <!-- ═══ FILTRES ══════════════════════════════════════════════════ -->
-  <div class="surface-card border-round-xl border-1 surface-border p-3"
-       style="box-shadow:0 1px 6px rgba(0,0,0,0.05)">
-    <form [formGroup]="filterForm">
-      <div class="flex flex-wrap gap-2 align-items-center">
-
-        <span class="text-500 text-xs font-medium mr-1" style="white-space:nowrap">
-          <i class="pi pi-sliders-h mr-1"></i>Filtres
-        </span>
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form [formGroup]="filterForm" class="flex flex-wrap gap-3 align-items-end">
 
         <p-dropdown
           formControlName="banqueId"
@@ -128,15 +123,12 @@
             [style]="{'width':'130px'}"/>
         </span>
 
-        <button pButton pRipple
-                icon="pi pi-times"
-                class="p-button-text p-button-secondary p-button-sm"
-                (click)="clearFilters()"
-                pTooltip="Réinitialiser"
-                tooltipPosition="bottom">
-        </button>
+        <div class="flex-shrink-0">
+          <p-button icon="pi pi-times" severity="secondary"
+                    (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+          </p-button>
+        </div>
 
-      </div>
     </form>
   </div>
 

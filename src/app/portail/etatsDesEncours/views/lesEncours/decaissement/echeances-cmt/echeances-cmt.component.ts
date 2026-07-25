@@ -182,6 +182,15 @@ export class EcheancesCmtComponent implements OnInit, OnDestroy {
     });
   }
 
+  clearSearch(): void {
+    this.searchForm.reset({ designation: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadEncours(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadEncours(event: TableLazyLoadEvent): void {
     const searchCriteria = this.searchForm.value;
 

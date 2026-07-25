@@ -19,6 +19,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { RouterLinkActive } from '@angular/router';
+import { CalendarModule } from 'primeng/calendar';
 
 // Project-specific imports
 import { ChequeResponseDto } from '../../dtos/ChequeResponseDto';
@@ -50,7 +51,8 @@ import { StatutMoyenPaiement } from '../../../global/enums/StatutMoyenPaiement';
     InputSwitchModule,
     FormsModule,
     BreadcrumbModule,
-    RouterLinkActive
+    RouterLinkActive,
+    CalendarModule
   ],
   templateUrl: './cheques-decaissements-list.component.html',
   styleUrl: './cheques-decaissements-list.component.scss',
@@ -75,6 +77,9 @@ export class ChequesDecaissementsListComponent implements OnInit, OnDestroy {
     { label: 'Réglés', value: StatutMoyenPaiement.REGLE },
     { label: 'Annulés', value: StatutMoyenPaiement.ANNULE }
   ];
+
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
 
   @ViewChild('dt') dt: Table | undefined;
 
@@ -117,10 +122,32 @@ export class ChequesDecaissementsListComponent implements OnInit, OnDestroy {
       numero: [''],
       beneficiaire: [''],
       nomBanque: [null],
-      statut: [null]
+      statut: [null],
+      dateEmissionFrom: [null],
+      dateEmissionTo: [null],
+      dateEcheanceFrom: [null],
+      dateEcheanceTo: [null],
+      dateOperationFrom: [null],
+      dateOperationTo: [null],
+      dateValeurFrom: [null],
+      dateValeurTo: [null]
     });
     const sub = this.searchForm.valueChanges.subscribe(() => this.onSearch());
     this.subscriptions.push(sub);
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateEmissionFrom || v.dateEmissionTo) count++;
+    if (v.dateEcheanceFrom || v.dateEcheanceTo) count++;
+    if (v.dateOperationFrom || v.dateOperationTo) count++;
+    if (v.dateValeurFrom || v.dateValeurTo) count++;
+    return count;
   }
 
   loadCheques(event: TableLazyLoadEvent): void {
@@ -135,12 +162,7 @@ export class ChequesDecaissementsListComponent implements OnInit, OnDestroy {
       sort = `${event.sortField},${event.sortOrder === 1 ? 'asc' : 'desc'}`;
     }
 
-    const searchCriteria: ChequeSearchDto = {
-      numero: this.searchForm.get('numero')?.value,
-      beneficiaire: this.searchForm.get('beneficiaire')?.value,
-      nomBanque: this.searchForm.get('nomBanque')?.value,
-      statut: this.searchForm.get('statut')?.value
-    };
+    const searchCriteria: ChequeSearchDto = this.searchForm.getRawValue();
 
     this.chequeService.getDecaissementCheques(searchCriteria, currentPage, pageSize, sort).subscribe({
       next: (page: PageResponse<ChequeResponseDto>) => {
@@ -172,7 +194,13 @@ export class ChequesDecaissementsListComponent implements OnInit, OnDestroy {
   }
 
   clearSearch(): void {
-    this.searchForm.reset();
+    this.searchForm.reset({
+      numero: '', beneficiaire: '', nomBanque: null, statut: null,
+      dateEmissionFrom: null, dateEmissionTo: null,
+      dateEcheanceFrom: null, dateEcheanceTo: null,
+      dateOperationFrom: null, dateOperationTo: null,
+      dateValeurFrom: null, dateValeurTo: null
+    });
     if (this.dt) {
       this.dt.clear();
       this.dt.first = 0;

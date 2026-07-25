@@ -303,6 +303,15 @@ export class VirementInternationalEncoursDecaissementComponent implements OnInit
    * Charge les virements internationaux en cours pour la banque.
    * @param event L'événement de chargement lazy de la table PrimeNG.
    */
+  clearSearch(): void {
+    this.searchForm.reset({ dateEmission: '', beneficiaire: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadOutstandingVirements(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadOutstandingVirements(event?: TableLazyLoadEvent): void {
     this.loading = true;
     const page = event ? event.first! / event.rows! : 0;

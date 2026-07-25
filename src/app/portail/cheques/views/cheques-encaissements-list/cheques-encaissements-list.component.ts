@@ -76,6 +76,9 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
     { label: 'Annulés', value: StatutMoyenPaiement.ANNULE }
   ];
 
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut). */
+  showDatePanel = false;
+
   @ViewChild('dt') dt: Table | undefined;
 
   private lastLazyLoadEvent: TableLazyLoadEvent = {
@@ -114,7 +117,14 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
 
   initSearchForm(): void {
     this.searchForm = this.fb.group({
-      dateEmission: [null],
+      dateEmissionFrom: [null],
+      dateEmissionTo: [null],
+      dateEcheanceFrom: [null],
+      dateEcheanceTo: [null],
+      dateOperationFrom: [null],
+      dateOperationTo: [null],
+      dateValeurFrom: [null],
+      dateValeurTo: [null],
       montant: [null],
       numero: [''],
       emetteur: [''],
@@ -123,6 +133,20 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
     });
     const sub = this.searchForm.valueChanges.subscribe(() => this.onSearch());
     this.subscriptions.push(sub);
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateEmissionFrom || v.dateEmissionTo) count++;
+    if (v.dateEcheanceFrom || v.dateEcheanceTo) count++;
+    if (v.dateOperationFrom || v.dateOperationTo) count++;
+    if (v.dateValeurFrom || v.dateValeurTo) count++;
+    return count;
   }
 
   loadCheques(event: TableLazyLoadEvent): void {
@@ -169,7 +193,13 @@ export class ChequesEncaissementsListComponent implements OnInit, OnDestroy {
   }
 
   clearSearch(): void {
-    this.searchForm.reset();
+    this.searchForm.reset({
+      dateEmissionFrom: null, dateEmissionTo: null,
+      dateEcheanceFrom: null, dateEcheanceTo: null,
+      dateOperationFrom: null, dateOperationTo: null,
+      dateValeurFrom: null, dateValeurTo: null,
+      montant: null, numero: '', emetteur: '', nomBanque: null, statut: null
+    });
     if (this.dt) {
       this.dt.clear();
       this.dt.first = 0;

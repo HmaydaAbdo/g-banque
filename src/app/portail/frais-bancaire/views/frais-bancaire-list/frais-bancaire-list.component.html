@@ -7,36 +7,40 @@
     <div class="flex justify-content-center align-items-center">
       <p-breadcrumb [model]="items">
         <ng-template pTemplate="item" let-item>
-          <ng-container *ngIf="item.route; else elseBlock">
-            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb" #rla="routerLinkActive">
+          @if (item.route) {
+            <a [routerLink]="item.route" class="p-menuitem-link" routerLinkActive="active-breadcrumb">
               <span [ngClass]="[item.icon ? item.icon : '', 'text-color', 'text-2xl']"></span>
               <span class="text-black-alpha-90 p-2 font-bold">{{ item.label }}</span>
             </a>
-          </ng-container>
-          <ng-template #elseBlock>
+          } @else {
             <a [href]="item.url">
               <span class="text-color text-sm md:text-xl lg:text-2xl text-center">{{ item.label }}</span>
             </a>
-          </ng-template>
+          }
         </ng-template>
       </p-breadcrumb>
     </div>
 
-    <button pButton pRipple label="Ajouter frais" class="hidden md:block h-fit mt-2" size="small"
-            icon="pi pi-plus" severity="primary" routerLink="/portail/frais-bancaire/new"></button>
-    <button pButton pRipple pTooltip="Ajouter frais" class="md:hidden h-fit mt-2" size="small"
-            icon="pi pi-plus" severity="primary" routerLink="/portail/frais-bancaire/new"></button>
+    <div class="flex gap-2">
+      <button pButton pRipple icon="pi pi-file-pdf" class="hidden md:block h-fit mt-2" size="small"
+              severity="secondary" [loading]="exporting" (click)="exportPdf()" label="Exporter PDF"></button>
+      <button pButton pRipple pTooltip="Exporter PDF" class="md:hidden h-fit mt-2" size="small"
+              icon="pi pi-file-pdf" severity="secondary" [loading]="exporting" (click)="exportPdf()"></button>
+      <button pButton pRipple label="Ajouter frais" class="hidden md:block h-fit mt-2" size="small"
+              icon="pi pi-plus" severity="primary" routerLink="/portail/frais-bancaire/new"></button>
+      <button pButton pRipple pTooltip="Ajouter frais" class="md:hidden h-fit mt-2" size="small"
+              icon="pi pi-plus" severity="primary" routerLink="/portail/frais-bancaire/new"></button>
+    </div>
   </div>
 
-  <p-toolbar styleClass="bg-white">
-    <ng-template pTemplate="left">
-      <div class="flex flex-column md:flex-row gap-2 align-items-start md:align-items-center w-full">
+  <div class="pg-filters">
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
+    <form [formGroup]="filterForm" class="flex flex-wrap gap-3 align-items-end">
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <p-dropdown
-            name="banque"
+            formControlName="banque"
             [options]="banques"
-            [(ngModel)]="selectedBanque"
             optionLabel="nom"
             placeholder="Sélectionner une banque"
             [virtualScroll]="true"
@@ -54,9 +58,8 @@
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
           <p-dropdown
-            name="status"
+            formControlName="status"
             [options]="statusOptions"
-            [(ngModel)]="selectedStatus"
             optionLabel="label"
             optionValue="value"
             placeholder="Tous les statuts"
@@ -69,35 +72,19 @@
 
         <div class="p-input-icon-left">
           <i class="pi pi-search"></i>
-          <input pInputText type="text" name="libelleFilter" placeholder="Rechercher par libellé"
-                 [(ngModel)]="libelleFilter" (input)="applyFilters()"
+          <input pInputText type="text" formControlName="libelle"
+                 placeholder="Rechercher par libellé"
+                 (input)="applyFilters()"
                  [style]="{'min-width': '200px'}" />
         </div>
-      </div>
-    </ng-template>
 
-    <ng-template pTemplate="right">
-      <button
-        pButton
-        pRipple
-        icon="pi pi-file-pdf"
-        class="p-button-outlined p-button-danger mr-2"
-        [loading]="exporting"
-        (click)="exportPdf()"
-        pTooltip="Exporter les résultats en PDF"
-        label="Exporter PDF"
-      ></button>
-      <button
-        pButton
-        pRipple
-        icon="pi pi-filter-slash"
-        class="p-button-outlined p-button-secondary"
-        (click)="clearFilters()"
-        pTooltip="Effacer les filtres"
-        label="Effacer"
-      ></button>
-    </ng-template>
-  </p-toolbar>
+        <div class="flex-shrink-0">
+          <p-button icon="pi pi-times" severity="secondary"
+                    (onClick)="clearFilters()" [style]="{'white-space': 'nowrap'}">
+          </p-button>
+        </div>
+    </form>
+  </div>
 
   <div class="pb-8">
     <p-table #dt [value]="fraisBancaires" [paginator]="true" [rows]="10" [totalRecords]="totalRecords"

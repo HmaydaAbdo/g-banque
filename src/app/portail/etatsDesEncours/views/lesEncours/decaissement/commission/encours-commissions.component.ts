@@ -194,6 +194,15 @@ export class EncoursCommissionsComponent implements OnInit ,OnDestroy{
     });
   }
 
+  clearSearch(): void {
+    this.searchForm.reset({ operation: null, libelle: '', montant: null });
+    if (this.table) {
+      this.table.clear();
+      this.table.first = 0;
+      this.loadCommissions(this.table.createLazyLoadMetadata());
+    }
+  }
+
   loadCommissions(event: TableLazyLoadEvent) {
     this.loading = true;
 

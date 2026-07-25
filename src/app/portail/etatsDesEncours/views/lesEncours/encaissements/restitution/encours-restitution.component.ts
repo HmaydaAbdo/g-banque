@@ -168,6 +168,15 @@ export class EncoursRestitutionComponent implements OnInit, OnDestroy {
     });
   }
 
+  clearSearch(): void {
+    this.searchForm.reset({ libelle: '', montant: null });
+    if (this.table) {
+      this.table.clear();
+      this.table.first = 0;
+      this.loadRestitutions(this.table.createLazyLoadMetadata());
+    }
+  }
+
   loadRestitutions(event: TableLazyLoadEvent) {
     this.loading = true;
 

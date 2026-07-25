@@ -66,7 +66,8 @@ export class DecomptesListComponent implements OnInit {
 
   banquesOptions: any[] = [];
 
-  showFilterPanel = true;
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut pour ne pas surcharger la barre de filtres). */
+  showDatePanel = false;
   exporting = false;
 
   private readonly fb = inject(FormBuilder);
@@ -100,13 +101,16 @@ export class DecomptesListComponent implements OnInit {
 
   initForm(): void {
     this.searchForm = this.fb.group({
-      marcheId:       [null],
-      banqueId:       [null],
-      status:         [null],
-      dateValeurFrom: [null],
-      dateValeurTo:   [null],
-      montantMin:     [null],
-      montantMax:     [null]
+      marcheId:         [null],
+      banqueId:         [null],
+      status:           [null],
+      dateEmissionFrom: [null],
+      dateEmissionTo:   [null],
+      dateOperationFrom:[null],
+      dateOperationTo:  [null],
+      dateValeurFrom:   [null],
+      dateValeurTo:     [null],
+      montant:          [null]
     });
   }
 
@@ -184,62 +188,25 @@ export class DecomptesListComponent implements OnInit {
     this.currentMarcheFilter = '';
     this.searchForm.reset({
       marcheId: null, banqueId: null, status: null,
+      dateEmissionFrom: null, dateEmissionTo: null,
+      dateOperationFrom: null, dateOperationTo: null,
       dateValeurFrom: null, dateValeurTo: null,
-      montantMin: null, montantMax: null
+      montant: null
     });
     this.initializeMarches();
   }
 
-  toggleFilterPanel() {
-    this.showFilterPanel = !this.showFilterPanel;
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
   }
 
-  get activeFilterCount(): number {
-    return this.activeFilters.length;
-  }
-
-  get activeFilters(): { label: string; field: string }[] {
+  get activeDateFilterCount(): number {
     const v = this.searchForm.value;
-    const filters: { label: string; field: string }[] = [];
-
-    if (v.marcheId) {
-      const opt = this.marchesOptions.find((m: any) => m.value === v.marcheId);
-      filters.push({ label: opt?.label ?? 'Marché', field: 'marcheId' });
-    }
-    if (v.banqueId) {
-      const opt = this.banquesOptions.find((b: any) => b.value === v.banqueId);
-      filters.push({ label: opt?.label ?? 'Banque', field: 'banqueId' });
-    }
-    if (v.status) {
-      filters.push({ label: v.status === 'PAYE' ? 'Payé' : 'Prévu', field: 'status' });
-    }
-    if (v.dateValeurFrom || v.dateValeurTo) {
-      const from = v.dateValeurFrom ? this.formatDateChip(v.dateValeurFrom) : '…';
-      const to   = v.dateValeurTo   ? this.formatDateChip(v.dateValeurTo)   : '…';
-      filters.push({ label: `${from} → ${to}`, field: 'dateValeur' });
-    }
-    if (v.montantMin != null || v.montantMax != null) {
-      const min = v.montantMin != null ? Number(v.montantMin).toLocaleString('fr-FR') : '0';
-      const max = v.montantMax != null ? Number(v.montantMax).toLocaleString('fr-FR') : '∞';
-      filters.push({ label: `${min} → ${max} MAD`, field: 'montant' });
-    }
-    return filters;
-  }
-
-  removeFilter(field: string) {
-    if (field === 'dateValeur') {
-      this.searchForm.patchValue({ dateValeurFrom: null, dateValeurTo: null });
-    } else if (field === 'montant') {
-      this.searchForm.patchValue({ montantMin: null, montantMax: null });
-    } else {
-      this.searchForm.patchValue({ [field]: null });
-    }
-  }
-
-  private formatDateChip(date: Date): string {
-    const d = String(date.getDate()).padStart(2, '0');
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    return `${d}/${m}/${date.getFullYear()}`;
+    let count = 0;
+    if (v.dateEmissionFrom || v.dateEmissionTo) count++;
+    if (v.dateOperationFrom || v.dateOperationTo) count++;
+    if (v.dateValeurFrom || v.dateValeurTo) count++;
+    return count;
   }
 
   exportPdf(): void {

@@ -185,6 +185,15 @@ export class EncoursOperationErroneComponent implements OnInit {
     });
   }
 
+  clearSearch(): void {
+    this.searchForm.reset({ libelle: '', montant: null });
+    if (this.table) {
+      this.table.clear();
+      this.table.first = 0;
+      this.loadOperations(this.table.createLazyLoadMetadata());
+    }
+  }
+
   loadOperations(event: TableLazyLoadEvent) {
     this.loading = true;
 

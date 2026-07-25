@@ -13,6 +13,7 @@ import { InputSwitchModule } from "primeng/inputswitch";
 import { ButtonModule } from "primeng/button";
 import { RippleModule } from "primeng/ripple";
 import { TooltipModule } from "primeng/tooltip";
+import { CalendarModule } from "primeng/calendar";
 
 // Services & Enums
 import { PrefinancementService } from '../../service/PrefinancementService';
@@ -47,7 +48,8 @@ import { PrefinancementSearchDTO } from '../../dtos/PrefinancementSearchDTO';
     TooltipModule,
     RouterLink,
     DatePipe,
-    DecimalPipe
+    DecimalPipe,
+    CalendarModule
   ],
   providers: [MessageService, ConfirmationService]
 })
@@ -82,6 +84,9 @@ export class PrefinancementsListComponent implements OnInit {
   /** Indicateur de chargement du bouton "Exporter PDF". */
   exporting = false;
 
+  /** Affiche/masque le panneau de recherche par période (fermé par défaut pour ne pas surcharger la barre de filtres). */
+  showDatePanel = false;
+
   private readonly fb = inject(FormBuilder);
   private readonly prefinancementService = inject(PrefinancementService);
   private readonly banqueService = inject(BanqueService);
@@ -115,8 +120,27 @@ export class PrefinancementsListComponent implements OnInit {
       marcheId: [null],
       banqueId: [null],
       type: [null],
-      status: [null]
+      status: [null],
+      dateEmissionFrom: [null],
+      dateEmissionTo: [null],
+      dateOperationFrom: [null],
+      dateOperationTo: [null],
+      dateValeurFrom: [null],
+      dateValeurTo: [null]
     });
+  }
+
+  toggleDatePanel(): void {
+    this.showDatePanel = !this.showDatePanel;
+  }
+
+  get activeDateFilterCount(): number {
+    const v = this.searchForm.value;
+    let count = 0;
+    if (v.dateEmissionFrom || v.dateEmissionTo) count++;
+    if (v.dateOperationFrom || v.dateOperationTo) count++;
+    if (v.dateValeurFrom || v.dateValeurTo) count++;
+    return count;
   }
 
   // --- LOGIQUE DROPDOWN MARCHÉS ---
@@ -213,7 +237,12 @@ export class PrefinancementsListComponent implements OnInit {
 
   clearFilters() {
     this.currentMarcheFilter = '';
-    this.searchForm.reset();
+    this.searchForm.reset({
+      marcheId: null, banqueId: null, type: null, status: null,
+      dateEmissionFrom: null, dateEmissionTo: null,
+      dateOperationFrom: null, dateOperationTo: null,
+      dateValeurFrom: null, dateValeurTo: null
+    });
     this.initializeMarches();
   }
 

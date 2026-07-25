@@ -24,7 +24,7 @@
 
   <!-- ═══ FILTRES ══════════════════════════════════════════════════════════ -->
   <div class="pg-filters">
-    <span class="pg-filters__label"><i class="pi pi-sliders-h"></i>Filtres</span>
+    <span class="pg-filters__label"><i class="pi pi-sliders-h" aria-hidden="true"></i> Filtres</span>
 
     <span class="p-input-icon-left">
       <i class="pi pi-search"></i>
@@ -33,11 +33,9 @@
              placeholder="Rechercher par nom ou description…"/>
     </span>
 
-    <button pButton pRipple icon="pi pi-times"
-            class="p-button-text p-button-secondary p-button-sm"
-            (click)="clearSearch()"
-            pTooltip="Réinitialiser" tooltipPosition="bottom">
-    </button>
+    <p-button icon="pi pi-times" severity="secondary"
+              (onClick)="clearSearch()" [style]="{'white-space': 'nowrap'}">
+    </p-button>
   </div>
 
   <!-- ═══ TABLE ════════════════════════════════════════════════════════════ -->

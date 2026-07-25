@@ -302,6 +302,15 @@ export class MiseADispositionEncoursComponent implements OnInit {
    * Loads the outstanding mise à dispositions for the bank.
    * @param event The lazy load event from the PrimeNG table.
    */
+  clearSearch(): void {
+    this.searchForm.reset({ numero: '', beneficiaire: '', montant: null });
+    if (this.dt) {
+      this.dt.clear();
+      this.dt.first = 0;
+      this.loadOutstandingMisesADisposition(this.dt.createLazyLoadMetadata());
+    }
+  }
+
   loadOutstandingMisesADisposition(event?: TableLazyLoadEvent): void {
     this.loading = true;
     const page = event ? event.first! / event.rows! : 0;

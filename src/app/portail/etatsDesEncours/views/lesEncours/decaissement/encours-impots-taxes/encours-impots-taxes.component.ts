@@ -189,6 +189,15 @@ export class EncoursImpotsEtTaxesComponent implements OnInit, OnDestroy {
     });
   }
 
+  clearSearch(): void {
+    this.searchForm.reset({ motif: null, libelle: '', montant: null });
+    if (this.table) {
+      this.table.clear();
+      this.table.first = 0;
+      this.loadImpotEtTaxes(this.table.createLazyLoadMetadata());
+    }
+  }
+
   loadImpotEtTaxes(event: TableLazyLoadEvent) {
     this.loading = true;
 
