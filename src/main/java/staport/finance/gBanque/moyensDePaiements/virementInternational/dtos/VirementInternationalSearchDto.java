@@ -1,126 +1,50 @@
 package staport.finance.gBanque.moyensDePaiements.virementInternational.dtos;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
-public class VirementInternationalSearchDto {
+/**
+ * Critères de recherche pour les listes de virements internationaux (décaissement et
+ * encaissement). Tous les champs sont optionnels.
+ */
+public record VirementInternationalSearchDto(
 
-    private Long banqueId;
-    private String beneficiaire;
-    private String emetteur;
-    private BigDecimal montant;
-    private LocalDate dateEmission ;
-    private LocalDate dateOperation ;
-    private LocalDate dateValeur ;
-    private String libelle;
-    private String observation;
-    private StatutMoyenPaiement statut;
-    private Type type;
+        Long banqueId,
 
-    public VirementInternationalSearchDto() {
-    }
+        String beneficiaire,
 
-    public Long getBanqueId() {
-        return banqueId;
-    }
+        String emetteur,
 
-    public void setBanqueId(Long banqueId) {
-        this.banqueId = banqueId;
-    }
+        BigDecimal montant,
 
-    public String getBeneficiaire() {
-        return beneficiaire;
-    }
+        String libelle,
 
-    public void setBeneficiaire(String beneficiaire) {
-        this.beneficiaire = beneficiaire;
-    }
+        String observation,
 
-    public String getEmetteur() {
-        return emetteur;
-    }
+        StatutMoyenPaiement statut,
 
-    public void setEmetteur(String emetteur) {
-        this.emetteur = emetteur;
-    }
+        Type type,
 
-    public BigDecimal getMontant() {
-        return montant;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionFrom,
 
-    public void setMontant(BigDecimal montant) {
-        this.montant = montant;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionTo,
 
-    public LocalDate getDateEmission() {
-        return dateEmission;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationFrom,
 
-    public void setDateEmission(LocalDate dateEmission) {
-        this.dateEmission = dateEmission;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationTo,
 
-    public LocalDate getDateOperation() {
-        return dateOperation;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurFrom,
 
-    public void setDateOperation(LocalDate dateOperation) {
-        this.dateOperation = dateOperation;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurTo
 
-    public LocalDate getDateValeur() {
-        return dateValeur;
-    }
-
-    public void setDateValeur(LocalDate dateValeur) {
-        this.dateValeur = dateValeur;
-    }
-
-    public String getLibelle() {
-        return libelle;
-    }
-
-    public void setLibelle(String libelle) {
-        this.libelle = libelle;
-    }
-
-    public String getObservation() {
-        return observation;
-    }
-
-    public void setObservation(String observation) {
-        this.observation = observation;
-    }
-
-    public StatutMoyenPaiement getStatut() { return statut; }
-
-    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
-
-    public Type getType() {
-        return type;
-    }
-
-    public void setType(Type type) {
-        this.type = type;
-    }
-
-    @Override
-    public String toString() {
-        return "VirementInternationalSearchDto{" +
-                "banqueId=" + banqueId +
-                ", beneficiaire='" + beneficiaire + '\'' +
-                ", emetteur='" + emetteur + '\'' +
-                ", montant=" + montant +
-                ", dateEmission=" + dateEmission +
-                ", dateOperation=" + dateOperation +
-                ", dateValeur=" + dateValeur +
-                ", libelle='" + libelle + '\'' +
-                ", observation='" + observation + '\'' +
-                ", statut=" + statut +
-                ", type=" + type +
-                '}';
-    }
-}
+) {}

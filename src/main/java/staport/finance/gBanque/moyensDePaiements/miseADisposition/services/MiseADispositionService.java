@@ -407,18 +407,33 @@ public class MiseADispositionService {
     private List<String> buildFilterSummary(MiseADispositionSearchDto dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
-        if (dto.getNumero() != null && !dto.getNumero().isBlank())
-            lines.add("N° MAD : " + dto.getNumero());
-        if (dto.getBanqueName() != null && !dto.getBanqueName().isBlank())
-            lines.add("Banque : " + dto.getBanqueName());
-        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
-            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
-        if (dto.getCinBeneficiaire() != null && !dto.getCinBeneficiaire().isBlank())
-            lines.add("CIN bénéficiaire : " + dto.getCinBeneficiaire());
-        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
-            lines.add("Émetteur : " + dto.getEmetteur());
-        if (dto.getStatut() != null)
-            lines.add("Statut : " + dto.getStatut());
+        if (dto.numero() != null && !dto.numero().isBlank())
+            lines.add("N° MAD : " + dto.numero());
+        if (dto.banqueName() != null && !dto.banqueName().isBlank())
+            lines.add("Banque : " + dto.banqueName());
+        if (dto.beneficiaire() != null && !dto.beneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.beneficiaire());
+        if (dto.cinBeneficiaire() != null && !dto.cinBeneficiaire().isBlank())
+            lines.add("CIN bénéficiaire : " + dto.cinBeneficiaire());
+        if (dto.emetteur() != null && !dto.emetteur().isBlank())
+            lines.add("Émetteur : " + dto.emetteur());
+        if (dto.statut() != null)
+            lines.add("Statut : " + dto.statut());
+        if (dto.dateEmissionFrom() != null || dto.dateEmissionTo() != null) {
+            String from = dto.dateEmissionFrom() != null ? dto.dateEmissionFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateEmissionTo()   != null ? dto.dateEmissionTo().format(DATE_FMT)   : "…";
+            lines.add("Date émission : " + from + " → " + to);
+        }
+        if (dto.dateOperationFrom() != null || dto.dateOperationTo() != null) {
+            String from = dto.dateOperationFrom() != null ? dto.dateOperationFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateOperationTo()   != null ? dto.dateOperationTo().format(DATE_FMT)   : "…";
+            lines.add("Date opération : " + from + " → " + to);
+        }
+        if (dto.dateValeurFrom() != null || dto.dateValeurTo() != null) {
+            String from = dto.dateValeurFrom() != null ? dto.dateValeurFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateValeurTo()   != null ? dto.dateValeurTo().format(DATE_FMT)   : "…";
+            lines.add("Date valeur : " + from + " → " + to);
+        }
         return lines;
     }
 

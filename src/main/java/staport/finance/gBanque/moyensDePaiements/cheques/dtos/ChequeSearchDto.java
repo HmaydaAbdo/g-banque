@@ -1,89 +1,51 @@
 package staport.finance.gBanque.moyensDePaiements.cheques.dtos;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
-public class ChequeSearchDto {
+/**
+ * Critères de recherche pour les listes de chèques (décaissement et encaissement). Tous les
+ * champs sont optionnels.
+ */
+public record ChequeSearchDto(
 
-    private LocalDate dateEmission ;
-    private BigDecimal montant;
-    private String emetteur;
+        String numero,
 
-    private String numero;
-    private String beneficiaire;
-    private String nomBanque;
-    private StatutMoyenPaiement statut;
+        String beneficiaire,
 
+        String nomBanque,
 
-    // Default constructor
-    public ChequeSearchDto() {
-    }
+        StatutMoyenPaiement statut,
 
-    // Getters and Setters
-    public String getNumero() {
-        return numero;
-    }
+        BigDecimal montant,
 
-    public void setNumero(String numero) {
-        this.numero = numero;
-    }
+        String emetteur,
 
-    public String getBeneficiaire() {
-        return beneficiaire;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionFrom,
 
-    public void setBeneficiaire(String beneficiaire) {
-        this.beneficiaire = beneficiaire;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionTo,
 
-    public String getNomBanque() {
-        return nomBanque;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEcheanceFrom,
 
-    public void setNomBanque(String nomBanque) {
-        this.nomBanque = nomBanque;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEcheanceTo,
 
-    public StatutMoyenPaiement getStatut() { return statut; }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationFrom,
 
-    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationTo,
 
-    public LocalDate getDateEmission() {
-        return dateEmission;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurFrom,
 
-    public void setDateEmission(LocalDate dateEmission) {
-        this.dateEmission = dateEmission;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurTo
 
-    public BigDecimal getMontant() {
-        return montant;
-    }
-
-    public void setMontant(BigDecimal montant) {
-        this.montant = montant;
-    }
-
-    public String getEmetteur() {
-        return emetteur;
-    }
-
-    public void setEmetteur(String emetteur) {
-        this.emetteur = emetteur;
-    }
-
-    @Override
-    public String toString() {
-        return "ChequeSearchDto{" +
-                "dateEmission=" + dateEmission +
-                ", montant=" + montant +
-                ", emetteur='" + emetteur + '\'' +
-                ", numero='" + numero + '\'' +
-                ", beneficiaire='" + beneficiaire + '\'' +
-                ", nomBanque='" + nomBanque + '\'' +
-                ", statut=" + statut +
-                '}';
-    }
-}
+) {}

@@ -413,6 +413,17 @@ public class MarcheService implements IMarcheService {
         if (criteria.actif() != null)
             lines.add("Statut : " + (criteria.actif() ? "Actif" : "Archivé"));
 
+        if (criteria.dateDebutDesTravauxFrom() != null || criteria.dateDebutDesTravauxTo() != null) {
+            String from = criteria.dateDebutDesTravauxFrom() != null ? criteria.dateDebutDesTravauxFrom().format(DATE_FMT) : "…";
+            String to   = criteria.dateDebutDesTravauxTo()   != null ? criteria.dateDebutDesTravauxTo().format(DATE_FMT)   : "…";
+            lines.add("Début travaux : " + from + " → " + to);
+        }
+        if (criteria.dateDAchievementDesTravauxFrom() != null || criteria.dateDAchievementDesTravauxTo() != null) {
+            String from = criteria.dateDAchievementDesTravauxFrom() != null ? criteria.dateDAchievementDesTravauxFrom().format(DATE_FMT) : "…";
+            String to   = criteria.dateDAchievementDesTravauxTo()   != null ? criteria.dateDAchievementDesTravauxTo().format(DATE_FMT)   : "…";
+            lines.add("Fin travaux : " + from + " → " + to);
+        }
+
         return lines;
     }
 

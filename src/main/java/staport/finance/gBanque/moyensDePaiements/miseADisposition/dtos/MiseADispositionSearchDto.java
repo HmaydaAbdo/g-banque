@@ -1,71 +1,44 @@
 package staport.finance.gBanque.moyensDePaiements.miseADisposition.dtos;
 
-import java.math.BigDecimal;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
-public class MiseADispositionSearchDto {
+/**
+ * Critères de recherche pour les listes de mises à disposition (décaissement et encaissement).
+ * Tous les champs sont optionnels.
+ */
+public record MiseADispositionSearchDto(
 
-    private String numero;
-    private String beneficiaire;
-    private String cinBeneficiaire;
-    private String banqueName;
-    private String emetteur;
-    private StatutMoyenPaiement statut;
+        String numero,
 
-    // Getters and Setters
-    public String getNumero() {
-        return numero;
-    }
+        String beneficiaire,
 
-    public void setNumero(String numero) {
-        this.numero = numero;
-    }
+        String cinBeneficiaire,
 
-    public String getBeneficiaire() {
-        return beneficiaire;
-    }
+        String banqueName,
 
-    public void setBeneficiaire(String beneficiaire) {
-        this.beneficiaire = beneficiaire;
-    }
+        String emetteur,
 
-    public String getCinBeneficiaire() {
-        return cinBeneficiaire;
-    }
+        StatutMoyenPaiement statut,
 
-    public void setCinBeneficiaire(String cinBeneficiaire) {
-        this.cinBeneficiaire = cinBeneficiaire;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionFrom,
 
-    public String getEmetteur() {
-        return emetteur;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionTo,
 
-    public void setEmetteur(String emetteur) {
-        this.emetteur = emetteur;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationFrom,
 
-    public String getBanqueName() {
-        return banqueName;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationTo,
 
-    public void setBanqueName(String banqueName) {
-        this.banqueName = banqueName;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurFrom,
 
-    public StatutMoyenPaiement getStatut() { return statut; }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurTo
 
-    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
-
-    @Override
-    public String toString() {
-        return "MiseADispositionSearchDto{" +
-                "numero='" + numero + '\'' +
-                ", beneficiaire='" + beneficiaire + '\'' +
-                ", cinBeneficiaire='" + cinBeneficiaire + '\'' +
-                ", banqueName='" + banqueName + '\'' +
-                ", emetteur='" + emetteur + '\'' +
-                ", statut=" + statut +
-                '}';
-    }
-}
+) {}

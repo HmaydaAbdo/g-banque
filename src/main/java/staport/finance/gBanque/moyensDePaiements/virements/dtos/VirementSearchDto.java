@@ -1,107 +1,52 @@
 package staport.finance.gBanque.moyensDePaiements.virements.dtos;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import staport.finance.gBanque.moyensDePaiements.virements.enums.Type;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
-public class VirementSearchDto {
+/**
+ * Critères de recherche pour les listes de virements (décaissement et encaissement). Tous les
+ * champs sont optionnels.
+ */
+public record VirementSearchDto(
 
-    private String numero;
-    private LocalDate dateEmission ;
-    private BigDecimal montant;
-    private String beneficiaire;
-    private String banqueBeneficiaire;
-    private String nomBanqueEmettrice;
-    private String ribBeneficiaire;
-    private StatutMoyenPaiement statut;
-    private String emetteur;
-    private Type type;
+        String numero,
 
-    public VirementSearchDto() {
-    }
+        String beneficiaire,
 
+        String banqueBeneficiaire,
 
-    public String getNumero() {
-        return numero;
-    }
+        String nomBanqueEmettrice,
 
-    public void setNumero(String numero) {
-        this.numero = numero;
-    }
+        String ribBeneficiaire,
 
-    public String getBeneficiaire() {
-        return beneficiaire;
-    }
+        StatutMoyenPaiement statut,
 
-    public void setBeneficiaire(String beneficiaire) {
-        this.beneficiaire = beneficiaire;
-    }
+        String emetteur,
 
-    public String getBanqueBeneficiaire() {
-        return banqueBeneficiaire;
-    }
+        Type type,
 
-    public void setBanqueBeneficiaire(String banqueBeneficiaire) {
-        this.banqueBeneficiaire = banqueBeneficiaire;
-    }
+        BigDecimal montant,
 
-    public String getNomBanqueEmettrice() {
-        return nomBanqueEmettrice;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionFrom,
 
-    public void setNomBanqueEmettrice(String nomBanqueEmettrice) {
-        this.nomBanqueEmettrice = nomBanqueEmettrice;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionTo,
 
-    public String getRibBeneficiaire() {
-        return ribBeneficiaire;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationFrom,
 
-    public void setRibBeneficiaire(String ribBeneficiaire) {
-        this.ribBeneficiaire = ribBeneficiaire;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationTo,
 
-    public StatutMoyenPaiement getStatut() { return statut; }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurFrom,
 
-    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurTo
 
-    public Type getType() {return type;}
-    public void setType(Type type) { this.type = type;}
-
-    public String getEmetteur() {return emetteur;}
-    public void setEmetteur(String emetteur) {this.emetteur = emetteur;}
-
-    public LocalDate getDateEmission() {
-        return dateEmission;
-    }
-
-    public void setDateEmission(LocalDate dateEmission) {
-        this.dateEmission = dateEmission;
-    }
-
-    public BigDecimal getMontant() {
-        return montant;
-    }
-
-    public void setMontant(BigDecimal montant) {
-        this.montant = montant;
-    }
-
-    @Override
-    public String toString() {
-        return "VirementSearchDto{" +
-                "numero='" + numero + '\'' +
-                ", dateEmisson=" + dateEmission +
-                ", montant=" + montant +
-                ", beneficiaire='" + beneficiaire + '\'' +
-                ", banqueBeneficiaire='" + banqueBeneficiaire + '\'' +
-                ", nomBanqueEmettrice='" + nomBanqueEmettrice + '\'' +
-                ", ribBeneficiaire='" + ribBeneficiaire + '\'' +
-                ", statut=" + statut +
-                ", emetteur='" + emetteur + '\'' +
-                ", type=" + type +
-                '}';
-    }
-}
+) {}

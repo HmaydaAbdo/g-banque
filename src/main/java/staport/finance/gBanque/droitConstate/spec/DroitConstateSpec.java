@@ -138,6 +138,34 @@ public class DroitConstateSpec {
         };
     }
 
+    /**
+     * Filtre générique par plage sur un champ de type date (bornes inclusives).
+     * Les enregistrements dont le champ est {@code null} sont exclus dès qu'une borne est fournie.
+     */
+    private static Specification<DroitConstate> byDateRange(String field, LocalDate from, LocalDate to) {
+        return (root, query, cb) -> {
+            if (from == null && to == null) return cb.conjunction();
+            if (from != null && to != null) return cb.between(root.get(field), from, to);
+            if (from != null) return cb.greaterThanOrEqualTo(root.get(field), from);
+            return cb.lessThanOrEqualTo(root.get(field), to);
+        };
+    }
+
+    /** Filtre par plage de dateEmission. */
+    public static Specification<DroitConstate> byDateEmissionRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateEmission", from, to);
+    }
+
+    /** Filtre par plage de dateOperation. */
+    public static Specification<DroitConstate> byDateOperationRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateOperation", from, to);
+    }
+
+    /** Filtre par plage de dateValeur. */
+    public static Specification<DroitConstate> byDateValeurRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateValeur", from, to);
+    }
+
 
     /**
      * Combines all individual specifications from the search DTO into a single,
@@ -154,7 +182,10 @@ public class DroitConstateSpec {
         return Specification.where(byMarcheId(searchDTO.marcheId()))
                 .and(byBanqueId(searchDTO.banqueId()))
                 .and(byType(searchDTO.type()))
-                .and(byStatus(searchDTO.status()));
+                .and(byStatus(searchDTO.status()))
+                .and(byDateEmissionRange(searchDTO.dateEmissionFrom(), searchDTO.dateEmissionTo()))
+                .and(byDateOperationRange(searchDTO.dateOperationFrom(), searchDTO.dateOperationTo()))
+                .and(byDateValeurRange(searchDTO.dateValeurFrom(), searchDTO.dateValeurTo()));
     }
 
     public static Specification<DroitConstate> outstandingRemboursementUntil(LocalDate until) {

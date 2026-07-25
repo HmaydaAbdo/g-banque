@@ -125,6 +125,39 @@ public final class ChequeSpec {
         };
     }
 
+    /**
+     * Filtre générique par plage sur un champ de type date (bornes inclusives).
+     * Les enregistrements dont le champ est {@code null} sont exclus dès qu'une borne est fournie.
+     */
+    private static Specification<Cheque> byDateRange(String field, LocalDate from, LocalDate to) {
+        return (root, query, cb) -> {
+            if (from == null && to == null) return cb.conjunction();
+            if (from != null && to != null) return cb.between(root.get(field), from, to);
+            if (from != null) return cb.greaterThanOrEqualTo(root.get(field), from);
+            return cb.lessThanOrEqualTo(root.get(field), to);
+        };
+    }
+
+    /** Filtre par plage de dateEmission (remplace {@link #hasDateEmission} sur les listes principales). */
+    public static Specification<Cheque> byDateEmissionRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateEmission", from, to);
+    }
+
+    /** Filtre par plage de dateEcheance. */
+    public static Specification<Cheque> byDateEcheanceRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateEcheance", from, to);
+    }
+
+    /** Filtre par plage de dateOperation (renseignée lors du rapprochement). */
+    public static Specification<Cheque> byDateOperationRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateOperation", from, to);
+    }
+
+    /** Filtre par plage de dateValeur (renseignée lors du rapprochement). */
+    public static Specification<Cheque> byDateValeurRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateValeur", from, to);
+    }
+
     public static Specification<Cheque> encoursDecaissements(Long banqueId, LocalDate until) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();

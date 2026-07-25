@@ -429,15 +429,23 @@ public class DecompteServiceImpl implements IDecompteService {
         }
         if (dto.status() != null)
             lines.add("Statut : " + (dto.status() == Status.PAYE ? "Payé" : "Prévu"));
+        if (dto.dateEmissionFrom() != null || dto.dateEmissionTo() != null) {
+            String from = dto.dateEmissionFrom() != null ? dto.dateEmissionFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateEmissionTo()   != null ? dto.dateEmissionTo().format(DATE_FMT)   : "…";
+            lines.add("Date émission : " + from + " → " + to);
+        }
+        if (dto.dateOperationFrom() != null || dto.dateOperationTo() != null) {
+            String from = dto.dateOperationFrom() != null ? dto.dateOperationFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateOperationTo()   != null ? dto.dateOperationTo().format(DATE_FMT)   : "…";
+            lines.add("Date opération : " + from + " → " + to);
+        }
         if (dto.dateValeurFrom() != null || dto.dateValeurTo() != null) {
             String from = dto.dateValeurFrom() != null ? dto.dateValeurFrom().format(DATE_FMT) : "…";
             String to   = dto.dateValeurTo()   != null ? dto.dateValeurTo().format(DATE_FMT)   : "…";
             lines.add("Date valeur : " + from + " → " + to);
         }
-        if (dto.montantMin() != null || dto.montantMax() != null) {
-            String min = dto.montantMin() != null ? formatMontantPdf(dto.montantMin()) : "0";
-            String max = dto.montantMax() != null ? formatMontantPdf(dto.montantMax()) : "∞";
-            lines.add("Montant : " + min + " → " + max + " MAD");
+        if (dto.montant() != null) {
+            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
         }
         return lines;
     }

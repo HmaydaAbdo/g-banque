@@ -146,10 +146,14 @@ public class ChequeService {
     public Page<ChequeResponseDto> getAllDecaissement(ChequeSearchDto searchDto, Pageable pageable) {
         log.debug("Recherche chèques décaissement — critères: {}", searchDto);
 
-        Specification<Cheque> spec = Specification.where(ChequeSpec.hasNumero(searchDto.getNumero()))
-                .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
-                .and(ChequeSpec.hasStatut(searchDto.getStatut()))
+        Specification<Cheque> spec = Specification.where(ChequeSpec.hasNumero(searchDto.numero()))
+                .and(ChequeSpec.hasBeneficiaire(searchDto.beneficiaire()))
+                .and(ChequeSpec.hasNomBanque(searchDto.nomBanque()))
+                .and(ChequeSpec.hasStatut(searchDto.statut()))
+                .and(ChequeSpec.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
+                .and(ChequeSpec.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
+                .and(ChequeSpec.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
+                .and(ChequeSpec.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
                 .and(ChequeSpec.hasType(Type.DECAISSEMENT));
 
         Page<Cheque> chequePage = chequeRepository.findAll(spec, stablePageable(pageable));
@@ -163,12 +167,15 @@ public class ChequeService {
         log.debug("Recherche chèques encaissement — critères: {}", searchDto);
 
         Specification<Cheque> spec = Specification.where(ChequeSpec.hasType(Type.ENCAISSEMENT))
-                .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
-                .and(ChequeSpec.hasStatut(searchDto.getStatut()))
-                .and(ChequeSpec.hasMontant(searchDto.getMontant()))
-                .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
-                .and(ChequeSpec.hasNumero(searchDto.getNumero()));
+                .and(ChequeSpec.hasNomBanque(searchDto.nomBanque()))
+                .and(ChequeSpec.hasStatut(searchDto.statut()))
+                .and(ChequeSpec.hasMontant(searchDto.montant()))
+                .and(ChequeSpec.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
+                .and(ChequeSpec.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
+                .and(ChequeSpec.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
+                .and(ChequeSpec.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
+                .and(ChequeSpec.hasEmetteur(searchDto.emetteur()))
+                .and(ChequeSpec.hasNumero(searchDto.numero()));
 
         Page<Cheque> chequePage = chequeRepository.findAll(spec, stablePageable(pageable));
         log.debug("{} chèque(s) d'encaissement trouvé(s)", chequePage.getTotalElements());
@@ -239,12 +246,15 @@ public class ChequeService {
     @Transactional(readOnly = true)
     public byte[] exportEncaissementsPdf(ChequeSearchDto searchDto) {
         Specification<Cheque> spec = Specification.where(ChequeSpec.hasType(Type.ENCAISSEMENT))
-                .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
-                .and(ChequeSpec.hasStatut(searchDto.getStatut()))
-                .and(ChequeSpec.hasMontant(searchDto.getMontant()))
-                .and(ChequeSpec.hasDateEmission(searchDto.getDateEmission()))
-                .and(ChequeSpec.hasEmetteur(searchDto.getEmetteur()))
-                .and(ChequeSpec.hasNumero(searchDto.getNumero()));
+                .and(ChequeSpec.hasNomBanque(searchDto.nomBanque()))
+                .and(ChequeSpec.hasStatut(searchDto.statut()))
+                .and(ChequeSpec.hasMontant(searchDto.montant()))
+                .and(ChequeSpec.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
+                .and(ChequeSpec.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
+                .and(ChequeSpec.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
+                .and(ChequeSpec.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
+                .and(ChequeSpec.hasEmetteur(searchDto.emetteur()))
+                .and(ChequeSpec.hasNumero(searchDto.numero()));
 
         List<Cheque> cheques = chequeRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
         BigDecimal total = sumMontant(spec);
@@ -255,10 +265,14 @@ public class ChequeService {
 
     @Transactional(readOnly = true)
     public byte[] exportDecaissementsPdf(ChequeSearchDto searchDto) {
-        Specification<Cheque> spec = Specification.where(ChequeSpec.hasNumero(searchDto.getNumero()))
-                .and(ChequeSpec.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(ChequeSpec.hasNomBanque(searchDto.getNomBanque()))
-                .and(ChequeSpec.hasStatut(searchDto.getStatut()))
+        Specification<Cheque> spec = Specification.where(ChequeSpec.hasNumero(searchDto.numero()))
+                .and(ChequeSpec.hasBeneficiaire(searchDto.beneficiaire()))
+                .and(ChequeSpec.hasNomBanque(searchDto.nomBanque()))
+                .and(ChequeSpec.hasStatut(searchDto.statut()))
+                .and(ChequeSpec.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
+                .and(ChequeSpec.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
+                .and(ChequeSpec.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
+                .and(ChequeSpec.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
                 .and(ChequeSpec.hasType(Type.DECAISSEMENT));
 
         List<Cheque> cheques = chequeRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
@@ -439,20 +453,38 @@ public class ChequeService {
     private List<String> buildFilterSummary(ChequeSearchDto dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
-        if (dto.getNumero() != null && !dto.getNumero().isBlank())
-            lines.add("N° Chèque : " + dto.getNumero());
-        if (dto.getNomBanque() != null && !dto.getNomBanque().isBlank())
-            lines.add("Banque : " + dto.getNomBanque());
-        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
-            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
-        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
-            lines.add("Émetteur : " + dto.getEmetteur());
-        if (dto.getStatut() != null)
-            lines.add("Statut : " + dto.getStatut());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        if (dto.getDateEmission() != null)
-            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
+        if (dto.numero() != null && !dto.numero().isBlank())
+            lines.add("N° Chèque : " + dto.numero());
+        if (dto.nomBanque() != null && !dto.nomBanque().isBlank())
+            lines.add("Banque : " + dto.nomBanque());
+        if (dto.beneficiaire() != null && !dto.beneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.beneficiaire());
+        if (dto.emetteur() != null && !dto.emetteur().isBlank())
+            lines.add("Émetteur : " + dto.emetteur());
+        if (dto.statut() != null)
+            lines.add("Statut : " + dto.statut());
+        if (dto.montant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+        if (dto.dateEmissionFrom() != null || dto.dateEmissionTo() != null) {
+            String from = dto.dateEmissionFrom() != null ? dto.dateEmissionFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateEmissionTo()   != null ? dto.dateEmissionTo().format(DATE_FMT)   : "…";
+            lines.add("Date émission : " + from + " → " + to);
+        }
+        if (dto.dateEcheanceFrom() != null || dto.dateEcheanceTo() != null) {
+            String from = dto.dateEcheanceFrom() != null ? dto.dateEcheanceFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateEcheanceTo()   != null ? dto.dateEcheanceTo().format(DATE_FMT)   : "…";
+            lines.add("Date échéance : " + from + " → " + to);
+        }
+        if (dto.dateOperationFrom() != null || dto.dateOperationTo() != null) {
+            String from = dto.dateOperationFrom() != null ? dto.dateOperationFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateOperationTo()   != null ? dto.dateOperationTo().format(DATE_FMT)   : "…";
+            lines.add("Date opération : " + from + " → " + to);
+        }
+        if (dto.dateValeurFrom() != null || dto.dateValeurTo() != null) {
+            String from = dto.dateValeurFrom() != null ? dto.dateValeurFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateValeurTo()   != null ? dto.dateValeurTo().format(DATE_FMT)   : "…";
+            lines.add("Date valeur : " + from + " → " + to);
+        }
         return lines;
     }
 

@@ -43,6 +43,34 @@ public final class VirementSpec {
 
 
 
+    /**
+     * Filtre générique par plage sur un champ de type date (bornes inclusives).
+     * Les enregistrements dont le champ est {@code null} sont exclus dès qu'une borne est fournie.
+     */
+    private static Specification<Virement> byDateRange(String field, LocalDate from, LocalDate to) {
+        return (root, query, cb) -> {
+            if (from == null && to == null) return cb.conjunction();
+            if (from != null && to != null) return cb.between(root.get(field), from, to);
+            if (from != null) return cb.greaterThanOrEqualTo(root.get(field), from);
+            return cb.lessThanOrEqualTo(root.get(field), to);
+        };
+    }
+
+    /** Filtre par plage de dateEmission (remplace {@link #hasDateEmission} sur la liste principale). */
+    public static Specification<Virement> byDateEmissionRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateEmission", from, to);
+    }
+
+    /** Filtre par plage de dateOperation (renseignée lors du rapprochement). */
+    public static Specification<Virement> byDateOperationRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateOperation", from, to);
+    }
+
+    /** Filtre par plage de dateValeur (renseignée lors du rapprochement). */
+    public static Specification<Virement> byDateValeurRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateValeur", from, to);
+    }
+
     public static Specification<Virement> hasEmetteur(String emetteur) {
         return (root, query, criteriaBuilder) -> {
             if (emetteur == null || emetteur.trim().isEmpty()) {
@@ -176,44 +204,44 @@ public final class VirementSpec {
     public static Specification<Virement> bySearchDto(VirementSearchDto searchDto) {
         Specification<Virement> spec = Specification.where(null);
 
-        if (searchDto.getNumero() != null) {
-            spec = spec.and(hasNumero(searchDto.getNumero()));
+        if (searchDto.numero() != null) {
+            spec = spec.and(hasNumero(searchDto.numero()));
         }
 
-        if( searchDto.getDateEmission() !=null){
-            spec=spec.and(hasDateEmission(searchDto.getDateEmission()));
+        spec = spec.and(byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()));
+        spec = spec.and(byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()));
+        spec = spec.and(byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()));
+
+        if (searchDto.beneficiaire() != null) {
+            spec = spec.and(hasBeneficiaire(searchDto.beneficiaire()));
         }
 
-        if (searchDto.getBeneficiaire() != null) {
-            spec = spec.and(hasBeneficiaire(searchDto.getBeneficiaire()));
+        if (searchDto.banqueBeneficiaire() != null) {
+            spec = spec.and(hasBanqueBeneficiaire(searchDto.banqueBeneficiaire()));
         }
 
-        if (searchDto.getBanqueBeneficiaire() != null) {
-            spec = spec.and(hasBanqueBeneficiaire(searchDto.getBanqueBeneficiaire()));
+        if (searchDto.nomBanqueEmettrice() != null) {
+            spec = spec.and(hasNomBanqueEmettrice(searchDto.nomBanqueEmettrice()));
         }
 
-        if (searchDto.getNomBanqueEmettrice() != null) {
-            spec = spec.and(hasNomBanqueEmettrice(searchDto.getNomBanqueEmettrice()));
+        if (searchDto.ribBeneficiaire() != null) {
+            spec = spec.and(hasRibBeneficiaire(searchDto.ribBeneficiaire()));
         }
 
-        if (searchDto.getRibBeneficiaire() != null) {
-            spec = spec.and(hasRibBeneficiaire(searchDto.getRibBeneficiaire()));
+        if (searchDto.statut() != null) {
+            spec = spec.and(hasStatut(searchDto.statut()));
         }
 
-        if (searchDto.getStatut() != null) {
-            spec = spec.and(hasStatut(searchDto.getStatut()));
+        if (searchDto.type() != null) {
+            spec = spec.and(hasType(searchDto.type()));
         }
 
-        if(searchDto.getType() != null) {
-            spec = spec.and(hasType(searchDto.getType()));
+        if (searchDto.emetteur() != null) {
+            spec = spec.and(hasEmetteur(searchDto.emetteur()));
         }
 
-        if(searchDto.getEmetteur() != null) {
-            spec = spec.and(hasEmetteur(searchDto.getEmetteur()));
-        }
-
-        if(searchDto.getMontant() != null) {
-            spec = spec.and(hasMontant(searchDto.getMontant()));
+        if (searchDto.montant() != null) {
+            spec = spec.and(hasMontant(searchDto.montant()));
         }
 
         return spec;

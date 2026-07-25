@@ -230,10 +230,14 @@ public class LcnService {
     public Page<LcnResponseDTO> getDecaissements(LcnSearchDTO searchDto, Pageable pageable) {
         log.debug("Recherche des LCN de décaissement avec les filtres={} et pagination={}", searchDto, pageable);
 
-        Specification<Lcn> spec = Specification.where(LcnSpecification.hasNumero(searchDto.getNumero()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
-                .and(LcnSpecification.hasStatut(searchDto.getStatut()))
+        Specification<Lcn> spec = Specification.where(LcnSpecification.hasNumero(searchDto.numero()))
+                .and(LcnSpecification.hasBeneficiaire(searchDto.beneficiaire()))
+                .and(LcnSpecification.hasBanqueNom(searchDto.nomBanque()))
+                .and(LcnSpecification.hasStatut(searchDto.statut()))
+                .and(LcnSpecification.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
+                .and(LcnSpecification.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
+                .and(LcnSpecification.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
+                .and(LcnSpecification.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
                 .and(LcnSpecification.hasType(Type.DECAISSEMENT));
 
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, stablePageable(pageable));
@@ -247,14 +251,16 @@ public class LcnService {
         log.debug("Recherche des LCN d'encaissement avec les filtres={} et pagination={}", searchDto, pageable);
 
         Specification<Lcn> spec = Specification.where(LcnSpecification.hasType(Type.ENCAISSEMENT))
-                .and(LcnSpecification.hasDateEmission(searchDto.getDateEmission()))
-                .and(LcnSpecification.hasDateEcheance(searchDto.getDateEcheance()))
-                .and(LcnSpecification.hasEmetteur(searchDto.getEmetteur()))
-                .and(LcnSpecification.hasMontant(searchDto.getMontant()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
-                .and(LcnSpecification.hasStatut(searchDto.getStatut()))
-                .and(LcnSpecification.hasNumero(searchDto.getNumero()));
+                .and(LcnSpecification.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
+                .and(LcnSpecification.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
+                .and(LcnSpecification.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
+                .and(LcnSpecification.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
+                .and(LcnSpecification.hasEmetteur(searchDto.emetteur()))
+                .and(LcnSpecification.hasMontant(searchDto.montant()))
+                .and(LcnSpecification.hasBeneficiaire(searchDto.beneficiaire()))
+                .and(LcnSpecification.hasBanqueNom(searchDto.nomBanque()))
+                .and(LcnSpecification.hasStatut(searchDto.statut()))
+                .and(LcnSpecification.hasNumero(searchDto.numero()));
 
         Page<Lcn> lcnPage = lcnRepository.findAll(spec, stablePageable(pageable));
         log.debug("{} LCN d'encaissement trouvé(s)", lcnPage.getTotalElements());
@@ -347,14 +353,16 @@ public class LcnService {
     @Transactional(readOnly = true)
     public byte[] exportEncaissementsPdf(LcnSearchDTO searchDto) {
         Specification<Lcn> spec = Specification.where(LcnSpecification.hasType(Type.ENCAISSEMENT))
-                .and(LcnSpecification.hasDateEmission(searchDto.getDateEmission()))
-                .and(LcnSpecification.hasDateEcheance(searchDto.getDateEcheance()))
-                .and(LcnSpecification.hasEmetteur(searchDto.getEmetteur()))
-                .and(LcnSpecification.hasMontant(searchDto.getMontant()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
-                .and(LcnSpecification.hasStatut(searchDto.getStatut()))
-                .and(LcnSpecification.hasNumero(searchDto.getNumero()));
+                .and(LcnSpecification.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
+                .and(LcnSpecification.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
+                .and(LcnSpecification.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
+                .and(LcnSpecification.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
+                .and(LcnSpecification.hasEmetteur(searchDto.emetteur()))
+                .and(LcnSpecification.hasMontant(searchDto.montant()))
+                .and(LcnSpecification.hasBeneficiaire(searchDto.beneficiaire()))
+                .and(LcnSpecification.hasBanqueNom(searchDto.nomBanque()))
+                .and(LcnSpecification.hasStatut(searchDto.statut()))
+                .and(LcnSpecification.hasNumero(searchDto.numero()));
 
         List<Lcn> lcns = lcnRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
         BigDecimal total = sumMontant(spec);
@@ -365,10 +373,14 @@ public class LcnService {
 
     @Transactional(readOnly = true)
     public byte[] exportDecaissementsPdf(LcnSearchDTO searchDto) {
-        Specification<Lcn> spec = Specification.where(LcnSpecification.hasNumero(searchDto.getNumero()))
-                .and(LcnSpecification.hasBeneficiaire(searchDto.getBeneficiaire()))
-                .and(LcnSpecification.hasBanqueNom(searchDto.getNomBanque()))
-                .and(LcnSpecification.hasStatut(searchDto.getStatut()))
+        Specification<Lcn> spec = Specification.where(LcnSpecification.hasNumero(searchDto.numero()))
+                .and(LcnSpecification.hasBeneficiaire(searchDto.beneficiaire()))
+                .and(LcnSpecification.hasBanqueNom(searchDto.nomBanque()))
+                .and(LcnSpecification.hasStatut(searchDto.statut()))
+                .and(LcnSpecification.byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()))
+                .and(LcnSpecification.byDateEcheanceRange(searchDto.dateEcheanceFrom(), searchDto.dateEcheanceTo()))
+                .and(LcnSpecification.byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()))
+                .and(LcnSpecification.byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()))
                 .and(LcnSpecification.hasType(Type.DECAISSEMENT));
 
         List<Lcn> lcns = lcnRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "dateEmission"));
@@ -552,22 +564,38 @@ public class LcnService {
     private List<String> buildFilterSummary(LcnSearchDTO dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
-        if (dto.getNumero() != null && !dto.getNumero().isBlank())
-            lines.add("N° LCN : " + dto.getNumero());
-        if (dto.getNomBanque() != null && !dto.getNomBanque().isBlank())
-            lines.add("Banque : " + dto.getNomBanque());
-        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
-            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
-        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
-            lines.add("Émetteur : " + dto.getEmetteur());
-        if (dto.getStatut() != null)
-            lines.add("Statut : " + dto.getStatut());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        if (dto.getDateEmission() != null)
-            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
-        if (dto.getDateEcheance() != null)
-            lines.add("Date échéance : " + dto.getDateEcheance().format(DATE_FMT));
+        if (dto.numero() != null && !dto.numero().isBlank())
+            lines.add("N° LCN : " + dto.numero());
+        if (dto.nomBanque() != null && !dto.nomBanque().isBlank())
+            lines.add("Banque : " + dto.nomBanque());
+        if (dto.beneficiaire() != null && !dto.beneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.beneficiaire());
+        if (dto.emetteur() != null && !dto.emetteur().isBlank())
+            lines.add("Émetteur : " + dto.emetteur());
+        if (dto.statut() != null)
+            lines.add("Statut : " + dto.statut());
+        if (dto.montant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+        if (dto.dateEmissionFrom() != null || dto.dateEmissionTo() != null) {
+            String from = dto.dateEmissionFrom() != null ? dto.dateEmissionFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateEmissionTo()   != null ? dto.dateEmissionTo().format(DATE_FMT)   : "…";
+            lines.add("Date émission : " + from + " → " + to);
+        }
+        if (dto.dateEcheanceFrom() != null || dto.dateEcheanceTo() != null) {
+            String from = dto.dateEcheanceFrom() != null ? dto.dateEcheanceFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateEcheanceTo()   != null ? dto.dateEcheanceTo().format(DATE_FMT)   : "…";
+            lines.add("Date échéance : " + from + " → " + to);
+        }
+        if (dto.dateOperationFrom() != null || dto.dateOperationTo() != null) {
+            String from = dto.dateOperationFrom() != null ? dto.dateOperationFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateOperationTo()   != null ? dto.dateOperationTo().format(DATE_FMT)   : "…";
+            lines.add("Date opération : " + from + " → " + to);
+        }
+        if (dto.dateValeurFrom() != null || dto.dateValeurTo() != null) {
+            String from = dto.dateValeurFrom() != null ? dto.dateValeurFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateValeurTo()   != null ? dto.dateValeurTo().format(DATE_FMT)   : "…";
+            lines.add("Date valeur : " + from + " → " + to);
+        }
         return lines;
     }
 

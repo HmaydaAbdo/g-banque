@@ -119,6 +119,34 @@ public final class VirementInternationalSpec {
     }
 
     /**
+     * Filtre générique par plage sur un champ de type date (bornes inclusives).
+     * Les enregistrements dont le champ est {@code null} sont exclus dès qu'une borne est fournie.
+     */
+    private static Specification<VirementInternational> byDateRange(String field, LocalDate from, LocalDate to) {
+        return (root, query, cb) -> {
+            if (from == null && to == null) return cb.conjunction();
+            if (from != null && to != null) return cb.between(root.get(field), from, to);
+            if (from != null) return cb.greaterThanOrEqualTo(root.get(field), from);
+            return cb.lessThanOrEqualTo(root.get(field), to);
+        };
+    }
+
+    /** Filtre par plage de dateEmission (remplace {@link #hasDateEmission} sur la liste principale). */
+    public static Specification<VirementInternational> byDateEmissionRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateEmission", from, to);
+    }
+
+    /** Filtre par plage de dateOperation (renseignée lors du rapprochement). */
+    public static Specification<VirementInternational> byDateOperationRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateOperation", from, to);
+    }
+
+    /** Filtre par plage de dateValeur (renseignée lors du rapprochement). */
+    public static Specification<VirementInternational> byDateValeurRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateValeur", from, to);
+    }
+
+    /**
      * Specification to filter VirementInternational by libelle (case-insensitive).
      * @param libelle The libelle to match.
      * @return A Specification for the libelle.
@@ -192,48 +220,40 @@ public final class VirementInternationalSpec {
     public static Specification<VirementInternational> bySearchDto(VirementInternationalSearchDto searchDto) {
         Specification<VirementInternational> spec = Specification.where(null);
 
-        if (searchDto.getBanqueId() != null) {
-            spec = spec.and(hasBanqueId(searchDto.getBanqueId()));
+        if (searchDto.banqueId() != null) {
+            spec = spec.and(hasBanqueId(searchDto.banqueId()));
         }
 
-        if (searchDto.getBeneficiaire() != null) {
-            spec = spec.and(hasBeneficiaire(searchDto.getBeneficiaire()));
+        if (searchDto.beneficiaire() != null) {
+            spec = spec.and(hasBeneficiaire(searchDto.beneficiaire()));
         }
 
-        if (searchDto.getEmetteur() != null) {
-            spec = spec.and(hasEmetteur(searchDto.getEmetteur()));
+        if (searchDto.emetteur() != null) {
+            spec = spec.and(hasEmetteur(searchDto.emetteur()));
         }
 
-        if (searchDto.getMontant() != null) {
-            spec = spec.and(hasMontant(searchDto.getMontant()));
+        if (searchDto.montant() != null) {
+            spec = spec.and(hasMontant(searchDto.montant()));
         }
 
-        if (searchDto.getDateEmission() != null) {
-            spec = spec.and(hasDateEmission(searchDto.getDateEmission()));
+        spec = spec.and(byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()));
+        spec = spec.and(byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()));
+        spec = spec.and(byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()));
+
+        if (searchDto.libelle() != null) {
+            spec = spec.and(hasLibelle(searchDto.libelle()));
         }
 
-        if (searchDto.getDateOperation() != null) {
-            spec = spec.and(hasDateOperation(searchDto.getDateOperation()));
+        if (searchDto.observation() != null) {
+            spec = spec.and(hasObservation(searchDto.observation()));
         }
 
-        if (searchDto.getDateValeur() != null) {
-            spec = spec.and(hasDateValeur(searchDto.getDateValeur()));
+        if (searchDto.statut() != null) {
+            spec = spec.and(hasStatut(searchDto.statut()));
         }
 
-        if (searchDto.getLibelle() != null) {
-            spec = spec.and(hasLibelle(searchDto.getLibelle()));
-        }
-
-        if (searchDto.getObservation() != null) {
-            spec = spec.and(hasObservation(searchDto.getObservation()));
-        }
-
-        if (searchDto.getStatut() != null) {
-            spec = spec.and(hasStatut(searchDto.getStatut()));
-        }
-
-        if (searchDto.getType() != null) {
-            spec = spec.and(hasType(searchDto.getType()));
+        if (searchDto.type() != null) {
+            spec = spec.and(hasType(searchDto.type()));
         }
 
         return spec;

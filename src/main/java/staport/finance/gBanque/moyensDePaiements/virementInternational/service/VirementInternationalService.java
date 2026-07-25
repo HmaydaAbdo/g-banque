@@ -452,25 +452,38 @@ public class VirementInternationalService {
     private List<String> buildFilterSummary(VirementInternationalSearchDto dto) {
         List<String> lines = new ArrayList<>();
         if (dto == null) return lines;
-        if (dto.getBanqueId() != null) {
+        if (dto.banqueId() != null) {
             try {
-                lines.add("Banque : " + banqueService.findOrThrow(dto.getBanqueId()).getNom());
+                lines.add("Banque : " + banqueService.findOrThrow(dto.banqueId()).getNom());
             } catch (ResourceNotFoundException ignored) {
                 // Filtre obsolète (banque supprimée depuis) — ignoré silencieusement dans le résumé PDF.
             }
         }
-        if (dto.getBeneficiaire() != null && !dto.getBeneficiaire().isBlank())
-            lines.add("Bénéficiaire : " + dto.getBeneficiaire());
-        if (dto.getEmetteur() != null && !dto.getEmetteur().isBlank())
-            lines.add("Émetteur : " + dto.getEmetteur());
-        if (dto.getType() != null)
-            lines.add("Type : " + dto.getType());
-        if (dto.getStatut() != null)
-            lines.add("Statut : " + dto.getStatut());
-        if (dto.getMontant() != null)
-            lines.add("Montant : " + formatMontantPdf(dto.getMontant()) + " MAD");
-        if (dto.getDateEmission() != null)
-            lines.add("Date émission : " + dto.getDateEmission().format(DATE_FMT));
+        if (dto.beneficiaire() != null && !dto.beneficiaire().isBlank())
+            lines.add("Bénéficiaire : " + dto.beneficiaire());
+        if (dto.emetteur() != null && !dto.emetteur().isBlank())
+            lines.add("Émetteur : " + dto.emetteur());
+        if (dto.type() != null)
+            lines.add("Type : " + dto.type());
+        if (dto.statut() != null)
+            lines.add("Statut : " + dto.statut());
+        if (dto.montant() != null)
+            lines.add("Montant : " + formatMontantPdf(dto.montant()) + " MAD");
+        if (dto.dateEmissionFrom() != null || dto.dateEmissionTo() != null) {
+            String from = dto.dateEmissionFrom() != null ? dto.dateEmissionFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateEmissionTo()   != null ? dto.dateEmissionTo().format(DATE_FMT)   : "…";
+            lines.add("Date émission : " + from + " → " + to);
+        }
+        if (dto.dateOperationFrom() != null || dto.dateOperationTo() != null) {
+            String from = dto.dateOperationFrom() != null ? dto.dateOperationFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateOperationTo()   != null ? dto.dateOperationTo().format(DATE_FMT)   : "…";
+            lines.add("Date opération : " + from + " → " + to);
+        }
+        if (dto.dateValeurFrom() != null || dto.dateValeurTo() != null) {
+            String from = dto.dateValeurFrom() != null ? dto.dateValeurFrom().format(DATE_FMT) : "…";
+            String to   = dto.dateValeurTo()   != null ? dto.dateValeurTo().format(DATE_FMT)   : "…";
+            lines.add("Date valeur : " + from + " → " + to);
+        }
         return lines;
     }
 

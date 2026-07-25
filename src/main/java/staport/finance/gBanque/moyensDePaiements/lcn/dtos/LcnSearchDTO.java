@@ -1,95 +1,51 @@
 package staport.finance.gBanque.moyensDePaiements.lcn.dtos;
 
+import org.springframework.format.annotation.DateTimeFormat;
+import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import staport.finance.gBanque.moyensDePaiements.synchronisation.enums.StatutMoyenPaiement;
 
-public class LcnSearchDTO {
+/**
+ * Critères de recherche pour les listes de LCN (décaissement et encaissement). Tous les champs
+ * sont optionnels.
+ */
+public record LcnSearchDTO(
 
-    private LocalDate dateEmission ;
-    private LocalDate dateEcheance ;
-    private String emetteur;
-    private BigDecimal montant;
-    private String numero;
-    private String beneficiaire;
-    private String nomBanque;
-    private StatutMoyenPaiement statut;
+        String numero,
 
-    public LcnSearchDTO() {
-    }
+        String emetteur,
 
-    public LocalDate getDateEmission() {
-        return dateEmission;
-    }
+        String beneficiaire,
 
-    public void setDateEmission(LocalDate dateEmission) {
-        this.dateEmission = dateEmission;
-    }
+        String nomBanque,
 
-    public String getEmetteur() {
-        return emetteur;
-    }
+        StatutMoyenPaiement statut,
 
-    public void setEmetteur(String emetteur) {
-        this.emetteur = emetteur;
-    }
+        BigDecimal montant,
 
-    public LocalDate getDateEcheance() {
-        return dateEcheance;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionFrom,
 
-    public void setDateEcheance(LocalDate dateEcheance) {
-        this.dateEcheance = dateEcheance;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionTo,
 
-    public BigDecimal getMontant() {
-        return montant;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEcheanceFrom,
 
-    public void setMontant(BigDecimal montant) {
-        this.montant = montant;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEcheanceTo,
 
-    public String getNumero() {
-        return numero;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationFrom,
 
-    public void setNumero(String numero) {
-        this.numero = numero;
-    }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationTo,
 
-    public StatutMoyenPaiement getStatut() { return statut; }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurFrom,
 
-    public void setStatut(StatutMoyenPaiement statut) { this.statut = statut; }
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateValeurTo
 
-    public String getNomBanque() {
-        return nomBanque;
-    }
-
-    public void setNomBanque(String nomBanque) {
-        this.nomBanque = nomBanque;
-    }
-
-    public String getBeneficiaire() {
-        return beneficiaire;
-    }
-
-    public void setBeneficiaire(String beneficiaire) {
-        this.beneficiaire = beneficiaire;
-    }
-
-    @Override
-    public String toString() {
-        return "LcnSearchDTO{" +
-                "dateEmission=" + dateEmission +
-                ", dateEcheance=" + dateEcheance +
-                ", emetteur='" + emetteur + '\'' +
-                ", montant=" + montant +
-                ", numero='" + numero + '\'' +
-                ", beneficiaire='" + beneficiaire + '\'' +
-                ", nomBanque='" + nomBanque + '\'' +
-                ", statut=" + statut +
-                '}';
-    }
-}
+) {}

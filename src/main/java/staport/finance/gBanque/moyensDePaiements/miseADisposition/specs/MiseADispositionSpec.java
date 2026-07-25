@@ -50,6 +50,34 @@ public final class MiseADispositionSpec {
         };
     }
 
+    /**
+     * Filtre générique par plage sur un champ de type date (bornes inclusives).
+     * Les enregistrements dont le champ est {@code null} sont exclus dès qu'une borne est fournie.
+     */
+    private static Specification<MiseADisposition> byDateRange(String field, LocalDate from, LocalDate to) {
+        return (root, query, cb) -> {
+            if (from == null && to == null) return cb.conjunction();
+            if (from != null && to != null) return cb.between(root.get(field), from, to);
+            if (from != null) return cb.greaterThanOrEqualTo(root.get(field), from);
+            return cb.lessThanOrEqualTo(root.get(field), to);
+        };
+    }
+
+    /** Filtre par plage de dateEmission. */
+    public static Specification<MiseADisposition> byDateEmissionRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateEmission", from, to);
+    }
+
+    /** Filtre par plage de dateOperation (renseignée lors du rapprochement). */
+    public static Specification<MiseADisposition> byDateOperationRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateOperation", from, to);
+    }
+
+    /** Filtre par plage de dateValeur (renseignée lors du rapprochement). */
+    public static Specification<MiseADisposition> byDateValeurRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateValeur", from, to);
+    }
+
     public static Specification<MiseADisposition> hasBeneficiaire(String beneficiaire) {
         return (root, query, criteriaBuilder) -> {
             if (beneficiaire == null || beneficiaire.trim().isEmpty()) {
@@ -124,29 +152,33 @@ public final class MiseADispositionSpec {
     public static Specification<MiseADisposition> bySearchDto(MiseADispositionSearchDto searchDto) {
         Specification<MiseADisposition> spec = Specification.where(null);
 
-        if (searchDto.getNumero() != null) {
-            spec = spec.and(hasNumero(searchDto.getNumero()));
+        if (searchDto.numero() != null) {
+            spec = spec.and(hasNumero(searchDto.numero()));
         }
 
-        if (searchDto.getBeneficiaire() != null) {
-            spec = spec.and(hasBeneficiaire(searchDto.getBeneficiaire()));
+        if (searchDto.beneficiaire() != null) {
+            spec = spec.and(hasBeneficiaire(searchDto.beneficiaire()));
         }
 
-        if (searchDto.getCinBeneficiaire() != null) {
-            spec = spec.and(hasCinBeneficiaire(searchDto.getCinBeneficiaire()));
+        if (searchDto.cinBeneficiaire() != null) {
+            spec = spec.and(hasCinBeneficiaire(searchDto.cinBeneficiaire()));
         }
 
-        if (searchDto.getBanqueName() != null) {
-            spec = spec.and(hasBanqueName(searchDto.getBanqueName()));
+        if (searchDto.banqueName() != null) {
+            spec = spec.and(hasBanqueName(searchDto.banqueName()));
         }
 
-        if(searchDto.getEmetteur()!=null){
-            spec = spec.and(hasEmetteur(searchDto.getEmetteur()));
+        if (searchDto.emetteur() != null) {
+            spec = spec.and(hasEmetteur(searchDto.emetteur()));
         }
 
-        if (searchDto.getStatut() != null) {
-            spec = spec.and(hasStatut(searchDto.getStatut()));
+        if (searchDto.statut() != null) {
+            spec = spec.and(hasStatut(searchDto.statut()));
         }
+
+        spec = spec.and(byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()));
+        spec = spec.and(byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()));
+        spec = spec.and(byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()));
 
         return spec;
     }

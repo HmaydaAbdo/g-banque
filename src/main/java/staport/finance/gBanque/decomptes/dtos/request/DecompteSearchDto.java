@@ -18,13 +18,23 @@ public record DecompteSearchDto(
         Status status,
 
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionFrom,
+
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateEmissionTo,
+
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationFrom,
+
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate dateOperationTo,
+
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate dateValeurFrom,
 
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate dateValeurTo,
 
-        BigDecimal montantMin,
-
-        BigDecimal montantMax
+        BigDecimal montant
 
 ) {}

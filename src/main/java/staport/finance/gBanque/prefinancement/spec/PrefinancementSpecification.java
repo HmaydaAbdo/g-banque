@@ -110,6 +110,34 @@ public final class PrefinancementSpecification {
         };
     }
 
+    /**
+     * Filtre générique par plage sur un champ de type date (bornes inclusives).
+     * Les enregistrements dont le champ est {@code null} sont exclus dès qu'une borne est fournie.
+     */
+    private static Specification<Prefinancement> byDateRange(String field, LocalDate from, LocalDate to) {
+        return (root, query, cb) -> {
+            if (from == null && to == null) return cb.conjunction();
+            if (from != null && to != null) return cb.between(root.get(field), from, to);
+            if (from != null) return cb.greaterThanOrEqualTo(root.get(field), from);
+            return cb.lessThanOrEqualTo(root.get(field), to);
+        };
+    }
+
+    /** Filtre par plage de dateEmission. */
+    public static Specification<Prefinancement> byDateEmissionRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateEmission", from, to);
+    }
+
+    /** Filtre par plage de dateOperation. */
+    public static Specification<Prefinancement> byDateOperationRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateOperation", from, to);
+    }
+
+    /** Filtre par plage de dateValeur. */
+    public static Specification<Prefinancement> byDateValeurRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateValeur", from, to);
+    }
+
     public static Specification<Prefinancement> searchByCriteria(PrefinancementSearchDTO searchDTO) {
         if (searchDTO == null) {
             return Specification.where(null);
@@ -118,7 +146,10 @@ public final class PrefinancementSpecification {
         return Specification.where(byMarcheId(searchDTO.marcheId()))
                 .and(byBanqueId(searchDTO.banqueId()))
                 .and(byType(searchDTO.type()))
-                .and(byStatus(searchDTO.status()));
+                .and(byStatus(searchDTO.status()))
+                .and(byDateEmissionRange(searchDTO.dateEmissionFrom(), searchDTO.dateEmissionTo()))
+                .and(byDateOperationRange(searchDTO.dateOperationFrom(), searchDTO.dateOperationTo()))
+                .and(byDateValeurRange(searchDTO.dateValeurFrom(), searchDTO.dateValeurTo()));
     }
 
     public static Specification<Prefinancement> outstandingRemboursementUntil(LocalDate until) {

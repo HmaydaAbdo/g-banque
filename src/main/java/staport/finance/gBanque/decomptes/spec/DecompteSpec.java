@@ -99,30 +99,34 @@ public final class DecompteSpec {
     }
 
     /**
+     * Filtre générique par plage sur un champ de type date (bornes inclusives).
+     * Les enregistrements dont le champ est {@code null} sont exclus dès qu'une borne est fournie.
+     */
+    private static Specification<Decompte> byDateRange(String field, LocalDate from, LocalDate to) {
+        return (root, query, cb) -> {
+            if (from == null && to == null) return cb.conjunction();
+            if (from != null && to != null) return cb.between(root.get(field), from, to);
+            if (from != null) return cb.greaterThanOrEqualTo(root.get(field), from);
+            return cb.lessThanOrEqualTo(root.get(field), to);
+        };
+    }
+
+    /**
      * Filtre par plage de dateValeur.
      * Les enregistrements avec dateValeur null sont exclus si au moins une borne est fournie.
      */
     public static Specification<Decompte> byDateValeurRange(LocalDate from, LocalDate to) {
-        return (root, query, cb) -> {
-            if (from == null && to == null) return cb.conjunction();
-            if (from != null && to != null)
-                return cb.between(root.get("dateValeur"), from, to);
-            if (from != null)
-                return cb.greaterThanOrEqualTo(root.get("dateValeur"), from);
-            return cb.lessThanOrEqualTo(root.get("dateValeur"), to);
-        };
+        return byDateRange("dateValeur", from, to);
     }
 
-    /** Filtre par plage de montant (min et/ou max). */
-    public static Specification<Decompte> byMontantRange(BigDecimal min, BigDecimal max) {
-        return (root, query, cb) -> {
-            if (min == null && max == null) return cb.conjunction();
-            if (min != null && max != null)
-                return cb.between(root.get("montant"), min, max);
-            if (min != null)
-                return cb.greaterThanOrEqualTo(root.get("montant"), min);
-            return cb.lessThanOrEqualTo(root.get("montant"), max);
-        };
+    /** Filtre par plage de dateEmission. */
+    public static Specification<Decompte> byDateEmissionRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateEmission", from, to);
+    }
+
+    /** Filtre par plage de dateOperation. */
+    public static Specification<Decompte> byDateOperationRange(LocalDate from, LocalDate to) {
+        return byDateRange("dateOperation", from, to);
     }
 
     /**
@@ -140,8 +144,10 @@ public final class DecompteSpec {
         if (searchDto.status() != null)
             spec = spec.and(byStatus(searchDto.status()));
 
+        spec = spec.and(byDateEmissionRange(searchDto.dateEmissionFrom(), searchDto.dateEmissionTo()));
+        spec = spec.and(byDateOperationRange(searchDto.dateOperationFrom(), searchDto.dateOperationTo()));
         spec = spec.and(byDateValeurRange(searchDto.dateValeurFrom(), searchDto.dateValeurTo()));
-        spec = spec.and(byMontantRange(searchDto.montantMin(), searchDto.montantMax()));
+        spec = spec.and(hasMontant(searchDto.montant()));
 
         return spec;
     }
